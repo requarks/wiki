@@ -1,0 +1,21 @@
+doctype html
+html
+	head
+		meta(http-equiv='X-UA-Compatible', content='IE=edge')
+		meta(charset='UTF-8')
+		title= appconfig.title
+
+		// Favicon
+		each favsize in [32, 96, 16]
+			link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize href='/images/favicon-' + favsize + 'x' + favsize + '.png')
+
+		// CSS
+		link(href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700|Inconsolata', rel='stylesheet', type='text/css')
+		link(type='text/css', rel='stylesheet', href='/css/app.css')
+
+	body(class='server-error')
+		#root
+			img(src='/images/logo-text_218x80.png')
+			h1 Oops, something went wrong
+			h4= message
+			pre #{error.stack}

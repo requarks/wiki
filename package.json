@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "auto-load": "^2.1.0",
+    "bcryptjs-then": "^1.0.1",
     "bluebird": "^3.4.1",
     "body-parser": "^1.15.2",
     "compression": "^1.6.2",
@@ -54,7 +55,7 @@
     "moment-timezone": "^0.5.5",
     "mongoose": "^4.5.9",
     "mongoose-delete": "^0.3.4",
-    "node-bcrypt": "0.0.1",
+    "nodegit": "^0.14.1",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "pug": "^2.0.0-beta5",
