@@ -1,3 +1,7 @@
+<a href="https://github.com/Requarks/wiki">
+    <img src="https://raw.githubusercontent.com/Requarks/wiki/master/assets/favicons/favicon-96x96.png" alt="Requarks Wiki" title="Requarks Wiki" align="right" />
+</a>
+
 # Requarks Wiki
 
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://github.com/requarks/wiki/blob/master/LICENSE)
