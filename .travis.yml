@@ -1,0 +1,30 @@
+language: node_js
+node_js:
+- '6'
+- '5'
+- '4.4'
+services:
+- redis-server
+- mongodb
+cache:
+  directories:
+  - node_modules
+before_script:
+- npm install -g snyk
+before_deploy:
+- npm install -g gulp
+- gulp deploy
+- snyk auth $SNYK_TOKEN
+- snyk monitor
+deploy:
+  provider: releases
+  file:
+  - dist/requarks-wiki.zip
+  - dist/requarks-wiki.tar.gz
+  skip_cleanup: true
+  overwrite: true
+  on:
+    branch: master
+    repo: requarks/wiki
+    tags: true
+    node: '6'

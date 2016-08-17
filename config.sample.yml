@@ -1,0 +1,54 @@
+###################################################
+# REQUARKS WIKI - CONFIGURATION                   #
+###################################################
+
+# -------------------------------------------------
+# Title of this site
+# -------------------------------------------------
+
+title: Wiki
+
+# -------------------------------------------------
+# Full path to the site, without the trailing slash
+# -------------------------------------------------
+
+host: http://localhost
+
+# -------------------------------------------------
+# Port the server should listen to (80 by default)
+# -------------------------------------------------
+# To use process.env.PORT, comment the line below:
+
+port: 80
+
+# -------------------------------------------------
+# MongoDB Connection String
+# -------------------------------------------------
+# Full explanation + examples in the documentation (https://opsstatus.readme.io/)
+
+db: mongodb://localhost/wiki
+
+# -------------------------------------------------
+# Redis Connection Info
+# -------------------------------------------------
+# Full explanation + examples in the documentation (https://opsstatus.readme.io/)
+
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+
+# -------------------------------------------------
+# Secret key to use when encrypting sessions
+# -------------------------------------------------
+# Use a long and unique random string (256-bit keys are perfect!)
+
+sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
+
+# -------------------------------------------------
+# Administrator email
+# -------------------------------------------------
+# An account will be created using the email specified here.
+# The password is set to "admin123" by default. Change it immediately upon login!!!
+
+admin: admin@company.com

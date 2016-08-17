@@ -1,0 +1,10 @@
+{
+  "files": {
+    "included": [
+      "controllers/**/*.js",
+      "middlewares/**/*.js",
+      "models/**/*.js",
+    ],
+    "excluded": []
+  }
+}

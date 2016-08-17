@@ -1,0 +1,4 @@
+failThreshold: high
+version: v1.5.2
+ignore: {}
+patch: {}
