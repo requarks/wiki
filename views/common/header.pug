@@ -1,0 +1,35 @@
+
+nav.nav.has-shadow
+	.nav-left
+		a.nav-item.is-brand(href='/')
+			img(src='/favicons/android-icon-96x96.png', alt='Wiki')
+		a.nav-item(href='/')
+			h1.title Wiki
+	.nav-center
+		p.nav-item.control.has-addons
+			input.input(type='text', placeholder='Find...')
+			a.button.is-info
+				span.icon.is-small
+					i.fa.fa-search
+	span.nav-toggle
+		span
+		span
+		span
+	.nav-right.nav-menu
+		a.nav-item(href='#')
+			| Account
+		a.nav-item(href='#')
+			| History
+		a.nav-item(href='#')
+			| Source
+		span.nav-item
+			a.button
+				span.icon
+					i.fa.fa-edit
+				span Edit
+			a.button.is-primary(href='#')
+				span.icon
+					i.fa.fa-plus
+				span Create
+
+

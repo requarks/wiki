@@ -7,7 +7,7 @@ var router = express.Router();
  * Home
  */
 router.get('/', (req, res) => {
-	res.send('OK');
+	res.render('pages/view');
 });
 
 module.exports = router;

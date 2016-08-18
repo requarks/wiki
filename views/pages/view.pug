@@ -1,0 +1,52 @@
+extends ../layout
+
+block content
+
+	section.section
+		.container.is-fluid
+			.columns
+
+				.column.is-narrow
+
+					aside.menu
+						p.menu-label
+							| General
+						ul.menu-list
+							li
+								a(href='#') Dashboard
+							li
+								a(href='#') Customers
+						p.menu-label
+							| Administration
+						ul.menu-list
+							li
+								a(href='#') Team Settings
+								li
+									a.is-active(href='#') Manage Your Team
+									ul
+										li
+											a(href='#') Members
+										li
+											a(href='#') Plugins
+										li
+											a(href='#') Add a member
+							li
+								a(href='#') Invitations
+							li
+								a(href='#') Authentication
+						p.menu-label
+							| Transactions
+						ul.menu-list
+							li
+								a(href='#') Payments
+							li
+								a(href='#') Transfers
+							li
+								a(href='#') Balance
+
+				.column
+					h1.title
+						| Primary bold title
+					h2.subtitle
+						| Primary bold subtitle
+

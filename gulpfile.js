@@ -18,28 +18,35 @@ var include = require("gulp-include");
  * @type       {Object}
  */
 var paths = {
-	scriptlibs: {
-
-	},
+	scriptlibs: [
+		'./node_modules/lodash/lodash.min.js',
+      './node_modules/jquery/dist/jquery.min.js',
+      './node_modules/vue/dist/vue.min.js'
+	],
 	scriptapps: [
 		'./client/js/components/*.js',
 		'./client/js/app.js'
 	],
-	scriptappswatch: [
+	scriptapps_watch: [
 		'./client/js/**/*.js'
 	],
 	csslibs: [
-
+		'./node_modules/font-awesome/css/font-awesome.min.css',
+		
 	],
 	cssapps: [
-		'./client/css/app.scss'
+		'./client/scss/app.scss'
 	],
-	cssappswatch: [
-		'./client/css/**/*.scss'
+	cssapps_watch: [
+		'./client/scss/**/*.scss'
+	],
+	cssapps_imports: [
+		'./node_modules/bulma/'
 	],
 	fonts: [
 		'./node_modules/font-awesome/fonts/*-webfont.*',
-		'!./node_modules/font-awesome/fonts/*-webfont.svg'
+		'.!/node_modules/font-awesome/fonts/*-webfont.svg',
+		'./node_modules/roboto-fontface/fonts/Roboto/*.woff'
 	],
 	deploypackage: [
 		'./**/*',
@@ -48,7 +55,7 @@ var paths = {
 		'!client/js', '!client/js/**',
 		'!dist', '!dist/**',
 		'!tests', '!tests/**',
-		'!gulpfile.js', '!inch.json', '!config.json', '!wiki.sublime-project'
+		'!gulpfile.js', '!inch.json', '!config.yml', '!wiki.sublime-project'
 	]
 };
 
@@ -58,18 +65,92 @@ var paths = {
 gulp.task('server', ['scripts', 'css', 'fonts'], function() {
 	nodemon({
 		script: './server',
-		ignore: ['public/', 'client/', 'tests/'],
+		ignore: ['assets/', 'client/', 'tests/'],
 		ext: 'js json',
 		env: { 'NODE_ENV': 'development' }
 	});
 });
 
 /**
+ * TASK - Process all scripts processes
+ */
+gulp.task("scripts", ['scripts-libs', 'scripts-app']);
+
+/**
+ * TASK - Combine js libraries
+ */
+gulp.task("scripts-libs", function () {
+
+	return gulp.src(paths.scriptlibs)
+	.pipe(plumber())
+	.pipe(concat('libs.js'))
+	.pipe(uglify({ mangle: false }))
+	.pipe(plumber.stop())
+	.pipe(gulp.dest("./assets/js"));
+
+});
+
+/**
+ * TASK - Combine, make compatible and compress js app scripts
+ */
+gulp.task("scripts-app", function () {
+
+	return gulp.src(paths.scriptapps)
+	.pipe(plumber())
+	.pipe(concat('app.js'))
+	.pipe(babel())
+	.pipe(uglify())
+	.pipe(plumber.stop())
+	.pipe(gulp.dest("./assets/js"))
+
+});
+
+/**
+ * TASK - Process all css processes
+ */
+gulp.task("css", ['css-libs', 'css-app']);
+
+/**
+ * TASK - Combine css libraries
+ */
+gulp.task("css-libs", function () {
+	return gulp.src(paths.csslibs)
+	.pipe(plumber())
+	.pipe(concat('libs.css'))
+	.pipe(cleanCSS({ keepSpecialComments: 0 }))
+	.pipe(plumber.stop())
+	.pipe(gulp.dest("./assets/css"));
+});
+
+/**
+ * TASK - Combine app css
+ */
+gulp.task("css-app", function () {
+	return gulp.src(paths.cssapps)
+	.pipe(plumber())
+	.pipe(sass({
+		includePaths: paths.cssapps_imports
+	}))
+	.pipe(concat('app.css'))
+	.pipe(cleanCSS({ keepSpecialComments: 0 }))
+	.pipe(plumber.stop())
+	.pipe(gulp.dest("./assets/css"));
+});
+
+/**
+ * TASK - Copy web fonts
+ */
+gulp.task("fonts", function () {
+	return gulp.src(paths.fonts)
+	.pipe(gulp.dest("./assets/fonts"));
+});
+
+/**
  * TASK - Start dev watchers
  */
 gulp.task('watch', function() {
-	gulp.watch([paths.scriptappswatch], ['scripts-app']);
-	gulp.watch([paths.cssappswatch], ['css-app']);
+	gulp.watch([paths.scriptapps_watch], ['scripts-app']);
+	gulp.watch([paths.cssapps_watch], ['css-app']);
 });
 
 /**

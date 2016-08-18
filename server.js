@@ -101,7 +101,7 @@ app.use(i18next_mw.handle(lang));
 app.set('views', path.join(ROOTPATH, 'views'));
 app.set('view engine', 'pug');
 
-//app.use(favicon(path.join(ROOTPATH, 'assets', 'favicon.ico')));
+app.use(favicon(path.join(ROOTPATH, 'assets', 'favicon.ico')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(expressValidator());
