@@ -44,3 +44,6 @@ jspm_packages
 
 # Config Files
 config.yml
+
+# App Repo
+repo

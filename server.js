@@ -9,13 +9,14 @@
 // ----------------------------------------
 
 global.winston = require('winston');
-winston.info('Requarks Wiki is initializing...');
+winston.info('[SERVER] Requarks Wiki is initializing...');
 
 global.ROOTPATH = __dirname;
 
 var appconfig = require('./models/config')('./config.yml');
 global.db = require('./models/mongodb')(appconfig);
 global.red = require('./models/redis')(appconfig);
+global.git = require('./models/git').init(appconfig);
 
 var _ = require('lodash');
 var express = require('express');
@@ -155,9 +156,9 @@ app.use(function(err, req, res, next) {
 // Start HTTP server
 // ----------------------------------------
 
-winston.info('Requarks Wiki has initialized successfully.');
+winston.info('[SERVER] Requarks Wiki has initialized successfully.');
 
-winston.info('Starting HTTP server on port ' + appconfig.port + '...');
+winston.info('[SERVER] Starting HTTP server on port ' + appconfig.port + '...');
 
 app.set('port', appconfig.port);
 var server = http.createServer(app);
@@ -183,5 +184,5 @@ server.on('error', (error) => {
 });
 
 server.on('listening', () => {
-  winston.info('HTTP server started successfully! [RUNNING]');
+  winston.info('[SERVER] HTTP server started successfully! [RUNNING]');
 });

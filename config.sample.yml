@@ -39,6 +39,29 @@ redis:
   db: 0
 
 # -------------------------------------------------
+# Git Connection Info
+# -------------------------------------------------
+# Full explanation + examples in the documentation (https://requarks-wiki.readme.io/)
+
+git:
+  path: auto
+  mode: remote
+  url: https://github.com/Organization/Repo
+  auth:
+    type: ssh
+    user: gitusername
+    publickey: /etc/requarkswiki/keys/git.pub
+    privatekey: /etc/requarkswiki/keys/git.key
+    passphrase: SomeSshPassphrase
+  # auth:
+  #   type: oauth
+  #   token: 1234567890abcdefghijklmnopqrstuvxyz
+  # auth:
+  #   type: basic
+  #   user: johnsmith
+  #   pass: password123
+
+# -------------------------------------------------
 # Secret key to use when encrypting sessions
 # -------------------------------------------------
 # Use a long and unique random string (256-bit keys are perfect!)
