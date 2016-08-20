@@ -8,16 +8,15 @@ var router = express.Router();
  */
 router.get('/', (req, res) => {
 
-	var md = require('markdown-it')({
-		breaks: true,
-	  linkify: true,
-	  typographer: true
-	});
-
 	var Promise = require('bluebird');
 	var fs = Promise.promisifyAll(require("fs"));
+
 	fs.readFileAsync("repo/Gollum.md", "utf8").then(function(contents) {
-    res.render('pages/view', { contents: md.render(contents) });
+		let pageData = mark.parse(contents);
+		if(!pageData.title) {
+			pageData.title = 'Gollum';
+		}
+		res.render('pages/view', { pageData });
  	});
 
 });

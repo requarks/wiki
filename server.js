@@ -4,19 +4,24 @@
 // Licensed under AGPLv3
 // ===========================================
 
+global.ROOTPATH = __dirname;
+
 // ----------------------------------------
-// Load modules
+// Load global modules
 // ----------------------------------------
 
 global.winston = require('winston');
 winston.info('[SERVER] Requarks Wiki is initializing...');
 
-global.ROOTPATH = __dirname;
-
 var appconfig = require('./models/config')('./config.yml');
 global.db = require('./models/mongodb')(appconfig);
 global.red = require('./models/redis')(appconfig);
 global.git = require('./models/git').init(appconfig);
+global.mark = require('./models/markdown');
+
+// ----------------------------------------
+// Load modules
+// ----------------------------------------
 
 var _ = require('lodash');
 var express = require('express');

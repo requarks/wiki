@@ -1,5 +1,13 @@
 extends ../layout
 
+mixin tocMenu(ti)
+	each node in ti
+		li
+			a(href='#' + node.anchor, title=node.content)= node.content
+			if node.nodes.length > 0
+				ul
+					+tocMenu(node.nodes)
+
 block content
 
 	section.section
@@ -8,47 +16,27 @@ block content
 
 				.column.is-narrow
 
-					aside.menu
-						p.menu-label
-							| General
-						ul.menu-list
-							li
-								a(href='#') Dashboard
-							li
-								a(href='#') Customers
-						p.menu-label
-							| Administration
-						ul.menu-list
-							li
-								a(href='#') Team Settings
+					.box
+						aside.menu(style= { 'min-width': '200px' })
+							p.menu-label
+								| Navigation
+							ul.menu-list
 								li
-									a.is-active(href='#') Manage Your Team
-									ul
-										li
-											a(href='#') Members
-										li
-											a(href='#') Plugins
-										li
-											a(href='#') Add a member
-							li
-								a(href='#') Invitations
-							li
-								a(href='#') Authentication
-						p.menu-label
-							| Transactions
-						ul.menu-list
-							li
-								a(href='#') Payments
-							li
-								a(href='#') Transfers
-							li
-								a(href='#') Balance
+									a(href='/') Home
+								li
+									a(href='/account') Account
+					.box
+						aside.menu(style= { 'min-width': '200px' })
+							p.menu-label
+								| Contents
+							ul.menu-list
+								+tocMenu(pageData.tree)
 
 				.column
-					h1.title
-						| Primary bold title
+
+					h1.title= pageData.title
 					h2.subtitle
 						| Primary bold subtitle
 					.content
-						!= contents
+						!= pageData.html
 

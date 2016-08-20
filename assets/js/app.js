@@ -1,0 +1,1 @@
+"use strict";jQuery(document).ready(function(e){e("a").smoothScroll({speed:"auto"})});
