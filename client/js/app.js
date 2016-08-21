@@ -3,7 +3,10 @@
 jQuery( document ).ready(function( $ ) {
 
 	$('a').smoothScroll({
-		speed: 'auto'
+		speed: 400,
+		offset: -20
 	});
+
+	var sticky = new Sticky('.stickyscroll');
 
 });

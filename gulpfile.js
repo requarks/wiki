@@ -22,7 +22,8 @@ var paths = {
 		'./node_modules/lodash/lodash.min.js',
       './node_modules/jquery/dist/jquery.min.js',
       './node_modules/vue/dist/vue.min.js',
-      './node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js'
+      './node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
+      './node_modules/sticky-js/dist/sticky.min.js'
 	],
 	scriptapps: [
 		'./client/js/components/*.js',
@@ -32,7 +33,8 @@ var paths = {
 		'./client/js/**/*.js'
 	],
 	csslibs: [
-		'./node_modules/font-awesome/css/font-awesome.min.css'
+		'./node_modules/font-awesome/css/font-awesome.min.css',
+		'./node_modules/highlight.js/styles/default.css'
 	],
 	cssapps: [
 		'./client/scss/app.scss'

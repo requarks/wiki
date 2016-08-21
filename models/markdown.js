@@ -9,7 +9,10 @@ var Promise = require('bluebird'),
 	mdFootnote = require('markdown-it-footnote'),
 	mdExternalLinks = require('markdown-it-external-links'),
 	mdExpandTabs = require('markdown-it-expand-tabs'),
+	mdAttrs = require('markdown-it-attrs'),
+	hljs = require('highlight.js'),
 	slug = require('slug'),
+	cheerio = require('cheerio'),
 	_ = require('lodash');
 
 // Load plugins
@@ -17,7 +20,15 @@ var Promise = require('bluebird'),
 var mkdown = md({
 		html: true,
 		linkify: true,
-		typography: true
+		typography: true,
+		highlight: function (str, lang) {
+			if (lang && hljs.getLanguage(lang)) {
+				try {
+					return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>';
+				} catch (__) {}
+			}
+			return '<pre class="hljs"><code>' + hljs.highlightAuto(str).value + '</code></pre>';
+		}
 	})
 	.use(mdEmoji)
 	.use(mdTaskLists)
@@ -33,7 +44,8 @@ var mkdown = md({
 	})
 	.use(mdExpandTabs, {
 		tabWidth: 4
-	});
+	})
+	.use(mdAttrs);
 
 // Rendering rules
 
@@ -41,12 +53,22 @@ mkdown.renderer.rules.emoji = function(token, idx) {
   return '<i class="twa twa-' + token[idx].markup + '"></i>';
 };
 
-// Parse markdown headings tree
+mkdown.inline.ruler.push('internal_link', (state) => {
 
+});
+
+/**
+ * Parse markdown content and build TOC tree
+ *
+ * @param      {(Function|string)}  content  Markdown content
+ * @return     {Array}             TOC tree
+ */
 const parseTree = (content) => {
 
 	let tokens = md().parse(content, {});
 	let tocArray = [];
+
+	//-> Extract headings and their respective levels
 
 	for (let i = 0; i < tokens.length; i++) {
 		if (tokens[i].type !== "heading_close") {
@@ -75,6 +97,12 @@ const parseTree = (content) => {
 		}
 	 }
 
+	 //-> Exclude levels deeper than 2
+
+	 _.remove(tocArray, (n) => { return n.level > 2; });
+
+	 //-> Build tree from flat array
+
 	 return _.reduce(tocArray, (tree, v) => {
 		let treeLength = tree.length - 1;
 		if(v.level < 2) {
@@ -98,15 +126,34 @@ const parseTree = (content) => {
 			};
 			let lastNodePath = GetNodePath();
 			let lastNode = _.get(tree[treeLength], lastNodePath);
-			lastNode.push({
-				content: v.content,
-				anchor: v.anchor,
-				nodes: []
-			});
-			_.set(tree[treeLength], lastNodePath, lastNode);
+			if(lastNode) {
+				lastNode.push({
+					content: v.content,
+					anchor: v.anchor,
+					nodes: []
+				});
+				_.set(tree[treeLength], lastNodePath, lastNode);
+			}
 		}
 		return tree;
 	}, []);
+
+};
+
+/**
+ * Parse markdown content to HTML
+ *
+ * @param      {String}    content  Markdown content
+ * @return     {String}  HTML formatted content
+ */
+const parseContent = (content)  => {
+
+	let output = mkdown.render(content);
+	let cr = cheerio.load(output);
+	cr('table').addClass('table is-bordered is-striped is-narrow');
+	output = cr.html();
+
+	return output;
 
 };
 
@@ -114,7 +161,7 @@ module.exports = {
 
 	parse(content) {
 		return {
-			html: mkdown.render(content),
+			html: parseContent(content),
 			tree: parseTree(content)
 		};
 	}

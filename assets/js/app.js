@@ -1,1 +1,1 @@
-"use strict";jQuery(document).ready(function(e){e("a").smoothScroll({speed:"auto"})});
+"use strict";jQuery(document).ready(function(e){e("a").smoothScroll({speed:400,offset:-20});new Sticky(".stickyscroll")});

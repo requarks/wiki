@@ -1,0 +1,32 @@
+
+.mkcontent {
+
+	h1 {
+		border-bottom: 1px dotted $grey-light;
+		padding-bottom: 4px;
+		font-weight: 400;
+		color: $grey-dark;
+	}
+
+	a.toc-anchor {
+		font-size: 80%;
+		color: $purple;
+		border-bottom: none;
+	}
+
+	.hljs {
+		padding: 0;
+		border-bottom: 1px solid $grey-light;
+		border-right: 1px solid $grey-light;
+		border-radius: 3px;
+	}
+
+	pre + p {
+		padding-top: 1em;
+	}
+
+	img.right {
+		float:right;
+	}
+
+}

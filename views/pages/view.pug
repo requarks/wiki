@@ -25,18 +25,19 @@ block content
 									a(href='/') Home
 								li
 									a(href='/account') Account
-					.box
+					.box.stickyscroll(data-margin-top=70)
 						aside.menu(style= { 'min-width': '200px' })
 							p.menu-label
 								| Contents
 							ul.menu-list
+								a(href='#root', title='Start') Start
 								+tocMenu(pageData.tree)
 
 				.column
 
-					h1.title= pageData.title
-					h2.subtitle
-						| Primary bold subtitle
-					.content
+					h1.title#title= pageData.title
+					if pageData.subtitle
+						h2.subtitle= pageData.subtitle
+					.content.mkcontent
 						!= pageData.html
 
