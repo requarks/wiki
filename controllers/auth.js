@@ -2,13 +2,13 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var ExpressBrute = require('express-brute');
-var ExpressBruteRedisStore = require('express-brute-redis');
+//var ExpressBruteRedisStore = require('express-brute-redis');
 var moment = require('moment');
 
 /**
  * Setup Express-Brute
  */
-var EBstore = new ExpressBruteRedisStore({
+/*var EBstore = new ExpressBruteRedisStore({
     prefix: 'bf:',
     client: red
 });
@@ -26,7 +26,7 @@ var bruteforce = new ExpressBrute(EBstore, {
 	    });
 		res.redirect('/login');
 	}
-});
+});*/
 
 /**
  * Login form
@@ -37,7 +37,7 @@ router.get('/login', function(req, res, next) {
 	});
 });
 
-router.post('/login', bruteforce.prevent, function(req, res, next) {
+router.post('/login', /*bruteforce.prevent,*/ function(req, res, next) {
 		passport.authenticate('local', function(err, user, info) {
 
 			if (err) { return next(err); }
@@ -54,9 +54,9 @@ router.post('/login', bruteforce.prevent, function(req, res, next) {
 
 			req.logIn(user, function(err) {
 	      if (err) { return next(err); }
-	      req.brute.reset(function () {
+	      //req.brute.reset(function () {
 				return res.redirect('/');
-			});
+			//});
 	    });
 
 		})(req, res, next);

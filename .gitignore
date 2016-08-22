@@ -45,5 +45,7 @@ jspm_packages
 # Config Files
 config.yml
 
-# App Repo
-repo
+# Data directories
+/repo
+/data
+/uploads

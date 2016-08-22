@@ -22,21 +22,13 @@ host: http://localhost
 port: 80
 
 # -------------------------------------------------
-# MongoDB Connection String
+# Data Directories
 # -------------------------------------------------
-# Full explanation + examples in the documentation (https://opsstatus.readme.io/)
 
-db: mongodb://localhost/wiki
-
-# -------------------------------------------------
-# Redis Connection Info
-# -------------------------------------------------
-# Full explanation + examples in the documentation (https://opsstatus.readme.io/)
-
-redis:
-  host: localhost
-  port: 6379
-  db: 0
+datadir:
+  repo: ./repo
+  db: ./data
+  uploads: ./uploads
 
 # -------------------------------------------------
 # Git Connection Info

@@ -9,11 +9,12 @@ module.exports = function(passport, appconfig) {
     });
 
     passport.deserializeUser(function(id, done) {
-        db.User.findById(id).then((user) => {
+        let user = db.User.find({ id });
+        if(user) {
             done(null, user);
-        }).catch((err) => {
+        } else {
             done(err, null);
-        });
+        }
     });
 
     // Setup local user authentication strategy
@@ -42,23 +43,23 @@ module.exports = function(passport, appconfig) {
 
     // Check for admin access
 
-    db.connectPromise.then(() => {
+    db.onReady.then(() => {
 
-        db.User.count().then((count) => {
-            if(count < 1) {
-                winston.info('No administrator account found. Creating a new one...');
-                db.User.new({
-                    email: appconfig.admin,
-                    firstName: "Admin",
-                    lastName: "Admin",
-                    password: "admin123"
-                }).then(() => {
-                    winston.info('Administrator account created successfully!');
-                }).catch((ex) => {
-                    winston.error('An error occured while creating administrator account: ' + ex);
-                });
+        if(db.User.count() < 1) {
+            winston.info('No administrator account found. Creating a new one...');
+            if(db.User.insert({
+                email: appconfig.admin,
+                firstName: "Admin",
+                lastName: "Admin",
+                password: "admin123"
+            })) {
+                winston.info('Administrator account created successfully!');
+            } else {
+                winston.error('An error occured while creating administrator account: ');
             }
-        });
+        }
+
+        return true;
 
     });
 
