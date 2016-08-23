@@ -14,7 +14,7 @@ block content
 		.container.is-fluid
 			.columns
 
-				.column.is-narrow
+				.column.is-narrow.sd-menus.is-hidden-touch
 
 					.box
 						aside.menu(style= { 'min-width': '200px' })
@@ -23,6 +23,8 @@ block content
 							ul.menu-list
 								li
 									a(href='/') Home
+								li
+									a(href='/') Storage
 								li
 									a(href='/account') Account
 					.box.stickyscroll(data-margin-top=70)
@@ -41,3 +43,18 @@ block content
 					.content.mkcontent
 						!= pageData.html
 
+	.modal
+		.modal-background
+		.modal-container
+			.modal-content
+				.card.is-fullwidth
+					header.card-header
+						p.card-header-title Create New Page
+					.card-content
+						.content
+							label.label Enter the full path:
+							p.control
+								input.input(type='text', placeholder='/path', value='/storage/new-page')
+					footer.card-footer
+						a.card-footer-item(onclick='$(".modal").removeClass("is-active");') Discard
+						a.card-footer-item Create

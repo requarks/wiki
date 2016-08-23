@@ -6,11 +6,8 @@ nav.nav.has-shadow.stickyscroll
 		a.nav-item(href='/')
 			h1.title Wiki
 	.nav-center
-		p.nav-item.control.has-addons
-			input.input(type='text', placeholder='Find...')
-			a.button.is-info
-				span.icon.is-small
-					i.fa.fa-search
+		p.nav-item
+			input.input(type='text', placeholder='Search...', style= { 'max-width': '300px', width: '33vw' })
 	span.nav-toggle
 		span
 		span
@@ -25,7 +22,7 @@ nav.nav.has-shadow.stickyscroll
 				span.icon
 					i.fa.fa-edit
 				span Edit
-			a.button.is-primary(href='#')
+			a.button.is-primary(href='#', onclick='$(".modal").addClass("is-active");')
 				span.icon
 					i.fa.fa-plus
 				span Create

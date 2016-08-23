@@ -14,8 +14,17 @@ html
 		link(type='text/css', rel='stylesheet', href='/css/app.css')
 
 	body(class='server-error')
-		#root
-			img(src='/images/logo-text_218x80.png')
-			h1 Oops, something went wrong
-			h4= message
-			pre #{error.stack}
+		section.hero.is-warning.is-fullheight
+			.hero-body
+				.container
+					a(href='/'): img(src='/favicons/android-icon-96x96.png')
+					h1.title(style={ 'margin-top': '30px'})= message
+					h2.subtitle(style={ 'margin-bottom': '50px'}) Oops, something went wrong
+					a.button.is-warning.is-inverted(href='/') Go Home
+
+		if error.stack
+			section.section
+				.container.is-fluid
+					.content
+						h3 Detailed debug trail:
+						pre: code #{error.stack}
