@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var ExpressBrute = require('express-brute');
-var ExpressBruteLokiStore = require('D:\\git\\express-brute-loki');
+var ExpressBruteLokiStore = require('express-brute-loki');
 var moment = require('moment');
 
 /**

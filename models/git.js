@@ -86,7 +86,7 @@ module.exports = {
 				winston.info('[GIT] Using existing repository...');
 				repoInitOperation = NodeGit.Repository.open(self._repo.path);
 
-			} else if(appconfig.git.remote) {
+			} else if(appconfig.git.mode === 'remote') {
 
 				winston.info('[GIT] Cloning remote repository for first time...');
 				let cloneOptions = self._generateCloneOptions(appconfig);
