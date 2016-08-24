@@ -52,12 +52,8 @@ var mkdown = md({
 // Rendering rules
 
 mkdown.renderer.rules.emoji = function(token, idx) {
-  return '<i class="twa twa-' + token[idx].markup + '"></i>';
+	return '<i class="twa twa-' + token[idx].markup + '"></i>';
 };
-
-mkdown.inline.ruler.push('internal_link', (state) => {
-
-});
 
 /**
  * Parse markdown content and build TOC tree
@@ -74,28 +70,28 @@ const parseTree = (content) => {
 
 	for (let i = 0; i < tokens.length; i++) {
 		if (tokens[i].type !== "heading_close") {
-		  continue;
+			continue;
 		}
 
 		const heading = tokens[i - 1];
 		const heading_close = tokens[i];
 
 		if (heading.type === "inline") {
-		  let content = "";
-		  let anchor = "";
-		  if (heading.children && heading.children[0].type === "link_open") {
+			let content = "";
+			let anchor = "";
+			if (heading.children && heading.children[0].type === "link_open") {
 			 content = heading.children[1].content;
 			 anchor = slug(content, {lower: true});
-		  } else {
+			} else {
 			 content = heading.content
 			 anchor = slug(heading.children.reduce((acc, t) => acc + t.content, ""), {lower: true});
-		  }
+			}
 
-		  tocArray.push({
+			tocArray.push({
 			 content,
 			 anchor,
 			 level: +heading_close.tag.substr(1, 1)
-		  });
+			});
 		}
 	 }
 
@@ -159,10 +155,23 @@ const parseContent = (content)  => {
 
 };
 
+const parseMeta = (content) => {
+
+	let commentMeta = new RegExp('<!-- ?([a-zA-Z]+):(.*)-->','g');
+	let results = {}, match;
+	while(match = commentMeta.exec(content)) {
+		results[_.toLower(match[1])] = _.trim(match[2]);
+	}
+
+	return results;
+
+};
+
 module.exports = {
 
 	parse(content) {
 		return {
+			meta: parseMeta(content),
 			html: parseContent(content),
 			tree: parseTree(content)
 		};

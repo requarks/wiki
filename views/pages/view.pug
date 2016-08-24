@@ -37,9 +37,9 @@ block content
 
 				.column
 
-					h1.title#title= pageData.title
-					if pageData.subtitle
-						h2.subtitle= pageData.subtitle
+					h1.title#title= pageData.meta.title
+					if pageData.meta.subtitle
+						h2.subtitle= pageData.meta.subtitle
 					.content.mkcontent
 						!= pageData.html
 
