@@ -5,6 +5,9 @@ $warning: #f68b39;
 
 @import 'bulma';
 @import './libs/twemoji-awesome';
+@import './libs/animate.min.css';
+
+@import './components/_alerts';
 
 @import './layout/_header';
 @import './layout/_footer';

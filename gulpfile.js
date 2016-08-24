@@ -103,7 +103,7 @@ gulp.task("scripts-app", function () {
 	.pipe(babel())
 	.pipe(uglify())
 	.pipe(plumber.stop())
-	.pipe(gulp.dest("./assets/js"))
+	.pipe(gulp.dest("./assets/js"));
 
 });
 

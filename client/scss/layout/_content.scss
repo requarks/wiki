@@ -71,6 +71,16 @@ p code {
 	border-radius: 4px;
 }
 
+.modal {
+	align-items: flex-start;
+}
+.modal-background {
+	animation: 0.4s ease fadeIn;
+}
+.modal-content {
+	animation: 0.4s ease slideInDown;	
+}
+
 .card-header {
 	background-color: $turquoise;
 }
@@ -80,4 +90,8 @@ p code {
 	font-weight: 400;
 	font-size: 16px;
 	padding: 10px 20px;
+}
+
+.modal-content .card-footer-item {
+	font-weight: 500;
 }

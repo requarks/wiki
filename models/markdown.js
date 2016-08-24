@@ -21,11 +21,13 @@ var mkdown = md({
 		html: true,
 		linkify: true,
 		typography: true,
-		highlight: function (str, lang) {
+		highlight(str, lang) {
 			if (lang && hljs.getLanguage(lang)) {
 				try {
 					return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>';
-				} catch (__) {}
+				} catch (err) {
+					return '<pre><code>' + str + '</code></pre>';
+				}
 			}
 			return '<pre class="hljs"><code>' + hljs.highlightAuto(str).value + '</code></pre>';
 		}
@@ -72,17 +74,17 @@ const parseTree = (content) => {
 
 	for (let i = 0; i < tokens.length; i++) {
 		if (tokens[i].type !== "heading_close") {
-		  continue
+		  continue;
 		}
 
-		const heading = tokens[i - 1]
-		const heading_close = tokens[i]
+		const heading = tokens[i - 1];
+		const heading_close = tokens[i];
 
 		if (heading.type === "inline") {
 		  let content = "";
 		  let anchor = "";
 		  if (heading.children && heading.children[0].type === "link_open") {
-			 content = heading.children[1].content
+			 content = heading.children[1].content;
 			 anchor = slug(content, {lower: true});
 		  } else {
 			 content = heading.content
@@ -93,7 +95,7 @@ const parseTree = (content) => {
 			 content,
 			 anchor,
 			 level: +heading_close.tag.substr(1, 1)
-		  })
+		  });
 		}
 	 }
 
