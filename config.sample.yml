@@ -26,7 +26,6 @@ port: 80
 # -------------------------------------------------
 
 datadir:
-  repo: ./repo
   db: ./data
   uploads: ./uploads
 
@@ -36,9 +35,10 @@ datadir:
 # Full explanation + examples in the documentation (https://requarks-wiki.readme.io/)
 
 git:
-  path: auto
-  mode: remote
+  path: ./repo
+  remote: true
   url: https://github.com/Organization/Repo
+  branch: master
   auth:
     type: ssh
     user: gitusername
@@ -67,3 +67,9 @@ sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 # The password is set to "admin123" by default. Change it immediately upon login!!!
 
 admin: admin@company.com
+
+# -------------------------------------------------
+# Default page for Home
+# -------------------------------------------------
+
+homepage: Home.md

@@ -15,8 +15,14 @@ module.exports = {
 	_git: null,
 	_repo: {
 		path: '',
+		branch: 'master',
 		exists: false,
-		inst: null
+		inst: null,
+		sync: true
+	},
+	_opts: {
+		clone: {},
+		push: {}
 	},
 
 	/**
@@ -41,6 +47,11 @@ module.exports = {
 
 		self._initRepo(appconfig).then((repo) => {
 			self._repo.inst = repo;
+
+			if(self._repo.sync) {
+				self.resync();
+			}
+
 		});
 
 		return self;
@@ -80,17 +91,20 @@ module.exports = {
 			//-> Init repository
 
 			let repoInitOperation = null;
+			self._repo.branch = appconfig.git.branch;
+			self._repo.sync = appconfig.git.remote;
+			self._opts.clone = self._generateCloneOptions(appconfig);
+			self._opts.push = self._generatePushOptions(appconfig);
 
 			if(self._repo.exists) {
 
 				winston.info('[GIT] Using existing repository...');
 				repoInitOperation = NodeGit.Repository.open(self._repo.path);
 
-			} else if(appconfig.git.mode === 'remote') {
+			} else if(appconfig.git.remote) {
 
 				winston.info('[GIT] Cloning remote repository for first time...');
-				let cloneOptions = self._generateCloneOptions(appconfig);
-				repoInitOperation = NodeGit.Clone(appconfig.git.url, self._repo.path, cloneOptions);
+				repoInitOperation = NodeGit.Clone(appconfig.git.url, self._repo.path, self._opts.clone);
 
 			} else {
 
@@ -106,7 +120,11 @@ module.exports = {
 			winston.error(err);
 		}).then((repo) => {
 
-			self._repo.inst = repo;
+			if(self._repo.sync) {
+				NodeGit.Remote.setPushurl(repo, 'origin', appconfig.git.url);
+			}
+
+			return repo;
 
 			winston.info('[GIT] Git repository is now ready.');
 		});
@@ -121,49 +139,111 @@ module.exports = {
 	 */
 	_generateCloneOptions(appconfig) {
 
-		let cloneOptions = {};
+		let cloneOptions = new NodeGit.CloneOptions();
+		cloneOptions.fetchOpts = this._generateFetchOptions(appconfig);
+		return cloneOptions;
 
-		cloneOptions.fetchOpts = {
-			callbacks: {
-				credentials: () => {
+	},
 
-					let cred = null;
-					switch(appconfig.git.auth.type) {
-						case 'basic':
-							cred = NodeGit.Cred.userpassPlaintextNew(
-								appconfig.git.auth.user,
-								appconfig.git.auth.pass
-							);
-						break;
-						case 'oauth':
-							cred = NodeGit.Cred.userpassPlaintextNew(
-								appconfig.git.auth.token,
-								"x-oauth-basic"
-							);
-						break;
-						case 'ssh':
-							cred = NodeGit.Cred.sshKeyNew(
-								appconfig.git.auth.user,
-								appconfig.git.auth.publickey,
-								appconfig.git.auth.privatekey,
-								appconfig.git.auth.passphrase
-							);
-						break;
-						default:
-							cred = NodeGit.Cred.defaultNew();
-						break;
-					}
+	_generateFetchOptions(appconfig) {
 
-					return cred;
-				}
-			}
-		};
+		let fetchOptions = new NodeGit.FetchOptions();
+		fetchOptions.callbacks = this._generateRemoteCallbacks(appconfig);
+		return fetchOptions;
+
+	},
+
+	_generatePushOptions(appconfig) {
+
+		let pushOptions = new NodeGit.PushOptions();
+		pushOptions.callbacks = this._generateRemoteCallbacks(appconfig);
+		return pushOptions;
+
+	},
+
+	_generateRemoteCallbacks(appconfig) {
+
+		let remoteCallbacks = new NodeGit.RemoteCallbacks();
+		let credFunc = this._generateCredentials(appconfig);
+		remoteCallbacks.credentials = () => { return credFunc; };
 
 		if(os.type() === 'Darwin') {
-			cloneOptions.fetchOpts.callbacks.certificateCheck = () => { return 1; }; // Bug in OS X, bypass certs check workaround
+			remoteCallbacks.certificateCheck = () => { return 1; }; // Bug in OS X, bypass certs check workaround
 		}
 
-		return cloneOptions;
+		return remoteCallbacks;
+
+	},
+
+	_generateCredentials(appconfig) {
+
+		let cred = null;
+		switch(appconfig.git.auth.type) {
+			case 'basic':
+				cred = NodeGit.Cred.userpassPlaintextNew(
+					appconfig.git.auth.user,
+					appconfig.git.auth.pass
+				);
+			break;
+			case 'oauth':
+				cred = NodeGit.Cred.userpassPlaintextNew(
+					appconfig.git.auth.token,
+					"x-oauth-basic"
+				);
+			break;
+			case 'ssh':
+				cred = NodeGit.Cred.sshKeyNew(
+					appconfig.git.auth.user,
+					appconfig.git.auth.publickey,
+					appconfig.git.auth.privatekey,
+					appconfig.git.auth.passphrase
+				);
+			break;
+			default:
+				cred = NodeGit.Cred.defaultNew();
+			break;
+		}
+
+		return cred;
+
+	},
+
+	resync() {
+
+		let self = this;
+
+		// Fetch
+
+		return self._repo.inst.fetch('origin', self._opts.clone.fetchOpts)
+		.catch((err) => {
+			winston.error('Unable to fetch from git origin!' + err);
+		})
+
+		// Merge
+
+		.then(() => {
+			return self._repo.inst.mergeBranches(self._repo.branch, 'origin/' + self._repo.branch);
+		})
+		.catch((err) => {
+			winston.error('Unable to merge from remote head!' + err);
+		})
+
+		// Push
+
+		.then(() => {
+			return self._repo.inst.getRemote('origin').then((remote) => {
+				self._repo.inst.getStatus().then(function(arrayStatusFile) {
+				  console.log(arrayStatusFile[0].status());
+				});
+				/*remote.push( ["refs/heads/master:refs/heads/master"], self._opts.push	).then((errNum) => {
+					console.log('DUDE' + errNum);
+				}).catch((err) => {
+					console.log(err);
+				});*/
+			});
+		}).catch((err) => {
+			winston.error('Unable to push to git origin!' + err);
+		});
 
 	}
 
