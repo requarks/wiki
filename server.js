@@ -4,6 +4,14 @@
 // Licensed under AGPLv3
 // ===========================================
 
+process.on('uncaughtException', function (exception) {
+  console.log(exception);
+});
+process.on('unhandledRejection', (reason, p) => {
+    console.log("Unhandled Rejection at: Promise ", p, " reason: ", reason);
+    // application specific logging, throwing an error, or other logic here
+});
+
 global.ROOTPATH = __dirname;
 
 // ----------------------------------------

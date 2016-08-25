@@ -5,6 +5,7 @@ var NodeGit = require("nodegit"),
 	path = require('path'),
 	os = require('os'),
 	fs = Promise.promisifyAll(require("fs")),
+	moment = require('moment'),
 	_ = require('lodash');
 
 /**
@@ -19,6 +20,10 @@ module.exports = {
 		exists: false,
 		inst: null,
 		sync: true
+	},
+	_signature: {
+		name: 'Wiki',
+		email: 'user@example.com'
 	},
 	_opts: {
 		clone: {},
@@ -53,6 +58,11 @@ module.exports = {
 			}
 
 		});
+
+		// Define signature
+
+		self._signature.name = appconfig.git.userinfo.name || 'Wiki';
+		self._signature.email = appconfig.git.userinfo.email || 'user@example.com';
 
 		return self;
 
@@ -166,9 +176,12 @@ module.exports = {
 		let remoteCallbacks = new NodeGit.RemoteCallbacks();
 		let credFunc = this._generateCredentials(appconfig);
 		remoteCallbacks.credentials = () => { return credFunc; };
+		remoteCallbacks.transferProgress = _.noop;
 
 		if(os.type() === 'Darwin') {
 			remoteCallbacks.certificateCheck = () => { return 1; }; // Bug in OS X, bypass certs check workaround
+		} else {
+			remoteCallbacks.certificateCheck = _.noop;
 		}
 
 		return remoteCallbacks;
@@ -232,14 +245,49 @@ module.exports = {
 
 		.then(() => {
 			return self._repo.inst.getRemote('origin').then((remote) => {
-				self._repo.inst.getStatus().then(function(arrayStatusFile) {
-				  console.log(arrayStatusFile[0].status());
-				});
-				/*remote.push( ["refs/heads/master:refs/heads/master"], self._opts.push	).then((errNum) => {
-					console.log('DUDE' + errNum);
-				}).catch((err) => {
-					console.log(err);
-				});*/
+
+				// Get modified files
+
+				return self._repo.inst.refreshIndex().then((index) => {
+					return self._repo.inst.getStatus().then(function(arrayStatusFile) {
+
+						let addOp = [];
+
+						// Add to next commit
+
+						_.forEach(arrayStatusFile, (v) => {
+							addOp.push(arrayStatusFile[0].path());
+						});
+
+						console.log('DUDE1');
+
+						// Create Commit
+
+						let sig = NodeGit.Signature.create(self._signature.name, self._signature.email, moment().utc().unix(),  0);
+						return self._repo.inst.createCommitOnHead(addOp, sig, sig, "Wiki Sync").then(() => {
+
+							console.log('DUDE2');
+
+							return remote.connect(NodeGit.Enums.DIRECTION.PUSH, self._opts.push.callbacks).then(() => {
+
+								console.log('DUDE3');
+
+								// Push to remote
+
+								return remote.push( ["refs/heads/master:refs/heads/master"], self._opts.push).then((errNum) => {
+									console.log('DUDE' + errNum);
+								}).catch((err) => {
+									console.log(err);
+								});
+
+							});
+
+						});
+
+					});
+				})
+
+				/**/
 			});
 		}).catch((err) => {
 			winston.error('Unable to push to git origin!' + err);
