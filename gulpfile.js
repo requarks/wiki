@@ -47,8 +47,7 @@ var paths = {
 	],
 	fonts: [
 		'./node_modules/font-awesome/fonts/*-webfont.*',
-		'.!/node_modules/font-awesome/fonts/*-webfont.svg',
-		'./node_modules/roboto-fontface/fonts/Roboto/*.woff'
+		'!./node_modules/font-awesome/fonts/*-webfont.svg'
 	],
 	deploypackage: [
 		'./**/*',
@@ -67,7 +66,7 @@ var paths = {
 gulp.task('server', ['scripts', 'css', 'fonts'], function() {
 	nodemon({
 		script: './server',
-		ignore: ['assets/', 'client/', 'tests/'],
+		ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
 		ext: 'js json',
 		env: { 'NODE_ENV': 'development' }
 	});

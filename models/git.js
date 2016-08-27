@@ -1,12 +1,13 @@
 "use strict";
 
-var NodeGit = require("nodegit"),
+var Git = require("git-wrapper2-promise"),
 	Promise = require('bluebird'),
 	path = require('path'),
 	os = require('os'),
 	fs = Promise.promisifyAll(require("fs")),
 	moment = require('moment'),
-	_ = require('lodash');
+	_ = require('lodash'),
+	URL = require('url');
 
 /**
  * Git Model
@@ -14,11 +15,11 @@ var NodeGit = require("nodegit"),
 module.exports = {
 
 	_git: null,
+	_url: '',
 	_repo: {
 		path: '',
 		branch: 'master',
 		exists: false,
-		inst: null,
 		sync: true
 	},
 	_signature: {
@@ -42,16 +43,15 @@ module.exports = {
 
 		//-> Build repository path
 		
-		if(_.isEmpty(appconfig.git.path) || appconfig.git.path === 'auto') {
+		if(_.isEmpty(appconfig.datadir.repo)) {
 			self._repo.path = path.join(ROOTPATH, 'repo');
 		} else {
-			self._repo.path = appconfig.git.path;
+			self._repo.path = appconfig.datadir.repo;
 		}
 
 		//-> Initialize repository
 
 		self._initRepo(appconfig).then((repo) => {
-			self._repo.inst = repo;
 
 			if(self._repo.sync) {
 				self.resync();
@@ -61,8 +61,8 @@ module.exports = {
 
 		// Define signature
 
-		self._signature.name = appconfig.git.userinfo.name || 'Wiki';
-		self._signature.email = appconfig.git.userinfo.email || 'user@example.com';
+		self._signature.name = appconfig.git.signature.name || 'Wiki';
+		self._signature.email = appconfig.git.signature.email || 'user@example.com';
 
 		return self;
 
@@ -78,7 +78,7 @@ module.exports = {
 
 		let self = this;
 
-		winston.info('[GIT] Initializing Git repository...');
+		winston.info('[GIT] Checking Git repository...');
 
 		//-> Check if path is accessible
 
@@ -88,136 +88,46 @@ module.exports = {
 			}
 		}).then(() => {
 
+			self._git = new Git({ 'git-dir': self._repo.path });
+
 			//-> Check if path already contains a git working folder
 
-			return fs.statAsync(path.join(self._repo.path, '.git')).then((stat) => {
-				self._repo.exists = stat.isDirectory();
+			return self._git.isRepo().then((isRepo) => {
+				self._repo.exists = isRepo;
+				return (!isRepo) ? self._git.exec('init') : true;
 			}).catch((err) => {
 				self._repo.exists = false;
 			});
 
 		}).then(() => {
 
-			//-> Init repository
+			// Initialize remote
 
-			let repoInitOperation = null;
-			self._repo.branch = appconfig.git.branch;
-			self._repo.sync = appconfig.git.remote;
-			self._opts.clone = self._generateCloneOptions(appconfig);
-			self._opts.push = self._generatePushOptions(appconfig);
+			let urlObj = URL.parse(appconfig.git.url);
+			urlObj.auth = appconfig.git.auth.username + ((appconfig.git.auth.type !== 'ssh') ? ':' + appconfig.git.auth.password : '');
+			self._url = URL.format(urlObj);
 
-			if(self._repo.exists) {
-
-				winston.info('[GIT] Using existing repository...');
-				repoInitOperation = NodeGit.Repository.open(self._repo.path);
-
-			} else if(appconfig.git.remote) {
-
-				winston.info('[GIT] Cloning remote repository for first time...');
-				repoInitOperation = NodeGit.Clone(appconfig.git.url, self._repo.path, self._opts.clone);
-
-			} else {
-
-				winston.info('[GIT] Using offline local repository...');
-				repoInitOperation = NodeGit.Repository.init(self._repo.path, 0);
-
-			}
-
-			return repoInitOperation;
+			return self._git.exec('remote', 'show').then((cProc) => {
+				let out = cProc.stdout.toString();
+				if(_.includes(out, 'origin')) {
+					return true;
+				} else {
+					return Promise.join(
+						self._git.exec('config', ['--local', 'user.name', self._signature.name]),
+						self._git.exec('config', ['--local', 'user.email', self._signature.email])
+					).then(() => {
+						return self._git.exec('remote', ['add', 'origin', self._url]);
+					})
+				}
+			});
 
 		}).catch((err) => {
-			winston.error('Unable to open or clone Git repository!');
-			winston.error(err);
-		}).then((repo) => {
-
-			if(self._repo.sync) {
-				NodeGit.Remote.setPushurl(repo, 'origin', appconfig.git.url);
-			}
-
-			return repo;
-
+			winston.error('Git remote error!');
+			throw err;
+		}).then(() => {
 			winston.info('[GIT] Git repository is now ready.');
+			return true;
 		});
-
-	},
-
-	/**
-	 * Generate Clone Options object
-	 *
-	 * @param      {Object}  appconfig  The application configuration
-	 * @return     {Object}  CloneOptions object
-	 */
-	_generateCloneOptions(appconfig) {
-
-		let cloneOptions = new NodeGit.CloneOptions();
-		cloneOptions.fetchOpts = this._generateFetchOptions(appconfig);
-		return cloneOptions;
-
-	},
-
-	_generateFetchOptions(appconfig) {
-
-		let fetchOptions = new NodeGit.FetchOptions();
-		fetchOptions.callbacks = this._generateRemoteCallbacks(appconfig);
-		return fetchOptions;
-
-	},
-
-	_generatePushOptions(appconfig) {
-
-		let pushOptions = new NodeGit.PushOptions();
-		pushOptions.callbacks = this._generateRemoteCallbacks(appconfig);
-		return pushOptions;
-
-	},
-
-	_generateRemoteCallbacks(appconfig) {
-
-		let remoteCallbacks = new NodeGit.RemoteCallbacks();
-		let credFunc = this._generateCredentials(appconfig);
-		remoteCallbacks.credentials = () => { return credFunc; };
-		remoteCallbacks.transferProgress = _.noop;
-
-		if(os.type() === 'Darwin') {
-			remoteCallbacks.certificateCheck = () => { return 1; }; // Bug in OS X, bypass certs check workaround
-		} else {
-			remoteCallbacks.certificateCheck = _.noop;
-		}
-
-		return remoteCallbacks;
-
-	},
-
-	_generateCredentials(appconfig) {
-
-		let cred = null;
-		switch(appconfig.git.auth.type) {
-			case 'basic':
-				cred = NodeGit.Cred.userpassPlaintextNew(
-					appconfig.git.auth.user,
-					appconfig.git.auth.pass
-				);
-			break;
-			case 'oauth':
-				cred = NodeGit.Cred.userpassPlaintextNew(
-					appconfig.git.auth.token,
-					"x-oauth-basic"
-				);
-			break;
-			case 'ssh':
-				cred = NodeGit.Cred.sshKeyNew(
-					appconfig.git.auth.user,
-					appconfig.git.auth.publickey,
-					appconfig.git.auth.privatekey,
-					appconfig.git.auth.passphrase
-				);
-			break;
-			default:
-				cred = NodeGit.Cred.defaultNew();
-			break;
-		}
-
-		return cred;
 
 	},
 
@@ -227,70 +137,45 @@ module.exports = {
 
 		// Fetch
 
-		return self._repo.inst.fetch('origin', self._opts.clone.fetchOpts)
-		.catch((err) => {
-			winston.error('Unable to fetch from git origin!' + err);
-		})
-
-		// Merge
-
-		.then(() => {
-			return self._repo.inst.mergeBranches(self._repo.branch, 'origin/' + self._repo.branch);
+		winston.info('[GIT] Performing pull from remote repository...');
+		return self._git.pull('origin', self._repo.branch).then((cProc) => {
+			winston.info('[GIT] Pull completed.');
 		})
 		.catch((err) => {
-			winston.error('Unable to merge from remote head!' + err);
+			winston.error('Unable to fetch from git origin!');
+			throw err;
 		})
-
-		// Push
-
 		.then(() => {
-			return self._repo.inst.getRemote('origin').then((remote) => {
 
-				// Get modified files
+			// Check for changes
 
-				return self._repo.inst.refreshIndex().then((index) => {
-					return self._repo.inst.getStatus().then(function(arrayStatusFile) {
+			return self._git.exec('status').then((cProc) => {
+				let out = cProc.stdout.toString();
+				if(!_.includes(out, 'nothing to commit')) {
 
-						let addOp = [];
+					// Add, commit and push
 
-						// Add to next commit
-
-						_.forEach(arrayStatusFile, (v) => {
-							addOp.push(arrayStatusFile[0].path());
-						});
-
-						console.log('DUDE1');
-
-						// Create Commit
-
-						let sig = NodeGit.Signature.create(self._signature.name, self._signature.email, moment().utc().unix(),  0);
-						return self._repo.inst.createCommitOnHead(addOp, sig, sig, "Wiki Sync").then(() => {
-
-							console.log('DUDE2');
-
-							return remote.connect(NodeGit.Enums.DIRECTION.PUSH, self._opts.push.callbacks).then(() => {
-
-								console.log('DUDE3');
-
-								// Push to remote
-
-								return remote.push( ["refs/heads/master:refs/heads/master"], self._opts.push).then((errNum) => {
-									console.log('DUDE' + errNum);
-								}).catch((err) => {
-									console.log(err);
-								});
-
-							});
-
-						});
-
+					winston.info('[GIT] Performing push to remote repository...');
+					return self._git.add('-A').then(() => {
+				    return self._git.commit("Resync");
+				  }).then(() => {
+				    return self._git.push('origin', self._repo.branch);
+				  }).then(() => {
+						return winston.info('[GIT] Push completed.');
 					});
-				})
 
-				/**/
+				} else {
+					winston.info('[GIT] Repository is already up to date. Nothing to commit.');
+				}
+
+				return true;
+
 			});
-		}).catch((err) => {
-			winston.error('Unable to push to git origin!' + err);
+
+		})
+		.catch((err) => {
+			winston.error('Unable to push changes to remote!');
+			throw err;
 		});
 
 	}

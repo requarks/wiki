@@ -1,6 +1,7 @@
 "use strict";
 
 var fs = require('fs'),
+	path = require('path'),
 	_ = require('lodash');
 
 /**
@@ -10,7 +11,7 @@ var fs = require('fs'),
  */
 module.exports = (appconfig) => {
 
-	// Create DB folder
+	// Create data directories
 
 	try {
 		fs.mkdirSync(appconfig.datadir.db);
@@ -21,10 +22,8 @@ module.exports = (appconfig) => {
 		}
 	}
 
-	// Create Uploads folder
-
 	try {
-		fs.mkdirSync(appconfig.datadir.uploads);
+		fs.mkdirSync(path.join(appconfig.datadir.db, 'cache'));
 	} catch (err) {
 		if(err.code !== 'EEXIST') {
 			winston.error(err);

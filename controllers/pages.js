@@ -3,21 +3,31 @@
 var express = require('express');
 var router = express.Router();
 
+router.get('/edit/*', (req, res, next) => {
+	res.send('EDIT MODE');
+});
+
+router.get('/new/*', (req, res, next) => {
+	res.send('CREATE MODE');
+});
+
 /**
  * Home
  */
-router.get('/', (req, res) => {
+router.get('/*', (req, res, next) => {
 
-	var Promise = require('bluebird');
-	var fs = Promise.promisifyAll(require("fs"));
+	let safePath = entries.parsePath(req.path);
 
-	fs.readFileAsync("repo/Storage/Redis.md", "utf8").then(function(contents) {
-		let pageData = mark.parse(contents);
-		if(!pageData.meta.title) {
-			pageData.meta.title = 'Redis.md';
+	entries.fetch(safePath).then((pageData) => {
+		console.log(pageData);
+		if(pageData) {
+			res.render('pages/view', { pageData });
+		} else {
+			next();
 		}
-		res.render('pages/view', { pageData });
- 	});
+	}).catch((err) => {
+		next();
+	});
 
 });
 

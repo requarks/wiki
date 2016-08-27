@@ -6,6 +6,8 @@ var loki = require('lokijs'),
 	 Promise = require('bluebird'),
 	 _ = require('lodash');
 
+var cols = ['User','Entry'];
+
 /**
  * Loki.js module
  *
@@ -27,27 +29,17 @@ module.exports = function(appconfig) {
 			autosave: true,
 			autosaveInterval: 5000
 		}),
-		Models: {},
 		onReady: dbReady
 	};
 
 	// Load Models
 
-	let dbModelsPath = path.join(ROOTPATH, 'models/db');
-
 	dbModel.Store.loadDatabase({}, () => {
 
-		fs
-		.readdirSync(dbModelsPath)
-		.filter(function(file) {
-			return (file.indexOf(".") !== 0);
-		})
-		.forEach(function(file) {
-			let modelName = _.upperFirst(_.split(file,'.')[0]);
-			dbModel.Models[modelName] = require(path.join(dbModelsPath, file));
-			dbModel[modelName] = dbModel.Store.getCollection(modelName);
-			if(!dbModel[modelName]) {
-				dbModel[modelName] = dbModel.Store.addCollection(modelName);
+		_.forEach(cols, (col) => {
+			dbModel[col] = dbModel.Store.getCollection(col);
+			if(!dbModel[col]) {
+				dbModel[col] = dbModel.Store.addCollection(col);
 			}
 		});
 

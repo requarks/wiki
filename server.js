@@ -4,14 +4,6 @@
 // Licensed under AGPLv3
 // ===========================================
 
-process.on('uncaughtException', function (exception) {
-  console.log(exception);
-});
-process.on('unhandledRejection', (reason, p) => {
-    console.log("Unhandled Rejection at: Promise ", p, " reason: ", reason);
-    // application specific logging, throwing an error, or other logic here
-});
-
 global.ROOTPATH = __dirname;
 
 // ----------------------------------------
@@ -22,10 +14,11 @@ global.winston = require('winston');
 winston.info('[SERVER] Requarks Wiki is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
-var lcdata = require('./models/localdata')(appconfig);
+let lcdata = require('./models/localdata');
 
-global.db = require('./models/loki')(appconfig);
+global.db = require('./models/db')(appconfig);
 global.git = require('./models/git').init(appconfig);
+global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
 
 // ----------------------------------------

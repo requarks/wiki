@@ -26,8 +26,8 @@ port: 80
 # -------------------------------------------------
 
 datadir:
+  repo: ./repo
   db: ./data
-  uploads: ./uploads
 
 # -------------------------------------------------
 # Git Connection Info
@@ -35,23 +35,22 @@ datadir:
 # Full explanation + examples in the documentation (https://requarks-wiki.readme.io/)
 
 git:
-  path: ./repo
-  remote: true
   url: https://github.com/Organization/Repo
   branch: master
   auth:
+
+    # Type: basic, oauth or ssh
     type: ssh
-    user: gitusername
-    publickey: /etc/requarkswiki/keys/git.pub
-    privatekey: /etc/requarkswiki/keys/git.key
-    passphrase: SomeSshPassphrase
-  # auth:
-  #   type: oauth
-  #   token: 1234567890abcdefghijklmnopqrstuvxyz
-  # auth:
-  #   type: basic
-  #   user: johnsmith
-  #   pass: password123
+
+    username: marty
+
+    # Password, OAuth token or private key passphrase:
+    password: MartyMcFly88
+
+    # Only for SSH authentication:
+    publicKey: /etc/requarkswiki/keys/git.pub
+    privateKey: /etc/requarkswiki/keys/git.key
+    sslVerify: true
 
 # -------------------------------------------------
 # Secret key to use when encrypting sessions
