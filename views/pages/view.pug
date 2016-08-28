@@ -8,6 +8,21 @@ mixin tocMenu(ti)
 				ul
 					+tocMenu(node.nodes)
 
+block rootNavRight
+	a.nav-item(href='#')
+		| History
+	a.nav-item(href='#')
+		| Source
+	span.nav-item
+		a.button(href='/edit/' + pageData.meta.path)
+			span.icon
+				i.fa.fa-edit
+			span Edit
+		a.button.is-primary(href='#', onclick='$(".modal").addClass("is-active");')
+			span.icon
+				i.fa.fa-plus
+			span Create
+
 block content
 
 	section.section
@@ -23,8 +38,9 @@ block content
 							ul.menu-list
 								li
 									a(href='/') Home
-								li
-									a(href='/') Storage
+								if pageData.parent
+									li
+										a(href='/' + pageData.parent.path)= pageData.parent.title
 								li
 									a(href='/account') Account
 					.box.stickyscroll(data-margin-top=70)

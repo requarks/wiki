@@ -1,30 +1,33 @@
 
 nav.nav.has-shadow.stickyscroll
 	.nav-left
-		a.nav-item.is-brand(href='/')
-			img(src='/favicons/android-icon-96x96.png', alt='Wiki')
-		a.nav-item(href='/')
-			h1.title Wiki
+		block rootNavLeft
+			a.nav-item.is-brand(href='/')
+				img(src='/favicons/android-icon-96x96.png', alt='Wiki')
+			a.nav-item(href='/')
+				h1.title Wiki
 	.nav-center
-		p.nav-item
-			input.input(type='text', placeholder='Search...', style= { 'max-width': '300px', width: '33vw' })
+		block rootNavCenter
+			p.nav-item
+				input.input(type='text', placeholder='Search...', style= { 'max-width': '300px', width: '33vw' })
 	span.nav-toggle
 		span
 		span
 		span
 	.nav-right.nav-menu
-		a.nav-item(href='#')
-			| History
-		a.nav-item(href='#')
-			| Source
-		span.nav-item
-			a.button
-				span.icon
-					i.fa.fa-edit
-				span Edit
-			a.button.is-primary(href='#', onclick='$(".modal").addClass("is-active");')
-				span.icon
-					i.fa.fa-plus
-				span Create
+		block rootNavRight
+			a.nav-item(href='#')
+				| History
+			a.nav-item(href='#')
+				| Source
+			span.nav-item
+				a.button
+					span.icon
+						i.fa.fa-edit
+					span Edit
+				a.button.is-primary(href='#', onclick='$(".modal").addClass("is-active");')
+					span.icon
+						i.fa.fa-plus
+					span Create
 
 

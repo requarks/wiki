@@ -6,6 +6,10 @@
 
 }
 
+.section.is-small {
+	padding: 20px 20px;
+}
+
 .mkcontent {
 
 	h1 {
@@ -26,12 +30,31 @@
 
 	}
 
-	.hljs {
+	a.external-link {
+		position: relative;
+		padding-left: 20px;
+
+		&:before {
+			content: "\f08e";
+			font-family: FontAwesome;
+			font-style: normal;
+			font-weight: normal;
+			text-decoration: inherit;
+			color: $grey;
+			font-size: 14px;
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+
+	}
+
+	pre {
 		padding: 0;
-		border-radius: 3px;
 
 		> code {
 			box-shadow: inset 0 0 5px 0 $grey-light;
+			border-radius: 5px;
 		}
 
 	}
@@ -52,6 +75,10 @@
 
 	strong {
 		color: $grey-dark;
+	}
+
+	.twa {
+		font-size: 120%;
 	}
 
 }

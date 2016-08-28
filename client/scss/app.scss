@@ -1,13 +1,20 @@
 //@import './layout/_fonts';
 @import './layout/_base';
 
-$warning: #f68b39;
+$red: #E53935;
+$orange: #FB8C00;
+$blue: #039BE5;
+$turquoise: #00ACC1;
+$green: #7CB342;
+
+$warning: $orange;
 
 @import 'bulma';
 @import './libs/twemoji-awesome';
 @import './libs/animate.min.css';
 
 @import './components/_alerts';
+@import './components/_editor';
 
 @import './layout/_header';
 @import './layout/_footer';

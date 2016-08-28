@@ -29,7 +29,7 @@ var mkdown = md({
 					return '<pre><code>' + str + '</code></pre>';
 				}
 			}
-			return '<pre class="hljs"><code>' + hljs.highlightAuto(str).value + '</code></pre>';
+			return '<pre><code>' + str + '</code></pre>';
 		}
 	})
 	.use(mdEmoji)
@@ -175,6 +175,10 @@ module.exports = {
 			html: parseContent(content),
 			tree: parseTree(content)
 		};
-	}
+	},
+
+	parseContent,
+	parseMeta,
+	parseTree
 
 };

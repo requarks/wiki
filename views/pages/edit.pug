@@ -1,0 +1,24 @@
+extends ../layout
+
+block rootNavCenter
+	h2.nav-item= pageData.meta.title
+
+block rootNavRight
+	a.nav-item(href='#')
+		| History
+	a.nav-item(href='#')
+		| Source
+	span.nav-item
+		a.button.is-danger(href='/' + pageData.meta.path)
+			span.icon
+				i.fa.fa-times
+			span Discard
+		a.button.is-success(href='#', onclick='$(".modal").addClass("is-active");')
+			span.icon
+				i.fa.fa-check
+			span Save Changes
+
+block content
+
+	section.section.is-small
+		textarea#mk-editor= pageData.markdown
