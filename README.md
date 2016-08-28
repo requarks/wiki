@@ -16,10 +16,15 @@
 *Under development*
 
 ##### Milestones
-- [ ] UI
-- [ ] Authentication
-- [ ] Git Management
-- [ ] Markdown Editor
-- [ ] Parsing / Wiki Navigation
 - [ ] Assets Management
+- [ ] Authentication
+- [x] Caching
+- [ ] Create Entry
+- [ ] Edit Entry
+- [x] Git Management
 - [ ] History Management
+- [ ] Markdown Editor
+- [x] Navigation
+- [x] Parsing / Tree / Metadata
+- [ ] Search
+- [x] UI
