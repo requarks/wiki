@@ -4,21 +4,37 @@ block rootNavCenter
 	h2.nav-item= pageData.meta.title
 
 block rootNavRight
+	i.nav-item#notifload
 	a.nav-item(href='#')
 		| History
 	a.nav-item(href='#')
 		| Source
 	span.nav-item
-		a.button.is-danger(href='/' + pageData.meta.path)
+		a.button.is-warning.btn-edit-discard
 			span.icon
 				i.fa.fa-times
 			span Discard
-		a.button.is-success(href='#', onclick='$(".modal").addClass("is-active");')
+		a.button.is-success.btn-edit-save
 			span.icon
 				i.fa.fa-check
 			span Save Changes
 
 block content
 
-	section.section.is-small
-		textarea#mk-editor= pageData.markdown
+	#page-type-edit
+		section.section.is-small
+			textarea#mk-editor= pageData.markdown
+
+	.modal#modal-edit-discard
+		.modal-background
+		.modal-container
+			.modal-content
+				.card.is-fullwidth
+					header.card-header.is-warning
+						p.card-header-title Discard?
+					.card-content
+						.content
+							| Are you sure you want to leave this page and loose any modifications?
+					footer.card-footer
+						a.card-footer-item.btn-edit-discard Stay on page
+						a.card-footer-item(href='/' + pageData.meta.path) Discard

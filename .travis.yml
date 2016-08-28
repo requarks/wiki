@@ -3,9 +3,14 @@ node_js:
 - '6'
 - '5'
 - '4.4'
-services:
-- redis-server
-- mongodb
+env:
+  - CXX=g++-6.2
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-6.2
 env:
   global:
   - secure: VCgscCCKhvHu0tW8e3jo6wydckE6jDkEfC2Zd5aSZytYAex05qahU45cmksqMIT1uBCcC4CKRK4caoKac/+818EyKBTV+vAL74cMMc8NeLNVY2m50+ohu8GYu+ByIffttK7cnXN7xIzyuK4csI7qz84jxLW0KYgYQ+6SPbUG3Hy6gr0P0CztNmAFfyhTam4OKSIiXyvQZW0fZoSruOpUYS5pxvCBi4AxpRY8+6IxCL8xYqF49P0l28nn0C/NYUklwag6l4JF32PrcLAU5S+NIXXgJX499cZO4C2m2GljJeolbvGue3ZEtadv5NkmQuFQ1WGb5aURHPkll0hXsWKxT0bH9P1a4Gt1h/J885acWG4U6QZA1Zds/Z4ymNeLA0MzzoAaDK1q8sRglhDJnZYb4Zm5jy7ZA3vFwb+zcGaOT//pCVpcsZINRnd0Qu9LC5NKPrfmyFAAMAXDdo78BEnwryUviWP5976JZmQAfDIWvmGGTs5i1yjiTRi+NVgH0YpfxtI9MTEJo++r5/zNH/jewxj1D8esaamphp6mQvxvpl388veQDw3REUZQ49muzrdK2YYmVRkzLfH2uMsHInN3WqEl3/mTpH76u0nlxMF6HlrVdgB2UNPjlXbSooWXLfdAw98NpCZ7BAFcCcT8Oa9cYw+40rJrdfem5J2EimG5ltw=

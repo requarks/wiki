@@ -110,6 +110,15 @@ p code {
 
 .card-header {
 	background-color: $turquoise;
+
+	&.is-warning {
+		background-color: $orange;
+	}
+
+	&.is-danger {
+		background-color: $red;
+	}
+
 }
 
 .card-header-title {
@@ -121,4 +130,8 @@ p code {
 
 .modal-content .card-footer-item {
 	font-weight: 500;
+}
+
+.modal-content .card-footer-item.featured {
+	animation: flash 4s ease 0 infinite;
 }

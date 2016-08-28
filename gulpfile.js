@@ -101,6 +101,7 @@ gulp.task("scripts-app", function () {
 	return gulp.src(paths.scriptapps)
 	.pipe(plumber())
 	.pipe(concat('app.js'))
+	.pipe(include({ extensions: "js" }))
 	.pipe(babel())
 	.pipe(uglify())
 	.pipe(plumber.stop())

@@ -3,3 +3,22 @@ h2.nav-item {
 	font-size: 150%;
 	color: $orange;
 }
+
+#notifload {
+	width: 42px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	opacity: 0;
+	transition: opacity .5s ease;
+
+	&::before {
+		content: " ";
+		@include spinner($orange,0.5s,24px);
+	}
+
+	&.active {
+		opacity: 1;
+	}
+
+}

@@ -9,6 +9,7 @@ mixin tocMenu(ti)
 					+tocMenu(node.nodes)
 
 block rootNavRight
+	i.nav-item#notifload
 	a.nav-item(href='#')
 		| History
 	a.nav-item(href='#')
@@ -25,39 +26,40 @@ block rootNavRight
 
 block content
 
-	section.section
-		.container.is-fluid
-			.columns
+	#page-type-view
+		section.section
+			.container.is-fluid
+				.columns
 
-				.column.is-narrow.sd-menus.is-hidden-touch
+					.column.is-narrow.sd-menus.is-hidden-touch
 
-					.box
-						aside.menu(style= { 'min-width': '200px' })
-							p.menu-label
-								| Navigation
-							ul.menu-list
-								li
-									a(href='/') Home
-								if pageData.parent
+						.box
+							aside.menu(style= { 'min-width': '200px' })
+								p.menu-label
+									| Navigation
+								ul.menu-list
 									li
-										a(href='/' + pageData.parent.path)= pageData.parent.title
-								li
-									a(href='/account') Account
-					.box.stickyscroll(data-margin-top=70)
-						aside.menu(style= { 'min-width': '200px' })
-							p.menu-label
-								| Contents
-							ul.menu-list
-								a(href='#root', title='Start') Start
-								+tocMenu(pageData.tree)
+										a(href='/') Home
+									if pageData.parent
+										li
+											a(href='/' + pageData.parent.path)= pageData.parent.title
+									li
+										a(href='/account') Account
+						.box.stickyscroll(data-margin-top=70)
+							aside.menu(style= { 'min-width': '200px' })
+								p.menu-label
+									| Contents
+								ul.menu-list
+									a(href='#root', title='Start') Start
+									+tocMenu(pageData.tree)
 
-				.column
+					.column
 
-					h1.title#title= pageData.meta.title
-					if pageData.meta.subtitle
-						h2.subtitle= pageData.meta.subtitle
-					.content.mkcontent
-						!= pageData.html
+						h1.title#title= pageData.meta.title
+						if pageData.meta.subtitle
+							h2.subtitle= pageData.meta.subtitle
+						.content.mkcontent
+							!= pageData.html
 
 	.modal
 		.modal-background
@@ -73,4 +75,4 @@ block content
 								input.input(type='text', placeholder='/path', value='/storage/new-page')
 					footer.card-footer
 						a.card-footer-item(onclick='$(".modal").removeClass("is-active");') Discard
-						a.card-footer-item Create
+						a.card-footer-item.featured Create
