@@ -26,7 +26,7 @@ block rootNavRight
 
 block content
 
-	#page-type-view
+	#page-type-view(data-entrypath=pageData.meta.path)
 		section.section
 			.container.is-fluid
 				.columns
@@ -70,9 +70,9 @@ block content
 						p.card-header-title Create New Page
 					.card-content
 						.content
-							label.label Enter the full path:
+							label.label Enter the new document name:
 							p.control
-								input.input(type='text', placeholder='/path', value='/storage/new-page')
+								input.input(type='text', placeholder='page-name')
 					footer.card-footer
 						a.card-footer-item(onclick='$(".modal").removeClass("is-active");') Discard
 						a.card-footer-item.featured Create

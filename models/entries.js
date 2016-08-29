@@ -2,7 +2,7 @@
 
 var Promise = require('bluebird'),
 	path = require('path'),
-	fs = Promise.promisifyAll(require("fs")),
+	fs = Promise.promisifyAll(require("fs-extra")),
 	_ = require('lodash'),
 	farmhash = require('farmhash'),
 	BSONModule = require('bson'),
@@ -34,16 +34,16 @@ module.exports = {
 	},
 
 	/**
-	 * Fetch an entry from cache, otherwise the original
+	 * Fetch a document from cache, otherwise the original
 	 *
-	 * @param      {String}  entryPath  The entry path
-	 * @return     {Object}  Page Data
+	 * @param      {String}           entryPath  The entry path
+	 * @return     {Promise<Object>}  Page Data
 	 */
 	fetch(entryPath) {
 
 		let self = this;
 
-		let cpath = path.join(self._cachePath, farmhash.fingerprint32(entryPath) + '.bson');
+		let cpath = self.getCachePath(entryPath);
 
 		return fs.statAsync(cpath).then((st) => {
 			return st.isFile();
@@ -78,16 +78,16 @@ module.exports = {
 	/**
 	 * Fetches the original document entry
 	 *
-	 * @param      {String}  entryPath  The entry path
-	 * @param      {Object}  options    The options
-	 * @return     {Object}  Page data
+	 * @param      {String}           entryPath  The entry path
+	 * @param      {Object}           options    The options
+	 * @return     {Promise<Object>}  Page data
 	 */
 	fetchOriginal(entryPath, options) {
 
 		let self = this;
 
-		let fpath = path.join(self._repoPath, entryPath + '.md');
-		let cpath = path.join(self._cachePath, farmhash.fingerprint32(entryPath) + '.bson');
+		let fpath = self.getFullPath(entryPath);
+		let cpath = self.getCachePath(entryPath);
 
 		options = _.defaults(options, {
 			parseMarkdown: true,
@@ -174,8 +174,8 @@ module.exports = {
 	/**
 	 * Gets the parent information.
 	 *
-	 * @param      {String}        entryPath  The entry path
-	 * @return     {Object|False}  The parent information.
+	 * @param      {String}                 entryPath  The entry path
+	 * @return     {Promise<Object|False>}  The parent information.
 	 */
 	getParentInfo(entryPath) {
 
@@ -183,10 +183,10 @@ module.exports = {
 
 		if(_.includes(entryPath, '/')) {
 
-			let parentParts = _.split(entryPath, '/');
-			let parentPath = _.join(_.initial(parentParts),'/');
+			let parentParts = _.initial(_.split(entryPath, '/'));
+			let parentPath = _.join(parentParts,'/');
 			let parentFile = _.last(parentParts);
-			let fpath = path.join(self._repoPath, parentPath + '.md');
+			let fpath = self.getFullPath(parentPath);
 
 			return fs.statAsync(fpath).then((st) => {
 				if(st.isFile()) {
@@ -209,6 +209,70 @@ module.exports = {
 		} else {
 			return Promise.reject(new Error('Parent entry is root.'));
 		}
+
+	},
+
+	/**
+	 * Gets the full original path of a document.
+	 *
+	 * @param      {String}  entryPath  The entry path
+	 * @return     {String}  The full path.
+	 */
+	getFullPath(entryPath) {
+		return path.join(this._repoPath, entryPath + '.md');
+	},
+
+	/**
+	 * Gets the full cache path of a document.
+	 *
+	 * @param      {String}    entryPath  The entry path
+	 * @return     {String}  The full cache path.
+	 */
+	getCachePath(entryPath) {
+		return path.join(this._cachePath, farmhash.fingerprint32(entryPath) + '.bson');
+	},
+
+	/**
+	 * Update an existing document
+	 *
+	 * @param      {String}            entryPath  The entry path
+	 * @param      {String}            contents   The markdown-formatted contents
+	 * @return     {Promise<Boolean>}  True on success, false on failure
+	 */
+	update(entryPath, contents) {
+
+		let self = this;
+		let fpath = self.getFullPath(entryPath);
+
+		return fs.statAsync(fpath).then((st) => {
+			if(st.isFile()) {
+				return self.makePersistent(entryPath, contents).then(() => {
+					return self.fetchOriginal(entryPath, {});
+				});
+			} else {
+				return Promise.reject(new Error('Entry does not exist!'));
+			}
+		}).catch((err) => {
+			return new Error('Entry does not exist!');
+		});
+
+	},
+
+	/**
+	 * Makes a document persistent to disk and git repository
+	 *
+	 * @param      {String}            entryPath  The entry path
+	 * @param      {String}            contents   The markdown-formatted contents
+	 * @return     {Promise<Boolean>}  True on success, false on failure
+	 */
+	makePersistent(entryPath, contents) {
+
+		let self = this;
+		let fpath = self.getFullPath(entryPath);
+
+		return fs.outputFileAsync(fpath, contents).then(() => {
+			return git.commitDocument(entryPath);
+		});
 
 	}
 

@@ -39,7 +39,7 @@ jQuery( document ).ready(function( $ ) {
 
 	if($('#mk-editor').length === 1) {
 
-		let mde = new SimpleMDE({
+		var mde = new SimpleMDE({
 			autofocus: true,
 			autoDownloadFontAwesome: false,
 			element: $("#mk-editor").get(0),

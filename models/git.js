@@ -131,6 +131,11 @@ module.exports = {
 
 	},
 
+	/**
+	 * Sync with the remote repository
+	 *
+	 * @return     {Promise}  Resolve on sync success
+	 */
 	resync() {
 
 		let self = this;
@@ -149,23 +154,20 @@ module.exports = {
 
 			// Check for changes
 
-			return self._git.exec('status').then((cProc) => {
+			return self._git.exec('log', 'origin/' + self._repo.branch + '..HEAD').then((cProc) => {
 				let out = cProc.stdout.toString();
-				if(!_.includes(out, 'nothing to commit')) {
 
-					// Add, commit and push
+				if(_.includes(out, 'commit')) {
 
 					winston.info('[GIT] Performing push to remote repository...');
-					return self._git.add('-A').then(() => {
-				    return self._git.commit("Resync");
-				  }).then(() => {
-				    return self._git.push('origin', self._repo.branch);
-				  }).then(() => {
+					return self._git.push('origin', self._repo.branch).then(() => {
 						return winston.info('[GIT] Push completed.');
 					});
 
 				} else {
-					winston.info('[GIT] Repository is already up to date. Nothing to commit.');
+
+					winston.info('[GIT] Repository is already in sync.');
+
 				}
 
 				return true;
@@ -176,6 +178,30 @@ module.exports = {
 		.catch((err) => {
 			winston.error('Unable to push changes to remote!');
 			throw err;
+		});
+
+	},
+
+	/**
+	 * Commits a document.
+	 *
+	 * @param      {String}   entryPath  The entry path
+	 * @return     {Promise}  Resolve on commit success
+	 */
+	commitDocument(entryPath) {
+
+		let self = this;
+		let gitFilePath = entryPath + '.md';
+		let commitMsg = '';
+
+		return self._git.exec('ls-files', gitFilePath).then((cProc) => {
+			let out = cProc.stdout.toString();
+			return _.includes(out, gitFilePath);
+		}).then((isTracked) => {
+			commitMsg = (isTracked) ? 'Updated ' + gitFilePath : 'Added ' + gitFilePath;
+			return self._git.add(gitFilePath);
+		}).then(() => {
+			return self._git.commit(commitMsg);
 		});
 
 	}

@@ -21,7 +21,7 @@ block rootNavRight
 
 block content
 
-	#page-type-edit
+	#page-type-edit(data-entrypath=pageData.meta.path)
 		section.section.is-small
 			textarea#mk-editor= pageData.markdown
 

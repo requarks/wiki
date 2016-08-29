@@ -4,6 +4,13 @@ var express = require('express');
 var router = express.Router();
 var _ = require('lodash');
 
+// ==========================================
+// EDIT MODE
+// ==========================================
+
+/**
+ * Edit document in Markdown
+ */
 router.get('/edit/*', (req, res, next) => {
 
 	let safePath = entries.parsePath(_.replace(req.path, '/edit', ''));
@@ -30,12 +37,37 @@ router.get('/edit/*', (req, res, next) => {
 
 });
 
+router.put('/edit/*', (req, res, next) => {
+
+	let safePath = entries.parsePath(_.replace(req.path, '/edit', ''));
+
+	entries.update(safePath, req.body.markdown).then(() => {
+		res.json({
+			ok: true
+		});
+	}).catch((err) => {
+		res.json({
+			ok: false,
+			error: err.message
+		});
+	});
+
+});
+
+// ==========================================
+// CREATE MODE
+// ==========================================
+
 router.get('/new/*', (req, res, next) => {
 	res.send('CREATE MODE');
 });
 
+// ==========================================
+// VIEW MODE
+// ==========================================
+
 /**
- * Home
+ * View document
  */
 router.get('/*', (req, res, next) => {
 
