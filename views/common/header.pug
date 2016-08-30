@@ -1,5 +1,5 @@
 
-nav.nav.has-shadow.stickyscroll
+nav.nav.has-shadow.stickyscroll#header
 	.nav-left
 		block rootNavLeft
 			a.nav-item.is-brand(href='/')
@@ -17,16 +17,16 @@ nav.nav.has-shadow.stickyscroll
 	.nav-right.nav-menu
 		block rootNavRight
 			i.nav-item#notifload
-			a.nav-item(href='#')
+			a.nav-item(href='/history/' + pageData.meta.path)
 				| History
-			a.nav-item(href='#')
+			a.nav-item(href='/source/' + pageData.meta.path)
 				| Source
 			span.nav-item
-				a.button
+				a.button(href='/edit/' + pageData.meta.path)
 					span.icon
 						i.fa.fa-edit
 					span Edit
-				a.button.is-primary(href='#', onclick='$(".modal").addClass("is-active");')
+				a.button.is-primary.btn-create-prompt
 					span.icon
 						i.fa.fa-plus
 					span Create

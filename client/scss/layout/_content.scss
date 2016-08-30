@@ -16,7 +16,7 @@
 		border-bottom: 1px dotted $grey-light;
 		padding-bottom: 4px;
 		font-weight: 400;
-		color: $grey-dark;
+		color: desaturate(darken($purple, 15%), 10%);
 	}
 
 	a.toc-anchor {

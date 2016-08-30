@@ -10,16 +10,16 @@ mixin tocMenu(ti)
 
 block rootNavRight
 	i.nav-item#notifload
-	a.nav-item(href='#')
+	a.nav-item(href='/history/' + pageData.meta.path)
 		| History
-	a.nav-item(href='#')
+	a.nav-item(href='/source/' + pageData.meta.path)
 		| Source
 	span.nav-item
 		a.button(href='/edit/' + pageData.meta.path)
 			span.icon
 				i.fa.fa-edit
 			span Edit
-		a.button.is-primary(href='#', onclick='$(".modal").addClass("is-active");')
+		a.button.is-primary.btn-create-prompt
 			span.icon
 				i.fa.fa-plus
 			span Create
@@ -61,18 +61,4 @@ block content
 						.content.mkcontent
 							!= pageData.html
 
-	.modal
-		.modal-background
-		.modal-container
-			.modal-content
-				.card.is-fullwidth
-					header.card-header
-						p.card-header-title Create New Page
-					.card-content
-						.content
-							label.label Enter the new document name:
-							p.control
-								input.input(type='text', placeholder='page-name')
-					footer.card-footer
-						a.card-footer-item(onclick='$(".modal").removeClass("is-active");') Discard
-						a.card-footer-item.featured Create
+	include ../modals/create

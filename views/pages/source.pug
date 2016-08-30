@@ -1,0 +1,9 @@
+extends ../layout
+
+block content
+
+	#page-type-source(data-entrypath=pageData.meta.path)
+		.ace-container
+			#source-display= pageData.markdown
+
+	include ../modals/create

@@ -11,7 +11,6 @@ var Promise = require('bluebird'),
 	mdExpandTabs = require('markdown-it-expand-tabs'),
 	mdAttrs = require('markdown-it-attrs'),
 	hljs = require('highlight.js'),
-	slug = require('slug'),
 	cheerio = require('cheerio'),
 	_ = require('lodash');
 
@@ -81,10 +80,10 @@ const parseTree = (content) => {
 			let anchor = "";
 			if (heading.children && heading.children[0].type === "link_open") {
 			 content = heading.children[1].content;
-			 anchor = slug(content, {lower: true});
+			 anchor = _.kebabCase(content);
 			} else {
 			 content = heading.content
-			 anchor = slug(heading.children.reduce((acc, t) => acc + t.content, ""), {lower: true});
+			 anchor = _.kebabCase(heading.children.reduce((acc, t) => acc + t.content, ""));
 			}
 
 			tocArray.push({

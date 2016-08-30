@@ -6,3 +6,16 @@
 .editor-toolbar .fa {
 	font-size: 14px;
 }
+
+.ace-container {
+	position: relative;
+	min-height: 95vh;
+}
+
+#source-display {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+}

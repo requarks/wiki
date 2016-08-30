@@ -1,0 +1,17 @@
+
+.modal#modal-create-prompt
+	.modal-background
+	.modal-container
+		.modal-content
+			.card.is-fullwidth
+				header.card-header
+					p.card-header-title Create New Page
+				.card-content
+					.content
+						label.label Enter the new document path:
+						p.control
+							input.input(type='text', placeholder='page-name')#txt-create-prompt
+							span.help.is-danger.is-hidden This document path is invalid!
+				footer.card-footer
+					a.card-footer-item.btn-create-prompt Discard
+					a.card-footer-item.btn-create-go Create

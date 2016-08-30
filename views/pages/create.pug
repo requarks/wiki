@@ -1,0 +1,36 @@
+extends ../layout
+
+block rootNavCenter
+	h2.nav-item Create New Document
+
+block rootNavRight
+	i.nav-item#notifload
+	span.nav-item
+		a.button.is-warning.btn-create-discard
+			span.icon
+				i.fa.fa-times
+			span Discard
+		a.button.is-success.btn-create-save
+			span.icon
+				i.fa.fa-check
+			span Save Document
+
+block content
+
+	#page-type-create(data-entrypath=pageData.meta.path)
+		section.section.is-small
+			textarea#mk-editor= pageData.markdown
+
+	.modal#modal-create-discard
+		.modal-background
+		.modal-container
+			.modal-content
+				.card.is-fullwidth
+					header.card-header.is-warning
+						p.card-header-title Discard?
+					.card-content
+						.content
+							| Are you sure you want to leave this page and loose anything you wrote so far?
+					footer.card-footer
+						a.card-footer-item.btn-create-discard Stay on page
+						a.card-footer-item(href='/') Discard

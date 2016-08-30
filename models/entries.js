@@ -34,6 +34,31 @@ module.exports = {
 	},
 
 	/**
+	 * Check if a document already exists
+	 *
+	 * @param      {String}  entryPath  The entry path
+	 * @return     {Promise<Boolean>}  True if exists, false otherwise
+	 */
+	exists(entryPath) {
+
+		let self = this;
+
+		return self.fetchOriginal(entryPath, {
+			parseMarkdown: false,
+			parseMeta: false,
+			parseTree: false,
+			includeMarkdown: false,
+			includeParentInfo: false,
+			cache: false
+		}).then(() => {
+			return true;
+		}).catch((err) => {
+			return false;
+		});
+
+	},
+
+	/**
 	 * Fetch a document from cache, otherwise the original
 	 *
 	 * @param      {String}           entryPath  The entry path
@@ -145,6 +170,8 @@ module.exports = {
 			} else {
 				return false;
 			}
+		}).catch((err) => {
+			return Promise.reject(new Error('Entry ' + entryPath + ' does not exist!'));
 		});
 
 	},
@@ -253,7 +280,33 @@ module.exports = {
 				return Promise.reject(new Error('Entry does not exist!'));
 			}
 		}).catch((err) => {
-			return new Error('Entry does not exist!');
+			return Promise.reject(new Error('Entry does not exist!'));
+		});
+
+	},
+
+	/**
+	 * Create a new document
+	 *
+	 * @param      {String}            entryPath  The entry path
+	 * @param      {String}            contents   The markdown-formatted contents
+	 * @return     {Promise<Boolean>}  True on success, false on failure
+	 */
+	create(entryPath, contents) {
+
+		let self = this;
+
+		return self.exists(entryPath).then((docExists) => {
+			if(!docExists) {
+				return self.makePersistent(entryPath, contents).then(() => {
+					return self.fetchOriginal(entryPath, {});
+				});
+			} else {
+				return Promise.reject(new Error('Entry already exists!'));
+			}
+		}).catch((err) => {
+			winston.error(err);
+			return Promise.reject(new Error('Something went wrong.'));
 		});
 
 	},
@@ -272,6 +325,23 @@ module.exports = {
 
 		return fs.outputFileAsync(fpath, contents).then(() => {
 			return git.commitDocument(entryPath);
+		});
+
+	},
+
+	/**
+	 * Generate a starter page content based on the entry path
+	 *
+	 * @param      {String}           entryPath  The entry path
+	 * @return     {Promise<String>}  Starter content
+	 */
+	getStarter(entryPath) {
+
+		let self = this;
+		let formattedTitle = _.startCase(_.last(_.split(entryPath, '/')));
+
+		return fs.readFileAsync(path.join(ROOTPATH, 'client/content/create.md'), 'utf8').then((contents) => {
+			return _.replace(contents, new RegExp('{TITLE}', 'g'), formattedTitle);
 		});
 
 	}

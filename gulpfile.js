@@ -19,12 +19,15 @@ var include = require("gulp-include");
  */
 var paths = {
 	scriptlibs: [
-	  	'./node_modules/lodash/lodash.min.js',
-      './node_modules/jquery/dist/jquery.min.js',
-      './node_modules/vue/dist/vue.min.js',
-      './node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
-      './node_modules/sticky-js/dist/sticky.min.js',
-      './node_modules/simplemde/dist/simplemde.min.js'
+		'./node_modules/jquery/dist/jquery.min.js',
+		'./node_modules/vue/dist/vue.min.js',
+		'./node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
+		'./node_modules/sticky-js/dist/sticky.min.js',
+		'./node_modules/simplemde/dist/simplemde.min.js',
+		'./node_modules/ace-builds/src-min-noconflict/ace.js',
+		'./node_modules/ace-builds/src-min-noconflict/mode-markdown.js',
+		'./node_modules/ace-builds/src-min-noconflict/theme-tomorrow_night.js',
+		'./node_modules/lodash/lodash.min.js'
 	],
 	scriptapps: [
 		'./client/js/components/*.js',

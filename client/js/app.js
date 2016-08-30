@@ -56,6 +56,12 @@ jQuery( document ).ready(function( $ ) {
 	// Pages logic
 	// ====================================
 
+	//=include pages/view.js
+	//=include pages/create.js
 	//=include pages/edit.js
+	//=include pages/source.js
 
 });
+
+//=include helpers/form.js
+//=include helpers/pages.js

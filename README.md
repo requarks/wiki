@@ -19,8 +19,8 @@
 - [ ] Assets Management
 - [ ] Authentication
 - [x] Caching
-- [ ] Create Entry
-- [ ] Edit Entry
+- [x] Create Entry
+- [x] Edit Entry
 - [x] Git Management
 - [ ] History Management
 - [ ] Markdown Editor

@@ -5,9 +5,9 @@ block rootNavCenter
 
 block rootNavRight
 	i.nav-item#notifload
-	a.nav-item(href='#')
+	a.nav-item(href='/history/' + pageData.meta.path, target='_blank')
 		| History
-	a.nav-item(href='#')
+	a.nav-item(href='/source/' + pageData.meta.path, target='_blank')
 		| Source
 	span.nav-item
 		a.button.is-warning.btn-edit-discard
@@ -25,16 +25,4 @@ block content
 		section.section.is-small
 			textarea#mk-editor= pageData.markdown
 
-	.modal#modal-edit-discard
-		.modal-background
-		.modal-container
-			.modal-content
-				.card.is-fullwidth
-					header.card-header.is-warning
-						p.card-header-title Discard?
-					.card-content
-						.content
-							| Are you sure you want to leave this page and loose any modifications?
-					footer.card-footer
-						a.card-footer-item.btn-edit-discard Stay on page
-						a.card-footer-item(href='/' + pageData.meta.path) Discard
+	include ../modals/edit
