@@ -7,6 +7,4 @@ if($('#page-type-source').length) {
   scEditor.setReadOnly(true);
   scEditor.renderer.updateFull();
 
-  console.log(scEditor.getSession().getLength());
-
 }

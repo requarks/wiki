@@ -1,6 +1,9 @@
 
 if($('#page-type-edit').length) {
 
+	$('.editor-toolbar').attr('data-margin-top', $('#header').height());
+	var editorToolbarSticky = new Sticky('.editor-toolbar');
+
 	//-> Discard
 
 	$('.btn-edit-discard').on('click', (ev) => {

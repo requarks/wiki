@@ -1,4 +1,23 @@
 
+.editor-toolbar {
+	z-index: 2;
+	background-color: #FFF;
+	border: none;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	opacity: 0.9;
+
+	&:hover {
+		opacity: 1;
+	}
+
+}
+
+.CodeMirror {
+	border-left: none;
+	border-right: none;
+}
+
 .editor-toolbar i.separator {
 	margin-top: 5px;
 }
