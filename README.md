@@ -18,6 +18,7 @@
 ##### Milestones
 - [ ] Assets Management
 - [ ] Authentication
+- [x] Background Agent (git sync, cache purge, etc.)
 - [x] Caching
 - [x] Create Entry
 - [x] Edit Entry
@@ -28,3 +29,4 @@
 - [x] Parsing / Tree / Metadata
 - [ ] Search
 - [x] UI
+- [x] View Entry Source

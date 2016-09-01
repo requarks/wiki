@@ -37,9 +37,11 @@ module.exports = {
 	 * @param      {Object}  appconfig  The application config
 	 * @return     {Object}  Git model instance
 	 */
-	init(appconfig) {
+	init(appconfig, sync) {
 
 		let self = this;
+
+		self._repo.sync = sync;
 
 		//-> Build repository path
 		

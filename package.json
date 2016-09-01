@@ -42,6 +42,7 @@
     "connect-loki": "^1.0.6",
     "connect-redis": "^3.1.0",
     "cookie-parser": "^1.4.3",
+    "cron": "^1.1.0",
     "express": "^4.14.0",
     "express-brute": "^1.0.0",
     "express-brute-loki": "^1.0.0",

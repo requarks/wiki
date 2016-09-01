@@ -17,7 +17,7 @@ var appconfig = require('./models/config')('./config.yml');
 let lcdata = require('./models/localdata');
 
 global.db = require('./models/db')(appconfig);
-global.git = require('./models/git').init(appconfig);
+global.git = require('./models/git').init(appconfig, false);
 global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
 
@@ -192,4 +192,19 @@ server.on('error', (error) => {
 
 server.on('listening', () => {
   winston.info('[SERVER] HTTP server started successfully! [RUNNING]');
+});
+
+// ----------------------------------------
+// Start Background Agent
+// ----------------------------------------
+
+var fork = require('child_process').fork;
+var bgAgent = fork('agent.js');
+
+bgAgent.on('message', (m) => {
+
+});
+
+process.on('exit', (code) => {
+  bgAgent.disconnect();
 });

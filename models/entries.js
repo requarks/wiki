@@ -6,7 +6,8 @@ var Promise = require('bluebird'),
 	_ = require('lodash'),
 	farmhash = require('farmhash'),
 	BSONModule = require('bson'),
-	BSON = new BSONModule.BSONPure.BSON();
+	BSON = new BSONModule.BSONPure.BSON(),
+	moment = require('moment');
 
 /**
  * Entries Model
@@ -260,6 +261,17 @@ module.exports = {
 	},
 
 	/**
+	 * Gets the entry path from full path.
+	 *
+	 * @param      {String}  fullPath  The full path
+	 * @return     {String}  The entry path
+	 */
+	getEntryPathFromFullPath(fullPath) {
+		let absRepoPath = path.resolve(ROOTPATH, this._repoPath);
+		return _.chain(fullPath).replace(absRepoPath, '').replace('.md', '').replace(new RegExp('\\\\', 'g'),'/').value();
+	},
+
+	/**
 	 * Update an existing document
 	 *
 	 * @param      {String}            entryPath  The entry path
@@ -343,6 +355,35 @@ module.exports = {
 		return fs.readFileAsync(path.join(ROOTPATH, 'client/content/create.md'), 'utf8').then((contents) => {
 			return _.replace(contents, new RegExp('{TITLE}', 'g'), formattedTitle);
 		});
+
+	},
+
+	purgeStaleCache() {
+
+		let self = this;
+
+		let cacheJobs = [];
+
+		fs.walk(self._repoPath)
+		.on('data', function (item) {
+			if(path.extname(item.path) === '.md') {
+
+				let entryPath = self.parsePath(self.getEntryPathFromFullPath(item.path));
+				let cachePath = self.getCachePath(entryPath);
+
+				cacheJobs.push(fs.statAsync(cachePath).then((st) => {
+					if(moment(st.mtime).isBefore(item.stats.mtime)) {
+						return fs.unlinkAsync(cachePath);
+					} else {
+						return true;
+					}
+				}).catch((err) => {
+					return (err.code !== 'EEXIST') ? err : true;
+				}));
+			}
+		});
+
+		return Promise.all(cacheJobs);
 
 	}
 
