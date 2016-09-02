@@ -5,7 +5,7 @@ var Promise = require('bluebird'),
 	mdEmoji = require('markdown-it-emoji'),
 	mdTaskLists = require('markdown-it-task-lists'),
 	mdAbbr = require('markdown-it-abbr'),
-	mdAnchor = require('markdown-it-toc-and-anchor').default,
+	mdAnchor = require('markdown-it-anchor'),
 	mdFootnote = require('markdown-it-footnote'),
 	mdExternalLinks = require('markdown-it-external-links'),
 	mdExpandTabs = require('markdown-it-expand-tabs'),
@@ -35,8 +35,11 @@ var mkdown = md({
 	.use(mdTaskLists)
 	.use(mdAbbr)
 	.use(mdAnchor, {
-		tocClassName: 'toc',
-		anchorClassName: 'toc-anchor'
+		slugify: _.kebabCase,
+		permalink: true,
+		permalinkClass: 'toc-anchor',
+		permalinkSymbol: '#',
+		permalinkBefore: true
 	})
 	.use(mdFootnote)
 	.use(mdExternalLinks, {

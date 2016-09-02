@@ -67,7 +67,6 @@
     "markdown-it-external-links": "0.0.5",
     "markdown-it-footnote": "^3.0.1",
     "markdown-it-task-lists": "^1.4.1",
-    "markdown-it-toc-and-anchor": "^4.1.1",
     "moment": "^2.14.1",
     "moment-timezone": "^0.5.5",
     "passport": "^0.3.2",
