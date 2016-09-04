@@ -27,8 +27,8 @@ module.exports = {
 
 		let self = this;
 
-		self._repoPath = appconfig.datadir.repo;
-		self._cachePath = path.join(appconfig.datadir.db, 'cache');
+		self._repoPath = path.resolve(ROOTPATH, appconfig.datadir.repo);
+		self._cachePath = path.resolve(ROOTPATH, appconfig.datadir.db, 'cache');
 
 		return self;
 
@@ -173,6 +173,32 @@ module.exports = {
 			}
 		}).catch((err) => {
 			return Promise.reject(new Error('Entry ' + entryPath + ' does not exist!'));
+		});
+
+	},
+
+	/**
+	 * Fetches a text version of a Markdown-formatted document
+	 *
+	 * @param      {String}  entryPath  The entry path
+	 * @return     {String}  Text-only version
+	 */
+	fetchTextVersion(entryPath) {
+
+		let self = this;
+
+		return self.fetchOriginal(entryPath, {
+			parseMarkdown: false,
+			parseMeta: true,
+			parseTree: false,
+			includeMarkdown: true,
+			includeParentInfo: false,
+			cache: false
+		}).then((pageData) => {
+			return {
+				meta: pageData.meta,
+				text: mark.removeMarkdown(pageData.markdown)
+			};
 		});
 
 	},
@@ -341,6 +367,8 @@ module.exports = {
 
 	},
 
+
+
 	/**
 	 * Generate a starter page content based on the entry path
 	 *
@@ -355,35 +383,6 @@ module.exports = {
 		return fs.readFileAsync(path.join(ROOTPATH, 'client/content/create.md'), 'utf8').then((contents) => {
 			return _.replace(contents, new RegExp('{TITLE}', 'g'), formattedTitle);
 		});
-
-	},
-
-	purgeStaleCache() {
-
-		let self = this;
-
-		let cacheJobs = [];
-
-		fs.walk(self._repoPath)
-		.on('data', function (item) {
-			if(path.extname(item.path) === '.md') {
-
-				let entryPath = self.parsePath(self.getEntryPathFromFullPath(item.path));
-				let cachePath = self.getCachePath(entryPath);
-
-				cacheJobs.push(fs.statAsync(cachePath).then((st) => {
-					if(moment(st.mtime).isBefore(item.stats.mtime)) {
-						return fs.unlinkAsync(cachePath);
-					} else {
-						return true;
-					}
-				}).catch((err) => {
-					return (err.code !== 'EEXIST') ? err : true;
-				}));
-			}
-		});
-
-		return Promise.all(cacheJobs);
 
 	}
 

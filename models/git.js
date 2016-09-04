@@ -19,8 +19,7 @@ module.exports = {
 	_repo: {
 		path: '',
 		branch: 'master',
-		exists: false,
-		sync: true
+		exists: false
 	},
 	_signature: {
 		name: 'Wiki',
@@ -30,6 +29,7 @@ module.exports = {
 		clone: {},
 		push: {}
 	},
+	onReady: null,
 
 	/**
 	 * Initialize Git model
@@ -37,11 +37,9 @@ module.exports = {
 	 * @param      {Object}  appconfig  The application config
 	 * @return     {Object}  Git model instance
 	 */
-	init(appconfig, sync) {
+	init(appconfig) {
 
 		let self = this;
-
-		self._repo.sync = sync;
 
 		//-> Build repository path
 		
@@ -53,13 +51,7 @@ module.exports = {
 
 		//-> Initialize repository
 
-		self._initRepo(appconfig).then((repo) => {
-
-			if(self._repo.sync) {
-				self.resync();
-			}
-
-		});
+		self.onReady = self._initRepo(appconfig);
 
 		// Define signature
 

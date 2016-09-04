@@ -1,6 +1,7 @@
 ###################################################
 # REQUARKS WIKI - CONFIGURATION                   #
 ###################################################
+# Full explanation + examples in the documentation (https://requarks-wiki.readme.io/)
 
 # -------------------------------------------------
 # Title of this site
@@ -32,7 +33,6 @@ datadir:
 # -------------------------------------------------
 # Git Connection Info
 # -------------------------------------------------
-# Full explanation + examples in the documentation (https://requarks-wiki.readme.io/)
 
 git:
   url: https://github.com/Organization/Repo
@@ -68,7 +68,8 @@ sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 admin: admin@company.com
 
 # -------------------------------------------------
-# Default page for Home
+# Site UI Language
 # -------------------------------------------------
+# Possible values: en, fr
 
-homepage: Home.md
+lang: en

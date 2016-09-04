@@ -52,7 +52,6 @@ var ctrl = autoload(path.join(ROOTPATH, '/controllers'));
 // ----------------------------------------
 
 global.app = express();
-global.ROOTPATH = __dirname;
 var _isDebug = (app.get('env') === 'development');
 
 // ----------------------------------------
@@ -127,7 +126,6 @@ app.use(express.static(path.join(ROOTPATH, 'assets')));
 app.locals._ = require('lodash');
 app.locals.moment = require('moment');
 app.locals.appconfig = appconfig;
-//app.locals.appdata = require('./data.json');
 app.use(mw.flash);
 
 // ----------------------------------------
@@ -195,15 +193,11 @@ server.on('listening', () => {
 });
 
 // ----------------------------------------
-// Start Background Agent
+// Start Agents
 // ----------------------------------------
 
 var fork = require('child_process').fork;
 var bgAgent = fork('agent.js');
-
-bgAgent.on('message', (m) => {
-
-});
 
 process.on('exit', (code) => {
   bgAgent.disconnect();

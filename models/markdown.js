@@ -12,7 +12,8 @@ var Promise = require('bluebird'),
 	mdAttrs = require('markdown-it-attrs'),
 	hljs = require('highlight.js'),
 	cheerio = require('cheerio'),
-	_ = require('lodash');
+	_ = require('lodash'),
+	mdRemove = require('remove-markdown');
 
 // Load plugins
 
@@ -157,6 +158,12 @@ const parseContent = (content)  => {
 
 };
 
+/**
+ * Parse meta-data tags from content
+ *
+ * @param      {String}  content  Markdown content
+ * @return     {Object}  Properties found in the content and their values
+ */
 const parseMeta = (content) => {
 
 	let commentMeta = new RegExp('<!-- ?([a-zA-Z]+):(.*)-->','g');
@@ -171,6 +178,12 @@ const parseMeta = (content) => {
 
 module.exports = {
 
+	/**
+	 * Parse content and return all data
+	 *
+	 * @param      {String}  content  Markdown-formatted content
+	 * @return     {Object}  Object containing meta, html and tree data
+	 */
 	parse(content) {
 		return {
 			meta: parseMeta(content),
@@ -181,6 +194,29 @@ module.exports = {
 
 	parseContent,
 	parseMeta,
-	parseTree
+	parseTree,
+
+	/**
+	 * Strips non-text elements from Markdown content
+	 *
+	 * @param      {String}  content  Markdown-formatted content
+	 * @return     {String}  Text-only version
+	 */
+	removeMarkdown(content) {
+		return mdRemove(_.chain(content)
+			.replace(/<!-- ?([a-zA-Z]+):(.*)-->/g, '')
+			.replace(/```[^`]+```/g, '')
+			.replace(/`[^`]+`/g, '')
+			.replace(new RegExp('(?!mailto:)(?:(?:http|https|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?', 'g'), '')
+			.replace(/\r?\n|\r/g, ' ')
+			.deburr()
+			.toLower()
+			.replace(/(\b([^a-z]+)\b)/g, ' ')
+			.replace(/[^a-z]+/g, ' ')
+			.replace(/(\b(\w{1,2})\b(\W|$))/g, '')
+			.replace(/\s\s+/g, ' ')
+			.value()
+		);
+	}
 
 };
