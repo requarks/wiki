@@ -1,38 +1,46 @@
-###################################################
-# REQUARKS WIKI - CONFIGURATION                   #
-###################################################
-# Full explanation + examples in the documentation (https://requarks-wiki.readme.io/)
+#######################################################################
+# REQUARKS WIKI - CONFIGURATION                                       #
+#######################################################################
+# Full explanation + examples in the documentation:
+# https://requarks-wiki.readme.io/
 
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 # Title of this site
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 
 title: Wiki
 
-# -------------------------------------------------
-# Full path to the site, without the trailing slash
-# -------------------------------------------------
+# ---------------------------------------------------------------------
+# Full public path to the site, without the trailing slash
+# ---------------------------------------------------------------------
 
 host: http://localhost
 
-# -------------------------------------------------
-# Port the server should listen to (80 by default)
-# -------------------------------------------------
+# ---------------------------------------------------------------------
+# Port the main server should listen to (80 by default)
+# ---------------------------------------------------------------------
 # To use process.env.PORT, comment the line below:
 
 port: 80
 
-# -------------------------------------------------
+# ---------------------------------------------------------------------
+# Port the websocket server should listen to (8080 by default)
+# ---------------------------------------------------------------------
+# Make sure this port is opened in the firewall if applicable
+
+wsPort: 8080
+
+# ---------------------------------------------------------------------
 # Data Directories
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 
 datadir:
   repo: ./repo
   db: ./data
 
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 # Git Connection Info
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 
 git:
   url: https://github.com/Organization/Repo
@@ -52,24 +60,25 @@ git:
     privateKey: /etc/requarkswiki/keys/git.key
     sslVerify: true
 
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 # Secret key to use when encrypting sessions
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 # Use a long and unique random string (256-bit keys are perfect!)
 
 sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 
-# -------------------------------------------------
+# ---------------------------------------------------------------------
 # Administrator email
-# -------------------------------------------------
-# An account will be created using the email specified here.
-# The password is set to "admin123" by default. Change it immediately upon login!!!
+# ---------------------------------------------------------------------
+# An admin account will be created using the email specified here.
+# The password is set to "admin123" by default. Change it immediately
+# upon login!!!
 
 admin: admin@company.com
 
-# -------------------------------------------------
-# Site UI Language
-# -------------------------------------------------
+# ---------------------------------------------------------------------
+# Site Language
+# ---------------------------------------------------------------------
 # Possible values: en, fr
 
 lang: en

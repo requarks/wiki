@@ -160,7 +160,7 @@ module.exports = {
 
 				} else {
 
-					winston.info('[GIT] Repository is already in sync.');
+					winston.info('[GIT] Push skipped. Repository is already in sync.');
 
 				}
 

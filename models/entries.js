@@ -183,7 +183,7 @@ module.exports = {
 	 * @param      {String}  entryPath  The entry path
 	 * @return     {String}  Text-only version
 	 */
-	fetchTextVersion(entryPath) {
+	fetchIndexableVersion(entryPath) {
 
 		let self = this;
 
@@ -192,11 +192,13 @@ module.exports = {
 			parseMeta: true,
 			parseTree: false,
 			includeMarkdown: true,
-			includeParentInfo: false,
+			includeParentInfo: true,
 			cache: false
 		}).then((pageData) => {
 			return {
+				entryPath,
 				meta: pageData.meta,
+				parent: pageData.parent || {},
 				text: mark.removeMarkdown(pageData.markdown)
 			};
 		});

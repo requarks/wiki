@@ -1,34 +1,45 @@
 
-nav.nav.has-shadow.stickyscroll#header
-	.nav-left
-		block rootNavLeft
-			a.nav-item.is-brand(href='/')
-				img(src='/favicons/android-icon-96x96.png', alt='Wiki')
-			a.nav-item(href='/')
-				h1.title Wiki
-	.nav-center
-		block rootNavCenter
-			p.nav-item
-				input.input(type='text', placeholder='Search...', style= { 'max-width': '300px', width: '33vw' })
-	span.nav-toggle
-		span
-		span
-		span
-	.nav-right.nav-menu
-		block rootNavRight
-			i.nav-item#notifload
-			a.nav-item(href='/history/' + pageData.meta.path)
-				| History
-			a.nav-item(href='/source/' + pageData.meta.path)
-				| Source
-			span.nav-item
-				a.button(href='/edit/' + pageData.meta.path)
-					span.icon
-						i.fa.fa-edit
-					span Edit
-				a.button.is-primary.btn-create-prompt
-					span.icon
-						i.fa.fa-plus
-					span Create
+#header-container
+	nav.nav.has-shadow.stickyscroll#header
+		.nav-left
+			block rootNavLeft
+				a.nav-item.is-brand(href='/')
+					img(src='/favicons/android-icon-96x96.png', alt='Wiki')
+				a.nav-item(href='/')
+					h1.title Wiki
+		.nav-center
+			block rootNavCenter
+				p.nav-item
+					input.input(type='text', v-model='searchq', debounce='500' placeholder='Search...', style= { 'max-width': '300px', width: '33vw' })
+		span.nav-toggle
+			span
+			span
+			span
+		.nav-right.nav-menu
+			block rootNavRight
+				i.nav-item#notifload
+				a.nav-item(href='/history/' + pageData.meta.path)
+					| History
+				a.nav-item(href='/source/' + pageData.meta.path)
+					| Source
+				span.nav-item
+					a.button(href='/edit/' + pageData.meta.path)
+						span.icon
+							i.fa.fa-edit
+						span Edit
+					a.button.is-primary.btn-create-prompt
+						span.icon
+							i.fa.fa-plus
+						span Create
+
+	.box.searchresults
+		.menu
+			p.menu-label
+				| Search Results
+			ul.menu-list
+				li(v-for='sres in searchres')
+					a(href='#') {{ sres.document.title }}
+			p.menu-label
+				| Do you mean...?
 
 

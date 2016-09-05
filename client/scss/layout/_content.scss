@@ -1,4 +1,12 @@
 
+#page-type-view > section {
+	transition: background-color .5s ease;
+
+	&.blurred {
+		background-color: $grey-lighter;
+	}
+
+}
 
 .sd-menus {
 

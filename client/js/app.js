@@ -53,6 +53,32 @@ jQuery( document ).ready(function( $ ) {
 	}
 
 	// ====================================
+	// Establish WebSocket connection
+	// ====================================
+
+	var socket = io(ioHost);
+
+	var vueHeader = new Vue({
+		el: '#header-container',
+		data: {
+			searchq: '',
+			searchres: []
+		},
+		watch: {
+			searchq: (val, oldVal) => {
+				if(val.length >= 3) {
+					socket.emit('search', { terms: val }, (data) => {
+						vueHeader.$set('searchres', data);
+					});
+				}
+			}
+		},
+		methods: {
+			
+		}
+	});
+
+	// ====================================
 	// Pages logic
 	// ====================================
 

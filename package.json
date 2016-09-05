@@ -76,6 +76,7 @@
     "search-index": "^0.8.15",
     "serve-favicon": "^2.3.0",
     "simplemde": "^1.11.2",
+    "socket.io": "^1.4.8",
     "validator": "^5.5.0",
     "validator-as-promised": "^1.0.2",
     "winston": "^2.2.0"

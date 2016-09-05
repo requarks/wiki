@@ -19,6 +19,7 @@ var include = require("gulp-include");
  */
 var paths = {
 	scriptlibs: [
+		'./node_modules/socket.io-client/socket.io.js',
 		'./node_modules/jquery/dist/jquery.min.js',
 		'./node_modules/vue/dist/vue.min.js',
 		'./node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',

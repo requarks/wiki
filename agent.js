@@ -7,10 +7,35 @@
 global.ROOTPATH = __dirname;
 
 // ----------------------------------------
+// Load Winston
+// ----------------------------------------
+
+var _isDebug = process.env.NODE_ENV === 'development';
+
+global.winston = require('winston');
+winston.remove(winston.transports.Console)
+winston.add(winston.transports.Console, {
+  level: (_isDebug) ? 'info' : 'warn',
+  prettyPrint: true,
+  colorize: true,
+  silent: false,
+  timestamp: true
+});
+
+// ----------------------------------------
+// Fetch internal handshake key
+// ----------------------------------------
+
+if(!process.argv[2] || process.argv[2].length !== 40) {
+	winston.error('[WS] Illegal process start. Missing handshake key.');
+	process.exit(1);
+}
+global.WSInternalKey = process.argv[2];
+
+// ----------------------------------------
 // Load modules
 // ----------------------------------------
 
-global.winston = require('winston');
 winston.info('[AGENT] Background Agent is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
@@ -18,7 +43,6 @@ var appconfig = require('./models/config')('./config.yml');
 global.git = require('./models/git').init(appconfig);
 global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
-global.search = require('./models/search').init(appconfig);
 
 var _ = require('lodash');
 var moment = require('moment');
@@ -26,6 +50,8 @@ var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require("fs-extra"));
 var path = require('path');
 var cron = require('cron').CronJob;
+var wsClient = require('socket.io-client');
+global.ws = wsClient('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
 
 // ----------------------------------------
 // Start Cron
@@ -90,8 +116,11 @@ var job = new cron({
 								//-> Update search index
 
 								if(fileStatus !== 'active') {
-									return entries.fetchTextVersion(entryPath).then((content) => {
-										console.log(content);
+									return entries.fetchIndexableVersion(entryPath).then((content) => {
+										ws.emit('searchAdd', {
+											auth: WSInternalKey,
+											content
+										});
 									});
 								}
 
@@ -114,17 +143,34 @@ var job = new cron({
 		// ----------------------------------------
 
 		Promise.all(jobs).then(() => {
-			winston.info('[AGENT] All jobs completed successfully! Going to sleep for now... [' + moment().toISOString() + ']');
+			winston.info('[AGENT] All jobs completed successfully! Going to sleep for now...');
 		}).catch((err) => {
-			winston.error('[AGENT] One or more jobs have failed [' + moment().toISOString() + ']: ', err);
+			winston.error('[AGENT] One or more jobs have failed: ', err);
 		}).finally(() => {
 			jobIsBusy = false;
 		});
 
 	},
-	start: true,
+	start: false,
 	timeZone: 'UTC',
 	runOnInit: true
+});
+
+// ----------------------------------------
+// Connect to local WebSocket server
+// ----------------------------------------
+
+ws.on('connect', function () {
+	job.start();
+	winston.info('[AGENT] Background Agent started successfully! [RUNNING]');
+});
+
+ws.on('connect_error', function () {
+	winston.warn('[AGENT] Unable to connect to WebSocket server! Retrying...');
+});
+ws.on('reconnect_failed', function () {
+	winston.error('[AGENT] Failed to reconnect to WebSocket server too many times! Stopping agent...');
+	process.exit(1);
 });
 
 // ----------------------------------------
@@ -132,7 +178,7 @@ var job = new cron({
 // ----------------------------------------
 
 process.on('disconnect', () => {
-	winston.warn('[AGENT] Lost connection to main server. Exiting... [' + moment().toISOString() + ']');
+	winston.warn('[AGENT] Lost connection to main server. Exiting...');
 	job.stop();
 	process.exit();
 });

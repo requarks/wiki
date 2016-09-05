@@ -10,7 +10,18 @@ global.ROOTPATH = __dirname;
 // Load global modules
 // ----------------------------------------
 
+var _isDebug = process.env.NODE_ENV === 'development';
+
 global.winston = require('winston');
+winston.remove(winston.transports.Console)
+winston.add(winston.transports.Console, {
+  level: (_isDebug) ? 'info' : 'warn',
+  prettyPrint: true,
+  colorize: true,
+  silent: false,
+  timestamp: true
+});
+
 winston.info('[SERVER] Requarks Wiki is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
@@ -161,8 +172,6 @@ app.use(function(err, req, res, next) {
 // Start HTTP server
 // ----------------------------------------
 
-winston.info('[SERVER] Requarks Wiki has initialized successfully.');
-
 winston.info('[SERVER] Starting HTTP server on port ' + appconfig.port + '...');
 
 app.set('port', appconfig.port);
@@ -193,12 +202,17 @@ server.on('listening', () => {
 });
 
 // ----------------------------------------
-// Start Agents
+// Start child processes
 // ----------------------------------------
 
-var fork = require('child_process').fork;
-var bgAgent = fork('agent.js');
+var fork = require('child_process').fork,
+    libInternalAuth = require('./lib/internalAuth'),
+    internalAuthKey = libInternalAuth.generateKey();
+
+var wsSrv = fork('ws-server.js', [internalAuthKey]),
+    bgAgent = fork('agent.js', [internalAuthKey]);
 
 process.on('exit', (code) => {
+  wsSrv.disconnect();
   bgAgent.disconnect();
 });
