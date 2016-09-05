@@ -71,7 +71,7 @@ router.get('/create/*', (req, res, next) => {
 
 	entries.exists(safePath).then((docExists) => {
 		if(!docExists) {
-			entries.getStarter(safePath).then((contents) => {
+			return entries.getStarter(safePath).then((contents) => {
 
 				let pageData = {
 					markdown: contents,
@@ -80,7 +80,9 @@ router.get('/create/*', (req, res, next) => {
 						path: safePath
 					}
 				};
-				return res.render('pages/create', { pageData });
+				res.render('pages/create', { pageData });
+
+				return true;
 
 			}).catch((err) => {
 				throw new Error('Could not load starter content!');

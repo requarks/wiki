@@ -11,7 +11,7 @@
 			block rootNavCenter
 				.nav-item
 					p.control(v-bind:class="{ 'is-loading': searchload > 0 }")
-						input.input#search-input(type='text', v-model='searchq', @keyup.esc='closeSearch', @keyup.down='moveDownSearch', @keyup.up='moveUpSearch', debounce='400', placeholder='Search...')
+						input.input#search-input(type='text', v-model='searchq', @keyup.esc='closeSearch', @keyup.down='moveDownSearch', @keyup.up='moveUpSearch', @keyup.enter='moveSelectSearch', debounce='400', placeholder='Search...')
 		span.nav-toggle
 			span
 			span
@@ -46,6 +46,6 @@
 				| Did you mean...?
 			ul.menu-list(v-if='searchsuggest.length > 0')
 				li(v-for='sug in searchsuggest')
-					a(v-on:click="useSuggestion(sug)") {{ sug }}
+					a(v-on:click="useSuggestion(sug)", v-bind:class="{ 'is-active': searchmovekey === 'sug.' + sug }") {{ sug }}
 
 

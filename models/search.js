@@ -100,42 +100,62 @@ module.exports = {
 
 		let self = this;
 
-		return self._si.addAsync({
-			entryPath: content.entryPath,
-			title: content.meta.title,
-			subtitle: content.meta.subtitle || '',
-			parent: content.parent.title || '',
-			content: content.text || ''
-		}, {
-			fieldOptions: [{
-				fieldName: 'entryPath',
-				searchable: true,
-				weight: 2
-			},
-			{
-				fieldName: 'title',
-				nGramLength: [1, 2],
-				searchable: true,
-				weight: 3
-			},
-			{
-				fieldName: 'subtitle',
-				searchable: true,
-				weight: 1,
-				store: false
-			},
-			{
-				fieldName: 'subtitle',
-				searchable: false,
-			},
-			{
-				fieldName: 'content',
-				searchable: true,
-				weight: 0,
-				store: false
-			}]
+		return self._si.searchAsync({
+			query: {
+				AND: [{ 'entryPath': [content.entryPath] }]
+			}
+		}).then((results) => {
+
+			if(results.totalHits > 0) {
+				let delIds = _.map(results.hits, 'id');
+				return self._si.delAsync(delIds);
+			} else {
+				return true;
+			}
+
 		}).then(() => {
-			winston.info('Entry ' + content.entryPath + ' added to index.');
+
+			return self._si.addAsync({
+				entryPath: content.entryPath,
+				title: content.meta.title,
+				subtitle: content.meta.subtitle || '',
+				parent: content.parent.title || '',
+				content: content.text || ''
+			}, {
+				fieldOptions: [{
+					fieldName: 'entryPath',
+					searchable: true,
+					weight: 2
+				},
+				{
+					fieldName: 'title',
+					nGramLength: [1, 2],
+					searchable: true,
+					weight: 3
+				},
+				{
+					fieldName: 'subtitle',
+					searchable: true,
+					weight: 1,
+					store: false
+				},
+				{
+					fieldName: 'parent',
+					searchable: false,
+				},
+				{
+					fieldName: 'content',
+					searchable: true,
+					weight: 0,
+					store: false
+				}]
+			}).then(() => {
+				winston.info('Entry ' + content.entryPath + ' added/updated to index.');
+				return true;
+			}).catch((err) => {
+				winston.error(err);
+			});
+
 		}).catch((err) => {
 			winston.error(err);
 		});

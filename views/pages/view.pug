@@ -1,4 +1,4 @@
-extends ../layout
+extends ../layout.pug
 
 mixin tocMenu(ti)
 	each node in ti
@@ -61,4 +61,4 @@ block content
 						.content.mkcontent
 							!= pageData.html
 
-	include ../modals/create
+	include ../modals/create.pug

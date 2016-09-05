@@ -68,6 +68,7 @@ var job = new cron({
 			winston.warn('[AGENT] Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)');
 			return;
 		}
+		winston.info('[AGENT] Running all jobs...');
 		jobIsBusy = true;
 
 		// Prepare async job collector
@@ -87,6 +88,10 @@ var job = new cron({
 				//-> Stream all documents
 
 				let cacheJobs = [];
+				let jobCbStreamDocs_resolve = null,
+						jobCbStreamDocs = new Promise((resolve, reject) => {
+							jobCbStreamDocs_resolve = resolve;
+						});
 
 				fs.walk(repoPath).on('data', function (item) {
 					if(path.extname(item.path) === '.md') {
@@ -113,15 +118,10 @@ var job = new cron({
 
 							}).then((fileStatus) => {
 
-								//-> Update search index
+								//-> Update cache and search index
 
 								if(fileStatus !== 'active') {
-									return entries.fetchIndexableVersion(entryPath).then((content) => {
-										ws.emit('searchAdd', {
-											auth: WSInternalKey,
-											content
-										});
-									});
+									return entries.updateCache(entryPath);
 								}
 
 								return true;
@@ -131,9 +131,11 @@ var job = new cron({
 						);
 
 					}
+				}).on('end', () => {
+					jobCbStreamDocs_resolve(Promise.all(cacheJobs));
 				});
 
-				return Promise.all(cacheJobs);
+				return jobCbStreamDocs;
 
 			});
 		}));
@@ -143,7 +145,7 @@ var job = new cron({
 		// ----------------------------------------
 
 		Promise.all(jobs).then(() => {
-			winston.info('[AGENT] All jobs completed successfully! Going to sleep for now...');
+			winston.info('[AGENT] All jobs completed successfully! Going to sleep for now.');
 		}).catch((err) => {
 			winston.error('[AGENT] One or more jobs have failed: ', err);
 		}).finally(() => {
@@ -161,8 +163,8 @@ var job = new cron({
 // ----------------------------------------
 
 ws.on('connect', function () {
-	job.start();
 	winston.info('[AGENT] Background Agent started successfully! [RUNNING]');
+	job.start();
 });
 
 ws.on('connect_error', function () {

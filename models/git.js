@@ -195,7 +195,9 @@ module.exports = {
 			commitMsg = (isTracked) ? 'Updated ' + gitFilePath : 'Added ' + gitFilePath;
 			return self._git.add(gitFilePath);
 		}).then(() => {
-			return self._git.commit(commitMsg);
+			return self._git.commit(commitMsg).catch((err) => {
+			  if(_.includes(err.stdout, 'nothing to commit')) { return true; }
+			});
 		});
 
 	}

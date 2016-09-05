@@ -27,24 +27,32 @@ jQuery( document ).ready(function( $ ) {
 			},
 			watch: {
 				searchq: (val, oldVal) => {
-					searchmoveidx: 0;
+					vueHeader.searchmoveidx = 0;
 					if(val.length >= 3) {
 						vueHeader.searchactive = true;
 						vueHeader.searchload++;
 						socket.emit('search', { terms: val }, (data) => {
 							vueHeader.searchres = data.match;
 							vueHeader.searchsuggest = data.suggest;
+							vueHeader.searchmovearr = _.concat([], vueHeader.searchres, vueHeader.searchsuggest);
 							if(vueHeader.searchload > 0) { vueHeader.searchload--; }
 						});
 					} else {
 						vueHeader.searchactive = false;
 						vueHeader.searchres = [];
 						vueHeader.searchsuggest = [];
+						vueHeader.searchmovearr = [];
 						vueHeader.searchload = 0;
 					}
 				},
 				searchmoveidx: (val, oldVal) => {
-
+					if(val > 0) {
+						vueHeader.searchmovekey = (vueHeader.searchmovearr[val - 1].document) ?
+																				'res.' + vueHeader.searchmovearr[val - 1].document.entryPath :
+																				'sug.' + vueHeader.searchmovearr[val - 1];
+					} else {
+						vueHeader.searchmovekey = '';
+					}
 				}
 			},
 			methods: {
@@ -53,13 +61,20 @@ jQuery( document ).ready(function( $ ) {
 				},
 				closeSearch: () => {
 					vueHeader.searchq = '';
-					vueHeader.searchactive = false;
 				},
 				moveSelectSearch: () => {
+					if(vueHeader.searchmoveidx < 1) { return; }
+					let i = vueHeader.searchmoveidx - 1;
+
+					if(vueHeader.searchmovearr[i].document) {
+						window.location.assign('/' + vueHeader.searchmovearr[i].document.entryPath);
+					} else {
+						vueHeader.searchq = vueHeader.searchmovearr[i];
+					}
 
 				},
 				moveDownSearch: () => {
-					if(vueHeader.searchmoveidx < vueHeader.searchmovearr) {
+					if(vueHeader.searchmoveidx < vueHeader.searchmovearr.length) {
 						vueHeader.searchmoveidx++;
 					}
 				},

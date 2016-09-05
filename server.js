@@ -206,13 +206,32 @@ server.on('listening', () => {
 // ----------------------------------------
 
 var fork = require('child_process').fork,
-    libInternalAuth = require('./lib/internalAuth'),
-    internalAuthKey = libInternalAuth.generateKey();
+    libInternalAuth = require('./lib/internalAuth');
 
-var wsSrv = fork('ws-server.js', [internalAuthKey]),
-    bgAgent = fork('agent.js', [internalAuthKey]);
+global.WSInternalKey = libInternalAuth.generateKey();
+
+var wsSrv = fork('ws-server.js', [WSInternalKey]),
+    bgAgent = fork('agent.js', [WSInternalKey]);
 
 process.on('exit', (code) => {
   wsSrv.disconnect();
   bgAgent.disconnect();
+});
+
+// ----------------------------------------
+// Connect to local WebSocket server
+// ----------------------------------------
+
+var wsClient = require('socket.io-client');
+global.ws = wsClient('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
+
+ws.on('connect', function () {
+  winston.info('[SERVER] Connected to WebSocket server successfully!');
+});
+ws.on('connect_error', function () {
+  winston.warn('[SERVER] Unable to connect to WebSocket server! Retrying...');
+});
+ws.on('reconnect_failed', function () {
+  winston.error('[SERVER] Failed to reconnect to WebSocket server too many times! Stopping...');
+  process.exit(1);
 });

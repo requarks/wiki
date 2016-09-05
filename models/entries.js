@@ -156,7 +156,7 @@ module.exports = {
 						// Cache to disk
 
 						if(options.cache) {
-							let cacheData = BSON.serialize(pageData, false, false, false);
+							let cacheData = BSON.serialize(_.pick(pageData, ['html', 'meta', 'tree', 'parent']), false, false, false);
 							return fs.writeFileAsync(cpath, cacheData).catch((err) => {
 								winston.error('Unable to write to cache! Performance may be affected.');
 								return true;
@@ -173,34 +173,6 @@ module.exports = {
 			}
 		}).catch((err) => {
 			return Promise.reject(new Error('Entry ' + entryPath + ' does not exist!'));
-		});
-
-	},
-
-	/**
-	 * Fetches a text version of a Markdown-formatted document
-	 *
-	 * @param      {String}  entryPath  The entry path
-	 * @return     {String}  Text-only version
-	 */
-	fetchIndexableVersion(entryPath) {
-
-		let self = this;
-
-		return self.fetchOriginal(entryPath, {
-			parseMarkdown: false,
-			parseMeta: true,
-			parseTree: false,
-			includeMarkdown: true,
-			includeParentInfo: true,
-			cache: false
-		}).then((pageData) => {
-			return {
-				entryPath,
-				meta: pageData.meta,
-				parent: pageData.parent || {},
-				text: mark.removeMarkdown(pageData.markdown)
-			};
 		});
 
 	},
@@ -314,13 +286,48 @@ module.exports = {
 		return fs.statAsync(fpath).then((st) => {
 			if(st.isFile()) {
 				return self.makePersistent(entryPath, contents).then(() => {
-					return self.fetchOriginal(entryPath, {});
+					return self.updateCache(entryPath);
 				});
 			} else {
 				return Promise.reject(new Error('Entry does not exist!'));
 			}
 		}).catch((err) => {
-			return Promise.reject(new Error('Entry does not exist!'));
+			winston.error(err);
+			return Promise.reject(new Error('Failed to save document.'));
+		});
+
+	},
+
+	/**
+	 * Update local cache and search index
+	 *
+	 * @param      {String}   entryPath  The entry path
+	 * @return     {Promise}  Promise of the operation
+	 */
+	updateCache(entryPath) {
+
+		let self = this;
+
+		return self.fetchOriginal(entryPath, {
+			parseMarkdown: true,
+			parseMeta: true,
+			parseTree: true,
+			includeMarkdown: true,
+			includeParentInfo: true,
+			cache: true
+		}).then((pageData) => {
+			return {
+				entryPath,
+				meta: pageData.meta,
+				parent: pageData.parent || {},
+				text: mark.removeMarkdown(pageData.markdown)
+			};
+		}).then((content) => {
+			ws.emit('searchAdd', {
+				auth: WSInternalKey,
+				content
+			});
+			return true;
 		});
 
 	},
@@ -339,7 +346,7 @@ module.exports = {
 		return self.exists(entryPath).then((docExists) => {
 			if(!docExists) {
 				return self.makePersistent(entryPath, contents).then(() => {
-					return self.fetchOriginal(entryPath, {});
+					return self.updateCache(entryPath);
 				});
 			} else {
 				return Promise.reject(new Error('Entry already exists!'));
