@@ -50,16 +50,43 @@ module.exports = {
 							.toLower()
 							.trim()
 							.replace(/[^a-z0-9 ]/g, '')
-							.split(' ')
-							.filter((f) => { return !_.isEmpty(f); })
 							.value();
+
+		let arrTerms = _.chain(terms)
+										.split(' ')
+										.filter((f) => { return !_.isEmpty(f); })
+										.value();
+
 
 		return self._si.searchAsync({
 			query: {
-				AND: [{ '*': terms }]
+				AND: [{ '*': arrTerms }]
 			},
 			pageSize: 10
-		}).get('hits');
+		}).get('hits').then((hits) => {
+
+			if(hits.length < 5) {
+				return self._si.matchAsync({
+					beginsWith: terms,
+					threshold: 3,
+					limit: 5,
+					type: 'simple'
+				}).then((matches) => {
+
+					return {
+						match: hits,
+						suggest: matches
+					};
+
+				});
+			} else {
+				return {
+					match: hits,
+					suggest: []
+				};
+			}
+
+		});
 
 	},
 

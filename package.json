@@ -32,7 +32,7 @@
   "dependencies": {
     "auto-load": "^2.1.0",
     "bcryptjs-then": "^1.0.1",
-    "bluebird": "^3.4.5",
+    "bluebird": "^3.4.6",
     "body-parser": "^1.15.2",
     "bson": "^0.5.4",
     "cheerio": "^0.22.0",
@@ -48,7 +48,7 @@
     "express-brute-loki": "^1.0.0",
     "express-session": "^1.14.1",
     "express-validator": "^2.20.8",
-    "farmhash": "^1.2.0",
+    "farmhash": "^1.2.1",
     "fs-extra": "^0.30.0",
     "git-wrapper2-promise": "^0.2.9",
     "highlight.js": "^9.6.0",
@@ -77,7 +77,8 @@
     "serve-favicon": "^2.3.0",
     "simplemde": "^1.11.2",
     "socket.io": "^1.4.8",
-    "validator": "^5.5.0",
+    "sticky-js": "^1.0.7",
+    "validator": "^5.6.0",
     "validator-as-promised": "^1.0.2",
     "winston": "^2.2.0"
   },

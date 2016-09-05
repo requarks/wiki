@@ -58,25 +58,7 @@ jQuery( document ).ready(function( $ ) {
 
 	var socket = io(ioHost);
 
-	var vueHeader = new Vue({
-		el: '#header-container',
-		data: {
-			searchq: '',
-			searchres: []
-		},
-		watch: {
-			searchq: (val, oldVal) => {
-				if(val.length >= 3) {
-					socket.emit('search', { terms: val }, (data) => {
-						vueHeader.$set('searchres', data);
-					});
-				}
-			}
-		},
-		methods: {
-			
-		}
-	});
+	//=include components/search.js
 
 	// ====================================
 	// Pages logic
@@ -91,3 +73,5 @@ jQuery( document ).ready(function( $ ) {
 
 //=include helpers/form.js
 //=include helpers/pages.js
+
+//=include components/alerts.js

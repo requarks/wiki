@@ -31,7 +31,6 @@ var paths = {
 		'./node_modules/lodash/lodash.min.js'
 	],
 	scriptapps: [
-		'./client/js/components/*.js',
 		'./client/js/app.js'
 	],
 	scriptapps_watch: [

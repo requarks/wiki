@@ -27,6 +27,6 @@
 - [ ] Markdown Editor
 - [x] Navigation
 - [x] Parsing / Tree / Metadata
-- [ ] Search
+- [x] Search
 - [x] UI
 - [x] View Entry Source

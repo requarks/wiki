@@ -27,6 +27,11 @@ h2.nav-item {
 
 }
 
+#search-input {
+	max-width: 300px;
+	width: 33vw;
+}
+
 .searchresults {
 	position: fixed;
 	top: 45px;
@@ -35,5 +40,9 @@ h2.nav-item {
 	margin: 0 auto;
 	width: 500px;
 	z-index: 1;
-	//display: none;
+
+	&.slideInDown {
+		@include prefix(animation-duration, .6s);
+	}
+
 }

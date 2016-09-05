@@ -9,8 +9,9 @@
 					h1.title Wiki
 		.nav-center
 			block rootNavCenter
-				p.nav-item
-					input.input(type='text', v-model='searchq', debounce='500' placeholder='Search...', style= { 'max-width': '300px', width: '33vw' })
+				.nav-item
+					p.control(v-bind:class="{ 'is-loading': searchload > 0 }")
+						input.input#search-input(type='text', v-model='searchq', @keyup.esc='closeSearch', @keyup.down='moveDownSearch', @keyup.up='moveUpSearch', debounce='400', placeholder='Search...')
 		span.nav-toggle
 			span
 			span
@@ -32,14 +33,19 @@
 							i.fa.fa-plus
 						span Create
 
-	.box.searchresults
+	.box.searchresults.animated(v-show='searchactive', transition='slide', v-cloak, style={'display':'none'})
 		.menu
 			p.menu-label
 				| Search Results
 			ul.menu-list
+				li(v-if="searchres.length === 0")
+					a: em No results matching your query
 				li(v-for='sres in searchres')
-					a(href='#') {{ sres.document.title }}
-			p.menu-label
-				| Do you mean...?
+					a(href='/{{ sres.document.entryPath }}', v-bind:class="{ 'is-active': searchmovekey === 'res.' + sres.document.entryPath }") {{ sres.document.title }}
+			p.menu-label(v-if='searchsuggest.length > 0')
+				| Did you mean...?
+			ul.menu-list(v-if='searchsuggest.length > 0')
+				li(v-for='sug in searchsuggest')
+					a(v-on:click="useSuggestion(sug)") {{ sug }}
 
 
