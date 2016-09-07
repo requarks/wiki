@@ -86,6 +86,17 @@ module.exports = {
 				};
 			}
 
+		}).catch((err) => {
+
+			if(err.type === 'NotFoundError') {
+				return {
+					match: [],
+					suggest: []
+				};
+			} else {
+				winston.error(err);
+			}
+
 		});
 
 	},
@@ -111,6 +122,14 @@ module.exports = {
 				return self._si.delAsync(delIds);
 			} else {
 				return true;
+			}
+
+		}).catch((err) => {
+
+			if(err.type === 'NotFoundError') {
+				return true;
+			} else {
+				winston.error(err);
 			}
 
 		}).then(() => {
