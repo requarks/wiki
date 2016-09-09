@@ -1,4 +1,12 @@
 failThreshold: high
-version: v1.5.2
+version: v1.5.0
 ignore: {}
-patch: {}
+patch:
+  'npm:negotiator:20160616':
+    - socket.io > engine.io > accepts > negotiator:
+        patched: '2016-09-09T02:19:31.082Z'
+  'npm:ws:20160624':
+    - socket.io > engine.io > ws:
+        patched: '2016-09-09T02:19:31.082Z'
+    - socket.io > socket.io-client > engine.io-client > ws:
+        patched: '2016-09-09T02:19:31.082Z'

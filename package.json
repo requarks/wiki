@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server",
     "dev": "gulp",
-    "test": "snyk test && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./tests/index.js && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage"
+    "test": "snyk test && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./tests/index.js && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -80,7 +82,8 @@
     "sticky-js": "^1.0.7",
     "validator": "^5.6.0",
     "validator-as-promised": "^1.0.2",
-    "winston": "^2.2.0"
+    "winston": "^2.2.0",
+    "snyk": "^1.19.1"
   },
   "devDependencies": {
     "ace-builds": "^1.2.5",
@@ -109,9 +112,9 @@
     "mocha": "^3.0.2",
     "mocha-lcov-reporter": "^1.2.0",
     "nodemon": "^1.10.2",
-    "snyk": "^1.19.1",
     "sticky-js": "^1.0.5",
     "twemoji-awesome": "^1.0.4",
     "vue": "^1.0.26"
-  }
+  },
+  "snyk": true
 }
