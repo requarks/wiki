@@ -127,6 +127,10 @@ p code {
 		background-color: $red;
 	}
 
+	&.is-info {
+		background-color: $purple;
+	}
+
 }
 
 .card-header-title {

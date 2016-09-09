@@ -1,0 +1,18 @@
+
+.modal#modal-move-prompt
+	.modal-background
+	.modal-container
+		.modal-content
+			.card.is-fullwidth
+				header.card-header.is-info
+					p.card-header-title Move document
+				.card-content
+					.content
+						label.label Enter the new document path:
+						p.control
+							input.input(type='text', placeholder='page-name')#txt-move-prompt
+							span.help.is-danger.is-hidden This document path is invalid or not allowed!
+						span Note that moving or renaming documents can lead to broken links. Make sure to edit any page that links to this document afterwards!
+				footer.card-footer
+					a.card-footer-item.btn-move-prompt Discard
+					a.card-footer-item.btn-move-go Move

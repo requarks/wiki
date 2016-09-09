@@ -174,4 +174,33 @@ router.get('/*', (req, res, next) => {
 
 });
 
+/**
+ * Move document
+ */
+router.put('/*', (req, res, next) => {
+
+	let safePath = entries.parsePath(req.path);
+
+	if(_.isEmpty(req.body.move)) {
+		return res.json({
+			ok: false,
+			error: 'Invalid document action call.'
+		});
+	}
+
+	let safeNewPath = entries.parsePath(req.body.move);
+
+	entries.move(safePath, safeNewPath).then(() => {
+		res.json({
+			ok: true
+		});
+	}).catch((err) => {
+		res.json({
+			ok: false,
+			error: err.message
+		});
+	});
+
+});
+
 module.exports = router;

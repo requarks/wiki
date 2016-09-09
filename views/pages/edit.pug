@@ -5,10 +5,6 @@ block rootNavCenter
 
 block rootNavRight
 	i.nav-item#notifload
-	a.nav-item(href='/history/' + pageData.meta.path, target='_blank')
-		| History
-	a.nav-item(href='/source/' + pageData.meta.path, target='_blank')
-		| Source
 	span.nav-item
 		a.button.is-warning.btn-edit-discard
 			span.icon
@@ -25,3 +21,4 @@ block content
 		textarea#mk-editor= pageData.markdown
 
 	include ../modals/edit.pug
+	include ../modals/move.pug

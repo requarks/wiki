@@ -19,19 +19,6 @@
 		.nav-right.nav-menu
 			block rootNavRight
 				i.nav-item#notifload
-				a.nav-item(href='/history/' + pageData.meta.path)
-					| History
-				a.nav-item(href='/source/' + pageData.meta.path)
-					| Source
-				span.nav-item
-					a.button(href='/edit/' + pageData.meta.path)
-						span.icon
-							i.fa.fa-edit
-						span Edit
-					a.button.is-primary.btn-create-prompt
-						span.icon
-							i.fa.fa-plus
-						span Create
 
 	.box.searchresults.animated(v-show='searchactive', transition='slide', v-cloak, style={'display':'none'})
 		.menu

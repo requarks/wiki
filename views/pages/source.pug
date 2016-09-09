@@ -1,9 +1,29 @@
 extends ../layout.pug
 
+block rootNavCenter
+	h2.nav-item= pageData.meta.title
+
+block rootNavRight
+	i.nav-item#notifload
+	a.nav-item.btn-move-prompt.is-hidden
+		| Move
+	a.nav-item(href='/' + pageData.meta.path)
+		| Normal View
+	span.nav-item
+		a.button(href='/edit/' + pageData.meta.path)
+			span.icon
+				i.fa.fa-edit
+			span Edit
+		a.button.is-primary.btn-create-prompt
+			span.icon
+				i.fa.fa-plus
+			span Create
+
 block content
 
 	#page-type-source(data-entrypath=pageData.meta.path)
 		.ace-container
 			#source-display= pageData.markdown
 
-	include ../modals/create
+	include ../modals/create.pug
+	include ../modals/move.pug

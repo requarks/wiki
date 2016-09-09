@@ -376,7 +376,24 @@ module.exports = {
 
 	},
 
+	/**
+	 * Move a document
+	 *
+	 * @param      {String}   entryPath     The current entry path
+	 * @param      {String}   newEntryPath  The new entry path
+	 * @return     {Promise}  Promise of the operation
+	 */
+	move(entryPath, newEntryPath) {
 
+		let self = this;
+
+		return git.moveDocument(entryPath, newEntryPath).then(() => {
+			return git.commitDocument(newEntryPath).then(() => {
+				return self.updateCache(newEntryPath);
+			});
+		});
+
+	},
 
 	/**
 	 * Generate a starter page content based on the entry path

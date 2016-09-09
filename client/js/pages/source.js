@@ -7,4 +7,9 @@ if($('#page-type-source').length) {
   scEditor.setReadOnly(true);
   scEditor.renderer.updateFull();
 
+  let currentBasePath = ($('#page-type-source').data('entrypath') !== 'home') ? $('#page-type-source').data('entrypath') : '';
+
+  //=include ../modals/create.js
+	//=include ../modals/move.js
+
 }

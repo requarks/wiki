@@ -23,8 +23,8 @@
 - [x] Create Entry
 - [x] Edit Entry
 - [x] Git Management
-- [ ] History Management
 - [ ] Markdown Editor
+- [x] Move Entry
 - [x] Navigation
 - [x] Parsing / Tree / Metadata
 - [x] Search

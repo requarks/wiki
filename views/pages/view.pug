@@ -10,8 +10,8 @@ mixin tocMenu(ti)
 
 block rootNavRight
 	i.nav-item#notifload
-	a.nav-item(href='/history/' + pageData.meta.path)
-		| History
+	a.nav-item.btn-move-prompt.is-hidden
+		| Move
 	a.nav-item(href='/source/' + pageData.meta.path)
 		| Source
 	span.nav-item
@@ -62,3 +62,4 @@ block content
 							!= pageData.html
 
 	include ../modals/create.pug
+	include ../modals/move.pug

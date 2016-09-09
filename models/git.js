@@ -200,6 +200,30 @@ module.exports = {
 			});
 		});
 
+	},
+
+	/**
+	 * Move a document.
+	 *
+	 * @param      {String}            entryPath     The current entry path
+	 * @param      {String}            newEntryPath  The new entry path
+	 * @return     {Promise<Boolean>}  Resolve on success
+	 */
+	moveDocument(entryPath, newEntryPath) {
+
+		let self = this;
+		let gitFilePath = entryPath + '.md';
+		let gitNewFilePath = newEntryPath + '.md';
+
+		return self._git.exec('mv', [gitFilePath, gitNewFilePath]).then((cProc) => {
+			let out = cProc.stdout.toString();
+			if(_.includes(out, 'fatal')) {
+				let errorMsg = _.capitalize(_.head(_.split(_.replace(out, 'fatal: ', ''), ',')));
+				throw new Error(errorMsg);
+			}
+			return true;
+		})
+
 	}
 
 };
