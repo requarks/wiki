@@ -20,16 +20,4 @@ block content
 	#page-type-create(data-entrypath=pageData.meta.path)
 		textarea#mk-editor= pageData.markdown
 
-	.modal#modal-create-discard
-		.modal-background
-		.modal-container
-			.modal-content
-				.card.is-fullwidth
-					header.card-header.is-warning
-						p.card-header-title Discard?
-					.card-content
-						.content
-							| Are you sure you want to leave this page and loose anything you wrote so far?
-					footer.card-footer
-						a.card-footer-item.btn-create-discard Stay on page
-						a.card-footer-item(href='/') Discard
+	include ../modals/create-discard.pug

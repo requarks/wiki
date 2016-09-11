@@ -8,7 +8,7 @@ jQuery( document ).ready(function( $ ) {
 
 	$('a').smoothScroll({
 		speed: 400,
-		offset: -20
+		offset: -70
 	});
 
 	var sticky = new Sticky('.stickyscroll');
@@ -31,25 +31,6 @@ jQuery( document ).ready(function( $ ) {
 		_.forEach(alertsData, (alertRow) => {
 			alerts.push(alertRow);
 		});
-	}
-
-	// ====================================
-	// Markdown Editor
-	// ====================================
-
-	if($('#mk-editor').length === 1) {
-
-		var mde = new SimpleMDE({
-			autofocus: true,
-			autoDownloadFontAwesome: false,
-			element: $("#mk-editor").get(0),
-			hideIcons: ['heading', 'quote'],
-			placeholder: 'Enter Markdown formatted content here...',
-			showIcons: ['strikethrough', 'heading-1', 'heading-2', 'heading-3', 'code', 'table', 'horizontal-rule'],
-			spellChecker: false,
-			status: false
-		});
-
 	}
 
 	// ====================================

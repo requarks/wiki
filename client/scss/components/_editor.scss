@@ -1,14 +1,34 @@
 
 .editor-toolbar {
 	z-index: 2;
-	background-color: #FFF;
+	background-color: rgba(0,0,0,0.65);
 	border: none;
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
-	opacity: 0.9;
+	opacity: 1;
+	position: fixed;
+	top: 52px;
+	left: 0;
+	width: 100%;
 
 	&:hover {
 		opacity: 1;
+	}
+
+	a {
+		color: #FFF !important;
+
+		&.active, &:hover {
+			background-color: rgba(0,0,0,0.5);
+			border-color: #888;
+		}
+
+	}
+
+	i.separator {
+		margin-top: 5px;
+		border-left-color: #000;
+		border-right-color: #AAA;
 	}
 
 }
@@ -16,10 +36,26 @@
 .CodeMirror {
 	border-left: none;
 	border-right: none;
+	padding-top: 52px;
 }
 
-.editor-toolbar i.separator {
-	margin-top: 5px;
+.CodeMirror .CodeMirror-code .cm-url {
+	color: #00ACC1;
+}
+.CodeMirror .CodeMirror-code .cm-header-1 {
+	color: #635c8c;
+	font-size: 2em;
+	font-weight: 400;
+}
+.CodeMirror .CodeMirror-code .cm-header-2 {
+	color: #222324;
+	font-size: 1.75em;
+	font-weight: 300;
+}
+.CodeMirror .CodeMirror-code .cm-header-3 {
+	color: #222324;
+	font-size: 1.5em;
+	font-weight: 300;
 }
 
 .editor-toolbar .fa {
@@ -28,13 +64,43 @@
 
 .ace-container {
 	position: relative;
+}
+
+#page-type-source .ace-container {
 	min-height: 95vh;
 }
 
-#source-display {
+#modal-editor-codeblock .ace-container {
+	height: 400px;
+}
+
+#source-display, #codeblock-editor {
 	position: absolute;
 	top: 0;
 	left: 0;
 	bottom: 0;
 	right: 0;
+}
+
+.modallayer {
+	position: fixed;
+	top: 100px;
+	width: 100%;
+	background-color: rgba(255,255,255,0.95);
+	border-bottom: 1px solid $grey-light;
+	z-index: 6;
+	padding: 20px;
+	border-bottom: 1px solid #CCC;
+	box-shadow: 0 2px 3px rgba(17,17,17,.1);
+	display: none;
+
+	> h3, .column > h3 {
+		color: $grey-dark;
+		font-size: 24px;
+		font-weight: 300;
+	}
+
+}
+
+.modallayer-content {
 }

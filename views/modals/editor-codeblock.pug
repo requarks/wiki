@@ -1,0 +1,20 @@
+
+.modallayer#modal-editor-codeblock
+	.modallayer-content
+		
+		.columns
+			.column
+				h3 Code Block
+			.column.is-narrow
+				p.control
+					span.select
+						select(style={width: '300px'})
+							option Plain text
+							option C#
+			.column.is-narrow
+				a.button.is-warning.is-outlined Cancel
+			.column.is-narrow
+				a.button.is-primary.is-outlined Insert Code Block
+
+		.ace-container(style={'border-radius':'5px'})
+			#codeblock-editor

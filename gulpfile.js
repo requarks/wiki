@@ -26,9 +26,14 @@ var paths = {
 		'./node_modules/sticky-js/dist/sticky.min.js',
 		'./node_modules/simplemde/dist/simplemde.min.js',
 		'./node_modules/ace-builds/src-min-noconflict/ace.js',
+		'./node_modules/ace-builds/src-min-noconflict/ext-modelist.js',
 		'./node_modules/ace-builds/src-min-noconflict/mode-markdown.js',
 		'./node_modules/ace-builds/src-min-noconflict/theme-tomorrow_night.js',
 		'./node_modules/lodash/lodash.min.js'
+	],
+	scriptlibs_acemodes: [
+		'./node_modules/ace-builds/src-min-noconflict/mode-*.js',
+		'!./node_modules/ace-builds/src-min-noconflict/mode-markdown.js'
 	],
 	scriptapps: [
 		'./client/js/app.js'
@@ -92,12 +97,19 @@ gulp.task("scripts", ['scripts-libs', 'scripts-app']);
  */
 gulp.task("scripts-libs", function () {
 
-	return gulp.src(paths.scriptlibs)
-	.pipe(plumber())
-	.pipe(concat('libs.js'))
-	.pipe(uglify({ mangle: false }))
-	.pipe(plumber.stop())
-	.pipe(gulp.dest("./assets/js"));
+	return merge(
+
+		gulp.src(paths.scriptlibs)
+		.pipe(plumber())
+		.pipe(concat('libs.js'))
+		.pipe(uglify({ mangle: false }))
+		.pipe(plumber.stop())
+		.pipe(gulp.dest("./assets/js")),
+
+		gulp.src(paths.scriptlibs_acemodes)
+		.pipe(gulp.dest("./assets/js/ace"))
+
+	);
 
 });
 

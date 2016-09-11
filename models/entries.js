@@ -387,9 +387,29 @@ module.exports = {
 
 		let self = this;
 
+		if(_.isEmpty(entryPath) || entryPath === 'home') {
+			return Promise.reject(new Error('Invalid path!'));
+		}
+
 		return git.moveDocument(entryPath, newEntryPath).then(() => {
 			return git.commitDocument(newEntryPath).then(() => {
+
+				// Delete old cache version
+
+				let oldEntryCachePath = self.getCachePath(entryPath);
+				fs.unlinkAsync(oldEntryCachePath).catch((err) => { return true; });
+
+				// Delete old index entry
+
+				ws.emit('searchDel', {
+					auth: WSInternalKey,
+					entryPath
+				});
+
+				// Create cache for new entry
+
 				return self.updateCache(newEntryPath);
+
 			});
 		});
 

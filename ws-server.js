@@ -110,11 +110,17 @@ io.on('connection', (socket) => {
 		}
 	});
 
+  socket.on('searchDel', (data, cb) => {
+    if(internalAuth.validateKey(data.auth)) {
+      search.delete(data.entryPath);
+    }
+  });
+
 	socket.on('search', (data, cb) => {
 		search.find(data.terms).then((results) => {
 			cb(results);
 		});
-	})
+	});
 
 });
 

@@ -78,12 +78,12 @@
     "search-index": "^0.8.15",
     "serve-favicon": "^2.3.0",
     "simplemde": "^1.11.2",
+    "snyk": "^1.19.1",
     "socket.io": "^1.4.8",
     "sticky-js": "^1.0.7",
     "validator": "^5.6.0",
     "validator-as-promised": "^1.0.2",
-    "winston": "^2.2.0",
-    "snyk": "^1.19.1"
+    "winston": "^2.2.0"
   },
   "devDependencies": {
     "ace-builds": "^1.2.5",
@@ -112,6 +112,7 @@
     "mocha": "^3.0.2",
     "mocha-lcov-reporter": "^1.2.0",
     "nodemon": "^1.10.2",
+    "requirejs": "^2.3.1",
     "sticky-js": "^1.0.5",
     "twemoji-awesome": "^1.0.4",
     "vue": "^1.0.26"

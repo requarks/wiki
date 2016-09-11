@@ -111,28 +111,7 @@ module.exports = {
 
 		let self = this;
 
-		return self._si.searchAsync({
-			query: {
-				AND: [{ 'entryPath': [content.entryPath] }]
-			}
-		}).then((results) => {
-
-			if(results.totalHits > 0) {
-				let delIds = _.map(results.hits, 'id');
-				return self._si.delAsync(delIds);
-			} else {
-				return true;
-			}
-
-		}).catch((err) => {
-
-			if(err.type === 'NotFoundError') {
-				return true;
-			} else {
-				winston.error(err);
-			}
-
-		}).then(() => {
+		return self.delete(content.entryPath).then(() => {
 
 			return self._si.addAsync({
 				entryPath: content.entryPath,
@@ -177,6 +156,41 @@ module.exports = {
 
 		}).catch((err) => {
 			winston.error(err);
+		});
+
+	},
+
+	/**
+	 * Delete an entry from the index
+	 *
+	 * @param      {String}   The     entry path
+	 * @return     {Promise}  Promise of the operation
+	 */
+	delete(entryPath) {
+
+		let self = this;
+
+		return self._si.searchAsync({
+			query: {
+				AND: [{ 'entryPath': [entryPath] }]
+			}
+		}).then((results) => {
+
+			if(results.totalHits > 0) {
+				let delIds = _.map(results.hits, 'id');
+				return self._si.delAsync(delIds);
+			} else {
+				return true;
+			}
+
+		}).catch((err) => {
+
+			if(err.type === 'NotFoundError') {
+				return true;
+			} else {
+				winston.error(err);
+			}
+
 		});
 
 	}
