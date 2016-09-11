@@ -100,10 +100,8 @@ gulp.task("scripts-libs", function () {
 	return merge(
 
 		gulp.src(paths.scriptlibs)
-		.pipe(plumber())
 		.pipe(concat('libs.js'))
 		.pipe(uglify({ mangle: false }))
-		.pipe(plumber.stop())
 		.pipe(gulp.dest("./assets/js")),
 
 		gulp.src(paths.scriptlibs_acemodes)

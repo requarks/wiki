@@ -112,7 +112,6 @@
     "mocha": "^3.0.2",
     "mocha-lcov-reporter": "^1.2.0",
     "nodemon": "^1.10.2",
-    "requirejs": "^2.3.1",
     "sticky-js": "^1.0.5",
     "twemoji-awesome": "^1.0.4",
     "vue": "^1.0.26"

@@ -8,9 +8,8 @@
 			.column.is-narrow
 				p.control
 					span.select
-						select(style={width: '300px'})
-							option Plain text
-							option C#
+						select(style={width: '300px'}, v-model='modeSelected')
+							option(v-for="mode in modes" v-bind:value='mode.name') {{ mode.caption }}
 			.column.is-narrow
 				a.button.is-warning.is-outlined Cancel
 			.column.is-narrow

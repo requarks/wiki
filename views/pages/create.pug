@@ -18,6 +18,7 @@ block rootNavRight
 block content
 
 	#page-type-create(data-entrypath=pageData.meta.path)
-		textarea#mk-editor= pageData.markdown
+		.editor-area
+			textarea#mk-editor= pageData.markdown
 
 	include ../modals/create-discard.pug

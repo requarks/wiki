@@ -5,15 +5,30 @@
 
 if($('#mk-editor').length === 1) {
 
-	require.config({paths: { "ace" : "/assets/js/ace"}});
+	let codeEditor = ace.edit("codeblock-editor");
+	codeEditor.setTheme("ace/theme/tomorrow_night");
+	codeEditor.getSession().setMode("ace/mode/markdown");
+	codeEditor.setOption('fontSize', '14px');
+	codeEditor.setOption('hScrollBarAlwaysVisible', false);
+	codeEditor.setOption('wrap', true);
 
-	let scEditor = ace.edit("codeblock-editor");
-	scEditor.setTheme("ace/theme/tomorrow_night");
-	scEditor.getSession().setMode("ace/mode/markdown");
-	scEditor.setOption('hScrollBarAlwaysVisible', false);
-	scEditor.setOption('wrap', true);
+	let modelist = ace.require("ace/ext/modelist");
 
-	var modelist = ace.require("ace/ext/modelist");
+	let vueCodeBlock = new Vue({
+		el: '#modal-editor-codeblock',
+		data: {
+			modes: modelist.modesByName,
+			modeSelected: 'text'
+		},
+		watch: {
+			modeSelected: (val, oldVal) => {
+				loadAceMode(val).done(() => {
+					ace.require("ace/mode/" + val);
+					codeEditor.getSession().setMode("ace/mode/" + val);
+				});
+			}
+		}
+	});
 
 	var mde = new SimpleMDE({
 		autofocus: true,
@@ -115,8 +130,8 @@ if($('#mk-editor').length === 1) {
 				name: "code-block",
 				action: (editor) => {
 					$('#modal-editor-codeblock').slideDown(400, () => {
-						scEditor.resize();
-						scEditor.focus();
+						codeEditor.resize();
+						codeEditor.focus();
 					});
 				},
 				className: "fa fa-code",
@@ -167,3 +182,22 @@ $('.btn-edit-save').on('click', (ev) => {
 	});
 
 });
+
+// ACE - Mode Loader
+
+let modelistLoaded = [];
+let loadAceMode = (m) => {
+	return $.ajax({
+		url: '/js/ace/mode-' + m + '.js',
+		dataType: "script",
+		cache: true,
+		beforeSend: () => {
+			if(_.includes(modelistLoaded, m)) {
+				return false;
+			}
+		},
+		success: () => {
+			modelistLoaded.push(m);
+		}
+	});
+}
