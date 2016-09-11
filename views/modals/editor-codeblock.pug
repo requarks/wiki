@@ -11,9 +11,9 @@
 						select(style={width: '300px'}, v-model='modeSelected')
 							option(v-for="mode in modes" v-bind:value='mode.name') {{ mode.caption }}
 			.column.is-narrow
-				a.button.is-warning.is-outlined Cancel
+				a.button.is-warning.is-outlined(v-on:click="cancel") Cancel
 			.column.is-narrow
-				a.button.is-primary.is-outlined Insert Code Block
+				a.button.is-primary.is-outlined(v-on:click="insertCode") Insert Code Block
 
 		.ace-container(style={'border-radius':'5px'})
 			#codeblock-editor

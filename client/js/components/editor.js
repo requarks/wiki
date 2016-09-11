@@ -5,30 +5,10 @@
 
 if($('#mk-editor').length === 1) {
 
-	let codeEditor = ace.edit("codeblock-editor");
-	codeEditor.setTheme("ace/theme/tomorrow_night");
-	codeEditor.getSession().setMode("ace/mode/markdown");
-	codeEditor.setOption('fontSize', '14px');
-	codeEditor.setOption('hScrollBarAlwaysVisible', false);
-	codeEditor.setOption('wrap', true);
+	let mdeModalOpenState = false;
+	let mdeCurrentEditor = null;
 
-	let modelist = ace.require("ace/ext/modelist");
-
-	let vueCodeBlock = new Vue({
-		el: '#modal-editor-codeblock',
-		data: {
-			modes: modelist.modesByName,
-			modeSelected: 'text'
-		},
-		watch: {
-			modeSelected: (val, oldVal) => {
-				loadAceMode(val).done(() => {
-					ace.require("ace/mode/" + val);
-					codeEditor.getSession().setMode("ace/mode/" + val);
-				});
-			}
-		}
-	});
+	//=include editor-codeblock.js
 
 	var mde = new SimpleMDE({
 		autofocus: true,
@@ -97,7 +77,10 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "link",
 				action: (editor) => {
-					$('#modal-editor-link').slideToggle();
+					if(!mdeModalOpenState) {
+						mdeModalOpenState = true;
+						$('#modal-editor-link').slideToggle();
+					}
 				},
 				className: "fa fa-link",
 				title: "Insert Link",
@@ -114,6 +97,7 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "inline-code",
 				action: (editor) => {
+
 					if(!editor.codemirror.doc.somethingSelected()) {
 						return alerts.pushError('Invalid selection','You must select at least 1 character first.');
 					}
@@ -122,6 +106,7 @@ if($('#mk-editor').length === 1) {
 						return '`' + s + '`';
 					});
 					editor.codemirror.doc.replaceSelections(curSel);
+					
 				},
 				className: "fa fa-terminal",
 				title: "Inline Code",
@@ -129,10 +114,21 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "code-block",
 				action: (editor) => {
-					$('#modal-editor-codeblock').slideDown(400, () => {
-						codeEditor.resize();
-						codeEditor.focus();
-					});
+					if(!mdeModalOpenState) {
+						mdeModalOpenState = true;
+
+						if(mde.codemirror.doc.somethingSelected()) {
+							codeEditor.setValue(mde.codemirror.doc.getSelection());
+						} else {
+							codeEditor.setValue('');
+						}
+
+						$('#modal-editor-codeblock').slideDown(400, () => {
+							codeEditor.resize();
+							codeEditor.focus();
+						});
+
+					}
 				},
 				className: "fa fa-code",
 				title: "Code Block",
@@ -182,22 +178,3 @@ $('.btn-edit-save').on('click', (ev) => {
 	});
 
 });
-
-// ACE - Mode Loader
-
-let modelistLoaded = [];
-let loadAceMode = (m) => {
-	return $.ajax({
-		url: '/js/ace/mode-' + m + '.js',
-		dataType: "script",
-		cache: true,
-		beforeSend: () => {
-			if(_.includes(modelistLoaded, m)) {
-				return false;
-			}
-		},
-		success: () => {
-			modelistLoaded.push(m);
-		}
-	});
-}
