@@ -60,20 +60,15 @@ var paths = {
 		'!./node_modules/font-awesome/fonts/*-webfont.svg'
 	],
 	deploypackage: [
-		'./assets/**/*',
-		'./client/content/**/*',
-		'./controllers/**/*',
-		'./lib/**/*',
-		'./locales/**/*',
-		'./middlewares/**/*',
-		'./models/**/*',
-		'./views/**/*',
-		'./LICENSE',
-		'./agent.js',
-		'./config.sample.yml',
-		'./package.json',
-		'./server.js',
-		'./ws-server.js'
+		'./**/*',
+		'!node_modules', '!node_modules/**',
+		'!coverage', '!coverage/**',
+		'!client/js', '!client/js/**',
+		'!client/scss', '!client/scss/**',
+		'!dist', '!dist/**',
+		'!tests', '!tests/**',
+		'!.babelrc', '!.gitattributes', '!.gitignore', '!.snyk', '!.travis.yml',
+		'!gulpfile.js', '!inch.json', '!config.yml', '!wiki.sublime-project'
 	]
 };
 
