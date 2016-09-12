@@ -63,15 +63,17 @@ var paths = {
 		'./assets/**/*',
 		'./client/content/**/*',
 		'./controllers/**/*',
+		'./lib/**/*',
 		'./locales/**/*',
 		'./middlewares/**/*',
 		'./models/**/*',
 		'./views/**/*',
 		'./LICENSE',
 		'./agent.js',
-		'./server.js',
-		'./package.json',
 		'./config.sample.yml'
+		'./package.json',
+		'./server.js',
+		'./ws-server.js',
 	]
 };
 
