@@ -70,10 +70,10 @@ var paths = {
 		'./views/**/*',
 		'./LICENSE',
 		'./agent.js',
-		'./config.sample.yml'
+		'./config.sample.yml',
 		'./package.json',
 		'./server.js',
-		'./ws-server.js',
+		'./ws-server.js'
 	]
 };
 
