@@ -33,6 +33,6 @@ deploy:
   overwrite: true
   on:
     branch: master
-    repo: requarks/wiki
+    repo: Requarks/wiki
     tags: true
     node: '6'
