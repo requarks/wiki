@@ -32,7 +32,7 @@ let vueCodeBlock = new Vue({
 			if(mde.codemirror.doc.somethingSelected()) {
 				mde.codemirror.execCommand('singleSelection');
 			}
-			let codeBlockText = '```' + vueCodeBlock.modeSelected + '\n' + codeEditor.getValue() + '\n```';
+			let codeBlockText = '\n```' + vueCodeBlock.modeSelected + '\n' + codeEditor.getValue() + '\n```\n';
 
 			mde.codemirror.doc.replaceSelection(codeBlockText);
 			vueCodeBlock.cancel();

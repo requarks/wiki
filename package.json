@@ -77,6 +77,7 @@
     "remove-markdown": "^0.1.0",
     "search-index": "^0.8.15",
     "serve-favicon": "^2.3.0",
+    "sharp": "^0.16.0",
     "simplemde": "^1.11.2",
     "snyk": "^1.19.1",
     "socket.io": "^1.4.8",

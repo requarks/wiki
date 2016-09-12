@@ -1,0 +1,35 @@
+
+.modallayer#modal-editor-image
+	.modallayer-content
+		
+		.columns
+			.column
+				h3 Image
+			.column.is-narrow
+				.control.is-grouped
+					p.control
+						a.button.is-dark.is-outlined(v-on:click="cancel")
+							span.icon.is-small: i.fa.fa-folder
+							span New Folder
+					.control.has-addons
+						a.button.is-info.is-outlined(v-on:click="cancel")
+							span.icon.is-small: i.fa.fa-upload
+							span Upload Image
+						a.button.is-info.is-outlined(v-on:click="cancel")
+							span.icon.is-small: i.fa.fa-download
+							span Fetch from URL
+			.column.is-narrow
+				.control.is-grouped
+					p.control
+						a.button.is-warning.is-outlined(v-on:click="cancel") Cancel
+					p.control
+						a.button.is-primary.is-outlined(v-on:click="insertCode") Insert Image
+
+		.columns
+			.column.is-one-quarter(style={'max-width':'350px'})
+				.box
+					| Folders
+			.column
+				| Files
+
+		

@@ -88,10 +88,18 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "image",
 				action: (editor) => {
-					//todo
+					$('#modal-editor-image').slideDown();
 				},
 				className: "fa fa-image",
 				title: "Insert Image",
+			},
+			{
+				name: "file",
+				action: (editor) => {
+					//todo
+				},
+				className: "fa fa-file-text-o",
+				title: "Insert File",
 			},
 			'|',
 			{
@@ -106,7 +114,7 @@ if($('#mk-editor').length === 1) {
 						return '`' + s + '`';
 					});
 					editor.codemirror.doc.replaceSelections(curSel);
-					
+
 				},
 				className: "fa fa-terminal",
 				title: "Inline Code",
