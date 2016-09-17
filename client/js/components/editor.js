@@ -8,6 +8,7 @@ if($('#mk-editor').length === 1) {
 	let mdeModalOpenState = false;
 	let mdeCurrentEditor = null;
 
+	//=include editor-image.js
 	//=include editor-codeblock.js
 
 	var mde = new SimpleMDE({
@@ -88,7 +89,10 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "image",
 				action: (editor) => {
-					$('#modal-editor-image').slideDown();
+					if(!mdeModalOpenState) {
+						mdeModalOpenState = true;
+						$('#modal-editor-image').slideDown();
+					}
 				},
 				className: "fa fa-image",
 				title: "Insert Image",

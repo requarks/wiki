@@ -126,6 +126,17 @@ module.exports = {
 	},
 
 	/**
+	 * Gets the repo path.
+	 *
+	 * @return     {String}  The repo path.
+	 */
+	getRepoPath() {
+
+		return this._repo.path || path.join(ROOTPATH, 'repo');
+
+	},
+
+	/**
 	 * Sync with the remote repository
 	 *
 	 * @return     {Promise}  Resolve on sync success

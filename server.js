@@ -145,8 +145,9 @@ app.use(mw.flash);
 
 app.use('/', ctrl.auth);
 
-app.use('/', ctrl.pages);
+app.use('/uploads', ctrl.uploads);
 app.use('/admin', mw.auth, ctrl.admin);
+app.use('/', ctrl.pages);
 
 // ----------------------------------------
 // Error handling
