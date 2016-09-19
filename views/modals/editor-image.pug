@@ -4,18 +4,23 @@
 		
 		.columns
 			.column
-				h3 Image
+				h3 Insert Image
+
+			.column.is-narrow.editor-modal-load(v-bind:class="{ 'is-active': isLoading }")
+				span {{ isLoadingText }}
+				i
+					
 			.column.is-narrow
 				.control.is-grouped
 					p.control
-						a.button.is-dark.is-outlined(v-on:click="cancel")
+						a.button.is-dark.is-outlined(v-on:click="newFolder")
 							span.icon.is-small: i.fa.fa-folder
 							span New Folder
 					.control.has-addons
-						a.button.is-info.is-outlined(v-on:click="cancel")
+						a.button.is-info.is-outlined(v-on:click="uploadImage")
 							span.icon.is-small: i.fa.fa-upload
 							span Upload Image
-						a.button.is-info.is-outlined(v-on:click="cancel")
+						a.button.is-info.is-outlined(v-on:click="fetchFromUrl")
 							span.icon.is-small: i.fa.fa-download
 							span Fetch from URL
 			.column.is-narrow
@@ -27,9 +32,36 @@
 
 		.columns
 			.column.is-one-quarter(style={'max-width':'350px'})
-				.box
-					| Folders
+				.box(style={'max-height': '400px', overflow: 'auto', 'overflow-x': 'hidden'})
+					aside.menu
+						p.menu-label
+							| Folders
+						ul.menu-list
+							li
+								a(v-on:click="selectFolder('')", v-bind:class="{ 'is-active': currentFolder === '' }")
+									span.icon.is-small: i.fa.fa-folder-o
+									span /
+							li(v-for="fld in folders")
+								a(v-on:click="selectFolder(fld)", v-bind:class="{ 'is-active': currentFolder === fld }")
+									span.icon.is-small: i.fa.fa-folder
+									span / {{ fld }}
 			.column
-				| Files
+				figure.image.is-128x128
+					img(src='http://placehold.it/128x128')
 
-		
+	.modal(v-bind:class="{ 'is-active': newFolderShow }")
+		.modal-background
+		.modal-container
+			.modal-content
+				.card.is-fullwidth
+					header.card-header
+						p.card-header-title New Folder
+					.card-content
+						.content
+							label.label Enter the new folder name:
+							p.control
+								input.input(type='text', placeholder='folder name', v-model='newFolderName')
+								span.help.is-danger.is-hidden This folder name is invalid!
+					footer.card-footer
+						a.card-footer-item(v-on:click="newFolderDiscard") Discard
+						a.card-footer-item(v-on:click="newFolderCreate") Create

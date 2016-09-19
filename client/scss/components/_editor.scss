@@ -33,6 +33,38 @@
 
 }
 
+.editor-modal-load {
+
+	display: flex;
+	align-items: center;
+	opacity: 0;
+	transition: opacity .5s ease;
+
+	span {
+		font-size: 12px;
+		color: $blue;
+	}
+
+	i {
+		margin-left: 10px;
+		width: 32px;
+		height: 32px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
+		&::before {
+			content: " ";
+			@include spinner($blue,0.5s,24px);
+		}
+	}
+
+	&.is-active {
+		opacity: 1;
+	}
+
+}
+
 .CodeMirror {
 	border-left: none;
 	border-right: none;

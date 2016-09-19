@@ -119,7 +119,7 @@ module.exports = {
 			winston.error('Git remote error!');
 			throw err;
 		}).then(() => {
-			winston.info('[GIT] Git repository is now ready.');
+			winston.info('[GIT] Git repository is OK.');
 			return true;
 		});
 

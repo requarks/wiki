@@ -2,23 +2,54 @@
 let vueImage = new Vue({
 	el: '#modal-editor-image',
 	data: {
-		modeSelected: 'text'
+		isLoading: false,
+		isLoadingText: '',
+		newFolderName: '',
+		newFolderShow: false,
+		folders: [],
+		currentFolder: '',
+		images: []
 	},
 	methods: {
+		open: () => {
+			mdeModalOpenState = true;
+			$('#modal-editor-image').slideDown();
+			vueImage.refreshFolders();
+		},
 		cancel: (ev) => {
 			mdeModalOpenState = false;
 			$('#modal-editor-image').slideUp();
 		},
-		insertImage: (ev) => {
-
-			if(mde.codemirror.doc.somethingSelected()) {
-				mde.codemirror.execCommand('singleSelection');
-			}
-			let codeBlockText = '\n```' + vueCodeBlock.modeSelected + '\n' + codeEditor.getValue() + '\n```\n';
-
-			mde.codemirror.doc.replaceSelection(codeBlockText);
-			vueCodeBlock.cancel();
-
+		newFolder: (ev) => {
+			vueImage.newFolderShow = true;
+		},
+		newFolderDiscard: (ev) => {
+			vueImage.newFolderShow = false;
+		},
+		selectFolder: (fldName) => {
+			vueImage.currentFolder = fldName;
+			vueImage.loadImages();
+		},
+		refreshFolders: () => {
+			vueImage.isLoading = true;
+			vueImage.isLoadingText = 'Fetching folders list...';
+			vueImage.currentFolder = '';
+			Vue.nextTick(() => {
+				socket.emit('uploadsGetFolders', { }, (data) => {
+					vueImage.folders = data;
+					vueImage.loadImages();
+				});
+			});
+		},
+		loadImages: () => {
+			vueImage.isLoading = true;
+			vueImage.isLoadingText = 'Fetching images...';
+			Vue.nextTick(() => {
+				socket.emit('uploadsGetImages', { folder: vueImage.currentFolder }, (data) => {
+					vueImage.images = data;
+					vueImage.isLoading = false;
+				});
+			});
 		}
 	}
 });

@@ -75,12 +75,15 @@ var job = new cron({
 
 		let jobs = [];
 		let repoPath = path.resolve(ROOTPATH, appconfig.datadir.repo);
+		let uploadsPath = path.join(repoPath, 'uploads');
 
 		// ----------------------------------------
 		// Compile Jobs
 		// ----------------------------------------
 
+		//*****************************************
 		//-> Resync with Git remote
+		//*****************************************
 
 		jobs.push(git.onReady.then(() => {
 			return git.resync().then(() => {
@@ -138,6 +141,24 @@ var job = new cron({
 				return jobCbStreamDocs;
 
 			});
+		}));
+
+		//*****************************************
+		//-> Refresh uploads data
+		//*****************************************
+
+		jobs.push(fs.readdirAsync(uploadsPath).then((ls) => {
+
+			return Promise.map(ls, (f) => {
+				return fs.statAsync(path.join(uploadsPath, f)).then((s) => { return { filename: f, stat: s }; });
+			}).filter((s) => { return s.stat.isDirectory(); }).then((arrStats) => {
+				ws.emit('uploadsSetFolders', {
+					auth: WSInternalKey,
+					content: _.map(arrStats, 'filename')
+				});
+				return true;
+			});
+
 		}));
 
 		// ----------------------------------------

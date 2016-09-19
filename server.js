@@ -25,7 +25,7 @@ winston.add(winston.transports.Console, {
 winston.info('[SERVER] Requarks Wiki is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
-let lcdata = require('./models/localdata');
+let lcdata = require('./models/localdata').init(appconfig, false);
 
 global.db = require('./models/db')(appconfig);
 global.git = require('./models/git').init(appconfig, false);

@@ -90,8 +90,7 @@ if($('#mk-editor').length === 1) {
 				name: "image",
 				action: (editor) => {
 					if(!mdeModalOpenState) {
-						mdeModalOpenState = true;
-						$('#modal-editor-image').slideDown();
+						vueImage.open();
 					}
 				},
 				className: "fa fa-image",

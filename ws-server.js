@@ -15,11 +15,11 @@ var _isDebug = process.env.NODE_ENV === 'development';
 global.winston = require('winston');
 winston.remove(winston.transports.Console)
 winston.add(winston.transports.Console, {
-  level: (_isDebug) ? 'info' : 'warn',
-  prettyPrint: true,
-  colorize: true,
-  silent: false,
-  timestamp: true
+	level: (_isDebug) ? 'info' : 'warn',
+	prettyPrint: true,
+	colorize: true,
+	silent: false,
+	timestamp: true
 });
 
 // ----------------------------------------
@@ -39,6 +39,7 @@ global.internalAuth = require('./lib/internalAuth').init(process.argv[2]);;
 winston.info('[WS] WS Server is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
+let lcdata = require('./models/localdata').init(appconfig, true);
 
 global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
@@ -66,7 +67,7 @@ global.app = express();
 // ----------------------------------------
 
 app.get('/', function(req, res){
-  res.send('Requarks Wiki WebSocket server');
+	res.send('Requarks Wiki WebSocket server');
 });
 
 // ----------------------------------------
@@ -80,29 +81,33 @@ var server = http.Server(app);
 var io = socketio(server);
 
 server.on('error', (error) => {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
+	if (error.syscall !== 'listen') {
+		throw error;
+	}
 
-  switch (error.code) {
-    case 'EACCES':
-      console.error('Listening on port ' + appconfig.port + ' requires elevated privileges!');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error('Port ' + appconfig.port + ' is already in use!');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+	switch (error.code) {
+		case 'EACCES':
+			console.error('Listening on port ' + appconfig.port + ' requires elevated privileges!');
+			process.exit(1);
+			break;
+		case 'EADDRINUSE':
+			console.error('Port ' + appconfig.port + ' is already in use!');
+			process.exit(1);
+			break;
+		default:
+			throw error;
+	}
 });
 
 server.listen(appconfig.wsPort, () => {
-  winston.info('[WS] WebSocket server started successfully! [RUNNING]');
+	winston.info('[WS] WebSocket server started successfully! [RUNNING]');
 });
 
 io.on('connection', (socket) => {
+
+	//-----------------------------------------
+	// SEARCH
+	//-----------------------------------------
 
 	socket.on('searchAdd', (data) => {
 		if(internalAuth.validateKey(data.auth)) {
@@ -110,11 +115,11 @@ io.on('connection', (socket) => {
 		}
 	});
 
-  socket.on('searchDel', (data, cb) => {
-    if(internalAuth.validateKey(data.auth)) {
-      search.delete(data.entryPath);
-    }
-  });
+	socket.on('searchDel', (data, cb) => {
+		if(internalAuth.validateKey(data.auth)) {
+			search.delete(data.entryPath);
+		}
+	});
 
 	socket.on('search', (data, cb) => {
 		search.find(data.terms).then((results) => {
@@ -122,11 +127,25 @@ io.on('connection', (socket) => {
 		});
 	});
 
-});
+	//-----------------------------------------
+	// UPLOADS
+	//-----------------------------------------
 
-/*setTimeout(() => {
-	search._si.searchAsync({ query: { AND: [{'*': ['unit']}] }}).then((stuff) => { console.log(stuff.hits); });
-}, 8000);*/
+	socket.on('uploadsSetFolders', (data, cb) => {
+		if(internalAuth.validateKey(data.auth)) {
+			lcdata.setUploadsFolders(data.content);
+		}
+	});
+
+	socket.on('uploadsGetFolders', (data, cb) => {
+		cb(lcdata.getUploadsFolders());
+	});
+
+	socket.on('uploadsGetImages', (data, cb) => {
+		cb([]);
+	});
+
+});
 
 // ----------------------------------------
 // Shutdown gracefully

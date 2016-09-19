@@ -6,7 +6,7 @@ var loki = require('lokijs'),
 	 Promise = require('bluebird'),
 	 _ = require('lodash');
 
-var cols = ['User','Entry'];
+var cols = ['User', 'Entry'];
 
 /**
  * Loki.js module
