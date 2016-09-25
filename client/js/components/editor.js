@@ -174,7 +174,7 @@ if($('#mk-editor').length === 1) {
 
 //-> Save
 
-$('.btn-edit-save').on('click', (ev) => {
+$('.btn-edit-save, .btn-create-save').on('click', (ev) => {
 
 	$.ajax(window.location.href, {
 		data: {
