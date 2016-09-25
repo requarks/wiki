@@ -37,17 +37,13 @@
 						p.menu-label
 							| Folders
 						ul.menu-list
-							li
-								a(v-on:click="selectFolder('')", v-bind:class="{ 'is-active': currentFolder === '' }")
-									span.icon.is-small: i.fa.fa-folder-o
-									span /
 							li(v-for="fld in folders")
 								a(v-on:click="selectFolder(fld)", v-bind:class="{ 'is-active': currentFolder === fld }")
 									span.icon.is-small: i.fa.fa-folder
-									span / {{ fld }}
+									span /{{ fld }}
 			.column
-				figure.image.is-128x128
-					img(src='http://placehold.it/128x128')
+				figure.image.is-128x128(v-for="img in images")
+					img(v-bind:src="'/uploads/t/' + img.thumbpath")
 
 	.modal(v-bind:class="{ 'is-active': newFolderShow }")
 		.modal-background

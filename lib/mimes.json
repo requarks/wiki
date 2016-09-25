@@ -1,0 +1,3427 @@
+[
+  {
+    "mime": "application/vnd.hzn-3d-crossword",
+    "name": "3D Crossword Plugin",
+    "ext": ".x3d"
+  },
+  {
+    "mime": "video/3gpp",
+    "name": "3GP",
+    "ext": ".3gp"
+  },
+  {
+    "mime": "video/3gpp2",
+    "name": "3GP2",
+    "ext": ".3g2"
+  },
+  {
+    "mime": "application/vnd.mseq",
+    "name": "3GPP MSEQ File",
+    "ext": ".mseq"
+  },
+  {
+    "mime": "application/vnd.3m.post-it-notes",
+    "name": "3M Post It Notes",
+    "ext": ".pwn"
+  },
+  {
+    "mime": "application/vnd.3gpp.pic-bw-large",
+    "name": "3rd Generation Partnership Project - Pic Large",
+    "ext": ".plb"
+  },
+  {
+    "mime": "application/vnd.3gpp.pic-bw-small",
+    "name": "3rd Generation Partnership Project - Pic Small",
+    "ext": ".psb"
+  },
+  {
+    "mime": "application/vnd.3gpp.pic-bw-var",
+    "name": "3rd Generation Partnership Project - Pic Var",
+    "ext": ".pvb"
+  },
+  {
+    "mime": "application/vnd.3gpp2.tcap",
+    "name": "3rd Generation Partnership Project - Transaction Capabilities Application Part",
+    "ext": ".tcap"
+  },
+  {
+    "mime": "application/x-7z-compressed",
+    "name": "7-Zip",
+    "ext": ".7z"
+  },
+  {
+    "mime": "application/x-abiword",
+    "name": "AbiWord",
+    "ext": ".abw"
+  },
+  {
+    "mime": "application/x-ace-compressed",
+    "name": "Ace Archive",
+    "ext": ".ace"
+  },
+  {
+    "mime": "application/vnd.americandynamics.acc",
+    "name": "Active Content Compression",
+    "ext": ".acc"
+  },
+  {
+    "mime": "application/vnd.acucobol",
+    "name": "ACU Cobol",
+    "ext": ".acu"
+  },
+  {
+    "mime": "application/vnd.acucorp",
+    "name": "ACU Cobol",
+    "ext": ".atc"
+  },
+  {
+    "mime": "audio/adpcm",
+    "name": "Adaptive differential pulse-code modulation",
+    "ext": ".adp"
+  },
+  {
+    "mime": "application/x-authorware-bin",
+    "name": "Adobe (Macropedia) Authorware - Binary File",
+    "ext": ".aab"
+  },
+  {
+    "mime": "application/x-authorware-map",
+    "name": "Adobe (Macropedia) Authorware - Map",
+    "ext": ".aam"
+  },
+  {
+    "mime": "application/x-authorware-seg",
+    "name": "Adobe (Macropedia) Authorware - Segment File",
+    "ext": ".aas"
+  },
+  {
+    "mime": "application/vnd.adobe.air-application-installer-package+zip",
+    "name": "Adobe AIR Application",
+    "ext": ".air"
+  },
+  {
+    "mime": "application/x-shockwave-flash",
+    "name": "Adobe Flash",
+    "ext": ".swf"
+  },
+  {
+    "mime": "application/vnd.adobe.fxp",
+    "name": "Adobe Flex Project",
+    "ext": ".fxp"
+  },
+  {
+    "mime": "application/pdf",
+    "name": "Adobe Portable Document Format",
+    "ext": ".pdf"
+  },
+  {
+    "mime": "application/vnd.cups-ppd",
+    "name": "Adobe PostScript Printer Description File Format",
+    "ext": ".ppd"
+  },
+  {
+    "mime": "application/x-director",
+    "name": "Adobe Shockwave Player",
+    "ext": ".dir"
+  },
+  {
+    "mime": "application/vnd.adobe.xdp+xml",
+    "name": "Adobe XML Data Package",
+    "ext": ".xdp"
+  },
+  {
+    "mime": "application/vnd.adobe.xfdf",
+    "name": "Adobe XML Forms Data Format",
+    "ext": ".xfdf"
+  },
+  {
+    "mime": "audio/x-aac",
+    "name": "Advanced Audio Coding (AAC)",
+    "ext": ".aac"
+  },
+  {
+    "mime": "application/vnd.ahead.space",
+    "name": "Ahead AIR Application",
+    "ext": ".ahead"
+  },
+  {
+    "mime": "application/vnd.airzip.filesecure.azf",
+    "name": "AirZip FileSECURE",
+    "ext": ".azf"
+  },
+  {
+    "mime": "application/vnd.airzip.filesecure.azs",
+    "name": "AirZip FileSECURE",
+    "ext": ".azs"
+  },
+  {
+    "mime": "application/vnd.amazon.ebook",
+    "name": "Amazon Kindle eBook format",
+    "ext": ".azw"
+  },
+  {
+    "mime": "application/vnd.amiga.ami",
+    "name": "AmigaDE",
+    "ext": ".ami"
+  },
+  {
+    "mime": "application/andrew-inset",
+    "name": "Andrew Toolkit",
+    "ext": "N/A"
+  },
+  {
+    "mime": "application/vnd.android.package-archive",
+    "name": "Android Package Archive",
+    "ext": ".apk"
+  },
+  {
+    "mime": "application/vnd.anser-web-certificate-issue-initiation",
+    "name": "ANSER-WEB Terminal Client - Certificate Issue",
+    "ext": ".cii"
+  },
+  {
+    "mime": "application/vnd.anser-web-funds-transfer-initiation",
+    "name": "ANSER-WEB Terminal Client - Web Funds Transfer",
+    "ext": ".fti"
+  },
+  {
+    "mime": "application/vnd.antix.game-component",
+    "name": "Antix Game Player",
+    "ext": ".atx"
+  },
+  {
+    "mime": "application/vnd.apple.installer+xml",
+    "name": "Apple Installer Package",
+    "ext": ".mpkg"
+  },
+  {
+    "mime": "application/applixware",
+    "name": "Applixware",
+    "ext": ".aw"
+  },
+  {
+    "mime": "application/vnd.hhe.lesson-player",
+    "name": "Archipelago Lesson Player",
+    "ext": ".les"
+  },
+  {
+    "mime": "application/vnd.aristanetworks.swi",
+    "name": "Arista Networks Software Image",
+    "ext": ".swi"
+  },
+  {
+    "mime": "text/x-asm",
+    "name": "Assembler Source File",
+    "ext": ".s"
+  },
+  {
+    "mime": "application/atomcat+xml",
+    "name": "Atom Publishing Protocol",
+    "ext": ".atomcat"
+  },
+  {
+    "mime": "application/atomsvc+xml",
+    "name": "Atom Publishing Protocol Service Document",
+    "ext": ".atomsvc"
+  },
+  {
+    "mime": "application/atom+xml",
+    "name": "Atom Syndication Format",
+    "ext": ".atom, .xml"
+  },
+  {
+    "mime": "application/pkix-attr-cert",
+    "name": "Attribute Certificate",
+    "ext": ".ac"
+  },
+  {
+    "mime": "audio/x-aiff",
+    "name": "Audio Interchange File Format",
+    "ext": ".aif"
+  },
+  {
+    "mime": "video/x-msvideo",
+    "name": "Audio Video Interleave (AVI)",
+    "ext": ".avi"
+  },
+  {
+    "mime": "application/vnd.audiograph",
+    "name": "Audiograph",
+    "ext": ".aep"
+  },
+  {
+    "mime": "image/vnd.dxf",
+    "name": "AutoCAD DXF",
+    "ext": ".dxf"
+  },
+  {
+    "mime": "model/vnd.dwf",
+    "name": "Autodesk Design Web Format (DWF)",
+    "ext": ".dwf"
+  },
+  {
+    "mime": "text/plain-bas",
+    "name": "BAS Partitur Format",
+    "ext": ".par"
+  },
+  {
+    "mime": "application/x-bcpio",
+    "name": "Binary CPIO Archive",
+    "ext": ".bcpio"
+  },
+  {
+    "mime": "application/octet-stream",
+    "name": "Binary Data",
+    "ext": ".bin"
+  },
+  {
+    "mime": "image/bmp",
+    "name": "Bitmap Image File",
+    "ext": ".bmp"
+  },
+  {
+    "mime": "application/x-bittorrent",
+    "name": "BitTorrent",
+    "ext": ".torrent"
+  },
+  {
+    "mime": "application/vnd.rim.cod",
+    "name": "Blackberry COD File",
+    "ext": ".cod"
+  },
+  {
+    "mime": "application/vnd.blueice.multipass",
+    "name": "Blueice Research Multipass",
+    "ext": ".mpm"
+  },
+  {
+    "mime": "application/vnd.bmi",
+    "name": "BMI Drawing Data Interchange",
+    "ext": ".bmi"
+  },
+  {
+    "mime": "application/x-sh",
+    "name": "Bourne Shell Script",
+    "ext": ".sh"
+  },
+  {
+    "mime": "image/prs.btif",
+    "name": "BTIF",
+    "ext": ".btif"
+  },
+  {
+    "mime": "application/vnd.businessobjects",
+    "name": "BusinessObjects",
+    "ext": ".rep"
+  },
+  {
+    "mime": "application/x-bzip",
+    "name": "Bzip Archive",
+    "ext": ".bz"
+  },
+  {
+    "mime": "application/x-bzip2",
+    "name": "Bzip2 Archive",
+    "ext": ".bz2"
+  },
+  {
+    "mime": "application/x-csh",
+    "name": "C Shell Script",
+    "ext": ".csh"
+  },
+  {
+    "mime": "text/x-c",
+    "name": "C Source File",
+    "ext": ".c"
+  },
+  {
+    "mime": "application/vnd.chemdraw+xml",
+    "name": "CambridgeSoft Chem Draw",
+    "ext": ".cdxml"
+  },
+  {
+    "mime": "text/css",
+    "name": "Cascading Style Sheets (CSS)",
+    "ext": ".css"
+  },
+  {
+    "mime": "chemical/x-cdx",
+    "name": "ChemDraw eXchange file",
+    "ext": ".cdx"
+  },
+  {
+    "mime": "chemical/x-cml",
+    "name": "Chemical Markup Language",
+    "ext": ".cml"
+  },
+  {
+    "mime": "chemical/x-csml",
+    "name": "Chemical Style Markup Language",
+    "ext": ".csml"
+  },
+  {
+    "mime": "application/vnd.contact.cmsg",
+    "name": "CIM Database",
+    "ext": ".cdbcmsg"
+  },
+  {
+    "mime": "application/vnd.claymore",
+    "name": "Claymore Data Files",
+    "ext": ".cla"
+  },
+  {
+    "mime": "application/vnd.clonk.c4group",
+    "name": "Clonk Game",
+    "ext": ".c4g"
+  },
+  {
+    "mime": "image/vnd.dvb.subtitle",
+    "name": "Close Captioning - Subtitle",
+    "ext": ".sub"
+  },
+  {
+    "mime": "application/cdmi-capability",
+    "name": "Cloud Data Management Interface (CDMI) - Capability",
+    "ext": ".cdmia"
+  },
+  {
+    "mime": "application/cdmi-container",
+    "name": "Cloud Data Management Interface (CDMI) - Contaimer",
+    "ext": ".cdmic"
+  },
+  {
+    "mime": "application/cdmi-domain",
+    "name": "Cloud Data Management Interface (CDMI) - Domain",
+    "ext": ".cdmid"
+  },
+  {
+    "mime": "application/cdmi-object",
+    "name": "Cloud Data Management Interface (CDMI) - Object",
+    "ext": ".cdmio"
+  },
+  {
+    "mime": "application/cdmi-queue",
+    "name": "Cloud Data Management Interface (CDMI) - Queue",
+    "ext": ".cdmiq"
+  },
+  {
+    "mime": "application/vnd.cluetrust.cartomobile-config",
+    "name": "ClueTrust CartoMobile - Config",
+    "ext": ".c11amc"
+  },
+  {
+    "mime": "application/vnd.cluetrust.cartomobile-config-pkg",
+    "name": "ClueTrust CartoMobile - Config Package",
+    "ext": ".c11amz"
+  },
+  {
+    "mime": "image/x-cmu-raster",
+    "name": "CMU Image",
+    "ext": ".ras"
+  },
+  {
+    "mime": "model/vnd.collada+xml",
+    "name": "COLLADA",
+    "ext": ".dae"
+  },
+  {
+    "mime": "text/csv",
+    "name": "Comma-Separated Values",
+    "ext": ".csv"
+  },
+  {
+    "mime": "application/mac-compactpro",
+    "name": "Compact Pro",
+    "ext": ".cpt"
+  },
+  {
+    "mime": "application/vnd.wap.wmlc",
+    "name": "Compiled Wireless Markup Language (WMLC)",
+    "ext": ".wmlc"
+  },
+  {
+    "mime": "image/cgm",
+    "name": "Computer Graphics Metafile",
+    "ext": ".cgm"
+  },
+  {
+    "mime": "x-conference/x-cooltalk",
+    "name": "CoolTalk",
+    "ext": ".ice"
+  },
+  {
+    "mime": "image/x-cmx",
+    "name": "Corel Metafile Exchange (CMX)",
+    "ext": ".cmx"
+  },
+  {
+    "mime": "application/vnd.xara",
+    "name": "CorelXARA",
+    "ext": ".xar"
+  },
+  {
+    "mime": "application/vnd.cosmocaller",
+    "name": "CosmoCaller",
+    "ext": ".cmc"
+  },
+  {
+    "mime": "application/x-cpio",
+    "name": "CPIO Archive",
+    "ext": ".cpio"
+  },
+  {
+    "mime": "application/vnd.crick.clicker",
+    "name": "CrickSoftware - Clicker",
+    "ext": ".clkx"
+  },
+  {
+    "mime": "application/vnd.crick.clicker.keyboard",
+    "name": "CrickSoftware - Clicker - Keyboard",
+    "ext": ".clkk"
+  },
+  {
+    "mime": "application/vnd.crick.clicker.palette",
+    "name": "CrickSoftware - Clicker - Palette",
+    "ext": ".clkp"
+  },
+  {
+    "mime": "application/vnd.crick.clicker.template",
+    "name": "CrickSoftware - Clicker - Template",
+    "ext": ".clkt"
+  },
+  {
+    "mime": "application/vnd.crick.clicker.wordbank",
+    "name": "CrickSoftware - Clicker - Wordbank",
+    "ext": ".clkw"
+  },
+  {
+    "mime": "application/vnd.criticaltools.wbs+xml",
+    "name": "Critical Tools - PERT Chart EXPERT",
+    "ext": ".wbs"
+  },
+  {
+    "mime": "application/vnd.rig.cryptonote",
+    "name": "CryptoNote",
+    "ext": ".cryptonote"
+  },
+  {
+    "mime": "chemical/x-cif",
+    "name": "Crystallographic Interchange Format",
+    "ext": ".cif"
+  },
+  {
+    "mime": "chemical/x-cmdf",
+    "name": "CrystalMaker Data Format",
+    "ext": ".cmdf"
+  },
+  {
+    "mime": "application/cu-seeme",
+    "name": "CU-SeeMe",
+    "ext": ".cu"
+  },
+  {
+    "mime": "application/prs.cww",
+    "name": "CU-Writer",
+    "ext": ".cww"
+  },
+  {
+    "mime": "text/vnd.curl",
+    "name": "Curl - Applet",
+    "ext": ".curl"
+  },
+  {
+    "mime": "text/vnd.curl.dcurl",
+    "name": "Curl - Detached Applet",
+    "ext": ".dcurl"
+  },
+  {
+    "mime": "text/vnd.curl.mcurl",
+    "name": "Curl - Manifest File",
+    "ext": ".mcurl"
+  },
+  {
+    "mime": "text/vnd.curl.scurl",
+    "name": "Curl - Source Code",
+    "ext": ".scurl"
+  },
+  {
+    "mime": "application/vnd.curl.car",
+    "name": "CURL Applet",
+    "ext": ".car"
+  },
+  {
+    "mime": "application/vnd.curl.pcurl",
+    "name": "CURL Applet",
+    "ext": ".pcurl"
+  },
+  {
+    "mime": "application/vnd.yellowriver-custom-menu",
+    "name": "CustomMenu",
+    "ext": ".cmp"
+  },
+  {
+    "mime": "application/dssc+der",
+    "name": "Data Structure for the Security Suitability of Cryptographic Algorithms",
+    "ext": ".dssc"
+  },
+  {
+    "mime": "application/dssc+xml",
+    "name": "Data Structure for the Security Suitability of Cryptographic Algorithms",
+    "ext": ".xdssc"
+  },
+  {
+    "mime": "application/x-debian-package",
+    "name": "Debian Package",
+    "ext": ".deb"
+  },
+  {
+    "mime": "audio/vnd.dece.audio",
+    "name": "DECE Audio",
+    "ext": ".uva"
+  },
+  {
+    "mime": "image/vnd.dece.graphic",
+    "name": "DECE Graphic",
+    "ext": ".uvi"
+  },
+  {
+    "mime": "video/vnd.dece.hd",
+    "name": "DECE High Definition Video",
+    "ext": ".uvh"
+  },
+  {
+    "mime": "video/vnd.dece.mobile",
+    "name": "DECE Mobile Video",
+    "ext": ".uvm"
+  },
+  {
+    "mime": "video/vnd.uvvu.mp4",
+    "name": "DECE MP4",
+    "ext": ".uvu"
+  },
+  {
+    "mime": "video/vnd.dece.pd",
+    "name": "DECE PD Video",
+    "ext": ".uvp"
+  },
+  {
+    "mime": "video/vnd.dece.sd",
+    "name": "DECE SD Video",
+    "ext": ".uvs"
+  },
+  {
+    "mime": "video/vnd.dece.video",
+    "name": "DECE Video",
+    "ext": ".uvv"
+  },
+  {
+    "mime": "application/x-dvi",
+    "name": "Device Independent File Format (DVI)",
+    "ext": ".dvi"
+  },
+  {
+    "mime": "application/vnd.fdsn.seed",
+    "name": "Digital Siesmograph Networks - SEED Datafiles",
+    "ext": ".seed"
+  },
+  {
+    "mime": "application/x-dtbook+xml",
+    "name": "Digital Talking Book",
+    "ext": ".dtb"
+  },
+  {
+    "mime": "application/x-dtbresource+xml",
+    "name": "Digital Talking Book - Resource File",
+    "ext": ".res"
+  },
+  {
+    "mime": "application/vnd.dvb.ait",
+    "name": "Digital Video Broadcasting",
+    "ext": ".ait"
+  },
+  {
+    "mime": "application/vnd.dvb.service",
+    "name": "Digital Video Broadcasting",
+    "ext": ".svc"
+  },
+  {
+    "mime": "audio/vnd.digital-winds",
+    "name": "Digital Winds Music",
+    "ext": ".eol"
+  },
+  {
+    "mime": "image/vnd.djvu",
+    "name": "DjVu",
+    "ext": ".djvu"
+  },
+  {
+    "mime": "application/xml-dtd",
+    "name": "Document Type Definition",
+    "ext": ".dtd"
+  },
+  {
+    "mime": "application/vnd.dolby.mlp",
+    "name": "Dolby Meridian Lossless Packing",
+    "ext": ".mlp"
+  },
+  {
+    "mime": "application/x-doom",
+    "name": "Doom Video Game",
+    "ext": ".wad"
+  },
+  {
+    "mime": "application/vnd.dpgraph",
+    "name": "DPGraph",
+    "ext": ".dpg"
+  },
+  {
+    "mime": "audio/vnd.dra",
+    "name": "DRA Audio",
+    "ext": ".dra"
+  },
+  {
+    "mime": "application/vnd.dreamfactory",
+    "name": "DreamFactory",
+    "ext": ".dfac"
+  },
+  {
+    "mime": "audio/vnd.dts",
+    "name": "DTS Audio",
+    "ext": ".dts"
+  },
+  {
+    "mime": "audio/vnd.dts.hd",
+    "name": "DTS High Definition Audio",
+    "ext": ".dtshd"
+  },
+  {
+    "mime": "image/vnd.dwg",
+    "name": "DWG Drawing",
+    "ext": ".dwg"
+  },
+  {
+    "mime": "application/vnd.dynageo",
+    "name": "DynaGeo",
+    "ext": ".geo"
+  },
+  {
+    "mime": "application/ecmascript",
+    "name": "ECMAScript",
+    "ext": ".es"
+  },
+  {
+    "mime": "application/vnd.ecowin.chart",
+    "name": "EcoWin Chart",
+    "ext": ".mag"
+  },
+  {
+    "mime": "image/vnd.fujixerox.edmics-mmr",
+    "name": "EDMICS 2000",
+    "ext": ".mmr"
+  },
+  {
+    "mime": "image/vnd.fujixerox.edmics-rlc",
+    "name": "EDMICS 2000",
+    "ext": ".rlc"
+  },
+  {
+    "mime": "application/exi",
+    "name": "Efficient XML Interchange",
+    "ext": ".exi"
+  },
+  {
+    "mime": "application/vnd.proteus.magazine",
+    "name": "EFI Proteus",
+    "ext": ".mgz"
+  },
+  {
+    "mime": "application/epub+zip",
+    "name": "Electronic Publication",
+    "ext": ".epub"
+  },
+  {
+    "mime": "message/rfc822",
+    "name": "Email Message",
+    "ext": ".eml"
+  },
+  {
+    "mime": "application/vnd.enliven",
+    "name": "Enliven Viewer",
+    "ext": ".nml"
+  },
+  {
+    "mime": "application/vnd.is-xpr",
+    "name": "Express by Infoseek",
+    "ext": ".xpr"
+  },
+  {
+    "mime": "image/vnd.xiff",
+    "name": "eXtended Image File Format (XIFF)",
+    "ext": ".xif"
+  },
+  {
+    "mime": "application/vnd.xfdl",
+    "name": "Extensible Forms Description Language",
+    "ext": ".xfdl"
+  },
+  {
+    "mime": "application/emma+xml",
+    "name": "Extensible MultiModal Annotation",
+    "ext": ".emma"
+  },
+  {
+    "mime": "application/vnd.ezpix-album",
+    "name": "EZPix Secure Photo Album",
+    "ext": ".ez2"
+  },
+  {
+    "mime": "application/vnd.ezpix-package",
+    "name": "EZPix Secure Photo Album",
+    "ext": ".ez3"
+  },
+  {
+    "mime": "image/vnd.fst",
+    "name": "FAST Search & Transfer ASA",
+    "ext": ".fst"
+  },
+  {
+    "mime": "video/vnd.fvt",
+    "name": "FAST Search & Transfer ASA",
+    "ext": ".fvt"
+  },
+  {
+    "mime": "image/vnd.fastbidsheet",
+    "name": "FastBid Sheet",
+    "ext": ".fbs"
+  },
+  {
+    "mime": "application/vnd.denovo.fcselayout-link",
+    "name": "FCS Express Layout Link",
+    "ext": ".fe_launch"
+  },
+  {
+    "mime": "video/x-f4v",
+    "name": "Flash Video",
+    "ext": ".f4v"
+  },
+  {
+    "mime": "video/x-flv",
+    "name": "Flash Video",
+    "ext": ".flv"
+  },
+  {
+    "mime": "image/vnd.fpx",
+    "name": "FlashPix",
+    "ext": ".fpx"
+  },
+  {
+    "mime": "image/vnd.net-fpx",
+    "name": "FlashPix",
+    "ext": ".npx"
+  },
+  {
+    "mime": "text/vnd.fmi.flexstor",
+    "name": "FLEXSTOR",
+    "ext": ".flx"
+  },
+  {
+    "mime": "video/x-fli",
+    "name": "FLI/FLC Animation Format",
+    "ext": ".fli"
+  },
+  {
+    "mime": "application/vnd.fluxtime.clip",
+    "name": "FluxTime Clip",
+    "ext": ".ftc"
+  },
+  {
+    "mime": "application/vnd.fdf",
+    "name": "Forms Data Format",
+    "ext": ".fdf"
+  },
+  {
+    "mime": "text/x-fortran",
+    "name": "Fortran Source File",
+    "ext": ".f"
+  },
+  {
+    "mime": "application/vnd.mif",
+    "name": "FrameMaker Interchange Format",
+    "ext": ".mif"
+  },
+  {
+    "mime": "application/vnd.framemaker",
+    "name": "FrameMaker Normal Format",
+    "ext": ".fm"
+  },
+  {
+    "mime": "image/x-freehand",
+    "name": "FreeHand MX",
+    "ext": ".fh"
+  },
+  {
+    "mime": "application/vnd.fsc.weblaunch",
+    "name": "Friendly Software Corporation",
+    "ext": ".fsc"
+  },
+  {
+    "mime": "application/vnd.frogans.fnc",
+    "name": "Frogans Player",
+    "ext": ".fnc"
+  },
+  {
+    "mime": "application/vnd.frogans.ltf",
+    "name": "Frogans Player",
+    "ext": ".ltf"
+  },
+  {
+    "mime": "application/vnd.fujixerox.ddd",
+    "name": "Fujitsu - Xerox 2D CAD Data",
+    "ext": ".ddd"
+  },
+  {
+    "mime": "application/vnd.fujixerox.docuworks",
+    "name": "Fujitsu - Xerox DocuWorks",
+    "ext": ".xdw"
+  },
+  {
+    "mime": "application/vnd.fujixerox.docuworks.binder",
+    "name": "Fujitsu - Xerox DocuWorks Binder",
+    "ext": ".xbd"
+  },
+  {
+    "mime": "application/vnd.fujitsu.oasys",
+    "name": "Fujitsu Oasys",
+    "ext": ".oas"
+  },
+  {
+    "mime": "application/vnd.fujitsu.oasys2",
+    "name": "Fujitsu Oasys",
+    "ext": ".oa2"
+  },
+  {
+    "mime": "application/vnd.fujitsu.oasys3",
+    "name": "Fujitsu Oasys",
+    "ext": ".oa3"
+  },
+  {
+    "mime": "application/vnd.fujitsu.oasysgp",
+    "name": "Fujitsu Oasys",
+    "ext": ".fg5"
+  },
+  {
+    "mime": "application/vnd.fujitsu.oasysprs",
+    "name": "Fujitsu Oasys",
+    "ext": ".bh2"
+  },
+  {
+    "mime": "application/x-futuresplash",
+    "name": "FutureSplash Animator",
+    "ext": ".spl"
+  },
+  {
+    "mime": "application/vnd.fuzzysheet",
+    "name": "FuzzySheet",
+    "ext": ".fzs"
+  },
+  {
+    "mime": "image/g3fax",
+    "name": "G3 Fax Image",
+    "ext": ".g3"
+  },
+  {
+    "mime": "application/vnd.gmx",
+    "name": "GameMaker ActiveX",
+    "ext": ".gmx"
+  },
+  {
+    "mime": "model/vnd.gtw",
+    "name": "Gen-Trix Studio",
+    "ext": ".gtw"
+  },
+  {
+    "mime": "application/vnd.genomatix.tuxedo",
+    "name": "Genomatix Tuxedo Framework",
+    "ext": ".txd"
+  },
+  {
+    "mime": "application/vnd.geogebra.file",
+    "name": "GeoGebra",
+    "ext": ".ggb"
+  },
+  {
+    "mime": "application/vnd.geogebra.tool",
+    "name": "GeoGebra",
+    "ext": ".ggt"
+  },
+  {
+    "mime": "model/vnd.gdl",
+    "name": "Geometric Description Language (GDL)",
+    "ext": ".gdl"
+  },
+  {
+    "mime": "application/vnd.geometry-explorer",
+    "name": "GeoMetry Explorer",
+    "ext": ".gex"
+  },
+  {
+    "mime": "application/vnd.geonext",
+    "name": "GEONExT and JSXGraph",
+    "ext": ".gxt"
+  },
+  {
+    "mime": "application/vnd.geoplan",
+    "name": "GeoplanW",
+    "ext": ".g2w"
+  },
+  {
+    "mime": "application/vnd.geospace",
+    "name": "GeospacW",
+    "ext": ".g3w"
+  },
+  {
+    "mime": "application/x-font-ghostscript",
+    "name": "Ghostscript Font",
+    "ext": ".gsf"
+  },
+  {
+    "mime": "application/x-font-bdf",
+    "name": "Glyph Bitmap Distribution Format",
+    "ext": ".bdf"
+  },
+  {
+    "mime": "application/x-gtar",
+    "name": "GNU Tar Files",
+    "ext": ".gtar"
+  },
+  {
+    "mime": "application/x-texinfo",
+    "name": "GNU Texinfo Document",
+    "ext": ".texinfo"
+  },
+  {
+    "mime": "application/x-gnumeric",
+    "name": "Gnumeric",
+    "ext": ".gnumeric"
+  },
+  {
+    "mime": "application/vnd.google-earth.kml+xml",
+    "name": "Google Earth - KML",
+    "ext": ".kml"
+  },
+  {
+    "mime": "application/vnd.google-earth.kmz",
+    "name": "Google Earth - Zipped KML",
+    "ext": ".kmz"
+  },
+  {
+    "mime": "application/vnd.grafeq",
+    "name": "GrafEq",
+    "ext": ".gqf"
+  },
+  {
+    "mime": "image/gif",
+    "name": "Graphics Interchange Format",
+    "ext": ".gif"
+  },
+  {
+    "mime": "text/vnd.graphviz",
+    "name": "Graphviz",
+    "ext": ".gv"
+  },
+  {
+    "mime": "application/vnd.groove-account",
+    "name": "Groove - Account",
+    "ext": ".gac"
+  },
+  {
+    "mime": "application/vnd.groove-help",
+    "name": "Groove - Help",
+    "ext": ".ghf"
+  },
+  {
+    "mime": "application/vnd.groove-identity-message",
+    "name": "Groove - Identity Message",
+    "ext": ".gim"
+  },
+  {
+    "mime": "application/vnd.groove-injector",
+    "name": "Groove - Injector",
+    "ext": ".grv"
+  },
+  {
+    "mime": "application/vnd.groove-tool-message",
+    "name": "Groove - Tool Message",
+    "ext": ".gtm"
+  },
+  {
+    "mime": "application/vnd.groove-tool-template",
+    "name": "Groove - Tool Template",
+    "ext": ".tpl"
+  },
+  {
+    "mime": "application/vnd.groove-vcard",
+    "name": "Groove - Vcard",
+    "ext": ".vcg"
+  },
+  {
+    "mime": "video/h261",
+    "name": "H.261",
+    "ext": ".h261"
+  },
+  {
+    "mime": "video/h263",
+    "name": "H.263",
+    "ext": ".h263"
+  },
+  {
+    "mime": "video/h264",
+    "name": "H.264",
+    "ext": ".h264"
+  },
+  {
+    "mime": "application/vnd.hp-hpid",
+    "name": "Hewlett Packard Instant Delivery",
+    "ext": ".hpid"
+  },
+  {
+    "mime": "application/vnd.hp-hps",
+    "name": "Hewlett-Packard's WebPrintSmart",
+    "ext": ".hps"
+  },
+  {
+    "mime": "application/x-hdf",
+    "name": "Hierarchical Data Format",
+    "ext": ".hdf"
+  },
+  {
+    "mime": "audio/vnd.rip",
+    "name": "Hit'n'Mix",
+    "ext": ".rip"
+  },
+  {
+    "mime": "application/vnd.hbci",
+    "name": "Homebanking Computer Interface (HBCI)",
+    "ext": ".hbci"
+  },
+  {
+    "mime": "application/vnd.hp-jlyt",
+    "name": "HP Indigo Digital Press - Job Layout Languate",
+    "ext": ".jlt"
+  },
+  {
+    "mime": "application/vnd.hp-pcl",
+    "name": "HP Printer Command Language",
+    "ext": ".pcl"
+  },
+  {
+    "mime": "application/vnd.hp-hpgl",
+    "name": "HP-GL/2 and HP RTL",
+    "ext": ".hpgl"
+  },
+  {
+    "mime": "application/vnd.yamaha.hv-script",
+    "name": "HV Script",
+    "ext": ".hvs"
+  },
+  {
+    "mime": "application/vnd.yamaha.hv-dic",
+    "name": "HV Voice Dictionary",
+    "ext": ".hvd"
+  },
+  {
+    "mime": "application/vnd.yamaha.hv-voice",
+    "name": "HV Voice Parameter",
+    "ext": ".hvp"
+  },
+  {
+    "mime": "application/vnd.hydrostatix.sof-data",
+    "name": "Hydrostatix Master Suite",
+    "ext": ".sfd-hdstx"
+  },
+  {
+    "mime": "application/hyperstudio",
+    "name": "Hyperstudio",
+    "ext": ".stk"
+  },
+  {
+    "mime": "application/vnd.hal+xml",
+    "name": "Hypertext Application Language",
+    "ext": ".hal"
+  },
+  {
+    "mime": "text/html",
+    "name": "HyperText Markup Language (HTML)",
+    "ext": ".html"
+  },
+  {
+    "mime": "application/vnd.ibm.rights-management",
+    "name": "IBM DB2 Rights Manager",
+    "ext": ".irm"
+  },
+  {
+    "mime": "application/vnd.ibm.secure-container",
+    "name": "IBM Electronic Media Management System - Secure Container",
+    "ext": ".sc"
+  },
+  {
+    "mime": "text/calendar",
+    "name": "iCalendar",
+    "ext": ".ics"
+  },
+  {
+    "mime": "application/vnd.iccprofile",
+    "name": "ICC profile",
+    "ext": ".icc"
+  },
+  {
+    "mime": "image/x-icon",
+    "name": "Icon Image",
+    "ext": ".ico"
+  },
+  {
+    "mime": "application/vnd.igloader",
+    "name": "igLoader",
+    "ext": ".igl"
+  },
+  {
+    "mime": "image/ief",
+    "name": "Image Exchange Format",
+    "ext": ".ief"
+  },
+  {
+    "mime": "application/vnd.immervision-ivp",
+    "name": "ImmerVision PURE Players",
+    "ext": ".ivp"
+  },
+  {
+    "mime": "application/vnd.immervision-ivu",
+    "name": "ImmerVision PURE Players",
+    "ext": ".ivu"
+  },
+  {
+    "mime": "application/reginfo+xml",
+    "name": "IMS Networks",
+    "ext": ".rif"
+  },
+  {
+    "mime": "text/vnd.in3d.3dml",
+    "name": "In3D - 3DML",
+    "ext": ".3dml"
+  },
+  {
+    "mime": "text/vnd.in3d.spot",
+    "name": "In3D - 3DML",
+    "ext": ".spot"
+  },
+  {
+    "mime": "model/iges",
+    "name": "Initial Graphics Exchange Specification (IGES)",
+    "ext": ".igs"
+  },
+  {
+    "mime": "application/vnd.intergeo",
+    "name": "Interactive Geometry Software",
+    "ext": ".i2g"
+  },
+  {
+    "mime": "application/vnd.cinderella",
+    "name": "Interactive Geometry Software Cinderella",
+    "ext": ".cdy"
+  },
+  {
+    "mime": "application/vnd.intercon.formnet",
+    "name": "Intercon FormNet",
+    "ext": ".xpw"
+  },
+  {
+    "mime": "application/vnd.isac.fcs",
+    "name": "International Society for Advancement of Cytometry",
+    "ext": ".fcs"
+  },
+  {
+    "mime": "application/ipfix",
+    "name": "Internet Protocol Flow Information Export",
+    "ext": ".ipfix"
+  },
+  {
+    "mime": "application/pkix-cert",
+    "name": "Internet Public Key Infrastructure - Certificate",
+    "ext": ".cer"
+  },
+  {
+    "mime": "application/pkixcmp",
+    "name": "Internet Public Key Infrastructure - Certificate Management Protocole",
+    "ext": ".pki"
+  },
+  {
+    "mime": "application/pkix-crl",
+    "name": "Internet Public Key Infrastructure - Certificate Revocation Lists",
+    "ext": ".crl"
+  },
+  {
+    "mime": "application/pkix-pkipath",
+    "name": "Internet Public Key Infrastructure - Certification Path",
+    "ext": ".pkipath"
+  },
+  {
+    "mime": "application/vnd.insors.igm",
+    "name": "IOCOM Visimeet",
+    "ext": ".igm"
+  },
+  {
+    "mime": "application/vnd.ipunplugged.rcprofile",
+    "name": "IP Unplugged Roaming Client",
+    "ext": ".rcprofile"
+  },
+  {
+    "mime": "application/vnd.irepository.package+xml",
+    "name": "iRepository / Lucidoc Editor",
+    "ext": ".irp"
+  },
+  {
+    "mime": "text/vnd.sun.j2me.app-descriptor",
+    "name": "J2ME App Descriptor",
+    "ext": ".jad"
+  },
+  {
+    "mime": "application/java-archive",
+    "name": "Java Archive",
+    "ext": ".jar"
+  },
+  {
+    "mime": "application/java-vm",
+    "name": "Java Bytecode File",
+    "ext": ".class"
+  },
+  {
+    "mime": "application/x-java-jnlp-file",
+    "name": "Java Network Launching Protocol",
+    "ext": ".jnlp"
+  },
+  {
+    "mime": "application/java-serialized-object",
+    "name": "Java Serialized Object",
+    "ext": ".ser"
+  },
+  {
+    "mime": "text/x-java-source,java",
+    "name": "Java Source File",
+    "ext": ".java"
+  },
+  {
+    "mime": "application/javascript",
+    "name": "JavaScript",
+    "ext": ".js"
+  },
+  {
+    "mime": "application/json",
+    "name": "JavaScript Object Notation (JSON)",
+    "ext": ".json"
+  },
+  {
+    "mime": "application/vnd.joost.joda-archive",
+    "name": "Joda Archive",
+    "ext": ".joda"
+  },
+  {
+    "mime": "video/jpm",
+    "name": "JPEG 2000 Compound Image File Format",
+    "ext": ".jpm"
+  },
+  {
+    "mime": "image/jpeg",
+    "name": "JPEG Image",
+    "ext": ".jpeg"
+  },
+  {
+    "mime": "image/jpeg",
+    "name": "JPEG Image",
+    "ext": ".jpg"
+  },
+  {
+    "mime": "video/jpeg",
+    "name": "JPGVideo",
+    "ext": ".jpgv"
+  },
+  {
+    "mime": "application/vnd.kahootz",
+    "name": "Kahootz",
+    "ext": ".ktz"
+  },
+  {
+    "mime": "application/vnd.chipnuts.karaoke-mmd",
+    "name": "Karaoke on Chipnuts Chipsets",
+    "ext": ".mmd"
+  },
+  {
+    "mime": "application/vnd.kde.karbon",
+    "name": "KDE KOffice Office Suite - Karbon",
+    "ext": ".karbon"
+  },
+  {
+    "mime": "application/vnd.kde.kchart",
+    "name": "KDE KOffice Office Suite - KChart",
+    "ext": ".chrt"
+  },
+  {
+    "mime": "application/vnd.kde.kformula",
+    "name": "KDE KOffice Office Suite - Kformula",
+    "ext": ".kfo"
+  },
+  {
+    "mime": "application/vnd.kde.kivio",
+    "name": "KDE KOffice Office Suite - Kivio",
+    "ext": ".flw"
+  },
+  {
+    "mime": "application/vnd.kde.kontour",
+    "name": "KDE KOffice Office Suite - Kontour",
+    "ext": ".kon"
+  },
+  {
+    "mime": "application/vnd.kde.kpresenter",
+    "name": "KDE KOffice Office Suite - Kpresenter",
+    "ext": ".kpr"
+  },
+  {
+    "mime": "application/vnd.kde.kspread",
+    "name": "KDE KOffice Office Suite - Kspread",
+    "ext": ".ksp"
+  },
+  {
+    "mime": "application/vnd.kde.kword",
+    "name": "KDE KOffice Office Suite - Kword",
+    "ext": ".kwd"
+  },
+  {
+    "mime": "application/vnd.kenameaapp",
+    "name": "Kenamea App",
+    "ext": ".htke"
+  },
+  {
+    "mime": "application/vnd.kidspiration",
+    "name": "Kidspiration",
+    "ext": ".kia"
+  },
+  {
+    "mime": "application/vnd.kinar",
+    "name": "Kinar Applications",
+    "ext": ".kne"
+  },
+  {
+    "mime": "application/vnd.kodak-descriptor",
+    "name": "Kodak Storyshare",
+    "ext": ".sse"
+  },
+  {
+    "mime": "application/vnd.las.las+xml",
+    "name": "Laser App Enterprise",
+    "ext": ".lasxml"
+  },
+  {
+    "mime": "application/x-latex",
+    "name": "LaTeX",
+    "ext": ".latex"
+  },
+  {
+    "mime": "application/vnd.llamagraphics.life-balance.desktop",
+    "name": "Life Balance - Desktop Edition",
+    "ext": ".lbd"
+  },
+  {
+    "mime": "application/vnd.llamagraphics.life-balance.exchange+xml",
+    "name": "Life Balance - Exchange Format",
+    "ext": ".lbe"
+  },
+  {
+    "mime": "application/vnd.jam",
+    "name": "Lightspeed Audio Lab",
+    "ext": ".jam"
+  },
+  {
+    "mime": "application/vnd.lotus-1-2-3",
+    "name": "Lotus 1-2-3",
+    "ext": 0.123
+  },
+  {
+    "mime": "application/vnd.lotus-approach",
+    "name": "Lotus Approach",
+    "ext": ".apr"
+  },
+  {
+    "mime": "application/vnd.lotus-freelance",
+    "name": "Lotus Freelance",
+    "ext": ".pre"
+  },
+  {
+    "mime": "application/vnd.lotus-notes",
+    "name": "Lotus Notes",
+    "ext": ".nsf"
+  },
+  {
+    "mime": "application/vnd.lotus-organizer",
+    "name": "Lotus Organizer",
+    "ext": ".org"
+  },
+  {
+    "mime": "application/vnd.lotus-screencam",
+    "name": "Lotus Screencam",
+    "ext": ".scm"
+  },
+  {
+    "mime": "application/vnd.lotus-wordpro",
+    "name": "Lotus Wordpro",
+    "ext": ".lwp"
+  },
+  {
+    "mime": "audio/vnd.lucent.voice",
+    "name": "Lucent Voice",
+    "ext": ".lvp"
+  },
+  {
+    "mime": "audio/x-mpegurl",
+    "name": "M3U (Multimedia Playlist)",
+    "ext": ".m3u"
+  },
+  {
+    "mime": "video/x-m4v",
+    "name": "M4v",
+    "ext": ".m4v"
+  },
+  {
+    "mime": "application/mac-binhex40",
+    "name": "Macintosh BinHex 4.0",
+    "ext": ".hqx"
+  },
+  {
+    "mime": "application/vnd.macports.portpkg",
+    "name": "MacPorts Port System",
+    "ext": ".portpkg"
+  },
+  {
+    "mime": "application/vnd.osgeo.mapguide.package",
+    "name": "MapGuide DBXML",
+    "ext": ".mgp"
+  },
+  {
+    "mime": "application/marc",
+    "name": "MARC Formats",
+    "ext": ".mrc"
+  },
+  {
+    "mime": "application/marcxml+xml",
+    "name": "MARC21 XML Schema",
+    "ext": ".mrcx"
+  },
+  {
+    "mime": "application/mxf",
+    "name": "Material Exchange Format",
+    "ext": ".mxf"
+  },
+  {
+    "mime": "application/vnd.wolfram.player",
+    "name": "Mathematica Notebook Player",
+    "ext": ".nbp"
+  },
+  {
+    "mime": "application/mathematica",
+    "name": "Mathematica Notebooks",
+    "ext": ".ma"
+  },
+  {
+    "mime": "application/mathml+xml",
+    "name": "Mathematical Markup Language",
+    "ext": ".mathml"
+  },
+  {
+    "mime": "application/mbox",
+    "name": "Mbox database files",
+    "ext": ".mbox"
+  },
+  {
+    "mime": "application/vnd.medcalcdata",
+    "name": "MedCalc",
+    "ext": ".mc1"
+  },
+  {
+    "mime": "application/mediaservercontrol+xml",
+    "name": "Media Server Control Markup Language",
+    "ext": ".mscml"
+  },
+  {
+    "mime": "application/vnd.mediastation.cdkey",
+    "name": "MediaRemote",
+    "ext": ".cdkey"
+  },
+  {
+    "mime": "application/vnd.mfer",
+    "name": "Medical Waveform Encoding Format",
+    "ext": ".mwf"
+  },
+  {
+    "mime": "application/vnd.mfmp",
+    "name": "Melody Format for Mobile Platform",
+    "ext": ".mfm"
+  },
+  {
+    "mime": "model/mesh",
+    "name": "Mesh Data Type",
+    "ext": ".msh"
+  },
+  {
+    "mime": "application/mads+xml",
+    "name": "Metadata Authority Description Schema",
+    "ext": ".mads"
+  },
+  {
+    "mime": "application/mets+xml",
+    "name": "Metadata Encoding and Transmission Standard",
+    "ext": ".mets"
+  },
+  {
+    "mime": "application/mods+xml",
+    "name": "Metadata Object Description Schema",
+    "ext": ".mods"
+  },
+  {
+    "mime": "application/metalink4+xml",
+    "name": "Metalink",
+    "ext": ".meta4"
+  },
+  {
+    "mime": "application/vnd.ms-powerpoint.template.macroenabled.12",
+    "name": "Micosoft PowerPoint - Macro-Enabled Template File",
+    "ext": ".potm"
+  },
+  {
+    "mime": "application/vnd.ms-word.document.macroenabled.12",
+    "name": "Micosoft Word - Macro-Enabled Document",
+    "ext": ".docm"
+  },
+  {
+    "mime": "application/vnd.ms-word.template.macroenabled.12",
+    "name": "Micosoft Word - Macro-Enabled Template",
+    "ext": ".dotm"
+  },
+  {
+    "mime": "application/vnd.mcd",
+    "name": "Micro CADAM Helix D&D",
+    "ext": ".mcd"
+  },
+  {
+    "mime": "application/vnd.micrografx.flo",
+    "name": "Micrografx",
+    "ext": ".flo"
+  },
+  {
+    "mime": "application/vnd.micrografx.igx",
+    "name": "Micrografx iGrafx Professional",
+    "ext": ".igx"
+  },
+  {
+    "mime": "application/vnd.eszigno3+xml",
+    "name": "MICROSEC e-Szign¢",
+    "ext": ".es3"
+  },
+  {
+    "mime": "application/x-msaccess",
+    "name": "Microsoft Access",
+    "ext": ".mdb"
+  },
+  {
+    "mime": "video/x-ms-asf",
+    "name": "Microsoft Advanced Systems Format (ASF)",
+    "ext": ".asf"
+  },
+  {
+    "mime": "application/x-msdownload",
+    "name": "Microsoft Application",
+    "ext": ".exe"
+  },
+  {
+    "mime": "application/vnd.ms-artgalry",
+    "name": "Microsoft Artgalry",
+    "ext": ".cil"
+  },
+  {
+    "mime": "application/vnd.ms-cab-compressed",
+    "name": "Microsoft Cabinet File",
+    "ext": ".cab"
+  },
+  {
+    "mime": "application/vnd.ms-ims",
+    "name": "Microsoft Class Server",
+    "ext": ".ims"
+  },
+  {
+    "mime": "application/x-ms-application",
+    "name": "Microsoft ClickOnce",
+    "ext": ".application"
+  },
+  {
+    "mime": "application/x-msclip",
+    "name": "Microsoft Clipboard Clip",
+    "ext": ".clp"
+  },
+  {
+    "mime": "image/vnd.ms-modi",
+    "name": "Microsoft Document Imaging Format",
+    "ext": ".mdi"
+  },
+  {
+    "mime": "application/vnd.ms-fontobject",
+    "name": "Microsoft Embedded OpenType",
+    "ext": ".eot"
+  },
+  {
+    "mime": "application/vnd.ms-excel",
+    "name": "Microsoft Excel",
+    "ext": ".xls"
+  },
+  {
+    "mime": "application/vnd.ms-excel.addin.macroenabled.12",
+    "name": "Microsoft Excel - Add-In File",
+    "ext": ".xlam"
+  },
+  {
+    "mime": "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+    "name": "Microsoft Excel - Binary Workbook",
+    "ext": ".xlsb"
+  },
+  {
+    "mime": "application/vnd.ms-excel.template.macroenabled.12",
+    "name": "Microsoft Excel - Macro-Enabled Template File",
+    "ext": ".xltm"
+  },
+  {
+    "mime": "application/vnd.ms-excel.sheet.macroenabled.12",
+    "name": "Microsoft Excel - Macro-Enabled Workbook",
+    "ext": ".xlsm"
+  },
+  {
+    "mime": "application/vnd.ms-htmlhelp",
+    "name": "Microsoft Html Help File",
+    "ext": ".chm"
+  },
+  {
+    "mime": "application/x-mscardfile",
+    "name": "Microsoft Information Card",
+    "ext": ".crd"
+  },
+  {
+    "mime": "application/vnd.ms-lrm",
+    "name": "Microsoft Learning Resource Module",
+    "ext": ".lrm"
+  },
+  {
+    "mime": "application/x-msmediaview",
+    "name": "Microsoft MediaView",
+    "ext": ".mvb"
+  },
+  {
+    "mime": "application/x-msmoney",
+    "name": "Microsoft Money",
+    "ext": ".mny"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "name": "Microsoft Office - OOXML - Presentation",
+    "ext": ".pptx"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.slide",
+    "name": "Microsoft Office - OOXML - Presentation (Slide)",
+    "ext": ".sldx"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
+    "name": "Microsoft Office - OOXML - Presentation (Slideshow)",
+    "ext": ".ppsx"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.template",
+    "name": "Microsoft Office - OOXML - Presentation Template",
+    "ext": ".potx"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "name": "Microsoft Office - OOXML - Spreadsheet",
+    "ext": ".xlsx"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
+    "name": "Microsoft Office - OOXML - Spreadsheet Teplate",
+    "ext": ".xltx"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "name": "Microsoft Office - OOXML - Word Document",
+    "ext": ".docx"
+  },
+  {
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+    "name": "Microsoft Office - OOXML - Word Document Template",
+    "ext": ".dotx"
+  },
+  {
+    "mime": "application/x-msbinder",
+    "name": "Microsoft Office Binder",
+    "ext": ".obd"
+  },
+  {
+    "mime": "application/vnd.ms-officetheme",
+    "name": "Microsoft Office System Release Theme",
+    "ext": ".thmx"
+  },
+  {
+    "mime": "application/onenote",
+    "name": "Microsoft OneNote",
+    "ext": ".onetoc"
+  },
+  {
+    "mime": "audio/vnd.ms-playready.media.pya",
+    "name": "Microsoft PlayReady Ecosystem",
+    "ext": ".pya"
+  },
+  {
+    "mime": "video/vnd.ms-playready.media.pyv",
+    "name": "Microsoft PlayReady Ecosystem Video",
+    "ext": ".pyv"
+  },
+  {
+    "mime": "application/vnd.ms-powerpoint",
+    "name": "Microsoft PowerPoint",
+    "ext": ".ppt"
+  },
+  {
+    "mime": "application/vnd.ms-powerpoint.addin.macroenabled.12",
+    "name": "Microsoft PowerPoint - Add-in file",
+    "ext": ".ppam"
+  },
+  {
+    "mime": "application/vnd.ms-powerpoint.slide.macroenabled.12",
+    "name": "Microsoft PowerPoint - Macro-Enabled Open XML Slide",
+    "ext": ".sldm"
+  },
+  {
+    "mime": "application/vnd.ms-powerpoint.presentation.macroenabled.12",
+    "name": "Microsoft PowerPoint - Macro-Enabled Presentation File",
+    "ext": ".pptm"
+  },
+  {
+    "mime": "application/vnd.ms-powerpoint.slideshow.macroenabled.12",
+    "name": "Microsoft PowerPoint - Macro-Enabled Slide Show File",
+    "ext": ".ppsm"
+  },
+  {
+    "mime": "application/vnd.ms-project",
+    "name": "Microsoft Project",
+    "ext": ".mpp"
+  },
+  {
+    "mime": "application/x-mspublisher",
+    "name": "Microsoft Publisher",
+    "ext": ".pub"
+  },
+  {
+    "mime": "application/x-msschedule",
+    "name": "Microsoft Schedule+",
+    "ext": ".scd"
+  },
+  {
+    "mime": "application/x-silverlight-app",
+    "name": "Microsoft Silverlight",
+    "ext": ".xap"
+  },
+  {
+    "mime": "application/vnd.ms-pki.stl",
+    "name": "Microsoft Trust UI Provider - Certificate Trust Link",
+    "ext": ".stl"
+  },
+  {
+    "mime": "application/vnd.ms-pki.seccat",
+    "name": "Microsoft Trust UI Provider - Security Catalog",
+    "ext": ".cat"
+  },
+  {
+    "mime": "application/vnd.visio",
+    "name": "Microsoft Visio",
+    "ext": ".vsd"
+  },
+  {
+    "mime": "video/x-ms-wm",
+    "name": "Microsoft Windows Media",
+    "ext": ".wm"
+  },
+  {
+    "mime": "audio/x-ms-wma",
+    "name": "Microsoft Windows Media Audio",
+    "ext": ".wma"
+  },
+  {
+    "mime": "audio/x-ms-wax",
+    "name": "Microsoft Windows Media Audio Redirector",
+    "ext": ".wax"
+  },
+  {
+    "mime": "video/x-ms-wmx",
+    "name": "Microsoft Windows Media Audio/Video Playlist",
+    "ext": ".wmx"
+  },
+  {
+    "mime": "application/x-ms-wmd",
+    "name": "Microsoft Windows Media Player Download Package",
+    "ext": ".wmd"
+  },
+  {
+    "mime": "application/vnd.ms-wpl",
+    "name": "Microsoft Windows Media Player Playlist",
+    "ext": ".wpl"
+  },
+  {
+    "mime": "application/x-ms-wmz",
+    "name": "Microsoft Windows Media Player Skin Package",
+    "ext": ".wmz"
+  },
+  {
+    "mime": "video/x-ms-wmv",
+    "name": "Microsoft Windows Media Video",
+    "ext": ".wmv"
+  },
+  {
+    "mime": "video/x-ms-wvx",
+    "name": "Microsoft Windows Media Video Playlist",
+    "ext": ".wvx"
+  },
+  {
+    "mime": "application/x-msmetafile",
+    "name": "Microsoft Windows Metafile",
+    "ext": ".wmf"
+  },
+  {
+    "mime": "application/x-msterminal",
+    "name": "Microsoft Windows Terminal Services",
+    "ext": ".trm"
+  },
+  {
+    "mime": "application/msword",
+    "name": "Microsoft Word",
+    "ext": ".doc"
+  },
+  {
+    "mime": "application/x-mswrite",
+    "name": "Microsoft Wordpad",
+    "ext": ".wri"
+  },
+  {
+    "mime": "application/vnd.ms-works",
+    "name": "Microsoft Works",
+    "ext": ".wps"
+  },
+  {
+    "mime": "application/x-ms-xbap",
+    "name": "Microsoft XAML Browser Application",
+    "ext": ".xbap"
+  },
+  {
+    "mime": "application/vnd.ms-xpsdocument",
+    "name": "Microsoft XML Paper Specification",
+    "ext": ".xps"
+  },
+  {
+    "mime": "audio/midi",
+    "name": "MIDI - Musical Instrument Digital Interface",
+    "ext": ".mid"
+  },
+  {
+    "mime": "application/vnd.ibm.minipay",
+    "name": "MiniPay",
+    "ext": ".mpy"
+  },
+  {
+    "mime": "application/vnd.ibm.modcap",
+    "name": "MO:DCA-P",
+    "ext": ".afp"
+  },
+  {
+    "mime": "application/vnd.jcp.javame.midlet-rms",
+    "name": "Mobile Information Device Profile",
+    "ext": ".rms"
+  },
+  {
+    "mime": "application/vnd.tmobile-livetv",
+    "name": "MobileTV",
+    "ext": ".tmo"
+  },
+  {
+    "mime": "application/x-mobipocket-ebook",
+    "name": "Mobipocket",
+    "ext": ".prc"
+  },
+  {
+    "mime": "application/vnd.mobius.mbk",
+    "name": "Mobius Management Systems - Basket file",
+    "ext": ".mbk"
+  },
+  {
+    "mime": "application/vnd.mobius.dis",
+    "name": "Mobius Management Systems - Distribution Database",
+    "ext": ".dis"
+  },
+  {
+    "mime": "application/vnd.mobius.plc",
+    "name": "Mobius Management Systems - Policy Definition Language File",
+    "ext": ".plc"
+  },
+  {
+    "mime": "application/vnd.mobius.mqy",
+    "name": "Mobius Management Systems - Query File",
+    "ext": ".mqy"
+  },
+  {
+    "mime": "application/vnd.mobius.msl",
+    "name": "Mobius Management Systems - Script Language",
+    "ext": ".msl"
+  },
+  {
+    "mime": "application/vnd.mobius.txf",
+    "name": "Mobius Management Systems - Topic Index File",
+    "ext": ".txf"
+  },
+  {
+    "mime": "application/vnd.mobius.daf",
+    "name": "Mobius Management Systems - UniversalArchive",
+    "ext": ".daf"
+  },
+  {
+    "mime": "text/vnd.fly",
+    "name": "mod_fly / fly.cgi",
+    "ext": ".fly"
+  },
+  {
+    "mime": "application/vnd.mophun.certificate",
+    "name": "Mophun Certificate",
+    "ext": ".mpc"
+  },
+  {
+    "mime": "application/vnd.mophun.application",
+    "name": "Mophun VM",
+    "ext": ".mpn"
+  },
+  {
+    "mime": "video/mj2",
+    "name": "Motion JPEG 2000",
+    "ext": ".mj2"
+  },
+  {
+    "mime": "audio/mpeg",
+    "name": "MPEG Audio",
+    "ext": ".mpga"
+  },
+  {
+    "mime": "video/vnd.mpegurl",
+    "name": "MPEG Url",
+    "ext": ".mxu"
+  },
+  {
+    "mime": "video/mpeg",
+    "name": "MPEG Video",
+    "ext": ".mpeg"
+  },
+  {
+    "mime": "application/mp21",
+    "name": "MPEG-21",
+    "ext": ".m21"
+  },
+  {
+    "mime": "audio/mp4",
+    "name": "MPEG-4 Audio",
+    "ext": ".mp4a"
+  },
+  {
+    "mime": "video/mp4",
+    "name": "MPEG-4 Video",
+    "ext": ".mp4"
+  },
+  {
+    "mime": "application/mp4",
+    "name": "MPEG4",
+    "ext": ".mp4"
+  },
+  {
+    "mime": "application/vnd.apple.mpegurl",
+    "name": "Multimedia Playlist Unicode",
+    "ext": ".m3u8"
+  },
+  {
+    "mime": "application/vnd.musician",
+    "name": "MUsical Score Interpreted Code Invented for the ASCII designation of Notation",
+    "ext": ".mus"
+  },
+  {
+    "mime": "application/vnd.muvee.style",
+    "name": "Muvee Automatic Video Editing",
+    "ext": ".msty"
+  },
+  {
+    "mime": "application/xv+xml",
+    "name": "MXML",
+    "ext": ".mxml"
+  },
+  {
+    "mime": "application/vnd.nokia.n-gage.data",
+    "name": "N-Gage Game Data",
+    "ext": ".ngdat"
+  },
+  {
+    "mime": "application/vnd.nokia.n-gage.symbian.install",
+    "name": "N-Gage Game Installer",
+    "ext": ".n-gage"
+  },
+  {
+    "mime": "application/x-dtbncx+xml",
+    "name": "Navigation Control file for XML (for ePub)",
+    "ext": ".ncx"
+  },
+  {
+    "mime": "application/x-netcdf",
+    "name": "Network Common Data Form (NetCDF)",
+    "ext": ".nc"
+  },
+  {
+    "mime": "application/vnd.neurolanguage.nlu",
+    "name": "neuroLanguage",
+    "ext": ".nlu"
+  },
+  {
+    "mime": "application/vnd.dna",
+    "name": "New Moon Liftoff/DNA",
+    "ext": ".dna"
+  },
+  {
+    "mime": "application/vnd.noblenet-directory",
+    "name": "NobleNet Directory",
+    "ext": ".nnd"
+  },
+  {
+    "mime": "application/vnd.noblenet-sealer",
+    "name": "NobleNet Sealer",
+    "ext": ".nns"
+  },
+  {
+    "mime": "application/vnd.noblenet-web",
+    "name": "NobleNet Web",
+    "ext": ".nnw"
+  },
+  {
+    "mime": "application/vnd.nokia.radio-preset",
+    "name": "Nokia Radio Application - Preset",
+    "ext": ".rpst"
+  },
+  {
+    "mime": "application/vnd.nokia.radio-presets",
+    "name": "Nokia Radio Application - Preset",
+    "ext": ".rpss"
+  },
+  {
+    "mime": "text/n3",
+    "name": "Notation3",
+    "ext": ".n3"
+  },
+  {
+    "mime": "application/vnd.novadigm.edm",
+    "name": "Novadigm's RADIA and EDM products",
+    "ext": ".edm"
+  },
+  {
+    "mime": "application/vnd.novadigm.edx",
+    "name": "Novadigm's RADIA and EDM products",
+    "ext": ".edx"
+  },
+  {
+    "mime": "application/vnd.novadigm.ext",
+    "name": "Novadigm's RADIA and EDM products",
+    "ext": ".ext"
+  },
+  {
+    "mime": "application/vnd.flographit",
+    "name": "NpGraphIt",
+    "ext": ".gph"
+  },
+  {
+    "mime": "audio/vnd.nuera.ecelp4800",
+    "name": "Nuera ECELP 4800",
+    "ext": ".ecelp4800"
+  },
+  {
+    "mime": "audio/vnd.nuera.ecelp7470",
+    "name": "Nuera ECELP 7470",
+    "ext": ".ecelp7470"
+  },
+  {
+    "mime": "audio/vnd.nuera.ecelp9600",
+    "name": "Nuera ECELP 9600",
+    "ext": ".ecelp9600"
+  },
+  {
+    "mime": "application/oda",
+    "name": "Office Document Architecture",
+    "ext": ".oda"
+  },
+  {
+    "mime": "application/ogg",
+    "name": "Ogg",
+    "ext": ".ogx"
+  },
+  {
+    "mime": "audio/ogg",
+    "name": "Ogg Audio",
+    "ext": ".oga"
+  },
+  {
+    "mime": "video/ogg",
+    "name": "Ogg Video",
+    "ext": ".ogv"
+  },
+  {
+    "mime": "application/vnd.oma.dd2+xml",
+    "name": "OMA Download Agents",
+    "ext": ".dd2"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.text-web",
+    "name": "Open Document Text Web",
+    "ext": ".oth"
+  },
+  {
+    "mime": "application/oebps-package+xml",
+    "name": "Open eBook Publication Structure",
+    "ext": ".opf"
+  },
+  {
+    "mime": "application/vnd.intu.qbo",
+    "name": "Open Financial Exchange",
+    "ext": ".qbo"
+  },
+  {
+    "mime": "application/vnd.openofficeorg.extension",
+    "name": "Open Office Extension",
+    "ext": ".oxt"
+  },
+  {
+    "mime": "application/vnd.yamaha.openscoreformat",
+    "name": "Open Score Format",
+    "ext": ".osf"
+  },
+  {
+    "mime": "audio/webm",
+    "name": "Open Web Media Project - Audio",
+    "ext": ".weba"
+  },
+  {
+    "mime": "video/webm",
+    "name": "Open Web Media Project - Video",
+    "ext": ".webm"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.chart",
+    "name": "OpenDocument Chart",
+    "ext": ".odc"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.chart-template",
+    "name": "OpenDocument Chart Template",
+    "ext": ".otc"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.database",
+    "name": "OpenDocument Database",
+    "ext": ".odb"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.formula",
+    "name": "OpenDocument Formula",
+    "ext": ".odf"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.formula-template",
+    "name": "OpenDocument Formula Template",
+    "ext": ".odft"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.graphics",
+    "name": "OpenDocument Graphics",
+    "ext": ".odg"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.graphics-template",
+    "name": "OpenDocument Graphics Template",
+    "ext": ".otg"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.image",
+    "name": "OpenDocument Image",
+    "ext": ".odi"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.image-template",
+    "name": "OpenDocument Image Template",
+    "ext": ".oti"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.presentation",
+    "name": "OpenDocument Presentation",
+    "ext": ".odp"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.presentation-template",
+    "name": "OpenDocument Presentation Template",
+    "ext": ".otp"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.spreadsheet",
+    "name": "OpenDocument Spreadsheet",
+    "ext": ".ods"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.spreadsheet-template",
+    "name": "OpenDocument Spreadsheet Template",
+    "ext": ".ots"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.text",
+    "name": "OpenDocument Text",
+    "ext": ".odt"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.text-master",
+    "name": "OpenDocument Text Master",
+    "ext": ".odm"
+  },
+  {
+    "mime": "application/vnd.oasis.opendocument.text-template",
+    "name": "OpenDocument Text Template",
+    "ext": ".ott"
+  },
+  {
+    "mime": "image/ktx",
+    "name": "OpenGL Textures (KTX)",
+    "ext": ".ktx"
+  },
+  {
+    "mime": "application/vnd.sun.xml.calc",
+    "name": "OpenOffice - Calc (Spreadsheet)",
+    "ext": ".sxc"
+  },
+  {
+    "mime": "application/vnd.sun.xml.calc.template",
+    "name": "OpenOffice - Calc Template (Spreadsheet)",
+    "ext": ".stc"
+  },
+  {
+    "mime": "application/vnd.sun.xml.draw",
+    "name": "OpenOffice - Draw (Graphics)",
+    "ext": ".sxd"
+  },
+  {
+    "mime": "application/vnd.sun.xml.draw.template",
+    "name": "OpenOffice - Draw Template (Graphics)",
+    "ext": ".std"
+  },
+  {
+    "mime": "application/vnd.sun.xml.impress",
+    "name": "OpenOffice - Impress (Presentation)",
+    "ext": ".sxi"
+  },
+  {
+    "mime": "application/vnd.sun.xml.impress.template",
+    "name": "OpenOffice - Impress Template (Presentation)",
+    "ext": ".sti"
+  },
+  {
+    "mime": "application/vnd.sun.xml.math",
+    "name": "OpenOffice - Math (Formula)",
+    "ext": ".sxm"
+  },
+  {
+    "mime": "application/vnd.sun.xml.writer",
+    "name": "OpenOffice - Writer (Text - HTML)",
+    "ext": ".sxw"
+  },
+  {
+    "mime": "application/vnd.sun.xml.writer.global",
+    "name": "OpenOffice - Writer (Text - HTML)",
+    "ext": ".sxg"
+  },
+  {
+    "mime": "application/vnd.sun.xml.writer.template",
+    "name": "OpenOffice - Writer Template (Text - HTML)",
+    "ext": ".stw"
+  },
+  {
+    "mime": "application/x-font-otf",
+    "name": "OpenType Font File",
+    "ext": ".otf"
+  },
+  {
+    "mime": "application/vnd.yamaha.openscoreformat.osfpvg+xml",
+    "name": "OSFPVG",
+    "ext": ".osfpvg"
+  },
+  {
+    "mime": "application/vnd.osgi.dp",
+    "name": "OSGi Deployment Package",
+    "ext": ".dp"
+  },
+  {
+    "mime": "application/vnd.palm",
+    "name": "PalmOS Data",
+    "ext": ".pdb"
+  },
+  {
+    "mime": "text/x-pascal",
+    "name": "Pascal Source File",
+    "ext": ".p"
+  },
+  {
+    "mime": "application/vnd.pawaafile",
+    "name": "PawaaFILE",
+    "ext": ".paw"
+  },
+  {
+    "mime": "application/vnd.hp-pclxl",
+    "name": "PCL 6 Enhanced (Formely PCL XL)",
+    "ext": ".pclxl"
+  },
+  {
+    "mime": "application/vnd.picsel",
+    "name": "Pcsel eFIF File",
+    "ext": ".efif"
+  },
+  {
+    "mime": "image/x-pcx",
+    "name": "PCX Image",
+    "ext": ".pcx"
+  },
+  {
+    "mime": "image/vnd.adobe.photoshop",
+    "name": "Photoshop Document",
+    "ext": ".psd"
+  },
+  {
+    "mime": "application/pics-rules",
+    "name": "PICSRules",
+    "ext": ".prf"
+  },
+  {
+    "mime": "image/x-pict",
+    "name": "PICT Image",
+    "ext": ".pic"
+  },
+  {
+    "mime": "application/x-chat",
+    "name": "pIRCh",
+    "ext": ".chat"
+  },
+  {
+    "mime": "application/pkcs10",
+    "name": "PKCS #10 - Certification Request Standard",
+    "ext": ".p10"
+  },
+  {
+    "mime": "application/x-pkcs12",
+    "name": "PKCS #12 - Personal Information Exchange Syntax Standard",
+    "ext": ".p12"
+  },
+  {
+    "mime": "application/pkcs7-mime",
+    "name": "PKCS #7 - Cryptographic Message Syntax Standard",
+    "ext": ".p7m"
+  },
+  {
+    "mime": "application/pkcs7-signature",
+    "name": "PKCS #7 - Cryptographic Message Syntax Standard",
+    "ext": ".p7s"
+  },
+  {
+    "mime": "application/x-pkcs7-certreqresp",
+    "name": "PKCS #7 - Cryptographic Message Syntax Standard (Certificate Request Response)",
+    "ext": ".p7r"
+  },
+  {
+    "mime": "application/x-pkcs7-certificates",
+    "name": "PKCS #7 - Cryptographic Message Syntax Standard (Certificates)",
+    "ext": ".p7b"
+  },
+  {
+    "mime": "application/pkcs8",
+    "name": "PKCS #8 - Private-Key Information Syntax Standard",
+    "ext": ".p8"
+  },
+  {
+    "mime": "application/vnd.pocketlearn",
+    "name": "PocketLearn Viewers",
+    "ext": ".plf"
+  },
+  {
+    "mime": "image/x-portable-anymap",
+    "name": "Portable Anymap Image",
+    "ext": ".pnm"
+  },
+  {
+    "mime": "image/x-portable-bitmap",
+    "name": "Portable Bitmap Format",
+    "ext": ".pbm"
+  },
+  {
+    "mime": "application/x-font-pcf",
+    "name": "Portable Compiled Format",
+    "ext": ".pcf"
+  },
+  {
+    "mime": "application/font-tdpfr",
+    "name": "Portable Font Resource",
+    "ext": ".pfr"
+  },
+  {
+    "mime": "application/x-chess-pgn",
+    "name": "Portable Game Notation (Chess Games)",
+    "ext": ".pgn"
+  },
+  {
+    "mime": "image/x-portable-graymap",
+    "name": "Portable Graymap Format",
+    "ext": ".pgm"
+  },
+  {
+    "mime": "image/png",
+    "name": "Portable Network Graphics (PNG)",
+    "ext": ".png"
+  },
+  {
+    "mime": "image/x-portable-pixmap",
+    "name": "Portable Pixmap Format",
+    "ext": ".ppm"
+  },
+  {
+    "mime": "application/pskc+xml",
+    "name": "Portable Symmetric Key Container",
+    "ext": ".pskcxml"
+  },
+  {
+    "mime": "application/vnd.ctc-posml",
+    "name": "PosML",
+    "ext": ".pml"
+  },
+  {
+    "mime": "application/postscript",
+    "name": "PostScript",
+    "ext": ".ai"
+  },
+  {
+    "mime": "application/x-font-type1",
+    "name": "PostScript Fonts",
+    "ext": ".pfa"
+  },
+  {
+    "mime": "application/vnd.powerbuilder6",
+    "name": "PowerBuilder",
+    "ext": ".pbd"
+  },
+  {
+    "mime": "application/pgp-encrypted",
+    "name": "Pretty Good Privacy",
+    "ext": ""
+  },
+  {
+    "mime": "application/pgp-signature",
+    "name": "Pretty Good Privacy - Signature",
+    "ext": ".pgp"
+  },
+  {
+    "mime": "application/vnd.previewsystems.box",
+    "name": "Preview Systems ZipLock/VBox",
+    "ext": ".box"
+  },
+  {
+    "mime": "application/vnd.pvi.ptid1",
+    "name": "Princeton Video Image",
+    "ext": ".ptid"
+  },
+  {
+    "mime": "application/pls+xml",
+    "name": "Pronunciation Lexicon Specification",
+    "ext": ".pls"
+  },
+  {
+    "mime": "application/vnd.pg.format",
+    "name": "Proprietary P&G Standard Reporting System",
+    "ext": ".str"
+  },
+  {
+    "mime": "application/vnd.pg.osasli",
+    "name": "Proprietary P&G Standard Reporting System",
+    "ext": ".ei6"
+  },
+  {
+    "mime": "text/prs.lines.tag",
+    "name": "PRS Lines Tag",
+    "ext": ".dsc"
+  },
+  {
+    "mime": "application/x-font-linux-psf",
+    "name": "PSF Fonts",
+    "ext": ".psf"
+  },
+  {
+    "mime": "application/vnd.publishare-delta-tree",
+    "name": "PubliShare Objects",
+    "ext": ".qps"
+  },
+  {
+    "mime": "application/vnd.pmi.widget",
+    "name": "Qualcomm's Plaza Mobile Internet",
+    "ext": ".wg"
+  },
+  {
+    "mime": "application/vnd.quark.quarkxpress",
+    "name": "QuarkXpress",
+    "ext": ".qxd"
+  },
+  {
+    "mime": "application/vnd.epson.esf",
+    "name": "QUASS Stream Player",
+    "ext": ".esf"
+  },
+  {
+    "mime": "application/vnd.epson.msf",
+    "name": "QUASS Stream Player",
+    "ext": ".msf"
+  },
+  {
+    "mime": "application/vnd.epson.ssf",
+    "name": "QUASS Stream Player",
+    "ext": ".ssf"
+  },
+  {
+    "mime": "application/vnd.epson.quickanime",
+    "name": "QuickAnime Player",
+    "ext": ".qam"
+  },
+  {
+    "mime": "application/vnd.intu.qfx",
+    "name": "Quicken",
+    "ext": ".qfx"
+  },
+  {
+    "mime": "video/quicktime",
+    "name": "Quicktime Video",
+    "ext": ".qt"
+  },
+  {
+    "mime": "application/x-rar-compressed",
+    "name": "RAR Archive",
+    "ext": ".rar"
+  },
+  {
+    "mime": "audio/x-pn-realaudio",
+    "name": "Real Audio Sound",
+    "ext": ".ram"
+  },
+  {
+    "mime": "audio/x-pn-realaudio-plugin",
+    "name": "Real Audio Sound",
+    "ext": ".rmp"
+  },
+  {
+    "mime": "application/rsd+xml",
+    "name": "Really Simple Discovery",
+    "ext": ".rsd"
+  },
+  {
+    "mime": "application/vnd.rn-realmedia",
+    "name": "RealMedia",
+    "ext": ".rm"
+  },
+  {
+    "mime": "application/vnd.realvnc.bed",
+    "name": "RealVNC",
+    "ext": ".bed"
+  },
+  {
+    "mime": "application/vnd.recordare.musicxml",
+    "name": "Recordare Applications",
+    "ext": ".mxl"
+  },
+  {
+    "mime": "application/vnd.recordare.musicxml+xml",
+    "name": "Recordare Applications",
+    "ext": ".musicxml"
+  },
+  {
+    "mime": "application/relax-ng-compact-syntax",
+    "name": "Relax NG Compact Syntax",
+    "ext": ".rnc"
+  },
+  {
+    "mime": "application/vnd.data-vision.rdz",
+    "name": "RemoteDocs R-Viewer",
+    "ext": ".rdz"
+  },
+  {
+    "mime": "application/rdf+xml",
+    "name": "Resource Description Framework",
+    "ext": ".rdf"
+  },
+  {
+    "mime": "application/vnd.cloanto.rp9",
+    "name": "RetroPlatform Player",
+    "ext": ".rp9"
+  },
+  {
+    "mime": "application/vnd.jisp",
+    "name": "RhymBox",
+    "ext": ".jisp"
+  },
+  {
+    "mime": "application/rtf",
+    "name": "Rich Text Format",
+    "ext": ".rtf"
+  },
+  {
+    "mime": "text/richtext",
+    "name": "Rich Text Format (RTF)",
+    "ext": ".rtx"
+  },
+  {
+    "mime": "application/vnd.route66.link66+xml",
+    "name": "ROUTE 66 Location Based Services",
+    "ext": ".link66"
+  },
+  {
+    "mime": "application/rss+xml",
+    "name": "RSS - Really Simple Syndication",
+    "ext": ".rss, .xml"
+  },
+  {
+    "mime": "application/shf+xml",
+    "name": "S Hexdump Format",
+    "ext": ".shf"
+  },
+  {
+    "mime": "application/vnd.sailingtracker.track",
+    "name": "SailingTracker",
+    "ext": ".st"
+  },
+  {
+    "mime": "image/svg+xml",
+    "name": "Scalable Vector Graphics (SVG)",
+    "ext": ".svg"
+  },
+  {
+    "mime": "application/vnd.sus-calendar",
+    "name": "ScheduleUs",
+    "ext": ".sus"
+  },
+  {
+    "mime": "application/sru+xml",
+    "name": "Search/Retrieve via URL Response Format",
+    "ext": ".sru"
+  },
+  {
+    "mime": "application/set-payment-initiation",
+    "name": "Secure Electronic Transaction - Payment",
+    "ext": ".setpay"
+  },
+  {
+    "mime": "application/set-registration-initiation",
+    "name": "Secure Electronic Transaction - Registration",
+    "ext": ".setreg"
+  },
+  {
+    "mime": "application/vnd.sema",
+    "name": "Secured eMail",
+    "ext": ".sema"
+  },
+  {
+    "mime": "application/vnd.semd",
+    "name": "Secured eMail",
+    "ext": ".semd"
+  },
+  {
+    "mime": "application/vnd.semf",
+    "name": "Secured eMail",
+    "ext": ".semf"
+  },
+  {
+    "mime": "application/vnd.seemail",
+    "name": "SeeMail",
+    "ext": ".see"
+  },
+  {
+    "mime": "application/x-font-snf",
+    "name": "Server Normal Format",
+    "ext": ".snf"
+  },
+  {
+    "mime": "application/scvp-vp-request",
+    "name": "Server-Based Certificate Validation Protocol - Validation Policies - Request",
+    "ext": ".spq"
+  },
+  {
+    "mime": "application/scvp-vp-response",
+    "name": "Server-Based Certificate Validation Protocol - Validation Policies - Response",
+    "ext": ".spp"
+  },
+  {
+    "mime": "application/scvp-cv-request",
+    "name": "Server-Based Certificate Validation Protocol - Validation Request",
+    "ext": ".scq"
+  },
+  {
+    "mime": "application/scvp-cv-response",
+    "name": "Server-Based Certificate Validation Protocol - Validation Response",
+    "ext": ".scs"
+  },
+  {
+    "mime": "application/sdp",
+    "name": "Session Description Protocol",
+    "ext": ".sdp"
+  },
+  {
+    "mime": "text/x-setext",
+    "name": "Setext",
+    "ext": ".etx"
+  },
+  {
+    "mime": "video/x-sgi-movie",
+    "name": "SGI Movie",
+    "ext": ".movie"
+  },
+  {
+    "mime": "application/vnd.shana.informed.formdata",
+    "name": "Shana Informed Filler",
+    "ext": ".ifm"
+  },
+  {
+    "mime": "application/vnd.shana.informed.formtemplate",
+    "name": "Shana Informed Filler",
+    "ext": ".itp"
+  },
+  {
+    "mime": "application/vnd.shana.informed.interchange",
+    "name": "Shana Informed Filler",
+    "ext": ".iif"
+  },
+  {
+    "mime": "application/vnd.shana.informed.package",
+    "name": "Shana Informed Filler",
+    "ext": ".ipk"
+  },
+  {
+    "mime": "application/thraud+xml",
+    "name": "Sharing Transaction Fraud Data",
+    "ext": ".tfi"
+  },
+  {
+    "mime": "application/x-shar",
+    "name": "Shell Archive",
+    "ext": ".shar"
+  },
+  {
+    "mime": "image/x-rgb",
+    "name": "Silicon Graphics RGB Bitmap",
+    "ext": ".rgb"
+  },
+  {
+    "mime": "application/vnd.epson.salt",
+    "name": "SimpleAnimeLite Player",
+    "ext": ".slt"
+  },
+  {
+    "mime": "application/vnd.accpac.simply.aso",
+    "name": "Simply Accounting",
+    "ext": ".aso"
+  },
+  {
+    "mime": "application/vnd.accpac.simply.imp",
+    "name": "Simply Accounting - Data Import",
+    "ext": ".imp"
+  },
+  {
+    "mime": "application/vnd.simtech-mindmapper",
+    "name": "SimTech MindMapper",
+    "ext": ".twd"
+  },
+  {
+    "mime": "application/vnd.commonspace",
+    "name": "Sixth Floor Media - CommonSpace",
+    "ext": ".csp"
+  },
+  {
+    "mime": "application/vnd.yamaha.smaf-audio",
+    "name": "SMAF Audio",
+    "ext": ".saf"
+  },
+  {
+    "mime": "application/vnd.smaf",
+    "name": "SMAF File",
+    "ext": ".mmf"
+  },
+  {
+    "mime": "application/vnd.yamaha.smaf-phrase",
+    "name": "SMAF Phrase",
+    "ext": ".spf"
+  },
+  {
+    "mime": "application/vnd.smart.teacher",
+    "name": "SMART Technologies Apps",
+    "ext": ".teacher"
+  },
+  {
+    "mime": "application/vnd.svd",
+    "name": "SourceView Document",
+    "ext": ".svd"
+  },
+  {
+    "mime": "application/sparql-query",
+    "name": "SPARQL - Query",
+    "ext": ".rq"
+  },
+  {
+    "mime": "application/sparql-results+xml",
+    "name": "SPARQL - Results",
+    "ext": ".srx"
+  },
+  {
+    "mime": "application/srgs",
+    "name": "Speech Recognition Grammar Specification",
+    "ext": ".gram"
+  },
+  {
+    "mime": "application/srgs+xml",
+    "name": "Speech Recognition Grammar Specification - XML",
+    "ext": ".grxml"
+  },
+  {
+    "mime": "application/ssml+xml",
+    "name": "Speech Synthesis Markup Language",
+    "ext": ".ssml"
+  },
+  {
+    "mime": "application/vnd.koan",
+    "name": "SSEYO Koan Play File",
+    "ext": ".skp"
+  },
+  {
+    "mime": "text/sgml",
+    "name": "Standard Generalized Markup Language (SGML)",
+    "ext": ".sgml"
+  },
+  {
+    "mime": "application/vnd.stardivision.calc",
+    "name": "StarOffice - Calc",
+    "ext": ".sdc"
+  },
+  {
+    "mime": "application/vnd.stardivision.draw",
+    "name": "StarOffice - Draw",
+    "ext": ".sda"
+  },
+  {
+    "mime": "application/vnd.stardivision.impress",
+    "name": "StarOffice - Impress",
+    "ext": ".sdd"
+  },
+  {
+    "mime": "application/vnd.stardivision.math",
+    "name": "StarOffice - Math",
+    "ext": ".smf"
+  },
+  {
+    "mime": "application/vnd.stardivision.writer",
+    "name": "StarOffice - Writer",
+    "ext": ".sdw"
+  },
+  {
+    "mime": "application/vnd.stardivision.writer-global",
+    "name": "StarOffice - Writer (Global)",
+    "ext": ".sgl"
+  },
+  {
+    "mime": "application/vnd.stepmania.stepchart",
+    "name": "StepMania",
+    "ext": ".sm"
+  },
+  {
+    "mime": "application/x-stuffit",
+    "name": "Stuffit Archive",
+    "ext": ".sit"
+  },
+  {
+    "mime": "application/x-stuffitx",
+    "name": "Stuffit Archive",
+    "ext": ".sitx"
+  },
+  {
+    "mime": "application/vnd.solent.sdkm+xml",
+    "name": "SudokuMagic",
+    "ext": ".sdkm"
+  },
+  {
+    "mime": "application/vnd.olpc-sugar",
+    "name": "Sugar Linux Application Bundle",
+    "ext": ".xo"
+  },
+  {
+    "mime": "audio/basic",
+    "name": "Sun Audio - Au file format",
+    "ext": ".au"
+  },
+  {
+    "mime": "application/vnd.wqd",
+    "name": "SundaHus WQ",
+    "ext": ".wqd"
+  },
+  {
+    "mime": "application/vnd.symbian.install",
+    "name": "Symbian Install Package",
+    "ext": ".sis"
+  },
+  {
+    "mime": "application/smil+xml",
+    "name": "Synchronized Multimedia Integration Language",
+    "ext": ".smi"
+  },
+  {
+    "mime": "application/vnd.syncml+xml",
+    "name": "SyncML",
+    "ext": ".xsm"
+  },
+  {
+    "mime": "application/vnd.syncml.dm+wbxml",
+    "name": "SyncML - Device Management",
+    "ext": ".bdm"
+  },
+  {
+    "mime": "application/vnd.syncml.dm+xml",
+    "name": "SyncML - Device Management",
+    "ext": ".xdm"
+  },
+  {
+    "mime": "application/x-sv4cpio",
+    "name": "System V Release 4 CPIO Archive",
+    "ext": ".sv4cpio"
+  },
+  {
+    "mime": "application/x-sv4crc",
+    "name": "System V Release 4 CPIO Checksum Data",
+    "ext": ".sv4crc"
+  },
+  {
+    "mime": "application/sbml+xml",
+    "name": "Systems Biology Markup Language",
+    "ext": ".sbml"
+  },
+  {
+    "mime": "text/tab-separated-values",
+    "name": "Tab Separated Values",
+    "ext": ".tsv"
+  },
+  {
+    "mime": "image/tiff",
+    "name": "Tagged Image File Format",
+    "ext": ".tiff"
+  },
+  {
+    "mime": "application/vnd.tao.intent-module-archive",
+    "name": "Tao Intent",
+    "ext": ".tao"
+  },
+  {
+    "mime": "application/x-tar",
+    "name": "Tar File (Tape Archive)",
+    "ext": ".tar"
+  },
+  {
+    "mime": "application/x-tcl",
+    "name": "Tcl Script",
+    "ext": ".tcl"
+  },
+  {
+    "mime": "application/x-tex",
+    "name": "TeX",
+    "ext": ".tex"
+  },
+  {
+    "mime": "application/x-tex-tfm",
+    "name": "TeX Font Metric",
+    "ext": ".tfm"
+  },
+  {
+    "mime": "application/tei+xml",
+    "name": "Text Encoding and Interchange",
+    "ext": ".tei"
+  },
+  {
+    "mime": "text/plain",
+    "name": "Text File",
+    "ext": ".txt"
+  },
+  {
+    "mime": "application/vnd.spotfire.dxp",
+    "name": "TIBCO Spotfire",
+    "ext": ".dxp"
+  },
+  {
+    "mime": "application/vnd.spotfire.sfs",
+    "name": "TIBCO Spotfire",
+    "ext": ".sfs"
+  },
+  {
+    "mime": "application/timestamped-data",
+    "name": "Time Stamped Data Envelope",
+    "ext": ".tsd"
+  },
+  {
+    "mime": "application/vnd.trid.tpt",
+    "name": "TRI Systems Config",
+    "ext": ".tpt"
+  },
+  {
+    "mime": "application/vnd.triscape.mxs",
+    "name": "Triscape Map Explorer",
+    "ext": ".mxs"
+  },
+  {
+    "mime": "text/troff",
+    "name": "troff",
+    "ext": ".t"
+  },
+  {
+    "mime": "application/vnd.trueapp",
+    "name": "True BASIC",
+    "ext": ".tra"
+  },
+  {
+    "mime": "application/x-font-ttf",
+    "name": "TrueType Font",
+    "ext": ".ttf"
+  },
+  {
+    "mime": "text/turtle",
+    "name": "Turtle (Terse RDF Triple Language)",
+    "ext": ".ttl"
+  },
+  {
+    "mime": "application/vnd.umajin",
+    "name": "UMAJIN",
+    "ext": ".umj"
+  },
+  {
+    "mime": "application/vnd.uoml+xml",
+    "name": "Unique Object Markup Language",
+    "ext": ".uoml"
+  },
+  {
+    "mime": "application/vnd.unity",
+    "name": "Unity 3d",
+    "ext": ".unityweb"
+  },
+  {
+    "mime": "application/vnd.ufdl",
+    "name": "Universal Forms Description Language",
+    "ext": ".ufd"
+  },
+  {
+    "mime": "text/uri-list",
+    "name": "URI Resolution Services",
+    "ext": ".uri"
+  },
+  {
+    "mime": "application/vnd.uiq.theme",
+    "name": "User Interface Quartz - Theme (Symbian)",
+    "ext": ".utz"
+  },
+  {
+    "mime": "application/x-ustar",
+    "name": "Ustar (Uniform Standard Tape Archive)",
+    "ext": ".ustar"
+  },
+  {
+    "mime": "text/x-uuencode",
+    "name": "UUEncode",
+    "ext": ".uu"
+  },
+  {
+    "mime": "text/x-vcalendar",
+    "name": "vCalendar",
+    "ext": ".vcs"
+  },
+  {
+    "mime": "text/x-vcard",
+    "name": "vCard",
+    "ext": ".vcf"
+  },
+  {
+    "mime": "application/x-cdlink",
+    "name": "Video CD",
+    "ext": ".vcd"
+  },
+  {
+    "mime": "application/vnd.vsf",
+    "name": "Viewport+",
+    "ext": ".vsf"
+  },
+  {
+    "mime": "model/vrml",
+    "name": "Virtual Reality Modeling Language",
+    "ext": ".wrl"
+  },
+  {
+    "mime": "application/vnd.vcx",
+    "name": "VirtualCatalog",
+    "ext": ".vcx"
+  },
+  {
+    "mime": "model/vnd.mts",
+    "name": "Virtue MTS",
+    "ext": ".mts"
+  },
+  {
+    "mime": "model/vnd.vtu",
+    "name": "Virtue VTU",
+    "ext": ".vtu"
+  },
+  {
+    "mime": "application/vnd.visionary",
+    "name": "Visionary",
+    "ext": ".vis"
+  },
+  {
+    "mime": "video/vnd.vivo",
+    "name": "Vivo",
+    "ext": ".viv"
+  },
+  {
+    "mime": "application/ccxml+xml,",
+    "name": "Voice Browser Call Control",
+    "ext": ".ccxml"
+  },
+  {
+    "mime": "application/voicexml+xml",
+    "name": "VoiceXML",
+    "ext": ".vxml"
+  },
+  {
+    "mime": "application/x-wais-source",
+    "name": "WAIS Source",
+    "ext": ".src"
+  },
+  {
+    "mime": "application/vnd.wap.wbxml",
+    "name": "WAP Binary XML (WBXML)",
+    "ext": ".wbxml"
+  },
+  {
+    "mime": "image/vnd.wap.wbmp",
+    "name": "WAP Bitamp (WBMP)",
+    "ext": ".wbmp"
+  },
+  {
+    "mime": "audio/x-wav",
+    "name": "Waveform Audio File Format (WAV)",
+    "ext": ".wav"
+  },
+  {
+    "mime": "application/davmount+xml",
+    "name": "Web Distributed Authoring and Versioning",
+    "ext": ".davmount"
+  },
+  {
+    "mime": "application/x-font-woff",
+    "name": "Web Open Font Format",
+    "ext": ".woff"
+  },
+  {
+    "mime": "application/wspolicy+xml",
+    "name": "Web Services Policy",
+    "ext": ".wspolicy"
+  },
+  {
+    "mime": "image/webp",
+    "name": "WebP Image",
+    "ext": ".webp"
+  },
+  {
+    "mime": "application/vnd.webturbo",
+    "name": "WebTurbo",
+    "ext": ".wtb"
+  },
+  {
+    "mime": "application/widget",
+    "name": "Widget Packaging and XML Configuration",
+    "ext": ".wgt"
+  },
+  {
+    "mime": "application/winhlp",
+    "name": "WinHelp",
+    "ext": ".hlp"
+  },
+  {
+    "mime": "text/vnd.wap.wml",
+    "name": "Wireless Markup Language (WML)",
+    "ext": ".wml"
+  },
+  {
+    "mime": "text/vnd.wap.wmlscript",
+    "name": "Wireless Markup Language Script (WMLScript)",
+    "ext": ".wmls"
+  },
+  {
+    "mime": "application/vnd.wap.wmlscriptc",
+    "name": "WMLScript",
+    "ext": ".wmlsc"
+  },
+  {
+    "mime": "application/vnd.wordperfect",
+    "name": "Wordperfect",
+    "ext": ".wpd"
+  },
+  {
+    "mime": "application/vnd.wt.stf",
+    "name": "Worldtalk",
+    "ext": ".stf"
+  },
+  {
+    "mime": "application/wsdl+xml",
+    "name": "WSDL - Web Services Description Language",
+    "ext": ".wsdl"
+  },
+  {
+    "mime": "image/x-xbitmap",
+    "name": "X BitMap",
+    "ext": ".xbm"
+  },
+  {
+    "mime": "image/x-xpixmap",
+    "name": "X PixMap",
+    "ext": ".xpm"
+  },
+  {
+    "mime": "image/x-xwindowdump",
+    "name": "X Window Dump",
+    "ext": ".xwd"
+  },
+  {
+    "mime": "application/x-x509-ca-cert",
+    "name": "X.509 Certificate",
+    "ext": ".der"
+  },
+  {
+    "mime": "application/x-xfig",
+    "name": "Xfig",
+    "ext": ".fig"
+  },
+  {
+    "mime": "application/xhtml+xml",
+    "name": "XHTML - The Extensible HyperText Markup Language",
+    "ext": ".xhtml"
+  },
+  {
+    "mime": "application/xml",
+    "name": "XML - Extensible Markup Language",
+    "ext": ".xml"
+  },
+  {
+    "mime": "application/xcap-diff+xml",
+    "name": "XML Configuration Access Protocol - XCAP Diff",
+    "ext": ".xdf"
+  },
+  {
+    "mime": "application/xenc+xml",
+    "name": "XML Encryption Syntax and Processing",
+    "ext": ".xenc"
+  },
+  {
+    "mime": "application/patch-ops-error+xml",
+    "name": "XML Patch Framework",
+    "ext": ".xer"
+  },
+  {
+    "mime": "application/resource-lists+xml",
+    "name": "XML Resource Lists",
+    "ext": ".rl"
+  },
+  {
+    "mime": "application/rls-services+xml",
+    "name": "XML Resource Lists",
+    "ext": ".rs"
+  },
+  {
+    "mime": "application/resource-lists-diff+xml",
+    "name": "XML Resource Lists Diff",
+    "ext": ".rld"
+  },
+  {
+    "mime": "application/xslt+xml",
+    "name": "XML Transformations",
+    "ext": ".xslt"
+  },
+  {
+    "mime": "application/xop+xml",
+    "name": "XML-Binary Optimized Packaging",
+    "ext": ".xop"
+  },
+  {
+    "mime": "application/x-xpinstall",
+    "name": "XPInstall - Mozilla",
+    "ext": ".xpi"
+  },
+  {
+    "mime": "application/xspf+xml",
+    "name": "XSPF - XML Shareable Playlist Format",
+    "ext": ".xspf"
+  },
+  {
+    "mime": "application/vnd.mozilla.xul+xml",
+    "name": "XUL - XML User Interface Language",
+    "ext": ".xul"
+  },
+  {
+    "mime": "chemical/x-xyz",
+    "name": "XYZ File Format",
+    "ext": ".xyz"
+  },
+  {
+    "mime": "application/yang",
+    "name": "YANG Data Modeling Language",
+    "ext": ".yang"
+  },
+  {
+    "mime": "application/yin+xml",
+    "name": "YIN (YANG - XML)",
+    "ext": ".yin"
+  },
+  {
+    "mime": "application/vnd.zul",
+    "name": "Z.U.L. Geometry",
+    "ext": ".zir"
+  },
+  {
+    "mime": "application/zip",
+    "name": "Zip Archive",
+    "ext": ".zip"
+  },
+  {
+    "mime": "application/vnd.handheld-entertainment+xml",
+    "name": "ZVUE Media Manager",
+    "ext": ".zmm"
+  },
+  {
+    "mime": "application/vnd.zzazz.deck+xml",
+    "name": "Zzazz Deck",
+    "ext": ".zaz"
+  }
+]

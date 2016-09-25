@@ -46,7 +46,10 @@ let vueImage = new Vue({
 			vueImage.isLoadingText = 'Fetching images...';
 			Vue.nextTick(() => {
 				socket.emit('uploadsGetImages', { folder: vueImage.currentFolder }, (data) => {
-					vueImage.images = data;
+					vueImage.images = _.map(data, (f) => {
+						f.thumbpath = (f.folder === '') ? f.basename + '.png' : _.join([ f.folder, f.basename + '.png' ], '/');
+						return f;
+					});
 					vueImage.isLoading = false;
 				});
 			});

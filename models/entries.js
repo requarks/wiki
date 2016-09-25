@@ -5,8 +5,6 @@ var Promise = require('bluebird'),
 	fs = Promise.promisifyAll(require("fs-extra")),
 	_ = require('lodash'),
 	farmhash = require('farmhash'),
-	BSONModule = require('bson'),
-	BSON = new BSONModule.BSONPure.BSON(),
 	moment = require('moment');
 
 /**
@@ -82,7 +80,7 @@ module.exports = {
 				// Load from cache
 
 				return fs.readFileAsync(cpath).then((contents) => {
-					return BSON.deserialize(contents);
+					return JSON.parse(contents);
 				}).catch((err) => {
 					winston.error('Corrupted cache file. Deleting it...');
 					fs.unlinkSync(cpath);
@@ -156,7 +154,7 @@ module.exports = {
 						// Cache to disk
 
 						if(options.cache) {
-							let cacheData = BSON.serialize(_.pick(pageData, ['html', 'meta', 'tree', 'parent']), false, false, false);
+							let cacheData = JSON.stringify(_.pick(pageData, ['html', 'meta', 'tree', 'parent']), false, false, false);
 							return fs.writeFileAsync(cpath, cacheData).catch((err) => {
 								winston.error('Unable to write to cache! Performance may be affected.');
 								return true;
@@ -257,7 +255,7 @@ module.exports = {
 	 * @return     {String}  The full cache path.
 	 */
 	getCachePath(entryPath) {
-		return path.join(this._cachePath, farmhash.fingerprint32(entryPath) + '.bson');
+		return path.join(this._cachePath, farmhash.fingerprint32(entryPath) + '.json');
 	},
 
 	/**

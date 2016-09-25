@@ -7,7 +7,7 @@
 global.ROOTPATH = __dirname;
 
 // ----------------------------------------
-// Load global modules
+// Load Winston
 // ----------------------------------------
 
 var _isDebug = process.env.NODE_ENV === 'development';
@@ -24,9 +24,12 @@ winston.add(winston.transports.Console, {
 
 winston.info('[SERVER] Requarks Wiki is initializing...');
 
-var appconfig = require('./models/config')('./config.yml');
-let lcdata = require('./models/localdata').init(appconfig, false);
+// ----------------------------------------
+// Load global modules
+// ----------------------------------------
 
+var appconfig = require('./models/config')('./config.yml');
+global.lcdata = require('./models/localdata').init(appconfig, 'server');
 global.db = require('./models/db')(appconfig);
 global.git = require('./models/git').init(appconfig, false);
 global.entries = require('./models/entries').init(appconfig);

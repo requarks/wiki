@@ -22,7 +22,7 @@ module.exports = {
 	init(appconfig) {
 
 		let self = this;
-		let dbPath = path.resolve(ROOTPATH, appconfig.datadir.db, 'search-index');
+		let dbPath = path.resolve(ROOTPATH, appconfig.datadir.db, 'search');
 
 		searchIndex({
 			deletable: true,

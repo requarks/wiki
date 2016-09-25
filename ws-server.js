@@ -33,20 +33,20 @@ if(!process.argv[2] || process.argv[2].length !== 40) {
 global.internalAuth = require('./lib/internalAuth').init(process.argv[2]);;
 
 // ----------------------------------------
-// Load modules
+// Load global modules
 // ----------------------------------------
 
 winston.info('[WS] WS Server is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
-let lcdata = require('./models/localdata').init(appconfig, true);
+let lcdata = require('./models/localdata').init(appconfig, 'ws');
 
 global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
 global.search = require('./models/search').init(appconfig);
 
 // ----------------------------------------
-// Load modules
+// Load local modules
 // ----------------------------------------
 
 var _ = require('lodash');
@@ -141,8 +141,14 @@ io.on('connection', (socket) => {
 		cb(lcdata.getUploadsFolders());
 	});
 
+	socket.on('uploadsSetFiles', (data, cb) => {
+		if(internalAuth.validateKey(data.auth)) {
+			lcdata.setUploadsFiles(data.content);
+		}
+	});
+
 	socket.on('uploadsGetImages', (data, cb) => {
-		cb([]);
+		cb(lcdata.getUploadsFiles('image', data.folder));
 	});
 
 });

@@ -39,6 +39,7 @@ global.WSInternalKey = process.argv[2];
 winston.info('[AGENT] Background Agent is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
+let lcdata = require('./models/localdata').init(appconfig, 'agent');
 
 global.git = require('./models/git').init(appconfig);
 global.entries = require('./models/entries').init(appconfig);
@@ -50,8 +51,12 @@ var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require("fs-extra"));
 var path = require('path');
 var cron = require('cron').CronJob;
-var wsClient = require('socket.io-client');
-global.ws = wsClient('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
+var readChunk = require('read-chunk');
+var fileType = require('file-type');
+
+global.ws = require('socket.io-client')('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
+
+const mimeImgTypes = ['image/png', 'image/jpg']
 
 // ----------------------------------------
 // Start Cron
@@ -75,6 +80,7 @@ var job = new cron({
 
 		let jobs = [];
 		let repoPath = path.resolve(ROOTPATH, appconfig.datadir.repo);
+		let dataPath = path.resolve(ROOTPATH, appconfig.datadir.db);
 		let uploadsPath = path.join(repoPath, 'uploads');
 
 		// ----------------------------------------
@@ -151,11 +157,97 @@ var job = new cron({
 
 			return Promise.map(ls, (f) => {
 				return fs.statAsync(path.join(uploadsPath, f)).then((s) => { return { filename: f, stat: s }; });
-			}).filter((s) => { return s.stat.isDirectory(); }).then((arrStats) => {
+			}).filter((s) => { return s.stat.isDirectory(); }).then((arrDirs) => {
+
+				let folderNames = _.map(arrDirs, 'filename');
+				folderNames.unshift('');
+
 				ws.emit('uploadsSetFolders', {
 					auth: WSInternalKey,
-					content: _.map(arrStats, 'filename')
+					content: folderNames
 				});
+
+				let allFiles = [];
+
+				// Travel each directory
+
+				return Promise.map(folderNames, (fldName) => {
+					let fldPath = path.join(uploadsPath, fldName);
+					return fs.readdirAsync(fldPath).then((fList) => {
+						return Promise.map(fList, (f) => {
+							let fPath = path.join(fldPath, f);
+							let fPathObj = path.parse(fPath);
+
+							return fs.statAsync(fPath)
+								.then((s) => {
+
+									if(!s.isFile()) { return false; }
+
+									// Get MIME info
+
+									let mimeInfo = fileType(readChunk.sync(fPath, 0, 262));
+
+									// Images
+
+									if(s.size < 3145728) { // ignore files larger than 3MB
+										if(_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
+											return lcdata.getImageMetadata(fPath).then((mData) => {
+
+												let cacheThumbnailPath = path.parse(path.join(dataPath, 'thumbs', fldName, fPathObj.name + '.png'));
+												let cacheThumbnailPathStr = path.format(cacheThumbnailPath);
+
+												mData = _.pick(mData, ['format', 'width', 'height', 'density', 'hasAlpha', 'orientation']);
+												mData.category = 'image';
+												mData.mime = mimeInfo.mime;
+												mData.folder = fldName;
+												mData.filename = f;
+												mData.basename = fPathObj.name;
+												mData.filesize = s.size;
+												mData.uploadedOn = moment().utc();
+												allFiles.push(mData);
+
+												// Generate thumbnail
+
+												return fs.statAsync(cacheThumbnailPathStr).then((st) => {
+													return st.isFile();
+												}).catch((err) => {
+													return false;
+												}).then((thumbExists) => {
+
+													return (thumbExists) ? true : fs.ensureDirAsync(cacheThumbnailPath.dir).then(() => {
+														return lcdata.generateThumbnail(fPath, cacheThumbnailPathStr);
+													});
+
+												});
+
+											})
+										}
+									}
+
+									// Other Files
+									
+									allFiles.push({
+										category: 'file',
+										mime: mimeInfo.mime,
+										folder: fldName,
+										filename: f,
+										basename: fPathObj.name,
+										filesize: s.size,
+										uploadedOn: moment().utc()
+									});
+
+								});
+						}, {concurrency: 3});
+					});
+				}, {concurrency: 1}).finally(() => {
+
+					ws.emit('uploadsSetFiles', {
+						auth: WSInternalKey,
+						content: allFiles
+					});
+
+				});
+
 				return true;
 			});
 
