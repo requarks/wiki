@@ -32,7 +32,7 @@
 
 		.columns
 			.column.is-one-quarter(style={'max-width':'350px'})
-				.box(style={'max-height': '400px', overflow: 'auto', 'overflow-x': 'hidden'})
+				.box.editor-modal-folderlist
 					aside.menu
 						p.menu-label
 							| Folders
@@ -41,9 +41,25 @@
 								a(v-on:click="selectFolder(fld)", v-bind:class="{ 'is-active': currentFolder === fld }")
 									span.icon.is-small: i.fa.fa-folder
 									span /{{ fld }}
-			.column
-				figure.image.is-128x128(v-for="img in images")
-					img(v-bind:src="'/uploads/t/' + img.thumbpath")
+				.box.editor-modal-imagealign
+					.control.is-grouped
+						.control
+							span Alignment
+						.control.has-addons
+							a.button.is-primary(title="Left", v-on:click="selectAlignment('left')", v-bind:class="{ 'is-outlined': currentAlign !== 'left' }")
+								span.icon.is-small: i.fa.fa-align-left
+							a.button.is-primary(title="Center", v-on:click="selectAlignment('center')", v-bind:class="{ 'is-outlined': currentAlign !== 'center' }")
+								span.icon.is-small: i.fa.fa-align-center
+							a.button.is-primary(title="Right", v-on:click="selectAlignment('right')", v-bind:class="{ 'is-outlined': currentAlign !== 'right' }")
+								span.icon.is-small: i.fa.fa-align-right
+						.control
+							a.button.is-primary(title="Page Logo", v-on:click="selectAlignment('logo')", v-bind:class="{ 'is-outlined': currentAlign !== 'logo' }")
+								span.icon.is-small: i.fa.fa-external-link-square
+			.column.editor-modal-imagechoices
+				figure(v-for="img in images", v-bind:class="{ 'is-active': currentImage === img.uid }", v-on:click="selectImage(img.uid)")
+					img(v-bind:src="'/uploads/t/' + img.uid + '.png'")
+					span: strong {{ img.basename }}
+					span {{ img.filesize | filesize }}
 
 	.modal(v-bind:class="{ 'is-active': newFolderShow }")
 		.modal-background
@@ -61,3 +77,20 @@
 					footer.card-footer
 						a.card-footer-item(v-on:click="newFolderDiscard") Discard
 						a.card-footer-item(v-on:click="newFolderCreate") Create
+
+	.modal(v-bind:class="{ 'is-active': fetchFromUrlShow }")
+		.modal-background
+		.modal-container
+			.modal-content
+				.card.is-fullwidth
+					header.card-header
+						p.card-header-title Fetch Image from URL
+					.card-content
+						.content
+							label.label Enter full URL path to the image:
+							p.control
+								input.input(type='text', placeholder='http://www.example.com/some-image.png', v-model='fetchFromUrlURL')
+								span.help.is-danger.is-hidden This URL path is invalid!
+					footer.card-footer
+						a.card-footer-item(v-on:click="fetchFromUrlDiscard") Discard
+						a.card-footer-item(v-on:click="fetchFromUrlFetch") Fetch

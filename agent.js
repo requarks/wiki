@@ -53,6 +53,7 @@ var path = require('path');
 var cron = require('cron').CronJob;
 var readChunk = require('read-chunk');
 var fileType = require('file-type');
+var farmhash = require('farmhash');
 
 global.ws = require('socket.io-client')('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
 
@@ -177,6 +178,7 @@ var job = new cron({
 						return Promise.map(fList, (f) => {
 							let fPath = path.join(fldPath, f);
 							let fPathObj = path.parse(fPath);
+							let fUid = farmhash.fingerprint32(fldName + '/' + f);
 
 							return fs.statAsync(fPath)
 								.then((s) => {
@@ -193,10 +195,11 @@ var job = new cron({
 										if(_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
 											return lcdata.getImageMetadata(fPath).then((mData) => {
 
-												let cacheThumbnailPath = path.parse(path.join(dataPath, 'thumbs', fldName, fPathObj.name + '.png'));
+												let cacheThumbnailPath = path.parse(path.join(dataPath, 'thumbs', fUid + '.png'));
 												let cacheThumbnailPathStr = path.format(cacheThumbnailPath);
 
 												mData = _.pick(mData, ['format', 'width', 'height', 'density', 'hasAlpha', 'orientation']);
+												mData.uid = fUid;
 												mData.category = 'image';
 												mData.mime = mimeInfo.mime;
 												mData.folder = fldName;
@@ -227,6 +230,7 @@ var job = new cron({
 									// Other Files
 									
 									allFiles.push({
+										uid: fUid,
 										category: 'file',
 										mime: mimeInfo.mime,
 										folder: fldName,

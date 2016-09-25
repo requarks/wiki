@@ -5,7 +5,7 @@ var router = express.Router();
 var _ = require('lodash');
 
 var validPathRe = new RegExp("^([a-z0-9\\/-]+\\.[a-z0-9]+)$");
-var validPathThumbsRe = new RegExp("^([a-z0-9\\/-]+\\.png)$");
+var validPathThumbsRe = new RegExp("^([0-9]+\\.png)$");
 
 // ==========================================
 // SERVE UPLOADS FILES

@@ -65,6 +65,99 @@
 
 }
 
+.editor-modal-imagechoices {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	max-height: 450px;
+	overflow: auto;
+	overflow-x: hidden;
+
+	> figure {
+		display: flex;
+		flex-direction: column;
+		background-color: #FAFAFA;
+		border-radius: 5px;
+		padding: 5px;
+		width: 160px;
+		min-height: 205px;
+		margin: 0 5px 10px 5px;
+		cursor: pointer;
+		justify-content: center;
+		align-items: center;
+		transition: background-color 0.4s ease;
+
+		> img {
+			border: 1px solid #DDD;
+			border-radius: 5px;
+			padding: 2px;
+			background-color: #FFF;
+			margin: 0 0 5px 0;
+		}
+
+		> span {
+			font-size: 12px;
+			
+			> strong {
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				overflow: hidden;
+				display: block;
+				width: 150px;
+				text-align: center;
+			}
+
+		}
+
+		&:hover {
+			background-color: #DDD;
+		}
+
+		&.is-active {
+			background-color: $primary;
+			color: #FFF;
+
+			> img {
+				border-color: darken($primary, 10%);
+			}
+
+			> span > strong {
+				color: #FFF;
+			}
+
+		}
+
+	}
+
+}
+
+.editor-modal-imagealign {
+
+	.control > span {
+		letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #aeb1b5;
+    font-size: 11px;
+	}
+
+	> .is-grouped {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.button > .icon {
+		margin: 0;
+	}
+
+}
+
+.editor-modal-folderlist {
+	height: 358px;
+	overflow: auto;
+	overflow-x: hidden;
+}
+
 .CodeMirror {
 	border-left: none;
 	border-right: none;

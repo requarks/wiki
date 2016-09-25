@@ -201,9 +201,9 @@ module.exports = {
 	 */
 	getUploadsFiles(cat, fld) {
 
-		return this._uploadsDb.Files.find({
+		return this._uploadsDb.Files.chain().find({
 			'$and': [{ 'category' : cat	},{ 'folder' : fld }]
-		});
+		}).simplesort('filename').data();
 
 	},
 

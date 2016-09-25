@@ -6,8 +6,12 @@ let vueImage = new Vue({
 		isLoadingText: '',
 		newFolderName: '',
 		newFolderShow: false,
+		fetchFromUrlURL: '',
+		fetchFromUrlShow: false,
 		folders: [],
 		currentFolder: '',
+		currentImage: '',
+		currentAlign: 'left',
 		images: []
 	},
 	methods: {
@@ -20,11 +24,44 @@ let vueImage = new Vue({
 			mdeModalOpenState = false;
 			$('#modal-editor-image').slideUp();
 		},
+		insertImage: (ev) => {
+
+			if(mde.codemirror.doc.somethingSelected()) {
+				mde.codemirror.execCommand('singleSelection');
+			}
+
+			let selImage = _.find(vueImage.images, ['uid', vueImage.currentImage]);
+			selImage.normalizedPath = (selImage.folder === '') ? selImage.filename : selImage.folder + '/' + selImage.filename;
+			selImage.titleGuess = _.startCase(selImage.basename);
+
+			let imageText = '![' + selImage.titleGuess + '](/uploads/' + selImage.normalizedPath + ' "' + selImage.titleGuess + '")';
+			switch(vueImage.currentAlign) {
+				case 'center':
+					imageText += '{.align-center}';
+				break;
+				case 'right':
+					imageText += '{.align-right}';
+				break;
+				case 'logo':
+					imageText += '{.pagelogo}';
+				break;
+			}
+
+			mde.codemirror.doc.replaceSelection(imageText);
+			vueImage.cancel();
+
+		},
 		newFolder: (ev) => {
 			vueImage.newFolderShow = true;
 		},
 		newFolderDiscard: (ev) => {
 			vueImage.newFolderShow = false;
+		},
+		fetchFromUrl: (ev) => {
+			vueImage.fetchFromUrlShow = true;
+		},
+		fetchFromUrlDiscard: (ev) => {
+			vueImage.fetchFromUrlShow = false;
 		},
 		selectFolder: (fldName) => {
 			vueImage.currentFolder = fldName;
@@ -34,6 +71,7 @@ let vueImage = new Vue({
 			vueImage.isLoading = true;
 			vueImage.isLoadingText = 'Fetching folders list...';
 			vueImage.currentFolder = '';
+			vueImage.currentImage = '';
 			Vue.nextTick(() => {
 				socket.emit('uploadsGetFolders', { }, (data) => {
 					vueImage.folders = data;
@@ -46,13 +84,16 @@ let vueImage = new Vue({
 			vueImage.isLoadingText = 'Fetching images...';
 			Vue.nextTick(() => {
 				socket.emit('uploadsGetImages', { folder: vueImage.currentFolder }, (data) => {
-					vueImage.images = _.map(data, (f) => {
-						f.thumbpath = (f.folder === '') ? f.basename + '.png' : _.join([ f.folder, f.basename + '.png' ], '/');
-						return f;
-					});
+					vueImage.images = data;
 					vueImage.isLoading = false;
 				});
 			});
+		},
+		selectImage: (imageId) => {
+			vueImage.currentImage = imageId;
+		},
+		selectAlignment: (align) => {
+			vueImage.currentAlign = align;
 		}
 	}
 });

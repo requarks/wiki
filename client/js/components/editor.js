@@ -8,6 +8,10 @@ if($('#mk-editor').length === 1) {
 	let mdeModalOpenState = false;
 	let mdeCurrentEditor = null;
 
+	Vue.filter('filesize', (v) => {
+		return _.toUpper(filesize(v));
+	})
+
 	//=include editor-image.js
 	//=include editor-codeblock.js
 
