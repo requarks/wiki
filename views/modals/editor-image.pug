@@ -60,6 +60,7 @@
 					img(v-bind:src="'/uploads/t/' + img.uid + '.png'")
 					span: strong {{ img.basename }}
 					span {{ img.filesize | filesize }}
+				em(v-show="images.length < 1") This folder is empty.
 
 	.modal(v-bind:class="{ 'is-active': newFolderShow }")
 		.modal-background
@@ -72,8 +73,8 @@
 						.content
 							label.label Enter the new folder name:
 							p.control
-								input.input(type='text', placeholder='folder name', v-model='newFolderName')
-								span.help.is-danger.is-hidden This folder name is invalid!
+								input.input#txt-editor-newfoldername(type='text', placeholder='folder name', v-model='newFolderName', v-on:keyup.enter="newFolderCreate", v-on:keyup.esc="newFolderDiscard")
+								span.help.is-danger(v-show="newFolderError") This folder name is invalid!
 					footer.card-footer
 						a.card-footer-item(v-on:click="newFolderDiscard") Discard
 						a.card-footer-item(v-on:click="newFolderCreate") Create

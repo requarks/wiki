@@ -5,23 +5,14 @@
 // ===========================================
 
 global.ROOTPATH = __dirname;
+global.PROCNAME = 'SERVER';
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
 var _isDebug = process.env.NODE_ENV === 'development';
-
-global.winston = require('winston');
-winston.remove(winston.transports.Console)
-winston.add(winston.transports.Console, {
-  level: (_isDebug) ? 'info' : 'warn',
-  prettyPrint: true,
-  colorize: true,
-  silent: false,
-  timestamp: true
-});
-
+global.winston = require('./lib/winston')(_isDebug);
 winston.info('[SERVER] Requarks Wiki is initializing...');
 
 // ----------------------------------------
@@ -66,7 +57,6 @@ var ctrl = autoload(path.join(ROOTPATH, '/controllers'));
 // ----------------------------------------
 
 global.app = express();
-var _isDebug = (app.get('env') === 'development');
 
 // ----------------------------------------
 // Security

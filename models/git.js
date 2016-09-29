@@ -72,13 +72,13 @@ module.exports = {
 
 		let self = this;
 
-		winston.info('[GIT] Checking Git repository...');
+		winston.info('[' + PROCNAME + '][GIT] Checking Git repository...');
 
 		//-> Check if path is accessible
 
 		return fs.mkdirAsync(self._repo.path).catch((err) => {
 			if(err.code !== 'EEXIST') {
-				winston.error('Invalid Git repository path or missing permissions.');
+				winston.error('[' + PROCNAME + '][GIT] Invalid Git repository path or missing permissions.');
 			}
 		}).then(() => {
 
@@ -116,10 +116,10 @@ module.exports = {
 			});
 
 		}).catch((err) => {
-			winston.error('Git remote error!');
+			winston.error('[' + PROCNAME + '][GIT] Git remote error!');
 			throw err;
 		}).then(() => {
-			winston.info('[GIT] Git repository is OK.');
+			winston.info('[' + PROCNAME + '][GIT] Git repository is OK.');
 			return true;
 		});
 
@@ -147,12 +147,12 @@ module.exports = {
 
 		// Fetch
 
-		winston.info('[GIT] Performing pull from remote repository...');
+		winston.info('[' + PROCNAME + '][GIT] Performing pull from remote repository...');
 		return self._git.pull('origin', self._repo.branch).then((cProc) => {
-			winston.info('[GIT] Pull completed.');
+			winston.info('[' + PROCNAME + '][GIT] Pull completed.');
 		})
 		.catch((err) => {
-			winston.error('Unable to fetch from git origin!');
+			winston.error('[' + PROCNAME + '][GIT] Unable to fetch from git origin!');
 			throw err;
 		})
 		.then(() => {
@@ -164,14 +164,14 @@ module.exports = {
 
 				if(_.includes(out, 'commit')) {
 
-					winston.info('[GIT] Performing push to remote repository...');
+					winston.info('[' + PROCNAME + '][GIT] Performing push to remote repository...');
 					return self._git.push('origin', self._repo.branch).then(() => {
-						return winston.info('[GIT] Push completed.');
+						return winston.info('[' + PROCNAME + '][GIT] Push completed.');
 					});
 
 				} else {
 
-					winston.info('[GIT] Push skipped. Repository is already in sync.');
+					winston.info('[' + PROCNAME + '][GIT] Push skipped. Repository is already in sync.');
 
 				}
 
@@ -181,7 +181,7 @@ module.exports = {
 
 		})
 		.catch((err) => {
-			winston.error('Unable to push changes to remote!');
+			winston.error('[' + PROCNAME + '][GIT] Unable to push changes to remote!');
 			throw err;
 		});
 

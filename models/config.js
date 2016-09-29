@@ -25,6 +25,7 @@ module.exports = (confPath) => {
 		title: "Requarks Wiki",
 		host: "http://localhost",
 		port: process.env.PORT,
+		wsPort: 8080,
 		db: "mongodb://localhost/wiki",
 		redis: null,
 		sessionSecret: null,

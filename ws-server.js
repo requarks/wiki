@@ -5,22 +5,14 @@
 // ===========================================
 
 global.ROOTPATH = __dirname;
+global.PROCNAME = 'WS';
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
 var _isDebug = process.env.NODE_ENV === 'development';
-
-global.winston = require('winston');
-winston.remove(winston.transports.Console)
-winston.add(winston.transports.Console, {
-	level: (_isDebug) ? 'info' : 'warn',
-	prettyPrint: true,
-	colorize: true,
-	silent: false,
-	timestamp: true
-});
+global.winston = require('./lib/winston')(_isDebug);
 
 // ----------------------------------------
 // Fetch internal handshake key
@@ -139,6 +131,12 @@ io.on('connection', (socket) => {
 
 	socket.on('uploadsGetFolders', (data, cb) => {
 		cb(lcdata.getUploadsFolders());
+	});
+
+	socket.on('uploadsCreateFolder', (data, cb) => {
+		lcdata.createUploadsFolder(data.foldername).then((fldList) => {
+			cb(fldList);
+		});
 	});
 
 	socket.on('uploadsSetFiles', (data, cb) => {

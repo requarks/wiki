@@ -6,6 +6,7 @@ let vueImage = new Vue({
 		isLoadingText: '',
 		newFolderName: '',
 		newFolderShow: false,
+		newFolderError: false,
 		fetchFromUrlURL: '',
 		fetchFromUrlShow: false,
 		folders: [],
@@ -52,10 +53,37 @@ let vueImage = new Vue({
 
 		},
 		newFolder: (ev) => {
+			vueImage.newFolderName = '';
+			vueImage.newFolderError = false;
 			vueImage.newFolderShow = true;
+			_.delay(() => { $('#txt-editor-newfoldername').focus(); }, 400);
 		},
 		newFolderDiscard: (ev) => {
 			vueImage.newFolderShow = false;
+		},
+		newFolderCreate: (ev) => {
+
+			let regFolderName = new RegExp("^[a-z0-9][a-z0-9\-]*[a-z0-9]$");
+			vueImage.newFolderName = _.kebabCase(_.trim(vueImage.newFolderName));
+
+			if(_.isEmpty(vueImage.newFolderName) || !regFolderName.test(vueImage.newFolderName)) {
+				vueImage.newFolderError = true;
+				return;
+			}
+
+			vueImage.newFolderDiscard();
+			vueImage.isLoading = true;
+			vueImage.isLoadingText = 'Creating new folder...';
+
+			Vue.nextTick(() => {
+				socket.emit('uploadsCreateFolder', { foldername: vueImage.newFolderName }, (data) => {
+					vueImage.folders = data;
+					vueImage.currentFolder = vueImage.newFolderName;
+					vueImage.images = [];
+					vueImage.isLoading = false;
+				});
+			});
+
 		},
 		fetchFromUrl: (ev) => {
 			vueImage.fetchFromUrlShow = true;

@@ -1,10 +1,12 @@
 "use strict";
 
-var fs = require('fs'),
-	path = require('path'),
+var path = require('path'),
 	loki = require('lokijs'),
 	Promise = require('bluebird'),
+	fs = Promise.promisifyAll(require('fs-extra')),
 	_ = require('lodash');
+
+var regFolderName = new RegExp("^[a-z0-9][a-z0-9\-]*[a-z0-9]$");
 
 /**
  * Local Data Storage
@@ -114,36 +116,20 @@ module.exports = {
 	 */
 	createBaseDirectories(appconfig) {
 
-		winston.info('[SERVER] Create data directories if they don\'t exist...');
+		winston.info('[SERVER] Checking data directories...');
 
 		try {
-			fs.mkdirSync(appconfig.datadir.db);
+			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.db));
+			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.db, './cache'));
+			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.db, './thumbs'));
+
+			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.repo));
+			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.repo, './uploads'));
 		} catch (err) {
-			if(err.code !== 'EEXIST') {
-				winston.error(err);
-				process.exit(1);
-			}
+			winston.error(err);
 		}
 
-		try {
-			fs.mkdirSync(path.join(appconfig.datadir.db, 'cache'));
-		} catch (err) {
-			if(err.code !== 'EEXIST') {
-				winston.error(err);
-				process.exit(1);
-			}
-		}
-
-		try {
-			fs.mkdirSync(path.join(appconfig.datadir.db, 'thumbs'));
-		} catch (err) {
-			if(err.code !== 'EEXIST') {
-				winston.error(err);
-				process.exit(1);
-			}
-		}
-
-		winston.info('[SERVER] Data directories are OK.');
+		winston.info('[SERVER] Data and Repository directories are OK.');
 
 		return;
 
@@ -169,6 +155,32 @@ module.exports = {
 	 */
 	getUploadsFolders() {
 		return this._uploadsFolders;
+	},
+
+	/**
+	 * Creates an uploads folder.
+	 *
+	 * @param      {String}  folderName  The folder name
+	 * @return     {Promise}  Promise of the operation
+	 */
+	createUploadsFolder(folderName) {
+
+		let self = this;
+
+		folderName = _.kebabCase(_.trim(folderName));
+
+		if(_.isEmpty(folderName) || !regFolderName.test(folderName)) {
+			return Promise.resolve(self.getUploadsFolders());
+		}
+
+		return fs.ensureDirAsync(path.join(self._uploadsPath, folderName)).then(() => {
+			if(!_.includes(self._uploadsFolders, folderName)) {
+				self._uploadsFolders.push(folderName);
+				self._uploadsFolders = _.sortBy(self._uploadsFolders);
+			}
+			return self.getUploadsFolders();
+		});
+
 	},
 
 	/**
