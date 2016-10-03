@@ -17,10 +17,12 @@
 
 	a {
 		color: #FFF !important;
+		border: none;
+		transition: background-color 0.4s ease;
 
-		&.active, &:hover {
+		&.active, &:hover, &:focus {
 			background-color: rgba(0,0,0,0.5);
-			border-color: #888;
+			outline: none;
 		}
 
 	}
@@ -62,6 +64,33 @@
 	&.is-active {
 		opacity: 1;
 	}
+
+}
+
+#btn-editor-uploadimage {
+	position: relative;
+	overflow: hidden;
+
+	> label {
+		display: block;
+		opacity: 0;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		cursor: pointer;
+
+		input[type=file] {
+			opacity: 0;
+			position: absolute;
+			top: -9999px;
+			left: -9999px;
+		}
+
+	}
+
+	
 
 }
 
@@ -119,6 +148,20 @@
 
 			> img {
 				border-color: darken($primary, 10%);
+			}
+
+			> span > strong {
+				color: #FFF;
+			}
+
+		}
+
+		&.is-contextopen {
+			background-color: $warning;
+			color: #FFF;
+
+			> img {
+				border-color: darken($warning, 10%);
 			}
 
 			> span > strong {

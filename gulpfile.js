@@ -23,7 +23,7 @@ var paths = {
 		'./node_modules/jquery/dist/jquery.min.js',
 		'./node_modules/vue/dist/vue.min.js',
 		'./node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
-		'./node_modules/jquery-contextmenu/dist/jquery.ui.position.min.js',
+		'./node_modules/jquery-simple-upload/simpleUpload.min.js',
 		'./node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.js',
 		'./node_modules/sticky-js/dist/sticky.min.js',
 		'./node_modules/simplemde/dist/simplemde.min.js',

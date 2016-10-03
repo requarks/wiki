@@ -17,9 +17,11 @@
 							span.icon.is-small: i.fa.fa-folder
 							span New Folder
 					.control.has-addons
-						a.button.is-info.is-outlined(v-on:click="uploadImage")
+						a.button.is-info.is-outlined#btn-editor-uploadimage(v-on:click="uploadImage")
 							span.icon.is-small: i.fa.fa-upload
 							span Upload Image
+							label
+								input(type="file", multiple)
 						a.button.is-info.is-outlined(v-on:click="fetchFromUrl")
 							span.icon.is-small: i.fa.fa-download
 							span Fetch from URL

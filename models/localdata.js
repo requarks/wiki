@@ -4,6 +4,7 @@ var path = require('path'),
 	loki = require('lokijs'),
 	Promise = require('bluebird'),
 	fs = Promise.promisifyAll(require('fs-extra')),
+	multer  = require('multer'),
 	_ = require('lodash');
 
 var regFolderName = new RegExp("^[a-z0-9][a-z0-9\-]*[a-z0-9]$");
@@ -20,6 +21,8 @@ module.exports = {
 	_uploadsFolders: [],
 	_uploadsDb: null,
 
+	uploadImgHandler: null,
+
 	/**
 	 * Initialize Local Data Storage model
 	 *
@@ -33,8 +36,7 @@ module.exports = {
 		self._uploadsPath = path.resolve(ROOTPATH, appconfig.datadir.repo, 'uploads');
 		self._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.datadir.db, 'thumbs');
 
-
-		// Start in full or bare mode
+		// Finish initialization tasks
 
 		switch(mode) {
 			case 'agent':
@@ -42,6 +44,7 @@ module.exports = {
 			break;
 			case 'server':
 				self.createBaseDirectories(appconfig);
+				self.initMulter(appconfig);
 			break;
 			case 'ws':
 				self.initDb(appconfig);
@@ -100,6 +103,42 @@ module.exports = {
 	},
 
 	/**
+	 * Init Multer upload handlers
+	 *
+	 * @param      {Object}   appconfig  The application config
+	 * @return     {boolean}  Void
+	 */
+	initMulter(appconfig) {
+
+		this.uploadImgHandler = multer({
+			storage: multer.diskStorage({
+				destination: (req, f, cb) => {
+					cb(null, path.resolve(ROOTPATH, appconfig.datadir.db, 'temp-upload'))
+				}
+			}),
+			fileFilter: (req, f, cb) => {
+
+				//-> Check filesize (3 MB max)
+
+				if(f.size > 3145728) {
+					return cb(null, false);
+				}
+
+				//-> Check MIME type (quick check only)
+
+				if(!_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], f.mimetype)) {
+					return cb(null, false);
+				}
+
+				cb(null, true);
+			}
+		}).array('imgfile', 20);
+
+		return true;
+
+	},
+
+	/**
 	 * Gets the thumbnails folder path.
 	 *
 	 * @return     {String}  The thumbs path.
@@ -122,6 +161,7 @@ module.exports = {
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.db));
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.db, './cache'));
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.db, './thumbs'));
+			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.db, './temp-upload'));
 
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.repo));
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.datadir.repo, './uploads'));
@@ -179,6 +219,50 @@ module.exports = {
 				self._uploadsFolders = _.sortBy(self._uploadsFolders);
 			}
 			return self.getUploadsFolders();
+		});
+
+	},
+
+	/**
+	 * Check if folder is valid and exists
+	 *
+	 * @param      {String}  folderName  The folder name
+	 * @return     {Boolean}   True if valid
+	 */
+	validateUploadsFolder(folderName) {
+
+		folderName = (_.includes(this._uploadsFolders, folderName)) ? folderName : '';
+		return path.resolve(this._uploadsPath, folderName);
+
+	},
+
+	/**
+	 * Check if filename is valid and unique
+	 *
+	 * @param      {String}           f       The filename
+	 * @param      {String}           fld     The containing folder
+	 * @return     {Promise<String>}  Promise of the accepted filename
+	 */
+	validateUploadsFilename(f, fld) {
+
+		let fObj = path.parse(f);
+		let fname = _.chain(fObj.name).trim().toLower().kebabCase().value().replace(/[^a-z0-9\-]+/g, '');
+		let fext = _.toLower(fObj.ext);
+
+		if(!_.includes(['.jpg', '.jpeg', '.png', '.gif', '.webp'], fext)) {
+			fext = '.png';
+		}
+
+		f = fname + fext;
+		let fpath = path.resolve(this._uploadsPath, fld, f);
+
+		return fs.statAsync(fpath).then((s) => {
+			throw new Error('File ' + f + ' already exists.');
+		}).catch((err) => {
+			if(err.code === 'ENOENT') {
+				return f;
+			}
+			throw err;
 		});
 
 	},
