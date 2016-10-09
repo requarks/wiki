@@ -72,13 +72,24 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 
 		}).then(() => {
 			return {
+				ok: true,
 				filename: destFilename,
 				filesize: f.size
 			};
-		});
+		}).reflect();
 
 	}, {concurrency: 3}).then((results) => {
-		res.json({ ok: true, results });
+		let uplResults = _.map(results, (r) => {
+			if(r.isFulfilled()) {
+				return r.value();
+			} else {
+				return {
+					ok: false,
+					msg: r.reason().message
+				}
+			}
+		});
+		res.json({ ok: true, results: uplResults });
 	}).catch((err) => {
 		res.json({ ok: false, msg: err.message });
 	});

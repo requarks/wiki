@@ -268,6 +268,22 @@ module.exports = {
 	},
 
 	/**
+	 * Parse relative Uploads path
+	 *
+	 * @param      {String}  f       Relative Uploads path
+	 * @return     {Object}  Parsed path (folder and filename)
+	 */
+	parseUploadsRelPath(f) {
+
+		let fObj = path.parse(f);
+		return {
+			folder: fObj.dir,
+			filename: fObj.base
+		};
+
+	},
+
+	/**
 	 * Sets the uploads files.
 	 *
 	 * @param      {Array<Object>}  arrFiles  The uploads files
@@ -289,6 +305,19 @@ module.exports = {
 	},
 
 	/**
+	 * Adds one or more uploads files.
+	 *
+	 * @param      {Array<Object>}  arrFiles  The uploads files
+	 * @return     {Void}  Void
+	 */
+	addUploadsFiles(arrFiles) {
+		if(_.isArray(arrFiles) || _.isPlainObject(arrFiles)) {
+			this._uploadsDb.Files.insert(arrFiles);
+		}
+		return;
+	},
+
+	/**
 	 * Gets the uploads files.
 	 *
 	 * @param      {String}  cat     Category type
@@ -300,41 +329,6 @@ module.exports = {
 		return this._uploadsDb.Files.chain().find({
 			'$and': [{ 'category' : cat	},{ 'folder' : fld }]
 		}).simplesort('filename').data();
-
-	},
-
-	/**
-	 * Generate thumbnail of image
-	 *
-	 * @param      {String}           sourcePath  The source path
-	 * @return     {Promise<Object>}  Promise returning the resized image info
-	 */
-	generateThumbnail(sourcePath, destPath) {
-
-		let sharp = require('sharp');
-
-		return sharp(sourcePath)
-						.withoutEnlargement()
-						.resize(150,150)
-						.background('white')
-						.embed()
-						.flatten()
-						.toFormat('png')
-						.toFile(destPath);
-
-	},
-
-	/**
-	 * Gets the image metadata.
-	 *
-	 * @param      {String}  sourcePath  The source path
-	 * @return     {Object}  The image metadata.
-	 */
-	getImageMetadata(sourcePath) {
-
-		let sharp = require('sharp');
-
-		return sharp(sourcePath).metadata();
 
 	}
 

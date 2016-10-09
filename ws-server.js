@@ -108,12 +108,14 @@ io.on('connection', (socket) => {
 	});
 
 	socket.on('searchDel', (data, cb) => {
+		cb = cb || _.noop
 		if(internalAuth.validateKey(data.auth)) {
 			search.delete(data.entryPath);
 		}
 	});
 
 	socket.on('search', (data, cb) => {
+		cb = cb || _.noop
 		search.find(data.terms).then((results) => {
 			cb(results);
 		});
@@ -124,28 +126,42 @@ io.on('connection', (socket) => {
 	//-----------------------------------------
 
 	socket.on('uploadsSetFolders', (data, cb) => {
+		cb = cb || _.noop
 		if(internalAuth.validateKey(data.auth)) {
 			lcdata.setUploadsFolders(data.content);
 		}
 	});
 
 	socket.on('uploadsGetFolders', (data, cb) => {
+		cb = cb || _.noop
 		cb(lcdata.getUploadsFolders());
 	});
 
 	socket.on('uploadsCreateFolder', (data, cb) => {
+		cb = cb || _.noop
 		lcdata.createUploadsFolder(data.foldername).then((fldList) => {
 			cb(fldList);
 		});
 	});
 
 	socket.on('uploadsSetFiles', (data, cb) => {
+		cb = cb || _.noop;
 		if(internalAuth.validateKey(data.auth)) {
 			lcdata.setUploadsFiles(data.content);
+			cb(true);
+		}
+	});
+
+	socket.on('uploadsAddFiles', (data, cb) => {
+		cb = cb || _.noop
+		if(internalAuth.validateKey(data.auth)) {
+			lcdata.addUploadsFiles(data.content);
+			cb(true);
 		}
 	});
 
 	socket.on('uploadsGetImages', (data, cb) => {
+		cb = cb || _.noop
 		cb(lcdata.getUploadsFiles('image', data.folder));
 	});
 

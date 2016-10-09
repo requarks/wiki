@@ -31,7 +31,8 @@ global.WSInternalKey = process.argv[2];
 winston.info('[AGENT] Background Agent is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
-let lcdata = require('./models/localdata').init(appconfig, 'agent');
+global.lcdata = require('./models/localdata').init(appconfig, 'agent');
+var upl = require('./models/uploads').init(appconfig);
 
 global.git = require('./models/git').init(appconfig);
 global.entries = require('./models/entries').init(appconfig);
@@ -43,9 +44,6 @@ var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require("fs-extra"));
 var path = require('path');
 var cron = require('cron').CronJob;
-var readChunk = require('read-chunk');
-var fileType = require('file-type');
-var farmhash = require('farmhash');
 
 global.ws = require('socket.io-client')('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
 
@@ -56,6 +54,8 @@ const mimeImgTypes = ['image/png', 'image/jpg']
 // ----------------------------------------
 
 var jobIsBusy = false;
+var jobUplWatchStarted = false;
+
 var job = new cron({
 	cronTime: '0 */5 * * * *',
 	onTick: () => {
@@ -168,71 +168,11 @@ var job = new cron({
 					let fldPath = path.join(uploadsPath, fldName);
 					return fs.readdirAsync(fldPath).then((fList) => {
 						return Promise.map(fList, (f) => {
-							let fPath = path.join(fldPath, f);
-							let fPathObj = path.parse(fPath);
-							let fUid = farmhash.fingerprint32(fldName + '/' + f);
-
-							return fs.statAsync(fPath)
-								.then((s) => {
-
-									if(!s.isFile()) { return false; }
-
-									// Get MIME info
-
-									let mimeInfo = fileType(readChunk.sync(fPath, 0, 262));
-
-									// Images
-
-									if(s.size < 3145728) { // ignore files larger than 3MB
-										if(_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
-											return lcdata.getImageMetadata(fPath).then((mData) => {
-
-												let cacheThumbnailPath = path.parse(path.join(dataPath, 'thumbs', fUid + '.png'));
-												let cacheThumbnailPathStr = path.format(cacheThumbnailPath);
-
-												mData = _.pick(mData, ['format', 'width', 'height', 'density', 'hasAlpha', 'orientation']);
-												mData.uid = fUid;
-												mData.category = 'image';
-												mData.mime = mimeInfo.mime;
-												mData.folder = fldName;
-												mData.filename = f;
-												mData.basename = fPathObj.name;
-												mData.filesize = s.size;
-												mData.uploadedOn = moment().utc();
-												allFiles.push(mData);
-
-												// Generate thumbnail
-
-												return fs.statAsync(cacheThumbnailPathStr).then((st) => {
-													return st.isFile();
-												}).catch((err) => {
-													return false;
-												}).then((thumbExists) => {
-
-													return (thumbExists) ? true : fs.ensureDirAsync(cacheThumbnailPath.dir).then(() => {
-														return lcdata.generateThumbnail(fPath, cacheThumbnailPathStr);
-													});
-
-												});
-
-											})
-										}
-									}
-
-									// Other Files
-									
-									allFiles.push({
-										uid: fUid,
-										category: 'file',
-										mime: mimeInfo.mime,
-										folder: fldName,
-										filename: f,
-										basename: fPathObj.name,
-										filesize: s.size,
-										uploadedOn: moment().utc()
-									});
-
-								});
+							return upl.processFile(fldName, f).then((mData) => {
+								if(mData) {
+									allFiles.push(mData);
+								}
+							});
 						}, {concurrency: 3});
 					});
 				}, {concurrency: 1}).finally(() => {
@@ -255,6 +195,12 @@ var job = new cron({
 
 		Promise.all(jobs).then(() => {
 			winston.info('[AGENT] All jobs completed successfully! Going to sleep for now.');
+
+			if(!jobUplWatchStarted) {
+				jobUplWatchStarted = true;
+				upl.watch();
+			}
+
 		}).catch((err) => {
 			winston.error('[AGENT] One or more jobs have failed: ', err);
 		}).finally(() => {

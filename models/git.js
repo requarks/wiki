@@ -235,6 +235,23 @@ module.exports = {
 			return true;
 		})
 
+	},
+
+	/**
+	 * Commits uploads changes.
+	 *
+	 * @return     {Promise}  Resolve on commit success
+	 */
+	commitUploads() {
+
+		let self = this;
+
+		return self._git.add('uploads').then(() => {
+			return self._git.commit("Uploads repository sync").catch((err) => {
+			  if(_.includes(err.stdout, 'nothing to commit')) { return true; }
+			});
+		});
+
 	}
 
 };

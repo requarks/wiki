@@ -160,11 +160,15 @@ router.get('/*', (req, res, next) => {
 		if(pageData) {
 			return res.render('pages/view', { pageData });
 		} else {
-			res.render('error', {
-				message: err.message,
-				error: {}
+			res.render('error-notexist', {
+				newpath: safePath
 			});
 		}
+	}).error((err) => {
+		res.render('error-notexist', {
+			message: err.message,
+			newpath: safePath
+		});
 	}).catch((err) => {
 		res.render('error', {
 			message: err.message,

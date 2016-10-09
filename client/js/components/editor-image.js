@@ -13,7 +13,9 @@ let vueImage = new Vue({
 		currentFolder: '',
 		currentImage: '',
 		currentAlign: 'left',
-		images: []
+		images: [],
+		uploadSucceeded: false,
+		postUploadChecks: 0
 	},
 	methods: {
 		open: () => {
@@ -126,13 +128,17 @@ let vueImage = new Vue({
 		 *
 		 * @return     {Void}  Void
 		 */
-		loadImages: () => {
-			vueImage.isLoading = true;
-			vueImage.isLoadingText = 'Fetching images...';
+		loadImages: (silent) => {
+			if(!silent) {
+				vueImage.isLoading = true;
+				vueImage.isLoadingText = 'Fetching images...';
+			}
 			Vue.nextTick(() => {
 				socket.emit('uploadsGetImages', { folder: vueImage.currentFolder }, (data) => {
 					vueImage.images = data;
-					vueImage.isLoading = false;
+					if(!silent) {
+						vueImage.isLoading = false;
+					}
 					vueImage.attachContextMenus();
 				});
 			});
@@ -209,6 +215,31 @@ let vueImage = new Vue({
 					}
 				}
 			});
+		},
+
+		waitUploadComplete: () => {
+
+			vueImage.postUploadChecks++;
+			vueImage.isLoadingText = 'Processing uploads...';
+
+			let currentUplAmount = vueImage.images.length;
+			vueImage.loadImages(true);
+
+			Vue.nextTick(() => {
+				_.delay(() => {
+					if(currentUplAmount !== vueImage.images.length) {
+						vueImage.postUploadChecks = 0;
+						vueImage.isLoading = false;
+					} else if(vueImage.postUploadChecks > 5) {
+						vueImage.postUploadChecks = 0;
+						vueImage.isLoading = false;
+						alerts.pushError('Unable to fetch new uploads', 'Try again later');
+					} else {
+						vueImage.waitUploadComplete();
+					}
+				}, 2000);
+			});
+
 		}
 
 	}
@@ -228,7 +259,8 @@ $('#btn-editor-uploadimage input').on('change', (ev) => {
 		allowedTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
 		maxFileSize: 3145728, // max 3 MB
 
-		init: () => {
+		init: (totalUploads) => {
+			vueImage.uploadSucceeded = false;
 			vueImage.isLoading = true;
 			vueImage.isLoadingText = 'Preparing to upload...';
 		},
@@ -240,18 +272,37 @@ $('#btn-editor-uploadimage input').on('change', (ev) => {
 		success: (data) => {
 			if(data.ok) {
 
+				let failedUpls = _.filter(data.results, ['ok', false]);
+				if(failedUpls.length) {
+					_.forEach(failedUpls, (u) => {
+						alerts.pushError('Upload error', u.msg);
+					});
+					if(failedUpls.length < data.results.length) {
+						alerts.push({
+							title: 'Some uploads succeeded',
+							message: 'Files that are not mentionned in the errors above were uploaded successfully.'
+						});
+						vueImage.uploadSucceeded = true;
+					} 
+				} else {
+					vueImage.uploadSucceeded = true;
+				}
+
 			} else {
 				alerts.pushError('Upload error', data.msg);
 			}
 		},
 
 		error: function(error) {
-			vueImage.isLoading = false;
 			alerts.pushError(error.message, this.upload.file.name);
 		},
 
 		finish: () => {
-			vueImage.isLoading = false;
+			if(vueImage.uploadSucceeded) {
+				vueImage.waitUploadComplete();
+			} else {
+				vueImage.isLoading = false;
+			}
 		}
 
 	});

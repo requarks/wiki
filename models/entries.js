@@ -170,7 +170,7 @@ module.exports = {
 				return false;
 			}
 		}).catch((err) => {
-			return Promise.reject(new Error('Entry ' + entryPath + ' does not exist!'));
+			return Promise.reject(new Promise.OperationalError('Entry ' + entryPath + ' does not exist!'));
 		});
 
 	},
