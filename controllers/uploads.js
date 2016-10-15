@@ -40,58 +40,68 @@ router.get('/t/*', (req, res, next) => {
 router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 
 	let destFolder = _.chain(req.body.folder).trim().toLower().value();
-	let destFolderPath = lcdata.validateUploadsFolder(destFolder);
 
-	Promise.map(req.files, (f) => {
+	ws.emit('uploadsValidateFolder', {
+		auth: WSInternalKey,
+		content: destFolder
+	}, (destFolderPath) => {
+		
+		if(!destFolderPath) {
+			return res.json({ ok: false, msg: 'Invalid Folder' });
+		}
 
-		let destFilename = '';
-		let destFilePath = '';
+		Promise.map(req.files, (f) => {
 
-		return lcdata.validateUploadsFilename(f.originalname, destFolder).then((fname) => {
-			
-			destFilename = fname;
-			destFilePath = path.resolve(destFolderPath, destFilename);
+			let destFilename = '';
+			let destFilePath = '';
 
-			return readChunk(f.path, 0, 262);
+			return lcdata.validateUploadsFilename(f.originalname, destFolder).then((fname) => {
+				
+				destFilename = fname;
+				destFilePath = path.resolve(destFolderPath, destFilename);
 
-		}).then((buf) => {
+				return readChunk(f.path, 0, 262);
 
-			//-> Check MIME type by magic number
+			}).then((buf) => {
 
-			let mimeInfo = fileType(buf);
-			if(!_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
-				return Promise.reject(new Error('Invalid file type.'));
-			}
-			return true;
+				//-> Check MIME type by magic number
 
-		}).then(() => {
-
-			//-> Move file to final destination
-
-			return fs.moveAsync(f.path, destFilePath, { clobber: false });
-
-		}).then(() => {
-			return {
-				ok: true,
-				filename: destFilename,
-				filesize: f.size
-			};
-		}).reflect();
-
-	}, {concurrency: 3}).then((results) => {
-		let uplResults = _.map(results, (r) => {
-			if(r.isFulfilled()) {
-				return r.value();
-			} else {
-				return {
-					ok: false,
-					msg: r.reason().message
+				let mimeInfo = fileType(buf);
+				if(!_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
+					return Promise.reject(new Error('Invalid file type.'));
 				}
-			}
+				return true;
+
+			}).then(() => {
+
+				//-> Move file to final destination
+
+				return fs.moveAsync(f.path, destFilePath, { clobber: false });
+
+			}).then(() => {
+				return {
+					ok: true,
+					filename: destFilename,
+					filesize: f.size
+				};
+			}).reflect();
+
+		}, {concurrency: 3}).then((results) => {
+			let uplResults = _.map(results, (r) => {
+				if(r.isFulfilled()) {
+					return r.value();
+				} else {
+					return {
+						ok: false,
+						msg: r.reason().message
+					}
+				}
+			});
+			res.json({ ok: true, results: uplResults });
+		}).catch((err) => {
+			res.json({ ok: false, msg: err.message });
 		});
-		res.json({ ok: true, results: uplResults });
-	}).catch((err) => {
-		res.json({ ok: false, msg: err.message });
+
 	});
 
 });

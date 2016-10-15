@@ -6,11 +6,6 @@ jQuery( document ).ready(function( $ ) {
 
 		$('#search-input').focus();
 
-		Vue.transition('slide', {
-			enterClass: 'slideInDown',
-			leaveClass: 'fadeOutUp'
-		});
-
 		$('.searchresults').css('display', 'block');
 
 		var vueHeader = new Vue({
@@ -47,8 +42,8 @@ jQuery( document ).ready(function( $ ) {
 				},
 				searchmoveidx: (val, oldVal) => {
 					if(val > 0) {
-						vueHeader.searchmovekey = (vueHeader.searchmovearr[val - 1].document) ?
-																				'res.' + vueHeader.searchmovearr[val - 1].document.entryPath :
+						vueHeader.searchmovekey = (vueHeader.searchmovearr[val - 1]) ?
+																				'res.' + vueHeader.searchmovearr[val - 1]._id :
 																				'sug.' + vueHeader.searchmovearr[val - 1];
 					} else {
 						vueHeader.searchmovekey = '';
@@ -66,8 +61,8 @@ jQuery( document ).ready(function( $ ) {
 					if(vueHeader.searchmoveidx < 1) { return; }
 					let i = vueHeader.searchmoveidx - 1;
 
-					if(vueHeader.searchmovearr[i].document) {
-						window.location.assign('/' + vueHeader.searchmovearr[i].document.entryPath);
+					if(vueHeader.searchmovearr[i]) {
+						window.location.assign('/' + vueHeader.searchmovearr[i]._id);
 					} else {
 						vueHeader.searchq = vueHeader.searchmovearr[i];
 					}

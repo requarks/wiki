@@ -20,8 +20,8 @@ winston.info('[SERVER] Requarks Wiki is initializing...');
 // ----------------------------------------
 
 var appconfig = require('./models/config')('./config.yml');
-global.lcdata = require('./models/localdata').init(appconfig, 'server');
-global.db = require('./models/db')(appconfig);
+global.lcdata = require('./models/server/local').init(appconfig);
+global.db = require('./models/mongo').init(appconfig);
 global.git = require('./models/git').init(appconfig, false);
 global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
@@ -35,7 +35,7 @@ var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var session = require('express-session');
-var lokiStore = require('connect-loki')(session);
+const mongoStore = require('connect-mongo')(session);
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var flash = require('connect-flash');
@@ -73,7 +73,10 @@ var strategy = require('./models/auth')(passport, appconfig);
 app.use(cookieParser());
 app.use(session({
   name: 'requarkswiki.sid',
-  store: new lokiStore({ path: path.join(appconfig.datadir.db, 'sessions.db') }),
+  store: new mongoStore({
+    mongooseConnection: db.connection,
+    touchAfter: 15
+  }),
   secret: appconfig.sessionSecret,
   resave: false,
   saveUninitialized: false

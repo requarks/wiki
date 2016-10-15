@@ -32,8 +32,8 @@ module.exports = {
 
 		let self = this;
 
-		self._uploadsPath = path.resolve(ROOTPATH, appconfig.datadir.repo, 'uploads');
-		self._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.datadir.db, 'thumbs');
+		self._uploadsPath = path.resolve(ROOTPATH, appconfig.paths.repo, 'uploads');
+		self._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.paths.data, 'thumbs');
 
 		return self;
 
@@ -51,19 +51,126 @@ module.exports = {
 			awaitWriteFinish: true
 		});
 
+		//-> Add new upload file
+
 		self._watcher.on('add', (p) => {
 
-			let pInfo = lcdata.parseUploadsRelPath(p);
+			let pInfo = self.parseUploadsRelPath(p);
 			return self.processFile(pInfo.folder, pInfo.filename).then((mData) => {
 				ws.emit('uploadsAddFiles', {
 					auth: WSInternalKey,
 					content: mData
 				});
 			}).then(() => {
-				return git.commitUploads();
+				return git.commitUploads('Uploaded ' + p);
 			});
 
 		});
+
+		//-> Remove upload file
+
+		self._watcher.on('unlink', (p) => {
+
+			let pInfo = self.parseUploadsRelPath(p);
+			return self.deleteFile(pInfo.folder, pInfo.filename).then((uID) => {
+				ws.emit('uploadsRemoveFiles', {
+					auth: WSInternalKey,
+					content: uID
+				});
+			}).then(() => {
+				return git.commitUploads('Deleted ' + p);
+			});
+
+		});
+
+	},
+
+	/**
+	 * Initial Uploads scan
+	 *
+	 * @return     {Promise<Void>}  Promise of the scan operation
+	 */
+	initialScan() {
+
+		let self = this;
+
+		return fs.readdirAsync(self._uploadsPath).then((ls) => {
+
+			// Get all folders
+
+			return Promise.map(ls, (f) => {
+				return fs.statAsync(path.join(self._uploadsPath, f)).then((s) => { return { filename: f, stat: s }; });
+			}).filter((s) => { return s.stat.isDirectory(); }).then((arrDirs) => {
+
+				let folderNames = _.map(arrDirs, 'filename');
+				folderNames.unshift('');
+
+				// Add folders to DB
+
+				return db.UplFolder.remove({}).then(() => {
+					return db.UplFolder.insertMany(_.map(folderNames, (f) => {
+						return { name: f };
+					}));
+				}).then(() => {
+
+					// Travel each directory and scan files
+
+					let allFiles = [];
+
+					return Promise.map(folderNames, (fldName) => {
+
+						let fldPath = path.join(self._uploadsPath, fldName);
+						return fs.readdirAsync(fldPath).then((fList) => {
+							return Promise.map(fList, (f) => {
+								return upl.processFile(fldName, f).then((mData) => {
+									if(mData) {
+										allFiles.push(mData);
+									}
+									return true;
+								});
+							}, {concurrency: 3});
+						});
+					}, {concurrency: 1}).finally(() => {
+
+						// Add files to DB
+
+						return db.UplFile.remove({}).then(() => {
+							if(_.isArray(allFiles) && allFiles.length > 0) {
+								return db.UplFile.insertMany(allFiles);
+							} else {
+								return true;
+							}
+						});
+
+					});
+
+				});
+				
+			});
+
+		}).then(() => {
+
+			// Watch for new changes
+
+			return upl.watch();
+
+		})
+
+	},
+
+	/**
+	 * Parse relative Uploads path
+	 *
+	 * @param      {String}  f       Relative Uploads path
+	 * @return     {Object}  Parsed path (folder and filename)
+	 */
+	parseUploadsRelPath(f) {
+
+		let fObj = path.parse(f);
+		return {
+			folder: fObj.dir,
+			filename: fObj.base
+		};
 
 	},
 
@@ -88,20 +195,21 @@ module.exports = {
 
 			if(s.size < 3145728) { // ignore files larger than 3MB
 				if(_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
-					return self.getImageMetadata(fPath).then((mData) => {
+					return self.getImageMetadata(fPath).then((mImgData) => {
 
 						let cacheThumbnailPath = path.parse(path.join(self._uploadsThumbsPath, fUid + '.png'));
 						let cacheThumbnailPathStr = path.format(cacheThumbnailPath);
 
-						mData = _.pick(mData, ['format', 'width', 'height', 'density', 'hasAlpha', 'orientation']);
-						mData.uid = fUid;
-						mData.category = 'image';
-						mData.mime = mimeInfo.mime;
-						mData.folder = fldName;
-						mData.filename = f;
-						mData.basename = fPathObj.name;
-						mData.filesize = s.size;
-						mData.uploadedOn = moment().utc();
+						let mData = {
+							_id: fUid,
+							category: 'image',
+							mime: mimeInfo.mime,
+							extra: _.pick(mImgData, ['format', 'width', 'height', 'density', 'hasAlpha', 'orientation']),
+							folder: null,
+							filename: f,
+							basename: fPathObj.name,
+							filesize: s.size
+						}
 
 						// Generate thumbnail
 
@@ -124,14 +232,13 @@ module.exports = {
 			// Other Files
 			
 			return {
-				uid: fUid,
-				category: 'file',
+				_id: fUid,
+				category: 'binary',
 				mime: mimeInfo.mime,
 				folder: fldName,
 				filename: f,
 				basename: fPathObj.name,
-				filesize: s.size,
-				uploadedOn: moment().utc()
+				filesize: s.size
 			};
 
 		});

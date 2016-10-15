@@ -43,10 +43,10 @@ module.exports = {
 
 		//-> Build repository path
 		
-		if(_.isEmpty(appconfig.datadir.repo)) {
+		if(_.isEmpty(appconfig.paths.repo)) {
 			self._repo.path = path.join(ROOTPATH, 'repo');
 		} else {
-			self._repo.path = appconfig.datadir.repo;
+			self._repo.path = appconfig.paths.repo;
 		}
 
 		//-> Initialize repository
@@ -240,14 +240,16 @@ module.exports = {
 	/**
 	 * Commits uploads changes.
 	 *
+	 * @param      {String}   msg     The commit message
 	 * @return     {Promise}  Resolve on commit success
 	 */
-	commitUploads() {
+	commitUploads(msg) {
 
 		let self = this;
+		msg = msg || "Uploads repository sync";
 
 		return self._git.add('uploads').then(() => {
-			return self._git.commit("Uploads repository sync").catch((err) => {
+			return self._git.commit(msg).catch((err) => {
 			  if(_.includes(err.stdout, 'nothing to commit')) { return true; }
 			});
 		});

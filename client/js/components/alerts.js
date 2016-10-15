@@ -104,9 +104,9 @@ class Alerts {
 
 		if(nAlertIdx >= 0 && nAlert) {
 			nAlert.class += ' exit';
-			self.mdl.children.$set(nAlertIdx, nAlert);
+			Vue.set(self.mdl.children, nAlertIdx, nAlert);
 			_.delay(() => {
-				self.mdl.children.$remove(nAlert);
+				self.mdl.children.splice(nAlertIdx, 1);
 			}, 500);
 		}
 

@@ -45,7 +45,7 @@ module.exports = function(passport, appconfig) {
 
     db.onReady.then(() => {
 
-        if(db.User.count() < 1) {
+        /*if(db.User.count() < 1) {
             winston.info('No administrator account found. Creating a new one...');
             if(db.User.insert({
                 email: appconfig.admin,
@@ -57,7 +57,7 @@ module.exports = function(passport, appconfig) {
             } else {
                 winston.error('An error occured while creating administrator account: ');
             }
-        }
+        }*/
 
         return true;
 

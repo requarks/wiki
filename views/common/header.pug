@@ -20,19 +20,20 @@
 			block rootNavRight
 				i.nav-item#notifload
 
-	.box.searchresults.animated(v-show='searchactive', transition='slide', v-cloak, style={'display':'none'})
-		.menu
-			p.menu-label
-				| Search Results
-			ul.menu-list
-				li(v-if="searchres.length === 0")
-					a: em No results matching your query
-				li(v-for='sres in searchres')
-					a(href='/{{ sres.document.entryPath }}', v-bind:class="{ 'is-active': searchmovekey === 'res.' + sres.document.entryPath }") {{ sres.document.title }}
-			p.menu-label(v-if='searchsuggest.length > 0')
-				| Did you mean...?
-			ul.menu-list(v-if='searchsuggest.length > 0')
-				li(v-for='sug in searchsuggest')
-					a(v-on:click="useSuggestion(sug)", v-bind:class="{ 'is-active': searchmovekey === 'sug.' + sug }") {{ sug }}
+	transition(name="searchresults-anim", enter-active-class="slideInDown", leave-active-class="fadeOutUp")
+		.box.searchresults.animated(v-show='searchactive', v-cloak, style={'display':'none'})
+			.menu
+				p.menu-label
+					| Search Results
+				ul.menu-list
+					li(v-if="searchres.length === 0")
+						a: em No results matching your query
+					li(v-for='sres in searchres')
+						a(v-bind:href="'/' + sres._id", v-bind:class="{ 'is-active': searchmovekey === 'res.' + sres._id }") {{ sres.title }}
+				p.menu-label(v-if='searchsuggest.length > 0')
+					| Did you mean...?
+				ul.menu-list(v-if='searchsuggest.length > 0')
+					li(v-for='sug in searchsuggest')
+						a(v-on:click="useSuggestion(sug)", v-bind:class="{ 'is-active': searchmovekey === 'sug.' + sug }") {{ sug }}
 
 

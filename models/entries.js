@@ -25,8 +25,8 @@ module.exports = {
 
 		let self = this;
 
-		self._repoPath = path.resolve(ROOTPATH, appconfig.datadir.repo);
-		self._cachePath = path.resolve(ROOTPATH, appconfig.datadir.db, 'cache');
+		self._repoPath = path.resolve(ROOTPATH, appconfig.paths.repo);
+		self._cachePath = path.resolve(ROOTPATH, appconfig.paths.data, 'cache');
 
 		return self;
 
@@ -321,11 +321,13 @@ module.exports = {
 				text: mark.removeMarkdown(pageData.markdown)
 			};
 		}).then((content) => {
-			ws.emit('searchAdd', {
-				auth: WSInternalKey,
-				content
+			return db.Entry.create({
+				_id: content.entryPath,
+				title: content.meta.title || content.entryPath,
+				subtitle: content.meta.subtitle || '',
+				parent: content.parent.title || '',
+				content: content.text || ''
 			});
-			return true;
 		});
 
 	},

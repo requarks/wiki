@@ -31,11 +31,11 @@ global.internalAuth = require('./lib/internalAuth').init(process.argv[2]);;
 winston.info('[WS] WS Server is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
-let lcdata = require('./models/localdata').init(appconfig, 'ws');
-
+global.db = require('./models/mongo').init(appconfig);
+global.upl = require('./models/ws/uploads').init(appconfig);
 global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
-global.search = require('./models/search').init(appconfig);
+global.search = require('./models/ws/search').init(appconfig);
 
 // ----------------------------------------
 // Load local modules
@@ -108,14 +108,14 @@ io.on('connection', (socket) => {
 	});
 
 	socket.on('searchDel', (data, cb) => {
-		cb = cb || _.noop
+		cb = cb || _.noop;
 		if(internalAuth.validateKey(data.auth)) {
 			search.delete(data.entryPath);
 		}
 	});
 
 	socket.on('search', (data, cb) => {
-		cb = cb || _.noop
+		cb = cb || _.noop;
 		search.find(data.terms).then((results) => {
 			cb(results);
 		});
@@ -125,44 +125,46 @@ io.on('connection', (socket) => {
 	// UPLOADS
 	//-----------------------------------------
 
-	socket.on('uploadsSetFolders', (data, cb) => {
-		cb = cb || _.noop
+	socket.on('uploadsSetFolders', (data) => {
 		if(internalAuth.validateKey(data.auth)) {
-			lcdata.setUploadsFolders(data.content);
+			upl.setUploadsFolders(data.content);
 		}
 	});
 
 	socket.on('uploadsGetFolders', (data, cb) => {
-		cb = cb || _.noop
-		cb(lcdata.getUploadsFolders());
+		cb = cb || _.noop;
+		cb(upl.getUploadsFolders());
+	});
+
+	socket.on('uploadsValidateFolder', (data, cb) => {
+		cb = cb || _.noop;
+		if(internalAuth.validateKey(data.auth)) {
+			cb(upl.validateUploadsFolder(data.content));
+		}
 	});
 
 	socket.on('uploadsCreateFolder', (data, cb) => {
-		cb = cb || _.noop
-		lcdata.createUploadsFolder(data.foldername).then((fldList) => {
+		cb = cb || _.noop;
+		upl.createUploadsFolder(data.foldername).then((fldList) => {
 			cb(fldList);
 		});
 	});
 
-	socket.on('uploadsSetFiles', (data, cb) => {
-		cb = cb || _.noop;
+	socket.on('uploadsSetFiles', (data) => {
 		if(internalAuth.validateKey(data.auth)) {
-			lcdata.setUploadsFiles(data.content);
-			cb(true);
+			upl.setUploadsFiles(data.content);
 		}
 	});
 
-	socket.on('uploadsAddFiles', (data, cb) => {
-		cb = cb || _.noop
+	socket.on('uploadsAddFiles', (data) => {
 		if(internalAuth.validateKey(data.auth)) {
-			lcdata.addUploadsFiles(data.content);
-			cb(true);
+			upl.addUploadsFiles(data.content);
 		}
 	});
 
 	socket.on('uploadsGetImages', (data, cb) => {
-		cb = cb || _.noop
-		cb(lcdata.getUploadsFiles('image', data.folder));
+		cb = cb || _.noop;
+		cb(upl.getUploadsFiles('image', data.folder));
 	});
 
 });

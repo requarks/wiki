@@ -25,18 +25,22 @@ if(!process.argv[2] || process.argv[2].length !== 40) {
 global.WSInternalKey = process.argv[2];
 
 // ----------------------------------------
-// Load modules
+// Load global modules
 // ----------------------------------------
 
 winston.info('[AGENT] Background Agent is initializing...');
 
 var appconfig = require('./models/config')('./config.yml');
-global.lcdata = require('./models/localdata').init(appconfig, 'agent');
-var upl = require('./models/uploads').init(appconfig);
-
+global.db = require('./models/mongo').init(appconfig);
+global.upl = require('./models/agent/uploads').init(appconfig);
 global.git = require('./models/git').init(appconfig);
 global.entries = require('./models/entries').init(appconfig);
 global.mark = require('./models/markdown');
+global.ws = require('socket.io-client')('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
+
+// ----------------------------------------
+// Load modules
+// ----------------------------------------
 
 var _ = require('lodash');
 var moment = require('moment');
@@ -44,10 +48,6 @@ var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require("fs-extra"));
 var path = require('path');
 var cron = require('cron').CronJob;
-
-global.ws = require('socket.io-client')('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
-
-const mimeImgTypes = ['image/png', 'image/jpg']
 
 // ----------------------------------------
 // Start Cron
@@ -72,16 +72,17 @@ var job = new cron({
 		// Prepare async job collector
 
 		let jobs = [];
-		let repoPath = path.resolve(ROOTPATH, appconfig.datadir.repo);
-		let dataPath = path.resolve(ROOTPATH, appconfig.datadir.db);
+		let repoPath = path.resolve(ROOTPATH, appconfig.paths.repo);
+		let dataPath = path.resolve(ROOTPATH, appconfig.paths.data);
 		let uploadsPath = path.join(repoPath, 'uploads');
+		let uploadsTempPath = path.join(dataPath, 'temp-upload');
 
 		// ----------------------------------------
-		// Compile Jobs
+		// REGULAR JOBS
 		// ----------------------------------------
 
 		//*****************************************
-		//-> Resync with Git remote
+		//-> Sync with Git remote
 		//*****************************************
 
 		jobs.push(git.onReady.then(() => {
@@ -143,51 +144,30 @@ var job = new cron({
 		}));
 
 		//*****************************************
-		//-> Refresh uploads data
+		//-> Clear failed temporary upload files
 		//*****************************************
 
-		jobs.push(fs.readdirAsync(uploadsPath).then((ls) => {
+		jobs.push(
+			fs.readdirAsync(uploadsTempPath).then((ls) => {
 
-			return Promise.map(ls, (f) => {
-				return fs.statAsync(path.join(uploadsPath, f)).then((s) => { return { filename: f, stat: s }; });
-			}).filter((s) => { return s.stat.isDirectory(); }).then((arrDirs) => {
+				let fifteenAgo = moment().subtract(15, 'minutes');
 
-				let folderNames = _.map(arrDirs, 'filename');
-				folderNames.unshift('');
+				return Promise.map(ls, (f) => {
+					return fs.statAsync(path.join(uploadsTempPath, f)).then((s) => { return { filename: f, stat: s }; });
+				}).filter((s) => { return s.stat.isFile(); }).then((arrFiles) => {
+					return Promise.map(arrFiles, (f) => {
 
-				ws.emit('uploadsSetFolders', {
-					auth: WSInternalKey,
-					content: folderNames
+						if(moment(f.stat.ctime).isBefore(fifteenAgo, 'minute')) {
+							return fs.unlinkAsync(path.join(uploadsTempPath, f.filename));
+						} else {
+							return true;
+						}
+
+					});
 				});
 
-				let allFiles = [];
-
-				// Travel each directory
-
-				return Promise.map(folderNames, (fldName) => {
-					let fldPath = path.join(uploadsPath, fldName);
-					return fs.readdirAsync(fldPath).then((fList) => {
-						return Promise.map(fList, (f) => {
-							return upl.processFile(fldName, f).then((mData) => {
-								if(mData) {
-									allFiles.push(mData);
-								}
-							});
-						}, {concurrency: 3});
-					});
-				}, {concurrency: 1}).finally(() => {
-
-					ws.emit('uploadsSetFiles', {
-						auth: WSInternalKey,
-						content: allFiles
-					});
-
-				});
-
-				return true;
-			});
-
-		}));
+			})
+		);
 
 		// ----------------------------------------
 		// Run
@@ -198,8 +178,10 @@ var job = new cron({
 
 			if(!jobUplWatchStarted) {
 				jobUplWatchStarted = true;
-				upl.watch();
+				upl.initialScan();
 			}
+
+			return true;
 
 		}).catch((err) => {
 			winston.error('[AGENT] One or more jobs have failed: ', err);

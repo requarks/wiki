@@ -78,7 +78,7 @@ var paths = {
 /**
  * TASK - Starts server in development mode
  */
-gulp.task('server', ['scripts', 'css', 'fonts'], function() {
+gulp.task('server', ['scripts', 'css'/*, 'fonts'*/], function() {
 	nodemon({
 		script: './server',
 		ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
