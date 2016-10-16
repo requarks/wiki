@@ -8,6 +8,7 @@ var path = require('path'),
 	farmhash = require('farmhash'),
 	moment = require('moment'),
 	chokidar = require('chokidar'),
+	sharp = require('sharp'),
 	_ = require('lodash');
 
 /**
@@ -35,10 +36,18 @@ module.exports = {
 		self._uploadsPath = path.resolve(ROOTPATH, appconfig.paths.repo, 'uploads');
 		self._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.paths.data, 'thumbs');
 
+		// Disable Sharp cache, as it cause file locks issues when deleting uploads.
+		sharp.cache(false);
+
 		return self;
 
 	},
 
+	/**
+	 * Watch the uploads folder for changes
+	 * 
+	 * @return     {Void}  Void
+	 */
 	watch() {
 
 		let self = this;
@@ -169,6 +178,13 @@ module.exports = {
 
 	},
 
+	/**
+	 * Get metadata from file and generate thumbnails if necessary
+	 *
+	 * @param      {String}  fldName  The folder name
+	 * @param      {String}  f        The filename
+	 * @return     {Promise<Object>}  Promise of the file metadata
+	 */
 	processFile(fldName, f) {
 
 		let self = this;
@@ -248,8 +264,6 @@ module.exports = {
 	 */
 	generateThumbnail(sourcePath, destPath) {
 
-		let sharp = require('sharp');
-
 		return sharp(sourcePath)
 						.withoutEnlargement()
 						.resize(150,150)
@@ -268,8 +282,6 @@ module.exports = {
 	 * @return     {Object}  The image metadata.
 	 */
 	getImageMetadata(sourcePath) {
-
-		let sharp = require('sharp');
 
 		return sharp(sourcePath).metadata();
 

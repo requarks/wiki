@@ -44,7 +44,8 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 	upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
 		
 		if(!destFolderPath) {
-			return res.json({ ok: false, msg: 'Invalid Folder' });
+			res.json({ ok: false, msg: 'Invalid Folder' });
+			return true;
 		}
 
 		Promise.map(req.files, (f) => {
@@ -95,8 +96,10 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 				}
 			});
 			res.json({ ok: true, results: uplResults });
+			return true;
 		}).catch((err) => {
 			res.json({ ok: false, msg: err.message });
+			return true;
 		});
 
 	});

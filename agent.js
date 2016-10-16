@@ -15,16 +15,6 @@ var _isDebug = process.env.NODE_ENV === 'development';
 global.winston = require('./libs/winston')(_isDebug);
 
 // ----------------------------------------
-// Fetch internal handshake key
-// ----------------------------------------
-
-if(!process.argv[2] || process.argv[2].length !== 40) {
-	winston.error('[WS] Illegal process start. Missing handshake key.');
-	process.exit(1);
-}
-global.WSInternalKey = process.argv[2];
-
-// ----------------------------------------
 // Load global modules
 // ----------------------------------------
 
@@ -36,7 +26,6 @@ global.upl = require('./libs/uploads-agent').init(appconfig);
 global.git = require('./libs/git').init(appconfig);
 global.entries = require('./libs/entries').init(appconfig);
 global.mark = require('./libs/markdown');
-global.ws = require('socket.io-client')('http://localhost:' + appconfig.port, { reconnectionAttempts: 10 });
 
 // ----------------------------------------
 // Load modules
@@ -195,22 +184,6 @@ var job = new cron({
 	runOnInit: true
 });
 
-// ----------------------------------------
-// Connect to local WebSocket server
-// ----------------------------------------
-
-ws.on('connect', function () {
-	winston.info('[AGENT] Background Agent started successfully! [RUNNING]');
-	job.start();
-});
-
-ws.on('connect_error', function () {
-	winston.warn('[AGENT] Unable to connect to main server! Retrying...');
-});
-ws.on('reconnect_failed', function () {
-	winston.error('[AGENT] Failed to reconnect to main server too many times! Stopping agent...');
-	process.exit(1);
-});
 
 // ----------------------------------------
 // Shutdown gracefully

@@ -1,12 +1,15 @@
 "use strict";
 
-var path = require('path'),
-	Promise = require('bluebird'),
-	fs = Promise.promisifyAll(require('fs-extra')),
-	multer  = require('multer'),
-	_ = require('lodash');
+const path = require('path'),
+			Promise = require('bluebird'),
+			fs = Promise.promisifyAll(require('fs-extra')),
+			multer  = require('multer'),
+			request = require('request'),
+			url = require('url'),
+			_ = require('lodash');
 
 var regFolderName = new RegExp("^[a-z0-9][a-z0-9\-]*[a-z0-9]$");
+const maxDownloadFileSize = 3145728; // 3 MB
 
 /**
  * Uploads
@@ -136,11 +139,98 @@ module.exports = {
 
 		return db.UplFile.findOneAndRemove({ _id: uid }).then((f) => {
 			if(f) {
-				fs.remove(path.join(self._uploadsThumbsPath, uid + '.png'));
-				fs.remove(path.resolve(self._uploadsPath, f.folder.slice(2), f.filename));
+				return self.deleteUploadsFileTry(f, 0);
 			}
 			return true;
 		})
+	},
+
+	deleteUploadsFileTry(f, attempt) {
+
+		let self = this;
+
+		let fFolder = (f.folder && f.folder !== 'f:') ? f.folder.slice(2) : './';
+
+		return Promise.join(
+			fs.removeAsync(path.join(self._uploadsThumbsPath, f._id + '.png')),
+			fs.removeAsync(path.resolve(self._uploadsPath, fFolder, f.filename))
+		).catch((err) => {
+			if(err.code === 'EBUSY' && attempt < 5) {
+				return Promise.delay(100).then(() => {
+					return self.deleteUploadsFileTry(f, attempt + 1);
+				})
+			} else {
+				winston.warn('Unable to delete uploads file ' + f.filename + '. File is locked by another process and multiple attempts failed.');
+				return true;
+			}
+		});
+
+	},
+
+	/**
+	 * Downloads a file from url.
+	 *
+	 * @param      {String}   fFolder  The folder
+	 * @param      {String}   fUrl     The full URL
+	 * @return     {Promise}  Promise of the operation
+	 */
+	downloadFromUrl(fFolder, fUrl) {
+
+		let self = this;
+
+		let fUrlObj = url.parse(fUrl);
+		let fUrlFilename = _.last(_.split(fUrlObj.pathname, '/'))
+		let destFolder = _.chain(fFolder).trim().toLower().value();
+
+		return upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
+			
+			if(!destFolderPath) {
+				return Promise.reject(new Error('Invalid Folder'));
+			}
+
+			return lcdata.validateUploadsFilename(fUrlFilename, destFolder).then((destFilename) => {
+				
+				let destFilePath = path.resolve(destFolderPath, destFilename);
+
+				return new Promise((resolve, reject) => {
+
+					let rq = request({
+						url: fUrl,
+						method: 'GET',
+						followRedirect: true,
+						maxRedirects: 5,
+						timeout: 10000
+					});
+
+					let destFileStream = fs.createWriteStream(destFilePath);
+					let curFileSize = 0;
+
+					rq.on('data', (data) => {
+						curFileSize += data.length;
+						if(curFileSize > maxDownloadFileSize) {
+							rq.abort();
+							destFileStream.destroy();
+							fs.remove(destFilePath);
+							reject(new Error('Remote file is too large!'));
+						}
+					}).on('error', (err) => {
+						destFileStream.destroy();
+						fs.remove(destFilePath);
+						reject(err);
+					});
+
+					destFileStream.on('finish', () => {
+						resolve(true);
+					})
+
+					rq.pipe(destFileStream);
+
+				});
+
+			});
+
+		});
+
 	}
 
 };

@@ -92,11 +92,11 @@
 						.content
 							label.label Enter full URL path to the image:
 							p.control
-								input.input(type='text', placeholder='http://www.example.com/some-image.png', v-model='fetchFromUrlURL')
+								input.input#txt-editor-fetchimgurl(type='text', placeholder='http://www.example.com/some-image.png', v-model='fetchFromUrlURL')
 								span.help.is-danger.is-hidden This URL path is invalid!
 					footer.card-footer
 						a.card-footer-item(v-on:click="fetchFromUrlDiscard") Discard
-						a.card-footer-item(v-on:click="fetchFromUrlFetch") Fetch
+						a.card-footer-item(v-on:click="fetchFromUrlGo") Fetch
 
 	.modal(v-bind:class="{ 'is-active': deleteImageShow }")
 		.modal-background

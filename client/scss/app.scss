@@ -2,16 +2,7 @@
 @import './layout/_base';
 @import './layout/_mixins';
 
-$red: #E53935;
-$orange: #FB8C00;
-$blue: #039BE5;
-$turquoise: #00ACC1;
-$green: #7CB342;
-$purple: #673AB7;
-
-$warning: $orange;
-
-@import 'bulma';
+@import './libs/bulma/bulma';
 @import './libs/twemoji-awesome';
 @import './libs/animate.min.css';
 @import './libs/jquery-contextmenu';

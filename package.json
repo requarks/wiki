@@ -48,7 +48,6 @@
     "express-brute": "^1.0.0",
     "express-brute-mongo": "^0.1.0",
     "express-session": "^1.14.1",
-    "express-validator": "^2.20.10",
     "farmhash": "^1.2.1",
     "file-type": "^3.8.0",
     "filesize.js": "^1.0.2",
@@ -63,7 +62,7 @@
     "markdown-it": "^8.0.0",
     "markdown-it-abbr": "^1.0.4",
     "markdown-it-anchor": "^2.5.0",
-    "markdown-it-attrs": "^0.7.1",
+    "markdown-it-attrs": "^0.8.0",
     "markdown-it-emoji": "^1.3.0",
     "markdown-it-expand-tabs": "^1.0.11",
     "markdown-it-external-links": "0.0.6",
@@ -78,8 +77,9 @@
     "pug": "^2.0.0-beta6",
     "read-chunk": "^2.0.0",
     "remove-markdown": "^0.1.0",
+    "request": "^2.75.0",
     "serve-favicon": "^2.3.0",
-    "sharp": "^0.16.0",
+    "sharp": "^0.16.1",
     "simplemde": "^1.11.2",
     "snyk": "^1.19.1",
     "socket.io": "^1.5.0",
@@ -91,7 +91,6 @@
   "devDependencies": {
     "ace-builds": "^1.2.5",
     "babel-preset-es2015": "^6.16.0",
-    "bulma": "^0.1.2",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
     "codacy-coverage": "^2.0.0",
@@ -115,12 +114,12 @@
     "jquery-simple-upload": "^1.0.0",
     "jquery-smooth-scroll": "^2.0.0",
     "merge-stream": "^1.0.0",
-    "mocha": "^3.1.0",
+    "mocha": "^3.1.2",
     "mocha-lcov-reporter": "^1.2.0",
     "nodemon": "^1.11.0",
-    "sticky-js": "^1.1.2",
+    "sticky-js": "^1.1.4",
     "twemoji-awesome": "^1.0.4",
-    "vue": "^2.0.1"
+    "vue": "^2.0.3"
   },
   "snyk": true
 }

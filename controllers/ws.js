@@ -9,7 +9,7 @@ module.exports = (socket) => {
   socket.on('search', (data, cb) => {
     cb = cb || _.noop;
     entries.search(data.terms).then((results) => {
-      cb(results);
+      return cb(results) || true;
     });
   });
 
@@ -20,28 +20,40 @@ module.exports = (socket) => {
   socket.on('uploadsGetFolders', (data, cb) => {
     cb = cb || _.noop;
     upl.getUploadsFolders().then((f) => {
-      cb(f);
+      return cb(f) || true;
     })
   });
 
   socket.on('uploadsCreateFolder', (data, cb) => {
     cb = cb || _.noop;
     upl.createUploadsFolder(data.foldername).then((f) => {
-      cb(f);
+      return cb(f) || true;
     });
   });
 
   socket.on('uploadsGetImages', (data, cb) => {
     cb = cb || _.noop;
     upl.getUploadsFiles('image', data.folder).then((f) => {
-      cb(f);
+      return cb(f) || true;
     });
   });
 
   socket.on('uploadsDeleteFile', (data, cb) => {
     cb = cb || _.noop;
     upl.deleteUploadsFile(data.uid).then((f) => {
-      cb(f);
+      return cb(f) || true;
+    });
+  });
+
+  socket.on('uploadsFetchFileFromURL', (data, cb) => {
+  	cb = cb || _.noop;
+    upl.downloadFromUrl(data.folder, data.fetchUrl).then((f) => {
+      return cb({ ok: true }) || true;
+    }).catch((err) => {
+    	return cb({
+    		ok: false,
+    		msg: err.message
+    	}) || true;
     });
   });
 

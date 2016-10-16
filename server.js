@@ -211,7 +211,7 @@ io.on('connection', ctrl.ws);
 // Start child processes
 // ----------------------------------------
 
-var bgAgent = fork('agent.js', [WSInternalKey]);
+global.bgAgent = fork('agent.js');
 
 process.on('exit', (code) => {
   bgAgent.disconnect();

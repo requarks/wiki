@@ -77,8 +77,8 @@ let vueImage = new Vue({
 			}
 
 			vueImage.newFolderDiscard();
-			vueImage.isLoading = true;
 			vueImage.isLoadingText = 'Creating new folder...';
+			vueImage.isLoading = true;
 
 			Vue.nextTick(() => {
 				socket.emit('uploadsCreateFolder', { foldername: vueImage.newFolderName }, (data) => {
@@ -91,12 +91,29 @@ let vueImage = new Vue({
 
 		},
 		fetchFromUrl: (ev) => {
+			vueImage.fetchFromUrlURL = '';
 			vueImage.fetchFromUrlShow = true;
+			_.delay(() => { $('#txt-editor-fetchimgurl').focus(); }, 400);
 		},
 		fetchFromUrlDiscard: (ev) => {
 			vueImage.fetchFromUrlShow = false;
 		},
-		fetchFromUrlFetch: (ev) => {
+		fetchFromUrlGo: (ev) => {
+			
+			vueImage.fetchFromUrlDiscard();
+			vueImage.isLoadingText = 'Fetching image...';
+			vueImage.isLoading = true;
+
+			Vue.nextTick(() => {
+				socket.emit('uploadsFetchFileFromURL', { folder: vueImage.currentFolder, fetchUrl: vueImage.fetchFromUrlURL }, (data) => {
+					if(data.ok) {
+						vueImage.waitUploadComplete();
+					} else {
+						vueImage.isLoading = false;
+						alerts.pushError('Upload error', data.msg);
+					}
+				});
+			});
 
 		},
 
@@ -117,8 +134,8 @@ let vueImage = new Vue({
 		 * @return     {Void}  Void
 		 */
 		refreshFolders: () => {
-			vueImage.isLoading = true;
 			vueImage.isLoadingText = 'Fetching folders list...';
+			vueImage.isLoading = true;
 			vueImage.currentFolder = '';
 			vueImage.currentImage = '';
 			Vue.nextTick(() => {
@@ -136,8 +153,8 @@ let vueImage = new Vue({
 		 */
 		loadImages: (silent) => {
 			if(!silent) {
-				vueImage.isLoading = true;
 				vueImage.isLoadingText = 'Fetching images...';
+				vueImage.isLoading = true;
 			}
 			Vue.nextTick(() => {
 				socket.emit('uploadsGetImages', { folder: vueImage.currentFolder }, (data) => {
@@ -226,7 +243,12 @@ let vueImage = new Vue({
 
 		deleteImageWarn: (show) => {
 			if(show) {
-				vueImage.deleteImageFilename = _.find(vueImage.images, ['_id', vueImage.deleteImageId ]).filename;
+				let c = _.find(vueImage.images, ['_id', vueImage.deleteImageId ]);
+				if(c) {
+					vueImage.deleteImageFilename = c.filename;
+				} else {
+					vueImage.deleteImageFilename = 'this image';
+				}
 			}
 			vueImage.deleteImageShow = show;
 		},
@@ -286,8 +308,8 @@ $('#btn-editor-uploadimage input').on('change', (ev) => {
 
 		init: (totalUploads) => {
 			vueImage.uploadSucceeded = false;
-			vueImage.isLoading = true;
 			vueImage.isLoadingText = 'Preparing to upload...';
+			vueImage.isLoading = true;
 		},
 
 		progress: function(progress) {

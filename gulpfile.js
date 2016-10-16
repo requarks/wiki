@@ -55,9 +55,6 @@ var paths = {
 	cssapps_watch: [
 		'./client/scss/**/*.scss'
 	],
-	cssapps_imports: [
-		'./node_modules/bulma/'
-	],
 	fonts: [
 		'./node_modules/font-awesome/fonts/*-webfont.*',
 		'!./node_modules/font-awesome/fonts/*-webfont.svg'
@@ -150,9 +147,7 @@ gulp.task("css-libs", function () {
 gulp.task("css-app", function () {
 	return gulp.src(paths.cssapps)
 	.pipe(plumber())
-	.pipe(sass({
-		includePaths: paths.cssapps_imports
-	}))
+	.pipe(sass())
 	.pipe(concat('app.css'))
 	.pipe(cleanCSS({ keepSpecialComments: 0 }))
 	.pipe(plumber.stop())
