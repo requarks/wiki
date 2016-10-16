@@ -17,7 +17,7 @@
 							span.icon.is-small: i.fa.fa-folder
 							span New Folder
 					.control.has-addons
-						a.button.is-info.is-outlined#btn-editor-uploadimage(v-on:click="uploadImage")
+						a.button.is-info.is-outlined#btn-editor-uploadimage
 							span.icon.is-small: i.fa.fa-upload
 							span Upload Image
 							label
@@ -58,8 +58,8 @@
 							a.button.is-primary(title="Page Logo", v-on:click="selectAlignment('logo')", v-bind:class="{ 'is-outlined': currentAlign !== 'logo' }")
 								span.icon.is-small: i.fa.fa-external-link-square
 			.column.editor-modal-imagechoices
-				figure(v-for="img in images", v-bind:class="{ 'is-active': currentImage === img.uid }", v-on:click="selectImage(img.uid)")
-					img(v-bind:src="'/uploads/t/' + img.uid + '.png'")
+				figure(v-for="img in images", v-bind:class="{ 'is-active': currentImage === img._id }", v-on:click="selectImage(img._id)", v-bind:data-uid="img._id")
+					img(v-bind:src="'/uploads/t/' + img._id + '.png'")
 					span: strong {{ img.basename }}
 					span {{ img.filesize | filesize }}
 				em(v-show="images.length < 1") This folder is empty.
@@ -97,3 +97,17 @@
 					footer.card-footer
 						a.card-footer-item(v-on:click="fetchFromUrlDiscard") Discard
 						a.card-footer-item(v-on:click="fetchFromUrlFetch") Fetch
+
+	.modal(v-bind:class="{ 'is-active': deleteImageShow }")
+		.modal-background
+		.modal-container
+			.modal-content
+				.card.is-fullwidth
+					header.card-header.is-danger
+						p.card-header-title Delete image?
+					.card-content
+						.content
+							| Are you sure you want to delete #[strong {{deleteImageFilename}}]?
+					footer.card-footer
+						a.card-footer-item(v-on:click="deleteImageWarn(false)") Discard
+						a.card-footer-item(v-on:click="deleteImageGo") Delete

@@ -23,7 +23,7 @@ module.exports = {
 
 		let self = this;
 
-		let dbModelsPath = path.resolve(ROOTPATH, 'models', 'db');
+		let dbModelsPath = path.resolve(ROOTPATH, 'models');
 
 		modb.Promise = require('bluebird');
 

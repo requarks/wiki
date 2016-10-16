@@ -57,10 +57,7 @@ module.exports = {
 
 			let pInfo = self.parseUploadsRelPath(p);
 			return self.processFile(pInfo.folder, pInfo.filename).then((mData) => {
-				ws.emit('uploadsAddFiles', {
-					auth: WSInternalKey,
-					content: mData
-				});
+				return db.UplFile.create(mData);
 			}).then(() => {
 				return git.commitUploads('Uploaded ' + p);
 			});
@@ -72,11 +69,9 @@ module.exports = {
 		self._watcher.on('unlink', (p) => {
 
 			let pInfo = self.parseUploadsRelPath(p);
-			return self.deleteFile(pInfo.folder, pInfo.filename).then((uID) => {
-				ws.emit('uploadsRemoveFiles', {
-					auth: WSInternalKey,
-					content: uID
-				});
+			return db.UplFile.findOneAndRemove({
+				folder: 'f:' + pInfo.folder,
+				filename: pInfo.filename
 			}).then(() => {
 				return git.commitUploads('Deleted ' + p);
 			});
@@ -205,7 +200,7 @@ module.exports = {
 							category: 'image',
 							mime: mimeInfo.mime,
 							extra: _.pick(mImgData, ['format', 'width', 'height', 'density', 'hasAlpha', 'orientation']),
-							folder: null,
+							folder: 'f:' + fldName,
 							filename: f,
 							basename: fPathObj.name,
 							filesize: s.size

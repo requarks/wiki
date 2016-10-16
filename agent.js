@@ -12,7 +12,7 @@ global.PROCNAME = 'AGENT';
 // ----------------------------------------
 
 var _isDebug = process.env.NODE_ENV === 'development';
-global.winston = require('./lib/winston')(_isDebug);
+global.winston = require('./libs/winston')(_isDebug);
 
 // ----------------------------------------
 // Fetch internal handshake key
@@ -30,13 +30,13 @@ global.WSInternalKey = process.argv[2];
 
 winston.info('[AGENT] Background Agent is initializing...');
 
-var appconfig = require('./models/config')('./config.yml');
-global.db = require('./models/mongo').init(appconfig);
-global.upl = require('./models/agent/uploads').init(appconfig);
-global.git = require('./models/git').init(appconfig);
-global.entries = require('./models/entries').init(appconfig);
-global.mark = require('./models/markdown');
-global.ws = require('socket.io-client')('http://localhost:' + appconfig.wsPort, { reconnectionAttempts: 10 });
+var appconfig = require('./libs/config')('./config.yml');
+global.db = require('./libs/mongo').init(appconfig);
+global.upl = require('./libs/uploads-agent').init(appconfig);
+global.git = require('./libs/git').init(appconfig);
+global.entries = require('./libs/entries').init(appconfig);
+global.mark = require('./libs/markdown');
+global.ws = require('socket.io-client')('http://localhost:' + appconfig.port, { reconnectionAttempts: 10 });
 
 // ----------------------------------------
 // Load modules
@@ -205,10 +205,10 @@ ws.on('connect', function () {
 });
 
 ws.on('connect_error', function () {
-	winston.warn('[AGENT] Unable to connect to WebSocket server! Retrying...');
+	winston.warn('[AGENT] Unable to connect to main server! Retrying...');
 });
 ws.on('reconnect_failed', function () {
-	winston.error('[AGENT] Failed to reconnect to WebSocket server too many times! Stopping agent...');
+	winston.error('[AGENT] Failed to reconnect to main server too many times! Stopping agent...');
 	process.exit(1);
 });
 

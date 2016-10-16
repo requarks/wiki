@@ -11,8 +11,11 @@ const modb = require('mongoose'),
  */
 var uplFolderSchema = modb.Schema({
 
+	_id: String,
+
   name: {
-    type: String
+    type: String,
+    index: true
   }
 
 },

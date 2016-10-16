@@ -41,25 +41,14 @@ module.exports = {
 	},
 
 	/**
-	 * Sets the uploads folders.
-	 *
-	 * @param      {Array<String>}  arrFolders  The arr folders
-	 * @return     {Void}  Void
-	 */
-	setUploadsFolders(arrFolders) {
-
-		this._uploadsFolders = arrFolders;
-		return;
-
-	},
-
-	/**
 	 * Gets the uploads folders.
 	 *
 	 * @return     {Array<String>}  The uploads folders.
 	 */
 	getUploadsFolders() {
-		return this._uploadsFolders;
+		return db.UplFolder.find({}, 'name').sort('name').exec().then((results) => {
+			return (results) ? _.map(results, 'name') : [{ name: '' }];
+		});
 	},
 
 	/**
@@ -79,10 +68,14 @@ module.exports = {
 		}
 
 		return fs.ensureDirAsync(path.join(self._uploadsPath, folderName)).then(() => {
-			if(!_.includes(self._uploadsFolders, folderName)) {
-				self._uploadsFolders.push(folderName);
-				self._uploadsFolders = _.sortBy(self._uploadsFolders);
-			}
+			return db.UplFolder.findOneAndUpdate({
+				_id: 'f:' + folderName
+			}, {
+				name: folderName
+			}, {
+				upsert: true
+			});
+		}).then(() => {
 			return self.getUploadsFolders();
 		});
 
@@ -96,32 +89,9 @@ module.exports = {
 	 */
 	validateUploadsFolder(folderName) {
 
-		if(_.includes(this._uploadsFolders, folderName)) {
-			return path.resolve(this._uploadsPath, folderName);
-		} else {
-			return false;
-		}
-
-	},
-
-	/**
-	 * Sets the uploads files.
-	 *
-	 * @param      {Array<Object>}  arrFiles  The uploads files
-	 * @return     {Void}  Void
-	 */
-	setUploadsFiles(arrFiles) {
-
-		let self = this;
-
-		/*if(_.isArray(arrFiles) && arrFiles.length > 0) {
-			self._uploadsDb.Files.clear();
-			self._uploadsDb.Files.insert(arrFiles);
-			self._uploadsDb.Files.ensureIndex('category', true);
-			self._uploadsDb.Files.ensureIndex('folder', true);
-		}*/
-
-		return;
+		return db.UplFolder.findOne({ name: folderName }).then((f) => {
+			return (f) ? path.resolve(this._uploadsPath, folderName) : false;
+		})
 
 	},
 
@@ -147,14 +117,30 @@ module.exports = {
 	 */
 	getUploadsFiles(cat, fld) {
 
-		return /*this._uploadsDb.Files.chain().find({
-			'$and': [{ 'category' : cat	},{ 'folder' : fld }]
-		}).simplesort('filename').data()*/;
+		return db.UplFile.find({
+			category: cat,
+			folder: 'f:' + fld
+		}).sort('filename').exec();
 
 	},
 
-	deleteUploadsFile(fldName, f) {
+	/**
+	 * Deletes an uploads file.
+	 *
+	 * @param      {string}   uid     The file unique ID
+	 * @return     {Promise}  Promise of the operation
+	 */
+	deleteUploadsFile(uid) {
 
+		let self = this;
+
+		return db.UplFile.findOneAndRemove({ _id: uid }).then((f) => {
+			if(f) {
+				fs.remove(path.join(self._uploadsThumbsPath, uid + '.png'));
+				fs.remove(path.resolve(self._uploadsPath, f.folder.slice(2), f.filename));
+			}
+			return true;
+		})
 	}
 
 };

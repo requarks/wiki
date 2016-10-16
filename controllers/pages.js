@@ -24,10 +24,11 @@ router.get('/edit/*', (req, res, next) => {
 		cache: false
 	}).then((pageData) => {
 		if(pageData) {
-			return res.render('pages/edit', { pageData });
+			res.render('pages/edit', { pageData });
 		} else {
 			throw new Error('Invalid page path.');
 		}
+		return true;
 	}).catch((err) => {
 		res.render('error', {
 			message: err.message,
@@ -158,12 +159,13 @@ router.get('/*', (req, res, next) => {
 
 	entries.fetch(safePath).then((pageData) => {
 		if(pageData) {
-			return res.render('pages/view', { pageData });
+			res.render('pages/view', { pageData });
 		} else {
 			res.render('error-notexist', {
 				newpath: safePath
 			});
 		}
+		return true;
 	}).error((err) => {
 		res.render('error-notexist', {
 			message: err.message,

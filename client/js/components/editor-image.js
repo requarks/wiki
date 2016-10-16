@@ -15,7 +15,10 @@ let vueImage = new Vue({
 		currentAlign: 'left',
 		images: [],
 		uploadSucceeded: false,
-		postUploadChecks: 0
+		postUploadChecks: 0,
+		deleteImageShow: false,
+		deleteImageId: 0,
+		deleteImageFilename: ''
 	},
 	methods: {
 		open: () => {
@@ -33,8 +36,8 @@ let vueImage = new Vue({
 				mde.codemirror.execCommand('singleSelection');
 			}
 
-			let selImage = _.find(vueImage.images, ['uid', vueImage.currentImage]);
-			selImage.normalizedPath = (selImage.folder === '') ? selImage.filename : selImage.folder + '/' + selImage.filename;
+			let selImage = _.find(vueImage.images, ['_id', vueImage.currentImage]);
+			selImage.normalizedPath = (selImage.folder === 'f:') ? selImage.filename : selImage.folder.slice(2) + '/' + selImage.filename;
 			selImage.titleGuess = _.startCase(selImage.basename);
 
 			let imageText = '![' + selImage.titleGuess + '](/uploads/' + selImage.normalizedPath + ' "' + selImage.titleGuess + '")';
@@ -92,6 +95,9 @@ let vueImage = new Vue({
 		},
 		fetchFromUrlDiscard: (ev) => {
 			vueImage.fetchFromUrlShow = false;
+		},
+		fetchFromUrlFetch: (ev) => {
+
 		},
 
 		/**
@@ -210,17 +216,36 @@ let vueImage = new Vue({
 						name: "Delete",
 						icon: "fa-trash",
 						callback: (key, opt) => {
-							 alert("Clicked on " + key);
+							vueImage.deleteImageId = _.toString($(opt.$trigger).data('uid'));
+							vueImage.deleteImageWarn(true);
 						}
 					}
 				}
 			});
 		},
 
+		deleteImageWarn: (show) => {
+			if(show) {
+				vueImage.deleteImageFilename = _.find(vueImage.images, ['_id', vueImage.deleteImageId ]).filename;
+			}
+			vueImage.deleteImageShow = show;
+		},
+
+		deleteImageGo: () => {
+			vueImage.deleteImageWarn(false);
+			vueImage.isLoadingText = 'Deleting image...';
+			vueImage.isLoading = true;
+			Vue.nextTick(() => {
+				socket.emit('uploadsDeleteFile', { uid: vueImage.deleteImageId }, (data) => {
+					vueImage.loadImages();
+				});
+			});
+		},
+
 		waitUploadComplete: () => {
 
 			vueImage.postUploadChecks++;
-			vueImage.isLoadingText = 'Processing uploads...';
+			vueImage.isLoadingText = 'Processing...';
 
 			let currentUplAmount = vueImage.images.length;
 			vueImage.loadImages(true);
@@ -233,7 +258,7 @@ let vueImage = new Vue({
 					} else if(vueImage.postUploadChecks > 5) {
 						vueImage.postUploadChecks = 0;
 						vueImage.isLoading = false;
-						alerts.pushError('Unable to fetch new uploads', 'Try again later');
+						alerts.pushError('Unable to fetch new listing', 'Try again later');
 					} else {
 						vueImage.waitUploadComplete();
 					}

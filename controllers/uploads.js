@@ -41,10 +41,7 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 
 	let destFolder = _.chain(req.body.folder).trim().toLower().value();
 
-	ws.emit('uploadsValidateFolder', {
-		auth: WSInternalKey,
-		content: destFolder
-	}, (destFolderPath) => {
+	upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
 		
 		if(!destFolderPath) {
 			return res.json({ ok: false, msg: 'Invalid Folder' });
