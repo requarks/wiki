@@ -66,7 +66,7 @@ module.exports = {
 
 			let pInfo = self.parseUploadsRelPath(p);
 			return self.processFile(pInfo.folder, pInfo.filename).then((mData) => {
-				return db.UplFile.create(mData);
+				return db.UplFile.findByIdAndUpdate(mData._id, mData, { upsert: true });
 			}).then(() => {
 				return git.commitUploads('Uploaded ' + p);
 			});
@@ -78,12 +78,7 @@ module.exports = {
 		self._watcher.on('unlink', (p) => {
 
 			let pInfo = self.parseUploadsRelPath(p);
-			return db.UplFile.findOneAndRemove({
-				folder: 'f:' + pInfo.folder,
-				filename: pInfo.filename
-			}).then(() => {
-				return git.commitUploads('Deleted ' + p);
-			});
+			return git.commitUploads('Deleted/Renamed ' + p);
 
 		});
 
@@ -113,7 +108,10 @@ module.exports = {
 
 				return db.UplFolder.remove({}).then(() => {
 					return db.UplFolder.insertMany(_.map(folderNames, (f) => {
-						return { name: f };
+						return {
+							_id: 'f:' + f,
+							name: f
+						};
 					}));
 				}).then(() => {
 

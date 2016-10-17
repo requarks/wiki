@@ -98,6 +98,23 @@
 						a.card-footer-item(v-on:click="fetchFromUrlDiscard") Discard
 						a.card-footer-item(v-on:click="fetchFromUrlGo") Fetch
 
+	.modal(v-bind:class="{ 'is-active': renameImageShow }")
+		.modal-background
+		.modal-container
+			.modal-content
+				.card.is-fullwidth
+					header.card-header
+						p.card-header-title Rename Image
+					.card-content
+						.content
+							label.label Enter the new filename (without the extension) of the image:
+							p.control
+								input.input#txt-editor-renameimage(type='text', placeholder='filename', v-model='renameImageFilename')
+								span.help.is-danger.is-hidden This filename is invalid!
+					footer.card-footer
+						a.card-footer-item(v-on:click="renameImageDiscard") Discard
+						a.card-footer-item(v-on:click="renameImageGo") Rename
+
 	.modal(v-bind:class="{ 'is-active': deleteImageShow }")
 		.modal-background
 		.modal-container

@@ -57,4 +57,28 @@ module.exports = (socket) => {
     });
   });
 
+  socket.on('uploadsRenameFile', (data, cb) => {
+  	cb = cb || _.noop;
+    upl.moveUploadsFile(data.uid, data.folder, data.filename).then((f) => {
+      return cb({ ok: true }) || true;
+    }).catch((err) => {
+    	return cb({
+    		ok: false,
+    		msg: err.message
+    	}) || true;
+    });
+  });
+
+  socket.on('uploadsMoveFile', (data, cb) => {
+    cb = cb || _.noop;
+    upl.moveUploadsFile(data.uid, data.folder).then((f) => {
+      return cb({ ok: true }) || true;
+    }).catch((err) => {
+    	return cb({
+    		ok: false,
+    		msg: err.message
+    	}) || true;
+    });
+  });
+
 };
