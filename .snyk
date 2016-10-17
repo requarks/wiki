@@ -1,6 +1,10 @@
 failThreshold: high
-version: v1.5.0
-ignore: {}
+version: v1.5.2
+ignore:
+  'npm:moment:20160126':
+    - express-brute-mongo > moment:
+        reason: None given
+        expires: '2016-11-16T22:23:46.921Z'
 patch:
   'npm:negotiator:20160616':
     - socket.io > engine.io > accepts > negotiator:
