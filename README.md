@@ -10,10 +10,13 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d0217a3153c4595bdedb322263e55c8)](https://www.codacy.com/app/Requarks/wiki)
 [![Dependency Status](https://gemnasium.com/badges/github.com/Requarks/wiki.svg)](https://gemnasium.com/github.com/Requarks/wiki)
 [![Known Vulnerabilities](https://snyk.io/test/github/requarks/wiki/badge.svg)](https://snyk.io/test/github/requarks/wiki)
-[![Documentation](http://inch-ci.org/github/Requarks/wiki.svg?branch=master)](https://requarks-wiki.readme.io/)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
 *Under development*
+
+### Documentation
+
+- [Installation Guide](https://requarks-wiki.readme.io/docs/prerequisites)
 
 ##### Milestones
 - [ ] Assets Management
