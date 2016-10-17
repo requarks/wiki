@@ -2,17 +2,13 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var ExpressBrute = require('express-brute');
-var ExpressBruteMongoStore = require('express-brute-mongo');
+var ExpressBruteMongooseStore = require('express-brute-mongoose');
 var moment = require('moment');
 
 /**
  * Setup Express-Brute
  */
-var EBstore = new ExpressBruteMongoStore((ready) => {
-	db.onReady.then(() => {
-		ready(db.connection.collection('bruteforce-store'));
-	});
-});
+var EBstore = new ExpressBruteMongooseStore(db.Bruteforce);
 var bruteforce = new ExpressBrute(EBstore, {
 	freeRetries: 5,
 	minWait: 60 * 1000,

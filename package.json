@@ -46,7 +46,7 @@
     "cron": "^1.1.1",
     "express": "^4.14.0",
     "express-brute": "^1.0.0",
-    "express-brute-mongo": "^0.1.0",
+    "express-brute-mongoose": "0.0.6",
     "express-session": "^1.14.1",
     "farmhash": "^1.2.1",
     "file-type": "^3.8.0",
