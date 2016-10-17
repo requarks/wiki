@@ -47,7 +47,7 @@ module.exports = {
 		this.uploadImgHandler = multer({
 			storage: multer.diskStorage({
 				destination: (req, f, cb) => {
-					cb(null, path.resolve(ROOTPATH, appconfig.paths.data, 'temp-upload'))
+					cb(null, path.resolve(ROOTPATH, appconfig.paths.data, 'temp-upload'));
 				}
 			}),
 			fileFilter: (req, f, cb) => {

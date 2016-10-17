@@ -21,7 +21,7 @@ module.exports = (socket) => {
     cb = cb || _.noop;
     upl.getUploadsFolders().then((f) => {
       return cb(f) || true;
-    })
+    });
   });
 
   socket.on('uploadsCreateFolder', (data, cb) => {

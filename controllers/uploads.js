@@ -92,7 +92,7 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 					return {
 						ok: false,
 						msg: r.reason().message
-					}
+					};
 				}
 			});
 			res.json({ ok: true, results: uplResults });

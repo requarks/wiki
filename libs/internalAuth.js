@@ -19,7 +19,7 @@ module.exports = {
 
 	generateKey() {
 
-		return crypto.randomBytes(20).toString('hex')
+		return crypto.randomBytes(20).toString('hex');
 
 	},
 

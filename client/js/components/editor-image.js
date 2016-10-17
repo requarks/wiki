@@ -186,7 +186,7 @@ let vueImage = new Vue({
 			vueImage.isLoadingText = 'Moving image...';
 			vueImage.isLoading = true;
 			Vue.nextTick(() => {
-				socket.emit('uploadsMoveFile', { uid: uid, folder: fld }, (data) => {
+				socket.emit('uploadsMoveFile', { uid, folder: fld }, (data) => {
 					if(data.ok) {
 						vueImage.loadImages();
 					} else {
@@ -311,7 +311,7 @@ let vueImage = new Vue({
 				position: (opt, x, y) => {
 					$(opt.$trigger).addClass('is-contextopen');
 					let trigPos = $(opt.$trigger).position();
-					let trigDim = { w: $(opt.$trigger).width() / 2, h: $(opt.$trigger).height() / 2 }
+					let trigDim = { w: $(opt.$trigger).width() / 2, h: $(opt.$trigger).height() / 2 };
 					opt.$menu.css({ top: trigPos.top + trigDim.h, left: trigPos.left + trigDim.w });
 				},
 				events: {
@@ -370,7 +370,7 @@ $('#btn-editor-uploadimage input').on('change', (ev) => {
 			vueImage.isLoading = true;
 		},
 
-		progress: function(progress) {
+		progress: (progress) => {
 			vueImage.isLoadingText = 'Uploading...' + Math.round(progress) + '%';
 		},
 
@@ -398,7 +398,7 @@ $('#btn-editor-uploadimage input').on('change', (ev) => {
 			}
 		},
 
-		error: function(error) {
+		error: (error) => {
 			alerts.pushError(error.message, this.upload.file.name);
 		},
 

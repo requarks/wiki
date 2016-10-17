@@ -8,6 +8,27 @@ codeEditor.setOption('wrap', true);
 
 let modelist = ace.require("ace/ext/modelist");
 
+// ACE - Mode Loader
+
+let modelistLoaded = [];
+let loadAceMode = (m) => {
+	return $.ajax({
+		url: '/js/ace/mode-' + m + '.js',
+		dataType: "script",
+		cache: true,
+		beforeSend: () => {
+			if(_.includes(modelistLoaded, m)) {
+				return false;
+			}
+		},
+		success: () => {
+			modelistLoaded.push(m);
+		}
+	});
+};
+
+// Vue Code Block instance
+
 let vueCodeBlock = new Vue({
 	el: '#modal-editor-codeblock',
 	data: {
@@ -40,22 +61,3 @@ let vueCodeBlock = new Vue({
 		}
 	}
 });
-
-// ACE - Mode Loader
-
-let modelistLoaded = [];
-let loadAceMode = (m) => {
-	return $.ajax({
-		url: '/js/ace/mode-' + m + '.js',
-		dataType: "script",
-		cache: true,
-		beforeSend: () => {
-			if(_.includes(modelistLoaded, m)) {
-				return false;
-			}
-		},
-		success: () => {
-			modelistLoaded.push(m);
-		}
-	});
-}

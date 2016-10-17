@@ -86,7 +86,7 @@ const parseTree = (content) => {
 			 content = heading.children[1].content;
 			 anchor = _.kebabCase(content);
 			} else {
-			 content = heading.content
+			 content = heading.content;
 			 anchor = _.kebabCase(heading.children.reduce((acc, t) => acc + t.content, ""));
 			}
 

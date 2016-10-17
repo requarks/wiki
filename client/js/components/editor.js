@@ -10,7 +10,7 @@ if($('#mk-editor').length === 1) {
 
 	Vue.filter('filesize', (v) => {
 		return _.toUpper(filesize(v));
-	})
+	});
 
 	//=include editor-image.js
 	//=include editor-codeblock.js
@@ -170,26 +170,26 @@ if($('#mk-editor').length === 1) {
 		}
 	});
 
-}
+	//-> Save
 
-//-> Save
+	$('.btn-edit-save, .btn-create-save').on('click', (ev) => {
 
-$('.btn-edit-save, .btn-create-save').on('click', (ev) => {
+		$.ajax(window.location.href, {
+			data: {
+				markdown: mde.value()
+			},
+			dataType: 'json',
+			method: 'PUT'
+		}).then((rData, rStatus, rXHR) => {
+			if(rData.ok) {
+				window.location.assign('/' + pageEntryPath);
+			} else {
+				alerts.pushError('Something went wrong', rData.error);
+			}
+		}, (rXHR, rStatus, err) => {
+			alerts.pushError('Something went wrong', 'Save operation failed.');
+		});
 
-	$.ajax(window.location.href, {
-		data: {
-			markdown: mde.value()
-		},
-		dataType: 'json',
-		method: 'PUT'
-	}).then((rData, rStatus, rXHR) => {
-		if(rData.ok) {
-			window.location.assign('/' + pageEntryPath);
-		} else {
-			alerts.pushError('Something went wrong', rData.error);
-		}
-	}, (rXHR, rStatus, err) => {
-		alerts.pushError('Something went wrong', 'Save operation failed.');
 	});
 
-});
+}

@@ -156,7 +156,7 @@ module.exports = {
 
 			return upl.watch();
 
-		})
+		});
 
 	},
 
@@ -218,7 +218,7 @@ module.exports = {
 							filename: f,
 							basename: fPathObj.name,
 							filesize: s.size
-						}
+						};
 
 						// Generate thumbnail
 
@@ -258,6 +258,7 @@ module.exports = {
 	 * Generate thumbnail of image
 	 *
 	 * @param      {String}           sourcePath  The source path
+	 * @param      {String}           destPath    The destination path
 	 * @return     {Promise<Object>}  Promise returning the resized image info
 	 */
 	generateThumbnail(sourcePath, destPath) {

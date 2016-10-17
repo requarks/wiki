@@ -4,7 +4,7 @@ var winston = require('winston');
 
 module.exports = (isDebug) => {
 
-	winston.remove(winston.transports.Console)
+	winston.remove(winston.transports.Console);
 	winston.add(winston.transports.Console, {
 		level: (isDebug) ? 'info' : 'warn',
 		prettyPrint: true,

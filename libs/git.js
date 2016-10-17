@@ -111,7 +111,7 @@ module.exports = {
 						self._git.exec('config', ['--local', 'user.email', self._signature.email])
 					).then(() => {
 						return self._git.exec('remote', ['add', 'origin', self._url]);
-					})
+					});
 				}
 			});
 

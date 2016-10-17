@@ -95,7 +95,7 @@ module.exports = {
 
 		return db.UplFolder.findOne({ name: folderName }).then((f) => {
 			return (f) ? path.resolve(this._uploadsPath, folderName) : false;
-		})
+		});
 
 	},
 
@@ -180,7 +180,7 @@ module.exports = {
 		let self = this;
 
 		let fUrlObj = url.parse(fUrl);
-		let fUrlFilename = _.last(_.split(fUrlObj.pathname, '/'))
+		let fUrlFilename = _.last(_.split(fUrlObj.pathname, '/'));
 		let destFolder = _.chain(fFolder).trim().toLower().value();
 
 		return upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
