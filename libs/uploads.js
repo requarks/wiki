@@ -143,7 +143,7 @@ module.exports = {
 				return self.deleteUploadsFileTry(f, 0);
 			}
 			return true;
-		})
+		});
 	},
 
 	deleteUploadsFileTry(f, attempt) {

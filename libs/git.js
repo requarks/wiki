@@ -233,7 +233,7 @@ module.exports = {
 				throw new Error(errorMsg);
 			}
 			return true;
-		})
+		});
 
 	},
 
