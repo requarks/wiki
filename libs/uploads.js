@@ -159,7 +159,7 @@ module.exports = {
 			if(err.code === 'EBUSY' && attempt < 5) {
 				return Promise.delay(100).then(() => {
 					return self.deleteUploadsFileTry(f, attempt + 1);
-				})
+				});
 			} else {
 				winston.warn('Unable to delete uploads file ' + f.filename + '. File is locked by another process and multiple attempts failed.');
 				return true;
