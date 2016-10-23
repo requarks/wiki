@@ -1,0 +1,1 @@
+"use strict";jQuery(document).ready(function(u){u("#login-user").focus()});

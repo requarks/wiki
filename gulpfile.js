@@ -39,7 +39,7 @@ var paths = {
 		'!./node_modules/ace-builds/src-min-noconflict/mode-markdown.js'
 	],
 	scriptapps: [
-		'./client/js/app.js'
+		'./client/js/*.js'
 	],
 	scriptapps_watch: [
 		'./client/js/**/*.js'
@@ -50,7 +50,7 @@ var paths = {
 		'./node_modules/simplemde/dist/simplemde.min.css'
 	],
 	cssapps: [
-		'./client/scss/app.scss'
+		'./client/scss/*.scss'
 	],
 	cssapps_watch: [
 		'./client/scss/**/*.scss'
@@ -115,7 +115,6 @@ gulp.task("scripts-app", function () {
 
 	return gulp.src(paths.scriptapps)
 	.pipe(plumber())
-	.pipe(concat('app.js'))
 	.pipe(include({ extensions: "js" }))
 	.pipe(babel())
 	.pipe(uglify())
@@ -148,7 +147,6 @@ gulp.task("css-app", function () {
 	return gulp.src(paths.cssapps)
 	.pipe(plumber())
 	.pipe(sass())
-	.pipe(concat('app.css'))
 	.pipe(cleanCSS({ keepSpecialComments: 0 }))
 	.pipe(plumber.stop())
 	.pipe(gulp.dest("./assets/css"));
