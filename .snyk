@@ -1,5 +1,5 @@
 failThreshold: high
-version: v1.5.2
+version: v1.5.0
 ignore:
   'npm:moment:20160126':
     - express-brute-mongo > moment:
@@ -14,3 +14,6 @@ patch:
         patched: '2016-09-09T02:19:31.082Z'
     - socket.io > socket.io-client > engine.io-client > ws:
         patched: '2016-09-09T02:19:31.082Z'
+  'npm:moment:20161019':
+    - express-brute-mongoose > moment:
+        patched: '2016-10-24T15:14:13.457Z'
