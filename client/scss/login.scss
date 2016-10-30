@@ -125,6 +125,59 @@ a {
 
 	}
 
+	#social {
+		margin-top: 25px;
+
+		> span {
+			display: block;
+			font-weight: bold;
+			color: rgba(255,255,255,0.7);
+		}
+
+		button {
+			margin-right: 5px;
+			width: auto;
+			padding: 0 15px;
+
+			> i {
+				margin-right: 10px;
+				font-size: 16px;
+			}
+
+			&.ms {
+				background-color: #009688;
+				border-color: lighten(#009688, 10%);
+
+				&:hover {
+					background-color: darken(#009688, 10%);
+				}
+
+			}
+
+			&.google {
+				background-color: #2196F3;
+				border-color: lighten(#2196F3, 10%);
+
+				&:hover {
+					background-color: darken(#2196F3, 10%);
+				}
+
+			}
+
+			&.facebook {
+				background-color: #673AB7;
+				border-color: lighten(#673AB7, 10%);
+
+				&:hover {
+					background-color: darken(#673AB7, 10%);
+				}
+
+			}
+
+		}
+
+	}
+
 }
 
 #copyright {

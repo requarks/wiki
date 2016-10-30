@@ -46,6 +46,7 @@ const http = require('http');
 const i18next_backend = require('i18next-node-fs-backend');
 const i18next_mw = require('i18next-express-middleware');
 const passport = require('passport');
+const passportSocketIo = require('passport.socketio');
 const path = require('path');
 const session = require('express-session');
 const sessionMongoStore = require('connect-mongo')(session);
@@ -81,15 +82,16 @@ app.use(express.static(path.join(ROOTPATH, 'assets')));
 // Session
 // ----------------------------------------
 
-var strategy = require('./libs/auth')(passport, appconfig);
+const strategies = require('./libs/auth')(passport, appconfig);
+var sessionStore = new sessionMongoStore({
+  mongooseConnection: db.connection,
+  touchAfter: 15
+});
 
 app.use(cookieParser());
 app.use(session({
   name: 'requarkswiki.sid',
-  store: new sessionMongoStore({
-    mongooseConnection: db.connection,
-    touchAfter: 15
-  }),
+  store: sessionStore,
   secret: appconfig.sessionSecret,
   resave: false,
   saveUninitialized: false
@@ -144,9 +146,9 @@ app.use(mw.flash);
 
 app.use('/', ctrl.auth);
 
-app.use('/uploads', ctrl.uploads);
+app.use('/uploads', mw.auth, ctrl.uploads);
 app.use('/admin', mw.auth, ctrl.admin);
-app.use('/', ctrl.pages);
+app.use('/', mw.auth, ctrl.pages);
 
 // ----------------------------------------
 // Error handling
@@ -202,8 +204,25 @@ server.on('listening', () => {
 });
 
 // ----------------------------------------
-// WebSocket handlers
+// WebSocket
 // ----------------------------------------
+
+io.use(passportSocketIo.authorize({
+  key: 'requarkswiki.sid',
+  store: sessionStore,
+  secret: appconfig.sessionSecret,
+  passport,
+  cookieParser,
+  success: (data, accept) => {
+    accept();
+  },
+  fail: (data, message, error, accept) => {
+    if(error) {
+      throw new Error(message);
+    }
+    return accept(new Error(message));
+  }
+}));
 
 io.on('connection', ctrl.ws);
 

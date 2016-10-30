@@ -60,6 +60,18 @@ router.post('/login', bruteforce.prevent, function(req, res, next) {
 });
 
 /**
+ * Social Login
+ */
+
+router.get('/login/ms', passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }));
+router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/login/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }));
+
+router.get('/login/ms/callback', passport.authenticate('windowslive', { failureRedirect: '/login', successRedirect: '/' }));
+router.get('/login/google/callback', passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }));
+router.get('/login/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }));
+
+/**
  * Logout
  */
 router.get('/logout', function(req, res) {

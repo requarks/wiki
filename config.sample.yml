@@ -32,6 +32,26 @@ paths:
   data: ./data
 
 # ---------------------------------------------------------------------
+# Site Authentication
+# ---------------------------------------------------------------------
+
+auth:
+  local:
+    enabled: true
+  google:
+    enabled: true
+    clientId: GOOGLE_CLIENT_ID
+    clientSecret: GOOGLE_CLIENT_SECRET
+  microsoft:
+    enabled: true
+    clientId: MS_APP_ID
+    clientSecret: MS_APP_SECRET
+  facebook:
+    enabled: false
+    clientId: FACEBOOK_APP_ID
+    clientSecret: FACEBOOK_APP_SECRET
+
+# ---------------------------------------------------------------------
 # Database Connection String
 # ---------------------------------------------------------------------
 

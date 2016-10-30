@@ -27,14 +27,33 @@ html
 
 	body
 		#bg
-			each bg in [1, 2, 3]
+			each bg in _.sampleSize([1, 2, 3],3)
 				div(style="background-image:url(/images/bg_" + bg + ".jpg);")
 		#root
 			h1= appconfig.title
 			h2 Login required
-			input#login-user(type='text', placeholder='Email address')
-			input#login-pass(type='password', placeholder='Password')
-			button Log In
+			if appconfig.auth.local.enabled
+				input#login-user(type='text', placeholder='Email address')
+				input#login-pass(type='password', placeholder='Password')
+				button Log In
+			if appconfig.authStrategies.socialEnabled
+				#social
+					if appconfig.auth.local.enabled
+						span Or, log in using...
+					else
+						span Log in using...
+					if appconfig.auth.microsoft && appconfig.auth.microsoft.enabled
+						button.ms(onclick="window.location.assign('/login/ms')")
+							i.fa.fa-windows
+							span Microsoft Account
+					if appconfig.auth.google && appconfig.auth.google.enabled
+						button.google(onclick="window.location.assign('/login/google')")
+							i.fa.fa-google
+							span Google ID
+					if appconfig.auth.facebook && appconfig.auth.facebook.enabled
+						button.facebook(onclick="window.location.assign('/login/facebook')")
+							i.fa.fa-facebook
+							span Facebook
 		#copyright
 			= t('footer.poweredby') + ' '
 			a.icon(href='https://github.com/Requarks/wiki')

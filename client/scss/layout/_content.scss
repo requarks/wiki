@@ -36,6 +36,13 @@
 .mkcontent {
 
 	h1 {
+		border-bottom: 1px dotted $blue;
+		padding-bottom: 4px;
+		font-weight: 400;
+		color: desaturate($blue, 20%);
+	}
+
+	h2 {
 		border-bottom: 1px dotted $grey-light;
 		padding-bottom: 4px;
 		font-weight: 400;
@@ -44,7 +51,7 @@
 
 	a.toc-anchor {
 		font-size: 80%;
-		color: $purple;
+		color: $blue;
 		border-bottom: none;
 
 		&:visited {
@@ -74,6 +81,7 @@
 
 	pre {
 		padding: 0;
+		font-family: $family-monospace;
 
 		> code {
 			box-shadow: inset 0 0 5px 0 $grey-light;
@@ -94,6 +102,7 @@
 		float: right;
 		margin-top: -50px;
 		max-width: 200px;
+		background-color: #FFF;
 	}
 
 	strong {
@@ -102,6 +111,23 @@
 
 	.twa {
 		font-size: 120%;
+	}
+
+	table thead th {
+		background-color: $blue;
+		color: #FFF;
+		border-color: #FFF;
+		border-bottom-color: $blue;
+		border-top-color: $blue;
+
+		&:first-child {
+			border-left-color: $blue;
+		}
+
+		&:last-child {
+			border-right-color: $blue;
+		}
+
 	}
 
 }

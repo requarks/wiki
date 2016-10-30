@@ -167,7 +167,9 @@ var job = new cron({
 
 			if(!jobUplWatchStarted) {
 				jobUplWatchStarted = true;
-				upl.initialScan();
+				upl.initialScan().then(() => {
+					job.start();
+				});
 			}
 
 			return true;

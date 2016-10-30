@@ -21,15 +21,36 @@ module.exports = (confPath) => {
 	  process.exit(1);
 	}
 
-	return _.defaultsDeep(appconfig, {
+	// Merge with defaults
+
+	appconfig = _.defaultsDeep(appconfig, {
 		title: "Requarks Wiki",
 		host: "http://localhost",
 		port: process.env.PORT,
-		wsPort: 8080,
+		auth: {
+			local: { enabled: true },
+			microsoft: { enabled: false },
+			google: { enabled: false },
+			facebook: { enabled: false },
+		},
 		db: "mongodb://localhost/wiki",
 		redis: null,
 		sessionSecret: null,
 		admin: null
 	});
+
+	// List authentication strategies
+	
+	appconfig.authStrategies = {
+		list: _.filter(appconfig.auth, ['enabled', true]),
+		socialEnabled: (_.chain(appconfig.auth).omit('local').reject({ enabled: false }).value().length > 0)
+	}
+	if(appconfig.authStrategies.list.length < 1) {
+		winston.error(new Error('You must enable at least 1 authentication strategy!'));
+	  process.exit(1);
+	}
+
+
+	return appconfig;
 
 };

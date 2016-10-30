@@ -1,6 +1,8 @@
 "use strict";
 
 module.exports = (socket) => {
+  
+  console.log(socket.request.user);
 
   //-----------------------------------------
   // SEARCH

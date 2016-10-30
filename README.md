@@ -20,13 +20,22 @@
 
 ##### Milestones
 - [ ] Assets Management
+	- [x] Images
+	- [ ] Files/Documents
 - [ ] Authentication
+	- [ ] Local
+	- [x] Microsoft Account
+	- [x] Google ID
+	- [x] Facebook
 - [x] Background Agent (git sync, cache purge, etc.)
 - [x] Caching
 - [x] Create Entry
 - [x] Edit Entry
 - [x] Git Management
 - [ ] Markdown Editor
+	- [x] Basic Formatting
+	- [ ] Links
+	- [ ] Table Editor
 - [x] Move Entry
 - [x] Navigation
 - [x] Parsing / Tree / Metadata
