@@ -1,0 +1,7 @@
+version: v1.5.2
+ignore:
+  'npm:moment:20161019':
+    - express-brute-mongoose > moment:
+        reason: Waiting for new version
+        expires: '2016-11-30T03:04:46.410Z'
+patch: {}
