@@ -19,11 +19,12 @@
 - [Installation Guide](https://requarks-wiki.readme.io/docs/prerequisites)
 
 ##### Milestones
+- [ ] Account Management
 - [ ] Assets Management
 	- [x] Images
 	- [ ] Files/Documents
-- [ ] Authentication
-	- [ ] Local
+- [x] Authentication
+	- [x] Local
 	- [x] Microsoft Account
 	- [x] Google ID
 	- [x] Facebook

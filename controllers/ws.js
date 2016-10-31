@@ -2,7 +2,9 @@
 
 module.exports = (socket) => {
   
-  console.log(socket.request.user);
+  if(!socket.request.user.logged_in) {
+    return;
+  }
 
   //-----------------------------------------
   // SEARCH

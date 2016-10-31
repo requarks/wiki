@@ -32,10 +32,16 @@ html
 		#root
 			h1= appconfig.title
 			h2 Login required
+			if appflash.length > 0
+				h3
+					i.fa.fa-warning
+					= appflash[0].title
+				h4= appflash[0].message
 			if appconfig.auth.local.enabled
-				input#login-user(type='text', placeholder='Email address')
-				input#login-pass(type='password', placeholder='Password')
-				button Log In
+				form(method='post', action='/login')
+					input#login-user(type='text', name='email', placeholder='Email address')
+					input#login-pass(type='password', name='password', placeholder='Password')
+					button(type='submit') Log In
 			if appconfig.authStrategies.socialEnabled
 				#social
 					if appconfig.auth.local.enabled
@@ -59,4 +65,3 @@ html
 			a.icon(href='https://github.com/Requarks/wiki')
 				i.fa.fa-github
 			a(href='https://github.com/Requarks/wiki') Requarks Wiki
-			

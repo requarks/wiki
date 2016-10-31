@@ -1,6 +1,8 @@
 @import './layout/_base';
 @import './layout/_mixins';
 
+@import './libs/animate.min.css';
+
 body {
 	padding: 0;
 	margin: 0;
@@ -80,6 +82,34 @@ a {
 		animation: headerIntro 3s ease;
 	}
 
+	h3 {
+		font-size: 1.25rem;
+		font-weight: normal;
+		color: #FB8C00;
+		padding: 0;
+		margin: 0;
+		animation: shake 1s ease;
+
+		> .fa {
+			margin-right: 7px;
+		}
+
+	}
+
+	h4 {
+		font-size: 0.8rem;
+		font-weight: normal;
+		color: rgba(255,255,255,0.7);
+		padding: 0;
+		margin: 0 0 15px 0;
+		animation: fadeIn 3s ease;
+	}
+
+	form {
+		display: flex;
+		flex-direction: column;
+	}
+
 	input[type=text], input[type=password] {
 		width: 350px;
 		max-width: 80vw;
@@ -96,7 +126,7 @@ a {
 
 		&:focus {
 			outline: none;
-			border-color: rgba(255,255,255,0.8);
+			border-color: #FB8C00;
 		}
 
 	}
@@ -148,6 +178,10 @@ a {
 				background-color: #009688;
 				border-color: lighten(#009688, 10%);
 
+				&:focus {
+					border-color: #FFF;
+				}
+
 				&:hover {
 					background-color: darken(#009688, 10%);
 				}
@@ -158,6 +192,10 @@ a {
 				background-color: #2196F3;
 				border-color: lighten(#2196F3, 10%);
 
+				&:focus {
+					border-color: #FFF;
+				}
+
 				&:hover {
 					background-color: darken(#2196F3, 10%);
 				}
@@ -167,6 +205,10 @@ a {
 			&.facebook {
 				background-color: #673AB7;
 				border-color: lighten(#673AB7, 10%);
+
+				&:focus {
+					border-color: #FFF;
+				}
 
 				&:hover {
 					background-color: darken(#673AB7, 10%);

@@ -34,23 +34,24 @@ module.exports = function(passport, appconfig) {
 		passport.use('local',
 			new LocalStrategy({
 				usernameField : 'email',
-				passwordField : 'password',
-				passReqToCallback : true
+				passwordField : 'password'
 			},
-			function(req, uEmail, uPassword, done) {
-				db.User.findOne({ 'email' :  uEmail }).then((user) => {
-					if (user) {
-						user.validatePassword(uPassword).then((isValid) => {
-							return (isValid) ? done(null, user) : done(null, false);
+			(uEmail, uPassword, done) => {
+				db.User.findOne({ email: uEmail, provider: 'local' }).then((user) => {
+					if(user) {
+						return user.validatePassword(uPassword).then(() => {
+							return done(null, user) || true;
+						}).catch((err) => {
+							 return done(err, null);
 						});
 					} else {
-						return done(null, false);
+						return done(new Error('Invalid Login'), null);
 					}
 				}).catch((err) => {
-					done(err);
+					done(err, null) ;
 				});
-			})
-		);
+			}
+		));
 
 	}
 

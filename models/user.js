@@ -78,9 +78,8 @@ userSchema.statics.hashPassword = (rawPwd) => {
 };
 
 userSchema.methods.validatePassword = function(rawPwd) {
-	let self = this;
-	return bcrypt.hash(rawPwd).then((pwd) => {
-		return (self.password === pwd) ? true : Promise.reject(new Error('Invalid Password'));
+	return bcrypt.compare(rawPwd, this.password).then((isValid) => {
+		return (isValid) ? true : Promise.reject(new Error('Invalid Login'));
 	});
 };
 

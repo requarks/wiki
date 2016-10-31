@@ -35,28 +35,26 @@ router.get('/login', function(req, res, next) {
 });
 
 router.post('/login', bruteforce.prevent, function(req, res, next) {
-		passport.authenticate('local', function(err, user, info) {
+	passport.authenticate('local', function(err, user, info) {
 
-			if (err) { return next(err); }
+		if (err) { return next(err); }
 
-			if (!user) {
-				req.flash('alert', {
-					class: 'error',
-					title: 'Invalid login',
-					message:  "The email or password is invalid.",
-					iconClass: 'fa-times'
-				});
-				return res.redirect('/login');
-			}
+		if (!user) {
+			req.flash('alert', {
+				title: 'Invalid login',
+				message:  "The email or password is invalid."
+			});
+			return res.redirect('/login');
+		}
 
-			req.logIn(user, function(err) {
-	      if (err) { return next(err); }
-	      req.brute.reset(function () {
-					return res.redirect('/');
-				});
-	    });
+		req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      req.brute.reset(function () {
+				return res.redirect('/');
+			});
+    });
 
-		})(req, res, next);
+	})(req, res, next);
 });
 
 /**
