@@ -19,6 +19,12 @@ module.exports = (req, res, next) => {
 		return res.redirect('/login');
 	}
 
+	// Check permissions
+
+	if(!rights.check(req, 'read')) {
+		return res.render('error-forbidden');
+	}
+
 	// Set i18n locale
 
 	req.i18n.changeLanguage(req.user.lang);

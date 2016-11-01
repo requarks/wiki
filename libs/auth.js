@@ -131,7 +131,13 @@ module.exports = function(passport, appconfig) {
 						provider: 'local',
 						email: appconfig.admin,
 						name: "Administrator",
-						password: pwd
+						password: pwd,
+						rights: [{
+							role: 'admin',
+							path: '/',
+							exact: false,
+							deny: false
+						}]
 					});
 				}).then(() => {
 					winston.info('[' + PROCNAME + '][AUTH] Administrator account created successfully!');

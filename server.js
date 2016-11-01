@@ -28,6 +28,7 @@ global.git = require('./libs/git').init(appconfig, false);
 global.lang = require('i18next');
 global.mark = require('./libs/markdown');
 global.upl = require('./libs/uploads').init(appconfig);
+global.rights = require('./libs/rights');
 
 // ----------------------------------------
 // Load modules
@@ -217,9 +218,6 @@ io.use(passportSocketIo.authorize({
     accept();
   },
   fail: (data, message, error, accept) => {
-    if(error) {
-      throw new Error(message);
-    }
     return accept(new Error(message));
   }
 }));

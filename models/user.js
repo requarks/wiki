@@ -36,7 +36,10 @@ var userSchema = modb.Schema({
 	},
 
 	rights: [{
-		type: String
+		role: String,
+		path: String,
+		exact: Boolean,
+		deny: Boolean
 	}]
 
 },

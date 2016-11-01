@@ -24,10 +24,14 @@
 	- [x] Images
 	- [ ] Files/Documents
 - [x] Authentication
-	- [x] Local
-	- [x] Microsoft Account
-	- [x] Google ID
-	- [x] Facebook
+	- [x] Strategies
+		- [x] Local
+		- [x] Microsoft Account
+		- [x] Google ID
+		- [x] Facebook
+	- [x] Access Rights
+		- [x] View
+		- [ ] Edit / Create
 - [x] Background Agent (git sync, cache purge, etc.)
 - [x] Caching
 - [x] Create Entry
