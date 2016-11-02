@@ -110,7 +110,7 @@ lang
   .use(i18next_mw.LanguageDetector)
   .init({
     load: 'languageOnly',
-    ns: ['common'],
+    ns: ['common', 'auth'],
     defaultNS: 'common',
     saveMissing: false,
     supportedLngs: ['en', 'fr'],

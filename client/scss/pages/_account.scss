@@ -1,0 +1,17 @@
+.account-profile-provider {
+	height: 32px;
+	display: flex;
+	align-items: center;
+
+	.fa {
+		margin-right: 10px;
+	}
+
+	.is-blue {
+		color: $blue;
+	}
+	.is-purple {
+		color: $purple;
+	}
+
+}

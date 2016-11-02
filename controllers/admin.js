@@ -7,7 +7,11 @@ var router = express.Router();
  * Admin
  */
 router.get('/', (req, res) => {
-	res.send('OK');
+	res.redirect('/admin/profile');
+});
+
+router.get('/profile', (req, res) => {
+	res.render('pages/account.pug');
 });
 
 module.exports = router;

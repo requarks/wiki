@@ -37,7 +37,7 @@ jQuery( document ).ready(function( $ ) {
 	// Establish WebSocket connection
 	// ====================================
 
-	var socket = io(ioHost);
+	var socket = io(window.location.origin);
 
 	//=include components/search.js
 
