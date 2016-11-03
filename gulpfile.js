@@ -67,6 +67,8 @@ var paths = {
 		'!client/scss', '!client/scss/**',
 		'!dist', '!dist/**',
 		'!tests', '!tests/**',
+		'!data', '!data/**',
+		'!repo', '!repo/**',
 		'!.babelrc', '!.gitattributes', '!.gitignore', '!.snyk', '!.travis.yml',
 		'!gulpfile.js', '!inch.json', '!config.yml', '!wiki.sublime-project'
 	]
