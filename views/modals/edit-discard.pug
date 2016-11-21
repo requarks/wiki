@@ -3,12 +3,9 @@
 	.modal-background
 	.modal-container
 		.modal-content
-			.card.is-fullwidth
-				header.card-header.is-warning
-					p.card-header-title Discard?
-				.card-content
-					.content
-						| Are you sure you want to leave this page and loose any modifications?
-				footer.card-footer
-					a.card-footer-item.btn-edit-discard Stay on page
-					a.card-footer-item(href='/' + pageData.meta.path) Discard
+				header.is-orange Discard?
+				section
+					span Are you sure you want to leave this page and loose any modifications?
+				footer
+					a.button.is-grey.is-outlined.btn-edit-discard Stay on page
+					a.button.is-orange(href='/' + pageData.meta.path) Discard

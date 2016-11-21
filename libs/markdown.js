@@ -152,9 +152,17 @@ const parseContent = (content)  => {
 	let output = mkdown.render(content);
 	let cr = cheerio.load(output);
 
-	//-> Style table headers
+	//-> Check for empty first element
 
-	//cr('table').addClass('table is-bordered is-striped is-narrow');
+	let firstElm = cr.root().children().first()[0];
+	if(firstElm.type === 'tag' && firstElm.name === 'p') {
+		let firstElmChildren = firstElm.children;
+		if(firstElmChildren.length < 1) {
+			firstElm.remove();
+		} else if(firstElmChildren.length === 1 && firstElmChildren[0].type === 'tag' && firstElmChildren[0].name === 'img') {
+			cr(firstElm).addClass('is-gapless');
+		}
+	}
 
 	//-> Remove links in headers
 
