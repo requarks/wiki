@@ -151,7 +151,18 @@ const parseContent = (content)  => {
 
 	let output = mkdown.render(content);
 	let cr = cheerio.load(output);
-	cr('table').addClass('table is-bordered is-striped is-narrow');
+
+	//-> Style table headers
+
+	//cr('table').addClass('table is-bordered is-striped is-narrow');
+
+	//-> Remove links in headers
+
+	cr('h1 > a:not(.toc-anchor), h2 > a:not(.toc-anchor), h3 > a:not(.toc-anchor)').each((i, elm) => {
+		let txtLink = cr(elm).text();
+		cr(elm).replaceWith(txtLink);
+	});
+
 	output = cr.html();
 
 	return output;

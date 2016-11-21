@@ -4,15 +4,16 @@
 // Licensed under AGPLv3
 // ===========================================
 
-global.ROOTPATH = __dirname;
 global.PROCNAME = 'AGENT';
+global.ROOTPATH = __dirname;
+global.CORE_PATH = ROOTPATH + '/../core/';
+global.IS_DEBUG = process.env.NODE_ENV === 'development';
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
-var _isDebug = process.env.NODE_ENV === 'development';
-global.winston = require('./libs/winston')(_isDebug);
+global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG);
 
 // ----------------------------------------
 // Load global modules
@@ -20,8 +21,8 @@ global.winston = require('./libs/winston')(_isDebug);
 
 winston.info('[AGENT] Background Agent is initializing...');
 
-var appconfig = require('./libs/config')('./config.yml');
-global.db = require('./libs/mongo').init(appconfig);
+var appconfig = require(CORE_PATH + 'core-libs/config')('./config.yml');
+global.db = require(CORE_PATH + 'core-libs/mongodb').init(appconfig);
 global.upl = require('./libs/uploads-agent').init(appconfig);
 global.git = require('./libs/git').init(appconfig);
 global.entries = require('./libs/entries').init(appconfig);

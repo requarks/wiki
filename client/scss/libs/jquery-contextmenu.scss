@@ -29,7 +29,7 @@
   font-style: normal;
   font-weight: normal;
   line-height: 1;
-  color: $primary;
+  color: mc('blue', '500');
   text-align: center;
   -webkit-transform: translateY(-50%);
       -ms-transform: translateY(-50%);
@@ -57,7 +57,7 @@
   font-size: 14px;
   list-style-type: none;
   background: #fff;
-  border: 1px solid $primary;
+  border: 1px solid mc('blue', '500');
   border-radius: .2em;
   -webkit-box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
           box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
@@ -85,7 +85,7 @@
 .context-menu-item.context-menu-hover {
   color: #fff;
   cursor: pointer; 
-  background-color: $primary;
+  background-color: mc('blue', '500');
 }
 
 .context-menu-item.context-menu-disabled {

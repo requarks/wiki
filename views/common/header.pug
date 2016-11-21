@@ -1,12 +1,12 @@
 
 #header-container
-	nav.nav.has-shadow.stickyscroll#header
+	nav.nav.stickyscroll#header
 		.nav-left
 			block rootNavLeft
-				a.nav-item.is-brand(href='/')
+				a.nav-item(href='/')
 					img(src='/favicons/android-icon-96x96.png', alt='Wiki')
 				a.nav-item(href='/')
-					h1.title Wiki
+					h1= appconfig.title
 		.nav-center
 			block rootNavCenter
 				.nav-item
@@ -16,7 +16,7 @@
 			span
 			span
 			span
-		.nav-right.nav-menu
+		.nav-right
 			block rootNavRight
 				i.nav-item#notifload
 

@@ -1,7 +1,6 @@
 "use strict";
 
-const modb = require('mongoose'),
-			Promise = require('bluebird'),
+const Promise = require('bluebird'),
 			bcrypt = require('bcryptjs-then'),
 			_ = require('lodash');
 
@@ -10,7 +9,7 @@ const modb = require('mongoose'),
  *
  * @type       {<Mongoose.Schema>}
  */
-var userSchema = modb.Schema({
+var userSchema = Mongoose.Schema({
 
 	email: {
 		type: String,
@@ -86,4 +85,4 @@ userSchema.methods.validatePassword = function(rawPwd) {
 	});
 };
 
-module.exports = modb.model('User', userSchema);
+module.exports = Mongoose.model('User', userSchema);

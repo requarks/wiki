@@ -5,30 +5,30 @@
 // Licensed under AGPLv3
 // ===========================================
 
-global.ROOTPATH = __dirname;
 global.PROCNAME = 'SERVER';
+global.ROOTPATH = __dirname;
+global.CORE_PATH = ROOTPATH + '/../core/';
+global.IS_DEBUG = process.env.NODE_ENV === 'development';
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
-const _isDebug = process.env.NODE_ENV === 'development';
-global.winston = require('./libs/winston')(_isDebug);
+global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG);
 winston.info('[SERVER] Requarks Wiki is initializing...');
 
 // ----------------------------------------
 // Load global modules
 // ----------------------------------------
 
-var appconfig = require('./libs/config')('./config.yml');
+var appconfig = require(CORE_PATH + 'core-libs/config')('./config.yml');
 global.lcdata = require('./libs/local').init(appconfig);
-global.db = require('./libs/mongo').init(appconfig);
+global.db = require(CORE_PATH + 'core-libs/mongodb').init(appconfig);
 global.entries = require('./libs/entries').init(appconfig);
 global.git = require('./libs/git').init(appconfig, false);
 global.lang = require('i18next');
 global.mark = require('./libs/markdown');
 global.upl = require('./libs/uploads').init(appconfig);
-global.rights = require('./libs/rights');
 
 // ----------------------------------------
 // Load modules
@@ -53,7 +53,7 @@ const session = require('express-session');
 const sessionMongoStore = require('connect-mongo')(session);
 const socketio = require('socket.io');
 
-var mw = autoload(path.join(ROOTPATH, '/middlewares'));
+var mw = autoload(CORE_PATH + '/core-middlewares');
 var ctrl = autoload(path.join(ROOTPATH, '/controllers'));
 var libInternalAuth = require('./libs/internalAuth');
 
@@ -80,10 +80,12 @@ app.use(favicon(path.join(ROOTPATH, 'assets', 'favicon.ico')));
 app.use(express.static(path.join(ROOTPATH, 'assets')));
 
 // ----------------------------------------
-// Session
+// Passport Authentication
 // ----------------------------------------
 
-const strategies = require('./libs/auth')(passport, appconfig);
+var strategy = require(CORE_PATH + 'core-libs/auth')(passport, appconfig);
+global.rights = require(CORE_PATH + 'core-libs/rights');
+
 var sessionStore = new sessionMongoStore({
   mongooseConnection: db.connection,
   touchAfter: 15
@@ -165,7 +167,7 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error', {
     message: err.message,
-    error: _isDebug ? err : {}
+    error: IS_DEBUG ? err : {}
   });
 });
 

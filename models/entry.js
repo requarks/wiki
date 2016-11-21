@@ -1,7 +1,6 @@
 "use strict";
 
-const modb = require('mongoose'),
-			Promise = require('bluebird'),
+const Promise = require('bluebird'),
 			_ = require('lodash');
 
 /**
@@ -9,7 +8,7 @@ const modb = require('mongoose'),
  *
  * @type       {<Mongoose.Schema>}
  */
-var entrySchema = modb.Schema({
+var entrySchema = Mongoose.Schema({
 
 	_id: String,
 
@@ -51,4 +50,4 @@ entrySchema.index({
   name: 'EntriesTextIndex'
 });
 
-module.exports = modb.model('Entry', entrySchema);
+module.exports = Mongoose.model('Entry', entrySchema);

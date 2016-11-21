@@ -1,7 +1,6 @@
 "use strict";
 
-const modb = require('mongoose'),
-			Promise = require('bluebird'),
+const Promise = require('bluebird'),
 			_ = require('lodash');
 
 /**
@@ -9,7 +8,7 @@ const modb = require('mongoose'),
  *
  * @type       {<Mongoose.Schema>}
  */
-var uplFileSchema = modb.Schema({
+var uplFileSchema = Mongoose.Schema({
 
 	_id: String,
 
@@ -48,4 +47,4 @@ var uplFileSchema = modb.Schema({
 	timestamps: {}
 });
 
-module.exports = modb.model('UplFile', uplFileSchema);
+module.exports = Mongoose.model('UplFile', uplFileSchema);

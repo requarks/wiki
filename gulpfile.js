@@ -1,4 +1,5 @@
 var gulp = require("gulp");
+var watch = require('gulp-watch');
 var merge = require('merge-stream');
 var babel = require("gulp-babel");
 var uglify = require('gulp-uglify');
@@ -18,48 +19,59 @@ var include = require("gulp-include");
  * @type       {Object}
  */
 var paths = {
-	scriptlibs: [
-		'./node_modules/socket.io-client/socket.io.js',
-		'./node_modules/jquery/dist/jquery.min.js',
-		'./node_modules/vue/dist/vue.min.js',
-		'./node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
-		'./node_modules/jquery-simple-upload/simpleUpload.min.js',
-		'./node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.js',
-		'./node_modules/sticky-js/dist/sticky.min.js',
-		'./node_modules/simplemde/dist/simplemde.min.js',
-		'./node_modules/ace-builds/src-min-noconflict/ace.js',
-		'./node_modules/ace-builds/src-min-noconflict/ext-modelist.js',
-		'./node_modules/ace-builds/src-min-noconflict/mode-markdown.js',
-		'./node_modules/ace-builds/src-min-noconflict/theme-tomorrow_night.js',
-		'./node_modules/filesize.js/dist/filesize.min.js',
-		'./node_modules/lodash/lodash.min.js'
-	],
-	scriptlibs_acemodes: [
-		'./node_modules/ace-builds/src-min-noconflict/mode-*.js',
-		'!./node_modules/ace-builds/src-min-noconflict/mode-markdown.js'
-	],
-	scriptapps: [
-		'./client/js/*.js'
-	],
-	scriptapps_watch: [
-		'./client/js/**/*.js'
-	],
-	csslibs: [
-		'./node_modules/font-awesome/css/font-awesome.min.css',
-		'./node_modules/highlight.js/styles/default.css',
-		'./node_modules/simplemde/dist/simplemde.min.css'
-	],
-	cssapps: [
-		'./client/scss/*.scss'
-	],
-	cssapps_watch: [
-		'./client/scss/**/*.scss'
-	],
+	scripts: {
+		combine: [
+			'./node_modules/socket.io-client/socket.io.js',
+			'./node_modules/jquery/dist/jquery.min.js',
+			'./node_modules/vue/dist/vue.min.js',
+			'./node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
+			'./node_modules/jquery-simple-upload/simpleUpload.min.js',
+			'./node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.js',
+			'./node_modules/sticky-js/dist/sticky.min.js',
+			'./node_modules/simplemde/dist/simplemde.min.js',
+			'./node_modules/ace-builds/src-min-noconflict/ace.js',
+			'./node_modules/ace-builds/src-min-noconflict/ext-modelist.js',
+			'./node_modules/ace-builds/src-min-noconflict/mode-markdown.js',
+			'./node_modules/ace-builds/src-min-noconflict/theme-tomorrow_night.js',
+			'./node_modules/filesize.js/dist/filesize.min.js',
+			'./node_modules/lodash/lodash.min.js'
+		],
+		ace: [
+			'./node_modules/ace-builds/src-min-noconflict/mode-*.js',
+			'!./node_modules/ace-builds/src-min-noconflict/mode-markdown.js'
+		],
+		compile: [
+			'./client/js/*.js'
+		],
+		watch: [
+			'./client/js/**/*.js'
+		]
+	},
+	css: {
+		combine: [
+			'./node_modules/font-awesome/css/font-awesome.min.css',
+			'./node_modules/highlight.js/styles/tomorrow.css',
+			'./node_modules/simplemde/dist/simplemde.min.css'
+		],
+		compile: [
+			'./client/scss/*.scss'
+		],
+		includes: [
+			'../core',
+			//'./node_modules/requarks-core'
+		],
+		watch: [
+			'./client/scss/**/*.scss',
+			'../core/core-client/scss/**/*.scss'
+		]
+	},
 	fonts: [
 		'./node_modules/font-awesome/fonts/*-webfont.*',
-		'!./node_modules/font-awesome/fonts/*-webfont.svg'
+		'!./node_modules/font-awesome/fonts/*-webfont.svg',
+		//'../node_modules/requarks-core/core-client/fonts/**/*'
+		'../core/core-client/fonts/**/*'
 	],
-	deploypackage: [
+	deploy: [
 		'./**/*',
 		'!node_modules', '!node_modules/**',
 		'!coverage', '!coverage/**',
@@ -77,7 +89,7 @@ var paths = {
 /**
  * TASK - Starts server in development mode
  */
-gulp.task('server', ['scripts', 'css'/*, 'fonts'*/], function() {
+gulp.task('server', ['scripts', 'css', 'fonts'], function() {
 	nodemon({
 		script: './server',
 		ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
@@ -98,12 +110,12 @@ gulp.task("scripts-libs", function () {
 
 	return merge(
 
-		gulp.src(paths.scriptlibs)
+		gulp.src(paths.scripts.combine)
 		.pipe(concat('libs.js', {newLine: ';\n'}))
 		.pipe(uglify({ mangle: false }))
 		.pipe(gulp.dest("./assets/js")),
 
-		gulp.src(paths.scriptlibs_acemodes)
+		gulp.src(paths.scripts.ace)
 		.pipe(gulp.dest("./assets/js/ace"))
 
 	);
@@ -115,7 +127,7 @@ gulp.task("scripts-libs", function () {
  */
 gulp.task("scripts-app", function () {
 
-	return gulp.src(paths.scriptapps)
+	return gulp.src(paths.scripts.compile)
 	.pipe(plumber())
 	.pipe(include({ extensions: "js" }))
 	.pipe(babel())
@@ -134,7 +146,7 @@ gulp.task("css", ['css-libs', 'css-app']);
  * TASK - Combine css libraries
  */
 gulp.task("css-libs", function () {
-	return gulp.src(paths.csslibs)
+	return gulp.src(paths.css.combine)
 	.pipe(plumber())
 	.pipe(concat('libs.css'))
 	.pipe(cleanCSS({ keepSpecialComments: 0 }))
@@ -146,9 +158,9 @@ gulp.task("css-libs", function () {
  * TASK - Combine app css
  */
 gulp.task("css-app", function () {
-	return gulp.src(paths.cssapps)
+	return gulp.src(paths.css.compile)
 	.pipe(plumber())
-	.pipe(sass())
+	.pipe(sass.sync({ includePaths: paths.css.includes }))
 	.pipe(cleanCSS({ keepSpecialComments: 0 }))
 	.pipe(plumber.stop())
 	.pipe(gulp.dest("./assets/css"));
@@ -166,8 +178,10 @@ gulp.task("fonts", function () {
  * TASK - Start dev watchers
  */
 gulp.task('watch', function() {
-	gulp.watch([paths.scriptapps_watch], ['scripts-app']);
-	gulp.watch([paths.cssapps_watch], ['css-app']);
+	return merge(
+		watch(paths.scripts.watch, {base: './'}, function() { return gulp.start('scripts-app'); }),
+		watch(paths.css.watch, {base: './'}, function() { return gulp.start('css-app'); })
+	);
 });
 
 /**
@@ -179,11 +193,11 @@ gulp.task('default', ['watch', 'server']);
  * TASK - Creates deployment packages
  */
 gulp.task('deploy', ['scripts', 'css', 'fonts'], function() {
-	var zipStream = gulp.src(paths.deploypackage)
+	var zipStream = gulp.src(paths.deploy)
 		.pipe(zip('requarks-wiki.zip'))
 		.pipe(gulp.dest('dist'));
 
-	var targzStream = gulp.src(paths.deploypackage)
+	var targzStream = gulp.src(paths.deploy)
 		.pipe(tar('requarks-wiki.tar'))
 		.pipe(gzip())
 		.pipe(gulp.dest('dist'));

@@ -1,0 +1,30 @@
+extends ../../layout.pug
+
+block rootNavCenter
+
+
+block rootNavRight
+	i.nav-item#notifload
+	span.nav-item
+		a.button.is-dark.is-outlined.btn-edit-discard(href='/')
+			span.icon
+				i.fa.fa-home
+			span Home
+
+block content
+
+	#page-type-account
+		section.hero.is-dark
+			.hero-body
+				.container
+					h1.title Account
+					h2.subtitle Manage your settings and site configuration
+		nav.nav.has-shadow
+			.container
+				.nav-left
+					a.nav-item.is-tab(href='/admin/profile', class={'is-active': adminTab === 'profile'}) My Profile
+					a.nav-item.is-tab(href='/admin/stats', class={'is-active': adminTab === 'stats'}) Stats
+					a.nav-item.is-tab(href='/admin/users', class={'is-active': adminTab === 'users'}) Users
+					a.nav-item.is-tab(href='/admin/settings', class={'is-active': adminTab === 'settings'}) Site Settings
+					a.nav-item.is-tab(href='/logout') Logout
+		block adminContent

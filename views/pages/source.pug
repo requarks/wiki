@@ -10,13 +10,11 @@ block rootNavRight
 	a.nav-item(href='/' + pageData.meta.path)
 		| Normal View
 	span.nav-item
-		a.button(href='/edit/' + pageData.meta.path)
-			span.icon
-				i.fa.fa-edit
+		a.button.is-orange(href='/edit/' + pageData.meta.path)
+			i.fa.fa-edit
 			span Edit
-		a.button.is-primary.btn-create-prompt
-			span.icon
-				i.fa.fa-plus
+		a.button.is-blue.btn-create-prompt
+			i.fa.fa-plus
 			span Create
 
 block content

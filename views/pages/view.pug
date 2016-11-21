@@ -15,51 +15,55 @@ block rootNavRight
 	a.nav-item(href='/source/' + pageData.meta.path)
 		| Source
 	span.nav-item
-		a.button(href='/edit/' + pageData.meta.path)
-			span.icon
-				i.fa.fa-edit
+		a.button.is-orange.is-outlined(href='/edit/' + pageData.meta.path)
+			i.fa.fa-edit
 			span Edit
-		a.button.is-primary.btn-create-prompt
-			span.icon
-				i.fa.fa-plus
+		a.button.is-light-blue.btn-create-prompt
+			i.fa.fa-plus
 			span Create
 
 block content
 
 	#page-type-view(data-entrypath=pageData.meta.path)
-		section.section
-			.container.is-fluid
-				.columns
+		.container.is-fluid
+			.columns.is-gapless
 
-					.column.is-narrow.sd-menus.is-hidden-touch
+				.column.is-narrow.is-hidden-touch.sidebar
 
-						.box
-							aside.menu(style= { 'min-width': '200px' })
-								p.menu-label
-									| Navigation
-								ul.menu-list
-									li
-										a(href='/') Home
-									if pageData.parent
-										li
-											a(href='/' + pageData.parent.path)= pageData.parent.title
-									li
-										a(href='/admin') Account
-						.box.stickyscroll(data-margin-top=70)
-							aside.menu(style= { 'min-width': '200px' })
-								p.menu-label
-									| Contents
-								ul.menu-list
-									a(href='#root', title='Start') Start
-									+tocMenu(pageData.tree)
+					aside
+						.sidebar-label
+							i.icon-th-small
+							span Navigation
+						ul.sidebar-menu
+							li
+								a(href='/')
+									i.icon-home
+									span Home
+							if pageData.parent
+								li
+									a(href='/' + pageData.parent.path)
+										i.icon-reply
+										span= pageData.parent.title
+							li
+								a(href='/admin')
+									i.icon-head
+									span Account
+					aside.stickyscroll(data-margin-top=40)
+						.sidebar-label
+							i.icon-th-list
+							span Contents
+						ul.sidebar-menu
+							li: a(href='#root', title='Start') Start
+							+tocMenu(pageData.tree)
 
-					.column
+				.column
 
+					.hero
 						h1.title#title= pageData.meta.title
 						if pageData.meta.subtitle
 							h2.subtitle= pageData.meta.subtitle
-						.content.mkcontent
-							!= pageData.html
+					.content.mkcontent
+						!= pageData.html
 
 	include ../modals/create.pug
 	include ../modals/move.pug

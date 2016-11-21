@@ -1,13 +1,10 @@
 
-#root {
-	padding-top: 52px;
-}
 
 #page-type-view > section {
 	transition: background-color .5s ease;
 
 	&.blurred {
-		background-color: $grey-lighter;
+		background-color: mc('grey', '50');
 	}
 
 }
@@ -36,26 +33,26 @@
 .mkcontent {
 
 	h1 {
-		border-bottom: 1px dotted $blue;
+		border-bottom: 1px dotted mc('blue', '500');
 		padding-bottom: 4px;
 		font-weight: 400;
-		color: desaturate($blue, 20%);
+		color: desaturate(mc('blue', '500'), 20%);
 	}
 
 	h2 {
-		border-bottom: 1px dotted $grey-light;
+		border-bottom: 1px dotted mc('grey', '100');
 		padding-bottom: 4px;
 		font-weight: 400;
-		color: desaturate($purple, 20%);
+		color: desaturate(mc('purple', '500'), 20%);
 	}
 
 	a.toc-anchor {
 		font-size: 80%;
-		color: $blue;
+		color: mc('blue', '500');
 		border-bottom: none;
 
 		&:visited {
-			color: $purple !important;
+			color: mc('purple', '500') !important;
 		}
 
 	}
@@ -70,7 +67,7 @@
 			font-style: normal;
 			font-weight: normal;
 			text-decoration: inherit;
-			color: $grey;
+			color: mc('grey', '500');
 			font-size: 14px;
 			position: absolute;
 			top: 0;
@@ -81,10 +78,10 @@
 
 	pre {
 		padding: 0;
-		font-family: $family-monospace;
+		font-family: $core-font-monospace;
 
 		> code {
-			box-shadow: inset 0 0 5px 0 $grey-light;
+			box-shadow: inset 0 0 5px 0 mc('grey', '100');
 			border-radius: 5px;
 		}
 
@@ -106,7 +103,7 @@
 	}
 
 	strong {
-		color: $grey-dark;
+		color: mc('grey', '700');
 	}
 
 	.twa {
@@ -114,18 +111,18 @@
 	}
 
 	table thead th {
-		background-color: $blue;
+		background-color: mc('blue', '500');
 		color: #FFF;
 		border-color: #FFF;
-		border-bottom-color: $blue;
-		border-top-color: $blue;
+		border-bottom-color: mc('blue', '500');
+		border-top-color: mc('blue', '500');
 
 		&:first-child {
-			border-left-color: $blue;
+			border-left-color: mc('blue', '500');
 		}
 
 		&:last-child {
-			border-right-color: $blue;
+			border-right-color: mc('blue', '500');
 		}
 
 	}
@@ -133,58 +130,16 @@
 }
 
 .content a:not(.button):visited {
-  color: $turquoise;
+  color: mc('teal', '500');
   font-weight: 500;
 }
 
 code {
 	font-weight: 500;
-	color: $purple;
+	color: mc('purple', '500');
 }
 
 p code {
 	padding: 2px 5px;
 	border-radius: 4px;
-}
-
-.modal {
-	align-items: flex-start;
-}
-.modal-background {
-	animation: 0.4s ease fadeIn;
-}
-.modal-content {
-	animation: 0.4s ease slideInDown;	
-}
-
-.card-header {
-	background-color: $turquoise;
-
-	&.is-warning {
-		background-color: $orange;
-	}
-
-	&.is-danger {
-		background-color: $red;
-	}
-
-	&.is-info {
-		background-color: $purple;
-	}
-
-}
-
-.card-header-title {
-	color: #FFF;
-	font-weight: 400;
-	font-size: 16px;
-	padding: 10px 20px;
-}
-
-.modal-content .card-footer-item {
-	font-weight: 500;
-}
-
-.modal-content .card-footer-item.featured {
-	animation: flash 4s ease 0 infinite;
 }
