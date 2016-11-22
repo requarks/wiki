@@ -57,8 +57,8 @@ var paths = {
 			'./client/scss/*.scss'
 		],
 		includes: [
-			'../core',
-			//'./node_modules/requarks-core'
+			//'../core',
+			'./node_modules/requarks-core'
 		],
 		watch: [
 			'./client/scss/**/*.scss',
@@ -68,8 +68,8 @@ var paths = {
 	fonts: [
 		'./node_modules/font-awesome/fonts/*-webfont.*',
 		'!./node_modules/font-awesome/fonts/*-webfont.svg',
-		//'../node_modules/requarks-core/core-client/fonts/**/*'
-		'../core/core-client/fonts/**/*'
+		'../node_modules/requarks-core/core-client/fonts/**/*'
+		//'../core/core-client/fonts/**/*'
 	],
 	deploy: [
 		'./**/*',
