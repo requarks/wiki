@@ -10,16 +10,18 @@ mixin tocMenu(ti)
 
 block rootNavRight
 	i.nav-item#notifload
-	a.nav-item.btn-move-prompt.is-hidden
-		| Move
-	a.nav-item(href='/source/' + pageData.meta.path)
-		| Source
-	span.nav-item
-		a.button.is-orange.is-outlined(href='/edit/' + pageData.meta.path)
-			i.fa.fa-edit
+	.nav-item
+		a.button.is-outlined.btn-move-prompt.is-hidden
+			i.icon-shuffle
+			span Move
+		a.button.is-outlined(href='/source/' + pageData.meta.path)
+			i.icon-loader
+			span Source
+		a.button(href='/edit/' + pageData.meta.path)
+			i.icon-document-text
 			span Edit
-		a.button.is-light-blue.btn-create-prompt
-			i.fa.fa-plus
+		a.button.btn-create-prompt
+			i.icon-plus
 			span Create
 
 block content

@@ -11,11 +11,6 @@
 	z-index: 5;
 }
 
-h2.nav-item {
-	font-size: 150%;
-	color: mc('orange', '500');
-}
-
 #notifload {
 	width: 42px;
 	display: flex;
@@ -26,7 +21,7 @@ h2.nav-item {
 
 	&::before {
 		content: " ";
-		@include spinner(mc('orange', '500'),0.5s,24px);
+		@include spinner(mc('indigo', '100'),0.5s,24px);
 	}
 
 	&.active {

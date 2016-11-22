@@ -3,10 +3,12 @@
 	nav.nav.stickyscroll#header
 		.nav-left
 			block rootNavLeft
-				a.nav-item(href='/')
+				//a.nav-item(href='/')
 					img(src='/favicons/android-icon-96x96.png', alt='Wiki')
 				a.nav-item(href='/')
-					h1= appconfig.title
+					h1
+						i.icon-layers
+						= appconfig.title
 		.nav-center
 			block rootNavCenter
 				.nav-item
@@ -21,7 +23,7 @@
 				i.nav-item#notifload
 
 	transition(name="searchresults-anim", enter-active-class="slideInDown", leave-active-class="fadeOutUp")
-		.box.searchresults.animated(v-show='searchactive', v-cloak, style={'display':'none'})
+		.searchresults.animated(v-show='searchactive', v-cloak, style={'display':'none'})
 			.menu
 				p.menu-label
 					| Search Results

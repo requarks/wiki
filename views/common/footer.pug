@@ -1,10 +1,9 @@
 footer.footer
-	.container
-		.content.has-text-centered
-			p
-				= t('footer.poweredby') + ' '
-				a(href='https://github.com/Requarks/wiki') Requarks Wiki
-			p
-				a.icon(href='https://github.com/Requarks/wiki')
-					i.fa.fa-github
+	span
+		= t('footer.poweredby') + ' '
+		a(href='https://github.com/Requarks/wiki') Requarks Wiki
+		| .
+	ul
+		li: a(href='/')= t('footer.home')
+		li: a(href='#root')= t('footer.top')
 					
