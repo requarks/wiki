@@ -8,7 +8,7 @@
     "dev": "gulp",
     "test": "snyk test && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./tests/index.js && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage",
     "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect"
+    "__prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
