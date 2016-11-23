@@ -5,11 +5,13 @@ block rootNavCenter
 
 block rootNavRight
 	i.nav-item#notifload
-	a.nav-item.btn-move-prompt.is-hidden
-		| Move
-	a.nav-item(href='/' + pageData.meta.path)
-		| Normal View
 	span.nav-item
+		a.button.is-outlined.btn-move-prompt.is-hidden
+			i.icon-shuffle
+			span Move
+		a.button.is-outlined(href='/' + pageData.meta.path)
+			i.icon-loader
+			span Normal View
 		a.button.is-orange(href='/edit/' + pageData.meta.path)
 			i.fa.fa-edit
 			span Edit

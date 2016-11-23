@@ -1,15 +1,18 @@
 extends ./_layout.pug
 
 block adminContent
-	section.section
-		.container
-			.columns
-				.column.is-three-quarters
-					label.label Coming soon
-				.column
-					p.control
-						button.button.is-info
-							| Create Local User
-					p.control
-						button.button.is-info
-							| Authorize Social User
+	.hero
+		h1.title#title Users
+		h2.subtitle Manage users and rights
+		ul.hero-menu
+				li
+					a.is-blue(href='/')
+						i.icon-plus
+						span Create Local User
+				li
+					a.is-indigo(href='/')
+						i.icon-globe
+						span Authorize Social User
+	.form-sections
+		section
+			| Coming soon

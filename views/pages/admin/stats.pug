@@ -1,11 +1,14 @@
 extends ./_layout.pug
 
 block adminContent
-	section.section
-		.container
-			label.label Entries
-			p.control= totalEntries
-			label.label Uploads
-			p.control= totalUploads
-			label.label Users
-			p.control= totalUsers
+	.hero
+		h1.title#title Stats
+		h2.subtitle General site-wide statistics
+	.form-sections
+		section
+				label.label Entries
+				p.control= totalEntries
+				label.label Uploads
+				p.control= totalUploads
+				label.label Users
+				p.control= totalUsers

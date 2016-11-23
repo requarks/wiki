@@ -34,18 +34,3 @@
 	max-width: 300px;
 	width: 33vw;
 }
-
-.searchresults {
-	position: fixed;
-	top: 45px;
-	left: 0;
-	right: 0;
-	margin: 0 auto;
-	width: 500px;
-	z-index: 1;
-
-	&.slideInDown {
-		@include prefix(animation-duration, .6s);
-	}
-
-}

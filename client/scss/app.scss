@@ -1,3 +1,6 @@
+
+$primary: 'indigo';
+
 @import 'core-client/scss/core';
 @import 'core-client/scss/components/alert';
 @import 'core-client/scss/components/button';
@@ -8,13 +11,15 @@
 @import 'core-client/scss/components/markdown-content';
 @import 'core-client/scss/components/modal';
 @import 'core-client/scss/components/nav';
+@import 'core-client/scss/components/panel';
+@import 'core-client/scss/components/search';
 @import 'core-client/scss/components/sidebar';
 @import 'core-client/scss/components/typography';
 
 @import './libs/twemoji-awesome';
 @import './libs/jquery-contextmenu';
 
-//@import './components/_editor';
+@import './components/_editor';
 
 @import './layout/_header';
 //@import './layout/_content';

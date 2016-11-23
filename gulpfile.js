@@ -12,6 +12,8 @@ var gzip = require('gulp-gzip');
 var sass = require('gulp-sass');
 var cleanCSS = require('gulp-clean-css');
 var include = require("gulp-include");
+var run = require('run-sequence');
+var _ = require('lodash');
 
 /**
  * Paths
@@ -57,8 +59,7 @@ var paths = {
 			'./client/scss/*.scss'
 		],
 		includes: [
-			//'../core',
-			'./node_modules/requarks-core'
+			'./node_modules/requarks-core' //! MUST BE LAST
 		],
 		watch: [
 			'./client/scss/**/*.scss',
@@ -68,8 +69,7 @@ var paths = {
 	fonts: [
 		'./node_modules/font-awesome/fonts/*-webfont.*',
 		'!./node_modules/font-awesome/fonts/*-webfont.svg',
-		'../node_modules/requarks-core/core-client/fonts/**/*'
-		//'../core/core-client/fonts/**/*'
+		'../node_modules/requarks-core/core-client/fonts/**/*' //! MUST BE LAST
 	],
 	deploy: [
 		'./**/*',
@@ -188,6 +188,18 @@ gulp.task('watch', function() {
  * TASK - Starts development server with watchers
  */
 gulp.task('default', ['watch', 'server']);
+
+gulp.task('dev', function() {
+
+	paths.css.includes.pop();
+	paths.css.includes.push('../core');
+
+	paths.fonts.pop();
+	paths.fonts.push('../core/core-client/fonts/**/*');
+
+	return run('default');
+
+})
 
 /**
  * TASK - Creates deployment packages

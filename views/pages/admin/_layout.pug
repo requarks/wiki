@@ -1,30 +1,58 @@
 extends ../../layout.pug
 
 block rootNavCenter
-
+	h2.nav-item Account
 
 block rootNavRight
 	i.nav-item#notifload
 	.nav-item
 		a.button.btn-edit-discard(href='/')
-			span.icon
-				i.fa.fa-home
+			i.fa.fa-home
 			span Home
 
 block content
 
 	#page-type-account
-		section.hero.is-dark
-			.hero-body
-				.container
-					h1.title Account
-					h2.subtitle Manage your settings and site configuration
-		nav.nav.has-shadow
-			.container
-				.nav-left
-					a.nav-item.is-tab(href='/admin/profile', class={'is-active': adminTab === 'profile'}) My Profile
-					a.nav-item.is-tab(href='/admin/stats', class={'is-active': adminTab === 'stats'}) Stats
-					a.nav-item.is-tab(href='/admin/users', class={'is-active': adminTab === 'users'}) Users
-					a.nav-item.is-tab(href='/admin/settings', class={'is-active': adminTab === 'settings'}) Site Settings
-					a.nav-item.is-tab(href='/logout') Logout
-		block adminContent
+		.container.is-fluid
+			.columns.is-gapless
+
+				.column.is-narrow.is-hidden-touch.sidebar
+
+					aside
+						.sidebar-label
+							i.icon-th-small
+							span Navigation
+						ul.sidebar-menu
+							li
+								a(href='/')
+									i.icon-home
+									span Home
+
+					aside
+						.sidebar-label
+							i.icon-head
+							span Account
+						ul.sidebar-menu
+							li
+								a(href='/admin/profile')
+									i.icon-user
+									span My Profile
+							li
+								a(href='/admin/stats')
+									i.icon-bar-graph-2
+									span Stats
+							li
+								a(href='/admin/users')
+									i.icon-users
+									span Users
+							li
+								a(href='/admin/settings')
+									i.icon-cog
+									span Site Settings
+							li
+								a(href='/logout')
+									i.icon-delete2
+									span Logout
+
+				.column
+					block adminContent

@@ -1,13 +1,13 @@
 
 .editor-toolbar {
 	z-index: 2;
-	background-color: rgba(0,0,0,0.65);
+	background-color: rgba(0,0,0,0.75);
 	border: none;
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 	opacity: 1;
 	position: fixed;
-	top: 52px;
+	top: 51px;
 	left: 0;
 	width: 100%;
 
@@ -44,7 +44,7 @@
 
 	span {
 		font-size: 12px;
-		color: $blue;
+		color: mc('blue', '500');
 	}
 
 	i {
@@ -57,7 +57,7 @@
 
 		&::before {
 			content: " ";
-			@include spinner($blue,0.5s,24px);
+			@include spinner(mc('blue', '500'),0.5s,24px);
 		}
 	}
 
@@ -143,11 +143,11 @@
 		}
 
 		&.is-active {
-			background-color: $primary;
+			background-color: mc($primary, '500');
 			color: #FFF;
 
 			> img {
-				border-color: darken($primary, 10%);
+				border-color: darken(mc($primary, '500'), 10%);
 			}
 
 			> span > strong {
@@ -157,11 +157,11 @@
 		}
 
 		&.is-contextopen {
-			background-color: $warning;
+			background-color: mc('orange', '500');
 			color: #FFF;
 
 			> img {
-				border-color: darken($warning, 10%);
+				border-color: darken(mc('orange', '500'), 10%);
 			}
 
 			> span > strong {
@@ -205,7 +205,7 @@
 	border-left: none;
 	border-right: none;
 	padding-top: 52px;
-	font-family: $family-monospace;
+	font-family: $core-font-monospace;
 }
 
 .CodeMirror .CodeMirror-code .cm-url {
@@ -256,7 +256,7 @@
 	top: 100px;
 	width: 100%;
 	background-color: rgba(255,255,255,0.95);
-	border-bottom: 1px solid $grey-light;
+	border-bottom: 1px solid mc('grey', '500');
 	z-index: 6;
 	padding: 20px;
 	border-bottom: 1px solid #CCC;
@@ -264,7 +264,7 @@
 	display: none;
 
 	> h3, .column > h3 {
-		color: $grey-dark;
+		color: mc('grey', '700');
 		font-size: 24px;
 		font-weight: 300;
 	}

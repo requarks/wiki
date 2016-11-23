@@ -24,18 +24,15 @@
 
 	transition(name="searchresults-anim", enter-active-class="slideInDown", leave-active-class="fadeOutUp")
 		.searchresults.animated(v-show='searchactive', v-cloak, style={'display':'none'})
-			.menu
-				p.menu-label
-					| Search Results
-				ul.menu-list
-					li(v-if="searchres.length === 0")
-						a: em No results matching your query
-					li(v-for='sres in searchres')
-						a(v-bind:href="'/' + sres._id", v-bind:class="{ 'is-active': searchmovekey === 'res.' + sres._id }") {{ sres.title }}
-				p.menu-label(v-if='searchsuggest.length > 0')
-					| Did you mean...?
-				ul.menu-list(v-if='searchsuggest.length > 0')
-					li(v-for='sug in searchsuggest')
-						a(v-on:click="useSuggestion(sug)", v-bind:class="{ 'is-active': searchmovekey === 'sug.' + sug }") {{ sug }}
+			p.searchresults-label Search Results
+			ul.searchresults-list
+				li(v-if="searchres.length === 0")
+					a: em No results matching your query
+				li(v-for='sres in searchres', v-bind:class="{ 'is-active': searchmovekey === 'res.' + sres._id }")
+					a(v-bind:href="'/' + sres._id") {{ sres.title }}
+			p.searchresults-label(v-if='searchsuggest.length > 0') Did you mean...?
+			ul.searchresults-list(v-if='searchsuggest.length > 0')
+				li(v-for='sug in searchsuggest', v-bind:class="{ 'is-active': searchmovekey === 'sug.' + sug }")
+					a(v-on:click="useSuggestion(sug)") {{ sug }}
 
 

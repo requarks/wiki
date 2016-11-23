@@ -7,9 +7,12 @@
 
 global.PROCNAME = 'SERVER';
 global.ROOTPATH = __dirname;
-global.CORE_PATH = ROOTPATH + './node_modules/requarks-core/';
-//global.CORE_PATH = ROOTPATH + '/../core/';
 global.IS_DEBUG = process.env.NODE_ENV === 'development';
+if(IS_DEBUG) {
+  global.CORE_PATH = ROOTPATH + '/../core/';
+} else {
+  global.CORE_PATH = ROOTPATH + './node_modules/requarks-core/';
+}
 
 // ----------------------------------------
 // Load Winston
