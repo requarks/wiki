@@ -23,7 +23,7 @@ var _ = require('lodash');
 var paths = {
 	scripts: {
 		combine: [
-			'./node_modules/socket.io-client/socket.io.js',
+			'./node_modules/socket.io-client/dist/socket.io.min.js',
 			'./node_modules/jquery/dist/jquery.min.js',
 			'./node_modules/vue/dist/vue.min.js',
 			'./node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
