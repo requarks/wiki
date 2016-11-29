@@ -82,10 +82,10 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "link",
 				action: (editor) => {
-					if(!mdeModalOpenState) {
+					/*if(!mdeModalOpenState) {
 						mdeModalOpenState = true;
 						$('#modal-editor-link').slideToggle();
-					}
+					}*/
 				},
 				className: "fa fa-link",
 				title: "Insert Link",
