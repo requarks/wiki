@@ -22,31 +22,22 @@
 						i.fa.fa-download
 						span Fetch from URL
 			section.is-gapless
-				.columns
+				.columns.is-stretched
 					.column.is-one-quarter.modal-sidebar.is-green(style={'max-width':'350px'})
-						.box.editor-modal-folderlist
-							aside.menu
-								p.menu-label
-									| Folders
-								ul.menu-list
-									li(v-for="fld in folders")
-										a(v-on:click="selectFolder(fld)", v-bind:class="{ 'is-active': currentFolder === fld }")
-											span.icon.is-small: i.fa.fa-folder
-											span /{{ fld }}
-						.box.editor-modal-imagealign
-							.control.is-grouped
-								.control
-									span Alignment
-								.control.has-addons
-									a.button.is-primary(title="Left", v-on:click="selectAlignment('left')", v-bind:class="{ 'is-outlined': currentAlign !== 'left' }")
-										span.icon.is-small: i.fa.fa-align-left
-									a.button.is-primary(title="Center", v-on:click="selectAlignment('center')", v-bind:class="{ 'is-outlined': currentAlign !== 'center' }")
-										span.icon.is-small: i.fa.fa-align-center
-									a.button.is-primary(title="Right", v-on:click="selectAlignment('right')", v-bind:class="{ 'is-outlined': currentAlign !== 'right' }")
-										span.icon.is-small: i.fa.fa-align-right
-								.control
-									a.button.is-primary(title="Page Logo", v-on:click="selectAlignment('logo')", v-bind:class="{ 'is-outlined': currentAlign !== 'logo' }")
-										span.icon.is-small: i.fa.fa-external-link-square
+						.model-sidebar-header Folders
+						ul.model-sidebar-list
+							li(v-for="fld in folders")
+								a(v-on:click="selectFolder(fld)", v-bind:class="{ 'is-active': currentFolder === fld }")
+									i.icon-folder2
+									span /{{ fld }}
+						.model-sidebar-header Alignment
+						.model-sidebar-content
+							p.control.is-fullwidth
+								select(v-model='currentAlign')
+									option(value='left') Left (default)
+									option(value='center') Centered
+									option(value='right') Right
+									option(value='logo') Page Logo
 					.column.editor-modal-imagechoices
 						figure(v-for="img in images", v-bind:class="{ 'is-active': currentImage === img._id }", v-on:click="selectImage(img._id)", v-bind:data-uid="img._id")
 							img(v-bind:src="'/uploads/t/' + img._id + '.png'")

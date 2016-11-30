@@ -98,7 +98,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-start;
-	max-height: 450px;
+	
 	overflow: auto;
 	overflow-x: hidden;
 
@@ -143,11 +143,11 @@
 		}
 
 		&.is-active {
-			background-color: mc($primary, '500');
+			background-color: mc('green', '500');
 			color: #FFF;
 
 			> img {
-				border-color: darken(mc($primary, '500'), 10%);
+				border-color: darken(mc('green', '500'), 10%);
 			}
 
 			> span > strong {
@@ -157,11 +157,11 @@
 		}
 
 		&.is-contextopen {
-			background-color: mc('orange', '500');
+			background-color: mc('blue', '500');
 			color: #FFF;
 
 			> img {
-				border-color: darken(mc('orange', '500'), 10%);
+				border-color: darken(mc('blue', '500'), 10%);
 			}
 
 			> span > strong {

@@ -42,9 +42,6 @@ let vueImage = new Vue({
 		selectImage: (imageId) => {
 			vueImage.currentImage = imageId;
 		},
-		selectAlignment: (align) => {
-			vueImage.currentAlign = align;
-		},
 		insertImage: (ev) => {
 
 			if(mde.codemirror.doc.somethingSelected()) {
