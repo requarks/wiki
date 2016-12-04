@@ -102,6 +102,20 @@
 	overflow: auto;
 	overflow-x: hidden;
 
+	> em {
+		display: flex;
+		align-items: center;
+		padding: 25px;
+		color: mc('grey', '500');
+
+		> i {
+			font-size: 32px;
+			margin-right: 10px;
+			color: mc('grey', '300');
+		}
+
+	}
+
 	> figure {
 		display: flex;
 		flex-direction: column;
@@ -235,12 +249,31 @@
 	position: relative;
 }
 
+.ace_scroller {
+	width: 100%;
+}
+.ace_content {
+	height: 100%;
+}
+
 #page-type-source .ace-container {
 	min-height: 95vh;
 }
 
 #modal-editor-codeblock .ace-container {
-	height: 400px;
+	display: flex;
+	align-items: stretch;
+	padding: 0;
+	position: relative;
+	width: 100%;
+	height: 100%;
+
+	#codeblock-editor {
+		width: 100%;
+		height: 100%;
+		min-height: 500px;
+	}
+
 }
 
 #source-display, #codeblock-editor {

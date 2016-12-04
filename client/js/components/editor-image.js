@@ -27,12 +27,12 @@ let vueImage = new Vue({
 
 		open: () => {
 			mdeModalOpenState = true;
-			$('#modal-editor-image').slideDown();
+			$('#modal-editor-image').addClass('is-active');
 			vueImage.refreshFolders();
 		},
 		cancel: (ev) => {
 			mdeModalOpenState = false;
-			$('#modal-editor-image').slideUp();
+			$('#modal-editor-image').removeClass('is-active');
 		},
 
 		// -------------------------------------------

@@ -1,21 +1,23 @@
 
-.modallayer#modal-editor-codeblock
-	.modallayer-content
-		
-		.columns
-			.column
-				h3 Code Block
-			.column.is-narrow
-				p.control
-					span.select
-						select(style={width: '300px'}, v-model='modeSelected')
-							option(v-for="mode in modes" v-bind:value='mode.name') {{ mode.caption }}
-			.column.is-narrow
-				.control.is-grouped
-					p.control
-						a.button.is-warning.is-outlined(v-on:click="cancel") Cancel
-					p.control
-						a.button.is-primary.is-outlined(v-on:click="insertCode") Insert Code Block
+.modal#modal-editor-codeblock
+	.modal-background
+	.modal-container
+		.modal-content.is-expanded
+			
+			header.is-green
+				span Insert Code Block
 
-		.ace-container(style={'border-radius':'5px'})
-			#codeblock-editor
+			section.is-gapless
+				.columns.is-stretched
+					.column.is-one-quarter.modal-sidebar.is-green(style={'max-width':'350px'})
+						.model-sidebar-header Language
+						.model-sidebar-content
+							p.control.is-fullwidth
+								select(v-model='modeSelected')
+									option(v-for="mode in modes" v-bind:value='mode.name') {{ mode.caption }}
+					.column.ace-container
+						#codeblock-editor
+
+			footer
+				a.button.is-grey.is-outlined(v-on:click="cancel") Discard
+				a.button.is-green(v-on:click="insertCode") Insert Code Block

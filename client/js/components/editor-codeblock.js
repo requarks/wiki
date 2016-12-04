@@ -44,9 +44,20 @@ let vueCodeBlock = new Vue({
 		}
 	},
 	methods: {
+		open: (ev) => {
+			$('#modal-editor-codeblock').addClass('is-active');
+
+			_.delay(() => {
+				codeEditor.resize();
+				codeEditor.focus();
+				codeEditor.setAutoScrollEditorIntoView(true);
+				codeEditor.renderer.updateFull();
+			}, 1000);
+			
+		},
 		cancel: (ev) => {
 			mdeModalOpenState = false;
-			$('#modal-editor-codeblock').slideUp();
+			$('#modal-editor-codeblock').removeClass('is-active');
 		},
 		insertCode: (ev) => {
 

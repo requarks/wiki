@@ -138,10 +138,7 @@ if($('#mk-editor').length === 1) {
 							codeEditor.setValue('');
 						}
 
-						$('#modal-editor-codeblock').slideDown(400, () => {
-							codeEditor.resize();
-							codeEditor.focus();
-						});
+						vueCodeBlock.open();
 
 					}
 				},
