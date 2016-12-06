@@ -35,6 +35,8 @@ paths:
 # Site Authentication
 # ---------------------------------------------------------------------
 
+public: false
+
 auth:
   local:
     enabled: true

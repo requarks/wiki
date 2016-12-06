@@ -55,7 +55,7 @@ var mkdown = md({
 // Rendering rules
 
 mkdown.renderer.rules.emoji = function(token, idx) {
-	return '<i class="twa twa-' + token[idx].markup + '"></i>';
+	return '<i class="twa twa-' + _.replace(token[idx].markup, /_/g, '-') + '"></i>';
 };
 
 /**
@@ -169,6 +169,19 @@ const parseContent = (content)  => {
 	cr('h1 > a:not(.toc-anchor), h2 > a:not(.toc-anchor), h3 > a:not(.toc-anchor)').each((i, elm) => {
 		let txtLink = cr(elm).text();
 		cr(elm).replaceWith(txtLink);
+	});
+
+	//-> Re-attach blockquote styling classes to their parents
+	
+	cr.root().children('blockquote').each((i, elm) => {
+		if(cr(elm).children().length > 0) {
+			let bqLastChild = cr(elm).children().last()[0];
+			let bqLastChildClasses = cr(bqLastChild).attr('class');
+			if(bqLastChildClasses.length > 0) {
+				cr(bqLastChild).removeAttr('class');
+				cr(elm).addClass(bqLastChildClasses);
+			}
+		}
 	});
 
 	output = cr.html();

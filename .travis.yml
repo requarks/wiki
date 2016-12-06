@@ -20,6 +20,7 @@ before_script:
 - npm install -g snyk
 - snyk auth $SNYK_TOKEN
 before_deploy:
+- npm install github:requarks/core -f
 - npm install -g gulp
 - gulp deploy
 - snyk monitor

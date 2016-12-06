@@ -91,7 +91,7 @@ var job = new cron({
 						});
 
 				fs.walk(repoPath).on('data', function (item) {
-					if(path.extname(item.path) === '.md') {
+					if(path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
 
 						let entryPath = entries.parsePath(entries.getEntryPathFromFullPath(item.path));
 						let cachePath = entries.getCachePath(entryPath);

@@ -1,8 +1,8 @@
 <a href="https://github.com/Requarks/wiki">
-    <img src="https://raw.githubusercontent.com/Requarks/wiki/master/assets/favicons/favicon-96x96.png" alt="Requarks Wiki" title="Requarks Wiki" align="right" />
+    <img src="https://raw.githubusercontent.com/Requarks/wiki/master/assets/favicons/favicon-96x96.png" alt="Wiki.js" title="Wiki.js" align="right" />
 </a>
 
-# Requarks Wiki
+# Wiki.js
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?maxAge=86400)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://github.com/requarks/wiki/blob/master/LICENSE)
@@ -16,7 +16,7 @@
 
 ### Documentation
 
-- [Installation Guide](https://requarks-wiki.readme.io/docs/prerequisites)
+- [Installation Guide](https://wiki.requarks.io/install)
 
 ##### Milestones
 - [ ] Account Management
