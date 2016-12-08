@@ -177,11 +177,31 @@ const parseContent = (content)  => {
 		if(cr(elm).children().length > 0) {
 			let bqLastChild = cr(elm).children().last()[0];
 			let bqLastChildClasses = cr(bqLastChild).attr('class');
-			if(bqLastChildClasses.length > 0) {
+			if(bqLastChildClasses && bqLastChildClasses.length > 0) {
 				cr(bqLastChild).removeAttr('class');
 				cr(elm).addClass(bqLastChildClasses);
 			}
 		}
+	});
+
+	//-> Enclose content below headers
+
+	cr('h2').each((i, elm) => {
+		let subH2Content = cr(elm).nextUntil('h1, h2');
+		cr(elm).after('<div class="indent-h2"></div>');
+		let subH2Container = cr(elm).next('.indent-h2');
+		_.forEach(subH2Content, (ch) => {
+			cr(subH2Container).append(ch);
+		});
+	});
+
+	cr('h3').each((i, elm) => {
+		let subH3Content = cr(elm).nextUntil('h1, h2, h3');
+		cr(elm).after('<div class="indent-h3"></div>');
+		let subH3Container = cr(elm).next('.indent-h3');
+		_.forEach(subH3Content, (ch) => {
+			cr(subH3Container).append(ch);
+		});
 	});
 
 	output = cr.html();
