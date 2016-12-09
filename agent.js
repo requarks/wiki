@@ -1,5 +1,5 @@
 // ===========================================
-// REQUARKS WIKI - Background Agent
+// Wiki.js - Background Agent
 // 1.0.0
 // Licensed under AGPLv3
 // ===========================================

@@ -167,10 +167,16 @@ router.get('/*', (req, res, next) => {
 		}
 		return true;
 	}).error((err) => {
-		res.render('error-notexist', {
-			message: err.message,
-			newpath: safePath
-		});
+
+		if(safePath === 'home') {
+			res.render('pages/welcome');
+		} else {
+			res.render('error-notexist', {
+				message: err.message,
+				newpath: safePath
+			});
+		}
+		
 	}).catch((err) => {
 		res.render('error', {
 			message: err.message,

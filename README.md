@@ -35,6 +35,11 @@
 - [x] Background Agent (git sync, cache purge, etc.)
 - [x] Caching
 - [x] Create Entry
+- [x] Documentation
+	- [x] Prerequisites
+	- [x] Install
+	- [ ] Authentication
+	- [ ] Git
 - [x] Edit Entry
 - [x] Git Management
 - [ ] Markdown Editor

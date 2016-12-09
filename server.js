@@ -1,6 +1,6 @@
 "use strict";
 // ===========================================
-// REQUARKS WIKI
+// Wiki.js
 // 1.0.0
 // Licensed under AGPLv3
 // ===========================================
@@ -19,7 +19,7 @@ if(IS_DEBUG) {
 // ----------------------------------------
 
 global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG);
-winston.info('[SERVER] Requarks Wiki is initializing...');
+winston.info('[SERVER] Wiki.js is initializing...');
 
 // ----------------------------------------
 // Load global modules

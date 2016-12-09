@@ -206,11 +206,11 @@ gulp.task('dev', function() {
  */
 gulp.task('deploy', ['scripts', 'css', 'fonts'], function() {
 	var zipStream = gulp.src(paths.deploy)
-		.pipe(zip('requarks-wiki.zip'))
+		.pipe(zip('wiki-js.zip'))
 		.pipe(gulp.dest('dist'));
 
 	var targzStream = gulp.src(paths.deploy)
-		.pipe(tar('requarks-wiki.tar'))
+		.pipe(tar('wiki-js.tar'))
 		.pipe(gzip())
 		.pipe(gulp.dest('dist'));
 

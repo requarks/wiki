@@ -1,8 +1,8 @@
 #######################################################################
-# REQUARKS WIKI - CONFIGURATION                                       #
+# Wiki.js - CONFIGURATION                                             #
 #######################################################################
 # Full explanation + examples in the documentation:
-# https://requarks-wiki.readme.io/
+# https://wiki.requarks.io/install
 
 # ---------------------------------------------------------------------
 # Title of this site
@@ -32,6 +32,13 @@ paths:
   data: ./data
 
 # ---------------------------------------------------------------------
+# Site Language
+# ---------------------------------------------------------------------
+# Possible values: en, fr
+
+lang: en
+
+# ---------------------------------------------------------------------
 # Site Authentication
 # ---------------------------------------------------------------------
 
@@ -52,6 +59,22 @@ auth:
     enabled: false
     clientId: FACEBOOK_APP_ID
     clientSecret: FACEBOOK_APP_SECRET
+
+# ---------------------------------------------------------------------
+# Secret key to use when encrypting sessions
+# ---------------------------------------------------------------------
+# Use a long and unique random string (256-bit keys are perfect!)
+
+sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
+
+# ---------------------------------------------------------------------
+# Administrator email
+# ---------------------------------------------------------------------
+# An admin account will be created using the email specified here.
+# The password is set to "admin123" by default. Change it immediately
+# upon login!!!
+
+admin: admin@company.com
 
 # ---------------------------------------------------------------------
 # Database Connection String
@@ -77,29 +100,6 @@ git:
     password: MartyMcFly88
 
     # Only for SSH authentication:
-    publicKey: /etc/requarkswiki/keys/git.pub
-    privateKey: /etc/requarkswiki/keys/git.key
+    publicKey: /etc/wiki/keys/git.pem
+    privateKey: /etc/wiki/keys/git.pem
     sslVerify: true
-
-# ---------------------------------------------------------------------
-# Secret key to use when encrypting sessions
-# ---------------------------------------------------------------------
-# Use a long and unique random string (256-bit keys are perfect!)
-
-sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
-
-# ---------------------------------------------------------------------
-# Administrator email
-# ---------------------------------------------------------------------
-# An admin account will be created using the email specified here.
-# The password is set to "admin123" by default. Change it immediately
-# upon login!!!
-
-admin: admin@company.com
-
-# ---------------------------------------------------------------------
-# Site Language
-# ---------------------------------------------------------------------
-# Possible values: en, fr
-
-lang: en
