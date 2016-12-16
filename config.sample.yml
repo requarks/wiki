@@ -103,3 +103,6 @@ git:
     publicKey: /etc/wiki/keys/git.pem
     privateKey: /etc/wiki/keys/git.pem
     sslVerify: true
+  signature:
+    name: Marty
+    email: marty@example.com
