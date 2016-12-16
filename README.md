@@ -20,7 +20,7 @@
 
 ##### Milestones
 - [ ] Account Management
-- [ ] Assets Management
+- [x] Assets Management
 	- [x] Images
 	- [ ] Files/Documents
 - [x] Authentication
@@ -42,7 +42,7 @@
 	- [ ] Git
 - [x] Edit Entry
 - [x] Git Management
-- [ ] Markdown Editor
+- [x] Markdown Editor
 	- [x] Basic Formatting
 	- [ ] Links
 	- [ ] Table Editor
