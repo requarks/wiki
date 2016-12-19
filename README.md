@@ -40,6 +40,7 @@
 	- [x] Install
 	- [ ] Authentication
 	- [ ] Git
+	- [x] Upgrade
 - [x] Edit Entry
 - [x] Git Management
 - [x] Markdown Editor
@@ -52,3 +53,8 @@
 - [x] Search
 - [x] UI
 - [x] View Entry Source
+
+### Thanks
+
+![Browserstack](https://wiki.requarks.io/assets/images/logo_browserstack.png)  
+[Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
