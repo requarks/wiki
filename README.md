@@ -12,17 +12,18 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/requarks/wiki/badge.svg)](https://snyk.io/test/github/requarks/wiki)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
-*Under development*
+*Under active development*
 
 ### Documentation
 
-- [Installation Guide](https://wiki.requarks.io/install)
+- [Official Website](https://wiki.requarks.io/)
+- [Installation Guide](https://wiki.requarks.io/get-started.html)
 
 ##### Milestones
 - [ ] Account Management
 - [x] Assets Management
 	- [x] Images
-	- [ ] Files/Documents
+	- [x] Files/Documents
 - [x] Authentication
 	- [x] Strategies
 		- [x] Local
@@ -46,6 +47,10 @@
 - [x] Markdown Editor
 	- [x] Basic Formatting
 	- [ ] Links
+	- [x] Image Selection modal
+	- [x] File Selection modal
+	- [x] Inline Code
+	- [x] Code Editor modal
 	- [ ] Table Editor
 - [x] Move Entry
 - [x] Navigation

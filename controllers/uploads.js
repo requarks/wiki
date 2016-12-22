@@ -53,7 +53,7 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 			let destFilename = '';
 			let destFilePath = '';
 
-			return lcdata.validateUploadsFilename(f.originalname, destFolder).then((fname) => {
+			return lcdata.validateUploadsFilename(f.originalname, destFolder, true).then((fname) => {
 				
 				destFilename = fname;
 				destFilePath = path.resolve(destFolderPath, destFilename);
@@ -71,6 +71,61 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 				return true;
 
 			}).then(() => {
+
+				//-> Move file to final destination
+
+				return fs.moveAsync(f.path, destFilePath, { clobber: false });
+
+			}).then(() => {
+				return {
+					ok: true,
+					filename: destFilename,
+					filesize: f.size
+				};
+			}).reflect();
+
+		}, {concurrency: 3}).then((results) => {
+			let uplResults = _.map(results, (r) => {
+				if(r.isFulfilled()) {
+					return r.value();
+				} else {
+					return {
+						ok: false,
+						msg: r.reason().message
+					};
+				}
+			});
+			res.json({ ok: true, results: uplResults });
+			return true;
+		}).catch((err) => {
+			res.json({ ok: false, msg: err.message });
+			return true;
+		});
+
+	});
+
+});
+
+router.post('/file', lcdata.uploadFileHandler, (req, res, next) => {
+
+	let destFolder = _.chain(req.body.folder).trim().toLower().value();
+
+	upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
+		
+		if(!destFolderPath) {
+			res.json({ ok: false, msg: 'Invalid Folder' });
+			return true;
+		}
+
+		Promise.map(req.files, (f) => {
+
+			let destFilename = '';
+			let destFilePath = '';
+
+			return lcdata.validateUploadsFilename(f.originalname, destFolder, false).then((fname) => {
+				
+				destFilename = fname;
+				destFilePath = path.resolve(destFolderPath, destFilename);
 
 				//-> Move file to final destination
 

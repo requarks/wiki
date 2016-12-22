@@ -42,6 +42,13 @@ module.exports = (socket) => {
     });
   });
 
+  socket.on('uploadsGetFiles', (data, cb) => {
+    cb = cb || _.noop;
+    upl.getUploadsFiles('binary', data.folder).then((f) => {
+      return cb(f) || true;
+    });
+  });
+
   socket.on('uploadsDeleteFile', (data, cb) => {
     cb = cb || _.noop;
     upl.deleteUploadsFile(data.uid).then((f) => {

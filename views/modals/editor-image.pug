@@ -13,7 +13,7 @@
 					a.button(v-on:click="newFolder")
 						i.fa.fa-folder
 						span New Folder
-					a.button#btn-editor-uploadimage
+					a.button#btn-editor-image-upload
 						i.fa.fa-upload
 						span Upload Image
 						label
@@ -38,7 +38,7 @@
 									option(value='center') Centered
 									option(value='right') Right
 									option(value='logo') Page Logo
-					.column.editor-modal-imagechoices
+					.column.editor-modal-image-choices
 						figure(v-for="img in images", v-bind:class="{ 'is-active': currentImage === img._id }", v-on:click="selectImage(img._id)", v-bind:data-uid="img._id")
 							img(v-bind:src="'/uploads/t/' + img._id + '.png'")
 							span: strong {{ img.basename }}
@@ -58,7 +58,7 @@
 				section
 					label.label Enter the new folder name:
 					p.control.is-fullwidth
-						input.input#txt-editor-newfoldername(type='text', placeholder='folder name', v-model='newFolderName', v-on:keyup.enter="newFolderCreate", v-on:keyup.esc="newFolderDiscard")
+						input.input#txt-editor-image-newfoldername(type='text', placeholder='folder name', v-model='newFolderName', v-on:keyup.enter="newFolderCreate", v-on:keyup.esc="newFolderDiscard")
 						span.help.is-danger(v-show="newFolderError") This folder name is invalid!
 				footer
 					a.button.is-grey.is-outlined(v-on:click="newFolderDiscard") Discard
@@ -72,7 +72,7 @@
 				section
 					label.label Enter full URL path to the image:
 					p.control.is-fullwidth
-						input.input#txt-editor-fetchimgurl(type='text', placeholder='http://www.example.com/some-image.png', v-model='fetchFromUrlURL')
+						input.input#txt-editor-image-fetchurl(type='text', placeholder='http://www.example.com/some-image.png', v-model='fetchFromUrlURL')
 						span.help.is-danger.is-hidden This URL path is invalid!
 				footer
 					a.button.is-grey.is-outlined(v-on:click="fetchFromUrlDiscard") Discard
@@ -86,7 +86,7 @@
 				section
 					label.label Enter the new filename (without the extension) of the image:
 					p.control.is-fullwidth
-						input.input#txt-editor-renameimage(type='text', placeholder='filename', v-model='renameImageFilename')
+						input.input#txt-editor-image-rename(type='text', placeholder='filename', v-model='renameImageFilename')
 						span.help.is-danger.is-hidden This filename is invalid!
 				footer
 					a.button.is-grey.is-outlined(v-on:click="renameImageDiscard") Discard

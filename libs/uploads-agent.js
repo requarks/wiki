@@ -5,6 +5,7 @@ var path = require('path'),
 	fs = Promise.promisifyAll(require('fs-extra')),
 	readChunk = require('read-chunk'),
 	fileType = require('file-type'),
+	mime = require('mime-types'),
 	farmhash = require('farmhash'),
 	moment = require('moment'),
 	chokidar = require('chokidar'),
@@ -199,6 +200,11 @@ module.exports = {
 			// Get MIME info
 
 			let mimeInfo = fileType(readChunk.sync(fPath, 0, 262));
+			if(_.isNil(mimeInfo)) {
+				mimeInfo = {
+					mime: mime.lookup(fPathObj.ext) || 'application/octet-stream'
+				};
+			}
 
 			// Images
 
@@ -244,7 +250,7 @@ module.exports = {
 				_id: fUid,
 				category: 'binary',
 				mime: mimeInfo.mime,
-				folder: fldName,
+				folder: 'f:' + fldName,
 				filename: f,
 				basename: fPathObj.name,
 				filesize: s.size

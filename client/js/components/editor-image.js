@@ -78,7 +78,7 @@ let vueImage = new Vue({
 			vueImage.newFolderName = '';
 			vueImage.newFolderError = false;
 			vueImage.newFolderShow = true;
-			_.delay(() => { $('#txt-editor-newfoldername').focus(); }, 400);
+			_.delay(() => { $('#txt-editor-image-newfoldername').focus(); }, 400);
 		},
 		newFolderDiscard: (ev) => {
 			vueImage.newFolderShow = false;
@@ -115,7 +115,7 @@ let vueImage = new Vue({
 		fetchFromUrl: (ev) => {
 			vueImage.fetchFromUrlURL = '';
 			vueImage.fetchFromUrlShow = true;
-			_.delay(() => { $('#txt-editor-fetchimgurl').focus(); }, 400);
+			_.delay(() => { $('#txt-editor-image-fetchurl').focus(); }, 400);
 		},
 		fetchFromUrlDiscard: (ev) => {
 			vueImage.fetchFromUrlShow = false;
@@ -149,8 +149,8 @@ let vueImage = new Vue({
 			vueImage.renameImageFilename = c.basename || '';
 			vueImage.renameImageShow = true;
 			_.delay(() => {
-				$('#txt-editor-renameimage').focus();
-				_.defer(() => { $('#txt-editor-renameimage').select(); });
+				$('#txt-editor-image-rename').focus();
+				_.defer(() => { $('#txt-editor-image-rename').select(); });
 			}, 400);
 		},
 		renameImageDiscard: () => {
@@ -301,10 +301,10 @@ let vueImage = new Vue({
 				};
 			});
 
-			$.contextMenu('destroy', '.editor-modal-imagechoices > figure');
+			$.contextMenu('destroy', '.editor-modal-image-choices > figure');
 			$.contextMenu({
-				selector: '.editor-modal-imagechoices > figure',
-				appendTo: '.editor-modal-imagechoices',
+				selector: '.editor-modal-image-choices > figure',
+				appendTo: '.editor-modal-image-choices',
 				position: (opt, x, y) => {
 					$(opt.$trigger).addClass('is-contextopen');
 					let trigPos = $(opt.$trigger).position();
@@ -345,7 +345,7 @@ let vueImage = new Vue({
 	}
 });
 
-$('#btn-editor-uploadimage input').on('change', (ev) => {
+$('#btn-editor-image-upload input').on('change', (ev) => {
 
 	let curImageAmount = vueImage.images.length;
 

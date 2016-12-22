@@ -13,6 +13,7 @@ if($('#mk-editor').length === 1) {
 	});
 
 	//=include editor-image.js
+	//=include editor-file.js
 	//=include editor-codeblock.js
 
 	var mde = new SimpleMDE({
@@ -103,7 +104,9 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "file",
 				action: (editor) => {
-					//todo
+					if(!mdeModalOpenState) {
+						vueFile.open();
+					}
 				},
 				className: "fa fa-file-text-o",
 				title: "Insert File",
@@ -133,9 +136,7 @@ if($('#mk-editor').length === 1) {
 						mdeModalOpenState = true;
 
 						if(mde.codemirror.doc.somethingSelected()) {
-							codeEditor.setValue(mde.codemirror.doc.getSelection());
-						} else {
-							codeEditor.setValue('');
+							vueCodeBlock.initContent = mde.codemirror.doc.getSelection();
 						}
 
 						vueCodeBlock.open();
@@ -170,7 +171,21 @@ if($('#mk-editor').length === 1) {
 	//-> Save
 
 	$('.btn-edit-save, .btn-create-save').on('click', (ev) => {
+		saveCurrentDocument(ev);
+	});
 
+	$(window).bind('keydown', (ev) => {
+		if (ev.ctrlKey || ev.metaKey) {
+			switch (String.fromCharCode(ev.which).toLowerCase()) {
+			case 's':
+				ev.preventDefault();
+				saveCurrentDocument(ev);
+				break;
+			}
+		}
+	});
+
+	let saveCurrentDocument = (ev) => {
 		$.ajax(window.location.href, {
 			data: {
 				markdown: mde.value()
@@ -186,7 +201,6 @@ if($('#mk-editor').length === 1) {
 		}, (rXHR, rStatus, err) => {
 			alerts.pushError('Something went wrong', 'Save operation failed.');
 		});
-
-	});
+	}
 
 }

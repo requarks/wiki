@@ -4,6 +4,7 @@ var path = require('path'),
 	Promise = require('bluebird'),
 	fs = Promise.promisifyAll(require('fs-extra')),
 	multer  = require('multer'),
+	os = require('os'),
 	_ = require('lodash');
 
 /**
@@ -44,6 +45,13 @@ module.exports = {
 	 */
 	initMulter(appconfig) {
 
+		let maxFileSizes = {
+			img: appconfig.uploads.maxImageFileSize * 1024 * 1024,
+			file: appconfig.uploads.maxOtherFileSize * 1024 * 1024
+		};
+
+		//-> IMAGES
+
 		this.uploadImgHandler = multer({
 			storage: multer.diskStorage({
 				destination: (req, f, cb) => {
@@ -52,9 +60,9 @@ module.exports = {
 			}),
 			fileFilter: (req, f, cb) => {
 
-				//-> Check filesize (3 MB max)
+				//-> Check filesize
 
-				if(f.size > 3145728) {
+				if(f.size > maxFileSizes.img) {
 					return cb(null, false);
 				}
 
@@ -67,6 +75,26 @@ module.exports = {
 				cb(null, true);
 			}
 		}).array('imgfile', 20);
+
+		//-> FILES
+
+		this.uploadFileHandler = multer({
+			storage: multer.diskStorage({
+				destination: (req, f, cb) => {
+					cb(null, path.resolve(ROOTPATH, appconfig.paths.data, 'temp-upload'));
+				}
+			}),
+			fileFilter: (req, f, cb) => {
+
+				//-> Check filesize
+
+				if(f.size > maxFileSizes.file) {
+					return cb(null, false);
+				}
+
+				cb(null, true);
+			}
+		}).array('binfile', 20);
 
 		return true;
 
@@ -88,8 +116,17 @@ module.exports = {
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './thumbs'));
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'));
 
+			if(os.type() !== 'Windows_NT') {
+				fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'), '644');
+			}
+
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.repo));
 			fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'));
+
+			if(os.type() !== 'Windows_NT') {
+				fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.repo, './upload'), '644');
+			}
+
 		} catch (err) {
 			winston.error(err);
 		}
@@ -125,13 +162,13 @@ module.exports = {
 	 * @param      {String}           fld     The containing folder
 	 * @return     {Promise<String>}  Promise of the accepted filename
 	 */
-	validateUploadsFilename(f, fld) {
+	validateUploadsFilename(f, fld, isImage) {
 
 		let fObj = path.parse(f);
 		let fname = _.chain(fObj.name).trim().toLower().kebabCase().value().replace(/[^a-z0-9\-]+/g, '');
 		let fext = _.toLower(fObj.ext);
 
-		if(!_.includes(['.jpg', '.jpeg', '.png', '.gif', '.webp'], fext)) {
+		if(isImage && !_.includes(['.jpg', '.jpeg', '.png', '.gif', '.webp'], fext)) {
 			fext = '.png';
 		}
 

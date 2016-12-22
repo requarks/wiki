@@ -67,7 +67,7 @@
 
 }
 
-#btn-editor-uploadimage {
+#btn-editor-image-upload, #btn-editor-file-upload {
 	position: relative;
 	overflow: hidden;
 
@@ -94,7 +94,7 @@
 
 }
 
-.editor-modal-imagechoices {
+.editor-modal-image-choices {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-start;
@@ -188,6 +188,85 @@
 
 }
 
+.editor-modal-file-choices {
+	overflow: auto;
+	overflow-x: hidden;
+
+	> em {
+		display: flex;
+		align-items: center;
+		padding: 25px;
+		color: mc('grey', '500');
+
+		> i {
+			font-size: 32px;
+			margin-right: 10px;
+			color: mc('grey', '300');
+		}
+
+	}
+
+	> figure {
+		display: flex;
+		background-color: #FAFAFA;
+		border-radius: 3px;
+		padding: 5px;
+		height: 34px;
+		margin: 0 0 5px 0;
+		cursor: pointer;
+		justify-content: flex-start;
+		align-items: center;
+		transition: background-color 0.4s ease;
+
+		> i {
+			width: 16px;
+		}
+
+		> span {
+			font-size: 14px;
+			flex: 0 1 auto;
+			padding: 0 15px;
+			color: mc('grey', '600');
+
+			&:first-of-type {
+				flex: 1 0 auto;
+				color: mc('grey', '800');
+			}
+
+			&:last-of-type {
+				width: 100px;
+			}
+
+		}
+
+		&:hover {
+			background-color: #DDD;
+		}
+
+		&.is-active {
+			background-color: mc('green', '500');
+			color: #FFF;
+
+			> span, strong {
+				color: #FFF;
+			}
+
+		}
+
+		&.is-contextopen {
+			background-color: mc('blue', '500');
+			color: #FFF;
+
+			> span, strong {
+				color: #FFF;
+			}
+
+		}
+
+	}
+
+}
+
 .editor-modal-imagealign {
 
 	.control > span {
@@ -214,6 +293,8 @@
 	overflow: auto;
 	overflow-x: hidden;
 }
+
+// CODE MIRROR
 
 .CodeMirror {
 	border-left: none;
@@ -245,16 +326,18 @@
 	font-size: 14px;
 }
 
+// ACE EDITOR
+
 .ace-container {
 	position: relative;
 }
 
-.ace_scroller {
+/*.ace_scroller {
 	width: 100%;
 }
 .ace_content {
 	height: 100%;
-}
+}*/
 
 #page-type-source .ace-container {
 	min-height: 95vh;
@@ -267,13 +350,6 @@
 	position: relative;
 	width: 100%;
 	height: 100%;
-
-	#codeblock-editor {
-		width: 100%;
-		height: 100%;
-		min-height: 500px;
-	}
-
 }
 
 #source-display, #codeblock-editor {
@@ -282,27 +358,4 @@
 	left: 0;
 	bottom: 0;
 	right: 0;
-}
-
-.modallayer {
-	position: fixed;
-	top: 100px;
-	width: 100%;
-	background-color: rgba(255,255,255,0.95);
-	border-bottom: 1px solid mc('grey', '500');
-	z-index: 6;
-	padding: 20px;
-	border-bottom: 1px solid #CCC;
-	box-shadow: 0 2px 3px rgba(17,17,17,.1);
-	display: none;
-
-	> h3, .column > h3 {
-		color: mc('grey', '700');
-		font-size: 24px;
-		font-weight: 300;
-	}
-
-}
-
-.modallayer-content {
 }
