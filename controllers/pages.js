@@ -137,10 +137,11 @@ router.get('/source/*', (req, res, next) => {
 		cache: false
 	}).then((pageData) => {
 		if(pageData) {
-			return res.render('pages/source', { pageData });
+			res.render('pages/source', { pageData });
 		} else {
 			throw new Error('Invalid page path.');
 		}
+		return true;
 	}).catch((err) => {
 		res.render('error', {
 			message: err.message,

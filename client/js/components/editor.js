@@ -26,57 +26,57 @@ if($('#mk-editor').length === 1) {
 		toolbar: [{
 				name: "bold",
 				action: SimpleMDE.toggleBold,
-				className: "fa fa-bold",
+				className: "icon-bold",
 				title: "Bold",
 			},
 			{
 				name: "italic",
 				action: SimpleMDE.toggleItalic,
-				className: "fa fa-italic",
+				className: "icon-italic",
 				title: "Italic",
 			},
 			{
 				name: "strikethrough",
 				action: SimpleMDE.toggleStrikethrough,
-				className: "fa fa-strikethrough",
+				className: "icon-strikethrough",
 				title: "Strikethrough",
 			},
 			'|',
 			{
 				name: "heading-1",
 				action: SimpleMDE.toggleHeading1,
-				className: "fa fa-header fa-header-x fa-header-1",
+				className: "icon-header fa-header-x fa-header-1",
 				title: "Big Heading",
 			},
 			{
 				name: "heading-2",
 				action: SimpleMDE.toggleHeading2,
-				className: "fa fa-header fa-header-x fa-header-2",
+				className: "icon-header fa-header-x fa-header-2",
 				title: "Medium Heading",
 			},
 			{
 				name: "heading-3",
 				action: SimpleMDE.toggleHeading3,
-				className: "fa fa-header fa-header-x fa-header-3",
+				className: "icon-header fa-header-x fa-header-3",
 				title: "Small Heading",
 			},
 			{
 				name: "quote",
 				action: SimpleMDE.toggleBlockquote,
-				className: "fa fa-quote-left",
+				className: "icon-quote-left",
 				title: "Quote",
 			},
 			'|',
 			{
 				name: "unordered-list",
 				action: SimpleMDE.toggleUnorderedList,
-				className: "fa fa-list-ul",
+				className: "icon-list-ul",
 				title: "Bullet List",
 			},
 			{
 				name: "ordered-list",
 				action: SimpleMDE.toggleOrderedList,
-				className: "fa fa-list-ol",
+				className: "icon-list-ol",
 				title: "Numbered List",
 			},
 			'|',
@@ -88,7 +88,7 @@ if($('#mk-editor').length === 1) {
 						$('#modal-editor-link').slideToggle();
 					}*/
 				},
-				className: "fa fa-link",
+				className: "icon-link2",
 				title: "Insert Link",
 			},
 			{
@@ -98,7 +98,7 @@ if($('#mk-editor').length === 1) {
 						vueImage.open();
 					}
 				},
-				className: "fa fa-image",
+				className: "icon-image3",
 				title: "Insert Image",
 			},
 			{
@@ -108,8 +108,18 @@ if($('#mk-editor').length === 1) {
 						vueFile.open();
 					}
 				},
-				className: "fa fa-file-text-o",
+				className: "icon-file-text-o",
 				title: "Insert File",
+			},
+			{
+				name: "video",
+				action: (editor) => {
+					/*if(!mdeModalOpenState) {
+						vueFile.open();
+					}*/
+				},
+				className: "icon-video-camera2",
+				title: "Insert Video Player",
 			},
 			'|',
 			{
@@ -126,7 +136,7 @@ if($('#mk-editor').length === 1) {
 					editor.codemirror.doc.replaceSelections(curSel);
 
 				},
-				className: "fa fa-terminal",
+				className: "icon-terminal",
 				title: "Inline Code",
 			},
 			{
@@ -143,7 +153,7 @@ if($('#mk-editor').length === 1) {
 
 					}
 				},
-				className: "fa fa-code",
+				className: "icon-code",
 				title: "Code Block",
 			},
 			'|',
@@ -152,13 +162,13 @@ if($('#mk-editor').length === 1) {
 				action: (editor) => {
 					//todo
 				},
-				className: "fa fa-table",
+				className: "icon-table",
 				title: "Insert Table",
 			},
 			{
 				name: "horizontal-rule",
 				action: SimpleMDE.drawHorizontalRule,
-				className: "fa fa-minus",
+				className: "icon-minus2",
 				title: "Horizontal Rule",
 			}
 		],

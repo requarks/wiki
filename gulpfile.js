@@ -51,7 +51,6 @@ var paths = {
 	},
 	css: {
 		combine: [
-			'./node_modules/font-awesome/css/font-awesome.min.css',
 			'./node_modules/highlight.js/styles/tomorrow.css',
 			'./node_modules/simplemde/dist/simplemde.min.css'
 		],
@@ -67,8 +66,6 @@ var paths = {
 		]
 	},
 	fonts: [
-		'./node_modules/font-awesome/fonts/*-webfont.*',
-		'!./node_modules/font-awesome/fonts/*-webfont.svg',
 		'../node_modules/requarks-core/core-client/fonts/**/*' //! MUST BE LAST
 	],
 	deploy: [
