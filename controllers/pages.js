@@ -13,6 +13,10 @@ var _ = require('lodash');
  */
 router.get('/edit/*', (req, res, next) => {
 
+	if(!res.locals.rights.write) {
+		return res.render('error-forbidden');
+	}
+
 	let safePath = entries.parsePath(_.replace(req.path, '/edit', ''));
 
 	entries.fetchOriginal(safePath, {
@@ -40,6 +44,13 @@ router.get('/edit/*', (req, res, next) => {
 
 router.put('/edit/*', (req, res, next) => {
 
+	if(!res.locals.rights.write) {
+		return res.json({
+			ok: false,
+			error: 'Forbidden'
+		});
+	}
+
 	let safePath = entries.parsePath(_.replace(req.path, '/edit', ''));
 
 	entries.update(safePath, req.body.markdown).then(() => {
@@ -60,6 +71,10 @@ router.put('/edit/*', (req, res, next) => {
 // ==========================================
 
 router.get('/create/*', (req, res, next) => {
+
+	if(!res.locals.rights.write) {
+		return res.render('error-forbidden');
+	}
 
 	if(_.some(['create','edit','account','source','history','mk'], (e) => { return _.startsWith(req.path, '/create/' + e); })) {
 		return res.render('error', {
@@ -102,6 +117,13 @@ router.get('/create/*', (req, res, next) => {
 
 router.put('/create/*', (req, res, next) => {
 
+	if(!res.locals.rights.write) {
+		return res.json({
+			ok: false,
+			error: 'Forbidden'
+		});
+	}
+
 	let safePath = entries.parsePath(_.replace(req.path, '/create', ''));
 
 	entries.create(safePath, req.body.markdown).then(() => {
@@ -109,7 +131,7 @@ router.put('/create/*', (req, res, next) => {
 			ok: true
 		}) || true;
 	}).catch((err) => {
-		res.json({
+		return res.json({
 			ok: false,
 			error: err.message
 		});
@@ -191,6 +213,13 @@ router.get('/*', (req, res, next) => {
  * Move document
  */
 router.put('/*', (req, res, next) => {
+
+	if(!res.locals.rights.write) {
+		return res.json({
+			ok: false,
+			error: 'Forbidden'
+		});
+	}
 
 	let safePath = entries.parsePath(req.path);
 

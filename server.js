@@ -89,6 +89,7 @@ app.use(express.static(path.join(ROOTPATH, 'assets')));
 
 var strategy = require(CORE_PATH + 'core-libs/auth')(passport, appconfig);
 global.rights = require(CORE_PATH + 'core-libs/rights');
+rights.init();
 
 var sessionStore = new sessionMongoStore({
   mongooseConnection: db.connection,

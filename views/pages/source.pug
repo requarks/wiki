@@ -6,18 +6,20 @@ block rootNavCenter
 block rootNavRight
 	i.nav-item#notifload
 	span.nav-item
-		a.button.is-outlined.btn-move-prompt.is-hidden
-			i.icon-shuffle
-			span Move
+		if rights.write
+			a.button.is-outlined.btn-move-prompt.is-hidden
+				i.icon-shuffle
+				span Move
 		a.button.is-outlined(href='/' + pageData.meta.path)
 			i.icon-loader
 			span Normal View
-		a.button.is-orange(href='/edit/' + pageData.meta.path)
-			i.fa.fa-edit
-			span Edit
-		a.button.is-blue.btn-create-prompt
-			i.fa.fa-plus
-			span Create
+		if rights.write
+			a.button.is-orange(href='/edit/' + pageData.meta.path)
+				i.fa.fa-edit
+				span Edit
+			a.button.is-blue.btn-create-prompt
+				i.fa.fa-plus
+				span Create
 
 block content
 

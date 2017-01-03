@@ -41,14 +41,15 @@ block content
 								a(href='/admin/stats')
 									i.icon-bar-graph-2
 									span Stats
-							li
-								a(href='/admin/users')
-									i.icon-users
-									span Users
-							li
-								a(href='/admin/settings')
-									i.icon-cog
-									span Site Settings
+							if rights.manage
+								li
+									a(href='/admin/users')
+										i.icon-users
+										span Users
+								li
+									a(href='/admin/settings')
+										i.icon-cog
+										span Site Settings
 							li
 								a(href='/logout')
 									i.icon-delete2

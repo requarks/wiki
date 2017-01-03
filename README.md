@@ -32,7 +32,7 @@
 		- [x] Facebook
 	- [x] Access Rights
 		- [x] View
-		- [ ] Edit / Create
+		- [x] Edit / Create
 - [x] Background Agent (git sync, cache purge, etc.)
 - [x] Caching
 - [x] Create Entry
@@ -40,7 +40,7 @@
 	- [x] Prerequisites
 	- [x] Install
 	- [ ] Authentication
-	- [ ] Git
+	- [x] Git
 	- [x] Upgrade
 - [x] Edit Entry
 - [x] Git Management

@@ -12,10 +12,21 @@ router.get('/', (req, res) => {
 });
 
 router.get('/profile', (req, res) => {
+
+	if(res.locals.isGuest) {
+		return res.render('error-forbidden');
+	}
+
 	res.render('pages/admin/profile', { adminTab: 'profile' });
+
 });
 
 router.get('/stats', (req, res) => {
+
+	if(res.locals.isGuest) {
+		return res.render('error-forbidden');
+	}
+
 	Promise.all([
 		db.Entry.count(),
 		db.UplFile.count(),
@@ -28,14 +39,27 @@ router.get('/stats', (req, res) => {
 	}).catch((err) => {
 		throw err;
 	});
+
 });
 
 router.get('/users', (req, res) => {
+
+	if(!res.locals.rights.manage) {
+		return res.render('error-forbidden');
+	}
+
 	res.render('pages/admin/users', { adminTab: 'users' });
+
 });
 
 router.get('/settings', (req, res) => {
+
+	if(!res.locals.rights.manage) {
+		return res.render('error-forbidden');
+	}
+
 	res.render('pages/admin/settings', { adminTab: 'settings' });
+
 });
 
 module.exports = router;
