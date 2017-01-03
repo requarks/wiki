@@ -196,7 +196,7 @@ gulp.task('dev', function() {
 
 	return run('default');
 
-})
+});
 
 /**
  * TASK - Creates deployment packages

@@ -222,7 +222,7 @@ module.exports = {
 
 					destFileStream.on('finish', () => {
 						resolve(true);
-					})
+					});
 
 					rq.pipe(destFileStream);
 

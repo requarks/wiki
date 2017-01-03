@@ -14,6 +14,7 @@ if($('#mk-editor').length === 1) {
 
 	//=include editor-image.js
 	//=include editor-file.js
+	//=include editor-video.js
 	//=include editor-codeblock.js
 
 	var mde = new SimpleMDE({
@@ -70,7 +71,7 @@ if($('#mk-editor').length === 1) {
 			{
 				name: "unordered-list",
 				action: SimpleMDE.toggleUnorderedList,
-				className: "icon-list-ul",
+				className: "icon-th-list",
 				title: "Bullet List",
 			},
 			{
@@ -98,7 +99,7 @@ if($('#mk-editor').length === 1) {
 						vueImage.open();
 					}
 				},
-				className: "icon-image3",
+				className: "icon-image",
 				title: "Insert Image",
 			},
 			{
@@ -108,15 +109,15 @@ if($('#mk-editor').length === 1) {
 						vueFile.open();
 					}
 				},
-				className: "icon-file-text-o",
+				className: "icon-paper",
 				title: "Insert File",
 			},
 			{
 				name: "video",
 				action: (editor) => {
-					/*if(!mdeModalOpenState) {
-						vueFile.open();
-					}*/
+					if(!mdeModalOpenState) {
+						vueVideo.open();
+					}
 				},
 				className: "icon-video-camera2",
 				title: "Insert Video Player",
@@ -180,21 +181,6 @@ if($('#mk-editor').length === 1) {
 
 	//-> Save
 
-	$('.btn-edit-save, .btn-create-save').on('click', (ev) => {
-		saveCurrentDocument(ev);
-	});
-
-	$(window).bind('keydown', (ev) => {
-		if (ev.ctrlKey || ev.metaKey) {
-			switch (String.fromCharCode(ev.which).toLowerCase()) {
-			case 's':
-				ev.preventDefault();
-				saveCurrentDocument(ev);
-				break;
-			}
-		}
-	});
-
 	let saveCurrentDocument = (ev) => {
 		$.ajax(window.location.href, {
 			data: {
@@ -211,6 +197,21 @@ if($('#mk-editor').length === 1) {
 		}, (rXHR, rStatus, err) => {
 			alerts.pushError('Something went wrong', 'Save operation failed.');
 		});
-	}
+	};
+
+	$('.btn-edit-save, .btn-create-save').on('click', (ev) => {
+		saveCurrentDocument(ev);
+	});
+
+	$(window).bind('keydown', (ev) => {
+		if (ev.ctrlKey || ev.metaKey) {
+			switch (String.fromCharCode(ev.which).toLowerCase()) {
+			case 's':
+				ev.preventDefault();
+				saveCurrentDocument(ev);
+				break;
+			}
+		}
+	});
 
 }

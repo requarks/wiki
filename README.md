@@ -49,6 +49,7 @@
 	- [ ] Links
 	- [x] Image Selection modal
 	- [x] File Selection modal
+	- [x] Video player
 	- [x] Inline Code
 	- [x] Code Editor modal
 	- [ ] Table Editor

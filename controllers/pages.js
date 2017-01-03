@@ -43,9 +43,9 @@ router.put('/edit/*', (req, res, next) => {
 	let safePath = entries.parsePath(_.replace(req.path, '/edit', ''));
 
 	entries.update(safePath, req.body.markdown).then(() => {
-		res.json({
+		return res.json({
 			ok: true
-		});
+		}) || true;
 	}).catch((err) => {
 		res.json({
 			ok: false,
@@ -105,9 +105,9 @@ router.put('/create/*', (req, res, next) => {
 	let safePath = entries.parsePath(_.replace(req.path, '/create', ''));
 
 	entries.create(safePath, req.body.markdown).then(() => {
-		res.json({
+		return res.json({
 			ok: true
-		});
+		}) || true;
 	}).catch((err) => {
 		res.json({
 			ok: false,

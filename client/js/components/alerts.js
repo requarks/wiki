@@ -42,7 +42,7 @@ class Alerts {
 
 		let nAlert = _.defaults(options, {
 			_uid: self.uidNext,
-			class: 'is-info',
+			class: 'info',
 			message: '---',
 			sticky: false,
 			title: '---'
@@ -68,7 +68,7 @@ class Alerts {
 	 */
 	pushError(title, message) {
 		this.push({
-			class: 'is-danger',
+			class: 'error',
 			message,
 			sticky: false,
 			title
@@ -83,7 +83,7 @@ class Alerts {
 	 */
 	pushSuccess(title, message) {
 		this.push({
-			class: 'is-success',
+			class: 'success',
 			message,
 			sticky: false,
 			title

@@ -1,16 +1,14 @@
 #alerts
 	ul
 		template(v-for="aItem in children", track-by='_uid')
-			.notification(v-bind:class='aItem.class')
+			li(v-bind:class='aItem.class')
 				button.delete(v-on:click='acknowledge(aItem._uid)')
 				h3 {{ aItem.title }}
 				span {{ aItem.message }}
 
 if appflash.length > 0
-	script(type='text/javascript')
-		| var alertsData = 
-		!= JSON.stringify(appflash)
-		| ;
+	script(type='text/javascript').
+		var alertsData = !{JSON.stringify(appflash)};
 else
-	script(type='text/javascript')
-		| var alertsData = [];
+	script(type='text/javascript').
+		var alertsData = [];

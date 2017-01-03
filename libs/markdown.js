@@ -58,6 +58,31 @@ mkdown.renderer.rules.emoji = function(token, idx) {
 	return '<i class="twa twa-' + _.replace(token[idx].markup, /_/g, '-') + '"></i>';
 };
 
+// Video rules
+
+const videoRules = [
+	{
+		selector: 'a.youtube',
+		regexp: new RegExp(/(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/, 'i'),
+		output: '<iframe width="640" height="360" src="https://www.youtube.com/embed/{0}?rel=0" frameborder="0" allowfullscreen></iframe>'
+	},
+	{
+		selector: 'a.vimeo',
+		regexp: new RegExp(/vimeo.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|)(\d+)(?:$|\/|\?)/, 'i'),
+		output: '<iframe src="https://player.vimeo.com/video/{0}" width="640" height="360" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'
+	},
+	{
+		selector: 'a.dailymotion',
+		regexp: new RegExp(/(?:dailymotion\.com(?:\/embed)?(?:\/video|\/hub)|dai\.ly)\/([0-9a-z]+)(?:[\-_0-9a-zA-Z]+(?:#video=)?([a-z0-9]+)?)?/, 'i'),
+		output: '<iframe width="640" height="360" src="//www.dailymotion.com/embed/video/{0}?endscreen-enable=false" frameborder="0" allowfullscreen></iframe>'
+	},
+	{
+		selector: 'a.video',
+		regexp: false,
+		output: '<video width="640" height="360" controls preload="metadata"><source src="{0}" type="video/mp4"></video>'
+	}
+]
+
 /**
  * Parse markdown content and build TOC tree
  *
@@ -201,6 +226,25 @@ const parseContent = (content)  => {
 		let subH3Container = cr(elm).next('.indent-h3');
 		_.forEach(subH3Content, (ch) => {
 			cr(subH3Container).append(ch);
+		});
+	});
+
+	// Replace video links with embeds
+
+	_.forEach(videoRules, (vrule) => {
+		cr(vrule.selector).each((i, elm) => {
+			let originLink = cr(elm).attr('href');
+			if(vrule.regexp) {
+				let vidMatches = originLink.match(vrule.regexp);
+				if((vidMatches && _.isArray(vidMatches))) {
+					vidMatches = _.filter(vidMatches, (f) => {
+						return f && _.isString(f);
+					});
+					originLink = _.last(vidMatches);
+				}
+			}
+			let processedLink = _.replace(vrule.output, '{0}', originLink);
+			cr(elm).replaceWith(processedLink);
 		});
 	});
 

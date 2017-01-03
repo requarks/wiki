@@ -158,8 +158,9 @@ module.exports = {
 	/**
 	 * Check if filename is valid and unique
 	 *
-	 * @param      {String}           f       The filename
-	 * @param      {String}           fld     The containing folder
+	 * @param      {String}           f        The filename
+	 * @param      {String}           fld      The containing folder
+	 * @param      {boolean}          isImage  Indicates if image
 	 * @return     {Promise<String>}  Promise of the accepted filename
 	 */
 	validateUploadsFilename(f, fld, isImage) {
