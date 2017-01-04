@@ -3,6 +3,7 @@
 var express = require('express');
 var router = express.Router();
 const Promise = require('bluebird');
+const validator = require('validator');
 
 /**
  * Admin
@@ -48,7 +49,30 @@ router.get('/users', (req, res) => {
 		return res.render('error-forbidden');
 	}
 
-	res.render('pages/admin/users', { adminTab: 'users' });
+	db.User.find({})
+		.select('-password -rights')
+		.sort('name email')
+		.exec().then((usrs) => {
+			res.render('pages/admin/users', { adminTab: 'users', usrs });
+		});
+
+});
+
+router.get('/users/:id', (req, res) => {
+
+	if(!res.locals.rights.manage) {
+		return res.render('error-forbidden');
+	}
+
+	if(!validator.isMongoId(req.params.id)) {
+		return res.render('error-forbidden');
+	}
+
+	db.User.findById(req.params.id)
+		.select('-password')
+		.exec().then((usr) => {
+			res.render('pages/admin/users-edit', { adminTab: 'users', usr });
+		});
 
 });
 

@@ -1,0 +1,114 @@
+extends ./_layout.pug
+
+block rootNavRight
+	i.nav-item#notifload
+	.nav-item
+		a.button(href='/admin/users')
+			i.icon-reply
+			span Return to Users
+
+block adminContent
+	#page-type-admin
+		.hero
+			h1.title#title Edit User
+			h2.subtitle= usr.email
+		table.table
+			thead
+				tr
+					th Unique ID
+					th Email
+					th Provider
+					th Created On
+					th Updated On
+			tbody
+					tr
+						td.is-centered= usr._id
+						td.is-centered= usr.email
+						td.is-centered.has-icons
+							case usr.provider
+								when 'local'
+									i.icon-server.is-deep-orange
+									| Local Database
+								when 'windowslive'
+									i.icon-windows2.is-blue
+									| Microsoft Account
+								when 'google'
+									i.icon-google.is-blue
+									| Google ID
+								when 'facebook'
+									i.icon-facebook.is-purple
+									| Facebook
+								default: i.icon-warning
+						td.is-centered= userMoment(usr.createdAt).format('lll')
+						td.is-centered= userMoment(usr.updatedAt).format('lll')
+		.form-sections
+			section
+				label.label Display Name
+				p.control.is-fullwidth
+					input.input(type='text', placeholder='John Smith', value=usr.name)
+			if usr.provider == 'local'
+				section
+					label.label Password
+					p.control.is-fullwidth
+						input.input(type='password', placeholder='Password', value='********')
+			section
+				label.label Access Rights
+				table.table
+					thead.is-teal
+						tr
+							th
+							th(style={width: '200px'}) Permission(s)
+							th Path
+							th(style={width: '150px'}) Access
+							th(style={width: '50px'})
+					tbody
+						tr(v-for='right in rights')
+							td.is-icon
+								i.icon-marquee-plus.is-green(v-if='!right.deny')
+								i.icon-marquee-minus.is-red(v-if='right.deny')
+							td
+								p.control.is-fullwidth
+									select(v-model='right.role')
+										option(value='write') Read and Write
+										option(value='read') Read Only
+							td
+								.columns
+									.column.is-narrow
+										p.control
+											select(v-model='right.exact')
+												option(value='false') Path starts with:
+												option(value='true') Path match exactly:
+									.column
+										p.control.is-fullwidth
+											input.input(type='text', placeholder='/', v-model='right.path')
+							td
+								p.control.is-fullwidth
+									select(v-model='right.deny')
+										option(value='false') Allow
+										option(value='true') Deny
+							td.is-centered.has-action-icons
+								i.icon-delete.is-red
+				.table-actions
+					button.button.is-blue
+						i.icon-plus
+						span Add New Row
+			section
+				label.label Role Override
+				p.control.is-fullwidth
+					select(v-model='roleoverride')
+						option(value='none') None
+						option(value='admin') Global Administrator
+			.columns.is-gapless
+				.column
+					section
+						button.button.is-green
+							i.icon-check
+							span Save Changes
+						button.button.is-grey.is-outlined
+							i.icon-cancel
+							span Discard
+				.column.is-narrow
+					section
+						button.button.is-red
+							i.icon-trash2
+							span Delete Account

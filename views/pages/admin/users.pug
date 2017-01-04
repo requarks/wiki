@@ -1,18 +1,50 @@
 extends ./_layout.pug
 
+block rootNavRight
+	i.nav-item#notifload
+	.nav-item
+		a.button.btn-create-prompt
+			i.icon-plus
+			span Create / Authorize User
+
 block adminContent
-	.hero
-		h1.title#title Users
-		h2.subtitle Manage users and rights
-		ul.hero-menu
-				li
-					a.is-blue(href='/')
-						i.icon-plus
-						span Create Local User
-				li
-					a.is-indigo(href='/')
-						i.icon-globe
-						span Authorize Social User
-	.form-sections
-		section
-			| Coming soon
+	#page-type-admin
+		.hero
+			h1.title#title Users
+			h2.subtitle Manage users and access rights
+		table.table
+			thead
+				tr
+					th
+					th Name
+					th Email
+					th Provider
+					th Created On
+					th Updated On
+			tbody
+				each usr in usrs
+					tr
+						td.is-icon
+							i.icon-user.is-grey
+						td
+							a(href='/admin/users/' + usr._id)= usr.name
+						td= usr.email
+						td.is-centered.has-icons
+							case usr.provider
+								when 'local'
+									i.icon-server.is-deep-orange
+									| Local Database
+								when 'windowslive'
+									i.icon-windows2.is-blue
+									| Microsoft Account
+								when 'google'
+									i.icon-google.is-blue
+									| Google ID
+								when 'facebook'
+									i.icon-facebook.is-purple
+									| Facebook
+								default: i.icon-warning
+						td.is-centered= userMoment(usr.createdAt).format('lll')
+						td.is-centered= userMoment(usr.updatedAt).format('lll')
+
+		include ../../modals/admin-createuser.pug

@@ -49,6 +49,7 @@ jQuery( document ).ready(function( $ ) {
 	//=include pages/create.js
 	//=include pages/edit.js
 	//=include pages/source.js
+	//=include pages/admin.js
 
 });
 

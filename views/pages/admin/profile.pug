@@ -33,11 +33,11 @@ block adminContent
 					label.label Provider
 					p.control.account-profile-provider
 						case user.provider
-							when 'local': i.fa.fa-database
-							when 'windowslive': i.fa.fa-windows.is-blue
-							when 'google': i.fa.fa-google.is-blue
-							when 'facebook': i.fa.fa-facebook.is-purple
-							default: i.fa.fa-question-circle
+							when 'local': i.icon-server
+							when 'windowslive': i.icon-windows2.is-blue
+							when 'google': i.icon-google.is-blue
+							when 'facebook': i.icon-facebook.is-purple
+							default: i.icon-warning
 						= t('auth:providers.' + user.provider)
 					label.label Member since
 					p.control= userMoment(user.createdAt).format('LL')
