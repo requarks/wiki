@@ -2,7 +2,7 @@
 // Vue Create User instance
 
 let vueCreateUser = new Vue({
-	el: '#modal-admin-createuser',
+	el: '#modal-admin-users-create',
 	data: {
 		email: '',
 		provider: 'local',
@@ -11,11 +11,11 @@ let vueCreateUser = new Vue({
 	},
 	methods: {
 		open: (ev) => {
-			$('#modal-admin-createuser').addClass('is-active');
-			$('#modal-admin-createuser input').first().focus();
+			$('#modal-admin-users-create').addClass('is-active');
+			$('#modal-admin-users-create input').first().focus();
 		},
 		cancel: (ev) => {
-			$('#modal-admin-createuser').removeClass('is-active');
+			$('#modal-admin-users-create').removeClass('is-active');
 			vueCreateUser.email = '';
 			vueCreateUser.provider = 'local';
 		},

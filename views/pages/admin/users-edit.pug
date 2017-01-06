@@ -8,7 +8,7 @@ block rootNavRight
 			span Return to Users
 
 block adminContent
-	#page-type-admin
+	#page-type-admin-users-edit
 		.hero
 			h1.title#title Edit User
 			h2.subtitle= usr.email
@@ -16,14 +16,12 @@ block adminContent
 			thead
 				tr
 					th Unique ID
-					th Email
 					th Provider
 					th Created On
 					th Updated On
 			tbody
 					tr
 						td.is-centered= usr._id
-						td.is-centered= usr.email
 						td.is-centered.has-icons
 							case usr.provider
 								when 'local'
@@ -43,14 +41,18 @@ block adminContent
 						td.is-centered= userMoment(usr.updatedAt).format('lll')
 		.form-sections
 			section
+				label.label Email Address
+				p.control.is-fullwidth
+					input.input(type='text', placeholder='john.smith@example.com', v-model='email', disabled=!usrOpts.canChangeEmail)
+			section
 				label.label Display Name
 				p.control.is-fullwidth
-					input.input(type='text', placeholder='John Smith', value=usr.name)
-			if usr.provider == 'local'
+					input.input(type='text', placeholder='John Smith', v-model='name', disabled=!usrOpts.canChangeName)
+			if usrOpts.canChangePassword
 				section
 					label.label Password
 					p.control.is-fullwidth
-						input.input(type='password', placeholder='Password', value='********')
+						input.input(type='password', placeholder='Password', v-model='password', value='********')
 			section
 				label.label Access Rights
 				table.table
@@ -62,7 +64,7 @@ block adminContent
 							th(style={width: '150px'}) Access
 							th(style={width: '50px'})
 					tbody
-						tr(v-for='right in rights')
+						tr(v-for='right in rights', v-cloak)
 							td.is-icon
 								i.icon-marquee-plus.is-green(v-if='!right.deny')
 								i.icon-marquee-minus.is-red(v-if='right.deny')
@@ -87,28 +89,38 @@ block adminContent
 										option(value='false') Allow
 										option(value='true') Deny
 							td.is-centered.has-action-icons
-								i.icon-delete.is-red
+								i.icon-delete.is-red(v-on:click='removeRightsRow(right._id)')
+						tr(v-if='rights.length < 1', v-cloak)
+							td.is-icon
+							td.is-centered(colspan='3'): em No additional access rights
+							td.is-centered.has-action-icons
 				.table-actions
-					button.button.is-blue
+					button.button.is-blue(v-on:click='addRightsRow')
 						i.icon-plus
 						span Add New Row
 			section
 				label.label Role Override
 				p.control.is-fullwidth
-					select(v-model='roleoverride')
+					select(v-model='roleoverride', disabled=!usrOpts.canChangeRole)
 						option(value='none') None
 						option(value='admin') Global Administrator
 			.columns.is-gapless
 				.column
 					section
-						button.button.is-green
+						button.button.is-green(v-on:click='saveUser')
 							i.icon-check
 							span Save Changes
-						button.button.is-grey.is-outlined
+						a.button.button.is-grey.is-outlined(href='/admin/users')
 							i.icon-cancel
 							span Discard
 				.column.is-narrow
 					section
-						button.button.is-red
-							i.icon-trash2
-							span Delete Account
+						if usrOpts.canBeDeleted
+							button.button.is-red.btn-deluser-prompt
+								i.icon-trash2
+								span Delete Account
+
+	include ../../modals/admin-deleteuser.pug
+
+	script(type='text/javascript').
+		var usrData = !{JSON.stringify(usr)};

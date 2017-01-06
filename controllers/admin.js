@@ -69,9 +69,18 @@ router.get('/users/:id', (req, res) => {
 	}
 
 	db.User.findById(req.params.id)
-		.select('-password')
+		.select('-password -providerId')
 		.exec().then((usr) => {
-			res.render('pages/admin/users-edit', { adminTab: 'users', usr });
+
+			let usrOpts = {
+				canChangeEmail: (usr.email !== 'guest' && usr.provider === 'local' && usr.email !== req.app.locals.appconfig.admin),
+				canChangeName: (usr.email !== 'guest'),
+				canChangePassword: (usr.email !== 'guest' && usr.provider === 'local'),
+				canChangeRole: (usr.email !== 'guest' && !(usr.provider === 'local' && usr.email === req.app.locals.appconfig.admin)),
+				canBeDeleted: (usr.email !== 'guest' && !(usr.provider === 'local' && usr.email === req.app.locals.appconfig.admin))
+			};
+
+			res.render('pages/admin/users-edit', { adminTab: 'users', usr, usrOpts });
 		});
 
 });
