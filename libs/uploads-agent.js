@@ -13,9 +13,7 @@ var path = require('path'),
 	_ = require('lodash');
 
 /**
- * Uploads
- *
- * @param      {Object}  appconfig  The application configuration
+ * Uploads - Agent
  */
 module.exports = {
 
@@ -27,10 +25,9 @@ module.exports = {
 	/**
 	 * Initialize Uploads model
 	 *
-	 * @param      {Object}  appconfig  The application config
 	 * @return     {Object}  Uploads model instance
 	 */
-	init(appconfig) {
+	init() {
 
 		let self = this;
 

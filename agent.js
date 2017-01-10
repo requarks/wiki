@@ -25,11 +25,13 @@ global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG);
 
 winston.info('[AGENT] Background Agent is initializing...');
 
-var appconfig = require(CORE_PATH + 'core-libs/config')('./config.yml');
-global.db = require(CORE_PATH + 'core-libs/mongodb').init(appconfig);
-global.upl = require('./libs/uploads-agent').init(appconfig);
-global.git = require('./libs/git').init(appconfig);
-global.entries = require('./libs/entries').init(appconfig);
+let appconf = require(CORE_PATH + 'core-libs/config')();
+global.appconfig = appconf.config;
+global.appdata = appconf.data;
+global.db = require(CORE_PATH + 'core-libs/mongodb').init();
+global.upl = require('./libs/uploads-agent').init();
+global.git = require('./libs/git').init();
+global.entries = require('./libs/entries').init();
 global.mark = require('./libs/markdown');
 
 // ----------------------------------------

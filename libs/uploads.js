@@ -23,10 +23,9 @@ module.exports = {
 	/**
 	 * Initialize Local Data Storage model
 	 *
-	 * @param      {Object}  appconfig  The application config
 	 * @return     {Object}  Uploads model instance
 	 */
-	init(appconfig) {
+	init() {
 
 		this._uploadsPath = path.resolve(ROOTPATH, appconfig.paths.repo, 'uploads');
 		this._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.paths.data, 'thumbs');

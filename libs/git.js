@@ -34,10 +34,9 @@ module.exports = {
 	/**
 	 * Initialize Git model
 	 *
-	 * @param      {Object}  appconfig  The application config
 	 * @return     {Object}  Git model instance
 	 */
-	init(appconfig) {
+	init() {
 
 		let self = this;
 

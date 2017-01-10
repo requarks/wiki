@@ -18,10 +18,9 @@ module.exports = {
 	/**
 	 * Initialize Entries model
 	 *
-	 * @param      {Object}  appconfig  The application config
 	 * @return     {Object}  Entries model instance
 	 */
-	init(appconfig) {
+	init() {
 
 		let self = this;
 

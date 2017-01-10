@@ -25,14 +25,16 @@ winston.info('[SERVER] Wiki.js is initializing...');
 // Load global modules
 // ----------------------------------------
 
-var appconfig = require(CORE_PATH + 'core-libs/config')('./config.yml');
-global.lcdata = require('./libs/local').init(appconfig);
-global.db = require(CORE_PATH + 'core-libs/mongodb').init(appconfig);
-global.entries = require('./libs/entries').init(appconfig);
-global.git = require('./libs/git').init(appconfig, false);
+let appconf = require(CORE_PATH + 'core-libs/config')();
+global.appconfig = appconf.config;
+global.appdata = appconf.data;
+global.lcdata = require('./libs/local').init();
+global.db = require(CORE_PATH + 'core-libs/mongodb').init();
+global.entries = require('./libs/entries').init();
+global.git = require('./libs/git').init(false);
 global.lang = require('i18next');
 global.mark = require('./libs/markdown');
-global.upl = require('./libs/uploads').init(appconfig);
+global.upl = require('./libs/uploads').init();
 
 // ----------------------------------------
 // Load modules
@@ -87,7 +89,7 @@ app.use(express.static(path.join(ROOTPATH, 'assets')));
 // Passport Authentication
 // ----------------------------------------
 
-var strategy = require(CORE_PATH + 'core-libs/auth')(passport, appconfig);
+var strategy = require(CORE_PATH + 'core-libs/auth')(passport);
 global.rights = require(CORE_PATH + 'core-libs/rights');
 rights.init();
 
