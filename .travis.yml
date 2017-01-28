@@ -1,5 +1,6 @@
 language: node_js
 node_js:
+- '7'
 - '6'
 - '4'
 addons:
@@ -37,4 +38,4 @@ deploy:
     branch: master
     repo: Requarks/wiki
     tags: true
-    node: '6'
+    node: '7'

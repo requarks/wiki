@@ -20,7 +20,7 @@
 - [Installation Guide](https://wiki.requarks.io/get-started.html)
 
 ##### Milestones
-- [ ] Account Management
+- [x] Account Management
 - [x] Assets Management
 	- [x] Images
 	- [x] Files/Documents
@@ -46,13 +46,13 @@
 - [x] Git Management
 - [x] Markdown Editor
 	- [x] Basic Formatting
-	- [ ] Links
+	- [ ] Insert Link modal
 	- [x] Image Selection modal
 	- [x] File Selection modal
 	- [x] Video player
 	- [x] Inline Code
 	- [x] Code Editor modal
-	- [ ] Table Editor
+	- [ ] Table Visual Editor
 - [x] Move Entry
 - [x] Navigation
 - [x] Parsing / Tree / Metadata
