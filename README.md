@@ -4,7 +4,7 @@
 
 # Wiki.js
 
-[![Release](https://img.shields.io/github/release/Requarks/wiki.svg?maxAge=86400)](https://github.com/Requarks/wiki/releases)
+[![Release](https://img.shields.io/github/release/Requarks/wiki.svg?maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://github.com/requarks/wiki/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/Requarks/wiki.svg?branch=master)](https://travis-ci.org/Requarks/wiki)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d0217a3153c4595bdedb322263e55c8)](https://www.codacy.com/app/Requarks/wiki)
