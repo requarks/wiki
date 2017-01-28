@@ -17,14 +17,38 @@ if($('#page-type-admin-users').length) {
 		},
 		methods: {
 			addRightsRow: (ev) => {
-				vueEditUser.rights.push({});
+				vueEditUser.rights.push({
+					role: 'write',
+					path: '/',
+					exact: false,
+					deny: false
+				});
 			},
-			removeRightsRow: (ev) => {
-
+			removeRightsRow: (idx) => {
+				_.pullAt(vueEditUser.rights, idx)
+				vueEditUser.$forceUpdate()
 			},
 			saveUser: (ev) => {
-
-
+				let formattedRights = _.cloneDeep(vueEditUser.rights)
+				switch(vueEditUser.roleoverride) {
+					case 'admin':
+						formattedRights.push({
+							role: 'admin',
+							path: '/',
+							exact: false,
+							deny: false
+						})
+					break;
+				}
+				$.post(window.location.href, {
+					password: vueEditUser.password,
+					name: vueEditUser.name,
+					rights: JSON.stringify(formattedRights)
+				}).done((resp) => {
+					alerts.pushSuccess('Saved successfully', 'Changes have been applied.');
+				}).fail((jqXHR, txtStatus, resp) => {
+					alerts.pushError('Error', resp);
+				})
 			}
 		},
 		created: function() {
@@ -32,8 +56,6 @@ if($('#page-type-admin-users').length) {
 			this.id = usrData._id;
 			this.email = usrData.email;
 			this.name = usrData.name;
-
-			console.log(_.find(usrData.rights, { role: 'admin' }));
 
 			if(_.find(usrData.rights, { role: 'admin' })) {
 				this.rights = _.reject(usrData.rights, ['role', 'admin']);

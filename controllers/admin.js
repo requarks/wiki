@@ -4,6 +4,7 @@ var express = require('express');
 var router = express.Router();
 const Promise = require('bluebird');
 const validator = require('validator');
+const _ = require('lodash');
 
 /**
  * Admin
@@ -82,6 +83,40 @@ router.get('/users/:id', (req, res) => {
 
 			res.render('pages/admin/users-edit', { adminTab: 'users', usr, usrOpts });
 		});
+
+});
+
+router.post('/users/:id', (req, res) => {
+
+	if(!res.locals.rights.manage) {
+		return res.status(401).json({ msg: 'Unauthorized' });
+	}
+
+	if(!validator.isMongoId(req.params.id)) {
+		return res.status(400).json({ msg: 'Invalid User ID' });
+	}
+
+	return db.User.findById(req.params.id).then((usr) => {
+		usr.name = _.trim(req.body.name);
+		usr.rights = JSON.parse(req.body.rights);
+		if(usr.provider === 'local' && req.body.password !== '********') {
+			let nPwd = _.trim(req.body.password);
+			if(nPwd.length < 6) {
+				return Promise.reject(new Error('New Password too short!'))
+			} else {
+				return db.User.hashPassword(nPwd).then((pwd) => {
+					usr.password = pwd;
+					return usr.save();
+				});
+			}
+		} else {
+			return usr.save();
+		}
+	}).then(() => {
+		return res.json({ msg: 'OK' });
+	}).catch((err) => {
+		res.status(400).json({ msg: err.message });
+	})
 
 });
 

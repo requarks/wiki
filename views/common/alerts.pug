@@ -2,8 +2,8 @@
 	ul
 		template(v-for="aItem in children", track-by='_uid')
 			li(v-bind:class='aItem.class')
-				button.delete(v-on:click='acknowledge(aItem._uid)')
-				h3 {{ aItem.title }}
+				button(v-on:click='acknowledge(aItem._uid)')
+				strong {{ aItem.title }}
 				span {{ aItem.message }}
 
 if appflash.length > 0

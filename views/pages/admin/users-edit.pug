@@ -64,10 +64,10 @@ block adminContent
 							th(style={width: '150px'}) Access
 							th(style={width: '50px'})
 					tbody
-						tr(v-for='right in rights', v-cloak)
+						tr(v-for='(right, idx) in rights', v-cloak)
 							td.is-icon
-								i.icon-marquee-plus.is-green(v-if='!right.deny')
-								i.icon-marquee-minus.is-red(v-if='right.deny')
+								i.icon-marquee-plus.is-green(v-if='right.deny === false || right.deny === "false"')
+								i.icon-marquee-minus.is-red(v-if='right.deny === true || right.deny === "true"')
 							td
 								p.control.is-fullwidth
 									select(v-model='right.role')
@@ -89,7 +89,7 @@ block adminContent
 										option(value='false') Allow
 										option(value='true') Deny
 							td.is-centered.has-action-icons
-								i.icon-delete.is-red(v-on:click='removeRightsRow(right._id)')
+								i.icon-delete.is-red(v-on:click='removeRightsRow(idx)')
 						tr(v-if='rights.length < 1', v-cloak)
 							td.is-icon
 							td.is-centered(colspan='3'): em No additional access rights
