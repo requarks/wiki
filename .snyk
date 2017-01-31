@@ -1,7 +1,13 @@
-version: v1.5.2
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.7.0
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
   'npm:moment:20161019':
     - express-brute-mongoose > moment:
         reason: Waiting for new version
         expires: '2016-11-30T03:04:46.410Z'
+  'npm:marked:20170112':
+    - simplemde > marked:
+        reason: No fix available
+        expires: '2017-03-02T00:49:29.268Z'
 patch: {}
