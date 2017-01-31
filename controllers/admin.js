@@ -23,6 +23,35 @@ router.get('/profile', (req, res) => {
 
 });
 
+router.post('/profile', (req, res) => {
+
+	if(res.locals.isGuest) {
+		return res.render('error-forbidden');
+	}
+
+	return db.User.findById(req.user.id).then((usr) => {
+		usr.name = _.trim(req.body.name);
+		if(usr.provider === 'local' && req.body.password !== '********') {
+			let nPwd = _.trim(req.body.password);
+			if(nPwd.length < 6) {
+				return Promise.reject(new Error('New Password too short!'))
+			} else {
+				return db.User.hashPassword(nPwd).then((pwd) => {
+					usr.password = pwd;
+					return usr.save();
+				});
+			}
+		} else {
+			return usr.save();
+		}
+	}).then(() => {
+		return res.json({ msg: 'OK' });
+	}).catch((err) => {
+		res.status(400).json({ msg: err.message });
+	})
+
+});
+
 router.get('/stats', (req, res) => {
 
 	if(res.locals.isGuest) {

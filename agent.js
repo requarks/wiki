@@ -42,6 +42,7 @@ var _ = require('lodash');
 var moment = require('moment');
 var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require("fs-extra"));
+var klaw = require('klaw');
 var path = require('path');
 var cron = require('cron').CronJob;
 
@@ -92,7 +93,7 @@ var job = new cron({
 							jobCbStreamDocs_resolve = resolve;
 						});
 
-				fs.walk(repoPath).on('data', function (item) {
+				klaw(repoPath).on('data', function (item) {
 					if(path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
 
 						let entryPath = entries.parsePath(entries.getEntryPathFromFullPath(item.path));

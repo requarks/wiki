@@ -1,5 +1,35 @@
 
-if($('#page-type-admin-users').length) {
+if($('#page-type-admin-profile').length) {
+
+	let vueProfile = new Vue({
+		el: '#page-type-admin-profile',
+		data: {
+			password: '********',
+			passwordVerify: '********',
+			name: ''
+		},
+		methods: {
+			saveUser: (ev) => {
+				if(vueProfile.password !== vueProfile.passwordVerify) {
+					alerts.pushError('Error', "Passwords don't match!");
+					return;
+				}
+				$.post(window.location.href, {
+					password: vueProfile.password,
+					name: vueProfile.name
+				}).done((resp) => {
+					alerts.pushSuccess('Saved successfully', 'Changes have been applied.');
+				}).fail((jqXHR, txtStatus, resp) => {
+					alerts.pushError('Error', resp);
+				})
+			}
+		},
+		created: function() {
+			this.name = usrDataName;
+		}
+	});
+
+} else if($('#page-type-admin-users').length) {
 
 	//=include ../modals/admin-users-create.js
 

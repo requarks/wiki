@@ -1,45 +1,49 @@
 extends ./_layout.pug
 
 block adminContent
-	.hero
-		h1.title#title My Profile
-		h2.subtitle Profile and authentication info
-	.form-sections
-		.columns.is-gapless
-			.column.is-two-thirds
-				section
-					label.label Email
-					p.control.is-fullwidth
-						input.input(type='text', placeholder='Email', value=user.email, disabled=(user.provider !== 'local'))
-				if user.provider == 'local'
+	#page-type-admin-profile
+		.hero
+			h1.title#title My Profile
+			h2.subtitle Profile and authentication info
+		.form-sections
+			.columns.is-gapless
+				.column.is-two-thirds
 					section
-						label.label Password
+						label.label Email
 						p.control.is-fullwidth
-							input.input(type='password', placeholder='Password', value='********')
+							input.input(type='text', placeholder='Email', value=user.email, disabled)
+					if user.provider == 'local'
+						section
+							label.label Password
+							p.control.is-fullwidth
+								input.input(type='password', placeholder='Password', value='********', v-model='password')
+						section
+							label.label Verify Password
+							p.control.is-fullwidth
+								input.input(type='password', placeholder='Password', value='********', v-model='passwordVerify')
 					section
-						label.label Verify Password
+						label.label Display Name
 						p.control.is-fullwidth
-							input.input(type='password', placeholder='Password', value='********')
-				section
-					label.label Display Name
-					p.control.is-fullwidth
-						input.input(type='text', placeholder='John Smith', value=user.name)
-				section
-					button.button.is-green
-						i.icon-check
-						span Save Changes
-			.column
-				.panel
-					label.label Provider
-					p.control.account-profile-provider
-						case user.provider
-							when 'local': i.icon-server
-							when 'windowslive': i.icon-windows2.is-blue
-							when 'google': i.icon-google.is-blue
-							when 'facebook': i.icon-facebook.is-purple
-							default: i.icon-warning
-						= t('auth:providers.' + user.provider)
-					label.label Member since
-					p.control= userMoment(user.createdAt).format('LL')
-					label.label Last Profile Update
-					p.control= userMoment(user.updatedAt).format('LL')
+							input.input(type='text', placeholder='John Smith', v-model='name')
+					section
+						button.button.is-green(v-on:click='saveUser')
+							i.icon-check
+							span Save Changes
+				.column
+					.panel
+						label.label Provider
+						p.control.account-profile-provider
+							case user.provider
+								when 'local': i.icon-server
+								when 'windowslive': i.icon-windows2.is-blue
+								when 'google': i.icon-google.is-blue
+								when 'facebook': i.icon-facebook.is-purple
+								default: i.icon-warning
+							= t('auth:providers.' + user.provider)
+						label.label Member since
+						p.control= userMoment(user.createdAt).format('LL')
+						label.label Last Profile Update
+						p.control= userMoment(user.updatedAt).format('LL')
+
+	script(type='text/javascript').
+		var usrDataName = "!{user.name}";
