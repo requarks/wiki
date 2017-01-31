@@ -21,6 +21,9 @@
 
 ##### Milestones
 - [x] Account Management
+	- [x] Profile
+	- [x] Manage users
+	- [ ] Create local account
 - [x] Assets Management
 	- [x] Images
 	- [x] Files/Documents
