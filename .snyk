@@ -10,4 +10,17 @@ ignore:
     - simplemde > marked:
         reason: No fix available
         expires: '2017-03-02T00:49:29.268Z'
+  'npm:ws:20160920':
+    - engine.io > ws:
+        reason: No fix available yet
+        expires: '2017-03-09T19:39:17.067Z'
+    - engine.io-client > ws:
+        reason: No fix available yet
+        expires: '2017-03-09T19:39:17.067Z'
+    - socket.io > engine.io > ws:
+        reason: No fix available yet
+        expires: '2017-03-09T19:39:17.067Z'
+    - socket.io > socket.io-client > engine.io-client > ws:
+        reason: No fix available yet
+        expires: '2017-03-09T19:39:17.067Z'
 patch: {}
