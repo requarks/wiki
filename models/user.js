@@ -65,7 +65,7 @@ userSchema.statics.processProfile = (profile) => {
 		email: primaryEmail,
 		provider: profile.provider,
 		providerId: profile.id,
-		name: profile.displayName
+		name: profile.displayName || _.split(primaryEmail, '@')[0]
 	}, {
 		new: true,
 		upsert: true
