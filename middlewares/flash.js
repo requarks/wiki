@@ -1,4 +1,4 @@
-"use strict";
+'use strict'
 
 /**
  * Flash middleware
@@ -9,9 +9,7 @@
  * @return     {any}               void
  */
 module.exports = (req, res, next) => {
+  res.locals.appflash = req.flash('alert')
 
-	res.locals.appflash = req.flash('alert');
-
-	next();
-
-};
+  next()
+}

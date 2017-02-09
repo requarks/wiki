@@ -1,7 +1,4 @@
-"use strict";
-
-const Promise = require('bluebird'),
-			_ = require('lodash');
+'use strict'
 
 /**
  * Upload File schema
@@ -10,7 +7,7 @@ const Promise = require('bluebird'),
  */
 var uplFileSchema = Mongoose.Schema({
 
-	_id: String,
+  _id: String,
 
   category: {
     type: String,
@@ -42,9 +39,6 @@ var uplFileSchema = Mongoose.Schema({
     required: true
   }
 
-},
-{
-	timestamps: {}
-});
+}, { timestamps: {} })
 
-module.exports = Mongoose.model('UplFile', uplFileSchema);
+module.exports = Mongoose.model('UplFile', uplFileSchema)

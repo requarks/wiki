@@ -4,207 +4,188 @@
 // Licensed under AGPLv3
 // ===========================================
 
-global.PROCNAME = 'AGENT';
-global.ROOTPATH = __dirname;
-global.IS_DEBUG = process.env.NODE_ENV === 'development';
-if(IS_DEBUG) {
-  global.CORE_PATH = ROOTPATH + '/../core/';
+global.PROCNAME = 'AGENT'
+global.ROOTPATH = __dirname
+global.IS_DEBUG = process.env.NODE_ENV === 'development'
+if (IS_DEBUG) {
+  global.CORE_PATH = ROOTPATH + '/../core/'
 } else {
-  global.CORE_PATH = ROOTPATH + '/node_modules/requarks-core/';
+  global.CORE_PATH = ROOTPATH + '/node_modules/requarks-core/'
 }
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
-global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG);
+global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG)
 
 // ----------------------------------------
 // Load global modules
 // ----------------------------------------
 
-winston.info('[AGENT] Background Agent is initializing...');
+winston.info('[AGENT] Background Agent is initializing...')
 
-let appconf = require(CORE_PATH + 'core-libs/config')();
-global.appconfig = appconf.config;
-global.appdata = appconf.data;
-global.db = require(CORE_PATH + 'core-libs/mongodb').init();
-global.upl = require('./libs/uploads-agent').init();
-global.git = require('./libs/git').init();
-global.entries = require('./libs/entries').init();
-global.mark = require('./libs/markdown');
+let appconf = require(CORE_PATH + 'core-libs/config')()
+global.appconfig = appconf.config
+global.appdata = appconf.data
+global.db = require(CORE_PATH + 'core-libs/mongodb').init()
+global.upl = require('./libs/uploads-agent').init()
+global.git = require('./libs/git').init()
+global.entries = require('./libs/entries').init()
+global.mark = require('./libs/markdown')
 
 // ----------------------------------------
 // Load modules
 // ----------------------------------------
 
-var _ = require('lodash');
-var moment = require('moment');
-var Promise = require('bluebird');
-var fs = Promise.promisifyAll(require("fs-extra"));
-var klaw = require('klaw');
-var path = require('path');
-var cron = require('cron').CronJob;
+var moment = require('moment')
+var Promise = require('bluebird')
+var fs = Promise.promisifyAll(require('fs-extra'))
+var klaw = require('klaw')
+var path = require('path')
+var Cron = require('cron').CronJob
 
 // ----------------------------------------
 // Start Cron
 // ----------------------------------------
 
-var jobIsBusy = false;
-var jobUplWatchStarted = false;
+var jobIsBusy = false
+var jobUplWatchStarted = false
 
-var job = new cron({
-	cronTime: '0 */5 * * * *',
-	onTick: () => {
+var job = new Cron({
+  cronTime: '0 */5 * * * *',
+  onTick: () => {
+    // Make sure we don't start two concurrent jobs
 
-		// Make sure we don't start two concurrent jobs
+    if (jobIsBusy) {
+      winston.warn('[AGENT] Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
+      return
+    }
+    winston.info('[AGENT] Running all jobs...')
+    jobIsBusy = true
 
-		if(jobIsBusy) {
-			winston.warn('[AGENT] Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)');
-			return;
-		}
-		winston.info('[AGENT] Running all jobs...');
-		jobIsBusy = true;
+    // Prepare async job collector
 
-		// Prepare async job collector
+    let jobs = []
+    let repoPath = path.resolve(ROOTPATH, appconfig.paths.repo)
+    let dataPath = path.resolve(ROOTPATH, appconfig.paths.data)
+    let uploadsTempPath = path.join(dataPath, 'temp-upload')
 
-		let jobs = [];
-		let repoPath = path.resolve(ROOTPATH, appconfig.paths.repo);
-		let dataPath = path.resolve(ROOTPATH, appconfig.paths.data);
-		let uploadsPath = path.join(repoPath, 'uploads');
-		let uploadsTempPath = path.join(dataPath, 'temp-upload');
+    // ----------------------------------------
+    // REGULAR JOBS
+    // ----------------------------------------
 
-		// ----------------------------------------
-		// REGULAR JOBS
-		// ----------------------------------------
+    //* ****************************************
+    // -> Sync with Git remote
+    //* ****************************************
 
-		//*****************************************
-		//-> Sync with Git remote
-		//*****************************************
+    jobs.push(git.onReady.then(() => {
+      return git.resync().then(() => {
+        // -> Stream all documents
 
-		jobs.push(git.onReady.then(() => {
-			return git.resync().then(() => {
+        let cacheJobs = []
+        let jobCbStreamDocsResolve = null
+        let jobCbStreamDocs = new Promise((resolve, reject) => {
+          jobCbStreamDocsResolve = resolve
+        })
 
-				//-> Stream all documents
+        klaw(repoPath).on('data', function (item) {
+          if (path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
+            let entryPath = entries.parsePath(entries.getEntryPathFromFullPath(item.path))
+            let cachePath = entries.getCachePath(entryPath)
 
-				let cacheJobs = [];
-				let jobCbStreamDocs_resolve = null,
-						jobCbStreamDocs = new Promise((resolve, reject) => {
-							jobCbStreamDocs_resolve = resolve;
-						});
+            // -> Purge outdated cache
 
-				klaw(repoPath).on('data', function (item) {
-					if(path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
+            cacheJobs.push(
+              fs.statAsync(cachePath).then((st) => {
+                return moment(st.mtime).isBefore(item.stats.mtime) ? 'expired' : 'active'
+              }).catch((err) => {
+                return (err.code !== 'EEXIST') ? err : 'new'
+              }).then((fileStatus) => {
+                // -> Delete expired cache file
 
-						let entryPath = entries.parsePath(entries.getEntryPathFromFullPath(item.path));
-						let cachePath = entries.getCachePath(entryPath);
-						
-						//-> Purge outdated cache
+                if (fileStatus === 'expired') {
+                  return fs.unlinkAsync(cachePath).return(fileStatus)
+                }
 
-						cacheJobs.push(
-							fs.statAsync(cachePath).then((st) => {
-								return moment(st.mtime).isBefore(item.stats.mtime) ? 'expired' : 'active';
-							}).catch((err) => {
-								return (err.code !== 'EEXIST') ? err : 'new';
-							}).then((fileStatus) => {
+                return fileStatus
+              }).then((fileStatus) => {
+                // -> Update cache and search index
 
-								//-> Delete expired cache file
+                if (fileStatus !== 'active') {
+                  return entries.updateCache(entryPath)
+                }
 
-								if(fileStatus === 'expired') {
-									return fs.unlinkAsync(cachePath).return(fileStatus);
-								}
+                return true
+              })
+            )
+          }
+        }).on('end', () => {
+          jobCbStreamDocsResolve(Promise.all(cacheJobs))
+        })
 
-								return fileStatus;
+        return jobCbStreamDocs
+      })
+    }))
 
-							}).then((fileStatus) => {
+    //* ****************************************
+    // -> Clear failed temporary upload files
+    //* ****************************************
 
-								//-> Update cache and search index
+    jobs.push(
+      fs.readdirAsync(uploadsTempPath).then((ls) => {
+        let fifteenAgo = moment().subtract(15, 'minutes')
 
-								if(fileStatus !== 'active') {
-									return entries.updateCache(entryPath);
-								}
+        return Promise.map(ls, (f) => {
+          return fs.statAsync(path.join(uploadsTempPath, f)).then((s) => { return { filename: f, stat: s } })
+        }).filter((s) => { return s.stat.isFile() }).then((arrFiles) => {
+          return Promise.map(arrFiles, (f) => {
+            if (moment(f.stat.ctime).isBefore(fifteenAgo, 'minute')) {
+              return fs.unlinkAsync(path.join(uploadsTempPath, f.filename))
+            } else {
+              return true
+            }
+          })
+        })
+      })
+    )
 
-								return true;
+    // ----------------------------------------
+    // Run
+    // ----------------------------------------
 
-							})
+    Promise.all(jobs).then(() => {
+      winston.info('[AGENT] All jobs completed successfully! Going to sleep for now.')
 
-						);
+      if (!jobUplWatchStarted) {
+        jobUplWatchStarted = true
+        upl.initialScan().then(() => {
+          job.start()
+        })
+      }
 
-					}
-				}).on('end', () => {
-					jobCbStreamDocs_resolve(Promise.all(cacheJobs));
-				});
-
-				return jobCbStreamDocs;
-
-			});
-		}));
-
-		//*****************************************
-		//-> Clear failed temporary upload files
-		//*****************************************
-
-		jobs.push(
-			fs.readdirAsync(uploadsTempPath).then((ls) => {
-
-				let fifteenAgo = moment().subtract(15, 'minutes');
-
-				return Promise.map(ls, (f) => {
-					return fs.statAsync(path.join(uploadsTempPath, f)).then((s) => { return { filename: f, stat: s }; });
-				}).filter((s) => { return s.stat.isFile(); }).then((arrFiles) => {
-					return Promise.map(arrFiles, (f) => {
-
-						if(moment(f.stat.ctime).isBefore(fifteenAgo, 'minute')) {
-							return fs.unlinkAsync(path.join(uploadsTempPath, f.filename));
-						} else {
-							return true;
-						}
-
-					});
-				});
-
-			})
-		);
-
-		// ----------------------------------------
-		// Run
-		// ----------------------------------------
-
-		Promise.all(jobs).then(() => {
-			winston.info('[AGENT] All jobs completed successfully! Going to sleep for now.');
-
-			if(!jobUplWatchStarted) {
-				jobUplWatchStarted = true;
-				upl.initialScan().then(() => {
-					job.start();
-				});
-			}
-
-			return true;
-
-		}).catch((err) => {
-			winston.error('[AGENT] One or more jobs have failed: ', err);
-		}).finally(() => {
-			jobIsBusy = false;
-		});
-
-	},
-	start: false,
-	timeZone: 'UTC',
-	runOnInit: true
-});
-
+      return true
+    }).catch((err) => {
+      winston.error('[AGENT] One or more jobs have failed: ', err)
+    }).finally(() => {
+      jobIsBusy = false
+    })
+  },
+  start: false,
+  timeZone: 'UTC',
+  runOnInit: true
+})
 
 // ----------------------------------------
 // Shutdown gracefully
 // ----------------------------------------
 
 process.on('disconnect', () => {
-	winston.warn('[AGENT] Lost connection to main server. Exiting...');
-	job.stop();
-	process.exit();
-});
+  winston.warn('[AGENT] Lost connection to main server. Exiting...')
+  job.stop()
+  process.exit()
+})
 
 process.on('exit', () => {
-	job.stop();
-});
+  job.stop()
+})

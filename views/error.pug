@@ -19,20 +19,15 @@ html
 
 		// CSS
 		link(type='text/css', rel='stylesheet', href='/css/libs.css')
-		link(type='text/css', rel='stylesheet', href='/css/app.css')
+		link(type='text/css', rel='stylesheet', href='/css/error.css')
 
-	body(class='server-error')
-		section.hero.is-warning.is-fullheight
-			.hero-body
-				.container
-					a(href='/'): img(src='/favicons/android-icon-96x96.png')
-					h1.title(style={ 'margin-top': '30px'})= message
-					h2.subtitle(style={ 'margin-bottom': '50px'}) Oops, something went wrong
-					a.button.is-warning.is-inverted(href='/') Go Home
+	body(class='is-error')
+		.container
+			a(href='/'): img(src='/favicons/android-icon-96x96.png')
+			h1= message
+			h2 Oops, something went wrong
+			a.button.is-amber.is-inverted.is-featured(href='/') Go Home
 
-		if error.stack
-			section.section
-				.container.is-fluid
-					.content
-						h3 Detailed debug trail:
-						pre: code #{error.stack}
+			if error.stack
+				h3 Detailed debug trail:
+				pre: code #{error.stack}

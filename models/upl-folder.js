@@ -1,7 +1,4 @@
-"use strict";
-
-const Promise = require('bluebird'),
-			_ = require('lodash');
+'use strict'
 
 /**
  * Upload Folder schema
@@ -10,16 +7,13 @@ const Promise = require('bluebird'),
  */
 var uplFolderSchema = Mongoose.Schema({
 
-	_id: String,
+  _id: String,
 
   name: {
     type: String,
     index: true
   }
 
-},
-{
-	timestamps: {}
-});
+}, { timestamps: {} })
 
-module.exports = Mongoose.model('UplFolder', uplFolderSchema);
+module.exports = Mongoose.model('UplFolder', uplFolderSchema)

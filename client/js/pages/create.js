@@ -1,14 +1,12 @@
 
-if($('#page-type-create').length) {
+if ($('#page-type-create').length) {
+  let pageEntryPath = $('#page-type-create').data('entrypath')
 
-	let pageEntryPath = $('#page-type-create').data('entrypath');
+	// -> Discard
 
-	//-> Discard
+  $('.btn-create-discard').on('click', (ev) => {
+    $('#modal-create-discard').toggleClass('is-active')
+  })
 
-	$('.btn-create-discard').on('click', (ev) => {
-		$('#modal-create-discard').toggleClass('is-active');
-	});
-
-	//=include ../components/editor.js
-
+	// =include ../components/editor.js
 }

@@ -1,7 +1,4 @@
-"use strict";
-
-const Promise = require('bluebird'),
-			_ = require('lodash');
+'use strict'
 
 /**
  * Entry schema
@@ -10,7 +7,7 @@ const Promise = require('bluebird'),
  */
 var entrySchema = Mongoose.Schema({
 
-	_id: String,
+  _id: String,
 
   title: {
     type: String,
@@ -31,9 +28,9 @@ var entrySchema = Mongoose.Schema({
   }
 
 },
-{
-	timestamps: {}
-});
+  {
+    timestamps: {}
+  })
 
 entrySchema.index({
   _id: 'text',
@@ -48,6 +45,6 @@ entrySchema.index({
     content: 1
   },
   name: 'EntriesTextIndex'
-});
+})
 
-module.exports = Mongoose.model('Entry', entrySchema);
+module.exports = Mongoose.model('Entry', entrySchema)

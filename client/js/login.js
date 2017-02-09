@@ -1,7 +1,5 @@
-"use strict";
+'use strict'
 
-jQuery( document ).ready(function( $ ) {
-
-	$('#login-user').focus();
-
-});
+jQuery(document).ready(function ($) {
+  $('#login-user').focus()
+})

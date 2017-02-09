@@ -1,32 +1,26 @@
-"use strict";
+'use strict'
 
-const crypto = require('crypto');
+const crypto = require('crypto')
 
 /**
  * Internal Authentication
  */
 module.exports = {
 
-	_curKey: false,
+  _curKey: false,
 
-	init(inKey) {
+  init (inKey) {
+    this._curKey = inKey
 
-		this._curKey = inKey;
+    return this
+  },
 
-		return this;
+  generateKey () {
+    return crypto.randomBytes(20).toString('hex')
+  },
 
-	},
+  validateKey (inKey) {
+    return inKey === this._curKey
+  }
 
-	generateKey() {
-
-		return crypto.randomBytes(20).toString('hex');
-
-	},
-
-	validateKey(inKey) {
-
-		return inKey === this._curKey;
-
-	}
-
-};
+}

@@ -129,5 +129,35 @@
     "twemoji-awesome": "^1.0.4",
     "vue": "^2.1.10"
   },
+  "standard": {
+     "globals": [
+      "app",
+      "appconfig",
+      "appdata",
+      "bgAgent",
+      "db",
+      "entries",
+      "git",
+      "mark",
+      "lang",
+      "lcdata",
+      "rights",
+      "upl",
+      "winston",
+      "ws",
+      "Mongoose",
+      "CORE_PATH",
+      "ROOTPATH",
+      "IS_DEBUG",
+      "PROCNAME",
+      "WSInternalKey"
+    ],
+    "ignore": [
+      "assets/**/*",
+      "data/**/*",
+      "node_modules/**/*",
+      "repo/**/*"
+    ]
+  },
   "snyk": true
 }

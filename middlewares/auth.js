@@ -1,7 +1,6 @@
-"use strict";
+'use strict'
 
-var Promise = require('bluebird'),
-	moment = require('moment-timezone');
+const moment = require('moment-timezone')
 
 /**
  * Authentication middleware
@@ -12,29 +11,27 @@ var Promise = require('bluebird'),
  * @return     {any}               void
  */
 module.exports = (req, res, next) => {
+  // Is user authenticated ?
 
-	// Is user authenticated ?
+  if (!req.isAuthenticated()) {
+    return res.redirect('/login')
+  }
 
-	if (!req.isAuthenticated()) {
-		return res.redirect('/login');
-	}
+  // Check permissions
 
-	// Check permissions
+  if (!rights.check(req, 'read')) {
+    return res.render('error-forbidden')
+  }
 
-	if(!rights.check(req, 'read')) {
-		return res.render('error-forbidden');
-	}
+  // Set i18n locale
 
-	// Set i18n locale
+  req.i18n.changeLanguage(req.user.lang)
+  res.locals.userMoment = moment
+  res.locals.userMoment.locale(req.user.lang)
 
-	req.i18n.changeLanguage(req.user.lang);
-	res.locals.userMoment = moment;
-	res.locals.userMoment.locale(req.user.lang);
+  // Expose user data
 
-	// Expose user data
+  res.locals.user = req.user
 
-	res.locals.user = req.user;
-
-	return next();
-
-};
+  return next()
+}

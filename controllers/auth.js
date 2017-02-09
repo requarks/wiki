@@ -1,80 +1,80 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var ExpressBrute = require('express-brute');
-var ExpressBruteMongooseStore = require('express-brute-mongoose');
-var moment = require('moment');
+'use strict'
+
+const express = require('express')
+const router = express.Router()
+const passport = require('passport')
+const ExpressBrute = require('express-brute')
+const ExpressBruteMongooseStore = require('express-brute-mongoose')
+const moment = require('moment')
 
 /**
  * Setup Express-Brute
  */
-var EBstore = new ExpressBruteMongooseStore(db.Bruteforce);
-var bruteforce = new ExpressBrute(EBstore, {
-	freeRetries: 5,
-	minWait: 60 * 1000,
-	maxWait: 5 * 60 * 1000,
-	refreshTimeoutOnRequest: false,
-	failCallback(req, res, next, nextValidRequestDate) {
-		req.flash('alert', {
-	      class: 'error',
-	      title: 'Too many attempts!',
-	      message:  "You've made too many failed attempts in a short period of time, please try again " + moment(nextValidRequestDate).fromNow() + '.',
-	      iconClass: 'fa-times'
-	    });
-		res.redirect('/login');
-	}
-});
+const EBstore = new ExpressBruteMongooseStore(db.Bruteforce)
+const bruteforce = new ExpressBrute(EBstore, {
+  freeRetries: 5,
+  minWait: 60 * 1000,
+  maxWait: 5 * 60 * 1000,
+  refreshTimeoutOnRequest: false,
+  failCallback (req, res, next, nextValidRequestDate) {
+    req.flash('alert', {
+      class: 'error',
+      title: 'Too many attempts!',
+      message: "You've made too many failed attempts in a short period of time, please try again " + moment(nextValidRequestDate).fromNow() + '.',
+      iconClass: 'fa-times'
+    })
+    res.redirect('/login')
+  }
+})
 
 /**
  * Login form
  */
-router.get('/login', function(req, res, next) {
-	res.render('auth/login', {
-		usr: res.locals.usr
-	});
-});
+router.get('/login', function (req, res, next) {
+  res.render('auth/login', {
+    usr: res.locals.usr
+  })
+})
 
-router.post('/login', bruteforce.prevent, function(req, res, next) {
-	passport.authenticate('local', function(err, user, info) {
+router.post('/login', bruteforce.prevent, function (req, res, next) {
+  passport.authenticate('local', function (err, user, info) {
+    if (err) { return next(err) }
 
-		if (err) { return next(err); }
+    if (!user) {
+      req.flash('alert', {
+        title: 'Invalid login',
+        message: 'The email or password is invalid.'
+      })
+      return res.redirect('/login')
+    }
 
-		if (!user) {
-			req.flash('alert', {
-				title: 'Invalid login',
-				message:  "The email or password is invalid."
-			});
-			return res.redirect('/login');
-		}
-
-		req.logIn(user, function(err) {
-      if (err) { return next(err); }
+    req.logIn(user, function (err) {
+      if (err) { return next(err) }
       req.brute.reset(function () {
-				return res.redirect('/');
-			});
-    });
-
-	})(req, res, next);
-});
+        return res.redirect('/')
+      })
+    })
+  })(req, res, next)
+})
 
 /**
  * Social Login
  */
 
-router.get('/login/ms', passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }));
-router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-router.get('/login/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }));
+router.get('/login/ms', passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }))
+router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
+router.get('/login/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }))
 
-router.get('/login/ms/callback', passport.authenticate('windowslive', { failureRedirect: '/login', successRedirect: '/' }));
-router.get('/login/google/callback', passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }));
-router.get('/login/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }));
+router.get('/login/ms/callback', passport.authenticate('windowslive', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/google/callback', passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }))
 
 /**
  * Logout
  */
-router.get('/logout', function(req, res) {
-	req.logout();
-	res.redirect('/');
-});
+router.get('/logout', function (req, res) {
+  req.logout()
+  res.redirect('/')
+})
 
-module.exports = router;
+module.exports = router
