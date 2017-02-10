@@ -11,6 +11,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d0217a3153c4595bdedb322263e55c8)](https://www.codacy.com/app/Requarks/wiki)
 [![Dependency Status](https://gemnasium.com/badges/github.com/Requarks/wiki.svg)](https://gemnasium.com/github.com/Requarks/wiki)
 [![Known Vulnerabilities](https://snyk.io/test/github/requarks/wiki/badge.svg)](https://snyk.io/test/github/requarks/wiki)
+[![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
 *Under active development*
@@ -66,8 +67,8 @@
 
 ### Special Thanks
 
-![Browserstack](https://wiki.requarks.io/assets/images/logo_browserstack.png)
+![Browserstack](https://wiki.requarks.io/assets/images/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-![DigitalOcean](https://wiki.requarks.io/assets/images/logo_digitalocean.png)
+![DigitalOcean](https://wiki.requarks.io/assets/images/logo_digitalocean.png)  
 [DigitalOcean](https://www.digitalocean.com/) for providing hosting of the Wiki.js documentation site.

@@ -194,6 +194,25 @@ router.post('/users/:id', (req, res) => {
   })
 })
 
+/**
+ * Delete / Deauthorize a user
+ */
+router.delete('/users/:id', (req, res) => {
+  if (!res.locals.rights.manage) {
+    return res.status(401).json({ msg: 'Unauthorized' })
+  }
+
+  if (!validator.isMongoId(req.params.id)) {
+    return res.status(400).json({ msg: 'Invalid User ID' })
+  }
+
+  return db.User.findByIdAndRemove(req.params.id).then(() => {
+    return res.json({ msg: 'OK' })
+  }).catch((err) => {
+    res.status(500).json({ msg: err.message })
+  })
+})
+
 router.get('/settings', (req, res) => {
   if (!res.locals.rights.manage) {
     return res.render('error-forbidden')

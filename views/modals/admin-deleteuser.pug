@@ -2,7 +2,9 @@
   .modal-background
   .modal-container
     .modal-content
-      header.is-red Delete User Account?
+      header.is-red
+        span Delete User Account?
+        p.modal-notify(v-bind:class='{ "is-active": loading }'): i
       section
         span Are you sure you want to delete this user account? This action cannot be undone!
       footer

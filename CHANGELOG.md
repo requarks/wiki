@@ -3,10 +3,13 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [v1.0-beta.3] - 2017-02-10
 ### Added
 - Change log
 - Added .editorconfig, .eslintrc.json and .pug-lintrc.json for code linting
 - Added Create / Authorize User feature
+- Added Delete / De-authorize User feature
 - Added Login as... button to Forbidden page
 
 ### Fixed
@@ -16,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 - Conversion to Standard JS compliant code
+- Accounts that are not pre-authorized are no longer added with no rights
 
 ## [v1.0-beta.2] - 2017-01-30
 ### Added
@@ -24,5 +28,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
-[Unreleased]: https://github.com/Requarks/wiki/compare/v1.0-beta.2...HEAD
+[Unreleased]: https://github.com/Requarks/wiki/compare/v1.0-beta.3...HEAD
+[v1.0-beta.3]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.3
 [v1.0-beta.2]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.2

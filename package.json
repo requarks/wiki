@@ -83,7 +83,7 @@
     "pug": "^2.0.0-beta11",
     "read-chunk": "^2.0.0",
     "remove-markdown": "^0.1.0",
-    "requarks-core": "^0.2.0",
+    "requarks-core": "^0.2.1",
     "request": "^2.79.0",
     "search-index": "^0.9.9",
     "serve-favicon": "^2.3.2",

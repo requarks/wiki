@@ -63,10 +63,9 @@ userSchema.statics.processProfile = (profile) => {
     providerId: profile.id,
     name: profile.displayName || _.split(primaryEmail, '@')[0]
   }, {
-    new: true,
-    upsert: true
+    new: true
   }).then((user) => {
-    return user || Promise.reject(new Error('User Upsert failed.'))
+    return user || Promise.reject(new Error('You have not been authorized to login to this site yet.'))
   })
 }
 
