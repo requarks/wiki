@@ -129,6 +129,7 @@
     "pug-lint": "^2.4.0",
     "run-sequence": "^1.2.2",
     "snyk": "^1.24.6",
+    "standard": "*",
     "sticky-js": "^1.1.9",
     "twemoji-awesome": "^1.0.4",
     "vue": "^2.1.10"
