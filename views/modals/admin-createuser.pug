@@ -3,31 +3,33 @@
   .modal-background
   .modal-container
     .modal-content
-      header.is-blue Create / Authorize User
+      header.is-blue
+        span Create / Authorize User
+        p.modal-notify(v-bind:class='{ "is-active": loading }'): i
       section
         label.label Email address:
         p.control.is-fullwidth
           input.input(type='text', placeholder='e.g. john.doe@company.com', v-model='email')
-          span.help.is-red.is-hidden This email is invalid!
       section
         label.label Provider:
         p.control.is-fullwidth
           select(v-model='provider')
             option(value='local') Local Database
-            option(value='windowslive') Microsoft Account
-            option(value='google') Google ID
-            option(value='facebook') Facebook
+            if appconfig.auth.microsoft.enabled
+              option(value='windowslive') Microsoft Account
+            if appconfig.auth.google.enabled
+              option(value='google') Google ID
+            if appconfig.auth.facebook.enabled
+              option(value='facebook') Facebook
       section(v-if='provider=="local"')
         label.label Password:
         p.control.is-fullwidth
           input.input(type='password', placeholder='', v-model='password')
-          span.help.is-red.is-hidden This password is invalid!
       section(v-if='provider=="local"')
         label.label Full Name:
         p.control.is-fullwidth
           input.input(type='text', placeholder='e.g. John Doe', v-model='name')
-          span.help.is-red.is-hidden This name is invalid!
       footer
         a.button.is-grey.is-outlined(v-on:click='cancel') Discard
-        a.button.is-blue(v-on:click='create', v-if='provider=="local"') Create User
-        a.button.is-blue(v-on:click='create', v-if='provider!="local"') Authorize User
+        a.button(v-on:click='create', v-if='provider=="local"', v-bind:disabled='loading', v-bind:class='{ "is-disabled": loading, "is-blue": !loading }') Create User
+        a.button(v-on:click='create', v-if='provider!="local"', v-bind:disabled='loading', v-bind:class='{ "is-disabled": loading, "is-blue": !loading }') Authorize User

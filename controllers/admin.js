@@ -103,6 +103,65 @@ router.get('/users/:id', (req, res) => {
     })
 })
 
+/**
+ * Create / Authorize a new user
+ */
+router.post('/users/create', (req, res) => {
+  if (!res.locals.rights.manage) {
+    return res.status(401).json({ msg: 'Unauthorized' })
+  }
+
+  let nUsr = {
+    email: _.trim(req.body.email),
+    provider: _.trim(req.body.provider),
+    password: req.body.password,
+    name: _.trim(req.body.name)
+  }
+
+  if (!validator.isEmail(nUsr.email)) {
+    return res.status(400).json({ msg: 'Invalid email address' })
+  } else if (!validator.isIn(nUsr.provider, ['local', 'google', 'windowslive', 'facebook'])) {
+    return res.status(400).json({ msg: 'Invalid provider' })
+  } else if (nUsr.provider === 'local' && !validator.isLength(nUsr.password, { min: 6 })) {
+    return res.status(400).json({ msg: 'Password too short or missing' })
+  } else if (nUsr.provider === 'local' && !validator.isLength(nUsr.name, { min: 2 })) {
+    return res.status(400).json({ msg: 'Name is missing' })
+  }
+
+  db.User.findOne({ email: nUsr.email, provider: nUsr.provider }).then(exUsr => {
+    if (exUsr) {
+      return res.status(400).json({ msg: 'User already exists!' }) || true
+    }
+
+    let pwdGen = (nUsr.provider === 'local') ? db.User.hashPassword(nUsr.password) : Promise.resolve(true)
+    return pwdGen.then(nPwd => {
+      if (nUsr.provider !== 'local') {
+        nUsr.password = ''
+        nUsr.name = '-- pending --'
+      } else {
+        nUsr.password = nPwd
+      }
+
+      nUsr.rights = [{
+        role: 'read',
+        path: '/',
+        exact: false,
+        deny: false
+      }]
+
+      return db.User.create(nUsr).then(() => {
+        return res.json({ ok: true })
+      })
+    }).catch(err => {
+      winston.warn(err)
+      return res.status(500).json({ msg: err })
+    })
+  }).catch(err => {
+    winston.warn(err)
+    return res.status(500).json({ msg: err })
+  })
+})
+
 router.post('/users/:id', (req, res) => {
   if (!res.locals.rights.manage) {
     return res.status(401).json({ msg: 'Unauthorized' })

@@ -6,6 +6,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Change log
 - Added .editorconfig, .eslintrc.json and .pug-lintrc.json for code linting
+- Added Create / Authorize User feature
+- Added Login as... button to Forbidden page
 
 ### Fixed
 - Fixed issue with social accounts with empty name
