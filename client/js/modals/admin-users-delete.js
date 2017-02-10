@@ -1,3 +1,4 @@
+/* global $, Vue */
 
 // Vue Delete User instance
 

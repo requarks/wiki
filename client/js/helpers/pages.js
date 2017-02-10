@@ -1,3 +1,5 @@
+/* global _ */
+/* eslint-disable no-unused-vars */
 
 function makeSafePath (rawPath) {
   let rawParts = _.split(_.trim(rawPath), '/')
@@ -7,3 +9,5 @@ function makeSafePath (rawPath) {
 
   return _.join(_.filter(rawParts, (r) => { return !_.isEmpty(r) }), '/')
 }
+
+/* eslint-enable no-unused-vars */

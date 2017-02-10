@@ -1,3 +1,4 @@
+/* global $, Vue, ace, mde, _ */
 
 let modelist = ace.require('ace/ext/modelist')
 let codeEditor = null
@@ -57,7 +58,7 @@ let vueCodeBlock = new Vue({
       }, 300)
     },
     cancel: (ev) => {
-      mdeModalOpenState = false
+      mdeModalOpenState = false  // eslint-disable-line no-undef
       $('#modal-editor-codeblock').removeClass('is-active')
       vueCodeBlock.initContent = ''
     },

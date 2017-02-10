@@ -1,3 +1,4 @@
+/* global $, ace */
 
 if ($('#page-type-source').length) {
   var scEditor = ace.edit('source-display')
@@ -9,8 +10,10 @@ if ($('#page-type-source').length) {
   scEditor.setReadOnly(true)
   scEditor.renderer.updateFull()
 
-  let currentBasePath = ($('#page-type-source').data('entrypath') !== 'home') ? $('#page-type-source').data('entrypath') : ''
+  let currentBasePath = ($('#page-type-source').data('entrypath') !== 'home') ? $('#page-type-source').data('entrypath') : '' // eslint-disable-line no-unused-vars
 
-  // =include ../modals/create.js
-	// =include ../modals/move.js
+  /* eslint-disable spaced-comment */
+  //=include ../modals/create.js
+  //=include ../modals/move.js
+  /* eslint-enable spaced-comment */
 }

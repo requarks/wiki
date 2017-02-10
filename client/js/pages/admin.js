@@ -1,3 +1,4 @@
+/* global $, Vue, alerts, _, usrData, usrDataName */
 
 if ($('#page-type-admin-profile').length) {
   let vueProfile = new Vue({
@@ -29,7 +30,9 @@ if ($('#page-type-admin-profile').length) {
   })
 } else if ($('#page-type-admin-users').length) {
 
-	// =include ../modals/admin-users-create.js
+  /* eslint-disable spaced-comment */
+  //=include ../modals/admin-users-create.js
+  /* eslint-enable spaced-comment */
 
 } else if ($('#page-type-admin-users-edit').length) {
   let vueEditUser = new Vue({
@@ -92,5 +95,7 @@ if ($('#page-type-admin-profile').length) {
     }
   })
 
-	// =include ../modals/admin-users-delete.js
+  /* eslint-disable spaced-comment */
+  //=include ../modals/admin-users-delete.js
+  /* eslint-enable spaced-comment */
 }

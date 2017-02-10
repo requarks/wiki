@@ -1,3 +1,4 @@
+/* global $, Vue */
 
 // Vue Create User instance
 

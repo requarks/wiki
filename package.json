@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server",
     "dev": "gulp dev",
-    "test": "snyk test && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec ./tests/index.js && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage",
+    "test": "snyk test && standard && pug-lint ./views",
     "snyk-protect": "snyk protect",
     "__prepublish": "npm run snyk-protect"
   },
@@ -101,6 +101,9 @@
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
     "codacy-coverage": "^2.0.0",
+    "eslint": "^3.15.0",
+    "eslint-plugin-promise": "^3.4.1",
+    "eslint-plugin-standard": "^2.0.1",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-clean-css": "^3.0.0",
@@ -123,6 +126,7 @@
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0",
     "nodemon": "^1.11.0",
+    "pug-lint": "^2.4.0",
     "run-sequence": "^1.2.2",
     "snyk": "^1.24.6",
     "sticky-js": "^1.1.9",
@@ -130,7 +134,7 @@
     "vue": "^2.1.10"
   },
   "standard": {
-     "globals": [
+    "globals": [
       "app",
       "appconfig",
       "appdata",

@@ -1,3 +1,6 @@
+'use strict'
+
+/* global $, Vue, _, filesize, SimpleMDE, alerts, vueImage, vueFile, vueVideo, vueCodeBlock */
 
 // ====================================
 // Markdown Editor
@@ -5,16 +8,18 @@
 
 if ($('#mk-editor').length === 1) {
   let mdeModalOpenState = false
-  let mdeCurrentEditor = null
+  let mdeCurrentEditor = null // eslint-disable-line no-unused-vars
 
   Vue.filter('filesize', (v) => {
     return _.toUpper(filesize(v))
   })
 
-	// =include editor-image.js
-	// =include editor-file.js
-	// =include editor-video.js
-	// =include editor-codeblock.js
+  /* eslint-disable spaced-comment */
+  //=include editor-image.js
+  //=include editor-file.js
+  //=include editor-video.js
+  //=include editor-codeblock.js
+  /* eslint-enable spaced-comment */
 
   var mde = new SimpleMDE({
     autofocus: true,
@@ -23,12 +28,13 @@ if ($('#mk-editor').length === 1) {
     placeholder: 'Enter Markdown formatted content here...',
     spellChecker: false,
     status: false,
-    toolbar: [{
-      name: 'bold',
-      action: SimpleMDE.toggleBold,
-      className: 'icon-bold',
-      title: 'Bold'
-    },
+    toolbar: [
+      {
+        name: 'bold',
+        action: SimpleMDE.toggleBold,
+        className: 'icon-bold',
+        title: 'Bold'
+      },
       {
         name: 'italic',
         action: SimpleMDE.toggleItalic,
@@ -83,10 +89,10 @@ if ($('#mk-editor').length === 1) {
       {
         name: 'link',
         action: (editor) => {
-					/* if(!mdeModalOpenState) {
-						mdeModalOpenState = true;
-						$('#modal-editor-link').slideToggle();
-					} */
+          /* if(!mdeModalOpenState) {
+            mdeModalOpenState = true;
+            $('#modal-editor-link').slideToggle();
+          } */
         },
         className: 'icon-link2',
         title: 'Insert Link'
@@ -157,7 +163,7 @@ if ($('#mk-editor').length === 1) {
       {
         name: 'table',
         action: (editor) => {
-					// todo
+          // todo
         },
         className: 'icon-table',
         title: 'Insert Table'
@@ -175,7 +181,7 @@ if ($('#mk-editor').length === 1) {
     }
   })
 
-	// -> Save
+  // -> Save
 
   let saveCurrentDocument = (ev) => {
     $.ajax(window.location.href, {
@@ -186,7 +192,7 @@ if ($('#mk-editor').length === 1) {
       method: 'PUT'
     }).then((rData, rStatus, rXHR) => {
       if (rData.ok) {
-        window.location.assign('/' + pageEntryPath)
+        window.location.assign('/' + pageEntryPath) // eslint-disable-line no-undef
       } else {
         alerts.pushError('Something went wrong', rData.error)
       }

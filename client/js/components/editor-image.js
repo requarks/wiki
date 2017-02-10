@@ -1,3 +1,4 @@
+/* global $, Vue, mde, _, alerts, socket */
 
 let vueImage = new Vue({
   el: '#modal-editor-image',
@@ -26,18 +27,18 @@ let vueImage = new Vue({
   methods: {
 
     open: () => {
-      mdeModalOpenState = true
+      mdeModalOpenState = true // eslint-disable-line no-undef
       $('#modal-editor-image').addClass('is-active')
       vueImage.refreshFolders()
     },
     cancel: (ev) => {
-      mdeModalOpenState = false
+      mdeModalOpenState = false // eslint-disable-line no-undef
       $('#modal-editor-image').removeClass('is-active')
     },
 
-		// -------------------------------------------
-		// INSERT IMAGE
-		// -------------------------------------------
+    // -------------------------------------------
+    // INSERT IMAGE
+    // -------------------------------------------
 
     selectImage: (imageId) => {
       vueImage.currentImage = imageId
@@ -68,9 +69,9 @@ let vueImage = new Vue({
       vueImage.cancel()
     },
 
-		// -------------------------------------------
-		// NEW FOLDER
-		// -------------------------------------------
+    // -------------------------------------------
+    // NEW FOLDER
+    // -------------------------------------------
 
     newFolder: (ev) => {
       vueImage.newFolderName = ''
@@ -82,7 +83,7 @@ let vueImage = new Vue({
       vueImage.newFolderShow = false
     },
     newFolderCreate: (ev) => {
-      let regFolderName = new RegExp('^[a-z0-9][a-z0-9\-]*[a-z0-9]$')
+      let regFolderName = new RegExp('^[a-z0-9][a-z0-9-]*[a-z0-9]$')
       vueImage.newFolderName = _.kebabCase(_.trim(vueImage.newFolderName))
 
       if (_.isEmpty(vueImage.newFolderName) || !regFolderName.test(vueImage.newFolderName)) {
@@ -104,9 +105,9 @@ let vueImage = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// FETCH FROM URL
-		// -------------------------------------------
+    // -------------------------------------------
+    // FETCH FROM URL
+    // -------------------------------------------
 
     fetchFromUrl: (ev) => {
       vueImage.fetchFromUrlURL = ''
@@ -133,12 +134,12 @@ let vueImage = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// RENAME IMAGE
-		// -------------------------------------------
+    // -------------------------------------------
+    // RENAME IMAGE
+    // -------------------------------------------
 
     renameImage: () => {
-      let c = _.find(vueImage.images, ['_id', vueImage.renameImageId ])
+      let c = _.find(vueImage.images, [ '_id', vueImage.renameImageId ])
       vueImage.renameImageFilename = c.basename || ''
       vueImage.renameImageShow = true
       _.delay(() => {
@@ -166,9 +167,9 @@ let vueImage = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// MOVE IMAGE
-		// -------------------------------------------
+    // -------------------------------------------
+    // MOVE IMAGE
+    // -------------------------------------------
 
     moveImage: (uid, fld) => {
       vueImage.isLoadingText = 'Moving image...'
@@ -185,13 +186,13 @@ let vueImage = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// DELETE IMAGE
-		// -------------------------------------------
+    // -------------------------------------------
+    // DELETE IMAGE
+    // -------------------------------------------
 
     deleteImageWarn: (show) => {
       if (show) {
-        let c = _.find(vueImage.images, ['_id', vueImage.deleteImageId ])
+        let c = _.find(vueImage.images, [ '_id', vueImage.deleteImageId ])
         vueImage.deleteImageFilename = c.filename || 'this image'
       }
       vueImage.deleteImageShow = show
@@ -207,9 +208,9 @@ let vueImage = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// LOAD FROM REMOTE
-		// -------------------------------------------
+    // -------------------------------------------
+    // LOAD FROM REMOTE
+    // -------------------------------------------
 
     selectFolder: (fldName) => {
       vueImage.currentFolder = fldName
@@ -272,9 +273,9 @@ let vueImage = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// IMAGE CONTEXT MENU
-		// -------------------------------------------
+    // -------------------------------------------
+    // IMAGE CONTEXT MENU
+    // -------------------------------------------
 
     attachContextMenus: () => {
       let moveFolders = _.map(vueImage.folders, (f) => {

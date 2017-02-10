@@ -1,15 +1,17 @@
 'use strict'
 
+/* global Vue, _ */
+
 /**
  * Alerts
  */
-class Alerts {
+class Alerts { // eslint-disable-line no-unused-vars
 
-	/**
-	 * Constructor
-	 *
-	 * @class
-	 */
+  /**
+   * Constructor
+   *
+   * @class
+   */
   constructor () {
     let self = this
 
@@ -28,12 +30,12 @@ class Alerts {
     self.uidNext = 1
   }
 
-	/**
-	 * Show a new Alert
-	 *
-	 * @param      {Object}  options  Alert properties
-	 * @return     {null}  Void
-	 */
+  /**
+   * Show a new Alert
+   *
+   * @param      {Object}  options  Alert properties
+   * @return     {null}  Void
+   */
   push (options) {
     let self = this
 
@@ -56,12 +58,12 @@ class Alerts {
     self.uidNext++
   }
 
-	/**
-	 * Shorthand method for pushing errors
-	 *
-	 * @param      {String}  title    The title
-	 * @param      {String}  message  The message
-	 */
+  /**
+   * Shorthand method for pushing errors
+   *
+   * @param      {String}  title    The title
+   * @param      {String}  message  The message
+   */
   pushError (title, message) {
     this.push({
       class: 'error',
@@ -71,12 +73,12 @@ class Alerts {
     })
   }
 
-	/**
-	 * Shorthand method for pushing success messages
-	 *
-	 * @param      {String}  title    The title
-	 * @param      {String}  message  The message
-	 */
+  /**
+   * Shorthand method for pushing success messages
+   *
+   * @param      {String}  title    The title
+   * @param      {String}  message  The message
+   */
   pushSuccess (title, message) {
     this.push({
       class: 'success',
@@ -86,11 +88,11 @@ class Alerts {
     })
   }
 
-	/**
-	 * Close an alert
-	 *
-	 * @param      {Integer}  uid     The unique ID of the alert
-	 */
+  /**
+   * Close an alert
+   *
+   * @param      {Integer}  uid     The unique ID of the alert
+   */
   close (uid) {
     let self = this
 

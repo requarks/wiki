@@ -1,3 +1,4 @@
+/* global $, Vue, _, alerts, mde, socket */
 
 let vueFile = new Vue({
   el: '#modal-editor-file',
@@ -23,18 +24,18 @@ let vueFile = new Vue({
   methods: {
 
     open: () => {
-      mdeModalOpenState = true
+      mdeModalOpenState = true // eslint-disable-line no-undef
       $('#modal-editor-file').addClass('is-active')
       vueFile.refreshFolders()
     },
     cancel: (ev) => {
-      mdeModalOpenState = false
+      mdeModalOpenState = false // eslint-disable-line no-undef
       $('#modal-editor-file').removeClass('is-active')
     },
 
-		// -------------------------------------------
-		// INSERT LINK TO FILE
-		// -------------------------------------------
+    // -------------------------------------------
+    // INSERT LINK TO FILE
+    // -------------------------------------------
 
     selectFile: (fileId) => {
       vueFile.currentFile = fileId
@@ -54,9 +55,9 @@ let vueFile = new Vue({
       vueFile.cancel()
     },
 
-		// -------------------------------------------
-		// NEW FOLDER
-		// -------------------------------------------
+    // -------------------------------------------
+    // NEW FOLDER
+    // -------------------------------------------
 
     newFolder: (ev) => {
       vueFile.newFolderName = ''
@@ -68,7 +69,7 @@ let vueFile = new Vue({
       vueFile.newFolderShow = false
     },
     newFolderCreate: (ev) => {
-      let regFolderName = new RegExp('^[a-z0-9][a-z0-9\-]*[a-z0-9]$')
+      let regFolderName = new RegExp('^[a-z0-9][a-z0-9-]*[a-z0-9]$')
       vueFile.newFolderName = _.kebabCase(_.trim(vueFile.newFolderName))
 
       if (_.isEmpty(vueFile.newFolderName) || !regFolderName.test(vueFile.newFolderName)) {
@@ -90,12 +91,12 @@ let vueFile = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// RENAME FILE
-		// -------------------------------------------
+    // -------------------------------------------
+    // RENAME FILE
+    // -------------------------------------------
 
     renameFile: () => {
-      let c = _.find(vueFile.files, ['_id', vueFile.renameFileId ])
+      let c = _.find(vueFile.files, [ '_id', vueFile.renameFileId ])
       vueFile.renameFileFilename = c.basename || ''
       vueFile.renameFileShow = true
       _.delay(() => {
@@ -123,9 +124,9 @@ let vueFile = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// MOVE FILE
-		// -------------------------------------------
+    // -------------------------------------------
+    // MOVE FILE
+    // -------------------------------------------
 
     moveFile: (uid, fld) => {
       vueFile.isLoadingText = 'Moving file...'
@@ -142,13 +143,13 @@ let vueFile = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// DELETE FILE
-		// -------------------------------------------
+    // -------------------------------------------
+    // DELETE FILE
+    // -------------------------------------------
 
     deleteFileWarn: (show) => {
       if (show) {
-        let c = _.find(vueFile.files, ['_id', vueFile.deleteFileId ])
+        let c = _.find(vueFile.files, [ '_id', vueFile.deleteFileId ])
         vueFile.deleteFileFilename = c.filename || 'this file'
       }
       vueFile.deleteFileShow = show
@@ -164,9 +165,9 @@ let vueFile = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// LOAD FROM REMOTE
-		// -------------------------------------------
+    // -------------------------------------------
+    // LOAD FROM REMOTE
+    // -------------------------------------------
 
     selectFolder: (fldName) => {
       vueFile.currentFolder = fldName
@@ -229,9 +230,9 @@ let vueFile = new Vue({
       })
     },
 
-		// -------------------------------------------
-		// IMAGE CONTEXT MENU
-		// -------------------------------------------
+    // -------------------------------------------
+    // IMAGE CONTEXT MENU
+    // -------------------------------------------
 
     attachContextMenus: () => {
       let moveFolders = _.map(vueFile.folders, (f) => {

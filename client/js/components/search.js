@@ -1,5 +1,7 @@
 'use strict'
 
+/* global $, Vue, _, socket */
+
 if ($('#search-input').length) {
   $('#search-input').focus()
 
@@ -39,9 +41,9 @@ if ($('#search-input').length) {
       },
       searchmoveidx: (val, oldVal) => {
         if (val > 0) {
-          vueHeader.searchmovekey = (vueHeader.searchmovearr[val - 1]) ?
-																			'res.' + vueHeader.searchmovearr[val - 1]._id :
-																			'sug.' + vueHeader.searchmovearr[val - 1]
+          vueHeader.searchmovekey = (vueHeader.searchmovearr[val - 1])
+            ? 'res.' + vueHeader.searchmovearr[val - 1]._id
+            : 'sug.' + vueHeader.searchmovearr[val - 1]
         } else {
           vueHeader.searchmovekey = ''
         }

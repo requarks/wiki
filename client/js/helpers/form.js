@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 
 function setInputSelection (input, startPos, endPos) {
   input.focus()
@@ -14,3 +15,5 @@ function setInputSelection (input, startPos, endPos) {
     range.select()
   }
 }
+
+/* eslint-enable no-unused-vars */

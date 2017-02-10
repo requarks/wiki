@@ -1,20 +1,23 @@
 'use strict'
 
+/* global jQuery, _, io, Sticky, alertsData, Alerts */
+/* eslint-disable spaced-comment */
+
 jQuery(document).ready(function ($) {
-	// ====================================
-	// Scroll
-	// ====================================
+  // ====================================
+  // Scroll
+  // ====================================
 
   $('a').smoothScroll({
     speed: 400,
     offset: -70
   })
 
-  var sticky = new Sticky('.stickyscroll')
+  var sticky = new Sticky('.stickyscroll') // eslint-disable-line no-unused-vars
 
-	// ====================================
-	// Notifications
-	// ====================================
+  // ====================================
+  // Notifications
+  // ====================================
 
   $(window).bind('beforeunload', () => {
     $('#notifload').addClass('active')
@@ -32,26 +35,28 @@ jQuery(document).ready(function ($) {
     })
   }
 
-	// ====================================
-	// Establish WebSocket connection
-	// ====================================
+  // ====================================
+  // Establish WebSocket connection
+  // ====================================
 
-  var socket = io(window.location.origin)
+  var socket = io(window.location.origin) // eslint-disable-line no-unused-vars
 
-	// =include components/search.js
+  //=include components/search.js
 
-	// ====================================
-	// Pages logic
-	// ====================================
+  // ====================================
+  // Pages logic
+  // ====================================
 
-	// =include pages/view.js
-	// =include pages/create.js
-	// =include pages/edit.js
-	// =include pages/source.js
-	// =include pages/admin.js
+  //=include pages/view.js
+  //=include pages/create.js
+  //=include pages/edit.js
+  //=include pages/source.js
+  //=include pages/admin.js
 })
 
-// =include helpers/form.js
-// =include helpers/pages.js
+//=include helpers/form.js
+//=include helpers/pages.js
 
-// =include components/alerts.js
+//=include components/alerts.js
+
+/* eslint-enable spaced-comment */
