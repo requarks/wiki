@@ -1,67 +1,67 @@
 doctype html
 html
-	head
-		meta(http-equiv='X-UA-Compatible', content='IE=edge')
-		meta(charset='UTF-8')
-		meta(name='viewport', content='width=device-width, initial-scale=1')
-		meta(name='theme-color', content='#009688')
-		meta(name='msapplication-TileColor', content='#009688')
-		meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
-		title= appconfig.title
+  head
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='theme-color', content='#009688')
+    meta(name='msapplication-TileColor', content='#009688')
+    meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
+    title= appconfig.title
 
-		// Favicon
-		each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
-			link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href='/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
-		link(rel='icon', type='image/png', sizes='192x192', href='/favicons/android-icon-192x192.png')
-		each favsize in [32, 96, 16]
-			link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
-		link(rel='manifest', href='/manifest.json')
+    // Favicon
+    each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
+      link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href='/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
+    link(rel='icon', type='image/png', sizes='192x192', href='/favicons/android-icon-192x192.png')
+    each favsize in [32, 96, 16]
+      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
+    link(rel='manifest', href='/manifest.json')
 
-		// CSS
-		link(type='text/css', rel='stylesheet', href='/css/libs.css')
-		link(type='text/css', rel='stylesheet', href='/css/login.css')
+    // CSS
+    link(type='text/css', rel='stylesheet', href='/css/libs.css')
+    link(type='text/css', rel='stylesheet', href='/css/login.css')
 
-		// JS
-		script(type='text/javascript', src='/js/libs.js')
-		script(type='text/javascript', src='/js/login.js')
+    // JS
+    script(type='text/javascript', src='/js/libs.js')
+    script(type='text/javascript', src='/js/login.js')
 
-	body
-		#bg
-			each bg in _.sampleSize([1, 2, 3],3)
-				div(style="background-image:url(/images/bg_" + bg + ".jpg);")
-		#root
-			h1= appconfig.title
-			h2 Login required
-			if appflash.length > 0
-				h3
-					i.fa.fa-warning
-					= appflash[0].title
-				h4= appflash[0].message
-			if appconfig.auth.local.enabled
-				form(method='post', action='/login')
-					input#login-user(type='text', name='email', placeholder='Email address')
-					input#login-pass(type='password', name='password', placeholder='Password')
-					button(type='submit') Log In
-			if appconfig.authStrategies.socialEnabled
-				#social
-					if appconfig.auth.local.enabled
-						span Or, log in using...
-					else
-						span Log in using...
-					if appconfig.auth.microsoft && appconfig.auth.microsoft.enabled
-						button.ms(onclick="window.location.assign('/login/ms')")
-							i.fa.fa-windows
-							span Microsoft Account
-					if appconfig.auth.google && appconfig.auth.google.enabled
-						button.google(onclick="window.location.assign('/login/google')")
-							i.fa.fa-google
-							span Google ID
-					if appconfig.auth.facebook && appconfig.auth.facebook.enabled
-						button.facebook(onclick="window.location.assign('/login/facebook')")
-							i.fa.fa-facebook
-							span Facebook
-		#copyright
-			= t('footer.poweredby') + ' '
-			a.icon(href='https://github.com/Requarks/wiki')
-				i.icon-github
-			a(href='https://github.com/Requarks/wiki') Requarks Wiki
+  body
+    #bg
+      each bg in _.sampleSize([1, 2, 3],3)
+        div(style='background-image:url(/images/bg_' + bg + '.jpg);')
+    #root
+      h1= appconfig.title
+      h2 Login required
+      if appflash.length > 0
+        h3
+          i.fa.fa-warning
+          = appflash[0].title
+        h4= appflash[0].message
+      if appconfig.auth.local.enabled
+        form(method='post', action='/login')
+          input#login-user(type='text', name='email', placeholder='Email address')
+          input#login-pass(type='password', name='password', placeholder='Password')
+          button(type='submit') Log In
+      if appconfig.authStrategies.socialEnabled
+        #social
+          if appconfig.auth.local.enabled
+            span Or, log in using...
+          else
+            span Log in using...
+          if appconfig.auth.microsoft && appconfig.auth.microsoft.enabled
+            button.ms(onclick='window.location.assign("/login/ms")')
+              i.fa.fa-windows
+              span Microsoft Account
+          if appconfig.auth.google && appconfig.auth.google.enabled
+            button.google(onclick='window.location.assign("/login/google")')
+              i.fa.fa-google
+              span Google ID
+          if appconfig.auth.facebook && appconfig.auth.facebook.enabled
+            button.facebook(onclick='window.location.assign("/login/facebook")')
+              i.fa.fa-facebook
+              span Facebook
+    #copyright
+      = t('footer.poweredby') + ' '
+      a.icon(href='https://github.com/Requarks/wiki')
+        i.icon-github
+      a(href='https://github.com/Requarks/wiki') Requarks Wiki

@@ -1,27 +1,27 @@
 extends ../layout.pug
 
 block rootNavCenter
-	h2.nav-item= pageData.meta.title
+  h2.nav-item= pageData.meta.title
 
 block rootNavRight
-	i.nav-item#notifload
-	span.nav-item
-		a.button.is-outlined.btn-edit-discard
-			i.icon-cross
-			span Discard
-		a.button.btn-edit-save
-			i.icon-check
-			span Save Changes
+  i.nav-item#notifload
+  span.nav-item
+    a.button.is-outlined.btn-edit-discard
+      i.icon-cross
+      span Discard
+    a.button.btn-edit-save
+      i.icon-check
+      span Save Changes
 
 block content
 
-	#page-type-edit(data-entrypath=pageData.meta.path)
-		.editor-area
-			textarea#mk-editor= pageData.markdown
+  #page-type-edit(data-entrypath=pageData.meta.path)
+    .editor-area
+      textarea#mk-editor= pageData.markdown
 
-	include ../modals/edit-discard.pug
-	include ../modals/editor-link.pug
-	include ../modals/editor-image.pug
-	include ../modals/editor-file.pug
-	include ../modals/editor-video.pug
-	include ../modals/editor-codeblock.pug
+  include ../modals/edit-discard.pug
+  include ../modals/editor-link.pug
+  include ../modals/editor-image.pug
+  include ../modals/editor-file.pug
+  include ../modals/editor-video.pug
+  include ../modals/editor-codeblock.pug

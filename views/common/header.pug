@@ -1,36 +1,34 @@
 
 #header-container
-	nav.nav.stickyscroll#header
-		.nav-left
-			block rootNavLeft
-				a.nav-item(href='/')
-					h1
-						i.icon-layers
-						= appconfig.title
-		.nav-center
-			block rootNavCenter
-				.nav-item
-					p.control(v-bind:class="{ 'is-loading': searchload > 0 }")
-						input.input#search-input(type='text', v-model='searchq', @keyup.esc='closeSearch', @keyup.down='moveDownSearch', @keyup.up='moveUpSearch', @keyup.enter='moveSelectSearch', debounce='400', placeholder='Search...')
-		span.nav-toggle
-			span
-			span
-			span
-		.nav-right
-			block rootNavRight
-				i.nav-item#notifload
+  nav.nav.stickyscroll#header
+    .nav-left
+      block rootNavLeft
+        a.nav-item(href='/')
+          h1
+            i.icon-layers
+            = appconfig.title
+    .nav-center
+      block rootNavCenter
+        .nav-item
+          p.control(v-bind:class='{ "is-loading": searchload > 0 }')
+            input.input#search-input(type='text', v-model='searchq', @keyup.esc='closeSearch', @keyup.down='moveDownSearch', @keyup.up='moveUpSearch', @keyup.enter='moveSelectSearch', debounce='400', placeholder='Search...')
+    span.nav-toggle
+      span
+      span
+      span
+    .nav-right
+      block rootNavRight
+        i.nav-item#notifload
 
-	transition(name="searchresults-anim", enter-active-class="slideInDown", leave-active-class="fadeOutUp")
-		.searchresults.animated(v-show='searchactive', v-cloak, style={'display':'none'})
-			p.searchresults-label Search Results
-			ul.searchresults-list
-				li(v-if="searchres.length === 0")
-					a: em No results matching your query
-				li(v-for='sres in searchres', v-bind:class="{ 'is-active': searchmovekey === 'res.' + sres._id }")
-					a(v-bind:href="'/' + sres._id") {{ sres.title }}
-			p.searchresults-label(v-if='searchsuggest.length > 0') Did you mean...?
-			ul.searchresults-list(v-if='searchsuggest.length > 0')
-				li(v-for='sug in searchsuggest', v-bind:class="{ 'is-active': searchmovekey === 'sug.' + sug }")
-					a(v-on:click="useSuggestion(sug)") {{ sug }}
-
-
+  transition(name='searchresults-anim', enter-active-class='slideInDown', leave-active-class='fadeOutUp')
+    .searchresults.animated(v-show='searchactive', v-cloak, style={'display':'none'})
+      p.searchresults-label Search Results
+      ul.searchresults-list
+        li(v-if='searchres.length === 0')
+          a: em No results matching your query
+        li(v-for='sres in searchres', v-bind:class='{ "is-active": searchmovekey === "res." + sres._id }')
+          a(v-bind:href='"/" + sres._id') {{ sres.title }}
+      p.searchresults-label(v-if='searchsuggest.length > 0') Did you mean...?
+      ul.searchresults-list(v-if='searchsuggest.length > 0')
+        li(v-for='sug in searchsuggest', v-bind:class='{ "is-active": searchmovekey === "sug." + sug }')
+          a(v-on:click='useSuggestion(sug)') {{ sug }}

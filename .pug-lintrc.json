@@ -9,7 +9,7 @@
   "requireLowerCaseTags": true,
   "requireSpaceAfterCodeOperator": true,
   "requireStrictEqualityOperators": true,
-  "validateAttributeQuoteMarks": true,
+  "validateAttributeQuoteMarks": "'",
   "validateAttributeSeparator": ", ",
   "validateDivTags": true,
   "validateIndentation": 2

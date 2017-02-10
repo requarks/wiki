@@ -1,31 +1,31 @@
 extends ../layout.pug
 
 block rootNavCenter
-	h2.nav-item= pageData.meta.title
+  h2.nav-item= pageData.meta.title
 
 block rootNavRight
-	i.nav-item#notifload
-	span.nav-item
-		if rights.write
-			a.button.is-outlined.btn-move-prompt.is-hidden
-				i.icon-shuffle
-				span Move
-		a.button.is-outlined(href='/' + pageData.meta.path)
-			i.icon-loader
-			span Normal View
-		if rights.write
-			a.button.is-orange(href='/edit/' + pageData.meta.path)
-				i.fa.fa-edit
-				span Edit
-			a.button.is-blue.btn-create-prompt
-				i.fa.fa-plus
-				span Create
+  i.nav-item#notifload
+  span.nav-item
+    if rights.write
+      a.button.is-outlined.btn-move-prompt.is-hidden
+        i.icon-shuffle
+        span Move
+    a.button.is-outlined(href='/' + pageData.meta.path)
+      i.icon-loader
+      span Normal View
+    if rights.write
+      a.button.is-orange(href='/edit/' + pageData.meta.path)
+        i.fa.fa-edit
+        span Edit
+      a.button.is-blue.btn-create-prompt
+        i.fa.fa-plus
+        span Create
 
 block content
 
-	#page-type-source(data-entrypath=pageData.meta.path)
-		.ace-container
-			#source-display= pageData.markdown
+  #page-type-source(data-entrypath=pageData.meta.path)
+    .ace-container
+      #source-display= pageData.markdown
 
-	include ../modals/create.pug
-	include ../modals/move.pug
+  include ../modals/create.pug
+  include ../modals/move.pug

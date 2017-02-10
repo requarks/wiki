@@ -1,27 +1,27 @@
 extends ../layout.pug
 
 block rootNavCenter
-	h2.nav-item Create New Document
+  h2.nav-item Create New Document
 
 block rootNavRight
-	i.nav-item#notifload
-	span.nav-item
-		a.button.is-outlined.btn-create-discard
-			i.icon-cross
-			span Discard
-		a.button.btn-create-save
-			i.icon-check
-			span Save Document
+  i.nav-item#notifload
+  span.nav-item
+    a.button.is-outlined.btn-create-discard
+      i.icon-cross
+      span Discard
+    a.button.btn-create-save
+      i.icon-check
+      span Save Document
 
 block content
 
-	#page-type-create(data-entrypath=pageData.meta.path)
-		.editor-area
-			textarea#mk-editor= pageData.markdown
+  #page-type-create(data-entrypath=pageData.meta.path)
+    .editor-area
+      textarea#mk-editor= pageData.markdown
 
-	include ../modals/create-discard.pug
-	include ../modals/editor-link.pug
-	include ../modals/editor-image.pug
-	include ../modals/editor-file.pug
-	include ../modals/editor-video.pug
-	include ../modals/editor-codeblock.pug
+  include ../modals/create-discard.pug
+  include ../modals/editor-link.pug
+  include ../modals/editor-image.pug
+  include ../modals/editor-file.pug
+  include ../modals/editor-video.pug
+  include ../modals/editor-codeblock.pug

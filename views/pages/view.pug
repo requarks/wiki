@@ -1,79 +1,79 @@
 extends ../layout.pug
 
 mixin tocMenu(ti)
-	each node in ti
-		li
-			a(href='#' + node.anchor, title=node.content)= node.content
-			if node.nodes.length > 0
-				ul
-					+tocMenu(node.nodes)
+  each node in ti
+    li
+      a(href='#' + node.anchor, title=node.content)= node.content
+      if node.nodes.length > 0
+        ul
+          +tocMenu(node.nodes)
 
 block rootNavRight
-	i.nav-item#notifload
-	.nav-item
-		if rights.write
-			a.button.is-outlined.btn-move-prompt.is-hidden
-				i.icon-shuffle
-				span Move
-		a.button.is-outlined(href='/source/' + pageData.meta.path)
-			i.icon-loader
-			span Source
-		if rights.write
-			a.button(href='/edit/' + pageData.meta.path)
-				i.icon-document-text
-				span Edit
-			a.button.btn-create-prompt
-				i.icon-plus
-				span Create
+  i.nav-item#notifload
+  .nav-item
+    if rights.write
+      a.button.is-outlined.btn-move-prompt.is-hidden
+        i.icon-shuffle
+        span Move
+    a.button.is-outlined(href='/source/' + pageData.meta.path)
+      i.icon-loader
+      span Source
+    if rights.write
+      a.button(href='/edit/' + pageData.meta.path)
+        i.icon-document-text
+        span Edit
+      a.button.btn-create-prompt
+        i.icon-plus
+        span Create
 
 block content
 
-	#page-type-view(data-entrypath=pageData.meta.path)
-		.container.is-fluid
-			.columns.is-gapless
+  #page-type-view(data-entrypath=pageData.meta.path)
+    .container.is-fluid
+      .columns.is-gapless
 
-				.column.is-narrow.is-hidden-touch.sidebar
+        .column.is-narrow.is-hidden-touch.sidebar
 
-					aside
-						.sidebar-label
-							i.icon-th-small
-							span Navigation
-						ul.sidebar-menu
-							li
-								a(href='/')
-									i.icon-home
-									span Home
-							if pageData.parent
-								li
-									a(href='/' + pageData.parent.path)
-										i.icon-reply
-										span= pageData.parent.title
-							if !isGuest
-								li
-									a(href='/admin')
-										i.icon-head
-										span Account
-							else
-								li
-									a(href='/login')
-										i.icon-unlock
-										span Login
-					aside.stickyscroll(data-margin-top=40)
-						.sidebar-label
-							i.icon-th-list
-							span Contents
-						ul.sidebar-menu
-							li: a(href='#root', title='Start') Start
-							+tocMenu(pageData.tree)
+          aside
+            .sidebar-label
+              i.icon-th-small
+              span Navigation
+            ul.sidebar-menu
+              li
+                a(href='/')
+                  i.icon-home
+                  span Home
+              if pageData.parent
+                li
+                  a(href='/' + pageData.parent.path)
+                    i.icon-reply
+                    span= pageData.parent.title
+              if !isGuest
+                li
+                  a(href='/admin')
+                    i.icon-head
+                    span Account
+              else
+                li
+                  a(href='/login')
+                    i.icon-unlock
+                    span Login
+          aside.stickyscroll(data-margin-top=40)
+            .sidebar-label
+              i.icon-th-list
+              span Contents
+            ul.sidebar-menu
+              li: a(href='#root', title='Start') Start
+              +tocMenu(pageData.tree)
 
-				.column
+        .column
 
-					.hero
-						h1.title#title= pageData.meta.title
-						if pageData.meta.subtitle
-							h2.subtitle= pageData.meta.subtitle
-					.content.mkcontent
-						!= pageData.html
+          .hero
+            h1.title#title= pageData.meta.title
+            if pageData.meta.subtitle
+              h2.subtitle= pageData.meta.subtitle
+          .content.mkcontent
+            != pageData.html
 
-	include ../modals/create.pug
-	include ../modals/move.pug
+  include ../modals/create.pug
+  include ../modals/move.pug
