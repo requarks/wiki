@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Fixed
+- Fixed folder name typo during uploads folder permissions check
+- Fixed SSH authentication for Git
+
+### Changed
+- Removed separate OAuth authentication option. Select basic authentication to use tokens.
 
 ## [v1.0-beta.3] - 2017-02-10
 ### Added

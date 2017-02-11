@@ -89,19 +89,32 @@ module.exports = {
       // Initialize remote
 
       let urlObj = URL.parse(appconfig.git.url)
-      urlObj.auth = appconfig.git.auth.username + ((appconfig.git.auth.type !== 'ssh') ? ':' + appconfig.git.auth.password : '')
+      if (appconfig.git.auth.type !== 'ssh') {
+        urlObj.auth = appconfig.git.auth.username + ':' + appconfig.git.auth.password
+      }
       self._url = URL.format(urlObj)
+
+      let gitConfigs = [
+        () => { return self._git.exec('config', ['--local', 'user.name', self._signature.name]) },
+        () => { return self._git.exec('config', ['--local', 'user.email', self._signature.email]) },
+        () => { return self._git.exec('config', ['--local', '--bool', 'http.sslVerify', _.toString(appconfig.git.auth.sslVerify)]) }
+      ]
+
+      if (appconfig.git.auth.type === 'ssh') {
+        gitConfigs.push(() => {
+          return self._git.exec('config', ['--local', 'core.sshCommand', 'ssh -i "' + appconfig.git.auth.privateKey + '" -o StrictHostKeyChecking=no'])
+        })
+      }
 
       return self._git.exec('remote', 'show').then((cProc) => {
         let out = cProc.stdout.toString()
         if (_.includes(out, 'origin')) {
           return true
         } else {
-          return Promise.join(
-            self._git.exec('config', ['--local', 'user.name', self._signature.name]),
-            self._git.exec('config', ['--local', 'user.email', self._signature.email])
-          ).then(() => {
+          return Promise.each(gitConfigs, fn => { return fn() }).then(() => {
             return self._git.exec('remote', ['add', 'origin', self._url])
+          }).catch(err => {
+            winston.error(err)
           })
         }
       })

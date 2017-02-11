@@ -114,7 +114,7 @@ module.exports = {
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'))
 
       if (os.type() !== 'Windows_NT') {
-        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.repo, './upload'), '644')
+        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'), '644')
       }
     } catch (err) {
       winston.error(err)

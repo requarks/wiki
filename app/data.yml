@@ -22,8 +22,8 @@ defaults:
     public: false
     auth:
       local:
-        enabled: true 
-      microsoft: 
+        enabled: true
+      microsoft:
         enabled: false
       google:
         enabled: false
@@ -39,7 +39,6 @@ defaults:
         type: basic
         username: null
         password: null
-        publicKey: null
         privateKey: null
         sslVerify: true
       signature:
