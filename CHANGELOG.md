@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [v1.0-beta.4] - 2017-02-11
 ### Fixed
 - Fixed folder name typo during uploads folder permissions check
 - Fixed SSH authentication for Git
@@ -34,6 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
-[Unreleased]: https://github.com/Requarks/wiki/compare/v1.0-beta.3...HEAD
+[Unreleased]: https://github.com/Requarks/wiki/compare/v1.0-beta.4...HEAD
+[v1.0-beta.4]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.4
 [v1.0-beta.3]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.3
 [v1.0-beta.2]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.2
