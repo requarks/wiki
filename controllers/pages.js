@@ -186,6 +186,7 @@ router.get('/*', (req, res, next) => {
         newpath: safePath
       })
     }
+    return true
   }).catch((err) => {
     res.render('error', {
       message: err.message,

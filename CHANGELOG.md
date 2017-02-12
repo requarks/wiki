@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+- Offline mode (no remote git sync) can now be enabled by setting `git: false` in config.yml
 
 ## [v1.0-beta.4] - 2017-02-11
 ### Fixed

@@ -51,8 +51,10 @@ module.exports = {
 
     // Define signature
 
-    self._signature.name = appconfig.git.signature.name || 'Wiki'
-    self._signature.email = appconfig.git.signature.email || 'user@example.com'
+    if (appconfig.git) {
+      self._signature.name = appconfig.git.signature.name || 'Wiki'
+      self._signature.email = appconfig.git.signature.email || 'user@example.com'
+    }
 
     return self
   },
@@ -86,6 +88,11 @@ module.exports = {
         self._repo.exists = false
       })
     }).then(() => {
+      if (appconfig.git === false) {
+        winston.info('[' + PROCNAME + '][GIT] Remote syncing is disabled. Not recommended!')
+        return Promise.resolve(true)
+      }
+
       // Initialize remote
 
       let urlObj = URL.parse(appconfig.git.url)
@@ -143,6 +150,12 @@ module.exports = {
    */
   resync () {
     let self = this
+
+    // Is git remote disabled?
+
+    if (appconfig.git === false) {
+      return Promise.resolve(true)
+    }
 
     // Fetch
 
