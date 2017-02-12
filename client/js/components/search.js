@@ -42,7 +42,7 @@ if ($('#search-input').length) {
       searchmoveidx: (val, oldVal) => {
         if (val > 0) {
           vueHeader.searchmovekey = (vueHeader.searchmovearr[val - 1])
-            ? 'res.' + vueHeader.searchmovearr[val - 1]._id
+            ? 'res.' + vueHeader.searchmovearr[val - 1].entryPath
             : 'sug.' + vueHeader.searchmovearr[val - 1]
         } else {
           vueHeader.searchmovekey = ''
@@ -61,7 +61,7 @@ if ($('#search-input').length) {
         let i = vueHeader.searchmoveidx - 1
 
         if (vueHeader.searchmovearr[i]) {
-          window.location.assign('/' + vueHeader.searchmovearr[i]._id)
+          window.location.assign('/' + vueHeader.searchmovearr[i].entryPath)
         } else {
           vueHeader.searchq = vueHeader.searchmovearr[i]
         }

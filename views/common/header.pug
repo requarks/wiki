@@ -26,8 +26,8 @@
       ul.searchresults-list
         li(v-if='searchres.length === 0')
           a: em No results matching your query
-        li(v-for='sres in searchres', v-bind:class='{ "is-active": searchmovekey === "res." + sres._id }')
-          a(v-bind:href='"/" + sres._id') {{ sres.title }}
+        li(v-for='sres in searchres', v-bind:class='{ "is-active": searchmovekey === "res." + sres.entryPath }')
+          a(v-bind:href='"/" + sres.entryPath') {{ sres.title }}
       p.searchresults-label(v-if='searchsuggest.length > 0') Did you mean...?
       ul.searchresults-list(v-if='searchsuggest.length > 0')
         li(v-for='sug in searchsuggest', v-bind:class='{ "is-active": searchmovekey === "sug." + sug }')

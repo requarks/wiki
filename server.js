@@ -37,6 +37,7 @@ global.entries = require('./libs/entries').init()
 global.git = require('./libs/git').init(false)
 global.lang = require('i18next')
 global.mark = require('./libs/markdown')
+global.search = require('./libs/search').init()
 global.upl = require('./libs/uploads').init()
 
 // ----------------------------------------
@@ -239,7 +240,19 @@ io.on('connection', ctrl.ws)
 // Start child processes
 // ----------------------------------------
 
-global.bgAgent = fork('agent.js')
+let bgAgent = fork('agent.js')
+
+bgAgent.on('message', m => {
+  if (!m.action) {
+    return
+  }
+
+  switch (m.action) {
+    case 'searchAdd':
+      search.add(m.content)
+      break
+  }
+})
 
 process.on('exit', (code) => {
   bgAgent.disconnect()

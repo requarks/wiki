@@ -32,6 +32,7 @@
     "lcdata": true,
     "mark": true,
     "rights": true,
+    "search": true,
     "upl": true,
     "winston": true,
     "ws": true,

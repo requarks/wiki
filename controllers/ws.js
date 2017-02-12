@@ -13,7 +13,7 @@ module.exports = (socket) => {
 
   socket.on('search', (data, cb) => {
     cb = cb || _.noop
-    entries.search(data.terms).then((results) => {
+    search.find(data.terms).then((results) => {
       return cb(results) || true
     })
   })

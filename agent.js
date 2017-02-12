@@ -113,7 +113,13 @@ var job = new Cron({
                 // -> Update cache and search index
 
                 if (fileStatus !== 'active') {
-                  return entries.updateCache(entryPath)
+                  return entries.updateCache(entryPath).then(entry => {
+                    process.send({
+                      action: 'searchAdd',
+                      content: entry
+                    })
+                    return true
+                  })
                 }
 
                 return true

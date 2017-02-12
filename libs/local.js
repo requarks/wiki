@@ -98,11 +98,12 @@ module.exports = {
    * @return     {Void}  Void
    */
   createBaseDirectories (appconfig) {
-    winston.info('[SERVER] Checking data directories...')
+    winston.info('[SERVER.Local] Checking data directories...')
 
     try {
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data))
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './cache'))
+      fs.emptyDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './cache'))
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './thumbs'))
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'))
 
@@ -120,7 +121,7 @@ module.exports = {
       winston.error(err)
     }
 
-    winston.info('[SERVER] Data and Repository directories are OK.')
+    winston.info('[SERVER.Local] Data and Repository directories are OK.')
 
     return
   },
