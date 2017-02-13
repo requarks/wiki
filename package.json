@@ -52,6 +52,7 @@
     "farmhash": "^1.2.1",
     "file-type": "^4.0.0",
     "filesize.js": "^1.0.2",
+    "follow-redirects": "^1.2.1",
     "fs-extra": "^2.0.0",
     "git-wrapper2-promise": "^0.2.9",
     "highlight.js": "^9.9.0",
@@ -94,6 +95,7 @@
     "sticky-js": "^1.0.7",
     "stopword": "^0.1.1",
     "stream-to-promise": "^2.2.0",
+    "tar": "^2.2.1",
     "validator": "^6.2.0",
     "validator-as-promised": "^1.0.2",
     "winston": "^2.3.0"

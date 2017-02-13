@@ -6,7 +6,7 @@ const Promise = require('bluebird')
 const validator = require('validator')
 const _ = require('lodash')
 const axios = require('axios')
-const moment = require('moment')
+const path = require('path')
 
 /**
  * Admin
@@ -232,6 +232,16 @@ router.get('/settings', (req, res) => {
     winston.warn(err)
     res.render('pages/admin/settings', { adminTab: 'settings', sysversion: { current: appdata.version } })
   })
+})
+
+router.get('/settings/install', (req, res) => {
+  if (!res.locals.rights.manage) {
+    return res.render('error-forbidden')
+  }
+
+  let sysLib = require(path.join(ROOTPATH, 'libs/system.js'))
+  sysLib.install('v1.0-beta.5')
+  res.status(200).end()
 })
 
 module.exports = router

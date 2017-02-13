@@ -186,7 +186,7 @@ module.exports = {
       })
     })
     .catch((err) => {
-      winston.error('[' + PROCNAME + '][GIT] Unable to push changes to remote!')
+      winston.error('[' + PROCNAME + '.Git] Unable to push changes to remote!')
       throw err
     })
   },
