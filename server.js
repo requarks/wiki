@@ -64,9 +64,6 @@ const socketio = require('socket.io')
 
 var mw = autoload(CORE_PATH + '/core-middlewares')
 var ctrl = autoload(path.join(ROOTPATH, '/controllers'))
-var libInternalAuth = require('./libs/internalAuth')
-
-global.WSInternalKey = libInternalAuth.generateKey()
 
 // ----------------------------------------
 // Define Express App

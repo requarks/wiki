@@ -371,14 +371,13 @@ module.exports = {
 
         // Delete old index entry
 
-        ws.emit('searchDel', {
-          auth: WSInternalKey,
-          entryPath
-        })
+        search.delete(entryPath)
 
         // Create cache for new entry
 
-        return self.updateCache(newEntryPath)
+        return self.updateCache(newEntryPath).then(entry => {
+          return search.add(entry)
+        })
       })
     })
   },

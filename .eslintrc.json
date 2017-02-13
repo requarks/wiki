@@ -40,8 +40,7 @@
     "CORE_PATH": true,
     "ROOTPATH": true,
     "IS_DEBUG": true,
-    "PROCNAME": true,
-    "WSInternalKey": true
+    "PROCNAME": true
   },
 
   "rules": {

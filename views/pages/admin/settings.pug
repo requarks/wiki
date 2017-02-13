@@ -2,8 +2,35 @@ extends ./_layout.pug
 
 block adminContent
   .hero
-    h1.title#title Site Settings
+    h1.title#title System Settings
     h2.subtitle Manage site configuration
   .form-sections
     section
-      | Coming soon
+      label.label System Version
+      .section-block
+        p Current Version: #[strong= sysversion.current]
+        if sysversion.latest
+          p Latest Version: #[strong= sysversion.latest] #[em (Published #{userMoment(sysversion.latestPublishedAt).fromNow()})]
+          p
+            if sysversion.current !== sysversion.latest
+              button.button.is-deep-orange Upgrade
+            else
+              button.button.is-disabled Upgrade
+            button.button.is-deep-orange.is-outlined Re-install current version
+        else
+          p: em Unable to query latest version. Try again later.
+    section
+      label.label Administrative Tools
+      .section-block
+        h6 Flush cache and rebuild indexes:
+        p.is-small If content or search results seems out-of-date or do not include latest content, flushing the cache can help resolve these issues.
+        p: button.button.is-teal.is-outlined Flush and Rebuild
+        h6 Reset the root administrator and guest accounts to defaults:
+        p.is-small
+          | The root administrator account will be reset to the email address in the configuration file and the password will be reinitialized to #[strong admin123].
+          br
+          | The guest account will be recreated with its access rights set to defaults.
+        p: button.button.is-teal.is-outlined Reset System Accounts
+        h6 Flush all active user sessions:
+        p.is-small All users will be logged out and forced to login again. Your current session will also be affected!
+        p: button.button.is-teal.is-outlined Flush Sessions

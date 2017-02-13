@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "auto-load": "^2.1.0",
+    "axios": "^0.15.3",
     "bcryptjs-then": "^1.0.1",
     "bluebird": "^3.4.7",
     "body-parser": "^1.15.2",
@@ -156,8 +157,7 @@
       "CORE_PATH",
       "ROOTPATH",
       "IS_DEBUG",
-      "PROCNAME",
-      "WSInternalKey"
+      "PROCNAME"
     ],
     "ignore": [
       "assets/**/*",

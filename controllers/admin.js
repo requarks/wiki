@@ -5,6 +5,8 @@ var router = express.Router()
 const Promise = require('bluebird')
 const validator = require('validator')
 const _ = require('lodash')
+const axios = require('axios')
+const moment = require('moment')
 
 /**
  * Admin
@@ -218,7 +220,18 @@ router.get('/settings', (req, res) => {
     return res.render('error-forbidden')
   }
 
-  res.render('pages/admin/settings', { adminTab: 'settings' })
+  axios.get('https://api.github.com/repos/Requarks/wiki/releases/latest').then(resp => {
+    let sysversion = {
+      current: appdata.version,
+      latest: resp.data.tag_name,
+      latestPublishedAt: resp.data.published_at
+    }
+
+    res.render('pages/admin/settings', { adminTab: 'settings', sysversion })
+  }).catch(err => {
+    winston.warn(err)
+    res.render('pages/admin/settings', { adminTab: 'settings', sysversion: { current: appdata.version } })
+  })
 })
 
 module.exports = router
