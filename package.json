@@ -82,6 +82,7 @@
     "passport-local": "^1.0.0",
     "passport-windowslive": "^1.0.2",
     "passport.socketio": "^3.7.0",
+    "pm2": "^2.4.0",
     "pug": "^2.0.0-beta11",
     "read-chunk": "^2.0.0",
     "remove-markdown": "^0.1.0",
@@ -96,6 +97,7 @@
     "stopword": "^0.1.1",
     "stream-to-promise": "^2.2.0",
     "tar": "^2.2.1",
+    "through2": "^2.0.3",
     "validator": "^6.2.0",
     "validator-as-promised": "^1.0.2",
     "winston": "^2.3.0"
