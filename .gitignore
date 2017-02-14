@@ -31,6 +31,7 @@ dist
 
 # Dependency directories
 node_modules
+npm/node_modules
 jspm_packages
 
 # Optional npm cache directory

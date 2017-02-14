@@ -1,0 +1,41 @@
+{
+  "name": "wiki.js",
+  "version": "1.0.0-beta.6",
+  "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
+  "main": "install.js",
+  "scripts": {
+    "test": "exit 1",
+    "install": "node install.js",
+    "preuninstall": "node uninstall.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Requarks/wiki.git"
+  },
+  "keywords": [
+    "wiki",
+    "wikis",
+    "wikijs",
+    "wiki.js",
+    "wiki-js",
+    "docs",
+    "documentation",
+    "markdown",
+    "guides"
+  ],
+  "author": "Nicolas Giard",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Requarks/wiki/issues"
+  },
+  "homepage": "https://github.com/Requarks/wiki#readme",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "follow-redirects": "^1.2.1",
+    "fs-extra": "^2.0.0",
+    "lodash": "^4.17.4",
+    "ora": "^1.1.0",
+    "pm2": "^2.4.0",
+    "tar": "^2.2.1"
+  }
+}

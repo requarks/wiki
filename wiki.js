@@ -1,11 +1,15 @@
+#!/usr/bin/env node
 'use strict'
 
+const fs = require('fs-extra')
 const ora = require('ora')
 const Promise = require('bluebird')
 const pm2 = Promise.promisifyAll(require('pm2'))
 const cmdr = require('commander')
 
-cmdr.version('1.0.0')
+const packageObj = fs.readJsonSync('package.json')
+
+cmdr.version(packageObj.version)
 
 cmdr.command('start')
   .description('Start Wiki.js process')

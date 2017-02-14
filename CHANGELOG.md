@@ -3,9 +3,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [v1.0.0-beta.6] - 2017-02-14
 ### Added
 - Automated Upgrade / Re-install feature
-- Automated process manager
+- Automated process management
+- npm automatic site installation
 
 ## [v1.0-beta.5] - 2017-02-12
 ### Added

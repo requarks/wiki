@@ -71,16 +71,16 @@ const paths = {
   ],
   deploy: [
     './**/*',
-    '!node_modules', '!node_modules/**',
-    '!coverage', '!coverage/**',
     '!client/js', '!client/js/**',
     '!client/scss', '!client/scss/**',
-    '!dist', '!dist/**',
-    '!tests', '!tests/**',
+    '!coverage', '!coverage/**',
     '!data', '!data/**',
+    '!dist', '!dist/**',
+    '!node_modules', '!node_modules/**',
+    '!npm', '!npm/**',
     '!repo', '!repo/**',
-    '!.babelrc', '!.gitattributes', '!.gitignore', '!.snyk', '!.travis.yml',
-    '!gulpfile.js', '!inch.json', '!config.yml', '!wiki.sublime-project'
+    '!test', '!test/**',
+    '!gulpfile.js', '!config.yml'
   ]
 }
 
