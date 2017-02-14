@@ -65,7 +65,7 @@ module.exports = {
       winston.info('[SERVER.System] Cleaning install leftovers...')
       return fs.removeAsync(self._installDir).then(() => {
         winston.info('[SERVER.System] Restarting Wiki.js...')
-        return pm2.restartAsync('wiki').catch(err => {
+        return pm2.restartAsync('wiki').catch(err => { // eslint-disable-line handle-callback-err
           winston.error('Unable to restart Wiki.js via pm2... Do a manual restart!')
           process.exit()
         })
