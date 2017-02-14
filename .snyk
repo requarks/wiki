@@ -23,4 +23,8 @@ ignore:
     - socket.io > socket.io-client > engine.io-client > ws:
         reason: No fix available yet
         expires: '2017-03-09T19:39:17.067Z'
+  'npm:shelljs:20140723':
+    - pm2 > shelljs:
+        reason: No fix available yet
+        expires: '2017-03-16T04:32:47.705Z'
 patch: {}
