@@ -1,6 +1,6 @@
 {
   "name": "wiki",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "server.js",
   "scripts": {
@@ -89,7 +89,7 @@
     "pug": "^2.0.0-beta11",
     "read-chunk": "^2.0.0",
     "remove-markdown": "^0.1.0",
-    "requarks-core": "^0.2.1",
+    "requarks-core": "^0.2.2",
     "request": "^2.79.0",
     "search-index": "^0.9.9",
     "serve-favicon": "^2.3.2",
