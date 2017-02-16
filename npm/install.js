@@ -13,32 +13,43 @@ const _ = require('lodash')
 
 let installDir = path.resolve(__dirname, '../..')
 
-/**
- * Fetch version from npm package
- */
-fs.readJsonAsync('package.json').then((packageObj) => {
-  let remoteURL = _.replace('https://github.com/Requarks/wiki/releases/download/v{0}/wiki-js.tar.gz', '{0}', packageObj.version)
+ora.text = 'Looking for running instances...'
+pm2.connectAsync().then(() => {
+  return pm2.describeAsync('wiki').then(() => {
+    ora.text = 'Stopping and deleting from pm2...'
+    return pm2.deleteAsync('wiki')
+  }).catch(err => { // eslint-disable-line handle-callback-err
+    return true
+  })
+}).then(() => {
+  /**
+   * Fetch version from npm package
+   */
+  return fs.readJsonAsync('package.json').then((packageObj) => {
+    let versionGet = _.chain(packageObj.version).split('.').take(4).join('.')
+    let remoteURL = _.replace('https://github.com/Requarks/wiki/releases/download/v{0}/wiki-js.tar.gz', '{0}', versionGet)
 
-  return new Promise((resolve, reject) => {
-    /**
-     * Fetch tarball
-     */
-    ora.text = 'Looking for latest release...'
-    https.get(remoteURL, resp => {
-      if (resp.statusCode !== 200) {
-        return reject(new Error('Remote file not found'))
-      }
-      ora.text = 'Install tarball found. Downloading...'
-
+    return new Promise((resolve, reject) => {
       /**
-       * Extract tarball
+       * Fetch tarball
        */
-      resp.pipe(zlib.createGunzip())
-      .pipe(tar.Extract({ path: installDir }))
-      .on('error', err => reject(err))
-      .on('end', () => {
-        ora.text = 'Tarball extracted successfully.'
-        resolve(true)
+      ora.text = 'Looking for latest release...'
+      https.get(remoteURL, resp => {
+        if (resp.statusCode !== 200) {
+          return reject(new Error('Remote file not found'))
+        }
+        ora.text = 'Install tarball found. Downloading...'
+
+        /**
+         * Extract tarball
+         */
+        resp.pipe(zlib.createGunzip())
+        .pipe(tar.Extract({ path: installDir }))
+        .on('error', err => reject(err))
+        .on('end', () => {
+          ora.text = 'Tarball extracted successfully.'
+          resolve(true)
+        })
       })
     })
   })
@@ -62,17 +73,19 @@ fs.readJsonAsync('package.json').then((packageObj) => {
     /**
      * Upgrade mode
      */
-    ora.text = 'Upgrade succeeded. Reloading Wiki.js...'
-    return pm2.connectAsync().then(() => {
-      return pm2.restartAsync('wiki').catch(err => { // eslint-disable-line handle-callback-err
-        return new Error('Unable to restart Wiki.js via pm2... Do a manual restart!')
-      }).then(() => {
-        ora.succeed('Wiki.js has restarted. Upgrade completed.')
+    return new Promise((resolve, reject) => {
+      ora.text = 'Upgrade succeeded. Starting Wiki.js...'
+      let npmInstallProc = exec('wiki start', {
+        cwd: installDir
       })
-    }).catch(err => {
-      ora.fail(err)
-    }).finally(() => {
-      pm2.disconnect()
+      npmInstallProc.stdout.pipe(process.stdout)
+      npmInstallProc.on('error', err => {
+        reject(err)
+      })
+      .on('exit', () => {
+        ora.succeed('Wiki.js has started. Upgrade completed.')
+        resolve(true)
+      })
     })
   }).catch(err => {
     /**
@@ -89,4 +102,6 @@ fs.readJsonAsync('package.json').then((packageObj) => {
   })
 }).catch(err => {
   ora.fail(err)
+}).finally(() => {
+  pm2.disconnect()
 })

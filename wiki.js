@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 'use strict'
 
-const fs = require('fs-extra')
-const ora = require('ora')
 const Promise = require('bluebird')
+const fs = Promise.promisifyAll(require('fs-extra'))
+const ora = require('ora')
 const pm2 = Promise.promisifyAll(require('pm2'))
 const cmdr = require('commander')
+const path = require('path')
 
 const packageObj = fs.readJsonSync('package.json')
 
@@ -15,18 +16,24 @@ cmdr.command('start')
   .description('Start Wiki.js process')
   .action(() => {
     let spinner = ora('Initializing...').start()
-    pm2.connectAsync().then(() => {
-      return pm2.startAsync({
-        name: 'wiki',
-        script: 'server.js',
-        cwd: __dirname
-      }).then(() => {
-        spinner.succeed('Wiki.js has started successfully.')
-      }).finally(() => {
-        pm2.disconnect()
+    fs.emptyDirAsync(path.join(__dirname, './logs')).then(() => {
+      return pm2.connectAsync().then(() => {
+        return pm2.startAsync({
+          name: 'wiki',
+          script: 'server.js',
+          cwd: __dirname,
+          output: path.join(__dirname, './logs/wiki-output.log'),
+          error: path.join(__dirname, './logs/wiki-error.log'),
+          minUptime: 5000,
+          maxRestarts: 5
+        }).then(() => {
+          spinner.succeed('Wiki.js has started successfully.')
+        }).finally(() => {
+          pm2.disconnect()
+        })
       })
     }).catch(err => {
-      console.error(err)
+      spinner.fail(err)
       process.exit(1)
     })
   })
@@ -42,7 +49,7 @@ cmdr.command('stop')
         pm2.disconnect()
       })
     }).catch(err => {
-      console.error(err)
+      spinner.fail(err)
       process.exit(1)
     })
   })
