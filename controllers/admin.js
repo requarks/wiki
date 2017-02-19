@@ -7,6 +7,7 @@ const validator = require('validator')
 const _ = require('lodash')
 const axios = require('axios')
 const path = require('path')
+const fs = Promise.promisifyAll(require('fs-extra'))
 
 /**
  * Admin
@@ -220,28 +221,30 @@ router.get('/settings', (req, res) => {
     return res.render('error-forbidden')
   }
 
-  axios.get('https://api.github.com/repos/Requarks/wiki/releases/latest').then(resp => {
-    let sysversion = {
-      current: appdata.version,
-      latest: resp.data.tag_name,
-      latestPublishedAt: resp.data.published_at
-    }
+  fs.readJsonAsync(path.join(ROOTPATH, 'package.json')).then(packageObj => {
+    axios.get('https://api.github.com/repos/Requarks/wiki/releases/latest').then(resp => {
+      let sysversion = {
+        current: 'v' + packageObj.version,
+        latest: resp.data.tag_name,
+        latestPublishedAt: resp.data.published_at
+      }
 
-    res.render('pages/admin/settings', { adminTab: 'settings', sysversion })
-  }).catch(err => {
-    winston.warn(err)
-    res.render('pages/admin/settings', { adminTab: 'settings', sysversion: { current: appdata.version } })
+      res.render('pages/admin/settings', { adminTab: 'settings', sysversion })
+    }).catch(err => {
+      winston.warn(err)
+      res.render('pages/admin/settings', { adminTab: 'settings', sysversion: { current: 'v' + packageObj.version } })
+    })
   })
 })
 
-router.get('/settings/install', (req, res) => {
+router.post('/settings/install', (req, res) => {
   if (!res.locals.rights.manage) {
     return res.render('error-forbidden')
   }
 
-  let sysLib = require(path.join(ROOTPATH, 'libs/system.js'))
-  sysLib.install('v1.0-beta.5')
-  res.status(200).end()
+  // let sysLib = require(path.join(ROOTPATH, 'libs/system.js'))
+  // sysLib.install('v1.0-beta.7')
+  res.status(400).send('Sorry, Upgrade/Re-Install via the web UI is not yet ready. You must use the npm upgrade method in the meantime.').end()
 })
 
 module.exports = router

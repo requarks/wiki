@@ -4,9 +4,22 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v1.0.0-beta.8] - 2017-02-19
+### Added
+- Automated Upgrade / Re-install feature UI only
+- npm installation improvements
+
+# Fixed
+- wiki executable shortcut on linux
+- Settings page is now displaying the correct current version
+
+## [v1.0.0-beta.7] - 2017-02-14
+### Fixed
+- npm installation fixes
+
 ## [v1.0.0-beta.6] - 2017-02-14
 ### Added
-- Automated Upgrade / Re-install feature
+- Settings page UI
 - Automated process management
 - npm automatic site installation
 

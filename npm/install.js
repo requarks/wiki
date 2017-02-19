@@ -1,6 +1,6 @@
 'use strict'
 
-const ora = require('ora')('Initializing...').start()
+const ora = require('ora')({ text: 'Initializing...', spinner: 'dots12' }).start()
 const Promise = require('bluebird')
 const exec = require('child_process').exec
 const fs = Promise.promisifyAll(require('fs-extra'))
@@ -16,7 +16,7 @@ let installDir = path.resolve(__dirname, '../..')
 ora.text = 'Looking for running instances...'
 pm2.connectAsync().then(() => {
   return pm2.describeAsync('wiki').then(() => {
-    ora.text = 'Stopping and deleting from pm2...'
+    ora.text = 'Stopping and deleting process from pm2...'
     return pm2.deleteAsync('wiki')
   }).catch(err => { // eslint-disable-line handle-callback-err
     return true

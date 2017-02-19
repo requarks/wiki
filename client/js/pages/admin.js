@@ -98,4 +98,51 @@ if ($('#page-type-admin-profile').length) {
   /* eslint-disable spaced-comment */
   //=include ../modals/admin-users-delete.js
   /* eslint-enable spaced-comment */
+} else if ($('#page-type-admin-settings').length) {
+  let vueSettings = new Vue({ // eslint-disable-line no-unused-vars
+    el: '#page-type-admin-settings',
+    data: {
+      upgradeModal: {
+        state: false,
+        step: 'confirm',
+        mode: 'upgrade',
+        error: 'Something went wrong.'
+      }
+    },
+    methods: {
+      upgrade: (ev) => {
+        vueSettings.upgradeModal.mode = 'upgrade'
+        vueSettings.upgradeModal.step = 'confirm'
+        vueSettings.upgradeModal.state = true
+      },
+      reinstall: (ev) => {
+        vueSettings.upgradeModal.mode = 're-install'
+        vueSettings.upgradeModal.step = 'confirm'
+        vueSettings.upgradeModal.state = true
+      },
+      upgradeCancel: (ev) => {
+        vueSettings.upgradeModal.state = false
+      },
+      upgradeStart: (ev) => {
+        vueSettings.upgradeModal.step = 'running'
+        $.post('/admin/settings/install', {
+          mode: vueSettings.upgradeModal.mode
+        }).done((resp) => {
+          // todo
+        }).fail((jqXHR, txtStatus, resp) => {
+          vueSettings.upgradeModal.step = 'error'
+          vueSettings.upgradeModal.error = jqXHR.responseText
+        })
+      },
+      flushcache: (ev) => {
+        window.alert('Coming soon!')
+      },
+      resetaccounts: (ev) => {
+        window.alert('Coming soon!')
+      },
+      flushsessions: (ev) => {
+        window.alert('Coming soon!')
+      }
+    }
+  })
 }

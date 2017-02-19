@@ -3,7 +3,6 @@
 # This is reserved for system use!
 # ---------------------------------
 name: Wiki.js
-version: v1.0.0-beta.6
 capabilities:
   guest: true
   rights: true

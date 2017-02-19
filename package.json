@@ -1,6 +1,6 @@
 {
   "name": "wiki",
-  "version": "1.0.0-beta.7",
+  "version": "1.0.0-beta.8",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "server.js",
   "scripts": {
@@ -10,6 +10,9 @@
     "test": "snyk test && standard && pug-lint ./views",
     "snyk-protect": "snyk protect",
     "__prepublish": "npm run snyk-protect"
+  },
+  "bin": {
+    "wiki": "wiki.js"
   },
   "repository": {
     "type": "git",
