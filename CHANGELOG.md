@@ -9,7 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Automated Upgrade / Re-install feature UI only
 - npm installation improvements
 
-# Fixed
+### Fixed
 - wiki executable shortcut on linux
 - Settings page is now displaying the correct current version
 
