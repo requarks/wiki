@@ -75,7 +75,7 @@ pm2.connectAsync().then(() => {
      */
     return new Promise((resolve, reject) => {
       ora.text = 'Upgrade succeeded. Starting Wiki.js...'
-      let npmInstallProc = exec('wiki start', {
+      let npmInstallProc = exec('node wiki start', {
         cwd: installDir
       })
       npmInstallProc.stdout.pipe(process.stdout)
