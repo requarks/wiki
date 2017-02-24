@@ -321,7 +321,9 @@ module.exports = {
     return self.exists(entryPath).then((docExists) => {
       if (!docExists) {
         return self.makePersistent(entryPath, contents).then(() => {
-          return self.updateCache(entryPath)
+          return self.updateCache(entryPath).then(entry => {
+            return search.add(entry)
+          })
         })
       } else {
         return Promise.reject(new Error('Entry already exists!'))
