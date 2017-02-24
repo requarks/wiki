@@ -34,8 +34,14 @@ block adminContent
                 i.icon-google.is-blue
                 | Google ID
               when 'facebook'
-                i.icon-facebook.is-purple
+                i.icon-facebook.is-indigo
                 | Facebook
+              when 'github'
+                i.icon-github.is-blue-grey
+                | GitHub
+              when 'slack'
+                i.icon-slack.is-purple
+                | Slack
               default: i.icon-warning
           td.is-centered= userMoment(usr.createdAt).format('lll')
           td.is-centered= userMoment(usr.updatedAt).format('lll')

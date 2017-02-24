@@ -68,6 +68,16 @@ auth:
     enabled: false
     clientId: FACEBOOK_APP_ID
     clientSecret: FACEBOOK_APP_SECRET
+  github:
+    enabled: false
+    clientId: GITHUB_CLIENT_ID
+    clientSecret: GITHUB_CLIENT_SECRET
+  slack:
+    enabled: false
+    clientId: SLACK_CLIENT_ID
+    clientSecret: SLACK_CLIENT_SECRET
+  ldap:
+    enabled: false
 
 # ---------------------------------------------------------------------
 # Secret key to use when encrypting sessions

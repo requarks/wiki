@@ -123,7 +123,7 @@ router.post('/users/create', (req, res) => {
 
   if (!validator.isEmail(nUsr.email)) {
     return res.status(400).json({ msg: 'Invalid email address' })
-  } else if (!validator.isIn(nUsr.provider, ['local', 'google', 'windowslive', 'facebook'])) {
+  } else if (!validator.isIn(nUsr.provider, ['local', 'google', 'windowslive', 'facebook', 'github', 'slack'])) {
     return res.status(400).json({ msg: 'Invalid provider' })
   } else if (nUsr.provider === 'local' && !validator.isLength(nUsr.password, { min: 6 })) {
     return res.status(400).json({ msg: 'Password too short or missing' })

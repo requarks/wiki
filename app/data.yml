@@ -29,6 +29,10 @@ defaults:
         enabled: false
       facebook:
         enabled: false
+      github:
+        enabled: false
+      slack:
+        enabled: false
     db: mongodb://localhost/wiki
     sessionSecret: null
     admin: null

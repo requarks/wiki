@@ -50,18 +50,26 @@ html
             span Log in using...
           if appconfig.auth.microsoft && appconfig.auth.microsoft.enabled
             button.ms(onclick='window.location.assign("/login/ms")')
-              i.fa.fa-windows
+              i.icon-windows2
               span Microsoft Account
           if appconfig.auth.google && appconfig.auth.google.enabled
             button.google(onclick='window.location.assign("/login/google")')
-              i.fa.fa-google
+              i.icon-google
               span Google ID
           if appconfig.auth.facebook && appconfig.auth.facebook.enabled
             button.facebook(onclick='window.location.assign("/login/facebook")')
-              i.fa.fa-facebook
+              i.icon-facebook
               span Facebook
+          if appconfig.auth.github && appconfig.auth.github.enabled
+            button.github(onclick='window.location.assign("/login/github")')
+              i.icon-github
+              span GitHub
+          if appconfig.auth.slack && appconfig.auth.slack.enabled
+            button.slack(onclick='window.location.assign("/login/slack")')
+              i.icon-slack
+              span Slack
     #copyright
       = t('footer.poweredby') + ' '
       a.icon(href='https://github.com/Requarks/wiki')
         i.icon-github
-      a(href='https://github.com/Requarks/wiki') Requarks Wiki
+      a(href='https://wiki.requarks.io/') Wiki.js

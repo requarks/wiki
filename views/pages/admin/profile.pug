@@ -37,7 +37,9 @@ block adminContent
                 when 'local': i.icon-server
                 when 'windowslive': i.icon-windows2.is-blue
                 when 'google': i.icon-google.is-blue
-                when 'facebook': i.icon-facebook.is-purple
+                when 'facebook': i.icon-facebook.is-indigo
+                when 'github': i.icon-github.is-grey
+                when 'slack': i.icon-slack.is-purple
                 default: i.icon-warning
               = t('auth:providers.' + user.provider)
             label.label Member since

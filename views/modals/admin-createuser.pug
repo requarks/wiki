@@ -21,6 +21,10 @@
               option(value='google') Google ID
             if appconfig.auth.facebook.enabled
               option(value='facebook') Facebook
+            if appconfig.auth.github.enabled
+              option(value='github') GitHub
+            if appconfig.auth.slack.enabled
+              option(value='slack') Slack
       section(v-if='provider=="local"')
         label.label Password:
         p.control.is-fullwidth

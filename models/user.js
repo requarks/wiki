@@ -50,9 +50,13 @@ userSchema.statics.processProfile = (profile) => {
     primaryEmail = (e) ? e.value : _.first(profile.emails).value
   } else if (_.isString(profile.email) && profile.email.length > 5) {
     primaryEmail = profile.email
+  } else if (profile.user && profile.user.email && profile.user.email.length > 5) {
+    primaryEmail = profile.user.email
   } else {
     return Promise.reject(new Error('Invalid User Email'))
   }
+
+  profile.provider = _.lowerCase(profile.provider)
 
   return db.User.findOneAndUpdate({
     email: primaryEmail,
