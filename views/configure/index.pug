@@ -1,0 +1,58 @@
+doctype html
+html
+  head
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(charset='UTF-8')
+    title Wiki.js | Configure
+
+    // Favicon
+    each favsize in [32, 96, 16]
+      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
+
+    // CSS
+    link(type='text/css', rel='stylesheet', href='/css/libs.css')
+    link(type='text/css', rel='stylesheet', href='/css/configure.css')
+
+    // JS
+    script(type='text/javascript', src='/js/libs.js')
+    //script(type='text/javascript', src='/js/app.js')
+
+    block head
+
+  body
+    #root
+      #header-container
+        nav.nav#header
+          .nav-left
+            a.nav-item(href='/')
+              h1
+                i.icon-layers
+                | Wiki.js
+      main
+        .container
+          .welcome(style={'padding-bottom': '5px'})
+            img(src='/favicons/android-icon-96x96.png', alt='Wiki.js')
+            h1 Welcome to Wiki.js!
+            h2(style={'margin-bottom': 0}) Fill in the fields below to get up and running.
+          .content
+            .panel
+              h2.panel-title
+                span General
+                i(v-if='loading')
+              .panel-content.form-sections
+                section
+                  p.control.is-fullwidth
+                    label.label Site Title
+                    input(type='text', placeholder='e.g. Wiki', v-model='title')
+                section
+                  p.control.is-fullwidth
+                    label.label Host
+                    input(type='text', placeholder='http://', v-model='host')
+              .panel-footer
+                button.button.is-indigo(v-on:click='add', v-bind:disabled='loading') Continue
+      footer.footer
+        span
+          | Powered by 
+          a(href='https://github.com/Requarks/wiki') Wiki.js
+          | .
+    block outside

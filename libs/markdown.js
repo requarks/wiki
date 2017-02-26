@@ -37,8 +37,8 @@ var mkdown = md({
   .use(mdAnchor, {
     slugify: _.kebabCase,
     permalink: true,
-    permalinkClass: 'toc-anchor',
-    permalinkSymbol: '#',
+    permalinkClass: 'toc-anchor icon-anchor',
+    permalinkSymbol: '',
     permalinkBefore: true
   })
   .use(mdFootnote)

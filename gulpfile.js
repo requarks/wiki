@@ -95,6 +95,14 @@ gulp.task('server', ['scripts', 'css', 'fonts'], function () {
     env: { 'NODE_ENV': 'development' }
   })
 })
+gulp.task('configure', ['scripts', 'css', 'fonts'], function () {
+  nodemon({
+    exec: 'node wiki configure',
+    ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
+    ext: 'js json',
+    env: { 'NODE_ENV': 'development' }
+  })
+})
 
 /**
  * TASK - Process all scripts processes
@@ -182,6 +190,7 @@ gulp.task('watch', function () {
  * TASK - Starts development server with watchers
  */
 gulp.task('default', ['watch', 'server'])
+gulp.task('default-configure', ['watch', 'configure'])
 
 gulp.task('dev', function () {
   paths.css.includes.pop()
@@ -191,6 +200,16 @@ gulp.task('dev', function () {
   paths.fonts.push('../core/core-client/fonts/**/*')
 
   return run('default')
+})
+
+gulp.task('dev-configure', function () {
+  paths.css.includes.pop()
+  paths.css.includes.push('../core')
+
+  paths.fonts.pop()
+  paths.fonts.push('../core/core-client/fonts/**/*')
+
+  return run('default-configure')
 })
 
 /**

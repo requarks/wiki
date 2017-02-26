@@ -1,0 +1,27 @@
+
+$primary: 'indigo';
+
+@import 'core-client/scss/core';
+@import 'core-client/scss/components/button';
+@import 'core-client/scss/components/footer';
+@import 'core-client/scss/components/form';
+@import 'core-client/scss/components/grid';
+@import 'core-client/scss/components/modal';
+@import 'core-client/scss/components/nav';
+@import 'core-client/scss/components/panel';
+@import 'core-client/scss/components/typography';
+
+.welcome {
+	text-align: center;
+	padding: 25px 0 0;
+	color: mc('grey', '700');
+
+	h1 {
+		margin-top: 5px;
+	}
+
+	h2 {
+		margin: 0;
+	}
+
+}

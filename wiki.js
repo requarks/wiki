@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 'use strict'
 
+// ===========================================
+// Wiki.js
+// 1.0.0
+// Licensed under AGPLv3
+// ===========================================
+
 const Promise = require('bluebird')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const ora = require('ora')
@@ -52,6 +58,14 @@ cmdr.command('stop')
       spinner.fail(err)
       process.exit(1)
     })
+  })
+
+cmdr.command('configure [port]')
+  .description('Configure Wiki.js')
+  .action((port) => {
+    port = port || 3000
+    let spinner = ora('Initializing interactive setup...').start()
+    require('./configure')(port, spinner)
   })
 
 cmdr.parse(process.argv)

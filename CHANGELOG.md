@@ -3,6 +3,19 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+- Interactive setup
+- GitHub and Slack authentication providers are now available
+- Experimental: LDAP authentication provider
+
+### Changed
+- Content headers are now showing an anchor icon instead of a #
+- Sidebar: Contents is now Page Contents
+- Sidebar: Start is now Top of Page
+
+### Fixed
+- Search index should now update upon article creation
+- Missing icons on login page
 
 ## [v1.0.0-beta.8] - 2017-02-19
 ### Added

@@ -78,6 +78,14 @@ auth:
     clientSecret: SLACK_CLIENT_SECRET
   ldap:
     enabled: false
+    url: ldap://serverhost:389
+    bindDn: cn='root'
+    bindCredentials: BIND_PASSWORD
+    searchBase: o=users,o=example.com
+    # searchFilter: {{username}} to use the provided username in search
+    searchFilter: (uid={{username}})
+    tlsEnabled: false
+    tlsCertPath: C:\example\root_ca_cert.crt
 
 # ---------------------------------------------------------------------
 # Secret key to use when encrypting sessions
