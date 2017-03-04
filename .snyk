@@ -9,7 +9,7 @@ ignore:
   'npm:marked:20170112':
     - simplemde > marked:
         reason: No fix available
-        expires: '2017-03-02T00:49:29.268Z'
+        expires: '2017-04-02T20:18:37.694Z'
   'npm:ws:20160920':
     - engine.io > ws:
         reason: No fix available yet

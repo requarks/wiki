@@ -2,8 +2,7 @@
 
 const Promise = require('bluebird')
 const _ = require('lodash')
-const path = require('path')
-const searchIndex = require('search-index')
+const searchIndex = require('./search-index')
 const stopWord = require('stopword')
 const streamToPromise = require('stream-to-promise')
 
@@ -19,12 +18,11 @@ module.exports = {
    */
   init () {
     let self = this
-    let dbPath = path.resolve(ROOTPATH, appconfig.paths.data, 'search')
     self._isReady = new Promise((resolve, reject) => {
       searchIndex({
         deletable: true,
         fieldedSearch: true,
-        indexPath: dbPath,
+        indexPath: 'wiki',
         logLevel: 'error',
         stopwords: _.get(stopWord, appconfig.lang, [])
       }, (err, si) => {

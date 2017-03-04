@@ -4,7 +4,7 @@ const Promise = require('bluebird')
 const path = require('path')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const _ = require('lodash')
-const farmhash = require('farmhash')
+const crypto = require('crypto')
 
 /**
  * Entries Model
@@ -228,7 +228,7 @@ module.exports = {
    * @return     {String}  The full cache path.
    */
   getCachePath (entryPath) {
-    return path.join(this._cachePath, farmhash.fingerprint32(entryPath) + '.json')
+    return path.join(this._cachePath, crypto.createHash('md5').update(entryPath).digest('hex') + '.json')
   },
 
   /**

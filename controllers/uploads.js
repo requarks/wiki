@@ -11,7 +11,7 @@ const path = require('path')
 const _ = require('lodash')
 
 const validPathRe = new RegExp('^([a-z0-9\\/-]+\\.[a-z0-9]+)$')
-const validPathThumbsRe = new RegExp('^([0-9]+\\.png)$')
+const validPathThumbsRe = new RegExp('^([a-z0-9]+\\.png)$')
 
 // ==========================================
 // SERVE UPLOADS FILES

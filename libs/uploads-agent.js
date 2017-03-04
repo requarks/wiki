@@ -6,9 +6,10 @@ const fs = Promise.promisifyAll(require('fs-extra'))
 const readChunk = require('read-chunk')
 const fileType = require('file-type')
 const mime = require('mime-types')
-const farmhash = require('farmhash')
+const crypto = require('crypto')
 const chokidar = require('chokidar')
-const sharp = require('sharp')
+const jimp = require('jimp')
+const imageSize = Promise.promisify(require('image-size'))
 const _ = require('lodash')
 
 /**
@@ -31,9 +32,6 @@ module.exports = {
 
     self._uploadsPath = path.resolve(ROOTPATH, appconfig.paths.repo, 'uploads')
     self._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.paths.data, 'thumbs')
-
-    // Disable Sharp cache, as it cause file locks issues when deleting uploads.
-    sharp.cache(false)
 
     return self
   },
@@ -162,7 +160,7 @@ module.exports = {
     let fldPath = path.join(self._uploadsPath, fldName)
     let fPath = path.join(fldPath, f)
     let fPathObj = path.parse(fPath)
-    let fUid = farmhash.fingerprint32(fldName + '/' + f)
+    let fUid = crypto.createHash('md5').update(fldName + '/' + f).digest('hex')
 
     return fs.statAsync(fPath).then((s) => {
       if (!s.isFile()) { return false }
@@ -179,8 +177,8 @@ module.exports = {
       // Images
 
       if (s.size < 3145728) { // ignore files larger than 3MB
-        if (_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
-          return self.getImageMetadata(fPath).then((mImgData) => {
+        if (_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/bmp'], mimeInfo.mime)) {
+          return self.getImageSize(fPath).then((mImgSize) => {
             let cacheThumbnailPath = path.parse(path.join(self._uploadsThumbsPath, fUid + '.png'))
             let cacheThumbnailPathStr = path.format(cacheThumbnailPath)
 
@@ -188,7 +186,7 @@ module.exports = {
               _id: fUid,
               category: 'image',
               mime: mimeInfo.mime,
-              extra: _.pick(mImgData, ['format', 'width', 'height', 'density', 'hasAlpha', 'orientation']),
+              extra: mImgSize,
               folder: 'f:' + fldName,
               filename: f,
               basename: fPathObj.name,
@@ -232,24 +230,23 @@ module.exports = {
    * @return     {Promise<Object>}  Promise returning the resized image info
    */
   generateThumbnail (sourcePath, destPath) {
-    return sharp(sourcePath)
-            .withoutEnlargement()
-            .resize(150, 150)
-            .background('white')
-            .embed()
-            .flatten()
-            .toFormat('png')
-            .toFile(destPath)
+    return jimp.read(sourcePath).then(img => {
+      return img.cover(150, 150)
+              .background(0xFFFFFFFF)
+              .opaque()
+              .rgba(false)
+              .write(destPath)
+    })
   },
 
   /**
-   * Gets the image metadata.
+   * Gets the image dimensions.
    *
    * @param      {String}  sourcePath  The source path
-   * @return     {Object}  The image metadata.
+   * @return     {Object}  The image dimensions.
    */
-  getImageMetadata (sourcePath) {
-    return sharp(sourcePath).metadata()
+  getImageSize (sourcePath) {
+    return imageSize(sourcePath)
   }
 
 }

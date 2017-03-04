@@ -15,56 +15,33 @@
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
-*Under active development*
+
+- [Official Website](https://wiki.requarks.io/)
+- [Documentation](#documentation)
+- [Requirements](#requirements)
+- [Change Log](#change-log)
+- [Special Thanks](#special-thanks)
 
 ### Documentation
 
-- [Official Website](https://wiki.requarks.io/)
 - [Installation Guide](https://wiki.requarks.io/get-started.html)
+- [Admin Guide](https://docs.wiki.requarks.io/#admin-guide)
+- [User Guide](https://docs.wiki.requarks.io/#user-guide)
 
-##### Milestones
-- [x] Account Management
-	- [x] Profile
-	- [x] Manage users
-	- [x] Create local account
-- [x] Assets Management
-	- [x] Images
-	- [x] Files/Documents
-- [x] Authentication
-	- [x] Strategies
-		- [x] Local
-		- [x] Microsoft Account
-		- [x] Google ID
-		- [x] Facebook
-	- [x] Access Rights
-		- [x] View
-		- [x] Edit / Create
-- [x] Background Agent (git sync, cache purge, etc.)
-- [x] Caching
-- [x] Create Entry
-- [x] Documentation
-	- [x] Prerequisites
-	- [x] Install
-	- [x] Authentication
-	- [x] Git
-	- [x] Upgrade
-- [x] Edit Entry
-- [x] Git Management
-- [x] Markdown Editor
-	- [x] Basic Formatting
-	- [ ] Insert Link modal
-	- [x] Image Selection modal
-	- [x] File Selection modal
-	- [x] Video player
-	- [x] Inline Code
-	- [x] Code Editor modal
-	- [ ] Table Visual Editor
-- [x] Move Entry
-- [x] Navigation
-- [x] Parsing / Tree / Metadata
-- [x] Search
-- [x] UI
-- [x] View Entry Source
+### Requirements
+
+Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
+
+- Node.js v**4.6.0** or later
+- MongoDB v**3.2** or later
+- Git **2.11.0** or later
+- An empty Git repository (optional)
+
+Read the full [prerequisites](https://docs.wiki.requarks.io/prerequisites) article for full details.
+
+### Change Log
+
+View all notable changes between releases in the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md).
 
 ### Special Thanks
 

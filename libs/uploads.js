@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const request = require('request')
 const url = require('url')
-const farmhash = require('farmhash')
+const crypto = require('crypto')
 const _ = require('lodash')
 
 var regFolderName = new RegExp('^[a-z0-9][a-z0-9-]*[a-z0-9]$')
@@ -254,7 +254,7 @@ module.exports = {
             // -> Move thumbnail ahead to avoid re-generation
 
             if (originFile.category === 'image') {
-              let fUid = farmhash.fingerprint32(folder.name + '/' + destFilename)
+              let fUid = crypto.createHash('md5').update(folder.name + '/' + destFilename).digest('hex')
               let sourceThumbPath = path.resolve(self._uploadsThumbsPath, originFile._id + '.png')
               let destThumbPath = path.resolve(self._uploadsThumbsPath, fUid + '.png')
               preMoveOps.push(fs.moveAsync(sourceThumbPath, destThumbPath))
