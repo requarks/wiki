@@ -20,7 +20,7 @@
 - [Documentation](#documentation)
   - [Requirements](#requirements)
   - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
-- [Project Status](https://github.com/Requarks/wiki/projects/3)
+- [Project Status](https://waffle.io/Requarks/wiki)
 - [Special Thanks](#special-thanks)
 
 ### Documentation

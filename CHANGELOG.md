@@ -12,6 +12,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Content headers are now showing an anchor icon instead of a #
 - Sidebar: Contents is now Page Contents
 - Sidebar: Start is now Top of Page
+- Replaced farmhash with md5 (native compilation removal)
+- Replaced sharp with jimp (native compilation removal)
+- Replaced leveldown with memdown (native compilation removal)
 
 ### Fixed
 - Search index should now update upon article creation
