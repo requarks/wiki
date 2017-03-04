@@ -18,8 +18,8 @@
 
 - [Official Website](https://wiki.requarks.io/)
 - [Documentation](#documentation)
-- [Requirements](#requirements)
-- [Change Log](#change-log)
+  - [Requirements](#requirements)
+  - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Project Status](https://github.com/Requarks/wiki/projects/3)
 - [Special Thanks](#special-thanks)
 
@@ -39,10 +39,6 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 - An empty Git repository (optional)
 
 Read the full [prerequisites](https://docs.wiki.requarks.io/prerequisites) article for full details.
-
-### Change Log
-
-View all notable changes between releases in the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md).
 
 ### Special Thanks
 

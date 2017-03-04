@@ -2,29 +2,12 @@
 version: v1.7.0
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-  'npm:moment:20161019':
-    - express-brute-mongoose > moment:
-        reason: Waiting for new version
-        expires: '2016-11-30T03:04:46.410Z'
   'npm:marked:20170112':
     - simplemde > marked:
-        reason: No fix available
-        expires: '2017-04-02T20:18:37.694Z'
-  'npm:ws:20160920':
-    - engine.io > ws:
-        reason: No fix available yet
-        expires: '2017-03-09T19:39:17.067Z'
-    - engine.io-client > ws:
-        reason: No fix available yet
-        expires: '2017-03-09T19:39:17.067Z'
-    - socket.io > engine.io > ws:
-        reason: No fix available yet
-        expires: '2017-03-09T19:39:17.067Z'
-    - socket.io > socket.io-client > engine.io-client > ws:
-        reason: No fix available yet
-        expires: '2017-03-09T19:39:17.067Z'
+        reason: None given
+        expires: '2017-04-03T16:35:30.347Z'
   'npm:shelljs:20140723':
     - pm2 > shelljs:
-        reason: No fix available yet
-        expires: '2017-03-16T04:32:47.705Z'
+        reason: None given
+        expires: '2017-04-03T16:35:30.347Z'
 patch: {}
