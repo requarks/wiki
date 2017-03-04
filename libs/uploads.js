@@ -101,7 +101,6 @@ module.exports = {
     if (_.isArray(arrFiles) || _.isPlainObject(arrFiles)) {
       // this._uploadsDb.Files.insert(arrFiles);
     }
-    return
   },
 
   /**

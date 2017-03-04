@@ -122,8 +122,6 @@ module.exports = {
     }
 
     winston.info('[SERVER.Local] Data and Repository directories are OK.')
-
-    return
   },
 
   /**

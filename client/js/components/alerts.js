@@ -6,7 +6,6 @@
  * Alerts
  */
 class Alerts { // eslint-disable-line no-unused-vars
-
   /**
    * Constructor
    *
@@ -107,5 +106,4 @@ class Alerts { // eslint-disable-line no-unused-vars
       }, 500)
     }
   }
-
 }

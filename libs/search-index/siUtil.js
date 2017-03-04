@@ -22,7 +22,7 @@ module.exports = function (siOptions) {
   siUtil.close = function (callback) {
     siOptions.indexes.close(function (err) {
       while (!siOptions.indexes.isClosed()) {
-        //log not always working here- investigate
+        // log not always working here- investigate
         if (siOptions.log) siOptions.log.info('closing...')
       }
       if (siOptions.indexes.isClosed()) {
