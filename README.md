@@ -20,6 +20,7 @@
 - [Documentation](#documentation)
 - [Requirements](#requirements)
 - [Change Log](#change-log)
+- [Project Status](https://github.com/Requarks/wiki/projects/3)
 - [Special Thanks](#special-thanks)
 
 ### Documentation
@@ -32,8 +33,8 @@
 
 Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
 
-- Node.js v**4.6.0** or later
-- MongoDB v**3.2** or later
+- Node.js **4.6.0** or later
+- MongoDB **3.2** or later
 - Git **2.11.0** or later
 - An empty Git repository (optional)
 
