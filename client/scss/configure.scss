@@ -25,3 +25,28 @@ $primary: 'indigo';
 	}
 
 }
+
+i.icon-loader {
+  display: inline-block;
+  color: mc('indigo', '500')
+}
+i.icon-check {
+  color: mc('green', '500')
+}
+i.icon-square-cross {
+  color: mc('red', '500')
+}
+
+.tst-welcome-leave-active {
+  transition: all .5s;
+  overflow-y: hidden;
+}
+.tst-welcome-leave {
+  opacity: 1;
+  max-height: 200px;
+}
+.tst-welcome-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+}

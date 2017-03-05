@@ -15,7 +15,7 @@ html
 
     // JS
     script(type='text/javascript', src='/js/libs.js')
-    //script(type='text/javascript', src='/js/app.js')
+    script(type='text/javascript', src='/js/configure.js')
 
     block head
 
@@ -24,32 +24,56 @@ html
       #header-container
         nav.nav#header
           .nav-left
-            a.nav-item(href='/')
+            a.nav-item
               h1
                 i.icon-layers
                 | Wiki.js
       main
         .container
-          .welcome(style={'padding-bottom': '5px'})
-            img(src='/favicons/android-icon-96x96.png', alt='Wiki.js')
-            h1 Welcome to Wiki.js!
-            h2(style={'margin-bottom': 0}) Fill in the fields below to get up and running.
-          .content
-            .panel
-              h2.panel-title
-                span General
-                i(v-if='loading')
-              .panel-content.form-sections
-                section
-                  p.control.is-fullwidth
-                    label.label Site Title
-                    input(type='text', placeholder='e.g. Wiki', v-model='title')
-                section
-                  p.control.is-fullwidth
-                    label.label Host
-                    input(type='text', placeholder='http://', v-model='host')
-              .panel-footer
-                button.button.is-indigo(v-on:click='add', v-bind:disabled='loading') Continue
+          transition(name='tst-welcome')
+            .welcome(style={'padding-bottom': '5px'}, v-if='state === "welcome"')
+              img(src='/favicons/android-icon-96x96.png', alt='Wiki.js')
+              h1 Welcome to Wiki.js!
+              h2(style={'margin-bottom': 0}) A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
+          .content(v-cloak)
+            template(v-if='state === "welcome"')
+              .panel
+                h2.panel-title.is-featured
+                  span Introduction
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
+                  p Detailed information about installation and usage can be found on the #[a(href='https://docs.wiki.requarks.io/') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
+                .panel-footer
+                  button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
+            template(v-else-if='state === "syscheck"')
+              .panel
+                h2.panel-title.is-featured
+                  span System Check
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Checking your system for compatibility...
+                  p(v-if='!loading && syscheck.ok') #[i.icon-check] Looks great! No issues so far.
+                  p(v-if='!loading && !syscheck.ok') #[i.icon-square-cross] Error: {{ syscheck.error }}
+                .panel-footer
+                  button.button.is-teal(v-on:click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
+                  button.button.is-indigo(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
+            template(v-else-if='state === "general"')
+              .panel
+                h2.panel-title.is-featured
+                  span General
+                  i(v-if='loading')
+                .panel-content.form-sections
+                  section
+                    p.control.is-fullwidth
+                      label.label Site Title
+                      input(type='text', placeholder='e.g. Wiki', v-model='conf.title')
+                  section
+                    p.control.is-fullwidth
+                      label.label Host
+                      input(type='text', placeholder='http://', v-model='conf.host')
+                .panel-footer
+                  button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Continue
       footer.footer
         span
           | Powered by 

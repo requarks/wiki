@@ -97,6 +97,7 @@
     "request": "^2.79.0",
     "search-index-adder": "github:NGPixel/search-index-adder",
     "search-index-searcher": "github:NGPixel/search-index-searcher",
+    "semver": "^5.3.0",
     "serve-favicon": "^2.4.1",
     "simplemde": "^1.11.2",
     "socket.io": "^1.7.3",

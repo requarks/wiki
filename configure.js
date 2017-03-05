@@ -14,6 +14,8 @@ module.exports = (port, spinner) => {
   const favicon = require('serve-favicon')
   const http = require('http')
   const path = require('path')
+  const Promise = require('bluebird')
+  const _ = require('lodash')
 
   // ----------------------------------------
   // Define Express App
@@ -47,6 +49,60 @@ module.exports = (port, spinner) => {
 
   app.get('*', (req, res) => {
     res.render('configure/index')
+  })
+
+  app.post('/syscheck', (req, res) => {
+    Promise.mapSeries([
+      () => {
+        const semver = require('semver')
+        if (!semver.satisfies(semver.clean(process.version), '>=4.6.0')) {
+          throw new Error('Node.js version is too old. Minimum is 4.6.0.')
+        }
+        return true
+      },
+      () => {
+        const os = require('os')
+        if (os.totalmem() < 1024 * 1024 * 512) {
+          throw new Error('Not enough memory. Minimum is 512 MB.')
+        }
+        return true
+      },
+      () => {
+        return Promise.try(() => {
+          require('crypto')
+        }).catch(err => { // eslint-disable-line handle-callback-err
+          throw new Error('Crypto Node.js module is not available.')
+        }).return(true)
+      },
+      () => {
+        const exec = require('child_process').exec
+        const semver = require('semver')
+        return new Promise((resolve, reject) => {
+          exec('git --version', (err, stdout, stderr) => {
+            if (err || stdout.length < 3) {
+              reject(new Error('Git is not installed or not reachable from PATH.'))
+            }
+            let gitver = _.chain(stdout.replace(/[^\d.]/g, '')).split('.').take(3).join('.').value()
+            if (!semver.satisfies(semver.clean(gitver), '>=2.11.0')) {
+              reject(new Error('Git version is too old. Minimum is 2.11.0.'))
+            }
+            resolve(true)
+          })
+        })
+      },
+      () => {
+        let fs = require('fs')
+        return Promise.try(() => {
+          fs.accessSync(path.join(ROOTPATH, 'config.yml'), (fs.constants || fs).W_OK)
+        }).catch(err => { // eslint-disable-line handle-callback-err
+          throw new Error('config.yml file is not writable by Node.js process or was not created properly.')
+        }).return(true)
+      }
+    ], test => { return test() }).then(results => {
+      res.json({ ok: true })
+    }).catch(err => {
+      res.json({ ok: false, error: err.message })
+    })
   })
 
   // ----------------------------------------
