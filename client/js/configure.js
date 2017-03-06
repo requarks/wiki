@@ -14,10 +14,17 @@ jQuery(document).ready(function ($) {
       },
       conf: {
         title: 'Wiki',
-        host: ''
+        host: '',
+        port: 80,
+        lang: 'en',
+        db: 'mongodb://localhost:27017/wiki'
       }
     },
     methods: {
+      proceedToWelcome: function (ev) {
+        this.state = 'welcome'
+        this.loading = false
+      },
       proceedToSyscheck: function (ev) {
         let self = this
         this.state = 'syscheck'
@@ -39,7 +46,11 @@ jQuery(document).ready(function ($) {
       },
       proceedToGeneral: function (ev) {
         this.state = 'general'
-        this.loading = true
+        this.loading = false
+      },
+      proceedToDb: function (ev) {
+        this.state = 'db'
+        this.loading = false
       }
     }
   })

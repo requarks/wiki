@@ -46,6 +46,7 @@ html
                   p Detailed information about installation and usage can be found on the #[a(href='https://docs.wiki.requarks.io/') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
                 .panel-footer
                   button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
+
             template(v-else-if='state === "syscheck"')
               .panel
                 h2.panel-title.is-featured
@@ -56,8 +57,10 @@ html
                   p(v-if='!loading && syscheck.ok') #[i.icon-check] Looks great! No issues so far.
                   p(v-if='!loading && !syscheck.ok') #[i.icon-square-cross] Error: {{ syscheck.error }}
                 .panel-footer
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
                   button.button.is-indigo(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
+
             template(v-else-if='state === "general"')
               .panel
                 h2.panel-title.is-featured
@@ -68,12 +71,42 @@ html
                     p.control.is-fullwidth
                       label.label Site Title
                       input(type='text', placeholder='e.g. Wiki', v-model='conf.title')
+                      p.desc The site title will appear in the top left corner on every page and within the window title bar.
                   section
                     p.control.is-fullwidth
                       label.label Host
                       input(type='text', placeholder='http://', v-model='conf.host')
+                      p.desc The full URL to your wiki, without the trailing slash. E.g.: http://wiki.domain.com. Note that sub-folders are not supported.
+                  section
+                    p.control
+                      label.label Port
+                      input(type='text', placeholder='e.g. 80', v-model='conf.port')
+                      p.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.
+                  section
+                    p.control
+                      label.label Site UI Language
+                      select(v-model='conf.lang')
+                        option(value='en') English
+                      p.desc The language in which navigation, help and other UI elements will be displayed.
                 .panel-footer
-                  button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Continue
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back
+                  button.button.is-indigo(v-on:click='proceedToDb', v-bind:disabled='loading') Continue
+
+            template(v-else-if='state === "db"')
+              .panel
+                h2.panel-title.is-featured
+                  span Database
+                  i(v-if='loading')
+                .panel-content.form-sections
+                  section
+                    p.control.is-fullwidth
+                      label.label MongoDB Connection String
+                      input(type='text', placeholder='e.g. mongodb://localhost:27017/wiki', v-model='conf.db')
+                      p.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.
+                .panel-footer
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
+                  button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Connect
+
       footer.footer
         span
           | Powered by 

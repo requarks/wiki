@@ -37,15 +37,15 @@ i.icon-square-cross {
   color: mc('red', '500')
 }
 
-.tst-welcome-leave-active {
+.tst-welcome-leave-active, .tst-welcome-enter-active {
   transition: all .5s;
   overflow-y: hidden;
 }
-.tst-welcome-leave {
+.tst-welcome-leave, .tst-welcome-enter-to {
   opacity: 1;
   max-height: 200px;
 }
-.tst-welcome-leave-to {
+.tst-welcome-leave-to, .tst-welcome-enter {
   opacity: 0;
   max-height: 0;
   padding-top: 0;
