@@ -19,6 +19,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Search index should now update upon article creation
 - Missing icons on login page
+- Image alignement center and right should now behave correctly
+- Error notification when upload is too large for server
 
 ## [v1.0.0-beta.8] - 2017-02-19
 ### Added
