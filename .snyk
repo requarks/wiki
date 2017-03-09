@@ -5,11 +5,11 @@ ignore:
   'npm:marked:20170112':
     - simplemde > marked:
         reason: None given
-        expires: '2017-04-08T03:03:26.484Z'
+        expires: '2017-04-08T03:11:24.935Z'
   'npm:shelljs:20140723':
     - pm2 > shelljs:
         reason: None given
-        expires: '2017-04-08T03:03:26.484Z'
+        expires: '2017-04-08T03:11:24.935Z'
   'npm:qs:20170213':
     - chokidar > fsevents > node-pre-gyp > request > qs:
         reason: None given
@@ -17,7 +17,4 @@ ignore:
     - pm2 > chokidar > fsevents > node-pre-gyp > request > qs:
         reason: None given
         expires: '2017-04-08T03:03:26.484Z'
-    - jimp > request > qs:
-      reason: None given
-      expires: '2017-04-08T03:03:26.484Z'
 patch: {}
