@@ -337,7 +337,7 @@ $('#btn-editor-file-upload input').on('change', (ev) => {
     },
 
     error: (error) => {
-      alerts.pushError(error.message, this.upload.file.name)
+      alerts.pushError('Upload error', error.message)
     },
 
     finish: () => {
