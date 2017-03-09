@@ -244,6 +244,13 @@ const parseContent = (content) => {
     })
   })
 
+  // Apply align-center to parent
+
+  cr('img.align-center').each((i, elm) => {
+    cr(elm).parent().addClass('align-center')
+    cr(elm).removeClass('align-center')
+  })
+
   output = cr.html()
 
   return output
