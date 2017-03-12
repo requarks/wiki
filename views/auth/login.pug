@@ -34,12 +34,12 @@ html
       h2 Login required
       if appflash.length > 0
         h3
-          i.fa.fa-warning
+          i.icon-warning-outline
           = appflash[0].title
         h4= appflash[0].message
       if appconfig.auth.local.enabled
         form(method='post', action='/login')
-          input#login-user(type='text', name='email', placeholder='Email address')
+          input#login-user(type='text', name='email', placeholder='Email / Username')
           input#login-pass(type='password', name='password', placeholder='Password')
           button(type='submit') Log In
       if appconfig.authStrategies.socialEnabled

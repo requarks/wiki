@@ -33,6 +33,8 @@ defaults:
         enabled: false
       slack:
         enabled: false
+      ldap:
+        enabled: false
     db: mongodb://localhost/wiki
     sessionSecret: null
     admin: null

@@ -1,5 +1,6 @@
 'use strict'
 
+const Promise = require('bluebird')
 const express = require('express')
 const router = express.Router()
 const passport = require('passport')
@@ -37,24 +38,51 @@ router.get('/login', function (req, res, next) {
 })
 
 router.post('/login', bruteforce.prevent, function (req, res, next) {
-  passport.authenticate('local', function (err, user, info) {
-    if (err) { return next(err) }
-
-    if (!user) {
-      req.flash('alert', {
-        title: 'Invalid login',
-        message: 'The email or password is invalid.'
+  new Promise((resolve, reject) => {
+    // [1] LOCAL AUTHENTICATION
+    passport.authenticate('local', function (err, user, info) {
+      if (err) { return reject(err) }
+      if (!user) { return reject(new Error('INVALID_LOGIN')) }
+      resolve(user)
+    })(req, res, next)
+  }).catch({ message: 'INVALID_LOGIN' }, err => {
+    if (appconfig.auth.ldap && appconfig.auth.ldap.enabled) {
+      // [2] LDAP AUTHENTICATION
+      return new Promise((resolve, reject) => {
+        passport.authenticate('ldapauth', function (err, user, info) {
+          if (err) { return reject(err) }
+          if (info && info.message) { return reject(new Error(info.message)) }
+          if (!user) { return reject(new Error('INVALID_LOGIN')) }
+          resolve(user)
+        })(req, res, next)
       })
-      return res.redirect('/login')
+    } else {
+      throw err
     }
-
-    req.logIn(user, function (err) {
+  }).then((user) => {
+    // LOGIN SUCCESS
+    return req.logIn(user, function (err) {
       if (err) { return next(err) }
       req.brute.reset(function () {
         return res.redirect('/')
       })
     })
-  })(req, res, next)
+  }).catch(err => {
+    // LOGIN FAIL
+    if (err.message === 'INVALID_LOGIN') {
+      req.flash('alert', {
+        title: 'Invalid login',
+        message: 'The email or password is invalid.'
+      })
+      return res.redirect('/login')
+    } else {
+      req.flash('alert', {
+        title: 'Login error',
+        message: err.message
+      })
+      return res.redirect('/login')
+    }
+  })
 })
 
 /**

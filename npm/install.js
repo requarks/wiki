@@ -56,7 +56,7 @@ pm2.connectAsync().then(() => {
 }).then(() => {
   return new Promise((resolve, reject) => {
     ora.text = 'Installing Wiki.js npm dependencies...'
-    let npmInstallProc = exec('npm install --only=production', {
+    let npmInstallProc = exec('npm install --only=production --no-optional', {
       cwd: installDir
     })
     npmInstallProc.stdout.pipe(process.stdout)

@@ -42,6 +42,9 @@ block adminContent
               when 'slack'
                 i.icon-slack.is-purple
                 | Slack
+              when 'ldap'
+                i.icon-arrow-repeat-outline
+                | LDAP / Active Directory
               default: i.icon-warning
           td.is-centered= userMoment(usr.createdAt).format('lll')
           td.is-centered= userMoment(usr.updatedAt).format('lll')

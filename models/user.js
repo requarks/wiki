@@ -71,6 +71,24 @@ userSchema.statics.processProfile = (profile) => {
   }, {
     new: true
   }).then((user) => {
+    // LDAP - Handle unregistered accounts
+    // Todo: Allow this behavior for any provider...
+    if (!user && profile.provider === 'ldap') {
+      let nUsr = {
+        email: primaryEmail,
+        provider: profile.provider,
+        providerId: profile.id,
+        password: '',
+        name: profile.displayName || profile.name || profile.cn,
+        rights: [{
+          role: 'read',
+          path: '/',
+          exact: false,
+          deny: false
+        }]
+      }
+      return db.User.create(nUsr)
+    }
     return user || Promise.reject(new Error('You have not been authorized to login to this site yet.'))
   })
 }
