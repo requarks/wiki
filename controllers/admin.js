@@ -115,7 +115,7 @@ router.post('/users/create', (req, res) => {
   }
 
   let nUsr = {
-    email: _.trim(req.body.email),
+    email: _.toLower(_.trim(req.body.email)),
     provider: _.trim(req.body.provider),
     password: req.body.password,
     name: _.trim(req.body.name)

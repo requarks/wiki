@@ -59,6 +59,7 @@ userSchema.statics.processProfile = (profile) => {
   }
 
   profile.provider = _.lowerCase(profile.provider)
+  primaryEmail = _.toLower(primaryEmail)
 
   return db.User.findOneAndUpdate({
     email: primaryEmail,
