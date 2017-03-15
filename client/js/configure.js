@@ -7,10 +7,11 @@ jQuery(document).ready(function ($) {
     el: 'main',
     data: {
       loading: false,
-      state: 'welcome',
+      state: 'considerations',
       syscheck: {
         ok: false,
-        error: ''
+        error: '',
+        results: []
       },
       conf: {
         title: 'Wiki',
@@ -18,6 +19,11 @@ jQuery(document).ready(function ($) {
         port: 80,
         lang: 'en',
         db: 'mongodb://localhost:27017/wiki'
+      },
+      considerations: {
+        https: false,
+        port: false,
+        localhost: false
       }
     },
     methods: {
@@ -29,16 +35,23 @@ jQuery(document).ready(function ($) {
         let self = this
         this.state = 'syscheck'
         this.loading = true
+        self.syscheck = {
+          ok: false,
+          error: '',
+          results: []
+        }
 
         _.delay(() => {
           axios.post('/syscheck').then(resp => {
             if (resp.data.ok === true) {
               self.syscheck.ok = true
+              self.syscheck.results = resp.data.results
             } else {
               self.syscheck.ok = false
               self.syscheck.error = resp.data.error
             }
             self.loading = false
+            self.$nextTick()
           }).catch(err => {
             window.alert(err.message)
           })
@@ -46,6 +59,15 @@ jQuery(document).ready(function ($) {
       },
       proceedToGeneral: function (ev) {
         this.state = 'general'
+        this.loading = false
+      },
+      proceedToConsiderations: function (ev) {
+        this.considerations = {
+          https: !_.startsWith(this.conf.host, 'https'),
+          port: false, // TODO
+          localhost: _.includes(this.conf.host, 'localhost')
+        }
+        this.state = 'considerations'
         this.loading = false
       },
       proceedToDb: function (ev) {

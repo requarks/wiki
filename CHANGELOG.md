@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Interactive setup
 - GitHub and Slack authentication providers are now available
-- Experimental: LDAP authentication provider
+- LDAP authentication provider
 
 ### Changed
 - Content headers are now showing an anchor icon instead of a #
@@ -21,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Missing icons on login page
 - Image alignement center and right should now behave correctly
 - Error notification when upload is too large for server
+- Authentication would fail if email has uppercase chars and provider callback is in lowercase
 
 ## [v1.0.0-beta.8] - 2017-02-19
 ### Added

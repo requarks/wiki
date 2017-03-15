@@ -39,3 +39,10 @@ deploy:
     repo: Requarks/wiki
     tags: true
     node: '7'
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/56b27cb2ec4692419db9
+    on_success: change
+    on_failure: always
+    on_start: never
