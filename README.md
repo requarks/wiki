@@ -21,7 +21,7 @@
 - [Documentation](#documentation)
   - [Requirements](#requirements)
   - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
-- [Project Status](https://waffle.io/Requarks/wiki)
+- [Project Planning](https://waffle.io/Requarks/wiki)
 - [Special Thanks](#special-thanks)
 
 ### Documentation
@@ -40,6 +40,10 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 - An empty Git repository (optional)
 
 Read the full [prerequisites](https://docs.wiki.requarks.io/prerequisites) article for full details.
+
+### Gitter
+
+Want to discuss features, ideas or issues? Join our [gitter channel](https://gitter.im/Requarks/wiki). We are very active and friendly!
 
 ### Special Thanks
 
