@@ -1,11 +1,11 @@
 {
-	"wiki": "Wiki",
-	"headers": {
-		"overview": "Vue d'ensemble"
-	},
-	"footer": {
-		"poweredby": "Propulsé par",
-		"home": "Accueil",
-		"top": "Retour en haut"
-	}
+  "wiki": "Wiki",
+  "headers": {
+    "overview": "Vue d'ensemble"
+  },
+  "footer": {
+    "poweredby": "Propulsé par",
+    "home": "Accueil",
+    "top": "Retour en haut"
+  }
 }
