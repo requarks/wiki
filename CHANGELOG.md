@@ -5,23 +5,25 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 ### Added
 - Interactive setup
-- GitHub and Slack authentication providers are now available
-- LDAP authentication provider
+- Auth: GitHub and Slack authentication providers are now available
+- Auth: LDAP authentication provider is now available
 
 ### Changed
-- Content headers are now showing an anchor icon instead of a #
+- Native Compilation Removal: Replaced farmhash with md5
+- Native Compilation Removal: Replaced leveldown with memdown
+- Native Compilation Removal: Replaced sharp with jimp
 - Sidebar: Contents is now Page Contents
 - Sidebar: Start is now Top of Page
-- Replaced farmhash with md5 (native compilation removal)
-- Replaced sharp with jimp (native compilation removal)
-- Replaced leveldown with memdown (native compilation removal)
+- UI: Content headers are now showing an anchor icon instead of a #
 
 ### Fixed
-- Search index should now update upon article creation
-- Missing icons on login page
-- Image alignement center and right should now behave correctly
-- Error notification when upload is too large for server
-- Authentication would fail if email has uppercase chars and provider callback is in lowercase
+- Auth: Authentication would fail if email has uppercase chars and provider callback is in lowercase
+- Search: Search index should now update upon article creation
+- Search: Search results are no longer duplicated upon article update
+- UI: Missing icons on login page
+- UI: Image alignement center and right should now behave correctly
+- Uploads: Error notification when upload is too large for server
+- Uploads: Fix uploads and temp-uploads folder permissions on unix-based systems
 
 ## [v1.0.0-beta.8] - 2017-02-19
 ### Added
