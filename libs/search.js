@@ -114,8 +114,8 @@ module.exports = {
           AND: { 'entryPath': [entryPath] }
         }]
       })).then((results) => {
-        if (results.totalHits > 0) {
-          let delIds = _.map(results.hits, 'id')
+        if (results && results.length > 0) {
+          let delIds = _.map(results, 'id')
           return self._si.delAsync(delIds)
         } else {
           return true
