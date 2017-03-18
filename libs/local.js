@@ -108,14 +108,14 @@ module.exports = {
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'))
 
       if (os.type() !== 'Windows_NT') {
-        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'), '644')
+        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'), '755')
       }
 
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.repo))
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'))
 
       if (os.type() !== 'Windows_NT') {
-        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'), '644')
+        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'), '755')
       }
     } catch (err) {
       winston.error(err)
