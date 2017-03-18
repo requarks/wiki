@@ -1,0 +1,11 @@
+{
+  "wiki": "위키",
+  "headers": {
+    "overview": "개요"
+  },
+  "footer": {
+    "poweredby": "에 의해 구동",
+    "home": "집",
+    "top": "맨 위로"
+  }
+}
