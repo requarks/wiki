@@ -19,8 +19,8 @@
 
 - [Official Website](https://wiki.requarks.io/)
 - [Documentation](#documentation)
-  - [Requirements](#requirements)
-  - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
+- [Requirements](#requirements)
+- [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Project Planning](https://waffle.io/Requarks/wiki)
 - [Special Thanks](#special-thanks)
 
