@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat-square&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat-square)](https://github.com/requarks/wiki/blob/master/LICENSE)
 [![npm](https://img.shields.io/badge/npm-wiki.js-blue.svg?style=flat-square)](https://www.npmjs.com/package/wiki.js)
-[![npm Downloads](https://img.shields.io/npm/dt/wiki.js.svg?style=flat-square)](https://www.npmjs.com/package/wiki.js)
+[![Downloads](https://img.shields.io/github/downloads/Requarks/wiki/total.svg?style=flat-square)](https://www.npmjs.com/package/wiki.js)
 [![Chat on Gitter](https://img.shields.io/badge/chat-on_gitter-CC2B5E.svg?style=flat-square&logo=image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAOCAMAAADUg/YpAAAABlBMVEUAAAD///%2Bl2Z/dAAAAAXRSTlMAQObYZgAAABVJREFUeAFjwAUYYTQByAAh0WicAAAFnwAYeB5bLwAAAABJRU5ErkJggg==)](https://gitter.im/Requarks/wiki)  
 [![Build Status](https://img.shields.io/travis/Requarks/wiki/master.svg?style=flat-square)](https://travis-ci.org/Requarks/wiki)
 [![Codacy Badge](https://img.shields.io/codacy/grade/1d0217a3153c4595bdedb322263e55c8/master.svg?style=flat-square)](https://www.codacy.com/app/Requarks/wiki)
@@ -19,8 +19,8 @@
 
 - [Official Website](https://wiki.requarks.io/)
 - [Documentation](#documentation)
-  - [Requirements](#requirements)
-  - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
+- [Requirements](#requirements)
+- [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Project Planning](https://waffle.io/Requarks/wiki)
 - [Special Thanks](#special-thanks)
 
