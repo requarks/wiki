@@ -36,6 +36,11 @@ html
               h1 Welcome to Wiki.js!
               h2(style={'margin-bottom': 0}) A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
           .content(v-cloak)
+
+            //- ==============================================
+            //- WELCOME
+            //- ==============================================
+
             template(v-if='state === "welcome"')
               .panel
                 h2.panel-title.is-featured
@@ -45,7 +50,12 @@ html
                   p This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
                   p Detailed information about installation and usage can be found on the #[a(href='https://docs.wiki.requarks.io/') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
                 .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
+
+            //- ==============================================
+            //- SYSTEM CHECK
+            //- ==============================================
 
             template(v-else-if='state === "syscheck"')
               .panel
@@ -62,9 +72,14 @@ html
                     strong  Looks good! No issues so far.
                   p(v-if='!loading && !syscheck.ok') #[i.icon-square-cross] Error: {{ syscheck.error }}
                 .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
                   button.button.is-indigo(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
+
+            //- ==============================================
+            //- GENERAL
+            //- ==============================================
 
             template(v-else-if='state === "general"')
               .panel
@@ -75,27 +90,33 @@ html
                   section
                     p.control.is-fullwidth
                       label.label Site Title
-                      input(type='text', placeholder='e.g. Wiki', v-model='conf.title')
-                      p.desc The site title will appear in the top left corner on every page and within the window title bar.
+                      input(type='text', placeholder='e.g. Wiki', v-model='conf.title', data-vv-scope='general', name='ipt-title', v-validate='{ required: true, min: 2 }')
+                      span.desc The site title will appear in the top left corner on every page and within the window title bar.
                   section
                     p.control.is-fullwidth
                       label.label Host
-                      input(type='text', placeholder='http://', v-model='conf.host')
-                      p.desc The full URL to your wiki, without the trailing slash. E.g.: http://wiki.domain.com. Note that sub-folders are not supported.
+                      input(type='text', placeholder='http://', v-model='conf.host', data-vv-scope='general', name='ipt-host', v-validate='{ required: true, url: true }')
+                      span.desc The full URL to your wiki, without the trailing slash. E.g.: http://wiki.domain.com. Note that sub-folders are not supported.
                   section
                     p.control
                       label.label Port
-                      input(type='text', placeholder='e.g. 80', v-model='conf.port')
-                      p.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.
+                      input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true, numeric: true, min_value: 1, max_value: 65535 }')
+                      span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.
                   section
                     p.control
                       label.label Site UI Language
                       select(v-model='conf.lang')
-                        option(value='en') English
-                      p.desc The language in which navigation, help and other UI elements will be displayed.
+                        each lg in langs
+                          option(value=lg.id)= lg.name
+                      span.desc The language in which navigation, help and other UI elements will be displayed.
                 .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back
-                  button.button.is-indigo(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Continue
+                  button.button.is-indigo(v-on:click='proceedToConsiderations', v-bind:disabled='loading || errors.any("general")') Continue
+
+            //- ==============================================
+            //- CONSIDERATIONS
+            //- ==============================================
 
             template(v-else-if='state === "considerations"')
               .panel
@@ -120,23 +141,228 @@ html
                     h3 Are you sure you want to use localhost as the host base URL? #[i.icon-warning-outline.animated.fadeOut.infinite]
                     p The host URL you specified is localhost. Unless you are a developer running Wiki.js locally on your machine, this is not recommended!
                 .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
                   button.button.is-indigo(v-on:click='proceedToDb', v-bind:disabled='loading') Continue
+
+            //- ==============================================
+            //- DATABASE
+            //- ==============================================
 
             template(v-else-if='state === "db"')
               .panel
                 h2.panel-title.is-featured
                   span Database
                   i(v-if='loading')
+                .panel-content.is-text
+                  p Wiki.js stores administrative data such as users, permissions and assets metadata in a MongoDB database. Article contents and uploads are <u>not</u> stored in the DB. Instead, they are stored on-disk and synced automatically with a remote git repository of your choice.
                 .panel-content.form-sections
                   section
                     p.control.is-fullwidth
                       label.label MongoDB Connection String
-                      input(type='text', placeholder='e.g. mongodb://localhost:27017/wiki', v-model='conf.db')
-                      p.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.
+                      input(type='text', placeholder='e.g. mongodb://localhost:27017/wiki', v-model='conf.db', data-vv-scope='db', name='ipt-db', v-validate='{ required: true, min: 14 }')
+                      span.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.
                 .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Back
-                  button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Connect
+                  button.button.is-indigo(v-on:click='proceedToDbcheck', v-bind:disabled='loading || errors.any("db")') Connect
+
+            //- ==============================================
+            //- DATABASE CHECK
+            //- ==============================================
+
+            template(v-else-if='state === "dbcheck"')
+              .panel
+                h2.panel-title.is-featured
+                  span Database Check
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Testing the connection to MongoDB...
+                  p(v-if='!loading && dbcheck.ok')
+                    i.icon-check
+                    strong  Connected successfully!
+                  p(v-if='!loading && !dbcheck.ok') #[i.icon-square-cross] Error: {{ dbcheck.error }}
+                .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-teal(v-on:click='proceedToDbcheck', v-if='!loading && !dbcheck.ok') Try Again
+                  button.button.is-indigo(v-on:click='proceedToPaths', v-if='loading || dbcheck.ok', v-bind:disabled='loading') Continue
+
+            //- ==============================================
+            //- PATHS
+            //- ==============================================
+
+            template(v-else-if='state === "paths"')
+              .panel
+                h2.panel-title.is-featured
+                  span Paths
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p It is recommended to leave the default values.
+                .panel-content.form-sections
+                  section
+                    p.control.is-fullwidth
+                      label.label Local Data Path
+                      input(type='text', placeholder='e.g. ./data', v-model='conf.pathData', data-vv-scope='paths', name='ipt-datapath', v-validate='{ required: true, min: 2 }')
+                      span.desc The path where cache (processed content, thumbnails, search index, etc.) will be stored on disk.
+                  section
+                    p.control.is-fullwidth
+                      label.label Local Repository Path
+                      input(type='text', placeholder='e.g. ./repo', v-model='conf.pathRepo', data-vv-scope='paths', name='ipt-repopath', v-validate='{ required: true, min: 2 }')
+                      span.desc The path where the local git repository will be created, used to store content in markdown files and uploads.
+                .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-indigo(v-on:click='proceedToGit', v-bind:disabled='loading || errors.any("paths")') Continue
+
+            //- ==============================================
+            //- GIT
+            //- ==============================================
+
+            template(v-else-if='state === "git"')
+              .panel
+                h2.panel-title.is-featured
+                  span Git Repository
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p Wiki.js stores article content and uploads locally on disk. All content is then regularly kept in sync with a remote git repository. This acts a backup protection and provides history / revert features. While optional, it is <strong>HIGHLY</strong> recommended to setup the remote git repository connection.
+                .panel-content.form-sections
+                  section.columns
+                    .column.is-two-thirds
+                      p.control.is-fullwidth
+                        label.label Repository URL
+                        input(type='text', placeholder='e.g. git@github.com/org/repo.git or https://github.com/org/repo', v-model='conf.gitUrl', data-vv-scope='git', name='ipt-giturl', v-validate='{ required: true, min: 5 }')
+                        span.desc The full git repository URL to connect to.
+                    .column
+                      p.control.is-fullwidth
+                        label.label Branch
+                        input(type='text', placeholder='e.g. master', v-model='conf.gitBranch', data-vv-scope='git', name='ipt-gitbranch', v-validate='{ required: true, min: 2 }')
+                        span.desc The git branch to use when synchronizing changes.
+                  section.columns
+                    .column.is-one-third
+                      p.control.is-fullwidth
+                        label.label Authentication
+                        select(v-model='conf.gitAuthType')
+                          option(value='ssh') SSH (recommended)
+                          option(value='basic') Basic
+                        span.desc The authentication method used to connect to your remote Git repository.
+                      p.control.is-fullwidth
+                        input#ipt-git-verify-ssl(type='checkbox', v-model='conf.gitAuthSSL')
+                        label.label(for='ipt-git-verify-ssl') Verify SSL
+                    .column(v-show='conf.gitAuthType === "basic"')
+                      p.control.is-fullwidth
+                        label.label Username
+                        input(type='text', v-model='conf.gitUrl')
+                        span.desc The username for the remote git connection.
+                    .column(v-show='conf.gitAuthType === "basic"')
+                      p.control.is-fullwidth
+                        label.label Password
+                        input(type='password', v-model='conf.gitUrl')
+                        span.desc The password for the remote git connection.
+                    .column(v-show='conf.gitAuthType === "ssh"')
+                      p.control.is-fullwidth
+                        label.label Private Key location
+                        input(type='text', placeholder='e.g. /etc/wiki/keys/git.pem')
+                        span.desc The full path to the private key on disk.
+                  section.columns
+                    .column
+                      p.control.is-fullwidth
+                        label.label Sync User Name
+                        input(type='text', placeholder='e.g. John Smith', v-model.number='conf.gitSignatureName', data-vv-scope='git', name='ipt-gitsigname', v-validate='{ required: true }')
+                        span.desc The name to use when pushing commits to the git repository.
+                    .column
+                      p.control.is-fullwidth
+                        label.label Sync User Email
+                        input(type='text', placeholder='e.g. user@example.com', v-model.number='conf.gitSignatureEmail', data-vv-scope='git', name='ipt-gitsigemail', v-validate='{ required: true, email: true }')
+                        span.desc The email to use when pushing commits to the git repository.
+                .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Skip this step
+                  button.button.is-indigo(v-on:click='proceedToGitCheck', v-bind:disabled='loading || errors.any("git")') Continue
+            
+            //- ==============================================
+            //- GIT CHECK
+            //- ==============================================
+
+            template(v-else-if='state === "gitcheck"')
+              .panel
+                h2.panel-title.is-featured
+                  span Git Repository Check
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Testing the connection to Git repository...
+                  p(v-if='!loading && gitcheck.ok')
+                    ul
+                      li(v-for='rs in gitcheck.results') #[i.icon-check] {{rs}}
+                  p(v-if='!loading && gitcheck.ok')
+                    i.icon-check
+                    strong  Git settings are correct!
+                  p(v-if='!loading && !gitcheck.ok') #[i.icon-square-cross] Error: {{ gitcheck.error }}
+                .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
+                  button.button.is-teal(v-on:click='proceedToGitCheck', v-if='!loading && !gitcheck.ok') Try Again
+                  button.button.is-indigo(v-on:click='proceedToAdmin', v-if='loading || gitcheck.ok', v-bind:disabled='loading') Continue
+
+            //- ==============================================
+            //- ADMINISTRATOR ACCOUNT
+            //- ==============================================
+
+            template(v-else-if='state === "admin"')
+              .panel
+                h2.panel-title.is-featured
+                  span Administrator Account
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p An administrator account will be created for local authentication. From this account, you can create or authorize more users.
+                .panel-content.form-sections
+                  section
+                    p.control.is-fullwidth
+                      label.label Administrator Email
+                      input(type='text', placeholder='e.g. admin@example.com', v-model='conf.adminEmail', data-vv-scope='admin', name='ipt-adminemail', v-validate='{ required: true, email: true }')
+                      span.desc The full git repository URL to connect to.
+                  section.columns
+                    .column
+                      p.control.is-fullwidth
+                        label.label Password
+                        input(type='password', v-model='conf.adminPassword', data-vv-scope='admin', name='ipt-adminpwd', v-validate='{ required: true, min: 8 }')
+                        span.desc The full git repository URL to connect to.
+                    .column
+                      p.control.is-fullwidth
+                        label.label Confirm Password
+                        input(type='password', v-model='conf.adminPasswordConfirm', data-vv-scope='admin', name='ipt-adminpwd2', v-validate='{ required: true, confirmed: "ipt-adminpwd" }')
+                        span.desc The git branch to use when synchronizing changes.
+                .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
+                  button.button.is-indigo(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("admin")') Continue
+
+            //- ==============================================
+            //- FINAL
+            //- ==============================================
+
+            template(v-else-if='state === "final"')
+              .panel
+                h2.panel-title.is-featured
+                  span Finalizing
+                  i(v-if='loading')
+                .panel-content.is-text
+                  p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Finalizing your installation...
+                  p(v-if='!loading && final.ok')
+                    ul
+                      li(v-for='rs in final.results') #[i.icon-check] {{rs}}
+                  p(v-if='!loading && final.ok')
+                    i.icon-check
+                    strong  Wiki.js was configured successfully and is now ready for use.
+                  p(v-if='!loading && final.ok')
+                    | Click the <strong>Start</strong> button below to start the Wiki.js server.
+                  p(v-if='!loading && !final.ok') #[i.icon-square-cross] Error: {{ final.error }}
+                .panel-footer
+                  .progress-bar: div(v-bind:style='{width: currentProgress}')
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
+                  button.button.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
+                  button.button.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
 
       footer.footer
         span

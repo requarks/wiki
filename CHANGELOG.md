@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - Auth: Authentication would fail if email has uppercase chars and provider callback is in lowercase
+- Markdown: Fixed potential crash on markdown processing of video links
 - Search: Search index should now update upon article creation
 - Search: Search results are no longer duplicated upon article update
 - UI: Missing icons on login page

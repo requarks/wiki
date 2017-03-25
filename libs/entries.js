@@ -152,7 +152,7 @@ module.exports = {
         return false
       }
     }).catch((err) => { // eslint-disable-line handle-callback-err
-      return Promise.reject(new Promise.OperationalError('Entry ' + entryPath + ' does not exist!'))
+      throw new Promise.OperationalError('Entry ' + entryPath + ' does not exist!')
     })
   },
 
@@ -299,8 +299,7 @@ module.exports = {
         _id: content.entryPath,
         title: content.meta.title || content.entryPath,
         subtitle: content.meta.subtitle || '',
-        parent: content.parent.title || '',
-        content: content.text || ''
+        parent: content.parent.title || ''
       }, {
         new: true,
         upsert: true
@@ -396,60 +395,5 @@ module.exports = {
     return fs.readFileAsync(path.join(ROOTPATH, 'client/content/create.md'), 'utf8').then((contents) => {
       return _.replace(contents, new RegExp('{TITLE}', 'g'), formattedTitle)
     })
-  },
-
-  /**
-   * Searches entries based on terms.
-   *
-   * @param      {String}  terms   The terms to search for
-   * @return     {Promise<Object>}  Promise of the search results
-   */
-  search (terms) {
-    terms = _.chain(terms)
-      .deburr()
-      .toLower()
-      .trim()
-      .replace(/[^a-z0-9\- ]/g, '')
-      .split(' ')
-      .filter((f) => { return !_.isEmpty(f) })
-      .join(' ')
-      .value()
-
-    return db.Entry.find(
-      { $text: { $search: terms } },
-      { score: { $meta: 'textScore' }, title: 1 }
-    )
-    .sort({ score: { $meta: 'textScore' } })
-    .limit(10)
-    .exec()
-    .then((hits) => {
-      if (hits.length < 5) {
-        let regMatch = new RegExp('^' + _.split(terms, ' ')[0])
-        return db.Entry.find({
-          _id: { $regex: regMatch }
-        }, '_id')
-            .sort('_id')
-            .limit(5)
-            .exec()
-            .then((matches) => {
-              return {
-                match: hits,
-                suggest: (matches) ? _.map(matches, '_id') : []
-              }
-            })
-      } else {
-        return {
-          match: _.filter(hits, (h) => { return h._doc.score >= 1 }),
-          suggest: []
-        }
-      }
-    }).catch((err) => {
-      winston.error(err)
-      return {
-        match: [],
-        suggest: []
-      }
-    })
   }
-
 }

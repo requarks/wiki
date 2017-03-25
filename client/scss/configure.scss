@@ -53,3 +53,24 @@ i.icon-warning-outline {
   max-height: 0;
   padding-top: 0;
 }
+
+.progress-bar {
+  width: 150px;
+  height: 10px;
+  background-color: mc('indigo', '50');
+  border:1px solid mc('indigo', '100');
+  border-radius: 3px;
+  position: absolute;
+  left: 15px;
+  top: 21px;
+  padding: 1px;
+
+  > div {
+    width: 5px;
+    height: 6px;
+    background-color: mc('indigo', '200');
+    border-radius: 2px;
+    transition: all 1s ease;
+  }
+
+}

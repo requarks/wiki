@@ -27,6 +27,7 @@ const paths = {
       './node_modules/socket.io-client/dist/socket.io.min.js',
       './node_modules/jquery/dist/jquery.min.js',
       './node_modules/vue/dist/vue.min.js',
+      './node_modules/vee-validate/dist/vee-validate.min.js',
       './node_modules/axios/dist/axios.min.js',
       './node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
       './node_modules/jquery-simple-upload/simpleUpload.min.js',

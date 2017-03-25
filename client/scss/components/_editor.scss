@@ -1,13 +1,13 @@
 
 .editor-toolbar {
 	z-index: 2;
-	background-color: rgba(0,0,0,0.75);
+	background-color: mc('indigo', '900');
 	border: none;
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 	opacity: 1;
 	position: fixed;
-	top: 51px;
+	top: 50px;
 	left: 0;
 	width: 100%;
 
@@ -90,7 +90,7 @@
 
 	}
 
-	
+
 
 }
 
@@ -98,7 +98,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-start;
-	
+
 	overflow: auto;
 	overflow-x: hidden;
 
@@ -140,7 +140,7 @@
 
 		> span {
 			font-size: 12px;
-			
+
 			> strong {
 				text-overflow: ellipsis;
 				white-space: nowrap;

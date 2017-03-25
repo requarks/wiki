@@ -50,4 +50,26 @@ defaults:
       signature:
         name: Wiki
         email: wiki@example.com
+langs:
+  -
+    id: en
+    name: English
+  -
+    id: fr
+    name: French - Français
+  -
+    id: de
+    name: German - Deutsch
+  -
+    id: ko
+    name: Korean - 한국어
+  -
+    id: pt
+    name: Portuguese - Português
+  -
+    id: ru
+    name: Russian - Русский
+  -
+    id: es
+    name: Spanish - Español
 # ---------------------------------

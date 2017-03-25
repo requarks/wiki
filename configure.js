@@ -15,7 +15,10 @@ module.exports = (port, spinner) => {
   const http = require('http')
   const path = require('path')
   const Promise = require('bluebird')
+  const fs = require('fs-extra')
+  const yaml = require('js-yaml')
   const _ = require('lodash')
+
 
   // ----------------------------------------
   // Define Express App
@@ -48,9 +51,20 @@ module.exports = (port, spinner) => {
   // ----------------------------------------
 
   app.get('*', (req, res) => {
-    res.render('configure/index')
+    let langs = []
+    try {
+      langs = yaml.safeLoad(fs.readFileSync('./app/data.yml', 'utf8')).langs
+    } catch (err) {
+      console.error(err)
+    }
+    res.render('configure/index', {
+      langs
+    })
   })
 
+  /**
+   * Perform basic system checks
+   */
   app.post('/syscheck', (req, res) => {
     Promise.mapSeries([
       () => {
@@ -102,6 +116,106 @@ module.exports = (port, spinner) => {
       res.json({ ok: true, results })
     }).catch(err => {
       res.json({ ok: false, error: err.message })
+    })
+  })
+
+  /**
+   * Check the DB connection
+   */
+  app.post('/dbcheck', (req, res) => {
+    let mongo = require('mongodb').MongoClient
+    mongo.connect(req.body.db, {
+      autoReconnect: false,
+      reconnectTries: 2,
+      reconnectInterval: 1000,
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 5000
+    }, (err, db) => {
+      if (err === null) {
+        // Try to create a test collection
+        db.createCollection('test', (err, results) => {
+          if (err === null) {
+            // Try to drop test collection
+            db.dropCollection('test', (err, results) => {
+              if (err === null) {
+                res.json({ ok: true })
+              } else {
+                res.json({ ok: false, error: 'Unable to delete test collection. Verify permissions. ' + err.message })
+              }
+              db.close()
+            })
+          } else {
+            res.json({ ok: false, error: 'Unable to create test collection. Verify permissions. ' + err.message })
+            db.close()
+          }
+        })
+      } else {
+        res.json({ ok: false, error: err.message })
+      }
+    })
+  })
+
+  /**
+   * Check the Git connection
+   */
+  app.post('/gitcheck', (req, res) => {
+    const exec = require('execa')
+
+    const dataDir = path.resolve(ROOTPATH, req.body.pathData)
+    const gitDir = path.resolve(ROOTPATH, req.body.pathRepo)
+    let results = []
+
+    fs.ensureDir(dataDir).then(() => {
+      results.push('Data directory path is valid.')
+      return fs.ensureDir(gitDir).then(() => {
+        results.push('Git directory path is valid.')
+        return true
+      })
+    }).then(() => {
+      return exec.stdout('git', ['init'], { cwd: gitDir }).then(result => {
+        results.push('Git local repository initialized.')
+        return true
+      })
+    }).then(() => {
+      return res.json({ ok: true, results })
+    }).catch(err => {
+      res.json({ ok: false, error: err.message })
+    })
+  })
+
+  /**
+   * Check the DB connection
+   */
+  app.post('/finalize', (req, res) => {
+    let mongo = require('mongodb').MongoClient
+    mongo.connect(req.body.db, {
+      autoReconnect: false,
+      reconnectTries: 2,
+      reconnectInterval: 1000,
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 5000
+    }, (err, db) => {
+      if (err === null) {
+        // Try to create a test collection
+        db.createCollection('test', (err, results) => {
+          if (err === null) {
+            // Try to drop test collection
+            db.dropCollection('test', (err, results) => {
+              if (err === null) {
+                res.json({ ok: true })
+              } else {
+                res.json({ ok: false, error: 'Unable to delete test collection. Verify permissions. ' + err.message })
+              }
+              db.close()
+            })
+          } else {
+            res.json({ ok: false, error: 'Unable to create test collection. Verify permissions. ' + err.message })
+            db.close()
+          }
+        })
+      } else {
+        res.json({ ok: false, error: err.message })
+      }
     })
   })
 

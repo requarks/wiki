@@ -231,10 +231,8 @@ module.exports = {
    */
   generateThumbnail (sourcePath, destPath) {
     return jimp.read(sourcePath).then(img => {
-      return img.cover(150, 150)
-              .background(0xFFFFFFFF)
-              .opaque()
-              .rgba(false)
+      return img
+              .contain(150, 150)
               .write(destPath)
     })
   },

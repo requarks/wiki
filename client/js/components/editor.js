@@ -93,6 +93,7 @@ if ($('#mk-editor').length === 1) {
             mdeModalOpenState = true;
             $('#modal-editor-link').slideToggle();
           } */
+          window.alert('Coming soon!')
         },
         className: 'icon-link2',
         title: 'Insert Link'
@@ -163,6 +164,7 @@ if ($('#mk-editor').length === 1) {
       {
         name: 'table',
         action: (editor) => {
+          window.alert('Coming soon!')
           // todo
         },
         className: 'icon-table',

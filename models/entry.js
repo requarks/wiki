@@ -21,30 +21,11 @@ var entrySchema = Mongoose.Schema({
   parent: {
     type: String,
     default: ''
-  },
-  content: {
-    type: String,
-    default: ''
   }
 
 },
   {
     timestamps: {}
   })
-
-entrySchema.index({
-  _id: 'text',
-  title: 'text',
-  subtitle: 'text',
-  content: 'text'
-}, {
-  weights: {
-    _id: 3,
-    title: 10,
-    subtitle: 5,
-    content: 1
-  },
-  name: 'EntriesTextIndex'
-})
 
 module.exports = Mongoose.model('Entry', entrySchema)

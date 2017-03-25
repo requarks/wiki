@@ -49,38 +49,41 @@ var Cron = require('cron').CronJob
 // Start Cron
 // ----------------------------------------
 
+var job
 var jobIsBusy = false
 var jobUplWatchStarted = false
 
-var job = new Cron({
-  cronTime: '0 */5 * * * *',
-  onTick: () => {
-    // Make sure we don't start two concurrent jobs
+db.onReady.then(() => {
+  return db.Entry.remove({})
+}).then(() => {
+  job = new Cron({
+    cronTime: '0 */5 * * * *',
+    onTick: () => {
+      // Make sure we don't start two concurrent jobs
 
-    if (jobIsBusy) {
-      winston.warn('[AGENT] Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
-      return
-    }
-    winston.info('[AGENT] Running all jobs...')
-    jobIsBusy = true
+      if (jobIsBusy) {
+        winston.warn('[AGENT] Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
+        return
+      }
+      winston.info('[AGENT] Running all jobs...')
+      jobIsBusy = true
 
-    // Prepare async job collector
+      // Prepare async job collector
 
-    let jobs = []
-    let repoPath = path.resolve(ROOTPATH, appconfig.paths.repo)
-    let dataPath = path.resolve(ROOTPATH, appconfig.paths.data)
-    let uploadsTempPath = path.join(dataPath, 'temp-upload')
+      let jobs = []
+      let repoPath = path.resolve(ROOTPATH, appconfig.paths.repo)
+      let dataPath = path.resolve(ROOTPATH, appconfig.paths.data)
+      let uploadsTempPath = path.join(dataPath, 'temp-upload')
 
-    // ----------------------------------------
-    // REGULAR JOBS
-    // ----------------------------------------
+      // ----------------------------------------
+      // REGULAR JOBS
+      // ----------------------------------------
 
-    //* ****************************************
-    // -> Sync with Git remote
-    //* ****************************************
+      //* ****************************************
+      // -> Sync with Git remote
+      //* ****************************************
 
-    jobs.push(git.onReady.then(() => {
-      return git.resync().then(() => {
+      jobs.push(git.resync().then(() => {
         // -> Stream all documents
 
         let cacheJobs = []
@@ -131,55 +134,56 @@ var job = new Cron({
         })
 
         return jobCbStreamDocs
-      })
-    }))
+      }))
 
-    //* ****************************************
-    // -> Clear failed temporary upload files
-    //* ****************************************
+      //* ****************************************
+      // -> Clear failed temporary upload files
+      //* ****************************************
 
-    jobs.push(
-      fs.readdirAsync(uploadsTempPath).then((ls) => {
-        let fifteenAgo = moment().subtract(15, 'minutes')
+      jobs.push(
+        fs.readdirAsync(uploadsTempPath).then((ls) => {
+          let fifteenAgo = moment().subtract(15, 'minutes')
 
-        return Promise.map(ls, (f) => {
-          return fs.statAsync(path.join(uploadsTempPath, f)).then((s) => { return { filename: f, stat: s } })
-        }).filter((s) => { return s.stat.isFile() }).then((arrFiles) => {
-          return Promise.map(arrFiles, (f) => {
-            if (moment(f.stat.ctime).isBefore(fifteenAgo, 'minute')) {
-              return fs.unlinkAsync(path.join(uploadsTempPath, f.filename))
-            } else {
-              return true
-            }
+          return Promise.map(ls, (f) => {
+            return fs.statAsync(path.join(uploadsTempPath, f)).then((s) => { return { filename: f, stat: s } })
+          }).filter((s) => { return s.stat.isFile() }).then((arrFiles) => {
+            return Promise.map(arrFiles, (f) => {
+              if (moment(f.stat.ctime).isBefore(fifteenAgo, 'minute')) {
+                return fs.unlinkAsync(path.join(uploadsTempPath, f.filename))
+              } else {
+                return true
+              }
+            })
           })
         })
+      )
+
+      // ----------------------------------------
+      // Run
+      // ----------------------------------------
+
+      Promise.all(jobs).then(() => {
+        winston.info('[AGENT] All jobs completed successfully! Going to sleep for now.')
+
+        if (!jobUplWatchStarted) {
+          jobUplWatchStarted = true
+          upl.initialScan().then(() => {
+            job.start()
+          })
+        }
+
+        return true
+      }).catch((err) => {
+        winston.error('[AGENT] One or more jobs have failed: ', err)
+      }).finally(() => {
+        jobIsBusy = false
       })
-    )
+    },
+    start: false,
+    timeZone: 'UTC',
+    runOnInit: true
+  })
 
-    // ----------------------------------------
-    // Run
-    // ----------------------------------------
-
-    Promise.all(jobs).then(() => {
-      winston.info('[AGENT] All jobs completed successfully! Going to sleep for now.')
-
-      if (!jobUplWatchStarted) {
-        jobUplWatchStarted = true
-        upl.initialScan().then(() => {
-          job.start()
-        })
-      }
-
-      return true
-    }).catch((err) => {
-      winston.error('[AGENT] One or more jobs have failed: ', err)
-    }).finally(() => {
-      jobIsBusy = false
-    })
-  },
-  start: false,
-  timeZone: 'UTC',
-  runOnInit: true
 })
 
 // ----------------------------------------
