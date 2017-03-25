@@ -183,7 +183,6 @@ db.onReady.then(() => {
     timeZone: 'UTC',
     runOnInit: true
   })
-
 })
 
 // ----------------------------------------

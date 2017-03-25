@@ -15,10 +15,9 @@ module.exports = (port, spinner) => {
   const http = require('http')
   const path = require('path')
   const Promise = require('bluebird')
-  const fs = require('fs-extra')
+  const fs = Promise.promisifyAll(require('fs-extra'))
   const yaml = require('js-yaml')
   const _ = require('lodash')
-
 
   // ----------------------------------------
   // Define Express App
@@ -160,26 +159,76 @@ module.exports = (port, spinner) => {
    */
   app.post('/gitcheck', (req, res) => {
     const exec = require('execa')
+    const url = require('url')
 
     const dataDir = path.resolve(ROOTPATH, req.body.pathData)
     const gitDir = path.resolve(ROOTPATH, req.body.pathRepo)
-    let results = []
 
-    fs.ensureDir(dataDir).then(() => {
-      results.push('Data directory path is valid.')
-      return fs.ensureDir(gitDir).then(() => {
-        results.push('Git directory path is valid.')
-        return true
-      })
-    }).then(() => {
-      return exec.stdout('git', ['init'], { cwd: gitDir }).then(result => {
-        results.push('Git local repository initialized.')
-        return true
-      })
-    }).then(() => {
-      return res.json({ ok: true, results })
+    let urlObj = url.parse(req.body.gitUrl)
+    if (req.body.gitAuthType === 'basic') {
+      urlObj.auth = req.body.gitAuthUser + ':' + req.body.gitAuthPass
+    }
+    const gitRemoteUrl = url.format(urlObj)
+
+    Promise.mapSeries([
+      () => {
+        return fs.ensureDirAsync(dataDir).return('Data directory path is valid.')
+      },
+      () => {
+        return fs.ensureDirAsync(gitDir).return('Git directory path is valid.')
+      },
+      () => {
+        return exec.stdout('git', ['init'], { cwd: gitDir }).then(result => {
+          return 'Local git repository has been initialized.'
+        })
+      },
+      () => {
+        return exec.stdout('git', ['config', '--local', 'user.name', req.body.gitSignatureName], { cwd: gitDir }).then(result => {
+          return 'Git Signature Name has been set successfully.'
+        })
+      },
+      () => {
+        return exec.stdout('git', ['config', '--local', 'user.email', req.body.gitSignatureEmail], { cwd: gitDir }).then(result => {
+          return 'Git Signature Name has been set successfully.'
+        })
+      },
+      () => {
+        return exec.stdout('git', ['config', '--local', '--bool', 'http.sslVerify', req.body.gitAuthSSL], { cwd: gitDir }).then(result => {
+          return 'Git SSL Verify flag has been set successfully.'
+        })
+      },
+      () => {
+        if (req.body.gitAuthType === 'ssh') {
+          return exec.stdout('git', ['config', '--local', 'core.sshCommand', 'ssh -i "' + req.body.gitAuthSSHKey + '" -o StrictHostKeyChecking=no'], { cwd: gitDir }).then(result => {
+            return 'Git SSH Private Key path has been set successfully.'
+          })
+        } else {
+          return false
+        }
+      },
+      () => {
+        return exec.stdout('git', ['remote', 'remove', 'origin'], { cwd: gitDir }).catch(err => {
+          if (_.includes(err.message, 'No such remote')) {
+            return true
+          } else {
+            throw err
+          }
+        }).then(() => {
+          return exec.stdout('git', ['remote', 'add', 'origin', gitRemoteUrl], { cwd: gitDir }).then(result => {
+            return 'Git Remote was added successfully.'
+          })
+        })
+      },
+      () => {
+        return exec.stdout('git', ['pull', 'origin', req.body.gitBranch], { cwd: gitDir }).then(result => {
+          return 'Git Pull operation successful.'
+        })
+      }
+    ], step => { return step() }).then(results => {
+      return res.json({ ok: true, results: _.without(results, false) })
     }).catch(err => {
-      res.json({ ok: false, error: err.message })
+      let errMsg = (err.stderr) ? err.stderr.replace(/(error:|warning:|fatal:)/gi, '').replace(/ \s+/g, ' ') : err.message
+      res.json({ ok: false, error: errMsg })
     })
   })
 

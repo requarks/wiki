@@ -205,8 +205,9 @@ jQuery(document).ready(function ($) {
         let self = this
         this.state = 'gitcheck'
         this.loading = true
-        self.dbcheck = {
+        self.gitcheck = {
           ok: false,
+          results: [],
           error: ''
         }
 
@@ -214,6 +215,7 @@ jQuery(document).ready(function ($) {
           axios.post('/gitcheck', self.conf).then(resp => {
             if (resp.data.ok === true) {
               self.gitcheck.ok = true
+              self.gitcheck.results = resp.data.results
             } else {
               self.gitcheck.ok = false
               self.gitcheck.error = resp.data.error

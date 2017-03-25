@@ -252,17 +252,17 @@ html
                     .column(v-show='conf.gitAuthType === "basic"')
                       p.control.is-fullwidth
                         label.label Username
-                        input(type='text', v-model='conf.gitUrl')
+                        input(type='text', v-model='conf.gitAuthUser')
                         span.desc The username for the remote git connection.
                     .column(v-show='conf.gitAuthType === "basic"')
                       p.control.is-fullwidth
                         label.label Password
-                        input(type='password', v-model='conf.gitUrl')
+                        input(type='password', v-model='conf.gitAuthPass')
                         span.desc The password for the remote git connection.
                     .column(v-show='conf.gitAuthType === "ssh"')
                       p.control.is-fullwidth
                         label.label Private Key location
-                        input(type='text', placeholder='e.g. /etc/wiki/keys/git.pem')
+                        input(type='text', placeholder='e.g. /etc/wiki/keys/git.pem', v-model='conf.gitAuthSSHKey')
                         span.desc The full path to the private key on disk.
                   section.columns
                     .column
@@ -277,7 +277,7 @@ html
                         span.desc The email to use when pushing commits to the git repository.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToPaths', v-bind:disabled='loading') Back
                   button.button.is-indigo.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Skip this step
                   button.button.is-indigo(v-on:click='proceedToGitCheck', v-bind:disabled='loading || errors.any("git")') Continue
             
