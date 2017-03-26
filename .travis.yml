@@ -2,7 +2,7 @@ language: node_js
 node_js:
 - '7'
 - '6'
-- '4'
+#- '4'
 addons:
   apt:
     sources:
