@@ -278,8 +278,8 @@ html
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToPaths', v-bind:disabled='loading') Back
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Skip this step
-                  button.button.is-indigo(v-on:click='proceedToGitCheck', v-bind:disabled='loading || errors.any("git")') Continue
+                  button.button.is-indigo.is-outlined(v-on:click='conf.gitUseRemote = false; proceedToGitCheck()', v-bind:disabled='loading') Skip this step
+                  button.button.is-indigo(v-on:click='conf.gitUseRemote = true; proceedToGitCheck()', v-bind:disabled='loading || errors.any("git")') Continue
             
             //- ==============================================
             //- GIT CHECK
@@ -291,7 +291,7 @@ html
                   span Git Repository Check
                   i(v-if='loading')
                 .panel-content.is-text
-                  p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Testing the connection to Git repository...
+                  p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Verifying Git repository settings...
                   p(v-if='!loading && gitcheck.ok')
                     ul
                       li(v-for='rs in gitcheck.results') #[i.icon-check] {{rs}}
@@ -321,18 +321,18 @@ html
                     p.control.is-fullwidth
                       label.label Administrator Email
                       input(type='text', placeholder='e.g. admin@example.com', v-model='conf.adminEmail', data-vv-scope='admin', name='ipt-adminemail', v-validate='{ required: true, email: true }')
-                      span.desc The full git repository URL to connect to.
+                      span.desc The email address of the administrator account
                   section.columns
                     .column
                       p.control.is-fullwidth
                         label.label Password
                         input(type='password', v-model='conf.adminPassword', data-vv-scope='admin', name='ipt-adminpwd', v-validate='{ required: true, min: 8 }')
-                        span.desc The full git repository URL to connect to.
+                        span.desc At least 8 characters long.
                     .column
                       p.control.is-fullwidth
                         label.label Confirm Password
                         input(type='password', v-model='conf.adminPasswordConfirm', data-vv-scope='admin', name='ipt-adminpwd2', v-validate='{ required: true, confirmed: "ipt-adminpwd" }')
-                        span.desc The git branch to use when synchronizing changes.
+                        span.desc Verify your password again.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
@@ -350,9 +350,6 @@ html
                 .panel-content.is-text
                   p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Finalizing your installation...
                   p(v-if='!loading && final.ok')
-                    ul
-                      li(v-for='rs in final.results') #[i.icon-check] {{rs}}
-                  p(v-if='!loading && final.ok')
                     i.icon-check
                     strong  Wiki.js was configured successfully and is now ready for use.
                   p(v-if='!loading && final.ok')
@@ -360,7 +357,7 @@ html
                   p(v-if='!loading && !final.ok') #[i.icon-square-cross] Error: {{ final.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
+                  button.button.is-indigo.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
                   button.button.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
 

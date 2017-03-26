@@ -1,6 +1,6 @@
 {
   "name": "wiki.js",
-  "version": "1.0.0-beta.8.1",
+  "version": "1.0.0-beta.9",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "install.js",
   "scripts": {

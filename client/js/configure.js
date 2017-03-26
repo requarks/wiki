@@ -46,6 +46,7 @@ jQuery(document).ready(function ($) {
         db: 'mongodb://localhost:27017/wiki',
         pathData: './data',
         pathRepo: './repo',
+        gitUseRemote: true,
         gitUrl: '',
         gitBranch: 'master',
         gitAuthType: 'ssh',

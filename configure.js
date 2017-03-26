@@ -51,14 +51,14 @@ module.exports = (port, spinner) => {
 
   app.get('*', (req, res) => {
     let langs = []
+    let conf = {}
     try {
       langs = yaml.safeLoad(fs.readFileSync('./app/data.yml', 'utf8')).langs
+      conf = yaml.safeLoad(fs.readFileSync('./config.yml', 'utf8'))
     } catch (err) {
       console.error(err)
     }
-    res.render('configure/index', {
-      langs
-    })
+    res.render('configure/index', { langs, conf })
   })
 
   /**
@@ -164,11 +164,16 @@ module.exports = (port, spinner) => {
     const dataDir = path.resolve(ROOTPATH, req.body.pathData)
     const gitDir = path.resolve(ROOTPATH, req.body.pathRepo)
 
-    let urlObj = url.parse(req.body.gitUrl)
-    if (req.body.gitAuthType === 'basic') {
-      urlObj.auth = req.body.gitAuthUser + ':' + req.body.gitAuthPass
+    let gitRemoteUrl = ''
+    console.log(req.body)
+
+    if (req.body.gitUseRemote === true) {
+      let urlObj = url.parse(req.body.gitUrl)
+      if (req.body.gitAuthType === 'basic') {
+        urlObj.auth = req.body.gitAuthUser + ':' + req.body.gitAuthPass
+      }
+      gitRemoteUrl = url.format(urlObj)
     }
-    const gitRemoteUrl = url.format(urlObj)
 
     Promise.mapSeries([
       () => {
@@ -183,21 +188,25 @@ module.exports = (port, spinner) => {
         })
       },
       () => {
+        if (req.body.gitUseRemote === false) { return false }
         return exec.stdout('git', ['config', '--local', 'user.name', req.body.gitSignatureName], { cwd: gitDir }).then(result => {
           return 'Git Signature Name has been set successfully.'
         })
       },
       () => {
+        if (req.body.gitUseRemote === false) { return false }
         return exec.stdout('git', ['config', '--local', 'user.email', req.body.gitSignatureEmail], { cwd: gitDir }).then(result => {
           return 'Git Signature Name has been set successfully.'
         })
       },
       () => {
+        if (req.body.gitUseRemote === false) { return false }
         return exec.stdout('git', ['config', '--local', '--bool', 'http.sslVerify', req.body.gitAuthSSL], { cwd: gitDir }).then(result => {
           return 'Git SSL Verify flag has been set successfully.'
         })
       },
       () => {
+        if (req.body.gitUseRemote === false) { return false }
         if (req.body.gitAuthType === 'ssh') {
           return exec.stdout('git', ['config', '--local', 'core.sshCommand', 'ssh -i "' + req.body.gitAuthSSHKey + '" -o StrictHostKeyChecking=no'], { cwd: gitDir }).then(result => {
             return 'Git SSH Private Key path has been set successfully.'
@@ -207,6 +216,7 @@ module.exports = (port, spinner) => {
         }
       },
       () => {
+        if (req.body.gitUseRemote === false) { return false }
         return exec.stdout('git', ['remote', 'remove', 'origin'], { cwd: gitDir }).catch(err => {
           if (_.includes(err.message, 'No such remote')) {
             return true
@@ -220,6 +230,7 @@ module.exports = (port, spinner) => {
         })
       },
       () => {
+        if (req.body.gitUseRemote === false) { return false }
         return exec.stdout('git', ['pull', 'origin', req.body.gitBranch], { cwd: gitDir }).then(result => {
           return 'Git Pull operation successful.'
         })
@@ -233,38 +244,115 @@ module.exports = (port, spinner) => {
   })
 
   /**
-   * Check the DB connection
+   * Finalize
    */
   app.post('/finalize', (req, res) => {
+    const bcrypt = require('bcryptjs-then')
+    const crypto = Promise.promisifyAll(require('crypto'))
     let mongo = require('mongodb').MongoClient
-    mongo.connect(req.body.db, {
-      autoReconnect: false,
-      reconnectTries: 2,
-      reconnectInterval: 1000,
-      connectTimeoutMS: 5000,
-      socketTimeoutMS: 5000
-    }, (err, db) => {
-      if (err === null) {
-        // Try to create a test collection
-        db.createCollection('test', (err, results) => {
+
+    Promise.join(
+      new Promise((resolve, reject) => {
+        mongo.connect(req.body.db, {
+          autoReconnect: false,
+          reconnectTries: 2,
+          reconnectInterval: 1000,
+          connectTimeoutMS: 5000,
+          socketTimeoutMS: 5000
+        }, (err, db) => {
           if (err === null) {
-            // Try to drop test collection
-            db.dropCollection('test', (err, results) => {
+            db.createCollection('users', { strict: false }, (err, results) => {
               if (err === null) {
-                res.json({ ok: true })
+                bcrypt.hash(req.body.adminPassword).then(adminPwdHash => {
+                  db.collection('users').findOneAndUpdate({
+                    provider: 'local',
+                    email: req.body.adminEmail
+                  }, {
+                    provider: 'local',
+                    email: req.body.adminEmail,
+                    name: 'Administrator',
+                    password: adminPwdHash,
+                    rights: [{
+                      role: 'admin',
+                      path: '/',
+                      exact: false,
+                      deny: false
+                    }],
+                    updatedAt: new Date(),
+                    createdAt: new Date()
+                  }, {
+                    upsert: true,
+                    returnOriginal: false
+                  }, (err, results) => {
+                    if (err === null) {
+                      resolve(true)
+                    } else {
+                      reject(err)
+                    }
+                    db.close()
+                  })
+                })
               } else {
-                res.json({ ok: false, error: 'Unable to delete test collection. Verify permissions. ' + err.message })
+                reject(err)
+                db.close()
               }
-              db.close()
             })
           } else {
-            res.json({ ok: false, error: 'Unable to create test collection. Verify permissions. ' + err.message })
-            db.close()
+            reject(err)
           }
         })
-      } else {
-        res.json({ ok: false, error: err.message })
-      }
+      }),
+      fs.readFileAsync('./config.yml', 'utf8').then(confRaw => {
+        let conf = yaml.safeLoad(confRaw)
+        conf.title = req.body.title
+        conf.host = req.body.host
+        conf.port = req.body.port
+        conf.paths = {
+          repo: req.body.pathRepo,
+          data: req.body.pathData
+        }
+        conf.uploads = {
+          maxImageFileSize: (conf.uploads && _.isNumber(conf.uploads.maxImageFileSize)) ? conf.uploads.maxImageFileSize : 3,
+          maxOtherFileSize: (conf.uploads && _.isNumber(conf.uploads.maxOtherFileSize)) ? conf.uploads.maxOtherFileSize : 100
+        }
+        conf.lang = req.body.lang
+        conf.public = (conf.public === true)
+        if (conf.auth && conf.auth.local) {
+          conf.auth.local = { enabled: true }
+        } else {
+          conf.auth = { local: { enabled: true } }
+        }
+        conf.admin = req.body.adminEmail
+        conf.db = req.body.db
+        if (req.body.gitUseRemote === false) {
+          conf.git = false
+        } else {
+          conf.git = {
+            url: req.body.gitUrl,
+            branch: req.body.gitBranch,
+            auth: {
+              type: req.body.gitAuthType,
+              username: req.body.gitAuthUser,
+              password: req.body.gitAuthPass,
+              privateKey: req.body.gitAuthSSHKey,
+              sslVerify: (req.body.gitAuthSSL === true)
+            },
+            signature: {
+              name: req.body.gitSignatureName,
+              email: req.body.gitSignatureEmail
+            }
+          }
+        }
+        return crypto.randomBytesAsync(32).then(buf => {
+          conf.sessionSecret = buf.toString('hex')
+          confRaw = yaml.safeDump(conf)
+          return fs.writeFileAsync('./config.yml', confRaw)
+        })
+      })
+    ).then(() => {
+      res.json({ ok: true })
+    }).catch(err => {
+      res.json({ ok: false, error: err.message })
     })
   })
 
