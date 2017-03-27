@@ -1,5 +1,5 @@
 doctype html
-html
+html(data-logic='login')
   head
     meta(http-equiv='X-UA-Compatible', content='IE=edge')
     meta(charset='UTF-8')
@@ -17,13 +17,8 @@ html
       link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
     link(rel='manifest', href='/manifest.json')
 
-    // CSS
-    link(type='text/css', rel='stylesheet', href='/css/libs.css')
-    link(type='text/css', rel='stylesheet', href='/css/login.css')
-
-    // JS
-    script(type='text/javascript', src='/js/libs.js')
-    script(type='text/javascript', src='/js/login.js')
+    // JS / CSS
+    script(type='text/javascript', src='/js/bundle.min.js')
 
   body
     #bg

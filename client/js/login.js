@@ -1,6 +1,6 @@
 'use strict'
 
-/* global jQuery */
+import jQuery from 'jquery'
 
 jQuery(document).ready(function ($) {
   $('#login-user').focus()

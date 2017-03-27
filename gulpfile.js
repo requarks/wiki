@@ -25,21 +25,21 @@ const paths = {
   scripts: {
     combine: [
       './node_modules/socket.io-client/dist/socket.io.min.js',
-      './node_modules/jquery/dist/jquery.min.js',
+      './node_modules/jquery/dist/jquery.min.js', // done
       './node_modules/vue/dist/vue.min.js',
       './node_modules/vee-validate/dist/vee-validate.min.js',
       './node_modules/axios/dist/axios.min.js',
       './node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js',
       './node_modules/jquery-simple-upload/simpleUpload.min.js',
       './node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.js',
-      './node_modules/sticky-js/dist/sticky.min.js',
+      './node_modules/sticky-js/dist/sticky.min.js', // done
       './node_modules/simplemde/dist/simplemde.min.js',
       './node_modules/ace-builds/src-min-noconflict/ace.js',
       './node_modules/ace-builds/src-min-noconflict/ext-modelist.js',
       './node_modules/ace-builds/src-min-noconflict/mode-markdown.js',
       './node_modules/ace-builds/src-min-noconflict/theme-tomorrow_night.js',
       './node_modules/filesize.js/dist/filesize.min.js',
-      './node_modules/lodash/lodash.min.js'
+      './node_modules/lodash/lodash.min.js' // done
     ],
     ace: [
       './node_modules/ace-builds/src-min-noconflict/mode-*.js',

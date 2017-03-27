@@ -1,0 +1,15 @@
+client/js
+client/scss
+coverage
+data
+logs
+node_modules
+npm
+repo
+test
+.*
+*.log
+*.tar.gz
+*.zip
+config.yml
+fuse.js

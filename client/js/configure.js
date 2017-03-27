@@ -1,6 +1,10 @@
 'use strict'
 
-/* global jQuery, _, Vue, VeeValidate, axios */
+import jQuery from 'jquery'
+import _ from 'lodash'
+import Vue from 'vue'
+import VeeValidate from 'vee-validate'
+import axios from 'axios'
 
 Vue.use(VeeValidate, {
   enableAutoClasses: true,

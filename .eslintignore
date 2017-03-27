@@ -1,0 +1,7 @@
+**/node_modules/**
+**/*.min.js
+assets/**
+coverage/**
+repo/**
+data/**
+logs/**

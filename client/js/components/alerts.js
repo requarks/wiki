@@ -1,11 +1,12 @@
 'use strict'
 
-/* global Vue, _ */
+import Vue from 'vue'
+import _ from 'lodash'
 
 /**
  * Alerts
  */
-class Alerts { // eslint-disable-line no-unused-vars
+class Alerts {
   /**
    * Constructor
    *
@@ -107,3 +108,5 @@ class Alerts { // eslint-disable-line no-unused-vars
     }
   }
 }
+
+export default Alerts

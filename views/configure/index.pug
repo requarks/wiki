@@ -1,5 +1,5 @@
 doctype html
-html
+html(data-logic='configure')
   head
     meta(http-equiv='X-UA-Compatible', content='IE=edge')
     meta(charset='UTF-8')
@@ -9,13 +9,8 @@ html
     each favsize in [32, 96, 16]
       link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
 
-    // CSS
-    link(type='text/css', rel='stylesheet', href='/css/libs.css')
-    link(type='text/css', rel='stylesheet', href='/css/configure.css')
-
-    // JS
-    script(type='text/javascript', src='/js/libs.js')
-    script(type='text/javascript', src='/js/configure.js')
+    // JS / CSS
+    script(type='text/javascript', src='/js/bundle.min.js')
 
     block head
 

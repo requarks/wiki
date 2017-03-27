@@ -1,6 +1,12 @@
 'use strict'
 
-/* global jQuery, _, io, Sticky, alertsData, Alerts */
+/* global alertsData */
+
+import jQuery from 'jquery'
+import _ from 'lodash'
+import Sticky from 'sticky-js'
+import io from 'socket.io-client'
+import Alerts from './components/alerts.js'
 /* eslint-disable spaced-comment */
 
 jQuery(document).ready(function ($) {

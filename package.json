@@ -6,11 +6,17 @@
   "scripts": {
     "start": "node wiki start",
     "stop": "node wiki stop",
-    "dev": "gulp dev",
-    "test": "snyk test && standard && pug-lint ./views",
+    "build": "node fuse",
+    "dev": "node fuse -d",
+    "dev-configure": "node fuse -d -c",
+    "test": "jest",
     "snyk-protect": "snyk protect",
-    "__prepublish": "npm run snyk-protect"
+    "__prepublish": "npm run snyk-protect",
+    "pre-commit": "npm run test"
   },
+  "pre-commit": [
+    "pre-commit"
+  ],
   "bin": {
     "wiki": "wiki.js"
   },
@@ -114,37 +120,26 @@
   },
   "devDependencies": {
     "ace-builds": "^1.2.6",
+    "babel-cli": "^6.24.0",
+    "babel-jest": "^19.0.0",
     "babel-preset-es2015": "^6.24.0",
-    "chai": "^3.5.0",
-    "chai-as-promised": "^6.0.0",
-    "codacy-coverage": "^2.0.0",
+    "colors": "^1.1.2",
     "eslint": "^3.18.0",
+    "eslint-config-standard": "^7.1.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-node": "^4.2.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^2.1.1",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-clean-css": "^3.0.4",
-    "gulp-concat": "^2.6.1",
-    "gulp-gzip": "^1.4.0",
-    "gulp-include": "^2.3.1",
-    "gulp-nodemon": "^2.2.1",
-    "gulp-plumber": "^1.1.0",
-    "gulp-sass": "^3.0.0",
-    "gulp-tar": "^1.9.0",
-    "gulp-uglify": "^2.1.2",
-    "gulp-watch": "^4.3.11",
-    "gulp-zip": "^4.0.0",
-    "istanbul": "^0.4.5",
+    "fuse-box": "^1.3.128",
+    "jest": "^19.0.2",
     "jquery": "^3.2.1",
     "jquery-contextmenu": "^2.4.4",
     "jquery-simple-upload": "^1.0.0",
     "jquery-smooth-scroll": "^2.0.0",
-    "merge-stream": "^1.0.1",
-    "mocha": "^3.2.0",
-    "mocha-lcov-reporter": "^1.3.0",
+    "node-sass": "^4.5.1",
     "nodemon": "^1.11.0",
+    "pre-commit": "^1.2.2",
     "pug-lint": "^2.4.0",
-    "run-sequence": "^1.2.2",
     "snyk": "^1.25.1",
     "standard": "^9.0.2",
     "sticky-js": "^1.1.9",
@@ -172,14 +167,19 @@
       "CORE_PATH",
       "ROOTPATH",
       "IS_DEBUG",
-      "PROCNAME"
-    ],
-    "ignore": [
-      "assets/**/*",
-      "data/**/*",
-      "node_modules/**/*",
-      "repo/**/*"
+      "PROCNAME",
+      "describe",
+      "it",
+      "expect"
     ]
+  },
+  "jest": {
+    "collectCoverage": false,
+    "testMatch": [
+      "**/test/**/*.js?(x)",
+      "**/?(*.)(spec|test).js?(x)"
+    ],
+    "verbose": true
   },
   "snyk": true
 }
