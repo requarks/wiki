@@ -35,5 +35,5 @@ describe('Security', () => {
     return snyk('./').then(report => {
       expect(report).toPassSnyk()
     })
-  }, 20000)
+  }, 30000)
 })
