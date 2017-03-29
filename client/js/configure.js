@@ -267,7 +267,18 @@ jQuery(document).ready(function ($) {
         }, 1000)
       },
       finish: function (ev) {
+        let self = this
+        self.state = 'restart'
 
+        _.delay(() => {
+          axios.post('/restart', {}).then(resp => {
+            _.delay(() => {
+              window.location.assign(self.conf.host)
+            }, 10000)
+          }).catch(err => {
+            window.alert(err.message)
+          })
+        }, 1000)
       }
     }
   })

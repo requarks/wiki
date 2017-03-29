@@ -26,6 +26,8 @@ module.exports = (port, spinner) => {
   var app = express()
   app.use(compression())
 
+  var server
+
   // ----------------------------------------
   // Public Assets
   // ----------------------------------------
@@ -165,7 +167,6 @@ module.exports = (port, spinner) => {
     const gitDir = path.resolve(ROOTPATH, req.body.pathRepo)
 
     let gitRemoteUrl = ''
-    console.log(req.body)
 
     if (req.body.gitUseRemote === true) {
       let urlObj = url.parse(req.body.gitUrl)
@@ -356,6 +357,23 @@ module.exports = (port, spinner) => {
     })
   })
 
+  /**
+   * Restart in normal mode
+   */
+  app.post('/restart', (req, res) => {
+    res.status(204).end()
+    server.destroy(() => {
+      spinner.text = 'Setup wizard terminated. Restarting in normal mode...'
+      _.delay(() => {
+        const exec = require('execa')
+        exec.stdout('node', ['wiki', 'start']).then(result => {
+          spinner.succeed('Wiki.js is now running in normal mode!')
+          process.exit(0)
+        })
+      }, 1000)
+    })
+  })
+
   // ----------------------------------------
   // Error handling
   // ----------------------------------------
@@ -383,8 +401,26 @@ module.exports = (port, spinner) => {
   spinner.text = 'Starting HTTP server...'
 
   app.set('port', port)
-  var server = http.createServer(app)
+  server = http.createServer(app)
   server.listen(port)
+
+  var openConnections = []
+
+  server.on('connection', (conn) => {
+    let key = conn.remoteAddress + ':' + conn.remotePort
+    openConnections[key] = conn
+    conn.on('close', () => {
+      delete openConnections[key]
+    })
+  })
+
+  server.destroy = (cb) => {
+    server.close(cb)
+    for (let key in openConnections) {
+      openConnections[key].destroy()
+    }
+  }
+
   server.on('error', (error) => {
     if (error.syscall !== 'listen') {
       throw error

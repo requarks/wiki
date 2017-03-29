@@ -26,7 +26,7 @@ html(data-logic='configure')
       main
         .container
           transition(name='tst-welcome')
-            .welcome(style={'padding-bottom': '5px'}, v-if='state === "welcome"')
+            .welcome(style={'padding-bottom': '5px'}, v-if='state === "welcome" || state === "restart"')
               img(src='/favicons/android-icon-96x96.png', alt='Wiki.js')
               h1 Welcome to Wiki.js!
               h2(style={'margin-bottom': 0}) A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
@@ -355,6 +355,21 @@ html(data-logic='configure')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
                   button.button.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
+
+            //- ==============================================
+            //- RESTART
+            //- ==============================================
+
+            template(v-else-if='state === "restart"')
+              .panel
+                h2.panel-title.is-featured
+                  span Restarting...
+                  i
+                .panel-content.is-text
+                  p #[i.icon-loader.animated.rotateIn.infinite] Restarting Wiki.js in normal mode...
+                  p You'll automatically be redirected to the homepage when ready. Please be patient...
+                .panel-footer
+                  button.button.is-green(disabled='disabled') Start
 
       footer.footer
         span
