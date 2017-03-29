@@ -11,22 +11,27 @@ global.ROOTPATH = __dirname
 global.IS_DEBUG = process.env.NODE_ENV === 'development'
 global.CORE_PATH = (IS_DEBUG) ? ROOTPATH + '/../core/' : ROOTPATH + '/node_modules/requarks-core/'
 
+if (IS_DEBUG) {
+  try { require('newrelic') } catch (err) {}
+}
+
 process.env.VIPS_WARNING = false
+
+let appconf = require(CORE_PATH + 'core-libs/config')()
+global.appconfig = appconf.config
+global.appdata = appconf.data
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
-global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG)
+global.winston = require('./libs/logger')(IS_DEBUG)
 winston.info('[SERVER] Wiki.js is initializing...')
 
 // ----------------------------------------
 // Load global modules
 // ----------------------------------------
 
-let appconf = require(CORE_PATH + 'core-libs/config')()
-global.appconfig = appconf.config
-global.appdata = appconf.data
 global.lcdata = require('./libs/local').init()
 global.db = require(CORE_PATH + 'core-libs/mongodb').init()
 global.entries = require('./libs/entries').init()
@@ -207,6 +212,8 @@ server.on('error', (error) => {
 
 server.on('listening', () => {
   winston.info('[SERVER] HTTP/WS server started successfully! [RUNNING]')
+  winston.warn('Something went wrong!')
+  winston.error('An big error occured!')
 })
 
 // ----------------------------------------

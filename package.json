@@ -8,7 +8,7 @@
     "stop": "node wiki stop",
     "build": "node fuse",
     "dev": "node fuse -d",
-    "dev-configure": "node fuse -d -c",
+    "dev-configure": "node fuse -c",
     "test": "jest",
     "snyk-protect": "snyk protect",
     "__prepublish": "npm run snyk-protect",

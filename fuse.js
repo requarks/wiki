@@ -19,10 +19,9 @@ const args = require('yargs')
       type: 'boolean'
     })
     .option('c', {
-      alias: 'configure',
-      describe: 'Use Configure mode',
-      type: 'boolean',
-      implies: 'd'
+      alias: 'dev-configure',
+      describe: 'Start in Configure Developer mode',
+      type: 'boolean'
     })
     .help('h')
     .alias('h', 'help')
@@ -62,34 +61,66 @@ if (args.d) {
   // Server
 
   _.delay(() => {
-    if (args.c) {
-      nodemon({
-        exec: 'node wiki configure',
-        ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
-        ext: 'js json',
-        watch: [
-          'configure.js'
-        ],
-        env: { 'NODE_ENV': 'development' }
-      })
-    } else {
-      nodemon({
-        script: './server.js',
-        args: [],
-        ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
-        ext: 'js json',
-        watch: [
-          'controllers',
-          'libs',
-          'locales',
-          'middlewares',
-          'models',
-          'agent.js',
-          'server.js'
-        ],
-        env: { 'NODE_ENV': 'development' }
-      })
-    }
+    nodemon({
+      script: './server.js',
+      args: [],
+      ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
+      ext: 'js json',
+      watch: [
+        'controllers',
+        'libs',
+        'locales',
+        'middlewares',
+        'models',
+        'agent.js',
+        'server.js'
+      ],
+      env: { 'NODE_ENV': 'development' }
+    })
+  }, 1000)
+} else if (args.c) {
+  // =============================================
+  // DEVELOPER MODE
+  // =============================================
+
+  console.info(colors.bgWhite.black(' Starting Fuse in CONFIGURE DEVELOPER mode... '))
+
+  const nodemon = require('nodemon')
+
+  // Client
+
+  const fuse = fsbx.FuseBox.init({
+    homeDir: './client',
+    outFile: './assets/js/configure.min.js',
+    alias: {
+      vue: 'vue/dist/vue.js'
+    },
+    plugins: [
+      [ fsbx.SassPlugin({ includePaths: ['../core'] }), fsbx.CSSPlugin() ],
+      fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
+      fsbx.JSONPlugin()
+    ],
+    debug: false,
+    log: true
+  })
+
+  fuse.devServer('>configure.js', {
+    port: 4444,
+    httpServer: false
+  })
+
+  // Server
+
+  _.delay(() => {
+    nodemon({
+      exec: 'node wiki configure',
+      ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
+      ext: 'js json',
+      watch: [
+        'configure.js'
+      ],
+      env: { 'NODE_ENV': 'development' }
+    })
   }, 1000)
 } else {
   // =============================================
@@ -100,7 +131,9 @@ if (args.d) {
 
   const fuse = fsbx.FuseBox.init({
     homeDir: './client',
-    outFile: './assets/js/bundle.min.js',
+    alias: {
+      vue: 'vue/dist/vue.js'
+    },
     plugins: [
       [ fsbx.SassPlugin({ outputStyle: 'compressed', includePaths: ['./node_modules/requarks-core'] }), fsbx.CSSPlugin() ],
       fsbx.BabelPlugin({
@@ -118,7 +151,10 @@ if (args.d) {
     log: true
   })
 
-  fuse.bundle('>index.js').then(() => {
+  fuse.bundle({
+    './assets/js/bundle.min.js': '>index.js',
+    './assets/js/configure.min.js': '>configure.js'
+  }).then(() => {
     console.info(colors.green.bold('Assets compilation + bundling completed.'))
   }).catch(err => {
     console.error(colors.green.red(' X Bundle compilation failed! ' + err.message))

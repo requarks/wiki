@@ -50,6 +50,11 @@ defaults:
       signature:
         name: Wiki
         email: wiki@example.com
+    externalLogging:
+      bugsnap: false
+      loggly: false
+      papertrail: false
+      rollbar: false
 langs:
   -
     id: en

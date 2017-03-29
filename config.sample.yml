@@ -131,3 +131,14 @@ git:
   signature:
     name: Marty
     email: marty@example.com
+
+# ---------------------------------------------------------------------
+# External Logging
+# ---------------------------------------------------------------------
+
+externalLogging:
+  bugsnag: false
+  loggly: false
+  papertrail: false
+  rollbar: false
+
