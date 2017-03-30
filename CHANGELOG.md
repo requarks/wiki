@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Interactive setup
 - Auth: GitHub and Slack authentication providers are now available
 - Auth: LDAP authentication provider is now available
-- Logs: Support for the logging services: Bugsnag, Loggly, Papertrail and Rollbar
+- Logs: Support for the logging services: Bugsnag, Loggly, Papertrail, Rollbar and Sentry
 
 ### Changed
 - Native Compilation Removal: Replaced farmhash with md5
@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Sidebar: Contents is now Page Contents
 - Sidebar: Start is now Top of Page
 - UI: Content headers are now showing an anchor icon instead of a #
+- Dev: Replaced Gulp with Fuse-box
 
 ### Fixed
 - Auth: Authentication would fail if email has uppercase chars and provider callback is in lowercase

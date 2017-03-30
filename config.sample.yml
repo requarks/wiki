@@ -141,4 +141,5 @@ externalLogging:
   loggly: false
   papertrail: false
   rollbar: false
+  sentry: false
 

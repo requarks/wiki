@@ -212,8 +212,6 @@ server.on('error', (error) => {
 
 server.on('listening', () => {
   winston.info('[SERVER] HTTP/WS server started successfully! [RUNNING]')
-  winston.warn('Something went wrong!')
-  winston.error('An big error occured!')
 })
 
 // ----------------------------------------

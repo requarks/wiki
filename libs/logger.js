@@ -60,5 +60,13 @@ module.exports = (isDebug) => {
     })
   }
 
+  if (appconfig.externalLogging.sentry) {
+    const sentryTransport = require('./winston-transports/sentry')
+    winston.add(sentryTransport, {
+      level: 'warn',
+      key: appconfig.externalLogging.sentry
+    })
+  }
+
   return winston
 }
