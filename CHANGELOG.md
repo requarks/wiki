@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Auth: GitHub and Slack authentication providers are now available
 - Auth: LDAP authentication provider is now available
 - Logs: Support for the logging services: Bugsnag, Loggly, Papertrail, Rollbar and Sentry
+- Config: Can now use ENV variable to specify DB connection string ($VARNAME as db value in config.yml)
 
 ### Changed
 - Native Compilation Removal: Replaced farmhash with md5
