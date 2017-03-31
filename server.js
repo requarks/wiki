@@ -33,7 +33,7 @@ winston.info('[SERVER] Wiki.js is initializing...')
 // ----------------------------------------
 
 global.lcdata = require('./libs/local').init()
-global.db = require(CORE_PATH + 'core-libs/mongodb').init()
+global.db = require('./libs/db').init()
 global.entries = require('./libs/entries').init()
 global.git = require('./libs/git').init(false)
 global.lang = require('i18next')

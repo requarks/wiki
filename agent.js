@@ -28,7 +28,7 @@ winston.info('[AGENT] Background Agent is initializing...')
 let appconf = require(CORE_PATH + 'core-libs/config')()
 global.appconfig = appconf.config
 global.appdata = appconf.data
-global.db = require(CORE_PATH + 'core-libs/mongodb').init()
+global.db = require('./libs/db').init()
 global.upl = require('./libs/uploads-agent').init()
 global.git = require('./libs/git').init()
 global.entries = require('./libs/entries').init()

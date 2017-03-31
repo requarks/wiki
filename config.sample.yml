@@ -105,6 +105,7 @@ admin: admin@company.com
 # ---------------------------------------------------------------------
 # Database Connection String
 # ---------------------------------------------------------------------
+# You can also use an ENV variable by using $ENV_VAR_NAME as the value
 
 db: mongodb://localhost:27017/wiki
 
