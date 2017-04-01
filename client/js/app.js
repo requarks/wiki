@@ -2,14 +2,14 @@
 
 /* global alertsData */
 
-import jQuery from 'jquery'
+import $ from 'jquery'
 import _ from 'lodash'
-import Sticky from 'sticky-js'
 import io from 'socket.io-client'
 import Alerts from './components/alerts.js'
-/* eslint-disable spaced-comment */
+import 'jquery-smooth-scroll'
+import Sticky from 'sticky-js'
 
-jQuery(document).ready(function ($) {
+$(() => {
   // ====================================
   // Scroll
   // ====================================
@@ -45,24 +45,17 @@ jQuery(document).ready(function ($) {
   // Establish WebSocket connection
   // ====================================
 
-  var socket = io(window.location.origin) // eslint-disable-line no-unused-vars
+  var socket = io(window.location.origin)
 
-  //=include components/search.js
+  require('./components/search.js')(socket)
 
   // ====================================
   // Pages logic
   // ====================================
 
-  //=include pages/view.js
-  //=include pages/create.js
-  //=include pages/edit.js
-  //=include pages/source.js
-  //=include pages/admin.js
+  require('./pages/view.js')(alerts)
+  // require('./pages/create.js')
+  require('./pages/edit.js')(alerts, socket)
+  require('./pages/source.js')(alerts)
+  require('./pages/admin.js')(alerts)
 })
-
-//=include helpers/form.js
-//=include helpers/pages.js
-
-//=include components/alerts.js
-
-/* eslint-enable spaced-comment */

@@ -1,10 +1,12 @@
-/* global $ */
+'use strict'
 
-if ($('#page-type-view').length) {
-  let currentBasePath = ($('#page-type-view').data('entrypath') !== 'home') ? $('#page-type-view').data('entrypath') : '' // eslint-disable-line no-unused-vars
+import $ from 'jquery'
 
-  /* eslint-disable spaced-comment */
-  //=include ../modals/create.js
-  //=include ../modals/move.js
-  /* eslint-enable spaced-comment */
+module.exports = (alerts) => {
+  if ($('#page-type-view').length) {
+    let currentBasePath = ($('#page-type-view').data('entrypath') !== 'home') ? $('#page-type-view').data('entrypath') : ''
+
+    require('../modals/create.js')(currentBasePath)
+    require('../modals/move.js')(currentBasePath, alerts)
+  }
 }

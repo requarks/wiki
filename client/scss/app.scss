@@ -19,6 +19,8 @@ $primary: 'indigo';
 
 @import './libs/twemoji-awesome';
 @import './libs/jquery-contextmenu';
+@import 'node_modules/highlight.js/styles/tomorrow';
+@import 'node_modules/simplemde/dist/simplemde.min';
 
 @import './components/_editor';
 

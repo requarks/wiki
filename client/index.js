@@ -8,8 +8,6 @@ switch (logic) {
     require('./js/login.js')
     break
   default:
-    require('./node_modules/highlight.js/styles/tomorrow.css')
-    require('./node_modules/simplemde/dist/simplemde.min.css')
     require('./scss/app.scss')
     require('./js/app.js')
     break

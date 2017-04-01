@@ -27,6 +27,21 @@ const args = require('yargs')
     .alias('h', 'help')
     .argv
 
+// Define aliases
+
+const ALIASES = {
+  'ace': 'ace-builds/src-min-noconflict/ace.js',
+  'simplemde': 'simplemde/dist/simplemde.min.js',
+  'socket.io-client': 'socket.io-client/dist/socket.io.min.js',
+  'vue': 'vue/dist/vue.js'
+}
+const SHIMS = {
+  jquery: {
+    source: 'node_modules/jquery/dist/jquery.js',
+    exports: '$'
+  }
+}
+
 if (args.d) {
   // =============================================
   // DEVELOPER MODE
@@ -41,9 +56,8 @@ if (args.d) {
   const fuse = fsbx.FuseBox.init({
     homeDir: './client',
     outFile: './assets/js/bundle.min.js',
-    alias: {
-      vue: 'vue/dist/vue.js'
-    },
+    alias: ALIASES,
+    shim: SHIMS,
     plugins: [
       [ fsbx.SassPlugin({ includePaths: ['../core'] }), fsbx.CSSPlugin() ],
       fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
@@ -55,7 +69,8 @@ if (args.d) {
 
   fuse.devServer('>index.js', {
     port: 4444,
-    httpServer: false
+    httpServer: false,
+    hmr: false
   })
 
   // Server
@@ -80,7 +95,7 @@ if (args.d) {
   }, 1000)
 } else if (args.c) {
   // =============================================
-  // DEVELOPER MODE
+  // CONFIGURE - DEVELOPER MODE
   // =============================================
 
   console.info(colors.bgWhite.black(' Starting Fuse in CONFIGURE DEVELOPER mode... '))
@@ -92,9 +107,8 @@ if (args.d) {
   const fuse = fsbx.FuseBox.init({
     homeDir: './client',
     outFile: './assets/js/configure.min.js',
-    alias: {
-      vue: 'vue/dist/vue.js'
-    },
+    alias: ALIASES,
+    shim: SHIMS,
     plugins: [
       [ fsbx.SassPlugin({ includePaths: ['../core'] }), fsbx.CSSPlugin() ],
       fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
@@ -131,9 +145,8 @@ if (args.d) {
 
   const fuse = fsbx.FuseBox.init({
     homeDir: './client',
-    alias: {
-      vue: 'vue/dist/vue.js'
-    },
+    alias: ALIASES,
+    shim: SHIMS,
     plugins: [
       [ fsbx.SassPlugin({ outputStyle: 'compressed', includePaths: ['./node_modules/requarks-core'] }), fsbx.CSSPlugin() ],
       fsbx.BabelPlugin({
