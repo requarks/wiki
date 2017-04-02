@@ -6,6 +6,7 @@ import _ from 'lodash'
 import * as ace from 'brace'
 import 'brace/theme/tomorrow_night'
 import 'brace/mode/markdown'
+import 'brace-ext-modelist'
 
 let codeEditor = null
 
@@ -31,7 +32,7 @@ let loadAceMode = (m) => {
 // Vue Code Block instance
 
 module.exports = (mde, mdeModalOpenState) => {
-  let modelist = {} // ace.require('ace/ext/modelist')
+  let modelist = ace.acequire('ace/ext/modelist')
   let vueCodeBlock = new Vue({
     el: '#modal-editor-codeblock',
     data: {
@@ -42,7 +43,7 @@ module.exports = (mde, mdeModalOpenState) => {
     watch: {
       modeSelected: (val, oldVal) => {
         loadAceMode(val).done(() => {
-          ace.require('ace/mode/' + val)
+          ace.acequire('ace/mode/' + val)
           codeEditor.getSession().setMode('ace/mode/' + val)
         })
       }

@@ -30,7 +30,7 @@ const args = require('yargs')
 // Define aliases
 
 const ALIASES = {
-  'ace': 'ace-builds/src-min-noconflict/ace.js',
+  'brace-ext-modelist': 'brace/ext/modelist.js',
   'simplemde': 'simplemde/dist/simplemde.min.js',
   'socket.io-client': 'socket.io-client/dist/socket.io.min.js',
   'vue': 'vue/dist/vue.js'
