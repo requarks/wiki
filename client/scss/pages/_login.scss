@@ -1,0 +1,306 @@
+
+body {
+	padding: 0;
+	margin: 0;
+	font-family: $core-font-standard;
+	font-size: 14px;
+}
+
+a {
+	color: #FFF;
+	transition: color 0.4s ease;
+	text-decoration: none;
+
+	&:hover {
+		color: mc('orange','600');
+		text-decoration: underline;
+	}
+
+}
+
+#bg {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	background-color: #000;
+
+	> div {
+		background-size: cover;
+		background-position: center center;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		top: 0;
+		left: 0;
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity 3s ease, visibility 3s;
+		animation: bg 30s linear infinite;
+
+		&:nth-child(1) {
+			animation-delay: 10s;
+		}
+
+		&:nth-child(2) {
+			animation-delay: 20s;
+		}
+
+	}
+
+}
+
+#root {
+	position: fixed;
+	top: 15vh;
+	left: 10vw;
+	z-index: 2;
+	color: #FFF;
+	display: flex;
+	flex-direction: column;
+
+	h1 {
+		font-size: 4rem;
+		font-weight: bold;
+		color: #FFF;
+		padding: 0;
+		margin: 0;
+		animation: headerIntro 3s ease;
+	}
+
+	h2 {
+		font-size: 1.5rem;
+		font-weight: normal;
+		color: rgba(255,255,255,0.7);
+		padding: 0;
+		margin: 0 0 25px 0;
+		animation: headerIntro 3s ease;
+	}
+
+	h3 {
+		font-size: 1.25rem;
+		font-weight: normal;
+		color: #FB8C00;
+		padding: 0;
+		margin: 0;
+		animation: shake 1s ease;
+
+		> .fa {
+			margin-right: 7px;
+		}
+
+	}
+
+	h4 {
+		font-size: 0.8rem;
+		font-weight: normal;
+		color: rgba(255,255,255,0.7);
+		padding: 0;
+		margin: 0 0 15px 0;
+		animation: fadeIn 3s ease;
+	}
+
+	form {
+		display: flex;
+		flex-direction: column;
+	}
+
+	input[type=text], input[type=password] {
+		width: 350px;
+		max-width: 80vw;
+		border: 1px solid rgba(255,255,255,0.3);
+		border-radius: 3px;
+		background-color: rgba(0,0,0,0.2);
+		padding: 0 15px;
+		height: 40px;
+		margin: 0 0 10px 0;
+		color: #FFF;
+		font-weight: bold;
+		font-size: 14px;
+		transition: all 0.4s ease;
+
+		&:focus {
+			outline: none;
+			border-color: mc('orange','600');
+		}
+
+	}
+
+	button {
+		background-color: mc('orange','600');
+		color: #FFF;
+		border: 1px solid lighten(mc('orange','600'), 10%);
+		border-radius: 3px;
+		height: 40px;
+		width: 125px;
+		padding: 0;
+		font-weight: bold;
+		margin: 15px 0 0 0;
+		transition: all 0.4s ease;
+		cursor: pointer;
+
+		span {
+			font-weight: bold;
+		}
+
+		&:focus {
+			outline: none;
+			border-color: #FFF;
+		}
+
+		&:hover {
+			background-color: darken(mc('orange','600'), 10%);
+		}
+
+	}
+
+	#social {
+		margin-top: 25px;
+
+		> span {
+			display: block;
+			font-weight: bold;
+			color: rgba(255,255,255,0.7);
+		}
+
+		button {
+			margin-right: 5px;
+			width: auto;
+			padding: 0 15px;
+
+			> i {
+				margin-right: 10px;
+				font-size: 16px;
+			}
+
+			&.ms {
+				background-color: mc('blue','600');
+				border-color: lighten(mc('blue','600'), 10%);
+
+				&:focus {
+					border-color: #FFF;
+				}
+
+				&:hover {
+					background-color: darken(mc('blue','600'), 10%);
+				}
+
+			}
+
+			&.google {
+				background-color: mc('light-blue','600');
+				border-color: lighten(mc('light-blue','600'), 10%);
+
+				&:focus {
+					border-color: #FFF;
+				}
+
+				&:hover {
+					background-color: darken(mc('light-blue','600'), 10%);
+				}
+
+			}
+
+			&.facebook {
+				background-color: mc('indigo','600');
+				border-color: lighten(mc('indigo','600'), 10%);
+
+				&:focus {
+					border-color: #FFF;
+				}
+
+				&:hover {
+					background-color: darken(mc('indigo','600'), 10%);
+				}
+
+			}
+
+      &.github {
+				background-color: mc('blue-grey','700');
+				border-color: lighten(mc('blue-grey','700'), 10%);
+
+				&:focus {
+					border-color: #FFF;
+				}
+
+				&:hover {
+					background-color: darken(mc('blue-grey','700'), 10%);
+				}
+			}
+
+      &.slack {
+				background-color: mc('purple','700');
+				border-color: lighten(mc('purple','700'), 10%);
+
+				&:focus {
+					border-color: #FFF;
+				}
+
+				&:hover {
+					background-color: darken(mc('purple','700'), 10%);
+				}
+			}
+
+		}
+
+	}
+
+}
+
+#copyright {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	position: absolute;
+	left: 10vw;
+	bottom: 10vh;
+	z-index: 2;
+	color: rgba(255,255,255,0.5);
+	font-weight: bold;
+
+	.icon {
+		font-size: 1.2rem;
+		margin: 0 8px;
+	}
+
+	a {
+		opacity: 0.75;
+	}
+
+}
+
+@include keyframes(bg) {
+	0% {
+		@include prefix(transform, scale(1,1));
+		visibility: visible;
+		opacity: 0;
+	},
+	5% {
+		opacity: 0.5;
+	},
+	33% {
+		opacity: 0.5;
+	},
+	38% {
+		@include prefix(transform, scale(1.2, 1.2));
+		opacity: 0;
+	},
+	39% {
+		visibility: hidden;
+	}
+	100% {
+		visibility: hidden;
+		opacity: 0;
+	}
+}
+
+@include keyframes(headerIntro) {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}

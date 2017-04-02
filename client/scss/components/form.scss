@@ -1,0 +1,213 @@
+
+.control {
+
+  & + .control {
+    margin-top: 15px;
+  }
+
+	// ===============================================================
+	// TEXTBOX
+	// ===============================================================
+
+	input[type=text], input[type=password] {
+		background-color: #FFF;
+		display: flex;
+		height: 30px;
+		align-items: center;
+		padding: 0 12px;
+		border: 1px solid mc('grey', '400');
+		border-radius: 3px;
+		font-family: $core-font-standard;
+		font-size: 14px;
+		color: mc('grey', '700');
+		transition: all .4s ease;
+		box-shadow: inset 0 0 5px 0 rgba(0,0,0,0.1);
+
+		&:focus {
+			outline: none;
+			border-color: mc('light-blue', '500');
+			box-shadow: inset 0 0 5px 0 rgba(mc('light-blue', '500'), 0.3);
+		}
+
+		&:disabled {
+			background-color: mc('grey', '100');
+		}
+
+    &.is-dirty.is-invalid {
+      border-color: mc('red', '500');
+      box-shadow: inset 0 0 5px 0 mc('red', '100');
+    }
+
+	}
+
+	&.is-fullwidth {
+
+		input[type=text], input[type=password], select, textarea {
+			width: 100%;
+		}
+
+	}
+
+	// ===============================================================
+	// DROPDOWN
+	// ===============================================================
+
+	select {
+		background-color: #FFF;
+		display: flex;
+		height: 30px;
+		align-items: center;
+		padding: 0 12px;
+		border: 1px solid mc('grey', '400');
+		border-radius: 3px;
+		font-family: $core-font-standard;
+		font-size: 14px;
+		color: mc('grey', '700');
+		transition: all .4s ease;
+		box-shadow: inset 0 0 5px 0 rgba(0,0,0,0.1);
+		cursor: pointer;
+
+		&:focus {
+			outline: none;
+			border-color: mc('light-blue', '500');
+			box-shadow: inset 0 0 5px 0 rgba(mc('light-blue', '500'), 0.3);
+		}
+
+		&:disabled {
+			background-color: mc('grey', '100');
+		}
+
+	}
+
+	// ===============================================================
+	// CHECKBOX / RADIO BUTTONS
+	// ===============================================================
+
+	input[type=radio], input[type=checkbox] {
+		position: absolute;
+	  left: -9999px;
+	  opacity: 0;
+
+	  & + label {
+			position: relative;
+			padding: 0 15px 0 25px;
+			cursor: pointer;
+			display: inline-block;
+			height: 25px;
+			line-height: 25px;
+			font-size: 14px;
+			transition: .28s ease;
+			@include prefix('user-select', none);
+
+			&:before, &:after {
+				content: '';
+				position: absolute;
+				left: 0;
+				top: 0;
+				margin: 4px;
+				border: 2px solid mc($primary, '600');
+				margin: 4px;
+		    width: 16px;
+		    height: 16px;
+		    border-radius: 50%;
+				z-index: 0;
+				transition: .28s ease;
+			}
+
+	  }
+
+	  &:checked + label {
+
+	  	&:before, &:after {
+				border-color: mc($primary, '600');
+			}
+
+			&:after {
+				@include prefix('transform', scale(0.5));
+				background-color: mc($primary, '600');
+			}
+
+	  }
+
+	}
+
+	input[type=checkbox] + label {
+		&:before, &:after {
+	    border-radius: 0;
+		}
+	}
+
+	.help {
+		font-size: 12px;
+
+		&.is-red {
+			color: mc('red','600');
+		}
+
+	}
+
+	& + label {
+		margin-top: 20px;
+	}
+
+	> i:first-child {
+		margin-right: 8px;
+	}
+
+}
+
+.label {
+	margin-bottom: 5px;
+	font-size: 14px;
+	font-weight: 500;
+	display: block;
+}
+
+.form-sections {
+
+	section {
+		border-top: 1px solid mc('grey', '200');
+		padding: 20px;
+		@include prefix(animation-duration, .6s);
+
+		&:first-child {
+			border-top: none;
+		}
+
+		.button + .button {
+			margin-left: 10px;
+		}
+
+    .desc {
+      display: inline-block;
+      padding: 10px 0 0 0px;
+      font-size: 12px;
+      color: mc('grey', '500');
+    }
+
+		.section-block {
+			padding-left: 20px;
+			font-size: 14px;
+			color: mc('blue-grey', '800');
+
+			h6 {
+				font-size: 14px;
+				font-weight: 500;
+				color: mc('blue-grey', '600');
+				margin-top: 15px;
+				border-bottom: 1px dotted mc('blue-grey', '200');
+			}
+
+			p {
+				padding: 5px 0;
+
+				&.is-small {
+					font-size: 13px;
+				}
+
+			}
+		}
+
+	}
+
+}

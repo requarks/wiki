@@ -1,0 +1,57 @@
+.searchresults {
+	position: fixed;
+	top: 45px;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+	width: 500px;
+	z-index: 1;
+	background-color: mc($primary, '700');
+	border-bottom: 5px solid mc($primary, '800');
+	box-shadow: 0 0 5px mc($primary, '500');
+	color: #FFF;
+
+	&.slideInDown {
+		@include prefix(animation-duration, .6s);
+	}
+
+	.searchresults-label {
+		color: mc($primary, '200');
+		padding: 15px 10px 10px;
+		font-size: 13px;
+		text-transform: uppercase;
+		border-bottom: 1px dotted mc($primary, '400');
+	}
+
+	.searchresults-list {
+
+		> li {
+			display: flex;
+			font-size: 14px;
+			transition: background-color .3s linear;
+
+			&:nth-child(odd) {
+				background-color: mc($primary, '600');
+			}
+
+			&.is-active, &:hover {
+				background-color: mc($primary, '400');
+				color: #FFF;
+				border-left: 5px solid mc($primary, '200');
+			}
+
+			a {
+				color: mc($primary, '50');
+				display: flex;
+				align-items: center;
+				height: 30px;
+				padding: 0 20px;
+				width: 100%;
+				cursor: pointer;
+			}
+
+		}
+
+	}
+
+}

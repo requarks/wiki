@@ -1,0 +1,25 @@
+
+// --------------------------------------
+// FONTS
+// --------------------------------------
+
+$core-font-standard: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+$core-font-monospace: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+
+// --------------------------------------
+// LAYOUT
+// --------------------------------------
+
+$tablet: 769px !default;
+$desktop: 980px !default;
+$widescreen: 1180px !default;
+
+// --------------------------------------
+// COLORS
+// --------------------------------------
+
+$color-text: mc('grey', '800');
+$color-link: mc('blue', '500');
+$color-link-hover: mc('blue', '700');
+$color-link-active: mc('purple', '500');
+$color-bg: #F4F5F9;

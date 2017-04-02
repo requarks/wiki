@@ -1,0 +1,68 @@
+.hero {
+	padding: 20px;
+	background-color: mc('grey', '50');
+	border-bottom: 1px solid mc('grey', '200');
+	position: relative;
+
+	h1 {
+		font-size: 28px;
+		color: mc($primary, '500');
+		font-weight: 300;
+	}
+
+	h2 {
+		font-size: 18px;
+		color: mc('grey', '500');
+		font-weight: 400;
+	}
+
+	.hero-menu {
+		position: absolute;
+		right: 20px;
+		bottom: -1px;
+		z-index: 1;
+		display: flex;
+
+		li {
+			display: flex;
+			margin-left: 1px;
+
+			a, button {
+				background-color: mc('light-blue', '500');
+				color: #FFF;
+				display: inline-flex;
+				align-items: center;
+				justify-items: center;
+				padding: 0 15px;
+				height: 32px;
+				border: 1px solid mc('light-blue', '600');
+				font-family: $core-font-standard;
+				font-size: 13px;
+				transition: all 0.4s ease;
+				cursor: pointer;
+				text-decoration: none;
+				text-transform: uppercase;
+
+				i {
+					margin-right: 10px;
+				}
+
+				@each $color, $colorvalue in $material-colors {
+					&.is-#{$color} {
+						background-color: mc($color, '600');
+						border-color: mc($color, '600');
+
+						&:hover {
+							background-color: mc($color, '800');
+						}
+
+					}
+				}
+
+			}
+
+		}
+
+	}
+
+}

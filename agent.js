@@ -7,17 +7,16 @@
 global.PROCNAME = 'AGENT'
 global.ROOTPATH = __dirname
 global.IS_DEBUG = process.env.NODE_ENV === 'development'
-if (IS_DEBUG) {
-  global.CORE_PATH = ROOTPATH + '/../core/'
-} else {
-  global.CORE_PATH = ROOTPATH + '/node_modules/requarks-core/'
-}
+
+let appconf = require('./libs/config')()
+global.appconfig = appconf.config
+global.appdata = appconf.data
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
-global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG)
+global.winston = require('./libs/logger')(IS_DEBUG)
 
 // ----------------------------------------
 // Load global modules
@@ -25,9 +24,6 @@ global.winston = require(CORE_PATH + 'core-libs/winston')(IS_DEBUG)
 
 winston.info('[AGENT] Background Agent is initializing...')
 
-let appconf = require(CORE_PATH + 'core-libs/config')()
-global.appconfig = appconf.config
-global.appdata = appconf.data
 global.db = require('./libs/db').init()
 global.upl = require('./libs/uploads-agent').init()
 global.git = require('./libs/git').init()

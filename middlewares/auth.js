@@ -1,5 +1,7 @@
 'use strict'
 
+/* global appdata, rights */
+
 const moment = require('moment-timezone')
 
 /**
@@ -14,13 +16,24 @@ module.exports = (req, res, next) => {
   // Is user authenticated ?
 
   if (!req.isAuthenticated()) {
-    return res.redirect('/login')
+    if (!appdata.capabilities.guest || req.app.locals.appconfig.public !== true) {
+      return res.redirect('/login')
+    } else {
+      req.user = rights.guest
+      res.locals.isGuest = true
+    }
+  } else if (appdata.capabilities.guest) {
+    res.locals.isGuest = false
   }
 
   // Check permissions
 
-  if (!rights.check(req, 'read')) {
-    return res.render('error-forbidden')
+  if (appdata.capabilities.rights) {
+    res.locals.rights = rights.check(req)
+
+    if (!res.locals.rights.read) {
+      return res.render('error-forbidden')
+    }
   }
 
   // Set i18n locale

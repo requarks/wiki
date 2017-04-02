@@ -1,31 +1,38 @@
+@charset "utf-8";
 
 $primary: 'indigo';
 
-@import 'core-client/scss/core';
-@import 'core-client/scss/components/alert';
-@import 'core-client/scss/components/button';
-@import 'core-client/scss/components/footer';
-@import 'core-client/scss/components/form';
-@import 'core-client/scss/components/grid';
-@import 'core-client/scss/components/hero';
-@import 'core-client/scss/components/markdown-content';
-@import 'core-client/scss/components/modal';
-@import 'core-client/scss/components/nav';
-@import 'core-client/scss/components/panel';
-@import 'core-client/scss/components/search';
-@import 'core-client/scss/components/sidebar';
-@import 'core-client/scss/components/table';
-@import 'core-client/scss/components/typography';
+@import "base/variables";
+@import "base/colors";
+@import "base/reset";
+@import "base/mixins";
+@import "base/fonts";
+@import "base/base";
 
-@import './libs/twemoji-awesome';
-@import './libs/jquery-contextmenu';
+@import "libs/animate";
+
+@import 'components/alert';
+@import 'components/button';
+@import 'components/footer';
+@import 'components/form';
+@import 'components/grid';
+@import 'components/hero';
+@import 'components/markdown-content';
+@import 'components/modal';
+@import 'components/nav';
+@import 'components/panel';
+@import 'components/search';
+@import 'components/sidebar';
+@import 'components/table';
+@import 'components/typography';
+
+@import 'libs/twemoji-awesome';
+@import 'libs/jquery-contextmenu';
 @import 'node_modules/highlight.js/styles/tomorrow';
 @import 'node_modules/simplemde/dist/simplemde.min';
 
-@import './components/_editor';
+@import 'components/_editor';
 
-@import './layout/_header';
-//@import './layout/_content';
+@import 'layout/_header';
 
-//@import './pages/_account';
-@import './pages/_welcome';
+@import 'pages/_welcome';

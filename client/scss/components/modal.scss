@@ -1,0 +1,356 @@
+.modal {
+	align-items: flex-start;
+	display: none;
+
+	&.is-active {
+		display: block;
+	}
+
+	&.is-superimposed {
+		.modal-background {
+			z-index: 20;
+		}
+		.modal-container {
+			z-index: 21;
+		}
+	}
+
+}
+.modal-background {
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	position: fixed;
+	background-color: rgba(0,0,0,0.85);
+	animation: .4s ease fadeIn;
+	z-index: 10;
+}
+.modal-container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 11;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.modal-content {
+	animation: .3s ease zoomIn;
+	width: 600px;
+	background-color: #FFF;
+
+	&.is-expanded {
+		align-self: stretch;
+		width: 100%;
+		margin: 20px;
+		display: flex;
+		flex-direction: column;
+
+		> section {
+			flex-grow: 1;
+		}
+
+	}
+
+	header {
+		background-color: mc('teal', '600');
+		color: #FFF;
+		display: flex;
+		flex-shrink: 0;
+		height: 40px;
+		align-items: center;
+		font-weight: 400;
+		font-size: 16px;
+		padding: 0 20px;
+		position: relative;
+
+		@each $color, $colorvalue in $material-colors {
+			&.is-#{$color} {
+				background-color: mc($color, '600');
+			}
+		}
+
+		.modal-notify {
+			position: absolute;
+			display: none;
+			align-items: center;
+			height: 40px;
+			right: 20px;
+			top: 0;
+
+			&.is-active {
+				display: flex;
+			}
+
+			span {
+				font-size: 12px;
+				letter-spacing: 1px;
+				text-transform: uppercase;
+			}
+
+			i {
+				margin-left: 15px;
+				display: inline-block;
+				@include spinner(#FFF, .5s, 20px);
+			}
+
+		}
+
+	}
+
+	section {
+		padding: 20px;
+		border-top: 1px dotted mc('grey', '300');
+
+		&:first-of-type {
+			border-top: none;
+			padding-top: 20px;
+		}
+		&:last-of-type {
+			padding-bottom: 20px;
+		}
+
+		&.is-gapless {
+			padding: 10px;
+			display: flex;
+		}
+
+		&.modal-loading {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+
+			> i {
+				display: block;
+				@include spinner(mc('blue','500'), .4s, 32px);
+				margin-bottom: 10px;
+			}
+
+			> span {
+				color: mc('grey', '600');
+			}
+
+			> em {
+				font-size: 12px;
+				color: mc('grey', '500');
+				font-style: normal;
+			}
+
+		}
+
+		&.modal-instructions {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			color: mc('grey', '800');
+
+			img {
+				height: 100px;
+
+				& + * {
+					margin-top: 10px;
+				}
+
+			}
+
+			i.is-huge {
+				font-size: 72px;
+				margin-bottom: 10px;
+			}
+
+			> span {
+				color: mc('grey', '800');
+			}
+
+			> em {
+				font-size: 12px;
+				color: mc('grey', '600');
+				font-style: normal;
+				margin-top: 10px;
+				display: block;
+			}
+
+		}
+
+		.bullets {
+			list-style-type: square;
+			padding: 5px 0 0 30px;
+			font-size: 14px;
+			color: mc('grey', '800');
+		}
+
+		.note {
+			display: block;
+			margin-top: 10px;
+			font-size: 14px;
+			color: mc('grey', '800');
+
+			&:first-child {
+				margin-top: 0;
+			}
+
+			ul {
+				color: mc('grey', '800');
+				padding-left: 10px;
+
+				li {
+					margin-top: 5px;
+					display: flex;
+					align-items: center;
+
+					> i {
+						margin-right: 8px;
+						font-size: 18px;
+					}
+
+				}
+			}
+
+		}
+
+	}
+
+	footer {
+		padding: 20px;
+		text-align: right;
+
+		.button {
+			margin-left: 10px;
+		}
+
+	}
+
+}
+
+.modal-toolbar {
+	background-color: mc('teal', '700');
+	padding: 7px 20px;
+	display: flex;
+	flex-shrink: 0;
+	justify-content: center;
+
+	@each $color, $colorvalue in $material-colors {
+		&.is-#{$color} {
+			background-color: mc($color, '700');
+
+			.button {
+				border-color: mc($color, '900');
+				background-color: mc($color, '900');
+
+				&:hover {
+					border-color: mc($color, '900');
+					background-color: mc($color, '800');
+				}
+
+			}
+
+		}
+	}
+
+	// BUTTONS
+
+	.button {
+		border: 1px solid mc('teal', '900');
+		background-color: mc('teal', '900');
+		transition: all .4s ease;
+		color: #FFF;
+		border-radius: 0;
+
+		&:first-child {
+			border-top-left-radius: 4px;
+			border-bottom-left-radius: 4px;
+		}
+
+		&:last-child {
+			border-top-right-radius: 4px;
+			border-bottom-right-radius: 4px;
+		}
+
+		&:hover {
+			border-color: mc('teal', '900');
+			background-color: mc('teal', '800');
+			color: #FFF;
+		}
+
+	}
+
+	.button + .button {
+		margin-left: 1px;
+	}
+
+}
+
+.modal-sidebar {
+
+	background-color: mc('teal', '50');
+	padding: 0;
+	//padding: 7px 20px;
+
+	@each $color, $colorvalue in $material-colors {
+		&.is-#{$color} {
+			background-color: mc($color, '50');
+
+			.model-sidebar-header {
+				background-color: mc($color, '100');
+				color: mc($color, '800');
+			}
+
+			.model-sidebar-list > li a {
+				&:hover {
+					background-color: mc($color, '200');
+				}
+				&.is-active {
+					background-color: mc($color, '500');
+				}
+			}
+
+		}
+	}
+
+	.model-sidebar-header {
+		padding: 7px 20px;
+	}
+
+	.model-sidebar-content {
+		padding: 7px 20px;
+	}
+
+	.model-sidebar-list {
+
+		> li {
+			padding: 0;
+
+			a {
+				display: flex;
+				align-items: center;
+				height: 34px;
+				padding: 0 20px;
+				cursor: pointer;
+				color: mc('grey', '800');
+
+				&:hover {
+					background-color: mc('teal', '200');
+				}
+
+				&.is-active {
+					color: #FFF;
+				}
+
+				i {
+					margin-right: 7px;
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
+.modal-content .card-footer-item.featured {
+	animation: flash 4s ease 0 infinite;
+}

@@ -26,7 +26,6 @@
     "winston": true,
     "ws": true,
     "Mongoose": true,
-    "CORE_PATH": true,
     "ROOTPATH": true,
     "IS_DEBUG": true,
     "PROCNAME": true

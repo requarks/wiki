@@ -1,0 +1,26 @@
+.footer {
+	background-color: mc('blue-grey','50');
+	border-bottom: 5px solid mc('blue-grey','100');
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 25px;
+	font-size: 13px;
+	font-weight: 500;
+	color: mc('blue-grey','500');
+
+	ul {
+		padding: 0;
+		margin: 0;
+		list-style-type: none;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
+		li {
+			padding: 0 15px;
+		}
+
+	}
+
+}

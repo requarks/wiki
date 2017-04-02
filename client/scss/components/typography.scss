@@ -1,0 +1,16 @@
+
+h1 {
+	font-size: 28px;
+}
+h2 {
+	font-size: 18px;
+}
+h3 {
+	font-size: 16px;
+}
+
+@each $color, $colorvalue in $material-colors {
+	i.is-#{$color} {
+		color: mc($color, '600');
+	}
+}

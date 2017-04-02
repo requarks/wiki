@@ -1,0 +1,90 @@
+.table {
+	border-spacing: collapse;
+	padding: 1px;
+	width: 100%;
+	font-size: 14px;
+
+	thead {
+		background-color: mc('blue-grey', '500');
+		color: #FFF;
+
+		th {
+			padding: 5px 10px;
+			font-weight: 500;
+			text-align: center;
+			border-left: 1px solid mc('blue-grey', '200');
+
+			&:first-child {
+				border-left: none;
+			}
+
+		}
+
+		@each $color, $colorvalue in $material-colors {
+			&.is-#{$color} {
+				background-color: mc($color, '500');
+
+				th {
+					border-left-color: mc($color, '200');
+				}
+
+			}
+		}
+
+	}
+
+	tbody {
+
+		tr {
+			background-color: mc('blue-grey', '100');
+
+			&:nth-child(odd) {
+				background-color: mc('blue-grey', '50');
+			}
+
+			td {
+				padding: 5px 10px;
+				border-left: 1px solid #FFF;
+				vertical-align: middle;
+
+				&:first-child {
+					border-left: none;
+				}
+
+			}
+
+		}
+
+	}
+
+	.is-centered {
+		text-align: center;
+	}
+
+	.has-icons i {
+		margin-right: 8px;
+	}
+
+	.is-icon {
+		font-size: 14px;
+		width: 20px;
+	}
+
+	.has-action-icons {
+		i {
+			cursor: pointer;
+			font-size: 20px;
+		}
+	}
+
+}
+
+.table-actions {
+	text-align: right;
+
+	.button {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
+
+}

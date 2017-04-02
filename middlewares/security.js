@@ -1,5 +1,7 @@
 'use strict'
 
+/* global app */
+
 /**
  * Security Middleware
  *

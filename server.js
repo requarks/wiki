@@ -9,7 +9,6 @@
 global.PROCNAME = 'SERVER'
 global.ROOTPATH = __dirname
 global.IS_DEBUG = process.env.NODE_ENV === 'development'
-global.CORE_PATH = (IS_DEBUG) ? ROOTPATH + '/../core/' : ROOTPATH + '/node_modules/requarks-core/'
 
 if (IS_DEBUG) {
   try { require('newrelic') } catch (err) {}
@@ -17,7 +16,7 @@ if (IS_DEBUG) {
 
 process.env.VIPS_WARNING = false
 
-let appconf = require(CORE_PATH + 'core-libs/config')()
+let appconf = require('./libs/config')()
 global.appconfig = appconf.config
 global.appdata = appconf.data
 
@@ -63,7 +62,7 @@ const session = require('express-session')
 const SessionMongoStore = require('connect-mongo')(session)
 const socketio = require('socket.io')
 
-var mw = autoload(CORE_PATH + '/core-middlewares')
+var mw = autoload(path.join(ROOTPATH, '/middlewares'))
 var ctrl = autoload(path.join(ROOTPATH, '/controllers'))
 
 // ----------------------------------------
@@ -90,8 +89,8 @@ app.use(express.static(path.join(ROOTPATH, 'assets')))
 // Passport Authentication
 // ----------------------------------------
 
-require(CORE_PATH + 'core-libs/auth')(passport)
-global.rights = require(CORE_PATH + 'core-libs/rights')
+require('./libs/auth')(passport)
+global.rights = require('./libs/rights')
 rights.init()
 
 var sessionStore = new SessionMongoStore({
