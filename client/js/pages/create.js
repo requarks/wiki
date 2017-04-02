@@ -1,15 +1,17 @@
-/* global $ */
+'use strict'
 
-if ($('#page-type-create').length) {
-  let pageEntryPath = $('#page-type-create').data('entrypath') // eslint-disable-line no-unused-vars
+import $ from 'jquery'
 
-  // -> Discard
+module.exports = (alerts, socket) => {
+  if ($('#page-type-create').length) {
+    let pageEntryPath = $('#page-type-create').data('entrypath')
 
-  $('.btn-create-discard').on('click', (ev) => {
-    $('#modal-create-discard').toggleClass('is-active')
-  })
+    // -> Discard
 
-  /* eslint-disable spaced-comment */
-  //=include ../components/editor.js
-  /* eslint-enable spaced-comment */
+    $('.btn-create-discard').on('click', (ev) => {
+      $('#modal-create-discard').toggleClass('is-active')
+    })
+
+    require('../components/editor.js')(alerts, pageEntryPath, socket)
+  }
 }

@@ -16,14 +16,13 @@ module.exports = (alerts, pageEntryPath, socket) => {
       return _.toUpper(filesize(v))
     })
 
-    let mde
     let mdeModalOpenState = false
-    let vueImage = require('./editor-image.js')(alerts, mde, mdeModalOpenState, socket)
-    let vueFile = require('./editor-file.js')(alerts, mde, mdeModalOpenState, socket)
-    let vueVideo = require('./editor-video.js')(mde, mdeModalOpenState)
-    let vueCodeBlock = require('./editor-codeblock.js')(mde, mdeModalOpenState)
+    let vueImage
+    let vueFile
+    let vueVideo
+    let vueCodeBlock
 
-    mde = new SimpleMDE({
+    let mde = new SimpleMDE({
       autofocus: true,
       autoDownloadFontAwesome: false,
       element: $('#mk-editor').get(0),
@@ -184,6 +183,11 @@ module.exports = (alerts, pageEntryPath, socket) => {
         'toggleFullScreen': null
       }
     })
+
+    vueImage = require('./editor-image.js')(alerts, mde, mdeModalOpenState, socket)
+    vueFile = require('./editor-file.js')(alerts, mde, mdeModalOpenState, socket)
+    vueVideo = require('./editor-video.js')(mde, mdeModalOpenState)
+    vueCodeBlock = require('./editor-codeblock.js')(mde, mdeModalOpenState)
 
     // -> Save
 

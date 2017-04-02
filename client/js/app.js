@@ -54,7 +54,7 @@ $(() => {
   // ====================================
 
   require('./pages/view.js')(alerts)
-  // require('./pages/create.js')
+  require('./pages/create.js')(alerts, socket)
   require('./pages/edit.js')(alerts, socket)
   require('./pages/source.js')(alerts)
   require('./pages/admin.js')(alerts)

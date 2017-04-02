@@ -51,6 +51,7 @@ module.exports = (alerts, mde, mdeModalOpenState, socket) => {
         vueImage.currentImage = imageId
       },
       insertImage: (ev) => {
+        console.log(mde)
         if (mde.codemirror.doc.somethingSelected()) {
           mde.codemirror.execCommand('singleSelection')
         }
