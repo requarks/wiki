@@ -4,6 +4,7 @@ import $ from 'jquery'
 import * as ace from 'brace'
 import 'brace/theme/tomorrow_night'
 import 'brace/mode/markdown'
+import pageLoader from '../components/page-loader'
 
 module.exports = (alerts) => {
   if ($('#page-type-source').length) {
@@ -20,5 +21,9 @@ module.exports = (alerts) => {
 
     require('../modals/create.js')(currentBasePath)
     require('../modals/move.js')(currentBasePath, alerts)
+
+    scEditor.renderer.on('afterRender', () => {
+      pageLoader.complete()
+    })
   }
 }

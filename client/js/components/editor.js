@@ -5,6 +5,7 @@ import Vue from 'vue'
 import _ from 'lodash'
 import filesize from 'filesize.js'
 import SimpleMDE from 'simplemde'
+import pageLoader from '../components/page-loader'
 
 // ====================================
 // Markdown Editor
@@ -188,6 +189,8 @@ module.exports = (alerts, pageEntryPath, socket) => {
     vueFile = require('./editor-file.js')(alerts, mde, mdeModalOpenState, socket)
     vueVideo = require('./editor-video.js')(mde, mdeModalOpenState)
     vueCodeBlock = require('./editor-codeblock.js')(mde, mdeModalOpenState)
+
+    pageLoader.complete()
 
     // -> Save
 
