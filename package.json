@@ -11,12 +11,8 @@
     "dev-configure": "node fuse -c",
     "test": "jest",
     "snyk-protect": "snyk protect",
-    "__prepublish": "npm run snyk-protect",
-    "pre-commit": "npm run test"
+    "__prepublish": "npm run snyk-protect"
   },
-  "pre-commit": [
-    "pre-commit"
-  ],
   "bin": {
     "wiki": "wiki.js"
   },
@@ -143,7 +139,6 @@
     "jquery-smooth-scroll": "^2.0.0",
     "node-sass": "latest",
     "nodemon": "latest",
-    "pre-commit": "latest",
     "pug-lint": "latest",
     "snyk": "latest",
     "standard": "latest",
