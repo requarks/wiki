@@ -7,19 +7,22 @@
 	min-height: 80vh;
 
 	aside {
+    padding: 1px 0 15px 0;
 
 		&:last-child {
 			padding-bottom: 20px;
 		}
 
 		.sidebar-label {
-			padding: 0 0 5px 0;
-			color: mc('blue-grey', '400');
+			padding: 8px;
+			color: mc('blue-grey', '300');
 			font-size: 13px;
 			letter-spacing: 1px;
 			text-transform: uppercase;
-			border-bottom: 1px solid mc('blue-grey', '700');
-			margin: 25px 10px 15px 10px;
+			background-color: mc('blue-grey', '800');
+			margin: 0 0 15px 0;
+      text-align: center;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
 
 			i {
 				margin-right: 5px;
