@@ -1,5 +1,7 @@
 'use strict'
 
+/* global appconfig */
+
 import jQuery from 'jquery'
 import _ from 'lodash'
 import Vue from 'vue'
@@ -43,14 +45,14 @@ jQuery(document).ready(function ($) {
         results: []
       },
       conf: {
-        title: 'Wiki',
-        host: 'http://',
-        port: 80,
-        lang: 'en',
-        db: 'mongodb://localhost:27017/wiki',
+        title: appconfig.title || 'Wiki',
+        host: appconfig.host || 'http://',
+        port: appconfig.port || 80,
+        lang: appconfig.lang || 'en',
+        db: appconfig.db || 'mongodb://localhost:27017/wiki',
         pathData: './data',
         pathRepo: './repo',
-        gitUseRemote: true,
+        gitUseRemote: (appconfig.git !== false),
         gitUrl: '',
         gitBranch: 'master',
         gitAuthType: 'ssh',
@@ -106,6 +108,27 @@ jQuery(document).ready(function ($) {
             break
         }
         return perc
+      }
+    },
+    mounted: function () {
+      if (appconfig.paths) {
+        this.conf.pathData = appconfig.paths.data || './data'
+        this.conf.pathRepo = appconfig.paths.repo || './repo'
+      }
+      if (appconfig.git !== false && _.isPlainObject(appconfig.git)) {
+        this.conf.gitUrl = appconfig.git.url || ''
+        this.conf.gitBranch = appconfig.git.branch || 'master'
+        if (_.isPlainObject(appconfig.git.auth)) {
+          this.conf.gitAuthType = appconfig.git.auth.type || 'ssh'
+          this.conf.gitAuthSSHKey = appconfig.git.auth.privateKey || ''
+          this.conf.gitAuthUser = appconfig.git.auth.username || ''
+          this.conf.gitAuthPass = appconfig.git.auth.password || ''
+          this.conf.gitAuthSSL = (appconfig.git.auth.sslVerify !== false)
+        }
+        if (_.isPlainObject(appconfig.git.signature)) {
+          this.conf.gitSignatureName = appconfig.git.signature.name || ''
+          this.conf.gitSignatureEmail = appconfig.git.signature.email || ''
+        }
       }
     },
     methods: {

@@ -10,6 +10,8 @@ html(data-logic='configure')
       link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
 
     // JS / CSS
+    script(type='text/javascript').
+      var appconfig = !{JSON.stringify(conf)};
     script(type='text/javascript', src='/js/configure.min.js')
 
   body

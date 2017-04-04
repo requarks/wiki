@@ -323,7 +323,6 @@ module.exports = (port, spinner) => {
         } else {
           conf.auth = { local: { enabled: true } }
         }
-        conf.admin = req.body.adminEmail
         conf.db = req.body.db
         if (req.body.gitUseRemote === false) {
           conf.git = false

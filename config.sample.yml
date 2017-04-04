@@ -94,15 +94,6 @@ auth:
 sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 
 # ---------------------------------------------------------------------
-# Administrator email
-# ---------------------------------------------------------------------
-# An admin account will be created using the email specified here.
-# The password is set to "admin123" by default. Change it immediately
-# upon login!!!
-
-admin: admin@company.com
-
-# ---------------------------------------------------------------------
 # Database Connection String
 # ---------------------------------------------------------------------
 # You can also use an ENV variable by using $ENV_VAR_NAME as the value
