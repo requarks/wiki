@@ -238,20 +238,22 @@
 	}
 
 	pre {
-		background-color: mc('grey', '50');
-		border-top: 1px solid mc('grey', '100');
-		box-shadow: inset 0 0 5px 0 rgba(mc('grey', '500'), 0.3);
-		padding: 20px;
+		background-color: mc('blue-grey', '900');
+		border-left: 7px solid mc('indigo', '500');
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+		padding: 20px 20px 20px 13px;
 		font-family: $core-font-monospace;
 		white-space: pre;
 
 		> code {
-			box-shadow: inset 0 0 5px 0 mc('grey', '100');
 			border-radius: 5px;
 			font-weight: 400;
-			background-color: none;
-			color: mc('grey', '700');
+			background-color: transparent;
+			color: mc('blue-grey', '100');
 			padding: 0;
+      font-family: $core-font-monospace;
+      font-size: 13px;
 		}
 
 		& + p {
