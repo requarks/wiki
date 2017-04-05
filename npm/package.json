@@ -29,12 +29,15 @@
   },
   "homepage": "https://github.com/Requarks/wiki#readme",
   "dependencies": {
-    "bluebird": "^3.4.7",
-    "follow-redirects": "^1.2.1",
-    "fs-extra": "^2.0.0",
+    "bluebird": "^3.5.0",
+    "colors": "^1.1.2",
+    "execa": "^0.6.3",
+    "follow-redirects": "^1.2.3",
+    "fs-extra": "^2.1.2",
+    "inquirer": "^3.0.6",
     "lodash": "^4.17.4",
-    "ora": "^1.1.0",
-    "pm2": "^2.4.0",
+    "ora": "^1.2.0",
+    "pm2": "^2.4.3",
     "tar": "^2.2.1"
   }
 }
