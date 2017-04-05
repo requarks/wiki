@@ -428,12 +428,10 @@ module.exports = (port, spinner) => {
     switch (error.code) {
       case 'EACCES':
         spinner.fail('Listening on port ' + port + ' requires elevated privileges!')
-        process.exit(1)
-        break
+        return process.exit(1)
       case 'EADDRINUSE':
         spinner.fail('Port ' + port + ' is already in use!')
-        process.exit(1)
-        break
+        return process.exit(1)
       default:
         throw error
     }

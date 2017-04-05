@@ -132,8 +132,7 @@ pm2.connectAsync().then(() => {
             })
           default:
             console.info(colors.bold.cyan('> Open config.yml in your favorite editor. Then start Wiki.js using: node wiki start'))
-            process.exit(0)
-            break
+            return process.exit(0)
         }
       }).then(() => {
         ora.succeed(colors.bold.green('Wiki.js has been configured and is now running!'))

@@ -1,5 +1,7 @@
 'use strict'
 
+/* eslint-disable standard/no-callback-literal */
+
 const _ = require('lodash')
 
 module.exports = (socket) => {

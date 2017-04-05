@@ -198,12 +198,10 @@ server.on('error', (error) => {
   switch (error.code) {
     case 'EACCES':
       console.error('Listening on port ' + appconfig.port + ' requires elevated privileges!')
-      process.exit(1)
-      break
+      return process.exit(1)
     case 'EADDRINUSE':
       console.error('Port ' + appconfig.port + ' is already in use!')
-      process.exit(1)
-      break
+      return process.exit(1)
     default:
       throw error
   }
