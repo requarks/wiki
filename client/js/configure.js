@@ -297,7 +297,7 @@ jQuery(document).ready(function ($) {
           axios.post('/restart', {}).then(resp => {
             _.delay(() => {
               window.location.assign(self.conf.host)
-            }, 10000)
+            }, 30000)
           }).catch(err => {
             window.alert(err.message)
           })

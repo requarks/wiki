@@ -78,6 +78,9 @@ pm2.connectAsync().then(() => {
      * Upgrade mode
      */
     ora.succeed('Upgrade completed.')
+    console.info(colors.yellow('\n!!! IMPORTANT !!!'))
+    console.info(colors.yellow('Running the configuration wizard is optional but recommended after an upgrade to ensure your config file is using the latest available settings.'))
+    console.info(colors.yellow('Note that the contents of your config file will be displayed during the configuration wizard. It is therefor highly recommended to run the wizard on a non-publicly accessible port or skip this step completely.\n'))
     return false
   }).catch(err => {
     /**
@@ -135,10 +138,10 @@ pm2.connectAsync().then(() => {
             return process.exit(0)
         }
       }).then(() => {
-        ora.succeed(colors.bold.green('Wiki.js has been configured and is now running!'))
+        ora.succeed(colors.bold.green('Wiki.js has been configured successfully. It is now starting up and should be accessible very soon!'))
       })
     } else {
-      console.info('[!] Non-interactive terminal detected. You may now manually edit config.yml and start Wiki.js by running: node wiki start')
+      console.info(colors.cyan('[!] Non-interactive terminal detected. You may now manually edit config.yml and start Wiki.js by running: node wiki start'))
     }
   })
 }).catch(err => {

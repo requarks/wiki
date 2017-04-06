@@ -53,7 +53,7 @@ const ALIASES = {
   'brace-ext-modelist': 'brace/ext/modelist.js',
   'simplemde': 'simplemde/dist/simplemde.min.js',
   'socket.io-client': 'socket.io-client/dist/socket.io.min.js',
-  'vue': 'vue/dist/vue.js'
+  'vue': 'vue/dist/vue.min.js'
 }
 const SHIMS = {
   jquery: {
@@ -184,6 +184,7 @@ globalTasks.then(() => {
         alias: ALIASES,
         shim: SHIMS,
         plugins: [
+          fsbx.EnvPlugin({ NODE_ENV: 'production' }),
           [ fsbx.SassPlugin({ outputStyle: 'compressed', includePaths: ['./node_modules/requarks-core'] }), fsbx.CSSPlugin() ],
           fsbx.BabelPlugin({
             config: {

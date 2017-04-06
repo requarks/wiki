@@ -92,9 +92,9 @@ module.exports = (port, spinner) => {
             }
             let gitver = _.chain(stdout.replace(/[^\d.]/g, '')).split('.').take(3).join('.').value()
             if (!semver.satisfies(semver.clean(gitver), '>=2.11.0')) {
-              reject(new Error('Git version is too old. Minimum is v2.11.0.'))
+              reject(new Error('Git version is too old. Minimum is v2.7.4.'))
             }
-            resolve('Git v' + gitver + ' detected. Minimum is v2.11.0.')
+            resolve('Git v' + gitver + ' detected. Minimum is v2.7.4.')
           })
         })
       },
