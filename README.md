@@ -37,7 +37,7 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 - Node.js **4.6.0** or later
 - MongoDB **3.2** or later
-- Git **2.11.0** or later
+- Git **2.7.4** or later
 - An empty Git repository (optional)
 
 Read the full [prerequisites](https://docs.wiki.requarks.io/prerequisites) article for full details.
@@ -45,6 +45,11 @@ Read the full [prerequisites](https://docs.wiki.requarks.io/prerequisites) artic
 ### Gitter
 
 Want to discuss features, ideas or issues? Join our [gitter channel](https://gitter.im/Requarks/wiki). We are very active and friendly!
+
+### Twitter
+
+Follow our Twitter feed to learn about upcoming updates and new releases!  
+<a href="https://twitter.com/requarks" class="twitter-follow-button" data-size="large" data-show-count="false">Follow @requarks</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 ### Special Thanks
 
