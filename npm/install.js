@@ -122,26 +122,26 @@ pm2.connectAsync().then(() => {
       }]).then((ans) => {
         switch (ans.action) {
           case 'default':
-            console.info(colors.bold.cyan('> Browse to http://your-server:3000/ to configure your wiki!'))
+            console.info(colors.bold.cyan('> Browse to http://your-server:3000/ to configure your wiki! (Replaced your-server with the hostname or IP of your server!)'))
             ora = require('ora')({ text: 'I\'ll wait until you\'re done ;)', color: 'yellow', spinner: 'pong' }).start()
             return exec.stdout('node', ['wiki', 'configure'], {
               cwd: installDir
             })
           case 'custom':
-            console.info(colors.bold.cyan('> Browse to http://your-server:' + ans.customport + '/ to configure your wiki!'))
+            console.info(colors.bold.cyan('> Browse to http://your-server:' + ans.customport + '/ to configure your wiki! (Replaced your-server with the hostname or IP of your server!)'))
             ora = require('ora')({ text: 'I\'ll wait until you\'re done ;)', color: 'yellow', spinner: 'pong' }).start()
             return exec.stdout('node', ['wiki', 'configure', ans.customport], {
               cwd: installDir
             })
           default:
-            console.info(colors.bold.cyan('> Open config.yml in your favorite editor. Then start Wiki.js using: node wiki start'))
+            console.info(colors.bold.cyan('> You can run the configuration wizard using command:') + colors.bold.white(' node wiki configure') + colors.bold.cyan('. Then start Wiki.js using command: ') + colors.bold.white('node wiki start'))
             return process.exit(0)
         }
       }).then(() => {
         ora.succeed(colors.bold.green('Wiki.js has been configured successfully. It is now starting up and should be accessible very soon!'))
       })
     } else {
-      console.info(colors.cyan('[!] Non-interactive terminal detected. You may now manually edit config.yml and start Wiki.js by running: node wiki start'))
+      console.info(colors.cyan('[WARNING] Non-interactive terminal detected. You must manually start the configuration wizard using the command: node wiki configure'))
     }
   })
 }).catch(err => {
