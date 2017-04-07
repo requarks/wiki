@@ -192,47 +192,23 @@ module.exports = function (passport) {
   db.onReady.then(() => {
     db.User.findOne({ provider: 'local', email: 'guest' }).then((c) => {
       if (c < 1) {
-        // Create root admin account
+        // Create guest account
 
-        winston.info('[AUTH] No administrator account found. Creating a new one...')
-        db.User.hashPassword('admin123').then((pwd) => {
-          return db.User.create({
-            provider: 'local',
-            email: appconfig.admin,
-            name: 'Administrator',
-            password: pwd,
-            rights: [{
-              role: 'admin',
-              path: '/',
-              exact: false,
-              deny: false
-            }]
-          })
+        return db.User.create({
+          provider: 'local',
+          email: 'guest',
+          name: 'Guest',
+          password: '',
+          rights: [{
+            role: 'read',
+            path: '/',
+            exact: false,
+            deny: !appconfig.public
+          }]
         }).then(() => {
-          winston.info('[AUTH] Administrator account created successfully!')
-        }).then(() => {
-          if (appdata.capabilities.guest) {
-            // Create guest account
-
-            return db.User.create({
-              provider: 'local',
-              email: 'guest',
-              name: 'Guest',
-              password: '',
-              rights: [{
-                role: 'read',
-                path: '/',
-                exact: false,
-                deny: !appconfig.public
-              }]
-            }).then(() => {
-              winston.info('[AUTH] Guest account created successfully!')
-            })
-          } else {
-            return true
-          }
+          winston.info('[AUTH] Guest account created successfully!')
         }).catch((err) => {
-          winston.error('[AUTH] An error occured while creating administrator/guest account:')
+          winston.error('[AUTH] An error occured while creating guest account:')
           winston.error(err)
         })
       }

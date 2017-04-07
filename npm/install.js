@@ -11,6 +11,7 @@ const zlib = require('zlib')
 const inquirer = require('inquirer')
 const colors = require('colors/safe')
 const _ = require('lodash')
+const os = require('os')
 
 let installDir = path.resolve(__dirname, '../..')
 
@@ -32,6 +33,11 @@ pm2.connectAsync().then(() => {
   }).catch(err => { // eslint-disable-line handle-callback-err
     return true
   })
+}).then(() => {
+  if (os.totalmem() < 1024 * 1024 * 768) {
+    throw new Error('Not enough memory to install dependencies. Minimum is 768 MB.')
+  }
+  return true
 }).then(() => {
   /**
    * Fetch version from npm package

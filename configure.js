@@ -91,7 +91,7 @@ module.exports = (port, spinner) => {
               reject(new Error('Git is not installed or not reachable from PATH.'))
             }
             let gitver = _.chain(stdout.replace(/[^\d.]/g, '')).split('.').take(3).join('.').value()
-            if (!semver.satisfies(semver.clean(gitver), '>=2.11.0')) {
+            if (!semver.satisfies(semver.clean(gitver), '>=2.7.4')) {
               reject(new Error('Git version is too old. Minimum is v2.7.4.'))
             }
             resolve('Git v' + gitver + ' detected. Minimum is v2.7.4.')
