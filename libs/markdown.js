@@ -173,6 +173,10 @@ const parseContent = (content) => {
   let output = mkdown.render(content)
   let cr = cheerio.load(output)
 
+  if (cr.root().children().length < 1) {
+    return ''
+  }
+
   // -> Check for empty first element
 
   let firstElm = cr.root().children().first()[0]

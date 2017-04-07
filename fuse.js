@@ -9,7 +9,7 @@
 const _ = require('lodash')
 const Promise = require('bluebird')
 const colors = require('colors/safe')
-const fs = Promise.promisifyAll(require('fs'))
+const fs = Promise.promisifyAll(require('fs-extra'))
 const fsbx = require('fuse-box')
 const nodemon = require('nodemon')
 const path = require('path')
@@ -71,11 +71,13 @@ console.info(colors.white('└── ') + colors.green('Running global tasks...'
 let globalTasks = Promise.mapSeries([
   () => {
     console.info(colors.white('  └── ') + colors.green('Copy + Minify ACE modes to assets...'))
-    return fs.readdirAsync('./node_modules/brace/mode').then(modeList => {
-      return Promise.map(modeList, mdFile => {
-        console.info(colors.white('      mode-' + mdFile))
-        let result = uglify.minify(path.join('./node_modules/brace/mode', mdFile), { output: { 'max_line_len': 1000000 } })
-        return fs.writeFileAsync(path.join('./assets/js/ace', 'mode-' + mdFile), result.code)
+    return fs.ensureDirAsync('./assets/js/ace').then(() => {
+      return fs.readdirAsync('./node_modules/brace/mode').then(modeList => {
+        return Promise.map(modeList, mdFile => {
+          console.info(colors.white('      mode-' + mdFile))
+          let result = uglify.minify(path.join('./node_modules/brace/mode', mdFile), { output: { 'max_line_len': 1000000 } })
+          return fs.writeFileAsync(path.join('./assets/js/ace', 'mode-' + mdFile), result.code)
+        })
       })
     })
   }

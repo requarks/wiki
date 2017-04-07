@@ -285,6 +285,9 @@ module.exports = {
       includeMarkdown: true,
       includeParentInfo: true,
       cache: true
+    }).catch(err => {
+      winston.error(err)
+      return err
     }).then((pageData) => {
       return {
         entryPath,
@@ -292,6 +295,9 @@ module.exports = {
         parent: pageData.parent || {},
         text: mark.removeMarkdown(pageData.markdown)
       }
+    }).catch(err => {
+      winston.error(err)
+      return err
     }).then((content) => {
       return db.Entry.findOneAndUpdate({
         _id: content.entryPath
@@ -304,6 +310,9 @@ module.exports = {
         new: true,
         upsert: true
       })
+    }).catch(err => {
+      winston.error(err)
+      return err
     })
   },
 
