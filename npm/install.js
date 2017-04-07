@@ -27,6 +27,9 @@ var ora = require('ora')({ text: 'Initializing...', spinner: 'dots12' }).start()
 
 ora.text = 'Looking for running instances...'
 pm2.connectAsync().then(() => {
+  /**
+   * Stop and delete existing instances
+   */
   return pm2.describeAsync('wiki').then(() => {
     ora.text = 'Stopping and deleting process from pm2...'
     return pm2.deleteAsync('wiki')
@@ -34,11 +37,46 @@ pm2.connectAsync().then(() => {
     return true
   })
 }).then(() => {
+  /**
+   * Check for sufficient memory
+   */
   if (os.totalmem() < 1024 * 1024 * 768) {
     throw new Error('Not enough memory to install dependencies. Minimum is 768 MB.')
   }
   return true
 }).then(() => {
+  /**
+   * Install via local tarball if present
+   */
+  let skipHttp = true
+  let tbPath = path.join(installDir, 'wiki-js.tar.gz')
+  return fs.accessAsync(tbPath)
+  .catch(err => { // eslint-disable-line handle-callback-err
+    skipHttp = false
+  }).then(() => {
+    if (skipHttp) {
+      ora.text = 'Local tarball found. Extracting...'
+
+      return new Promise((resolve, reject) => {
+        fs.createReadStream(tbPath).pipe(zlib.createGunzip())
+          .pipe(tar.Extract({ path: installDir }))
+          .on('error', err => reject(err))
+          .on('end', () => {
+            ora.text = 'Tarball extracted successfully.'
+            resolve(true)
+          })
+      })
+    } else {
+      return false
+    }
+  })
+}).then((skipHttp) => {
+  /**
+   * Install via remote tarball
+   */
+
+  if (skipHttp) { return true }
+
   /**
    * Fetch version from npm package
    */
@@ -140,11 +178,16 @@ pm2.connectAsync().then(() => {
               cwd: installDir
             })
           default:
-            console.info(colors.bold.cyan('> You can run the configuration wizard using command:') + colors.bold.white(' node wiki configure') + colors.bold.cyan('. Then start Wiki.js using command: ') + colors.bold.white('node wiki start'))
-            return process.exit(0)
+            console.info(colors.bold.cyan('\n> You can run the configuration wizard using command:') + colors.bold.white(' node wiki configure') + colors.bold.cyan('.\n> Then start Wiki.js using command: ') + colors.bold.white('node wiki start'))
+            return Promise.delay(7000).then(() => {
+              process.exit(0)
+            })
         }
       }).then(() => {
         ora.succeed(colors.bold.green('Wiki.js has been configured successfully. It is now starting up and should be accessible very soon!'))
+        return Promise.delay(3000).then(() => {
+          console.info('npm is finishing... please wait...')
+        })
       })
     } else {
       console.info(colors.cyan('[WARNING] Non-interactive terminal detected. You must manually start the configuration wizard using the command: node wiki configure'))
