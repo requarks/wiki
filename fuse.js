@@ -70,7 +70,7 @@ console.info(colors.white('└── ') + colors.green('Running global tasks...'
 
 let globalTasks = Promise.mapSeries([
   () => {
-    fs.accessAsync('./assets/js/ace').then(() => {
+    return fs.accessAsync('./assets/js/ace').then(() => {
       console.info(colors.white('  └── ') + colors.magenta('ACE modes directory already exists. Task aborted.'))
       return true
     }).catch(err => {
