@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.0-beta.10] - 2017-04-08
+### Added
+- Installation: Wiki.js can now install via local tarball
+- Installation: RAM check during install to prevent crashing due to low memory
+
+### Changed
+- Updated dependencies + snyk policy
+
+### Fixed
+- UI: Code blocks longer than page width are now displayed with scrollbars
+- Configuration Wizard: Git version check no longer fails if between 2.7.4 and 2.11.0
+- Init: Admin account is no longer attempted to be created during init
+
 ## [v1.0.0-beta.9] - 2017-04-05
 ### Added
 - Interactive setup

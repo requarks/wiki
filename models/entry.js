@@ -21,6 +21,10 @@ var entrySchema = Mongoose.Schema({
   parent: {
     type: String,
     default: ''
+  },
+  parentPath: {
+    type: String,
+    default: ''
   }
 
 },

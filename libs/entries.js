@@ -305,7 +305,8 @@ module.exports = {
         _id: content.entryPath,
         title: content.meta.title || content.entryPath,
         subtitle: content.meta.subtitle || '',
-        parent: content.parent.title || ''
+        parent: content.parent.title || '',
+        parentPath: content.parent.path || ''
       }, {
         new: true,
         upsert: true
