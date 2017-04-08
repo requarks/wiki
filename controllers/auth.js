@@ -66,7 +66,7 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
       req.brute.reset(function () {
         return res.redirect('/')
       })
-    })
+    }) || true
   }).catch(err => {
     // LOGIN FAIL
     if (err.message === 'INVALID_LOGIN') {

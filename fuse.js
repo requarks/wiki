@@ -70,15 +70,24 @@ console.info(colors.white('└── ') + colors.green('Running global tasks...'
 
 let globalTasks = Promise.mapSeries([
   () => {
-    console.info(colors.white('  └── ') + colors.green('Copy + Minify ACE modes to assets...'))
-    return fs.ensureDirAsync('./assets/js/ace').then(() => {
-      return fs.readdirAsync('./node_modules/brace/mode').then(modeList => {
-        return Promise.map(modeList, mdFile => {
-          console.info(colors.white('      mode-' + mdFile))
-          let result = uglify.minify(path.join('./node_modules/brace/mode', mdFile), { output: { 'max_line_len': 1000000 } })
-          return fs.writeFileAsync(path.join('./assets/js/ace', 'mode-' + mdFile), result.code)
+    fs.accessAsync('./assets/js/ace').then(() => {
+      console.info(colors.white('  └── ') + colors.magenta('ACE modes directory already exists. Task aborted.'))
+      return true
+    }).catch(err => {
+      if (err.code === 'ENOENT') {
+        console.info(colors.white('  └── ') + colors.green('Copy + Minify ACE modes to assets...'))
+        return fs.ensureDirAsync('./assets/js/ace').then(() => {
+          return fs.readdirAsync('./node_modules/brace/mode').then(modeList => {
+            return Promise.map(modeList, mdFile => {
+              console.info(colors.white('      mode-' + mdFile))
+              let result = uglify.minify(path.join('./node_modules/brace/mode', mdFile), { output: { 'max_line_len': 1000000 } })
+              return fs.writeFileAsync(path.join('./assets/js/ace', 'mode-' + mdFile), result.code)
+            })
+          })
         })
-      })
+      } else {
+        throw err
+      }
     })
   }
 ], f => { return f() })

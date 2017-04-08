@@ -1,7 +1,20 @@
+.has-mkcontent {
+  width:100%;
+  overflow:hidden;
+
+  .columns, .column {
+    width: 100%;
+    overflow: hidden;
+  }
+
+}
+
 .mkcontent {
 	font-size: 14px;
 	color: mc('grey', '700');
 	padding: 0 0 20px 0;
+  width: 100%;
+  overflow: hidden;
 
 	h1, h2, h3 {
 		font-weight: 400;
@@ -243,6 +256,7 @@
 		padding: 20px 20px 20px 13px;
 		font-family: $core-font-monospace;
 		white-space: pre;
+    overflow-x: scroll;
 
 		> code {
 			border-radius: 5px;
