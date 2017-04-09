@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+### Added
+- Configuration Wizard: Added Public Access option
+
+### Fixed
+- UI: Scrollbar is no longer always shown in code blocks
+
 ## [v1.0.0-beta.10] - 2017-04-08
 ### Added
 - Installation: Wiki.js can now install via local tarball

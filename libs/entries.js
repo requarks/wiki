@@ -405,5 +405,15 @@ module.exports = {
     return fs.readFileAsync(path.join(ROOTPATH, 'client/content/create.md'), 'utf8').then((contents) => {
       return _.replace(contents, new RegExp('{TITLE}', 'g'), formattedTitle)
     })
+  },
+
+  /**
+   * Get all entries from base path
+   *
+   * @param {String} basePath Path to list from
+   * @return {Promise<Array>} List of entries
+   */
+  getFromTree (basePath) {
+    return Promise.resolve([])
   }
 }

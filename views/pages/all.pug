@@ -1,0 +1,67 @@
+extends ../layout.pug
+
+block rootNavRight
+  i.nav-item#notifload
+
+block content
+
+  #page-type-all
+    .container.is-fluid.has-collapsable-nav
+      .columns.is-gapless
+
+        .column.is-narrow.is-hidden-touch.sidebar.is-collapsed
+
+          aside
+            .sidebar-label
+              span NAV
+            ul.sidebar-menu
+              li
+                a(href='/')
+                  i.icon-home
+                  span Home
+              if !isGuest
+                li
+                  a(href='/admin')
+                    i.icon-head
+                    span Account
+              else
+                li
+                  a(href='/login')
+                    i.icon-unlock
+                    span Login
+
+        .column.is-narrow
+          ul.collapsable-nav.has-children
+            li: a
+              i.icon-file
+              span Page 1
+            li: a
+              i.icon-file
+              span Page 2
+            li: a
+              i.icon-file
+              span Page 3
+            li.is-active: a
+              i.icon-folder2
+              span Page 4
+            li: a
+              i.icon-file
+              span Page 5
+        .column.is-narrow
+          ul.collapsable-nav-sub
+            li: a
+              i.icon-file
+              span Page 1
+            li: a
+              i.icon-file
+              span Page 2
+            li: a
+              i.icon-file
+              span Page 3
+            li: a
+              i.icon-file
+              span Page 4
+            li: a
+              i.icon-file
+              span Page 5
+

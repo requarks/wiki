@@ -83,4 +83,37 @@
 
 	}
 
+  &.is-collapsed {
+    width: 50px;
+
+    aside {
+      .sidebar-label {
+        margin-right: 1px;
+      }
+
+      .sidebar-menu li a {
+        padding: 10px 0;
+        justify-content: center;
+
+        i {
+          margin: 0;
+          font-size: 20px;
+          transition: color .6s ease;
+        }
+
+        span {
+          display: none;
+        }
+
+        &:hover {
+          i {
+            color: #FFF;
+          }
+        }
+      }
+
+    }
+
+  }
+
 }
