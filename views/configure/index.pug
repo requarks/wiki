@@ -104,6 +104,11 @@ html(data-logic='configure')
                         each lg in langs
                           option(value=lg.id)= lg.name
                       span.desc The language in which navigation, help and other UI elements will be displayed.
+                  section
+                    p.control.is-fullwidth
+                      input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='general', name='ipt-public')
+                      label.label(for='ipt-public') Public Access
+                      span.desc Should the site be accessible (read only) without login.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back

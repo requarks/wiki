@@ -49,6 +49,7 @@ jQuery(document).ready(function ($) {
         host: appconfig.host || 'http://',
         port: appconfig.port || 80,
         lang: appconfig.lang || 'en',
+        public: (appconfig.public === true),
         db: appconfig.db || 'mongodb://localhost:27017/wiki',
         pathData: './data',
         pathRepo: './repo',
