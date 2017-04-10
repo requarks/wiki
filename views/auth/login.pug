@@ -47,6 +47,10 @@ html(data-logic='login')
             button.ms(onclick='window.location.assign("/login/ms")')
               i.icon-windows2
               span Microsoft Account
+          if appconfig.auth.azure && appconfig.auth.azure.enabled
+            button.ms(onclick='window.location.assign("/login/azure")')
+              i.icon-windows2
+              span Azure AD
           if appconfig.auth.google && appconfig.auth.google.enabled
             button.google(onclick='window.location.assign("/login/google")')
               i.icon-google

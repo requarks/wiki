@@ -2,13 +2,6 @@
 
 /* global appconfig, appdata, db, winston */
 
-const LocalStrategy = require('passport-local').Strategy
-const GoogleStrategy = require('passport-google-oauth20').Strategy
-const WindowsLiveStrategy = require('passport-windowslive').Strategy
-const FacebookStrategy = require('passport-facebook').Strategy
-const GitHubStrategy = require('passport-github2').Strategy
-const SlackStrategy = require('passport-slack').Strategy
-const LdapStrategy = require('passport-ldapauth').Strategy
 const fs = require('fs')
 
 module.exports = function (passport) {
@@ -34,6 +27,7 @@ module.exports = function (passport) {
   // Local Account
 
   if (!appdata.capabilities.manyAuthProviders || (appconfig.auth.local && appconfig.auth.local.enabled)) {
+    const LocalStrategy = require('passport-local').Strategy
     passport.use('local',
       new LocalStrategy({
         usernameField: 'email',
@@ -60,6 +54,7 @@ module.exports = function (passport) {
   // Google ID
 
   if (appdata.capabilities.manyAuthProviders && appconfig.auth.google && appconfig.auth.google.enabled) {
+    const GoogleStrategy = require('passport-google-oauth20').Strategy
     passport.use('google',
       new GoogleStrategy({
         clientID: appconfig.auth.google.clientId,
@@ -79,6 +74,7 @@ module.exports = function (passport) {
   // Microsoft Accounts
 
   if (appdata.capabilities.manyAuthProviders && appconfig.auth.microsoft && appconfig.auth.microsoft.enabled) {
+    const WindowsLiveStrategy = require('passport-windowslive').Strategy
     passport.use('windowslive',
       new WindowsLiveStrategy({
         clientID: appconfig.auth.microsoft.clientId,
@@ -98,6 +94,7 @@ module.exports = function (passport) {
   // Facebook
 
   if (appdata.capabilities.manyAuthProviders && appconfig.auth.facebook && appconfig.auth.facebook.enabled) {
+    const FacebookStrategy = require('passport-facebook').Strategy
     passport.use('facebook',
       new FacebookStrategy({
         clientID: appconfig.auth.facebook.clientId,
@@ -118,6 +115,7 @@ module.exports = function (passport) {
   // GitHub
 
   if (appdata.capabilities.manyAuthProviders && appconfig.auth.github && appconfig.auth.github.enabled) {
+    const GitHubStrategy = require('passport-github2').Strategy
     passport.use('github',
       new GitHubStrategy({
         clientID: appconfig.auth.github.clientId,
@@ -138,6 +136,7 @@ module.exports = function (passport) {
   // Slack
 
   if (appdata.capabilities.manyAuthProviders && appconfig.auth.slack && appconfig.auth.slack.enabled) {
+    const SlackStrategy = require('passport-slack').Strategy
     passport.use('slack',
       new SlackStrategy({
         clientID: appconfig.auth.slack.clientId,
@@ -157,6 +156,7 @@ module.exports = function (passport) {
   // LDAP
 
   if (appdata.capabilities.manyAuthProviders && appconfig.auth.ldap && appconfig.auth.ldap.enabled) {
+    const LdapStrategy = require('passport-ldapauth').Strategy
     passport.use('ldapauth',
       new LdapStrategy({
         server: {
@@ -179,6 +179,32 @@ module.exports = function (passport) {
         profile.provider = 'ldap'
         profile.id = profile.dn
         db.User.processProfile(profile).then((user) => {
+          return cb(null, user) || true
+        }).catch((err) => {
+          return cb(err, null) || true
+        })
+      }
+    ))
+  }
+
+  // AZURE AD
+
+  if (appdata.capabilities.manyAuthProviders && appconfig.auth.azure && appconfig.auth.azure.enabled) {
+    const AzureAdOAuth2Strategy = require('passport-azure-ad-oauth2').Strategy
+    const jwt = require('jsonwebtoken')
+    passport.use('azure_ad_oauth2',
+      new AzureAdOAuth2Strategy({
+        clientID: appconfig.auth.azure.clientId,
+        clientSecret: appconfig.auth.azure.clientSecret,
+        callbackURL: appconfig.host + '/login/azure/callback',
+        resource: appconfig.auth.azure.resource,
+        tenant: appconfig.auth.azure.tenant
+      },
+      (accessToken, refreshToken, params, profile, cb) => {
+        let waadProfile = jwt.decode(params.id_token)
+        waadProfile.id = waadProfile.oid
+        waadProfile.provider = 'azure'
+        db.User.processProfile(waadProfile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

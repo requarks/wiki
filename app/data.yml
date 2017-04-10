@@ -21,6 +21,7 @@ defaults:
     lang: en
     public: false
     auth:
+      defaultReadAccess: false
       local:
         enabled: true
       microsoft:
@@ -34,6 +35,8 @@ defaults:
       slack:
         enabled: false
       ldap:
+        enabled: false
+      azure:
         enabled: false
     db: mongodb://localhost/wiki
     sessionSecret: null
@@ -55,6 +58,7 @@ defaults:
       loggly: false
       papertrail: false
       rollbar: false
+      sentry: false
 langs:
   -
     id: en

@@ -54,6 +54,7 @@ lang: en
 public: false
 
 auth:
+  defaultReadAccess: false
   local:
     enabled: true
   google:
@@ -85,6 +86,12 @@ auth:
     searchFilter: (uid={{username}})
     tlsEnabled: false
     tlsCertPath: C:\example\root_ca_cert.crt
+  azure:
+    enabled: false
+    clientID: APP_ID
+    clientSecret: APP_SECRET_KEY,
+    resource: '00000002-0000-0000-c000-000000000000',
+    tenant: 'YOUR_TENANT.onmicrosoft.com'
 
 # ---------------------------------------------------------------------
 # Secret key to use when encrypting sessions

@@ -72,9 +72,8 @@ userSchema.statics.processProfile = (profile) => {
   }, {
     new: true
   }).then((user) => {
-    // LDAP - Handle unregistered accounts
-    // Todo: Allow this behavior for any provider...
-    if (!user && profile.provider === 'ldap') {
+    // Handle unregistered accounts
+    if (!user && profile.provider !== 'local' && (appconfig.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
       let nUsr = {
         email: primaryEmail,
         provider: profile.provider,
