@@ -5,9 +5,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 ### Added
 - Configuration Wizard: Added Public Access option
+- Auth: Azure AD authentication provider is now available
+- Auth: Can now specify Read Access by default for all providers (except Local)
+- Navigation: All Pages section
+
+### Changed
+- Auth: Provider Strategies are now only loaded if enabled
 
 ### Fixed
 - UI: Scrollbar is no longer always shown in code blocks
+- Init: Malformed config file is now being reported correctly
 
 ## [v1.0.0-beta.10] - 2017-04-08
 ### Added
