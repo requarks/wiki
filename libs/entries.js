@@ -5,6 +5,7 @@ const path = require('path')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const _ = require('lodash')
 const crypto = require('crypto')
+const qs = require('querystring')
 
 /**
  * Entries Model
@@ -163,7 +164,8 @@ module.exports = {
    * @return     {String}  Safe entry path
    */
   parsePath (urlPath) {
-    let wlist = new RegExp('[^a-z0-9/-]', 'g')
+    urlPath = qs.unescape(urlPath)
+    let wlist = new RegExp('(?!([^a-z0-9]|' + appdata.regex.cjk.source + '|[/-]))', 'g')
 
     urlPath = _.toLower(urlPath).replace(wlist, '')
 

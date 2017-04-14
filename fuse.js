@@ -59,6 +59,10 @@ const SHIMS = {
   jquery: {
     source: 'node_modules/jquery/dist/jquery.js',
     exports: '$'
+  },
+  mathjax: {
+    source: 'node_modules/mathjax/MathJax.js',
+    exports: 'MathJax'
   }
 }
 
@@ -69,6 +73,9 @@ const SHIMS = {
 console.info(colors.white('└── ') + colors.green('Running global tasks...'))
 
 let globalTasks = Promise.mapSeries([
+  /**
+   * ACE Modes
+   */
   () => {
     return fs.accessAsync('./assets/js/ace').then(() => {
       console.info(colors.white('  └── ') + colors.magenta('ACE modes directory already exists. Task aborted.'))
@@ -84,6 +91,54 @@ let globalTasks = Promise.mapSeries([
               return fs.writeFileAsync(path.join('./assets/js/ace', 'mode-' + mdFile), result.code)
             })
           })
+        })
+      } else {
+        throw err
+      }
+    })
+  },
+  /**
+   * MathJax
+   */
+  () => {
+    return fs.accessAsync('./assets/js/mathjax').then(() => {
+      console.info(colors.white('  └── ') + colors.magenta('MathJax directory already exists. Task aborted.'))
+      return true
+    }).catch(err => {
+      if (err.code === 'ENOENT') {
+        console.info(colors.white('  └── ') + colors.green('Copy MathJax dependencies to assets...'))
+        return fs.ensureDirAsync('./assets/js/mathjax').then(() => {
+          return fs.copyAsync('./node_modules/mathjax', './assets/js/mathjax', { filter: (src, dest) => {
+            let srcNormalized = src.replace(/\\/g, '/')
+            let shouldCopy = false
+            console.log(srcNormalized)
+            _.forEach([
+              '/node_modules/mathjax',
+              '/node_modules/mathjax/jax',
+              '/node_modules/mathjax/jax/input',
+              '/node_modules/mathjax/jax/output'
+            ], chk => {
+              if (srcNormalized.endsWith(chk)) {
+                shouldCopy = true
+              }
+            })
+            _.forEach([
+              '/node_modules/mathjax/extensions',
+              '/node_modules/mathjax/MathJax.js',
+              '/node_modules/mathjax/jax/element',
+              '/node_modules/mathjax/jax/input/MathML',
+              '/node_modules/mathjax/jax/input/TeX',
+              '/node_modules/mathjax/jax/output/SVG'
+            ], chk => {
+              if (srcNormalized.indexOf(chk) > 0) {
+                shouldCopy = true
+              }
+            })
+            if (shouldCopy && srcNormalized.indexOf('/fonts/') > 0 && srcNormalized.indexOf('/STIX-Web') <= 1) {
+              shouldCopy = false
+            }
+            return shouldCopy
+          }})
         })
       } else {
         throw err

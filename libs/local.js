@@ -152,7 +152,7 @@ module.exports = {
    */
   validateUploadsFilename (f, fld, isImage) {
     let fObj = path.parse(f)
-    let fname = _.chain(fObj.name).trim().toLower().kebabCase().value().replace(/[^a-z0-9-]+/g, '')
+    let fname = _.chain(fObj.name).trim().toLower().kebabCase().value().replace(new RegExp('(?!([^a-z0-9-]|' + appdata.regex.cjk.source + '))', 'g'), '')
     let fext = _.toLower(fObj.ext)
 
     if (isImage && !_.includes(['.jpg', '.jpeg', '.png', '.gif', '.webp'], fext)) {

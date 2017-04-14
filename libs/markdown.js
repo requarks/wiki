@@ -51,6 +51,11 @@ var mkdown = md({
   })
   .use(mdAttrs)
 
+if (appconfig) {
+  const mdMathjax = require('markdown-it-mathjax')
+  mkdown.use(mdMathjax())
+}
+
 // Rendering rules
 
 mkdown.renderer.rules.emoji = function (token, idx) {

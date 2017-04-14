@@ -13,7 +13,8 @@ const _ = require('lodash')
 module.exports = (confPaths) => {
   confPaths = _.defaults(confPaths, {
     config: './config.yml',
-    data: './app/data.yml'
+    data: './app/data.yml',
+    dataRegex: '../app/regex.js'
   })
 
   let appconfig = {}
@@ -22,6 +23,7 @@ module.exports = (confPaths) => {
   try {
     appconfig = yaml.safeLoad(fs.readFileSync(confPaths.config, 'utf8'))
     appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
+    appdata.regex = require(confPaths.dataRegex)
   } catch (ex) {
     console.error(ex)
     process.exit(1)

@@ -10,7 +10,7 @@ const fs = Promise.promisifyAll(require('fs-extra'))
 const path = require('path')
 const _ = require('lodash')
 
-const validPathRe = new RegExp('^([a-z0-9\\/-]+\\.[a-z0-9]+)$')
+const validPathRe = new RegExp('^(([a-z0-9/-]|' + appdata.regex.cjk.source + ')+\\.[a-z0-9]+)$')
 const validPathThumbsRe = new RegExp('^([a-z0-9]+\\.png)$')
 
 // ==========================================

@@ -53,6 +53,8 @@ defaults:
       signature:
         name: Wiki
         email: wiki@example.com
+    features:
+      mathjax: true
     externalLogging:
       bugsnap: false
       loggly: false

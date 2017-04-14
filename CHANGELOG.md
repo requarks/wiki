@@ -4,57 +4,60 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 ### Added
-- Configuration Wizard: Added Public Access option
-- Auth: Azure AD authentication provider is now available
-- Auth: Can now specify Read Access by default for all providers (except Local)
-- Navigation: All Pages section
+- **Auth**: Azure AD authentication provider is now available
+- **Auth**: Can now specify Read Access by default for all providers (except Local)
+- **View**: MathML and TeX math equations support
+- **Configuration Wizard**: Added Public Access option
+- **Navigation**: All Pages section
 
 ### Changed
-- Auth: Provider Strategies are now only loaded if enabled
+- **Auth**: Provider Strategies are now only loaded if enabled
 
 ### Fixed
-- UI: Scrollbar is no longer always shown in code blocks
-- Init: Malformed config file is now being reported correctly
+- **Configuration Wizard**: Git version detection no longer fails on MacOS
+- **Init**: Malformed config file is now being reported correctly
+- **UI**: Scrollbar is no longer always shown in code blocks
+- **Misc**: CJK (Chinese, Japanese & Korean) characters are now fully supported for pages, content and uploads
 
 ## [v1.0.0-beta.10] - 2017-04-08
 ### Added
-- Installation: Wiki.js can now install via local tarball
-- Installation: RAM check during install to prevent crashing due to low memory
+- **Installation**: Wiki.js can now install via local tarball
+- **Installation**: RAM check during install to prevent crashing due to low memory
 
 ### Changed
 - Updated dependencies + snyk policy
 
 ### Fixed
-- UI: Code blocks longer than page width are now displayed with scrollbars
-- Configuration Wizard: Git version check no longer fails if between 2.7.4 and 2.11.0
-- Init: Admin account is no longer attempted to be created during init
+- **UI**: Code blocks longer than page width are now displayed with scrollbars
+- **Configuration Wizard**: Git version check no longer fails if between 2.7.4 and 2.11.0
+- **Init**: Admin account is no longer attempted to be created during init
 
 ## [v1.0.0-beta.9] - 2017-04-05
 ### Added
 - Interactive setup
-- Auth: GitHub and Slack authentication providers are now available
-- Auth: LDAP authentication provider is now available
-- Logs: Support for the logging services: Bugsnag, Loggly, Papertrail, Rollbar and Sentry
-- Config: Can now use ENV variable to specify DB connection string ($VARNAME as db value in config.yml)
+- **Auth**: GitHub and Slack authentication providers are now available
+- **Auth**: LDAP authentication provider is now available
+- **Logs**: Support for the logging services: Bugsnag, Loggly, Papertrail, Rollbar and Sentry
+- **Config**: Can now use ENV variable to specify DB connection string ($VARNAME as db value in config.yml)
 
 ### Changed
-- Native Compilation Removal: Replaced farmhash with md5
-- Native Compilation Removal: Replaced leveldown with memdown
-- Native Compilation Removal: Replaced sharp with jimp
-- Sidebar: Contents is now Page Contents
-- Sidebar: Start is now Top of Page
-- UI: Content headers are now showing an anchor icon instead of a #
-- Dev: Replaced Gulp with Fuse-box
+- **Native Compilation Removal**: Replaced farmhash with md5
+- **Native Compilation Removal**: Replaced leveldown with memdown
+- **Native Compilation Removal**: Replaced sharp with jimp
+- **Sidebar**: Contents is now Page Contents
+- **Sidebar**: Start is now Top of Page
+- **UI**: Content headers are now showing an anchor icon instead of a #
+- **Dev**: Replaced Gulp with Fuse-box
 
 ### Fixed
-- Auth: Authentication would fail if email has uppercase chars and provider callback is in lowercase
-- Markdown: Fixed potential crash on markdown processing of video links
-- Search: Search index should now update upon article creation
-- Search: Search results are no longer duplicated upon article update
-- UI: Missing icons on login page
-- UI: Image alignement center and right should now behave correctly
-- Uploads: Error notification when upload is too large for server
-- Uploads: Fix uploads and temp-uploads folder permissions on unix-based systems
+- **Auth**: Authentication would fail if email has uppercase chars and provider callback is in lowercase
+- **Markdown**: Fixed potential crash on markdown processing of video links
+- **Search**: Search index should now update upon article creation
+- **Search**: Search results are no longer duplicated upon article update
+- **UI**: Missing icons on login page
+- **UI**: Image alignement center and right should now behave correctly
+- **Uploads**: Error notification when upload is too large for server
+- **Uploads**: Fix uploads and temp-uploads folder permissions on unix-based systems
 
 ## [v1.0.0-beta.8] - 2017-02-19
 ### Added
