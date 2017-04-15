@@ -56,6 +56,10 @@ const ALIASES = {
   'vue': 'vue/dist/vue.min.js'
 }
 const SHIMS = {
+  _preinit: {
+    source: '.build/_preinit.js',
+    exports: '_preinit'
+  },
   jquery: {
     source: 'node_modules/jquery/dist/jquery.js',
     exports: '$'
@@ -72,6 +76,7 @@ const SHIMS = {
 
 console.info(colors.white('└── ') + colors.green('Running global tasks...'))
 
+let preInitContent = ''
 let globalTasks = Promise.mapSeries([
   /**
    * ACE Modes
@@ -143,6 +148,20 @@ let globalTasks = Promise.mapSeries([
       } else {
         throw err
       }
+    })
+  },
+  /**
+   * Bundle pre-init scripts
+   */
+  () => {
+    console.info(colors.white('  └── ') + colors.green('Bundling pre-init scripts...'))
+    return fs.readdirAsync('./client/js/pre-init').map(f => {
+      let fPath = path.join('./client/js/pre-init/', f)
+      return fs.readFileAsync(fPath, 'utf8').then(fContent => {
+        preInitContent += fContent + ';\n'
+      })
+    }).then(() => {
+      return fs.outputFileAsync('./.build/_preinit.js', preInitContent, 'utf8')
     })
   }
 ], f => { return f() })
@@ -251,6 +270,7 @@ globalTasks.then(() => {
         shim: SHIMS,
         plugins: [
           fsbx.EnvPlugin({ NODE_ENV: 'production' }),
+          fsbx.BannerPlugin(preInitContent),
           [ fsbx.SassPlugin({ outputStyle: 'compressed', includePaths: ['./node_modules/requarks-core'] }), fsbx.CSSPlugin() ],
           fsbx.BabelPlugin({
             config: {

@@ -25,6 +25,7 @@ newrelic.js
 
 # Fusebox
 .fusebox
+.build
 
 # Config Files
 config.yml

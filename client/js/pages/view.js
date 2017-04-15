@@ -19,8 +19,14 @@ module.exports = (alerts) => {
         scale: 120,
         font: 'STIX-Web'
       },
-      showMathMenu: false
+      tex2jax: {
+        preview: 'none'
+      },
+      showMathMenu: false,
+      showProcessingMessages: false,
+      messageStyle: 'none'
     })
+    MathJax.Hub.Configured()
 
     require('../modals/create.js')(currentBasePath)
     require('../modals/move.js')(currentBasePath, alerts)
