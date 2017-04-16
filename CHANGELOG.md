@@ -16,8 +16,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - **Configuration Wizard**: Git version detection no longer fails on MacOS
 - **Init**: Malformed config file is now being reported correctly
-- **UI**: Scrollbar is no longer always shown in code blocks
+- **Init**: Git remote is now always updated to current settings
 - **Misc**: CJK (Chinese, Japanese & Korean) characters are now fully supported for pages, content and uploads
+- **UI**: Scrollbar is no longer always shown in code blocks
+- **Search**: Search is now working for guest users when public mode is enabled
 
 ## [v1.0.0-beta.10] - 2017-04-08
 ### Added
