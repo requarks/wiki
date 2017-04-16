@@ -115,15 +115,15 @@ module.exports = {
 
       return self._git.exec('remote', 'show').then((cProc) => {
         let out = cProc.stdout.toString()
-        if (_.includes(out, 'origin')) {
-          return true
-        } else {
-          return Promise.each(gitConfigs, fn => { return fn() }).then(() => {
+        return Promise.each(gitConfigs, fn => { return fn() }).then(() => {
+          if (!_.includes(out, 'origin')) {
             return self._git.exec('remote', ['add', 'origin', self._url])
-          }).catch(err => {
-            winston.error(err)
-          })
-        }
+          } else {
+            return self._git.exec('remote', ['set-url', 'origin', self._url])
+          }
+        }).catch(err => {
+          winston.error(err)
+        })
       })
     }).catch((err) => {
       winston.error('[' + PROCNAME + '.Git] Git remote error!')
