@@ -19,6 +19,19 @@ module.exports = (socket) => {
   }
 
   // -----------------------------------------
+  // TREE VIEW (LIST ALL PAGES)
+  // -----------------------------------------
+
+  if (socket.request.user.logged_in) {
+    socket.on('treeFetch', (data, cb) => {
+      cb = cb || _.noop
+      entries.getFromTree(data.basePath).then((f) => {
+        return cb(f) || true
+      })
+    })
+  }
+
+  // -----------------------------------------
   // UPLOADS
   // -----------------------------------------
 

@@ -135,18 +135,10 @@ router.put('/create/*', (req, res, next) => {
 // ==========================================
 
 /**
- * View list view of all pages
+ * View tree view of all pages
  */
 router.get('/all', (req, res, next) => {
-  entries.getFromTree('/').then((pageData) => {
-    res.render('pages/all', { pageData })
-    return true
-  }).catch((err) => {
-    res.render('error', {
-      message: err.message,
-      error: {}
-    })
-  })
+  res.render('pages/all')
 })
 
 // ==========================================

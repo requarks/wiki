@@ -6,7 +6,6 @@
  * @type       {<Mongoose.Schema>}
  */
 var entrySchema = Mongoose.Schema({
-
   _id: String,
 
   title: {
@@ -18,18 +17,20 @@ var entrySchema = Mongoose.Schema({
     type: String,
     default: ''
   },
-  parent: {
+  parentTitle: {
     type: String,
     default: ''
   },
   parentPath: {
     type: String,
     default: ''
+  },
+  isDirectory: {
+    type: Boolean,
+    default: false
   }
-
-},
-  {
-    timestamps: {}
-  })
+}, {
+  timestamps: {}
+})
 
 module.exports = Mongoose.model('Entry', entrySchema)

@@ -30,6 +30,12 @@ const args = require('yargs')
     describe: 'Start in Configure Developer mode',
     type: 'boolean'
   })
+  .option('i', {
+    alias: 'inspect',
+    describe: 'Enable Inspector for debugging',
+    type: 'boolean',
+    implies: 'd'
+  })
   .help('h')
   .alias('h', 'help')
   .argv
@@ -204,8 +210,7 @@ globalTasks.then(() => {
 
       _.delay(() => {
         nodemon({
-          script: './server.js',
-          args: [],
+          exec: (args.i) ? 'node --inspect server' : 'node server',
           ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
           ext: 'js json',
           watch: [

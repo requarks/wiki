@@ -21,27 +21,32 @@ cmdr.version(packageObj.version)
 cmdr.command('start')
   .description('Start Wiki.js process')
   .action(() => {
-    let spinner = ora('Initializing...').start()
-    fs.emptyDirAsync(path.join(__dirname, './logs')).then(() => {
-      return pm2.connectAsync().then(() => {
-        return pm2.startAsync({
-          name: 'wiki',
-          script: 'server.js',
-          cwd: __dirname,
-          output: path.join(__dirname, './logs/wiki-output.log'),
-          error: path.join(__dirname, './logs/wiki-error.log'),
-          minUptime: 5000,
-          maxRestarts: 5
-        }).then(() => {
-          spinner.succeed('Wiki.js has started successfully.')
-        }).finally(() => {
-          pm2.disconnect()
+    if (process.env.HEROKU) {
+      console.info('Initializing Wiki.js for Heroku...')
+      // todo
+    } else {
+      let spinner = ora('Initializing...').start()
+      fs.emptyDirAsync(path.join(__dirname, './logs')).then(() => {
+        return pm2.connectAsync().then(() => {
+          return pm2.startAsync({
+            name: 'wiki',
+            script: 'server.js',
+            cwd: __dirname,
+            output: path.join(__dirname, './logs/wiki-output.log'),
+            error: path.join(__dirname, './logs/wiki-error.log'),
+            minUptime: 5000,
+            maxRestarts: 5
+          }).then(() => {
+            spinner.succeed('Wiki.js has started successfully.')
+          }).finally(() => {
+            pm2.disconnect()
+          })
         })
+      }).catch(err => {
+        spinner.fail(err)
+        process.exit(1)
       })
-    }).catch(err => {
-      spinner.fail(err)
-      process.exit(1)
-    })
+    }
   })
 
 cmdr.command('stop')

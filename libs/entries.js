@@ -272,7 +272,7 @@ module.exports = {
   },
 
   /**
-   * Update local cache and search index
+   * Update local cache
    *
    * @param      {String}   entryPath  The entry path
    * @return     {Promise}  Promise of the operation
@@ -301,13 +301,14 @@ module.exports = {
       winston.error(err)
       return err
     }).then((content) => {
+      // let entryPaths = _.split(content.entryPath, '/')
       return db.Entry.findOneAndUpdate({
         _id: content.entryPath
       }, {
         _id: content.entryPath,
         title: content.meta.title || content.entryPath,
         subtitle: content.meta.subtitle || '',
-        parent: content.parent.title || '',
+        parentTitle: content.parent.title || '',
         parentPath: content.parent.path || ''
       }, {
         new: true,
@@ -416,6 +417,6 @@ module.exports = {
    * @return {Promise<Array>} List of entries
    */
   getFromTree (basePath) {
-    return Promise.resolve([])
+    return db.Entry.find({ parentPath: basePath })
   }
 }
