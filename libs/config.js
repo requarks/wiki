@@ -33,6 +33,16 @@ module.exports = (confPaths) => {
 
   appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
 
+  // Using ENV variables?
+
+  if (appconfig.port < 1) {
+    appconfig.port = process.env.PORT || 80
+  }
+
+  if (_.startsWith(appconfig.db, '$')) {
+    appconfig.db = process.env[appconfig.db.slice(1)]
+  }
+
   // List authentication strategies
 
   if (appdata.capabilities.manyAuthProviders) {

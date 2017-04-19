@@ -95,8 +95,8 @@ html(data-logic='configure')
                   section
                     p.control
                       label.label Port
-                      input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true, numeric: true, min_value: 1, max_value: 65535 }')
-                      span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.
+                      input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true, numeric: true, min_value: 0, max_value: 65535 }')
+                      span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>0</strong> to use $PORT system environment variable.
                   section
                     p.control
                       label.label Site UI Language

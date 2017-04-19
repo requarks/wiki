@@ -54,12 +54,6 @@ module.exports = {
       self[modelName] = require(path.join(dbModelsPath, file))
     })
 
-    // Using ENV variable?
-
-    if (_.startsWith(appconfig.db, '$')) {
-      appconfig.db = process.env[appconfig.db.slice(1)]
-    }
-
     // Connect
 
     self.onReady = modb.connect(appconfig.db)
