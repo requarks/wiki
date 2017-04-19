@@ -28,8 +28,8 @@
 ### Documentation
 
 - [Installation Guide](https://wiki.requarks.io/get-started.html)
-- [Admin Guide](https://docs.wiki.requarks.io/#admin-guide)
-- [User Guide](https://docs.wiki.requarks.io/#user-guide)
+- [Admin Guide](https://docs.requarks.io/wiki/#admin-guide)
+- [User Guide](https://docs.requarks.io/wiki/#user-guide)
 
 ### Requirements
 
