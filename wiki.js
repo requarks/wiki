@@ -7,74 +7,46 @@
 // Licensed under AGPLv3
 // ===========================================
 
-const Promise = require('bluebird')
-const fs = Promise.promisifyAll(require('fs-extra'))
-const ora = require('ora')
-const pm2 = Promise.promisifyAll(require('pm2'))
-const cmdr = require('commander')
-const path = require('path')
+const init = require('./init')
 
-const packageObj = fs.readJsonSync('package.json')
-
-cmdr.version(packageObj.version)
-
-cmdr.command('start')
-  .description('Start Wiki.js process')
-  .action(() => {
-    if (process.env.HEROKU) {
-      console.info('Initializing Wiki.js for Heroku...')
-      // todo
-    } else {
-      let spinner = ora('Initializing...').start()
-      fs.emptyDirAsync(path.join(__dirname, './logs')).then(() => {
-        return pm2.connectAsync().then(() => {
-          return pm2.startAsync({
-            name: 'wiki',
-            script: 'server.js',
-            cwd: __dirname,
-            output: path.join(__dirname, './logs/wiki-output.log'),
-            error: path.join(__dirname, './logs/wiki-error.log'),
-            minUptime: 5000,
-            maxRestarts: 5
-          }).then(() => {
-            spinner.succeed('Wiki.js has started successfully.')
-          }).finally(() => {
-            pm2.disconnect()
-          })
-        })
-      }).catch(err => {
-        spinner.fail(err)
-        process.exit(1)
-      })
+require('yargs') // eslint-disable-line no-unused-expressions
+  .usage('Usage: node $0 <cmd> [args]')
+  .command({
+    command: 'start',
+    alias: ['boot', 'init'],
+    desc: 'Start Wiki.js process',
+    handler: argv => {
+      init.startDetect()
     }
   })
-
-cmdr.command('stop')
-  .description('Stop Wiki.js process')
-  .action(() => {
-    let spinner = ora('Shutting down Wiki.js...').start()
-    pm2.connectAsync().then(() => {
-      return pm2.stopAsync('wiki').then(() => {
-        spinner.succeed('Wiki.js has stopped successfully.')
-      }).finally(() => {
-        pm2.disconnect()
-      })
-    }).catch(err => {
-      spinner.fail(err)
-      process.exit(1)
-    })
+  .command({
+    command: 'stop',
+    alias: ['quit', 'exit'],
+    desc: 'Stop Wiki.js process',
+    handler: argv => {
+      init.stop()
+    }
   })
-
-cmdr.command('configure [port]')
-  .description('Configure Wiki.js')
-  .action((port) => {
-    port = port || 3000
-    let spinner = ora('Initializing interactive setup...').start()
-    require('./configure')(port, spinner)
+  .command({
+    command: 'restart',
+    alias: ['reload'],
+    desc: 'Restart Wiki.js process',
+    handler: argv => {
+      init.restart()
+    }
   })
-
-cmdr.parse(process.argv)
-
-if (!process.argv.slice(2).length) {
-  cmdr.help()
-}
+  .command({
+    command: 'configure [port]',
+    alias: ['config', 'conf', 'cfg', 'setup'],
+    desc: 'Configure Wiki.js using the web-based setup wizard',
+    builder: (yargs) => yargs.default('port', 3000),
+    handler: argv => {
+      init.configure(argv.port)
+    }
+  })
+  .recommendCommands()
+  .demandCommand(1, 'You must provide one of the accepted commands above.')
+  .help()
+  .version()
+  .epilogue('Read the docs at https://wiki.requarks.io')
+  .argv

@@ -82,7 +82,6 @@ const SHIMS = {
 
 console.info(colors.white('└── ') + colors.green('Running global tasks...'))
 
-let preInitContent = ''
 let globalTasks = Promise.mapSeries([
   /**
    * ACE Modes
@@ -161,6 +160,7 @@ let globalTasks = Promise.mapSeries([
    */
   () => {
     console.info(colors.white('  └── ') + colors.green('Bundling pre-init scripts...'))
+    let preInitContent = ''
     return fs.readdirAsync('./client/js/pre-init').map(f => {
       let fPath = path.join('./client/js/pre-init/', f)
       return fs.readFileAsync(fPath, 'utf8').then(fContent => {
@@ -275,7 +275,6 @@ globalTasks.then(() => {
         shim: SHIMS,
         plugins: [
           fsbx.EnvPlugin({ NODE_ENV: 'production' }),
-          fsbx.BannerPlugin(preInitContent),
           [ fsbx.SassPlugin({ outputStyle: 'compressed', includePaths: ['./node_modules/requarks-core'] }), fsbx.CSSPlugin() ],
           fsbx.BabelPlugin({
             config: {

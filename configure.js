@@ -125,7 +125,8 @@ module.exports = (port, spinner) => {
    */
   app.post('/dbcheck', (req, res) => {
     let mongo = require('mongodb').MongoClient
-    mongo.connect(req.body.db, {
+    let mongoURI = (_.startsWith(req.body.db, '$')) ? process.env[req.body.db.slice(1)] : req.body.db
+    mongo.connect(mongoURI, {
       autoReconnect: false,
       reconnectTries: 2,
       reconnectInterval: 1000,

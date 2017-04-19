@@ -160,8 +160,8 @@ html(data-logic='configure')
                   section
                     p.control.is-fullwidth
                       label.label MongoDB Connection String
-                      input(type='text', placeholder='e.g. mongodb://localhost:27017/wiki', v-model='conf.db', data-vv-scope='db', name='ipt-db', v-validate='{ required: true, min: 14 }')
-                      span.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.
+                      input(type='text', placeholder='e.g. mongodb://localhost:27017/wiki', v-model='conf.db', data-vv-scope='db', name='ipt-db', v-validate='{ required: true, min: 3 }')
+                      span.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.<br />You can also specify an environment variable as the connection string (e.g. $MONGO_URI).
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-indigo.is-outlined(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Back
