@@ -62,6 +62,7 @@ Current and upcoming milestones *(features only, see the [changelog](https://git
 - [ ] Better localization in the UI
 - [ ] Better simultaneous user editing handling
 - [ ] Preview changes directly from the editor, without saving
+- [ ] Upgrade from web UI
 
 ## Gitter
 
