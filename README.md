@@ -23,15 +23,17 @@
 - [Requirements](#requirements)
 - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Project Planning](https://waffle.io/Requarks/wiki)
+- [Milestones](#milestones)
+- [Chat with us](#gitter)
 - [Special Thanks](#special-thanks)
 
-### Documentation
+## Documentation
 
 - [Installation Guide](https://wiki.requarks.io/get-started.html)
 - [Admin Guide](https://docs.requarks.io/wiki/#admin-guide)
 - [User Guide](https://docs.requarks.io/wiki/#user-guide)
 
-### Requirements
+## Requirements
 
 Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
 
@@ -42,16 +44,35 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 Read the full [prerequisites](https://docs.wiki.requarks.io/prerequisites) article for full details.
 
-### Gitter
+## Milestones
+
+Current and upcoming milestones *(features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for list of bug fixes)*:
+
+### Beta 11
+
+- [x] Azure AD authentication
+- [x] MathML / Tex math equations
+- [x] Support for CJK (Chinese, Japanese & Korean) characters in content, meta and uploads
+- [ ] All Pages section
+- [ ] Heroku support
+
+### Beta 12
+
+- [ ] Insert Link modal in Editor
+- [ ] Better localization in the UI
+- [ ] Better simultaneous user editing handling
+- [ ] Preview changes directly from the editor, without saving
+
+## Gitter
 
 Want to discuss features, ideas or issues? Join our [gitter channel](https://gitter.im/Requarks/wiki). We are very active and friendly!
 
-### Twitter
+## Twitter
 
 Follow our Twitter feed to learn about upcoming updates and new releases!  
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat-square)](https://twitter.com/requarks)  
 
-### Special Thanks
+## Special Thanks
 
 ![Browserstack](https://wiki.requarks.io/assets/images/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
