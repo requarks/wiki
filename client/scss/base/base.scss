@@ -1,6 +1,7 @@
 html {
   box-sizing: border-box;
   font-family: $core-font-standard;
+  height: 100%;
 }
 *, *:before, *:after {
   box-sizing: inherit;
@@ -10,12 +11,19 @@ html {
   display: none;
 }
 
+#root {
+  padding-bottom: 67px;
+  position: relative;
+  min-height: 100%;
+}
+
 body {
-	background-color: mc('blue-grey','100');
+	background-color: lighten(mc('blue-grey','50'), 5%);
+  height: 100%;
 }
 
 main {
-	background-color: #FFF;
+	background-color: lighten(mc('blue-grey','50'), 5%);
 }
 
 a {

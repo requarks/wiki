@@ -26,10 +26,9 @@ html(data-logic='configure')
       main
         .container
           transition(name='tst-welcome')
-            .welcome(style={'padding-bottom': '5px'}, v-if='state === "welcome" || state === "restart"')
-              img(src='/favicons/android-icon-96x96.png', alt='Wiki.js')
-              h1 Welcome to Wiki.js!
-              h2(style={'margin-bottom': 0}) A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
+            .welcome(v-if='state === "welcome" || state === "restart"')
+              img(src='/images/logo.png', alt='Wiki.js')
+              h2 A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
           .content(v-cloak)
 
             //- ==============================================
@@ -39,14 +38,14 @@ html(data-logic='configure')
             template(v-if='state === "welcome"')
               .panel
                 h2.panel-title.is-featured
-                  span Introduction
+                  span Welcome!
                   i(v-if='loading')
                 .panel-content.is-text
                   p This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
                   p Detailed information about installation and usage can be found on the #[a(href='https://docs.wiki.requarks.io/') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
+                  button.button.is-light-blue(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
 
             //- ==============================================
             //- SYSTEM CHECK
@@ -68,9 +67,9 @@ html(data-logic='configure')
                   p(v-if='!loading && !syscheck.ok') #[i.icon-square-cross] Error: {{ syscheck.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
-                  button.button.is-indigo(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
+                  button.button.is-light-blue(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- GENERAL
@@ -111,8 +110,8 @@ html(data-logic='configure')
                       span.desc Should the site be accessible (read only) without login.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back
-                  button.button.is-indigo(v-on:click='proceedToConsiderations', v-bind:disabled='loading || errors.any("general")') Continue
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back
+                  button.button.is-light-blue(v-on:click='proceedToConsiderations', v-bind:disabled='loading || errors.any("general")') Continue
 
             //- ==============================================
             //- CONSIDERATIONS
@@ -142,8 +141,8 @@ html(data-logic='configure')
                     p The host URL you specified is localhost. Unless you are a developer running Wiki.js locally on your machine, this is not recommended!
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
-                  button.button.is-indigo(v-on:click='proceedToDb', v-bind:disabled='loading') Continue
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
+                  button.button.is-light-blue(v-on:click='proceedToDb', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- DATABASE
@@ -164,8 +163,8 @@ html(data-logic='configure')
                       span.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.<br />You can also specify an environment variable as the connection string (e.g. $MONGO_URI).
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Back
-                  button.button.is-indigo(v-on:click='proceedToDbcheck', v-bind:disabled='loading || errors.any("db")') Connect
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Back
+                  button.button.is-light-blue(v-on:click='proceedToDbcheck', v-bind:disabled='loading || errors.any("db")') Connect
 
             //- ==============================================
             //- DATABASE CHECK
@@ -184,9 +183,9 @@ html(data-logic='configure')
                   p(v-if='!loading && !dbcheck.ok') #[i.icon-square-cross] Error: {{ dbcheck.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToDbcheck', v-if='!loading && !dbcheck.ok') Try Again
-                  button.button.is-indigo(v-on:click='proceedToPaths', v-if='loading || dbcheck.ok', v-bind:disabled='loading') Continue
+                  button.button.is-light-blue(v-on:click='proceedToPaths', v-if='loading || dbcheck.ok', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- PATHS
@@ -212,8 +211,8 @@ html(data-logic='configure')
                       span.desc The path where the local git repository will be created, used to store content in markdown files and uploads.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
-                  button.button.is-indigo(v-on:click='proceedToGit', v-bind:disabled='loading || errors.any("paths")') Continue
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-light-blue(v-on:click='proceedToGit', v-bind:disabled='loading || errors.any("paths")') Continue
 
             //- ==============================================
             //- GIT
@@ -277,9 +276,9 @@ html(data-logic='configure')
                         span.desc The email to use when pushing commits to the git repository.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToPaths', v-bind:disabled='loading') Back
-                  button.button.is-indigo.is-outlined(v-on:click='conf.gitUseRemote = false; proceedToGitCheck()', v-bind:disabled='loading') Skip this step
-                  button.button.is-indigo(v-on:click='conf.gitUseRemote = true; proceedToGitCheck()', v-bind:disabled='loading || errors.any("git")') Continue
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToPaths', v-bind:disabled='loading') Back
+                  button.button.is-light-blue.is-outlined(v-on:click='conf.gitUseRemote = false; proceedToGitCheck()', v-bind:disabled='loading') Skip this step
+                  button.button.is-light-blue(v-on:click='conf.gitUseRemote = true; proceedToGitCheck()', v-bind:disabled='loading || errors.any("git")') Continue
             
             //- ==============================================
             //- GIT CHECK
@@ -301,9 +300,9 @@ html(data-logic='configure')
                   p(v-if='!loading && !gitcheck.ok') #[i.icon-square-cross] Error: {{ gitcheck.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToGitCheck', v-if='!loading && !gitcheck.ok') Try Again
-                  button.button.is-indigo(v-on:click='proceedToAdmin', v-if='loading || gitcheck.ok', v-bind:disabled='loading') Continue
+                  button.button.is-light-blue(v-on:click='proceedToAdmin', v-if='loading || gitcheck.ok', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- ADMINISTRATOR ACCOUNT
@@ -335,8 +334,8 @@ html(data-logic='configure')
                         span.desc Verify your password again.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
-                  button.button.is-indigo(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("admin")') Continue
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
+                  button.button.is-light-blue(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("admin")') Continue
 
             //- ==============================================
             //- FINAL
@@ -357,7 +356,7 @@ html(data-logic='configure')
                   p(v-if='!loading && !final.ok') #[i.icon-square-cross] Error: {{ final.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-indigo.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
+                  button.button.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
                   button.button.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
                   button.button.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
 

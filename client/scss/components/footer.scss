@@ -1,13 +1,17 @@
 .footer {
 	background-color: mc('blue-grey','50');
-	border-bottom: 5px solid mc('blue-grey','100');
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 25px;
+	padding: 0 25px;
+  height: 70px;
 	font-size: 13px;
 	font-weight: 500;
 	color: mc('blue-grey','500');
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
 
 	ul {
 		padding: 0;
