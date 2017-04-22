@@ -1,6 +1,4 @@
-<a href="https://github.com/Requarks/wiki">
-    <img src="https://raw.githubusercontent.com/Requarks/wiki-site/1.0/assets/images/logo.png" alt="Wiki.js" title="Wiki.js" />
-</a>
+![Wiki.js](https://raw.githubusercontent.com/Requarks/wiki-site/1.0/assets/images/logo.png)
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat-square&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat-square)](https://github.com/requarks/wiki/blob/master/LICENSE)
@@ -14,7 +12,6 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/requarks/wiki/badge.svg?style=flat-square)](https://snyk.io/test/github/requarks/wiki)
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 
-# Wiki.js
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
 
 - [Official Website](https://wiki.requarks.io/)
