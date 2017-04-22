@@ -1,8 +1,4 @@
-<a href="https://github.com/Requarks/wiki">
-    <img src="https://raw.githubusercontent.com/Requarks/wiki/master/assets/favicons/favicon-96x96.png" alt="Wiki.js" title="Wiki.js" align="right" />
-</a>
-
-# Wiki.js
+![Wiki.js](https://raw.githubusercontent.com/Requarks/wiki-site/1.0/assets/images/logo.png)
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat-square&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat-square)](https://github.com/requarks/wiki/blob/master/LICENSE)
