@@ -2,8 +2,8 @@
 
 import $ from 'jquery'
 import _ from 'lodash'
-import { makeSafePath } from '../helpers/form'
-import { setInputSelection } from '../helpers/pages'
+import { setInputSelection } from '../helpers/form'
+import { makeSafePath } from '../helpers/pages'
 
 // -> Move Existing Document
 
