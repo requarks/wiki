@@ -351,6 +351,12 @@ module.exports = (port, spinner) => {
         })
       })
     ).then(() => {
+      if (process.env.IS_HEROKU) {
+        return fs.outputJsonAsync('./app/heroku.json', { configured: true })
+      } else {
+        return true
+      }
+    }).then(() => {
       res.json({ ok: true })
     }).catch(err => {
       res.json({ ok: false, error: err.message })

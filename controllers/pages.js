@@ -137,8 +137,12 @@ router.put('/create/*', (req, res, next) => {
 /**
  * View tree view of all pages
  */
-router.get('/all', (req, res, next) => {
-  res.render('pages/all')
+router.use((req, res, next) => {
+  if (_.endsWith(req.url, '/all')) {
+    res.render('pages/all')
+  } else {
+    next()
+  }
 })
 
 // ==========================================

@@ -8,12 +8,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Auth**: Can now specify Read Access by default for all providers (except Local)
 - **View**: MathML and TeX math equations support
 - **Configuration Wizard**: Added Public Access option
+- **Misc**: Heroku support
 - **Navigation**: All Pages section
 - **UI**: Beatiful new logo!
 
 ### Changed
 - **Auth**: Provider Strategies are now only loaded if enabled
-- **System**: Updated dependencies
+- **Misc**: Trailing slashes in URL are now removed
+- **Misc**: Updated dependencies
 - **UI**: Footer is now always at the bottom of the page (but not fixed)
 
 ### Fixed

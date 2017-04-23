@@ -32,7 +32,11 @@ module.exports = (alerts, socket) => {
         }
       },
       mounted: function () {
-        this.fetch('')
+        let basePath = window.location.pathname.slice(0, -4)
+        if (basePath.length > 1) {
+          basePath = basePath.slice(1)
+        }
+        this.fetch(basePath)
       }
     })
   }
