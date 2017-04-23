@@ -71,8 +71,8 @@ Follow our Twitter feed to learn about upcoming updates and new releases!
 
 ## Special Thanks
 
-![Browserstack](https://wiki.requarks.io/assets/images/logo_browserstack.png)  
+![Browserstack](https://wiki.js.org/assets/images/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-![DigitalOcean](https://wiki.requarks.io/assets/images/logo_digitalocean.png)  
+![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)  
 [DigitalOcean](https://www.digitalocean.com/) for providing hosting of the Wiki.js documentation site.
