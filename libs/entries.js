@@ -301,7 +301,7 @@ module.exports = {
       winston.error(err)
       return err
     }).then((content) => {
-      // let entryPaths = _.split(content.entryPath, '/')
+      let parentPath = _.chain(content.entryPath).split('/').initial().join('/').value()
       return db.Entry.findOneAndUpdate({
         _id: content.entryPath
       }, {
@@ -309,10 +309,21 @@ module.exports = {
         title: content.meta.title || content.entryPath,
         subtitle: content.meta.subtitle || '',
         parentTitle: content.parent.title || '',
-        parentPath: content.parent.path || ''
+        parentPath: parentPath,
+        isDirectory: false
       }, {
         new: true,
         upsert: true
+      })
+    }).then(result => {
+      return db.Entry.distinct('parentPath', { parentPath: { $ne: '' } }).then(allPaths => {
+        if (allPaths.length > 0) {
+          return db.Entry.updateMany({ _id: { $in: allPaths } }, { $set: { isDirectory: true } }).then(() => {
+            return result
+          })
+        } else {
+          return result
+        }
       })
     }).catch(err => {
       winston.error(err)

@@ -4,6 +4,8 @@ import $ from 'jquery'
 import Vue from 'vue'
 import _ from 'lodash'
 
+const rootUrl = '/'
+
 module.exports = (alerts, socket) => {
   if ($('#page-type-all').length) {
     let vueAllPages = new Vue({ // eslint-disable-line no-unused-vars
@@ -29,6 +31,9 @@ module.exports = (alerts, socket) => {
               $('#notifload').removeClass('active')
             })
           })
+        },
+        goto: function (entryPath) {
+          window.location.assign(rootUrl + entryPath)
         }
       },
       mounted: function () {

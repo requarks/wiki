@@ -28,6 +28,10 @@ block content
                   span Login
       ul.collapsable-nav(v-for='treeItem in tree', :class='{ "has-children": treeItem.hasChildren }', v-cloak)
         li(v-for='page in treeItem.pages', :class='{ "is-active": page.isActive }')
-          a(v-on:click='fetch(page._id)')
-            i(:class='{ "icon-folder2": page.isFolder, "icon-file": !page.isFolder }')
-            span {{ page.title }}
+          a(v-on:click='(page.isDirectory) ? fetch(page._id) : goto(page._id)')
+            template(v-if='page._id !== "home"')
+              i(:class='{ "icon-folder2": page.isDirectory, "icon-file-text-o": !page.isDirectory }')
+              span {{ page.title }}
+            template(v-else)
+              i.icon-home
+              span Home
