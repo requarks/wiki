@@ -28,6 +28,10 @@ var entrySchema = Mongoose.Schema({
   isDirectory: {
     type: Boolean,
     default: false
+  },
+  isEntry: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: {}

@@ -58,6 +58,11 @@
 
       a {
         height: 50px;
+
+        &:nth-child(2) {
+          display: none;
+        }
+
       }
     }
 
@@ -65,7 +70,8 @@
 
   a {
     display: flex;
-    height: 40px;
+    flex: 1 1 auto;
+    min-height: 40px;
     width: 100%;
     align-items: center;
     padding: 0 15px;
@@ -74,14 +80,28 @@
     transition: all .4s ease;
     background-color: rgba(0,0,0,0);
 
-    i {
-      font-size: 14px;
-      margin-right: 10px;
+    &.is-pagelink {
+      flex: 0 1 70px;
+      justify-content: center;
     }
 
     &:hover {
       background-color: rgba(0,0,0,.1);
       text-decoration: none;
+    }
+
+    i {
+      font-size: 14px;
+
+      &:first-of-type {
+        margin-right: 10px;
+      }
+
+    }
+
+    span {
+      display: block;
+      padding: 5px 0;
     }
 
   }

@@ -310,24 +310,41 @@ module.exports = {
         subtitle: content.meta.subtitle || '',
         parentTitle: content.parent.title || '',
         parentPath: parentPath,
-        isDirectory: false
+        isDirectory: false,
+        isEntry: true
       }, {
         new: true,
         upsert: true
       })
     }).then(result => {
-      return db.Entry.distinct('parentPath', { parentPath: { $ne: '' } }).then(allPaths => {
-        if (allPaths.length > 0) {
-          return db.Entry.updateMany({ _id: { $in: allPaths } }, { $set: { isDirectory: true } }).then(() => {
-            return result
-          })
-        } else {
-          return result
-        }
+      return self.updateTreeInfo().then(() => {
+        return result
       })
     }).catch(err => {
       winston.error(err)
       return err
+    })
+  },
+
+  /**
+   * Update tree info for all directory and parent entries
+   *
+   * @returns {Promise<Boolean>} Promise of the operation
+   */
+  updateTreeInfo () {
+    return db.Entry.distinct('parentPath', { parentPath: { $ne: '' } }).then(allPaths => {
+      if (allPaths.length > 0) {
+        return Promise.map(allPaths, pathItem => {
+          let parentPath = _.chain(pathItem).split('/').initial().join('/').value()
+          let guessedTitle = _.chain(pathItem).split('/').last().startCase().value()
+          return db.Entry.update({ _id: pathItem }, {
+            $set: { isDirectory: true },
+            $setOnInsert: { isEntry: false, title: guessedTitle, parentPath }
+          }, { upsert: true })
+        })
+      } else {
+        return true
+      }
     })
   },
 
@@ -428,6 +445,6 @@ module.exports = {
    * @return {Promise<Array>} List of entries
    */
   getFromTree (basePath) {
-    return db.Entry.find({ parentPath: basePath })
+    return db.Entry.find({ parentPath: basePath }, 'title parentPath isDirectory isEntry').sort({ title: 'asc' })
   }
 }

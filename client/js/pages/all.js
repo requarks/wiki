@@ -20,9 +20,9 @@ module.exports = (alerts, socket) => {
           Vue.nextTick(() => {
             socket.emit('treeFetch', { basePath }, (data) => {
               if (self.tree.length > 0) {
-                let curTree = _.last(self.tree)
-                curTree.hasChildren = true
-                _.find(curTree.pages, { _id: basePath }).isActive = true
+                let branch = _.last(self.tree)
+                branch.hasChildren = true
+                _.find(branch.pages, { _id: basePath }).isActive = true
               }
               self.tree.push({
                 hasChildren: false,
@@ -34,6 +34,32 @@ module.exports = (alerts, socket) => {
         },
         goto: function (entryPath) {
           window.location.assign(rootUrl + entryPath)
+        },
+        unfold: function (entryPath) {
+          let self = this
+          let lastIndex = 0
+          _.forEach(self.tree, branch => {
+            lastIndex++
+            if (_.find(branch.pages, { _id: entryPath }) !== undefined) {
+              return false
+            }
+          })
+          self.tree = _.slice(self.tree, 0, lastIndex)
+          let branch = _.last(self.tree)
+          branch.hasChildren = false
+          branch.pages.forEach(page => {
+            page.isActive = false
+          })
+        },
+        mainAction: function (page) {
+          let self = this
+          if (page.isActive) {
+            self.unfold(page._id)
+          } else if (page.isDirectory) {
+            self.fetch(page._id)
+          } else {
+            self.goto(page._id)
+          }
         }
       },
       mounted: function () {
