@@ -18,6 +18,7 @@
 - [Documentation](#documentation)
 - [Requirements](#requirements)
 - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
+- [Feature Requests](https://wikijs.canny.io/features)
 - [Project Planning](https://waffle.io/Requarks/wiki)
 - [Milestones](#milestones)
 - [Chat with us](#gitter)
