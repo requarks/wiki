@@ -20,8 +20,7 @@ module.exports = {
     exists: false
   },
   _signature: {
-    name: 'Wiki',
-    email: 'user@example.com'
+    email: 'wiki@example.com'
   },
   _opts: {
     clone: {},
@@ -52,8 +51,7 @@ module.exports = {
     // Define signature
 
     if (appconfig.git) {
-      self._signature.name = appconfig.git.signature.name || 'Wiki'
-      self._signature.email = appconfig.git.signature.email || 'user@example.com'
+      self._signature.email = appconfig.git.serverEmail || 'wiki@example.com'
     }
 
     return self
@@ -102,7 +100,7 @@ module.exports = {
       self._url = URL.format(urlObj)
 
       let gitConfigs = [
-        () => { return self._git.exec('config', ['--local', 'user.name', self._signature.name]) },
+        () => { return self._git.exec('config', ['--local', 'user.name', 'Wiki']) },
         () => { return self._git.exec('config', ['--local', 'user.email', self._signature.email]) },
         () => { return self._git.exec('config', ['--local', '--bool', 'http.sslVerify', _.toString(appconfig.git.auth.sslVerify)]) }
       ]

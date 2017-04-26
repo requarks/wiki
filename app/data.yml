@@ -50,9 +50,8 @@ defaults:
         password: null
         privateKey: null
         sslVerify: true
-      signature:
-        name: Wiki
-        email: wiki@example.com
+      serverEmail: wiki@example.com
+      showUserEmail: true
     features:
       mathjax: true
     externalLogging:

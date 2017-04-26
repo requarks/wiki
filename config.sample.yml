@@ -127,9 +127,12 @@ git:
     privateKey: /etc/wiki/keys/git.pem
 
     sslVerify: true
-  signature:
-    name: Marty
-    email: marty@example.com
+
+  # Default email to use as commit author
+  serverEmail: marty@example.com
+
+  # Whether to use user email as author in commits
+  showUserEmail: true
 
 # ---------------------------------------------------------------------
 # Features
