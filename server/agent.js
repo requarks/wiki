@@ -8,10 +8,9 @@ const path = require('path')
 const ROOTPATH = process.cwd()
 const SERVERPATH = path.join(ROOTPATH, 'server')
 
-global.PROCNAME = 'AGENT'
 global.ROOTPATH = ROOTPATH
 global.SERVERPATH = SERVERPATH
-global.IS_DEBUG = process.env.NODE_ENV === 'development'
+const IS_DEBUG = process.env.NODE_ENV === 'development'
 
 let appconf = require('./libs/config')()
 global.appconfig = appconf.config
@@ -21,13 +20,13 @@ global.appdata = appconf.data
 // Load Winston
 // ----------------------------------------
 
-global.winston = require('./libs/logger')(IS_DEBUG)
+global.winston = require('./libs/logger')(IS_DEBUG, 'AGENT')
 
 // ----------------------------------------
 // Load global modules
 // ----------------------------------------
 
-winston.info('[AGENT] Background Agent is initializing...')
+winston.info('Background Agent is initializing...')
 
 global.db = require('./libs/db').init()
 global.upl = require('./libs/uploads-agent').init()
@@ -64,10 +63,10 @@ db.onReady.then(() => {
       // Make sure we don't start two concurrent jobs
 
       if (jobIsBusy) {
-        winston.warn('[AGENT] Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
+        winston.warn('Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
         return
       }
-      winston.info('[AGENT] Running all jobs...')
+      winston.info('Running all jobs...')
       jobIsBusy = true
 
       // Prepare async job collector
@@ -165,7 +164,7 @@ db.onReady.then(() => {
       // ----------------------------------------
 
       Promise.all(jobs).then(() => {
-        winston.info('[AGENT] All jobs completed successfully! Going to sleep for now.')
+        winston.info('All jobs completed successfully! Going to sleep for now.')
 
         if (!jobUplWatchStarted) {
           jobUplWatchStarted = true
@@ -176,7 +175,7 @@ db.onReady.then(() => {
 
         return true
       }).catch((err) => {
-        winston.error('[AGENT] One or more jobs have failed: ', err)
+        winston.error('One or more jobs have failed: ', err)
       }).finally(() => {
         jobIsBusy = false
       })
@@ -192,7 +191,7 @@ db.onReady.then(() => {
 // ----------------------------------------
 
 process.on('disconnect', () => {
-  winston.warn('[AGENT] Lost connection to main server. Exiting...')
+  winston.warn('Lost connection to main server. Exiting...')
   job.stop()
   process.exit()
 })

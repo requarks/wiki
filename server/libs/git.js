@@ -66,13 +66,13 @@ module.exports = {
   _initRepo (appconfig) {
     let self = this
 
-    winston.info('[' + PROCNAME + '.Git] Checking Git repository...')
+    winston.info('Checking Git repository...')
 
     // -> Check if path is accessible
 
     return fs.mkdirAsync(self._repo.path).catch((err) => {
       if (err.code !== 'EEXIST') {
-        winston.error('[' + PROCNAME + '.Git] Invalid Git repository path or missing permissions.')
+        winston.error('Invalid Git repository path or missing permissions.')
       }
     }).then(() => {
       self._git = new Git({ 'git-dir': self._repo.path })
@@ -87,7 +87,7 @@ module.exports = {
       })
     }).then(() => {
       if (appconfig.git === false) {
-        winston.info('[' + PROCNAME + '.Git] Remote syncing is disabled. Not recommended!')
+        winston.info('Remote Git syncing is disabled. Not recommended!')
         return Promise.resolve(true)
       }
 
@@ -124,10 +124,10 @@ module.exports = {
         })
       })
     }).catch((err) => {
-      winston.error('[' + PROCNAME + '.Git] Git remote error!')
+      winston.error('Git remote error!')
       throw err
     }).then(() => {
-      winston.info('[' + PROCNAME + '.Git] Git repository is OK.')
+      winston.info('Git repository is OK.')
       return true
     })
   },
@@ -157,12 +157,12 @@ module.exports = {
 
     // Fetch
 
-    winston.info('[' + PROCNAME + '.Git] Performing pull from remote repository...')
+    winston.info('Performing pull from remote Git repository...')
     return self._git.pull('origin', self._repo.branch).then((cProc) => {
-      winston.info('[' + PROCNAME + '.Git] Pull completed.')
+      winston.info('Git Pull completed.')
     })
     .catch((err) => {
-      winston.error('[' + PROCNAME + '.Git] Unable to fetch from git origin!')
+      winston.error('Unable to fetch from git origin!')
       throw err
     })
     .then(() => {
@@ -172,19 +172,19 @@ module.exports = {
         let out = cProc.stdout.toString()
 
         if (_.includes(out, 'commit')) {
-          winston.info('[' + PROCNAME + '.Git] Performing push to remote repository...')
+          winston.info('Performing push to remote Git repository...')
           return self._git.push('origin', self._repo.branch).then(() => {
-            return winston.info('[' + PROCNAME + '.Git] Push completed.')
+            return winston.info('Git Push completed.')
           })
         } else {
-          winston.info('[' + PROCNAME + '.Git] Push skipped. Repository is already in sync.')
+          winston.info('Git Push skipped. Repository is already in sync.')
         }
 
         return true
       })
     })
     .catch((err) => {
-      winston.error('[' + PROCNAME + '.Git] Unable to push changes to remote!')
+      winston.error('Unable to push changes to remote Git repository!')
       throw err
     })
   },

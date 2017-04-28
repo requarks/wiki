@@ -98,7 +98,7 @@ module.exports = {
    * @return     {Void}  Void
    */
   createBaseDirectories (appconfig) {
-    winston.info('[SERVER.Local] Checking data directories...')
+    winston.info('Checking data directories...')
 
     try {
       fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data))
@@ -121,7 +121,7 @@ module.exports = {
       winston.error(err)
     }
 
-    winston.info('[SERVER.Local] Data and Repository directories are OK.')
+    winston.info('Data and Repository directories are OK.')
   },
 
   /**

@@ -1,31 +1,36 @@
 'use strict'
 
-const winston = require('winston')
+module.exports = (isDebug, processName) => {
+  let winston = require('winston')
 
-module.exports = (isDebug) => {
-  if (typeof PROCNAME === 'undefined') {
-    const PROCNAME = 'SERVER' // eslint-disable-line no-unused-vars
+  if (typeof processName === 'undefined') {
+    processName = 'SERVER'
   }
 
-  // Console + File Logs
+  // Console
 
-  winston.remove(winston.transports.Console)
-  winston.add(winston.transports.Console, {
+  let logger = new (winston.Logger)({
     level: (isDebug) ? 'debug' : 'info',
-    prettyPrint: true,
-    colorize: true,
-    silent: false,
-    timestamp: true,
-    filters: [(level, msg, meta) => {
-      return '[' + PROCNAME + '] ' + msg // eslint-disable-line no-undef
-    }]
+    transports: [
+      new (winston.transports.Console)({
+        level: (isDebug) ? 'debug' : 'info',
+        prettyPrint: true,
+        colorize: true,
+        silent: false,
+        timestamp: true
+      })
+    ]
+  })
+
+  logger.filters.push((level, msg) => {
+    return '[' + processName + '] ' + msg
   })
 
   // External services
 
   if (appconfig.externalLogging.bugsnag) {
     const bugsnagTransport = require('./winston-transports/bugsnag')
-    winston.add(bugsnagTransport, {
+    logger.add(bugsnagTransport, {
       level: 'warn',
       key: appconfig.externalLogging.bugsnag
     })
@@ -33,7 +38,7 @@ module.exports = (isDebug) => {
 
   if (appconfig.externalLogging.loggly) {
     require('winston-loggly-bulk')
-    winston.add(winston.transports.Loggly, {
+    logger.add(winston.transports.Loggly, {
       token: appconfig.externalLogging.loggly.token,
       subdomain: appconfig.externalLogging.loggly.subdomain,
       tags: ['wiki-js'],
@@ -44,7 +49,7 @@ module.exports = (isDebug) => {
 
   if (appconfig.externalLogging.papertrail) {
     require('winston-papertrail').Papertrail // eslint-disable-line no-unused-expressions
-    winston.add(winston.transports.Papertrail, {
+    logger.add(winston.transports.Papertrail, {
       host: appconfig.externalLogging.papertrail.host,
       port: appconfig.externalLogging.papertrail.port,
       level: 'warn',
@@ -54,7 +59,7 @@ module.exports = (isDebug) => {
 
   if (appconfig.externalLogging.rollbar) {
     const rollbarTransport = require('./winston-transports/rollbar')
-    winston.add(rollbarTransport, {
+    logger.add(rollbarTransport, {
       level: 'warn',
       key: appconfig.externalLogging.rollbar
     })
@@ -62,11 +67,11 @@ module.exports = (isDebug) => {
 
   if (appconfig.externalLogging.sentry) {
     const sentryTransport = require('./winston-transports/sentry')
-    winston.add(sentryTransport, {
+    logger.add(sentryTransport, {
       level: 'warn',
       key: appconfig.externalLogging.sentry
     })
   }
 
-  return winston
+  return logger
 }

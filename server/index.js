@@ -10,10 +10,9 @@ const path = require('path')
 const ROOTPATH = process.cwd()
 const SERVERPATH = path.join(ROOTPATH, 'server')
 
-global.PROCNAME = 'SERVER'
 global.ROOTPATH = ROOTPATH
 global.SERVERPATH = SERVERPATH
-global.IS_DEBUG = process.env.NODE_ENV === 'development'
+const IS_DEBUG = process.env.NODE_ENV === 'development'
 
 process.env.VIPS_WARNING = false
 
@@ -25,8 +24,8 @@ global.appdata = appconf.data
 // Load Winston
 // ----------------------------------------
 
-global.winston = require('./libs/logger')(IS_DEBUG)
-winston.info('[SERVER] Wiki.js is initializing...')
+global.winston = require('./libs/logger')(IS_DEBUG, 'SERVER')
+winston.info('Wiki.js is initializing...')
 
 // ----------------------------------------
 // Load global modules
@@ -188,7 +187,7 @@ app.use(function (err, req, res, next) {
 // Start HTTP server
 // ----------------------------------------
 
-winston.info('[SERVER] Starting HTTP/WS server on port ' + appconfig.port + '...')
+winston.info('Starting HTTP/WS server on port ' + appconfig.port + '...')
 
 app.set('port', appconfig.port)
 var server = http.createServer(app)
@@ -203,10 +202,10 @@ server.on('error', (error) => {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error('Listening on port ' + appconfig.port + ' requires elevated privileges!')
+      winston.error('Listening on port ' + appconfig.port + ' requires elevated privileges!')
       return process.exit(1)
     case 'EADDRINUSE':
-      console.error('Port ' + appconfig.port + ' is already in use!')
+      winston.error('Port ' + appconfig.port + ' is already in use!')
       return process.exit(1)
     default:
       throw error
@@ -214,7 +213,7 @@ server.on('error', (error) => {
 })
 
 server.on('listening', () => {
-  winston.info('[SERVER] HTTP/WS server started successfully! [RUNNING]')
+  winston.info('HTTP/WS server started successfully! [RUNNING]')
 })
 
 // ----------------------------------------

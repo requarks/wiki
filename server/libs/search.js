@@ -27,12 +27,12 @@ module.exports = {
         stopwords: _.get(stopWord, appconfig.lang, [])
       }, (err, si) => {
         if (err) {
-          winston.error('[SERVER.Search] Failed to initialize search index.', err)
+          winston.error('Failed to initialize search index.', err)
           reject(err)
         } else {
           self._si = Promise.promisifyAll(si)
           self._si.flushAsync().then(() => {
-            winston.info('[SERVER.Search] Search index flushed and ready.')
+            winston.info('Search index flushed and ready.')
             resolve(true)
           })
         }
@@ -92,7 +92,7 @@ module.exports = {
           parent: content.parent || '',
           content: content.content || ''
         }]).then(() => {
-          winston.log('verbose', '[SERVER.Search] Entry ' + content._id + ' added/updated to index.')
+          winston.log('verbose', 'Entry ' + content._id + ' added/updated to search index.')
           return true
         }).catch((err) => {
           winston.error(err)
