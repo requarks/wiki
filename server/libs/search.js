@@ -51,6 +51,10 @@ module.exports = {
   add (content) {
     let self = this
 
+    if (!content.isEntry) {
+      return Promise.resolve(true)
+    }
+
     return self._isReady.then(() => {
       return self.delete(content._id).then(() => {
         return self._si.concurrentAddAsync({

@@ -50,7 +50,7 @@ router.put('/edit/*', (req, res, next) => {
 
   let safePath = entries.parsePath(_.replace(req.path, '/edit', ''))
 
-  entries.update(safePath, req.body.markdown).then(() => {
+  entries.update(safePath, req.body.markdown, req.user).then(() => {
     return res.json({
       ok: true
     }) || true
@@ -118,7 +118,7 @@ router.put('/create/*', (req, res, next) => {
 
   let safePath = entries.parsePath(_.replace(req.path, '/create', ''))
 
-  entries.create(safePath, req.body.markdown).then(() => {
+  entries.create(safePath, req.body.markdown, req.user).then(() => {
     return res.json({
       ok: true
     }) || true
@@ -232,7 +232,7 @@ router.put('/*', (req, res, next) => {
 
   let safeNewPath = entries.parsePath(req.body.move)
 
-  entries.move(safePath, safeNewPath).then(() => {
+  entries.move(safePath, safeNewPath, req.user).then(() => {
     res.json({
       ok: true
     })

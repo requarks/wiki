@@ -4,8 +4,13 @@
 // Licensed under AGPLv3
 // ===========================================
 
+const path = require('path')
+const ROOTPATH = process.cwd()
+const SERVERPATH = path.join(ROOTPATH, 'server')
+
 global.PROCNAME = 'AGENT'
-global.ROOTPATH = __dirname
+global.ROOTPATH = ROOTPATH
+global.SERVERPATH = SERVERPATH
 global.IS_DEBUG = process.env.NODE_ENV === 'development'
 
 let appconf = require('./libs/config')()
@@ -34,20 +39,19 @@ global.mark = require('./libs/markdown')
 // Load modules
 // ----------------------------------------
 
-var moment = require('moment')
-var Promise = require('bluebird')
-var fs = Promise.promisifyAll(require('fs-extra'))
-var klaw = require('klaw')
-var path = require('path')
-var Cron = require('cron').CronJob
+const moment = require('moment')
+const Promise = require('bluebird')
+const fs = Promise.promisifyAll(require('fs-extra'))
+const klaw = require('klaw')
+const Cron = require('cron').CronJob
 
 // ----------------------------------------
 // Start Cron
 // ----------------------------------------
 
-var job
-var jobIsBusy = false
-var jobUplWatchStarted = false
+let job
+let jobIsBusy = false
+let jobUplWatchStarted = false
 
 db.onReady.then(() => {
   return db.Entry.remove({})

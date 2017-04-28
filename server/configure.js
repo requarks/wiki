@@ -1,7 +1,10 @@
 'use strict'
 
 module.exports = (port, spinner) => {
-  const ROOTPATH = __dirname
+  const path = require('path')
+
+  const ROOTPATH = process.cwd()
+  const SERVERPATH = path.join(ROOTPATH, 'server')
   const IS_DEBUG = process.env.NODE_ENV === 'development'
 
   // ----------------------------------------
@@ -13,7 +16,6 @@ module.exports = (port, spinner) => {
   const express = require('express')
   const favicon = require('serve-favicon')
   const http = require('http')
-  const path = require('path')
   const Promise = require('bluebird')
   const fs = Promise.promisifyAll(require('fs-extra'))
   const yaml = require('js-yaml')
@@ -39,7 +41,7 @@ module.exports = (port, spinner) => {
   // View Engine Setup
   // ----------------------------------------
 
-  app.set('views', path.join(ROOTPATH, 'views'))
+  app.set('views', path.join(SERVERPATH, 'views'))
   app.set('view engine', 'pug')
 
   app.use(bodyParser.json())
@@ -55,8 +57,8 @@ module.exports = (port, spinner) => {
     let langs = []
     let conf = {}
     try {
-      langs = yaml.safeLoad(fs.readFileSync('./app/data.yml', 'utf8')).langs
-      conf = yaml.safeLoad(fs.readFileSync('./config.yml', 'utf8'))
+      langs = yaml.safeLoad(fs.readFileSync(path.join(SERVERPATH, 'app/data.yml'), 'utf8')).langs
+      conf = yaml.safeLoad(fs.readFileSync(path.join(ROOTPATH, 'config.yml'), 'utf8'))
     } catch (err) {
       console.error(err)
     }
@@ -304,7 +306,7 @@ module.exports = (port, spinner) => {
           }
         })
       }),
-      fs.readFileAsync('./config.yml', 'utf8').then(confRaw => {
+      fs.readFileAsync(path.join(ROOTPATH, 'config.yml'), 'utf8').then(confRaw => {
         let conf = yaml.safeLoad(confRaw)
         conf.title = req.body.title
         conf.host = req.body.host
@@ -347,12 +349,12 @@ module.exports = (port, spinner) => {
         return crypto.randomBytesAsync(32).then(buf => {
           conf.sessionSecret = buf.toString('hex')
           confRaw = yaml.safeDump(conf)
-          return fs.writeFileAsync('./config.yml', confRaw)
+          return fs.writeFileAsync(path.join(ROOTPATH, 'config.yml'), confRaw)
         })
       })
     ).then(() => {
       if (process.env.IS_HEROKU) {
-        return fs.outputJsonAsync('./app/heroku.json', { configured: true })
+        return fs.outputJsonAsync(path.join(SERVERPATH, 'app/heroku.json'), { configured: true })
       } else {
         return true
       }

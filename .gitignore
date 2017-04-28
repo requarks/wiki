@@ -1,7 +1,6 @@
 # Logs
 logs
 *.log
-npm-debug.log*
 /logs
 
 # Deployment builds
@@ -11,11 +10,11 @@ dist
 node_modules
 npm/node_modules
 
-# Optional npm cache directory
+# NPM / Yarn
 .npm
-
-# Optional REPL history
+.yarn.lock
 .node_repl_history
+npm-debug.log*
 
 # NewRelic APM
 newrelic.js
@@ -25,7 +24,6 @@ newrelic.js
 
 # Fusebox
 .fusebox
-.build
 
 # Config Files
 config.yml

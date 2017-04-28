@@ -249,15 +249,16 @@ module.exports = {
    *
    * @param      {String}            entryPath  The entry path
    * @param      {String}            contents   The markdown-formatted contents
+   * @param {Object} author The author user object
    * @return     {Promise<Boolean>}  True on success, false on failure
    */
-  update (entryPath, contents) {
+  update (entryPath, contents, author) {
     let self = this
     let fpath = self.getFullPath(entryPath)
 
     return fs.statAsync(fpath).then((st) => {
       if (st.isFile()) {
-        return self.makePersistent(entryPath, contents).then(() => {
+        return self.makePersistent(entryPath, contents, author).then(() => {
           return self.updateCache(entryPath).then(entry => {
             return search.add(entry)
           })
@@ -353,14 +354,15 @@ module.exports = {
    *
    * @param      {String}            entryPath  The entry path
    * @param      {String}            contents   The markdown-formatted contents
+   * @param {Object} author The author user object
    * @return     {Promise<Boolean>}  True on success, false on failure
    */
-  create (entryPath, contents) {
+  create (entryPath, contents, author) {
     let self = this
 
     return self.exists(entryPath).then((docExists) => {
       if (!docExists) {
-        return self.makePersistent(entryPath, contents).then(() => {
+        return self.makePersistent(entryPath, contents, author).then(() => {
           return self.updateCache(entryPath).then(entry => {
             return search.add(entry)
           })
@@ -379,14 +381,15 @@ module.exports = {
    *
    * @param      {String}            entryPath  The entry path
    * @param      {String}            contents   The markdown-formatted contents
+   * @param {Object} author The author user object
    * @return     {Promise<Boolean>}  True on success, false on failure
    */
-  makePersistent (entryPath, contents) {
+  makePersistent (entryPath, contents, author) {
     let self = this
     let fpath = self.getFullPath(entryPath)
 
     return fs.outputFileAsync(fpath, contents).then(() => {
-      return git.commitDocument(entryPath)
+      return git.commitDocument(entryPath, author)
     })
   },
 
@@ -395,9 +398,10 @@ module.exports = {
    *
    * @param      {String}   entryPath     The current entry path
    * @param      {String}   newEntryPath  The new entry path
+   * @param {Object} author The author user object
    * @return     {Promise}  Promise of the operation
    */
-  move (entryPath, newEntryPath) {
+  move (entryPath, newEntryPath, author) {
     let self = this
 
     if (_.isEmpty(entryPath) || entryPath === 'home') {
@@ -405,7 +409,7 @@ module.exports = {
     }
 
     return git.moveDocument(entryPath, newEntryPath).then(() => {
-      return git.commitDocument(newEntryPath).then(() => {
+      return git.commitDocument(newEntryPath, author).then(() => {
         // Delete old cache version
 
         let oldEntryCachePath = self.getCachePath(entryPath)

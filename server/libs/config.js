@@ -3,6 +3,7 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
 const _ = require('lodash')
+const path = require('path')
 
 /**
  * Load Application Configuration
@@ -12,9 +13,9 @@ const _ = require('lodash')
  */
 module.exports = (confPaths) => {
   confPaths = _.defaults(confPaths, {
-    config: './config.yml',
-    data: './app/data.yml',
-    dataRegex: '../app/regex.js'
+    config: path.join(ROOTPATH, 'config.yml'),
+    data: path.join(SERVERPATH, 'app/data.yml'),
+    dataRegex: path.join(SERVERPATH, 'app/regex.js')
   })
 
   let appconfig = {}

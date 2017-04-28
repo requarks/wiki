@@ -20,7 +20,7 @@ before_script:
 - npm install -g snyk
 - snyk auth $SNYK_TOKEN
 before_deploy:
-- tar -czf wiki-js.tar.gz * -X .deployexclude
+- tar -czf wiki-js.tar.gz * -X .build/.deployexclude
 - snyk monitor
 deploy:
   provider: releases

@@ -6,6 +6,8 @@ const pm2 = Promise.promisifyAll(require('pm2'))
 const ora = require('ora')
 const path = require('path')
 
+const ROOTPATH = process.cwd()
+
 module.exports = {
   /**
    * Detect the most appropriate start mode
@@ -22,14 +24,14 @@ module.exports = {
    */
   startInBackgroundMode: function () {
     let spinner = ora('Initializing...').start()
-    return fs.emptyDirAsync(path.join(__dirname, './logs')).then(() => {
+    return fs.emptyDirAsync(path.join(ROOTPATH, './logs')).then(() => {
       return pm2.connectAsync().then(() => {
         return pm2.startAsync({
           name: 'wiki',
-          script: 'server.js',
-          cwd: __dirname,
-          output: path.join(__dirname, './logs/wiki-output.log'),
-          error: path.join(__dirname, './logs/wiki-error.log'),
+          script: 'server',
+          cwd: ROOTPATH,
+          output: path.join(ROOTPATH, './logs/wiki-output.log'),
+          error: path.join(ROOTPATH, './logs/wiki-error.log'),
           minUptime: 5000,
           maxRestarts: 5
         }).then(() => {

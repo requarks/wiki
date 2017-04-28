@@ -71,7 +71,7 @@ describe('Code Linting', () => {
     const lint = new PugLint()
     const pugConfig = fs.readJsonSync('.pug-lintrc.json')
     lint.configure(pugConfig)
-    let report = lint.checkPath('./views')
+    let report = lint.checkPath('./server/views')
     expect(report).toPugLint()
   })
 })

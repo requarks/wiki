@@ -213,15 +213,7 @@ globalTasks.then(() => {
           exec: (args.i) ? 'node --inspect server' : 'node server',
           ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
           ext: 'js json',
-          watch: [
-            'controllers',
-            'libs',
-            'locales',
-            'middlewares',
-            'models',
-            'agent.js',
-            'server.js'
-          ],
+          watch: ['server'],
           env: { 'NODE_ENV': 'development' }
         })
       }, 1000)
@@ -258,9 +250,7 @@ globalTasks.then(() => {
           exec: 'node wiki configure',
           ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
           ext: 'js json',
-          watch: [
-            'configure.js'
-          ],
+          watch: ['server/configure.js'],
           env: { 'NODE_ENV': 'development' }
         })
       }, 1000)

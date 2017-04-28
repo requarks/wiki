@@ -6,13 +6,14 @@
 // Licensed under AGPLv3
 // ===========================================
 
-global.PROCNAME = 'SERVER'
-global.ROOTPATH = __dirname
-global.IS_DEBUG = process.env.NODE_ENV === 'development'
+const path = require('path')
+const ROOTPATH = process.cwd()
+const SERVERPATH = path.join(ROOTPATH, 'server')
 
-if (IS_DEBUG) {
-  try { require('newrelic') } catch (err) {}
-}
+global.PROCNAME = 'SERVER'
+global.ROOTPATH = ROOTPATH
+global.SERVERPATH = SERVERPATH
+global.IS_DEBUG = process.env.NODE_ENV === 'development'
 
 process.env.VIPS_WARNING = false
 
@@ -57,13 +58,12 @@ const i18nextBackend = require('i18next-node-fs-backend')
 const i18nextMw = require('i18next-express-middleware')
 const passport = require('passport')
 const passportSocketIo = require('passport.socketio')
-const path = require('path')
 const session = require('express-session')
 const SessionMongoStore = require('connect-mongo')(session)
 const socketio = require('socket.io')
 
-var mw = autoload(path.join(ROOTPATH, '/middlewares'))
-var ctrl = autoload(path.join(ROOTPATH, '/controllers'))
+var mw = autoload(path.join(SERVERPATH, '/middlewares'))
+var ctrl = autoload(path.join(SERVERPATH, '/controllers'))
 
 // ----------------------------------------
 // Define Express App
@@ -141,7 +141,7 @@ lang
 // ----------------------------------------
 
 app.use(i18nextMw.handle(lang))
-app.set('views', path.join(ROOTPATH, 'views'))
+app.set('views', path.join(SERVERPATH, 'views'))
 app.set('view engine', 'pug')
 
 app.use(bodyParser.json())
@@ -241,7 +241,7 @@ io.on('connection', ctrl.ws)
 // Start child processes
 // ----------------------------------------
 
-let bgAgent = fork('agent.js')
+let bgAgent = fork(path.join(SERVERPATH, 'agent.js'))
 
 bgAgent.on('message', m => {
   if (!m.action) {

@@ -7,7 +7,7 @@
 // Licensed under AGPLv3
 // ===========================================
 
-const init = require('./init')
+const init = require('./server/init')
 
 require('yargs') // eslint-disable-line no-unused-expressions
   .usage('Usage: node $0 <cmd> [args]')

@@ -23,7 +23,7 @@ module.exports = {
     let self = this
     global.Mongoose = modb
 
-    let dbModelsPath = path.resolve(ROOTPATH, 'models')
+    let dbModelsPath = path.join(SERVERPATH, 'models')
 
     modb.Promise = require('bluebird')
 
