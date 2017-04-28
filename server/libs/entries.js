@@ -4,8 +4,8 @@ const Promise = require('bluebird')
 const path = require('path')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const _ = require('lodash')
-const crypto = require('crypto')
-const qs = require('querystring')
+
+const entryHelper = require('../helpers/entry')
 
 /**
  * Entries Model
@@ -25,6 +25,8 @@ module.exports = {
 
     self._repoPath = path.resolve(ROOTPATH, appconfig.paths.repo)
     self._cachePath = path.resolve(ROOTPATH, appconfig.paths.data, 'cache')
+    appdata.repoPath = self._repoPath
+    appdata.cachePath = self._cachePath
 
     return self
   },
@@ -61,7 +63,7 @@ module.exports = {
   fetch (entryPath) {
     let self = this
 
-    let cpath = self.getCachePath(entryPath)
+    let cpath = entryHelper.getCachePath(entryPath)
 
     return fs.statAsync(cpath).then((st) => {
       return st.isFile()
@@ -96,8 +98,8 @@ module.exports = {
   fetchOriginal (entryPath, options) {
     let self = this
 
-    let fpath = self.getFullPath(entryPath)
-    let cpath = self.getCachePath(entryPath)
+    let fpath = entryHelper.getFullPath(entryPath)
+    let cpath = entryHelper.getCachePath(entryPath)
 
     options = _.defaults(options, {
       parseMarkdown: true,
@@ -158,40 +160,17 @@ module.exports = {
   },
 
   /**
-   * Parse raw url path and make it safe
-   *
-   * @param      {String}  urlPath  The url path
-   * @return     {String}  Safe entry path
-   */
-  parsePath (urlPath) {
-    urlPath = qs.unescape(urlPath)
-    let wlist = new RegExp('(?!([^a-z0-9]|' + appdata.regex.cjk.source + '|[/-]))', 'g')
-
-    urlPath = _.toLower(urlPath).replace(wlist, '')
-
-    if (urlPath === '/') {
-      urlPath = 'home'
-    }
-
-    let urlParts = _.filter(_.split(urlPath, '/'), (p) => { return !_.isEmpty(p) })
-
-    return _.join(urlParts, '/')
-  },
-
-  /**
    * Gets the parent information.
    *
    * @param      {String}                 entryPath  The entry path
    * @return     {Promise<Object|False>}  The parent information.
    */
   getParentInfo (entryPath) {
-    let self = this
-
     if (_.includes(entryPath, '/')) {
       let parentParts = _.initial(_.split(entryPath, '/'))
       let parentPath = _.join(parentParts, '/')
       let parentFile = _.last(parentParts)
-      let fpath = self.getFullPath(parentPath)
+      let fpath = entryHelper.getFullPath(parentPath)
 
       return fs.statAsync(fpath).then((st) => {
         if (st.isFile()) {
@@ -214,37 +193,6 @@ module.exports = {
   },
 
   /**
-   * Gets the full original path of a document.
-   *
-   * @param      {String}  entryPath  The entry path
-   * @return     {String}  The full path.
-   */
-  getFullPath (entryPath) {
-    return path.join(this._repoPath, entryPath + '.md')
-  },
-
-  /**
-   * Gets the full cache path of a document.
-   *
-   * @param      {String}    entryPath  The entry path
-   * @return     {String}  The full cache path.
-   */
-  getCachePath (entryPath) {
-    return path.join(this._cachePath, crypto.createHash('md5').update(entryPath).digest('hex') + '.json')
-  },
-
-  /**
-   * Gets the entry path from full path.
-   *
-   * @param      {String}  fullPath  The full path
-   * @return     {String}  The entry path
-   */
-  getEntryPathFromFullPath (fullPath) {
-    let absRepoPath = path.resolve(ROOTPATH, this._repoPath)
-    return _.chain(fullPath).replace(absRepoPath, '').replace('.md', '').replace(new RegExp('\\\\', 'g'), '/').value()
-  },
-
-  /**
    * Update an existing document
    *
    * @param      {String}            entryPath  The entry path
@@ -254,7 +202,7 @@ module.exports = {
    */
   update (entryPath, contents, author) {
     let self = this
-    let fpath = self.getFullPath(entryPath)
+    let fpath = entryHelper.getFullPath(entryPath)
 
     return fs.statAsync(fpath).then((st) => {
       if (st.isFile()) {
@@ -385,8 +333,7 @@ module.exports = {
    * @return     {Promise<Boolean>}  True on success, false on failure
    */
   makePersistent (entryPath, contents, author) {
-    let self = this
-    let fpath = self.getFullPath(entryPath)
+    let fpath = entryHelper.getFullPath(entryPath)
 
     return fs.outputFileAsync(fpath, contents).then(() => {
       return git.commitDocument(entryPath, author)
@@ -412,7 +359,7 @@ module.exports = {
       return git.commitDocument(newEntryPath, author).then(() => {
         // Delete old cache version
 
-        let oldEntryCachePath = self.getCachePath(entryPath)
+        let oldEntryCachePath = entryHelper.getCachePath(entryPath)
         fs.unlinkAsync(oldEntryCachePath).catch((err) => { return true }) // eslint-disable-line handle-callback-err
 
         // Delete old index entry
@@ -437,7 +384,7 @@ module.exports = {
   getStarter (entryPath) {
     let formattedTitle = _.startCase(_.last(_.split(entryPath, '/')))
 
-    return fs.readFileAsync(path.join(ROOTPATH, 'client/content/create.md'), 'utf8').then((contents) => {
+    return fs.readFileAsync(path.join(SERVERPATH, 'app/content/create.md'), 'utf8').then((contents) => {
       return _.replace(contents, new RegExp('{TITLE}', 'g'), formattedTitle)
     })
   },

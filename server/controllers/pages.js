@@ -4,6 +4,8 @@ const express = require('express')
 const router = express.Router()
 const _ = require('lodash')
 
+const entryHelper = require('../helpers/entry')
+
 // ==========================================
 // EDIT MODE
 // ==========================================
@@ -16,7 +18,7 @@ router.get('/edit/*', (req, res, next) => {
     return res.render('error-forbidden')
   }
 
-  let safePath = entries.parsePath(_.replace(req.path, '/edit', ''))
+  let safePath = entryHelper.parsePath(_.replace(req.path, '/edit', ''))
 
   entries.fetchOriginal(safePath, {
     parseMarkdown: false,
@@ -48,7 +50,7 @@ router.put('/edit/*', (req, res, next) => {
     })
   }
 
-  let safePath = entries.parsePath(_.replace(req.path, '/edit', ''))
+  let safePath = entryHelper.parsePath(_.replace(req.path, '/edit', ''))
 
   entries.update(safePath, req.body.markdown, req.user).then(() => {
     return res.json({
@@ -78,7 +80,7 @@ router.get('/create/*', (req, res, next) => {
     })
   }
 
-  let safePath = entries.parsePath(_.replace(req.path, '/create', ''))
+  let safePath = entryHelper.parsePath(_.replace(req.path, '/create', ''))
 
   entries.exists(safePath).then((docExists) => {
     if (!docExists) {
@@ -116,7 +118,7 @@ router.put('/create/*', (req, res, next) => {
     })
   }
 
-  let safePath = entries.parsePath(_.replace(req.path, '/create', ''))
+  let safePath = entryHelper.parsePath(_.replace(req.path, '/create', ''))
 
   entries.create(safePath, req.body.markdown, req.user).then(() => {
     return res.json({
@@ -153,7 +155,7 @@ router.use((req, res, next) => {
  * View source of a document
  */
 router.get('/source/*', (req, res, next) => {
-  let safePath = entries.parsePath(_.replace(req.path, '/source', ''))
+  let safePath = entryHelper.parsePath(_.replace(req.path, '/source', ''))
 
   entries.fetchOriginal(safePath, {
     parseMarkdown: false,
@@ -181,7 +183,7 @@ router.get('/source/*', (req, res, next) => {
  * View document
  */
 router.get('/*', (req, res, next) => {
-  let safePath = entries.parsePath(req.path)
+  let safePath = entryHelper.parsePath(req.path)
 
   entries.fetch(safePath).then((pageData) => {
     if (pageData) {
@@ -221,7 +223,7 @@ router.put('/*', (req, res, next) => {
     })
   }
 
-  let safePath = entries.parsePath(req.path)
+  let safePath = entryHelper.parsePath(req.path)
 
   if (_.isEmpty(req.body.move)) {
     return res.json({
@@ -230,7 +232,7 @@ router.put('/*', (req, res, next) => {
     })
   }
 
-  let safeNewPath = entries.parsePath(req.body.move)
+  let safeNewPath = entryHelper.parsePath(req.body.move)
 
   entries.move(safePath, safeNewPath, req.user).then(() => {
     res.json({

@@ -45,6 +45,8 @@ const fs = Promise.promisifyAll(require('fs-extra'))
 const klaw = require('klaw')
 const Cron = require('cron').CronJob
 
+const entryHelper = require('./helpers/entry')
+
 // ----------------------------------------
 // Start Cron
 // ----------------------------------------
@@ -94,8 +96,8 @@ db.onReady.then(() => {
 
         klaw(repoPath).on('data', function (item) {
           if (path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
-            let entryPath = entries.parsePath(entries.getEntryPathFromFullPath(item.path))
-            let cachePath = entries.getCachePath(entryPath)
+            let entryPath = entryHelper.parsePath(entryHelper.getEntryPathFromFullPath(item.path))
+            let cachePath = entryHelper.getCachePath(entryPath)
 
             // -> Purge outdated cache
 
