@@ -2,7 +2,7 @@
 # Wiki.js - CONFIGURATION                                             #
 #######################################################################
 # Full explanation + examples in the documentation:
-# https://wiki.requarks.io/install
+# https://docs.requarks.io/wiki/install
 
 # ---------------------------------------------------------------------
 # Title of this site
@@ -43,7 +43,7 @@ uploads:
 # ---------------------------------------------------------------------
 # Site Language
 # ---------------------------------------------------------------------
-# Possible values: en, fr
+# Possible values: en, de, es, fr, ko, pt or ru
 
 lang: en
 

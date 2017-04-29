@@ -131,7 +131,7 @@ lang
     preload: ['en', 'fr'],
     fallbackLng: 'en',
     backend: {
-      loadPath: './locales/{{lng}}/{{ns}}.json'
+      loadPath: path.join(SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
     }
   })
 
