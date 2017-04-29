@@ -112,7 +112,6 @@
     "serve-favicon": "^2.4.2",
     "simplemde": "^1.11.2",
     "socket.io": "^1.7.3",
-    "sticky-js": "^1.0.7",
     "stopword": "^0.1.1",
     "stream-to-promise": "^2.2.0",
     "tar": "^2.2.1",

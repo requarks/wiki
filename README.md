@@ -7,6 +7,7 @@
 [![Chat on Gitter](https://img.shields.io/badge/chat-on_gitter-CC2B5E.svg?style=flat-square&logo=image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAOCAMAAADUg/YpAAAABlBMVEUAAAD///%2Bl2Z/dAAAAAXRSTlMAQObYZgAAABVJREFUeAFjwAUYYTQByAAh0WicAAAFnwAYeB5bLwAAAABJRU5ErkJggg==)](https://gitter.im/Requarks/wiki)
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat-square)](https://twitter.com/requarks)  
 [![Build Status](https://img.shields.io/travis/Requarks/wiki/master.svg?style=flat-square)](https://travis-ci.org/Requarks/wiki)
+[![Codefresh Build Status]( https://g.codefresh.io/api/badges/build?repoOwner=Requarks&repoName=wiki&branch=master&pipelineName=wiki&accountName=NGPixel&type=cf-1)](https://g.codefresh.io/repositories/Requarks/wiki/builds?filter=trigger:build;branch:master;service:5903d09d270a090001e864b6~wiki)
 [![Codacy Badge](https://img.shields.io/codacy/grade/1d0217a3153c4595bdedb322263e55c8/master.svg?style=flat-square)](https://www.codacy.com/app/Requarks/wiki)
 [![Dependency Status](https://img.shields.io/gemnasium/Requarks/wiki.svg?style=flat-square)](https://gemnasium.com/github.com/Requarks/wiki)
 [![Known Vulnerabilities](https://snyk.io/test/github/requarks/wiki/badge.svg?style=flat-square)](https://snyk.io/test/github/requarks/wiki)

@@ -1,0 +1,15 @@
+version: '3'
+services:
+  wikidb:
+    image: mongo
+    ports:
+      - '27017'
+    command: '--smallfiles --logpath=/dev/null'
+  wikijs:
+    image: 'requarks/wiki:master'
+    links:
+      - wikidb
+    ports:
+      - '3000'
+    environment:
+      - PORT: 3000
