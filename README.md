@@ -50,10 +50,14 @@ Current and upcoming milestones *(features only, see the [changelog](https://git
 - [x] Azure AD authentication
 - [x] MathML / Tex math equations
 - [x] Support for CJK (Chinese, Japanese & Korean) characters in content, meta and uploads
-- [ ] All Pages section
-- [ ] Heroku support
+- [x] All Pages section
 
 ### Beta 12
+
+- [ ] Docker support + Auto compile/publish to Docker Hub
+- [ ] Heroku support
+
+### Beta 13
 
 - [ ] Insert Link modal in Editor
 - [ ] Better localization in the UI

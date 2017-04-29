@@ -2,18 +2,19 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [v1.0.0-beta.11] - 2017-04-29
 ### Added
 - **Auth**: Azure AD authentication provider is now available
 - **Auth**: Can now specify Read Access by default for all providers (except Local)
-- **View**: MathML and TeX math equations support
 - **Configuration Wizard**: Added Public Access option
-- **Misc**: Heroku support
+- **Git**: Commits author is now set to current user
 - **Navigation**: All Pages section
 - **UI**: Beatiful new logo!
+- **View**: MathML and TeX math equations support
 
 ### Changed
 - **Auth**: Provider Strategies are now only loaded if enabled
+- **Misc**: Server files are now in their own /server path
 - **Misc**: Trailing slashes in URL are now removed
 - **Misc**: Updated dependencies
 - **UI**: Footer is now always at the bottom of the page (but not fixed)
