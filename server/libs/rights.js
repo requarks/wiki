@@ -58,15 +58,15 @@ module.exports = {
     let rt = []
     let p = _.chain(req.originalUrl).toLower().trim().value()
 
-    // Load User Rights
+    // Load user rights
 
     if (_.isArray(req.user.rights)) {
       rt = req.user.rights
     }
 
-    // Is admin?
+    // Check rights
 
-    if (_.find(rt, { role: 'admin' })) {
+    if (self.checkRole(p, rt, 'admin')) {
       perm.read = true
       perm.write = true
       perm.manage = true
@@ -89,6 +89,8 @@ module.exports = {
    * @return     {boolean}        True if authorized
    */
   checkRole (p, rt, role) {
+    if (_.find(rt, { role: 'admin' })) { return true }
+
     // Check specific role on path
 
     let filteredRights = _.filter(rt, (r) => {

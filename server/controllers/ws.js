@@ -25,7 +25,7 @@ module.exports = (socket) => {
   if (socket.request.user.logged_in) {
     socket.on('treeFetch', (data, cb) => {
       cb = cb || _.noop
-      entries.getFromTree(data.basePath).then((f) => {
+      entries.getFromTree(data.basePath, socket.request.user).then((f) => {
         return cb(f) || true
       })
     })

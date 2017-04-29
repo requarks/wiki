@@ -300,10 +300,10 @@ module.exports = {
   /**
    * Create a new document
    *
-   * @param      {String}            entryPath  The entry path
-   * @param      {String}            contents   The markdown-formatted contents
+   * @param {String} entryPath The entry path
+   * @param {String}  contents The markdown-formatted contents
    * @param {Object} author The author user object
-   * @return     {Promise<Boolean>}  True on success, false on failure
+   * @return {Promise<Boolean>} True on success, false on failure
    */
   create (entryPath, contents, author) {
     let self = this
@@ -327,10 +327,10 @@ module.exports = {
   /**
    * Makes a document persistent to disk and git repository
    *
-   * @param      {String}            entryPath  The entry path
-   * @param      {String}            contents   The markdown-formatted contents
+   * @param {String} entryPath The entry path
+   * @param {String} contents The markdown-formatted contents
    * @param {Object} author The author user object
-   * @return     {Promise<Boolean>}  True on success, false on failure
+   * @return {Promise<Boolean>} True on success, false on failure
    */
   makePersistent (entryPath, contents, author) {
     let fpath = entryHelper.getFullPath(entryPath)
@@ -343,10 +343,10 @@ module.exports = {
   /**
    * Move a document
    *
-   * @param      {String}   entryPath     The current entry path
-   * @param      {String}   newEntryPath  The new entry path
+   * @param {String} entryPath The current entry path
+   * @param {String} newEntryPath  The new entry path
    * @param {Object} author The author user object
-   * @return     {Promise}  Promise of the operation
+   * @return {Promise} Promise of the operation
    */
   move (entryPath, newEntryPath, author) {
     let self = this
@@ -393,9 +393,15 @@ module.exports = {
    * Get all entries from base path
    *
    * @param {String} basePath Path to list from
+   * @param {Object} usr Current user
    * @return {Promise<Array>} List of entries
    */
-  getFromTree (basePath) {
-    return db.Entry.find({ parentPath: basePath }, 'title parentPath isDirectory isEntry').sort({ title: 'asc' })
+  getFromTree (basePath, usr) {
+    return db.Entry.find({ parentPath: basePath }, 'title parentPath isDirectory isEntry').sort({ title: 'asc' }).then(results => {
+      return _.filter(results, r => {
+        console.log(r._id, rights.checkRole(r._id, usr.rights, 'read'))
+        return rights.checkRole('/' + r._id, usr.rights, 'read')
+      })
+    })
   }
 }
