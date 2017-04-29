@@ -7,6 +7,8 @@ const fs = Promise.promisifyAll(require('fs'))
 const _ = require('lodash')
 const URL = require('url')
 
+const securityHelper = require('../helpers/security')
+
 /**
  * Git Model
  */
@@ -207,7 +209,8 @@ module.exports = {
       commitMsg = (isTracked) ? 'Updated ' + gitFilePath : 'Added ' + gitFilePath
       return self._git.add(gitFilePath)
     }).then(() => {
-      return self._git.exec('commit', ['-m', commitMsg, '--author="' + author.name + ' <' + author.email + '>"']).catch((err) => {
+      let commitUsr = securityHelper.sanitizeCommitUser(author)
+      return self._git.exec('commit', ['-m', commitMsg, '--author="' + commitUsr.name + ' <' + commitUsr.email + '>"']).catch((err) => {
         if (_.includes(err.stdout, 'nothing to commit')) { return true }
       })
     })
