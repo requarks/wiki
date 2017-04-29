@@ -193,13 +193,13 @@ module.exports = (port, spinner) => {
       },
       () => {
         if (req.body.gitUseRemote === false) { return false }
-        return exec.stdout('git', ['config', '--local', 'user.name', req.body.gitSignatureName], { cwd: gitDir }).then(result => {
+        return exec.stdout('git', ['config', '--local', 'user.name', 'Wiki'], { cwd: gitDir }).then(result => {
           return 'Git Signature Name has been set successfully.'
         })
       },
       () => {
         if (req.body.gitUseRemote === false) { return false }
-        return exec.stdout('git', ['config', '--local', 'user.email', req.body.gitSignatureEmail], { cwd: gitDir }).then(result => {
+        return exec.stdout('git', ['config', '--local', 'user.email', req.body.gitServerEmail], { cwd: gitDir }).then(result => {
           return 'Git Signature Name has been set successfully.'
         })
       },
@@ -340,10 +340,8 @@ module.exports = (port, spinner) => {
               privateKey: req.body.gitAuthSSHKey,
               sslVerify: (req.body.gitAuthSSL === true)
             },
-            signature: {
-              name: req.body.gitSignatureName,
-              email: req.body.gitSignatureEmail
-            }
+            showUserEmail: (req.body.gitShowUserEmail === true),
+            serverEmail: req.body.gitServerEmail
           }
         }
         return crypto.randomBytesAsync(32).then(buf => {

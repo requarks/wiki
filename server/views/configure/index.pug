@@ -264,16 +264,16 @@ html(data-logic='configure')
                         input(type='text', placeholder='e.g. /etc/wiki/keys/git.pem', v-model='conf.gitAuthSSHKey')
                         span.desc The full path to the private key on disk.
                   section.columns
+                    .column.is-one-third
+                      p.control.is-fullwidth
+                        input#ipt-git-show-user-email(type='checkbox', v-model='conf.gitShowUserEmail')
+                        label.label(for='ipt-git-show-user-email') Commit using User Email
+                        span.desc When enabled, commits are made as the current user name and email. If unchecked, the current user name will still be used but the default commit author email will be used instead.
                     .column
                       p.control.is-fullwidth
-                        label.label Sync User Name
-                        input(type='text', placeholder='e.g. John Smith', v-model.number='conf.gitSignatureName', data-vv-scope='git', name='ipt-gitsigname', v-validate='{ required: true }')
-                        span.desc The name to use when pushing commits to the git repository.
-                    .column
-                      p.control.is-fullwidth
-                        label.label Sync User Email
-                        input(type='text', placeholder='e.g. user@example.com', v-model.number='conf.gitSignatureEmail', data-vv-scope='git', name='ipt-gitsigemail', v-validate='{ required: true, email: true }')
-                        span.desc The email to use when pushing commits to the git repository.
+                        label.label Default Commit Author Email
+                        input(type='text', placeholder='e.g. user@example.com', v-model.number='conf.gitServerEmail', data-vv-scope='git', name='ipt-gitsrvemail', v-validate='{ required: true, email: true }')
+                        span.desc The default/fallback email to use when creating commits to the git repository.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-light-blue.is-outlined(v-on:click='proceedToPaths', v-bind:disabled='loading') Back

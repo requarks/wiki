@@ -61,8 +61,8 @@ jQuery(document).ready(function ($) {
         gitAuthUser: '',
         gitAuthPass: '',
         gitAuthSSL: true,
-        gitSignatureName: '',
-        gitSignatureEmail: '',
+        gitShowUserEmail: true,
+        gitServerEmail: '',
         adminEmail: '',
         adminPassword: '',
         adminPasswordConfirm: ''
@@ -119,16 +119,14 @@ jQuery(document).ready(function ($) {
       if (appconfig.git !== false && _.isPlainObject(appconfig.git)) {
         this.conf.gitUrl = appconfig.git.url || ''
         this.conf.gitBranch = appconfig.git.branch || 'master'
+        this.conf.gitShowUserEmail = (appconfig.git.showUserEmail !== false)
+        this.conf.gitServerEmail = appconfig.git.serverEmail || ''
         if (_.isPlainObject(appconfig.git.auth)) {
           this.conf.gitAuthType = appconfig.git.auth.type || 'ssh'
           this.conf.gitAuthSSHKey = appconfig.git.auth.privateKey || ''
           this.conf.gitAuthUser = appconfig.git.auth.username || ''
           this.conf.gitAuthPass = appconfig.git.auth.password || ''
           this.conf.gitAuthSSL = (appconfig.git.auth.sslVerify !== false)
-        }
-        if (_.isPlainObject(appconfig.git.signature)) {
-          this.conf.gitSignatureName = appconfig.git.signature.name || ''
-          this.conf.gitSignatureEmail = appconfig.git.signature.email || ''
         }
       }
     },
