@@ -1,10 +1,16 @@
 'use strict'
 
+/* global appconfig, rights */
 /* eslint-disable standard/no-callback-literal */
 
 const _ = require('lodash')
 
 module.exports = (socket) => {
+  // Check if Guest
+  if (!socket.request.user.logged_in) {
+    socket.request.user = _.assign(rights.guest, socket.request.user)
+  }
+
   // -----------------------------------------
   // SEARCH
   // -----------------------------------------
@@ -22,7 +28,7 @@ module.exports = (socket) => {
   // TREE VIEW (LIST ALL PAGES)
   // -----------------------------------------
 
-  if (socket.request.user.logged_in) {
+  if (appconfig.public || socket.request.user.logged_in) {
     socket.on('treeFetch', (data, cb) => {
       cb = cb || _.noop
       entries.getFromTree(data.basePath, socket.request.user).then((f) => {

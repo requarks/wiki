@@ -92,14 +92,14 @@ require('./libs/auth')(passport)
 global.rights = require('./libs/rights')
 rights.init()
 
-var sessionStore = new SessionMongoStore({
+let sessionStore = new SessionMongoStore({
   mongooseConnection: db.connection,
   touchAfter: 15
 })
 
 app.use(cookieParser())
 app.use(session({
-  name: 'requarkswiki.sid',
+  name: 'wikijs.sid',
   store: sessionStore,
   secret: appconfig.sessionSecret,
   resave: false,
@@ -221,16 +221,15 @@ server.on('listening', () => {
 // ----------------------------------------
 
 io.use(passportSocketIo.authorize({
-  key: 'requarkswiki.sid',
+  key: 'wikijs.sid',
   store: sessionStore,
   secret: appconfig.sessionSecret,
-  passport,
   cookieParser,
   success: (data, accept) => {
     accept()
   },
   fail: (data, message, error, accept) => {
-    return accept(new Error(message))
+    accept()
   }
 }))
 

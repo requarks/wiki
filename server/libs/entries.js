@@ -399,7 +399,6 @@ module.exports = {
   getFromTree (basePath, usr) {
     return db.Entry.find({ parentPath: basePath }, 'title parentPath isDirectory isEntry').sort({ title: 'asc' }).then(results => {
       return _.filter(results, r => {
-        console.log(r._id, rights.checkRole(r._id, usr.rights, 'read'))
         return rights.checkRole('/' + r._id, usr.rights, 'read')
       })
     })
