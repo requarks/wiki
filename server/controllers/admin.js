@@ -190,6 +190,12 @@ router.post('/users/:id', (req, res) => {
     } else {
       return usr.save()
     }
+  }).then((usr) => {
+    // Update guest rights for future requests
+    if (usr.provider === 'local' && usr.email === 'guest') {
+      rights.guest = usr
+    }
+    return usr
   }).then(() => {
     return res.json({ msg: 'OK' })
   }).catch((err) => {
