@@ -13,7 +13,7 @@ module.exports = {
    * Detect the most appropriate start mode
    */
   startDetect: function () {
-    if (!process.env.IS_HEROKU) {
+    if (process.env.IS_HEROKU) {
       return this.startInHerokuMode()
     } else {
       return this.startInBackgroundMode()
