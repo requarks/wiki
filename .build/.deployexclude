@@ -12,4 +12,7 @@ test
 *.tar.gz
 *.zip
 config.yml
+docker-compose.yml
+Dockerfile
 fuse.js
+yarn.lock
