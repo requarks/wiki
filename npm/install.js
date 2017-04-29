@@ -136,7 +136,11 @@ const tasks = {
       // Is New Install
       if (err.code === 'ENOENT') {
         ora.text = 'First-time install, creating a new config.yml...'
-        return fs.copyAsync(path.join(installDir, 'config.sample.yml'), path.join(installDir, 'config.yml')).then(() => {
+        let sourceConfigFile = 'config.sample.yml'
+        if (process.env.WIKI_JS_DOCKER) {
+          sourceConfigFile = 'config.docker.yml'
+        }
+        return fs.copyAsync(path.join(installDir, sourceConfigFile), path.join(installDir, 'config.yml')).then(() => {
           ora.succeed('Installation succeeded.')
           return true
         })
@@ -146,7 +150,7 @@ const tasks = {
     })
   },
   startConfigurationWizard () {
-    if (process.stdout.isTTY) {
+    if (process.stdout.isTTY && !process.env.WIKI_JS_DOCKER) {
       inquirer.prompt([{
         type: 'list',
         name: 'action',
@@ -205,7 +209,7 @@ const tasks = {
 // INSTALL SEQUENCE
 // =====================================================
 
-if (!process.env.IS_HEROKU) {
+if (!process.env.IS_HEROKU && !process.env.WIKI_JS_DOCKER) {
   console.info(colors.yellow(
     ' __    __ _ _    _    _     \n' +
     '/ / /\\ \\ (_) | _(_)  (_)___ \n' +
