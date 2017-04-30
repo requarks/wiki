@@ -1,6 +1,9 @@
 language: node_js
 node_js:
 - '7'
+branches:
+  except:
+    - docker
 addons:
   apt:
     sources:
