@@ -65,7 +65,7 @@ block content
             .sidebar-label
               span Page Contents
             ul.sidebar-menu
-              li: a(href='#root', title='Top of Page')
+              li.is-hidden-until-scroll: a(href='#root', title='Top of Page')
                 i.icon-arrow-up2
               +tocMenu(pageData.tree)
 
