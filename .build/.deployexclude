@@ -1,5 +1,4 @@
-client/js
-client/scss
+client
 coverage
 data
 logs

@@ -253,6 +253,30 @@ module.exports = {
         if (_.includes(err.stdout, 'nothing to commit')) { return true }
       })
     })
+  },
+
+  getHistory (entryPath) {
+    let self = this
+    let gitFilePath = entryPath + '.md'
+
+    return self._git.exec('log', ['-n', '25', '--format=format:%H %h %cI %cE %cN', '--', gitFilePath]).then((cProc) => {
+      let out = cProc.stdout.toString()
+      if (_.includes(out, 'fatal')) {
+        let errorMsg = _.capitalize(_.head(_.split(_.replace(out, 'fatal: ', ''), ',')))
+        throw new Error(errorMsg)
+      }
+      let hist = _.chain(out).split('\n').map(h => {
+        let hParts = h.split(' ', 4)
+        return {
+          commit: hParts[0],
+          commitAbbr: hParts[1],
+          date: hParts[2],
+          email: hParts[3],
+          name: hParts[4]
+        }
+      }).value()
+      return hist
+    })
   }
 
 }

@@ -180,6 +180,27 @@ router.get('/source/*', (req, res, next) => {
 })
 
 /**
+ * View history of a document
+ */
+router.get('/hist/*', (req, res, next) => {
+  let safePath = entryHelper.parsePath(_.replace(req.path, '/hist', ''))
+
+  entries.getHistory(safePath).then((pageData) => {
+    if (pageData) {
+      res.render('pages/history', { pageData })
+    } else {
+      throw new Error('Invalid page path.')
+    }
+    return true
+  }).catch((err) => {
+    res.render('error', {
+      message: err.message,
+      error: {}
+    })
+  })
+})
+
+/**
  * View document
  */
 router.get('/*', (req, res, next) => {

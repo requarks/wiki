@@ -19,7 +19,7 @@ $(() => {
     offset: -50
   })
 
-  $('.stickyscroll').sticky({ topSpacing: 15 })
+  $('.stickyscroll').sticky({ topSpacing: 15, bottomSpacing: 75 })
 
   // ====================================
   // Notifications
@@ -58,5 +58,6 @@ $(() => {
   require('./pages/create.js')(alerts, socket)
   require('./pages/edit.js')(alerts, socket)
   require('./pages/source.js')(alerts)
+  require('./pages/history.js')(alerts)
   require('./pages/admin.js')(alerts)
 })

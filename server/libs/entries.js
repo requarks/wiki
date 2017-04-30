@@ -402,5 +402,17 @@ module.exports = {
         return rights.checkRole('/' + r._id, usr.rights, 'read')
       })
     })
+  },
+
+  getHistory (entryPath) {
+    return db.Entry.findOne({ _id: entryPath, isEntry: true }).then(entry => {
+      if (!entry) { return false }
+      return git.getHistory(entryPath).then(history => {
+        return {
+          meta: entry,
+          history
+        }
+      })
+    })
   }
 }

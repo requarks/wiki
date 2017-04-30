@@ -45,6 +45,21 @@
 					transition: all .4s ease;
 					line-height: 14px;
 
+          &.is-multiline {
+            flex-wrap: wrap;
+          }
+
+          &.is-active {
+            border-left: 5px solid mc('blue', '500');
+            color: mc('blue', '300');
+            padding-left: 15px;
+
+            .is-small {
+              color: mc('blue', '500');
+            }
+
+          }
+
 					i {
 						margin-right: 7px;
 						color: mc('blue-grey', '300');
@@ -54,6 +69,13 @@
 						color: mc('blue-grey', '400');
 						text-decoration: none;
 					}
+
+          .is-small {
+            flex: 1 0 100%;
+            display: block;
+            font-size: 11px;
+            color: rgba(255,255,255,.5)
+          }
 
 				}
 
