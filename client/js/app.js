@@ -15,8 +15,8 @@ $(() => {
   // ====================================
 
   $('a').smoothScroll({
-    speed: 400,
-    offset: -70
+    speed: 500,
+    offset: -50
   })
 
   $('.stickyscroll').sticky({ topSpacing: 15 })
