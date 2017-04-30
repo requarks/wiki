@@ -7,7 +7,7 @@ import _ from 'lodash'
 import io from 'socket.io-client'
 import Alerts from './components/alerts.js'
 import 'jquery-smooth-scroll'
-import Sticky from 'sticky-js'
+import 'jquery-sticky'
 
 $(() => {
   // ====================================
@@ -19,7 +19,7 @@ $(() => {
     offset: -70
   })
 
-  var sticky = new Sticky('.stickyscroll') // eslint-disable-line no-unused-vars
+  $('.stickyscroll').sticky({ topSpacing: 15 })
 
   // ====================================
   // Notifications
