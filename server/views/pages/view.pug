@@ -18,6 +18,9 @@ block rootNavRight
     a.button.is-outlined(href='/source/' + pageData.meta.path)
       i.icon-loader
       span Source
+    a.button.is-outlined(href='/diff/' + pageData.meta.path)
+      i.icon-flow-merge
+      span Diff
     if rights.write
       a.button(href='/edit/' + pageData.meta.path)
         i.icon-document-text

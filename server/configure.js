@@ -221,8 +221,8 @@ module.exports = (port, spinner) => {
       },
       () => {
         if (req.body.gitUseRemote === false) { return false }
-        return exec.stdout('git', ['remote', 'remove', 'origin'], { cwd: gitDir }).catch(err => {
-          if (_.includes(err.message, 'No such remote')) {
+        return exec.stdout('git', ['remote', 'rm', 'origin'], { cwd: gitDir }).catch(err => {
+          if (_.includes(err.message, 'No such remote') || _.includes(err.message, 'Could not remove')) {
             return true
           } else {
             throw err

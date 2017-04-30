@@ -52,6 +52,7 @@
     "connect-mongo": "^1.3.2",
     "cookie-parser": "^1.4.3",
     "cron": "^1.2.1",
+    "diff2html": "^2.3.0",
     "execa": "^0.6.3",
     "express": "^4.15.2",
     "express-brute": "^1.0.1",
