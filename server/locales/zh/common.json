@@ -1,1 +1,11 @@
-{ }
+{
+  "wiki": "维基",
+  "headers": {
+    "overview": "总览"
+  },
+  "footer": {
+    "poweredby": "Powered by",
+    "home": "首页",
+    "top": "返回顶部"
+  }
+}
