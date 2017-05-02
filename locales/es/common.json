@@ -1,0 +1,11 @@
+{
+  "wiki": "Wiki",
+  "headers": {
+    "overview": "Información General"
+  },
+  "footer": {
+    "poweredby": "Energizado por",
+    "home": "Casa",
+    "top": "Volver a la cima"
+  }
+}
