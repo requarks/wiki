@@ -110,7 +110,7 @@ const parseTree = (content) => {
     if (heading.type === 'inline') {
       let content = ''
       let anchor = ''
-      if (heading.children && heading.children[0].type === 'link_open') {
+      if (heading.children && heading.children.length > 0 && heading.children[0].type === 'link_open') {
         content = heading.children[1].content
         anchor = _.kebabCase(content)
       } else {

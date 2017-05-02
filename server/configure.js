@@ -102,7 +102,7 @@ module.exports = (port, spinner) => {
       },
       () => {
         const os = require('os')
-        if (os.totalmem() < 1024 * 1024 * 768) {
+        if (os.totalmem() < 1000 * 1000 * 768) {
           throw new Error('Not enough memory. Minimum is 768 MB.')
         }
         return _.round(os.totalmem() / (1024 * 1024)) + ' MB of system memory available. Minimum is 768 MB.'
