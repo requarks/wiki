@@ -22,6 +22,7 @@
 - [Feature Requests](https://wikijs.canny.io/features)
 - [Milestones](#milestones)
 - [Chat with us](#gitter)
+- [Translations](#translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
 
 ## Documentation
