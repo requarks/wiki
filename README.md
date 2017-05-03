@@ -74,6 +74,16 @@ Want to discuss features, ideas or issues? Join our [gitter channel](https://git
 Follow our Twitter feed to learn about upcoming updates and new releases!  
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat-square)](https://twitter.com/requarks)  
 
+## Translations
+
+We are looking for translators to make Wiki.js available in multiple languages. If your language is not listed below and would like to contribute to this project, contact us on our [gitter channel](https://gitter.im/Requarks/wiki) and we'll provide you with the necessary tool to add translations, no coding required!
+
+**Languages that are already translated:**
+
+- [x] English
+- [x] French
+- [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
+
 ## Special Thanks
 
 ![Browserstack](https://wiki.js.org/assets/images/logo_browserstack.png)  
