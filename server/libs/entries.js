@@ -212,7 +212,7 @@ module.exports = {
           })
         })
       } else {
-        return Promise.reject(new Error(lang.t('errors:notexist', { path: entryPath }))
+        return Promise.reject(new Error(lang.t('errors:notexist', { path: entryPath })))
       }
     }).catch((err) => {
       winston.error(err)
