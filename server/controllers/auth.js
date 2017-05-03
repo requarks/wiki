@@ -20,8 +20,8 @@ const bruteforce = new ExpressBrute(EBstore, {
   failCallback (req, res, next, nextValidRequestDate) {
     req.flash('alert', {
       class: 'error',
-      title: 'Too many attempts!',
-      message: "You've made too many failed attempts in a short period of time, please try again " + moment(nextValidRequestDate).fromNow() + '.',
+      title: lang.t('auth:errors.toomanyattempts'),
+      message: lang.t('auth:errors.toomanyattemptsmsg', { time: moment(nextValidRequestDate).fromNow() }),
       iconClass: 'fa-times'
     })
     res.redirect('/login')
@@ -71,13 +71,13 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
     // LOGIN FAIL
     if (err.message === 'INVALID_LOGIN') {
       req.flash('alert', {
-        title: 'Invalid login',
-        message: 'The email or password is invalid.'
+        title: lang.t('auth:errors.invalidlogin'),
+        message: lang.t('auth:errors.invalidloginmsg')
       })
       return res.redirect('/login')
     } else {
       req.flash('alert', {
-        title: 'Login error',
+        title: lang.t('auth:errors.loginerror'),
         message: err.message
       })
       return res.redirect('/login')

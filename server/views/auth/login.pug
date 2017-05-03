@@ -26,7 +26,7 @@ html(data-logic='login')
         div(style='background-image:url(/images/bg_' + bg + '.jpg);')
     #root
       h1= appconfig.title
-      h2 Login required
+      h2= t('auth:loginrequired')
       if appflash.length > 0
         h3
           i.icon-warning-outline
@@ -34,39 +34,39 @@ html(data-logic='login')
         h4= appflash[0].message
       if appconfig.auth.local.enabled
         form(method='post', action='/login')
-          input#login-user(type='text', name='email', placeholder='Email / Username')
-          input#login-pass(type='password', name='password', placeholder='Password')
-          button(type='submit') Log In
+          input#login-user(type='text', name='email', placeholder=t('auth:fields.emailuser'))
+          input#login-pass(type='password', name='password', placeholder=t('auth:fields.password'))
+          button(type='submit')= t('auth:actions.login')
       if appconfig.authStrategies.socialEnabled
         #social
           if appconfig.auth.local.enabled
-            span Or, log in using...
+            span= t('auth:loginusingalt')
           else
-            span Log in using...
+            span= t('auth:loginusing')
           if appconfig.auth.microsoft && appconfig.auth.microsoft.enabled
             button.ms(onclick='window.location.assign("/login/ms")')
               i.icon-windows2
-              span Microsoft Account
+              span= t('auth:providers.windowslive')
           if appconfig.auth.azure && appconfig.auth.azure.enabled
             button.ms(onclick='window.location.assign("/login/azure")')
               i.icon-windows2
-              span Azure AD
+              span= t('auth:providers.azure')
           if appconfig.auth.google && appconfig.auth.google.enabled
             button.google(onclick='window.location.assign("/login/google")')
               i.icon-google
-              span Google ID
+              span= t('auth:providers.google')
           if appconfig.auth.facebook && appconfig.auth.facebook.enabled
             button.facebook(onclick='window.location.assign("/login/facebook")')
               i.icon-facebook
-              span Facebook
+              span= t('auth:providers.facebook')
           if appconfig.auth.github && appconfig.auth.github.enabled
             button.github(onclick='window.location.assign("/login/github")')
               i.icon-github
-              span GitHub
+              span= t('auth:providers.github')
           if appconfig.auth.slack && appconfig.auth.slack.enabled
             button.slack(onclick='window.location.assign("/login/slack")')
               i.icon-slack
-              span Slack
+              span= t('auth:providers.slack')
     #copyright
       = t('footer.poweredby') + ' '
       a.icon(href='https://github.com/Requarks/wiki')

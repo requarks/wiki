@@ -1,0 +1,19 @@
+{
+  "generic": "Oops, something went wrong",
+  "notexistdetail": "Would you like to create this entry?",
+  "forbidden": "Forbidden",
+  "forbiddendetail": "Sorry, you don't have the necessary permissions to access this page.",
+  "unauthorized": "Unauthorized",
+  "debugmsg": "Detailed debug trail",
+  "invalidaction": "Invalid Action.",
+  "invalidpath": "Invalid page path.",
+  "invaliduserid": "Invalid User Id",
+  "reservedname": "You cannot create a document with this name as it is reserved by the system.",
+  "alreadyexists": "This entry already exists!",
+  "starterfailed": "Could not load starter content!",
+  "actions": {
+    "create": "Create",
+    "gohome": "Go Home",
+    "loginas": "Login as..."
+  }
+}

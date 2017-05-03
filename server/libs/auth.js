@@ -16,7 +16,7 @@ module.exports = function (passport) {
       if (user) {
         done(null, user)
       } else {
-        done(new Error('User not found.'), null)
+        done(new Error(lang.t('auth:errors:usernotfound')), null)
       }
       return true
     }).catch((err) => {
