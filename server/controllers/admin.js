@@ -167,11 +167,11 @@ router.post('/users/create', (req, res) => {
 
 router.post('/users/:id', (req, res) => {
   if (!res.locals.rights.manage) {
-    return res.status(401).json({ msg: 'Unauthorized' })
+    return res.status(401).json({ msg: lang.t('errors:unauthorized') })
   }
 
   if (!validator.isMongoId(req.params.id)) {
-    return res.status(400).json({ msg: 'Invalid User ID' })
+    return res.status(400).json({ msg: lang.t('errors:invaliduserid') })
   }
 
   return db.User.findById(req.params.id).then((usr) => {
@@ -180,7 +180,7 @@ router.post('/users/:id', (req, res) => {
     if (usr.provider === 'local' && req.body.password !== '********') {
       let nPwd = _.trim(req.body.password)
       if (nPwd.length < 6) {
-        return Promise.reject(new Error('New Password too short!'))
+        return Promise.reject(new Error(lang.t('errors:newpasswordtooshort')))
       } else {
         return db.User.hashPassword(nPwd).then((pwd) => {
           usr.password = pwd
@@ -208,11 +208,11 @@ router.post('/users/:id', (req, res) => {
  */
 router.delete('/users/:id', (req, res) => {
   if (!res.locals.rights.manage) {
-    return res.status(401).json({ msg: 'Unauthorized' })
+    return res.status(401).json({ msg: lang.t('errors:unauthorized') })
   }
 
   if (!validator.isMongoId(req.params.id)) {
-    return res.status(400).json({ msg: 'Invalid User ID' })
+    return res.status(400).json({ msg: lang.t('errors:invaliduserid') })
   }
 
   return db.User.findByIdAndRemove(req.params.id).then(() => {

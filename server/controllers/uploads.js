@@ -40,7 +40,7 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 
   upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
     if (!destFolderPath) {
-      res.json({ ok: false, msg: 'Invalid Folder' })
+      res.json({ ok: false, msg: lang.t('errors:invalidfolder') })
       return true
     }
 
@@ -58,7 +58,7 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 
         let mimeInfo = fileType(buf)
         if (!_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
-          return Promise.reject(new Error('Invalid file type.'))
+          return Promise.reject(new Error(lang.t('errors:invalidfiletype')))
         }
         return true
       }).then(() => {
@@ -97,7 +97,7 @@ router.post('/file', lcdata.uploadFileHandler, (req, res, next) => {
 
   upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
     if (!destFolderPath) {
-      res.json({ ok: false, msg: 'Invalid Folder' })
+      res.json({ ok: false, msg: lang.t('errors:invalidfolder') })
       return true
     }
 
