@@ -5,7 +5,7 @@ block rootNavRight
   .nav-item
     a.button(href='/' + pageData.meta._id)
       i.icon-circle-check
-      span View Latest
+      span= t('nav.viewlatest')
 
 block content
 
@@ -17,7 +17,7 @@ block content
 
           aside.stickyscroll
             .sidebar-label
-              span Past versions
+              span= t('sidebar.pastversions')
             ul.sidebar-menu
               each item, index in pageData.history
                 - var itemDate = moment(item.date)

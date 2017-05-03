@@ -168,7 +168,7 @@ module.exports = {
 
     return upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
       if (!destFolderPath) {
-        return Promise.reject(new Error('Invalid Folder'))
+        return Promise.reject(new Error(lang.t('errors:invalidfolder')))
       }
 
       return lcdata.validateUploadsFilename(fUrlFilename, destFolder).then((destFilename) => {
@@ -192,7 +192,7 @@ module.exports = {
               rq.abort()
               destFileStream.destroy()
               fs.remove(destFilePath)
-              reject(new Error('Remote file is too large!'))
+              reject(new Error(lang.t('errors:remotetoolarge')))
             }
           }).on('error', (err) => {
             destFileStream.destroy()
@@ -243,7 +243,7 @@ module.exports = {
             // -> Check for invalid operations
 
             if (sourceFilePath === destFilePath) {
-              return Promise.reject(new Error('Invalid Operation!'))
+              return Promise.reject(new Error(lang.t('errors:invalidoperation')))
             }
 
             // -> Delete DB entry
@@ -271,7 +271,7 @@ module.exports = {
           })
         })
       } else {
-        return Promise.reject(new Error('Invalid Destination Folder'))
+        return Promise.reject(new Error(lang.t('errors:invaliddestfolder')))
       }
     })
   }

@@ -59,14 +59,14 @@ module.exports = {
       return self.processFile(pInfo.folder, pInfo.filename).then((mData) => {
         return db.UplFile.findByIdAndUpdate(mData._id, mData, { upsert: true })
       }).then(() => {
-        return git.commitUploads('Uploaded ' + p)
+        return git.commitUploads(lang.t('git:uploaded', { path: p }))
       })
     })
 
     // -> Remove upload file
 
     self._watcher.on('unlink', (p) => {
-      return git.commitUploads('Deleted/Renamed ' + p)
+      return git.commitUploads(lang.t('git:deleted', { path: p }))
     })
   },
 

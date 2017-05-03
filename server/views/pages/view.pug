@@ -14,20 +14,20 @@ block rootNavRight
     if rights.write
       a.button.is-outlined.btn-move-prompt.is-hidden
         i.icon-shuffle
-        span Move
+        span= t('nav.move')
     a.button.is-outlined(href='/source/' + pageData.meta.path)
       i.icon-loader
-      span Source
+      span= t('nav.source')
     a.button.is-outlined(href='/hist/' + pageData.meta.path)
       i.icon-clock
-      span History
+      span= t('nav.history')
     if rights.write
       a.button(href='/edit/' + pageData.meta.path)
         i.icon-document-text
-        span Edit
+        span= t('nav.edit')
       a.button.btn-create-prompt
         i.icon-plus
-        span Create
+        span= t('nav.create')
 
 block content
 
@@ -39,16 +39,16 @@ block content
 
           aside
             .sidebar-label
-              span Navigation
+              span= t('sidebar.navigation')
             ul.sidebar-menu
               li
                 a(href='/')
                   i.icon-home
-                  span Home
+                  span= t('nav.home')
               li
                 a(href='/all')
                   i.icon-paper
-                  span All Pages
+                  span= t('nav.allpages')
               if pageData.parent
                 li
                   a(href='/' + pageData.parent.path)
@@ -58,15 +58,15 @@ block content
                 li
                   a(href='/admin')
                     i.icon-head
-                    span Account
+                    span= t('nav.account')
               else
                 li
                   a(href='/login')
                     i.icon-unlock
-                    span Login
+                    span= t('nav.login')
           aside.stickyscroll
             .sidebar-label
-              span Page Contents
+              span= t('sidebar.pagecontents')
             ul.sidebar-menu
               li.is-hidden-until-scroll: a(href='#root', title='Top of Page')
                 i.icon-arrow-up2

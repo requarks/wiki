@@ -55,7 +55,7 @@ userSchema.statics.processProfile = (profile) => {
   } else if (profile.user && profile.user.email && profile.user.email.length > 5) {
     primaryEmail = profile.user.email
   } else {
-    return Promise.reject(new Error('Invalid User Email'))
+    return Promise.reject(new Error(lang.t('auth:errors.invaliduseremail')))
   }
 
   profile.provider = _.lowerCase(profile.provider)
@@ -89,7 +89,7 @@ userSchema.statics.processProfile = (profile) => {
       }
       return db.User.create(nUsr)
     }
-    return user || Promise.reject(new Error('You have not been authorized to login to this site yet.'))
+    return user || Promise.reject(new Error(lang.t('auth:errors:notyetauthorized')))
   })
 }
 
@@ -99,7 +99,7 @@ userSchema.statics.hashPassword = (rawPwd) => {
 
 userSchema.methods.validatePassword = function (rawPwd) {
   return bcrypt.compare(rawPwd, this.password).then((isValid) => {
-    return (isValid) ? true : Promise.reject(new Error('Invalid Login'))
+    return (isValid) ? true : Promise.reject(new Error(lang.t('auth:errors:invalidlogin')))
   })
 }
 

@@ -9,17 +9,17 @@ block rootNavRight
     if rights.write
       a.button.is-outlined.btn-move-prompt.is-hidden
         i.icon-shuffle
-        span Move
+        span= t('nav.move')
     a.button.is-outlined(href='/' + pageData.meta.path)
       i.icon-loader
-      span Normal View
+      span= t('nav.normalview')
     if rights.write
       a.button.is-orange(href='/edit/' + pageData.meta.path)
         i.fa.fa-edit
-        span Edit
+        span= t('nav.edit')
       a.button.is-blue.btn-create-prompt
         i.fa.fa-plus
-        span Create
+        span= t('nav.create')
 
 block content
 
@@ -33,4 +33,4 @@ block content
 block outside
   #page-loader
     i
-    span Loading source...
+    span= t('loading.source')

@@ -163,7 +163,7 @@ module.exports = {
     let fpath = path.resolve(this._uploadsPath, fld, f)
 
     return fs.statAsync(fpath).then((s) => {
-      throw new Error('File ' + f + ' already exists.')
+      throw new Error(lang.t('errors:fileexists', { path: f }))
     }).catch((err) => {
       if (err.code === 'ENOENT') {
         return f

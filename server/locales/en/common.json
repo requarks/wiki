@@ -1,11 +1,54 @@
 {
   "wiki": "Wiki",
-  "headers": {
-    "overview": "Overview"
+  "header": {
+    "overview": "Overview",
+    "createdoc": "Create New Document"
   },
   "footer": {
     "poweredby": "Powered by",
     "home": "Home",
     "top": "Return to top"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "results": "Search Results",
+    "nomatch": "No results matching your query",
+    "didyoumean": "Did you mean...?"
+  },
+  "sidebar": {
+    "nav": "NAV",
+    "navigation": "Navigation",
+    "pagecontents": "Page Contents",
+    "pastversions": "Past Versions"
+  },
+  "nav": {
+    "home": "Home",
+    "account": "Account",
+    "myprofile": "My Profile",
+    "stats": "Stats",
+    "syssettings": "System Settings",
+    "users": "Users",
+    "logout": "Logout",
+    "create": "Create",
+    "edit": "Edit",
+    "history": "History",
+    "source": "Source",
+    "move": "Move",
+    "allpages": "All Pages",
+    "login": "Login",
+    "normalview": "Normal View",
+    "viewlatest": "View Latest",
+    "discard": "Discard",
+    "savechanges": "Save Changes",
+    "savedocument": "Save Document"
+  },
+  "welcome": {
+    "title": "Welcome to your wiki!",
+    "subtitle": "Let's get started and create the home page.",
+    "createhome": "Create Home Page"
+  },
+  "loading": {
+    "source": "Loading source...",
+    "editor": "Loading editor..."
   }
 }

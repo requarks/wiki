@@ -8,10 +8,10 @@ block rootNavRight
   span.nav-item
     a.button.is-outlined.btn-edit-discard
       i.icon-cross
-      span Discard
+      span= t('nav.discard')
     a.button.btn-edit-save
       i.icon-check
-      span Save Changes
+      span= t('nav.savechanges')
 
 block content
 
@@ -29,4 +29,4 @@ block content
 block outside
   #page-loader
     i
-    span Loading editor...
+    span= t('loading.editor')

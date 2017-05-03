@@ -1,14 +1,14 @@
 extends ../../layout.pug
 
 block rootNavCenter
-  h2.nav-item Account
+  h2.nav-item= t('nav.account')
 
 block rootNavRight
   i.nav-item#notifload
   .nav-item
     a.button.btn-edit-discard(href='/')
       i.icon-home
-      span Home
+      span= t('nav.home')
 
 block content
 
@@ -20,38 +20,38 @@ block content
 
           aside
             .sidebar-label
-              span Navigation
+              span= t('sidebar.navigation')
             ul.sidebar-menu
               li
                 a(href='/')
                   i.icon-home
-                  span Home
+                  span= t('nav.home')
 
           aside
             .sidebar-label
-              span Account
+              span= t('nav.account')
             ul.sidebar-menu
               li
                 a(href='/admin/profile')
                   i.icon-user
-                  span My Profile
+                  span= t('nav.myprofile')
               li
                 a(href='/admin/stats')
                   i.icon-bar-graph-2
-                  span Stats
+                  span= t('nav.stats')
               if rights.manage
                 li
                   a(href='/admin/users')
                     i.icon-users
-                    span Users
+                    span= t('nav.users')
                 li
                   a(href='/admin/settings')
                     i.icon-cog
-                    span System Settings
+                    span= t('nav.syssettings')
               li
                 a(href='/logout')
                   i.icon-delete2
-                  span Logout
+                  span= t('nav.logout')
 
         .column
           block adminContent

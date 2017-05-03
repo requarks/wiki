@@ -1,17 +1,17 @@
 extends ../layout.pug
 
 block rootNavCenter
-  h2.nav-item Create New Document
+  h2.nav-item= t('header.createdoc')
 
 block rootNavRight
   i.nav-item#notifload
   span.nav-item
     a.button.is-outlined.btn-create-discard
       i.icon-cross
-      span Discard
+      span= t('nav.discard')
     a.button.btn-create-save
       i.icon-check
-      span Save Document
+      span= t('nav.savedocument')
 
 block content
 
@@ -29,4 +29,4 @@ block content
 block outside
   #page-loader
     i
-    span Loading editor...
+    span= t('loading.editor')

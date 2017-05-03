@@ -155,7 +155,7 @@ module.exports = {
         return false
       }
     }).catch((err) => { // eslint-disable-line handle-callback-err
-      throw new Promise.OperationalError('Entry ' + entryPath + ' does not exist!')
+      throw new Promise.OperationalError(lang.t('errors:notexist', { path: entryPath }))
     })
   },
 
@@ -184,11 +184,11 @@ module.exports = {
             }
           })
         } else {
-          return Promise.reject(new Error('Parent entry is not a valid file.'))
+          return Promise.reject(new Error(lang.t('errors:parentinvalid')))
         }
       })
     } else {
-      return Promise.reject(new Error('Parent entry is root.'))
+      return Promise.reject(new Error(lang.t('errors:parentisroot')))
     }
   },
 
@@ -212,11 +212,11 @@ module.exports = {
           })
         })
       } else {
-        return Promise.reject(new Error('Entry does not exist!'))
+        return Promise.reject(new Error(lang.t('errors:notexist', { path: entryPath }))
       }
     }).catch((err) => {
       winston.error(err)
-      return Promise.reject(new Error('Failed to save document.'))
+      return Promise.reject(new Error(lang.t('errors:savefailed')))
     })
   },
 
@@ -316,11 +316,11 @@ module.exports = {
           })
         })
       } else {
-        return Promise.reject(new Error('Entry already exists!'))
+        return Promise.reject(new Error(lang.t('errors:alreadyexists')))
       }
     }).catch((err) => {
       winston.error(err)
-      return Promise.reject(new Error('Something went wrong.'))
+      return Promise.reject(new Error(lang.t('errors:generic')))
     })
   },
 
@@ -352,7 +352,7 @@ module.exports = {
     let self = this
 
     if (_.isEmpty(entryPath) || entryPath === 'home') {
-      return Promise.reject(new Error('Invalid path!'))
+      return Promise.reject(new Error(lang.t('errors:invalidpath')))
     }
 
     return git.moveDocument(entryPath, newEntryPath).then(() => {

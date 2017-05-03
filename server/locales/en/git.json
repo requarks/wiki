@@ -1,0 +1,6 @@
+{
+  "added": "Added {{path}}",
+  "deleted": "Deleted/Renamed {{path}}",
+  "updated": "Updated {{path}}",
+  "uploaded": "Uplodated {{path}}"
+}
