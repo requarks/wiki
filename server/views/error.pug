@@ -24,9 +24,9 @@ html(data-logic='error')
     .container
       a(href='/'): img(src='/images/logo.png')
       h1= message
-      h2 Oops, something went wrong
-      a.button.is-amber.is-inverted.is-featured(href='/') Go Home
+      h2= t('errors:generic')
+      a.button.is-amber.is-inverted.is-featured(href='/')= t('errors:actions.gohome')
 
       if error.stack
-        h3 Detailed debug trail:
+        h3= t('errors:debugmsg')
         pre: code #{error.stack}

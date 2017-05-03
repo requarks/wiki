@@ -31,7 +31,7 @@ router.get('/edit/*', (req, res, next) => {
     if (pageData) {
       res.render('pages/edit', { pageData })
     } else {
-      throw new Error('Invalid page path.')
+      throw new Error(lang.t('errors:invalidpath'))
     }
     return true
   }).catch((err) => {
@@ -46,7 +46,7 @@ router.put('/edit/*', (req, res, next) => {
   if (!res.locals.rights.write) {
     return res.json({
       ok: false,
-      error: 'Forbidden'
+      error: lang.t('errors:forbidden')
     })
   }
 
@@ -75,7 +75,7 @@ router.get('/create/*', (req, res, next) => {
 
   if (_.some(['create', 'edit', 'account', 'source', 'history', 'mk', 'all'], (e) => { return _.startsWith(req.path, '/create/' + e) })) {
     return res.render('error', {
-      message: 'You cannot create a document with this name as it is reserved by the system.',
+      message: lang.t('errors:reservedname'),
       error: {}
     })
   }
@@ -97,10 +97,10 @@ router.get('/create/*', (req, res, next) => {
         return true
       }).catch((err) => {
         winston.warn(err)
-        throw new Error('Could not load starter content!')
+        throw new Error(lang.t('errors:starterfailed'))
       })
     } else {
-      throw new Error('This entry already exists!')
+      throw new Error(lang.t('errors:alreadyexists'))
     }
   }).catch((err) => {
     res.render('error', {
@@ -114,7 +114,7 @@ router.put('/create/*', (req, res, next) => {
   if (!res.locals.rights.write) {
     return res.json({
       ok: false,
-      error: 'Forbidden'
+      error: lang.t('errors:forbidden')
     })
   }
 
@@ -168,7 +168,7 @@ router.get('/source/*', (req, res, next) => {
     if (pageData) {
       res.render('pages/source', { pageData })
     } else {
-      throw new Error('Invalid page path.')
+      throw new Error(lang.t('errors:invalidpath'))
     }
     return true
   }).catch((err) => {
@@ -189,7 +189,7 @@ router.get('/hist/*', (req, res, next) => {
     if (pageData) {
       res.render('pages/history', { pageData })
     } else {
-      throw new Error('Invalid page path.')
+      throw new Error(lang.t('errors:invalidpath'))
     }
     return true
   }).catch((err) => {
@@ -240,7 +240,7 @@ router.put('/*', (req, res, next) => {
   if (!res.locals.rights.write) {
     return res.json({
       ok: false,
-      error: 'Forbidden'
+      error: lang.t('errors:forbidden')
     })
   }
 
@@ -249,7 +249,7 @@ router.put('/*', (req, res, next) => {
   if (_.isEmpty(req.body.move)) {
     return res.json({
       ok: false,
-      error: 'Invalid document action call.'
+      error: lang.t('errors:invalidaction')
     })
   }
 

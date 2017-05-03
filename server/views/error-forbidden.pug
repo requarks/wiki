@@ -23,7 +23,7 @@ html(data-logic='error')
   body(class='is-forbidden')
     .container
       a(href='/'): img(src='/images/logo.png')
-      h1 Forbidden
-      h2 Sorry, you don't have the necessary permissions to access this page.
-      a.button.is-amber.is-inverted(href='/') Go Home
-      a.button.is-amber.is-inverted(href='/login') Login as...
+      h1= t('errors:forbidden')
+      h2= t('errors:forbiddendetail')
+      a.button.is-amber.is-inverted(href='/')= t('errors:actions.gohome')
+      a.button.is-amber.is-inverted(href='/login')= t('errors:actions.loginas')
