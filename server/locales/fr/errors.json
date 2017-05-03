@@ -1,0 +1,30 @@
+{
+  "alreadyexists": "Cette entrée existe déjà!",
+  "debugmsg": "Trace détaillé de débogage",
+  "fileexists": "Fichier {{path}} existe déjà.",
+  "forbidden": "Accès interdit",
+  "forbiddendetail": "Désolé, vous ne disposez pas des autorisations nécessaires pour accéder à cette page.",
+  "generic": "Oups, une erreur s'est produite",
+  "invalidaction": "Action invalide.",
+  "invaliddestfolder": "Dossier de destination invalide!",
+  "invalidfiletype": "Type de fichier invalide.",
+  "invalidfolder": "Dossier invalide.",
+  "invalidoperation": "Opération invalide!",
+  "invalidpath": "Chemin de page invalide",
+  "invaliduserid": "Identifiant invalide",
+  "newpasswordtooshort": "Le nouveau mot de passe est trop court!",
+  "notexist": "Entrée {{path}} n'existe pas!",
+  "notexistdetail": "Voulez-vous créer cette entrée?",
+  "parentinvalid": "L'entrée parent n'est pas un fichier valide.",
+  "parentisroot": "L'entrée parent est la racine du site.",
+  "remotetoolarge": "Fichier distant trop large!",
+  "reservedname": "Vous ne pouvez pas créer un document avec ce nom puisqu'il est réservé par le système.",
+  "savefailed": "Impossible d'enregistrer le document",
+  "starterfailed": "Impossible de charger le contenu de démarrage!",
+  "unauthorized": "Non autorisé",
+  "actions": {
+    "create": "Créer",
+    "gohome": "Accueil",
+    "loginas": "Se connecter en tant que..."
+  }
+}
