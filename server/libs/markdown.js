@@ -111,10 +111,10 @@ const parseTree = (content) => {
       let content = ''
       let anchor = ''
       if (heading.children && heading.children.length > 0 && heading.children[0].type === 'link_open') {
-        content = heading.children[1].content
+        content = removeMarkdown(heading.children[1].content)
         anchor = _.kebabCase(content)
       } else {
-        content = heading.content
+        content = removeMarkdown(heading.content)
         anchor = _.kebabCase(heading.children.reduce((acc, t) => acc + t.content, ''))
       }
 
@@ -282,6 +282,29 @@ const parseMeta = (content) => {
   return results
 }
 
+/**
+ * Strips non-text elements from Markdown content
+ *
+ * @param      {String}  content  Markdown-formatted content
+ * @return     {String}  Text-only version
+ */
+const removeMarkdown = (content) => {
+  return mdRemove(_.chain(content)
+    .replace(/<!-- ?([a-zA-Z]+):(.*)-->/g, '')
+    .replace(/```[^`]+```/g, '')
+    .replace(/`[^`]+`/g, '')
+    .replace(new RegExp('(?!mailto:)(?:(?:http|https|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?', 'g'), '')
+    .replace(/\r?\n|\r/g, ' ')
+    .deburr()
+    .toLower()
+    .replace(/(\b([^a-z]+)\b)/g, ' ')
+    .replace(/[^a-z]+/g, ' ')
+    .replace(/(\b(\w{1,2})\b(\W|$))/g, '')
+    .replace(/\s\s+/g, ' ')
+    .value()
+  )
+}
+
 module.exports = {
 
   /**
@@ -302,27 +325,6 @@ module.exports = {
   parseMeta,
   parseTree,
 
-  /**
-   * Strips non-text elements from Markdown content
-   *
-   * @param      {String}  content  Markdown-formatted content
-   * @return     {String}  Text-only version
-   */
-  removeMarkdown (content) {
-    return mdRemove(_.chain(content)
-      .replace(/<!-- ?([a-zA-Z]+):(.*)-->/g, '')
-      .replace(/```[^`]+```/g, '')
-      .replace(/`[^`]+`/g, '')
-      .replace(new RegExp('(?!mailto:)(?:(?:http|https|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?', 'g'), '')
-      .replace(/\r?\n|\r/g, ' ')
-      .deburr()
-      .toLower()
-      .replace(/(\b([^a-z]+)\b)/g, ' ')
-      .replace(/[^a-z]+/g, ' ')
-      .replace(/(\b(\w{1,2})\b(\W|$))/g, '')
-      .replace(/\s\s+/g, ' ')
-      .value()
-    )
-  }
+  removeMarkdown
 
 }
