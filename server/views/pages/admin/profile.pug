@@ -3,35 +3,35 @@ extends ./_layout.pug
 block adminContent
   #page-type-admin-profile
     .hero
-      h1.title#title My Profile
-      h2.subtitle Profile and authentication info
+      h1.title#title= t('nav.myprofile')
+      h2.subtitle= t('admin:profile.subtitle')
     .form-sections
       .columns.is-gapless
         .column.is-two-thirds
           section
-            label.label Email
+            label.label= t('admin:profile.email')
             p.control.is-fullwidth
-              input.input(type='text', placeholder='Email', value=user.email, disabled)
+              input.input(type='text', placeholder=t('admin:profile.email'), value=user.email, disabled)
           if user.provider === 'local'
             section
-              label.label Password
+              label.label= t('admin:profile.password')
               p.control.is-fullwidth
-                input.input(type='password', placeholder='Password', value='********', v-model='password')
+                input.input(type='password', placeholder=t('admin:profile.password'), value='********', v-model='password')
             section
-              label.label Verify Password
+              label.label= t('admin:profile.passwordverify')
               p.control.is-fullwidth
-                input.input(type='password', placeholder='Password', value='********', v-model='passwordVerify')
+                input.input(type='password', placeholder=t('admin:profile.password'), value='********', v-model='passwordVerify')
           section
-            label.label Display Name
+            label.label= t('admin:profile.displayname')
             p.control.is-fullwidth
-              input.input(type='text', placeholder='John Smith', v-model='name')
+              input.input(type='text', placeholder=t('admin:profile.displaynameexample'), v-model='name')
           section
             button.button.is-green(v-on:click='saveUser')
               i.icon-check
-              span Save Changes
+              span= t('admin:profile.savechanges')
         .column
           .panel-aside
-            label.label Provider
+            label.label= t('admin:profile.provider')
             p.control.account-profile-provider
               case user.provider
                 when 'local': i.icon-server
@@ -44,9 +44,9 @@ block adminContent
                 when 'ldap': i.icon-arrow-repeat-outline
                 default: i.icon-warning
               = t('auth:providers.' + user.provider)
-            label.label Member since
+            label.label= t('admin:profile.membersince')
             p.control= userMoment(user.createdAt).format('LL')
-            label.label Last Profile Update
+            label.label= t('admin:profile.lastprofileupdate')
             p.control= userMoment(user.updatedAt).format('LL')
 
   script(type='text/javascript').

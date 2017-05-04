@@ -32,6 +32,7 @@ global.db = require('./libs/db').init()
 global.upl = require('./libs/uploads-agent').init()
 global.git = require('./libs/git').init()
 global.entries = require('./libs/entries').init()
+global.lang = require('i18next')
 global.mark = require('./libs/markdown')
 
 // ----------------------------------------
@@ -43,8 +44,30 @@ const Promise = require('bluebird')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const klaw = require('klaw')
 const Cron = require('cron').CronJob
+const i18nextBackend = require('i18next-node-fs-backend')
+const i18nextMw = require('i18next-express-middleware')
 
 const entryHelper = require('./helpers/entry')
+
+// ----------------------------------------
+// Localization Engine
+// ----------------------------------------
+
+lang
+  .use(i18nextBackend)
+  .use(i18nextMw.LanguageDetector)
+  .init({
+    load: 'languageOnly',
+    ns: ['common', 'errors', 'git'],
+    defaultNS: 'common',
+    saveMissing: false,
+    supportedLngs: ['en', 'fr'],
+    preload: ['en', 'fr'],
+    fallbackLng: 'en',
+    backend: {
+      loadPath: path.join(SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
+    }
+  })
 
 // ----------------------------------------
 // Start Cron

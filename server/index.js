@@ -124,7 +124,7 @@ lang
   .use(i18nextMw.LanguageDetector)
   .init({
     load: 'languageOnly',
-    ns: ['common', 'auth'],
+    ns: ['common', 'admin', 'auth', 'errors', 'git'],
     defaultNS: 'common',
     saveMissing: false,
     supportedLngs: ['en', 'fr'],

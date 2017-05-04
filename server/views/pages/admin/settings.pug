@@ -3,38 +3,35 @@ extends ./_layout.pug
 block adminContent
   #page-type-admin-settings
     .hero
-      h1.title#title System Settings
-      h2.subtitle Manage site configuration
+      h1.title#title= t('nav.syssettings')
+      h2.subtitle= t('admin:settings.subtitle')
     .form-sections
       section
         img(src='/images/logo.png', style={width:'200px', float:'right'})
-        label.label System Version
+        label.label= t('admin:settings.systemversion')
         .section-block
-          p Current Version: #[strong= sysversion.current]
+          p #{t('admin:settings.currentversion')}: #[strong= sysversion.current]
           if sysversion.latest
-            p Latest Version: #[strong= sysversion.latest] #[em (Published #{userMoment(sysversion.latestPublishedAt).fromNow()})]
+            p #{t('admin:settings.latestversion')}: #[strong= sysversion.latest] #[em (Published #{userMoment(sysversion.latestPublishedAt).fromNow()})]
             p
               if sysversion.current !== sysversion.latest
-                button.button.is-deep-orange(v-on:click='upgrade') Upgrade
+                button.button.is-deep-orange(v-on:click='upgrade')= t('admin:settings.upgrade')
               else
-                button.button.is-disabled Upgrade
-              button.button.is-deep-orange.is-outlined(v-on:click='reinstall') Re-install current version
+                button.button.is-disabled= t('admin:settings.upgrade')
+              button.button.is-deep-orange.is-outlined(v-on:click='reinstall')= t('admin:settings.reinstall')
           else
-            p: em Unable to query latest version. Try again later.
+            p: em= t('admin:settings.versioncheckfailed')
       section
-        label.label Administrative Tools
+        label.label= t('admin:settings.administrativetools')
         .section-block
-          h6 Flush cache and rebuild indexes:
-          p.is-small If content or search results seems out-of-date or do not include latest content, flushing the cache can help resolve these issues.
-          p: button.button.is-teal.is-outlined(v-on:click='flushcache') Flush and Rebuild
-          h6 Reset the root administrator and guest accounts to defaults:
-          p.is-small
-            | The root administrator account will be reset to the email address in the configuration file and the password will be reinitialized to #[strong admin123].
-            br
-            | The guest account will be recreated with its access rights set to defaults.
-          p: button.button.is-teal.is-outlined(v-on:click='resetaccounts') Reset System Accounts
-          h6 Flush all active user sessions:
-          p.is-small All users will be logged out and forced to login again. Your current session will also be affected!
-          p: button.button.is-teal.is-outlined(v-on:click='flushsessions') Flush Sessions
+          h6 #{t('admin:settings.flushcache')}:
+          p.is-small= t('admin:settings.flushcachetext')
+          p: button.button.is-teal.is-outlined(v-on:click='flushcache')= t('admin:settings.flushcachebtn')
+          h6 #{t('admin:settings.resetaccounts')}:
+          p.is-small= t('admin:settings.resetaccountstext')
+          p: button.button.is-teal.is-outlined(v-on:click='resetaccounts')= t('admin:settings.resetaccountsbtn')
+          h6 #{t('admin:settings.flushsessions')}:
+          p.is-small= t('admin:settings.flushsessionstext')
+          p: button.button.is-teal.is-outlined(v-on:click='flushsessions')= t('admin:settings.flushsessionsbtn')
 
     include ../../modals/admin-upgrade.pug

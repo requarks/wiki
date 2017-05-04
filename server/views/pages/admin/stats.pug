@@ -2,13 +2,13 @@ extends ./_layout.pug
 
 block adminContent
   .hero
-    h1.title#title Stats
-    h2.subtitle General site-wide statistics
+    h1.title#title= t('nav.stats')
+    h2.subtitle= t('admin:stats.subtitle')
   .form-sections
     section
-      label.label Entries
+      label.label= t('admin:stats.entries')
       p.control= totalEntries
-      label.label Uploads
+      label.label= t('admin:stats.uploads')
       p.control= totalUploads
-      label.label Users
+      label.label= t('admin:stats.users')
       p.control= totalUsers
