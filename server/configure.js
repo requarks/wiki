@@ -320,7 +320,7 @@ module.exports = (port, spinner) => {
           maxOtherFileSize: (conf.uploads && _.isNumber(conf.uploads.maxOtherFileSize)) ? conf.uploads.maxOtherFileSize : 100
         }
         conf.lang = req.body.lang
-        conf.public = (conf.public === true)
+        conf.public = (req.body.public === true)
         if (conf.auth && conf.auth.local) {
           conf.auth.local = { enabled: true }
         } else {
