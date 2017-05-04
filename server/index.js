@@ -143,8 +143,8 @@ app.use(i18nextMw.handle(lang))
 app.set('views', path.join(SERVERPATH, 'views'))
 app.set('view engine', 'pug')
 
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json({ limit: '1mb' }))
+app.use(bodyParser.urlencoded({ extended: false, limit: '1mb' }))
 
 // ----------------------------------------
 // View accessible data
