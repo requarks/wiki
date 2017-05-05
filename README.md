@@ -55,13 +55,13 @@ Current and upcoming milestones *(features only, see the [changelog](https://git
 
 ### Beta 12
 
+- [ ] Better localization in the UI
 - [ ] Docker support + Auto compile/publish to Docker Hub
 - [ ] Heroku support
 
 ### Beta 13
 
 - [ ] Insert Link modal in Editor
-- [ ] Better localization in the UI
 - [ ] Better simultaneous user editing handling
 - [ ] Preview changes directly from the editor, without saving
 - [ ] Upgrade from web UI

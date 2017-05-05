@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unrelease
+### Added
+- **History**: History section to list all changes
+- **Localization**: All UI text elements are now localized
+- **Localization**: Chinese locale is now available (thanks to @choicky)
+
+### Changed
+- **Misc**: Updated dependencies
+- **UI**: Reveal 'Top of Page' only on scroll + icon only
+
+### Fixed
+- **Configuration Wizard**: Public option is now saved properly in config file
+- **Configuration Wizard**: Git check no longer fails when unable to remove existing remotes
+- **Editor**: Large size content can now be saved up to 1 MB
+- **Misc**: Empty anchors no longer crash the rendering process
+- **UI**: Markdown is now stripped from page contents items
+- **UI**: Page contents no longer disappear when scrolling down
+
 ## [v1.0.0-beta.11] - 2017-04-29
 ### Added
 - **Auth**: Azure AD authentication provider is now available
