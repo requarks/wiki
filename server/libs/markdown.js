@@ -94,6 +94,7 @@ const videoRules = [
  * @return     {Array}             TOC tree
  */
 const parseTree = (content) => {
+  content = content.replace(/<!--(.|\t|\n|\r)*?-->/g, '')
   let tokens = md().parse(content, {})
   let tocArray = []
 
