@@ -188,11 +188,12 @@ globalTasks.then(() => {
 
       fuse = fsbx.FuseBox.init({
         homeDir: './client',
-        outFile: './assets/js/bundle.min.js',
+        output: './assets/js/$name.min.js',
         alias: ALIASES,
         shim: SHIMS,
         plugins: [
-          [ fsbx.SassPlugin({ includePaths: ['../core'] }), fsbx.CSSPlugin() ],
+          fsbx.VuePlugin(),
+          [ '.scss', fsbx.SassPlugin(), fsbx.CSSPlugin() ],
           fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
           fsbx.JSONPlugin()
         ],
@@ -200,15 +201,16 @@ globalTasks.then(() => {
         log: true
       })
 
-      fuse.devServer('>index.js', {
+      fuse.dev({
         port: 4444,
-        httpServer: false,
-        hmr: false
+        httpServer: false
       })
 
-      // Server
+      fuse.bundle('bundle')
+        .instructions('> index.js')
+        .watch()
 
-      _.delay(() => {
+      fuse.run().then(() => {
         nodemon({
           exec: (args.i) ? 'node --inspect server' : 'node server',
           ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
@@ -216,7 +218,8 @@ globalTasks.then(() => {
           watch: ['server'],
           env: { 'NODE_ENV': 'development' }
         })
-      }, 1000)
+      })
+
       break
     // =============================================
     // CONFIGURE - DEVELOPER MODE
@@ -226,11 +229,11 @@ globalTasks.then(() => {
 
       fuse = fsbx.FuseBox.init({
         homeDir: './client',
-        outFile: './assets/js/configure.min.js',
+        output: './assets/js/$name.min.js',
         alias: ALIASES,
         shim: SHIMS,
         plugins: [
-          [ fsbx.SassPlugin({ includePaths: ['../core'] }), fsbx.CSSPlugin() ],
+          [ '.scss', fsbx.SassPlugin(), fsbx.CSSPlugin() ],
           fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
           fsbx.JSONPlugin()
         ],
@@ -238,14 +241,16 @@ globalTasks.then(() => {
         log: true
       })
 
-      fuse.devServer('>configure.js', {
+      fuse.dev({
         port: 4444,
         httpServer: false
       })
 
-      // Server
+      fuse.bundle('configure')
+        .instructions('> configure.js')
+        .watch()
 
-      _.delay(() => {
+      fuse.run().then(() => {
         nodemon({
           exec: 'node wiki configure',
           ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
@@ -253,7 +258,8 @@ globalTasks.then(() => {
           watch: ['server/configure.js'],
           env: { 'NODE_ENV': 'development' }
         })
-      }, 1000)
+      })
+
       break
     // =============================================
     // BUILD ONLY MODE
@@ -261,11 +267,13 @@ globalTasks.then(() => {
     case 'build':
       fuse = fsbx.FuseBox.init({
         homeDir: './client',
+        output: './assets/js/$name.min.js',
         alias: ALIASES,
         shim: SHIMS,
         plugins: [
           fsbx.EnvPlugin({ NODE_ENV: 'production' }),
-          [ fsbx.SassPlugin({ outputStyle: 'compressed', includePaths: ['./node_modules/requarks-core'] }), fsbx.CSSPlugin() ],
+          fsbx.VuePlugin(),
+          [ '.scss', fsbx.SassPlugin({ outputStyle: 'compressed' }), fsbx.CSSPlugin() ],
           fsbx.BabelPlugin({
             config: {
               comments: false,
@@ -282,10 +290,10 @@ globalTasks.then(() => {
         log: true
       })
 
-      fuse.bundle({
-        './assets/js/bundle.min.js': '>index.js',
-        './assets/js/configure.min.js': '>configure.js'
-      }).then(() => {
+      fuse.bundle('bundle').instructions('> index.js')
+      fuse.bundle('configure').instructions('> configure.js')
+
+      fuse.run().then(() => {
         console.info(colors.green.bold('\nAssets compilation + bundling completed.'))
       }).catch(err => {
         console.error(colors.red(' X Bundle compilation failed! ' + err.message))

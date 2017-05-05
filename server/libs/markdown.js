@@ -112,10 +112,10 @@ const parseTree = (content) => {
       let content = ''
       let anchor = ''
       if (heading.children && heading.children.length > 0 && heading.children[0].type === 'link_open') {
-        content = removeMarkdown(heading.children[1].content)
+        content = mdRemove(heading.children[1].content)
         anchor = _.kebabCase(content)
       } else {
-        content = removeMarkdown(heading.content)
+        content = mdRemove(heading.content)
         anchor = _.kebabCase(heading.children.reduce((acc, t) => acc + t.content, ''))
       }
 

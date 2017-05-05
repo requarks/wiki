@@ -1,11 +1,22 @@
 'use strict'
 
+/* eslint-disable no-new */
+
 import $ from 'jquery'
 import MathJax from 'mathjax'
+import * as CopyPath from '../components/copy-path.vue'
+import Vue from 'vue'
 
 module.exports = (alerts) => {
   if ($('#page-type-view').length) {
     let currentBasePath = ($('#page-type-view').data('entrypath') !== 'home') ? $('#page-type-view').data('entrypath') : ''
+
+    // Copy Path
+
+    new Vue({
+      el: '.modal-copypath',
+      render: h => h(CopyPath)
+    })
 
     // MathJax Render
 
