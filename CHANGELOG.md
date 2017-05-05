@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Configuration Wizard**: Git check no longer fails when unable to remove existing remotes
 - **Editor**: Large size content can now be saved up to 1 MB
 - **Misc**: Empty anchors no longer crash the rendering process
+- **Misc**: Commented headers no longer appear in page contents
 - **UI**: Markdown is now stripped from page contents items
 - **UI**: Page contents no longer disappear when scrolling down
 
