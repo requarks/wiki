@@ -1,0 +1,51 @@
+{
+  "profile": {
+    "displayname": "显示的名字",
+    "displaynameexample": "John Smith",
+    "email": "Email",
+    "lastprofileupdate": "配置文件的最近更新",
+    "membersince": "会员始于",
+    "password": "密码",
+    "passwordverify": "验证密码",
+    "provider": "供应商",
+    "savechanges": "保存",
+    "subtitle": "个人资料与验证信息"
+  },
+  "stats": {
+    "subtitle": "通用全站统计",
+    "entries": "页面",
+    "uploads": "上传",
+    "users": "用户"
+  },
+  "settings": {
+    "subtitle": "管理",
+    "systemversion": "系统版本",
+    "currentversion": "当前版本",
+    "latestversion": "最新版本",
+    "upgrade": "升级",
+    "reinstall": "重装当前版本",
+    "versioncheckfailed": "无法查询最新版本。稍后再试。",
+    "administrativetools": "管理工具",
+    "flushcache": "清空缓存和重建索引",
+    "flushcachetext": "如果内容或搜索结果过期或者没有包括最新的内容，可清空缓存来解决。",
+    "flushcachebtn": "清空与重建",
+    "resetaccounts": "重置系统帐户为默认值",
+    "resetaccountstext": "该系统帐户（如 Guest 帐户）将被重置为默认设置。",
+    "resetaccountsbtn": "重置系统帐户",
+    "flushsessions": "刷新所有活动用户的会话",
+    "flushsessionstext": "所有用户将被注销并被要求重新登录。您当前的会话也会受到影响！",
+    "flushsessionsbtn": "清空会话"
+  },
+  "users": {
+    "createauthorize": "创建/授权用户",
+    "subtitle": "用户及权限管理",
+    "name": "名字",
+    "email": "Email 地址",
+    "provider": "供应商",
+    "createdon": "创建于",
+    "updatedon": "更新于",
+    "returntousers": "返回用户",
+    "edituser": "编辑用户",
+    "uniqueid": "唯一 ID"
+  }
+}

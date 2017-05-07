@@ -1,0 +1,51 @@
+{
+  "profile": {
+    "displayname": "Nom complet",
+    "displaynameexample": "Jean Dupont",
+    "email": "Courriel",
+    "lastprofileupdate": "Dernière MAJ du profile",
+    "membersince": "Membre depuis",
+    "password": "Mot de passe",
+    "passwordverify": "Vérification du mot de passe",
+    "provider": "Fournisseur",
+    "savechanges": "Sauvegarder",
+    "subtitle": "Informations du profil et authentification"
+  },
+  "stats": {
+    "subtitle": "Statistiques générales du site",
+    "entries": "Entrées",
+    "uploads": "Fichiers téléversés",
+    "users": "Utilisateurs"
+  },
+  "settings": {
+    "subtitle": "Gérer la configuration du site",
+    "systemversion": "Version du système",
+    "currentversion": "Version actuelle",
+    "latestversion": "Dernière version",
+    "upgrade": "Mettre à jour",
+    "reinstall": "Réinstaller la version actuelle",
+    "versioncheckfailed": "Impossible d'obtenir la dernière version. Ré-essayez plus tard.",
+    "administrativetools": "Outils administratifs",
+    "flushcache": "Vider la cache et reconstruire les index",
+    "flushcachetext": "Si le contenu ou les résultats de recherche semblent périmés ou n'incluent pas le contenu le plus récent, le nettoyage de la cache peut aider à résoudre ces problèmes.",
+    "flushcachebtn": "Vider et reconstruire",
+    "resetaccounts": "Réinitialiser les comptes du système aux valeurs par défaut",
+    "resetaccountstext": "Les comptes du système (tels que le compte Invité) seront remis à leurs paramètres par défaut.",
+    "resetaccountsbtn": "Réinitialiser les comptes système",
+    "flushsessions": "Supprimer toutes les sessions utilisateur actives",
+    "flushsessionstext": "Tous les utilisateurs seront déconnectés et contraints de se connecter à nouveau. Votre session sera également affectée!",
+    "flushsessionsbtn": "Supprimer les sessions"
+  },
+  "users": {
+    "createauthorize": "Créer / Autoriser un utilisateur",
+    "subtitle": "Gérer les utilisateurs et les droits d'accès",
+    "name": "Nom",
+    "email": "Courriel",
+    "provider": "Fournisseur",
+    "createdon": "Créé le",
+    "updatedon": "Mis à jour le",
+    "returntousers": "Retourner aux utilisateurs",
+    "edituser": "Modifier l'utilisateur",
+    "uniqueid": "Identifiant unique"
+  }
+}
