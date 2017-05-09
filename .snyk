@@ -1,15 +1,18 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.7.0
+version: v1.7.1
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
   'npm:marked:20170112':
     - simplemde > marked:
         reason: None given
-        expires: '2017-05-08T20:36:21.933Z'
+        expires: '2017-06-08T23:50:56.092Z'
+    - fuse-box > marked:
+        reason: None given
+        expires: '2017-06-08T23:50:56.093Z'
   'npm:shelljs:20140723':
     - pm2 > shelljs:
         reason: None given
-        expires: '2017-05-08T20:36:21.933Z'
+        expires: '2017-06-08T23:50:56.093Z'
   'npm:qs:20170213':
     - chokidar > fsevents > node-pre-gyp > request > qs:
         reason: None given
