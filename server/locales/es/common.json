@@ -1,11 +1,54 @@
 {
   "wiki": "Wiki",
   "header": {
-    "overview": "Información General"
+    "overview": "Información General",
+    "createdoc": "Crear nuevo documento"
   },
   "footer": {
-    "poweredby": "Energizado por",
-    "home": "Casa",
-    "top": "Volver a la cima"
+    "poweredby": "Con la tecnología de",
+    "home": "Página principal",
+    "top": "Volver arriba"
+  },
+  "search": {
+    "placeholder": "Buscar...",
+    "results": "Resultados de búsqueda",
+    "nomatch": "No se han encontrado resultados",
+    "didyoumean": "Quisiste decir...?"
+  },
+  "sidebar": {
+    "nav": "NAV",
+    "navigation": "Navegación",
+    "pagecontents": "Contenido de la página",
+    "pastversions": "Versiones pasadas"
+  },
+  "nav": {
+    "home": "Página principal",
+    "account": "Cuenta",
+    "myprofile": "Mi perfil",
+    "stats": "Estadísticas",
+    "syssettings": "Ajustes del sistema",
+    "users": "Usuarios",
+    "logout": "Cerrar Sesión",
+    "create": "Crear",
+    "edit": "Editar",
+    "history": "Historia",
+    "source": "Fuente",
+    "move": "Mover",
+    "allpages": "Todas las páginas",
+    "login": "Iniciar Sesión",
+    "normalview": "Vista normal",
+    "viewlatest": "Ver más reciente",
+    "discard": "Descartar",
+    "savechanges": "Guardar Cambios",
+    "savedocument": "Guardar documento"
+  },
+  "welcome": {
+    "title": "¡Bienvenido a tu wiki!",
+    "subtitle": "Comencemos y creemos la página principal.",
+    "createhome": "Crear página principal"
+  },
+  "loading": {
+    "source": "Cargando fuentes...",
+    "editor": "Cargando editor..."
   }
 }
