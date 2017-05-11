@@ -1,1 +1,51 @@
-{ }
+{
+  "profile": {
+    "displayname": "Nombre para mostrar",
+    "displaynameexample": "Juan Pérez",
+    "email": "Correo electrónico",
+    "lastprofileupdate": "Última actualización de perfil",
+    "membersince": "Miembro desde",
+    "password": "Contraseña",
+    "passwordverify": "Confirmar Contraseña",
+    "provider": "Proveedor",
+    "savechanges": "Guardar Cambios",
+    "subtitle": "Perfil e información de autenticación"
+  },
+  "stats": {
+    "subtitle": "Estadísticas generales del sitio",
+    "entries": "Entradas",
+    "uploads": "Subidas",
+    "users": "Usuarios"
+  },
+  "settings": {
+    "subtitle": "Configuración del sitio",
+    "systemversion": "Versión del Sistema",
+    "currentversion": "Versión Actual",
+    "latestversion": "Última Versión",
+    "upgrade": "Actualización",
+    "reinstall": "Reinstalar la versión actual",
+    "versioncheckfailed": "No se pudo consultar la última versión. Pruebe más tarde.",
+    "administrativetools": "Herramientas administrativas",
+    "flushcache": "Limpiar caché y reconstruir índices",
+    "flushcachetext": "Si el contenido o resultados de búsqueda están obsoletos o no incluyen los últimos cambios, limpiar caché puede ayudar a resolver estos problemas.",
+    "flushcachebtn": "Limpiar y Reconstruir",
+    "resetaccounts": "Restablecer cuentas del sistema a los valores predeterminados",
+    "resetaccountstext": "Las cuentas del sistema (como la cuenta de invitado) se restablecerán a sus valores predeterminados.",
+    "resetaccountsbtn": "Restablecer cuentas del sistema",
+    "flushsessions": "Limpiar todas las sesiones de usuario activas",
+    "flushsessionstext": "Todos los usuarios serán desconectados y forzados a iniciar sesión nuevamente. ¡Su sesión actual también se verá afectada!",
+    "flushsessionsbtn": "Limpiar Sesiones"
+  },
+  "users": {
+    "createauthorize": "Crear / Autorizar usuario",
+    "subtitle": "Administrar usuarios y derechos de acceso",
+    "name": "Nombre",
+    "email": "Dirección De Correo Electrónico",
+    "provider": "Proveedor",
+    "createdon": "Creado En",
+    "updatedon": "Actualizado en",
+    "returntousers": "Volver a Usuarios",
+    "edituser": "Editar Usuario",
+    "uniqueid": "ID Único"
+  }
+}
