@@ -56,7 +56,7 @@ Current and upcoming milestones *(features only, see the [changelog](https://git
 ### Beta 12
 
 - [ ] Better localization in the UI
-- [ ] History / Revert to preview version feature
+- [ ] History / Revert to previous version feature
 - [ ] Docker support + Auto compile/publish to Docker Hub
 - [ ] Heroku support
 
