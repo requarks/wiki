@@ -30,17 +30,12 @@ const args = require('yargs')
     describe: 'Start in Configure Developer mode',
     type: 'boolean'
   })
-  .option('i', {
-    alias: 'inspect',
-    describe: 'Enable Inspector for debugging',
-    type: 'boolean',
-    implies: 'd'
-  })
   .help('h')
   .alias('h', 'help')
   .argv
 
 let mode = 'build'
+const dev = args.d || args.c
 if (args.d) {
   console.info(colors.bgWhite.black(' Starting Fuse in DEVELOPER mode... '))
   mode = 'dev'
@@ -49,31 +44,6 @@ if (args.d) {
   mode = 'dev-configure'
 } else {
   console.info(colors.bgWhite.black(' Starting Fuse in BUILD mode... '))
-}
-
-// ======================================================
-// Define aliases / shims
-// ======================================================
-
-const ALIASES = {
-  'brace-ext-modelist': 'brace/ext/modelist.js',
-  'simplemde': 'simplemde/dist/simplemde.min.js',
-  'socket.io-client': 'socket.io-client/dist/socket.io.min.js',
-  'vue': 'vue/dist/vue.min.js'
-}
-const SHIMS = {
-  _preinit: {
-    source: '.build/_preinit.js',
-    exports: '_preinit'
-  },
-  jquery: {
-    source: 'node_modules/jquery/dist/jquery.js',
-    exports: '$'
-  },
-  mathjax: {
-    source: 'node_modules/mathjax/MathJax.js',
-    exports: 'MathJax'
-  }
 }
 
 // ======================================================
@@ -169,6 +139,12 @@ let globalTasks = Promise.mapSeries([
     }).then(() => {
       return fs.outputFileAsync('./.build/_preinit.js', preInitContent, 'utf8')
     })
+  },
+  /**
+   * Delete Fusebox cache
+   */
+  () => {
+    return fs.emptyDirAsync('./.fusebox')
   }
 ], f => { return f() })
 
@@ -176,129 +152,83 @@ let globalTasks = Promise.mapSeries([
 // Fuse Tasks
 // ======================================================
 
-let fuse
+const ALIASES = {
+  'brace-ext-modelist': 'brace/ext/modelist.js',
+  'simplemde': 'simplemde/dist/simplemde.min.js',
+  'socket.io-client': 'socket.io-client/dist/socket.io.js',
+  'vue': 'vue/dist/vue.min.js'
+}
+const SHIMS = {
+  _preinit: {
+    source: '.build/_preinit.js',
+    exports: '_preinit'
+  },
+  jquery: {
+    source: 'node_modules/jquery/dist/jquery.js',
+    exports: '$'
+  },
+  mathjax: {
+    source: 'node_modules/mathjax/MathJax.js',
+    exports: 'MathJax'
+  }
+}
 
 globalTasks.then(() => {
+  let fuse = fsbx.FuseBox.init({
+    homeDir: './client',
+    output: './assets/js/$name.min.js',
+    alias: ALIASES,
+    shim: SHIMS,
+    plugins: [
+      fsbx.EnvPlugin({ NODE_ENV: (dev) ? 'development' : 'production' }),
+      fsbx.VuePlugin(),
+      [ '.scss', fsbx.SassPlugin({ outputStyle: (dev) ? 'nested' : 'compressed' }), fsbx.CSSPlugin() ],
+      fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
+      fsbx.JSONPlugin(),
+      !dev && fsbx.UglifyJSPlugin({
+        compress: { unused: false },
+        output: { 'max_line_len': 1000000 }
+      })
+    ],
+    debug: false,
+    log: true
+  })
+
+  if (dev) {
+    fuse.dev({
+      port: 4444,
+      httpServer: false
+    })
+  }
+
+  const bundleLibs = fuse.bundle('libs').instructions('~ index.js')
+  const bundleApp = fuse.bundle('app').instructions('!> index.js')
+  const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
+
   switch (mode) {
-    // =============================================
-    // DEVELOPER MODE
-    // =============================================
     case 'dev':
-      // Client
-
-      fuse = fsbx.FuseBox.init({
-        homeDir: './client',
-        output: './assets/js/$name.min.js',
-        alias: ALIASES,
-        shim: SHIMS,
-        plugins: [
-          fsbx.VuePlugin(),
-          [ '.scss', fsbx.SassPlugin(), fsbx.CSSPlugin() ],
-          fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
-          fsbx.JSONPlugin()
-        ],
-        debug: false,
-        log: true
-      })
-
-      fuse.dev({
-        port: 4444,
-        httpServer: false
-      })
-
-      fuse.bundle('bundle')
-        .instructions('> index.js')
-        .watch()
-
-      fuse.run().then(() => {
-        nodemon({
-          exec: (args.i) ? 'node --inspect server' : 'node server',
-          ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
-          ext: 'js json',
-          watch: ['server'],
-          env: { 'NODE_ENV': 'development' }
-        })
-      })
-
+      bundleLibs.watch()
+      bundleApp.watch()
       break
-    // =============================================
-    // CONFIGURE - DEVELOPER MODE
-    // =============================================
     case 'dev-configure':
-      // Client
-
-      fuse = fsbx.FuseBox.init({
-        homeDir: './client',
-        output: './assets/js/$name.min.js',
-        alias: ALIASES,
-        shim: SHIMS,
-        plugins: [
-          [ '.scss', fsbx.SassPlugin(), fsbx.CSSPlugin() ],
-          fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
-          fsbx.JSONPlugin()
-        ],
-        debug: false,
-        log: true
-      })
-
-      fuse.dev({
-        port: 4444,
-        httpServer: false
-      })
-
-      fuse.bundle('configure')
-        .instructions('> configure.js')
-        .watch()
-
-      fuse.run().then(() => {
-        nodemon({
-          exec: 'node wiki configure',
-          ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
-          ext: 'js json',
-          watch: ['server/configure.js'],
-          env: { 'NODE_ENV': 'development' }
-        })
-      })
-
-      break
-    // =============================================
-    // BUILD ONLY MODE
-    // =============================================
-    case 'build':
-      fuse = fsbx.FuseBox.init({
-        homeDir: './client',
-        output: './assets/js/$name.min.js',
-        alias: ALIASES,
-        shim: SHIMS,
-        plugins: [
-          fsbx.EnvPlugin({ NODE_ENV: 'production' }),
-          fsbx.VuePlugin(),
-          [ '.scss', fsbx.SassPlugin({ outputStyle: 'compressed' }), fsbx.CSSPlugin() ],
-          fsbx.BabelPlugin({
-            config: {
-              comments: false,
-              presets: ['es2015']
-            }
-          }),
-          fsbx.JSONPlugin(),
-          fsbx.UglifyJSPlugin({
-            compress: { unused: false },
-            output: { 'max_line_len': 1000000 }
-          })
-        ],
-        debug: false,
-        log: true
-      })
-
-      fuse.bundle('bundle').instructions('> index.js')
-      fuse.bundle('configure').instructions('> configure.js')
-
-      fuse.run().then(() => {
-        console.info(colors.green.bold('\nAssets compilation + bundling completed.'))
-      }).catch(err => {
-        console.error(colors.red(' X Bundle compilation failed! ' + err.message))
-        process.exit(1)
-      })
+      bundleSetup.watch()
       break
   }
+
+  fuse.run().then(() => {
+    console.info(colors.green.bold('\nAssets compilation + bundling completed.'))
+
+    if (dev) {
+      nodemon({
+        exec: (args.d) ? 'node server' : 'node wiki configure',
+        ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
+        ext: 'js json',
+        watch: (args.d) ? ['server'] : ['server/configure.js'],
+        env: { 'NODE_ENV': 'development' }
+      })
+    }
+  }).catch(err => {
+    console.error(colors.red(' X Bundle compilation failed! ' + err.message))
+    process.exit(1)
+  })
 })

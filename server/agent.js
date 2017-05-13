@@ -44,8 +44,7 @@ const Promise = require('bluebird')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const klaw = require('klaw')
 const Cron = require('cron').CronJob
-const i18nextBackend = require('i18next-node-fs-backend')
-const i18nextMw = require('i18next-express-middleware')
+const i18nBackend = require('i18next-node-fs-backend')
 
 const entryHelper = require('./helpers/entry')
 
@@ -54,15 +53,14 @@ const entryHelper = require('./helpers/entry')
 // ----------------------------------------
 
 global.lang
-  .use(i18nextBackend)
-  .use(i18nextMw.LanguageDetector)
+  .use(i18nBackend)
   .init({
     load: 'languageOnly',
-    ns: ['common', 'errors', 'git'],
+    ns: ['common', 'admin', 'auth', 'errors', 'git'],
     defaultNS: 'common',
     saveMissing: false,
-    supportedLngs: ['en', 'fr'],
-    preload: ['en', 'fr'],
+    preload: [appconfig.lang],
+    lng: appconfig.lang,
     fallbackLng: 'en',
     backend: {
       loadPath: path.join(SERVERPATH, 'locales/{{lng}}/{{ns}}.json')

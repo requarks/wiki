@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node wiki start",
     "stop": "node wiki stop",
+    "restart": "node wiki restart",
     "build": "node fuse",
     "dev": "node fuse -d",
     "dev-configure": "node fuse -c",
