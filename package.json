@@ -119,6 +119,7 @@
     "through2": "^2.0.3",
     "validator": "^7.0.0",
     "validator-as-promised": "^1.0.2",
+    "vue-template-es2015-compiler": "^1.5.2",
     "winston": "^2.3.1",
     "yargs": "^8.0.1"
   },

@@ -31,9 +31,13 @@ module.exports = (confPaths) => {
   let appdata = {}
 
   try {
-    appconfig = yaml.safeLoad(_.deepMap(fs.readFileSync(confPaths.config, 'utf8'), c => {
-      return _.replace(c, (/\$\([A-Z0-9_]+\)/g, (m) => { return process.env[m] }))
-    }))
+    appconfig = yaml.safeLoad(
+      _.replace(
+        fs.readFileSync(confPaths.config, 'utf8'),
+        (/\$\([A-Z0-9_]+\)/g,
+        (m) => { return process.env[m] })
+      )
+    )
     appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
     appdata.regex = require(confPaths.dataRegex)
   } catch (ex) {
