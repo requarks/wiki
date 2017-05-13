@@ -148,13 +148,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
-[Unreleased]: https://github.com/Requarks/wiki/compare/v1.0-beta.11...HEAD
-[v1.0-beta.11]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.11
-[v1.0-beta.10]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.10
-[v1.0-beta.9]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.9
-[v1.0-beta.8]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.8
-[v1.0-beta.7]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.7
-[v1.0-beta.6]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.6
+[Unreleased]: https://github.com/Requarks/wiki/compare/v1.0.0-beta.11...HEAD
+[v1.0.0-beta.11]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.11
+[v1.0.0-beta.10]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.10
+[v1.0.0-beta.9]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.9
+[v1.0.0-beta.8]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.8
+[v1.0.0-beta.7]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.7
+[v1.0.0-beta.6]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.6
 [v1.0-beta.5]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.5
 [v1.0-beta.4]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.4
 [v1.0-beta.3]: https://github.com/Requarks/wiki/releases/tag/v1.0-beta.3
