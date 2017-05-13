@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **History**: History section to list all changes
 - **Localization**: All UI text elements are now localized
 - **Localization**: Chinese locale is now available (thanks to @choicky)
+- **Localization**: Russian locale is now available (thanks to @efimlosev)
+- **Localization**: Spanish locale is now available (thanks to @MatiasArriola)
 
 ### Changed
 - **Misc**: Updated dependencies
