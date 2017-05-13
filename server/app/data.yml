@@ -3,10 +3,6 @@
 # This is reserved for system use!
 # ---------------------------------
 name: Wiki.js
-capabilities:
-  guest: true
-  rights: true
-  manyAuthProviders: true
 defaults:
   config:
     title: Wiki
@@ -64,6 +60,9 @@ langs:
   -
     id: en
     name: English
+  -
+    id: zh
+    name: Chinese - 普通话
   -
     id: fr
     name: French - Français

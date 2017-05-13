@@ -26,7 +26,7 @@ module.exports = function (passport) {
 
   // Local Account
 
-  if (!appdata.capabilities.manyAuthProviders || (appconfig.auth.local && appconfig.auth.local.enabled)) {
+  if (appconfig.auth.local && appconfig.auth.local.enabled) {
     const LocalStrategy = require('passport-local').Strategy
     passport.use('local',
       new LocalStrategy({
@@ -53,7 +53,7 @@ module.exports = function (passport) {
 
   // Google ID
 
-  if (appdata.capabilities.manyAuthProviders && appconfig.auth.google && appconfig.auth.google.enabled) {
+  if (appconfig.auth.google && appconfig.auth.google.enabled) {
     const GoogleStrategy = require('passport-google-oauth20').Strategy
     passport.use('google',
       new GoogleStrategy({
@@ -73,7 +73,7 @@ module.exports = function (passport) {
 
   // Microsoft Accounts
 
-  if (appdata.capabilities.manyAuthProviders && appconfig.auth.microsoft && appconfig.auth.microsoft.enabled) {
+  if (appconfig.auth.microsoft && appconfig.auth.microsoft.enabled) {
     const WindowsLiveStrategy = require('passport-windowslive').Strategy
     passport.use('windowslive',
       new WindowsLiveStrategy({
@@ -93,7 +93,7 @@ module.exports = function (passport) {
 
   // Facebook
 
-  if (appdata.capabilities.manyAuthProviders && appconfig.auth.facebook && appconfig.auth.facebook.enabled) {
+  if (appconfig.auth.facebook && appconfig.auth.facebook.enabled) {
     const FacebookStrategy = require('passport-facebook').Strategy
     passport.use('facebook',
       new FacebookStrategy({
@@ -114,7 +114,7 @@ module.exports = function (passport) {
 
   // GitHub
 
-  if (appdata.capabilities.manyAuthProviders && appconfig.auth.github && appconfig.auth.github.enabled) {
+  if (appconfig.auth.github && appconfig.auth.github.enabled) {
     const GitHubStrategy = require('passport-github2').Strategy
     passport.use('github',
       new GitHubStrategy({
@@ -135,7 +135,7 @@ module.exports = function (passport) {
 
   // Slack
 
-  if (appdata.capabilities.manyAuthProviders && appconfig.auth.slack && appconfig.auth.slack.enabled) {
+  if (appconfig.auth.slack && appconfig.auth.slack.enabled) {
     const SlackStrategy = require('passport-slack').Strategy
     passport.use('slack',
       new SlackStrategy({
@@ -155,7 +155,7 @@ module.exports = function (passport) {
 
   // LDAP
 
-  if (appdata.capabilities.manyAuthProviders && appconfig.auth.ldap && appconfig.auth.ldap.enabled) {
+  if (appconfig.auth.ldap && appconfig.auth.ldap.enabled) {
     const LdapStrategy = require('passport-ldapauth').Strategy
     passport.use('ldapauth',
       new LdapStrategy({
@@ -189,7 +189,7 @@ module.exports = function (passport) {
 
   // AZURE AD
 
-  if (appdata.capabilities.manyAuthProviders && appconfig.auth.azure && appconfig.auth.azure.enabled) {
+  if (appconfig.auth.azure && appconfig.auth.azure.enabled) {
     const AzureAdOAuth2Strategy = require('passport-azure-ad-oauth2').Strategy
     const jwt = require('jsonwebtoken')
     passport.use('azure_ad_oauth2',

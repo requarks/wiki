@@ -16,24 +16,22 @@ module.exports = (req, res, next) => {
   // Is user authenticated ?
 
   if (!req.isAuthenticated()) {
-    if (!appdata.capabilities.guest || req.app.locals.appconfig.public !== true) {
+    if (req.app.locals.appconfig.public !== true) {
       return res.redirect('/login')
     } else {
       req.user = rights.guest
       res.locals.isGuest = true
     }
-  } else if (appdata.capabilities.guest) {
+  } else {
     res.locals.isGuest = false
   }
 
   // Check permissions
 
-  if (appdata.capabilities.rights) {
-    res.locals.rights = rights.check(req)
+  res.locals.rights = rights.check(req)
 
-    if (!res.locals.rights.read) {
-      return res.render('error-forbidden')
-    }
+  if (!res.locals.rights.read) {
+    return res.render('error-forbidden')
   }
 
   // Set i18n locale

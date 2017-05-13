@@ -5,6 +5,15 @@ const yaml = require('js-yaml')
 const _ = require('lodash')
 const path = require('path')
 
+const deepMap = (obj, iterator, context) => {
+  return _.transform(obj, (result, val, key) => {
+    result[key] = _.isObject(val)
+      ? deepMap(val, iterator, context)
+      : iterator.call(context, val, key, obj)
+  })
+}
+_.mixin({ deepMap })
+
 /**
  * Load Application Configuration
  *
@@ -22,7 +31,9 @@ module.exports = (confPaths) => {
   let appdata = {}
 
   try {
-    appconfig = yaml.safeLoad(fs.readFileSync(confPaths.config, 'utf8'))
+    appconfig = yaml.safeLoad(_.deepMap(fs.readFileSync(confPaths.config, 'utf8'), c => {
+      return _.replace(c, (/\$\([A-Z0-9_]+\)/g, (m) => { return process.env[m] }))
+    }))
     appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
     appdata.regex = require(confPaths.dataRegex)
   } catch (ex) {
@@ -34,32 +45,21 @@ module.exports = (confPaths) => {
 
   appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
 
-  // Using ENV variables?
+  // Check port
 
   if (appconfig.port < 1) {
     appconfig.port = process.env.PORT || 80
   }
 
-  if (_.startsWith(appconfig.db, '$')) {
-    appconfig.db = process.env[appconfig.db.slice(1)]
-  }
-
   // List authentication strategies
 
-  if (appdata.capabilities.manyAuthProviders) {
-    appconfig.authStrategies = {
-      list: _.filter(appconfig.auth, ['enabled', true]),
-      socialEnabled: (_.chain(appconfig.auth).omit('local').filter(['enabled', true]).value().length > 0)
-    }
-    if (appconfig.authStrategies.list.length < 1) {
-      console.error(new Error('You must enable at least 1 authentication strategy!'))
-      process.exit(1)
-    }
-  } else {
-    appconfig.authStrategies = {
-      list: { local: { enabled: true } },
-      socialEnabled: false
-    }
+  appconfig.authStrategies = {
+    list: _.filter(appconfig.auth, ['enabled', true]),
+    socialEnabled: (_.chain(appconfig.auth).omit('local').filter(['enabled', true]).value().length > 0)
+  }
+  if (appconfig.authStrategies.list.length < 1) {
+    console.error(new Error('You must enable at least 1 authentication strategy!'))
+    process.exit(1)
   }
 
   return {

@@ -19,9 +19,8 @@ host: http://localhost
 # ---------------------------------------------------------------------
 # Port the main server should listen to (80 by default)
 # ---------------------------------------------------------------------
-# To use process.env.PORT, comment the line below:
 
-# port: 80
+port: $(PORT)
 
 # ---------------------------------------------------------------------
 # Data Directories
@@ -103,7 +102,6 @@ sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 # ---------------------------------------------------------------------
 # Database Connection String
 # ---------------------------------------------------------------------
-# You can also use an ENV variable by using $ENV_VAR_NAME as the value
 
 db: mongodb://mongo:27017/wiki
 
