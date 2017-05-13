@@ -1,5 +1,7 @@
 'use strict'
 
+const Mongoose = require('mongoose')
+
 /**
  * BruteForce schema
  *

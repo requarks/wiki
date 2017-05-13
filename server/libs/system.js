@@ -1,5 +1,7 @@
 'use strict'
 
+/* global winston */
+
 const Promise = require('bluebird')
 const crypto = require('crypto')
 const fs = Promise.promisifyAll(require('fs-extra'))

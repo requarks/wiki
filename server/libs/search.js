@@ -1,5 +1,7 @@
 'use strict'
 
+/* global winston */
+
 const Promise = require('bluebird')
 const _ = require('lodash')
 const searchIndex = require('./search-index')

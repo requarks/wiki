@@ -21,7 +21,6 @@ module.exports = {
    */
   init () {
     let self = this
-    global.Mongoose = modb
 
     let dbModelsPath = path.join(SERVERPATH, 'models')
 

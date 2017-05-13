@@ -1,5 +1,7 @@
 'use strict'
 
+/* global db, lang, rights, winston */
+
 var express = require('express')
 var router = express.Router()
 const Promise = require('bluebird')

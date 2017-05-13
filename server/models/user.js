@@ -1,5 +1,8 @@
 'use strict'
 
+/* global db, lang */
+
+const Mongoose = require('mongoose')
 const Promise = require('bluebird')
 const bcrypt = require('bcryptjs-then')
 const _ = require('lodash')

@@ -1,6 +1,6 @@
 'use strict'
 
-/* global appconfig, rights */
+/* global appconfig, entries, rights, search, upl */
 /* eslint-disable standard/no-callback-literal */
 
 const _ = require('lodash')

@@ -1,5 +1,7 @@
 'use strict'
 
+/* global git, lang, lcdata, upl */
+
 const express = require('express')
 const router = express.Router()
 

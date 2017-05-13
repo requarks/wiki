@@ -25,7 +25,7 @@ global.appdata = appconf.data
 // ----------------------------------------
 
 global.winston = require('./libs/logger')(IS_DEBUG, 'SERVER')
-winston.info('Wiki.js is initializing...')
+global.winston.info('Wiki.js is initializing...')
 
 // ----------------------------------------
 // Load global modules
@@ -53,8 +53,7 @@ const favicon = require('serve-favicon')
 const flash = require('connect-flash')
 const fork = require('child_process').fork
 const http = require('http')
-const i18nextBackend = require('i18next-node-fs-backend')
-const i18nextMw = require('i18next-express-middleware')
+const i18nBackend = require('i18next-node-fs-backend')
 const passport = require('passport')
 const passportSocketIo = require('passport.socketio')
 const session = require('express-session')
@@ -68,7 +67,8 @@ var ctrl = autoload(path.join(SERVERPATH, '/controllers'))
 // Define Express App
 // ----------------------------------------
 
-global.app = express()
+const app = express()
+global.app = app
 app.use(compression())
 
 // ----------------------------------------
@@ -90,10 +90,10 @@ app.use(express.static(path.join(ROOTPATH, 'assets')))
 
 require('./libs/auth')(passport)
 global.rights = require('./libs/rights')
-rights.init()
+global.rights.init()
 
 let sessionStore = new SessionMongoStore({
-  mongooseConnection: db.connection,
+  mongooseConnection: global.db.connection,
   touchAfter: 15
 })
 
@@ -119,16 +119,15 @@ app.use(mw.seo)
 // Localization Engine
 // ----------------------------------------
 
-lang
-  .use(i18nextBackend)
-  .use(i18nextMw.LanguageDetector)
+global.lang
+  .use(i18nBackend)
   .init({
     load: 'languageOnly',
     ns: ['common', 'admin', 'auth', 'errors', 'git'],
     defaultNS: 'common',
     saveMissing: false,
-    supportedLngs: ['en', 'fr'],
-    preload: ['en', 'fr'],
+    preload: [appconfig.lang],
+    lng: appconfig.lang,
     fallbackLng: 'en',
     backend: {
       loadPath: path.join(SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
@@ -139,7 +138,6 @@ lang
 // View Engine Setup
 // ----------------------------------------
 
-app.use(i18nextMw.handle(lang))
 app.set('views', path.join(SERVERPATH, 'views'))
 app.set('view engine', 'pug')
 
@@ -151,7 +149,9 @@ app.use(bodyParser.urlencoded({ extended: false, limit: '1mb' }))
 // ----------------------------------------
 
 app.locals._ = require('lodash')
+app.locals.t = global.lang.t.bind(global.lang)
 app.locals.moment = require('moment')
+app.locals.moment.locale(appconfig.lang)
 app.locals.appconfig = appconfig
 app.use(mw.flash)
 
@@ -187,7 +187,7 @@ app.use(function (err, req, res, next) {
 // Start HTTP server
 // ----------------------------------------
 
-winston.info('Starting HTTP/WS server on port ' + appconfig.port + '...')
+global.winston.info('Starting HTTP/WS server on port ' + appconfig.port + '...')
 
 app.set('port', appconfig.port)
 var server = http.createServer(app)
@@ -202,10 +202,10 @@ server.on('error', (error) => {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      winston.error('Listening on port ' + appconfig.port + ' requires elevated privileges!')
+      global.winston.error('Listening on port ' + appconfig.port + ' requires elevated privileges!')
       return process.exit(1)
     case 'EADDRINUSE':
-      winston.error('Port ' + appconfig.port + ' is already in use!')
+      global.winston.error('Port ' + appconfig.port + ' is already in use!')
       return process.exit(1)
     default:
       throw error
@@ -213,7 +213,7 @@ server.on('error', (error) => {
 })
 
 server.on('listening', () => {
-  winston.info('HTTP/WS server started successfully! [RUNNING]')
+  global.winston.info('HTTP/WS server started successfully! [RUNNING]')
 })
 
 // ----------------------------------------
@@ -248,7 +248,7 @@ bgAgent.on('message', m => {
 
   switch (m.action) {
     case 'searchAdd':
-      search.add(m.content)
+      global.search.add(m.content)
       break
   }
 })

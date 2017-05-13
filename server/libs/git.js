@@ -1,5 +1,7 @@
 'use strict'
 
+/* global lang, winston */
+
 const Git = require('git-wrapper2-promise')
 const Promise = require('bluebird')
 const path = require('path')

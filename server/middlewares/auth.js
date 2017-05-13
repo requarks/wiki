@@ -2,8 +2,6 @@
 
 /* global appdata, rights */
 
-const moment = require('moment-timezone')
-
 /**
  * Authentication middleware
  *
@@ -33,12 +31,6 @@ module.exports = (req, res, next) => {
   if (!res.locals.rights.read) {
     return res.render('error-forbidden')
   }
-
-  // Set i18n locale
-
-  req.i18n.changeLanguage(req.user.lang)
-  res.locals.userMoment = moment
-  res.locals.userMoment.locale(req.user.lang)
 
   // Expose user data
 

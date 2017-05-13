@@ -26,7 +26,7 @@ global.winston = require('./libs/logger')(IS_DEBUG, 'AGENT')
 // Load global modules
 // ----------------------------------------
 
-winston.info('Background Agent is initializing...')
+global.winston.info('Background Agent is initializing...')
 
 global.db = require('./libs/db').init()
 global.upl = require('./libs/uploads-agent').init()
@@ -53,7 +53,7 @@ const entryHelper = require('./helpers/entry')
 // Localization Engine
 // ----------------------------------------
 
-lang
+global.lang
   .use(i18nextBackend)
   .use(i18nextMw.LanguageDetector)
   .init({
@@ -77,8 +77,8 @@ let job
 let jobIsBusy = false
 let jobUplWatchStarted = false
 
-db.onReady.then(() => {
-  return db.Entry.remove({})
+global.db.onReady.then(() => {
+  return global.db.Entry.remove({})
 }).then(() => {
   job = new Cron({
     cronTime: '0 */5 * * * *',
@@ -86,10 +86,10 @@ db.onReady.then(() => {
       // Make sure we don't start two concurrent jobs
 
       if (jobIsBusy) {
-        winston.warn('Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
+        global.winston.warn('Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
         return
       }
-      winston.info('Running all jobs...')
+      global.winston.info('Running all jobs...')
       jobIsBusy = true
 
       // Prepare async job collector
@@ -107,7 +107,7 @@ db.onReady.then(() => {
       // -> Sync with Git remote
       //* ****************************************
 
-      jobs.push(git.resync().then(() => {
+      jobs.push(global.git.resync().then(() => {
         // -> Stream all documents
 
         let cacheJobs = []
@@ -140,7 +140,7 @@ db.onReady.then(() => {
                 // -> Update cache and search index
 
                 if (fileStatus !== 'active') {
-                  return entries.updateCache(entryPath).then(entry => {
+                  return global.entries.updateCache(entryPath).then(entry => {
                     process.send({
                       action: 'searchAdd',
                       content: entry
@@ -187,18 +187,18 @@ db.onReady.then(() => {
       // ----------------------------------------
 
       Promise.all(jobs).then(() => {
-        winston.info('All jobs completed successfully! Going to sleep for now.')
+        global.winston.info('All jobs completed successfully! Going to sleep for now.')
 
         if (!jobUplWatchStarted) {
           jobUplWatchStarted = true
-          upl.initialScan().then(() => {
+          global.upl.initialScan().then(() => {
             job.start()
           })
         }
 
         return true
       }).catch((err) => {
-        winston.error('One or more jobs have failed: ', err)
+        global.winston.error('One or more jobs have failed: ', err)
       }).finally(() => {
         jobIsBusy = false
       })
@@ -214,7 +214,7 @@ db.onReady.then(() => {
 // ----------------------------------------
 
 process.on('disconnect', () => {
-  winston.warn('Lost connection to main server. Exiting...')
+  global.winston.warn('Lost connection to main server. Exiting...')
   job.stop()
   process.exit()
 })

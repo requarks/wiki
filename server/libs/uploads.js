@@ -1,5 +1,7 @@
 'use strict'
 
+/* global db, lang, lcdata, upl, winston */
+
 const path = require('path')
 const Promise = require('bluebird')
 const fs = Promise.promisifyAll(require('fs-extra'))

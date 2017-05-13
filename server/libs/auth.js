@@ -1,6 +1,6 @@
 'use strict'
 
-/* global appconfig, appdata, db, winston */
+/* global appconfig, appdata, db, lang, winston */
 
 const fs = require('fs')
 

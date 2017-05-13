@@ -119,7 +119,6 @@
     "through2": "^2.0.3",
     "validator": "^7.0.0",
     "validator-as-promised": "^1.0.2",
-    "vue-template-es2015-compiler": "^1.5.2",
     "winston": "^2.3.1",
     "yargs": "^8.0.1"
   },
@@ -135,7 +134,7 @@
     "eslint-plugin-node": "latest",
     "eslint-plugin-promise": "latest",
     "eslint-plugin-standard": "latest",
-    "fuse-box": "beta",
+    "fuse-box": "^2.0.0",
     "jest": "latest",
     "jquery": "^3.2.1",
     "jquery-contextmenu": "^2.4.5",
@@ -147,38 +146,13 @@
     "nodemon": "latest",
     "pug-lint": "latest",
     "snyk": "latest",
-    "standard": "latest",
     "twemoji-awesome": "^1.0.6",
     "typescript": "^2.3.2",
     "uglify-js": "latest",
     "vee-validate": "^2.0.0-rc.3",
     "vue": "^2.3.3",
-    "vue-template-compiler": "^2.3.3"
-  },
-  "standard": {
-    "globals": [
-      "app",
-      "appconfig",
-      "appdata",
-      "db",
-      "entries",
-      "git",
-      "mark",
-      "lang",
-      "lcdata",
-      "rights",
-      "search",
-      "upl",
-      "winston",
-      "ws",
-      "Mongoose",
-      "ROOTPATH",
-      "IS_DEBUG",
-      "PROCNAME",
-      "describe",
-      "it",
-      "expect"
-    ]
+    "vue-template-compiler": "^2.3.3",
+    "vue-template-es2015-compiler": "^1.5.2"
   },
   "jest": {
     "collectCoverage": false,

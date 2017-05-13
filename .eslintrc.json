@@ -11,24 +11,10 @@
     "document": false,
     "navigator": false,
     "window": false,
-    "app": true,
     "appconfig": true,
     "appdata": true,
-    "db": true,
-    "entries": true,
-    "git": true,
-    "lang": true,
-    "lcdata": true,
-    "mark": true,
-    "rights": true,
-    "search": true,
-    "upl": true,
-    "winston": true,
-    "ws": true,
-    "Mongoose": true,
     "ROOTPATH": true,
     "SERVERPATH": true,
-    "IS_DEBUG": true,
-    "PROCNAME": true
+    "IS_DEBUG": true
   }
 }
