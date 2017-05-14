@@ -1,0 +1,40 @@
+@media print {
+  #header-container,
+  #alerts,
+  .sidebar,
+  .footer {
+    display: none;
+  }
+
+  #root {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  body, main, .hero {
+    background: #FFF;
+    border: none;
+  }
+
+  .mkcontent {
+    color: mc('grey', '900');
+
+    h1, h2, h3 {
+      background: #FFF;
+    }
+    .toc-anchor {
+      display: none;
+    }
+    pre {
+      background-color: #FFF;
+      border-left: none;
+      padding-left: 20px;
+
+      > code {
+        color: mc('grey', '800');
+      }
+    }
+  }
+
+  @import 'node_modules/highlight.js/styles/atom-one-light';
+}
