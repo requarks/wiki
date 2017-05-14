@@ -45,9 +45,9 @@ block adminContent
                 default: i.icon-warning
               = t('auth:providers.' + user.provider)
             label.label= t('admin:profile.membersince')
-            p.control= userMoment(user.createdAt).format('LL')
+            p.control= moment(user.createdAt).format('LL')
             label.label= t('admin:profile.lastprofileupdate')
-            p.control= userMoment(user.updatedAt).format('LL')
+            p.control= moment(user.updatedAt).format('LL')
 
   script(type='text/javascript').
     var usrDataName = "!{user.name}";

@@ -87,6 +87,10 @@ const videoRules = [
   }
 ]
 
+// Non-markdown filter
+
+const textRegex = new RegExp('\\b[a-z0-9-.,' + appdata.regex.cjk + appdata.regex.arabic + ']+\\b', 'g')
+
 /**
  * Parse markdown content and build TOC tree
  *
@@ -290,20 +294,15 @@ const parseMeta = (content) => {
  * @return     {String}  Text-only version
  */
 const removeMarkdown = (content) => {
-  return mdRemove(_.chain(content)
+  return _.join(mdRemove(_.chain(content)
     .replace(/<!-- ?([a-zA-Z]+):(.*)-->/g, '')
-    .replace(/```[^`]+```/g, '')
+    .replace(/```([^`]|`)+?```/g, '')
     .replace(/`[^`]+`/g, '')
     .replace(new RegExp('(?!mailto:)(?:(?:http|https|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?', 'g'), '')
-    .replace(/\r?\n|\r/g, ' ')
     .deburr()
     .toLower()
-    .replace(/(\b([^a-z]+)\b)/g, ' ')
-    .replace(/[^a-z]+/g, ' ')
-    .replace(/(\b(\w{1,2})\b(\W|$))/g, '')
-    .replace(/\s\s+/g, ' ')
     .value()
-  )
+  ).replace(/\r?\n|\r/g, ' ').match(textRegex), ' ')
 }
 
 module.exports = {

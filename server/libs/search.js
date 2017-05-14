@@ -92,7 +92,7 @@ module.exports = {
           title: content.title,
           subtitle: content.subtitle || '',
           parent: content.parent || '',
-          content: content.content || ''
+          content: content.text || ''
         }]).then(() => {
           winston.log('verbose', 'Entry ' + content._id + ' added/updated to search index.')
           return true
@@ -160,7 +160,7 @@ module.exports = {
               .deburr()
               .toLower()
               .trim()
-              .replace(/[^a-z0-9 ]/g, '')
+              .replace(/[^a-z0-9 ]/g, ' ')
               .value()
     let arrTerms = _.chain(terms)
                     .split(' ')

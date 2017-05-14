@@ -266,6 +266,10 @@ module.exports = {
       }, {
         new: true,
         upsert: true
+      }).then(result => {
+        let plainResult = result.toObject()
+        plainResult.text = content.text
+        return plainResult
       })
     }).then(result => {
       return self.updateTreeInfo().then(() => {

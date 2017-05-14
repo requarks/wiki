@@ -34,8 +34,8 @@ block adminContent
               when 'ldap': i.icon-arrow-repeat-outline
               default: i.icon-warning
             = t('auth:providers.' + usr.provider)
-          td.is-centered= userMoment(usr.createdAt).format('lll')
-          td.is-centered= userMoment(usr.updatedAt).format('lll')
+          td.is-centered= moment(usr.createdAt).format('lll')
+          td.is-centered= moment(usr.updatedAt).format('lll')
     .form-sections
       section
         label.label= t('admin:profile.email')

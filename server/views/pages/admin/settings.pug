@@ -12,7 +12,7 @@ block adminContent
         .section-block
           p #{t('admin:settings.currentversion')}: #[strong= sysversion.current]
           if sysversion.latest
-            p #{t('admin:settings.latestversion')}: #[strong= sysversion.latest] #[em (Published #{userMoment(sysversion.latestPublishedAt).fromNow()})]
+            p #{t('admin:settings.latestversion')}: #[strong= sysversion.latest] #[em (Published #{moment(sysversion.latestPublishedAt).fromNow()})]
             p
               if sysversion.current !== sysversion.latest
                 button.button.is-deep-orange(v-on:click='upgrade')= t('admin:settings.upgrade')
