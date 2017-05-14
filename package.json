@@ -124,6 +124,7 @@
     "yargs": "^8.0.1"
   },
   "devDependencies": {
+    "@glimpse/glimpse": "^0.20.8",
     "babel-cli": "latest",
     "babel-jest": "latest",
     "babel-preset-es2015": "latest",

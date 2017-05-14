@@ -16,6 +16,10 @@ const IS_DEBUG = process.env.NODE_ENV === 'development'
 
 process.env.VIPS_WARNING = false
 
+if (IS_DEBUG) {
+  require('@glimpse/glimpse').init()
+}
+
 let appconf = require('./libs/config')()
 global.appconfig = appconf.config
 global.appdata = appconf.data
