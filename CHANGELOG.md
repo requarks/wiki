@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Localization**: Chinese locale is now available (thanks to @choicky)
 - **Localization**: Russian locale is now available (thanks to @efimlosev)
 - **Localization**: Spanish locale is now available (thanks to @MatiasArriola)
+- **Print**: Optimized layout and colors for print view
 
 ### Changed
 - **Misc**: Updated dependencies
