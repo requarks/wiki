@@ -90,7 +90,7 @@
     "moment": "^2.18.1",
     "moment-timezone": "^0.5.13",
     "mongodb": "^2.2.26",
-    "mongoose": "^4.9.8",
+    "mongoose": "^4.9.9",
     "multer": "^1.3.0",
     "ora": "^1.2.0",
     "passport": "^0.3.2",
