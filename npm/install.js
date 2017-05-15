@@ -215,7 +215,7 @@ const tasks = {
 // INSTALL SEQUENCE
 // =====================================================
 
-if (!process.env.IS_HEROKU && !process.env.WIKI_JS_DOCKER) {
+if (!process.env.WIKI_JS_HEROKU && !process.env.WIKI_JS_DOCKER) {
   console.info(colors.yellow(
     ' __    __ _ _    _    _     \n' +
     '/ / /\\ \\ (_) | _(_)  (_)___ \n' +
