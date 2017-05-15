@@ -49,8 +49,8 @@ module.exports = {
    * Start in Heroku mode
    */
   startInHerokuMode: function () {
-    console.info('Initializing Wiki.js for Heroku...')
-    require('./server.js')
+    console.warn('Incorrect command on Heroku, use instead: node server')
+    process.exit(1)
   },
   /**
    * Stop Wiki.js process(es)
