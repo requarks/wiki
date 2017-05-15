@@ -67,8 +67,8 @@ module.exports = (port, spinner) => {
       langs,
       conf,
       runmode: {
-        staticPort: (process.env.IS_HEROKU || process.env.WIKI_JS_DOCKER) || true,
-        staticMongo: (!_.isNil(process.env.IS_HEROKU)) || true
+        staticPort: (process.env.IS_HEROKU || process.env.WIKI_JS_DOCKER),
+        staticMongo: (!_.isNil(process.env.IS_HEROKU))
       }
     })
   })
