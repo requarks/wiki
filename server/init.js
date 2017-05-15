@@ -13,7 +13,7 @@ module.exports = {
    * Detect the most appropriate start mode
    */
   startDetect: function () {
-    if (process.env.IS_HEROKU) {
+    if (process.env.WIKI_JS_HEROKU) {
       return this.startInHerokuMode()
     } else {
       return this.startInBackgroundMode()
@@ -49,21 +49,8 @@ module.exports = {
    * Start in Heroku mode
    */
   startInHerokuMode: function () {
-    let self = this
-
     console.info('Initializing Wiki.js for Heroku...')
-    let herokuStatePath = path.join(__dirname, './app/heroku.json')
-    return fs.accessAsync(herokuStatePath).then(() => {
-      require('./server.js')
-    }).catch(err => {
-      if (err.code === 'ENOENT') {
-        console.info('Wiki.js is not configured yet. Launching configuration wizard...')
-        self.configure(process.env.PORT)
-      } else {
-        console.error(err)
-        process.exit(1)
-      }
-    })
+    require('./server.js')
   },
   /**
    * Stop Wiki.js process(es)

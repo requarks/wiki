@@ -8,13 +8,13 @@
 # Title of this site
 # ---------------------------------------------------------------------
 
-title: Wiki
+title: $(WIKI_TITLE)
 
 # ---------------------------------------------------------------------
 # Full public path to the site, without the trailing slash
 # ---------------------------------------------------------------------
 
-host: https://YOURAPP.herokuapp.com/
+host: $(WIKI_HOST)
 
 # ---------------------------------------------------------------------
 # Port the main server should listen to (80 by default)
@@ -44,13 +44,13 @@ uploads:
 # ---------------------------------------------------------------------
 # Possible values: en, de, es, fr, ko, pt or ru
 
-lang: en
+lang: $(WIKI_LANG)
 
 # ---------------------------------------------------------------------
 # Site Authentication
 # ---------------------------------------------------------------------
 
-public: false
+public: $(WIKI_PUBLIC)
 
 auth:
   defaultReadAccess: false
@@ -97,7 +97,7 @@ auth:
 # ---------------------------------------------------------------------
 # Use a long and unique random string (256-bit keys are perfect!)
 
-sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
+sessionSecret: $(WIKI_SESSION_KEY)
 
 # ---------------------------------------------------------------------
 # Database Connection String
@@ -110,16 +110,16 @@ db: $(MONGODB_URI)
 # ---------------------------------------------------------------------
 
 git:
-  url: https://github.com/Organization/Repo
-  branch: master
+  url: $(WIKI_GIT_URL)
+  branch: $(WIKI_GIT_BRANCH)
   auth:
 
     # Type: basic or ssh
-    type: ssh
+    type: basic
 
     # Only for Basic authentication:
-    username: marty
-    password: MartyMcFly88
+    username: $(WIKI_GIT_USERNAME)
+    password: $(WIKI_GIT_PASSWORD)
 
     # Only for SSH authentication:
     privateKey: /etc/wiki/keys/git.pem
@@ -127,10 +127,10 @@ git:
     sslVerify: true
 
   # Default email to use as commit author
-  serverEmail: marty@example.com
+  serverEmail: $(WIKI_SERVER_EMAIL)
 
   # Whether to use user email as author in commits
-  showUserEmail: true
+  showUserEmail: $(WIKI_SHOW_USER_EMAIL)
 
 # ---------------------------------------------------------------------
 # Features

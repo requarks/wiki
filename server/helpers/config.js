@@ -13,7 +13,7 @@ module.exports = {
     return _.replace(
       cfg,
       (/\$\(([A-Z0-9_]+)\)/g,
-      (m) => { return process.env[m] })
+      (fm, m) => { return process.env[m] })
     )
   }
 }
