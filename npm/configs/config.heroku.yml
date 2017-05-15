@@ -103,7 +103,7 @@ sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 # Database Connection String
 # ---------------------------------------------------------------------
 
-db: $(MONGO_URI)
+db: $(MONGODB_URI)
 
 # ---------------------------------------------------------------------
 # Git Connection Info

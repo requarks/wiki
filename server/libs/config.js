@@ -4,15 +4,7 @@ const fs = require('fs')
 const yaml = require('js-yaml')
 const _ = require('lodash')
 const path = require('path')
-
-const deepMap = (obj, iterator, context) => {
-  return _.transform(obj, (result, val, key) => {
-    result[key] = _.isObject(val)
-      ? deepMap(val, iterator, context)
-      : iterator.call(context, val, key, obj)
-  })
-}
-_.mixin({ deepMap })
+const cfgHelper = require('../helpers/config')
 
 /**
  * Load Application Configuration
@@ -32,10 +24,8 @@ module.exports = (confPaths) => {
 
   try {
     appconfig = yaml.safeLoad(
-      _.replace(
-        fs.readFileSync(confPaths.config, 'utf8'),
-        (/\$\([A-Z0-9_]+\)/g,
-        (m) => { return process.env[m] })
+      cfgHelper.parseConfigValue(
+        fs.readFileSync(confPaths.config, 'utf8')
       )
     )
     appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))

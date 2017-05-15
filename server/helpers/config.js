@@ -12,7 +12,7 @@ module.exports = {
   parseConfigValue (cfg) {
     return _.replace(
       cfg,
-      (/\$\([A-Z0-9_]+\)/g,
+      (/\$\(([A-Z0-9_]+)\)/g,
       (m) => { return process.env[m] })
     )
   }
