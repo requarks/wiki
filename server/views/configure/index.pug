@@ -12,6 +12,7 @@ html(data-logic='configure')
     // JS / CSS
     script(type='text/javascript').
       var appconfig = !{JSON.stringify(conf)};
+      var runmode = !{JSON.stringify(runmode)};
     script(type='text/javascript', src='/js/configure.min.js')
 
   body
@@ -89,13 +90,14 @@ html(data-logic='configure')
                   section
                     p.control.is-fullwidth
                       label.label Host
-                      input(type='text', placeholder='http://', v-model='conf.host', data-vv-scope='general', name='ipt-host', v-validate='{ required: true, url: true }')
-                      span.desc The full URL to your wiki, without the trailing slash. E.g.: http://wiki.domain.com. Note that sub-folders are not supported.
-                  section
-                    p.control
-                      label.label Port
-                      input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true, numeric: true, min_value: 0, max_value: 65535 }')
-                      span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>0</strong> to use $PORT system environment variable.
+                      input(type='text', placeholder='http://', v-model='conf.host', data-vv-scope='general', name='ipt-host', v-validate='{ required: true, min: 4 }')
+                      span.desc The full URL to your wiki, without the trailing slash. E.g.: http://wiki.domain.com. Note that sub-folders are #[u not supported].
+                  if !runmode.staticPort
+                    section
+                      p.control
+                        label.label Port
+                        input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
+                        span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>$(PORT)</strong> to use PORT environment variable.
                   section
                     p.control
                       label.label Site UI Language
@@ -160,7 +162,7 @@ html(data-logic='configure')
                     p.control.is-fullwidth
                       label.label MongoDB Connection String
                       input(type='text', placeholder='e.g. mongodb://localhost:27017/wiki', v-model='conf.db', data-vv-scope='db', name='ipt-db', v-validate='{ required: true, min: 3 }')
-                      span.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.<br />You can also specify an environment variable as the connection string (e.g. $MONGO_URI).
+                      span.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.<br />You can also specify an environment variable as the connection string, e.g. $(MONGO_URI).
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
                   button.button.is-light-blue.is-outlined(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Back

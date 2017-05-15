@@ -20,6 +20,7 @@ module.exports = (port, spinner) => {
   const fs = Promise.promisifyAll(require('fs-extra'))
   const yaml = require('js-yaml')
   const _ = require('lodash')
+  const cfgHelper = require('./helpers/config')
 
   // ----------------------------------------
   // Define Express App
@@ -62,7 +63,14 @@ module.exports = (port, spinner) => {
     } catch (err) {
       console.error(err)
     }
-    res.render('configure/index', { langs, conf })
+    res.render('configure/index', {
+      langs,
+      conf,
+      runmode: {
+        staticPort: (process.env.IS_HEROKU || process.env.WIKI_JS_DOCKER) || true,
+        staticMongo: (!_.isNil(process.env.IS_HEROKU)) || true
+      }
+    })
   })
 
   /**
@@ -127,7 +135,7 @@ module.exports = (port, spinner) => {
    */
   app.post('/dbcheck', (req, res) => {
     let mongo = require('mongodb').MongoClient
-    let mongoURI = (_.startsWith(req.body.db, '$')) ? process.env[req.body.db.slice(1)] : req.body.db
+    let mongoURI = cfgHelper.parseConfigValue(req.body.db)
     mongo.connect(mongoURI, {
       autoReconnect: false,
       reconnectTries: 2,
@@ -166,13 +174,13 @@ module.exports = (port, spinner) => {
     const exec = require('execa')
     const url = require('url')
 
-    const dataDir = path.resolve(ROOTPATH, req.body.pathData)
-    const gitDir = path.resolve(ROOTPATH, req.body.pathRepo)
+    const dataDir = path.resolve(ROOTPATH, cfgHelper.parseConfigValue(req.body.pathData))
+    const gitDir = path.resolve(ROOTPATH, cfgHelper.parseConfigValue(req.body.pathRepo))
 
     let gitRemoteUrl = ''
 
     if (req.body.gitUseRemote === true) {
-      let urlObj = url.parse(req.body.gitUrl)
+      let urlObj = url.parse(cfgHelper.parseConfigValue(req.body.gitUrl))
       if (req.body.gitAuthType === 'basic') {
         urlObj.auth = req.body.gitAuthUser + ':' + req.body.gitAuthPass
       }
@@ -254,10 +262,11 @@ module.exports = (port, spinner) => {
     const bcrypt = require('bcryptjs-then')
     const crypto = Promise.promisifyAll(require('crypto'))
     let mongo = require('mongodb').MongoClient
+    let parsedMongoConStr = cfgHelper.parseConfigValue(req.body.db)
 
     Promise.join(
       new Promise((resolve, reject) => {
-        mongo.connect(req.body.db, {
+        mongo.connect(parsedMongoConStr, {
           autoReconnect: false,
           reconnectTries: 2,
           reconnectInterval: 1000,

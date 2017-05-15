@@ -1,6 +1,6 @@
 'use strict'
 
-/* global appconfig */
+/* global appconfig, runmode */
 
 import jQuery from 'jquery'
 import _ from 'lodash'
@@ -180,6 +180,9 @@ jQuery(document).ready(function ($) {
       },
       proceedToDb: function (ev) {
         let self = this
+        if (runmode.staticMongo) {
+          return self.proceedToDbcheck()
+        }
         self.state = 'db'
         self.loading = false
         self.$nextTick(() => {

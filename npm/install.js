@@ -136,11 +136,13 @@ const tasks = {
       // Is New Install
       if (err.code === 'ENOENT') {
         ora.text = 'First-time install, creating a new config.yml...'
-        let sourceConfigFile = 'config.sample.yml'
-        if (process.env.WIKI_JS_DOCKER) {
-          sourceConfigFile = 'config.docker.yml'
+        let sourceConfigFile = path.join(installDir, 'config.sample.yml')
+        if (process.env.IS_HEROKU) {
+          sourceConfigFile = path.join(__dirname, 'configs/config.heroku.yml')
+        } else if (process.env.WIKI_JS_DOCKER) {
+          sourceConfigFile = path.join(__dirname, 'configs/config.docker.yml')
         }
-        return fs.copyAsync(path.join(installDir, sourceConfigFile), path.join(installDir, 'config.yml')).then(() => {
+        return fs.copyAsync(sourceConfigFile, path.join(installDir, 'config.yml')).then(() => {
           ora.succeed('Installation succeeded.')
           return true
         })
@@ -200,7 +202,11 @@ const tasks = {
         })
       })
     } else {
-      console.info(colors.cyan('[WARNING] Non-interactive terminal detected. You must manually start the configuration wizard using the command: node wiki configure'))
+      if (!process.env.IS_HEROKU && !process.env.WIKI_JS_DOCKER) {
+        console.info(colors.cyan('[WARNING] Non-interactive terminal detected. You must manually start the configuration wizard using the command: node wiki configure'))
+      } else {
+        console.info('Container environment detected. Skipping setup wizard auto-start. OK.')
+      }
     }
   }
 }
@@ -217,6 +223,8 @@ if (!process.env.IS_HEROKU && !process.env.WIKI_JS_DOCKER) {
     ' \\  /\\  /| |   <| |_ | \\__ \\ \n' +
     '  \\/  \\/ |_|_|\\_\\_(_)/ |___/ \n' +
     '                   |__/\n'))
+} else {
+  console.info('=-=-= WIKI.JS =-=-=')
 }
 
 let ora = require('ora')({ text: 'Initializing...', spinner: 'dots12' }).start()
