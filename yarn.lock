@@ -2,11 +2,11 @@
 # yarn lockfile v1
 
 
-"@glimpse/glimpse-agent-node@0.20.8":
-  version "0.20.8"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-agent-node/-/glimpse-agent-node-0.20.8.tgz#3a6934ae7b3585273311331c3d1138b1109e98c7"
+"@glimpse/glimpse-agent-node@0.20.9":
+  version "0.20.9"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-agent-node/-/glimpse-agent-node-0.20.9.tgz#45fbbfa4a2cf13112b973c325ec0bd617da0d8eb"
   dependencies:
-    "@glimpse/glimpse-common" "0.20.8"
+    "@glimpse/glimpse-common" "0.20.9"
     config-chain "^1.1.10"
     continuation-local-storage "^3.1.4"
     cookie "^0.2.3"
@@ -22,20 +22,20 @@
     util "~0.10.3"
     uuid "^2.0.2"
 
-"@glimpse/glimpse-common@0.20.8":
-  version "0.20.8"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-common/-/glimpse-common-0.20.8.tgz#e4ab78f4337b002775b47b3b6a3e49f777de9aa8"
+"@glimpse/glimpse-common@0.20.9":
+  version "0.20.9"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-common/-/glimpse-common-0.20.9.tgz#e9ea89aa61feda0006208a76cbaea51e59c5372f"
   dependencies:
     applicationinsights "^0.15.18"
     config-chain "^1.1.10"
     node-uuid "^1.4.7"
     semver "^5.3.0"
 
-"@glimpse/glimpse-server@0.20.8":
-  version "0.20.8"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-server/-/glimpse-server-0.20.8.tgz#91552884c0d47117d03c4236e0e8d25c9e340fd0"
+"@glimpse/glimpse-server@0.20.9":
+  version "0.20.9"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-server/-/glimpse-server-0.20.9.tgz#0d562a114a0a95c234f1ad6c070041ea98038987"
   dependencies:
-    "@glimpse/glimpse-common" "0.20.8"
+    "@glimpse/glimpse-common" "0.20.9"
     body-parser "^1.14.2"
     cors "^2.7.1"
     crc "^3.4.0"
@@ -45,12 +45,12 @@
     moment "^2.16.1"
     morgan "^1.6.1"
 
-"@glimpse/glimpse@^0.20.8":
-  version "0.20.8"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse/-/glimpse-0.20.8.tgz#054bc2ead3ecf442f9fd815239222050f07e703e"
+"@glimpse/glimpse@^0.20.9":
+  version "0.20.9"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse/-/glimpse-0.20.9.tgz#953a50a76628ec5f99517b202d44aaf8448beb0f"
   dependencies:
-    "@glimpse/glimpse-agent-node" "0.20.8"
-    "@glimpse/glimpse-server" "0.20.8"
+    "@glimpse/glimpse-agent-node" "0.20.9"
+    "@glimpse/glimpse-server" "0.20.9"
     lodash "^4.15.0"
 
 abab@^1.0.3:
@@ -2966,9 +2966,9 @@ ignore@^3.0.11, ignore@^3.2.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-3.3.0.tgz#3812d22cbe9125f2c2b4915755a1b8abd745a001"
 
-image-size@^0.5.2:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/image-size/-/image-size-0.5.3.tgz#5cbe9fafc8436386ceb7e9e3a9d90c5b71b70ad9"
+image-size@^0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/image-size/-/image-size-0.5.4.tgz#94e07beec0659386f1aefb84b2222e88405485cd"
 
 immediate@^3.2.3:
   version "3.2.3"
@@ -4422,24 +4422,7 @@ mongodb@2.2.26, "mongodb@>= 1.2.0 <3.0.0", mongodb@^2.2.26:
     mongodb-core "2.1.10"
     readable-stream "2.2.7"
 
-mongoose@*:
-  version "4.9.8"
-  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.9.8.tgz#ef64304231dc2455ab15a0c0cb6c149ce8c787bb"
-  dependencies:
-    async "2.1.4"
-    bson "~1.0.4"
-    hooks-fixed "2.0.0"
-    kareem "1.4.1"
-    mongodb "2.2.26"
-    mpath "0.2.1"
-    mpromise "0.5.5"
-    mquery "2.3.0"
-    ms "0.7.2"
-    muri "1.2.1"
-    regexp-clone "0.0.1"
-    sliced "1.0.1"
-
-mongoose@^4.9.9:
+mongoose@*, mongoose@^4.9.9:
   version "4.9.9"
   resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.9.9.tgz#8671fbe06c945f55fba7ad03797bc02f19516762"
   dependencies:
@@ -6559,9 +6542,9 @@ tar@^2.0.0, tar@^2.2.1:
     fstream "^1.0.2"
     inherits "2"
 
-tar@^3.1.2:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-3.1.2.tgz#b4f3c86dd177822eb51922f8418cd91d4a41b19e"
+tar@^3.1.3:
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/tar/-/tar-3.1.3.tgz#b4a04aafb5375a969a9fb7cc08e48a8ac3514277"
   dependencies:
     minipass "^2.0.2"
     minizlib "^1.0.3"
