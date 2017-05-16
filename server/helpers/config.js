@@ -12,8 +12,8 @@ module.exports = {
   parseConfigValue (cfg) {
     return _.replace(
       cfg,
-      (/\$\(([A-Z0-9_]+)\)/g,
-      (fm, m) => { return process.env[m] })
+      /\$\(([A-Z0-9_]+)\)/g,
+      (fm, m) => { return process.env[m] }
     )
   }
 }
