@@ -4,6 +4,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+- **Deploy**: Heroku support
 - **History**: History section to list all changes
 - **Localization**: All UI text elements are now localized
 - **Localization**: Chinese locale is now available (thanks to @choicky)

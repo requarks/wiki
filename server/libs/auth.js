@@ -216,7 +216,7 @@ module.exports = function (passport) {
   // Create users for first-time
 
   db.onReady.then(() => {
-    db.User.findOne({ provider: 'local', email: 'guest' }).then((c) => {
+    return db.User.findOne({ provider: 'local', email: 'guest' }).then((c) => {
       if (c < 1) {
         // Create guest account
 
@@ -238,8 +238,32 @@ module.exports = function (passport) {
           winston.error(err)
         })
       }
-    })
+    }).then(() => {
+      if (process.env.WIKI_JS_HEROKU) {
+        return db.User.findOne({ provider: 'local', email: process.env.WIKI_ADMIN_EMAIL }).then((c) => {
+          if (c < 1) {
+            // Create root admin account (HEROKU ONLY)
 
-    return true
+            return db.User.create({
+              provider: 'local',
+              email: process.env.WIKI_ADMIN_EMAIL,
+              name: 'Administrator',
+              password: '$2a$04$MAHRw785Xe/Jd5kcKzr3D.VRZDeomFZu2lius4gGpZZ9cJw7B7Mna', // admin123 (default)
+              rights: [{
+                role: 'admin',
+                path: '/',
+                exact: false,
+                deny: false
+              }]
+            }).then(() => {
+              winston.info('[AUTH] Root admin account created successfully!')
+            }).catch((err) => {
+              winston.error('[AUTH] An error occured while creating root admin account:')
+              winston.error(err)
+            })
+          } else { return true }
+        })
+      } else { return true }
+    })
   })
 }

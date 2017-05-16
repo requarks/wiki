@@ -44,23 +44,19 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 ## Milestones
 
-Current and upcoming milestones *(features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for list of bug fixes)*:
-
-### Beta 11
-
-- [x] Azure AD authentication
-- [x] MathML / Tex math equations
-- [x] Support for CJK (Chinese, Japanese & Korean) characters in content, meta and uploads
-- [x] All Pages section
+Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
 ### Beta 12
 
 - [ ] Better localization in the UI
-- [ ] History / Revert to previous version feature
-- [ ] Docker support + Auto compile/publish to Docker Hub
-- [ ] Heroku support
+- [x] Heroku support
 
 ### Beta 13
+
+- [ ] History / Revert to previous version feature
+- [ ] Docker support + Auto compile/publish to Docker Hub
+
+### Beta 14
 
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
@@ -83,8 +79,9 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 **Languages that are already translated:**
 
 - [x] English
-- [x] French
 - [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
+- [x] French
+- [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
 - [x] Russian - *Thanks to [@efimlosev](https://github.com/efimlosev)*
 - [x] Spanish - *Thanks to [@MatiasArriola](https://github.com/MatiasArriola)*
 
