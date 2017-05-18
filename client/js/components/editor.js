@@ -150,8 +150,6 @@ module.exports = (alerts, pageEntryPath, socket) => {
           name: 'code-block',
           action: (editor) => {
             if (!mdeModalOpenState) {
-              // mdeModalOpenState = true
-
               if (mde.codemirror.doc.somethingSelected()) {
                 vueCodeBlock.initContent = mde.codemirror.doc.getSelection()
               }
