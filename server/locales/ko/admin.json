@@ -1,1 +1,51 @@
-{ }
+{
+  "profile": {
+    "displayname": "이름",
+    "displaynameexample": "박준원",
+    "email": "이메일",
+    "lastprofileupdate": "최근 프로필 업데이트",
+    "membersince": "회원 가입일",
+    "password": "비밀번호",
+    "passwordverify": "비밀번호 확인",
+    "provider": "제공자",
+    "savechanges": "변경 사항 저장",
+    "subtitle": "프로필 및 인증 정보"
+  },
+  "stats": {
+    "subtitle": "사이트 전체 통계",
+    "entries": "항목",
+    "uploads": "업로드",
+    "users": "사용자"
+  },
+  "settings": {
+    "subtitle": "사이트 구성 관리",
+    "systemversion": "시스템 버전",
+    "currentversion": "현재 버전",
+    "latestversion": "최신 버전",
+    "upgrade": "업그레이드",
+    "reinstall": "현재 버전 재설치",
+    "versioncheckfailed": "최신 버전을 쿼리 할 수 ​​없습니다. 나중에 다시 시도하십시오.",
+    "administrativetools": "관리자 도구",
+    "flushcache": "캐시 플러싱 및 인덱스 리빌드",
+    "flushcachetext": "검색 결과가 최신 문서가 아니라면 캐시를 플러시하는게 도움될 수 있습니다.",
+    "flushcachebtn": "플러쉬 및 리빌드",
+    "resetaccounts": "시스템 계정을 기본으로 재설정",
+    "resetaccountstext": "모든 시스템 계정이 기본 설정으로 재설정됩니다.",
+    "resetaccountsbtn": "시스템 계정들 재설정",
+    "flushsessions": "모든 활성 사용자 세션 플러시",
+    "flushsessionstext": "모든 유저들이 로그아웃 됩니다. 당신의 지금 세션도 영향 받습니다.",
+    "flushsessionsbtn": "세션 플러시"
+  },
+  "users": {
+    "createauthorize": "사용자 생성 / 허가",
+    "subtitle": "사용자 및 액세스 권한 관리",
+    "name": "이름",
+    "email": "이메일 주소",
+    "provider": "제공자",
+    "createdon": "작성 날짜",
+    "updatedon": "수정 날짜",
+    "returntousers": "프로필로 돌아가기",
+    "edituser": "프로필 편집",
+    "uniqueid": "고유 ID"
+  }
+}
