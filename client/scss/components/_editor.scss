@@ -1,8 +1,9 @@
 
 .editor-toolbar {
 	z-index: 2;
-	background-color: mc('indigo', '900');
+	background: linear-gradient(to bottom, mc('blue-grey', '900'), mc('blue-grey', '700'));
 	border: none;
+  border-top: 1px solid mc('blue-grey', '400');
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 	opacity: 1;
@@ -10,6 +11,7 @@
 	top: 50px;
 	left: 0;
 	width: 100%;
+  box-shadow: 0 0 5px rgba(0,0,0,.75);
 
 	&:hover {
 		opacity: 1;
@@ -299,27 +301,33 @@
 .CodeMirror {
 	border-left: none;
 	border-right: none;
-	padding-top: 52px;
-	font-family: $core-font-monospace;
+	margin-top: 49px;
+	font-family: $core-font-standard;
+  border: 10px solid mc('blue-grey', '100');
 }
 
-.CodeMirror .CodeMirror-code .cm-url {
-	color: #00ACC1;
-}
-.CodeMirror .CodeMirror-code .cm-header-1 {
-	color: #635c8c;
-	font-size: 2em;
-	font-weight: 400;
-}
-.CodeMirror .CodeMirror-code .cm-header-2 {
-	color: #222324;
-	font-size: 1.75em;
-	font-weight: 300;
-}
-.CodeMirror .CodeMirror-code .cm-header-3 {
-	color: #222324;
-	font-size: 1.5em;
-	font-weight: 300;
+.CodeMirror .CodeMirror-code {
+  .cm-url {
+    color: #00ACC1;
+  }
+  .cm-header-1 {
+    color: #635c8c;
+    font-size: 2em;
+    font-weight: 400;
+  }
+  .cm-header-2 {
+    color: #222324;
+    font-size: 1.75em;
+    font-weight: 300;
+  }
+  .cm-header-3 {
+    color: #222324;
+    font-size: 1.5em;
+    font-weight: 300;
+  }
+  .cm-formatting-code-block, .cm-comment {
+    font-family: $core-font-monospace;
+  }
 }
 
 .editor-toolbar .fa {

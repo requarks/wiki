@@ -19,7 +19,8 @@ $(() => {
     offset: -50
   })
 
-  $('.stickyscroll').sticky({ topSpacing: 15, bottomSpacing: 75 })
+  $('#header').sticky({ topSpacing: 0 })
+  $('.sidebar-pagecontents').sticky({ topSpacing: 15, bottomSpacing: 75 })
 
   // ====================================
   // Notifications
