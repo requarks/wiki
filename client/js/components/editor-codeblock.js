@@ -50,7 +50,6 @@ module.exports = (mde, mdeModalOpenState) => {
     },
     methods: {
       open: (ev) => {
-        mdeModalOpenState = true;
         $('#modal-editor-codeblock').addClass('is-active')
 
         _.delay(() => {
