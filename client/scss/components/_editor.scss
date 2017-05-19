@@ -352,7 +352,16 @@
 	height: 100%;
 }
 
-#source-display, #codeblock-editor {
+#modal-editor-table .ace-container {
+	display: flex;
+	align-items: stretch;
+	padding: 0;
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+#source-display, #codeblock-editor,#table-editor {
 	position: absolute;
 	top: 0;
 	left: 0;

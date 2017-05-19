@@ -14,7 +14,7 @@
             .model-sidebar-content
               p.control.is-fullwidth
                 select(v-model='modeSelected')
-                  option(v-for='item in modes', v-bind:value='mode.name') {{ mode.caption }}
+                  option(v-for='mode in modes', v-bind:value='mode.name') {{ mode.caption }}
           .column.ace-container
             #codeblock-editor
 
