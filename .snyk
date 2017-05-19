@@ -5,14 +5,14 @@ ignore:
   'npm:marked:20170112':
     - simplemde > marked:
         reason: None given
-        expires: '2017-06-15T01:17:20.759Z'
+        expires: '2017-06-18T00:34:26.984Z'
     - fuse-box > marked:
         reason: None given
         expires: '2017-06-08T23:50:56.093Z'
   'npm:shelljs:20140723':
     - pm2 > shelljs:
         reason: None given
-        expires: '2017-06-15T01:17:20.763Z'
+        expires: '2017-06-18T00:34:26.985Z'
   'npm:qs:20170213':
     - chokidar > fsevents > node-pre-gyp > request > qs:
         reason: None given
@@ -24,30 +24,57 @@ ignore:
     - serve-favicon > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      mongoose > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.984Z'
     - express-session > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      express-brute-mongoose > mongoose > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.984Z'
     - follow-redirects > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      socket.io > socket.io-adapter > debug > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.984Z'
     - axios > follow-redirects > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      compression > debug > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.985Z'
     - pm2 > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      mongoose > mquery > debug > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.985Z'
     - body-parser > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      express-brute-mongoose > mongoose > mquery > debug > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.985Z'
     - express > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      pm2 > pm2-axon > debug > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.985Z'
     - express > send > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.759Z'
+      socket.io > socket.io-client > debug > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.985Z'
     - express > serve-static > send > debug > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.761Z'
+      socket.io > socket.io-client > engine.io-client > debug > ms:
+        reason: None given
+        expires: '2017-06-18T00:34:26.985Z'
     - express > send > ms:
         reason: None given
         expires: '2017-06-15T01:17:20.761Z'
