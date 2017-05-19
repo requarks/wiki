@@ -22,6 +22,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
     let vueFile
     let vueVideo
     let vueCodeBlock
+    let vueTable;
 
     let mde = new SimpleMDE({
       autofocus: true,
@@ -150,6 +151,8 @@ module.exports = (alerts, pageEntryPath, socket) => {
           name: 'code-block',
           action: (editor) => {
             if (!mdeModalOpenState) {
+              // mdeModalOpenState = true
+
               if (mde.codemirror.doc.somethingSelected()) {
                 vueCodeBlock.initContent = mde.codemirror.doc.getSelection()
               }
@@ -164,8 +167,11 @@ module.exports = (alerts, pageEntryPath, socket) => {
         {
           name: 'table',
           action: (editor) => {
-            window.alert('Coming soon!')
+            //window.alert('Coming soon!')
             // todo
+            if (!mdeModalOpenState){
+              vueTable.open();
+            }
           },
           className: 'icon-table',
           title: 'Insert Table'
@@ -187,6 +193,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
     vueFile = require('./editor-file.js')(alerts, mde, mdeModalOpenState, socket)
     vueVideo = require('./editor-video.js')(mde, mdeModalOpenState)
     vueCodeBlock = require('./editor-codeblock.js')(mde, mdeModalOpenState)
+    vueTable = require('./editor-table.js')(mde, mdeModalOpenState);
 
     pageLoader.complete()
 
