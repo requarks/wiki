@@ -14,13 +14,22 @@ let tableEditor = null;
 
 
 module.exports = (mde, mdeModalOpenState) => {
-	let modelist = ace.acequire('ace/ext/modelist')
+	// let modelist = ace.acequire('ace/ext/modelist')
 	let vueTable = new Vue({
 		el: '#modal-editor-table',
 		data: {
 			// modes: modelist.modesByName,
-			modes : [{SpreadSheet:{name:"SpreadSheet",mode:"",extensions:"",caption:"S"}}],
-			modeSelected: 'Text',
+			modes : [
+				{
+					name: "media-wiki",
+					caption : "media-wiki"
+				},
+				{
+					name: "spreadsheet",
+					caption: "spreadsheet"
+				}
+			],
+			modeSelected: 'media-wiki',
 			initContent: ''
 		},
 		watch: {
