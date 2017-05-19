@@ -92,6 +92,7 @@
     "mongodb": "^2.2.26",
     "mongoose": "^4.9.9",
     "multer": "^1.3.0",
+    "node-graceful": "^0.2.3",
     "ora": "^1.2.0",
     "passport": "^0.3.2",
     "passport-azure-ad-oauth2": "0.0.4",

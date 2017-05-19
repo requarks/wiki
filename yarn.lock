@@ -4569,6 +4569,10 @@ node-abi@^2.0.0:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-2.0.2.tgz#00f3e0a58100eb480133b48c99a32cc1f9e6c93e"
 
+node-graceful@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/node-graceful/-/node-graceful-0.2.3.tgz#ab120e1eed8c0c2b5e2ac874bf2754519c3fa942"
+
 node-gyp@^3.3.1:
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/node-gyp/-/node-gyp-3.6.1.tgz#19561067ff185464aded478212681f47fd578cbc"
