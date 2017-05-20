@@ -16,9 +16,9 @@ const IS_DEBUG = process.env.NODE_ENV === 'development'
 
 process.env.VIPS_WARNING = false
 
-if (IS_DEBUG) {
-  require('@glimpse/glimpse').init()
-}
+// if (IS_DEBUG) {
+//   require('@glimpse/glimpse').init()
+// }
 
 let appconf = require('./libs/config')()
 global.appconfig = appconf.config
@@ -62,6 +62,7 @@ const passport = require('passport')
 const passportSocketIo = require('passport.socketio')
 const session = require('express-session')
 const SessionMongoStore = require('connect-mongo')(session)
+const graceful = require('node-graceful')
 const socketio = require('socket.io')
 
 var mw = autoload(path.join(SERVERPATH, '/middlewares'))
@@ -257,6 +258,14 @@ bgAgent.on('message', m => {
   }
 })
 
-process.on('exit', (code) => {
-  bgAgent.disconnect()
+// ----------------------------------------
+// Graceful shutdown
+// ----------------------------------------
+
+graceful.on('exit', () => {
+  global.winston.info('- SHUTTING DOWN - Performing git sync...')
+  return global.git.resync().then(() => {
+    global.winston.info('- SHUTTING DOWN - Git sync successful. Now safe to exit.')
+    process.kill(process.pid, 'SIGINT')
+  })
 })

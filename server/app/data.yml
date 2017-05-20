@@ -67,14 +67,8 @@ langs:
     id: fr
     name: French - Français
   -
-    id: de
-    name: German - Deutsch
-  -
     id: ko
     name: Korean - 한국어
-  -
-    id: pt
-    name: Portuguese - Português
   -
     id: ru
     name: Russian - Русский
