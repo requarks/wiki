@@ -55,7 +55,7 @@ module.exports = (mde, mdeModalOpenState) => {
 
         _.delay(() => {
           codeEditor = ace.edit('codeblock-editor')
-          codeEditor.setTheme('ace/theme/monokai')
+          codeEditor.setTheme('ace/theme/tomorrow_night')
           codeEditor.getSession().setMode('ace/mode/' + vueCodeBlock.modeSelected)
           codeEditor.setOption('fontSize', '14px')
           codeEditor.setOption('hScrollBarAlwaysVisible', false)
