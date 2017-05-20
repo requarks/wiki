@@ -7,53 +7,56 @@ import Vue from 'vue'
 import _ from 'lodash'
 import * as ace from 'brace'
 import 'brace/theme/tomorrow_night'
-import 'brace/mode/markdown'
 import 'brace-ext-modelist'
 
 let tableEditor = null;
+require('brace/mode/markdown');
+// require('brace/mode/html')
 
 
 module.exports = (mde, mdeModalOpenState) => {
-	// let modelist = ace.acequire('ace/ext/modelist')
 	let vueTable = new Vue({
 		el: '#modal-editor-table',
 		data: {
-			// modes: modelist.modesByName,
 			modes : [
 				{
-					name: "media-wiki",
-					caption : "media-wiki"
+					name: "markdown",
+					caption : "markdown"
 				},
 				{
-					name: "spreadsheet",
-					caption: "spreadsheet"
+					name: "html",
+					caption: "html"
 				}
 			],
-			modeSelected: 'media-wiki',
+			modeSelected: 'markdown',
+			url: "http://www.tablesgenerator.com/markdown_tables",
 			initContent: ''
 		},
 		watch: {
 			modeSelected: (val, oldVal) => {
-				alert("changed from " + oldVal +" to " + val);
+				tableEditor.getSession().setMode('ace/mode/' + val);
+				vueTable.url = "http://www.tablesgenerator.com/" + val + "_tables";
 			}
 		},
 		methods: {
 			open: (ev) => {
+				// alert(vueTable.initContent);
 				mdeModalOpenState = true;
 				$('#modal-editor-table').addClass('is-active');
 
 				_.delay(() => {
-		          tableEditor = ace.edit('table-editor');
-		          tableEditor.setTheme('ace/theme/tomorrow_night');
-		          tableEditor.getSession().setMode('ace/mode/text');			// no syntex needed
-		          tableEditor.setOption('fontSize', '14px');
-		          tableEditor.setOption('hScrollBarAlwaysVisible', false);
-		          tableEditor.setOption('wrap', true);
+					console.log(vueTable.initContent);
+					tableEditor = ace.edit('table-editor');
+					tableEditor.setTheme('ace/theme/tomorrow_night');
+					tableEditor.getSession().setMode('ace/mode/' + vueTable.modeSelected);
+					tableEditor.setOption('hScrollBarAlwaysVisible', false);
+					tableEditor.setOption('wrap', true);
 
-		          tableEditor.setValue(vueTable.initContent);
+					tableEditor.setValue(vueTable.initContent);
 
-		          tableEditor.focus();
-		          tableEditor.renderer.updateFull();
+					tableEditor.focus();
+					tableEditor.renderer.updateFull();
+					console.log(tableEditor.getValue());
 				}, 300)
 			},
 			cancel: (ev) => {
@@ -62,6 +65,9 @@ module.exports = (mde, mdeModalOpenState) => {
 				vueTable.initContent = '';
 			},
 			insertTable: (ev) => {
+		        let tableText = '\n' + tableEditor.getValue() + '\n';
+
+        		mde.codemirror.doc.replaceSelection(tableText)
 				vueTable.cancel()
 			}
 		}

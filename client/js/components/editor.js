@@ -170,6 +170,9 @@ module.exports = (alerts, pageEntryPath, socket) => {
             //window.alert('Coming soon!')
             // todo
             if (!mdeModalOpenState){
+              if (mde.codemirror.doc.somethingSelected()) {
+                vueTable.initContent = mde.codemirror.doc.getSelection();
+              }
               vueTable.open();
             }
           },
