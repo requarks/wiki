@@ -9,26 +9,11 @@
             = appconfig.title
     .nav-center
       block rootNavCenter
-        .nav-item
-          p.control(v-bind:class='{ "is-loading": searchload > 0 }')
-            input.input#search-input(type='text', v-model='searchq', @keyup.esc='closeSearch', @keyup.down='moveDownSearch', @keyup.up='moveUpSearch', @keyup.enter='moveSelectSearch', debounce='400', placeholder=t('search.placeholder'))
+        search
     span.nav-toggle
       span
       span
       span
     .nav-right
       block rootNavRight
-        i.nav-item#notifload
-
-  transition(name='searchresults-anim', enter-active-class='slideInDown', leave-active-class='fadeOutUp')
-    .searchresults.animated(v-show='searchactive', v-cloak, style={'display':'none'})
-      p.searchresults-label= t('search.results')
-      ul.searchresults-list
-        li(v-if='searchres.length === 0')
-          a: em= t('search.nomatch')
-        li(v-for='sres in searchres', v-bind:class='{ "is-active": searchmovekey === "res." + sres.entryPath }')
-          a(v-bind:href='"/" + sres.entryPath') {{ sres.title }}
-      p.searchresults-label(v-if='searchsuggest.length > 0')= t('search.didyoumean')
-      ul.searchresults-list(v-if='searchsuggest.length > 0')
-        li(v-for='sug in searchsuggest', v-bind:class='{ "is-active": searchmovekey === "sug." + sug }')
-          a(v-on:click='useSuggestion(sug)') {{ sug }}
+        loading-spinner

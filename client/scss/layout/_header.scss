@@ -24,7 +24,7 @@
 		@include spinner(mc('indigo', '100'),0.5s,24px);
 	}
 
-	&.active {
+	&.is-active {
 		opacity: 1;
 	}
 

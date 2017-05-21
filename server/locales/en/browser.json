@@ -1,0 +1,16 @@
+{
+  "profile": {
+    "displayname": "Display Name",
+    "displaynameexample": "John Smith",
+    "email": "Email",
+    "password": "Password",
+    "passwordverify": "Verify Password",
+    "savechanges": "Save Changes"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "results": "Search Results",
+    "nomatch": "No results matching your query",
+    "didyoumean": "Did you mean...?"
+  }
+}

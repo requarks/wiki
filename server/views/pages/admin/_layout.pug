@@ -4,7 +4,7 @@ block rootNavCenter
   h2.nav-item= t('nav.account')
 
 block rootNavRight
-  i.nav-item#notifload
+  loading-spinner
   .nav-item
     a.button.btn-edit-discard(href='/')
       i.icon-home
@@ -48,6 +48,10 @@ block content
                   a(href='/admin/settings')
                     i.icon-cog
                     span= t('nav.syssettings')
+                li
+                  a(href='/admin/theme')
+                    i.icon-drop
+                    span= t('nav.theme')
               li
                 a(href='/logout')
                   i.icon-delete2

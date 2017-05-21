@@ -1,47 +1,56 @@
 .searchresults {
 	position: fixed;
-	top: 45px;
+	top: 50px;
 	left: 0;
 	right: 0;
 	margin: 0 auto;
 	width: 500px;
 	z-index: 1;
-	background-color: mc($primary, '700');
-	border-bottom: 5px solid mc($primary, '800');
-	box-shadow: 0 0 5px mc($primary, '500');
+	background-color: darken(mc('blue-grey', '900'), 2%);
+  border: 1px solid mc('blue-grey', '900');
+	box-shadow: 0 0 5px mc('blue-grey', '500');
 	color: #FFF;
+  transition: max-height 1s ease;
 
-	&.slideInDown {
-		@include prefix(animation-duration, .6s);
-	}
+	&-enter-active, &-leave-active {
+    overflow: hidden;
+  }
+  &-enter-to, &-leave {
+    max-height: 500px;
+  }
+  &-enter, &-leave-to {
+    max-height: 0px;
+  }
 
 	.searchresults-label {
-		color: mc($primary, '200');
-		padding: 15px 10px 10px;
+    background-color: mc('blue-grey', '800');
+		color: mc('blue-grey', '300');
+		padding: 8px;
 		font-size: 13px;
-		text-transform: uppercase;
-		border-bottom: 1px dotted mc($primary, '400');
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
 	}
 
 	.searchresults-list {
+    padding-bottom: 5px;
 
 		> li {
 			display: flex;
 			font-size: 14px;
-			transition: background-color .3s linear;
+			transition: background-color .2s linear;
 
 			&:nth-child(odd) {
-				background-color: mc($primary, '600');
+				background-color: mc('blue-grey', '900');
 			}
 
 			&.is-active, &:hover {
-				background-color: mc($primary, '400');
+				background-color: mc('blue-grey', '600');
 				color: #FFF;
-				border-left: 5px solid mc($primary, '200');
 			}
 
 			a {
-				color: mc($primary, '50');
+				color: mc('blue-grey', '50');
 				display: flex;
 				align-items: center;
 				height: 30px;

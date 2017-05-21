@@ -24,9 +24,11 @@
   "nav": {
     "home": "Accueil",
     "account": "Compte",
+    "settings": "Paramètres",
     "myprofile": "Mon Profil",
     "stats": "Statistiques",
     "syssettings": "Paramètres système",
+    "theme": "Thème de couleur",
     "users": "Utilisateurs",
     "logout": "Se Déconnecter",
     "create": "Créer",

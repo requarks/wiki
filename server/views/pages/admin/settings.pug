@@ -1,10 +1,10 @@
 extends ./_layout.pug
 
 block adminContent
-  #page-type-admin-settings
-    .hero
-      h1.title#title= t('nav.syssettings')
-      h2.subtitle= t('admin:settings.subtitle')
+  .hero
+    h1.title#title= t('nav.syssettings')
+    h2.subtitle= t('admin:settings.subtitle')
+  admin-settings(inline-template)
     .form-sections
       section
         img(src='/images/logo.png', style={width:'200px', float:'right'})
@@ -34,4 +34,4 @@ block adminContent
           p.is-small= t('admin:settings.flushsessionstext')
           p: button.button.is-teal.is-outlined(v-on:click='flushsessions')= t('admin:settings.flushsessionsbtn')
 
-    include ../../modals/admin-upgrade.pug
+      include ../../modals/admin-upgrade.pug

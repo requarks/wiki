@@ -4,7 +4,7 @@
 
 import $ from 'jquery'
 import MathJax from 'mathjax'
-import * as CopyPath from '../components/copy-path.vue'
+// import * as CopyPath from '../components/copy-path.vue'
 import Vue from 'vue'
 
 module.exports = (alerts) => {
@@ -13,10 +13,10 @@ module.exports = (alerts) => {
 
     // Copy Path
 
-    new Vue({
-      el: '.modal-copypath',
-      render: h => h(CopyPath)
-    })
+    // new Vue({
+    //   el: '.modal-copypath',
+    //   render: h => h(CopyPath)
+    // })
 
     // MathJax Render
 

@@ -1,0 +1,11 @@
+extends ./_layout.pug
+
+block adminContent
+  #page-type-admin-settings
+    .hero
+      h1.title#title= t('nav.theme')
+      h2.subtitle= t('admin:theme.subtitle')
+    .form-sections
+      section
+        label.label= t('admin:theme.primarycolor')
+        color-picker

@@ -9,7 +9,7 @@ html
     meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
     title= appconfig.title
 
-    // Favicon
+    //- Favicon
     each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
       link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href='/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
     link(rel='icon', type='image/png', sizes='192x192', href='/favicons/android-icon-192x192.png')
@@ -17,7 +17,10 @@ html
       link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
     link(rel='manifest', href='/manifest.json')
 
-    // JS / CSS
+    //- Site Lang
+    script var siteLang = '!{appconfig.lang}';
+
+    //- JS / CSS
     script(type='text/javascript', src='/js/libs.min.js')
     script(type='text/javascript', src='/js/app.min.js')
 
@@ -26,7 +29,7 @@ html
   body
     #root.has-stickynav
       include ./common/header.pug
-      include ./common/alerts.pug
+      //-include ./common/alerts.pug
       main
         block content
       include ./common/footer.pug

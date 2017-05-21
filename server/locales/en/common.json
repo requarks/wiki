@@ -9,12 +9,6 @@
     "home": "Home",
     "top": "Return to top"
   },
-  "search": {
-    "placeholder": "Search...",
-    "results": "Search Results",
-    "nomatch": "No results matching your query",
-    "didyoumean": "Did you mean...?"
-  },
   "sidebar": {
     "nav": "NAV",
     "navigation": "Navigation",
@@ -24,9 +18,11 @@
   "nav": {
     "home": "Home",
     "account": "Account",
+    "settings": "Settings",
     "myprofile": "My Profile",
     "stats": "Stats",
     "syssettings": "System Settings",
+    "theme": "Color Theme",
     "users": "Users",
     "logout": "Logout",
     "create": "Create",

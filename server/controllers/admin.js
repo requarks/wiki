@@ -255,4 +255,11 @@ router.post('/settings/install', (req, res) => {
   res.status(400).send('Sorry, Upgrade/Re-Install via the web UI is not yet ready. You must use the npm upgrade method in the meantime.').end()
 })
 
+router.get('/theme', (req, res) => {
+  if (!res.locals.rights.manage) {
+    return res.render('error-forbidden')
+  }
+  res.render('pages/admin/theme', { adminTab: 'theme' })
+})
+
 module.exports = router

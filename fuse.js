@@ -88,41 +88,64 @@ let globalTasks = Promise.mapSeries([
       if (err.code === 'ENOENT') {
         console.info(colors.white('  └── ') + colors.green('Copy MathJax dependencies to assets...'))
         return fs.ensureDirAsync('./assets/js/mathjax').then(() => {
-          return fs.copyAsync('./node_modules/mathjax', './assets/js/mathjax', { filter: (src, dest) => {
-            let srcNormalized = src.replace(/\\/g, '/')
-            let shouldCopy = false
-            console.log(srcNormalized)
-            _.forEach([
-              '/node_modules/mathjax',
-              '/node_modules/mathjax/jax',
-              '/node_modules/mathjax/jax/input',
-              '/node_modules/mathjax/jax/output'
-            ], chk => {
-              if (srcNormalized.endsWith(chk)) {
-                shouldCopy = true
+          return fs.copyAsync('./node_modules/mathjax', './assets/js/mathjax', {
+            filter: (src, dest) => {
+              let srcNormalized = src.replace(/\\/g, '/')
+              let shouldCopy = false
+              console.info(colors.white('      ' + srcNormalized))
+              _.forEach([
+                '/node_modules/mathjax',
+                '/node_modules/mathjax/jax',
+                '/node_modules/mathjax/jax/input',
+                '/node_modules/mathjax/jax/output'
+              ], chk => {
+                if (srcNormalized.endsWith(chk)) {
+                  shouldCopy = true
+                }
+              })
+              _.forEach([
+                '/node_modules/mathjax/extensions',
+                '/node_modules/mathjax/MathJax.js',
+                '/node_modules/mathjax/jax/element',
+                '/node_modules/mathjax/jax/input/MathML',
+                '/node_modules/mathjax/jax/input/TeX',
+                '/node_modules/mathjax/jax/output/SVG'
+              ], chk => {
+                if (srcNormalized.indexOf(chk) > 0) {
+                  shouldCopy = true
+                }
+              })
+              if (shouldCopy && srcNormalized.indexOf('/fonts/') > 0 && srcNormalized.indexOf('/STIX-Web') <= 1) {
+                shouldCopy = false
               }
-            })
-            _.forEach([
-              '/node_modules/mathjax/extensions',
-              '/node_modules/mathjax/MathJax.js',
-              '/node_modules/mathjax/jax/element',
-              '/node_modules/mathjax/jax/input/MathML',
-              '/node_modules/mathjax/jax/input/TeX',
-              '/node_modules/mathjax/jax/output/SVG'
-            ], chk => {
-              if (srcNormalized.indexOf(chk) > 0) {
-                shouldCopy = true
-              }
-            })
-            if (shouldCopy && srcNormalized.indexOf('/fonts/') > 0 && srcNormalized.indexOf('/STIX-Web') <= 1) {
-              shouldCopy = false
+              return shouldCopy
             }
-            return shouldCopy
-          }})
+          })
         })
       } else {
         throw err
       }
+    })
+  },
+  /**
+   * i18n
+   */
+  () => {
+    console.info(colors.white('  └── ') + colors.green('Copying i18n client files...'))
+    return fs.ensureDirAsync('./assets/js/i18n').then(() => {
+      return fs.readJsonAsync('./server/locales/en/browser.json').then(enContent => {
+        return fs.readdirAsync('./server/locales').then(langs => {
+          return Promise.map(langs, lang => {
+            console.info(colors.white('      ' + lang + '.json'))
+            let outputPath = path.join('./assets/js/i18n', lang + '.json')
+            return fs.readJsonAsync(path.join('./server/locales', lang + '.json'), 'utf8').then((content) => {
+              return fs.outputJsonAsync(outputPath, _.defaultsDeep(content, enContent))
+            }).catch(err => { // eslint-disable-line handle-callback-err
+              return fs.outputJsonAsync(outputPath, enContent)
+            })
+          })
+        })
+      })
     })
   },
   /**
@@ -144,6 +167,7 @@ let globalTasks = Promise.mapSeries([
    * Delete Fusebox cache
    */
   () => {
+    console.info(colors.white('  └── ') + colors.green('Clearing fuse-box cache...'))
     return fs.emptyDirAsync('./.fusebox')
   }
 ], f => { return f() })
@@ -156,7 +180,7 @@ const ALIASES = {
   'brace-ext-modelist': 'brace/ext/modelist.js',
   'simplemde': 'simplemde/dist/simplemde.min.js',
   'socket.io-client': 'socket.io-client/dist/socket.io.js',
-  'vue': 'vue/dist/vue.min.js'
+  'vue': (dev) ? 'vue/dist/vue.js' : 'vue/dist/vue.min.js'
 }
 const SHIMS = {
   _preinit: {
@@ -182,7 +206,7 @@ globalTasks.then(() => {
     plugins: [
       fsbx.EnvPlugin({ NODE_ENV: (dev) ? 'development' : 'production' }),
       fsbx.VuePlugin(),
-      [ '.scss', fsbx.SassPlugin({ outputStyle: (dev) ? 'nested' : 'compressed' }), fsbx.CSSPlugin() ],
+      ['.scss', fsbx.SassPlugin({ outputStyle: (dev) ? 'nested' : 'compressed' }), fsbx.CSSPlugin()],
       fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
       fsbx.JSONPlugin(),
       !dev && fsbx.UglifyJSPlugin({
