@@ -35,57 +35,57 @@ module.exports = (alerts, pageEntryPath, socket) => {
         {
           name: 'bold',
           action: SimpleMDE.toggleBold,
-          className: 'icon-bold',
+          className: 'icon-bold no-disable',
           title: 'Bold'
         },
         {
           name: 'italic',
           action: SimpleMDE.toggleItalic,
-          className: 'icon-italic',
+          className: 'icon-italic no-disable',
           title: 'Italic'
         },
         {
           name: 'strikethrough',
           action: SimpleMDE.toggleStrikethrough,
-          className: 'icon-strikethrough',
+          className: 'icon-strikethrough no-disable',
           title: 'Strikethrough'
         },
         '|',
         {
           name: 'heading-1',
           action: SimpleMDE.toggleHeading1,
-          className: 'icon-header fa-header-x fa-header-1',
+          className: 'icon-header fa-header-x fa-header-1 no-disable',
           title: 'Big Heading'
         },
         {
           name: 'heading-2',
           action: SimpleMDE.toggleHeading2,
-          className: 'icon-header fa-header-x fa-header-2',
+          className: 'icon-header fa-header-x fa-header-2 no-disable',
           title: 'Medium Heading'
         },
         {
           name: 'heading-3',
           action: SimpleMDE.toggleHeading3,
-          className: 'icon-header fa-header-x fa-header-3',
+          className: 'icon-header fa-header-x fa-header-3 no-disable',
           title: 'Small Heading'
         },
         {
           name: 'quote',
           action: SimpleMDE.toggleBlockquote,
-          className: 'icon-quote-left',
+          className: 'icon-quote-left no-disable',
           title: 'Quote'
         },
         '|',
         {
           name: 'unordered-list',
           action: SimpleMDE.toggleUnorderedList,
-          className: 'icon-th-list',
+          className: 'icon-th-list no-disable',
           title: 'Bullet List'
         },
         {
           name: 'ordered-list',
           action: SimpleMDE.toggleOrderedList,
-          className: 'icon-list-ol',
+          className: 'icon-list-ol no-disable',
           title: 'Numbered List'
         },
         '|',
@@ -98,7 +98,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
             } */
             window.alert('Coming soon!')
           },
-          className: 'icon-link2',
+          className: 'icon-link2 no-disable',
           title: 'Insert Link'
         },
         {
@@ -108,7 +108,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
               vueImage.open()
             }
           },
-          className: 'icon-image',
+          className: 'icon-image no-disable',
           title: 'Insert Image'
         },
         {
@@ -118,7 +118,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
               vueFile.open()
             }
           },
-          className: 'icon-paper',
+          className: 'icon-paper no-disable',
           title: 'Insert File'
         },
         {
@@ -128,7 +128,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
               vueVideo.open()
             }
           },
-          className: 'icon-video-camera2',
+          className: 'icon-video-camera2 no-disable',
           title: 'Insert Video Player'
         },
         '|',
@@ -144,7 +144,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
             })
             editor.codemirror.doc.replaceSelections(curSel)
           },
-          className: 'icon-terminal',
+          className: 'icon-terminal no-disable',
           title: 'Inline Code'
         },
         {
@@ -160,7 +160,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
               vueCodeBlock.open()
             }
           },
-          className: 'icon-code',
+          className: 'icon-code no-disable',
           title: 'Code Block'
         },
         '|',
@@ -176,14 +176,42 @@ module.exports = (alerts, pageEntryPath, socket) => {
               vueTable.open();
             }
           },
-          className: 'icon-table',
+          className: 'icon-table no-disable',
           title: 'Insert Table'
         },
         {
           name: 'horizontal-rule',
-          action: SimpleMDE.drawHorizontalRule,
-          className: 'icon-minus2',
+          action:SimpleMDE.drawHorizontalRule,
+          className: 'icon-minus2 no-disable',
           title: 'Horizontal Rule'
+        },
+        '|',
+        {
+          name: 'preview',
+          action: (editor) =>{
+            SimpleMDE.togglePreview(mde)
+            mde.codemirror.focus();
+          },
+          className: 'icon-eye2 no-disable',
+          title: 'Toggle preview'
+        },
+        {
+          name: 'side-by-side',
+          action:(editor) =>{
+            SimpleMDE.toggleSideBySide(mde)
+            mde.codemirror.focus();
+          },
+          className: 'icon-columns2 no-disable',
+          title: 'Toggle Side By Side'
+        },
+        {
+          name: 'fullscreen',
+          action:(editor) =>{
+            SimpleMDE.toggleFullScreen(mde)
+            mde.codemirror.focus();
+          },
+          className: 'icon-expand no-disable',
+          title: 'Toggle Fullscreen'
         }
       ],
       shortcuts: {

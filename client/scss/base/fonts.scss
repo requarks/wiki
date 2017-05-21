@@ -367,6 +367,7 @@ $icon-next: "\e98b";
 $icon-refresh2: "\e98c";
 $icon-film: "\e98d";
 $icon-home2: "\e98e";
+$icon-columns2:"\f0db\f0db";
 
 // CSS Classes
 
@@ -2023,5 +2024,10 @@ $icon-home2: "\e98e";
 .icon-home2 {
   &:before {
     content: $icon-home2;
+  }
+}
+.icon-columns2 {
+  &:before {
+    content: $icon-columns2;
   }
 }
