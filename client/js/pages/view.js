@@ -4,8 +4,6 @@
 
 import $ from 'jquery'
 import MathJax from 'mathjax'
-// import * as CopyPath from '../components/copy-path.vue'
-import Vue from 'vue'
 
 module.exports = (alerts) => {
   if ($('#page-type-view').length) {

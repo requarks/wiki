@@ -3,45 +3,44 @@ extends ./_layout.pug
 block rootNavRight
   i.nav-item#notifload
   .nav-item
-    a.button.btn-create-prompt
+    a.button(v-on:click='$store.dispatch("adminUsersCreateOpen")')
       i.icon-plus
       span= t('admin:users.createauthorize')
 
 block adminContent
-  #page-type-admin-users
-    .hero
-      h1.title#title= t('nav.users')
-      h2.subtitle= t('admin:users.subtitle')
-    table.table
-      thead
+  .hero
+    h1.title#title= t('nav.users')
+    h2.subtitle= t('admin:users.subtitle')
+  table.table
+    thead
+      tr
+        th
+        th= t('admin:users.name')
+        th= t('admin:users.email')
+        th= t('admin:users.provider')
+        th= t('admin:users.createdon')
+        th= t('admin:users.updatedon')
+    tbody
+      each usr in usrs
         tr
-          th
-          th= t('admin:users.name')
-          th= t('admin:users.email')
-          th= t('admin:users.provider')
-          th= t('admin:users.createdon')
-          th= t('admin:users.updatedon')
-      tbody
-        each usr in usrs
-          tr
-            td.is-icon
-              i.icon-user.is-grey
-            td
-              a(href='/admin/users/' + usr._id)= usr.name
-            td= usr.email
-            td.is-centered.has-icons
-              case usr.provider
-                when 'local': i.icon-server
-                when 'windowslive': i.icon-windows2.is-blue
-                when 'azure': i.icon-windows2.is-blue
-                when 'google': i.icon-google.is-blue
-                when 'facebook': i.icon-facebook.is-indigo
-                when 'github': i.icon-github.is-grey
-                when 'slack': i.icon-slack.is-purple
-                when 'ldap': i.icon-arrow-repeat-outline
-                default: i.icon-warning
-              = t('auth:providers.' + usr.provider)
-            td.is-centered= moment(usr.createdAt).format('lll')
-            td.is-centered= moment(usr.updatedAt).format('lll')
+          td.is-icon
+            i.icon-user.is-grey
+          td
+            a(href='/admin/users/' + usr._id)= usr.name
+          td= usr.email
+          td.is-centered.has-icons
+            case usr.provider
+              when 'local': i.icon-server
+              when 'windowslive': i.icon-windows2.is-blue
+              when 'azure': i.icon-windows2.is-blue
+              when 'google': i.icon-google.is-blue
+              when 'facebook': i.icon-facebook.is-indigo
+              when 'github': i.icon-github.is-grey
+              when 'slack': i.icon-slack.is-purple
+              when 'ldap': i.icon-arrow-repeat-outline
+              default: i.icon-warning
+            = t('auth:providers.' + usr.provider)
+          td.is-centered= moment(usr.createdAt).format('lll')
+          td.is-centered= moment(usr.updatedAt).format('lll')
 
-    include ../../modals/admin-createuser.pug
+  admin-users-create

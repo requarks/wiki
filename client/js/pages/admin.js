@@ -7,9 +7,7 @@ import _ from 'lodash'
 import Vue from 'vue'
 
 module.exports = (alerts) => {
-  if ($('#page-type-admin-users').length) {
-    require('../modals/admin-users-create.js')(alerts)
-  } else if ($('#page-type-admin-users-edit').length) {
+  if ($('#page-type-admin-users-edit').length) {
     let vueEditUser = new Vue({
       el: '#page-type-admin-users-edit',
       data: {

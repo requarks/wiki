@@ -1,7 +1,5 @@
 'use strict'
 
-import * as $ from 'jquery'
-
 export default {
   name: 'admin-profile',
   props: ['email', 'name', 'provider'],
@@ -13,17 +11,29 @@ export default {
   },
   methods: {
     saveUser() {
+      let self = this
       if (this.password !== this.passwordVerify) {
-        //alerts.pushError('Error', "Passwords don't match!")
-        return
+        return self.$store.dispatch('alert', {
+          style: 'red',
+          icon: 'square-cross',
+          msg: 'The passwords don\'t match. Try again.'
+        })
       }
-      $.post(window.location.href, {
+      this.$http.post(window.location.href, {
         password: this.password,
         name: this.name
-      }).done((resp) => {
-        //alerts.pushSuccess('Saved successfully', 'Changes have been applied.')
-      }).fail((jqXHR, txtStatus, resp) => {
-        //alerts.pushError('Error', resp)
+      }).then(resp => {
+        self.$store.dispatch('alert', {
+          style: 'green',
+          icon: 'check',
+          msg: 'Changes have been applied successfully.'
+        })
+      }).catch(err => {
+        self.$store.dispatch('alert', {
+          style: 'red',
+          icon: 'square-cross',
+          msg: 'Error: ' + err.body.msg
+        })
       })
     }
   }
