@@ -18,7 +18,9 @@ html
     link(rel='manifest', href='/manifest.json')
 
     //- Site Lang
-    script var siteLang = '!{appconfig.lang}';
+    script.
+      var siteLang = '!{appconfig.lang}';
+      var siteRoot = '!{appconfig.host}';
 
     //- JS / CSS
     script(type='text/javascript', src='/js/libs.min.js')

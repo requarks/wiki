@@ -1,4 +1,7 @@
 {
+  "nav": {
+    "home": "Home"
+  },
   "profile": {
     "displayname": "Display Name",
     "displaynameexample": "John Smith",

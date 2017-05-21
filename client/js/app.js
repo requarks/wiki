@@ -1,10 +1,9 @@
 'use strict'
 
-/* global alertsData, siteLang */
+/* global siteLang */
 /* eslint-disable no-new */
 
 import $ from 'jquery'
-import _ from 'lodash'
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import store from './store'
@@ -12,7 +11,6 @@ import io from 'socket.io-client'
 import i18next from 'i18next'
 import i18nextXHR from 'i18next-xhr-backend'
 import VueI18Next from '@panter/vue-i18next'
-// import Alerts from './components/alerts.js'
 import 'jquery-smooth-scroll'
 import 'jquery-sticky'
 
@@ -25,6 +23,7 @@ import anchorComponent from './components/anchor.vue'
 import colorPickerComponent from './components/color-picker.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import searchComponent from './components/search.vue'
+import treeComponent from './components/tree.vue'
 
 import adminUsersCreateComponent from './modals/admin-users-create.vue'
 
@@ -62,14 +61,6 @@ $(() => {
     store.dispatch('stopLoading')
   })
 
-  var alerts = {}
-  /*var alerts = new Alerts()
-  if (alertsData) {
-    _.forEach(alertsData, (alertRow) => {
-      alerts.push(alertRow)
-    })
-  }*/
-
   // ====================================
   // Establish WebSocket connection
   // ====================================
@@ -91,34 +82,16 @@ $(() => {
       anchor: anchorComponent,
       colorPicker: colorPickerComponent,
       loadingSpinner: loadingSpinnerComponent,
-      search: searchComponent
-    },
-    directives: {
-      // sticky: VueSticky
+      search: searchComponent,
+      tree: treeComponent
     },
     store,
     i18n,
     el: '#root',
     mounted() {
-      $('a').smoothScroll({
-        speed: 500,
-        offset: -50
-      })
-
+      $('a').smoothScroll({ speed: 500, offset: -50 })
       $('#header').sticky({ topSpacing: 0 })
       $('.sidebar-pagecontents').sticky({ topSpacing: 15, bottomSpacing: 75 })
-
-      // ====================================
-      // Pages logic
-      // ====================================
-
-      require('./pages/view.js')(alerts)
-      require('./pages/all.js')(alerts, socket)
-      require('./pages/create.js')(alerts, socket)
-      require('./pages/edit.js')(alerts, socket)
-      require('./pages/source.js')(alerts)
-      require('./pages/history.js')(alerts)
-      require('./pages/admin.js')(alerts)
     }
   })
 })
