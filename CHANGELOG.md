@@ -8,11 +8,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **History**: History section to list all changes
 - **Localization**: All UI text elements are now localized
 - **Localization**: Chinese locale is now available (thanks to @choicky)
+- **Localization**: Korean locale is now available (thanks to @junwonpk)
 - **Localization**: Russian locale is now available (thanks to @efimlosev)
 - **Localization**: Spanish locale is now available (thanks to @MatiasArriola)
+- **Misc**: Copy to clipboard modal when clicking on header anchor
 - **Print**: Optimized layout and colors for print view
 
 ### Changed
+- **Misc**: Refactored all client-side code into Vue components
 - **Misc**: Updated dependencies
 - **UI**: Reveal 'Top of Page' only on scroll + icon only
 
@@ -24,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Misc**: Commented headers no longer appear in page contents
 - **Misc**: CJK + Arabic validators are now working properly
 - **Search**: Content is now indexed properly and handles more scenarios
+- **Search**: CJK search terms are no longer stripped
 - **UI**: Markdown is now stripped from page contents items
 - **UI**: Page contents no longer disappear when scrolling down
 
