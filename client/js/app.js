@@ -29,6 +29,7 @@ import adminUsersCreateComponent from './modals/admin-users-create.vue'
 
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
+import sourceComponent from './pages/source.component.js'
 
 // ====================================
 // Initialize Vue Modules
@@ -83,6 +84,7 @@ $(() => {
       colorPicker: colorPickerComponent,
       loadingSpinner: loadingSpinnerComponent,
       search: searchComponent,
+      sourceView: sourceComponent,
       tree: treeComponent
     },
     store,

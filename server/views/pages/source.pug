@@ -4,7 +4,7 @@ block rootNavCenter
   h2.nav-item= pageData.meta.title
 
 block rootNavRight
-  i.nav-item#notifload
+  loading-spinner
   span.nav-item
     if rights.write
       a.button.is-outlined.btn-move-prompt.is-hidden
@@ -23,7 +23,7 @@ block rootNavRight
 
 block content
 
-  #page-type-source(data-entrypath=pageData.meta.path)
+  source-view(inline-template, data-entrypath=pageData.meta.path)
     .ace-container
       #source-display= pageData.markdown
 
