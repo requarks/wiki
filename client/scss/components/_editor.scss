@@ -367,19 +367,30 @@
 	height: 100%;
 }
 
-#modal-editor-table .ace-container {
+/*#modal-editor-table .ace-container {
 	display: flex;
 	align-items: stretch;
 	padding: 0;
 	position: relative;
 	width: 100%;
 	height: 100%;
-}
+}*/
 
-#source-display, #codeblock-editor,#table-editor {
+#source-display, #codeblock-editor/*,#table-editor*/ {
 	position: absolute;
 	top: 0;
 	left: 0;
 	bottom: 0;
 	right: 0;
+}
+
+.table-editor{
+	position:relateve;
+	margin-top:5%;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+.htContextMenu{
+	z-index : 20;
 }

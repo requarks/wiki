@@ -1,4 +1,6 @@
 // By fa93hws (wjun0912@gmail.com)
+script(type='text/javascript' src='/js/handsontable.min.js')
+//- script(type='text/javascript' src="file://d:/private/wiki/assets/js//handsontable.min.js")
 .modal#modal-editor-table
   .modal-background
   .modal-container
@@ -10,16 +12,16 @@
       section.is-gapless
         .columns.is-stretched
           .column.is-one-quarter.modal-sidebar.is-green(style={'max-width':'350px'})
-            .model-sidebar-header Format
+            .model-sidebar-header Size Control
             .model-sidebar-content
-              p.control.is-fullwidth
-                select(v-model='modeSelected')
-                  option(v-for='mode in modes', v-bind:value='mode.name') {{ mode.caption }}
-              div
-                h2 <br /> Hint!
-                p try <a v-bind:href="url" target = "_blank">this link</a>  to generate the table and paste back.
-          .column.ace-container
-            #table-editor
+              <table style>
+                <tr><td rowspan = "2">rows</td><td rowspan = "2"> <input type="text" v-model = row> </td><td class = "clickable" v-on:click="rowAdd">+</td></tr>
+                <tr><td class = "clickable" v-on:click="rowMinus">-</td></tr>
+                <tr><td rowspan = "2">columns</td><td rowspan = "2"> <input type="text" v-model = col> </td><td class = "clickable" v-on:click="colAdd">+</td></tr>
+                <tr><td class = "clickable" v-on:click="colMinus">-</td></tr>
+                <tr><td></td><td class = "clickable" v-on:click="setTableSize">Set</td><td></td></tr>
+              </table>
+          #table-editor.table-editor
 
       footer
         a.button.is-grey.is-outlined(v-on:click='cancel') Discard

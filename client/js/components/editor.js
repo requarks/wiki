@@ -167,11 +167,46 @@ module.exports = (alerts, pageEntryPath, socket) => {
         {
           name: 'table',
           action: (editor) => {
+            vueTable.resContent = "";
+            vueTable.prefixContent = "";
             //window.alert('Coming soon!')
             // todo
             if (!mdeModalOpenState){
               if (mde.codemirror.doc.somethingSelected()) {
-                vueTable.initContent = mde.codemirror.doc.getSelection();
+                // fist check format
+                let mdTable = mde.codemirror.doc.getSelection();
+                mdTable.replace(/(^\s+)|(\s+$)/g, "");
+                //parse table from MD text
+                mdTable = mdTable.replace('\r',"");
+                let lines = mdTable.split('\n');
+                for (let i=0;i<lines.length;i++){
+                  if (lines[i].indexOf('|')>-1){
+                    vueTable.prefixContent = lines.slice(0,i);
+                    lines = lines.slice(i);
+                    break;
+                  }
+                }
+
+                let cols = lines[1].split('|').length + 1;
+                if (lines[1].match(/^[\s]*\|/i))
+                  cols -= 1;
+                else if (!lines[1].match(/^[\s]*\-/i))
+                  return alerts.pushError('Invalid selection', 'Not Markdown table format');
+                if (lines[1].match(/[\s\S]*\|[\s]*$/i))
+                  cols -= 1;
+                else if (!lines[1].match(/[\s\S]*\-[\s]*$/i))
+                  return alerts.pushError('Invalid selection', 'Not Markdown table format');
+                for (let i=0; i < lines.length; i++){
+                  if (lines[i].indexOf('|')<0){
+                    vueTable.resContent = lines.slice(i);
+                    lines = lines.slice(0,i);
+                    break;
+                  }
+                  let num = lines[i].split('|').length;
+                  if (!(cols-1 <= num && num <= cols + 1))
+                    return alerts.pushError('Invalid selection', 'Number of the columns does not match?');
+                }
+                vueTable.initContent = lines;
               }
               vueTable.open();
             }
@@ -224,7 +259,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
     vueFile = require('./editor-file.js')(alerts, mde, mdeModalOpenState, socket)
     vueVideo = require('./editor-video.js')(mde, mdeModalOpenState)
     vueCodeBlock = require('./editor-codeblock.js')(mde, mdeModalOpenState)
-    vueTable = require('./editor-table.js')(mde, mdeModalOpenState);
+    vueTable = require('./editor-table.js')( mde, mdeModalOpenState);
 
     pageLoader.complete()
 
