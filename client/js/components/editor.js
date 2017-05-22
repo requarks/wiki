@@ -259,7 +259,7 @@ module.exports = (alerts, pageEntryPath, socket) => {
     vueFile = require('./editor-file.js')(alerts, mde, mdeModalOpenState, socket)
     vueVideo = require('./editor-video.js')(mde, mdeModalOpenState)
     vueCodeBlock = require('./editor-codeblock.js')(mde, mdeModalOpenState)
-    vueTable = require('./editor-table.js')( mde, mdeModalOpenState);
+    vueTable = require('./editor-table.js')(alerts, mde, mdeModalOpenState);
 
     pageLoader.complete()
 

@@ -5,13 +5,13 @@
 import $ from 'jquery'
 import Vue from 'vue'
 import _ from 'lodash'
-// import handsontable from 'handsontable'
+import Handsontable from 'handsontable'
 // It seems that handsontable does not fully support ES6 and the js file is copy&past and included in editor-table.pug
 
 let tableEditor = null;
 
 
-module.exports = ( mde, mdeModalOpenState) => {
+module.exports = (alerts, mde, mdeModalOpenState) => {
 	let vueTable = new Vue({
 		el: '#modal-editor-table',
 		data: {
@@ -42,20 +42,26 @@ module.exports = ( mde, mdeModalOpenState) => {
 					["", "","","","",""],["", "","","","",""],["", "","","","",""],["", "","","","",""],["", "","","","",""]
 				];
 				if (vueTable.initContent!==""){
-					let mdTable = vueTable.initContent;
-					let tokens = require('markdown-it')().parse(mdTable.join('\n'), {});
-					tableData = [];
-					let trOpen = false;
-					let tdOpen = false;
-					let row = -1;
-					for (let i=0; i<tokens.length;i++){
-						let token = tokens[i];
-						if (token.type == "inline")
-							tableData[row].push(token.content);
-						if (token.tag == "tr" && token.type == "tr_open"){
-							tableData.push([]);
-							row++;
+					try{
+						let mdTable = vueTable.initContent;
+						let tokens = require('markdown-it')().parse(mdTable.join('\n'), {});
+						tableData = [];
+						let trOpen = false;
+						let tdOpen = false;
+						let row = -1;
+						for (let i=0; i<tokens.length;i++){
+							let token = tokens[i];
+							if (token.type == "inline")
+								tableData[row].push(token.content);
+							if (token.tag == "tr" && token.type == "tr_open"){
+								tableData.push([]);
+								row++;
+							}
 						}
+					}
+					catch(err){
+						alerts.pushError('Invalid selection', 'Not Markdown table format');
+						vueTable.cancel();
 					}
 				}
 				_.delay(() => {
