@@ -20,7 +20,7 @@ var mkdown = md({
   html: true,
   linkify: true,
   typography: true,
-  highlight (str, lang) {
+  highlight(str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
         return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
@@ -206,6 +206,13 @@ const parseContent = (content) => {
     cr(elm).replaceWith(txtLink)
   })
 
+  // -> Add anchor handler
+
+  cr('a.toc-anchor').each((i, elm) => {
+    let hashText = cr(elm).attr('href').slice(1)
+    cr(elm).attr('v-on:click.stop.prevent', "$store.dispatch('anchorOpen', '" + hashText + "')")
+  })
+
   // -> Re-attach blockquote styling classes to their parents
 
   cr.root().children('blockquote').each((i, elm) => {
@@ -313,7 +320,7 @@ module.exports = {
    * @param      {String}  content  Markdown-formatted content
    * @return     {Object}  Object containing meta, html and tree data
    */
-  parse (content) {
+  parse(content) {
     return {
       meta: parseMeta(content),
       html: parseContent(content),

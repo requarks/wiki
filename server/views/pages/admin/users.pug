@@ -1,7 +1,7 @@
 extends ./_layout.pug
 
 block rootNavRight
-  i.nav-item#notifload
+  loading-spinner
   .nav-item
     a.button(v-on:click='$store.dispatch("adminUsersCreateOpen")')
       i.icon-plus

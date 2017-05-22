@@ -6,6 +6,7 @@
 import $ from 'jquery'
 import Vue from 'vue'
 import VueResource from 'vue-resource'
+import VueClipboards from 'vue-clipboards'
 import store from './store'
 import io from 'socket.io-client'
 import i18next from 'i18next'
@@ -36,6 +37,7 @@ import sourceComponent from './pages/source.component.js'
 // ====================================
 
 Vue.use(VueResource)
+Vue.use(VueClipboards)
 Vue.use(VueI18Next)
 
 i18next
@@ -91,7 +93,7 @@ $(() => {
     i18n,
     el: '#root',
     mounted() {
-      $('a').smoothScroll({ speed: 500, offset: -50 })
+      $('a:not(.toc-anchor)').smoothScroll({ speed: 500, offset: -50 })
       $('#header').sticky({ topSpacing: 0 })
       $('.sidebar-pagecontents').sticky({ topSpacing: 15, bottomSpacing: 75 })
     }

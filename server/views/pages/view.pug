@@ -9,7 +9,7 @@ mixin tocMenu(ti)
           +tocMenu(node.nodes)
 
 block rootNavRight
-  i.nav-item#notifload
+  loading-spinner
   .nav-item
     if rights.write
       a.button.is-outlined.btn-move-prompt.is-hidden
@@ -83,3 +83,4 @@ block content
 
   include ../modals/create.pug
   include ../modals/move.pug
+  anchor
