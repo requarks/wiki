@@ -3,7 +3,8 @@ import Vuex from 'vuex'
 
 import alert from './modules/alert'
 import anchor from './modules/anchor'
-import adminUsersCreate from './modules/admin-users-create'
+import modalCreatePage from './modules/modal-create-page'
+import modalCreateUser from './modules/modal-create-user'
 
 Vue.use(Vuex)
 
@@ -22,6 +23,7 @@ export default new Vuex.Store({
   modules: {
     alert,
     anchor,
-    adminUsersCreate
+    modalCreatePage,
+    modalCreateUser
   }
 })
