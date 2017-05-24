@@ -1,0 +1,30 @@
+{
+  "alreadyexists": "Esta entrada já existe!",
+  "debugmsg": "Informação de depuração",
+  "fileexists": "Arquivo {{path}} já existe.",
+  "forbidden": "Proibido",
+  "forbiddendetail": "Desculpe, você não tem permissões necessárias para acessar esta página.",
+  "generic": "Oops, algo deu errado",
+  "invalidaction": "Ação Inválida.",
+  "invaliddestfolder": "Pasta de Destino Inválida!",
+  "invalidfiletype": "Tipo de Arquivo Inválido.",
+  "invalidfolder": "Pasta Inválida.",
+  "invalidoperation": "Operação Inválida!",
+  "invalidpath": "Caminha da página inválido.",
+  "invaliduserid": "Id do usuário inválido",
+  "newpasswordtooshort": "A nova senha é muito curta!",
+  "notexist": "A entrada {{path}} não existe!",
+  "notexistdetail": "Você gostaria de criar essa entrada?",
+  "parentinvalid": "A entrada pai não é um arquivo válido.",
+  "parentisroot": "A entrada pai é a raiz.",
+  "remotetoolarge": "Arquivo remoto é muito grante!",
+  "reservedname": "Você não pode criar um documento com este nome pois é reservado ao sistema.",
+  "savefailed": "Falha ao salvar o documento",
+  "starterfailed": "Não foi possível carregar o conteúdo inicial!",
+  "unauthorized": "Não autorizado",
+  "actions": {
+    "create": "Criar",
+    "gohome": "Ir ao início",
+    "loginas": "Login como..."
+  }
+}
