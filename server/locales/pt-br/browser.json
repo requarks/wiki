@@ -1,0 +1,19 @@
+{
+  "nav": {
+    "home": "Início"
+  },
+  "profile": {
+    "displayname": "Nome de Exibição",
+    "displaynameexample": "João Silva",
+    "email": "Email",
+    "password": "Senha",
+    "passwordverify": "Verificar Senha",
+    "savechanges": "Salvar Alterações"
+  },
+  "search": {
+    "placeholder": "Buscar...",
+    "results": "Resultados da Busca",
+    "nomatch": "Nenhum resultado corresponde à sua consulta",
+    "didyoumean": "Você quis dizer...?"
+  }
+}
