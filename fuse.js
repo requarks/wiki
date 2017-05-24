@@ -13,7 +13,7 @@ const fs = Promise.promisifyAll(require('fs-extra'))
 const fsbx = require('fuse-box')
 const nodemon = require('nodemon')
 const path = require('path')
-const uglify = require('uglify-js')
+const uglify = require('uglify-es')
 
 // ======================================================
 // Parse cmd arguments
@@ -64,13 +64,28 @@ let globalTasks = Promise.mapSeries([
       if (err.code === 'ENOENT') {
         console.info(colors.white('  └── ') + colors.green('Copy + Minify ACE modes to assets...'))
         return fs.ensureDirAsync('./assets/js/ace').then(() => {
-          return fs.readdirAsync('./node_modules/brace/mode').then(modeList => {
-            return Promise.map(modeList, mdFile => {
-              console.info(colors.white('      mode-' + mdFile))
-              let result = uglify.minify(path.join('./node_modules/brace/mode', mdFile), { output: { 'max_line_len': 1000000 } })
-              return fs.writeFileAsync(path.join('./assets/js/ace', 'mode-' + mdFile), result.code)
+          return Promise.join(
+            // Core
+            Promise.all([
+              fs.readFileAsync('./node_modules/brace/index.js', 'utf8'),
+              fs.readFileAsync('./node_modules/brace/theme/dawn.js', 'utf8'),
+              fs.readFileAsync('./node_modules/brace/mode/markdown.js', 'utf8')
+            ]).then(items => {
+              console.info(colors.white('      source-view.js'))
+              let result = uglify.minify(items.join(';\n'), { output: { 'max_line_len': 1000000 } })
+              return fs.writeFileAsync('./assets/js/ace/source-view.js', result.code)
+            }),
+            // Modes
+            fs.readdirAsync('./node_modules/brace/mode').then(modeList => {
+              return Promise.map(modeList, mdFile => {
+                return fs.readFileAsync(path.join('./node_modules/brace/mode', mdFile), 'utf8').then(modeCode => {
+                  console.info(colors.white('      mode-' + mdFile))
+                  let result = uglify.minify(modeCode, { output: { 'max_line_len': 1000000 } })
+                  return fs.writeFileAsync(path.join('./assets/js/ace', 'mode-' + mdFile), result.code)
+                })
+              }, { concurrency: 3 })
             })
-          })
+          )
         })
       } else {
         throw err
@@ -179,7 +194,7 @@ let globalTasks = Promise.mapSeries([
 const ALIASES = {
   'brace-ext-modelist': 'brace/ext/modelist.js',
   'simplemde': 'simplemde/dist/simplemde.min.js',
-  'socket.io-client': 'socket.io-client/dist/socket.io.js',
+  'socket-io-client': 'socket.io-client/dist/socket.io.js',
   'vue': (dev) ? 'vue/dist/vue.js' : 'vue/dist/vue.min.js'
 }
 const SHIMS = {
@@ -209,7 +224,7 @@ globalTasks.then(() => {
       ['.scss', fsbx.SassPlugin({ outputStyle: (dev) ? 'nested' : 'compressed' }), fsbx.CSSPlugin()],
       fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
       fsbx.JSONPlugin(),
-      !dev && fsbx.UglifyJSPlugin({
+      !dev && fsbx.UglifyESPlugin({
         compress: { unused: false },
         output: { 'max_line_len': 1000000 }
       })
@@ -225,8 +240,8 @@ globalTasks.then(() => {
     })
   }
 
-  const bundleLibs = fuse.bundle('libs').instructions('~ index.js')
-  const bundleApp = fuse.bundle('app').instructions('!> index.js')
+  const bundleLibs = fuse.bundle('libs').instructions('~ index.js - brace')
+  const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
   const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
 
   switch (mode) {

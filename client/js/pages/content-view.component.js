@@ -1,23 +1,13 @@
 'use strict'
 
-/* eslint-disable no-new */
-
-import $ from 'jquery'
 import MathJax from 'mathjax'
 
-module.exports = (alerts) => {
-  if ($('#page-type-view').length) {
-    let currentBasePath = ($('#page-type-view').data('entrypath') !== 'home') ? $('#page-type-view').data('entrypath') : ''
-
-    // Copy Path
-
-    // new Vue({
-    //   el: '.modal-copypath',
-    //   render: h => h(CopyPath)
-    // })
-
-    // MathJax Render
-
+export default {
+  name: 'content-view',
+  data() {
+    return {}
+  },
+  mounted() {
     MathJax.Hub.Config({
       jax: ['input/TeX', 'input/MathML', 'output/SVG'],
       extensions: ['tex2jax.js', 'mml2jax.js'],
@@ -36,8 +26,13 @@ module.exports = (alerts) => {
       messageStyle: 'none'
     })
     MathJax.Hub.Configured()
-
-    require('../modals/create.js')(currentBasePath)
-    require('../modals/move.js')(currentBasePath, alerts)
   }
 }
+
+// module.exports = (alerts) => {
+//   if ($('#page-type-view').length) {
+//     let currentBasePath = ($('#page-type-view').data('entrypath') !== 'home') ? $('#page-type-view').data('entrypath') : ''
+//     require('../modals/create.js')(currentBasePath)
+//     require('../modals/move.js')(currentBasePath, alerts)
+//   }
+// }

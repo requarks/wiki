@@ -10,45 +10,44 @@
             input.input(type='text', placeholder='page-name', v-model='entrypath', autofocus)
             span.help.is-danger(v-show='isInvalid') This document path is invalid!
         footer
-          a.button.is-grey.is-outlined(v-on:click='hide') Discard
+          a.button.is-grey.is-outlined(v-on:click='cancel') Discard
           a.button.is-light-blue(v-on:click='create') Create
 </template>
 
 <script>
-  import * as _ from 'lodash'
-  import { makeSafePath } from '../helpers/pages'
+  import { isEmpty } from 'lodash'
+  // import { makeSafePath } from '../helpers/pages'
+  import { mapState } from 'vuex'
 
   export default {
     name: 'modal-create',
     data () {
       return {
-        entrypath: ''
-        isInvalid: false,
-        isLoading: false,
-        isShown: false
+        isLoading: false
       }
     },
+    computed: mapState('createPage', {
+      entrypath: '',
+      isShown: 'shown',
+      isInvalid: 'invalid'
+    }),
     methods: {
-      show: function () {
-        this.isInvalid = false
-        this.shown = true
-      },
-      hide: function () {
-        this.shown = false
+      cancel: function () {
+        this.$store.dispatch('createPageClose')
       },
       create: function () {
         this.isInvalid = false
         let newDocPath = makeSafePath(this.entrypath)
-        if (_.isEmpty(newDocPath)) {
-          this.isInvalid = true
+        if (isEmpty(newDocPath)) {
+          this.$store.createPage.commit('')
         } else {
-          $('#txt-create-prompt').parent().addClass('is-loading')
+          this.isLoading = true
           window.location.assign('/create/' + newDocPath)
         }
       }
     },
     mounted () {
-      this.entrypath = currentBasePath + '/new-page'
+      // this.entrypath = currentBasePath + '/new-page'
     }
   }
 </script>

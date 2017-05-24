@@ -53,9 +53,9 @@
     "@glimpse/glimpse-server" "0.20.9"
     lodash "^4.15.0"
 
-"@panter/vue-i18next@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@panter/vue-i18next/-/vue-i18next-0.4.1.tgz#6b06b783cd4d8f2c80255457d3fa0db6aff1091c"
+"@panter/vue-i18next@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@panter/vue-i18next/-/vue-i18next-0.5.0.tgz#3a7928d8113b680ca81a1a899eb5aad34ba9c17a"
 
 abab@^1.0.3:
   version "1.0.3"
@@ -4005,6 +4005,10 @@ locate-path@^2.0.0:
     p-locate "^2.0.0"
     path-exists "^3.0.0"
 
+lodash-es@^4.17.4:
+  version "4.17.4"
+  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.4.tgz#dcc1d7552e150a0640073ba9cb31d70f032950e7"
+
 lodash._baseassign@^3.0.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/lodash._baseassign/-/lodash._baseassign-3.2.0.tgz#8c38a099500f215ad09e59f1722fd0c52bfe0a4e"
@@ -4457,7 +4461,14 @@ mongodb-core@2.1.10:
     bson "~1.0.4"
     require_optional "~1.0.0"
 
-mongodb@2.2.26, "mongodb@>= 1.2.0 <3.0.0", mongodb@^2.2.26:
+mongodb-core@2.1.11:
+  version "2.1.11"
+  resolved "https://registry.yarnpkg.com/mongodb-core/-/mongodb-core-2.1.11.tgz#1c38776ceb174997a99c28860eed9028da9b3e1a"
+  dependencies:
+    bson "~1.0.4"
+    require_optional "~1.0.0"
+
+mongodb@2.2.26:
   version "2.2.26"
   resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-2.2.26.tgz#1bd50c557c277c98e1a05da38c9839c4922b034a"
   dependencies:
@@ -4465,9 +4476,17 @@ mongodb@2.2.26, "mongodb@>= 1.2.0 <3.0.0", mongodb@^2.2.26:
     mongodb-core "2.1.10"
     readable-stream "2.2.7"
 
-mongoose@*, mongoose@^4.10.0:
-  version "4.10.0"
-  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.0.tgz#f4ff031f8b9e7105ae62b7cb3d4fc4e00f320b87"
+"mongodb@>= 1.2.0 <3.0.0", mongodb@^2.2.27:
+  version "2.2.27"
+  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-2.2.27.tgz#34122034db66d983bcf6ab5adb26a24a70fef6e6"
+  dependencies:
+    es6-promise "3.2.1"
+    mongodb-core "2.1.11"
+    readable-stream "2.2.7"
+
+mongoose@*, mongoose@^4.10.1:
+  version "4.10.1"
+  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.1.tgz#5982948c51d2174d27b782a89ea502a2a53c9db0"
   dependencies:
     async "2.1.4"
     bson "~1.0.4"
@@ -6782,6 +6801,13 @@ uc.micro@^1.0.1, uc.micro@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/uc.micro/-/uc.micro-1.0.3.tgz#7ed50d5e0f9a9fb0a573379259f2a77458d50192"
 
+uglify-es@^3.0.10:
+  version "3.0.10"
+  resolved "https://registry.yarnpkg.com/uglify-es/-/uglify-es-3.0.10.tgz#8fc9b86f2b57b2805e8863a6fcde1a92210cb885"
+  dependencies:
+    commander "~2.9.0"
+    source-map "~0.5.1"
+
 uglify-js@^2.6, uglify-js@^2.6.1:
   version "2.8.24"
   resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-2.8.24.tgz#48eb5175cf32e22ec11a47e638d7c8b4e0faf2dd"
@@ -6790,13 +6816,6 @@ uglify-js@^2.6, uglify-js@^2.6.1:
     yargs "~3.10.0"
   optionalDependencies:
     uglify-to-browserify "~1.0.0"
-
-uglify-js@latest:
-  version "3.0.9"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.0.9.tgz#974c5e638f5e2348f8509f0233667caedd52d813"
-  dependencies:
-    commander "~2.9.0"
-    source-map "~0.5.1"
 
 uglify-to-browserify@~1.0.0:
   version "1.0.2"
@@ -7024,9 +7043,9 @@ vue-clipboards@^1.0.0:
   dependencies:
     clipboard "^1.5.15"
 
-vue-resource@^1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/vue-resource/-/vue-resource-1.3.1.tgz#bf2f7b70bfe21b397c9d7607878f776a3acea2cf"
+vue-resource@^1.3.3:
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/vue-resource/-/vue-resource-1.3.3.tgz#6f12cfc77cccd47fb7e07aff6c42d75e34005992"
   dependencies:
     got "^6.7.1"
 

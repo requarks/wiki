@@ -8,7 +8,7 @@ import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
 import store from './store'
-import io from 'socket.io-client'
+import io from 'socket-io-client'
 import i18next from 'i18next'
 import i18nextXHR from 'i18next-xhr-backend'
 import VueI18Next from '@panter/vue-i18next'
@@ -23,14 +23,15 @@ import alertComponent from './components/alert.vue'
 import anchorComponent from './components/anchor.vue'
 import colorPickerComponent from './components/color-picker.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
+import modalCreatePageComponent from './components/modal-create-page.vue'
+import modalCreateUserComponent from './components/modal-create-user.vue'
 import searchComponent from './components/search.vue'
 import treeComponent from './components/tree.vue'
 
-import adminUsersCreateComponent from './modals/admin-users-create.vue'
-
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
-import sourceComponent from './pages/source.component.js'
+import contentViewComponent from './pages/content-view.component.js'
+import sourceViewComponent from './pages/source-view.component.js'
 
 // ====================================
 // Initialize Vue Modules
@@ -81,12 +82,14 @@ $(() => {
       alert: alertComponent,
       adminProfile: adminProfileComponent,
       adminSettings: adminSettingsComponent,
-      adminUsersCreate: adminUsersCreateComponent,
       anchor: anchorComponent,
       colorPicker: colorPickerComponent,
+      contentView: contentViewComponent,
       loadingSpinner: loadingSpinnerComponent,
+      modalCreatePage: modalCreatePageComponent,
+      modalCreateUser: modalCreateUserComponent,
       search: searchComponent,
-      sourceView: sourceComponent,
+      sourceView: sourceViewComponent,
       tree: treeComponent
     },
     store,

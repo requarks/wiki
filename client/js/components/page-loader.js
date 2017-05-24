@@ -1,13 +1,13 @@
 'use strict'
 
 import $ from 'jquery'
-import _ from 'lodash'
+import delay from 'lodash/delay'
 
 module.exports = {
 
   complete () {
     $('#page-loader').addClass('is-loaded')
-    _.delay(() => {
+    delay(() => {
       $('#page-loader').addClass('is-hidden')
     }, 1100)
   }
