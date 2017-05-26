@@ -1,4 +1,4 @@
-#page-loader {
+.page-loader {
   position: fixed;
   top: 0;
   left: 0;
@@ -28,6 +28,10 @@
 		}
 	}
 
+  &-leave-active {
+    animation: pageLoaderExit 1s ease forwards;
+  }
+
   @include keyframes(pageLoaderExit) {
     0% {
       opacity: 1;
@@ -41,14 +45,6 @@
       opacity: 0;
       display: none;
     }
-  }
-
-  &.is-loaded {
-    animation: pageLoaderExit 1s ease forwards;
-  }
-
-  &.is-hidden {
-    display: none !important;
   }
 
 }

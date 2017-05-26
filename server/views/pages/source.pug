@@ -23,14 +23,10 @@ block rootNavRight
 
 block content
 
-  source-view(inline-template, data-entrypath=pageData.meta.path)
+  source-view(inline-template, data-entrypath=pageData.meta.path, v-cloak)
     .ace-container
       #source-display= pageData.markdown
 
   include ../modals/create.pug
   include ../modals/move.pug
-
-block outside
-  #page-loader
-    i
-    span= t('loading.source')
+  page-loader(text=t('loading.source'))
