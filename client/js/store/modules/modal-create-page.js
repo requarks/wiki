@@ -3,14 +3,11 @@
 export default {
   namespaced: true,
   state: {
-    entrypath: '',
-    shown: false,
-    invalid: false
+    shown: false
   },
   getters: {},
   mutations: {
-    shownChange: (state, shownState) => { state.shown = shownState },
-    pathChange: (state, newpath) => { state.entrypath = newpath }
+    shownChange: (state, shownState) => { state.shown = shownState }
   },
   actions: {
     open({ commit }) { commit('shownChange', true) },
