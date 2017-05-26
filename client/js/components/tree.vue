@@ -15,8 +15,6 @@
 </template>
 
 <script>
-  import * as _ from 'lodash'
-
   export default {
     name: '',
     data () {
@@ -31,9 +29,9 @@
         self.$nextTick(() => {
           socket.emit('treeFetch', { basePath }, (data) => {
             if (self.tree.length > 0) {
-              let branch = _.last(self.tree)
+              let branch = self._.last(self.tree)
               branch.hasChildren = true
-              _.find(branch.pages, { _id: basePath }).isActive = true
+              self._.find(branch.pages, { _id: basePath }).isActive = true
             }
             self.tree.push({
               hasChildren: false,
@@ -49,14 +47,14 @@
       unfold (entryPath) {
         let self = this
         let lastIndex = 0
-        _.forEach(self.tree, branch => {
+        self._.forEach(self.tree, branch => {
           lastIndex++
-          if (_.find(branch.pages, { _id: entryPath }) !== undefined) {
+          if (self._.find(branch.pages, { _id: entryPath }) !== undefined) {
             return false
           }
         })
-        self.tree = _.slice(self.tree, 0, lastIndex)
-        let branch = _.last(self.tree)
+        self.tree = self._.slice(self.tree, 0, lastIndex)
+        let branch = self._.last(self.tree)
         branch.hasChildren = false
         branch.pages.forEach(page => {
           page.isActive = false

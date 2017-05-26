@@ -18,7 +18,6 @@
 </template>
 
 <script>
-  import * as _ from 'lodash'
   import * as $ from 'jquery'
 
   export default {
@@ -44,7 +43,7 @@
           socket.emit('search', { terms: val }, (data) => {
             self.searchres = data.match
             self.searchsuggest = data.suggest
-            self.searchmovearr = _.concat([], self.searchres, self.searchsuggest)
+            self.searchmovearr = self._.concat([], self.searchres, self.searchsuggest)
             if (self.searchload > 0) { self.searchload-- }
           })
         } else {

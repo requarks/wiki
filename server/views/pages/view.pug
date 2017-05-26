@@ -25,13 +25,12 @@ block rootNavRight
       a.button(href='/edit/' + pageData.meta.path)
         i.icon-document-text
         span= t('nav.edit')
-      a.button.btn-create-prompt
+      a.button(v-on:click='$store.dispatch("modalCreatePage/open")')
         i.icon-plus
         span= t('nav.create')
 
 block content
 
-  //- #page-type-view.page-type-container(data-entrypath=pageData.meta.path)
   content-view(inline-template)
     .container.is-fluid.has-mkcontent
       .columns.is-gapless
@@ -82,6 +81,5 @@ block content
           .content.mkcontent
             != pageData.html
 
-  include ../modals/create.pug
-  include ../modals/move.pug
+  modal-create-page(basepath=pageData.meta.path)
   anchor

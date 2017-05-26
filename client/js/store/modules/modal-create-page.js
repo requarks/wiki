@@ -1,15 +1,19 @@
 'use strict'
 
 export default {
+  namespaced: true,
   state: {
-    shown: false
+    entrypath: '',
+    shown: false,
+    invalid: false
   },
   getters: {},
   mutations: {
-    shownChange: (state, shownState) => { state.shown = shownState }
+    shownChange: (state, shownState) => { state.shown = shownState },
+    pathChange: (state, newpath) => { state.entrypath = newpath }
   },
   actions: {
-    adminUsersCreateOpen({ commit }) { commit('shownChange', true) },
-    adminUsersCreateClose({ commit }) { commit('shownChange', false) }
+    open({ commit }) { commit('shownChange', true) },
+    close({ commit }) { commit('shownChange', false) }
   }
 }

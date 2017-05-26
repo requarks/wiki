@@ -1,6 +1,7 @@
 'use strict'
 
 export default {
+  namespaced: true,
   state: {
     shown: false
   },
@@ -9,7 +10,7 @@ export default {
     shownChange: (state, shownState) => { state.shown = shownState }
   },
   actions: {
-    adminUsersCreateOpen({ commit }) { commit('shownChange', true) },
-    adminUsersCreateClose({ commit }) { commit('shownChange', false) }
+    open({ commit }) { commit('shownChange', true) },
+    close({ commit }) { commit('shownChange', false) }
   }
 }

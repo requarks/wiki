@@ -36,7 +36,7 @@
 
 <script>
   export default {
-    name: 'admin-users-create',
+    name: 'modal-create-user',
     data () {
       return {
         email: '',
@@ -48,12 +48,12 @@
     },
     computed: {
       isShown () {
-        return this.$store.state.adminUsersCreate.shown
+        return this.$store.state.modalCreateUser.shown
       }
     },
     methods: {
       cancel () {
-        this.$store.dispatch('adminUsersCreateClose')
+        this.$store.dispatch('modalCreateUser/close')
         this.email = ''
         this.provider = 'local'
       },

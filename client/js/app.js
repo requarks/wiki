@@ -4,9 +4,11 @@
 /* eslint-disable no-new */
 
 import $ from 'jquery'
+import _ from 'lodash'
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
+import VueLodash from 'vue-lodash'
 import store from './store'
 import io from 'socket-io-client'
 import i18next from 'i18next'
@@ -14,6 +16,12 @@ import i18nextXHR from 'i18next-xhr-backend'
 import VueI18Next from '@panter/vue-i18next'
 import 'jquery-smooth-scroll'
 import 'jquery-sticky'
+
+// ====================================
+// Load Helpers
+// ====================================
+
+import helpers from './helpers'
 
 // ====================================
 // Load Vue Components
@@ -40,6 +48,7 @@ import sourceViewComponent from './pages/source-view.component.js'
 Vue.use(VueResource)
 Vue.use(VueClipboards)
 Vue.use(VueI18Next)
+Vue.use(VueLodash, _)
 
 i18next
   .use(i18nextXHR)
@@ -78,6 +87,7 @@ $(() => {
 
   const i18n = new VueI18Next(i18next)
   new Vue({
+    mixins: [helpers],
     components: {
       alert: alertComponent,
       adminProfile: adminProfileComponent,

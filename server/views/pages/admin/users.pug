@@ -3,7 +3,7 @@ extends ./_layout.pug
 block rootNavRight
   loading-spinner
   .nav-item
-    a.button(v-on:click='$store.dispatch("adminUsersCreateOpen")')
+    a.button(v-on:click='$store.dispatch("modalCreateUser/open")')
       i.icon-plus
       span= t('admin:users.createauthorize')
 
@@ -43,4 +43,4 @@ block adminContent
           td.is-centered= moment(usr.createdAt).format('lll')
           td.is-centered= moment(usr.updatedAt).format('lll')
 
-  admin-users-create
+  modal-create-user

@@ -47,6 +47,32 @@ if (args.d) {
 }
 
 // ======================================================
+// BUILD VARS
+// ======================================================
+
+const ALIASES = {
+  'brace-ext-modelist': 'brace/ext/modelist.js',
+  'simplemde': 'simplemde/dist/simplemde.min.js',
+  'socket-io-client': 'socket.io-client/dist/socket.io.js',
+  'vue': (dev) ? 'vue/dist/vue.js' : 'vue/dist/vue.min.js',
+  'vue-lodash': 'vue-lodash/dist/vue-lodash.min.js'
+}
+const SHIMS = {
+  _preinit: {
+    source: '.build/_preinit.js',
+    exports: '_preinit'
+  },
+  jquery: {
+    source: 'node_modules/jquery/dist/jquery.js',
+    exports: '$'
+  },
+  mathjax: {
+    source: 'node_modules/mathjax/MathJax.js',
+    exports: 'MathJax'
+  }
+}
+
+// ======================================================
 // Global Tasks
 // ======================================================
 
@@ -191,27 +217,6 @@ let globalTasks = Promise.mapSeries([
 // Fuse Tasks
 // ======================================================
 
-const ALIASES = {
-  'brace-ext-modelist': 'brace/ext/modelist.js',
-  'simplemde': 'simplemde/dist/simplemde.min.js',
-  'socket-io-client': 'socket.io-client/dist/socket.io.js',
-  'vue': (dev) ? 'vue/dist/vue.js' : 'vue/dist/vue.min.js'
-}
-const SHIMS = {
-  _preinit: {
-    source: '.build/_preinit.js',
-    exports: '_preinit'
-  },
-  jquery: {
-    source: 'node_modules/jquery/dist/jquery.js',
-    exports: '$'
-  },
-  mathjax: {
-    source: 'node_modules/mathjax/MathJax.js',
-    exports: 'MathJax'
-  }
-}
-
 globalTasks.then(() => {
   let fuse = fsbx.FuseBox.init({
     homeDir: './client',
@@ -222,7 +227,7 @@ globalTasks.then(() => {
       fsbx.EnvPlugin({ NODE_ENV: (dev) ? 'development' : 'production' }),
       fsbx.VuePlugin(),
       ['.scss', fsbx.SassPlugin({ outputStyle: (dev) ? 'nested' : 'compressed' }), fsbx.CSSPlugin()],
-      fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
+      dev && fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
       fsbx.JSONPlugin(),
       !dev && fsbx.UglifyESPlugin({
         compress: { unused: false },
@@ -240,13 +245,14 @@ globalTasks.then(() => {
     })
   }
 
-  const bundleLibs = fuse.bundle('libs').instructions('~ index.js - brace')
-  const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
+  // const bundleLibs = fuse.bundle('libs').instructions('~ index.js - brace')
+  // const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
+  const bundleApp = fuse.bundle('app').instructions('> index.js')
   const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
 
   switch (mode) {
     case 'dev':
-      bundleLibs.watch()
+      // bundleLibs.watch()
       bundleApp.watch()
       break
     case 'dev-configure':
