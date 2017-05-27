@@ -11,8 +11,8 @@ mixin tocMenu(ti)
 block rootNavRight
   loading-spinner
   .nav-item
-    if rights.write
-      a.button.is-outlined.btn-move-prompt.is-hidden
+    if rights.write && pageData.meta.path !== 'home'
+      a.button.is-outlined(v-on:click='$store.dispatch("modalMovePage/open")')
         i.icon-shuffle
         span= t('nav.move')
     a.button.is-outlined(href='/source/' + pageData.meta.path)
@@ -82,4 +82,5 @@ block content
             != pageData.html
 
   modal-create-page(basepath=pageData.meta.path)
+  modal-move-page(current-path=pageData.meta.path)
   anchor

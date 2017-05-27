@@ -8,7 +8,7 @@
           label.label Enter the new document path:
           p.control.is-fullwidth(v-bind:class='{ "is-loading": isLoading }')
             input.input(type='text', placeholder='page-name', v-model='userPath', ref='createPageInput', @keyup.enter='create', @keyup.esc='cancel')
-            span.help.is-danger(v-show='isInvalid') This document path is invalid!
+            span.help.is-red(v-show='isInvalid') This document path is invalid!
         footer
           a.button.is-grey.is-outlined(v-on:click='cancel') Discard
           a.button.is-light-blue(v-on:click='create') Create

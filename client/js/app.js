@@ -33,6 +33,7 @@ import colorPickerComponent from './components/color-picker.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
+import modalMovePageComponent from './components/modal-move-page.vue'
 import pageLoaderComponent from './components/page-loader.vue'
 import searchComponent from './components/search.vue'
 import treeComponent from './components/tree.vue'
@@ -100,6 +101,7 @@ $(() => {
       loadingSpinner: loadingSpinnerComponent,
       modalCreatePage: modalCreatePageComponent,
       modalCreateUser: modalCreateUserComponent,
+      modalMovePage: modalMovePageComponent,
       pageLoader: pageLoaderComponent,
       search: searchComponent,
       sourceView: sourceViewComponent,

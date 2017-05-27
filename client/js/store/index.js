@@ -5,6 +5,7 @@ import alert from './modules/alert'
 import anchor from './modules/anchor'
 import modalCreatePage from './modules/modal-create-page'
 import modalCreateUser from './modules/modal-create-user'
+import modalMovePage from './modules/modal-move-page'
 import pageLoader from './modules/page-loader'
 
 Vue.use(Vuex)
@@ -26,6 +27,7 @@ export default new Vuex.Store({
     anchor,
     modalCreatePage,
     modalCreateUser,
+    modalMovePage,
     pageLoader
   }
 })
