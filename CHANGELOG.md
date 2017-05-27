@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Localization**: All UI text elements are now localized
 - **Localization**: Chinese locale is now available (thanks to @choicky)
 - **Localization**: Korean locale is now available (thanks to @junwonpk)
+- **Localization**: Portuguese locale is now available (thanks to @felipeplets)
 - **Localization**: Russian locale is now available (thanks to @efimlosev)
 - **Localization**: Spanish locale is now available (thanks to @MatiasArriola)
 - **Misc**: Copy to clipboard modal when clicking on header anchor
@@ -18,6 +19,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Misc**: Refactored all client-side code into Vue components
 - **Misc**: Updated dependencies
 - **UI**: Reveal 'Top of Page' only on scroll + icon only
+- **UI**: Updated navigation buttons design
+- **UI**: Updated editor toolbar + page design
 
 ### Fixed
 - **Configuration Wizard**: Public option is now saved properly in config file

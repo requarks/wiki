@@ -82,6 +82,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
 - [x] French
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
+- [x] Portuguese - *Thanks to [@felipeplets](https://github.com/felipeplets)*
 - [x] Russian - *Thanks to [@efimlosev](https://github.com/efimlosev)*
 - [x] Spanish - *Thanks to [@MatiasArriola](https://github.com/MatiasArriola)*
 
