@@ -26,11 +26,13 @@ $primary: 'indigo';
 @import 'components/sidebar';
 @import 'components/table';
 @import 'components/typography';
+@import 'components/editor-table';
 
 @import 'libs/twemoji-awesome';
 @import 'libs/jquery-contextmenu';
 @import 'node_modules/highlight.js/styles/atom-one-dark';
 @import 'node_modules/simplemde/dist/simplemde.min';
+@import 'components/handsontable.min';
 
 @import 'components/_editor';
 

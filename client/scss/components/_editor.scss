@@ -3,7 +3,7 @@
 	z-index: 2;
 	background: linear-gradient(to bottom, mc('blue-grey', '900'), mc('blue-grey', '700'));
 	border: none;
-  border-top: 1px solid mc('blue-grey', '400');
+  	border-top: 1px solid mc('blue-grey', '400');
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 	opacity: 1;
@@ -11,7 +11,7 @@
 	top: 50px;
 	left: 0;
 	width: 100%;
-  box-shadow: 0 0 5px rgba(0,0,0,.75);
+  	box-shadow: 0 0 5px rgba(0,0,0,.75);
 
 	&:hover {
 		opacity: 1;
@@ -27,6 +27,11 @@
 			outline: none;
 		}
 
+		&.active{
+		    border: 1px solid grey;
+    		border-radius: 5px;
+		}
+
 	}
 
 	i.separator {
@@ -36,7 +41,9 @@
 	}
 
 }
-
+.editor-toolbar.fullscreen{
+	background: linear-gradient(to bottom, mc('blue-grey', '900'), mc('blue-grey', '700'));
+}
 .editor-modal-load {
 
 	display: flex;
@@ -298,7 +305,7 @@
 
 // CODE MIRROR
 
-.CodeMirror {
+.CodeMirror:not(.CodeMirror-fullscreen) {
 	border-left: none;
 	border-right: none;
 	margin-top: 49px;
@@ -360,10 +367,30 @@ main > .ace-container {
 	height: 100%;
 }
 
-#source-display, #codeblock-editor {
+/*#modal-editor-table .ace-container {
+	display: flex;
+	align-items: stretch;
+	padding: 0;
+	position: relative;
+	width: 100%;
+	height: 100%;
+}*/
+
+#source-display, #codeblock-editor/*,#table-editor*/ {
 	position: absolute;
 	top: 0;
 	left: 0;
 	bottom: 0;
 	right: 0;
+}
+
+.table-editor{
+	position:relateve;
+	margin-top:5%;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+.htContextMenu{
+	z-index : 20;
 }

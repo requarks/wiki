@@ -1,0 +1,28 @@
+.model-sidebar-content table{
+  border-collapse: collapse;
+  margin-left:auto;
+  margin-right:auto;
+  margin-top:20px;
+  text-align:center;
+}
+
+.model-sidebar-content table tr td{
+  padding-left:1px;
+  padding-right:1px;
+  border:1px solid black;
+  vertical-align:middle;
+}
+
+.model-sidebar-content table tr td input{
+  width:30px;
+  text-align:center;
+}
+
+.model-sidebar-content.clickable{
+  crusor:pointer;
+}
+
+#table-editor.table-editor{
+  margin-left:3%;
+  margin-top:3%;
+}
