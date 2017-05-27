@@ -6,8 +6,8 @@ block rootNavCenter
 block rootNavRight
   loading-spinner
   span.nav-item
-    if rights.write
-      a.button.is-outlined.btn-move-prompt.is-hidden
+    if rights.write && pageData.meta.path !== 'home'
+      a.button.is-outlined(v-on:click='$store.dispatch("modalMovePage/open")')
         i.icon-shuffle
         span= t('nav.move')
     a.button.is-outlined(href='/' + pageData.meta.path)
@@ -15,10 +15,10 @@ block rootNavRight
       span= t('nav.normalview')
     if rights.write
       a.button.is-orange(href='/edit/' + pageData.meta.path)
-        i.fa.fa-edit
+        i.icon-document-text
         span= t('nav.edit')
-      a.button.is-blue.btn-create-prompt
-        i.fa.fa-plus
+      a.button(v-on:click='$store.dispatch("modalCreatePage/open")')
+        i.icon-plus
         span= t('nav.create')
 
 block content
@@ -27,6 +27,6 @@ block content
     .ace-container
       #source-display= pageData.markdown
 
-  include ../modals/create.pug
-  include ../modals/move.pug
+  modal-create-page(basepath=pageData.meta.path)
+  modal-move-page(current-path=pageData.meta.path)
   page-loader(text=t('loading.source'))
