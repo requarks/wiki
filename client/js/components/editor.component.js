@@ -1,32 +1,54 @@
 'use strict'
 
-import $ from 'jquery'
-import Vue from 'vue'
-import _ from 'lodash'
-import filesize from 'filesize.js'
 import SimpleMDE from 'simplemde'
-import pageLoader from '../components/page-loader'
+import filesize from 'filesize.js'
+import $ from 'jquery'
 
-// ====================================
-// Markdown Editor
-// ====================================
+let mde
 
-module.exports = (alerts, pageEntryPath, socket) => {
-  if ($('#mk-editor').length === 1) {
-    Vue.filter('filesize', (v) => {
-      return _.toUpper(filesize(v))
-    })
-
-    let mdeModalOpenState = false
-    let vueImage
-    let vueFile
-    let vueVideo
-    let vueCodeBlock
-
-    let mde = new SimpleMDE({
+export default {
+  name: 'editor',
+  props: ['currentPath'],
+  filters: {
+    filesize(v) {
+      return this._.toUpper(filesize(v))
+    }
+  },
+  data() {
+    return {}
+  },
+  methods: {
+    save() {
+      let self = this
+      this.$http.put(window.location.href, {
+        markdown: mde.value()
+      }).then(resp => {
+        return resp.json()
+      }).then(resp => {
+        if (resp.ok) {
+          window.location.assign('/' + self.currentPath)
+        } else {
+          self.$store.dispatch('alert', {
+            style: 'red',
+            icon: 'square-cross',
+            msg: resp.msg
+          })
+        }
+      }).catch(err => {
+        self.$store.dispatch('alert', {
+          style: 'red',
+          icon: 'square-cross',
+          msg: 'Error: ' + err.body.msg
+        })
+      })
+    }
+  },
+  mounted() {
+    let self = this
+    mde = new SimpleMDE({
       autofocus: true,
       autoDownloadFontAwesome: false,
-      element: $('#mk-editor').get(0),
+      element: this.$refs.editorTextArea,
       placeholder: 'Enter Markdown formatted content here...',
       spellChecker: false,
       status: false,
@@ -183,46 +205,20 @@ module.exports = (alerts, pageEntryPath, socket) => {
       }
     })
 
-    vueImage = require('./editor-image.js')(alerts, mde, mdeModalOpenState, socket)
-    vueFile = require('./editor-file.js')(alerts, mde, mdeModalOpenState, socket)
-    vueVideo = require('./editor-video.js')(mde, mdeModalOpenState)
-    vueCodeBlock = require('./editor-codeblock.js')(mde, mdeModalOpenState)
+    // Save
 
-    pageLoader.complete()
-
-    // -> Save
-
-    let saveCurrentDocument = (ev) => {
-      $.ajax(window.location.href, {
-        data: {
-          markdown: mde.value()
-        },
-        dataType: 'json',
-        method: 'PUT'
-      }).then((rData, rStatus, rXHR) => {
-        if (rData.ok) {
-          window.location.assign('/' + pageEntryPath) // eslint-disable-line no-undef
-        } else {
-          alerts.pushError('Something went wrong', rData.error)
-        }
-      }, (rXHR, rStatus, err) => {
-        alerts.pushError('Something went wrong', 'Save operation failed.')
-      })
-    }
-
-    $('.btn-edit-save, .btn-create-save').on('click', (ev) => {
-      saveCurrentDocument(ev)
-    })
-
+    this.$root.$on('editor-save', this.save)
     $(window).bind('keydown', (ev) => {
       if (ev.ctrlKey || ev.metaKey) {
         switch (String.fromCharCode(ev.which).toLowerCase()) {
           case 's':
             ev.preventDefault()
-            saveCurrentDocument(ev)
+            self.save()
             break
         }
       }
     })
+
+    this.$store.dispatch('pageLoader/complete')
   }
 }

@@ -23,7 +23,7 @@ block rootNavRight
 
 block content
 
-  source-view(inline-template, data-entrypath=pageData.meta.path, v-cloak)
+  source-view(inline-template, entrypath=pageData.meta.path, v-cloak)
     .ace-container
       #source-display= pageData.markdown
 

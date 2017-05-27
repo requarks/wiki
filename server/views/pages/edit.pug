@@ -4,29 +4,19 @@ block rootNavCenter
   h2.nav-item= pageData.meta.title
 
 block rootNavRight
-  i.nav-item#notifload
+  loading-spinner
   span.nav-item
-    a.button.is-outlined.btn-edit-discard
+    a.button.is-outlined(v-on:click='$store.dispatch("modalDiscardPage/open")')
       i.icon-cross
       span= t('nav.discard')
-    a.button.btn-edit-save
+    a.button(v-on:click='$root.$emit("editor-save")')
       i.icon-check
       span= t('nav.savechanges')
 
 block content
-
-  #page-type-edit(data-entrypath=pageData.meta.path)
+  editor(inline-template, current-path=pageData.meta.path, v-cloak)
     .editor-area
-      textarea#mk-editor= pageData.markdown
+      textarea(ref='editorTextArea')= pageData.markdown
 
-  include ../modals/edit-discard.pug
-  include ../modals/editor-link.pug
-  include ../modals/editor-image.pug
-  include ../modals/editor-file.pug
-  include ../modals/editor-video.pug
-  include ../modals/editor-codeblock.pug
-
-block outside
-  #page-loader
-    i
-    span= t('loading.editor')
+  modal-discard-page(mode='edit', current-path=pageData.meta.path)
+  page-loader(text=t('loading.editor'))

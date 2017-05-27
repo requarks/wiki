@@ -3,8 +3,10 @@ import Vuex from 'vuex'
 
 import alert from './modules/alert'
 import anchor from './modules/anchor'
+import editor from './modules/editor'
 import modalCreatePage from './modules/modal-create-page'
 import modalCreateUser from './modules/modal-create-user'
+import modalDiscardPage from './modules/modal-discard-page'
 import modalMovePage from './modules/modal-move-page'
 import pageLoader from './modules/page-loader'
 
@@ -25,8 +27,10 @@ export default new Vuex.Store({
   modules: {
     alert,
     anchor,
+    editor,
     modalCreatePage,
     modalCreateUser,
+    modalDiscardPage,
     modalMovePage,
     pageLoader
   }

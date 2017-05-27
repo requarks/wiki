@@ -33,6 +33,7 @@ import colorPickerComponent from './components/color-picker.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
+import modalDiscardPageComponent from './components/modal-discard-page.vue'
 import modalMovePageComponent from './components/modal-move-page.vue'
 import pageLoaderComponent from './components/page-loader.vue'
 import searchComponent from './components/search.vue'
@@ -41,6 +42,7 @@ import treeComponent from './components/tree.vue'
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
 import contentViewComponent from './pages/content-view.component.js'
+import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
 
 // ====================================
@@ -98,9 +100,11 @@ $(() => {
       anchor: anchorComponent,
       colorPicker: colorPickerComponent,
       contentView: contentViewComponent,
+      editor: editorComponent,
       loadingSpinner: loadingSpinnerComponent,
       modalCreatePage: modalCreatePageComponent,
       modalCreateUser: modalCreateUserComponent,
+      modalDiscardPage: modalDiscardPageComponent,
       modalMovePage: modalMovePageComponent,
       pageLoader: pageLoaderComponent,
       search: searchComponent,

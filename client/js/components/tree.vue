@@ -1,5 +1,5 @@
 <template lang="pug">
-  transition
+  .has-collapsable-nav
     ul.collapsable-nav(v-for='treeItem in tree', :class='{ "has-children": treeItem.hasChildren }', v-cloak)
       li(v-for='page in treeItem.pages', :class='{ "is-active": page.isActive }')
         a(v-on:click='mainAction(page)')
