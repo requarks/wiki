@@ -1,10 +1,6 @@
 .modal {
 	align-items: flex-start;
-	display: none;
-
-	&.is-active {
-		display: block;
-	}
+	display: block;
 
 	&.is-superimposed {
 		.modal-background {
@@ -23,8 +19,15 @@
 	height: 100vh;
 	position: fixed;
 	background-color: rgba(0,0,0,0.85);
-	animation: .4s ease fadeIn;
 	z-index: 10;
+
+  &-enter-active {
+    animation: .4s ease fadeIn;
+  }
+  &-leave-active {
+    animation: .4s ease fadeOut;
+  }
+
 }
 .modal-container {
 	position: fixed;
@@ -38,9 +41,15 @@
 	align-items: center;
 }
 .modal-content {
-	animation: .3s ease zoomIn;
 	width: 600px;
 	background-color: #FFF;
+
+  &-enter-active {
+    animation: .3s ease zoomIn;
+  }
+  &-leave-active {
+    animation: .3s ease zoomOut;
+  }
 
 	&.is-expanded {
 		align-self: stretch;

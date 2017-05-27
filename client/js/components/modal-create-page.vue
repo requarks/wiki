@@ -1,17 +1,20 @@
 <template lang="pug">
-  .modal(v-bind:class='{ "is-active": isShown }')
-    .modal-background
-    .modal-container
-      .modal-content
-        header.is-light-blue Create New Document
-        section
-          label.label Enter the new document path:
-          p.control.is-fullwidth(v-bind:class='{ "is-loading": isLoading }')
-            input.input(type='text', placeholder='page-name', v-model='userPath', ref='createPageInput', @keyup.enter='create', @keyup.esc='cancel')
-            span.help.is-red(v-show='isInvalid') This document path is invalid!
-        footer
-          a.button.is-grey.is-outlined(v-on:click='cancel') Discard
-          a.button.is-light-blue(v-on:click='create') Create
+  transition(:duration="400")
+    .modal(v-show='isShown', v-cloak)
+      transition(name='modal-background')
+        .modal-background(v-show='isShown')
+      .modal-container
+        transition(name='modal-content')
+          .modal-content(v-show='isShown')
+            header.is-light-blue Create New Document
+            section
+              label.label Enter the new document path:
+              p.control.is-fullwidth(v-bind:class='{ "is-loading": isLoading }')
+                input.input(type='text', placeholder='page-name', v-model='userPath', ref='createPageInput', @keyup.enter='create', @keyup.esc='cancel')
+                span.help.is-red(v-show='isInvalid') This document path is invalid!
+            footer
+              a.button.is-grey.is-outlined(v-on:click='cancel') Discard
+              a.button.is-light-blue(v-on:click='create') Create
 </template>
 
 <script>

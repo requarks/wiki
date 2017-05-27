@@ -1,18 +1,21 @@
 <template lang="pug">
-  .modal(v-bind:class='{ "is-active": isShown }')
-    .modal-background
-    .modal-container
-      .modal-content
-        header.is-indigo Move document
-        section
-          label.label Enter the new document path:
-          p.control.is-fullwidth(v-bind:class='{ "is-loading": isLoading }')
-            input.input(type='text', placeholder='page-name', v-model='movePath', ref='movePageInput', @keyup.enter='move', @keyup.esc='cancel')
-            span.help.is-red(v-show='isInvalid') This document path is invalid or not allowed!
-            span.note Note that moving or renaming documents can lead to broken links. Make sure to edit any page that links to this document afterwards!
-        footer
-          a.button.is-grey.is-outlined(v-on:click='cancel') Discard
-          a.button.is-indigo(v-on:click='move') Move
+  transition(:duration="400")
+    .modal(v-show='isShown', v-cloak)
+      transition(name='modal-background')
+        .modal-background(v-show='isShown')
+      .modal-container
+        transition(name='modal-content')
+          .modal-content(v-show='isShown')
+            header.is-indigo Move document
+            section
+              label.label Enter the new document path:
+              p.control.is-fullwidth(v-bind:class='{ "is-loading": isLoading }')
+                input.input(type='text', placeholder='page-name', v-model='movePath', ref='movePageInput', @keyup.enter='move', @keyup.esc='cancel')
+                span.help.is-red(v-show='isInvalid') This document path is invalid or not allowed!
+                span.note Note that moving or renaming documents can lead to broken links. Make sure to edit any page that links to this document afterwards!
+            footer
+              a.button.is-grey.is-outlined(v-on:click='cancel') Discard
+              a.button.is-indigo(v-on:click='move') Move
 </template>
 
 <script>
