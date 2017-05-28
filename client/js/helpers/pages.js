@@ -1,6 +1,13 @@
 'use strict'
 
-import _ from 'lodash'
+import deburr from 'lodash/deburr'
+import filter from 'lodash/filter'
+import isEmpty from 'lodash/isEmpty'
+import join from 'lodash/join'
+import kebabCase from 'lodash/kebabCase'
+import map from 'lodash/map'
+import split from 'lodash/split'
+import trim from 'lodash/trim'
 
 module.exports = {
   /**
@@ -9,11 +16,11 @@ module.exports = {
    * @returns {string} Safe path
    */
   makeSafePath: (rawPath) => {
-    let rawParts = _.split(_.trim(rawPath), '/')
-    rawParts = _.map(rawParts, (r) => {
-      return _.kebabCase(_.deburr(_.trim(r)))
+    let rawParts = split(trim(rawPath), '/')
+    rawParts = map(rawParts, (r) => {
+      return kebabCase(deburr(trim(r)))
     })
 
-    return _.join(_.filter(rawParts, (r) => { return !_.isEmpty(r) }), '/')
+    return join(filter(rawParts, (r) => { return !isEmpty(r) }), '/')
   }
 }

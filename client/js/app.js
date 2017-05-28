@@ -4,7 +4,6 @@
 /* eslint-disable no-new */
 
 import $ from 'jquery'
-import _ from 'lodash'
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
@@ -16,6 +15,33 @@ import i18nextXHR from 'i18next-xhr-backend'
 import VueI18Next from '@panter/vue-i18next'
 import 'jquery-smooth-scroll'
 import 'jquery-sticky'
+
+// ====================================
+// Load minimal lodash
+// ====================================
+
+import concat from 'lodash/concat'
+import cloneDeep from 'lodash/cloneDeep'
+import debounce from 'lodash/debounce'
+import deburr from 'lodash/deburr'
+import delay from 'lodash/delay'
+import filter from 'lodash/filter'
+import find from 'lodash/find'
+import findKey from 'lodash/findKey'
+import forEach from 'lodash/forEach'
+import includes from 'lodash/includes'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import join from 'lodash/join'
+import kebabCase from 'lodash/kebabCase'
+import last from 'lodash/last'
+import map from 'lodash/map'
+import pullAt from 'lodash/pullAt'
+import reject from 'lodash/reject'
+import slice from 'lodash/slice'
+import split from 'lodash/split'
+import trim from 'lodash/trim'
+import toUpper from 'lodash/toUpper'
 
 // ====================================
 // Load Helpers
@@ -30,6 +56,7 @@ import helpers from './helpers'
 import alertComponent from './components/alert.vue'
 import anchorComponent from './components/anchor.vue'
 import colorPickerComponent from './components/color-picker.vue'
+import editorCodeblockComponent from './components/editor-codeblock.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
@@ -44,6 +71,35 @@ import adminSettingsComponent from './pages/admin-settings.component.js'
 import contentViewComponent from './pages/content-view.component.js'
 import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
+
+// ====================================
+// Build lodash object
+// ====================================
+
+const _ = {
+  deburr,
+  concat,
+  cloneDeep,
+  debounce,
+  delay,
+  filter,
+  find,
+  findKey,
+  forEach,
+  includes,
+  isEmpty,
+  isNil,
+  join,
+  kebabCase,
+  last,
+  map,
+  pullAt,
+  reject,
+  slice,
+  split,
+  toUpper,
+  trim
+}
 
 // ====================================
 // Initialize Vue Modules
@@ -101,6 +157,7 @@ $(() => {
       colorPicker: colorPickerComponent,
       contentView: contentViewComponent,
       editor: editorComponent,
+      editorCodeblock: editorCodeblockComponent,
       loadingSpinner: loadingSpinnerComponent,
       modalCreatePage: modalCreatePageComponent,
       modalCreateUser: modalCreateUserComponent,

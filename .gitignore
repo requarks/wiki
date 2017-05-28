@@ -31,3 +31,6 @@ config.yml
 /repo
 /data
 /uploads
+
+# IDE exclude
+.idea

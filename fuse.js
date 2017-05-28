@@ -80,6 +80,22 @@ console.info(colors.white('└── ') + colors.green('Running global tasks...'
 
 let globalTasks = Promise.mapSeries([
   /**
+   * SimpleMDE
+   */
+  () => {
+    return fs.accessAsync('./assets/js/simplemde').then(() => {
+      console.info(colors.white('  └── ') + colors.magenta('SimpleMDE directory already exists. Task aborted.'))
+      return true
+    }).catch(err => {
+      if (err.code === 'ENOENT') {
+        console.info(colors.white('  └── ') + colors.green('Copy + Minify SimpleMDE to assets...'))
+        return fs.copy('./node_modules/simplemde/dist/simplemde.min.js', './assets/js/simplemde/simplemde.min.js')
+      } else {
+        throw err
+      }
+    })
+  },
+  /**
    * ACE Modes
    */
   () => {

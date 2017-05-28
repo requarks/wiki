@@ -4,6 +4,7 @@ import Vuex from 'vuex'
 import alert from './modules/alert'
 import anchor from './modules/anchor'
 import editor from './modules/editor'
+import editorCodeblock from './modules/editor-codeblock'
 import modalCreatePage from './modules/modal-create-page'
 import modalCreateUser from './modules/modal-create-user'
 import modalDiscardPage from './modules/modal-discard-page'
@@ -28,6 +29,7 @@ export default new Vuex.Store({
     alert,
     anchor,
     editor,
+    editorCodeblock,
     modalCreatePage,
     modalCreateUser,
     modalDiscardPage,

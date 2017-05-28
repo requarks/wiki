@@ -1,6 +1,6 @@
 'use strict'
 
-import _ from 'lodash'
+import debounce from 'lodash/debounce'
 
 export default {
   state: {
@@ -24,7 +24,7 @@ export default {
       commit('alertChange', opts)
       dispatch('alertDismiss')
     },
-    alertDismiss: _.debounce(({ commit }) => {
+    alertDismiss: debounce(({ commit }) => {
       let opts = { shown: false }
       commit('alertChange', opts)
     }, 3000)
