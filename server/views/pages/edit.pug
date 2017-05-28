@@ -9,7 +9,7 @@ block rootNavRight
     a.button.is-outlined(v-on:click='$store.dispatch("modalDiscardPage/open")')
       i.icon-cross
       span= t('nav.discard')
-    a.button(v-on:click='$root.$emit("editor-save")')
+    a.button(v-on:click='$root.$emit("editor/save")')
       i.icon-check
       span= t('nav.savechanges')
 
@@ -18,5 +18,6 @@ block content
     .editor-area
       textarea(ref='editorTextArea')= pageData.markdown
 
+  editor-codeblock
   modal-discard-page(mode='edit', current-path=pageData.meta.path)
   page-loader(text=t('loading.editor'))

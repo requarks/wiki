@@ -1,6 +1,5 @@
 'use strict'
 
-/* global siteLang */
 /* eslint-disable no-new */
 
 import $ from 'jquery'
@@ -147,7 +146,7 @@ $(() => {
   // ====================================
 
   const i18n = new VueI18Next(i18next)
-  new Vue({
+  window.wikijs = new Vue({
     mixins: [helpers],
     components: {
       alert: alertComponent,

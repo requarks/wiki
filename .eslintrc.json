@@ -6,9 +6,15 @@
     "jest": true
   },
   "globals": {
+    // Client
     "document": false,
     "navigator": false,
     "window": false,
+    "siteLang": false,
+    "socket": true,
+    "wikijs": true,
+    "FuseBox": false,
+    // Server
     "appconfig": true,
     "appdata": true,
     "ROOTPATH": true,

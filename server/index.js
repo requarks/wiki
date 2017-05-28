@@ -87,7 +87,10 @@ app.use(mw.security)
 // ----------------------------------------
 
 app.use(favicon(path.join(ROOTPATH, 'assets', 'favicon.ico')))
-app.use(express.static(path.join(ROOTPATH, 'assets')))
+app.use(express.static(path.join(ROOTPATH, 'assets'), {
+  index: false,
+  maxAge: '7d'
+}))
 
 // ----------------------------------------
 // Passport Authentication

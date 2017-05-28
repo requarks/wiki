@@ -3,14 +3,20 @@
 export default {
   namespaced: true,
   state: {
-    shown: false
+    shown: false,
+    content: ''
   },
   getters: {},
   mutations: {
-    shownChange: (state, shownState) => { state.shown = shownState }
+    shownChange: (state, shownState) => { state.shown = shownState },
+    contentChange: (state, newContent) => { state.content = newContent }
   },
   actions: {
-    open({ commit }) { commit('shownChange', true) },
+    open({ commit }, opts) {
+      commit('shownChange', true)
+      commit('contentChange', opts.initialContent || '')
+      wikijs.$emit('editorCodeblock/init')
+    },
     close({ commit }) { commit('shownChange', false) }
   }
 }

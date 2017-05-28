@@ -1,7 +1,5 @@
 'use strict'
 
-/* global FuseBox */
-
 import filesize from 'filesize.js'
 import $ from 'jquery'
 
@@ -18,7 +16,18 @@ export default {
   data() {
     return {}
   },
+  computed: {
+    insertContent() {
+      return this.$store.state.editor.insertContent
+    }
+  },
   methods: {
+    insert(content) {
+      if (mde.codemirror.doc.somethingSelected()) {
+        mde.codemirror.execCommand('singleSelection')
+      }
+      mde.codemirror.doc.replaceSelection(this.insertContent)
+    },
     save() {
       let self = this
       this.$http.put(window.location.href, {
@@ -177,13 +186,9 @@ export default {
           {
             name: 'code-block',
             action: (editor) => {
-              // if (!mdeModalOpenState) {
-              //   if (mde.codemirror.doc.somethingSelected()) {
-              //     vueCodeBlock.initContent = mde.codemirror.doc.getSelection()
-              //   }
-
-              //   vueCodeBlock.open()
-              // }
+              self.$store.dispatch('editorCodeblock/open', {
+                initialContent: (mde.codemirror.doc.somethingSelected()) ? mde.codemirror.doc.getSelection() : ''
+              })
             },
             className: 'icon-code',
             title: 'Code Block'
@@ -212,8 +217,6 @@ export default {
       })
 
       // Save
-
-      this.$root.$on('editor-save', this.save)
       $(window).bind('keydown', (ev) => {
         if (ev.ctrlKey || ev.metaKey) {
           switch (String.fromCharCode(ev.which).toLowerCase()) {
@@ -224,6 +227,10 @@ export default {
           }
         }
       })
+
+      // Listeners
+      this.$root.$on('editor/save', this.save)
+      this.$root.$on('editor/insert', this.insert)
 
       this.$store.dispatch('pageLoader/complete')
     })
