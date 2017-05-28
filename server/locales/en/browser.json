@@ -1,4 +1,11 @@
 {
+  "editor": {
+    "discard": "Discard",
+    "codeblocktitle": "Insert Code Block",
+    "codeblockinsert": "Insert Code Block",
+    "codeblocklanguage": "Language",
+    "codeblockloading": "Loading code syntax for {{name}}"
+  },
   "nav": {
     "home": "Home"
   },

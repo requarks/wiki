@@ -7,11 +7,14 @@
         transition(name='modal-content')
           .modal-content.is-expanded(v-show='isShown')
             header.is-green
-              span Insert Code Block
+              span {{ $t('editor.codeblocktitle') }}
+              p.modal-notify(v-bind:class='{ "is-active": isLoading }')
+                span {{ $t('editor.codeblockloading', { name: modeSelected }) }}
+                i
             section.is-gapless
               .columns.is-stretched
                 .column.is-one-quarter.modal-sidebar.is-green(style={'max-width':'350px'})
-                  .model-sidebar-header Language
+                  .model-sidebar-header {{ $t('editor.codeblocklanguage') }}
                   .model-sidebar-content
                     p.control.is-fullwidth
                       select(v-model='modeSelected')
@@ -19,8 +22,8 @@
                 .column.ace-container
                   #codeblock-editor
             footer
-              a.button.is-grey.is-outlined(v-on:click='cancel') Discard
-              a.button.is-green(v-on:click='insertCode') Insert Code Block
+              a.button.is-grey.is-outlined(v-on:click='cancel') {{ $t('editor.discard') }}
+              a.button.is-green(v-on:click='insertCode') {{ $t('editor.codeblockinsert') }}
 </template>
 
 <script>
@@ -33,7 +36,8 @@
       return {
         modes: [],
         modeSelected: 'text',
-        modelistLoaded: []
+        modelistLoaded: [],
+        isLoading: false
       }
     },
     computed: {
@@ -72,13 +76,27 @@
         if (self._.includes(self.modelistLoaded, m)) {
           codeEditor.getSession().setMode('ace/mode/' + m)
         } else {
+          self.isLoading = true
           self.$http.get('/js/ace/mode-' + m + '.js').then(resp => {
             if(resp.ok) {
               eval(resp.bodyText)
               self.modelistLoaded.push(m)
               ace.acequire('ace/mode/' + m)
               codeEditor.getSession().setMode('ace/mode/' + m)
+              self._.delay(() => { self.isLoading = false }, 500)
+            } else {
+              this.$store.dispatch('alert', {
+                style: 'red',
+                icon: 'square-cross',
+                msg: 'Error: Unable to load language syntax.'
+              })
             }
+          }).catch(err => {
+            his.$store.dispatch('alert', {
+              style: 'red',
+              icon: 'square-cross',
+              msg: 'Error: ' + err.body.msg
+            })
           })
         }
       },
