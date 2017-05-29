@@ -88,7 +88,7 @@
               this.$store.dispatch('alert', {
                 style: 'red',
                 icon: 'square-cross',
-                msg: 'Error: Unable to load language syntax.'
+                msg: self.$t('editor.codeblockloadingerror')
               })
             }
           }).catch(err => {
@@ -110,7 +110,7 @@
         this.$store.dispatch('alert', {
           style: 'blue',
           icon: 'inbox',
-          msg: 'Your code block has been inserted.'
+          msg: self.$t('editor.codeblocksuccess')
         })
         this.cancel()
       }

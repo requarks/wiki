@@ -56,6 +56,7 @@ import alertComponent from './components/alert.vue'
 import anchorComponent from './components/anchor.vue'
 import colorPickerComponent from './components/color-picker.vue'
 import editorCodeblockComponent from './components/editor-codeblock.vue'
+import editorVideoComponent from './components/editor-video.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
@@ -157,6 +158,7 @@ $(() => {
       contentView: contentViewComponent,
       editor: editorComponent,
       editorCodeblock: editorCodeblockComponent,
+      editorVideo: editorVideoComponent,
       loadingSpinner: loadingSpinnerComponent,
       modalCreatePage: modalCreatePageComponent,
       modalCreateUser: modalCreateUserComponent,

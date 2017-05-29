@@ -4,7 +4,16 @@
     "codeblocktitle": "Insert Code Block",
     "codeblockinsert": "Insert Code Block",
     "codeblocklanguage": "Language",
-    "codeblockloading": "Loading code syntax for {{name}}"
+    "codeblockloading": "Loading code syntax for {{name}}",
+    "codeblockloadingerror": "Error: Unable to load language syntax.",
+    "codeblocksuccess": "Your code block has been inserted.",
+    "videotitle": "Insert Video",
+    "videolinktitle": "Enter the link to the video to be embedded:",
+    "videoinsert": "Insert Video",
+    "videonotsupported": "This URL is invalid or not supported!",
+    "videosupportedtitle": "The following are supported:",
+    "videoanymp4file": "Any standard MP4 file",
+    "videosuccess": "The video code has been inserted."
   },
   "nav": {
     "home": "Home"

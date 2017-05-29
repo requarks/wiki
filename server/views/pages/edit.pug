@@ -18,6 +18,7 @@ block content
     .editor-area
       textarea(ref='editorTextArea')= pageData.markdown
 
+  editor-video
   editor-codeblock
   modal-discard-page(mode='edit', current-path=pageData.meta.path)
   page-loader(text=t('loading.editor'))

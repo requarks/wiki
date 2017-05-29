@@ -156,9 +156,7 @@ export default {
           {
             name: 'video',
             action: (editor) => {
-              // if (!mdeModalOpenState) {
-              //   vueVideo.open()
-              // }
+              self.$store.dispatch('editorVideo/open')
             },
             className: 'icon-video-camera2',
             title: 'Insert Video Player'
