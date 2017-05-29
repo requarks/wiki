@@ -110,7 +110,7 @@
         this.$store.dispatch('alert', {
           style: 'blue',
           icon: 'inbox',
-          msg: self.$t('editor.codeblocksuccess')
+          msg: this.$t('editor.codeblocksuccess')
         })
         this.cancel()
       }
