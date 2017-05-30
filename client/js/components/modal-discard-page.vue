@@ -6,13 +6,13 @@
       .modal-container
         transition(name='modal-content')
           .modal-content(v-show='isShown')
-            header.is-orange Discard?
+            header.is-orange {{ $t('modal.discardpagetitle') }}
             section
-              span(v-if='mode === "create"') Are you sure you want to leave this page and loose anything you wrote so far?
-              span(v-else) Are you sure you want to leave this page and loose any modifications?
+              span(v-if='mode === "create"') {{ $t('modal.discardpagecreate') }}
+              span(v-else) {{ $t('modal.discardpageedit') }}
             footer
-              a.button.is-grey.is-outlined(v-on:click='stay') Stay on page
-              a.button.is-orange(v-on:click='discard') Discard
+              a.button.is-grey.is-outlined(v-on:click='stay') {{ $t('modal.discardpagestay') }}
+              a.button.is-orange(v-on:click='discard') {{ $t('modal.discard') }}
 </template>
 
 <script>

@@ -1,7 +1,7 @@
 extends ./_layout.pug
 
 block rootNavRight
-  i.nav-item#notifload
+  loading-spinner
   .nav-item
     a.button(href='/admin/users')
       i.icon-reply
@@ -113,11 +113,11 @@ block adminContent
         .column.is-narrow
           section
             if usrOpts.canBeDeleted
-              button.button.is-red.btn-deluser-prompt
+              button.button.is-red(v-on:click='$store.dispatch("modalDeleteUser/open")')
                 i.icon-trash2
                 span Delete Account
 
-  include ../../modals/admin-deleteuser.pug
+  modal-delete-user(current-user=usr._id)
 
   script(type='text/javascript').
     var usrData = !{JSON.stringify(usr)};

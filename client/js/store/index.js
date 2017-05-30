@@ -8,6 +8,7 @@ import editorCodeblock from './modules/editor-codeblock'
 import editorVideo from './modules/editor-video'
 import modalCreatePage from './modules/modal-create-page'
 import modalCreateUser from './modules/modal-create-user'
+import modalDeleteUser from './modules/modal-delete-user'
 import modalDiscardPage from './modules/modal-discard-page'
 import modalMovePage from './modules/modal-move-page'
 import pageLoader from './modules/page-loader'
@@ -34,6 +35,7 @@ export default new Vuex.Store({
     editorVideo,
     modalCreatePage,
     modalCreateUser,
+    modalDeleteUser,
     modalDiscardPage,
     modalMovePage,
     pageLoader

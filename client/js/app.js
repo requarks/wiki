@@ -60,6 +60,7 @@ import editorVideoComponent from './components/editor-video.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
+import modalDeleteUserComponent from './components/modal-delete-user.vue'
 import modalDiscardPageComponent from './components/modal-discard-page.vue'
 import modalMovePageComponent from './components/modal-move-page.vue'
 import pageLoaderComponent from './components/page-loader.vue'
@@ -162,6 +163,7 @@ $(() => {
       loadingSpinner: loadingSpinnerComponent,
       modalCreatePage: modalCreatePageComponent,
       modalCreateUser: modalCreateUserComponent,
+      modalDeleteUser: modalDeleteUserComponent,
       modalDiscardPage: modalDiscardPageComponent,
       modalMovePage: modalMovePageComponent,
       pageLoader: pageLoaderComponent,

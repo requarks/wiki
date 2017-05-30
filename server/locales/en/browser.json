@@ -15,6 +15,31 @@
     "videoanymp4file": "Any standard MP4 file",
     "videosuccess": "The video code has been inserted."
   },
+  "modal": {
+    "abort": "Abort",
+    "anchortitle": "Copy link to this section",
+    "anchorsuccess": "The URL has been copied to your clipboard.",
+    "anchorerror": "Clipboard copy failed. Copy the URL manually.",
+    "copyclipboard": "Copy to Clipboard",
+    "create": "Create",
+    "createpagetitle": "Create New Page",
+    "createpagepath": "Enter the new page path:",
+    "createpageinvalid": "This page path is invalid!",
+    "discard": "Discard",
+    "discardpagestay": "Stay on page",
+    "discardpagetitle": "Discard?",
+    "discardpagecreate": "Are you sure you want to leave this page and loose anything you wrote so far?",
+    "discardpageedit": "Are you sure you want to leave this page and loose any modifications?",
+    "delete": "Delete",
+    "deleteusertitle": "Delete User Account?",
+    "deleteuserwarning": "Are you sure you want to delete this user account? This action cannot be undone!",
+    "move": "Move",
+    "movepagetitle": "Move Page",
+    "movepagepath": "Enter the new page path:",
+    "movepageinvalid": "This page path is invalid or not allowed!",
+    "movepagewarning": "Note that moving or renaming pages can lead to broken links. Make sure to edit any page that links to this page afterwards!",
+    "movepageplaceholder": "page-name"
+  },
   "nav": {
     "home": "Home"
   },

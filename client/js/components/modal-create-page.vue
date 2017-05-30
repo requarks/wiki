@@ -6,15 +6,15 @@
       .modal-container
         transition(name='modal-content')
           .modal-content(v-show='isShown')
-            header.is-light-blue Create New Document
+            header.is-light-blue {{ $t('modal.createpagetitle') }}
             section
-              label.label Enter the new document path:
+              label.label {{ $t('modal.createpagepath') }}
               p.control.is-fullwidth(v-bind:class='{ "is-loading": isLoading }')
                 input.input(type='text', placeholder='page-name', v-model='userPath', ref='createPageInput', @keyup.enter='create', @keyup.esc='cancel')
-                span.help.is-red(v-show='isInvalid') This document path is invalid!
+                span.help.is-red(v-show='isInvalid') {{ $t('modal.createpageinvalid') }}
             footer
-              a.button.is-grey.is-outlined(v-on:click='cancel') Discard
-              a.button.is-light-blue(v-on:click='create') Create
+              a.button.is-grey.is-outlined(v-on:click='cancel') {{ $t('modal.discard') }}
+              a.button.is-light-blue(v-on:click='create') {{ $t('modal.create') }}
 </template>
 
 <script>

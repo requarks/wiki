@@ -6,16 +6,16 @@
       .modal-container
         transition(name='modal-content')
           .modal-content(v-show='isShown')
-            header.is-indigo Move document
+            header.is-indigo {{ $t('modal.movepagetitle') }}
             section
-              label.label Enter the new document path:
+              label.label {{ $t('modal.movepagepath') }}
               p.control.is-fullwidth(v-bind:class='{ "is-loading": isLoading }')
-                input.input(type='text', placeholder='page-name', v-model='movePath', ref='movePageInput', @keyup.enter='move', @keyup.esc='cancel')
-                span.help.is-red(v-show='isInvalid') This document path is invalid or not allowed!
-                span.note Note that moving or renaming documents can lead to broken links. Make sure to edit any page that links to this document afterwards!
+                input.input(type='text', v-bind:placeholder='$t("modal.movepageplaceholder")', v-model='movePath', ref='movePageInput', @keyup.enter='move', @keyup.esc='cancel')
+                span.help.is-red(v-show='isInvalid') {{ $t('modal.movepageinvalid') }}
+                span.note {{ $t('modal.movepagewarning') }}
             footer
-              a.button.is-grey.is-outlined(v-on:click='cancel') Discard
-              a.button.is-indigo(v-on:click='move') Move
+              a.button.is-grey.is-outlined(v-on:click='cancel') {{ $t('modal.discard') }}
+              a.button.is-indigo(v-on:click='move') {{ $t('modal.move') }}
 </template>
 
 <script>
