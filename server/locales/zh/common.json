@@ -9,12 +9,6 @@
     "home": "首页",
     "top": "滚到顶部"
   },
-  "search": {
-    "placeholder": "搜索...",
-    "results": "搜索结果",
-    "nomatch": "没有符合你查询的结果",
-    "didyoumean": "你是指...？"
-  },
   "sidebar": {
     "nav": "导航",
     "navigation": "导航",
@@ -22,11 +16,12 @@
     "pastversions": "历史版本"
   },
   "nav": {
-    "home": "首页",
     "account": "帐户",
+    "settings": "设置",
     "myprofile": "我的信息",
     "stats": "统计",
     "syssettings": "系统设置",
+    "theme": "颜色方案",
     "users": "用户",
     "logout": "登出",
     "create": "创建",

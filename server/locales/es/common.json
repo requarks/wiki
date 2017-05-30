@@ -9,12 +9,6 @@
     "home": "Página principal",
     "top": "Volver arriba"
   },
-  "search": {
-    "placeholder": "Buscar...",
-    "results": "Resultados de búsqueda",
-    "nomatch": "No se han encontrado resultados",
-    "didyoumean": "Quisiste decir...?"
-  },
   "sidebar": {
     "nav": "NAV",
     "navigation": "Navegación",
@@ -22,11 +16,12 @@
     "pastversions": "Versiones pasadas"
   },
   "nav": {
-    "home": "Página principal",
     "account": "Cuenta",
+    "settings": "Ajustes",
     "myprofile": "Mi perfil",
     "stats": "Estadísticas",
     "syssettings": "Ajustes del sistema",
+    "theme": "Tema de Colores",
     "users": "Usuarios",
     "logout": "Cerrar Sesión",
     "create": "Crear",
