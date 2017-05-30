@@ -1,14 +1,8 @@
 {
   "profile": {
-    "displayname": "Nome de exibição",
-    "displaynameexample": "João Silva",
-    "email": "Email",
     "lastprofileupdate": "Última atualização do perfil",
     "membersince": "Membro desde",
-    "password": "Senha",
-    "passwordverify": "Verificar Senha",
     "provider": "Provider",
-    "savechanges": "Salvar alterações",
     "subtitle": "Perfil e informações de autenticação"
   },
   "stats": {

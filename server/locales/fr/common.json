@@ -9,12 +9,6 @@
     "home": "Accueil",
     "top": "Retour en haut"
   },
-  "search": {
-    "placeholder": "Recherche...",
-    "results": "Résultats de la recherche",
-    "nomatch": "Aucun résultat correspondant à votre recherche",
-    "didyoumean": "Vouliez-vous dire...?"
-  },
   "sidebar": {
     "nav": "NAV",
     "navigation": "Navigation",
@@ -22,7 +16,6 @@
     "pastversions": "Versions antérieures"
   },
   "nav": {
-    "home": "Accueil",
     "account": "Compte",
     "settings": "Paramètres",
     "myprofile": "Mon Profil",

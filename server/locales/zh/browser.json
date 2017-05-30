@@ -1,0 +1,35 @@
+{
+  "editor": {
+    "discard": "放弃",
+    "codeblocktitle": "插入代码块",
+    "codeblockinsert": "插入代码块",
+    "codeblocklanguage": "语言",
+    "codeblockloading": "加载{{name}}的代码语法",
+    "codeblockloadingerror": "出错：无法加载语言语法。",
+    "codeblocksuccess": "您的代码块已插入。",
+    "videotitle": "插入视频",
+    "videolinktitle": "输入要嵌入的视频的链接：",
+    "videoinsert": "插入视频",
+    "videonotsupported": "此网址无效或尚未支持！",
+    "videosupportedtitle": "支持以下内容：",
+    "videoanymp4file": "任何标准的MP4文件",
+    "videosuccess": "视频代码已插入。"
+  },
+  "nav": {
+    "home": "首页"
+  },
+  "profile": {
+    "displayname": "显示的名字",
+    "displaynameexample": "John Smith",
+    "email": "Email",
+    "password": "密码",
+    "passwordverify": "验证密码",
+    "savechanges": "保存"
+  },
+  "search": {
+    "placeholder": "搜索...",
+    "results": "搜索结果",
+    "nomatch": "没有符合你查询的结果",
+    "didyoumean": "你是指...？"
+  }
+}

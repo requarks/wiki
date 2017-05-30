@@ -1,0 +1,19 @@
+{
+  "nav": {
+    "home": "Главная"
+  },
+  "profile": {
+    "displayname": "Отоброжаемое Имя",
+    "displaynameexample": "Джон Смит",
+    "email": "Е-маил",
+    "password": "Пароль",
+    "passwordverify": "Потвердить Пороль",
+    "savechanges": "Сохранить изменения "
+  },
+  "search": {
+    "placeholder": "Поиск ...",
+    "results": "Результаты поиска",
+    "nomatch": "Нет результатов, соответствующих вашему запросу",
+    "didyoumean": "Вы имели ввиду...?"
+  }
+}
