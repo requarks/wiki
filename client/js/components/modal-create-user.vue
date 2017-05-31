@@ -7,14 +7,14 @@
         transition(name='modal-content')
           .modal-content(v-show='isShown')
             header.is-blue
-              span Create / Authorize User
-              p.modal-notify(v-bind:class='{ "is-active": loading }'): i
+              span {{ $t('modal.createusertitle') }}
+              p.modal-notify(v-bind:class='{ "is-active": isLoading }'): i
             section
-              label.label Email address:
+              label.label {{ $t('modal.createuseremail') }}
               p.control.is-fullwidth
-                input.input(type='text', placeholder='e.g. john.doe@company.com', v-model='email', autofocus)
+                input.input(type='text', v-bind:placeholder='$t("modal.createuseremailplaceholder")', v-model='email', ref='createUserEmailInput')
             section
-              label.label Provider:
+              label.label {{ $t('modal.createuserprovider') }}
               p.control.is-fullwidth
                 select(v-model='provider')
                   option(value='local') Local Database
@@ -24,17 +24,17 @@
                   option(value='github') GitHub
                   option(value='slack') Slack
             section(v-if='provider=="local"')
-              label.label Password:
+              label.label {{ $t('modal.createuserpassword') }}
               p.control.is-fullwidth
                 input.input(type='password', placeholder='', v-model='password')
             section(v-if='provider=="local"')
-              label.label Full Name:
+              label.label {{ $t('modal.createuserfullname') }}
               p.control.is-fullwidth
-                input.input(type='text', placeholder='e.g. John Doe', v-model='name')
+                input.input(type='text', v-bind:placeholder='$t("modal.createusernameplaceholder")', v-model='name')
             footer
-              a.button.is-grey.is-outlined(v-on:click='cancel') Discard
-              a.button(v-on:click='create', v-if='provider=="local"', v-bind:disabled='loading', v-bind:class='{ "is-disabled": loading, "is-blue": !loading }') Create User
-              a.button(v-on:click='create', v-if='provider!="local"', v-bind:disabled='loading', v-bind:class='{ "is-disabled": loading, "is-blue": !loading }') Authorize User
+              a.button.is-grey.is-outlined(v-on:click='cancel') {{ $t('modal.discard') }}
+              a.button(v-on:click='create', v-if='provider=="local"', v-bind:disabled='isLoading', v-bind:class='{ "is-disabled": isLoading, "is-blue": !loading }') {{ $t('modal.createuser') }}
+              a.button(v-on:click='create', v-if='provider!="local"', v-bind:disabled='isLoading', v-bind:class='{ "is-disabled": isLoading, "is-blue": !loading }') {{ $t('modal.createuserauthorize') }}
 </template>
 
 <script>
@@ -46,7 +46,7 @@
         provider: 'local',
         password: '',
         name: '',
-        loading: false
+        isLoading: false
       }
     },
     computed: {
@@ -55,6 +55,12 @@
       }
     },
     methods: {
+      init () {
+        let self = this
+        self._.delay(() => {
+          self.$refs.createUserEmailInput.focus()
+        }, 100)
+      },
       cancel () {
         this.$store.dispatch('modalCreateUser/close')
         this.email = ''
@@ -62,7 +68,7 @@
       },
       create () {
         let self = this
-        this.loading = true
+        this.isLoading = true
         this.$http.post('/admin/users/create', {
           email: this.email,
           provider: this.provider,
@@ -71,7 +77,7 @@
         }).then(resp => {
           return resp.json()
         }).then(resp => {
-          this.loading = false
+          this.isLoading = false
           if (resp.ok) {
             this.cancel()
             window.location.reload(true)
@@ -83,13 +89,16 @@
             })
           }
         }).catch(err => {
-          this.loading = false
+          this.isLoading = false
           self.$store.dispatch('alert', {
             style: 'red',
             icon: 'square-cross',
             msg: 'Error: ' + err.body.msg
           })
         })
+      },
+      mounted () {
+        this.$root.$on('modalCreateUser/init', this.init)
       }
     }
   }

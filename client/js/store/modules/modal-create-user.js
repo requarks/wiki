@@ -10,7 +10,10 @@ export default {
     shownChange: (state, shownState) => { state.shown = shownState }
   },
   actions: {
-    open({ commit }) { commit('shownChange', true) },
+    open({ commit }) {
+      commit('shownChange', true)
+      wikijs.$emit('modalCreateUser/init')
+    },
     close({ commit }) { commit('shownChange', false) }
   }
 }
