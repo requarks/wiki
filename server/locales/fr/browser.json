@@ -1,0 +1,60 @@
+{
+  "editor": {
+    "discard": "Annuler",
+    "codeblocktitle": "Insérer un bloc de code",
+    "codeblockinsert": "Insérer le bloc de code",
+    "codeblocklanguage": "Syntaxe",
+    "codeblockloading": "Chargement de la syntaxe pour {{name}}",
+    "codeblockloadingerror": "Erreur: Impossible de charger la syntaxe.",
+    "codeblocksuccess": "Votre bloc de code a été inséré.",
+    "videotitle": "Insérer une vidéo",
+    "videolinktitle": "Entrez le lien vers la vidéo à intégrer:",
+    "videoinsert": "Insérer la vidéo",
+    "videonotsupported": "Cette URL n'est pas valide ou n'est pas prise en charge!",
+    "videosupportedtitle": "Les formats suivants sont pris en charge:",
+    "videoanymp4file": "Tout fichier MP4 standard",
+    "videosuccess": "Le code vidéo a été inséré."
+  },
+  "modal": {
+    "abort": "Annuler",
+    "anchortitle": "Copier le lien vers cette section",
+    "anchorsuccess": "Le lien a été copié au presse-papiers.",
+    "anchorerror": "Échec de la copie vers le presse-papiers. Copiez manuellement.",
+    "copyclipboard": "Copie vers le presse-papiers",
+    "create": "Créer",
+    "createpagetitle": "Créer une nouvelle page",
+    "createpagepath": "Entrez le nouveau chemin de la page:",
+    "createpageinvalid": "Ce chemin de page est invalide!",
+    "discard": "Annuler",
+    "discardpagestay": "Rester sur la page",
+    "discardpagetitle": "Quitter?",
+    "discardpagecreate": "Êtes-vous sûr de vouloir quitter cette page et perdre tout ce que vous avez écrit jusqu'ici?",
+    "discardpageedit": "Êtes-vous sûr de vouloir quitter cette page et perdre toute modification?",
+    "delete": "Supprimer",
+    "deleteusertitle": "Supprimer le compte utilisateur?",
+    "deleteuserwarning": "Êtes-vous sûr de vouloir supprimer ce compte utilisateur? Impossible de revenir en arrière une fois l'action complétée!",
+    "move": "Déplacer",
+    "movepagetitle": "Déplacer la page",
+    "movepagepath": "Entrez le nouveau chemin de page:",
+    "movepageinvalid": "Ce chemin de page n'est pas valide ou non autorisé.",
+    "movepagewarning": "Notez que le déplacement ou le renommage des pages peut entraîner des liens cassés. Assurez-vous d'éditer toute page qui relie vers cette page!",
+    "movepageplaceholder": "nom-de-page"
+  },
+  "nav": {
+    "home": "Accueil"
+  },
+  "profile": {
+    "displayname": "Nom complet",
+    "displaynameexample": "Jean Dupont",
+    "email": "Courriel",
+    "password": "Mot de passe",
+    "passwordverify": "Vérification du mot de passe",
+    "savechanges": "Sauvegarder"
+  },
+  "search": {
+    "placeholder": "Recherche...",
+    "results": "Résultats de la recherche",
+    "nomatch": "Aucun résultat correspondant à votre recherche",
+    "didyoumean": "Vouliez-vous dire...?"
+  }
+}

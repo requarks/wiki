@@ -9,12 +9,6 @@
     "home": "홈으로",
     "top": "맨 위로"
   },
-  "search": {
-    "placeholder": "검색",
-    "results": "검색 결과",
-    "nomatch": "검색어와 일치하는 결과가 없습니다.",
-    "didyoumean": "혹시 이런 의미였습니까?"
-  },
   "sidebar": {
     "nav": "NAV",
     "navigation": "네비게이션",
@@ -22,7 +16,6 @@
     "pastversions": "페이지 버전"
   },
   "nav": {
-    "home": "홈으로",
     "account": "계정",
     "myprofile": "내 프로필",
     "stats": "통계",

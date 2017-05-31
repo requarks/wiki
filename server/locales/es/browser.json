@@ -1,0 +1,35 @@
+{
+  "editor": {
+    "discard": "Descartar",
+    "codeblocktitle": "Insertar Bloque de Código",
+    "codeblockinsert": "Insertar Bloque de Código",
+    "codeblocklanguage": "Lenguaje",
+    "codeblockloading": "Cargando sintaxis de código para {{name}}",
+    "codeblockloadingerror": "Error: No se pudo cargar la sintaxis",
+    "codeblocksuccess": "Tu bloque de código ha sido insertado",
+    "videotitle": "Insertar Video",
+    "videolinktitle": "Ingresar el link al video a ser embebido",
+    "videoinsert": "Insertar Video",
+    "videonotsupported": "La URL es inválida o no está soportada!",
+    "videosupportedtitle": "Los siguientes están soportados:",
+    "videoanymp4file": "Cualquier archivo MP4 estándar",
+    "videosuccess": "El código de video ha sido insertado"
+  },
+  "nav": {
+    "home": "Página principal"
+  },
+  "profile": {
+    "displayname": "Nombre para mostrar",
+    "displaynameexample": "Juan Pérez",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "passwordverify": "Confirmar Contraseña",
+    "savechanges": "Guardar Cambios"
+  },
+  "search": {
+    "placeholder": "Buscar...",
+    "results": "Resultados de búsqueda",
+    "nomatch": "No se han encontrado resultados",
+    "didyoumean": "Quisiste decir...?"
+  }
+}
