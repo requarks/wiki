@@ -47,20 +47,21 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
 ### Beta 12
-*Planned for early June release*  
-Progress: ![Progress](http://progressed.io/bar/80)
+> *Planned for early June release*  
+![Progress](http://progressed.io/bar/80)
 
 - [x] Better localization in the UI
 - [x] Heroku support
 - [ ] Refactor of all client-side code to modular Vue components
 
 ### Beta 13
-*Planned for July release*
+> *Planned for July release*  
+![Progress](http://progressed.io/bar/10)
 
 - [ ] History / Revert to previous version feature
 - [ ] Docker support + Auto compile/publish to Docker Hub
 
-### Beta 14
+### Future
 
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
