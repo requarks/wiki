@@ -47,7 +47,8 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
 ### Beta 12
-*Planned for early June release*
+*Planned for early June release*  
+Progress: ![Progress](http://progressed.io/bar/80)
 
 - [x] Better localization in the UI
 - [x] Heroku support
