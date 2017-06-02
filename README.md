@@ -50,8 +50,10 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 > *Planned for early June release*  
 ![Progress](http://progressed.io/bar/80)
 
-- [x] Better localization in the UI
+- [x] Anchor with Copy to clipboard function
+- [x] Full UI Localization
 - [x] Heroku support
+- [x] New Localizations: Chinese, French, Korean, Portuguese, Russian and Spanish
 - [ ] Refactor of all client-side code to modular Vue components
 
 ### Beta 13

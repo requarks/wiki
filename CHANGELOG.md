@@ -2,10 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.0-beta.13] - Unreleased
+- **History**: History section to list all changes
+
 ## [v1.0.0-beta.12] - Unreleased
 ### Added
 - **Deploy**: Heroku support
-- **History**: History section to list all changes
 - **Localization**: All UI text elements are now localized
 - **Localization**: Chinese locale is now available (thanks to @choicky)
 - **Localization**: Korean locale is now available (thanks to @junwonpk)
@@ -162,6 +164,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
+[v1.0.0-beta.13]: https://github.com/Requarks/wiki/compare/v1.0.0-beta.11...HEAD
 [v1.0.0-beta.12]: https://github.com/Requarks/wiki/compare/v1.0.0-beta.11...HEAD
 [v1.0.0-beta.11]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.11
 [v1.0.0-beta.10]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.10
