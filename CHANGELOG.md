@@ -26,9 +26,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Configuration Wizard**: Public option is now saved properly in config file
 - **Configuration Wizard**: Git check no longer fails when unable to remove existing remotes
 - **Editor**: Large size content can now be saved up to 1 MB
+- **Editor**: Editor no longer fails to initialize if it contains unescaped mustache content
+- **Misc**: Page content no longer renders non-highlighted HTML content enclosed in code blocks
 - **Misc**: Empty anchors no longer crash the rendering process
 - **Misc**: Commented headers no longer appear in page contents
 - **Misc**: CJK + Arabic validators are now working properly
+- **Move**: It is now possible to move a page to non-existant sub-directory (or deeper)
 - **Search**: Content is now indexed properly and handles more scenarios
 - **Search**: CJK search terms are no longer stripped
 - **UI**: Markdown is now stripped from page contents items
