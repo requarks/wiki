@@ -9,7 +9,7 @@ block rootNavRight
     a.button.is-outlined(v-on:click='$store.dispatch("modalDiscardPage/open")')
       i.icon-cross
       span= t('nav.discard')
-    a.button(v-on:click='$root.$emit("editor-save")')
+    a.button(v-on:click='$root.$emit("editor/save")')
       i.icon-check
       span= t('nav.savedocument')
 

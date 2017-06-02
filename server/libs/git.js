@@ -5,7 +5,7 @@
 const Git = require('git-wrapper2-promise')
 const Promise = require('bluebird')
 const path = require('path')
-const fs = Promise.promisifyAll(require('fs'))
+const fs = Promise.promisifyAll(require('fs-extra'))
 const _ = require('lodash')
 const URL = require('url')
 
@@ -37,7 +37,7 @@ module.exports = {
    *
    * @return     {Object}  Git model instance
    */
-  init () {
+  init() {
     let self = this
 
     // -> Build repository path
@@ -67,7 +67,7 @@ module.exports = {
    * @param      {Object}  appconfig  The application config
    * @return     {Object}  Promise
    */
-  _initRepo (appconfig) {
+  _initRepo(appconfig) {
     let self = this
 
     winston.info('Checking Git repository...')
@@ -141,7 +141,7 @@ module.exports = {
    *
    * @return     {String}  The repo path.
    */
-  getRepoPath () {
+  getRepoPath() {
     return this._repo.path || path.join(ROOTPATH, 'repo')
   },
 
@@ -150,7 +150,7 @@ module.exports = {
    *
    * @return     {Promise}  Resolve on sync success
    */
-  resync () {
+  resync() {
     let self = this
 
     // Is git remote disabled?
@@ -165,32 +165,32 @@ module.exports = {
     return self._git.pull('origin', self._repo.branch).then((cProc) => {
       winston.info('Git Pull completed.')
     })
-    .catch((err) => {
-      winston.error('Unable to fetch from git origin!')
-      throw err
-    })
-    .then(() => {
-      // Check for changes
-
-      return self._git.exec('log', 'origin/' + self._repo.branch + '..HEAD').then((cProc) => {
-        let out = cProc.stdout.toString()
-
-        if (_.includes(out, 'commit')) {
-          winston.info('Performing push to remote Git repository...')
-          return self._git.push('origin', self._repo.branch).then(() => {
-            return winston.info('Git Push completed.')
-          })
-        } else {
-          winston.info('Git Push skipped. Repository is already in sync.')
-        }
-
-        return true
+      .catch((err) => {
+        winston.error('Unable to fetch from git origin!')
+        throw err
       })
-    })
-    .catch((err) => {
-      winston.error('Unable to push changes to remote Git repository!')
-      throw err
-    })
+      .then(() => {
+        // Check for changes
+
+        return self._git.exec('log', 'origin/' + self._repo.branch + '..HEAD').then((cProc) => {
+          let out = cProc.stdout.toString()
+
+          if (_.includes(out, 'commit')) {
+            winston.info('Performing push to remote Git repository...')
+            return self._git.push('origin', self._repo.branch).then(() => {
+              return winston.info('Git Push completed.')
+            })
+          } else {
+            winston.info('Git Push skipped. Repository is already in sync.')
+          }
+
+          return true
+        })
+      })
+      .catch((err) => {
+        winston.error('Unable to push changes to remote Git repository!')
+        throw err
+      })
   },
 
   /**
@@ -199,7 +199,7 @@ module.exports = {
    * @param      {String}   entryPath  The entry path
    * @return     {Promise}  Resolve on commit success
    */
-  commitDocument (entryPath, author) {
+  commitDocument(entryPath, author) {
     let self = this
     let gitFilePath = entryPath + '.md'
     let commitMsg = ''
@@ -225,18 +225,21 @@ module.exports = {
    * @param      {String}            newEntryPath  The new entry path
    * @return     {Promise<Boolean>}  Resolve on success
    */
-  moveDocument (entryPath, newEntryPath) {
+  moveDocument(entryPath, newEntryPath) {
     let self = this
     let gitFilePath = entryPath + '.md'
     let gitNewFilePath = newEntryPath + '.md'
+    let destPathObj = path.parse(this.getRepoPath() + '/' + gitNewFilePath)
 
-    return self._git.exec('mv', [gitFilePath, gitNewFilePath]).then((cProc) => {
-      let out = cProc.stdout.toString()
-      if (_.includes(out, 'fatal')) {
-        let errorMsg = _.capitalize(_.head(_.split(_.replace(out, 'fatal: ', ''), ',')))
-        throw new Error(errorMsg)
-      }
-      return true
+    return fs.ensureDir(destPathObj.dir).then(() => {
+      return self._git.exec('mv', [gitFilePath, gitNewFilePath]).then((cProc) => {
+        let out = cProc.stdout.toString()
+        if (_.includes(out, 'fatal')) {
+          let errorMsg = _.capitalize(_.head(_.split(_.replace(out, 'fatal: ', ''), ',')))
+          throw new Error(errorMsg)
+        }
+        return true
+      })
     })
   },
 
@@ -246,7 +249,7 @@ module.exports = {
    * @param      {String}   msg     The commit message
    * @return     {Promise}  Resolve on commit success
    */
-  commitUploads (msg) {
+  commitUploads(msg) {
     let self = this
     msg = msg || 'Uploads repository sync'
 
@@ -257,7 +260,7 @@ module.exports = {
     })
   },
 
-  getHistory (entryPath) {
+  getHistory(entryPath) {
     let self = this
     let gitFilePath = entryPath + '.md'
 
