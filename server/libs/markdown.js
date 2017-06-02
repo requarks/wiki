@@ -25,10 +25,10 @@ var mkdown = md({
       try {
         return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
       } catch (err) {
-        return '<pre><code>' + str + '</code></pre>'
+        return '<pre><code>' + _.escape(str) + '</code></pre>'
       }
     }
-    return '<pre><code>' + str + '</code></pre>'
+    return '<pre><code>' + _.escape(str) + '</code></pre>'
   }
 })
   .use(mdEmoji)

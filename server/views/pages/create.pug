@@ -16,7 +16,7 @@ block rootNavRight
 block content
   editor(inline-template, current-path=pageData.meta.path, v-cloak)
     .editor-area
-      textarea(ref='editorTextArea')= pageData.markdown
+      textarea(ref='editorTextArea', v-pre)= pageData.markdown
 
   editor-video
   editor-codeblock
