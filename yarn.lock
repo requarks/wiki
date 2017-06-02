@@ -336,9 +336,15 @@ async@1.5, async@^1.4.0, async@^1.5, async@~1.5:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
 
-async@2.1.4, async@^2.1.4:
+async@2.1.4:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/async/-/async-2.1.4.tgz#2d2160c7788032e4dd6cbe2502f1f9a2c8f6cde4"
+  dependencies:
+    lodash "^4.14.0"
+
+async@^2.1.4, async@^2.3.0:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/async/-/async-2.4.1.tgz#62a56b279c98a11d0987096a01cc3eeb8eb7bbd7"
   dependencies:
     lodash "^4.14.0"
 
@@ -1619,12 +1625,6 @@ debug@2.3.3:
   dependencies:
     ms "0.7.2"
 
-debug@2.6.4:
-  version "2.6.4"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.4.tgz#7586a9b3c39741c0282ae33445c4e8ac74734fe0"
-  dependencies:
-    ms "0.7.3"
-
 debug@2.6.7, debug@^2.1.1, debug@^2.2.0, debug@^2.3.2, debug@^2.4.5, debug@~2.6.6:
   version "2.6.7"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.7.tgz#92bad1f6d05bbb6bba22cca88bcd0ec894c2861e"
@@ -1712,9 +1712,9 @@ diff@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.2.0.tgz#c9ce393a4b7cbd0b058a725c93df299027868ff9"
 
-docproc@^0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/docproc/-/docproc-0.0.8.tgz#507ebe68444f1fbe622ca527a5f88f072ffd3191"
+docproc@^0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/docproc/-/docproc-0.0.10.tgz#8ab5eac3574b80b98c39f888bfafa03261b8b8fd"
   dependencies:
     pumpify "^1.3.5"
     term-frequency "^0.0.15"
@@ -2229,9 +2229,9 @@ expand-template@^1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/expand-template/-/expand-template-1.0.3.tgz#6c303323177a62b1b22c070279f7861287b69b1a"
 
-express-brute-mongoose@0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/express-brute-mongoose/-/express-brute-mongoose-0.0.8.tgz#e58aca5d87990484b799a84d08bb2345c4ee6c49"
+express-brute-mongoose@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/express-brute-mongoose/-/express-brute-mongoose-0.0.9.tgz#7f8001c9548f78b705e6810be06f4c1e85745bd2"
   dependencies:
     express-brute "~0.5.0"
     moment "^2.18.1"
@@ -2932,9 +2932,9 @@ he@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/he/-/he-1.1.1.tgz#93410fd21b009735151f8868c2f271f3427e23fd"
 
-highlight.js@^9.11.0:
-  version "9.11.0"
-  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-9.11.0.tgz#47f98c7399918700db2caf230ded12cec41a84ae"
+highlight.js@^9.12.0:
+  version "9.12.0"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-9.12.0.tgz#e6d9dbe57cbefe60751f02af336195870c90c01e"
 
 hoek@2.x.x:
   version "2.16.3"
@@ -3020,9 +3020,9 @@ i18next-xhr-backend@^1.4.1:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/i18next-xhr-backend/-/i18next-xhr-backend-1.4.1.tgz#ade99356065f51742da9e4bc79c7bb4905a4b91d"
 
-i18next@^8.3.0:
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/i18next/-/i18next-8.3.0.tgz#04739294a665d204cab5fe4f4dd3e9bc3750ace4"
+i18next@^8.4.0:
+  version "8.4.0"
+  resolved "https://registry.yarnpkg.com/i18next/-/i18next-8.4.0.tgz#ffdf2b5dee22c646f0a715f8f5a38a347c83a546"
 
 iconv-lite@0.4.13:
   version "0.4.13"
@@ -3968,9 +3968,9 @@ level-iterator-stream@~1.3.0:
     readable-stream "^1.0.33"
     xtend "^4.0.0"
 
-leveldown@^1.5.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/leveldown/-/leveldown-1.7.0.tgz#fdae843ec139b6bd7150ff98df43863611320476"
+leveldown@^1.6.0:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/leveldown/-/leveldown-1.7.1.tgz#82b9865c95a9ff4df3d8c440324bd6080c17864d"
   dependencies:
     abstract-leveldown "~2.6.1"
     bindings "~1.2.1"
@@ -3978,9 +3978,9 @@ leveldown@^1.5.0:
     nan "~2.6.1"
     prebuild-install "^2.1.0"
 
-levelup@^1.3.3, levelup@^1.3.5, levelup@^1.3.7:
-  version "1.3.7"
-  resolved "https://registry.yarnpkg.com/levelup/-/levelup-1.3.7.tgz#70df7c1116fbc8b9efc434f4cfa21f27e2eef9f9"
+levelup@^1.3.5, levelup@^1.3.8:
+  version "1.3.8"
+  resolved "https://registry.yarnpkg.com/levelup/-/levelup-1.3.8.tgz#fb442c488efbea1043f7eb9929a792a74fbd1da6"
   dependencies:
     deferred-leveldown "~1.2.1"
     level-codec "~6.1.0"
@@ -4483,9 +4483,9 @@ mongodb@2.2.27, "mongodb@>= 1.2.0 <3.0.0", mongodb@^2.2.27:
     mongodb-core "2.1.11"
     readable-stream "2.2.7"
 
-mongoose@*, mongoose@^4.10.3:
-  version "4.10.3"
-  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.3.tgz#5fbcd6549e67191ef30cab259644ff75f77026f9"
+mongoose@*, mongoose@^4.10.4:
+  version "4.10.4"
+  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.4.tgz#b9a0a033725e5c29efd9eefb4687d1371956c7b6"
   dependencies:
     async "2.1.4"
     bson "~1.0.4"
@@ -4534,10 +4534,6 @@ ms@0.7.1:
 ms@0.7.2:
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.2.tgz#ae25cf2512b3885a1d95d7f037868d8431124765"
-
-ms@0.7.3:
-  version "0.7.3"
-  resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.3.tgz#708155a5e44e33f5fd0fc53e81d0d40a91be1fff"
 
 ms@2.0.0, ms@^2.0.0:
   version "2.0.0"
@@ -4621,6 +4617,10 @@ nested-error-stacks@^1.0.0:
   resolved "https://registry.yarnpkg.com/nested-error-stacks/-/nested-error-stacks-1.0.2.tgz#19f619591519f096769a5ba9a86e6eeec823c3cf"
   dependencies:
     inherits "~2.0.1"
+
+ngraminator@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/ngraminator/-/ngraminator-0.0.1.tgz#29cfd699df6970f42de9b2f0bdc7f4b60fad6f8e"
 
 node-abi@^2.0.0:
   version "2.0.2"
@@ -4843,13 +4843,13 @@ on-headers@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/on-headers/-/on-headers-1.0.1.tgz#928f5d0f470d49342651ea6794b0857c100693f7"
 
-once@^1.3.0, once@^1.3.1, once@~1.3.0:
+once@^1.3.0, once@~1.3.0:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/once/-/once-1.3.3.tgz#b2e261557ce4c314ec8304f3fa82663e4297ca20"
   dependencies:
     wrappy "1"
 
-once@^1.3.3, once@^1.4.0:
+once@^1.3.1, once@^1.3.3, once@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/once/-/once-1.4.0.tgz#583b1aa775961d4b113ac17d9c50baef9dd76bd1"
   dependencies:
@@ -6013,21 +6013,21 @@ scss-tokenizer@^0.2.3:
     js-base64 "^2.1.8"
     source-map "^0.4.2"
 
-"search-index-adder@https://github.com/ngpixel/search-index-adder.git":
-  version "0.1.27"
-  resolved "https://github.com/ngpixel/search-index-adder.git#1da71f54d77506ab26e12606487bd3abe4f12abd"
+search-index-adder@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/search-index-adder/-/search-index-adder-0.2.3.tgz#54fd255ff162c26cf3f9181c4f6b2693535b8b62"
   dependencies:
-    async "^2.1.4"
-    bunyan "^1.8.1"
-    docproc "^0.0.8"
-    levelup "^1.3.3"
+    async "^2.3.0"
+    bunyan "^1.8.10"
+    docproc "^0.0.10"
+    levelup "^1.3.5"
     pumpify "^1.3.5"
   optionalDependencies:
-    leveldown "^1.5.0"
+    leveldown "^1.6.0"
 
-"search-index-searcher@https://github.com/ngpixel/search-index-searcher.git":
-  version "0.1.28"
-  resolved "https://github.com/ngpixel/search-index-searcher.git#d10ee26a4490b5f1fc5902a24da9f68eef4cceba"
+search-index-searcher@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/search-index-searcher/-/search-index-searcher-0.2.3.tgz#30b4fea23c911de7450291937df1db6bd58c5d3e"
   dependencies:
     bunyan "^1.8.1"
     intersect-arrays-to-stream "^0.0.3"
@@ -6038,6 +6038,9 @@ scss-tokenizer@^0.2.3:
     lodash.spread "^4.2.1"
     lodash.union "^4.6.0"
     lodash.uniq "^4.5.0"
+    ngraminator "0.0.1"
+  optionalDependencies:
+    leveldown "^1.6.0"
 
 select@^1.1.2:
   version "1.1.2"
@@ -6305,9 +6308,9 @@ snyk-try-require@^1.1.1, snyk-try-require@^1.2.0:
     lru-cache "^4.0.0"
     then-fs "^2.0.0"
 
-snyk@latest:
-  version "1.31.0"
-  resolved "https://registry.yarnpkg.com/snyk/-/snyk-1.31.0.tgz#73fbd719406ac5c4517a3bf5659e22edff7ba82e"
+snyk@^1.33.0:
+  version "1.33.0"
+  resolved "https://registry.yarnpkg.com/snyk/-/snyk-1.33.0.tgz#8e31a889e26f58819ca5eb5b39f95600afa67ac1"
   dependencies:
     abbrev "^1.0.7"
     ansi-escapes "^1.3.0"
@@ -6342,19 +6345,20 @@ socket.io-adapter@~1.1.0:
   dependencies:
     debug "2.3.3"
 
-socket.io-client@2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/socket.io-client/-/socket.io-client-2.0.1.tgz#1d52f8c74660c68bb6695953fa119971155fad93"
+socket.io-client@~2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/socket.io-client/-/socket.io-client-2.0.2.tgz#86f59db59ba1168724220f39be281ad49af742c1"
   dependencies:
     backo2 "1.0.2"
     base64-arraybuffer "0.1.5"
     component-bind "1.0.0"
     component-emitter "1.2.1"
-    debug "2.6.4"
+    debug "~2.6.4"
     engine.io-client "~3.1.0"
     has-cors "1.1.0"
     indexof "0.0.1"
     object-component "0.0.3"
+    parseqs "0.0.5"
     parseuri "0.0.5"
     socket.io-parser "~3.1.1"
     to-array "0.1.4"
@@ -6368,15 +6372,15 @@ socket.io-parser@~3.1.1:
     has-binary2 "~1.0.2"
     isarray "2.0.1"
 
-socket.io@2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/socket.io/-/socket.io-2.0.1.tgz#064c125178462e477a6df23d2fdad18dd1c5914f"
+socket.io@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/socket.io/-/socket.io-2.0.2.tgz#133bf3a1b67d02f2ac65103c11f78e6f2c4f3b3a"
   dependencies:
     debug "~2.6.6"
     engine.io "~3.1.0"
     object-assign "~4.1.1"
     socket.io-adapter "~1.1.0"
-    socket.io-client "2.0.1"
+    socket.io-client "~2.0.2"
     socket.io-parser "~3.1.1"
 
 source-map-support@^0.4.2, source-map-support@^0.4.6:
@@ -6813,9 +6817,9 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
-typescript@^2.3.3:
-  version "2.3.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.3.3.tgz#9639f3c3b40148e8ca97fe08a51dd1891bb6be22"
+typescript@^2.3.4:
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.3.4.tgz#3d38321828231e434f287514959c37a82b629f42"
 
 typo-js@*:
   version "1.0.3"
@@ -6825,9 +6829,9 @@ uc.micro@^1.0.1, uc.micro@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/uc.micro/-/uc.micro-1.0.3.tgz#7ed50d5e0f9a9fb0a573379259f2a77458d50192"
 
-uglify-es@^3.0.12:
-  version "3.0.12"
-  resolved "https://registry.yarnpkg.com/uglify-es/-/uglify-es-3.0.12.tgz#7734f9bb64bbf36dbb1e059358343c58553e52c1"
+uglify-es@^3.0.15:
+  version "3.0.15"
+  resolved "https://registry.yarnpkg.com/uglify-es/-/uglify-es-3.0.15.tgz#4a23d0e9cb5f25f7bb3f1f0bbe0bb364e600d047"
   dependencies:
     commander "~2.9.0"
     source-map "~0.5.1"
