@@ -11,9 +11,9 @@
     "savechanges": "변경 사항 저장"
   },
   "search": {
-    "placeholder": "검색",
-    "results": "검색 결과",
+    "didyoumean": "혹시 이런 의미였습니까?",
     "nomatch": "검색어와 일치하는 결과가 없습니다.",
-    "didyoumean": "혹시 이런 의미였습니까?"
+    "placeholder": "검색",
+    "results": "검색 결과"
   }
 }

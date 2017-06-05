@@ -11,9 +11,9 @@
     "savechanges": "Salvar Alterações"
   },
   "search": {
-    "placeholder": "Buscar...",
-    "results": "Resultados da Busca",
+    "didyoumean": "Você quis dizer...?",
     "nomatch": "Nenhum resultado corresponde à sua consulta",
-    "didyoumean": "Você quis dizer...?"
+    "placeholder": "Buscar...",
+    "results": "Resultados da Busca"
   }
 }

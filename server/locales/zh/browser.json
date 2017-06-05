@@ -1,19 +1,53 @@
 {
   "editor": {
-    "discard": "放弃",
-    "codeblocktitle": "插入代码块",
     "codeblockinsert": "插入代码块",
     "codeblocklanguage": "语言",
     "codeblockloading": "加载{{name}}的代码语法",
     "codeblockloadingerror": "出错：无法加载语言语法。",
     "codeblocksuccess": "您的代码块已插入。",
-    "videotitle": "插入视频",
-    "videolinktitle": "输入要嵌入的视频的链接：",
-    "videoinsert": "插入视频",
-    "videonotsupported": "此网址无效或尚未支持！",
-    "videosupportedtitle": "支持以下内容：",
+    "codeblocktitle": "插入代码块",
+    "discard": "放弃",
     "videoanymp4file": "任何标准的MP4文件",
-    "videosuccess": "视频代码已插入。"
+    "videoinsert": "插入视频",
+    "videolinktitle": "输入要嵌入的视频的链接：",
+    "videonotsupported": "此网址无效或尚未支持！",
+    "videosuccess": "视频代码已插入。",
+    "videosupportedtitle": "支持以下内容：",
+    "videotitle": "插入视频"
+  },
+  "modal": {
+    "abort": "退出",
+    "anchorerror": "剪贴板复制失败，请手动复制URL。",
+    "anchorsuccess": "该URL已被复制到剪贴板。",
+    "anchortitle": "复制本节的链接",
+    "copyclipboard": "复制到剪贴板",
+    "create": "创建",
+    "createpageinvalid": "此页面路径无效！",
+    "createpagepath": "输入新页面路径：",
+    "createpagetitle": "创建新页面",
+    "createuser": "创建用户",
+    "createuserauthorize": "创建/授权用户",
+    "createuseremail": "Email 地址",
+    "createuseremailplaceholder": "例如 john.doe@company.com",
+    "createusername": "全名：",
+    "createusernameplaceholder": "例如 李四",
+    "createuserpassword": "密码",
+    "createuserprovider": "供应商",
+    "createusertitle": "创建/授权用户",
+    "delete": "删除",
+    "deleteusertitle": "删除用户帐号？",
+    "deleteuserwarning": "您确定要删除此用户帐户吗？此操作无法撤销！",
+    "discard": "放弃",
+    "discardpagecreate": "你确定要离开此页面，丢弃你已写的内容吗？",
+    "discardpageedit": "您确定要离开此页面，丢弃您做的修改吗？",
+    "discardpagestay": "留在页面上",
+    "discardpagetitle": "放弃",
+    "move": "移动",
+    "movepageinvalid": "此页面路径无效或不被允许！",
+    "movepagepath": "输入新页面路径：",
+    "movepageplaceholder": "页面名称",
+    "movepagetitle": "移动页面",
+    "movepagewarning": "请注意，如有其他页面链接到此页面，移动或重命名本页面后需要更新该其他页面，否则该其他页面的指向本页面链接将不准确！"
   },
   "nav": {
     "home": "首页"
@@ -27,9 +61,9 @@
     "savechanges": "保存"
   },
   "search": {
-    "placeholder": "搜索...",
-    "results": "搜索结果",
+    "didyoumean": "你是指...？",
     "nomatch": "没有符合你查询的结果",
-    "didyoumean": "你是指...？"
+    "placeholder": "搜索...",
+    "results": "搜索结果"
   }
 }
