@@ -1,6 +1,5 @@
 'use strict'
 
-import filesize from 'filesize.js'
 import $ from 'jquery'
 
 let mde
@@ -8,11 +7,6 @@ let mde
 export default {
   name: 'editor',
   props: ['currentPath'],
-  filters: {
-    filesize(v) {
-      return this._.toUpper(filesize(v))
-    }
-  },
   data() {
     return {}
   },
@@ -124,11 +118,8 @@ export default {
           {
             name: 'link',
             action: (editor) => {
-              /* if(!mdeModalOpenState) {
-                mdeModalOpenState = true;
-                $('#modal-editor-link').slideToggle();
-              } */
               window.alert('Coming soon!')
+              // todo
             },
             className: 'icon-link2',
             title: 'Insert Link'
@@ -136,9 +127,7 @@ export default {
           {
             name: 'image',
             action: (editor) => {
-              // if (!mdeModalOpenState) {
-              //   vueImage.open()
-              // }
+              self.$store.dispatch('editorImage/open')
             },
             className: 'icon-image',
             title: 'Insert Image'
@@ -146,9 +135,7 @@ export default {
           {
             name: 'file',
             action: (editor) => {
-              // if (!mdeModalOpenState) {
-              //   vueFile.open()
-              // }
+              self.$store.dispatch('editorFile/open')
             },
             className: 'icon-paper',
             title: 'Insert File'

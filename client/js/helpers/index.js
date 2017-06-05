@@ -1,6 +1,7 @@
 'use strict'
 
 const helpers = {
+  common: require('./common'),
   form: require('./form'),
   pages: require('./pages')
 }

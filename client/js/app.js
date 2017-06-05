@@ -12,6 +12,8 @@ import io from 'socket-io-client'
 import i18next from 'i18next'
 import i18nextXHR from 'i18next-xhr-backend'
 import VueI18Next from '@panter/vue-i18next'
+import 'jquery-contextmenu'
+import 'jquery-simple-upload'
 import 'jquery-smooth-scroll'
 import 'jquery-sticky'
 
@@ -19,8 +21,8 @@ import 'jquery-sticky'
 // Load minimal lodash
 // ====================================
 
-import concat from 'lodash/concat'
 import cloneDeep from 'lodash/cloneDeep'
+import concat from 'lodash/concat'
 import debounce from 'lodash/debounce'
 import deburr from 'lodash/deburr'
 import delay from 'lodash/delay'
@@ -29,6 +31,7 @@ import find from 'lodash/find'
 import findKey from 'lodash/findKey'
 import forEach from 'lodash/forEach'
 import includes from 'lodash/includes'
+import isBoolean from 'lodash/isBoolean'
 import isEmpty from 'lodash/isEmpty'
 import isNil from 'lodash/isNil'
 import join from 'lodash/join'
@@ -39,8 +42,10 @@ import pullAt from 'lodash/pullAt'
 import reject from 'lodash/reject'
 import slice from 'lodash/slice'
 import split from 'lodash/split'
-import trim from 'lodash/trim'
+import startCase from 'lodash/startCase'
+import toString from 'lodash/toString'
 import toUpper from 'lodash/toUpper'
+import trim from 'lodash/trim'
 
 // ====================================
 // Load Helpers
@@ -56,6 +61,7 @@ import alertComponent from './components/alert.vue'
 import anchorComponent from './components/anchor.vue'
 import colorPickerComponent from './components/color-picker.vue'
 import editorCodeblockComponent from './components/editor-codeblock.vue'
+import editorFileComponent from './components/editor-file.vue'
 import editorVideoComponent from './components/editor-video.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
@@ -88,6 +94,7 @@ const _ = {
   findKey,
   forEach,
   includes,
+  isBoolean,
   isEmpty,
   isNil,
   join,
@@ -98,6 +105,8 @@ const _ = {
   reject,
   slice,
   split,
+  startCase,
+  toString,
   toUpper,
   trim
 }
@@ -159,6 +168,7 @@ $(() => {
       contentView: contentViewComponent,
       editor: editorComponent,
       editorCodeblock: editorCodeblockComponent,
+      editorFile: editorFileComponent,
       editorVideo: editorVideoComponent,
       loadingSpinner: loadingSpinnerComponent,
       modalCreatePage: modalCreatePageComponent,

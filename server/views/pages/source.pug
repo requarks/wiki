@@ -25,7 +25,7 @@ block content
 
   source-view(inline-template, entrypath=pageData.meta.path, v-cloak)
     .ace-container
-      #source-display= pageData.markdown
+      #source-display(v-pre)= pageData.markdown
 
   modal-create-page(basepath=pageData.meta.path)
   modal-move-page(current-path=pageData.meta.path)
