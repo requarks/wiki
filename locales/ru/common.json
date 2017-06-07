@@ -1,0 +1,11 @@
+{
+  "wiki": "Wiki",
+  "headers": {
+    "overview": "Обзор"
+  },
+  "footer": {
+    "poweredby": "Питаться от",
+    "home": "Главная",
+    "top": "Вернуться к началу"
+  }
+}
