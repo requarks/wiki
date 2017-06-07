@@ -2,11 +2,11 @@
 # yarn lockfile v1
 
 
-"@glimpse/glimpse-agent-node@0.20.9":
-  version "0.20.9"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-agent-node/-/glimpse-agent-node-0.20.9.tgz#45fbbfa4a2cf13112b973c325ec0bd617da0d8eb"
+"@glimpse/glimpse-agent-node@0.21.5":
+  version "0.21.5"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-agent-node/-/glimpse-agent-node-0.21.5.tgz#cf5fb8d8bde5f5441d059d7714666787b7346feb"
   dependencies:
-    "@glimpse/glimpse-common" "0.20.9"
+    "@glimpse/glimpse-common" "0.21.5"
     config-chain "^1.1.10"
     continuation-local-storage "^3.1.4"
     cookie "^0.2.3"
@@ -21,21 +21,22 @@
     useragent "~2.1.7"
     util "~0.10.3"
     uuid "^2.0.2"
+    zone.js "^0.8.10"
 
-"@glimpse/glimpse-common@0.20.9":
-  version "0.20.9"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-common/-/glimpse-common-0.20.9.tgz#e9ea89aa61feda0006208a76cbaea51e59c5372f"
+"@glimpse/glimpse-common@0.21.5":
+  version "0.21.5"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-common/-/glimpse-common-0.21.5.tgz#78ba82f434426a23118be1575984b1b1a82cf5d8"
   dependencies:
     applicationinsights "^0.15.18"
     config-chain "^1.1.10"
     node-uuid "^1.4.7"
     semver "^5.3.0"
 
-"@glimpse/glimpse-server@0.20.9":
-  version "0.20.9"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-server/-/glimpse-server-0.20.9.tgz#0d562a114a0a95c234f1ad6c070041ea98038987"
+"@glimpse/glimpse-server@0.21.5":
+  version "0.21.5"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse-server/-/glimpse-server-0.21.5.tgz#43819bccd3b9c9a063cbbc877cd9eddf344c9c81"
   dependencies:
-    "@glimpse/glimpse-common" "0.20.9"
+    "@glimpse/glimpse-common" "0.21.5"
     body-parser "^1.14.2"
     cors "^2.7.1"
     crc "^3.4.0"
@@ -45,12 +46,12 @@
     moment "^2.16.1"
     morgan "^1.6.1"
 
-"@glimpse/glimpse@^0.20.9":
-  version "0.20.9"
-  resolved "https://registry.yarnpkg.com/@glimpse/glimpse/-/glimpse-0.20.9.tgz#953a50a76628ec5f99517b202d44aaf8448beb0f"
+"@glimpse/glimpse@^0.21.5":
+  version "0.21.5"
+  resolved "https://registry.yarnpkg.com/@glimpse/glimpse/-/glimpse-0.21.5.tgz#1dffde5e79af222c81c7442b66b642e877dc7b61"
   dependencies:
-    "@glimpse/glimpse-agent-node" "0.20.9"
-    "@glimpse/glimpse-server" "0.20.9"
+    "@glimpse/glimpse-agent-node" "0.21.5"
+    "@glimpse/glimpse-server" "0.21.5"
     lodash "^4.15.0"
 
 "@panter/vue-i18next@^0.5.0":
@@ -336,13 +337,13 @@ async@1.5, async@^1.4.0, async@^1.5, async@~1.5:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
 
-async@2.1.4:
+async@2.1.4, async@^2.1.4:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/async/-/async-2.1.4.tgz#2d2160c7788032e4dd6cbe2502f1f9a2c8f6cde4"
   dependencies:
     lodash "^4.14.0"
 
-async@^2.1.4, async@^2.3.0:
+async@^2.3.0:
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/async/-/async-2.4.1.tgz#62a56b279c98a11d0987096a01cc3eeb8eb7bbd7"
   dependencies:
@@ -1608,9 +1609,9 @@ de-indent@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/de-indent/-/de-indent-1.0.2.tgz#b2038e846dc33baa5796128d0804b455b8c1e21d"
 
-debug@*, debug@2.6.8, debug@^2.6, debug@^2.6.3, debug@~2.6.4:
-  version "2.6.8"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.8.tgz#e731531ca2ede27d188222427da17821d68ff4fc"
+debug@*, debug@2.6.7, debug@^2.1.1, debug@^2.2.0, debug@^2.3.2, debug@^2.4.5, debug@^2.6, debug@~2.6.4, debug@~2.6.6:
+  version "2.6.7"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.7.tgz#92bad1f6d05bbb6bba22cca88bcd0ec894c2861e"
   dependencies:
     ms "2.0.0"
 
@@ -1626,9 +1627,9 @@ debug@2.3.3:
   dependencies:
     ms "0.7.2"
 
-debug@2.6.7, debug@^2.1.1, debug@^2.2.0, debug@^2.3.2, debug@^2.4.5, debug@~2.6.6:
-  version "2.6.7"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.7.tgz#92bad1f6d05bbb6bba22cca88bcd0ec894c2861e"
+debug@2.6.8, debug@^2.6.3:
+  version "2.6.8"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.8.tgz#e731531ca2ede27d188222427da17821d68ff4fc"
   dependencies:
     ms "2.0.0"
 
@@ -2426,9 +2427,9 @@ file-type@^3.1.0:
   version "3.9.0"
   resolved "https://registry.yarnpkg.com/file-type/-/file-type-3.9.0.tgz#257a078384d1db8087bc449d107d52a52672b9e9"
 
-file-type@^4.3.0:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/file-type/-/file-type-4.3.0.tgz#b26f0a35e03f6857848d18b8a27238448caa79a5"
+file-type@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/file-type/-/file-type-5.0.0.tgz#68dfe735ef37155ee6aa9a58951f0cca796e726e"
 
 filename-regex@^2.0.0:
   version "2.0.1"
@@ -3016,9 +3017,9 @@ i18next-node-fs-backend@^1.0.0:
     js-yaml "3.5.4"
     json5 "0.5.0"
 
-i18next-xhr-backend@^1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/i18next-xhr-backend/-/i18next-xhr-backend-1.4.1.tgz#ade99356065f51742da9e4bc79c7bb4905a4b91d"
+i18next-xhr-backend@^1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/i18next-xhr-backend/-/i18next-xhr-backend-1.4.2.tgz#7aa766292c46ca83ff6477bb55074b363a646a62"
 
 i18next@^8.4.0:
   version "8.4.0"
@@ -3968,7 +3969,7 @@ level-iterator-stream@~1.3.0:
     readable-stream "^1.0.33"
     xtend "^4.0.0"
 
-leveldown@^1.6.0:
+leveldown@^1.6.0, leveldown@^1.7.1:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/leveldown/-/leveldown-1.7.1.tgz#82b9865c95a9ff4df3d8c440324bd6080c17864d"
   dependencies:
@@ -4498,7 +4499,7 @@ mongodb@2.2.27:
     mongodb-core "2.1.12"
     readable-stream "2.2.7"
 
-mongoose@*, mongoose@^4.10.4:
+mongoose@*:
   version "4.10.4"
   resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.4.tgz#b9a0a033725e5c29efd9eefb4687d1371956c7b6"
   dependencies:
@@ -4508,6 +4509,23 @@ mongoose@*, mongoose@^4.10.4:
     kareem "1.4.1"
     mongodb "2.2.27"
     mpath "0.2.1"
+    mpromise "0.5.5"
+    mquery "2.3.1"
+    ms "2.0.0"
+    muri "1.2.1"
+    regexp-clone "0.0.1"
+    sliced "1.0.1"
+
+mongoose@^4.10.5:
+  version "4.10.5"
+  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.5.tgz#7cd50ee38d5057815e83962e3985f7dd9da769ad"
+  dependencies:
+    async "2.1.4"
+    bson "~1.0.4"
+    hooks-fixed "2.0.0"
+    kareem "1.4.1"
+    mongodb "2.2.27"
+    mpath "0.3.0"
     mpromise "0.5.5"
     mquery "2.3.1"
     ms "2.0.0"
@@ -4528,6 +4546,10 @@ morgan@^1.6.1:
 mpath@0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/mpath/-/mpath-0.2.1.tgz#3a4e829359801de96309c27a6b2e102e89f9e96e"
+
+mpath@0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/mpath/-/mpath-0.3.0.tgz#7a58f789e9b5fd3c94520634157960f26bd5ef44"
 
 mpromise@0.5.5:
   version "0.5.5"
@@ -6028,17 +6050,17 @@ scss-tokenizer@^0.2.3:
     js-base64 "^2.1.8"
     source-map "^0.4.2"
 
-search-index-adder@^0.2.3:
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/search-index-adder/-/search-index-adder-0.2.3.tgz#54fd255ff162c26cf3f9181c4f6b2693535b8b62"
+search-index-adder@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/search-index-adder/-/search-index-adder-0.2.4.tgz#4493dd1084514a7ee95cd9a8cc5edc7bd05c861e"
   dependencies:
     async "^2.3.0"
     bunyan "^1.8.10"
     docproc "^0.0.10"
-    levelup "^1.3.5"
+    levelup "^1.3.8"
     pumpify "^1.3.5"
   optionalDependencies:
-    leveldown "^1.6.0"
+    leveldown "^1.7.1"
 
 search-index-searcher@^0.2.3:
   version "0.2.3"
@@ -6275,6 +6297,10 @@ snyk-policy@1.7.1:
     snyk-try-require "^1.1.1"
     then-fs "^2.0.0"
 
+snyk-python-plugin@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/snyk-python-plugin/-/snyk-python-plugin-1.0.0.tgz#d3915fbd933305d9988d86a56a7381e73c4565f7"
+
 snyk-recursive-readdir@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/snyk-recursive-readdir/-/snyk-recursive-readdir-2.0.0.tgz#5cb59e94698169e0205a60e7d6a506d0b4d52ff3"
@@ -6323,9 +6349,9 @@ snyk-try-require@^1.1.1, snyk-try-require@^1.2.0:
     lru-cache "^4.0.0"
     then-fs "^2.0.0"
 
-snyk@^1.33.0:
-  version "1.33.0"
-  resolved "https://registry.yarnpkg.com/snyk/-/snyk-1.33.0.tgz#8e31a889e26f58819ca5eb5b39f95600afa67ac1"
+snyk@^1.34.3:
+  version "1.34.3"
+  resolved "https://registry.yarnpkg.com/snyk/-/snyk-1.34.3.tgz#8299611a3b60b5a6734abf4b2ca8fa989253298b"
   dependencies:
     abbrev "^1.0.7"
     ansi-escapes "^1.3.0"
@@ -6342,6 +6368,7 @@ snyk@^1.33.0:
     snyk-config "1.0.1"
     snyk-module "1.8.1"
     snyk-policy "1.7.1"
+    snyk-python-plugin "1.0.0"
     snyk-recursive-readdir "^2.0.0"
     snyk-resolve "1.0.0"
     snyk-resolve-deps "1.7.0"
@@ -7451,3 +7478,7 @@ yargs@~3.15.0:
 yeast@0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/yeast/-/yeast-0.1.2.tgz#008e06d8094320c372dbc2f8ed76a0ca6c8ac419"
+
+zone.js@^0.8.10:
+  version "0.8.12"
+  resolved "https://registry.yarnpkg.com/zone.js/-/zone.js-0.8.12.tgz#86ff5053c98aec291a0bf4bbac501d694a05cfbb"
