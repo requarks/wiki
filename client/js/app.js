@@ -38,6 +38,7 @@ import join from 'lodash/join'
 import kebabCase from 'lodash/kebabCase'
 import last from 'lodash/last'
 import map from 'lodash/map'
+import nth from 'lodash/nth'
 import pullAt from 'lodash/pullAt'
 import reject from 'lodash/reject'
 import slice from 'lodash/slice'
@@ -101,6 +102,7 @@ const _ = {
   kebabCase,
   last,
   map,
+  nth,
   pullAt,
   reject,
   slice,

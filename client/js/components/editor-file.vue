@@ -8,29 +8,29 @@
           .modal-content.is-expanded(v-show='isShown')
             header.is-green
               span {{ $t('editor.filetitle') }}
-              p.modal-notify(v-bind:class='{ "is-active": isLoading }')
+              p.modal-notify(:class='{ "is-active": isLoading }')
                 span {{ isLoadingText }}
                 i
             .modal-toolbar.is-green
-              a.button(v-on:click='newFolder')
+              a.button(@click='newFolder')
                 i.icon-folder2
                 span {{ $t('editor.newfolder') }}
               a.button#btn-editor-file-upload
                 i.icon-cloud-upload
                 span {{ $t('editor.fileupload') }}
                 label
-                  input(type='file', multiple)
+                  input(type='file', multiple, :disabled='isLoading', ref='editorFileUploadInput')
             section.is-gapless
               .columns.is-stretched
                 .column.is-one-quarter.modal-sidebar.is-green(style={'max-width':'350px'})
                   .model-sidebar-header {{ $t('editor.folders') }}
                   ul.model-sidebar-list
                     li(v-for='fld in folders')
-                      a(v-on:click='selectFolder(fld)', v-bind:class='{ "is-active": currentFolder === fld }')
+                      a(@click='selectFolder(fld)', :class='{ "is-active": currentFolder === fld }')
                         i.icon-folder2
                         span / {{ fld }}
                 .column.editor-modal-file-choices
-                  figure(v-for='fl in files', v-bind:class='{ "is-active": currentFile === fl._id }', v-on:click='selectFile(fl._id)', v-bind:data-uid='fl._id')
+                  figure(v-for='fl in files', :class='{ "is-active": currentFile === fl._id }', @click='selectFile(fl._id)', :data-uid='fl._id')
                     i(class='icon-file')
                     span: strong {{ fl.filename }}
                     span {{ fl.mime }}
@@ -39,49 +39,56 @@
                     i.icon-marquee-minus
                     | {{ $t('editor.filefolderempty') }}
             footer
-              a.button.is-grey.is-outlined(v-on:click='cancel') {{ $t('editor.discard') }}
-              a.button.is-green(v-on:click='insertFileLink') {{ $t('editor.fileinsert') }}
+              a.button.is-grey.is-outlined(@click='cancel') {{ $t('editor.discard') }}
+              a.button.is-green(@click='insertFileLink') {{ $t('editor.fileinsert') }}
 
-      .modal.is-superimposed(v-show='newFolderShow')
-        transition(name='modal-background')
-          .modal-background
-        .modal-container(v-show='newFolderShow')
-          transition(name='modal-content')
-            .modal-content(v-show='newFolderShow')
-              header.is-light-blue {{ $t('modal.newfoldertitle') }}
-              section
-                label.label {{ $t('modal.newfoldername') }}
-                p.control.is-fullwidth
-                  input.input(type='text', v-bind:placeholder='$t("modal.newfoldernameplaceholder")', v-model='newFolderName', ref='editorFileNewFolderInput', v-on:keyup.enter='newFolderCreate', v-on:keyup.esc='newFolderDiscard')
-                  span.help.is-danger(v-show='newFolderError') {{ $t('modal.newfolderinvalid') }}
-              footer
-                a.button.is-grey.is-outlined(v-on:click='newFolderDiscard') {{ $t('modal.discard') }}
-                a.button.is-light-blue(v-on:click='newFolderCreate') {{ $t('modal.create') }}
+      transition(:duration="400")
+        .modal.is-superimposed(v-show='newFolderShow')
+          transition(name='modal-background')
+            .modal-background(v-show='newFolderShow')
+          .modal-container
+            transition(name='modal-content')
+              .modal-content(v-show='newFolderShow')
+                header.is-light-blue {{ $t('modal.newfoldertitle') }}
+                section
+                  label.label {{ $t('modal.newfoldername') }}
+                  p.control.is-fullwidth
+                    input.input(type='text', :placeholder='$t("modal.newfoldernameplaceholder")', v-model='newFolderName', ref='editorFileNewFolderInput', @keyup.enter='newFolderCreate', @keyup.esc='newFolderDiscard')
+                    span.help.is-danger(v-show='newFolderError') {{ $t('modal.newfolderinvalid') }}
+                footer
+                  a.button.is-grey.is-outlined(@click='newFolderDiscard') {{ $t('modal.discard') }}
+                  a.button.is-light-blue(@click='newFolderCreate') {{ $t('modal.create') }}
 
-      .modal.is-superimposed(v-show='renameFileShow')
-        .modal-background
-        .modal-container
-          .modal-content
-            header.is-indigo {{ $t('modal.renamefiletitle') }}
-            section
-              label.label {{ $t('modal.renamefilename') }}
-              p.control.is-fullwidth
-                input.input#txt-editor-file-rename(type='text', v-bind:placeholder='$t("modal.renamefilenameplaceholder")', v-model='renameFileFilename', ref='editorFileRenameInput', v-on:keyup.enter='renameFileGo', v-on:keyup.esc='renameFileDiscard')
-                span.help.is-danger.is-hidden {{ $t('modal.renamefileinvalid') }}
-            footer
-              a.button.is-grey.is-outlined(v-on:click='renameFileDiscard') {{ $t('modal.discard') }}
-              a.button.is-light-blue(v-on:click='renameFileGo') {{ $t('modal.renamefile') }}
+      transition(:duration="400")
+        .modal.is-superimposed(v-show='renameFileShow')
+          transition(name='modal-background')
+            .modal-background(v-show='renameFileShow')
+          .modal-container
+            transition(name='modal-content')
+              .modal-content(v-show='renameFileShow')
+                header.is-indigo {{ $t('modal.renamefiletitle') }}
+                section
+                  label.label {{ $t('modal.renamefilename') }}
+                  p.control.is-fullwidth
+                    input.input#txt-editor-file-rename(type='text', :placeholder='$t("modal.renamefilenameplaceholder")', v-model='renameFileFilename', ref='editorFileRenameInput', @keyup.enter='renameFileGo', @keyup.esc='renameFileDiscard')
+                    span.help.is-danger.is-hidden {{ $t('modal.renamefileinvalid') }}
+                footer
+                  a.button.is-grey.is-outlined(@click='renameFileDiscard') {{ $t('modal.discard') }}
+                  a.button.is-light-blue(@click='renameFileGo') {{ $t('modal.renamefile') }}
 
-      .modal.is-superimposed(v-show='deleteFileShow')
-        .modal-background
-        .modal-container
-          .modal-content
-            header.is-red {{ $t('modal.deletefiletitle') }}
-            section
-              span {{ $t('modal.deletefilewarn') }} #[strong {{deleteFileFilename}}]?
-            footer
-              a.button.is-grey.is-outlined(v-on:click='deleteFileWarn(false)') {{ $t('modal.discard') }}
-              a.button.is-red(v-on:click='deleteFileGo')  {{ $t('modal.delete') }}
+      transition(:duration="400")
+        .modal.is-superimposed(v-show='deleteFileShow')
+          transition(name='modal-background')
+            .modal-background(v-show='deleteFileShow')
+          .modal-container
+            transition(name='modal-content')
+              .modal-content(v-show='deleteFileShow')
+                header.is-red {{ $t('modal.deletefiletitle') }}
+                section
+                  span {{ $t('modal.deletefilewarn') }} #[strong {{deleteFileFilename}}]?
+                footer
+                  a.button.is-grey.is-outlined(@click='deleteFileWarn(false)') {{ $t('modal.discard') }}
+                  a.button.is-red(@click='deleteFileGo')  {{ $t('modal.delete') }}
 </template>
 
 <script>
@@ -115,9 +122,11 @@
     },
     methods: {
       init () {
+        $(this.$refs.editorFileUploadInput).on('change', this.upload)
         this.refreshFolders()
       },
       cancel () {
+        $(this.$refs.editorFileUploadInput).off('change', this.upload)
         this.$store.dispatch('editorFile/close')
       },
       filesize (rawSize) {
@@ -240,6 +249,11 @@
           socket.emit('uploadsMoveFile', { uid, folder: fld }, (data) => {
             if (data.ok) {
               self.loadFiles()
+              self.$store.dispatch('alert', {
+                style: 'blue',
+                icon: 'arrow-right2',
+                msg: self.$t('editor.filemovesuccess')
+              })
             } else {
               self.isLoading = false
               self.$store.dispatch('alert', {
@@ -271,6 +285,11 @@
         this.$nextTick(() => {
           socket.emit('uploadsDeleteFile', { uid: this.deleteFileId }, (data) => {
             self.loadFiles()
+            self.$store.dispatch('alert', {
+              style: 'blue',
+              icon: 'trash2',
+              msg: self.$t('editor.filedeletesuccess')
+            })
           })
         })
       },
@@ -403,6 +422,79 @@
               }
             }
           }
+        })
+      },
+      upload() {
+        let self = this
+        let curFileAmount = this.files.length
+
+        $(this.$refs.editorFileUploadInput).simpleUpload('/uploads/file', {
+
+          name: 'binfile',
+          data: {
+            folder: self.currentFolder
+          },
+          limit: 20,
+          expect: 'json',
+          maxFileSize: 0,
+
+          init: (totalUploads) => {
+            self.uploadSucceeded = false
+            self.isLoadingText = 'Preparing to upload...'
+            self.isLoading = true
+          },
+
+          progress: (progress) => {
+            self.isLoadingText = 'Uploading...' + Math.round(progress) + '%'
+          },
+
+          success: (data) => {
+            if (data.ok) {
+              let failedUpls = self._.filter(data.results, ['ok', false])
+              if (failedUpls.length) {
+                self._.forEach(failedUpls, (u) => {
+                  self.$store.dispatch('alert', {
+                    style: 'red',
+                    icon: 'square-cross',
+                    msg: self.$t('editor.fileuploaderror', { err: u.msg })
+                  })
+                })
+                if (failedUpls.length < data.results.length) {
+                  self.uploadSucceeded = true
+                }
+              } else {
+                self.uploadSucceeded = true
+                self.$store.dispatch('alert', {
+                  style: 'blue',
+                  icon: 'cloud-upload',
+                  msg: self.$t('editor.fileuploadsuccess')
+                })
+              }
+            } else {
+              self.$store.dispatch('alert', {
+                style: 'red',
+                icon: 'square-cross',
+                msg: self.$t('editor.fileuploaderror', { err: data.msg })
+              })
+            }
+          },
+
+          error: (error) => {
+            self.$store.dispatch('alert', {
+              style: 'red',
+              icon: 'square-cross',
+              msg: self.$t('editor.fileuploaderror', { err: error.message })
+            })
+          },
+
+          finish: () => {
+            if (self.uploadSucceeded) {
+              self.waitChangeComplete(curFileAmount, true)
+            } else {
+              self.isLoading = false
+            }
+          }
+
         })
       }
     },
