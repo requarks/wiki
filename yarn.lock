@@ -337,13 +337,13 @@ async@1.5, async@^1.4.0, async@^1.5, async@~1.5:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
 
-async@2.1.4, async@^2.1.4:
+async@2.1.4:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/async/-/async-2.1.4.tgz#2d2160c7788032e4dd6cbe2502f1f9a2c8f6cde4"
   dependencies:
     lodash "^4.14.0"
 
-async@^2.3.0:
+async@^2.1.4, async@^2.3.0:
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/async/-/async-2.4.1.tgz#62a56b279c98a11d0987096a01cc3eeb8eb7bbd7"
   dependencies:
@@ -1609,9 +1609,9 @@ de-indent@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/de-indent/-/de-indent-1.0.2.tgz#b2038e846dc33baa5796128d0804b455b8c1e21d"
 
-debug@*, debug@2.6.7, debug@^2.1.1, debug@^2.2.0, debug@^2.3.2, debug@^2.4.5, debug@^2.6, debug@~2.6.4, debug@~2.6.6:
-  version "2.6.7"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.7.tgz#92bad1f6d05bbb6bba22cca88bcd0ec894c2861e"
+debug@*, debug@2.6.8, debug@^2.3.2, debug@^2.6, debug@^2.6.3, debug@~2.6.4:
+  version "2.6.8"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.8.tgz#e731531ca2ede27d188222427da17821d68ff4fc"
   dependencies:
     ms "2.0.0"
 
@@ -1627,9 +1627,9 @@ debug@2.3.3:
   dependencies:
     ms "0.7.2"
 
-debug@2.6.8, debug@^2.6.3:
-  version "2.6.8"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.8.tgz#e731531ca2ede27d188222427da17821d68ff4fc"
+debug@2.6.7, debug@^2.1.1, debug@^2.2.0, debug@^2.4.5, debug@~2.6.6:
+  version "2.6.7"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.7.tgz#92bad1f6d05bbb6bba22cca88bcd0ec894c2861e"
   dependencies:
     ms "2.0.0"
 
@@ -4499,24 +4499,7 @@ mongodb@2.2.27:
     mongodb-core "2.1.12"
     readable-stream "2.2.7"
 
-mongoose@*:
-  version "4.10.4"
-  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.4.tgz#b9a0a033725e5c29efd9eefb4687d1371956c7b6"
-  dependencies:
-    async "2.1.4"
-    bson "~1.0.4"
-    hooks-fixed "2.0.0"
-    kareem "1.4.1"
-    mongodb "2.2.27"
-    mpath "0.2.1"
-    mpromise "0.5.5"
-    mquery "2.3.1"
-    ms "2.0.0"
-    muri "1.2.1"
-    regexp-clone "0.0.1"
-    sliced "1.0.1"
-
-mongoose@^4.10.5:
+mongoose@*, mongoose@^4.10.5:
   version "4.10.5"
   resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.5.tgz#7cd50ee38d5057815e83962e3985f7dd9da769ad"
   dependencies:
@@ -4542,10 +4525,6 @@ morgan@^1.6.1:
     depd "~1.1.0"
     on-finished "~2.3.0"
     on-headers "~1.0.1"
-
-mpath@0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/mpath/-/mpath-0.2.1.tgz#3a4e829359801de96309c27a6b2e102e89f9e96e"
 
 mpath@0.3.0:
   version "0.3.0"
@@ -5273,8 +5252,8 @@ performance-now@^0.2.0:
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-0.2.0.tgz#33ef30c5c77d4ea21c5a53869d91b56d8f2555e5"
 
 pidusage@^1.1.0:
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/pidusage/-/pidusage-1.1.4.tgz#ab83ffdec051fe345d8ea08cc23085a3e7684ebd"
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/pidusage/-/pidusage-1.1.5.tgz#b8c8d32bdfaf36212ca9e741028876ea33217e66"
 
 pify@^2.0.0, pify@^2.3.0:
   version "2.3.0"
