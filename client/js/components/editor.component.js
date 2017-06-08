@@ -127,7 +127,7 @@ export default {
           {
             name: 'image',
             action: (editor) => {
-              self.$store.dispatch('editorImage/open')
+              self.$store.dispatch('editorFile/open', { mode: 'image' })
             },
             className: 'icon-image',
             title: 'Insert Image'
@@ -135,7 +135,7 @@ export default {
           {
             name: 'file',
             action: (editor) => {
-              self.$store.dispatch('editorFile/open')
+              self.$store.dispatch('editorFile/open', { mode: 'file' })
             },
             className: 'icon-paper',
             title: 'Insert File'

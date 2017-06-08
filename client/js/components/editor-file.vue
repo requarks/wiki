@@ -7,7 +7,7 @@
         transition(name='modal-content')
           .modal-content.is-expanded(v-show='isShown')
             header.is-green
-              span {{ $t('editor.filetitle') }}
+              span {{ (mode === 'file') ? $t('editor.filetitle') : $t('editor.imagetitle') }}
               p.modal-notify(:class='{ "is-active": isLoading }')
                 span {{ isLoadingText }}
                 i
@@ -17,9 +17,12 @@
                 span {{ $t('editor.newfolder') }}
               a.button#btn-editor-file-upload
                 i.icon-cloud-upload
-                span {{ $t('editor.fileupload') }}
+                span {{ (mode === 'file') ? $t('editor.fileupload') : $t('editor.imageupload') }}
                 label
                   input(type='file', multiple, :disabled='isLoading', ref='editorFileUploadInput')
+              a.button(v-if='mode === "image"', @click='fetchFromUrl')
+                i.icon-cloud-download
+                span Fetch from URL
             section.is-gapless
               .columns.is-stretched
                 .column.is-one-quarter.modal-sidebar.is-green(style={'max-width':'350px'})
@@ -29,7 +32,15 @@
                       a(@click='selectFolder(fld)', :class='{ "is-active": currentFolder === fld }')
                         i.icon-folder2
                         span / {{ fld }}
-                .column.editor-modal-file-choices
+                  .model-sidebar-header(v-if='mode === "image"') Alignment
+                  .model-sidebar-content(v-if='mode === "image"')
+                    p.control.is-fullwidth
+                      select(v-model='currentAlign')
+                        option(value='left') {{ $t('editor.imagealignleft') }}
+                        option(value='center') {{ $t('editor.imagealigncenter') }}
+                        option(value='right') {{ $t('editor.imagealignright') }}
+                        option(value='logo') {{ $t('editor.imagealignlogo') }}
+                .column.editor-modal-choices.editor-modal-file-choices(v-if='mode === "file"')
                   figure(v-for='fl in files', :class='{ "is-active": currentFile === fl._id }', @click='selectFile(fl._id)', :data-uid='fl._id')
                     i(class='icon-file')
                     span: strong {{ fl.filename }}
@@ -38,9 +49,17 @@
                   em(v-show='files.length < 1')
                     i.icon-marquee-minus
                     | {{ $t('editor.filefolderempty') }}
+                .column.editor-modal-choices.editor-modal-image-choices(v-if='mode === "image"')
+                  figure(v-for='img in files', v-bind:class='{ "is-active": currentFile === img._id }', v-on:click='selectFile(img._id)', v-bind:data-uid='img._id')
+                    img(v-bind:src='"/uploads/t/" + img._id + ".png"')
+                    span: strong {{ img.basename }}
+                    span {{ filesize(img.filesize) }}
+                  em(v-show='files.length < 1')
+                    i.icon-marquee-minus
+                    | {{ $t('editor.filefolderempty') }}
             footer
               a.button.is-grey.is-outlined(@click='cancel') {{ $t('editor.discard') }}
-              a.button.is-green(@click='insertFileLink') {{ $t('editor.fileinsert') }}
+              a.button.is-green(@click='insertFileLink') {{ (mode === 'file') ? $t('editor.fileinsert') : $t('editor.imageinsert') }}
 
       transition(:duration="400")
         .modal.is-superimposed(v-show='newFolderShow')
@@ -58,6 +77,23 @@
                 footer
                   a.button.is-grey.is-outlined(@click='newFolderDiscard') {{ $t('modal.discard') }}
                   a.button.is-light-blue(@click='newFolderCreate') {{ $t('modal.create') }}
+
+      transition(:duration="400")
+        .modal.is-superimposed(v-show='fetchFromUrlShow')
+          transition(name='modal-background')
+            .modal-background(v-show='fetchFromUrlShow')
+          .modal-container
+            transition(name='modal-content')
+              .modal-content(v-show='fetchFromUrlShow')
+                header.is-light-blue Fetch Image from URL
+                section
+                  label.label Enter full URL path to the image:
+                  p.control.is-fullwidth
+                    input.input(type='text', placeholder='http://www.example.com/some-image.png', v-model='fetchFromUrlURL', ref='editorFileFetchInput', @keyup.enter='fetchFromUrlGo', @keyup.esc='fetchFromUrlDiscard')
+                    span.help.is-danger.is-hidden This URL path is invalid!
+                footer
+                  a.button.is-grey.is-outlined(v-on:click='fetchFromUrlDiscard') Discard
+                  a.button.is-light-blue(v-on:click='fetchFromUrlGo') Fetch
 
       transition(:duration="400")
         .modal.is-superimposed(v-show='renameFileShow')
@@ -101,9 +137,12 @@
         newFolderName: '',
         newFolderShow: false,
         newFolderError: false,
+        fetchFromUrlURL: '',
+        fetchFromUrlShow: false,
         folders: [],
         currentFolder: '',
         currentFile: '',
+        currentAlign: 'left',
         files: [],
         uploadSucceeded: false,
         postUploadChecks: 0,
@@ -118,6 +157,9 @@
     computed: {
       isShown () {
         return this.$store.state.editorFile.shown
+      },
+      mode () {
+        return this.$store.state.editorFile.mode
       }
     },
     methods: {
@@ -145,13 +187,30 @@
         selFile.normalizedPath = (selFile.folder === 'f:') ? selFile.filename : selFile.folder.slice(2) + '/' + selFile.filename
         selFile.titleGuess = this._.startCase(selFile.basename)
 
-        let fileText = '[' + selFile.titleGuess + '](/uploads/' + selFile.normalizedPath + ' "' + selFile.titleGuess + '")'
+        let textToInsert = ''
 
-        this.$store.dispatch('editor/insert', fileText)
+        if (this.mode === 'image') {
+          textToInsert = '![' + selFile.titleGuess + '](/uploads/' + selFile.normalizedPath + ' "' + selFile.titleGuess + '")'
+          switch (this.currentAlign) {
+            case 'center':
+              textToInsert += '{.align-center}'
+              break
+            case 'right':
+              textToInsert += '{.align-right}'
+              break
+            case 'logo':
+              textToInsert += '{.pagelogo}'
+              break
+          }
+        } else {
+          textToInsert = '[' + selFile.titleGuess + '](/uploads/' + selFile.normalizedPath + ' "' + selFile.titleGuess + '")'
+        }
+
+        this.$store.dispatch('editor/insert', textToInsert)
         this.$store.dispatch('alert', {
           style: 'blue',
           icon: 'paper',
-          msg: this.$t('editor.filesuccess')
+          msg: (this.mode === 'file') ? this.$t('editor.filesuccess') : this.$t('editor.imagesuccess')
         })
         this.cancel()
       },
@@ -195,6 +254,41 @@
               icon: 'folder2',
               msg: self.$t('modal.newfoldersuccess', { name: self.newFolderName })
             })
+          })
+        })
+      },
+
+      // -------------------------------------------
+      // FETCH FROM URL
+      // -------------------------------------------
+
+      fetchFromUrl() {
+        let self = this
+        this.fetchFromUrlURL = ''
+        this.fetchFromUrlShow = true
+        this._.delay(() => { self.$refs.editorFileFetchInput.focus() }, 400)
+      },
+      fetchFromUrlDiscard() {
+        this.fetchFromUrlShow = false
+      },
+      fetchFromUrlGo() {
+        let self = this
+        this.fetchFromUrlDiscard()
+        this.isLoadingText = 'Fetching image...'
+        this.isLoading = true
+
+        this.$nextTick(() => {
+          socket.emit('uploadsFetchFileFromURL', { folder: self.currentFolder, fetchUrl: self.fetchFromUrlURL }, (data) => {
+            if (data.ok) {
+              self.waitChangeComplete(self.files.length, true)
+            } else {
+              self.isLoading = false
+              self.$store.dispatch('alert', {
+                style: 'red',
+                icon: 'square-cross',
+                msg: self.$t('editor.fileuploaderror', { err: data.msg })
+              })
+            }
           })
         })
       },
@@ -325,7 +419,8 @@
         }
         return new Promise((resolve, reject) => {
           self.$nextTick(() => {
-            socket.emit('uploadsGetFiles', { folder: self.currentFolder }, (data) => {
+            let loadAction = (self.mode === 'image') ? 'uploadsGetImages' : 'uploadsGetFiles'
+            socket.emit(loadAction, { folder: self.currentFolder }, (data) => {
               self.files = data
               if (!silent) {
                 self.isLoading = false
@@ -384,10 +479,10 @@
           }
         })
 
-        $.contextMenu('destroy', '.editor-modal-file-choices > figure')
+        $.contextMenu('destroy', '.editor-modal-choices > figure')
         $.contextMenu({
-          selector: '.editor-modal-file-choices > figure',
-          appendTo: '.editor-modal-file-choices',
+          selector: '.editor-modal-choices > figure',
+          appendTo: '.editor-modal-choices',
           position: (opt, x, y) => {
             $(opt.$trigger).addClass('is-contextopen')
             let trigPos = $(opt.$trigger).position()
@@ -427,16 +522,19 @@
       upload() {
         let self = this
         let curFileAmount = this.files.length
+        let uplUrl = (self.mode === 'image') ? '/uploads/img' : '/uploads/file'
 
-        $(this.$refs.editorFileUploadInput).simpleUpload('/uploads/file', {
+        $(this.$refs.editorFileUploadInput).simpleUpload(uplUrl, {
 
-          name: 'binfile',
+          name: (self.mode === 'image') ? 'imgfile' : 'binfile',
           data: {
             folder: self.currentFolder
           },
           limit: 20,
           expect: 'json',
-          maxFileSize: 0,
+          allowedExts: (self.mode === 'image') ? ['jpg', 'jpeg', 'gif', 'png', 'webp'] : undefined,
+          allowedTypes: (self.mode === 'image') ? ['image/png', 'image/jpeg', 'image/gif', 'image/webp'] : undefined,
+          maxFileSize: (self.mode === 'image') ? 3145728 : 0, // max 3 MB
 
           init: (totalUploads) => {
             self.uploadSucceeded = false

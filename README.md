@@ -48,7 +48,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 ### Beta 12
 > *Planned for early June release*  
-![Progress](http://progressed.io/bar/85)
+![Progress](http://progressed.io/bar/95)
 
 - [x] Anchor with Copy to clipboard function
 - [x] Full UI Localization
