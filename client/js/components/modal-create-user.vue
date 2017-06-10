@@ -8,11 +8,11 @@
           .modal-content(v-show='isShown')
             header.is-blue
               span {{ $t('modal.createusertitle') }}
-              p.modal-notify(v-bind:class='{ "is-active": isLoading }'): i
+              p.modal-notify(:class='{ "is-active": isLoading }'): i
             section
               label.label {{ $t('modal.createuseremail') }}
               p.control.is-fullwidth
-                input.input(type='text', v-bind:placeholder='$t("modal.createuseremailplaceholder")', v-model='email', ref='createUserEmailInput')
+                input.input(type='text', :placeholder='$t("modal.createuseremailplaceholder")', v-model='email', ref='createUserEmailInput')
             section
               label.label {{ $t('modal.createuserprovider') }}
               p.control.is-fullwidth
@@ -30,76 +30,76 @@
             section(v-if='provider=="local"')
               label.label {{ $t('modal.createuserfullname') }}
               p.control.is-fullwidth
-                input.input(type='text', v-bind:placeholder='$t("modal.createusernameplaceholder")', v-model='name')
+                input.input(type='text', :placeholder='$t("modal.createusernameplaceholder")', v-model='name')
             footer
-              a.button.is-grey.is-outlined(v-on:click='cancel') {{ $t('modal.discard') }}
-              a.button(v-on:click='create', v-if='provider=="local"', v-bind:disabled='isLoading', v-bind:class='{ "is-disabled": isLoading, "is-blue": !loading }') {{ $t('modal.createuser') }}
-              a.button(v-on:click='create', v-if='provider!="local"', v-bind:disabled='isLoading', v-bind:class='{ "is-disabled": isLoading, "is-blue": !loading }') {{ $t('modal.createuserauthorize') }}
+              a.button.is-grey.is-outlined(@click='cancel') {{ $t('modal.discard') }}
+              a.button(@click='create', v-if='provider=="local"', :disabled='isLoading', :class='{ "is-disabled": isLoading, "is-blue": !loading }') {{ $t('modal.createuser') }}
+              a.button(@click='create', v-if='provider!="local"', :disabled='isLoading', :class='{ "is-disabled": isLoading, "is-blue": !loading }') {{ $t('modal.createuserauthorize') }}
 </template>
 
 <script>
-  export default {
-    name: 'modal-create-user',
-    data () {
-      return {
-        email: '',
-        provider: 'local',
-        password: '',
-        name: '',
-        isLoading: false
-      }
+export default {
+  name: 'modal-create-user',
+  data() {
+    return {
+      email: '',
+      provider: 'local',
+      password: '',
+      name: '',
+      isLoading: false
+    }
+  },
+  computed: {
+    isShown() {
+      return this.$store.state.modalCreateUser.shown
+    }
+  },
+  methods: {
+    init() {
+      let self = this
+      self._.delay(() => {
+        self.$refs.createUserEmailInput.focus()
+      }, 100)
     },
-    computed: {
-      isShown () {
-        return this.$store.state.modalCreateUser.shown
-      }
+    cancel() {
+      this.$store.dispatch('modalCreateUser/close')
+      this.email = ''
+      this.provider = 'local'
     },
-    methods: {
-      init () {
-        let self = this
-        self._.delay(() => {
-          self.$refs.createUserEmailInput.focus()
-        }, 100)
-      },
-      cancel () {
-        this.$store.dispatch('modalCreateUser/close')
-        this.email = ''
-        this.provider = 'local'
-      },
-      create () {
-        let self = this
-        this.isLoading = true
-        this.$http.post('/admin/users/create', {
-          email: this.email,
-          provider: this.provider,
-          password: this.password,
-          name: this.name
-        }).then(resp => {
-          return resp.json()
-        }).then(resp => {
-          this.isLoading = false
-          if (resp.ok) {
-            this.cancel()
-            window.location.reload(true)
-          } else {
-            self.$store.dispatch('alert', {
-              style: 'red',
-              icon: 'square-cross',
-              msg: resp.msg
-            })
-          }
-        }).catch(err => {
-          this.isLoading = false
+    create() {
+      let self = this
+      this.isLoading = true
+      this.$http.post('/admin/users/create', {
+        email: this.email,
+        provider: this.provider,
+        password: this.password,
+        name: this.name
+      }).then(resp => {
+        return resp.json()
+      }).then(resp => {
+        this.isLoading = false
+        if (resp.ok) {
+          this.cancel()
+          window.location.reload(true)
+        } else {
           self.$store.dispatch('alert', {
             style: 'red',
             icon: 'square-cross',
-            msg: 'Error: ' + err.body.msg
+            msg: resp.msg
           })
+        }
+      }).catch(err => {
+        this.isLoading = false
+        self.$store.dispatch('alert', {
+          style: 'red',
+          icon: 'square-cross',
+          msg: 'Error: ' + err.body.msg
         })
-      },
-      mounted () {
-        this.$root.$on('modalCreateUser/init', this.init)
-      }
+      })
     }
+  },
+  mounted() {
+    this.$root.$on('modalCreateUser/init', this.init)
   }
+}
 </script>

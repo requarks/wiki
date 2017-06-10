@@ -1,7 +1,7 @@
 extends ../../layout.pug
 
 block rootNavCenter
-  h2.nav-item= t('nav.account')
+  h2.nav-item= t('nav.settings')
 
 block rootNavRight
   loading-spinner
@@ -48,7 +48,7 @@ block content
                   a(href='/admin/settings')
                     i.icon-cog
                     span= t('nav.syssettings')
-                li
+                //-li
                   a(href='/admin/theme')
                     i.icon-drop
                     span= t('nav.theme')

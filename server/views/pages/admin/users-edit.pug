@@ -8,116 +8,114 @@ block rootNavRight
       span= t('admin:users.returntousers')
 
 block adminContent
-  #page-type-admin-users-edit
-    .hero
-      h1.title#title= t('admin:users.edituser')
-      h2.subtitle= usr.email
-    table.table
-      thead
-        tr
-          th= t('admin:users.uniqueid')
-          th= t('admin:users.provider')
-          th= t('admin:users.createdon')
-          th= t('admin:users.updatedon')
-      tbody
-        tr
-          td.is-centered= usr._id
-          td.is-centered.has-icons
-            case usr.provider
-              when 'local': i.icon-server
-              when 'windowslive': i.icon-windows2.is-blue
-              when 'azure': i.icon-windows2.is-blue
-              when 'google': i.icon-google.is-blue
-              when 'facebook': i.icon-facebook.is-indigo
-              when 'github': i.icon-github.is-grey
-              when 'slack': i.icon-slack.is-purple
-              when 'ldap': i.icon-arrow-repeat-outline
-              default: i.icon-warning
-            = t('auth:providers.' + usr.provider)
-          td.is-centered= moment(usr.createdAt).format('lll')
-          td.is-centered= moment(usr.updatedAt).format('lll')
-    .form-sections
-      section
-        label.label= t('admin:profile.email')
-        p.control.is-fullwidth
-          input.input(type='text', placeholder='john.smith@example.com', v-model='email', disabled=!usrOpts.canChangeEmail)
-      section
-        label.label= t('admin:profile.displayname')
-        p.control.is-fullwidth
-          input.input(type='text', placeholder=t('admin:profile.displaynameexample'), v-model='name', disabled=!usrOpts.canChangeName)
-      if usrOpts.canChangePassword
+  admin-edit-user(inline-template, usrdata=JSON.stringify(usr))
+    div
+      .hero
+        h1.title= t('admin:users.edituser')
+        h2.subtitle= usr.email
+      table.table
+        thead
+          tr
+            th= t('admin:users.uniqueid')
+            th= t('admin:users.provider')
+            th= t('admin:users.createdon')
+            th= t('admin:users.updatedon')
+        tbody
+          tr
+            td.is-centered= usr._id
+            td.is-centered.has-icons
+              case usr.provider
+                when 'local': i.icon-server
+                when 'windowslive': i.icon-windows2.is-blue
+                when 'azure': i.icon-windows2.is-blue
+                when 'google': i.icon-google.is-blue
+                when 'facebook': i.icon-facebook.is-indigo
+                when 'github': i.icon-github.is-grey
+                when 'slack': i.icon-slack.is-purple
+                when 'ldap': i.icon-arrow-repeat-outline
+                default: i.icon-warning
+              = t('auth:providers.' + usr.provider)
+            td.is-centered= moment(usr.createdAt).format('lll')
+            td.is-centered= moment(usr.updatedAt).format('lll')
+      .form-sections
         section
-          label.label= t('admin:profile.password')
+          label.label= t('admin:profile.email')
           p.control.is-fullwidth
-            input.input(type='password', placeholder=t('admin:profile.password'), v-model='password', value='********')
-      section
-        label.label Access Rights
-        table.table
-          thead.is-teal
-            tr
-              th
-              th(style={width: '200px'}) Permission(s)
-              th Path
-              th(style={width: '150px'}) Access
-              th(style={width: '50px'})
-          tbody
-            tr(v-for='(right, idx) in rights', v-cloak)
-              td.is-icon
-                i.icon-marquee-plus.is-green(v-if='right.deny === false || right.deny === "false"')
-                i.icon-marquee-minus.is-red(v-if='right.deny === true || right.deny === "true"')
-              td
-                p.control.is-fullwidth
-                  select(v-model='right.role')
-                    option(value='write') Read and Write
-                    option(value='read') Read Only
-              td
-                .columns
-                  .column.is-narrow
-                    p.control
-                      select(v-model='right.exact')
-                        option(value='false') Path starts with:
-                        option(value='true') Path match exactly:
-                  .column
-                    p.control.is-fullwidth
-                      input.input(type='text', placeholder='/', v-model='right.path')
-              td
-                p.control.is-fullwidth
-                  select(v-model='right.deny')
-                    option(value='false') Allow
-                    option(value='true') Deny
-              td.is-centered.has-action-icons
-                i.icon-delete.is-red(v-on:click='removeRightsRow(idx)')
-            tr(v-if='rights.length < 1', v-cloak)
-              td.is-icon
-              td.is-centered(colspan='3'): em No additional access rights
-              td.is-centered.has-action-icons
-        .table-actions
-          button.button.is-blue(v-on:click='addRightsRow')
-            i.icon-plus
-            span Add New Row
-      section
-        label.label Role Override
-        p.control.is-fullwidth
-          select(v-model='roleoverride', disabled=!usrOpts.canChangeRole)
-            option(value='none') None
-            option(value='admin') Global Administrator
-      .columns.is-gapless
-        .column
+            input.input(type='text', placeholder='john.smith@example.com', v-model='email', disabled=!usrOpts.canChangeEmail)
+        section
+          label.label= t('admin:profile.displayname')
+          p.control.is-fullwidth
+            input.input(type='text', placeholder=t('admin:profile.displaynameexample'), v-model='name', disabled=!usrOpts.canChangeName)
+        if usrOpts.canChangePassword
           section
-            button.button.is-green(v-on:click='saveUser')
-              i.icon-check
-              span Save Changes
-            a.button.button.is-grey.is-outlined(href='/admin/users')
-              i.icon-cancel
-              span Discard
-        .column.is-narrow
-          section
-            if usrOpts.canBeDeleted
-              button.button.is-red(v-on:click='$store.dispatch("modalDeleteUser/open")')
-                i.icon-trash2
-                span Delete Account
+            label.label= t('admin:profile.password')
+            p.control.is-fullwidth
+              input.input(type='password', placeholder=t('admin:profile.password'), v-model='password', value='********')
+        section
+          label.label Access Rights
+          table.table
+            thead.is-teal
+              tr
+                th
+                th(style={width: '200px'}) Permission(s)
+                th Path
+                th(style={width: '150px'}) Access
+                th(style={width: '50px'})
+            tbody
+              tr(v-for='(right, idx) in rights', v-cloak)
+                td.is-icon
+                  i.icon-marquee-plus.is-green(v-if='right.deny === false || right.deny === "false"')
+                  i.icon-marquee-minus.is-red(v-if='right.deny === true || right.deny === "true"')
+                td
+                  p.control.is-fullwidth
+                    select(v-model='right.role')
+                      option(value='write') Read and Write
+                      option(value='read') Read Only
+                td
+                  .columns
+                    .column.is-narrow
+                      p.control
+                        select(v-model='right.exact')
+                          option(value='false') Path starts with:
+                          option(value='true') Path match exactly:
+                    .column
+                      p.control.is-fullwidth
+                        input.input(type='text', placeholder='/', v-model='right.path')
+                td
+                  p.control.is-fullwidth
+                    select(v-model='right.deny')
+                      option(value='false') Allow
+                      option(value='true') Deny
+                td.is-centered.has-action-icons
+                  i.icon-delete.is-red(v-on:click='removeRightsRow(idx)')
+              tr(v-if='rights.length < 1', v-cloak)
+                td.is-icon
+                td.is-centered(colspan='3'): em No additional access rights
+                td.is-centered.has-action-icons
+          .table-actions
+            button.button.is-blue(v-on:click='addRightsRow')
+              i.icon-plus
+              span Add New Row
+        section
+          label.label Role Override
+          p.control.is-fullwidth
+            select(v-model='roleoverride', disabled=!usrOpts.canChangeRole)
+              option(value='none') None
+              option(value='admin') Global Administrator
+        .columns.is-gapless
+          .column
+            section
+              button.button.is-green(v-on:click='saveUser')
+                i.icon-check
+                span Save Changes
+              a.button.button.is-grey.is-outlined(href='/admin/users')
+                i.icon-cancel
+                span Discard
+          .column.is-narrow
+            section
+              if usrOpts.canBeDeleted
+                button.button.is-red(v-on:click='$store.dispatch("modalDeleteUser/open")')
+                  i.icon-trash2
+                  span Delete Account
 
   modal-delete-user(current-user=usr._id)
-
-  script(type='text/javascript').
-    var usrData = !{JSON.stringify(usr)};

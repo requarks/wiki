@@ -74,6 +74,7 @@ import pageLoaderComponent from './components/page-loader.vue'
 import searchComponent from './components/search.vue'
 import treeComponent from './components/tree.vue'
 
+import adminEditUserComponent from './pages/admin-edit-user.component.js'
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
 import contentViewComponent from './pages/content-view.component.js'
@@ -163,6 +164,7 @@ $(() => {
     mixins: [helpers],
     components: {
       alert: alertComponent,
+      adminEditUser: adminEditUserComponent,
       adminProfile: adminProfileComponent,
       adminSettings: adminSettingsComponent,
       anchor: anchorComponent,
