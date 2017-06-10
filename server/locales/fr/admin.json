@@ -1,8 +1,14 @@
 {
   "profile": {
+    "displayname": "Nom complet",
+    "displaynameexample": "Jean Dupont",
+    "email": "Courriel",
     "lastprofileupdate": "Dernière MAJ du profile",
     "membersince": "Membre depuis",
+    "password": "Mot de passe",
+    "passwordverify": "Vérification du mot de passe",
     "provider": "Fournisseur",
+    "savechanges": "Sauvegarder",
     "subtitle": "Informations du profil et authentification"
   },
   "stats": {

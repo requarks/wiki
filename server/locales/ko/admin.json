@@ -1,8 +1,14 @@
 {
   "profile": {
+    "displayname": "이름",
+    "displaynameexample": "박준원",
+    "email": "이메일",
     "lastprofileupdate": "최근 프로필 업데이트",
     "membersince": "회원 가입일",
+    "password": "비밀번호",
+    "passwordverify": "비밀번호 확인",
     "provider": "제공자",
+    "savechanges": "변경 사항 저장",
     "subtitle": "프로필 및 인증 정보"
   },
   "stats": {

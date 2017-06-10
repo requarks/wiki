@@ -22,8 +22,18 @@
     "filesuccess": "已插入文件链接。",
     "filetitle": "插入文件",
     "fileupload": "上传文件",
+    "fileuploaderror": "上传出错：{{err}}",
+    "fileuploadsuccess": "文件上传成功。",
     "folders": "文件夹",
     "foldersloading": "获取文件夹列表",
+    "imagetitle": "插入图片",
+    "imageinsert": "插入图片",
+    "imagesuccess": "图像已插入。",
+    "imageupload": "上传图片",
+    "imagealignleft": "左对齐（默认）",
+    "imagealigncenter": "居中",
+    "imagealignright": "右对齐",
+    "imagealignlogo": "页面 Logo",
     "newfolder": "新文件夹",
     "videoanymp4file": "任何标准的MP4文件",
     "videoinsert": "插入视频",
@@ -84,14 +94,6 @@
   },
   "nav": {
     "home": "首页"
-  },
-  "profile": {
-    "displayname": "显示的名字",
-    "displaynameexample": "John Smith",
-    "email": "Email",
-    "password": "密码",
-    "passwordverify": "验证密码",
-    "savechanges": "保存"
   },
   "search": {
     "didyoumean": "你是指...？",
