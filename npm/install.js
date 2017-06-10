@@ -19,6 +19,8 @@ const tar = require('tar')
 const zlib = require('zlib')
 
 const installDir = path.resolve(__dirname, '../..')
+const isContainerBased = (process.env.WIKI_JS_HEROKU || process.env.WIKI_JS_DOCKER)
+let installMode = 'new'
 
 // =====================================================
 // INSTALLATION TASKS
@@ -28,7 +30,7 @@ const tasks = {
   /**
    * Stop and delete existing instances
    */
-  stopAndDeleteInstances () {
+  stopAndDeleteInstances() {
     ora.text = 'Looking for running instances...'
     return pm2.connectAsync().then(() => {
       return pm2.describeAsync('wiki').then(() => {
@@ -39,14 +41,16 @@ const tasks = {
       }).finally(() => {
         pm2.disconnect()
       })
+    }).catch(err => { // eslint-disable-line handle-callback-err
+      return true
     })
   },
   /**
    * Check for sufficient memory
    */
-  checkRequirements () {
+  checkRequirements() {
     ora.text = 'Checking system requirements...'
-    if (os.totalmem() < 1024 * 1024 * 768) {
+    if (os.totalmem() < 1000 * 1000 * 768) {
       return Promise.reject(new Error('Not enough memory to install dependencies. Minimum is 768 MB.'))
     } else {
       return Promise.resolve(true)
@@ -55,7 +59,7 @@ const tasks = {
   /**
    * Install via local tarball if present
    */
-  installFromLocal () {
+  installFromLocal() {
     let hasTarball = true
     let tbPath = path.join(installDir, 'wiki-js.tar.gz')
     return fs.accessAsync(tbPath)
@@ -67,7 +71,7 @@ const tasks = {
 
           return new Promise((resolve, reject) => {
             fs.createReadStream(tbPath).pipe(zlib.createGunzip())
-              .pipe(tar.Extract({ path: installDir }))
+              .pipe(tar.extract({ cwd: installDir }))
               .on('error', err => reject(err))
               .on('end', () => {
                 ora.text = 'Tarball extracted successfully.'
@@ -82,7 +86,7 @@ const tasks = {
   /**
    * Install from GitHub release download
    */
-  installFromRemote () {
+  installFromRemote() {
     // Fetch version from npm package
     return fs.readJsonAsync('package.json').then((packageObj) => {
       let versionGet = _.chain(packageObj.version).split('.').take(4).join('.')
@@ -96,23 +100,50 @@ const tasks = {
             return reject(new Error('Remote file not found'))
           }
           ora.text = 'Remote wiki.js tarball found. Downloading...'
+          isContainerBased && console.info('>> Extracting to ' + installDir)
 
           // Extract tarball
           resp.pipe(zlib.createGunzip())
-          .pipe(tar.Extract({ path: installDir }))
-          .on('error', err => reject(err))
-          .on('end', () => {
-            ora.text = 'Tarball extracted successfully.'
-            resolve(true)
-          })
+            .pipe(tar.extract({ cwd: installDir }))
+            .on('error', err => reject(err))
+            .on('end', () => {
+              ora.text = 'Tarball extracted successfully.'
+              resolve(true)
+            })
         })
       })
     })
   },
   /**
+   * Create default config.yml file if new installation
+   */
+  ensureConfigFile() {
+    return fs.accessAsync(path.join(installDir, 'config.yml')).then(() => {
+      // Is Upgrade
+      ora.text = 'Existing config.yml found. Upgrade mode.'
+      installMode = 'upgrade'
+      return true
+    }).catch(err => {
+      // Is New Install
+      if (err.code === 'ENOENT') {
+        ora.text = 'First-time install, creating a new config.yml...'
+        installMode = 'new'
+        let sourceConfigFile = path.join(installDir, 'config.sample.yml')
+        if (process.env.WIKI_JS_HEROKU) {
+          sourceConfigFile = path.join(__dirname, 'configs/config.heroku.yml')
+        } else if (process.env.WIKI_JS_DOCKER) {
+          sourceConfigFile = path.join(__dirname, 'configs/config.docker.yml')
+        }
+        return fs.copyAsync(sourceConfigFile, path.join(installDir, 'config.yml'))
+      } else {
+        return err
+      }
+    })
+  },
+  /**
    * Install npm dependencies
    */
-  installDependencies () {
+  installDependencies() {
     ora.text = 'Installing Wiki.js npm dependencies...'
     return exec.stdout('npm', ['install', '--only=production', '--no-optional'], {
       cwd: installDir
@@ -121,42 +152,20 @@ const tasks = {
       return true
     })
   },
-  /**
-   * Create default config.yml file if new installation
-   */
-  ensureConfigFile () {
-    return fs.accessAsync(path.join(installDir, 'config.yml')).then(() => {
-      // Is Upgrade
-      ora.succeed('Upgrade completed.')
-      console.info(colors.yellow('\n!!! IMPORTANT !!!'))
-      console.info(colors.yellow('Running the configuration wizard is optional but recommended after an upgrade to ensure your config file is using the latest available settings.'))
-      console.info(colors.yellow('Note that the contents of your config file will be displayed during the configuration wizard. It is therefor highly recommended to run the wizard on a non-publicly accessible port or skip this step completely.\n'))
-      return true
-    }).catch(err => {
-      // Is New Install
-      if (err.code === 'ENOENT') {
-        ora.text = 'First-time install, creating a new config.yml...'
-        let sourceConfigFile = path.join(installDir, 'config.sample.yml')
-        if (process.env.WIKI_JS_HEROKU) {
-          sourceConfigFile = path.join(__dirname, 'configs/config.heroku.yml')
-        } else if (process.env.WIKI_JS_DOCKER) {
-          sourceConfigFile = path.join(__dirname, 'configs/config.docker.yml')
-        }
-        return fs.copyAsync(sourceConfigFile, path.join(installDir, 'config.yml')).then(() => {
-          ora.succeed('Installation succeeded.')
-          return true
-        })
-      } else {
-        return err
-      }
-    })
-  },
-  startConfigurationWizard () {
+  startConfigurationWizard() {
+    ora.succeed('Installation succeeded.')
     if (process.env.WIKI_JS_HEROKU) {
-      console.info('Wiki.js has been installed and is configured to use Heroku configuration.')
+      console.info('> Wiki.js has been installed and is configured to use Heroku configuration.')
+      return true
     } else if (process.env.WIKI_JS_DOCKER) {
       console.info('Docker environment detected. Skipping setup wizard auto-start.')
+      return true
     } else if (process.stdout.isTTY) {
+      if (installMode === 'upgrade') {
+        console.info(colors.yellow('\n!!! IMPORTANT !!!'))
+        console.info(colors.yellow('Running the configuration wizard is optional but recommended after an upgrade to ensure your config file is using the latest available settings.'))
+        console.info(colors.yellow('Note that the contents of your config file will be displayed during the configuration wizard. It is therefor highly recommended to run the wizard on a non-publicly accessible port or skip this step completely.\n'))
+      }
       inquirer.prompt([{
         type: 'list',
         name: 'action',
@@ -215,7 +224,7 @@ const tasks = {
 // INSTALL SEQUENCE
 // =====================================================
 
-if (!process.env.WIKI_JS_HEROKU && !process.env.WIKI_JS_DOCKER) {
+if (!isContainerBased) {
   console.info(colors.yellow(
     ' __    __ _ _    _    _     \n' +
     '/ / /\\ \\ (_) | _(_)  (_)___ \n' +
@@ -233,15 +242,19 @@ Promise.join(
   tasks.stopAndDeleteInstances(),
   tasks.checkRequirements()
 ).then(() => {
+  isContainerBased && console.info('>> Fetching tarball...')
   return tasks.installFromLocal().then(succeeded => {
     return (!succeeded) ? tasks.installFromRemote() : true
   })
 }).then(() => {
-  return tasks.installDependencies()
-}).then(() => {
+  isContainerBased && console.info('>> Creating config file...')
   return tasks.ensureConfigFile()
+}).then(() => {
+  isContainerBased && console.info('>> Installing dependencies...')
+  return tasks.installDependencies()
 }).then(() => {
   return tasks.startConfigurationWizard()
 }).catch(err => {
+  isContainerBased && console.error(err)
   ora.fail(err)
 })
