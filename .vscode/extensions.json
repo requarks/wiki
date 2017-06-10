@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "EditorConfig.editorconfig",
+    "dbaeumer.vscode-eslint",
+    "christian-kohler.path-intellisense",
+    "mrmlnc.vscode-puglint",
+    "robinbentley.sass-indented",
+    "octref.vetur"
+  ]
+}
