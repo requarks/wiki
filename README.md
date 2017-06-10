@@ -42,6 +42,12 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 > Read the full [prerequisites](https://docs.requarks.io/wiki/prerequisites) article for full details.
 
+## Cloud Install
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
+
+*Docker and more coming soon!*
+
 ## Milestones
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
