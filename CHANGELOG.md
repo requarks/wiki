@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - **History**: History section to list all changes
 
-## [v1.0.0-beta.12] - Unreleased
+## [v1.0.0-beta.12] - 2017-06-10
 ### Added
 - **Deploy**: Heroku support
 - **Localization**: All UI text elements are now localized
