@@ -97,14 +97,6 @@
   "nav": {
     "home": "Home"
   },
-  "profile": {
-    "displayname": "Display Name",
-    "displaynameexample": "John Smith",
-    "email": "Email",
-    "password": "Password",
-    "passwordverify": "Verify Password",
-    "savechanges": "Save Changes"
-  },
   "search": {
     "didyoumean": "Did you mean...?",
     "nomatch": "No results matching your query",

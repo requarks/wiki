@@ -1,6 +1,7 @@
 'use strict'
 
 import MathJax from 'mathjax'
+import $ from 'jquery'
 
 export default {
   name: 'content-view',
@@ -8,6 +9,15 @@ export default {
     return {}
   },
   mounted() {
+    let self = this
+    $('a.toc-anchor').each((i, elm) => {
+      let hashText = $(elm).attr('href').slice(1)
+      $(elm).on('click', (ev) => {
+        ev.stopImmediatePropagation()
+        self.$store.dispatch('anchor/open', hashText)
+        return false
+      })
+    })
     MathJax.Hub.Config({
       jax: ['input/TeX', 'input/MathML', 'output/SVG'],
       extensions: ['tex2jax.js', 'mml2jax.js'],
@@ -28,11 +38,3 @@ export default {
     MathJax.Hub.Configured()
   }
 }
-
-// module.exports = (alerts) => {
-//   if ($('#page-type-view').length) {
-//     let currentBasePath = ($('#page-type-view').data('entrypath') !== 'home') ? $('#page-type-view').data('entrypath') : ''
-//     require('../modals/create.js')(currentBasePath)
-//     require('../modals/move.js')(currentBasePath, alerts)
-//   }
-// }

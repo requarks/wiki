@@ -1,6 +1,7 @@
 'use strict'
 
 export default {
+  namespaced: true,
   state: {
     shown: false,
     hash: ''
@@ -13,10 +14,11 @@ export default {
     }
   },
   actions: {
-    anchorOpen({ commit, dispatch }, hash) {
+    open({ commit }, hash) {
+      console.info('MIGUEL!')
       commit('anchorChange', { shown: true, hash })
     },
-    anchorClose({ commit, dispatch }) {
+    close({ commit }) {
       commit('anchorChange', { shown: false })
     }
   }

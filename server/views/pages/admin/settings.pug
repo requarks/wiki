@@ -15,10 +15,10 @@ block adminContent
             p #{t('admin:settings.latestversion')}: #[strong= sysversion.latest] #[em (Published #{moment(sysversion.latestPublishedAt).fromNow()})]
             p
               if sysversion.current !== sysversion.latest
-                button.button.is-deep-orange(v-on:click='upgrade')= t('admin:settings.upgrade')
+                button.button.is-deep-orange(@click='$store.dispatch("modalUpgradeSystem/open", { mode: "upgrade"})')= t('admin:settings.upgrade')
               else
                 button.button.is-disabled= t('admin:settings.upgrade')
-              button.button.is-deep-orange.is-outlined(v-on:click='reinstall')= t('admin:settings.reinstall')
+              button.button.is-deep-orange.is-outlined(@click='$store.dispatch("modalUpgradeSystem/open", { mode: "reinstall"})')= t('admin:settings.reinstall')
           else
             p: em= t('admin:settings.versioncheckfailed')
       section
@@ -34,4 +34,4 @@ block adminContent
           p.is-small= t('admin:settings.flushsessionstext')
           p: button.button.is-teal.is-outlined(v-on:click='flushsessions')= t('admin:settings.flushsessionsbtn')
 
-      include ../../modals/admin-upgrade.pug
+  modal-upgrade-system

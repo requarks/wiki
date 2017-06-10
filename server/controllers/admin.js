@@ -105,6 +105,8 @@ router.get('/users/:id', (req, res) => {
       }
 
       res.render('pages/admin/users-edit', { adminTab: 'users', usr, usrOpts })
+    }).catch(err => { // eslint-disable-line handle-callback-err
+      return res.status(404).end() || true
     })
 })
 
@@ -218,9 +220,9 @@ router.delete('/users/:id', (req, res) => {
   }
 
   return db.User.findByIdAndRemove(req.params.id).then(() => {
-    return res.json({ msg: 'OK' })
+    return res.json({ ok: true })
   }).catch((err) => {
-    res.status(500).json({ msg: err.message })
+    res.status(500).json({ ok: false, msg: err.message })
   })
 })
 

@@ -70,6 +70,7 @@ import modalCreateUserComponent from './components/modal-create-user.vue'
 import modalDeleteUserComponent from './components/modal-delete-user.vue'
 import modalDiscardPageComponent from './components/modal-discard-page.vue'
 import modalMovePageComponent from './components/modal-move-page.vue'
+import modalUpgradeSystemComponent from './components/modal-upgrade-system.vue'
 import pageLoaderComponent from './components/page-loader.vue'
 import searchComponent from './components/search.vue'
 import treeComponent from './components/tree.vue'
@@ -180,6 +181,7 @@ $(() => {
       modalDeleteUser: modalDeleteUserComponent,
       modalDiscardPage: modalDiscardPageComponent,
       modalMovePage: modalMovePageComponent,
+      modalUpgradeSystem: modalUpgradeSystemComponent,
       pageLoader: pageLoaderComponent,
       search: searchComponent,
       sourceView: sourceViewComponent,

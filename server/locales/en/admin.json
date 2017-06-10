@@ -1,8 +1,14 @@
 {
   "profile": {
+    "displayname": "Display Name",
+    "displaynameexample": "John Smith",
+    "email": "Email",
     "lastprofileupdate": "Last Profile Update",
     "membersince": "Member since",
+    "password": "Password",
+    "passwordverify": "Verify Password",
     "provider": "Provider",
+    "savechanges": "Save Changes",
     "subtitle": "Profile and authentication info"
   },
   "stats": {

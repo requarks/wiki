@@ -32,7 +32,7 @@
     },
     methods: {
       cancel () {
-        this.$store.dispatch('anchorClose')
+        this.$store.dispatch('anchor/close')
       },
       clipboardSuccess () {
         this.$store.dispatch('alert', {
@@ -40,7 +40,7 @@
           icon: 'clipboard',
           msg: this.$t('modal.anchorsuccess')
         })
-        this.$store.dispatch('anchorClose')
+        this.$store.dispatch('anchor/close')
       },
       clipboardError () {
         this.$store.dispatch('alert', {

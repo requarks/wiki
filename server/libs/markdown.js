@@ -206,13 +206,6 @@ const parseContent = (content) => {
     cr(elm).replaceWith(txtLink)
   })
 
-  // -> Add anchor handler
-
-  cr('a.toc-anchor').each((i, elm) => {
-    let hashText = cr(elm).attr('href').slice(1)
-    cr(elm).attr('v-on:click.stop.prevent', "$store.dispatch('anchorOpen', '" + hashText + "')")
-  })
-
   // -> Re-attach blockquote styling classes to their parents
 
   cr.root().children('blockquote').each((i, elm) => {

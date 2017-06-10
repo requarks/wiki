@@ -28,7 +28,7 @@
               p.control.is-fullwidth
                 input.input(type='password', placeholder='', v-model='password')
             section(v-if='provider=="local"')
-              label.label {{ $t('modal.createuserfullname') }}
+              label.label {{ $t('modal.createusername') }}
               p.control.is-fullwidth
                 input.input(type='text', :placeholder='$t("modal.createusernameplaceholder")', v-model='name')
             footer
