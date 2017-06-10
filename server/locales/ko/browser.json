@@ -1,14 +1,9 @@
 {
+  "modal": {
+    "move": "이동"
+  },
   "nav": {
     "home": "홈으로"
-  },
-  "profile": {
-    "displayname": "이름",
-    "displaynameexample": "박준원",
-    "email": "이메일",
-    "password": "비밀번호",
-    "passwordverify": "비밀번호 확인",
-    "savechanges": "변경 사항 저장"
   },
   "search": {
     "didyoumean": "혹시 이런 의미였습니까?",

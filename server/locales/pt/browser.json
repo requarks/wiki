@@ -2,14 +2,6 @@
   "nav": {
     "home": "Início"
   },
-  "profile": {
-    "displayname": "Nome de Exibição",
-    "displaynameexample": "João Silva",
-    "email": "Email",
-    "password": "Senha",
-    "passwordverify": "Verificar Senha",
-    "savechanges": "Salvar Alterações"
-  },
   "search": {
     "didyoumean": "Você quis dizer...?",
     "nomatch": "Nenhum resultado corresponde à sua consulta",

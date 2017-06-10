@@ -2,14 +2,6 @@
   "nav": {
     "home": "Главная"
   },
-  "profile": {
-    "displayname": "Отоброжаемое Имя",
-    "displaynameexample": "Джон Смит",
-    "email": "Е-маил",
-    "password": "Пароль",
-    "passwordverify": "Потвердить Пороль",
-    "savechanges": "Сохранить изменения "
-  },
   "search": {
     "didyoumean": "Вы имели ввиду...?",
     "nomatch": "Нет результатов, соответствующих вашему запросу",

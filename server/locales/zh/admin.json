@@ -1,8 +1,14 @@
 {
   "profile": {
+    "displayname": "显示的名字",
+    "displaynameexample": "John Smith",
+    "email": "Email",
     "lastprofileupdate": "配置文件的最近更新",
     "membersince": "会员始于",
+    "password": "密码",
+    "passwordverify": "验证密码",
     "provider": "供应商",
+    "savechanges": "保存",
     "subtitle": "个人资料与验证信息"
   },
   "stats": {

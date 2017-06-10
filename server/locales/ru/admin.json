@@ -1,7 +1,13 @@
 {
   "profile": {
+    "displayname": "Отоброжаемое Имя",
+    "displaynameexample": "Джон Смит",
+    "email": "Е-маил",
     "membersince": "Участник с ",
+    "password": "Пароль",
+    "passwordverify": "Потвердить Пороль",
     "provider": "Провайдер",
+    "savechanges": "Сохранить изменения ",
     "subtitle": "Информация о профайле и антификации"
   },
   "stats": {
