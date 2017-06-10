@@ -44,7 +44,7 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 ## Cloud Install
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
 
 *Docker and more coming soon!*
 
