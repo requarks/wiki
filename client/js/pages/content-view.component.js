@@ -1,7 +1,8 @@
 'use strict'
 
+/* global $ */
+
 import MathJax from 'mathjax'
-import $ from 'jquery'
 
 export default {
   name: 'content-view',

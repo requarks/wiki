@@ -1,8 +1,8 @@
 'use strict'
 
+/* global $ */
 /* eslint-disable no-new */
 
-import $ from 'jquery'
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'

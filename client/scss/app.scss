@@ -32,7 +32,7 @@ $primary: 'indigo';
 @import 'node_modules/highlight.js/styles/atom-one-dark';
 @import 'node_modules/simplemde/dist/simplemde.min';
 
-@import 'components/_editor';
+@import 'components/editor';
 
 @import 'layout/_header';
 @import 'layout/_loader';
