@@ -374,11 +374,17 @@ main > .ace-container {
   background-color: mc('blue-grey', '100');
 
   &-item {
-    background-color: mc('blue-grey', '50');
+    background-color: mc('blue-grey', '500');
+    padding: 5px;
 
     &:first-child {
       margin-top: 60px;
     }
+
+    & + .editor-sd-item {
+      margin-top: 5px;
+    }
+
   }
 
 }
