@@ -367,3 +367,18 @@ main > .ace-container {
 	bottom: 0;
 	right: 0;
 }
+
+.editor-sd {
+  max-width: 250px;
+  flex: 0 1 250px;
+  background-color: mc('blue-grey', '100');
+
+  &-item {
+    background-color: mc('blue-grey', '50');
+
+    &:first-child {
+      margin-top: 60px;
+    }
+  }
+
+}

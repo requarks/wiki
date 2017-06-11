@@ -15,8 +15,12 @@ block rootNavRight
 
 block content
   editor(inline-template, current-path=pageData.meta.path, v-cloak)
-    .editor-area
-      textarea(ref='editorTextArea', v-pre)= pageData.markdown
+    .columns.is-gapless
+      .column.editor-area
+        textarea(ref='editorTextArea', v-pre)= pageData.markdown
+      .column.editor-sd
+        .editor-sd-item Images
+        .editor-sd-item Files
 
   editor-file
   editor-video

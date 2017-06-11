@@ -2618,9 +2618,9 @@ functional-red-black-tree@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
 
-fuse-box@2.1.0-beta.10:
-  version "2.1.0-beta.10"
-  resolved "https://registry.yarnpkg.com/fuse-box/-/fuse-box-2.1.0-beta.10.tgz#37a3eced1aaa3e665a848af6523f3b87f39e6cbc"
+fuse-box@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/fuse-box/-/fuse-box-2.0.2.tgz#f1171f1c7d5a584dc8151dbfbb50f739c1477b82"
   dependencies:
     acorn "^4.0.3"
     acorn-es7 "^0.1.0"

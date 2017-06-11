@@ -18,8 +18,6 @@
 </template>
 
 <script>
-  import * as $ from 'jquery'
-
   export default {
     data () {
       return {

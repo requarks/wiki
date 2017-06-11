@@ -139,7 +139,7 @@
     "eslint-plugin-node": "^5.0.0",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
-    "fuse-box": "2.1.0-beta.10",
+    "fuse-box": "^2.0.2",
     "i18next-xhr-backend": "^1.4.2",
     "jest": "^20.0.4",
     "jquery": "^3.2.1",
