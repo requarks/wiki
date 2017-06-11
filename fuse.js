@@ -83,7 +83,6 @@ globalTasks.then(() => {
     homeDir: './client',
     output: './assets/js/$name.min.js',
     alias: ALIASES,
-    shim: SHIMS,
     plugins: [
       fsbx.EnvPlugin({ NODE_ENV: (dev) ? 'development' : 'production' }),
       fsbx.VuePlugin(),
@@ -106,7 +105,7 @@ globalTasks.then(() => {
     })
   }
 
-  const bundleApp = fuse.bundle('app').instructions('> index.js')
+  const bundleApp = fuse.bundle('app').shim(SHIMS).instructions('> index.js')
   const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
 
   switch (mode) {
