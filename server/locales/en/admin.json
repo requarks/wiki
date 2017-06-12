@@ -9,7 +9,10 @@
     "passwordverify": "Verify Password",
     "provider": "Provider",
     "savechanges": "Save Changes",
-    "subtitle": "Profile and authentication info"
+    "subtitle": "Profile and authentication info",
+    "tfa": "Two-Factor Authentication (2FA)",
+    "tfaenable": "Enable 2FA",
+    "tfadisable": "Disable 2FA"
   },
   "stats": {
     "subtitle": "General site-wide statistics",
