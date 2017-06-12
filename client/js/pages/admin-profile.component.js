@@ -2,11 +2,16 @@
 
 export default {
   name: 'admin-profile',
-  props: ['email', 'name', 'provider'],
+  props: ['email', 'name', 'provider', 'tfaIsActive'],
   data() {
     return {
       password: '********',
       passwordVerify: '********'
+    }
+  },
+  computed: {
+    tfaStatus() {
+      return this.tfaIsActive ? this.$t('profile.tfaenabled') : this.$t('profile.tfadisabled')
     }
   },
   methods: {

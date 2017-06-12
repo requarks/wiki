@@ -97,6 +97,10 @@
   "nav": {
     "home": "Home"
   },
+  "profile": {
+    "tfaenabled": "Enabled",
+    "tfadisabled": "Disabled"
+  },
   "search": {
     "didyoumean": "Did you mean...?",
     "nomatch": "No results matching your query",

@@ -4617,11 +4617,11 @@ mute-stream@0.0.5:
   version "0.0.5"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.5.tgz#8fbfabb0a98a253d3184331f9e8deb7372fac6c0"
 
-mute-stream@0.0.6, mute-stream@~0.0.4:
+mute-stream@0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.6.tgz#48962b19e169fd1dfc240b3f1e7317627bbc47db"
 
-mute-stream@0.0.7:
+mute-stream@0.0.7, mute-stream@~0.0.4:
   version "0.0.7"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
 
@@ -4681,6 +4681,13 @@ nested-error-stacks@^1.0.0:
 ngraminator@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/ngraminator/-/ngraminator-0.0.1.tgz#29cfd699df6970f42de9b2f0bdc7f4b60fad6f8e"
+
+node-2fa@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/node-2fa/-/node-2fa-1.1.2.tgz#5bc5691474afe35ae6b3b76459b98b7c20c7158c"
+  dependencies:
+    notp "^2.0.3"
+    thirty-two "0.0.2"
 
 node-abi@^2.0.0:
   version "2.0.2"
@@ -4829,6 +4836,10 @@ normalize-path@^2.0.1:
   resolved "https://registry.yarnpkg.com/normalize-path/-/normalize-path-2.1.1.tgz#1ab28b556e198363a8c1a6f7e6fa20137fe6aed9"
   dependencies:
     remove-trailing-separator "^1.0.1"
+
+notp@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/notp/-/notp-2.0.3.tgz#a9fd11e25cfe1ccb39fc6689544ee4c10ef9a577"
 
 npm-run-path@^2.0.0:
   version "2.0.2"
@@ -6773,6 +6784,10 @@ then-fs@^2.0.0:
   resolved "https://registry.yarnpkg.com/then-fs/-/then-fs-2.0.0.tgz#72f792dd9d31705a91ae19ebfcf8b3f968c81da2"
   dependencies:
     promise ">=3.2 <8"
+
+thirty-two@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/thirty-two/-/thirty-two-0.0.2.tgz#4253e29d8cb058f0480267c5698c0e4927e54b6a"
 
 throat@^3.0.0:
   version "3.0.0"

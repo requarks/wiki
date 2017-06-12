@@ -27,7 +27,15 @@ block adminContent
               p.control.is-fullwidth
                 input.input(type='text', placeholder=t('admin:profile.displaynameexample'), v-model='name')
             section
-              button.button.is-green(v-on:click='saveUser')
+              label.label #{t('admin:profile.tfa')}: #[strong.is-red(v-cloak) {{ tfaStatus }}] 
+              button.button.is-blue(@click='$store.dispatch("modalProfile2fa/open")', :disabled='tfaIsActive')
+                i.icon-circle-plus
+                span= t('admin:profile.tfaenable')
+              button.button.is-blue(@click='saveUser', :disabled='!tfaIsActive')
+                i.icon-circle-minus
+                span= t('admin:profile.tfadisable')
+            section
+              button.button.is-green(@click='saveUser')
                 i.icon-check
                 span= t('admin:profile.savechanges')
       .column
@@ -49,3 +57,5 @@ block adminContent
           p.control= moment(user.createdAt).format('LL')
           label.label= t('admin:profile.lastprofileupdate')
           p.control= moment(user.updatedAt).format('LL')
+
+  modal-profile-2fa

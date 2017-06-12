@@ -1,5 +1,6 @@
 {
   "eslint.enable": true,
+  "eslint.autoFixOnSave": false,
   "puglint.enable": true,
   "standard.enable": false,
   "editor.formatOnSave": true,

@@ -12,6 +12,7 @@ import modalCreateUser from './modules/modal-create-user'
 import modalDeleteUser from './modules/modal-delete-user'
 import modalDiscardPage from './modules/modal-discard-page'
 import modalMovePage from './modules/modal-move-page'
+import modalProfile2fa from './modules/modal-profile-2fa'
 import modalUpgradeSystem from './modules/modal-upgrade-system'
 import pageLoader from './modules/page-loader'
 
@@ -41,6 +42,7 @@ export default new Vuex.Store({
     modalDeleteUser,
     modalDiscardPage,
     modalMovePage,
+    modalProfile2fa,
     modalUpgradeSystem,
     pageLoader
   }

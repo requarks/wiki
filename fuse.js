@@ -99,14 +99,7 @@ globalTasks.then(() => {
     log: true
   })
 
-  if (dev) {
-    fuse.dev({
-      port: 4444,
-      httpServer: false
-    })
-  }
-
-  const bundleVendor = fuse.bundle('vendor').instructions('~ index.js')
+  const bundleVendor = fuse.bundle('vendor').instructions('~ index.js') // eslint-disable-line no-unused-vars
   const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
   const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
 
