@@ -18,13 +18,13 @@ html(data-logic='error')
     link(rel='manifest', href='/manifest.json')
 
     // JS / CSS
-    //- script(type='text/javascript', src='/js/libs.min.js')
+    script(type='text/javascript', src='/js/vendor.min.js')
     script(type='text/javascript', src='/js/app.min.js')
 
   body(class='is-notexist')
     .container
       a(href='/'): img(src='/images/logo.png')
-      h1= message
+      h1 !{message}
       h2= t('errors:notexistdetail')
       a.button.is-amber.is-inverted.is-featured(href='/create/' + newpath)= t('errors:actions.create')
       a.button.is-amber.is-inverted(href='/')= t('errors:actions.gohome')
