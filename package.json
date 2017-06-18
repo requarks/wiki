@@ -158,6 +158,7 @@
     "twemoji-awesome": "^1.0.6",
     "typescript": "^2.3.4",
     "uglify-es": "^3.0.15",
+    "uglify-js": "^3.0.15",
     "vee-validate": "^2.0.0-rc.5",
     "vue": "^2.3.4",
     "vue-clipboards": "^1.0.2",

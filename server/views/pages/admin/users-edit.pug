@@ -4,7 +4,7 @@ block rootNavRight
   loading-spinner
   .nav-item
     a.button(href='/admin/users')
-      i.icon-reply
+      i.nc-icon-outline.arrows-2_corner-left-round
       span= t('admin:users.returntousers')
 
 block adminContent
@@ -25,7 +25,7 @@ block adminContent
             td.is-centered= usr._id
             td.is-centered.has-icons
               case usr.provider
-                when 'local': i.icon-server
+                when 'local': i.nc-icon-outline.ui-1_database
                 when 'windowslive': i.icon-windows2.is-blue
                 when 'azure': i.icon-windows2.is-blue
                 when 'google': i.icon-google.is-blue
@@ -64,8 +64,8 @@ block adminContent
             tbody
               tr(v-for='(right, idx) in rights', v-cloak)
                 td.is-icon
-                  i.icon-marquee-plus.is-green(v-if='right.deny === false || right.deny === "false"')
-                  i.icon-marquee-minus.is-red(v-if='right.deny === true || right.deny === "true"')
+                  i.nc-icon-outline.ui-2_square-add-08.is-green(v-if='right.deny === false || right.deny === "false"')
+                  i.nc-icon-outline.ui-2_square-delete-10.is-red(v-if='right.deny === true || right.deny === "true"')
                 td
                   p.control.is-fullwidth
                     select(v-model='right.role')
@@ -94,7 +94,7 @@ block adminContent
                 td.is-centered.has-action-icons
           .table-actions
             button.button.is-blue(v-on:click='addRightsRow')
-              i.icon-plus
+              i.nc-icon-outline.ui-1_simple-add
               span Add New Row
         section
           label.label Role Override
@@ -106,16 +106,16 @@ block adminContent
           .column
             section
               button.button.is-green(v-on:click='saveUser')
-                i.icon-check
+                i.nc-icon-outline.ui-1_check
                 span Save Changes
               a.button.button.is-grey.is-outlined(href='/admin/users')
-                i.icon-cancel
+                i.nc-icon-outline.ui-1_simple-remove
                 span Discard
           .column.is-narrow
             section
               if usrOpts.canBeDeleted
                 button.button.is-red(v-on:click='$store.dispatch("modalDeleteUser/open")')
-                  i.icon-trash2
+                  i.nc-icon-outline.ui-1_trash
                   span Delete Account
 
   modal-delete-user(current-user=usr._id)

@@ -13,20 +13,20 @@ block rootNavRight
   .nav-item
     if rights.write && pageData.meta.path !== 'home'
       a.button.is-outlined(v-on:click='$store.dispatch("modalMovePage/open")')
-        i.icon-shuffle
+        i.nc-icon-outline.arrows-1_shuffle-98
         span= t('nav.move')
     a.button.is-outlined(href='/source/' + pageData.meta.path)
-      i.icon-loader
+      i.nc-icon-outline.education_paper
       span= t('nav.source')
     //- a.button.is-outlined(href='/hist/' + pageData.meta.path)
       i.icon-clock
       span= t('nav.history')
     if rights.write
       a.button(href='/edit/' + pageData.meta.path)
-        i.icon-document-text
+        i.nc-icon-outline.ui-1_edit-76
         span= t('nav.edit')
       a.button(v-on:click='$store.dispatch("modalCreatePage/open")')
-        i.icon-plus
+        i.nc-icon-outline.ui-1_simple-add
         span= t('nav.create')
 
 block content
@@ -43,11 +43,11 @@ block content
             ul.sidebar-menu
               li
                 a(href='/')
-                  i.icon-home
+                  i.nc-icon-outline.ui-1_home-minimal
                   span= t('nav.root')
               li
                 a(href='/all')
-                  i.icon-paper
+                  i.nc-icon-outline.business_hierarchy-55
                   span= t('nav.allpages')
               if pageData.parent
                 li
@@ -57,12 +57,12 @@ block content
               if !isGuest
                 li
                   a(href='/admin')
-                    i.icon-cog
+                    i.nc-icon-outline.ui-1_settings-gear-63
                     span= t('nav.settings')
               else
                 li
                   a(href='/login')
-                    i.icon-unlock
+                    i.nc-icon-outline.arrows-1_log-in
                     span= t('nav.login')
           aside.sidebar-pagecontents
             .sidebar-label

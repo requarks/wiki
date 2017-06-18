@@ -4,7 +4,7 @@ block rootNavRight
   loading-spinner
   .nav-item
     a.button(v-on:click='$store.dispatch("modalCreateUser/open")')
-      i.icon-plus
+      i.nc-icon-outline.ui-1_simple-add
       span= t('admin:users.createauthorize')
 
 block adminContent
@@ -24,13 +24,13 @@ block adminContent
       each usr in usrs
         tr
           td.is-icon
-            i.icon-user.is-grey
+            i.nc-icon-outline.users_single-05.is-grey
           td
             a(href='/admin/users/' + usr._id)= usr.name
           td= usr.email
           td.is-centered.has-icons
             case usr.provider
-              when 'local': i.icon-server
+              when 'local': i.nc-icon-outline.ui-1_database
               when 'windowslive': i.icon-windows2.is-blue
               when 'azure': i.icon-windows2.is-blue
               when 'google': i.icon-google.is-blue

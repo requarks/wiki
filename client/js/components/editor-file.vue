@@ -13,15 +13,15 @@
                 i
             .modal-toolbar.is-green
               a.button(@click='newFolder')
-                i.icon-folder2
+                i.nc-icon-outline.files_folder-14
                 span {{ $t('editor.newfolder') }}
               a.button#btn-editor-file-upload
-                i.icon-cloud-upload
+                i.nc-icon-outline.arrows-1_cloud-upload-94
                 span {{ (mode === 'file') ? $t('editor.fileupload') : $t('editor.imageupload') }}
                 label
                   input(type='file', multiple, :disabled='isLoading', ref='editorFileUploadInput')
               a.button(v-if='mode === "image"', @click='fetchFromUrl')
-                i.icon-cloud-download
+                i.nc-icon-outline.arrows-1_cloud-download-93
                 span Fetch from URL
             section.is-gapless
               .columns.is-stretched
@@ -30,7 +30,7 @@
                   ul.model-sidebar-list
                     li(v-for='fld in folders')
                       a(@click='selectFolder(fld)', :class='{ "is-active": currentFolder === fld }')
-                        i.icon-folder2
+                        i.nc-icon-outline.files_folder-17
                         span / {{ fld }}
                   .model-sidebar-header(v-if='mode === "image"') Alignment
                   .model-sidebar-content(v-if='mode === "image"')

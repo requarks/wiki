@@ -81,37 +81,37 @@ export default {
             name: 'heading-1',
             action: SimpleMDE.toggleHeading1,
             className: 'icon-header fa-header-x fa-header-1',
-            title: 'Big Heading'
+            title: 'Header (Level 1)'
           },
           {
             name: 'heading-2',
             action: SimpleMDE.toggleHeading2,
             className: 'icon-header fa-header-x fa-header-2',
-            title: 'Medium Heading'
+            title: 'Header (Level 2)'
           },
           {
             name: 'heading-3',
             action: SimpleMDE.toggleHeading3,
             className: 'icon-header fa-header-x fa-header-3',
-            title: 'Small Heading'
+            title: 'Header (Level 3)'
           },
           {
             name: 'quote',
             action: SimpleMDE.toggleBlockquote,
-            className: 'icon-quote-left',
+            className: 'nc-icon-outline text_quote',
             title: 'Quote'
           },
           '|',
           {
             name: 'unordered-list',
             action: SimpleMDE.toggleUnorderedList,
-            className: 'icon-th-list',
+            className: 'nc-icon-outline text_list-bullet',
             title: 'Bullet List'
           },
           {
             name: 'ordered-list',
             action: SimpleMDE.toggleOrderedList,
-            className: 'icon-list-ol',
+            className: 'nc-icon-outline text_list-numbers',
             title: 'Numbered List'
           },
           '|',
@@ -121,7 +121,7 @@ export default {
               window.alert('Coming soon!')
               // todo
             },
-            className: 'icon-link2',
+            className: 'nc-icon-outline ui-2_link-68',
             title: 'Insert Link'
           },
           {
@@ -129,7 +129,7 @@ export default {
             action: (editor) => {
               self.$store.dispatch('editorFile/open', { mode: 'image' })
             },
-            className: 'icon-image',
+            className: 'nc-icon-outline design_image',
             title: 'Insert Image'
           },
           {
@@ -137,7 +137,7 @@ export default {
             action: (editor) => {
               self.$store.dispatch('editorFile/open', { mode: 'file' })
             },
-            className: 'icon-paper',
+            className: 'nc-icon-outline files_zip-54',
             title: 'Insert File'
           },
           {
@@ -145,7 +145,7 @@ export default {
             action: (editor) => {
               self.$store.dispatch('editorVideo/open')
             },
-            className: 'icon-video-camera2',
+            className: 'nc-icon-outline media-1_video-64',
             title: 'Insert Video Player'
           },
           '|',
@@ -165,7 +165,7 @@ export default {
               })
               editor.codemirror.doc.replaceSelections(curSel)
             },
-            className: 'icon-terminal',
+            className: 'nc-icon-outline arrows-4_enlarge-46',
             title: 'Inline Code'
           },
           {
@@ -175,7 +175,7 @@ export default {
                 initialContent: (mde.codemirror.doc.somethingSelected()) ? mde.codemirror.doc.getSelection() : ''
               })
             },
-            className: 'icon-code',
+            className: 'nc-icon-outline design_code',
             title: 'Code Block'
           },
           '|',
@@ -185,13 +185,13 @@ export default {
               window.alert('Coming soon!')
               // todo
             },
-            className: 'icon-table',
+            className: 'nc-icon-outline ui-2_grid-square',
             title: 'Insert Table'
           },
           {
             name: 'horizontal-rule',
             action: SimpleMDE.drawHorizontalRule,
-            className: 'icon-minus2',
+            className: 'nc-icon-outline design_distribute-vertical',
             title: 'Horizontal Rule'
           }
         ],

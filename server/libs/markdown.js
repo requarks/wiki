@@ -37,7 +37,7 @@ var mkdown = md({
   .use(mdAnchor, {
     slugify: _.kebabCase,
     permalink: true,
-    permalinkClass: 'toc-anchor icon-anchor',
+    permalinkClass: 'toc-anchor nc-icon-outline location_bookmark-add',
     permalinkSymbol: '',
     permalinkBefore: true
   })

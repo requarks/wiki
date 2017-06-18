@@ -8,17 +8,17 @@ block rootNavRight
   span.nav-item
     if rights.write && pageData.meta.path !== 'home'
       a.button.is-outlined(v-on:click='$store.dispatch("modalMovePage/open")')
-        i.icon-shuffle
+        i.nc-icon-outline.arrows-1_shuffle-98
         span= t('nav.move')
     a.button.is-outlined(href='/' + pageData.meta.path)
-      i.icon-loader
+      i.nc-icon-outline.ui-2_book
       span= t('nav.normalview')
     if rights.write
       a.button.is-orange(href='/edit/' + pageData.meta.path)
-        i.icon-document-text
+        i.nc-icon-outline.ui-1_edit-76
         span= t('nav.edit')
       a.button(v-on:click='$store.dispatch("modalCreatePage/open")')
-        i.icon-plus
+        i.nc-icon-outline.ui-1_simple-add
         span= t('nav.create')
 
 block content
