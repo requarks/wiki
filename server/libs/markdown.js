@@ -208,7 +208,7 @@ const parseContent = (content) => {
 
   // -> Re-attach blockquote styling classes to their parents
 
-  cr.root().children('blockquote').each((i, elm) => {
+  cr('blockquote').each((i, elm) => {
     if (cr(elm).children().length > 0) {
       let bqLastChild = cr(elm).children().last()[0]
       let bqLastChildClasses = cr(bqLastChild).attr('class')
