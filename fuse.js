@@ -81,7 +81,7 @@ let globalTasks = require('./.build/_tasks')
 globalTasks.then(() => {
   let fuse = fsbx.FuseBox.init({
     homeDir: './client',
-    output: './assets/js/$name.min.js',
+    output: './assets/js/$name.js',
     alias: ALIASES,
     shim: SHIMS,
     plugins: [
@@ -90,10 +90,25 @@ globalTasks.then(() => {
       ['.scss', fsbx.SassPlugin({ outputStyle: (dev) ? 'nested' : 'compressed' }), fsbx.CSSPlugin()],
       fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
       fsbx.JSONPlugin(),
-      !dev && fsbx.UglifyESPlugin({
-        compress: { unused: false },
-        output: { 'max_line_len': 1000000 }
-      })
+      /* !dev && fsbx.QuantumPlugin({
+        target: 'browser',
+        uglify: true,
+        api: (core) => {
+          core.solveComputed('default/js/components/editor-codeblock.vue', {
+            mapping: '/js/ace/ace.js',
+            fn: (statement, core) => {
+              statement.setExpression(`'/js/ace/ace.js'`)
+            }
+          })
+          core.solveComputed('default/js/components/editor.component.js', {
+            mapping: '/js/simplemde/simplemde.min.js',
+            fn: (statement, core) => {
+              statement.setExpression(`'/js/simplemde/simplemde.min.js'`)
+            }
+          })
+        }
+      }) */
+      !dev && fsbx.UglifyESPlugin()
     ],
     debug: false,
     log: true
@@ -101,6 +116,7 @@ globalTasks.then(() => {
 
   const bundleVendor = fuse.bundle('vendor').instructions('~ index.js') // eslint-disable-line no-unused-vars
   const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
+  // const bundleApp = fuse.bundle('app').instructions('> index.js')
   const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
 
   switch (mode) {

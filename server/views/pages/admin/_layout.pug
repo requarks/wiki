@@ -7,7 +7,7 @@ block rootNavRight
   loading-spinner
   .nav-item
     a.button.btn-edit-discard(href='/')
-      i.icon-home
+      i.nc-icon-outline.ui-1_home-minimal
       span= t('nav.root')
 
 block content
@@ -24,7 +24,7 @@ block content
             ul.sidebar-menu
               li
                 a(href='/')
-                  i.icon-home
+                  i.nc-icon-outline.ui-1_home-minimal
                   span= t('nav.root')
 
           aside
@@ -33,20 +33,20 @@ block content
             ul.sidebar-menu
               li
                 a(href='/admin/profile')
-                  i.icon-user
+                  i.nc-icon-outline.users_circle-10
                   span= t('nav.myprofile')
               li
                 a(href='/admin/stats')
-                  i.icon-bar-graph-2
+                  i.nc-icon-outline.ui-3_chart-bars
                   span= t('nav.stats')
               if rights.manage
                 li
                   a(href='/admin/users')
-                    i.icon-users
+                    i.nc-icon-outline.users_multiple-19
                     span= t('nav.users')
                 li
                   a(href='/admin/settings')
-                    i.icon-cog
+                    i.nc-icon-outline.ui-1_settings-gear-63
                     span= t('nav.syssettings')
                 //-li
                   a(href='/admin/theme')
@@ -54,7 +54,7 @@ block content
                     span= t('nav.theme')
               li
                 a(href='/logout')
-                  i.icon-delete2
+                  i.nc-icon-outline.arrows-1_log-out
                   span= t('nav.logout')
 
         .column

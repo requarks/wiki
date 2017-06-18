@@ -7,10 +7,10 @@ block rootNavRight
   loading-spinner
   span.nav-item
     a.button.is-outlined(v-on:click='$store.dispatch("modalDiscardPage/open")')
-      i.icon-cross
+      i.nc-icon-outline.ui-1_simple-remove
       span= t('nav.discard')
     a.button(v-on:click='$root.$emit("editor/save")')
-      i.icon-check
+      i.nc-icon-outline.ui-1_check
       span= t('nav.savedocument')
 
 block content

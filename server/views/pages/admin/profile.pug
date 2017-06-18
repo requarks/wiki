@@ -29,21 +29,21 @@ block adminContent
             section
               label.label #{t('admin:profile.tfa')}: #[strong.is-red(v-cloak) {{ tfaStatus }}] 
               button.button.is-blue(@click='$store.dispatch("modalProfile2fa/open")', :disabled='tfaIsActive')
-                i.icon-circle-plus
+                i.nc-icon-outline.ui-1_circle-add
                 span= t('admin:profile.tfaenable')
               button.button.is-blue(@click='saveUser', :disabled='!tfaIsActive')
-                i.icon-circle-minus
+                i.nc-icon-outline.ui-1_circle-delete
                 span= t('admin:profile.tfadisable')
             section
               button.button.is-green(@click='saveUser')
-                i.icon-check
+                i.nc-icon-outline.ui-1_check
                 span= t('admin:profile.savechanges')
       .column
         .panel-aside
           label.label= t('admin:profile.provider')
           p.control.account-profile-provider
             case user.provider
-              when 'local': i.icon-server
+              when 'local': i.nc-icon-outline.ui-1_database
               when 'windowslive': i.icon-windows2.is-blue
               when 'azure': i.icon-windows2.is-blue
               when 'google': i.icon-google.is-blue

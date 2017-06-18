@@ -6951,6 +6951,13 @@ uglify-js@2.7.5, uglify-js@^2.6, uglify-js@^2.6.1:
     uglify-to-browserify "~1.0.0"
     yargs "~3.10.0"
 
+uglify-js@^3.0.15:
+  version "3.0.15"
+  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.0.15.tgz#aacb323a846b234602270dead8a32441a8806f42"
+  dependencies:
+    commander "~2.9.0"
+    source-map "~0.5.1"
+
 uglify-to-browserify@~1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/uglify-to-browserify/-/uglify-to-browserify-1.0.2.tgz#6e0924d6bda6b5afe349e39a6d632850a0f882b7"
