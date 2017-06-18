@@ -5,6 +5,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [v1.0.0-beta.13] - Unreleased
 ### Added
 - **History**: History section to list all changes
+- **Security**: Optional Two-Factor Authentication protection
+
+### Changed
+- **UI**: Updated icons to Nucleo icon set
+
+### Fixed
+- **Editor**: Blockquotes are now displayed in their correct color stylings
+- **Misc**: 'Entry does not exist' page now display sub-pages separator correctly
 
 ## [v1.0.0-beta.12] - 2017-06-10
 ### Added
@@ -166,7 +174,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Updated dependencies + snyk policy
 
 [v1.0.0-beta.13]: https://github.com/Requarks/wiki/compare/v1.0.0-beta.11...HEAD
-[v1.0.0-beta.12]: https://github.com/Requarks/wiki/compare/v1.0.0-beta.11...HEAD
+[v1.0.0-beta.12]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.12
 [v1.0.0-beta.11]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.11
 [v1.0.0-beta.10]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.10
 [v1.0.0-beta.9]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.9
