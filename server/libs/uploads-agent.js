@@ -234,8 +234,8 @@ module.exports = {
   generateThumbnail (sourcePath, destPath) {
     return jimp.read(sourcePath).then(img => {
       return img
-              .contain(150, 150)
-              .write(destPath)
+        .contain(150, 150)
+        .write(destPath)
     })
   },
 

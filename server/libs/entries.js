@@ -260,21 +260,21 @@ module.exports = {
       return db.Entry.findOneAndUpdate({
         _id: content.entryPath
       }, {
-          _id: content.entryPath,
-          title: content.meta.title || content.entryPath,
-          subtitle: content.meta.subtitle || '',
-          parentTitle: content.parent.title || '',
-          parentPath: parentPath,
-          isDirectory: false,
-          isEntry: true
-        }, {
-          new: true,
-          upsert: true
-        }).then(result => {
-          let plainResult = result.toObject()
-          plainResult.text = content.text
-          return plainResult
-        })
+        _id: content.entryPath,
+        title: content.meta.title || content.entryPath,
+        subtitle: content.meta.subtitle || '',
+        parentTitle: content.parent.title || '',
+        parentPath: parentPath,
+        isDirectory: false,
+        isEntry: true
+      }, {
+        new: true,
+        upsert: true
+      }).then(result => {
+        let plainResult = result.toObject()
+        plainResult.text = content.text
+        return plainResult
+      })
     }).then(result => {
       return self.updateTreeInfo().then(() => {
         return result

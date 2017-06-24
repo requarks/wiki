@@ -46,21 +46,21 @@ module.exports = {
           winston.info('[SERVER.System] Install tarball found. Downloading...')
 
           resp.pipe(zlib.createGunzip())
-          .pipe(tar.Extract({ path: self._installDir }))
-          .on('error', err => reject(err))
-          .on('end', () => {
-            winston.info('[SERVER.System] Tarball extracted. Comparing files...')
-            /**
-             * Replace old files
-             */
-            klaw(self._installDir)
+            .pipe(tar.Extract({ path: self._installDir }))
             .on('error', err => reject(err))
             .on('end', () => {
-              winston.info('[SERVER.System] All files were updated successfully.')
-              resolve(true)
+              winston.info('[SERVER.System] Tarball extracted. Comparing files...')
+              /**
+             * Replace old files
+             */
+              klaw(self._installDir)
+                .on('error', err => reject(err))
+                .on('end', () => {
+                  winston.info('[SERVER.System] All files were updated successfully.')
+                  resolve(true)
+                })
+                .pipe(self.replaceFile())
             })
-            .pipe(self.replaceFile())
-          })
         })
       })
     }).then(() => {
@@ -119,12 +119,12 @@ module.exports = {
       let hash = crypto.createHash('sha1')
       hash.setEncoding('hex')
       fs.createReadStream(filePath)
-      .on('error', err => { reject(err) })
-      .on('end', () => {
-        hash.end()
-        resolve(hash.read())
-      })
-      .pipe(hash)
+        .on('error', err => { reject(err) })
+        .on('end', () => {
+          hash.end()
+          resolve(hash.read())
+        })
+        .pipe(hash)
     }).catch(err => {
       if (err.code === 'ENOENT') {
         return '0'
