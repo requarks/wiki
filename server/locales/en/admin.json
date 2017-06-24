@@ -39,6 +39,9 @@
     "flushsessionstext": "All users will be logged out and forced to login again. Your current session will also be affected!",
     "flushsessionsbtn": "Flush Sessions"
   },
+  "system": {
+    "subtitle": "Information on Wiki.js and troubleshooting tools"
+  },
   "users": {
     "createauthorize": "Create / Authorize User",
     "subtitle": "Manage users and access rights",
