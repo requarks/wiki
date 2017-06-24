@@ -21,6 +21,7 @@ const mdRemove = require('remove-markdown')
 
 var mkdown = md({
   html: true,
+  breaks: appconfig.features.linebreaks,
   linkify: true,
   typography: true,
   highlight(str, lang) {
@@ -53,7 +54,10 @@ var mkdown = md({
     tabWidth: 4
   })
   .use(mdAttrs)
-  .use(mdMathjax)
+
+if (appconfig.features.mathjax) {
+  mkdown.use(mdMathjax)
+}
 
 // Rendering rules
 
@@ -296,7 +300,11 @@ const parseContent = (content) => {
 
   // Mathjax Post-processor
 
-  return processMathjax(cr.html())
+  if (appconfig.features.mathjax) {
+    return processMathjax(cr.html())
+  } else {
+    return Promise.resolve(cr.html())
+  }
 }
 
 /**
