@@ -16,7 +16,7 @@
 
 <script>
   export default {
-    name: '',
+    name: 'tree',
     data () {
       return {
         tree: []

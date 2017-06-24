@@ -1,6 +1,6 @@
 'use strict'
 
-/* global $ */
+/* global $, siteRoot */
 /* eslint-disable no-new */
 
 import Vue from 'vue'
@@ -64,6 +64,7 @@ import colorPickerComponent from './components/color-picker.vue'
 import editorCodeblockComponent from './components/editor-codeblock.vue'
 import editorFileComponent from './components/editor-file.vue'
 import editorVideoComponent from './components/editor-video.vue'
+import historyComponent from './components/history.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
@@ -130,7 +131,7 @@ i18next
   .use(i18nextXHR)
   .init({
     backend: {
-      loadPath: '/js/i18n/{{lng}}.json'
+      loadPath: siteRoot + '/js/i18n/{{lng}}.json'
     },
     lng: siteLang,
     fallbackLng: siteLang
@@ -176,6 +177,7 @@ $(() => {
       editorCodeblock: editorCodeblockComponent,
       editorFile: editorFileComponent,
       editorVideo: editorVideoComponent,
+      history: historyComponent,
       loadingSpinner: loadingSpinnerComponent,
       modalCreatePage: modalCreatePageComponent,
       modalCreateUser: modalCreateUserComponent,

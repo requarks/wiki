@@ -2,8 +2,6 @@
 
 /* global $ */
 
-import MathJax from 'mathjax'
-
 export default {
   name: 'content-view',
   data() {
@@ -19,23 +17,5 @@ export default {
         return false
       })
     })
-    MathJax.Hub.Config({
-      jax: ['input/TeX', 'input/MathML', 'output/SVG'],
-      extensions: ['tex2jax.js', 'mml2jax.js'],
-      TeX: {
-        extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js']
-      },
-      SVG: {
-        scale: 120,
-        font: 'STIX-Web'
-      },
-      tex2jax: {
-        preview: 'none'
-      },
-      showMathMenu: false,
-      showProcessingMessages: false,
-      messageStyle: 'none'
-    })
-    MathJax.Hub.Configured()
   }
 }

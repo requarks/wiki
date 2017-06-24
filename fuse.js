@@ -53,17 +53,9 @@ const ALIASES = {
   'vue-lodash': 'vue-lodash/dist/vue-lodash.min.js'
 }
 const SHIMS = {
-  _preinit: {
-    source: '.build/_preinit.js',
-    exports: '_preinit'
-  },
   jquery: {
     source: 'node_modules/jquery/dist/jquery.js',
     exports: '$'
-  },
-  mathjax: {
-    source: 'node_modules/mathjax/MathJax.js',
-    exports: 'MathJax'
   }
 }
 

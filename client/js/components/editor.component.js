@@ -1,6 +1,6 @@
 'use strict'
 
-/* global $ */
+/* global $, siteRoot */
 
 let mde
 
@@ -30,7 +30,7 @@ export default {
         return resp.json()
       }).then(resp => {
         if (resp.ok) {
-          window.location.assign('/' + self.currentPath)
+          window.location.assign(siteRoot + '/' + self.currentPath)
         } else {
           self.$store.dispatch('alert', {
             style: 'red',

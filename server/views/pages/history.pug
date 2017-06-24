@@ -4,32 +4,24 @@ block rootNavRight
   i.nav-item#notifload
   .nav-item
     a.button(href='/' + pageData.meta._id)
-      i.icon-circle-check
+      i.nc-icon-outline.ui-3_select
       span= t('nav.viewlatest')
 
 block content
+  .container.is-fluid
+    .columns.is-gapless
 
-  #page-type-history.page-type-container(data-entrypath=pageData.meta._id)
-    .container.is-fluid.has-mkcontent
-      .columns.is-gapless
+      .column.is-narrow.is-hidden-touch.sidebar
 
-        .column.is-narrow.is-hidden-touch.sidebar
+        aside.stickyscroll
+          .sidebar-label
+            span= t('sidebar.pastversions')
+          ul.sidebar-menu
+            each item, index in pageData.history
+              - var itemDate = moment(item.date)
+              li: a.is-multiline(class={ 'is-active': index < 1 }, href='', title=itemDate.format('LLLL'))
+                span= itemDate.calendar(null, { sameElse: 'llll'})
+                span.is-small= item.commitAbbr
 
-          aside.stickyscroll
-            .sidebar-label
-              span= t('sidebar.pastversions')
-            ul.sidebar-menu
-              each item, index in pageData.history
-                - var itemDate = moment(item.date)
-                li: a.is-multiline(class={ 'is-active': index < 1 }, href='', title=itemDate.format('LLLL'))
-                  span= itemDate.calendar(null, { sameElse: 'llll'})
-                  span.is-small= item.commitAbbr
-
-        .column
-
-          .hero
-            h1.title#title= pageData.meta.title
-            if pageData.meta.subtitle
-              h2.subtitle= pageData.meta.subtitle
-          .content.mkcontent
-            != pageData.html
+      .column
+        history(current-path=pageData.meta._id)

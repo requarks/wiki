@@ -66,56 +66,6 @@ module.exports = Promise.mapSeries([
     })
   },
   /**
-   * MathJax
-   */
-  () => {
-    return fs.accessAsync('./assets/js/mathjax').then(() => {
-      console.info(colors.white('  └── ') + colors.magenta('MathJax directory already exists. Task aborted.'))
-      return true
-    }).catch(err => {
-      if (err.code === 'ENOENT') {
-        console.info(colors.white('  └── ') + colors.green('Copy MathJax dependencies to assets...'))
-        return fs.ensureDirAsync('./assets/js/mathjax').then(() => {
-          return fs.copyAsync('./node_modules/mathjax', './assets/js/mathjax', {
-            filter: (src, dest) => {
-              let srcNormalized = src.replace(/\\/g, '/')
-              let shouldCopy = false
-              console.info(colors.white('      ' + srcNormalized))
-              _.forEach([
-                '/node_modules/mathjax',
-                '/node_modules/mathjax/jax',
-                '/node_modules/mathjax/jax/input',
-                '/node_modules/mathjax/jax/output'
-              ], chk => {
-                if (srcNormalized.endsWith(chk)) {
-                  shouldCopy = true
-                }
-              })
-              _.forEach([
-                '/node_modules/mathjax/extensions',
-                '/node_modules/mathjax/MathJax.js',
-                '/node_modules/mathjax/jax/element',
-                '/node_modules/mathjax/jax/input/MathML',
-                '/node_modules/mathjax/jax/input/TeX',
-                '/node_modules/mathjax/jax/output/SVG'
-              ], chk => {
-                if (srcNormalized.indexOf(chk) > 0) {
-                  shouldCopy = true
-                }
-              })
-              if (shouldCopy && srcNormalized.indexOf('/fonts/') > 0 && srcNormalized.indexOf('/STIX-Web') <= 1) {
-                shouldCopy = false
-              }
-              return shouldCopy
-            }
-          })
-        })
-      } else {
-        throw err
-      }
-    })
-  },
-  /**
    * i18n
    */
   () => {
@@ -134,21 +84,6 @@ module.exports = Promise.mapSeries([
           })
         })
       })
-    })
-  },
-  /**
-   * Bundle pre-init scripts
-   */
-  () => {
-    console.info(colors.white('  └── ') + colors.green('Bundling pre-init scripts...'))
-    let preInitContent = ''
-    return fs.readdirAsync('./client/js/pre-init').map(f => {
-      let fPath = path.join('./client/js/pre-init/', f)
-      return fs.readFileAsync(fPath, 'utf8').then(fContent => {
-        preInitContent += fContent + ';\n'
-      })
-    }).then(() => {
-      return fs.outputFileAsync('./.build/_preinit.js', preInitContent, 'utf8')
     })
   },
   /**

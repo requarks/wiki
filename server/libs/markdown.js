@@ -1,5 +1,6 @@
 'use strict'
 
+const Promise = require('bluebird')
 const md = require('markdown-it')
 const mdEmoji = require('markdown-it-emoji')
 const mdTaskLists = require('markdown-it-task-lists')
@@ -9,6 +10,8 @@ const mdFootnote = require('markdown-it-footnote')
 const mdExternalLinks = require('markdown-it-external-links')
 const mdExpandTabs = require('markdown-it-expand-tabs')
 const mdAttrs = require('markdown-it-attrs')
+const mdMathjax = require('markdown-it-mathjax')()
+const mathjax = require('mathjax-node')
 const hljs = require('highlight.js')
 const cheerio = require('cheerio')
 const _ = require('lodash')
@@ -50,11 +53,7 @@ var mkdown = md({
     tabWidth: 4
   })
   .use(mdAttrs)
-
-if (appconfig) {
-  const mdMathjax = require('markdown-it-mathjax')
-  mkdown.use(mdMathjax())
-}
+  .use(mdMathjax)
 
 // Rendering rules
 
@@ -87,9 +86,40 @@ const videoRules = [
   }
 ]
 
-// Non-markdown filter
+// Regex
 
 const textRegex = new RegExp('\\b[a-z0-9-.,' + appdata.regex.cjk + appdata.regex.arabic + ']+\\b', 'g')
+const mathRegex = [
+  {
+    format: 'TeX',
+    regex: /\\\[([\s\S]*?)\\\]/g
+  },
+  {
+    format: 'inline-TeX',
+    regex: /\\\((.*?)\\\)/g
+  },
+  {
+    format: 'MathML',
+    regex: /<math([\s\S]*?)<\/math>/g
+  }
+]
+
+// MathJax
+
+mathjax.config({
+  MathJax: {
+    jax: ['input/TeX', 'input/MathML', 'output/SVG'],
+    extensions: ['tex2jax.js', 'mml2jax.js'],
+    TeX: {
+      extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js']
+    },
+    SVG: {
+      scale: 120,
+      font: 'STIX-Web'
+    }
+  }
+})
+mathjax.start()
 
 /**
  * Parse markdown content and build TOC tree
@@ -177,11 +207,10 @@ const parseTree = (content) => {
  * Parse markdown content to HTML
  *
  * @param      {String}    content  Markdown content
- * @return     {String}  HTML formatted content
+ * @return     {Promise<String>} Promise
  */
 const parseContent = (content) => {
-  let output = mkdown.render(content)
-  let cr = cheerio.load(output)
+  let cr = cheerio.load(mkdown.render(content))
 
   if (cr.root().children().length < 1) {
     return ''
@@ -265,9 +294,55 @@ const parseContent = (content) => {
     cr(elm).removeClass('align-center')
   })
 
-  output = cr.html()
+  // Mathjax Post-processor
 
-  return output
+  return processMathjax(cr.html())
+}
+
+/**
+ * Process MathJax expressions
+ *
+ * @param {String} content HTML content
+ * @returns {Promise<String>} Promise
+ */
+const processMathjax = (content) => {
+  let matchStack = []
+  let replaceStack = []
+  let currentMatch
+  let mathjaxState = {}
+
+  _.forEach(mathRegex, mode => {
+    do {
+      currentMatch = mode.regex.exec(content)
+      if (currentMatch) {
+        matchStack.push(currentMatch[0])
+        replaceStack.push(
+          new Promise((resolve, reject) => {
+            mathjax.typeset({
+              math: (mode.format === 'MathML') ? currentMatch[0] : currentMatch[1],
+              format: mode.format,
+              speakText: false,
+              svg: true,
+              state: mathjaxState
+            }, result => {
+              if (!result.errors) {
+                resolve(result.svg)
+              } else {
+                reject(new Error(result.errors.join(', ')))
+              }
+            })
+          })
+        )
+      }
+    } while (currentMatch)
+  })
+
+  return (matchStack.length > 0) ? Promise.all(replaceStack).then(results => {
+    _.forEach(matchStack, (repMatch, idx) => {
+      content = content.replace(repMatch, results[idx])
+    })
+    return content
+  }) : Promise.resolve(content)
 }
 
 /**
@@ -314,11 +389,13 @@ module.exports = {
    * @return     {Object}  Object containing meta, html and tree data
    */
   parse(content) {
-    return {
-      meta: parseMeta(content),
-      html: parseContent(content),
-      tree: parseTree(content)
-    }
+    return parseContent(content).then(html => {
+      return {
+        meta: parseMeta(content),
+        html,
+        tree: parseTree(content)
+      }
+    })
   },
 
   parseContent,
