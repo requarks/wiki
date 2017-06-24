@@ -49,6 +49,7 @@ defaults:
       serverEmail: wiki@example.com
       showUserEmail: true
     features:
+      linebreaks: true
       mathjax: true
     externalLogging:
       bugsnap: false
