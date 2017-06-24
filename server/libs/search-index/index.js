@@ -29,7 +29,7 @@ module.exports = function (givenOptions, moduleReady) {
 const getAdder = function (SearchIndex, done) {
   SearchIndexAdder(SearchIndex.options, function (err, searchIndexAdder) {
     SearchIndex.add = searchIndexAdder.add
-    SearchIndex.callbackyAdd = searchIndexAdder.concurrentAdd  // deprecated
+    SearchIndex.callbackyAdd = searchIndexAdder.concurrentAdd // deprecated
     SearchIndex.concurrentAdd = searchIndexAdder.concurrentAdd
     SearchIndex.createWriteStream = searchIndexAdder.createWriteStream
     SearchIndex.dbWriteStream = searchIndexAdder.dbWriteStream

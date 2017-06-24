@@ -32,8 +32,7 @@ module.exports = function (passport) {
       new LocalStrategy({
         usernameField: 'email',
         passwordField: 'password'
-      },
-      (uEmail, uPassword, done) => {
+      }, (uEmail, uPassword, done) => {
         db.User.findOne({ email: uEmail, provider: 'local' }).then((user) => {
           if (user) {
             return user.validatePassword(uPassword).then(() => {
@@ -48,7 +47,7 @@ module.exports = function (passport) {
           done(err, null)
         })
       }
-    ))
+      ))
   }
 
   // Google ID
@@ -60,15 +59,14 @@ module.exports = function (passport) {
         clientID: appconfig.auth.google.clientId,
         clientSecret: appconfig.auth.google.clientSecret,
         callbackURL: appconfig.host + '/login/google/callback'
-      },
-      (accessToken, refreshToken, profile, cb) => {
+      }, (accessToken, refreshToken, profile, cb) => {
         db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true
         })
       }
-    ))
+      ))
   }
 
   // Microsoft Accounts
@@ -80,15 +78,14 @@ module.exports = function (passport) {
         clientID: appconfig.auth.microsoft.clientId,
         clientSecret: appconfig.auth.microsoft.clientSecret,
         callbackURL: appconfig.host + '/login/ms/callback'
-      },
-      function (accessToken, refreshToken, profile, cb) {
+      }, function (accessToken, refreshToken, profile, cb) {
         db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true
         })
       }
-    ))
+      ))
   }
 
   // Facebook
@@ -101,15 +98,14 @@ module.exports = function (passport) {
         clientSecret: appconfig.auth.facebook.clientSecret,
         callbackURL: appconfig.host + '/login/facebook/callback',
         profileFields: ['id', 'displayName', 'email']
-      },
-      function (accessToken, refreshToken, profile, cb) {
+      }, function (accessToken, refreshToken, profile, cb) {
         db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true
         })
       }
-    ))
+      ))
   }
 
   // GitHub
@@ -121,16 +117,15 @@ module.exports = function (passport) {
         clientID: appconfig.auth.github.clientId,
         clientSecret: appconfig.auth.github.clientSecret,
         callbackURL: appconfig.host + '/login/github/callback',
-        scope: [ 'user:email' ]
-      },
-      (accessToken, refreshToken, profile, cb) => {
+        scope: ['user:email']
+      }, (accessToken, refreshToken, profile, cb) => {
         db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true
         })
       }
-    ))
+      ))
   }
 
   // Slack
@@ -142,15 +137,14 @@ module.exports = function (passport) {
         clientID: appconfig.auth.slack.clientId,
         clientSecret: appconfig.auth.slack.clientSecret,
         callbackURL: appconfig.host + '/login/slack/callback'
-      },
-      (accessToken, refreshToken, profile, cb) => {
+      }, (accessToken, refreshToken, profile, cb) => {
         db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true
         })
       }
-    ))
+      ))
   }
 
   // LDAP
@@ -174,8 +168,7 @@ module.exports = function (passport) {
         },
         usernameField: 'email',
         passReqToCallback: false
-      },
-      (profile, cb) => {
+      }, (profile, cb) => {
         profile.provider = 'ldap'
         profile.id = profile.dn
         db.User.processProfile(profile).then((user) => {
@@ -184,7 +177,7 @@ module.exports = function (passport) {
           return cb(err, null) || true
         })
       }
-    ))
+      ))
   }
 
   // AZURE AD
@@ -199,8 +192,7 @@ module.exports = function (passport) {
         callbackURL: appconfig.host + '/login/azure/callback',
         resource: appconfig.auth.azure.resource,
         tenant: appconfig.auth.azure.tenant
-      },
-      (accessToken, refreshToken, params, profile, cb) => {
+      }, (accessToken, refreshToken, params, profile, cb) => {
         let waadProfile = jwt.decode(params.id_token)
         waadProfile.id = waadProfile.oid
         waadProfile.provider = 'azure'
@@ -210,7 +202,7 @@ module.exports = function (passport) {
           return cb(err, null) || true
         })
       }
-    ))
+      ))
   }
 
   // Create users for first-time

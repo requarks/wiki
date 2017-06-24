@@ -157,15 +157,15 @@ module.exports = {
   find (terms) {
     let self = this
     terms = _.chain(terms)
-              .deburr()
-              .toLower()
-              .trim()
-              .replace(/[^a-z0-9 ]/g, ' ')
-              .value()
+      .deburr()
+      .toLower()
+      .trim()
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .value()
     let arrTerms = _.chain(terms)
-                    .split(' ')
-                    .filter((f) => { return !_.isEmpty(f) })
-                    .value()
+      .split(' ')
+      .filter((f) => { return !_.isEmpty(f) })
+      .value()
 
     return streamToPromise(self._si.search({
       query: [{

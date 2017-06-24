@@ -19,7 +19,7 @@ module.exports = {
    *
    * @return     {Object}  DB instance
    */
-  init () {
+  init() {
     let self = this
 
     let dbModelsPath = path.join(SERVERPATH, 'models')
@@ -44,14 +44,14 @@ module.exports = {
     // Load DB Models
 
     fs
-    .readdirSync(dbModelsPath)
-    .filter(function (file) {
-      return (file.indexOf('.') !== 0)
-    })
-    .forEach(function (file) {
-      let modelName = _.upperFirst(_.camelCase(_.split(file, '.')[0]))
-      self[modelName] = require(path.join(dbModelsPath, file))
-    })
+      .readdirSync(dbModelsPath)
+      .filter(function (file) {
+        return (file.indexOf('.') !== 0)
+      })
+      .forEach(function (file) {
+        let modelName = _.upperFirst(_.camelCase(_.split(file, '.')[0]))
+        self[modelName] = require(path.join(dbModelsPath, file))
+      })
 
     // Connect
 
