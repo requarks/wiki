@@ -22,7 +22,7 @@ module.exports = {
    *
    * @return     {Object}  Entries model instance
    */
-  init () {
+  init() {
     let self = this
 
     self._repoPath = path.resolve(ROOTPATH, appconfig.paths.repo)
@@ -39,7 +39,7 @@ module.exports = {
    * @param      {String}  entryPath  The entry path
    * @return     {Promise<Boolean>}  True if exists, false otherwise
    */
-  exists (entryPath) {
+  exists(entryPath) {
     let self = this
 
     return self.fetchOriginal(entryPath, {
@@ -62,7 +62,7 @@ module.exports = {
    * @param      {String}           entryPath  The entry path
    * @return     {Promise<Object>}  Page Data
    */
-  fetch (entryPath) {
+  fetch(entryPath) {
     let self = this
 
     let cpath = entryHelper.getCachePath(entryPath)
@@ -97,7 +97,7 @@ module.exports = {
    * @param      {Object}           options    The options
    * @return     {Promise<Object>}  Page data
    */
-  fetchOriginal (entryPath, options) {
+  fetchOriginal(entryPath, options) {
     let self = this
 
     let fpath = entryHelper.getFullPath(entryPath)
@@ -115,43 +115,47 @@ module.exports = {
     return fs.statAsync(fpath).then((st) => {
       if (st.isFile()) {
         return fs.readFileAsync(fpath, 'utf8').then((contents) => {
+          let htmlProcessor = (options.parseMarkdown) ? mark.parseContent(contents) : Promise.resolve('')
+
           // Parse contents
 
-          let pageData = {
-            markdown: (options.includeMarkdown) ? contents : '',
-            html: (options.parseMarkdown) ? mark.parseContent(contents) : '',
-            meta: (options.parseMeta) ? mark.parseMeta(contents) : {},
-            tree: (options.parseTree) ? mark.parseTree(contents) : []
-          }
-
-          if (!pageData.meta.title) {
-            pageData.meta.title = _.startCase(entryPath)
-          }
-
-          pageData.meta.path = entryPath
-
-          // Get parent
-
-          let parentPromise = (options.includeParentInfo) ? self.getParentInfo(entryPath).then((parentData) => {
-            return (pageData.parent = parentData)
-          }).catch((err) => { // eslint-disable-line handle-callback-err
-            return (pageData.parent = false)
-          }) : Promise.resolve(true)
-
-          return parentPromise.then(() => {
-            // Cache to disk
-
-            if (options.cache) {
-              let cacheData = JSON.stringify(_.pick(pageData, ['html', 'meta', 'tree', 'parent']), false, false, false)
-              return fs.writeFileAsync(cpath, cacheData).catch((err) => {
-                winston.error('Unable to write to cache! Performance may be affected.')
-                winston.error(err)
-                return true
-              })
-            } else {
-              return true
+          return htmlProcessor.then(html => {
+            let pageData = {
+              markdown: (options.includeMarkdown) ? contents : '',
+              html,
+              meta: (options.parseMeta) ? mark.parseMeta(contents) : {},
+              tree: (options.parseTree) ? mark.parseTree(contents) : []
             }
-          }).return(pageData)
+
+            if (!pageData.meta.title) {
+              pageData.meta.title = _.startCase(entryPath)
+            }
+
+            pageData.meta.path = entryPath
+
+            // Get parent
+
+            let parentPromise = (options.includeParentInfo) ? self.getParentInfo(entryPath).then((parentData) => {
+              return (pageData.parent = parentData)
+            }).catch((err) => { // eslint-disable-line handle-callback-err
+              return (pageData.parent = false)
+            }) : Promise.resolve(true)
+
+            return parentPromise.then(() => {
+              // Cache to disk
+
+              if (options.cache) {
+                let cacheData = JSON.stringify(_.pick(pageData, ['html', 'meta', 'tree', 'parent']), false, false, false)
+                return fs.writeFileAsync(cpath, cacheData).catch((err) => {
+                  winston.error('Unable to write to cache! Performance may be affected.')
+                  winston.error(err)
+                  return true
+                })
+              } else {
+                return true
+              }
+            }).return(pageData)
+          })
         })
       } else {
         return false
@@ -167,7 +171,7 @@ module.exports = {
    * @param      {String}                 entryPath  The entry path
    * @return     {Promise<Object|False>}  The parent information.
    */
-  getParentInfo (entryPath) {
+  getParentInfo(entryPath) {
     if (_.includes(entryPath, '/')) {
       let parentParts = _.initial(_.split(entryPath, '/'))
       let parentPath = _.join(parentParts, '/')
@@ -202,7 +206,7 @@ module.exports = {
    * @param {Object} author The author user object
    * @return     {Promise<Boolean>}  True on success, false on failure
    */
-  update (entryPath, contents, author) {
+  update(entryPath, contents, author) {
     let self = this
     let fpath = entryHelper.getFullPath(entryPath)
 
@@ -228,7 +232,7 @@ module.exports = {
    * @param      {String}   entryPath  The entry path
    * @return     {Promise}  Promise of the operation
    */
-  updateCache (entryPath) {
+  updateCache(entryPath) {
     let self = this
 
     return self.fetchOriginal(entryPath, {
@@ -256,21 +260,21 @@ module.exports = {
       return db.Entry.findOneAndUpdate({
         _id: content.entryPath
       }, {
-        _id: content.entryPath,
-        title: content.meta.title || content.entryPath,
-        subtitle: content.meta.subtitle || '',
-        parentTitle: content.parent.title || '',
-        parentPath: parentPath,
-        isDirectory: false,
-        isEntry: true
-      }, {
-        new: true,
-        upsert: true
-      }).then(result => {
-        let plainResult = result.toObject()
-        plainResult.text = content.text
-        return plainResult
-      })
+          _id: content.entryPath,
+          title: content.meta.title || content.entryPath,
+          subtitle: content.meta.subtitle || '',
+          parentTitle: content.parent.title || '',
+          parentPath: parentPath,
+          isDirectory: false,
+          isEntry: true
+        }, {
+          new: true,
+          upsert: true
+        }).then(result => {
+          let plainResult = result.toObject()
+          plainResult.text = content.text
+          return plainResult
+        })
     }).then(result => {
       return self.updateTreeInfo().then(() => {
         return result
@@ -286,7 +290,7 @@ module.exports = {
    *
    * @returns {Promise<Boolean>} Promise of the operation
    */
-  updateTreeInfo () {
+  updateTreeInfo() {
     return db.Entry.distinct('parentPath', { parentPath: { $ne: '' } }).then(allPaths => {
       if (allPaths.length > 0) {
         return Promise.map(allPaths, pathItem => {
@@ -311,7 +315,7 @@ module.exports = {
    * @param {Object} author The author user object
    * @return {Promise<Boolean>} True on success, false on failure
    */
-  create (entryPath, contents, author) {
+  create(entryPath, contents, author) {
     let self = this
 
     return self.exists(entryPath).then((docExists) => {
@@ -338,7 +342,7 @@ module.exports = {
    * @param {Object} author The author user object
    * @return {Promise<Boolean>} True on success, false on failure
    */
-  makePersistent (entryPath, contents, author) {
+  makePersistent(entryPath, contents, author) {
     let fpath = entryHelper.getFullPath(entryPath)
 
     return fs.outputFileAsync(fpath, contents).then(() => {
@@ -354,7 +358,7 @@ module.exports = {
    * @param {Object} author The author user object
    * @return {Promise} Promise of the operation
    */
-  move (entryPath, newEntryPath, author) {
+  move(entryPath, newEntryPath, author) {
     let self = this
 
     if (_.isEmpty(entryPath) || entryPath === 'home') {
@@ -387,7 +391,7 @@ module.exports = {
    * @param      {String}           entryPath  The entry path
    * @return     {Promise<String>}  Starter content
    */
-  getStarter (entryPath) {
+  getStarter(entryPath) {
     let formattedTitle = _.startCase(_.last(_.split(entryPath, '/')))
 
     return fs.readFileAsync(path.join(SERVERPATH, 'app/content/create.md'), 'utf8').then((contents) => {
@@ -402,7 +406,7 @@ module.exports = {
    * @param {Object} usr Current user
    * @return {Promise<Array>} List of entries
    */
-  getFromTree (basePath, usr) {
+  getFromTree(basePath, usr) {
     return db.Entry.find({ parentPath: basePath }, 'title parentPath isDirectory isEntry').sort({ title: 'asc' }).then(results => {
       return _.filter(results, r => {
         return rights.checkRole('/' + r._id, usr.rights, 'read')
@@ -410,7 +414,7 @@ module.exports = {
     })
   },
 
-  getHistory (entryPath) {
+  getHistory(entryPath) {
     return db.Entry.findOne({ _id: entryPath, isEntry: true }).then(entry => {
       if (!entry) { return false }
       return git.getHistory(entryPath).then(history => {
