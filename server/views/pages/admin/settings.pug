@@ -4,34 +4,3 @@ block adminContent
   .hero
     h1.title#title= t('nav.syssettings')
     h2.subtitle= t('admin:settings.subtitle')
-  admin-settings(inline-template)
-    .form-sections
-      section
-        img(src='/images/logo.png', style={width:'200px', float:'right'})
-        label.label= t('admin:settings.systemversion')
-        .section-block
-          p #{t('admin:settings.currentversion')}: #[strong= sysversion.current]
-          if sysversion.latest
-            p #{t('admin:settings.latestversion')}: #[strong= sysversion.latest] #[em (Published #{moment(sysversion.latestPublishedAt).fromNow()})]
-            p
-              if sysversion.current !== sysversion.latest
-                button.button.is-deep-orange(@click='$store.dispatch("modalUpgradeSystem/open", { mode: "upgrade"})')= t('admin:settings.upgrade')
-              else
-                button.button.is-disabled= t('admin:settings.upgrade')
-              button.button.is-deep-orange.is-outlined(@click='$store.dispatch("modalUpgradeSystem/open", { mode: "reinstall"})')= t('admin:settings.reinstall')
-          else
-            p: em= t('admin:settings.versioncheckfailed')
-      section
-        label.label= t('admin:settings.administrativetools')
-        .section-block
-          h6 #{t('admin:settings.flushcache')}:
-          p.is-small= t('admin:settings.flushcachetext')
-          p: button.button.is-teal.is-outlined(v-on:click='flushcache')= t('admin:settings.flushcachebtn')
-          h6 #{t('admin:settings.resetaccounts')}:
-          p.is-small= t('admin:settings.resetaccountstext')
-          p: button.button.is-teal.is-outlined(v-on:click='resetaccounts')= t('admin:settings.resetaccountsbtn')
-          h6 #{t('admin:settings.flushsessions')}:
-          p.is-small= t('admin:settings.flushsessionstext')
-          p: button.button.is-teal.is-outlined(v-on:click='flushsessions')= t('admin:settings.flushsessionsbtn')
-
-  modal-upgrade-system

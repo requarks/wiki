@@ -230,6 +230,13 @@ router.get('/settings', (req, res) => {
   if (!res.locals.rights.manage) {
     return res.render('error-forbidden')
   }
+  res.render('pages/admin/settings', { adminTab: 'settings' })
+})
+
+router.get('/system', (req, res) => {
+  if (!res.locals.rights.manage) {
+    return res.render('error-forbidden')
+  }
 
   fs.readJsonAsync(path.join(ROOTPATH, 'package.json')).then(packageObj => {
     axios.get('https://api.github.com/repos/Requarks/wiki/releases/latest').then(resp => {
@@ -239,15 +246,15 @@ router.get('/settings', (req, res) => {
         latestPublishedAt: resp.data.published_at
       }
 
-      res.render('pages/admin/settings', { adminTab: 'settings', sysversion })
+      res.render('pages/admin/system', { adminTab: 'system', sysversion })
     }).catch(err => {
       winston.warn(err)
-      res.render('pages/admin/settings', { adminTab: 'settings', sysversion: { current: 'v' + packageObj.version } })
+      res.render('pages/admin/system', { adminTab: 'system', sysversion: { current: 'v' + packageObj.version } })
     })
   })
 })
 
-router.post('/settings/install', (req, res) => {
+router.post('/system/install', (req, res) => {
   if (!res.locals.rights.manage) {
     return res.render('error-forbidden')
   }

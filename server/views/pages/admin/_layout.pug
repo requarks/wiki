@@ -33,7 +33,7 @@ block content
             ul.sidebar-menu
               li
                 a(href='/admin/profile')
-                  i.nc-icon-outline.users_circle-10
+                  i.nc-icon-outline.business_business-contact-86
                   span= t('nav.myprofile')
               li
                 a(href='/admin/stats')
@@ -45,13 +45,17 @@ block content
                     i.nc-icon-outline.users_multiple-19
                     span= t('nav.users')
                 li
-                  a(href='/admin/settings')
-                    i.nc-icon-outline.ui-1_settings-gear-63
-                    span= t('nav.syssettings')
-                //-li
                   a(href='/admin/theme')
                     i.icon-drop
                     span= t('nav.theme')
+                li
+                  a(href='/admin/settings')
+                    i.nc-icon-outline.ui-1_settings-gear-63
+                    span= t('nav.syssettings')
+                li
+                  a(href='/admin/system')
+                    i.nc-icon-outline.objects_planet
+                    span= t('nav.sysinfo')
               li
                 a(href='/logout')
                   i.nc-icon-outline.arrows-1_log-out
