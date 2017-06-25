@@ -3,13 +3,13 @@ services:
   wikidb:
     image: mongo
     ports:
-      - '27017'
+      - '27017:27017'
     command: '--smallfiles --logpath=/dev/null'
   wikijs:
     image: 'requarks/wiki:latest'
     links:
       - wikidb
     ports:
-      - '3000'
+      - '3000:3000'
     environment:
       - PORT=3000
