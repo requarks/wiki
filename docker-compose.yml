@@ -6,10 +6,10 @@ services:
       - '27017'
     command: '--smallfiles --logpath=/dev/null'
   wikijs:
-    image: 'requarks/wiki:master'
+    image: 'requarks/wiki:latest'
     links:
       - wikidb
     ports:
       - '3000'
     environment:
-      - PORT: 3000
+      - PORT=3000
