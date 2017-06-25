@@ -1,11 +1,17 @@
 extends ./_layout.pug
 
 block adminContent
-  #page-type-admin-settings
-    .hero
-      h1.title#title= t('nav.theme')
-      h2.subtitle= t('admin:theme.subtitle')
-    .form-sections
-      section
-        label.label= t('admin:theme.primarycolor')
-        color-picker
+  .hero
+    h1.title#title= t('nav.theme')
+    h2.subtitle= t('admin:theme.subtitle')
+  .form-sections
+    section
+      label.label= t('admin:theme.primarycolor')
+      color-picker(current-color='indigo')
+    section
+      label.label= t('admin:theme.altcolor')
+      color-picker(current-color='blue-grey')
+    section
+      label.label= t('admin:theme.codeblock')
+      toggle(current-value='dark', desc='Use Dark Theme')
+      toggle(current-value='dark', desc='Colorize code syntax')

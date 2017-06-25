@@ -4,10 +4,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.0.0-beta.13] - Unreleased
 ### Added
+- **Editor**: Linebreaks are now rendered, can be disabled via config option
 - **History**: History section to list all changes
 - **Security**: Optional Two-Factor Authentication protection
 
 ### Changed
+- **Editor**: TeX and MathML is now rendered server-side to SVG
 - **UI**: Updated icons to Nucleo icon set
 
 ### Fixed

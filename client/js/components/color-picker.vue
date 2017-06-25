@@ -1,14 +1,40 @@
 <template lang="pug">
-  p.control
-    input.input(type='text', placeholder='#F0F0F0', v-model='color')
+  .colorpicker
+    .colorpicker-choice(v-for='color in colors', :class='["is-" + color, color === currentColor ? "is-active" : ""]', @click='setColor(color)')
 </template>
 
 <script>
   export default {
     name: 'color-picker',
+    props: ['currentColor'],
     data () {
       return {
-        color: '000000'
+        colors: [
+          'red',
+          'pink',
+          'purple',
+          'deep-purple',
+          'indigo',
+          'blue',
+          'light-blue',
+          'cyan',
+          'teal',
+          'green',
+          'light-green',
+          'lime',
+          'yellow',
+          'amber',
+          'orange',
+          'deep-orange',
+          'brown',
+          'grey',
+          'blue-grey'
+        ]
+      }
+    },
+    methods: {
+      setColor(color) {
+        this.currentColor = color
       }
     }
   }

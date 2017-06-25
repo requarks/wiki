@@ -42,6 +42,12 @@
   "system": {
     "subtitle": "Information on Wiki.js and troubleshooting tools"
   },
+  "theme": {
+    "subtitle": "Customize the appearance of your wiki",
+    "primarycolor": "Primary Color",
+    "altcolor": "Secondary Color",
+    "codeblock": "Code Blocks"
+  },
   "users": {
     "createauthorize": "Create / Authorize User",
     "subtitle": "Manage users and access rights",
