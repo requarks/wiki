@@ -103,7 +103,7 @@ sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 # Database Connection String
 # ---------------------------------------------------------------------
 
-db: mongodb://mongo:27017/wiki
+db: mongodb://wikidb:27017/wiki
 
 # ---------------------------------------------------------------------
 # Git Connection Info
