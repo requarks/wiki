@@ -6,7 +6,12 @@ RUN apk update && apk upgrade && \
 ENV WIKI_JS_DOCKER 1
 
 WORKDIR /usr/src/app
-RUN npm install wiki.js@latest
+COPY assets assets/
+COPY server server/
+COPY npm/configs/config.docker.yml config.yml
+COPY package.json package.json
+COPY LICENSE LICENSE
+RUN npm install --only=production --no-optional
 
 EXPOSE 3000
 ENTRYPOINT [ "node", "server" ]
