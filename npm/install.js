@@ -129,10 +129,8 @@ const tasks = {
         ora.text = 'First-time install, creating a new config.yml...'
         installMode = 'new'
         let sourceConfigFile = path.join(installDir, 'config.sample.yml')
-        if (process.env.WIKI_JS_HEROKU) {
-          sourceConfigFile = path.join(__dirname, 'configs/config.heroku.yml')
-        } else if (process.env.WIKI_JS_DOCKER) {
-          sourceConfigFile = path.join(__dirname, 'configs/config.docker.yml')
+        if (process.env.WIKI_JS_HEROKU || process.env.WIKI_JS_DOCKER) {
+          sourceConfigFile = path.join(__dirname, 'configs/config.passive.yml')
         }
         return fs.copyAsync(sourceConfigFile, path.join(installDir, 'config.yml'))
       } else {
