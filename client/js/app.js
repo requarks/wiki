@@ -75,6 +75,7 @@ import modalProfile2faComponent from './components/modal-profile-2fa.vue'
 import modalUpgradeSystemComponent from './components/modal-upgrade-system.vue'
 import pageLoaderComponent from './components/page-loader.vue'
 import searchComponent from './components/search.vue'
+import toggleComponent from './components/toggle.vue'
 import treeComponent from './components/tree.vue'
 
 import adminEditUserComponent from './pages/admin-edit-user.component.js'
@@ -189,6 +190,7 @@ $(() => {
       pageLoader: pageLoaderComponent,
       search: searchComponent,
       sourceView: sourceViewComponent,
+      toggle: toggleComponent,
       tree: treeComponent
     },
     store,
