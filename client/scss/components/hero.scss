@@ -16,6 +16,14 @@
 		font-weight: 400;
 	}
 
+  .pageicon {
+    position:absolute;
+    right: 20px;
+    top: 28px;
+    font-size: 48px;
+    color: mc('blue-grey', '500');
+  }
+
 	.hero-menu {
 		position: absolute;
 		right: 20px;

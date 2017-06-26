@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs-then')
 const _ = require('lodash')
 
 /**
- * Region schema
+ * Users schema
  *
  * @type       {<Mongoose.Schema>}
  */
