@@ -27,4 +27,11 @@
 
 	}
 
+  @each $color, $colorvalue in $material-colors {
+		&.is-#{$color} {
+      background-color: mc($color,'50');
+      color: mc($color,'500');
+    }
+  }
+
 }

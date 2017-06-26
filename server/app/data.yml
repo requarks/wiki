@@ -57,6 +57,13 @@ defaults:
       papertrail: false
       rollbar: false
       sentry: false
+    theme:
+      primary: indigo
+      alt: blue-grey
+      footer: blue-grey
+      code:
+        dark: true
+        colorize: true
 langs:
   -
     id: en

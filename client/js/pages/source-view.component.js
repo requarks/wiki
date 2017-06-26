@@ -1,7 +1,5 @@
 'use strict'
 
-/* global siteRoot */
-
 export default {
   name: 'source-view',
   data() {
@@ -9,7 +7,7 @@ export default {
   },
   mounted() {
     let self = this
-    FuseBox.import(siteRoot + '/js/ace/ace.js', (ace) => {
+    FuseBox.import('/js/ace/ace.js', (ace) => {
       let scEditor = ace.edit('source-display')
       scEditor.setTheme('ace/theme/dawn')
       scEditor.getSession().setMode('ace/mode/markdown')

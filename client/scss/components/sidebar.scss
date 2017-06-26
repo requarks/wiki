@@ -135,3 +135,54 @@
   }
 
 }
+
+/* THEME OVERRIDE - START */
+
+@each $color, $colorvalue in $material-colors {
+  .is-alternate-#{$color} .sidebar {
+    background-color: mc($color, '900');
+	  color: mc($color, '50');
+
+    aside {
+      .sidebar-label {
+        color: mc($color, '300');
+        background-color: mc($color, '800');
+      }
+      .sidebar-menu {
+        li {
+          a {
+            color: mc($color, '50');
+
+            &.is-active {
+              border-left-color: mc($color, '500');
+              color: mc($color, '300');
+
+              .is-small {
+                color: mc($color, '500');
+              }
+            }
+
+            &:hover {
+              color: mc($color, '400');
+            }
+
+            i {
+              color: mc($color, '300');
+            }
+          }
+          > ul {
+            border-top-color: lighten(mc($color, '900'), 3%);
+            border-bottom-color: lighten(mc($color, '900'), 2%);
+            background-color: darken(mc($color, '900'), 2%);
+
+            li a {
+              color: mc($color, '100');
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* THEME OVERRIDE - END */

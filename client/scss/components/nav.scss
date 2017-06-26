@@ -10,25 +10,37 @@
 	z-index: 2;
 	color: #FFF;
 
+  /* THEME OVERRIDE - START */
+
 	@each $color, $colorvalue in $material-colors {
 		&.is-#{$color} {
 			background-color: mc($color, '500');
 			box-shadow: 0 2px 3px rgba(mc($color, '500'), 0.2);
 
+      .nav-item a, a.nav-item {
+        color: mc($color, '50');
+
+        &:hover {
+          color: mc($color, '200');
+        }
+
+      }
+
+      h1:hover {
+        color: mc($color, '100');
+      }
+
 			.nav-item {
 
 				.button {
-					border: 1px solid mc($color, '900');
 					background-color: mc($color, '800');
 
 					&.is-outlined {
 						background-color: mc($color, '600');
-						border-color: mc($color, '800');
 						color: mc($color, '100');
 					}
 
 					&:hover {
-						border-color: mc($color, '900');
 						background-color: mc($color, '900');
 					}
 
@@ -36,8 +48,30 @@
 
 			}
 
+      .control {
+
+        input[type=text] {
+          background-color: mc($color, '800');
+          border-color: mc($color, '400');
+          color: mc($color, '50');
+
+          &:focus {
+            border-color: mc($color, '200');
+            box-shadow: inset 0 0 5px 0 rgba(mc($color, '900'), 0.5);
+          }
+
+          @include placeholder {
+            color: mc($color, '200');
+          }
+
+        }
+
+      }
+
 		}
 	}
+
+  /* THEME OVERRIDE - END */
 
 }
 
@@ -117,7 +151,7 @@
 		}
 
 		&:hover {
-			color: mc('indigo', '100');
+			color: mc($primary, '100');
 		}
 	}
 
