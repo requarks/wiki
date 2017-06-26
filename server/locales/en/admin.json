@@ -46,7 +46,8 @@
     "subtitle": "Customize the appearance of your wiki",
     "primarycolor": "Primary Color",
     "altcolor": "Secondary Color",
-    "codeblock": "Code Blocks"
+    "codeblock": "Code Blocks",
+    "footercolor": "Footer Color"
   },
   "users": {
     "createauthorize": "Create / Authorize User",

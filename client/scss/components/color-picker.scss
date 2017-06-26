@@ -9,11 +9,21 @@
     border: 1px solid #FFF;
     transition: all .2s ease;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     &.is-active, &:hover {
       border-width: 5px;
+      border-radius: 3px;
       width: 60px;
       height: 60px;
+    }
+
+    &.is-active::before {
+      content: 'X';
+      font-weight: 700;
+      color: rgba(255,255,255,.5);
     }
 
     @each $color, $colorvalue in $material-colors {
