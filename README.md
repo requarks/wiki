@@ -46,7 +46,7 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
 
-*Docker and more coming soon!*
+*Docker, Azure and more coming soon!*
 
 ## Milestones
 
@@ -63,10 +63,15 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 ### Beta 13
 > *Planned for July release*  
-![Progress](http://progressed.io/bar/10)
+![Progress](http://progressed.io/bar/30)
 
+- [ ] Color Themes
 - [ ] History / Revert to previous version feature
 - [ ] Docker support + Auto compile/publish to Docker Hub
+- [ ] Optional Two-Steps Authentication (2FA)
+- [x] Server-side TeX/MathML rendering
+- [x] Render linebreaks by default (Github style)
+- [ ] Support sub-directory installations (e.g. example.com/wiki)
 
 ### Future
 
