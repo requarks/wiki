@@ -40,7 +40,7 @@
 				color: #FFF;
 				display: inline-flex;
 				align-items: center;
-				justify-items: center;
+				justify-content: center;
 				padding: 0 15px;
 				height: 32px;
 				border: 1px solid mc('light-blue', '600');
@@ -74,3 +74,20 @@
 	}
 
 }
+
+/* THEME OVERRIDE - START */
+
+@each $color, $colorvalue in $material-colors {
+  .is-primary-#{$color} .hero {
+    h1 {
+      color: mc($color, '500');
+    }
+  }
+  .is-alternate-#{$color} .hero {
+    .pageicon {
+      color: mc($color, '500');
+    }
+  }
+}
+
+/* THEME OVERRIDE - END */
