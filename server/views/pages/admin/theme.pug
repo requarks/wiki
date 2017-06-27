@@ -8,17 +8,20 @@ block adminContent
   .form-sections
     section
       label.label= t('admin:theme.primarycolor')
-      color-picker(current-color='indigo')
+      color-picker(current-color=appconfig.theme.primary)
+      span.desc Used for top navigation bar, headers, links, etc.
     section
       label.label= t('admin:theme.altcolor')
-      color-picker(current-color='blue-grey')
+      color-picker(current-color=appconfig.theme.alt)
+      span.desc Used for the sidebar (in a darker tone)
     section
       label.label= t('admin:theme.footercolor')
-      color-picker(current-color='blue-grey')
+      color-picker(current-color=appconfig.theme.footer)
+      span.desc Used for the foter (in a lighter tone)
     section
       label.label= t('admin:theme.codeblock')
-      toggle(current-value='dark', desc='Use Dark Theme')
-      toggle(current-value='dark', desc='Colorize code syntax')
+      toggle(:current-value=appconfig.theme.code.dark.toString(), desc='Use Dark Theme')
+      toggle(:current-value=appconfig.theme.code.colorize.toString(), desc='Colorize code syntax')
     section
       button.button.is-green(@click='saveUser')
         i.nc-icon-outline.ui-1_check
