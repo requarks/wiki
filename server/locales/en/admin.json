@@ -9,10 +9,7 @@
     "passwordverify": "Verify Password",
     "provider": "Provider",
     "savechanges": "Save Changes",
-    "subtitle": "Profile and authentication info",
-    "tfa": "Two-Factor Authentication (2FA)",
-    "tfaenable": "Enable 2FA",
-    "tfadisable": "Disable 2FA"
+    "subtitle": "Profile and authentication info"
   },
   "stats": {
     "subtitle": "General site-wide statistics",
@@ -38,16 +35,6 @@
     "flushsessions": "Flush all active user sessions",
     "flushsessionstext": "All users will be logged out and forced to login again. Your current session will also be affected!",
     "flushsessionsbtn": "Flush Sessions"
-  },
-  "system": {
-    "subtitle": "Information on Wiki.js and troubleshooting tools"
-  },
-  "theme": {
-    "subtitle": "Customize the appearance of your wiki",
-    "primarycolor": "Primary Color",
-    "altcolor": "Secondary Color",
-    "codeblock": "Code Blocks",
-    "footercolor": "Footer Color"
   },
   "users": {
     "createauthorize": "Create / Authorize User",
