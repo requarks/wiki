@@ -1,0 +1,30 @@
+{
+  "alreadyexists": "Dieser Eintrag existiert bereits",
+  "debugmsg": "Detailierte Debugmeldungen",
+  "fileexists": "Die Datei {{path}} existiert bereits.",
+  "forbidden": "Verboten",
+  "forbiddendetail": "Entschuldigung, du verfügst nicht über ausreichend Berechtigung diese Seite zu öffnen",
+  "generic": "Oops, da ist etwas schief gelaufen",
+  "invalidaction": "Ungültige Aktion.",
+  "invaliddestfolder": "Ungültiger Zielordner!",
+  "invalidfiletype": "Ungültiger Dateityp.",
+  "invalidfolder": "Ungültiger Ordner.",
+  "invalidoperation": "Ungültige Operation.",
+  "invalidpath": "Ungültiger Dateipfad.",
+  "invaliduserid": "Ungültige User ID",
+  "newpasswordtooshort": "Das neue Passwort ist zu kurz!",
+  "notexist": "Der Eintrag {{path}} existiert nicht.",
+  "notexistdetail": "Willst du diesen Eintrag erstellen?",
+  "parentinvalid": "Der übergeordnete Eintrag ist keine gültige Datei.",
+  "parentisroot": "Der übergeordnete Eintrag ist die Wurzel.",
+  "remotetoolarge": "Remotedatei ist zu groß!",
+  "reservedname": "Du kannst kein Dokument mit diesem Namen erstellt, da dieser vom System reserviert ist.",
+  "savefailed": "Datei speichern fehlgeschlagen",
+  "starterfailed": "Konnte den Anfangsinhalt nicht laden",
+  "unauthorized": "Unerlaubt",
+  "actions": {
+    "create": "Erstellen",
+    "gohome": "Gehe zur Startseite",
+    "loginas": "Anmelden als..."
+  }
+}
