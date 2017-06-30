@@ -1,0 +1,51 @@
+{
+  "profile": {
+    "displayname": "Anzeigename",
+    "displaynameexample": "John Smith",
+    "email": "E-Mail",
+    "lastprofileupdate": "Letzte Profiländerung",
+    "membersince": "Mitglied seit",
+    "password": "Passwort",
+    "passwordverify": "Passwort bestätigen",
+    "provider": "Anbieter",
+    "savechanges": "Änderungen speichern",
+    "subtitle": "Profil und Authentifizierunginformationen"
+  },
+  "stats": {
+    "subtitle": "Allgemeine seitenweite Statistik",
+    "entries": "Einträge",
+    "uploads": "Uploads",
+    "users": "Benutzer"
+  },
+  "settings": {
+    "subtitle": "Verwalte Seitenkonfiguration",
+    "systemversion": "Systemversion",
+    "currentversion": "Aktuelle Version",
+    "latestversion": "Letzte Version",
+    "upgrade": "Upgrade",
+    "reinstall": "Aktuelle Version neuinstallieren",
+    "versioncheckfailed": "Fehler beim Ermitteln der letzten Version. Versuche es später erneut.",
+    "administrativetools": "Administrationswerkzeuge",
+    "flushcache": "Leere Cache und rekonstruiere Indexes",
+    "flushcachetext": "Falls Inhalts- oder Suchergebnisse veraltet wirken oder nicht den letzten Inhalt enthalten hilft es den Cache zu leeren.",
+    "flushcachebtn": "Leere und baue erneut",
+    "resetaccounts": "Setze Systemaccounts auf Standard zurück",
+    "resetaccountstext": "Die Systemaccount (wie den Gästeaccount) werden zu den Standardeinstellungen zurückgesetzt.",
+    "resetaccountsbtn": "Setze Sytemaccounts zurück",
+    "flushsessions": "Leere alle aktiven Benutersitzungen",
+    "flushsessionstext": "Alle Benutzer werden ausgeloggt und müssen sich erneut anmelden. Deine jetzige Sitzung ist davon ebenfalls betroffen!",
+    "flushsessionsbtn": "Leere Sitzungen"
+  },
+  "users": {
+    "createauthorize": "Erstelle / Autorisiere Benutzer",
+    "subtitle": "Benutzer und Zugriffsrechte verwalten",
+    "name": "Name",
+    "email": "E-Mail Addresse",
+    "provider": "Anbieter",
+    "createdon": "Erstellt am",
+    "updatedon": "Geändert am",
+    "returntousers": "Zurück zu Benutzern",
+    "edituser": "Benutzer bearbeiten",
+    "uniqueid": "Einmalige ID"
+  }
+}
