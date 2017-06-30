@@ -1,0 +1,50 @@
+{
+  "wiki": "Wiki",
+  "header": {
+    "overview": "Übersicht",
+    "createdoc": "Erstelle neues Dokument"
+  },
+  "footer": {
+    "poweredby": "Unterstützt von",
+    "home": "Startseite",
+    "top": "Nach oben"
+  },
+  "sidebar": {
+    "nav": "NAV",
+    "navigation": "Navigation",
+    "pagecontents": "Seiteninhalte",
+    "pastversions": "Letzte Versionen"
+  },
+  "nav": {
+    "account": "Account",
+    "allpages": "Alle Seiten",
+    "create": "Erstellen",
+    "discard": "Verwerfen",
+    "edit": "Bearbeiten",
+    "history": "Verlauf",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "move": "Verschieben",
+    "myprofile": "Mein Profil",
+    "normalview": "Normale Ansicht",
+    "root": "Startseite",
+    "savechanges": "Änderungen speichern",
+    "savedocument": "Dokument speichern",
+    "settings": "Einstellungen",
+    "source": "Quelle",
+    "stats": "Statistik",
+    "syssettings": "Systemeinstellungen",
+    "theme": "Farbschema",
+    "users": "Benutzer",
+    "viewlatest": "Letzte Ansicht"
+  },
+  "welcome": {
+    "title": "Willkommen in deinem Wiki!",
+    "subtitle": "Auf geht's! Erstelle deine Startseite",
+    "createhome": "Startseite erstellen"
+  },
+  "loading": {
+    "source": "Lade Quellen...",
+    "editor": "Lade Editor..."
+  }
+}
