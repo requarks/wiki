@@ -5,6 +5,7 @@
 	width: 250px;
 	max-width: 250px;
 	min-height: calc(100vh - 120px);
+  transition: background-color 1s ease;
 
 	aside {
     padding: 1px 0 15px 0;
@@ -23,6 +24,7 @@
 			margin: 0 0 15px 0;
       text-align: center;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      transition: background-color 1s ease;
 
 			i {
 				margin-right: 5px;

@@ -271,4 +271,26 @@ router.get('/theme', (req, res) => {
   res.render('pages/admin/theme', { adminTab: 'theme' })
 })
 
+router.post('/theme', (req, res) => {
+  if (res.locals.isGuest) {
+    return res.render('error-forbidden')
+  }
+
+  if (!validator.isIn(req.body.primary, appdata.colors)) {
+    return res.status(406).json({ msg: 'Primary color is invalid.' })
+  } else if (!validator.isIn(req.body.alt, appdata.colors)) {
+    return res.status(406).json({ msg: 'Alternate color is invalid.' })
+  } else if (!validator.isIn(req.body.footer, appdata.colors)) {
+    return res.status(406).json({ msg: 'Footer color is invalid.' })
+  }
+
+  appconfig.theme.primary = req.body.primary
+  appconfig.theme.alt = req.body.alt
+  appconfig.theme.footer = req.body.footer
+  appconfig.theme.code.dark = req.body.codedark === 'true'
+  appconfig.theme.code.colorize = req.body.codecolorize === 'true'
+
+  return res.json({ msg: 'OK' })
+})
+
 module.exports = router

@@ -27,6 +27,7 @@ import reject from 'lodash/reject'
 import slice from 'lodash/slice'
 import split from 'lodash/split'
 import startCase from 'lodash/startCase'
+import startsWith from 'lodash/startsWith'
 import toString from 'lodash/toString'
 import toUpper from 'lodash/toUpper'
 import trim from 'lodash/trim'
@@ -35,7 +36,7 @@ import trim from 'lodash/trim'
 // Build lodash object
 // ====================================
 
-export default {
+module.exports = {
   deburr,
   concat,
   cloneDeep,
@@ -59,6 +60,7 @@ export default {
   slice,
   split,
   startCase,
+  startsWith,
   toString,
   toUpper,
   trim
