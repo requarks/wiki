@@ -2425,9 +2425,9 @@ file-type@^3.1.0:
   version "3.9.0"
   resolved "https://registry.yarnpkg.com/file-type/-/file-type-3.9.0.tgz#257a078384d1db8087bc449d107d52a52672b9e9"
 
-file-type@~5.1.1:
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/file-type/-/file-type-5.1.1.tgz#b3ff41bbbb985e2fe5f4526234cb031c701ee5cd"
+file-type@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/file-type/-/file-type-5.2.0.tgz#2ddbea7c73ffe36368dfae49dc338c058c2b8ad6"
 
 filename-regex@^2.0.0:
   version "2.0.1"
@@ -5049,9 +5049,9 @@ options@>=0.0.5:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/options/-/options-0.0.6.tgz#ec22d312806bb53e731773e7cdaefcf1c643128f"
 
-ora@~1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/ora/-/ora-1.2.0.tgz#32fb3183500efe83f5ea89101785f0ee6060fec9"
+ora@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/ora/-/ora-1.3.0.tgz#80078dd2b92a934af66a3ad72a5b910694ede51a"
   dependencies:
     chalk "^1.1.1"
     cli-cursor "^2.1.0"
@@ -6169,7 +6169,7 @@ scss-tokenizer@^0.2.3:
     js-base64 "^2.1.8"
     source-map "^0.4.2"
 
-search-index-adder@^0.3.5:
+search-index-adder@~0.3.5:
   version "0.3.5"
   resolved "https://registry.yarnpkg.com/search-index-adder/-/search-index-adder-0.3.5.tgz#c613e73935cf7c031bf01509925c95b9451ac456"
   dependencies:
@@ -6182,7 +6182,7 @@ search-index-adder@^0.3.5:
   optionalDependencies:
     leveldown "^1.7.1"
 
-search-index-searcher@^0.2.5:
+search-index-searcher@~0.2.5:
   version "0.2.5"
   resolved "https://registry.yarnpkg.com/search-index-searcher/-/search-index-searcher-0.2.5.tgz#300a599a0a636c6260d278590fa5757da4934456"
   dependencies:
