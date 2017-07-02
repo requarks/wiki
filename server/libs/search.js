@@ -7,6 +7,7 @@ const _ = require('lodash')
 const searchIndex = require('./search-index')
 const stopWord = require('stopword')
 const streamToPromise = require('stream-to-promise')
+const searchAllowedChars = new RegExp('[^a-z0-9' + appdata.regex.cjk + appdata.regex.arabic + ' ]', 'g')
 
 module.exports = {
 
@@ -160,7 +161,7 @@ module.exports = {
       .deburr()
       .toLower()
       .trim()
-      .replace(/[^a-z0-9 ]/g, ' ')
+      .replace(searchAllowedChars, ' ')
       .value()
     let arrTerms = _.chain(terms)
       .split(' ')
