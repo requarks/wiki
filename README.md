@@ -63,9 +63,9 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 ### Beta 13
 > *Planned for July release*  
-![Progress](http://progressed.io/bar/30)
+![Progress](http://progressed.io/bar/40)
 
-- [ ] Color Themes
+- [x] Color Themes
 - [ ] History / Revert to previous version feature
 - [ ] Docker support + Auto compile/publish to Docker Hub
 - [ ] Optional Two-Steps Authentication (2FA)
