@@ -18,37 +18,6 @@ import 'jquery-smooth-scroll'
 import 'jquery-sticky'
 
 // ====================================
-// Load minimal lodash
-// ====================================
-
-import cloneDeep from 'lodash/cloneDeep'
-import concat from 'lodash/concat'
-import debounce from 'lodash/debounce'
-import deburr from 'lodash/deburr'
-import delay from 'lodash/delay'
-import filter from 'lodash/filter'
-import find from 'lodash/find'
-import findKey from 'lodash/findKey'
-import forEach from 'lodash/forEach'
-import includes from 'lodash/includes'
-import isBoolean from 'lodash/isBoolean'
-import isEmpty from 'lodash/isEmpty'
-import isNil from 'lodash/isNil'
-import join from 'lodash/join'
-import kebabCase from 'lodash/kebabCase'
-import last from 'lodash/last'
-import map from 'lodash/map'
-import nth from 'lodash/nth'
-import pullAt from 'lodash/pullAt'
-import reject from 'lodash/reject'
-import slice from 'lodash/slice'
-import split from 'lodash/split'
-import startCase from 'lodash/startCase'
-import toString from 'lodash/toString'
-import toUpper from 'lodash/toUpper'
-import trim from 'lodash/trim'
-
-// ====================================
 // Load Helpers
 // ====================================
 
@@ -81,42 +50,10 @@ import treeComponent from './components/tree.vue'
 import adminEditUserComponent from './pages/admin-edit-user.component.js'
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
+import adminThemeComponent from './pages/admin-theme.component.js'
 import contentViewComponent from './pages/content-view.component.js'
 import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
-
-// ====================================
-// Build lodash object
-// ====================================
-
-const _ = {
-  deburr,
-  concat,
-  cloneDeep,
-  debounce,
-  delay,
-  filter,
-  find,
-  findKey,
-  forEach,
-  includes,
-  isBoolean,
-  isEmpty,
-  isNil,
-  join,
-  kebabCase,
-  last,
-  map,
-  nth,
-  pullAt,
-  reject,
-  slice,
-  split,
-  startCase,
-  toString,
-  toUpper,
-  trim
-}
 
 // ====================================
 // Initialize Vue Modules
@@ -125,8 +62,43 @@ const _ = {
 Vue.use(VueResource)
 Vue.use(VueClipboards)
 Vue.use(VueI18Next)
-Vue.use(VueLodash, _)
+Vue.use(VueLodash, helpers._)
 Vue.use(helpers)
+
+// ====================================
+// Register Vue Components
+// ====================================
+
+Vue.component('alert', alertComponent)
+Vue.component('adminEditUser', adminEditUserComponent)
+Vue.component('adminProfile', adminProfileComponent)
+Vue.component('adminSettings', adminSettingsComponent)
+Vue.component('adminTheme', adminThemeComponent)
+Vue.component('anchor', anchorComponent)
+Vue.component('colorPicker', colorPickerComponent)
+Vue.component('contentView', contentViewComponent)
+Vue.component('editor', editorComponent)
+Vue.component('editorCodeblock', editorCodeblockComponent)
+Vue.component('editorFile', editorFileComponent)
+Vue.component('editorVideo', editorVideoComponent)
+Vue.component('history', historyComponent)
+Vue.component('loadingSpinner', loadingSpinnerComponent)
+Vue.component('modalCreatePage', modalCreatePageComponent)
+Vue.component('modalCreateUser', modalCreateUserComponent)
+Vue.component('modalDeleteUser', modalDeleteUserComponent)
+Vue.component('modalDiscardPage', modalDiscardPageComponent)
+Vue.component('modalMovePage', modalMovePageComponent)
+Vue.component('modalProfile2fa', modalProfile2faComponent)
+Vue.component('modalUpgradeSystem', modalUpgradeSystemComponent)
+Vue.component('pageLoader', pageLoaderComponent)
+Vue.component('search', searchComponent)
+Vue.component('sourceView', sourceViewComponent)
+Vue.component('toggle', toggleComponent)
+Vue.component('tree', treeComponent)
+
+// ====================================
+// Load Localization strings
+// ====================================
 
 i18next
   .use(i18nextXHR)
@@ -166,33 +138,7 @@ $(() => {
   const i18n = new VueI18Next(i18next)
   window.wikijs = new Vue({
     mixins: [helpers],
-    components: {
-      alert: alertComponent,
-      adminEditUser: adminEditUserComponent,
-      adminProfile: adminProfileComponent,
-      adminSettings: adminSettingsComponent,
-      anchor: anchorComponent,
-      colorPicker: colorPickerComponent,
-      contentView: contentViewComponent,
-      editor: editorComponent,
-      editorCodeblock: editorCodeblockComponent,
-      editorFile: editorFileComponent,
-      editorVideo: editorVideoComponent,
-      history: historyComponent,
-      loadingSpinner: loadingSpinnerComponent,
-      modalCreatePage: modalCreatePageComponent,
-      modalCreateUser: modalCreateUserComponent,
-      modalDeleteUser: modalDeleteUserComponent,
-      modalDiscardPage: modalDiscardPageComponent,
-      modalMovePage: modalMovePageComponent,
-      modalProfile2fa: modalProfile2faComponent,
-      modalUpgradeSystem: modalUpgradeSystemComponent,
-      pageLoader: pageLoaderComponent,
-      search: searchComponent,
-      sourceView: sourceViewComponent,
-      toggle: toggleComponent,
-      tree: treeComponent
-    },
+    components: {},
     store,
     i18n,
     el: '#root',
