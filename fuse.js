@@ -56,6 +56,14 @@ const SHIMS = {
   jquery: {
     source: 'node_modules/jquery/dist/jquery.js',
     exports: '$'
+  },
+  diff2html: {
+    source: 'node_modules/diff2html/dist/diff2html.min.js',
+    exports: 'Diff2Html'
+  },
+  diff2htmlui: {
+    source: 'node_modules/diff2html/dist/diff2html-ui.min.js',
+    exports: 'Diff2HtmlUI'
   }
 }
 

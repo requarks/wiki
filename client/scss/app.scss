@@ -19,6 +19,7 @@ $primary: 'indigo';
 @import 'components/form';
 @import 'components/grid';
 @import 'components/hero';
+@import 'components/history';
 @import 'components/markdown-content';
 @import 'components/modal';
 @import 'components/nav';
@@ -34,6 +35,7 @@ $primary: 'indigo';
 @import 'libs/jquery-contextmenu';
 @import 'node_modules/highlight.js/styles/atom-one-dark';
 @import 'node_modules/simplemde/dist/simplemde.min';
+@import 'node_modules/diff2html/dist/diff2html.min';
 
 @import 'components/editor';
 

@@ -1,0 +1,51 @@
+.history {
+
+  &-title {
+    border-top: 1px solid mc('blue-grey', '900');
+    padding: 8px;
+    color: mc('blue-grey', '800');
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background-color: mc('blue-grey', '100');
+    text-align: center;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  }
+
+  &-info {
+    background-color: mc('blue-grey', '50');
+    padding: 5px 15px;
+
+    p {
+      padding: 5px 0;
+      font-size: 14px;
+      color: mc('blue-grey', '800');
+    }
+
+    &-actions {
+      display: flex;
+      flex-basis: initial;
+      flex-grow: initial;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      .button-group {
+        margin-bottom: 10px;
+      }
+    }
+
+  }
+
+  &-diff {
+    position: relative;
+
+    .d2h-wrapper {
+      position: absolute;
+      left: 0;
+      right: 0;
+    }
+
+  }
+
+}

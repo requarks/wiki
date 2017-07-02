@@ -14,7 +14,7 @@
     align-items: center;
     height: 24px;
     width: 50px;
-    background-color: mc('grey', '300');
+    background-color: mc('blue-grey', '200');
     border-radius: 12px;
     padding: 2px;
     transition: background-color .5s ease;
@@ -51,3 +51,17 @@
   }
 
 }
+
+/* THEME OVERRIDE - START */
+
+@each $color, $colorvalue in $material-colors {
+  .is-primary-#{$color} .toggle {
+    &.is-active {
+      .toggle-container {
+        background-color: mc($color, '500');
+      }
+    }
+  }
+}
+
+/* THEME OVERRIDE - END */
