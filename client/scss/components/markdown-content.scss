@@ -281,6 +281,58 @@
 
 	}
 
+  &.is-code-dark {
+    pre, pre.hljs {
+      background-color: mc('blue-grey', '900');
+		  border-left-color: mc('blue-grey', '500');
+
+      > code {
+        color: mc('blue-grey', '100');
+      }
+    }
+  }
+
+  &.is-code-light {
+    @import 'node_modules/highlight.js/styles/atom-one-light';
+    pre, pre.hljs {
+      background-color: lighten(mc('blue-grey', '50'), 3%);
+		  border-left: 7px solid mc('blue-grey', '100');
+      border-top: 1px solid mc('blue-grey', '100');
+      border-bottom: 1px solid mc('blue-grey', '100');
+
+      > code {
+        color: mc('blue-grey', '800');
+      }
+    }
+  }
+
+  &.is-code-dark, &.is-code-light {
+    pre, pre.hljs {
+      padding: 20px 20px 20px 13px;
+      font-family: $core-font-monospace;
+      white-space: pre;
+      overflow-x: auto;
+
+      > code {
+        border-radius: 5px;
+        font-weight: 400;
+        background-color: transparent;
+        padding: 0;
+        font-family: $core-font-monospace;
+        font-size: 13px;
+      }
+
+      & + p {
+        padding-top: 1em;
+      }
+
+      & + h1, & + h2, & + h3 {
+        margin-top: 1px;
+      }
+
+    }
+  }
+
 	.align-right {
 		float:right;
     margin: 0 0 10px 10px;
