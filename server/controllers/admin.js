@@ -10,6 +10,8 @@ const _ = require('lodash')
 const axios = require('axios')
 const path = require('path')
 const fs = Promise.promisifyAll(require('fs-extra'))
+const os = require('os')
+const filesize = require('filesize.js')
 
 /**
  * Admin
@@ -238,6 +240,15 @@ router.get('/system', (req, res) => {
     return res.render('error-forbidden')
   }
 
+  let hostInfo = {
+    cpus: os.cpus(),
+    hostname: os.hostname(),
+    nodeversion: process.version,
+    os: `${os.type()} (${os.platform()}) ${os.release()} ${os.arch()}`,
+    totalmem: filesize(os.totalmem()),
+    cwd: process.cwd()
+  }
+
   fs.readJsonAsync(path.join(ROOTPATH, 'package.json')).then(packageObj => {
     axios.get('https://api.github.com/repos/Requarks/wiki/releases/latest').then(resp => {
       let sysversion = {
@@ -246,10 +257,10 @@ router.get('/system', (req, res) => {
         latestPublishedAt: resp.data.published_at
       }
 
-      res.render('pages/admin/system', { adminTab: 'system', sysversion })
+      res.render('pages/admin/system', { adminTab: 'system', hostInfo, sysversion })
     }).catch(err => {
       winston.warn(err)
-      res.render('pages/admin/system', { adminTab: 'system', sysversion: { current: 'v' + packageObj.version } })
+      res.render('pages/admin/system', { adminTab: 'system', hostInfo, sysversion: { current: 'v' + packageObj.version } })
     })
   })
 })
