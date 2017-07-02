@@ -4,17 +4,24 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.0.0-beta.13] - Unreleased
 ### Added
+- **Admin**: Added Host Information section to System Info page
+- **Admin**: Added Color Theme page to modify look and feel
 - **Editor**: Linebreaks are now rendered, can be disabled via config option
 - **History**: History section to list all changes
-- **Security**: Optional Two-Factor Authentication protection
+- **Localization**: German locale is now available (thanks to @joetjengerdes)
+- **Security**: Optional Two-Factor Authentication (2FA) protection
+- **UI**: Support for color themes, code blocks dark/light + colorize on/off
 
 ### Changed
 - **Editor**: TeX and MathML is now rendered server-side to SVG
 - **UI**: Updated icons to Nucleo icon set
+- **Misc**: Updated dependencies
 
 ### Fixed
+- **Configuration Wizard**: Git version check is now handled properly when using 2 or 3 version precision
 - **Editor**: Blockquotes are now displayed in their correct color stylings
 - **Misc**: 'Entry does not exist' page now display sub-pages separator correctly
+- **Misc**: Locked dependencies to patch instead of minor version
 
 ## [v1.0.0-beta.12] - 2017-06-10
 ### Added
