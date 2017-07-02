@@ -56,7 +56,7 @@ export default {
     },
     upgradeStart() {
       this.$store.commit('modalUpgradeSystem/stepChange', 'running')
-      this.$http.post('/admin/settings/install', {
+      this.$http.post('/admin/system/install', {
         mode: this.mode
       }).then(resp => {
         // todo

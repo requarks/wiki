@@ -23,7 +23,10 @@
     "users": "Users"
   },
   "settings": {
-    "subtitle": "Manage site configuration",
+    "subtitle": "Manage site configuration"
+  },
+  "system": {
+    "subtitle": "Information and utilities for your wiki",
     "systemversion": "System Version",
     "currentversion": "Current Version",
     "latestversion": "Latest Version",
@@ -39,10 +42,14 @@
     "resetaccountsbtn": "Reset System Accounts",
     "flushsessions": "Flush all active user sessions",
     "flushsessionstext": "All users will be logged out and forced to login again. Your current session will also be affected!",
-    "flushsessionsbtn": "Flush Sessions"
-  },
-  "system": {
-    "subtitle": "Information and utilities for your wiki"
+    "flushsessionsbtn": "Flush Sessions",
+    "hostinfo": "Host Information",
+    "os": "Operating System",
+    "nodeversion": "Node.js Version",
+    "hostname": "Hostname",
+    "cores": "CPU Cores",
+    "totalmem": "Total Memory",
+    "cwd": "Working Directory"
   },
   "theme": {
     "subtitle": "Change the look and feel of your wiki",
