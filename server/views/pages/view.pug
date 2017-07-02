@@ -77,7 +77,7 @@ block content
             h1.title#title= pageData.meta.title
             if pageData.meta.subtitle
               h2.subtitle= pageData.meta.subtitle
-          .content.mkcontent(v-pre)
+          .content.mkcontent(v-pre, class=[appconfig.theme.code.dark ? 'is-code-dark' : 'is-code-light'])
             != pageData.html
 
   modal-create-page(basepath=pageData.meta.path)
