@@ -1,5 +1,5 @@
 <template lang="pug">
-  .toggle(:class='{ "is-active": currentValue }', @click='changeToggle')
+  .toggle(:class='{ "is-active": value }', @click='changeToggle')
     .toggle-container
       .toggle-pin
     .toggle-text {{ desc }}
@@ -8,13 +8,13 @@
 <script>
   export default {
     name: 'toggle',
-    props: ['currentValue', 'desc'],
+    props: ['value', 'desc'],
     data () {
       return { }
     },
     methods: {
       changeToggle() {
-        this.currentValue = !this.currentValue
+        this.$emit('input', !this.value)
       }
     }
   }

@@ -1,12 +1,12 @@
 <template lang="pug">
   .colorpicker
-    .colorpicker-choice(v-for='color in colors', :class='["is-" + color, color === currentColor ? "is-active" : ""]', @click='setColor(color)')
+    .colorpicker-choice(v-for='color in colors', :class='["is-" + color, color === value ? "is-active" : ""]', @click='setColor(color)')
 </template>
 
 <script>
   export default {
     name: 'color-picker',
-    props: ['currentColor'],
+    props: ['value'],
     data () {
       return {
         colors: [
@@ -34,7 +34,7 @@
     },
     methods: {
       setColor(color) {
-        this.currentColor = color
+        this.$emit('input', color)
       }
     }
   }

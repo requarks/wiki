@@ -9,7 +9,12 @@
     "passwordverify": "Verify Password",
     "provider": "Provider",
     "savechanges": "Save Changes",
-    "subtitle": "Profile and authentication info"
+    "subtitle": "Profile and authentication info",
+    "tfa": "Two-Factor Authentication",
+    "tfadisable": "Disable 2FA",
+    "tfadisabled": "Disabled",
+    "tfaenable": "Enable 2FA",
+    "tfaenabled": "Enabled"
   },
   "stats": {
     "subtitle": "General site-wide statistics",
@@ -35,6 +40,25 @@
     "flushsessions": "Flush all active user sessions",
     "flushsessionstext": "All users will be logged out and forced to login again. Your current session will also be affected!",
     "flushsessionsbtn": "Flush Sessions"
+  },
+  "system": {
+    "subtitle": "Information and utilities for your wiki"
+  },
+  "theme": {
+    "subtitle": "Change the look and feel of your wiki",
+    "primarycolor": "Primary Color",
+    "primarycolordesc": "Used for top navigation bar, headers, links, etc.",
+    "altcolor": "Alternate Color",
+    "altcolordesc": "Used for the sidebar (in a darker tone)",
+    "footercolor": "Footer Color",
+    "footercolordesc": "Used for the foter (in a lighter tone)",
+    "codeblock": {
+      "title": "Code Blocks",
+      "dark": "Use Dark Theme",
+      "colorize": "Colorize code syntax"
+    },
+    "savechanges": "Save Changes",
+    "reset": "Revert to Defaults"
   },
   "users": {
     "createauthorize": "Create / Authorize User",
