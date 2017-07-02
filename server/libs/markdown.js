@@ -25,7 +25,7 @@ var mkdown = md({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    if (lang && hljs.getLanguage(lang)) {
+    if (appconfig.theme.code.colorize && lang && hljs.getLanguage(lang)) {
       try {
         return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
       } catch (err) {
