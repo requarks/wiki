@@ -12,6 +12,17 @@ export default {
       codecolorize: 'true'
     }
   },
+  watch: {
+    primary(val) {
+      this.$root.changeTheme(this.$data)
+    },
+    alt(val) {
+      this.$root.changeTheme(this.$data)
+    },
+    footer(val) {
+      this.$root.changeTheme(this.$data)
+    }
+  },
   methods: {
     saveTheme() {
       let self = this

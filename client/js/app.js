@@ -22,6 +22,7 @@ import 'jquery-sticky'
 // ====================================
 
 import helpers from './helpers'
+import _ from './helpers/lodash'
 
 // ====================================
 // Load Vue Components
@@ -62,7 +63,7 @@ import sourceViewComponent from './pages/source-view.component.js'
 Vue.use(VueResource)
 Vue.use(VueClipboards)
 Vue.use(VueI18Next)
-Vue.use(VueLodash, helpers._)
+Vue.use(VueLodash, _)
 Vue.use(helpers)
 
 // ====================================
@@ -142,6 +143,13 @@ $(() => {
     store,
     i18n,
     el: '#root',
+    methods: {
+      changeTheme(opts) {
+        this.$el.className = `has-stickynav is-primary-${opts.primary} is-alternate-${opts.alt}`
+        this.$refs.header.className = `nav is-${opts.primary}`
+        this.$refs.footer.className = `footer is-${opts.footer}`
+      }
+    },
     mounted() {
       $('a:not(.toc-anchor)').smoothScroll({ speed: 500, offset: -50 })
       $('#header').sticky({ topSpacing: 0 })

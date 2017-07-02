@@ -1,7 +1,6 @@
 'use strict'
 
 const helpers = {
-  _: require('./lodash'),
   common: require('./common'),
   form: require('./form'),
   pages: require('./pages')
