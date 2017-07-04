@@ -1,18 +1,45 @@
 <template lang="pug">
-  .history
-    .history-title {{ currentPath }}
-    .history-info
-      .columns
-        .column
-          p Timestamp: #[strong 2017/07/02 5:19 PM]
-          p Author: #[strong Nicolas Giard]
-          p Commit: #[strong 379ff16957b2b7f978e02bfe50cd0cee182fcb8a]
-        .column.history-info-actions
-          .button-group
-            button.button.is-blue-grey() Compare With...
-            button.button.is-blue-grey() Revert to version
-          toggle.is-dark(v-model='sidebyside', desc='Side-by-side View')
-    .history-diff#diff
+  .container.is-fluid
+    .columns.is-gapless
+
+      .column.is-narrow.is-hidden-touch.sidebar
+        aside.stickyscroll
+          .sidebar-label
+            span {{ $t('sidebar.pastversions') }}
+          ul.sidebar-menu
+            li(v-for='item in versions')
+              a.is-multiline(:title='item.dateFull')
+                span {{ item.dateCalendar }}
+                span.is-small {{ item.commitAbbr }}
+
+      .column
+        .history
+          .history-title {{ currentPath }}
+          .history-info
+            .columns
+              .column.history-info-meta
+                p
+                  i.nc-icon-outline.ui-1_calendar-check-62
+                  span Timestamp: #[strong 2017/07/02 5:19 PM]
+                p
+                  i.nc-icon-outline.i.nc-icon-outline.users_man-23
+                  span Author: #[strong Nicolas Giard]
+                p
+                  i.nc-icon-outline.media-1_flash-21
+                  span Commit: #[strong 379ff16957b2b7f978e02bfe50cd0cee182fcb8a]
+              .column.history-info-actions
+                .button-group
+                  button.button.is-blue-grey()
+                    i.nc-icon-outline.design_path-intersect
+                    span Compare With...
+                  button.button.is-blue-grey()
+                    i.nc-icon-outline.ui-1_eye-17
+                    span View
+                  button.button.is-blue-grey()
+                    i.nc-icon-outline.arrows-4_undo-29
+                    span Revert to version
+                toggle.is-dark(v-model='sidebyside', desc='Side-by-side View')
+          .history-diff#diff
 
 </template>
 
@@ -20,24 +47,31 @@
 let diffui
 export default {
   name: 'history',
-  props: ['currentPath'],
+  props: ['currentPath', 'historyData'],
   data() {
     return {
+      versions: [],
       diffui: {},
       sidebyside: true
+    }
+  },
+  watch: {
+    sidebyside() {
+      this.draw()
     }
   },
   methods: {
     draw() {
       diffui.draw('#diff', {
         inputFormat: 'json',
-        outputFormat: 'side-by-side',
+        outputFormat: this.sidebyside ? 'side-by-side' : 'line-by-line',
         matching: 'words',
         synchronisedScroll: true
       })
     }
   },
   mounted() {
+    this.versions = JSON.parse(this.historyData)
     diffui = new Diff2HtmlUI({
       diff: `diff --git a/wiki/prerequisites.md b/wiki/prerequisites.md
 index 89a10de..4bc0d66 100644
