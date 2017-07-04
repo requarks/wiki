@@ -14,12 +14,20 @@
 
   &-info {
     background-color: mc('blue-grey', '50');
-    padding: 5px 15px;
+    padding: 5px 10px;
 
-    p {
-      padding: 5px 0;
-      font-size: 14px;
-      color: mc('blue-grey', '800');
+    &-meta {
+      i {
+        margin-right: 8px;
+      }
+
+      p {
+        padding: 5px 0;
+        font-size: 14px;
+        color: mc('blue-grey', '800');
+        display: flex;
+        align-items: center;
+      }
     }
 
     &-actions {

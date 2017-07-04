@@ -8,6 +8,7 @@ const path = require('path')
 const fs = Promise.promisifyAll(require('fs-extra'))
 const _ = require('lodash')
 const URL = require('url')
+const moment = require('moment')
 
 const securityHelper = require('../helpers/security')
 
@@ -272,10 +273,13 @@ module.exports = {
       }
       let hist = _.chain(out).split('\n').map(h => {
         let hParts = h.split(' ', 4)
+        let hDate = moment(hParts[2])
         return {
           commit: hParts[0],
           commitAbbr: hParts[1],
           date: hParts[2],
+          dateFull: hDate.format('LLLL'),
+          dateCalendar: hDate.calendar(null, { sameElse: 'llll' }),
           email: hParts[3],
           name: hParts[4]
         }

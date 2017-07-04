@@ -8,20 +8,4 @@ block rootNavRight
       span= t('nav.viewlatest')
 
 block content
-  .container.is-fluid
-    .columns.is-gapless
-
-      .column.is-narrow.is-hidden-touch.sidebar
-
-        aside.stickyscroll
-          .sidebar-label
-            span= t('sidebar.pastversions')
-          ul.sidebar-menu
-            each item, index in pageData.history
-              - var itemDate = moment(item.date)
-              li: a.is-multiline(class={ 'is-active': index < 1 }, href='', title=itemDate.format('LLLL'))
-                span= itemDate.calendar(null, { sameElse: 'llll'})
-                span.is-small= item.commitAbbr
-
-      .column
-        history(current-path=pageData.meta._id)
+  history(current-path=pageData.meta._id, history-data=JSON.stringify(pageData.history))
