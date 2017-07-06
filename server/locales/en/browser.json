@@ -45,6 +45,16 @@
     "videosupportedtitle": "The following are supported:",
     "videotitle": "Insert Video"
   },
+  "history": {
+    "pastversions": "Past Versions",
+    "timestamp": "Timestamp",
+    "author": "Author",
+    "commit": "Commit",
+    "comparewith": "Compare With...",
+    "view": "View",
+    "reverttoversion": "Revert to Version",
+    "sidebyside": "Side-by-side View"
+  },
   "modal": {
     "abort": "Abort",
     "anchorerror": "Clipboard copy failed. Copy the URL manually.",

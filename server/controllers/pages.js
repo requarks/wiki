@@ -1,6 +1,6 @@
 'use strict'
 
-/* global entries, lang, winston */
+/* global entries, git, lang, winston */
 
 const express = require('express')
 const router = express.Router()
@@ -199,6 +199,25 @@ router.get('/hist/*', (req, res, next) => {
       message: err.message,
       error: {}
     })
+  })
+})
+
+/**
+ * View history of a document
+ */
+router.post('/hist', (req, res, next) => {
+  let commit = req.body.commit
+  let safePath = entryHelper.parsePath(req.body.path)
+
+  if (!/^[a-f0-9]{40}$/.test(commit)) {
+    return res.status(400).json({ ok: false, error: 'Invalid commit' })
+  }
+
+  git.getHistoryDiff(safePath, commit).then((diff) => {
+    res.json({ ok: true, diff })
+    return true
+  }).catch((err) => {
+    res.status(500).json({ ok: false, error: err.message })
   })
 })
 
