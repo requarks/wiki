@@ -94,7 +94,7 @@ export default {
             })
           }
         }).catch(err => {
-          his.$store.dispatch('alert', {
+          this.$store.dispatch('alert', {
             style: 'red',
             icon: 'square-cross',
             msg: 'Error: ' + err.body.msg

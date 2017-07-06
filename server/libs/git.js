@@ -265,7 +265,7 @@ module.exports = {
     let self = this
     let gitFilePath = entryPath + '.md'
 
-    return self._git.exec('log', ['-n', '25', '--format=format:%H %h %cI %cE %cN', '--', gitFilePath]).then((cProc) => {
+    return self._git.exec('log', ['--max-count=25', '--skip=1', '--format=format:%H %h %cI %cE %cN', '--', gitFilePath]).then((cProc) => {
       let out = cProc.stdout.toString()
       if (_.includes(out, 'fatal')) {
         let errorMsg = _.capitalize(_.head(_.split(_.replace(out, 'fatal: ', ''), ',')))
@@ -285,6 +285,24 @@ module.exports = {
         }
       }).value()
       return hist
+    })
+  },
+
+  getHistoryDiff(path, commit, comparewith) {
+    let self = this
+    if (!comparewith) {
+      comparewith = 'HEAD'
+    }
+
+    return self._git.exec('diff', ['--no-color', `${commit}:${path}.md`, `${comparewith}:${path}.md`]).then((cProc) => {
+      let out = cProc.stdout.toString()
+      if (_.startsWith(out, 'fatal: ')) {
+        throw new Error(out)
+      } else if (!_.includes(out, 'diff')) {
+        throw new Error('Unable to query diff data.')
+      } else {
+        return out
+      }
     })
   }
 
