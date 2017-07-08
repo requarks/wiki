@@ -13,7 +13,8 @@ html(data-logic='configure')
     script(type='text/javascript').
       var appconfig = !{JSON.stringify(conf)};
       var runmode = !{JSON.stringify(runmode)};
-    script(type='text/javascript', src='/js/configure.min.js')
+    script(type='text/javascript', src='/js/vendor.js')
+    script(type='text/javascript', src='/js/configure.js')
 
   body
     #root
