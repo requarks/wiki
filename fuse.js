@@ -83,7 +83,7 @@ globalTasks.then(() => {
     homeDir: './client',
     output: './assets/js/$name.js',
     alias: ALIASES,
-    shim: SHIMS,
+    target: 'browser',
     plugins: [
       fsbx.EnvPlugin({ NODE_ENV: (dev) ? 'development' : 'production' }),
       fsbx.VuePlugin(),
@@ -114,7 +114,7 @@ globalTasks.then(() => {
     log: true
   })
 
-  const bundleVendor = fuse.bundle('vendor').instructions('~ index.js') // eslint-disable-line no-unused-vars
+  const bundleVendor = fuse.bundle('vendor').shim(SHIMS).instructions('~ index.js') // eslint-disable-line no-unused-vars
   const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
   // const bundleApp = fuse.bundle('app').instructions('> index.js')
   const bundleSetup = fuse.bundle('configure').instructions('> configure.js')

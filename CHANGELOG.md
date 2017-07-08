@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.0-beta.14] - Unreleased
+### Added
+- **Security**: Optional Two-Factor Authentication (2FA) protection
+
 ## [v1.0.0-beta.13] - Unreleased
 ### Added
 - **Admin**: Added Host Information section to System Info page
@@ -9,7 +13,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Editor**: Linebreaks are now rendered, can be disabled via config option
 - **History**: History section to list all changes
 - **Localization**: German locale is now available (thanks to @joetjengerdes)
-- **Security**: Optional Two-Factor Authentication (2FA) protection
 - **UI**: Support for color themes, code blocks dark/light + colorize on/off
 
 ### Changed

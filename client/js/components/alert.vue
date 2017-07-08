@@ -14,7 +14,7 @@
     computed: {
       shown() { return this.$store.state.alert.shown },
       style() { return 'is-' + this.$store.state.alert.style },
-      icon() { return 'icon-' + this.$store.state.alert.icon },
+      icon() { return 'nc-icon-outline ' + this.$store.state.alert.icon },
       msg() { return this.$store.state.alert.msg },
     }
   }

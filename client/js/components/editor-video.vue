@@ -22,7 +22,7 @@
                     i.icon-vimeo
                     span Vimeo
                   li
-                    i.icon-film
+                    i.nc-icon-outline.media-1_play-69
                     span Dailymotion
                   li
                     i.icon-video
@@ -81,7 +81,7 @@
         this.$store.dispatch('editor/insert', videoText)
         this.$store.dispatch('alert', {
           style: 'blue',
-          icon: 'video',
+          icon: 'media-1_action-74',
           msg: self.$t('editor.videosuccess')
         })
         this.cancel()
