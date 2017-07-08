@@ -63,11 +63,10 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 ### Beta 13
 > *Planned for July release*  
-![Progress](http://progressed.io/bar/70)
+![Progress](http://progressed.io/bar/90)
 
 - [x] Color Themes
-- [ ] History / Revert to previous version feature
-- [ ] Optional Two-Steps Authentication (2FA)
+- [ ] History
 - [x] Server-side TeX/MathML rendering
 - [x] Render linebreaks by default (Github style)
 - [x] New Localization: German
@@ -76,6 +75,8 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 > *Planned for August release*  
 ![Progress](http://progressed.io/bar/0)
 
+- [ ] Revert to previous version (history)
+- [ ] Optional Two-Steps Authentication (2FA)
 - [ ] Docker support + Auto compile/publish to Docker Hub
 - [ ] User Groups + Better permissions management
 - [ ] Support sub-directory installations (e.g. example.com/wiki)
