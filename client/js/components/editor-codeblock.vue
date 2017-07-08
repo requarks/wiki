@@ -89,14 +89,14 @@ export default {
           } else {
             this.$store.dispatch('alert', {
               style: 'red',
-              icon: 'square-cross',
+              icon: 'ui-2_square-remove-09',
               msg: self.$t('editor.codeblockloadingerror')
             })
           }
         }).catch(err => {
           this.$store.dispatch('alert', {
             style: 'red',
-            icon: 'square-cross',
+            icon: 'ui-2_square-remove-09',
             msg: 'Error: ' + err.body.msg
           })
         })
@@ -111,7 +111,7 @@ export default {
       this.$store.dispatch('editor/insert', codeBlockText)
       this.$store.dispatch('alert', {
         style: 'blue',
-        icon: 'inbox',
+        icon: 'files_archive-3d-check',
         msg: this.$t('editor.codeblocksuccess')
       })
       this.cancel()

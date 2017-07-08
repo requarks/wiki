@@ -34,14 +34,14 @@ export default {
         } else {
           self.$store.dispatch('alert', {
             style: 'red',
-            icon: 'square-cross',
+            icon: 'ui-2_square-remove-09',
             msg: resp.msg
           })
         }
       }).catch(err => {
         self.$store.dispatch('alert', {
           style: 'red',
-          icon: 'square-cross',
+          icon: 'ui-2_square-remove-09',
           msg: 'Error: ' + err.body.msg
         })
       })
@@ -155,7 +155,7 @@ export default {
               if (!editor.codemirror.doc.somethingSelected()) {
                 return self.$store.dispatch('alert', {
                   style: 'orange',
-                  icon: 'marquee',
+                  icon: 'design_drag',
                   msg: 'Invalid selection. Select at least 1 character.'
                 })
               }

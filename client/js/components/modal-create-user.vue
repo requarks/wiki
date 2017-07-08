@@ -84,7 +84,7 @@ export default {
         } else {
           self.$store.dispatch('alert', {
             style: 'red',
-            icon: 'square-cross',
+            icon: 'ui-2_square-remove-09',
             msg: resp.msg
           })
         }
@@ -92,7 +92,7 @@ export default {
         this.isLoading = false
         self.$store.dispatch('alert', {
           style: 'red',
-          icon: 'square-cross',
+          icon: 'ui-2_square-remove-09',
           msg: 'Error: ' + err.body.msg
         })
       })

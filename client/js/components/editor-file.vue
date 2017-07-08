@@ -173,7 +173,7 @@
       },
       filesize (rawSize) {
         return this.$helpers.common.filesize(rawSize)
-      }
+      },
 
       // -------------------------------------------
       // INSERT LINK TO FILE
@@ -251,7 +251,7 @@
             self.isLoading = false
             self.$store.dispatch('alert', {
               style: 'blue',
-              icon: 'folder2',
+              icon: 'files_folder-check',
               msg: self.$t('modal.newfoldersuccess', { name: self.newFolderName })
             })
           })
@@ -285,7 +285,7 @@
               self.isLoading = false
               self.$store.dispatch('alert', {
                 style: 'red',
-                icon: 'square-cross',
+                icon: 'ui-2_square-remove-09',
                 msg: self.$t('editor.fileuploaderror', { err: data.msg })
               })
             }
@@ -323,7 +323,7 @@
               self.isLoading = false
               self.$store.dispatch('alert', {
                 style: 'red',
-                icon: 'square-cross',
+                icon: 'ui-2_square-remove-09',
                 msg: self.$t('modal.renamefileerror', { err: data.msg })
               })
             }
@@ -345,14 +345,14 @@
               self.loadFiles()
               self.$store.dispatch('alert', {
                 style: 'blue',
-                icon: 'arrow-right2',
+                icon: 'files_check',
                 msg: self.$t('editor.filemovesuccess')
               })
             } else {
               self.isLoading = false
               self.$store.dispatch('alert', {
                 style: 'red',
-                icon: 'square-cross',
+                icon: 'ui-2_square-remove-09',
                 msg: self.$t('editor.filemoveerror', { err: data.msg })
               })
             }
@@ -381,7 +381,7 @@
             self.loadFiles()
             self.$store.dispatch('alert', {
               style: 'blue',
-              icon: 'trash2',
+              icon: 'ui-1_trash',
               msg: self.$t('editor.filedeletesuccess')
             })
           })
@@ -449,7 +449,7 @@
               self.isLoading = false
               self.$store.dispatch('alert', {
                 style: 'red',
-                icon: 'square-cross',
+                icon: 'ui-2_square-remove-09',
                 msg: self.$t('editor.fileerror')
               })
             } else {
@@ -470,7 +470,7 @@
         let moveFolders = this._.map(this.folders, (f) => {
           return {
             name: (f !== '') ? f : '/ (root)',
-            icon: 'icon-folder2',
+            icon: 'nc-icon-outline files_folder-15',
             callback: (key, opt) => {
               let moveFileId = self._.toString($(opt.$trigger).data('uid'))
               let moveFileDestFolder = self._.nth(self.folders, key)
@@ -497,7 +497,7 @@
           items: {
             rename: {
               name: self.$t('editor.filerenameaction'),
-              icon: 'icon-edit',
+              icon: 'nc-icon-outline files_vector',
               callback: (key, opt) => {
                 self.renameFileId = self._.toString(opt.$trigger[0].dataset.uid)
                 self.renameFile()
@@ -553,7 +553,7 @@
                 self._.forEach(failedUpls, (u) => {
                   self.$store.dispatch('alert', {
                     style: 'red',
-                    icon: 'square-cross',
+                    icon: 'ui-2_square-remove-09',
                     msg: self.$t('editor.fileuploaderror', { err: u.msg })
                   })
                 })
@@ -571,7 +571,7 @@
             } else {
               self.$store.dispatch('alert', {
                 style: 'red',
-                icon: 'square-cross',
+                icon: 'ui-2_square-remove-09',
                 msg: self.$t('editor.fileuploaderror', { err: data.msg })
               })
             }
@@ -580,7 +580,7 @@
           error: (error) => {
             self.$store.dispatch('alert', {
               style: 'red',
-              icon: 'square-cross',
+              icon: 'ui-2_square-remove-09',
               msg: self.$t('editor.fileuploaderror', { err: error.message })
             })
           },

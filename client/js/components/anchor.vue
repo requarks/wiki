@@ -37,7 +37,7 @@
       clipboardSuccess () {
         this.$store.dispatch('alert', {
           style: 'blue',
-          icon: 'clipboard',
+          icon: 'business_notes',
           msg: this.$t('modal.anchorsuccess')
         })
         this.$store.dispatch('anchor/close')
@@ -45,7 +45,7 @@
       clipboardError () {
         this.$store.dispatch('alert', {
           style: 'red',
-          icon: 'clipboard',
+          icon: 'business_notes',
           msg: this.$t('modal.anchorerror')
         })
         this.$refs.anchorURLinput.select()

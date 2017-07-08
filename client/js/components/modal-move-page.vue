@@ -39,20 +39,20 @@
       }
     },
     methods: {
-      makeSelection: function () {
+      makeSelection() {
         let self = this;
         self._.delay(() => {
-          let startPos = (self._.includes(self.currentPath, '/') ? self._.lastIndexOf(self.movePath, '/') + 1 : 0
+          let startPos = (self._.includes(self.currentPath, '/')) ? self._.lastIndexOf(self.movePath, '/') + 1 : 0
           self.$helpers.form.setInputSelection(self.$refs.movePageInput, startPos, self.movePath.length)
         }, 100)
       },
-      cancel: function () {
+      cancel() {
         this.$store.dispatch('modalMovePage/close')
       },
-      move: function () {
+      move () {
         this.isInvalid = false
         let newDocPath = this.$helpers.pages.makeSafePath(this.movePath)
-        if (this._.isEmpty(newDocPath) || newDocPath === this.currentPath || newDocPath === 'home') {) {
+        if (this._.isEmpty(newDocPath) || newDocPath === this.currentPath || newDocPath === 'home') {
           this.isInvalid = true
         } else {
           this.isLoading = true
@@ -67,7 +67,7 @@
               this.loading = false
               self.$store.dispatch('alert', {
                 style: 'red',
-                icon: 'square-cross',
+                icon: 'ui-2_square-remove-09',
                 msg: resp.msg
               })
             }
@@ -75,7 +75,7 @@
             this.loading = false
             self.$store.dispatch('alert', {
               style: 'red',
-              icon: 'square-cross',
+              icon: 'ui-2_square-remove-09',
               msg: 'Error: ' + err.body.msg
             })
           })
