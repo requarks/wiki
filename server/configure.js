@@ -80,10 +80,10 @@ module.exports = (port, spinner) => {
     Promise.mapSeries([
       () => {
         const semver = require('semver')
-        if (!semver.satisfies(semver.clean(process.version), '>=4.6.0')) {
-          throw new Error('Node.js version is too old. Minimum is v4.6.0.')
+        if (!semver.satisfies(semver.clean(process.version), '>=6.9.0')) {
+          throw new Error('Node.js version is too old. Minimum is v6.6.0.')
         }
-        return 'Node.js ' + process.version + ' detected. Minimum is v4.6.0.'
+        return 'Node.js ' + process.version + ' detected. Minimum is v6.9.0.'
       },
       () => {
         return Promise.try(() => {
