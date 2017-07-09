@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-- '7'
+- '8'
 branches:
   except:
     - docker
@@ -18,11 +18,8 @@ env:
 cache: yarn
 before_script:
 - yarn run build
-- yarn global add snyk
-- snyk auth $SNYK_TOKEN
 before_deploy:
 - tar -czf wiki-js.tar.gz * -X .build/.deployexclude
-- snyk monitor
 deploy:
   provider: releases
   api_key:
@@ -35,7 +32,7 @@ deploy:
     branch: master
     repo: Requarks/wiki
     tags: true
-    node: '7'
+    node: '8'
 notifications:
   webhooks:
     urls:

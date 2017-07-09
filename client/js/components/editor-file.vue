@@ -209,7 +209,7 @@
         this.$store.dispatch('editor/insert', textToInsert)
         this.$store.dispatch('alert', {
           style: 'blue',
-          icon: 'paper',
+          icon: 'ui-1_check-square-09',
           msg: (this.mode === 'file') ? this.$t('editor.filesuccess') : this.$t('editor.imagesuccess')
         })
         this.cancel()
@@ -564,7 +564,7 @@
                 self.uploadSucceeded = true
                 self.$store.dispatch('alert', {
                   style: 'blue',
-                  icon: 'cloud-upload',
+                  icon: 'arrows-1_cloud-upload-96',
                   msg: self.$t('editor.fileuploadsuccess')
                 })
               }
