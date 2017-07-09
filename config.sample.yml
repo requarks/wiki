@@ -154,3 +154,14 @@ externalLogging:
   rollbar: false
   sentry: false
 
+# ---------------------------------------------------------------------
+# Color Theme
+# ---------------------------------------------------------------------
+
+theme:
+  primary: indigo
+  alt: blue-grey
+  footer: blue-grey
+  code:
+    dark: true
+    colorize: true
