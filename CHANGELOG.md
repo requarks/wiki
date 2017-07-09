@@ -4,14 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.0.0-beta.14] - Unreleased
 ### Added
+- **History**: History section to list all changes
 - **Security**: Optional Two-Factor Authentication (2FA) protection
 
-## [v1.0.0-beta.13] - Unreleased
+## [v1.0.0-beta.13] - 2017-07-09
 ### Added
 - **Admin**: Added Host Information section to System Info page
 - **Admin**: Added Color Theme page to modify look and feel
 - **Editor**: Linebreaks are now rendered, can be disabled via config option
-- **History**: History section to list all changes
 - **Localization**: German locale is now available (thanks to @joetjengerdes)
 - **UI**: Support for color themes, code blocks dark/light + colorize on/off
 
@@ -25,6 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Editor**: Blockquotes are now displayed in their correct color stylings
 - **Misc**: 'Entry does not exist' page now display sub-pages separator correctly
 - **Misc**: Locked dependencies to patch instead of minor version
+- **Misc**: Saving a page no longer crash the search index engine
 
 ## [v1.0.0-beta.12] - 2017-06-10
 ### Added
@@ -185,7 +186,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
-[v1.0.0-beta.13]: https://github.com/Requarks/wiki/compare/v1.0.0-beta.11...HEAD
+[v1.0.0-beta.14]: https://github.com/Requarks/wiki/compare/v1.0.0-beta.13...HEAD
+[v1.0.0-beta.13]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.13
 [v1.0.0-beta.12]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.12
 [v1.0.0-beta.11]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.11
 [v1.0.0-beta.10]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.10
