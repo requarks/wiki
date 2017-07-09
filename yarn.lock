@@ -4262,7 +4262,7 @@ mathjax-node@~1.1.0:
     jsdom "7.0 - 9.8"
     mathjax "*"
 
-mathjax@*, mathjax@~2.7.1:
+mathjax@*:
   version "2.7.1"
   resolved "https://registry.yarnpkg.com/mathjax/-/mathjax-2.7.1.tgz#c82d2f853b2f58f738e3355329adf0b2d8f8face"
 
@@ -4443,24 +4443,7 @@ mongodb@2.2.27:
     mongodb-core "2.1.14"
     readable-stream "2.2.7"
 
-mongoose@*:
-  version "4.10.8"
-  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.10.8.tgz#31f44ed7884756f9fd9b7708ddcb3fcb4250f34e"
-  dependencies:
-    async "2.1.4"
-    bson "~1.0.4"
-    hooks-fixed "2.0.0"
-    kareem "1.4.1"
-    mongodb "2.2.27"
-    mpath "0.3.0"
-    mpromise "0.5.5"
-    mquery "2.3.1"
-    ms "2.0.0"
-    muri "1.2.1"
-    regexp-clone "0.0.1"
-    sliced "1.0.1"
-
-mongoose@^4.11.1:
+mongoose@*, mongoose@^4.11.1:
   version "4.11.1"
   resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.11.1.tgz#2560b6d89e744b05857d024cab8b316066716e3e"
   dependencies:
@@ -6680,13 +6663,6 @@ uglify-js@2.7.5, uglify-js@^2.6, uglify-js@^2.6.1:
     source-map "~0.5.1"
     uglify-to-browserify "~1.0.0"
     yargs "~3.10.0"
-
-uglify-js@~3.0.24:
-  version "3.0.24"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.0.24.tgz#ee93400ad9857fb7a1671778db83f6a23f033121"
-  dependencies:
-    commander "~2.9.0"
-    source-map "~0.5.1"
 
 uglify-to-browserify@~1.0.0:
   version "1.0.2"

@@ -1,5 +1,7 @@
 'use strict'
 
+/* global winston */
+
 const Promise = require('bluebird')
 const md = require('markdown-it')
 const mdEmoji = require('markdown-it-emoji')
@@ -123,7 +125,6 @@ mathjax.config({
     }
   }
 })
-mathjax.start()
 
 /**
  * Parse markdown content and build TOC tree
@@ -331,12 +332,14 @@ const processMathjax = (content) => {
               format: mode.format,
               speakText: false,
               svg: true,
-              state: mathjaxState
+              state: mathjaxState,
+              timeout: 30 * 1000
             }, result => {
               if (!result.errors) {
                 resolve(result.svg)
               } else {
-                reject(new Error(result.errors.join(', ')))
+                resolve(currentMatch[0])
+                winston.warn(result.errors.join(', '))
               }
             })
           })
