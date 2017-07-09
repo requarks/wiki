@@ -116,7 +116,7 @@ globalTasks.then(() => {
 
   // const bundleVendor = fuse.bundle('vendor').shim(SHIMS).instructions('~ index.js') // eslint-disable-line no-unused-vars
   // const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
-  const bundleApp = fuse.bundle('app').instructions('> index.js')
+  const bundleApp = fuse.bundle('app').shim(SHIMS).instructions('> index.js')
   const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
 
   switch (mode) {
