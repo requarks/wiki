@@ -107,3 +107,16 @@
   }
 
 }
+
+/* THEME OVERRIDE - START */
+
+@each $color, $colorvalue in $material-colors {
+  .is-primary-#{$color} .collapsable-nav {
+    &.has-children {
+      background-color: mc($color, '500');
+      border-left-color: mc($color, '700');
+    }
+  }
+}
+
+/* THEME OVERRIDE - END */
