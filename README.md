@@ -9,7 +9,6 @@
 [![Build Status](https://img.shields.io/travis/Requarks/wiki/master.svg?style=flat-square)](https://travis-ci.org/Requarks/wiki)
 [![Codacy Badge](https://img.shields.io/codacy/grade/1d0217a3153c4595bdedb322263e55c8/master.svg?style=flat-square)](https://www.codacy.com/app/Requarks/wiki)
 [![Dependency Status](https://img.shields.io/gemnasium/Requarks/wiki.svg?style=flat-square)](https://gemnasium.com/github.com/Requarks/wiki)
-[![Known Vulnerabilities](https://snyk.io/test/github/requarks/wiki/badge.svg?style=flat-square)](https://snyk.io/test/github/requarks/wiki)
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
