@@ -33,7 +33,7 @@
 
 Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
 
-- Node.js **6.9.0** or later
+- Node.js **6.11.1** or later
 - MongoDB **3.2** or later
 - Git **2.7.4** or later
 - An empty Git repository (optional)
