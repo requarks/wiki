@@ -55,7 +55,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 - [x] Color Themes
 - [x] Server-side TeX/MathML rendering
-- [x] Render linebreaks by default (Github style)
+- [x] Render line breaks by default (GitHub style)
 - [x] New Localization: German
 
 ### Beta 14
