@@ -33,7 +33,7 @@
 
 Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
 
-- Node.js **6.9.0** or later
+- Node.js **6.11.1** or later
 - MongoDB **3.2** or later
 - Git **2.7.4** or later
 - An empty Git repository (optional)
@@ -55,7 +55,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 - [x] Color Themes
 - [x] Server-side TeX/MathML rendering
-- [x] Render linebreaks by default (Github style)
+- [x] Render line breaks by default (GitHub style)
 - [x] New Localization: German
 
 ### Beta 14
