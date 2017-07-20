@@ -13,6 +13,7 @@ title: Wiki
 # ---------------------------------------------------------------------
 # Full public path to the site, without the trailing slash
 # ---------------------------------------------------------------------
+# INCLUDE CLIENT PORT IF NOT 80/443!
 
 host: http://localhost
 

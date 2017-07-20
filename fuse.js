@@ -50,7 +50,8 @@ const ALIASES = {
   'simplemde': 'simplemde/dist/simplemde.min.js',
   'socket-io-client': 'socket.io-client/dist/socket.io.js',
   'vue': (dev) ? 'vue/dist/vue.js' : 'vue/dist/vue.min.js',
-  'vue-lodash': 'vue-lodash/dist/vue-lodash.min.js'
+  'vue-lodash': 'vue-lodash/dist/vue-lodash.min.js',
+  'vue-resource': (dev) ? 'vue-resource/dist/vue-resource.js' : 'vue-resource/dist/vue-resource.es2015.js'
 }
 const SHIMS = {
   jquery: {
