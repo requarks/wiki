@@ -266,9 +266,11 @@ bgAgent.on('message', m => {
 // ----------------------------------------
 
 graceful.on('exit', () => {
+  global.winston.info('- SHUTTING DOWN - Terminating Background Agent...')
+  bgAgent.kill()
   global.winston.info('- SHUTTING DOWN - Performing git sync...')
   return global.git.resync().then(() => {
     global.winston.info('- SHUTTING DOWN - Git sync successful. Now safe to exit.')
-    process.kill(process.pid, 'SIGINT')
+    process.exit()
   })
 })
