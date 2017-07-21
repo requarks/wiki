@@ -10,7 +10,7 @@
           li(v-if='searchres.length === 0')
             a: em {{ $t('search.nomatch') }}
           li(v-for='sres in searchres', v-bind:class='{ "is-active": searchmovekey === "res." + sres.entryPath }')
-            a(v-bind:href='siteRoot + "/" + sres.entryPath') {{ sres.title }}
+            a(v-bind:href='sres.entryPath') {{ sres.title }}
         p.searchresults-label(v-if='searchsuggest.length > 0') {{ $t('search.didyoumean') }}
         ul.searchresults-list(v-if='searchsuggest.length > 0')
           li(v-for='sug in searchsuggest', v-bind:class='{ "is-active": searchmovekey === "sug." + sug }')
@@ -39,7 +39,10 @@ export default {
         self.searchactive = true
         self.searchload++
         socket.emit('search', { terms: val }, (data) => {
-          self.searchres = data.match
+          self.searchres = self._.map(data.match, m => {
+            m.entryPath = `${siteRoot}/${m.entryPath}`
+            return m
+          })
           self.searchsuggest = data.suggest
           self.searchmovearr = self._.concat([], self.searchres, self.searchsuggest)
           if (self.searchload > 0) { self.searchload-- }
@@ -74,7 +77,7 @@ export default {
       let i = this.searchmoveidx - 1
 
       if (this.searchmovearr[i]) {
-        window.location.assign(siteRoot + '/' + this.searchmovearr[i].entryPath)
+        window.location.assign(this.searchmovearr[i].entryPath)
       } else {
         this.searchq = this.searchmovearr[i]
       }
