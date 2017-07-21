@@ -8,6 +8,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **Security**: Optional Two-Factor Authentication (2FA) protection
 
 ## [v1.0.0-beta.14] - Unreleased
+### Changed
+- **Misc**: Switch to Yarn for npm dependencies installation
+
 ### Fixed
 - **Misc**: JS/CSS is now loading properly in Safari (macOS/iOS)
 - **Misc**: Process termination handling
