@@ -59,6 +59,10 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] New Localization: German
 
 ### Beta 14
+
+- [x] Bug fixes release
+
+### Beta 15
 > *Planned for August release*  
 ![Progress](http://progressed.io/bar/20)
 
