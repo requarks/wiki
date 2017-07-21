@@ -2,12 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [v1.0.0-beta.15] - Unreleased
+## [v1.0.1] - Unreleased
 ### Added
 - **History**: History section to list all changes
 - **Security**: Optional Two-Factor Authentication (2FA) protection
 
-## [v1.0.0-beta.14] - Unreleased
+## [v1.0.0] - Unreleased
 ### Changed
 - **Misc**: Switch to Yarn for npm dependencies installation
 
