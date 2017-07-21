@@ -58,11 +58,11 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Render line breaks by default (GitHub style)
 - [x] New Localization: German
 
-### Beta 14
+### 1.0.0
 
 - [x] Bug fixes release
 
-### Beta 15
+### 1.1.0
 > *Planned for August release*  
 ![Progress](http://progressed.io/bar/20)
 
