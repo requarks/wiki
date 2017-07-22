@@ -11,5 +11,11 @@
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
     "target": "es5"
-  }
+  },
+  "exclude": [
+    ".fusebox",
+    "data",
+    "node_modules",
+    "repo"
+  ]
 }

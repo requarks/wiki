@@ -139,11 +139,23 @@ const tasks = {
     })
   },
   /**
+   * Install Yarn
+   */
+  installYarn() {
+    ora.text = 'Installing Yarn...'
+    return exec.stdout('npm', ['install', '-g', 'yarn'], {
+      cwd: installDir
+    }).then(results => {
+      ora.text = 'Yarn installed successfully.'
+      return true
+    })
+  },
+  /**
    * Install npm dependencies
    */
   installDependencies() {
     ora.text = 'Installing Wiki.js npm dependencies...'
-    return exec.stdout('npm', ['install', '--only=production', '--no-optional'], {
+    return exec.stdout('yarn', ['install', '--production', '--ignore-optional'], {
       cwd: installDir
     }).then(results => {
       ora.text = 'Wiki.js npm dependencies installed successfully.'
@@ -247,6 +259,9 @@ Promise.join(
 }).then(() => {
   isContainerBased && console.info('>> Creating config file...')
   return tasks.ensureConfigFile()
+}).then(() => {
+  isContainerBased && console.info('>> Installing Yarn...')
+  return tasks.installYarn()
 }).then(() => {
   isContainerBased && console.info('>> Installing dependencies...')
   return tasks.installDependencies()
