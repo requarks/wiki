@@ -63,10 +63,12 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 - [x] Bug fixes release
 
-### 1.1.0
-> *Planned for August release*  
+### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/20)
 
+**Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
+
+- [ ] Migrate to PostgreSQL + Redis datastore
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
 - [ ] Docker support + Auto compile/publish to Docker Hub
