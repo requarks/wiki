@@ -13,6 +13,9 @@
     "target": "es5"
   },
   "exclude": [
-    "node_modules"
+    ".fusebox",
+    "data",
+    "node_modules",
+    "repo"
   ]
 }

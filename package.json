@@ -1,6 +1,6 @@
 {
   "name": "wiki",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "wiki.js",
   "scripts": {
@@ -129,6 +129,7 @@
     "@panter/vue-i18next": "~0.5.0",
     "babel-cli": "~6.24.1",
     "babel-jest": "~20.0.3",
+    "babel-plugin-transform-object-assign": "~6.22.0",
     "babel-preset-es2015": "~6.24.1",
     "brace": "~0.10.0",
     "colors": "~1.1.2",

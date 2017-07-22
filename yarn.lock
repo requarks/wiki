@@ -796,6 +796,12 @@ babel-plugin-transform-es2015-unicode-regex@^6.24.1:
     babel-runtime "^6.22.0"
     regexpu-core "^2.0.0"
 
+babel-plugin-transform-object-assign@~6.22.0:
+  version "6.22.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-transform-object-assign/-/babel-plugin-transform-object-assign-6.22.0.tgz#f99d2f66f1a0b0d498e346c5359684740caa20ba"
+  dependencies:
+    babel-runtime "^6.22.0"
+
 babel-plugin-transform-regenerator@^6.24.1:
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-regenerator/-/babel-plugin-transform-regenerator-6.24.1.tgz#b8da305ad43c3c99b4848e4fe4037b770d23c418"
@@ -2043,7 +2049,7 @@ eslint-scope@^3.7.1:
     esrecurse "^4.1.0"
     estraverse "^4.1.1"
 
-eslint@^4.3.0:
+eslint@~4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/eslint/-/eslint-4.3.0.tgz#fcd7c96376bbf34c85ee67ed0012a299642b108f"
   dependencies:
@@ -2591,7 +2597,7 @@ functional-red-black-tree@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
 
-fuse-box@^2.2.1:
+fuse-box@~2.2.1:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/fuse-box/-/fuse-box-2.2.1.tgz#444dc3bd01a47b8044210d7344495cae92d3af3a"
   dependencies:
@@ -4490,7 +4496,7 @@ mongodb@2.2.27:
     mongodb-core "2.1.14"
     readable-stream "2.2.7"
 
-mongoose@*, mongoose@^4.11.1:
+mongoose@*, mongoose@~4.11.1:
   version "4.11.3"
   resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-4.11.3.tgz#f93d427b282c2e798b0fe1532fb41a7dde6e98d3"
   dependencies:
@@ -5999,7 +6005,7 @@ search-index-adder@~0.3.9:
   optionalDependencies:
     leveldown "^1.7.1"
 
-search-index-searcher@^0.2.10:
+search-index-searcher@~0.2.10:
   version "0.2.10"
   resolved "https://registry.yarnpkg.com/search-index-searcher/-/search-index-searcher-0.2.10.tgz#3b52b8bb643065883997dfce57c6c792ec551cb0"
   dependencies:
@@ -6936,7 +6942,7 @@ vue-resource@~1.3.4:
   dependencies:
     got "^7.0.0"
 
-vue-template-compiler@^2.4.2:
+vue-template-compiler@~2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/vue-template-compiler/-/vue-template-compiler-2.4.2.tgz#5a45d843f148b098f6c1d1e35ac20c4956d30ad1"
   dependencies:
@@ -6947,7 +6953,7 @@ vue-template-es2015-compiler@~1.5.3:
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.5.3.tgz#22787de4e37ebd9339b74223bc467d1adee30545"
 
-vue@^2.4.2:
+vue@~2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.4.2.tgz#a9855261f191c978cc0dc1150531b8d08149b58c"
 
