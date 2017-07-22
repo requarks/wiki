@@ -50,7 +50,7 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### Beta 13
+### 1.0.0 - Beta 13
 ![Progress](http://progressed.io/bar/100)
 
 - [x] Color Themes
@@ -58,7 +58,8 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Render line breaks by default (GitHub style)
 - [x] New Localization: German
 
-### 1.0.0
+### 1.0.1 - Stable
+![Progress](http://progressed.io/bar/100)
 
 - [x] Bug fixes release
 
