@@ -64,6 +64,15 @@ defaults:
       code:
         dark: true
         colorize: true
+authProviders:
+  - local
+  - microsoft
+  - google
+  - facebook
+  - github
+  - slack
+  - ldap
+  - azure
 colors:
   - red
   - pink

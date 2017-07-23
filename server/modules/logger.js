@@ -1,6 +1,8 @@
 'use strict'
 
-module.exports = (isDebug, processName) => {
+/* global wiki */
+
+module.exports = (processName) => {
   let winston = require('winston')
 
   if (typeof processName === 'undefined') {
@@ -10,10 +12,10 @@ module.exports = (isDebug, processName) => {
   // Console
 
   let logger = new (winston.Logger)({
-    level: (isDebug) ? 'debug' : 'info',
+    level: (wiki.IS_DEBUG) ? 'debug' : 'info',
     transports: [
       new (winston.transports.Console)({
-        level: (isDebug) ? 'debug' : 'info',
+        level: (wiki.IS_DEBUG) ? 'debug' : 'info',
         prettyPrint: true,
         colorize: true,
         silent: false,
@@ -28,48 +30,48 @@ module.exports = (isDebug, processName) => {
 
   // External services
 
-  if (appconfig.externalLogging.bugsnag) {
+  if (wiki.config.externalLogging.bugsnag) {
     const bugsnagTransport = require('./winston-transports/bugsnag')
     logger.add(bugsnagTransport, {
       level: 'warn',
-      key: appconfig.externalLogging.bugsnag
+      key: wiki.config.externalLogging.bugsnag
     })
   }
 
-  if (appconfig.externalLogging.loggly) {
+  if (wiki.config.externalLogging.loggly) {
     require('winston-loggly-bulk')
     logger.add(winston.transports.Loggly, {
-      token: appconfig.externalLogging.loggly.token,
-      subdomain: appconfig.externalLogging.loggly.subdomain,
+      token: wiki.config.externalLogging.loggly.token,
+      subdomain: wiki.config.externalLogging.loggly.subdomain,
       tags: ['wiki-js'],
       level: 'warn',
       json: true
     })
   }
 
-  if (appconfig.externalLogging.papertrail) {
+  if (wiki.config.externalLogging.papertrail) {
     require('winston-papertrail').Papertrail // eslint-disable-line no-unused-expressions
     logger.add(winston.transports.Papertrail, {
-      host: appconfig.externalLogging.papertrail.host,
-      port: appconfig.externalLogging.papertrail.port,
+      host: wiki.config.externalLogging.papertrail.host,
+      port: wiki.config.externalLogging.papertrail.port,
       level: 'warn',
       program: 'wiki.js'
     })
   }
 
-  if (appconfig.externalLogging.rollbar) {
+  if (wiki.config.externalLogging.rollbar) {
     const rollbarTransport = require('./winston-transports/rollbar')
     logger.add(rollbarTransport, {
       level: 'warn',
-      key: appconfig.externalLogging.rollbar
+      key: wiki.config.externalLogging.rollbar
     })
   }
 
-  if (appconfig.externalLogging.sentry) {
+  if (wiki.config.externalLogging.sentry) {
     const sentryTransport = require('./winston-transports/sentry')
     logger.add(sentryTransport, {
       level: 'warn',
-      key: appconfig.externalLogging.sentry
+      key: wiki.config.externalLogging.sentry
     })
   }
 

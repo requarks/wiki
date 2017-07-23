@@ -1,5 +1,7 @@
 'use strict'
 
+/* global wiki */
+
 const fs = require('fs')
 const yaml = require('js-yaml')
 const _ = require('lodash')
@@ -14,9 +16,9 @@ const cfgHelper = require('../helpers/config')
  */
 module.exports = (confPaths) => {
   confPaths = _.defaults(confPaths, {
-    config: path.join(ROOTPATH, 'config.yml'),
-    data: path.join(SERVERPATH, 'app/data.yml'),
-    dataRegex: path.join(SERVERPATH, 'app/regex.js')
+    config: path.join(wiki.ROOTPATH, 'config.yml'),
+    data: path.join(wiki.SERVERPATH, 'app/data.yml'),
+    dataRegex: path.join(wiki.SERVERPATH, 'app/regex.js')
   })
 
   let appconfig = {}

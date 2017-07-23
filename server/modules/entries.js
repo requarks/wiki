@@ -1,6 +1,6 @@
 'use strict'
 
-/* global db, git, lang, mark, rights, search, winston */
+/* global wiki */
 
 const Promise = require('bluebird')
 const path = require('path')
@@ -25,10 +25,10 @@ module.exports = {
   init() {
     let self = this
 
-    self._repoPath = path.resolve(ROOTPATH, appconfig.paths.repo)
-    self._cachePath = path.resolve(ROOTPATH, appconfig.paths.data, 'cache')
-    appdata.repoPath = self._repoPath
-    appdata.cachePath = self._cachePath
+    self._repoPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.repo)
+    self._cachePath = path.resolve(wiki.ROOTPATH, wiki.config.paths.data, 'cache')
+    wiki.data.repoPath = self._repoPath
+    wiki.data.cachePath = self._cachePath
 
     return self
   },
