@@ -10,6 +10,7 @@
     "filedeleteaction": "删除",
     "filedeleteloading": "删除文件...",
     "filedeletedefault": "这个文件",
+    "filedeletesuccess": "文件已删除。",
     "fileerror": "无法获取更新的列表。",
     "filefolderempty": "这个文件夹是空的。",
     "fileinsert": "插入文件的链接",
@@ -17,6 +18,7 @@
     "filemoveaction": "移动到",
     "filemoveerror": "移动出错：{{err}}",
     "filemoveloading": "移动文件...",
+    "filemovesuccess": "文件移动成功。",
     "fileprocessing": "处理...",
     "filerenameaction": "重命名",
     "filesuccess": "已插入文件链接。",
@@ -42,6 +44,16 @@
     "videosuccess": "视频代码已插入。",
     "videosupportedtitle": "支持以下内容：",
     "videotitle": "插入视频"
+  },
+  "history": {
+    "pastversions": "老版本",
+    "timestamp": "时间戳",
+    "author": "作者",
+    "commit": "提交",
+    "comparewith": "对比",
+    "view": "视图",
+    "reverttoversion": "恢复到版本",
+    "sidebyside": "并排视图"
   },
   "modal": {
     "abort": "退出",

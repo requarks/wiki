@@ -9,7 +9,12 @@
     "passwordverify": "Vérification du mot de passe",
     "provider": "Fournisseur",
     "savechanges": "Sauvegarder",
-    "subtitle": "Informations du profil et authentification"
+    "subtitle": "Informations du profil et authentification",
+    "tfa": "Authentification à deux facteurs",
+    "tfadisable": "Désactiver 2FA",
+    "tfadisabled": "Désactivé",
+    "tfaenable": "Activer 2FA",
+    "tfaenabled": "Activé"
   },
   "stats": {
     "subtitle": "Statistiques générales du site",
@@ -18,7 +23,10 @@
     "users": "Utilisateurs"
   },
   "settings": {
-    "subtitle": "Gérer la configuration du site",
+    "subtitle": "Gérer la configuration du site"
+  },
+  "system": {
+    "subtitle": "Informations et utilitaires pour votre wiki",
     "systemversion": "Version du système",
     "currentversion": "Version actuelle",
     "latestversion": "Dernière version",
@@ -34,7 +42,30 @@
     "resetaccountsbtn": "Réinitialiser les comptes système",
     "flushsessions": "Supprimer toutes les sessions utilisateur actives",
     "flushsessionstext": "Tous les utilisateurs seront déconnectés et contraints de se connecter à nouveau. Votre session sera également affectée!",
-    "flushsessionsbtn": "Supprimer les sessions"
+    "flushsessionsbtn": "Supprimer les sessions",
+    "hostinfo": "Informations sur l'hôte",
+    "os": "Système d'exploitation",
+    "nodeversion": "Version Node.js",
+    "hostname": "Nom d'hôte",
+    "cores": "Cœurs CPU",
+    "totalmem": "Mémoire totale",
+    "cwd": "Répertoire de travail"
+  },
+  "theme": {
+    "subtitle": "Changez l'apparence de votre wiki",
+    "primarycolor": "Couleur primaire",
+    "primarycolordesc": "Utilisé pour la barre de navigation supérieure, les en-têtes, les liens, etc.",
+    "altcolor": "Couleur alternative",
+    "altcolordesc": "Utilisé pour la barre latérale (dans une tonalité plus foncée)",
+    "footercolor": "Couleur du pied de page",
+    "footercolordesc": "Utilisé pour la le pied de page (dans une tonalité plus claire)",
+    "codeblock": {
+      "title": "Blocs de code",
+      "dark": "Utiliser un thème sombre",
+      "colorize": "Coloriser la syntaxe du code"
+    },
+    "savechanges": "Sauvegarder",
+    "reset": "Revenir aux paramètres par défaut"
   },
   "users": {
     "createauthorize": "Créer / Autoriser un utilisateur",

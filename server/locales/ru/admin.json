@@ -17,7 +17,9 @@
     "users": "Пользователи"
   },
   "settings": {
-    "subtitle": "Управление конфигурацией сайта",
+    "subtitle": "Управление конфигурацией сайта"
+  },
+  "system": {
     "systemversion": "Версия системы",
     "currentversion": "Текущая версия",
     "latestversion": "Последняя версия",

@@ -9,7 +9,12 @@
     "passwordverify": "验证密码",
     "provider": "供应商",
     "savechanges": "保存",
-    "subtitle": "个人资料与验证信息"
+    "subtitle": "个人资料与验证信息",
+    "tfa": "双重验证",
+    "tfadisable": "禁用双重验证",
+    "tfadisabled": "禁用",
+    "tfaenable": "启用双重验证",
+    "tfaenabled": "启用"
   },
   "stats": {
     "subtitle": "通用全站统计",
@@ -18,7 +23,10 @@
     "users": "用户"
   },
   "settings": {
-    "subtitle": "管理",
+    "subtitle": "管理"
+  },
+  "system": {
+    "subtitle": "本 wiki 的信息与工具",
     "systemversion": "系统版本",
     "currentversion": "当前版本",
     "latestversion": "最新版本",
@@ -34,7 +42,30 @@
     "resetaccountsbtn": "重置系统帐户",
     "flushsessions": "刷新所有活动用户的会话",
     "flushsessionstext": "所有用户将被注销并被要求重新登录。您当前的会话也会受到影响！",
-    "flushsessionsbtn": "清空会话"
+    "flushsessionsbtn": "清空会话",
+    "hostinfo": "主机信息",
+    "os": "操作系统",
+    "nodeversion": "Node.js版本",
+    "hostname": "主机名",
+    "cores": "CPU内核",
+    "totalmem": "总内存",
+    "cwd": "工作目录"
+  },
+  "theme": {
+    "subtitle": "改变 wiki 的外观和感觉",
+    "primarycolor": "原色",
+    "primarycolordesc": "用于顶级导航栏，标题，链接等",
+    "altcolor": "替代颜色",
+    "altcolordesc": "用于边栏（黑色）",
+    "footercolor": "页脚颜色",
+    "footercolordesc": "用于foter（较轻的音调）",
+    "codeblock": {
+      "title": "代码块",
+      "dark": "使用黑色主题",
+      "colorize": "对代码涂色"
+    },
+    "savechanges": "保存",
+    "reset": "恢复为默认值"
   },
   "users": {
     "createauthorize": "创建/授权用户",

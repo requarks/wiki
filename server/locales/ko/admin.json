@@ -18,7 +18,9 @@
     "users": "사용자"
   },
   "settings": {
-    "subtitle": "사이트 구성 관리",
+    "subtitle": "사이트 구성 관리"
+  },
+  "system": {
     "systemversion": "시스템 버전",
     "currentversion": "현재 버전",
     "latestversion": "최신 버전",
