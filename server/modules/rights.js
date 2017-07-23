@@ -1,6 +1,6 @@
 'use strict'
 
-/* global db */
+/* global wiki */
 
 const _ = require('lodash')
 
@@ -32,8 +32,8 @@ module.exports = {
   init () {
     let self = this
 
-    db.onReady.then(() => {
-      db.User.findOne({ provider: 'local', email: 'guest' }).then((u) => {
+    wiki.db.onReady.then(() => {
+      wiki.db.User.findOne({ provider: 'local', email: 'guest' }).then((u) => {
         if (u) {
           self.guest = u
         }

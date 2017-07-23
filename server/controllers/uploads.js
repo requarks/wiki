@@ -1,6 +1,6 @@
 'use strict'
 
-/* global git, lang, lcdata, upl */
+/* global wiki */
 
 const express = require('express')
 const router = express.Router()
@@ -12,7 +12,7 @@ const fs = Promise.promisifyAll(require('fs-extra'))
 const path = require('path')
 const _ = require('lodash')
 
-const validPathRe = new RegExp('^([a-z0-9/-' + appdata.regex.cjk + appdata.regex.arabic + ']+\\.[a-z0-9]+)$')
+const validPathRe = new RegExp('^([a-z0-9/-' + wiki.data.regex.cjk + wiki.data.regex.arabic + ']+\\.[a-z0-9]+)$')
 const validPathThumbsRe = new RegExp('^([a-z0-9]+\\.png)$')
 
 // ==========================================
@@ -28,7 +28,7 @@ router.get('/t/*', (req, res, next) => {
   // todo: Authentication-based access
 
   res.sendFile(fileName, {
-    root: lcdata.getThumbsPath(),
+    root: wiki.disk.getThumbsPath(),
     dotfiles: 'deny'
   }, (err) => {
     if (err) {
@@ -37,12 +37,12 @@ router.get('/t/*', (req, res, next) => {
   })
 })
 
-router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
+router.post('/img', wiki.disk.uploadImgHandler, (req, res, next) => {
   let destFolder = _.chain(req.body.folder).trim().toLower().value()
 
-  upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
+  wiki.upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
     if (!destFolderPath) {
-      res.json({ ok: false, msg: lang.t('errors:invalidfolder') })
+      res.json({ ok: false, msg: wiki.lang.t('errors:invalidfolder') })
       return true
     }
 
@@ -50,7 +50,7 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
       let destFilename = ''
       let destFilePath = ''
 
-      return lcdata.validateUploadsFilename(f.originalname, destFolder, true).then((fname) => {
+      return wiki.disk.validateUploadsFilename(f.originalname, destFolder, true).then((fname) => {
         destFilename = fname
         destFilePath = path.resolve(destFolderPath, destFilename)
 
@@ -60,7 +60,7 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
 
         let mimeInfo = fileType(buf)
         if (!_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
-          return Promise.reject(new Error(lang.t('errors:invalidfiletype')))
+          return Promise.reject(new Error(wiki.lang.t('errors:invalidfiletype')))
         }
         return true
       }).then(() => {
@@ -94,12 +94,12 @@ router.post('/img', lcdata.uploadImgHandler, (req, res, next) => {
   })
 })
 
-router.post('/file', lcdata.uploadFileHandler, (req, res, next) => {
+router.post('/file', wiki.disk.uploadFileHandler, (req, res, next) => {
   let destFolder = _.chain(req.body.folder).trim().toLower().value()
 
-  upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
+  wiki.upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
     if (!destFolderPath) {
-      res.json({ ok: false, msg: lang.t('errors:invalidfolder') })
+      res.json({ ok: false, msg: wiki.lang.t('errors:invalidfolder') })
       return true
     }
 
@@ -107,7 +107,7 @@ router.post('/file', lcdata.uploadFileHandler, (req, res, next) => {
       let destFilename = ''
       let destFilePath = ''
 
-      return lcdata.validateUploadsFilename(f.originalname, destFolder, false).then((fname) => {
+      return wiki.disk.validateUploadsFilename(f.originalname, destFolder, false).then((fname) => {
         destFilename = fname
         destFilePath = path.resolve(destFolderPath, destFilename)
 
@@ -150,7 +150,7 @@ router.get('/*', (req, res, next) => {
   // todo: Authentication-based access
 
   res.sendFile(fileName, {
-    root: git.getRepoPath() + '/uploads/',
+    root: wiki.git.getRepoPath() + '/uploads/',
     dotfiles: 'deny'
   }, (err) => {
     if (err) {

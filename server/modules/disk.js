@@ -1,6 +1,6 @@
 'use strict'
 
-/* global lang, winston */
+/* global wiki */
 
 const path = require('path')
 const Promise = require('bluebird')
@@ -10,7 +10,7 @@ const os = require('os')
 const _ = require('lodash')
 
 /**
- * Local Data Storage
+ * Local Disk Storage
  */
 module.exports = {
 
@@ -21,29 +21,24 @@ module.exports = {
 
   /**
    * Initialize Local Data Storage model
-   *
-   * @return     {Object}  Local Data Storage model instance
    */
   init () {
-    this._uploadsPath = path.resolve(ROOTPATH, appconfig.paths.repo, 'uploads')
-    this._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.paths.data, 'thumbs')
+    this._uploadsPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.repo, 'uploads')
+    this._uploadsThumbsPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.data, 'thumbs')
 
-    this.createBaseDirectories(appconfig)
-    this.initMulter(appconfig)
+    this.createBaseDirectories()
+    this.initMulter()
 
     return this
   },
 
   /**
    * Init Multer upload handlers
-   *
-   * @param      {Object}   appconfig  The application config
-   * @return     {boolean}  Void
    */
-  initMulter (appconfig) {
+  initMulter () {
     let maxFileSizes = {
-      img: appconfig.uploads.maxImageFileSize * 1024 * 1024,
-      file: appconfig.uploads.maxOtherFileSize * 1024 * 1024
+      img: wiki.config.uploads.maxImageFileSize * 1024 * 1024,
+      file: wiki.config.uploads.maxOtherFileSize * 1024 * 1024
     }
 
     // -> IMAGES
@@ -51,7 +46,7 @@ module.exports = {
     this.uploadImgHandler = multer({
       storage: multer.diskStorage({
         destination: (req, f, cb) => {
-          cb(null, path.resolve(ROOTPATH, appconfig.paths.data, 'temp-upload'))
+          cb(null, path.resolve(wiki.ROOTPATH, wiki.config.paths.data, 'temp-upload'))
         }
       }),
       fileFilter: (req, f, cb) => {
@@ -76,7 +71,7 @@ module.exports = {
     this.uploadFileHandler = multer({
       storage: multer.diskStorage({
         destination: (req, f, cb) => {
-          cb(null, path.resolve(ROOTPATH, appconfig.paths.data, 'temp-upload'))
+          cb(null, path.resolve(wiki.ROOTPATH, wiki.config.paths.data, 'temp-upload'))
         }
       }),
       fileFilter: (req, f, cb) => {
@@ -95,35 +90,32 @@ module.exports = {
 
   /**
    * Creates a base directories (Synchronous).
-   *
-   * @param      {Object}  appconfig  The application config
-   * @return     {Void}  Void
    */
-  createBaseDirectories (appconfig) {
-    winston.info('Checking data directories...')
+  createBaseDirectories () {
+    wiki.logger.info('Checking data directories...')
 
     try {
-      fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data))
-      fs.emptyDirSync(path.resolve(ROOTPATH, appconfig.paths.data))
-      fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './cache'))
-      fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './thumbs'))
-      fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'))
+      fs.ensureDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data))
+      fs.emptyDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data))
+      fs.ensureDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data, './cache'))
+      fs.ensureDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data, './thumbs'))
+      fs.ensureDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data, './temp-upload'))
 
       if (os.type() !== 'Windows_NT') {
-        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.data, './temp-upload'), '755')
+        fs.chmodSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data, './temp-upload'), '755')
       }
 
-      fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.repo))
-      fs.ensureDirSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'))
+      fs.ensureDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.repo))
+      fs.ensureDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.repo, './uploads'))
 
       if (os.type() !== 'Windows_NT') {
-        fs.chmodSync(path.resolve(ROOTPATH, appconfig.paths.repo, './uploads'), '755')
+        fs.chmodSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.repo, './uploads'), '755')
       }
     } catch (err) {
-      winston.error(err)
+      wiki.logger.error(err)
     }
 
-    winston.info('Data and Repository directories are OK.')
+    wiki.logger.info('Data and Repository directories are OK.')
   },
 
   /**
@@ -154,7 +146,7 @@ module.exports = {
    */
   validateUploadsFilename (f, fld, isImage) {
     let fObj = path.parse(f)
-    let fname = _.chain(fObj.name).trim().toLower().kebabCase().value().replace(new RegExp('[^a-z0-9-' + appdata.regex.cjk + appdata.regex.arabic + ']', 'g'), '')
+    let fname = _.chain(fObj.name).trim().toLower().kebabCase().value().replace(new RegExp('[^a-z0-9-' + wiki.data.regex.cjk + wiki.data.regex.arabic + ']', 'g'), '')
     let fext = _.toLower(fObj.ext)
 
     if (isImage && !_.includes(['.jpg', '.jpeg', '.png', '.gif', '.webp'], fext)) {
@@ -165,7 +157,7 @@ module.exports = {
     let fpath = path.resolve(this._uploadsPath, fld, f)
 
     return fs.statAsync(fpath).then((s) => {
-      throw new Error(lang.t('errors:fileexists', { path: f }))
+      throw new Error(wiki.lang.t('errors:fileexists', { path: f }))
     }).catch((err) => {
       if (err.code === 'ENOENT') {
         return f

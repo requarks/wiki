@@ -2,47 +2,48 @@
 
 // ===========================================
 // Wiki.js
-// 1.0.0
+// 1.0.1
 // Licensed under AGPLv3
 // ===========================================
 
 const path = require('path')
-const ROOTPATH = process.cwd()
-const SERVERPATH = path.join(ROOTPATH, 'server')
-
-global.ROOTPATH = ROOTPATH
-global.SERVERPATH = SERVERPATH
-const IS_DEBUG = process.env.NODE_ENV === 'development'
+let wiki = {
+  IS_DEBUG: process.env.NODE_ENV === 'development',
+  ROOTPATH: process.cwd(),
+  SERVERPATH: path.join(process.cwd(), 'server')
+}
+global.wiki = wiki
 
 process.env.VIPS_WARNING = false
 
-// if (IS_DEBUG) {
+// if (wiki.IS_DEBUG) {
 //   require('@glimpse/glimpse').init()
 // }
 
-let appconf = require('./libs/config')()
-global.appconfig = appconf.config
-global.appdata = appconf.data
+let appconf = require('./modules/config')()
+wiki.config = appconf.config
+wiki.data = appconf.data
 
 // ----------------------------------------
 // Load Winston
 // ----------------------------------------
 
-global.winston = require('./libs/logger')(IS_DEBUG, 'SERVER')
-global.winston.info('Wiki.js is initializing...')
+wiki.logger = require('./modules/logger')(wiki.IS_DEBUG, 'SERVER')
+wiki.logger.info('Wiki.js is initializing...')
 
 // ----------------------------------------
 // Load global modules
 // ----------------------------------------
 
-global.lcdata = require('./libs/local').init()
-global.db = require('./libs/db').init()
-global.entries = require('./libs/entries').init()
-global.git = require('./libs/git').init(false)
-global.lang = require('i18next')
-global.mark = require('./libs/markdown')
-global.search = require('./libs/search').init()
-global.upl = require('./libs/uploads').init()
+wiki.disk = require('./modules/disk').init()
+wiki.db = require('./modules/db').init()
+wiki.entries = require('./modules/entries').init()
+wiki.git = require('./modules/git').init(false)
+wiki.lang = require('i18next')
+wiki.mark = require('./modules/markdown')
+wiki.redis = require('./modules/redis').init()
+wiki.search = require('./modules/search').init()
+wiki.upl = require('./modules/uploads').init()
 
 // ----------------------------------------
 // Load modules
@@ -61,19 +62,19 @@ const i18nBackend = require('i18next-node-fs-backend')
 const passport = require('passport')
 const passportSocketIo = require('passport.socketio')
 const session = require('express-session')
-const SessionMongoStore = require('connect-mongo')(session)
+const SessionRedisStore = require('connect-redis')(session)
 const graceful = require('node-graceful')
 const socketio = require('socket.io')
 
-var mw = autoload(path.join(SERVERPATH, '/middlewares'))
-var ctrl = autoload(path.join(SERVERPATH, '/controllers'))
+var mw = autoload(path.join(wiki.SERVERPATH, '/middlewares'))
+var ctrl = autoload(path.join(wiki.SERVERPATH, '/controllers'))
 
 // ----------------------------------------
 // Define Express App
 // ----------------------------------------
 
 const app = express()
-global.app = app
+wiki.app = app
 app.use(compression())
 
 // ----------------------------------------
@@ -86,8 +87,8 @@ app.use(mw.security)
 // Public Assets
 // ----------------------------------------
 
-app.use(favicon(path.join(ROOTPATH, 'assets', 'favicon.ico')))
-app.use(express.static(path.join(ROOTPATH, 'assets'), {
+app.use(favicon(path.join(wiki.ROOTPATH, 'assets', 'favicon.ico')))
+app.use(express.static(path.join(wiki.ROOTPATH, 'assets'), {
   index: false,
   maxAge: '7d'
 }))
@@ -96,20 +97,19 @@ app.use(express.static(path.join(ROOTPATH, 'assets'), {
 // Passport Authentication
 // ----------------------------------------
 
-require('./libs/auth')(passport)
-global.rights = require('./libs/rights')
-global.rights.init()
+require('./modules/auth')(passport)
+wiki.rights = require('./modules/rights')
+wiki.rights.init()
 
-let sessionStore = new SessionMongoStore({
-  mongooseConnection: global.db.connection,
-  touchAfter: 15
+let sessionStore = new SessionRedisStore({
+  client: wiki.redis
 })
 
 app.use(cookieParser())
 app.use(session({
   name: 'wikijs.sid',
   store: sessionStore,
-  secret: appconfig.sessionSecret,
+  secret: wiki.config.sessionSecret,
   resave: false,
   saveUninitialized: false
 }))
@@ -127,26 +127,24 @@ app.use(mw.seo)
 // Localization Engine
 // ----------------------------------------
 
-global.lang
-  .use(i18nBackend)
-  .init({
-    load: 'languageOnly',
-    ns: ['common', 'admin', 'auth', 'errors', 'git'],
-    defaultNS: 'common',
-    saveMissing: false,
-    preload: [appconfig.lang],
-    lng: appconfig.lang,
-    fallbackLng: 'en',
-    backend: {
-      loadPath: path.join(SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
-    }
-  })
+wiki.lang.use(i18nBackend).init({
+  load: 'languageOnly',
+  ns: ['common', 'admin', 'auth', 'errors', 'git'],
+  defaultNS: 'common',
+  saveMissing: false,
+  preload: [wiki.config.lang],
+  lng: wiki.config.lang,
+  fallbackLng: 'en',
+  backend: {
+    loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
+  }
+})
 
 // ----------------------------------------
 // View Engine Setup
 // ----------------------------------------
 
-app.set('views', path.join(SERVERPATH, 'views'))
+app.set('views', path.join(wiki.SERVERPATH, 'views'))
 app.set('view engine', 'pug')
 
 app.use(bodyParser.json({ limit: '1mb' }))
@@ -157,10 +155,10 @@ app.use(bodyParser.urlencoded({ extended: false, limit: '1mb' }))
 // ----------------------------------------
 
 app.locals._ = require('lodash')
-app.locals.t = global.lang.t.bind(global.lang)
+app.locals.t = wiki.lang.t.bind(wiki.lang)
 app.locals.moment = require('moment')
-app.locals.moment.locale(appconfig.lang)
-app.locals.appconfig = appconfig
+app.locals.moment.locale(wiki.config.lang)
+app.locals.appconfig = wiki.config
 app.use(mw.flash)
 
 // ----------------------------------------
@@ -187,7 +185,7 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500)
   res.render('error', {
     message: err.message,
-    error: IS_DEBUG ? err : {}
+    error: wiki.IS_DEBUG ? err : {}
   })
 })
 
@@ -195,13 +193,13 @@ app.use(function (err, req, res, next) {
 // Start HTTP server
 // ----------------------------------------
 
-global.winston.info('Starting HTTP/WS server on port ' + appconfig.port + '...')
+wiki.logger.info('Starting HTTP/WS server on port ' + wiki.config.port + '...')
 
-app.set('port', appconfig.port)
+app.set('port', wiki.config.port)
 var server = http.createServer(app)
 var io = socketio(server)
 
-server.listen(appconfig.port)
+server.listen(wiki.config.port)
 server.on('error', (error) => {
   if (error.syscall !== 'listen') {
     throw error
@@ -210,10 +208,10 @@ server.on('error', (error) => {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      global.winston.error('Listening on port ' + appconfig.port + ' requires elevated privileges!')
+      wiki.logger.error('Listening on port ' + wiki.config.port + ' requires elevated privileges!')
       return process.exit(1)
     case 'EADDRINUSE':
-      global.winston.error('Port ' + appconfig.port + ' is already in use!')
+      wiki.logger.error('Port ' + wiki.config.port + ' is already in use!')
       return process.exit(1)
     default:
       throw error
@@ -221,7 +219,7 @@ server.on('error', (error) => {
 })
 
 server.on('listening', () => {
-  global.winston.info('HTTP/WS server started successfully! [RUNNING]')
+  wiki.logger.info('HTTP/WS server started successfully! [RUNNING]')
 })
 
 // ----------------------------------------
@@ -231,7 +229,7 @@ server.on('listening', () => {
 io.use(passportSocketIo.authorize({
   key: 'wikijs.sid',
   store: sessionStore,
-  secret: appconfig.sessionSecret,
+  secret: wiki.config.sessionSecret,
   cookieParser,
   success: (data, accept) => {
     accept()
@@ -247,7 +245,7 @@ io.on('connection', ctrl.ws)
 // Start child processes
 // ----------------------------------------
 
-let bgAgent = fork(path.join(SERVERPATH, 'agent.js'))
+let bgAgent = fork(path.join(wiki.SERVERPATH, 'agent.js'))
 
 bgAgent.on('message', m => {
   if (!m.action) {
@@ -256,7 +254,7 @@ bgAgent.on('message', m => {
 
   switch (m.action) {
     case 'searchAdd':
-      global.search.add(m.content)
+      wiki.search.add(m.content)
       break
   }
 })
@@ -266,11 +264,11 @@ bgAgent.on('message', m => {
 // ----------------------------------------
 
 graceful.on('exit', () => {
-  global.winston.info('- SHUTTING DOWN - Terminating Background Agent...')
+  wiki.logger.info('- SHUTTING DOWN - Terminating Background Agent...')
   bgAgent.kill()
-  global.winston.info('- SHUTTING DOWN - Performing git sync...')
+  wiki.logger.info('- SHUTTING DOWN - Performing git sync...')
   return global.git.resync().then(() => {
-    global.winston.info('- SHUTTING DOWN - Git sync successful. Now safe to exit.')
+    wiki.logger.info('- SHUTTING DOWN - Git sync successful. Now safe to exit.')
     process.exit()
   })
 })

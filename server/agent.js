@@ -1,6 +1,6 @@
 // ===========================================
 // Wiki.js - Background Agent
-// 1.0.0
+// 1.0.1
 // Licensed under AGPLv3
 // ===========================================
 
@@ -12,7 +12,7 @@ global.ROOTPATH = ROOTPATH
 global.SERVERPATH = SERVERPATH
 const IS_DEBUG = process.env.NODE_ENV === 'development'
 
-let appconf = require('./libs/config')()
+let appconf = require('./modules/config')()
 global.appconfig = appconf.config
 global.appdata = appconf.data
 
@@ -20,7 +20,7 @@ global.appdata = appconf.data
 // Load Winston
 // ----------------------------------------
 
-global.winston = require('./libs/logger')(IS_DEBUG, 'AGENT')
+global.winston = require('./modules/logger')(IS_DEBUG, 'AGENT')
 
 // ----------------------------------------
 // Load global modules
@@ -28,12 +28,12 @@ global.winston = require('./libs/logger')(IS_DEBUG, 'AGENT')
 
 global.winston.info('Background Agent is initializing...')
 
-global.db = require('./libs/db').init()
-global.upl = require('./libs/uploads-agent').init()
-global.git = require('./libs/git').init()
-global.entries = require('./libs/entries').init()
+global.db = require('./modules/db').init()
+global.upl = require('./modules/uploads-agent').init()
+global.git = require('./modules/git').init()
+global.entries = require('./modules/entries').init()
 global.lang = require('i18next')
-global.mark = require('./libs/markdown')
+global.mark = require('./modules/markdown')
 
 // ----------------------------------------
 // Load modules

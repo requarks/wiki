@@ -1,19 +1,21 @@
 'use strict'
 
-/* global db, lang */
+/* global wiki */
 
 const Promise = require('bluebird')
 const express = require('express')
 const router = express.Router()
 const passport = require('passport')
 const ExpressBrute = require('express-brute')
-const ExpressBruteMongooseStore = require('express-brute-mongoose')
+const ExpressBruteRedisStore = require('express-brute-redis')
 const moment = require('moment')
 
 /**
  * Setup Express-Brute
  */
-const EBstore = new ExpressBruteMongooseStore(db.Bruteforce)
+const EBstore = new ExpressBruteRedisStore({
+  client: wiki.redis
+})
 const bruteforce = new ExpressBrute(EBstore, {
   freeRetries: 5,
   minWait: 60 * 1000,
@@ -22,8 +24,8 @@ const bruteforce = new ExpressBrute(EBstore, {
   failCallback (req, res, next, nextValidRequestDate) {
     req.flash('alert', {
       class: 'error',
-      title: lang.t('auth:errors.toomanyattempts'),
-      message: lang.t('auth:errors.toomanyattemptsmsg', { time: moment(nextValidRequestDate).fromNow() }),
+      title: wiki.lang.t('auth:errors.toomanyattempts'),
+      message: wiki.lang.t('auth:errors.toomanyattemptsmsg', { time: moment(nextValidRequestDate).fromNow() }),
       iconClass: 'fa-times'
     })
     res.redirect('/login')
@@ -73,13 +75,13 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
     // LOGIN FAIL
     if (err.message === 'INVALID_LOGIN') {
       req.flash('alert', {
-        title: lang.t('auth:errors.invalidlogin'),
-        message: lang.t('auth:errors.invalidloginmsg')
+        title: wiki.lang.t('auth:errors.invalidlogin'),
+        message: wiki.lang.t('auth:errors.invalidloginmsg')
       })
       return res.redirect('/login')
     } else {
       req.flash('alert', {
-        title: lang.t('auth:errors.loginerror'),
+        title: wiki.lang.t('auth:errors.loginerror'),
         message: err.message
       })
       return res.redirect('/login')

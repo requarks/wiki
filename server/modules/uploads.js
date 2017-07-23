@@ -1,6 +1,6 @@
 'use strict'
 
-/* global db, lang, lcdata, upl, winston */
+/* global wiki */
 
 const path = require('path')
 const Promise = require('bluebird')
@@ -27,8 +27,8 @@ module.exports = {
    * @return     {Object}  Uploads model instance
    */
   init () {
-    this._uploadsPath = path.resolve(ROOTPATH, appconfig.paths.repo, 'uploads')
-    this._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.paths.data, 'thumbs')
+    this._uploadsPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.repo, 'uploads')
+    this._uploadsThumbsPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.data, 'thumbs')
 
     return this
   },
@@ -48,7 +48,7 @@ module.exports = {
    * @return     {Array<String>}  The uploads folders.
    */
   getUploadsFolders () {
-    return db.UplFolder.find({}, 'name').sort('name').exec().then((results) => {
+    return wiki.db.Folder.find({}, 'name').sort('name').exec().then((results) => {
       return (results) ? _.map(results, 'name') : [{ name: '' }]
     })
   },
@@ -69,7 +69,7 @@ module.exports = {
     }
 
     return fs.ensureDirAsync(path.join(self._uploadsPath, folderName)).then(() => {
-      return db.UplFolder.findOneAndUpdate({
+      return wiki.db.UplFolder.findOneAndUpdate({
         _id: 'f:' + folderName
       }, {
         name: folderName
@@ -88,7 +88,7 @@ module.exports = {
    * @return     {Boolean}   True if valid
    */
   validateUploadsFolder (folderName) {
-    return db.UplFolder.findOne({ name: folderName }).then((f) => {
+    return wiki.db.UplFolder.findOne({ name: folderName }).then((f) => {
       return (f) ? path.resolve(this._uploadsPath, folderName) : false
     })
   },
@@ -101,7 +101,7 @@ module.exports = {
    */
   addUploadsFiles (arrFiles) {
     if (_.isArray(arrFiles) || _.isPlainObject(arrFiles)) {
-      // this._uploadsDb.Files.insert(arrFiles);
+      // this._uploadswiki.Db.Files.insert(arrFiles);
     }
   },
 
@@ -113,7 +113,7 @@ module.exports = {
    * @return     {Array<Object>}  The files matching the query
    */
   getUploadsFiles (cat, fld) {
-    return db.UplFile.find({
+    return wiki.db.UplFile.find({
       category: cat,
       folder: 'f:' + fld
     }).sort('filename').exec()
@@ -128,7 +128,7 @@ module.exports = {
   deleteUploadsFile (uid) {
     let self = this
 
-    return db.UplFile.findOneAndRemove({ _id: uid }).then((f) => {
+    return wiki.db.UplFile.findOneAndRemove({ _id: uid }).then((f) => {
       if (f) {
         return self.deleteUploadsFileTry(f, 0)
       }
@@ -150,7 +150,7 @@ module.exports = {
           return self.deleteUploadsFileTry(f, attempt + 1)
         })
       } else {
-        winston.warn('Unable to delete uploads file ' + f.filename + '. File is locked by another process and multiple attempts failed.')
+        wiki.logger.warn('Unable to delete uploads file ' + f.filename + '. File is locked by another process and multiple attempts failed.')
         return true
       }
     })
@@ -168,12 +168,12 @@ module.exports = {
     let fUrlFilename = _.last(_.split(fUrlObj.pathname, '/'))
     let destFolder = _.chain(fFolder).trim().toLower().value()
 
-    return upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
+    return wiki.upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
       if (!destFolderPath) {
-        return Promise.reject(new Error(lang.t('errors:invalidfolder')))
+        return Promise.reject(new Error(wiki.lang.t('errors:invalidfolder')))
       }
 
-      return lcdata.validateUploadsFilename(fUrlFilename, destFolder).then((destFilename) => {
+      return wiki.disk.validateUploadsFilename(fUrlFilename, destFolder).then((destFilename) => {
         let destFilePath = path.resolve(destFolderPath, destFilename)
 
         return new Promise((resolve, reject) => {
@@ -194,7 +194,7 @@ module.exports = {
               rq.abort()
               destFileStream.destroy()
               fs.remove(destFilePath)
-              reject(new Error(lang.t('errors:remotetoolarge')))
+              reject(new Error(wiki.lang.t('errors:remotetoolarge')))
             }
           }).on('error', (err) => {
             destFileStream.destroy()
@@ -223,15 +223,15 @@ module.exports = {
   moveUploadsFile (uid, fld, nFilename) {
     let self = this
 
-    return db.UplFolder.findById('f:' + fld).then((folder) => {
+    return wiki.db.UplFolder.finwiki.dById('f:' + fld).then((folder) => {
       if (folder) {
-        return db.UplFile.findById(uid).then((originFile) => {
+        return wiki.db.UplFile.finwiki.dById(uid).then((originFile) => {
           // -> Check if rename is valid
 
           let nameCheck = null
           if (nFilename) {
             let originFileObj = path.parse(originFile.filename)
-            nameCheck = lcdata.validateUploadsFilename(nFilename + originFileObj.ext, folder.name)
+            nameCheck = wiki.disk.validateUploadsFilename(nFilename + originFileObj.ext, folder.name)
           } else {
             nameCheck = Promise.resolve(originFile.filename)
           }
@@ -245,12 +245,12 @@ module.exports = {
             // -> Check for invalid operations
 
             if (sourceFilePath === destFilePath) {
-              return Promise.reject(new Error(lang.t('errors:invalidoperation')))
+              return Promise.reject(new Error(wiki.lang.t('errors:invalidoperation')))
             }
 
-            // -> Delete DB entry
+            // -> Delete wiki.DB entry
 
-            preMoveOps.push(db.UplFile.findByIdAndRemove(uid))
+            preMoveOps.push(wiki.db.UplFile.finwiki.dByIdAndRemove(uid))
 
             // -> Move thumbnail ahead to avoid re-generation
 
@@ -273,7 +273,7 @@ module.exports = {
           })
         })
       } else {
-        return Promise.reject(new Error(lang.t('errors:invaliddestfolder')))
+        return Promise.reject(new Error(wiki.lang.t('errors:invaliddestfolder')))
       }
     })
   }

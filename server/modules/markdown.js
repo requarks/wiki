@@ -1,6 +1,6 @@
 'use strict'
 
-/* global winston */
+/* global wiki */
 
 const Promise = require('bluebird')
 const md = require('markdown-it')
@@ -23,11 +23,11 @@ const mdRemove = require('remove-markdown')
 
 var mkdown = md({
   html: true,
-  breaks: appconfig.features.linebreaks,
+  breaks: wiki.config.features.linebreaks,
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    if (appconfig.theme.code.colorize && lang && hljs.getLanguage(lang)) {
+    if (wiki.config.theme.code.colorize && lang && hljs.getLanguage(lang)) {
       try {
         return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
       } catch (err) {
@@ -57,7 +57,7 @@ var mkdown = md({
   })
   .use(mdAttrs)
 
-if (appconfig.features.mathjax) {
+if (wiki.config.features.mathjax) {
   mkdown.use(mdMathjax)
 }
 
@@ -94,7 +94,7 @@ const videoRules = [
 
 // Regex
 
-const textRegex = new RegExp('\\b[a-z0-9-.,' + appdata.regex.cjk + appdata.regex.arabic + ']+\\b', 'g')
+const textRegex = new RegExp('\\b[a-z0-9-.,' + wiki.data.regex.cjk + wiki.data.regex.arabic + ']+\\b', 'g')
 const mathRegex = [
   {
     format: 'TeX',
@@ -301,7 +301,7 @@ const parseContent = (content) => {
 
   // Mathjax Post-processor
 
-  if (appconfig.features.mathjax) {
+  if (wiki.config.features.mathjax) {
     return processMathjax(cr.html())
   } else {
     return Promise.resolve(cr.html())
@@ -339,7 +339,7 @@ const processMathjax = (content) => {
                 resolve(result.svg)
               } else {
                 resolve(currentMatch[0])
-                winston.warn(result.errors.join(', '))
+                wiki.logger.warn(result.errors.join(', '))
               }
             })
           })

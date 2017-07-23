@@ -1,13 +1,13 @@
 'use strict'
 
-/* global winston */
+/* global wiki */
 
 const Promise = require('bluebird')
 const _ = require('lodash')
 const searchIndex = require('./search-index')
 const stopWord = require('stopword')
 const streamToPromise = require('stream-to-promise')
-const searchAllowedChars = new RegExp('[^a-z0-9' + appdata.regex.cjk + appdata.regex.arabic + ' ]', 'g')
+const searchAllowedChars = new RegExp('[^a-z0-9' + wiki.data.regex.cjk + wiki.data.regex.arabic + ' ]', 'g')
 
 module.exports = {
 
@@ -27,15 +27,15 @@ module.exports = {
         fieldedSearch: true,
         indexPath: 'wiki',
         logLevel: 'error',
-        stopwords: _.get(stopWord, appconfig.lang, [])
+        stopwords: _.get(stopWord, wiki.config.lang, [])
       }, (err, si) => {
         if (err) {
-          winston.error('Failed to initialize search index.', err)
+          wiki.logger.error('Failed to initialize search index.', err)
           reject(err)
         } else {
           self._si = Promise.promisifyAll(si)
           self._si.flushAsync().then(() => {
-            winston.info('Search index flushed and ready.')
+            wiki.logger.info('Search index flushed and ready.')
             resolve(true)
           })
         }
@@ -95,13 +95,13 @@ module.exports = {
           parent: content.parent || '',
           content: content.text || ''
         }]).then(() => {
-          winston.log('verbose', 'Entry ' + content._id + ' added/updated to search index.')
+          wiki.logger.log('verbose', 'Entry ' + content._id + ' added/updated to search index.')
           return true
         }).catch((err) => {
-          winston.error(err)
+          wiki.logger.error(err)
         })
       }).catch((err) => {
-        winston.error(err)
+        wiki.logger.error(err)
       })
     })
   },
@@ -131,7 +131,7 @@ module.exports = {
         if (err.type === 'NotFoundError') {
           return true
         } else {
-          winston.error(err)
+          wiki.logger.error(err)
         }
       })
     })
@@ -204,7 +204,7 @@ module.exports = {
           suggest: []
         }
       } else {
-        winston.error(err)
+        wiki.logger.error(err)
       }
     })
   }

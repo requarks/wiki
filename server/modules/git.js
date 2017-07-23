@@ -1,6 +1,6 @@
 'use strict'
 
-/* global lang, winston */
+/* global wiki */
 
 const Git = require('git-wrapper2-promise')
 const Promise = require('bluebird')
@@ -43,20 +43,20 @@ module.exports = {
 
     // -> Build repository path
 
-    if (_.isEmpty(appconfig.paths.repo)) {
-      self._repo.path = path.join(ROOTPATH, 'repo')
+    if (_.isEmpty(wiki.config.paths.repo)) {
+      self._repo.path = path.join(wiki.ROOTPATH, 'repo')
     } else {
-      self._repo.path = appconfig.paths.repo
+      self._repo.path = wiki.config.paths.repo
     }
 
     // -> Initialize repository
 
-    self.onReady = self._initRepo(appconfig)
+    self.onReady = self._initRepo()
 
     // Define signature
 
-    if (appconfig.git) {
-      self._signature.email = appconfig.git.serverEmail || 'wiki@example.com'
+    if (wiki.config.git) {
+      self._signature.email = wiki.config.git.serverEmail || 'wiki@example.com'
     }
 
     return self
@@ -65,19 +65,19 @@ module.exports = {
   /**
    * Initialize Git repository
    *
-   * @param      {Object}  appconfig  The application config
+   * @param      {Object}  wiki.config  The application config
    * @return     {Object}  Promise
    */
-  _initRepo(appconfig) {
+  _initRepo() {
     let self = this
 
-    winston.info('Checking Git repository...')
+    wiki.logger.info('Checking Git repository...')
 
     // -> Check if path is accessible
 
     return fs.mkdirAsync(self._repo.path).catch((err) => {
       if (err.code !== 'EEXIST') {
-        winston.error('Invalid Git repository path or missing permissions.')
+        wiki.logger.error('Invalid Git repository path or missing permissions.')
       }
     }).then(() => {
       self._git = new Git({ 'git-dir': self._repo.path })
@@ -91,28 +91,28 @@ module.exports = {
         self._repo.exists = false
       })
     }).then(() => {
-      if (appconfig.git === false) {
-        winston.info('Remote Git syncing is disabled. Not recommended!')
+      if (wiki.config.git === false) {
+        wiki.logger.info('Remote Git syncing is disabled. Not recommended!')
         return Promise.resolve(true)
       }
 
       // Initialize remote
 
-      let urlObj = URL.parse(appconfig.git.url)
-      if (appconfig.git.auth.type !== 'ssh') {
-        urlObj.auth = appconfig.git.auth.username + ':' + appconfig.git.auth.password
+      let urlObj = URL.parse(wiki.config.git.url)
+      if (wiki.config.git.auth.type !== 'ssh') {
+        urlObj.auth = wiki.config.git.auth.username + ':' + wiki.config.git.auth.password
       }
       self._url = URL.format(urlObj)
 
       let gitConfigs = [
         () => { return self._git.exec('config', ['--local', 'user.name', 'Wiki']) },
         () => { return self._git.exec('config', ['--local', 'user.email', self._signature.email]) },
-        () => { return self._git.exec('config', ['--local', '--bool', 'http.sslVerify', _.toString(appconfig.git.auth.sslVerify)]) }
+        () => { return self._git.exec('config', ['--local', '--bool', 'http.sslVerify', _.toString(wiki.config.git.auth.sslVerify)]) }
       ]
 
-      if (appconfig.git.auth.type === 'ssh') {
+      if (wiki.config.git.auth.type === 'ssh') {
         gitConfigs.push(() => {
-          return self._git.exec('config', ['--local', 'core.sshCommand', 'ssh -i "' + appconfig.git.auth.privateKey + '" -o StrictHostKeyChecking=no'])
+          return self._git.exec('config', ['--local', 'core.sshCommand', 'ssh -i "' + wiki.config.git.auth.privateKey + '" -o StrictHostKeyChecking=no'])
         })
       }
 
@@ -125,14 +125,14 @@ module.exports = {
             return self._git.exec('remote', ['set-url', 'origin', self._url])
           }
         }).catch(err => {
-          winston.error(err)
+          wiki.logger.error(err)
         })
       })
     }).catch((err) => {
-      winston.error('Git remote error!')
+      wiki.logger.error('Git remote error!')
       throw err
     }).then(() => {
-      winston.info('Git repository is OK.')
+      wiki.logger.info('Git repository is OK.')
       return true
     })
   },
@@ -143,7 +143,7 @@ module.exports = {
    * @return     {String}  The repo path.
    */
   getRepoPath() {
-    return this._repo.path || path.join(ROOTPATH, 'repo')
+    return this._repo.path || path.join(wiki.ROOTPATH, 'repo')
   },
 
   /**
@@ -156,18 +156,18 @@ module.exports = {
 
     // Is git remote disabled?
 
-    if (appconfig.git === false) {
+    if (wiki.config.git === false) {
       return Promise.resolve(true)
     }
 
     // Fetch
 
-    winston.info('Performing pull from remote Git repository...')
+    wiki.logger.info('Performing pull from remote Git repository...')
     return self._git.pull('origin', self._repo.branch).then((cProc) => {
-      winston.info('Git Pull completed.')
+      wiki.logger.info('Git Pull completed.')
     })
       .catch((err) => {
-        winston.error('Unable to fetch from git origin!')
+        wiki.logger.error('Unable to fetch from git origin!')
         throw err
       })
       .then(() => {
@@ -177,19 +177,19 @@ module.exports = {
           let out = cProc.stdout.toString()
 
           if (_.includes(out, 'commit')) {
-            winston.info('Performing push to remote Git repository...')
+            wiki.logger.info('Performing push to remote Git repository...')
             return self._git.push('origin', self._repo.branch).then(() => {
-              return winston.info('Git Push completed.')
+              return wiki.logger.info('Git Push completed.')
             })
           } else {
-            winston.info('Git Push skipped. Repository is already in sync.')
+            wiki.logger.info('Git Push skipped. Repository is already in sync.')
           }
 
           return true
         })
       })
       .catch((err) => {
-        winston.error('Unable to push changes to remote Git repository!')
+        wiki.logger.error('Unable to push changes to remote Git repository!')
         throw err
       })
   },
@@ -209,7 +209,7 @@ module.exports = {
       let out = cProc.stdout.toString()
       return _.includes(out, gitFilePath)
     }).then((isTracked) => {
-      commitMsg = (isTracked) ? lang.t('git:updated', { path: gitFilePath }) : lang.t('git:added', { path: gitFilePath })
+      commitMsg = (isTracked) ? wiki.lang.t('git:updated', { path: gitFilePath }) : wiki.lang.t('git:added', { path: gitFilePath })
       return self._git.add(gitFilePath)
     }).then(() => {
       let commitUsr = securityHelper.sanitizeCommitUser(author)

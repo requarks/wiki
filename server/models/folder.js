@@ -1,16 +1,12 @@
 'use strict'
 
 /**
- * Settings schema
+ * Folder schema
  */
 module.exports = (sequelize, DataTypes) => {
-  let settingSchema = sequelize.define('setting', {
-    key: {
+  let folderSchema = sequelize.define('folder', {
+    name: {
       type: DataTypes.STRING,
-      allowNull: false
-    },
-    config: {
-      type: DataTypes.JSONB,
       allowNull: false
     }
   }, {
@@ -19,10 +15,10 @@ module.exports = (sequelize, DataTypes) => {
     indexes: [
       {
         unique: true,
-        fields: ['key']
+        fields: ['name']
       }
     ]
   })
 
-  return settingSchema
+  return folderSchema
 }
