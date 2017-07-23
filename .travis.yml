@@ -20,12 +20,15 @@ before_script:
 - yarn run build
 before_deploy:
 - tar -czf wiki-js.tar.gz * -X .build/.deployexclude
+- yarn install --production --ignore-scripts --prefer-offline
+- tar -czf node_modules.tar.gz node_modules
 deploy:
   provider: releases
   api_key:
     secure: TyasQ2QnWQoBhsiwm88oHoeJ+PWBZnbWEJwu6JdN5HA9cXqIdHqd1msCh84gGtKRfL2EObw4AvDwLSEd5mIM0cmQfTiokYbmb7OSjOq880rbZwtXt9t9KkC5b+TIxkhJzkzi7vIpssTeNkVJBbo/R3m0suaCRqzypkW5mhVcsFhhZ8oVCZnI1uZAXCwFNMcFFUAHxWYE98tW5bfxknRU1NJFcXysN8VXskIZ82wQQBAzZ1aQgVyMl6Uw2hns399hxCx8gVKWOIdbpO1bliHBMdm5z+lR5i723IQnHpYJf4gWvPf3oHnSS1ocrJeWVoBqanC5Iu3QhwOvPLPw/AUcJOqhvS/QiGZ2AuA9GwtBpYNVYYGD9RqcODBKZy0fWluwCuVNNoQHmwMWVP7lRnwP+SNtLzzV5ZC8mrjb4B9KGoBUR8Q7lz8cMtLoPOixk1WdWOpIFzKcw/fy8Ze6cnnFKrzsPVUZy3E3SKit3GuP6Nd7ghO0Kxp4x0eAlqFDYRZ9nG55ctd0i2b5u1r+VArt21dk2aMFxL6i67funIraEndLQFHhRgPVmjemJBRXf8j8OYrGStTsm0S26IXo3iVh/NJakIg6mEFJ3j4BXPEjCUmIW0iD6sKGTeNH6jaON+DV4T+ErGnYzgwO5KIfo9cI00DqjG0tjBQ45lWaLGy6PEo=
   file:
-  - wiki-js.tar.gz
+    - wiki-js.tar.gz
+    - node_modules.tar.gz
   skip_cleanup: true
   overwrite: true
   on:

@@ -143,7 +143,7 @@ const tasks = {
    */
   installYarn() {
     ora.text = 'Installing Yarn...'
-    return exec.stdout('npm', ['install', '-g', 'yarn'], {
+    return exec.stdout('npm', ['install', 'yarn'], {
       cwd: installDir
     }).then(results => {
       ora.text = 'Yarn installed successfully.'
@@ -155,7 +155,7 @@ const tasks = {
    */
   installDependencies() {
     ora.text = 'Installing Wiki.js npm dependencies...'
-    return exec.stdout('yarn', ['install', '--production', '--ignore-optional'], {
+    return exec.stdout('./node_modules/.bin/yarn', ['install', '--production', '--ignore-optional'], {
       cwd: installDir
     }).then(results => {
       ora.text = 'Wiki.js npm dependencies installed successfully.'
