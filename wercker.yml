@@ -2,13 +2,10 @@ box: node:8-alpine
 build:
   steps:
     - script:
-      name: yarn repository
+      name: install dependencies
       code: |
-        curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-        echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-        apt update
-    - install-packages:
-      packages: bash build-essential git openssh yarn
+        apk update
+        apk add bash build-base curl git openssh yarn
     - script:
       name: yarn install
       code: |
