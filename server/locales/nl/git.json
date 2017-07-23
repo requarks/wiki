@@ -1,1 +1,6 @@
-{ }
+{
+  "added": "{{path}} toegevoegd",
+  "deleted": "{{path}} verwijderd/hernoemd",
+  "updated": "{{path}} bijgewerkt",
+  "uploaded": "{{path}} is geüpload"
+}

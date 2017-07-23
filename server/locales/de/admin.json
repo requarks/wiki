@@ -18,7 +18,9 @@
     "users": "Benutzer"
   },
   "settings": {
-    "subtitle": "Verwalte Seitenkonfiguration",
+    "subtitle": "Verwalte Seitenkonfiguration"
+  },
+  "system": {
     "systemversion": "Systemversion",
     "currentversion": "Aktuelle Version",
     "latestversion": "Letzte Version",

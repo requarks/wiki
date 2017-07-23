@@ -9,7 +9,12 @@
     "passwordverify": "Confirmar Contraseña",
     "provider": "Proveedor",
     "savechanges": "Guardar Cambios",
-    "subtitle": "Perfil e información de autenticación"
+    "subtitle": "Perfil e información de autenticación",
+    "tfa": "Autenticación de dos factores",
+    "tfadisable": "Desactivar 2FA",
+    "tfadisabled": "Desactivado",
+    "tfaenable": "Activar 2FA",
+    "tfaenabled": "Activado"
   },
   "stats": {
     "subtitle": "Estadísticas generales del sitio",
@@ -18,7 +23,10 @@
     "users": "Usuarios"
   },
   "settings": {
-    "subtitle": "Configuración del sitio",
+    "subtitle": "Configuración del sitio"
+  },
+  "system": {
+    "subtitle": "Información y utilidades para tu wiki",
     "systemversion": "Versión del Sistema",
     "currentversion": "Versión Actual",
     "latestversion": "Última Versión",
@@ -34,7 +42,30 @@
     "resetaccountsbtn": "Restablecer cuentas del sistema",
     "flushsessions": "Limpiar todas las sesiones de usuario activas",
     "flushsessionstext": "Todos los usuarios serán desconectados y forzados a iniciar sesión nuevamente. ¡Su sesión actual también se verá afectada!",
-    "flushsessionsbtn": "Limpiar Sesiones"
+    "flushsessionsbtn": "Limpiar Sesiones",
+    "hostinfo": "Información del Host",
+    "os": "Sistema Operativo",
+    "nodeversion": "Versión de Node.js",
+    "hostname": "Nombre de host",
+    "cores": "CPU Cores",
+    "totalmem": "Memoria Total",
+    "cwd": "DIrectorio de Trabajo"
+  },
+  "theme": {
+    "subtitle": "Cambiar la apariencia de tu wiki",
+    "primarycolor": "Color primario",
+    "primarycolordesc": "Se utiliza para la barra de navegación superior, encabezados, enlaces, etc.",
+    "altcolor": "Color alternativo",
+    "altcolordesc": "Se utiliza para la barra lateral (en un tono más oscuro)",
+    "footercolor": "Color del pie de página",
+    "footercolordesc": "Utilizado para el pie de página (en un tono más claro)",
+    "codeblock": {
+      "title": "Bloques de código",
+      "dark": "Utilizar Tema Oscuro",
+      "colorize": "Colorear la sintaxis del código"
+    },
+    "savechanges": "Guardar Cambios",
+    "reset": "Volver a los valores predeterminados"
   },
   "users": {
     "createauthorize": "Crear / Autorizar usuario",

@@ -45,6 +45,16 @@
     "videosupportedtitle": "Les formats suivants sont pris en charge:",
     "videotitle": "Insérer une vidéo"
   },
+  "history": {
+    "pastversions": "Versions antérieures",
+    "timestamp": "Horodatage",
+    "author": "Auteur",
+    "commit": "Commit",
+    "comparewith": "Comparer avec...",
+    "view": "Visualiser",
+    "reverttoversion": "Revenir à la version",
+    "sidebyside": "Vue côte à côte"
+  },
   "modal": {
     "abort": "Annuler",
     "anchorerror": "Échec de la copie vers le presse-papiers. Copiez manuellement.",
