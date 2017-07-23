@@ -1,0 +1,28 @@
+box: node:8-alpine
+build:
+  steps:
+    - script:
+      name: yarn repository
+      code: |
+        curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+        echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+        apt update
+    - install-packages:
+      packages: bash build-essential git openssh yarn
+    - script:
+      name: yarn install
+      code: |
+        yarn config set cache-folder "$WERCKER_CACHE_DIR/yarn"
+        yarn install
+    - script:
+      name: build
+      code: yarn run build
+    - npm-test
+deploy:
+  steps:
+    - script:
+      name: package
+      code: |
+        tar -czf wiki-js.tar.gz * -X .build/.deployexclude
+        yarn install --production --ignore-scripts --prefer-offline
+        tar -czf node_modules.tar.gz node_modules

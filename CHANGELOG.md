@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **History**: History section to list all changes
 - **Security**: Optional Two-Factor Authentication (2FA) protection
 
+## [v1.0.3] - 2017-07-23
+### Fixed
+- **Misc**: Revert to npm install (Yarn may cause permissions + hang issues)
+
 ## [v1.0.1] - 2017-07-22
 ### Changed
 - **Misc**: Switch to Yarn for npm dependencies installation
