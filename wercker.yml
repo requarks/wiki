@@ -15,7 +15,8 @@ build:
       name: build
       code: yarn run build
     - npm-test
-deploy:
+
+deploy-github:
   steps:
     - script:
       name: package
@@ -23,3 +24,25 @@ deploy:
         tar -czf wiki-js.tar.gz * -X .build/.deployexclude
         yarn install --production --ignore-scripts --prefer-offline
         tar -czf node_modules.tar.gz node_modules
+        SEMVER_LAST=`npm show wiki.js version`
+        SEMVER_NEXT=`./.build/semver_next.sh -p $SEMVER_LAST`
+    - github-create-release:
+      token: $GITHUB_TOKEN
+      tag: "v${SEMVER_NEXT}"
+      prerelease: true
+    - github-upload-asset:
+      token: $GITHUB_TOKEN
+      file: wiki-js.tar.gz
+    - github-upload-asset:
+      token: $GITHUB_TOKEN
+      file: node_modules.tar.gz
+deploy-docker:
+  steps:
+    - internal/docker-push:
+        username: $DOCKER_HUB_USERNAME
+        password: $DOCKER_HUB_PASSWORD
+        tag: latest
+        ports: "3000"
+        entrypoint: node server
+        repository: requarks/wiki
+        registry: https://registry.hub.docker.com

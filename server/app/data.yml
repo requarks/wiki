@@ -92,6 +92,9 @@ langs:
     id: zh
     name: Chinese - 中文
   -
+    id: nl
+    name: Dutch - Nederlands
+  -
     id: fr
     name: French - Français
   -
