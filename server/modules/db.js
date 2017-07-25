@@ -64,8 +64,7 @@ module.exports = {
     // Sync DB
 
     self.onReady = self.inst.sync({
-      force: false,
-      logging: wiki.logger.verbose
+      force: false
     })
 
     return self

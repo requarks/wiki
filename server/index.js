@@ -65,6 +65,8 @@ const session = require('express-session')
 const SessionRedisStore = require('connect-redis')(session)
 const graceful = require('node-graceful')
 const socketio = require('socket.io')
+const graphqlApollo = require('apollo-server-express')
+const graphqlSchema = require('./modules/graphql')
 
 var mw = autoload(path.join(wiki.SERVERPATH, '/middlewares'))
 var ctrl = autoload(path.join(wiki.SERVERPATH, '/controllers'))
@@ -167,6 +169,8 @@ app.use(mw.flash)
 
 app.use('/', ctrl.auth)
 
+app.use('/graphql', graphqlApollo.graphqlExpress({ schema: graphqlSchema }))
+app.use('/graphiql', graphqlApollo.graphiqlExpress({ endpointURL: '/graphql' }))
 app.use('/uploads', mw.auth, ctrl.uploads)
 app.use('/admin', mw.auth, ctrl.admin)
 app.use('/', mw.auth, ctrl.pages)

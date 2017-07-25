@@ -99,7 +99,7 @@ module.exports = (sequelize, DataTypes) => {
             deny: false
           }]
         }
-        return db.User.create(nUsr)
+        return wiki.db.User.create(nUsr)
       }
       return user || Promise.reject(new Error(wiki.lang.t('auth:errors:notyetauthorized')))
     })
