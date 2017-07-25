@@ -214,20 +214,17 @@ module.exports = function (passport) {
 
         return wiki.db.User.create({
           provider: 'local',
-          email: 'guest',
+          email: 'guest@example.com',
           name: 'Guest',
           password: '',
-          rights: [{
-            role: 'read',
-            path: '/',
-            exact: false,
-            deny: !wiki.config.public
-          }]
+          role: 'guest'
         }).then(() => {
           wiki.logger.info('[AUTH] Guest account created successfully!')
+          return true
         }).catch((err) => {
           wiki.logger.error('[AUTH] An error occured while creating guest account:')
           wiki.logger.error(err)
+          return err
         })
       }
     }).then(() => {
@@ -241,17 +238,14 @@ module.exports = function (passport) {
               email: process.env.WIKI_ADMIN_EMAIL,
               name: 'Administrator',
               password: '$2a$04$MAHRw785Xe/Jd5kcKzr3D.VRZDeomFZu2lius4gGpZZ9cJw7B7Mna', // admin123 (default)
-              rights: [{
-                role: 'admin',
-                path: '/',
-                exact: false,
-                deny: false
-              }]
+              role: 'admin'
             }).then(() => {
               wiki.logger.info('[AUTH] Root admin account created successfully!')
+              return true
             }).catch((err) => {
               wiki.logger.error('[AUTH] An error occured while creating root admin account:')
               wiki.logger.error(err)
+              return err
             })
           } else { return true }
         })
