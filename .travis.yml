@@ -21,7 +21,7 @@ before_script:
 before_deploy:
 - tar -czf wiki-js.tar.gz * -X .build/.deployexclude
 - yarn install --production --ignore-scripts --prefer-offline
-- tar -czf node_modules.tar.gz node_modules
+- tar -czf node_modules.tar.gz -C node_modules .
 deploy:
   provider: releases
   api_key:
