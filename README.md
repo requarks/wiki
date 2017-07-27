@@ -68,16 +68,17 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
+- [ ] GraphQL API
 - [ ] Migrate to PostgreSQL + Redis datastore
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
 - [ ] Docker support + Auto compile/publish to Docker Hub
 - [ ] Support sub-directory installations (e.g. example.com/wiki)
 - [ ] Persist system settings to database instead of file-based
+- [ ] User Groups + Better permissions management
 
 ### Future
 
-- [ ] User Groups + Better permissions management
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
 - [ ] Preview changes directly from the editor, without saving
@@ -100,6 +101,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 
 - [x] English
 - [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
+- [x] Dutch - *Thanks to [@weirdwater](https://github.com/weirdwater)*
 - [x] French
 - [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes)*
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
