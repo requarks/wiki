@@ -1,6 +1,6 @@
 {
   "name": "wiki",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "wiki.js",
   "scripts": {
@@ -34,7 +34,7 @@
   },
   "homepage": "https://github.com/Requarks/wiki#readme",
   "engines": {
-    "node": ">=4.6"
+    "node": ">=6.11.1"
   },
   "dependencies": {
     "auto-load": "~3.0.0",

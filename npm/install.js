@@ -75,7 +75,8 @@ const tasks = {
               .on('error', err => reject(err))
               .on('end', () => {
                 ora.text = 'Tarball extracted successfully.'
-                resolve(true)
+                resolve(tasks.installDependencies())
+                isContainerBased && console.info('>> Installing dependencies...')
               })
           })
         } else {
@@ -90,26 +91,48 @@ const tasks = {
     // Fetch version from npm package
     return fs.readJsonAsync('package.json').then((packageObj) => {
       let versionGet = _.chain(packageObj.version).split('.').take(4).join('.')
-      let remoteURL = _.replace('https://github.com/Requarks/wiki/releases/download/v{0}/wiki-js.tar.gz', '{0}', versionGet)
+      let remoteURLApp = _.replace('https://github.com/Requarks/wiki/releases/download/v{0}/wiki-js.tar.gz', '{0}', versionGet)
+      let remoteURLDeps = _.replace('https://github.com/Requarks/wiki/releases/download/v{0}/node_modules.tar.gz', '{0}', versionGet)
 
       return new Promise((resolve, reject) => {
-        // Fetch tarball
-        ora.text = 'Looking for latest release...'
-        https.get(remoteURL, resp => {
+        // Fetch app tarball
+        ora.text = 'Looking for app package...'
+        https.get(remoteURLApp, resp => {
           if (resp.statusCode !== 200) {
             return reject(new Error('Remote file not found'))
           }
-          ora.text = 'Remote wiki.js tarball found. Downloading...'
-          isContainerBased && console.info('>> Extracting to ' + installDir)
+          ora.text = 'Remote app tarball found. Downloading...'
+          isContainerBased && console.info('>> Extracting app to ' + installDir)
 
-          // Extract tarball
+          // Extract app tarball
           resp.pipe(zlib.createGunzip())
             .pipe(tar.extract({ cwd: installDir }))
             .on('error', err => reject(err))
             .on('end', () => {
-              ora.text = 'Tarball extracted successfully.'
+              ora.text = 'App tarball extracted successfully.'
               resolve(true)
             })
+        })
+      }).then(() => {
+        return new Promise((resolve, reject) => {
+          // Fetch deps tarball
+          ora.text = 'Looking for dependencies package...'
+          https.get(remoteURLDeps, resp => {
+            if (resp.statusCode !== 200) {
+              return reject(new Error('Remote file not found'))
+            }
+            ora.text = 'Remote dependencies tarball found. Downloading...'
+            isContainerBased && console.info('>> Extracting dependencies to ' + installDir)
+
+            // Extract deps tarball
+            resp.pipe(zlib.createGunzip())
+              .pipe(tar.extract({ cwd: path.join(installDir, 'node_modules') }))
+              .on('error', err => reject(err))
+              .on('end', () => {
+                ora.text = 'Dependencies tarball extracted successfully.'
+                resolve(true)
+              })
+          })
         })
       })
     })
@@ -247,9 +270,6 @@ Promise.join(
 }).then(() => {
   isContainerBased && console.info('>> Creating config file...')
   return tasks.ensureConfigFile()
-}).then(() => {
-  isContainerBased && console.info('>> Installing dependencies...')
-  return tasks.installDependencies()
 }).then(() => {
   return tasks.startConfigurationWizard()
 }).catch(err => {
