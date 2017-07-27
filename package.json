@@ -106,6 +106,7 @@
     "passport.socketio": "~3.7.0",
     "pm2": "~2.6.1",
     "pug": "~2.0.0-rc.2",
+    "qs": "~6.5.0",
     "read-chunk": "~2.0.0",
     "remove-markdown": "~0.2.0",
     "request": "~2.81.0",
