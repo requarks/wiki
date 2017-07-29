@@ -6,10 +6,14 @@
 // ===========================================
 
 const path = require('path')
+const cluster = require('cluster')
+
 let wiki = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
+  IS_MASTER: cluster.isMaster,
   ROOTPATH: process.cwd(),
-  SERVERPATH: path.join(process.cwd(), 'server')
+  SERVERPATH: path.join(process.cwd(), 'server'),
+  configSvc: require('./modules/config')
 }
 global.wiki = wiki
 
@@ -19,29 +23,36 @@ process.env.VIPS_WARNING = false
 //   require('@glimpse/glimpse').init()
 // }
 
-let appconf = require('./modules/config')()
-wiki.config = appconf.config
-wiki.data = appconf.data
+wiki.configSvc.init()
 
 // ----------------------------------------
-// Load Winston
+// Init Logger
 // ----------------------------------------
 
-wiki.logger = require('./modules/logger')()
+wiki.logger = require('./modules/logger').init()
+
+// ----------------------------------------
+// Init DB
+// ----------------------------------------
+
+wiki.db = require('./modules/db').init()
 
 // ----------------------------------------
 // Start Cluster
 // ----------------------------------------
 
-const cluster = require('cluster')
 const numCPUs = require('os').cpus().length
+let numWorkers = (wiki.config.workers > 0) ? wiki.config.workers : numCPUs
+if (numWorkers > numCPUs) {
+  numWorkers = numCPUs
+}
 
 if (cluster.isMaster) {
   wiki.logger.info('Wiki.js is initializing...')
 
   require('./master')
 
-  for (let i = 0; i < numCPUs; i++) {
+  for (let i = 0; i < numWorkers; i++) {
     cluster.fork()
   }
 
@@ -50,5 +61,5 @@ if (cluster.isMaster) {
   })
 } else {
   wiki.logger.info(`Background Worker #${cluster.worker.id} is starting...`)
-  // require('./worker')
+  require('./worker')
 }

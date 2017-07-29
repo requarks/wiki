@@ -23,7 +23,8 @@ const mdRemove = require('remove-markdown')
 
 var mkdown = md({
   html: true,
-  breaks: wiki.config.features.linebreaks,
+  // breaks: wiki.config.features.linebreaks,
+  breaks: true,
   linkify: true,
   typography: true,
   highlight(str, lang) {
@@ -57,7 +58,8 @@ var mkdown = md({
   })
   .use(mdAttrs)
 
-if (wiki.config.features.mathjax) {
+// if (wiki.config.features.mathjax) {
+if (true) {
   mkdown.use(mdMathjax)
 }
 

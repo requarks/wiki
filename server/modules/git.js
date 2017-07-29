@@ -51,7 +51,7 @@ module.exports = {
 
     // -> Initialize repository
 
-    self.onReady = self._initRepo()
+    self.onReady = (wiki.IS_MASTER) ? self._initRepo() : Promise.resolve()
 
     // Define signature
 

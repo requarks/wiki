@@ -5,7 +5,7 @@
 # https://docs.requarks.io/wiki/install
 
 # ---------------------------------------------------------------------
-# Port the main server should listen to (80 by default)
+# Port the main server should listen to
 # ---------------------------------------------------------------------
 
 port: 80
@@ -39,3 +39,9 @@ redis:
   db: 0
   password: null
 
+# ---------------------------------------------------------------------
+# Background Workers
+# ---------------------------------------------------------------------
+
+# Leave 0 for auto based on CPU cores
+workers: 0

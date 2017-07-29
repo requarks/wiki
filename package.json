@@ -52,7 +52,6 @@
     "connect-flash": "~0.1.1",
     "connect-redis": "~3.3.0",
     "cookie-parser": "~1.4.3",
-    "cron": "~1.2.1",
     "diff2html": "~2.3.0",
     "execa": "~0.7.0",
     "express": "~4.15.3",
