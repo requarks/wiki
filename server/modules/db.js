@@ -64,7 +64,8 @@ module.exports = {
     // Sync DB
 
     self.onReady = self.inst.sync({
-      force: false
+      force: false,
+      logging: false
     })
 
     return self

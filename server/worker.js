@@ -1,39 +1,19 @@
-// ===========================================
-// Wiki.js - Background Agent
-// 1.0.1
-// Licensed under AGPLv3
-// ===========================================
+'use strict'
+
+/* global wiki */
 
 const path = require('path')
-const ROOTPATH = process.cwd()
-const SERVERPATH = path.join(ROOTPATH, 'server')
-
-global.ROOTPATH = ROOTPATH
-global.SERVERPATH = SERVERPATH
-const IS_DEBUG = process.env.NODE_ENV === 'development'
-
-let appconf = require('./modules/config')()
-global.appconfig = appconf.config
-global.appdata = appconf.data
-
-// ----------------------------------------
-// Load Winston
-// ----------------------------------------
-
-global.winston = require('./modules/logger')(IS_DEBUG, 'AGENT')
 
 // ----------------------------------------
 // Load global modules
 // ----------------------------------------
 
-global.winston.info('Background Agent is initializing...')
-
-global.db = require('./modules/db').init()
-global.upl = require('./modules/uploads-agent').init()
-global.git = require('./modules/git').init()
-global.entries = require('./modules/entries').init()
-global.lang = require('i18next')
-global.mark = require('./modules/markdown')
+wiki.db = require('./modules/db').init()
+wiki.upl = require('./modules/uploads-agent').init()
+wiki.git = require('./modules/git').init()
+wiki.entries = require('./modules/entries').init()
+wiki.lang = require('i18next')
+wiki.mark = require('./modules/markdown')
 
 // ----------------------------------------
 // Load modules
@@ -52,20 +32,18 @@ const entryHelper = require('./helpers/entry')
 // Localization Engine
 // ----------------------------------------
 
-global.lang
-  .use(i18nBackend)
-  .init({
-    load: 'languageOnly',
-    ns: ['common', 'admin', 'auth', 'errors', 'git'],
-    defaultNS: 'common',
-    saveMissing: false,
-    preload: [appconfig.lang],
-    lng: appconfig.lang,
-    fallbackLng: 'en',
-    backend: {
-      loadPath: path.join(SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
-    }
-  })
+wiki.lang.use(i18nBackend).init({
+  load: 'languageOnly',
+  ns: ['common', 'admin', 'auth', 'errors', 'git'],
+  defaultNS: 'common',
+  saveMissing: false,
+  preload: [wiki.config.lang],
+  lng: wiki.config.lang,
+  fallbackLng: 'en',
+  backend: {
+    loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
+  }
+})
 
 // ----------------------------------------
 // Start Cron
@@ -75,8 +53,8 @@ let job
 let jobIsBusy = false
 let jobUplWatchStarted = false
 
-global.db.onReady.then(() => {
-  return global.db.Entry.remove({})
+wiki.db.onReady.then(() => {
+  return wiki.db.Entry.remove({})
 }).then(() => {
   job = new Cron({
     cronTime: '0 */5 * * * *',
@@ -84,17 +62,17 @@ global.db.onReady.then(() => {
       // Make sure we don't start two concurrent jobs
 
       if (jobIsBusy) {
-        global.winston.warn('Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
+        wiki.logger.warn('Previous job has not completed gracefully or is still running! Skipping for now. (This is not normal, you should investigate)')
         return
       }
-      global.winston.info('Running all jobs...')
+      wiki.logger.info('Running all jobs...')
       jobIsBusy = true
 
       // Prepare async job collector
 
       let jobs = []
-      let repoPath = path.resolve(ROOTPATH, appconfig.paths.repo)
-      let dataPath = path.resolve(ROOTPATH, appconfig.paths.data)
+      let repoPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.repo)
+      let dataPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.data)
       let uploadsTempPath = path.join(dataPath, 'temp-upload')
 
       // ----------------------------------------
@@ -105,7 +83,7 @@ global.db.onReady.then(() => {
       // -> Sync with Git remote
       //* ****************************************
 
-      jobs.push(global.git.resync().then(() => {
+      jobs.push(wiki.git.resync().then(() => {
         // -> Stream all documents
 
         let cacheJobs = []
@@ -185,18 +163,18 @@ global.db.onReady.then(() => {
       // ----------------------------------------
 
       Promise.all(jobs).then(() => {
-        global.winston.info('All jobs completed successfully! Going to sleep for now.')
+        wiki.logger.info('All jobs completed successfully! Going to sleep for now.')
 
         if (!jobUplWatchStarted) {
           jobUplWatchStarted = true
-          global.upl.initialScan().then(() => {
+          wiki.upl.initialScan().then(() => {
             job.start()
           })
         }
 
         return true
       }).catch((err) => {
-        global.winston.error('One or more jobs have failed: ', err)
+        wiki.logger.error('One or more jobs have failed: ', err)
       }).finally(() => {
         jobIsBusy = false
       })
@@ -212,7 +190,7 @@ global.db.onReady.then(() => {
 // ----------------------------------------
 
 process.on('disconnect', () => {
-  global.winston.warn('Lost connection to main server. Exiting...')
+  wiki.logger.warn('Lost connection to main server. Exiting...')
   job.stop()
   process.exit()
 })

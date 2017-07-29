@@ -40,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false
+    },
+    searchContent: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: ''
     }
   }, {
     timestamps: true,
