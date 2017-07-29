@@ -76,12 +76,16 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Support sub-directory installations (e.g. example.com/wiki)
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
+- [ ] Make use of all available CPU cores, distributed jobs queue
+- [ ] Tags per document / folder
+- [ ] Comments / Discussion per document
+- [ ] Profile page per user
+- [ ] Preview changes directly from the editor, without saving
 
 ### Future
 
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
-- [ ] Preview changes directly from the editor, without saving
 - [ ] Upgrade from web UI
 
 ## Gitter
