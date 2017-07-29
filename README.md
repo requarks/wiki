@@ -62,6 +62,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 ![Progress](http://progressed.io/bar/100)
 
 - [x] Bug fixes release
+- [x] New Localization: Dutch
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/20)
