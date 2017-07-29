@@ -2,12 +2,10 @@
 
 /* global wiki */
 
-module.exports = (processName) => {
-  let winston = require('winston')
+const cluster = require('cluster')
 
-  if (typeof processName === 'undefined') {
-    processName = 'SERVER'
-  }
+module.exports = () => {
+  let winston = require('winston')
 
   // Console
 
@@ -25,6 +23,7 @@ module.exports = (processName) => {
   })
 
   logger.filters.push((level, msg) => {
+    let processName = (cluster.isMaster) ? 'MASTER' : `WORKER-${cluster.worker.id}`
     return '[' + processName + '] ' + msg
   })
 

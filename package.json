@@ -43,6 +43,7 @@
     "bcryptjs-then": "~1.0.1",
     "bluebird": "~3.5.0",
     "body-parser": "~1.17.2",
+    "bull": "/home/nick3.0.0-rc.4",
     "bunyan": "~1.8.10",
     "cheerio": "~1.0.0-rc.2",
     "child-process-promise": "~2.2.1",
