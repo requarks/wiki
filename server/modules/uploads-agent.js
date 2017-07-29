@@ -1,6 +1,6 @@
 'use strict'
 
-/* global db, git, lang, upl */
+/* global wiki */
 
 const path = require('path')
 const Promise = require('bluebird')
@@ -32,8 +32,8 @@ module.exports = {
   init () {
     let self = this
 
-    self._uploadsPath = path.resolve(ROOTPATH, appconfig.paths.repo, 'uploads')
-    self._uploadsThumbsPath = path.resolve(ROOTPATH, appconfig.paths.data, 'thumbs')
+    self._uploadsPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.repo, 'uploads')
+    self._uploadsThumbsPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.data, 'thumbs')
 
     return self
   },
@@ -59,16 +59,16 @@ module.exports = {
     self._watcher.on('add', (p) => {
       let pInfo = self.parseUploadsRelPath(p)
       return self.processFile(pInfo.folder, pInfo.filename).then((mData) => {
-        return db.UplFile.findByIdAndUpdate(mData._id, mData, { upsert: true })
+        return wiki.db.UplFile.findByIdAndUpdate(mData._id, mData, { upsert: true })
       }).then(() => {
-        return git.commitUploads(lang.t('git:uploaded', { path: p }))
+        return wiki.git.commitUploads(wiki.lang.t('git:uploaded', { path: p }))
       })
     })
 
     // -> Remove upload file
 
     self._watcher.on('unlink', (p) => {
-      return git.commitUploads(lang.t('git:deleted', { path: p }))
+      return wiki.git.commitUploads(wiki.lang.t('git:deleted', { path: p }))
     })
   },
 
@@ -91,8 +91,8 @@ module.exports = {
 
         // Add folders to DB
 
-        return db.UplFolder.remove({}).then(() => {
-          return db.UplFolder.insertMany(_.map(folderNames, (f) => {
+        return wiki.db.UplFolder.remove({}).then(() => {
+          return wiki.db.UplFolder.insertMany(_.map(folderNames, (f) => {
             return {
               _id: 'f:' + f,
               name: f
@@ -107,7 +107,7 @@ module.exports = {
             let fldPath = path.join(self._uploadsPath, fldName)
             return fs.readdirAsync(fldPath).then((fList) => {
               return Promise.map(fList, (f) => {
-                return upl.processFile(fldName, f).then((mData) => {
+                return wiki.upl.processFile(fldName, f).then((mData) => {
                   if (mData) {
                     allFiles.push(mData)
                   }
@@ -118,9 +118,9 @@ module.exports = {
           }, {concurrency: 1}).finally(() => {
             // Add files to DB
 
-            return db.UplFile.remove({}).then(() => {
+            return wiki.db.UplFile.remove({}).then(() => {
               if (_.isArray(allFiles) && allFiles.length > 0) {
-                return db.UplFile.insertMany(allFiles)
+                return wiki.db.UplFile.insertMany(allFiles)
               } else {
                 return true
               }
@@ -131,7 +131,7 @@ module.exports = {
     }).then(() => {
       // Watch for new changes
 
-      return upl.watch()
+      return wiki.upl.watch()
     })
   },
 

@@ -27,7 +27,7 @@ module.exports = {
     this._uploadsThumbsPath = path.resolve(wiki.ROOTPATH, wiki.config.paths.data, 'thumbs')
 
     this.createBaseDirectories()
-    this.initMulter()
+    // this.initMulter()
 
     return this
   },
@@ -37,8 +37,10 @@ module.exports = {
    */
   initMulter () {
     let maxFileSizes = {
-      img: wiki.config.uploads.maxImageFileSize * 1024 * 1024,
-      file: wiki.config.uploads.maxOtherFileSize * 1024 * 1024
+      // img: wiki.config.uploads.maxImageFileSize * 1024 * 1024,
+      // file: wiki.config.uploads.maxOtherFileSize * 1024 * 1024
+      img: 3 * 1024 * 1024,
+      file: 10 * 1024 * 1024
     }
 
     // -> IMAGES

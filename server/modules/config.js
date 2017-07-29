@@ -8,62 +8,95 @@ const _ = require('lodash')
 const path = require('path')
 const cfgHelper = require('../helpers/config')
 
-/**
- * Load Application Configuration
- *
- * @param      {Object}  confPaths  Path to the configuration files
- * @return     {Object}  Application Configuration
- */
-module.exports = (confPaths) => {
-  confPaths = _.defaults(confPaths, {
-    config: path.join(wiki.ROOTPATH, 'config.yml'),
-    data: path.join(wiki.SERVERPATH, 'app/data.yml'),
-    dataRegex: path.join(wiki.SERVERPATH, 'app/regex.js')
-  })
+module.exports = {
+  SUBSETS: ['auth', 'features', 'git', 'logging', 'site', 'theme', 'uploads'],
 
-  let appconfig = {}
-  let appdata = {}
+  /**
+   * Load root config from disk
+   *
+   * @param {any} confPaths
+   * @returns
+   */
+  init() {
+    let confPaths = {
+      config: path.join(wiki.ROOTPATH, 'config.yml'),
+      data: path.join(wiki.SERVERPATH, 'app/data.yml'),
+      dataRegex: path.join(wiki.SERVERPATH, 'app/regex.js')
+    }
 
-  try {
-    appconfig = yaml.safeLoad(
-      cfgHelper.parseConfigValue(
-        fs.readFileSync(confPaths.config, 'utf8')
+    let appconfig = {}
+    let appdata = {}
+
+    try {
+      appconfig = yaml.safeLoad(
+        cfgHelper.parseConfigValue(
+          fs.readFileSync(confPaths.config, 'utf8')
+        )
       )
-    )
-    appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
-    appdata.regex = require(confPaths.dataRegex)
-  } catch (ex) {
-    console.error(ex)
-    process.exit(1)
-  }
+      appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
+      appdata.regex = require(confPaths.dataRegex)
+    } catch (ex) {
+      console.error(ex)
+      process.exit(1)
+    }
 
-  // Merge with defaults
+    // Merge with defaults
 
-  appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
+    appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
 
-  // Check port
+    // Check port
 
-  if (appconfig.port < 1) {
-    appconfig.port = process.env.PORT || 80
-  }
+    if (appconfig.port < 1) {
+      appconfig.port = process.env.PORT || 80
+    }
 
   // Convert booleans
 
   appconfig.public = (appconfig.public === true || _.toLower(appconfig.public) === 'true')
 
   // List authentication strategies
+    wiki.config = appconfig
+    wiki.data = appdata
 
-  appconfig.authStrategies = {
-    list: _.filter(appconfig.auth, ['enabled', true]),
-    socialEnabled: (_.chain(appconfig.auth).omit(['local', 'ldap']).filter(['enabled', true]).value().length > 0)
-  }
-  if (appconfig.authStrategies.list.length < 1) {
-    console.error(new Error('You must enable at least 1 authentication strategy!'))
-    process.exit(1)
-  }
+    // List authentication strategies
 
-  return {
-    config: appconfig,
-    data: appdata
+    // appconfig.authStrategies = {
+    //   list: _.filter(appconfig.auth, ['enabled', true]),
+    //   socialEnabled: (_.chain(appconfig.auth).omit('local').filter(['enabled', true]).value().length > 0)
+    // }
+    // if (appconfig.authStrategies.list.length < 1) {
+    //   console.error(new Error('You must enable at least 1 authentication strategy!'))
+    //   process.exit(1)
+    // }
+  },
+
+  /**
+   * Load config from DB
+   *
+   * @param {Array} subsets Array of subsets to load
+   * @returns Promise
+   */
+  loadFromDb(subsets) {
+    if (!_.isArray(subsets) || subsets.length === 0) {
+      subsets = this.SUBSETS
+    }
+
+    return wiki.db.Setting.findAll({
+      attributes: ['key', 'config'],
+      where: {
+        key: {
+          $in: subsets
+        }
+      }
+    }).then(results => {
+      if (_.isArray(results) && results.length > 0) {
+        results.forEach(result => {
+          wiki.config[result.key] = result.config
+        })
+        return true
+      } else {
+        return Promise.reject(new Error('Invalid DB Configuration result set'))
+      }
+    })
   }
 }

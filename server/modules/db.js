@@ -5,6 +5,7 @@
 const fs = require('fs')
 const path = require('path')
 const _ = require('lodash')
+const Promise = require('bluebird')
 
 /**
  * PostgreSQL DB module
@@ -33,7 +34,8 @@ module.exports = {
         max: 10,
         min: 0,
         idle: 10000
-      }
+      },
+      logging: false
     })
 
     // Attempt to connect and authenticate to DB
@@ -63,10 +65,10 @@ module.exports = {
 
     // Sync DB
 
-    self.onReady = self.inst.sync({
+    self.onReady = (wiki.IS_MASTER) ? self.inst.sync({
       force: false,
       logging: false
-    })
+    }) : Promise.resolve()
 
     return self
   }
