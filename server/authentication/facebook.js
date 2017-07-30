@@ -8,21 +8,19 @@
 
 const FacebookStrategy = require('passport-facebook').Strategy
 
-module.exports = (passport) => {
-  if (wiki.config.auth.facebook && wiki.config.auth.facebook.enabled) {
-    passport.use('facebook',
-      new FacebookStrategy({
-        clientID: wiki.config.auth.facebook.clientId,
-        clientSecret: wiki.config.auth.facebook.clientSecret,
-        callbackURL: wiki.config.host + '/login/facebook/callback',
-        profileFields: ['id', 'displayName', 'email']
-      }, function (accessToken, refreshToken, profile, cb) {
-        wiki.db.User.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
-      }
-      ))
-  }
+module.exports = (passport, conf) => {
+  passport.use('facebook',
+    new FacebookStrategy({
+      clientID: conf.clientId,
+      clientSecret: conf.clientSecret,
+      callbackURL: conf.callbackURL,
+      profileFields: ['id', 'displayName', 'email']
+    }, function (accessToken, refreshToken, profile, cb) {
+      wiki.db.User.processProfile(profile).then((user) => {
+        return cb(null, user) || true
+      }).catch((err) => {
+        return cb(err, null) || true
+      })
+    }
+    ))
 }

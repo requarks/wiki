@@ -57,17 +57,6 @@ module.exports = {
   // List authentication strategies
     wiki.config = appconfig
     wiki.data = appdata
-
-    // List authentication strategies
-
-    // appconfig.authStrategies = {
-    //   list: _.filter(appconfig.auth, ['enabled', true]),
-    //   socialEnabled: (_.chain(appconfig.auth).omit('local').filter(['enabled', true]).value().length > 0)
-    // }
-    // if (appconfig.authStrategies.list.length < 1) {
-    //   console.error(new Error('You must enable at least 1 authentication strategy!'))
-    //   process.exit(1)
-    // }
   },
 
   /**

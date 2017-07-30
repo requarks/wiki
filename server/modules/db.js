@@ -41,7 +41,7 @@ module.exports = {
     // Attempt to connect and authenticate to DB
 
     self.inst.authenticate().then(() => {
-      wiki.logger.info('Connected to PostgreSQL database.')
+      wiki.logger.info('Database (PostgreSQL) connection: OK')
     }).catch(err => {
       wiki.logger.error('Failed to connect to MongoDB instance.')
       return err

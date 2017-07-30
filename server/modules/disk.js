@@ -94,8 +94,6 @@ module.exports = {
    * Creates a base directories (Synchronous).
    */
   createBaseDirectories () {
-    wiki.logger.info('Checking data directories...')
-
     try {
       fs.ensureDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data))
       fs.emptyDirSync(path.resolve(wiki.ROOTPATH, wiki.config.paths.data))
@@ -117,7 +115,7 @@ module.exports = {
       wiki.logger.error(err)
     }
 
-    wiki.logger.info('Data and Repository directories are OK.')
+    wiki.logger.info('Disk Data Paths: OK')
   },
 
   /**

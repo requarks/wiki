@@ -71,8 +71,6 @@ module.exports = {
   _initRepo() {
     let self = this
 
-    wiki.logger.info('Checking Git repository...')
-
     // -> Check if path is accessible
 
     return fs.mkdirAsync(self._repo.path).catch((err) => {
@@ -92,7 +90,7 @@ module.exports = {
       })
     }).then(() => {
       if (wiki.config.git === false) {
-        wiki.logger.info('Remote Git syncing is disabled. Not recommended!')
+        wiki.logger.warn('Remote Git syncing is disabled. Not recommended!')
         return Promise.resolve(true)
       }
 
@@ -132,7 +130,7 @@ module.exports = {
       wiki.logger.error('Git remote error!')
       throw err
     }).then(() => {
-      wiki.logger.info('Git repository is OK.')
+      wiki.logger.info('Git Repository: OK')
       return true
     })
   },
