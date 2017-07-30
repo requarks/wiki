@@ -2,9 +2,9 @@
 
 /* global wiki */
 
-const fs = require('fs')
+const _ = require('lodash')
 
-module.exports = function (passport) {
+module.exports = (passport) => {
   // Serialization user methods
 
   passport.serializeUser(function (user, done) {
@@ -24,12 +24,28 @@ module.exports = function (passport) {
     })
   })
 
-  // Create users for first-time
+  // Load authentication strategies
 
-  return wiki.db.User.findOne({ provider: 'local', email: 'guest@example.com' }).then((c) => {
+  wiki.config.authStrategies = {
+    list: _.pickBy(wiki.config.auth, strategy => strategy.enabled),
+    socialEnabled: (_.chain(wiki.config.auth).omit('local').filter(['enabled', true]).value().length > 0)
+  }
+
+  _.forOwn(wiki.config.authStrategies.list, (strategyConfig, strategyName) => {
+    strategyConfig.callbackURL = `${wiki.config.site.host}/login/${strategyName}/callback`
+    require(`../authentication/${strategyName}`)(passport, strategyConfig)
+    wiki.logger.info(`Authentication Provider ${_.upperFirst(strategyName)}: OK`)
+  })
+
+  // Create Guest account for first-time
+
+  return wiki.db.User.findOne({
+    where: {
+      provider: 'local',
+      email: 'guest@example.com'
+    }
+  }).then((c) => {
     if (c < 1) {
-      // Create guest account
-
       return wiki.db.User.create({
         provider: 'local',
         email: 'guest@example.com',

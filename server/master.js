@@ -147,7 +147,7 @@ module.exports = Promise.join(
 
   app.use('/graphql', graphqlApollo.graphqlExpress({ schema: graphqlSchema }))
   app.use('/graphiql', graphqlApollo.graphiqlExpress({ endpointURL: '/graphql' }))
-  app.use('/uploads', mw.auth, ctrl.uploads)
+  // app.use('/uploads', mw.auth, ctrl.uploads)
   app.use('/admin', mw.auth, ctrl.admin)
   app.use('/', mw.auth, ctrl.pages)
 
@@ -173,7 +173,7 @@ module.exports = Promise.join(
   // Start HTTP server
   // ----------------------------------------
 
-  wiki.logger.info('Starting HTTP/WS server on port ' + wiki.config.port + '...')
+  wiki.logger.info(`HTTP/WS Server on port: ${wiki.config.port}`)
 
   app.set('port', wiki.config.port)
   var server = http.createServer(app)
@@ -199,7 +199,7 @@ module.exports = Promise.join(
   })
 
   server.on('listening', () => {
-    wiki.logger.info('HTTP/WS server started successfully! [RUNNING]')
+    wiki.logger.info('HTTP/WS Server: RUNNING')
   })
 
   // ----------------------------------------

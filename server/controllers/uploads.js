@@ -2,6 +2,9 @@
 
 /* global wiki */
 
+module.exports = false
+return
+
 const express = require('express')
 const router = express.Router()
 

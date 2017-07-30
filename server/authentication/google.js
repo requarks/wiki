@@ -8,20 +8,18 @@
 
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 
-module.exports = (passport) => {
-  if (wiki.config.auth.google && wiki.config.auth.google.enabled) {
-    passport.use('google',
-      new GoogleStrategy({
-        clientID: wiki.config.auth.google.clientId,
-        clientSecret: wiki.config.auth.google.clientSecret,
-        callbackURL: wiki.config.host + '/login/google/callback'
-      }, (accessToken, refreshToken, profile, cb) => {
-        wiki.db.User.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
-      }
-      ))
-  }
+module.exports = (passport, conf) => {
+  passport.use('google',
+    new GoogleStrategy({
+      clientID: conf.clientId,
+      clientSecret: conf.clientSecret,
+      callbackURL: conf.callbackURL
+    }, (accessToken, refreshToken, profile, cb) => {
+      wiki.db.User.processProfile(profile).then((user) => {
+        return cb(null, user) || true
+      }).catch((err) => {
+        return cb(err, null) || true
+      })
+    }
+    ))
 }
