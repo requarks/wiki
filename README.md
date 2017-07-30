@@ -70,7 +70,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
 - [ ] GraphQL API
-- [ ] Migrate to PostgreSQL + Redis datastore
+- [x] Migrate to PostgreSQL + Redis datastore
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
 - [ ] Docker support + Auto compile/publish to Docker Hub
@@ -82,6 +82,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Comments / Discussion per document
 - [ ] Profile page per user
 - [ ] Preview changes directly from the editor, without saving
+- [x] Modular authentication providers
 
 ### Future
 
