@@ -83,6 +83,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Profile page per user
 - [ ] Preview changes directly from the editor, without saving
 - [x] Modular authentication providers
+- [ ] High Availability support (multiple concurrent instances)
 
 ### Future
 
