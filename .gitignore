@@ -26,11 +26,15 @@ newrelic.js
 
 # Config Files
 config.yml
+.env.production
 
 # Data directories
 /repo
 /data
 /uploads
+
+# Private Keys
+git.pem
 
 # IDE exclude
 .idea
