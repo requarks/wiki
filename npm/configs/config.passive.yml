@@ -115,7 +115,7 @@ git:
   auth:
 
     # Type: basic or ssh
-    type: basic
+    type: ssh
 
     # Only for Basic authentication:
     username: $(WIKI_GIT_USERNAME)
@@ -151,4 +151,3 @@ externalLogging:
   papertrail: false
   rollbar: false
   sentry: false
-

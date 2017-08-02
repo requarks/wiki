@@ -2,14 +2,13 @@ version: '3'
 services:
   wikidb:
     image: mongo
-    ports:
-      - '27017:27017'
     command: '--smallfiles --logpath=/dev/null'
+    volumes:
+      - ./data/mongo:/data/db
   wikijs:
+    build: wiki/
     image: 'requarks/wiki:latest'
     links:
       - wikidb
-    ports:
-      - '3000:3000'
-    environment:
-      - PORT=3000
+    env_file: .env.production
+    #entrypoint: node wiki.js configure
