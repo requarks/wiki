@@ -56,9 +56,9 @@
     "primarycolor": "原色",
     "primarycolordesc": "用于顶级导航栏，标题，链接等",
     "altcolor": "替代颜色",
-    "altcolordesc": "用于边栏（黑色）",
+    "altcolordesc": "用于边栏（暗色）",
     "footercolor": "页脚颜色",
-    "footercolordesc": "用于foter（较轻的音调）",
+    "footercolordesc": "用于页脚（浅色）",
     "codeblock": {
       "title": "代码块",
       "dark": "使用黑色主题",
