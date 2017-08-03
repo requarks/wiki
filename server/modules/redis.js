@@ -19,7 +19,11 @@ module.exports = {
    */
   init() {
     if (isPlainObject(wiki.config.redis)) {
-      return new Redis(wiki.config.redis)
+      let red = new Redis(wiki.config.redis)
+      red.on('ready', () => {
+        wiki.logger.info('Redis connection: OK')
+      })
+      return red
     } else {
       wiki.logger.error('Invalid Redis configuration!')
       process.exit(1)

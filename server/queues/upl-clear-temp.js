@@ -22,5 +22,8 @@ module.exports = (job, done) => {
         }
       })
     })
+  }).then(() => {
+    wiki.logger.info('Purging temporary upload files: DONE')
+    return true
   })
 }

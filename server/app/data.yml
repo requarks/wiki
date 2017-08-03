@@ -21,6 +21,12 @@ defaults:
       db: 0
       password: null
     workers: 0
+    ha:
+      nodeuid: primary
+      readonly: false
+queues:
+  - gitSync
+  - uplClearTemp
 authProviders:
   - local
   - microsoft

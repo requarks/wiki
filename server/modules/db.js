@@ -63,12 +63,32 @@ module.exports = {
 
     require(path.join(dbModelsPath, '_relations.js'))(self)
 
-    // Sync DB
+    // Set init tasks
 
-    self.onReady = (wiki.IS_MASTER) ? self.inst.sync({
-      force: false,
-      logging: false
-    }) : Promise.resolve()
+    let initTasks = {
+      // -> Sync DB Schemas
+      syncSchemas() {
+        return self.inst.sync({
+          force: false,
+          logging: false
+        })
+      },
+      // -> Set Connection App Name
+      setAppName() {
+        return self.inst.query(`set application_name = 'Wiki.js'`, { raw: true })
+      }
+    }
+
+    let initTasksQueue = (wiki.IS_MASTER) ? [
+      initTasks.syncSchemas,
+      initTasks.setAppName
+    ] : [
+      initTasks.setAppName
+    ]
+
+    // Perform init tasks
+
+    self.onReady = Promise.each(initTasksQueue, t => t())
 
     return self
   }
