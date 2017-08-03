@@ -61,5 +61,8 @@ module.exports = (job, done) => {
     })
 
     return jobCbStreamDocs
+  }).then(() => {
+    wiki.logger.info('Git remote repository sync: DONE')
+    return true
   })
 }

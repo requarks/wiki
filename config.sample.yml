@@ -42,6 +42,15 @@ redis:
 # ---------------------------------------------------------------------
 # Background Workers
 # ---------------------------------------------------------------------
-
 # Leave 0 for auto based on CPU cores
+
 workers: 0
+
+# ---------------------------------------------------------------------
+# High Availability
+# ---------------------------------------------------------------------
+# Read the docs BEFORE changing these settings!
+
+ha:
+  nodeuid: primary
+  readonly: false

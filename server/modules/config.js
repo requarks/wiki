@@ -13,9 +13,6 @@ module.exports = {
 
   /**
    * Load root config from disk
-   *
-   * @param {any} confPaths
-   * @returns
    */
   init() {
     let confPaths = {

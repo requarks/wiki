@@ -4,20 +4,23 @@
 
 const Promise = require('bluebird')
 
+wiki.redis = require('./modules/redis').init()
+wiki.queue = require('./modules/queue').init()
+
 module.exports = Promise.join(
   wiki.db.onReady,
-  wiki.configSvc.loadFromDb()
+  wiki.configSvc.loadFromDb(),
+  wiki.queue.clean()
 ).then(() => {
   // ----------------------------------------
   // Load global modules
   // ----------------------------------------
 
   wiki.disk = require('./modules/disk').init()
-  wiki.entries = require('./modules/entries').init()
+  wiki.docs = require('./modules/documents').init()
   wiki.git = require('./modules/git').init(false)
   wiki.lang = require('i18next')
   wiki.mark = require('./modules/markdown')
-  wiki.redis = require('./modules/redis').init()
   wiki.search = require('./modules/search').init()
   wiki.upl = require('./modules/uploads').init()
 
@@ -75,7 +78,7 @@ module.exports = Promise.join(
   // Passport Authentication
   // ----------------------------------------
 
-  require('./modules/auth')(passport)
+  require('./modules/auth').init(passport)
   wiki.rights = require('./modules/rights')
   // wiki.rights.init()
 

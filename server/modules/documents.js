@@ -10,7 +10,7 @@ const _ = require('lodash')
 const entryHelper = require('../helpers/entry')
 
 /**
- * Entries Model
+ * Documents Model
  */
 module.exports = {
 

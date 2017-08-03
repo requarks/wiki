@@ -48,18 +48,27 @@ if (numWorkers > numCPUs) {
 }
 
 if (cluster.isMaster) {
+  wiki.logger.info('--------------------------')
   wiki.logger.info('Wiki.js is initializing...')
+  wiki.logger.info('--------------------------')
 
-  require('./master')
+  require('./master').then(() => {
+    // -> Create background workers
+    for (let i = 0; i < numWorkers; i++) {
+      cluster.fork()
+    }
 
-  for (let i = 0; i < numWorkers; i++) {
-    cluster.fork()
-  }
+    // -> Queue post-init tasks
+
+    wiki.queue.uplClearTemp.add({}, {
+      repeat: { cron: '*/15 * * * *' }
+    })
+  })
 
   cluster.on('exit', (worker, code, signal) => {
-    wiki.logger.info(`Worker #${worker.id} died.`)
+    wiki.logger.info(`Background Worker #${worker.id} was terminated.`)
   })
 } else {
-  wiki.logger.info(`Background Worker #${cluster.worker.id} is starting...`)
+  wiki.logger.info(`Background Worker #${cluster.worker.id} is initializing...`)
   require('./worker')
 }
