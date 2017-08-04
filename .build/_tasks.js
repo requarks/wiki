@@ -76,7 +76,7 @@ module.exports = Promise.mapSeries([
           return Promise.map(langs, lang => {
             console.info(colors.white('      ' + lang + '.json'))
             let outputPath = path.join('./assets/js/i18n', lang + '.json')
-            return fs.readJsonAsync(path.join('./server/locales', lang + '.json'), 'utf8').then((content) => {
+            return fs.readJsonAsync(path.join('./server/locales', lang, 'browser.json'), 'utf8').then((content) => {
               return fs.outputJsonAsync(outputPath, _.defaultsDeep(content, enContent))
             }).catch(err => { // eslint-disable-line handle-callback-err
               return fs.outputJsonAsync(outputPath, enContent)
