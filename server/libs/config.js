@@ -45,6 +45,10 @@ module.exports = (confPaths) => {
     appconfig.port = process.env.PORT || 80
   }
 
+  // Convert booleans
+
+  appconfig.public = (appconfig.public === true || _.toLower(appconfig.public) === 'true')
+
   // List authentication strategies
 
   appconfig.authStrategies = {
