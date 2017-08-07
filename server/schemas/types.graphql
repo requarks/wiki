@@ -1,0 +1,136 @@
+# SCALARS
+
+scalar Date
+
+# ENUMS
+
+enum UserRole {
+  guest
+  user
+  admin
+}
+
+enum FileType {
+  binary
+  image
+}
+
+enum RightRole {
+  read
+  write
+  manage
+}
+
+# INTERFACES
+
+interface Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+}
+
+# TYPES
+
+type Comment implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  content: String
+  document: Document!
+  author: User!
+}
+
+type Document implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  path: String!
+  title: String!
+  subtitle: String
+  parentPath: String
+  parentTitle: String
+  isDirectory: Boolean!
+  isEntry: Boolean!
+  searchContent: String
+  tags: [Tag]
+}
+
+type File implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  category: FileType!
+  mime: String!
+  extra: String
+  filename: String!
+  basename: String!
+  filesize: Int!
+  folder: Folder
+}
+
+type Folder implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  name: String!
+}
+
+type Group implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  name: String!
+  users: [User]
+  rights: [Right]
+}
+
+type Right implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  path: String!
+  role: RightRole!
+  exact: Boolean!
+  allow: Boolean!
+}
+
+type Setting implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  key: String!
+  config: String!
+}
+
+type Tag implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  key: String!
+}
+
+type User implements Base {
+  id: Int!
+  createdOn: Date
+  updatedOn: Date
+  email: String!
+  provider: String
+  providerId: String
+  name: String
+  role: UserRole!
+  groups: [Group]
+}
+
+# QUERY
+
+type Query {
+  comments(id: Int): [Comment]
+  documents(id: Int, path: String): [Document]
+  files(id: Int): [File]
+  folders(id: Int, name: String): [Folder]
+  groups(id: Int, name: String): [Group]
+  rights(id: Int): [Right]
+  settings(key: String): [Setting]
+  tags(key: String): [Tag]
+  users(id: Int, email: String, provider: String, providerId: String, role: UserRole): [User]
+}

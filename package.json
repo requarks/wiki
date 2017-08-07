@@ -64,6 +64,7 @@
     "fs-extra": "~4.0.0",
     "git-wrapper2-promise": "~0.2.9",
     "graphql": "~0.10.5",
+    "graphql-tools": "/home/nick1.1.0",
     "highlight.js": "~9.12.0",
     "i18next": "~8.4.3",
     "i18next-express-middleware": "~1.0.5",

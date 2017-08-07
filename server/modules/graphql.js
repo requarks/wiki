@@ -2,66 +2,27 @@
 
 /* global wiki */
 
-const gql = require('graphql')
+const gqlTools = require('graphql-tools')
+const fs = require('fs')
+const path = require('path')
 
-const User = new gql.GraphQLObjectType({
-  name: 'User',
-  description: 'A User',
-  fields() {
-    return {
-      id: {
-        type: gql.GraphQLInt,
-        resolve(usr) {
-          return usr.id
-        }
-      },
-      email: {
-        type: gql.GraphQLString,
-        resolve(usr) {
-          return usr.email
-        }
-      },
-      provider: {
-        type: gql.GraphQLString,
-        resolve(usr) {
-          return usr.provider
-        }
-      },
-      providerId: {
-        type: gql.GraphQLString,
-        resolve(usr) {
-          return usr.providerId
-        }
-      }
-    }
-  }
-})
+const typeDefs = fs.readFileSync(path.join(wiki.SERVERPATH, 'schemas/types.graphql'), 'utf8')
 
-const Query = new gql.GraphQLObjectType({
-  name: 'Query',
-  description: 'Root Query',
-  fields() {
-    return {
-      users: {
-        type: new gql.GraphQLList(User),
-        args: {
-          id: {
-            type: gql.GraphQLInt
-          },
-          email: {
-            type: gql.GraphQLString
-          }
-        },
-        resolve(root, args) {
-          return wiki.db.User.findAll({ where: args })
-        }
-      }
-    }
-  }
-})
+const GroupResolvers = require('../schemas/resolvers-group')
+const UserResolvers = require('../schemas/resolvers-user')
 
-const Schema = new gql.GraphQLSchema({
-  query: Query
+const resolvers = {
+  Query: {
+    groups: GroupResolvers.Query,
+    users: UserResolvers.Query
+  },
+  Group: GroupResolvers.Type,
+  User: UserResolvers.Type
+}
+
+const Schema = gqlTools.makeExecutableSchema({
+  typeDefs,
+  resolvers
 })
 
 module.exports = Schema

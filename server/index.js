@@ -48,9 +48,9 @@ if (numWorkers > numCPUs) {
 }
 
 if (cluster.isMaster) {
-  wiki.logger.info('--------------------------')
-  wiki.logger.info('Wiki.js is initializing...')
-  wiki.logger.info('--------------------------')
+  wiki.logger.info('=======================================')
+  wiki.logger.info('= Wiki.js =============================')
+  wiki.logger.info('=======================================')
 
   require('./master').then(() => {
     // -> Create background workers
