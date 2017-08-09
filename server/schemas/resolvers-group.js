@@ -3,10 +3,17 @@
 /* global wiki */
 
 module.exports = {
-  Query(obj, args, context, info) {
-    return wiki.db.Group.findAll({ where: args })
+  Query: {
+    groups(obj, args, context, info) {
+      return wiki.db.Group.findAll({ where: args })
+    }
   },
-  Type: {
+  Mutation: {
+    createGroup(obj, args) {
+      return wiki.db.Group.create(args)
+    }
+  },
+  Group: {
     users(grp) {
       return grp.getUsers()
     }

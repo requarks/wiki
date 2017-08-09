@@ -102,6 +102,7 @@ type Setting implements Base {
   config: String!
 }
 
+# Tags are attached to one or more documents
 type Tag implements Base {
   id: Int!
   createdOn: Date
@@ -109,20 +110,20 @@ type Tag implements Base {
   key: String!
 }
 
+# A User
 type User implements Base {
   id: Int!
   createdOn: Date
   updatedOn: Date
   email: String!
-  provider: String
+  provider: String!
   providerId: String
   name: String
   role: UserRole!
   groups: [Group]
 }
 
-# QUERY
-
+# Query (Read)
 type Query {
   comments(id: Int): [Comment]
   documents(id: Int, path: String): [Document]
@@ -133,4 +134,32 @@ type Query {
   settings(key: String): [Setting]
   tags(key: String): [Tag]
   users(id: Int, email: String, provider: String, providerId: String, role: UserRole): [User]
+}
+
+# Mutations (Create, Update, Delete)
+type Mutation {
+  assignUserToGroup(
+    userId: Int!
+    groupId: Int!
+  ): Boolean
+  createGroup(
+    name: String!
+  ): Group
+  createUser(
+    email: String!
+    name: String
+    provider: String!
+    providerId: String
+    role: UserRole!
+  ): User
+  deleteGroup(
+    id: Int!
+  ): Boolean
+  deleteUser(
+    id: Int!
+  ): Boolean
+  removeUserFromGroup(
+    userId: Int!
+    groupId: Int!
+  ): Boolean
 }

@@ -140,7 +140,7 @@ globalTasks.then(() => {
       nodemon({
         exec: (args.d) ? 'node server' : 'node wiki configure',
         ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
-        ext: 'js json',
+        ext: 'js json graphql',
         watch: (args.d) ? ['server'] : ['server/configure.js'],
         env: { 'NODE_ENV': 'development' }
       })
