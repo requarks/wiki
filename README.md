@@ -58,7 +58,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Render line breaks by default (GitHub style)
 - [x] New Localization: German
 
-### 1.0.5 - Stable
+### 1.0.6 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 - [x] Bug fixes release
