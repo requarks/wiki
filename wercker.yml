@@ -21,9 +21,9 @@ deploy-github:
     - script:
       name: package
       code: |
-        tar -czfv wiki-js.tar.gz * -X .build/.deployexclude
+        tar -chzfv wiki-js.tar.gz * -X .build/.deployexclude
         yarn install --production --ignore-scripts --prefer-offline
-        tar -czfv node_modules.tar.gz node_modules
+        tar -chzfv node_modules.tar.gz node_modules
         SEMVER_LAST=`npm show wiki.js version`
         chmod +x ./.build/semver_next.sh
         SEMVER_NEXT=`./.build/semver_next.sh -p $SEMVER_LAST`
