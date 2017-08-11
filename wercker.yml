@@ -1,11 +1,11 @@
 build:
-  box: node:8-alpine
+  box: node:8
   steps:
     - script:
       name: install dependencies
       code: |
         apk update
-        apk add bash build-base curl git openssh yarn
+        apk add bash build-base curl yarn
     - script:
       name: yarn install
       code: |
@@ -20,11 +20,13 @@ build:
       code: |
         yarn install --production --ignore-scripts --prefer-offline
     - script:
-        name: copy artifacts
-        code: cp assets server config.sample.yml package.json wiki.cmd wiki.js "$WERCKER_OUTPUT_DIR"
+      name: copy artifacts
+      code: |
+        ls
+        cp -LR assets node_modules server config.sample.yml package.json wiki.cmd wiki.js "$WERCKER_OUTPUT_DIR"
 
 deploy-github:
-  box: node:8-alpine
+  box: node:8
   steps:
     - script:
       name: package
@@ -47,6 +49,11 @@ deploy-github:
 
 deploy-docker-master:
   box: node:8-alpine
+  - script:
+      name: install dependencies
+      code: |
+        apk update
+        apk add bash curl git openssh
   steps:
     - internal/docker-scratch-push:
         username: $DOCKER_HUB_USERNAME
