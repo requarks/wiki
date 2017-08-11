@@ -2,10 +2,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [v1.1.0] - Unreleased
-### Added
-- **History**: History section to list all changes
-- **Security**: Optional Two-Factor Authentication (2FA) protection
+## [v1.0.6] - 2017-08-10
+### Fixed
+- **Authentication**: LDAP no longer cause the social login text to appear on the login screen.
+- **Misc**: Browser locales are now generated for non-english languages
+- **Misc**: Renaming or moving a page is now removing the old entry in the All Pages navigation
+
+## [v1.0.5] - 2017-08-06
+### Fixed
+- **Misc**: public access always false if using env var string
 
 ## [v1.0.4] - 2017-07-26
 ### Fixed
@@ -203,7 +208,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
-[v1.0.0-beta.14]: https://github.com/Requarks/wiki/compare/v1.0.1...HEAD
+[v1.0.6]: https://github.com/Requarks/wiki/releases/tag/v1.0.6
+[v1.0.5]: https://github.com/Requarks/wiki/releases/tag/v1.0.5
+[v1.0.4]: https://github.com/Requarks/wiki/releases/tag/v1.0.4
+[v1.0.3]: https://github.com/Requarks/wiki/releases/tag/v1.0.3
 [v1.0.1]: https://github.com/Requarks/wiki/releases/tag/v1.0.1
 [v1.0.0-beta.13]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.13
 [v1.0.0-beta.12]: https://github.com/Requarks/wiki/releases/tag/v1.0.0-beta.12
