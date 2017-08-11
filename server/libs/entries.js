@@ -378,9 +378,12 @@ module.exports = {
 
         // Create cache for new entry
 
-        return self.updateCache(newEntryPath).then(entry => {
-          return search.add(entry)
-        })
+        return Promise.join(
+          db.Entry.deleteOne({ _id: entryPath }),
+          self.updateCache(newEntryPath).then(entry => {
+            return search.add(entry)
+          })
+        )
       })
     })
   },

@@ -53,7 +53,7 @@ module.exports = (confPaths) => {
 
   appconfig.authStrategies = {
     list: _.filter(appconfig.auth, ['enabled', true]),
-    socialEnabled: (_.chain(appconfig.auth).omit('local').filter(['enabled', true]).value().length > 0)
+    socialEnabled: (_.chain(appconfig.auth).omit(['local', 'ldap']).filter(['enabled', true]).value().length > 0)
   }
   if (appconfig.authStrategies.list.length < 1) {
     console.error(new Error('You must enable at least 1 authentication strategy!'))
