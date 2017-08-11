@@ -4,8 +4,8 @@ build:
     - script:
       name: install dependencies
       code: |
-        apk update
-        apk add bash build-base curl yarn
+        apt update
+        apt install bash build-essential yarn
     - script:
       name: yarn install
       code: |
@@ -55,7 +55,7 @@ deploy-docker-master:
       code: |
         apk update
         apk add bash curl git openssh
-    - internal/docker-push:
+    - internal/docker-scratch-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: latest, master
@@ -67,7 +67,7 @@ deploy-docker-master:
 deploy-docker-dev:
   box: node:8-alpine
   steps:
-    - internal/docker-push:
+    - internal/docker-scratch-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: dev
