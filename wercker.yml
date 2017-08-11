@@ -44,6 +44,7 @@ deploy-docker-master:
       name: remove dev dependencies
       code: |
         yarn install --production --ignore-scripts --prefer-offline
+        apk update
         apk del build-base yarn
     - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
