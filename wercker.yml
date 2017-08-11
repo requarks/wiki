@@ -37,12 +37,28 @@ deploy-github:
     - github-upload-asset:
       token: $GITHUB_TOKEN
       file: node_modules.tar.gz
-deploy-docker:
+
+deploy-docker-master:
+  steps:
+    - script:
+      name: remove dev dependencies
+      code: |
+        yarn install --production --ignore-scripts --prefer-offline
+    - internal/docker-push:
+        username: $DOCKER_HUB_USERNAME
+        password: $DOCKER_HUB_PASSWORD
+        tag: latest, master
+        ports: "3000"
+        entrypoint: node server
+        repository: requarks/wiki
+        registry: https://registry.hub.docker.com
+
+deploy-docker-dev:
   steps:
     - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
-        tag: latest
+        tag: dev
         ports: "3000"
         entrypoint: node server
         repository: requarks/wiki
