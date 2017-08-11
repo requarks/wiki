@@ -1,5 +1,5 @@
-box: node:8-alpine
 build:
+  box: node:8-alpine
   steps:
     - script:
       name: install dependencies
@@ -15,14 +15,21 @@ build:
       name: build
       code: yarn run build
     - npm-test
+    - script:
+      name: purge dev files
+      code: |
+        yarn install --production --ignore-scripts --prefer-offline
+    - script:
+        name: copy artifacts
+        code: cp assets server config.sample.yml package.json wiki.cmd wiki.js "$WERCKER_OUTPUT_DIR"
 
 deploy-github:
+  box: node:8-alpine
   steps:
     - script:
       name: package
       code: |
         tar -chzfv wiki-js.tar.gz * -X .build/.deployexclude
-        yarn install --production --ignore-scripts --prefer-offline
         tar -chzfv node_modules.tar.gz node_modules
         SEMVER_LAST=`npm show wiki.js version`
         chmod +x ./.build/semver_next.sh
@@ -39,14 +46,9 @@ deploy-github:
       file: node_modules.tar.gz
 
 deploy-docker-master:
+  box: node:8-alpine
   steps:
-    - script:
-      name: remove dev dependencies
-      code: |
-        yarn install --production --ignore-scripts --prefer-offline
-        apk update
-        apk del build-base yarn
-    - internal/docker-push:
+    - internal/docker-scratch-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: latest, master
@@ -56,8 +58,9 @@ deploy-docker-master:
         registry: https://registry.hub.docker.com
 
 deploy-docker-dev:
+  box: node:8-alpine
   steps:
-    - internal/docker-push:
+    - internal/docker-scratch-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: dev
