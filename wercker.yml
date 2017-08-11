@@ -49,13 +49,13 @@ deploy-github:
 
 deploy-docker-master:
   box: node:8-alpine
-  - script:
+  steps:
+    - script:
       name: install dependencies
       code: |
         apk update
         apk add bash curl git openssh
-  steps:
-    - internal/docker-scratch-push:
+    - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: latest, master
@@ -67,7 +67,7 @@ deploy-docker-master:
 deploy-docker-dev:
   box: node:8-alpine
   steps:
-    - internal/docker-scratch-push:
+    - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: dev
