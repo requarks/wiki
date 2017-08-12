@@ -56,7 +56,7 @@ deploy-docker-master:
       code: |
         apk update
         apk add bash curl git openssh
-    - internal/docker-scratch-push:
+    - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: latest, master
@@ -68,7 +68,7 @@ deploy-docker-master:
 deploy-docker-dev:
   box: node:8-alpine
   steps:
-    - internal/docker-scratch-push:
+    - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: dev
