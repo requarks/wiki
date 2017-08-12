@@ -4,8 +4,8 @@ build:
     - script:
       name: install dependencies
       code: |
-        apt update
-        apt install build-essential
+        apt-get update
+        apt-get install build-essential -y
         npm install -g yarn
     - script:
       name: yarn install
