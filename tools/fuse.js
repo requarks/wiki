@@ -58,15 +58,15 @@ const ALIASES = {
 }
 const SHIMS = {
   jquery: {
-    source: 'node_modules/jquery/dist/jquery.js',
+    source: '../node_modules/jquery/dist/jquery.js',
     exports: '$'
   },
   diff2html: {
-    source: 'node_modules/diff2html/dist/diff2html.min.js',
+    source: '../node_modules/diff2html/dist/diff2html.min.js',
     exports: 'Diff2Html'
   },
   diff2htmlui: {
-    source: 'node_modules/diff2html/dist/diff2html-ui.min.js',
+    source: '../node_modules/diff2html/dist/diff2html-ui.min.js',
     exports: 'Diff2HtmlUI'
   }
 }
@@ -76,7 +76,7 @@ const SHIMS = {
 // ======================================================
 
 console.info(colors.white('└── ') + colors.green('Running global tasks...'))
-let globalTasks = require('./.build/_tasks')
+let globalTasks = require('./fuse_tasks')
 
 // ======================================================
 // Fuse Tasks
@@ -84,10 +84,11 @@ let globalTasks = require('./.build/_tasks')
 
 globalTasks.then(() => {
   let fuse = fsbx.FuseBox.init({
-    homeDir: './client',
-    output: './assets/js/$name.js',
+    homeDir: '../client',
+    output: '../assets/js/$name.js',
     alias: ALIASES,
     target: 'browser',
+    tsConfig: './tsconfig.json',
     plugins: [
       fsbx.EnvPlugin({ NODE_ENV: (dev) ? 'development' : 'production' }),
       fsbx.VuePlugin(),

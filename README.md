@@ -14,7 +14,8 @@
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
 
 - [Official Website](https://wiki.js.org/)
-- [Documentation](#documentation)
+- **[Getting Started](https://wiki.js.org/get-started.html)**
+- [Documentation](https://docs.requarks.io/wiki/)
 - [Requirements](#requirements)
 - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Feature Requests](https://wikijs.canny.io/features)
@@ -22,12 +23,6 @@
 - [Chat with us](#gitter)
 - [Translations](#translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
-
-## Documentation
-
-- [Installation Guide](https://wiki.js.org/get-started.html)
-- [Admin Guide](https://docs.requarks.io/wiki/#admin-guide)
-- [User Guide](https://docs.requarks.io/wiki/#user-guide)
 
 ## Requirements
 
@@ -43,9 +38,16 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 ## Cloud Install
 
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
-[![Docker Image](https://raw.githubusercontent.com/Requarks/wiki-site/master/assets/images/docker-deploy.png)](https://hub.docker.com/r/requarks/wiki/)
 
 *Docker Cloud, Azure, IBM Bluemix and more coming soon!*
+
+## Docker
+
+A docker Wiki.js image is available on Docker Hub:
+
+[![Docker Image](https://raw.githubusercontent.com/Requarks/wiki-site/master/assets/images/docker-deploy.png)](https://hub.docker.com/r/requarks/wiki/)
+
+You can also use a Dockerfile ([see example]()) or Docker Compose ([see example]()) to run Wiki.js.
 
 ## Milestones
 
@@ -74,7 +76,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Migrate to PostgreSQL + Redis datastore
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
-- [ ] Docker support + Auto compile/publish to Docker Hub
+- [x] Docker support + Auto compile/publish to Docker Hub
 - [ ] Support sub-directory installations (e.g. example.com/wiki)
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management

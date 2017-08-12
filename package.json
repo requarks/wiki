@@ -7,9 +7,9 @@
     "start": "node wiki start",
     "stop": "node wiki stop",
     "restart": "node wiki restart",
-    "build": "node fuse",
-    "dev": "node fuse -d",
-    "dev-configure": "node fuse -c",
+    "build": "node tools/fuse",
+    "dev": "node tools/fuse -d",
+    "dev-configure": "node tools/fuse -c",
     "test": "jest"
   },
   "bin": {

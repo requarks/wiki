@@ -69,7 +69,7 @@ describe('Code Linting', () => {
   it('should pass PugLint validation', () => {
     const PugLint = require('pug-lint')
     const lint = new PugLint()
-    const pugConfig = fs.readJsonSync('.pug-lintrc.json')
+    const pugConfig = fs.readJsonSync('tools/.pug-lintrc.json')
     lint.configure(pugConfig)
     let report = lint.checkPath('./server/views')
     expect(report).toPugLint()
