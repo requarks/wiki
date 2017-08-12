@@ -34,7 +34,7 @@ deploy-docker-master:
       code: |
         mkdir -p /var/wiki
         cp -LR assets node_modules server config.sample.yml package.json /var/wiki
-        yarn cache clean
+        rm -rf /pipeline
     - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
