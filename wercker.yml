@@ -23,6 +23,7 @@ build:
     - script:
       name: copy artifacts
       code: |
+        mkdir -p "$WERCKER_OUTPUT_DIR/var/wiki"
         cp -LR assets node_modules server config.sample.yml package.json wiki.cmd wiki.js "$WERCKER_OUTPUT_DIR/var/wiki"
         cp .build/docker_init.sh "$WERCKER_OUTPUT_DIR/init.sh"
 
