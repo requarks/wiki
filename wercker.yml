@@ -42,17 +42,30 @@ deploy-docker-master:
         ports: "3000"
         working-dir: /var/wiki
         entrypoint: node server
+        env: "WIKI_JS_HEROKU=1"
         repository: requarks/wiki
         registry: https://registry.hub.docker.com
 
 deploy-docker-dev:
   box: node:8-alpine
   steps:
+    - script:
+      name: install dependencies
+      code: |
+        apk update
+        apk add bash curl git openssh
+    - script:
+      name: copy app files
+      code: |
+        mkdir -p /var/wiki
+        cp -LR assets node_modules server config.sample.yml package.json /var/wiki
+        rm -rf /pipeline
     - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
         tag: dev
         ports: "3000"
+        working-dir: /var/wiki
         entrypoint: node server
         repository: requarks/wiki
         registry: https://registry.hub.docker.com
