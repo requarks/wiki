@@ -5,7 +5,8 @@ build:
       name: install dependencies
       code: |
         apt update
-        apt install bash build-essential yarn
+        apt install build-essential
+        npm install -g yarn
     - script:
       name: yarn install
       code: |
