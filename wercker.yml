@@ -23,8 +23,32 @@ build:
     - script:
       name: copy artifacts
       code: |
-        ls
-        cp -LR assets node_modules server config.sample.yml package.json wiki.cmd wiki.js "$WERCKER_OUTPUT_DIR"
+        cp -LR assets node_modules server config.sample.yml package.json wiki.cmd wiki.js "$WERCKER_OUTPUT_DIR/var/wiki"
+        cp .build/docker_init.sh "$WERCKER_OUTPUT_DIR/init.sh"
+
+deploy-docker-master:
+  box: node:8-alpine
+  steps:
+    - internal/docker-push:
+        username: $DOCKER_HUB_USERNAME
+        password: $DOCKER_HUB_PASSWORD
+        tag: latest, master
+        ports: "3000"
+        entrypoint: ["ash", "/init.sh"]
+        repository: requarks/wiki
+        registry: https://registry.hub.docker.com
+
+deploy-docker-dev:
+  box: node:8-alpine
+  steps:
+    - internal/docker-push:
+        username: $DOCKER_HUB_USERNAME
+        password: $DOCKER_HUB_PASSWORD
+        tag: dev
+        ports: "3000"
+        entrypoint: ["ash", "/init.sh"]
+        repository: requarks/wiki
+        registry: https://registry.hub.docker.com
 
 deploy-github:
   box: node:8
@@ -47,32 +71,3 @@ deploy-github:
     - github-upload-asset:
       token: $GITHUB_TOKEN
       file: node_modules.tar.gz
-
-deploy-docker-master:
-  box: node:8-alpine
-  steps:
-    - script:
-      name: install dependencies
-      code: |
-        apk update
-        apk add bash curl git openssh
-    - internal/docker-push:
-        username: $DOCKER_HUB_USERNAME
-        password: $DOCKER_HUB_PASSWORD
-        tag: latest, master
-        ports: "3000"
-        entrypoint: node server
-        repository: requarks/wiki
-        registry: https://registry.hub.docker.com
-
-deploy-docker-dev:
-  box: node:8-alpine
-  steps:
-    - internal/docker-push:
-        username: $DOCKER_HUB_USERNAME
-        password: $DOCKER_HUB_PASSWORD
-        tag: dev
-        ports: "3000"
-        entrypoint: node server
-        repository: requarks/wiki
-        registry: https://registry.hub.docker.com
