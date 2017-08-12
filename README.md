@@ -13,9 +13,9 @@
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
 
-- [Official Website](https://wiki.js.org/)
+- **[Official Website](https://wiki.js.org/)**
 - **[Getting Started](https://wiki.js.org/get-started.html)**
-- [Documentation](https://docs.requarks.io/wiki/)
+- **[Documentation](https://docs.requarks.io/wiki/)**
 - [Requirements](#requirements)
 - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Feature Requests](https://wikijs.canny.io/features)
@@ -47,7 +47,7 @@ A docker Wiki.js image is available on Docker Hub:
 
 [![Docker Image](https://raw.githubusercontent.com/Requarks/wiki-site/master/assets/images/docker-deploy.png)](https://hub.docker.com/r/requarks/wiki/)
 
-You can also use a Dockerfile ([see example]()) or Docker Compose ([see example]()) to run Wiki.js.
+You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/blob/master/tools/Dockerfile)) or Docker Compose ([see example](https://github.com/Requarks/wiki/blob/master/tools/docker-compose.yml)) to run Wiki.js.
 
 ## Milestones
 
