@@ -25,16 +25,16 @@ enum RightRole {
 
 interface Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 # TYPES
 
 type Comment implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   content: String
   document: Document!
   author: User!
@@ -42,8 +42,8 @@ type Comment implements Base {
 
 type Document implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   path: String!
   title: String!
   subtitle: String
@@ -57,8 +57,8 @@ type Document implements Base {
 
 type File implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   category: FileType!
   mime: String!
   extra: String
@@ -70,15 +70,15 @@ type File implements Base {
 
 type Folder implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   name: String!
 }
 
 type Group implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   name: String!
   users: [User]
   rights: [Right]
@@ -86,8 +86,8 @@ type Group implements Base {
 
 type Right implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   path: String!
   role: RightRole!
   exact: Boolean!
@@ -96,8 +96,8 @@ type Right implements Base {
 
 type Setting implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   key: String!
   config: String!
 }
@@ -105,16 +105,16 @@ type Setting implements Base {
 # Tags are attached to one or more documents
 type Tag implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   key: String!
 }
 
 # A User
 type User implements Base {
   id: Int!
-  createdOn: Date
-  updatedOn: Date
+  createdAt: Date
+  updatedAt: Date
   email: String!
   provider: String!
   providerId: String

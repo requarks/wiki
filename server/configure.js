@@ -81,9 +81,9 @@ module.exports = (port, spinner) => {
       () => {
         const semver = require('semver')
         if (!semver.satisfies(semver.clean(process.version), '>=6.9.0')) {
-          throw new Error('Node.js version is too old. Minimum is v6.6.0.')
+          throw new Error('Node.js version is too old. Minimum is v6.11.1.')
         }
-        return 'Node.js ' + process.version + ' detected. Minimum is v6.9.0.'
+        return 'Node.js ' + process.version + ' detected.'
       },
       () => {
         return Promise.try(() => {
@@ -110,10 +110,10 @@ module.exports = (port, spinner) => {
       },
       () => {
         const os = require('os')
-        if (os.totalmem() < 1000 * 1000 * 768) {
-          throw new Error('Not enough memory. Minimum is 768 MB.')
+        if (os.totalmem() < 1000 * 1000 * 512) {
+          throw new Error('Not enough memory. Minimum is 512 MB.')
         }
-        return _.round(os.totalmem() / (1024 * 1024)) + ' MB of system memory available. Minimum is 768 MB.'
+        return _.round(os.totalmem() / (1024 * 1024)) + ' MB of system memory available. Minimum is 512 MB.'
       },
       () => {
         let fs = require('fs')
