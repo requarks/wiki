@@ -73,6 +73,15 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
 - [ ] GraphQL API
+  - [ ] Comments
+  - [ ] Documents
+  - [ ] Files
+  - [ ] Folders
+  - [x] Groups
+  - [ ] Rights
+  - [ ] Settings
+  - [ ] Tags
+  - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
@@ -80,7 +89,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Support sub-directory installations (e.g. example.com/wiki)
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
-- [ ] Make use of all available CPU cores, distributed jobs queue
+- [x] Make use of all available CPU cores, distributed jobs queue
 - [ ] Tags per document / folder
 - [ ] Comments / Discussion per document
 - [ ] Profile page per user
