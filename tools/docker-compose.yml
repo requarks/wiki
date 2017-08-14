@@ -14,6 +14,6 @@ services:
     ports:
       - '80:3000'
     environment:
-      - WIKI_ADMIN_EMAIL: admin@example.com
+      WIKI_ADMIN_EMAIL: admin@example.com
     volumes:
       - ./config.yml:/var/wiki/config.yml
