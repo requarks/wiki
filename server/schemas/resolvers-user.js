@@ -11,6 +11,14 @@ module.exports = {
   Mutation: {
     createUser(obj, args) {
       return wiki.db.User.create(args)
+    },
+    deleteUser(obj, args) {
+      return wiki.db.User.destroy({
+        where: {
+          id: args.id
+        },
+        limit: 1
+      })
     }
   },
   User: {

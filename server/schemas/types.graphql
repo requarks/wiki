@@ -73,6 +73,7 @@ type Folder implements Base {
   createdAt: Date
   updatedAt: Date
   name: String!
+  files: [File]
 }
 
 type Group implements Base {
@@ -107,7 +108,8 @@ type Tag implements Base {
   id: Int!
   createdAt: Date
   updatedAt: Date
-  key: String!
+  key: String!,
+  documents: [Document]
 }
 
 # A User
@@ -138,13 +140,23 @@ type Query {
 
 # Mutations (Create, Update, Delete)
 type Mutation {
+  assignTagToDocument(
+    tagId: Int!
+    documentId: Int!
+  ): Boolean
   assignUserToGroup(
     userId: Int!
     groupId: Int!
   ): Boolean
+  createFolder(
+    name: String!
+  ): Folder
   createGroup(
     name: String!
   ): Group
+  createTag(
+    name: String!
+  ): Tag
   createUser(
     email: String!
     name: String
@@ -152,11 +164,21 @@ type Mutation {
     providerId: String
     role: UserRole!
   ): User
+  deleteFolder(
+    id: Int!
+  ): Boolean
   deleteGroup(
+    id: Int!
+  ): Boolean
+  deleteTag(
     id: Int!
   ): Boolean
   deleteUser(
     id: Int!
+  ): Boolean
+  removeTagFromDocument(
+    tagId: Int!
+    documentId: Int!
   ): Boolean
   removeUserFromGroup(
     userId: Int!

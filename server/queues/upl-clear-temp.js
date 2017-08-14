@@ -7,7 +7,7 @@ const fs = Promise.promisifyAll(require('fs-extra'))
 const moment = require('moment')
 const path = require('path')
 
-module.exports = (job, done) => {
+module.exports = (job) => {
   return fs.readdirAsync(wiki.UPLTEMPPATH).then((ls) => {
     let fifteenAgo = moment().subtract(15, 'minutes')
 

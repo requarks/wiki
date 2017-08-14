@@ -9,7 +9,7 @@ const moment = require('moment')
 const path = require('path')
 const entryHelper = require('../helpers/entry')
 
-module.exports = (job, done) => {
+module.exports = (job) => {
   return wiki.git.resync().then(() => {
     // -> Stream all documents
 
