@@ -76,11 +76,11 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Comments
   - [ ] Documents
   - [ ] Files
-  - [ ] Folders
+  - [x] Folders
   - [x] Groups
   - [ ] Rights
   - [ ] Settings
-  - [ ] Tags
+  - [x] Tags
   - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
 - [ ] History / Revert to previous version
