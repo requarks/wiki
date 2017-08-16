@@ -151,9 +151,7 @@ $(() => {
       }
     },
     mounted() {
-      $('a:not(.toc-anchor)').smoothScroll({ speed: 500, offset: -50 })
       $('#header').sticky({ topSpacing: 0 })
-      $('.sidebar-pagecontents').sticky({ topSpacing: 15, bottomSpacing: 75 })
     }
   })
 })
