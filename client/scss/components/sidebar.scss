@@ -3,11 +3,12 @@
 	background-color: mc('blue-grey', '900');
 	color: mc('blue-grey', '50');
 	width: 250px;
-	max-width: 250px;
-	min-height: calc(100vh - 120px);
+  max-width: 250px;
+  height: calc(100vh - 120px);
+  overflow: auto !important;
   transition: background-color 1s ease;
 
-	aside {
+  aside {
     padding: 1px 0 15px 0;
 
 		&:last-child {
@@ -102,10 +103,9 @@
 
 				}
 
-			}
+      }
 
-		}
-
+    }
 	}
 
   &.is-collapsed {
