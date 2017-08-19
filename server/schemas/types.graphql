@@ -108,7 +108,7 @@ type Tag implements Base {
   id: Int!
   createdAt: Date
   updatedAt: Date
-  key: String!,
+  key: String!
   documents: [Document]
 }
 
@@ -123,6 +123,11 @@ type User implements Base {
   name: String
   role: UserRole!
   groups: [Group]
+}
+
+type OperationResult {
+  succeded: Boolean!
+  message: String
 }
 
 # Query (Read)
@@ -143,45 +148,111 @@ type Mutation {
   assignTagToDocument(
     tagId: Int!
     documentId: Int!
-  ): Boolean
+  ): OperationResult
+
   assignUserToGroup(
     userId: Int!
     groupId: Int!
-  ): Boolean
+  ): OperationResult
+
+  createDocument(
+    path: String!
+    title: String!
+    subtitle: String
+  ): Document
+
   createFolder(
     name: String!
   ): Folder
+
   createGroup(
     name: String!
   ): Group
+
   createTag(
     name: String!
   ): Tag
+
   createUser(
     email: String!
     name: String
+    passwordRaw: String
     provider: String!
     providerId: String
     role: UserRole!
   ): User
+
+  deleteDocument(
+    id: Int!
+  ): OperationResult
+
   deleteFolder(
     id: Int!
-  ): Boolean
+  ): OperationResult
+
   deleteGroup(
     id: Int!
-  ): Boolean
+  ): OperationResult
+
   deleteTag(
     id: Int!
-  ): Boolean
+  ): OperationResult
+
   deleteUser(
     id: Int!
-  ): Boolean
+  ): OperationResult
+
+  modifyDocument(
+    id: Int!
+    title: String
+    subtitle: String
+  ): Document
+
+  modifyUser(
+    id: Int!
+    email: String
+    name: String
+    provider: String
+    providerId: String
+    role: UserRole
+  ): User
+
+  moveDocument(
+    id: Int!
+    path: String!
+  ): OperationResult
+
+  renameFolder(
+    id: Int!
+    name: String!
+  ): OperationResult
+
+  renameGroup(
+    id: Int!
+    name: String!
+  ): OperationResult
+
+  renameTag(
+    id: Int!
+    name: String!
+  ): OperationResult
+
   removeTagFromDocument(
     tagId: Int!
     documentId: Int!
-  ): Boolean
+  ): OperationResult
+
   removeUserFromGroup(
     userId: Int!
     groupId: Int!
-  ): Boolean
+  ): OperationResult
+
+  resetUserPassword(
+    id: Int!
+  ): OperationResult
+
+  setUserPassword(
+    id: Int!
+    passwordRaw: String!
+  ): OperationResult
 }
