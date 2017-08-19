@@ -74,12 +74,12 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 - [ ] GraphQL API
   - [ ] Comments
-  - [ ] Documents
+  - [x] Documents
   - [ ] Files
   - [x] Folders
   - [x] Groups
   - [ ] Rights
-  - [ ] Settings
+  - [x] Settings
   - [x] Tags
   - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
