@@ -19,9 +19,27 @@ module.exports = {
         },
         limit: 1
       })
+    },
+    modifyDocument(obj, args) {
+      return wiki.db.Document.update({
+        title: args.title,
+        subtitle: args.subtitle
+      }, {
+        where: { id: args.id }
+      })
+    },
+    moveDocument(obj, args) {
+      return wiki.db.Document.update({
+        path: args.path
+      }, {
+        where: { id: args.id }
+      })
     }
   },
   Document: {
+    comments(doc) {
+      return doc.getComments()
+    },
     tags(doc) {
       return doc.getTags()
     }

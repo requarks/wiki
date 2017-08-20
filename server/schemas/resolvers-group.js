@@ -47,6 +47,13 @@ module.exports = {
           return grp.removeUser(usr)
         })
       })
+    },
+    renameGroup(obj, args) {
+      return wiki.db.Group.update({
+        name: args.name
+      }, {
+        where: { id: args.id }
+      })
     }
   },
   Group: {

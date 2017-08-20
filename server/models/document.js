@@ -41,6 +41,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false
     },
+    isDraft: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
     searchContent: {
       type: DataTypes.TEXT,
       allowNull: true,

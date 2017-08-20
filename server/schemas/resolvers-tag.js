@@ -47,6 +47,13 @@ module.exports = {
           return tag.removeDocument(doc)
         })
       })
+    },
+    renameTag(obj, args) {
+      return wiki.db.Group.update({
+        key: args.key
+      }, {
+        where: { id: args.id }
+      })
     }
   },
   Tag: {

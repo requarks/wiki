@@ -19,6 +19,13 @@ module.exports = {
         },
         limit: 1
       })
+    },
+    renameFolder(obj, args) {
+      return wiki.db.Folder.update({
+        name: args.name
+      }, {
+        where: { id: args.id }
+      })
     }
   },
   Folder: {

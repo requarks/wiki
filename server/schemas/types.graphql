@@ -52,6 +52,7 @@ type Document implements Base {
   isDirectory: Boolean!
   isEntry: Boolean!
   searchContent: String
+  comments: [Comment]
   tags: [Tag]
 }
 
@@ -93,6 +94,7 @@ type Right implements Base {
   role: RightRole!
   exact: Boolean!
   allow: Boolean!
+  group: Group!
 }
 
 type Setting implements Base {
@@ -145,6 +147,14 @@ type Query {
 
 # Mutations (Create, Update, Delete)
 type Mutation {
+  addRightToGroup(
+    groupId: Int!
+    path: String!
+    role: RightRole!
+    exact: Boolean!
+    allow: Boolean!
+  ): Right
+
   assignTagToDocument(
     tagId: Int!
     documentId: Int!
@@ -154,6 +164,12 @@ type Mutation {
     userId: Int!
     groupId: Int!
   ): OperationResult
+
+  createComment(
+    userId: Int!
+    documentId: Int!
+    content: String!
+  ): Comment
 
   createDocument(
     path: String!
@@ -182,6 +198,10 @@ type Mutation {
     role: UserRole!
   ): User
 
+  deleteComment(
+    id: Int!
+  ): OperationResult
+
   deleteDocument(
     id: Int!
   ): OperationResult
@@ -202,6 +222,11 @@ type Mutation {
     id: Int!
   ): OperationResult
 
+  modifyComment(
+    id: Int!
+    content: String!
+  ): Document
+
   modifyDocument(
     id: Int!
     title: String
@@ -216,6 +241,14 @@ type Mutation {
     providerId: String
     role: UserRole
   ): User
+
+  modifyRight(
+    id: Int!
+    path: String
+    role: RightRole
+    exact: Boolean
+    allow: Boolean
+  ): Right
 
   moveDocument(
     id: Int!
@@ -234,12 +267,16 @@ type Mutation {
 
   renameTag(
     id: Int!
-    name: String!
+    key: String!
   ): OperationResult
 
   removeTagFromDocument(
     tagId: Int!
     documentId: Int!
+  ): OperationResult
+
+  removeRightFromGroup(
+    rightId: Int!
   ): OperationResult
 
   removeUserFromGroup(
@@ -249,6 +286,11 @@ type Mutation {
 
   resetUserPassword(
     id: Int!
+  ): OperationResult
+
+  setConfigEntry(
+    key: String!
+    value: String!
   ): OperationResult
 
   setUserPassword(

@@ -19,6 +19,23 @@ module.exports = {
         },
         limit: 1
       })
+    },
+    modifyUser(obj, args) {
+      return wiki.db.User.update({
+        email: args.email,
+        name: args.name,
+        provider: args.provider,
+        providerId: args.providerId,
+        role: args.role
+      }, {
+        where: { id: args.id }
+      })
+    },
+    resetUserPassword(obj, args) {
+      return false
+    },
+    setUserPassword(obj, args) {
+      return false
     }
   },
   User: {
