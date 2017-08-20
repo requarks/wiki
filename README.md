@@ -73,12 +73,12 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
 - [ ] GraphQL API
-  - [ ] Comments
+  - [x] Comments
   - [x] Documents
   - [ ] Files
   - [x] Folders
   - [x] Groups
-  - [ ] Rights
+  - [x] Rights
   - [x] Settings
   - [x] Tags
   - [x] Users
