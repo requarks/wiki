@@ -53,7 +53,6 @@ module.exports = {
 
     self.onReady = self._initRepo(appconfig)
 
-
     if (appconfig.git) {
       // Set repo branch
       self._repo.branch = appconfig.git.branch || 'master'
