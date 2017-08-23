@@ -48,7 +48,6 @@ module.exports = {
     } else {
       self._repo.path = appconfig.paths.repo
     }
-    
 
     // -> Initialize repository
 
@@ -57,9 +56,9 @@ module.exports = {
 
     if (appconfig.git) {
       // Set repo branch
-      self._repo.branch = appconfig.git.branch || 'master';
+      self._repo.branch = appconfig.git.branch || 'master'
       // Define signature
-      self._signature.email = appconfig.git.serverEmail || 'wiki@example.com';
+      self._signature.email = appconfig.git.serverEmail || 'wiki@example.com'
     }
 
     return self
