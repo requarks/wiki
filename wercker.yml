@@ -76,8 +76,8 @@ deploy-github:
     - script:
       name: package
       code: |
-        tar -chzfv wiki-js.tar.gz assets server config.sample.yml package.json wiki.js LICENSE
-        tar -chzfv node_modules.tar.gz node_modules
+        tar -chzfv assets server config.sample.yml package.json wiki.js LICENSE wiki-js.tar.gz
+        tar -chzfv node_modules node_modules.tar.gz
         SEMVER_LAST=`npm show wiki.js version`
         chmod +x ./tools/semver_next.sh
         SEMVER_NEXT=`./tools/semver_next.sh -p $SEMVER_LAST`
