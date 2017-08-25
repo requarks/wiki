@@ -33,7 +33,7 @@ deploy-docker-master:
       name: copy app files
       code: |
         mkdir -p /var/wiki
-        cp -LR assets node_modules server config.sample.yml package.json /var/wiki
+        cp -LR assets node_modules server config.sample.yml package.json LICENSE /var/wiki
         rm -rf /pipeline
     - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
@@ -58,7 +58,7 @@ deploy-docker-dev:
       name: copy app files
       code: |
         mkdir -p /var/wiki
-        cp -LR assets node_modules server config.sample.yml package.json /var/wiki
+        cp -LR assets node_modules server config.sample.yml package.json LICENSE /var/wiki
         rm -rf /pipeline
     - internal/docker-push:
         username: $DOCKER_HUB_USERNAME
@@ -76,11 +76,11 @@ deploy-github:
     - script:
       name: package
       code: |
-        tar -chzfv wiki-js.tar.gz * -X .build/.deployexclude
+        tar -chzfv wiki-js.tar.gz assets server config.sample.yml package.json wiki.js LICENSE
         tar -chzfv node_modules.tar.gz node_modules
         SEMVER_LAST=`npm show wiki.js version`
-        chmod +x ./.build/semver_next.sh
-        SEMVER_NEXT=`./.build/semver_next.sh -p $SEMVER_LAST`
+        chmod +x ./tools/semver_next.sh
+        SEMVER_NEXT=`./tools/semver_next.sh -p $SEMVER_LAST`
     - github-create-release:
       token: $GITHUB_TOKEN
       tag: "v${SEMVER_NEXT}"
