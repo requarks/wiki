@@ -34,3 +34,4 @@ config.yml
 
 # IDE exclude
 .idea
+*.sublime-*
