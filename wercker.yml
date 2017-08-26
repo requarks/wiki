@@ -76,6 +76,7 @@ deploy-github:
     - script:
       name: package
       code: |
+        ls
         tar -chzfv wiki-js.tar.gz assets server config.sample.yml package.json wiki.js LICENSE
         tar -chzfv node_modules.tar.gz node_modules
         SEMVER_LAST=`npm show wiki.js version`
