@@ -15,9 +15,10 @@ block rootNavRight
       a.button.is-outlined(v-on:click='$store.dispatch("modalMovePage/open")')
         i.nc-icon-outline.arrows-1_shuffle-98
         span= t('nav.move')
-    a.button.is-outlined(href='/source/' + pageData.meta.path)
-      i.nc-icon-outline.education_paper
-      span= t('nav.source')
+    if appconfig.theme.viewSource == "all" || rights.write && appconfig.theme.viewSource == "write"
+      a.button.is-outlined(href='/source/' + pageData.meta.path)
+        i.nc-icon-outline.education_paper
+        span= t('nav.source')
     //-a.button.is-outlined(href='/hist/' + pageData.meta.path)
       i.nc-icon-outline.ui-2_time
       span= t('nav.history')

@@ -28,6 +28,7 @@ module.exports = (confPaths) => {
         fs.readFileSync(confPaths.config, 'utf8')
       )
     )
+
     appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
     appdata.regex = require(confPaths.dataRegex)
   } catch (ex) {
