@@ -162,7 +162,7 @@ externalLogging:
 theme:
   primary: indigo
   alt: blue-grey
-  viewSource: "all"
+  viewSource: all
   footer: blue-grey
   code:
     dark: true
