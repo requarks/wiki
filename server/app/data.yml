@@ -61,7 +61,7 @@ defaults:
       primary: indigo
       alt: blue-grey
       footer: blue-grey
-      viewSource: "none"
+      viewSource: false
       code:
         dark: true
         colorize: true
