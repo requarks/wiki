@@ -78,13 +78,12 @@ deploy-github:
       code: |
         tar -chzf wiki-js.tar.gz assets server config.sample.yml package.json wiki.js LICENSE
         tar -chzf node_modules.tar.gz node_modules
-        SEMVER_LAST=`npm show wiki.js version`
-        chmod +x ./tools/semver_next.sh
-        SEMVER_NEXT=`./tools/semver_next.sh -p $SEMVER_LAST`
+        SEMVER_NEXT=`curl --request POST --url http://beta.requarks.io/api/version/increment --header 'authorization: $WIKIJSORG_TOKEN' --header 'cache-control: no-cache' --header 'content-type: application/json' --data '{"channel": "stable"}'`
     - github-create-release:
       token: $GITHUB_TOKEN
       tag: "v${SEMVER_NEXT}"
       prerelease: true
+      title: "$SEMVER_NEXT Release"
     - github-upload-asset:
       token: $GITHUB_TOKEN
       file: wiki-js.tar.gz
