@@ -53,11 +53,12 @@ You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/bl
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.7 - Stable
+### 1.0.8 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 - [x] Fix: Azure AD client Id is now referenced correctly ([#219](https://github.com/Requarks/wiki/issues/219))
 - [x] Fix: Git Branch is now referenced correctly ([#215](https://github.com/Requarks/wiki/issues/215))
+- [x] Updated dependencies
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/20)
