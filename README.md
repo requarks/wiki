@@ -61,14 +61,14 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Updated dependencies
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/20)
+![Progress](http://progressed.io/bar/25)
 
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
-- [ ] GraphQL API
+- [x] GraphQL API
   - [x] Comments
   - [x] Documents
-  - [ ] Files
+  - [x] Files
   - [x] Folders
   - [x] Groups
   - [x] Rights
@@ -76,6 +76,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Tags
   - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
+- [ ] New Login page
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
 - [x] Docker support + Auto compile/publish to Docker Hub
