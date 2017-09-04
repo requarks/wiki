@@ -54,8 +54,8 @@ module.exports = {
     self.onReady = (wiki.IS_MASTER) ? self._initRepo() : Promise.resolve()
 
     if (wiki.config.git) {
-      self._repo.branch = appconfig.git.branch || 'master'
-      self._signature.email = appconfig.git.serverEmail || 'wiki@example.com'
+      self._repo.branch = wiki.config.git.branch || 'master'
+      self._signature.email = wiki.config.git.serverEmail || 'wiki@example.com'
     }
 
     return self
