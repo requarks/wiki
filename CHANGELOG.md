@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.8] - 2017-08-31
+### Changed
+- **Misc**: Updated dependencies
+
+## [v1.0.7] - 2017-08-29
+### Fixed
+- **Authentication**: Azure AD client Id is now referenced correctly ([#219](https://github.com/Requarks/wiki/issues/219))
+- **Git**: Git Branch is now referenced correctly ([#215](https://github.com/Requarks/wiki/issues/215))
+
 ## [v1.0.6] - 2017-08-10
 ### Fixed
 - **Authentication**: LDAP no longer cause the social login text to appear on the login screen.
@@ -208,6 +217,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
+[v1.0.8]: https://github.com/Requarks/wiki/releases/tag/v1.0.8
+[v1.0.7]: https://github.com/Requarks/wiki/releases/tag/v1.0.7
 [v1.0.6]: https://github.com/Requarks/wiki/releases/tag/v1.0.6
 [v1.0.5]: https://github.com/Requarks/wiki/releases/tag/v1.0.5
 [v1.0.4]: https://github.com/Requarks/wiki/releases/tag/v1.0.4

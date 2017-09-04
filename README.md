@@ -53,34 +53,37 @@ You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/bl
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.0 - Beta 13
+### 1.0.8 - Stable
 ![Progress](http://progressed.io/bar/100)
 
-- [x] Color Themes
-- [x] Server-side TeX/MathML rendering
-- [x] Render line breaks by default (GitHub style)
-- [x] New Localization: German
-
-### 1.0.6 - Stable
-![Progress](http://progressed.io/bar/100)
-
-- [x] Bug fixes release
-- [x] New Localization: Dutch
+- [x] Fix: Azure AD client Id is now referenced correctly ([#219](https://github.com/Requarks/wiki/issues/219))
+- [x] Fix: Git Branch is now referenced correctly ([#215](https://github.com/Requarks/wiki/issues/215))
+- [x] Updated dependencies
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/20)
+![Progress](http://progressed.io/bar/25)
 
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
-- [ ] GraphQL API
+- [x] GraphQL API
+  - [x] Comments
+  - [x] Documents
+  - [x] Files
+  - [x] Folders
+  - [x] Groups
+  - [x] Rights
+  - [x] Settings
+  - [x] Tags
+  - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
+- [ ] New Login page
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
 - [x] Docker support + Auto compile/publish to Docker Hub
 - [ ] Support sub-directory installations (e.g. example.com/wiki)
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
-- [ ] Make use of all available CPU cores, distributed jobs queue
+- [x] Make use of all available CPU cores, distributed jobs queue
 - [ ] Tags per document / folder
 - [ ] Comments / Discussion per document
 - [ ] Profile page per user

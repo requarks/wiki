@@ -206,6 +206,10 @@ type Mutation {
     id: Int!
   ): OperationResult
 
+  deleteFile(
+    id: Int!
+  ): OperationResult
+
   deleteFolder(
     id: Int!
   ): OperationResult
@@ -255,6 +259,16 @@ type Mutation {
     path: String!
   ): OperationResult
 
+  moveFile(
+    id: Int!
+    folderId: Int!
+  ): OperationResult
+
+  renameFile(
+    id: Int!
+    name: String!
+  ): OperationResult
+
   renameFolder(
     id: Int!
     name: String!
@@ -297,4 +311,9 @@ type Mutation {
     id: Int!
     passwordRaw: String!
   ): OperationResult
+
+  uploadFile(
+    category: FileType!
+    filename: String!
+  ): File
 }
