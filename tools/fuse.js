@@ -126,7 +126,8 @@ globalTasks.then(() => {
 
   switch (mode) {
     case 'dev':
-      bundleApp.watch()
+      bundleApp.hmr().watch()
+      fuse.dev({ httpServer: false })
       break
     case 'dev-configure':
       bundleSetup.watch()

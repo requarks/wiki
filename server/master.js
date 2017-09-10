@@ -136,10 +136,10 @@ module.exports = Promise.join(
   // ----------------------------------------
 
   app.locals._ = require('lodash')
-  app.locals.t = wiki.lang.t.bind(wiki.config.site.lang)
+  app.locals.t = wiki.lang.t.bind(wiki.lang)
   app.locals.moment = require('moment')
   app.locals.moment.locale(wiki.config.site.lang)
-  app.locals.appconfig = wiki.config
+  app.locals.config = wiki.config
   app.use(mw.flash)
 
   // ----------------------------------------

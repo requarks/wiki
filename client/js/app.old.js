@@ -1,21 +1,27 @@
 'use strict'
 
-/* global siteConfig */
+/* global $, siteConfig */
 /* eslint-disable no-new */
 
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
+import VueLodash from 'vue-lodash'
 import store from './store'
 import i18next from 'i18next'
 import i18nextXHR from 'i18next-xhr-backend'
 import VueI18Next from '@panter/vue-i18next'
+import 'jquery-contextmenu'
+import 'jquery-simple-upload'
+import 'jquery-smooth-scroll'
+import 'jquery-sticky'
 
 // ====================================
 // Load Helpers
 // ====================================
 
 import helpers from './helpers'
+import _ from './helpers/lodash'
 
 // ====================================
 // Load Vue Components
@@ -56,6 +62,7 @@ import sourceViewComponent from './pages/source-view.component.js'
 Vue.use(VueResource)
 Vue.use(VueClipboards)
 Vue.use(VueI18Next)
+Vue.use(VueLodash, _)
 Vue.use(helpers)
 
 // ====================================
@@ -103,13 +110,18 @@ i18next
     fallbackLng: siteConfig.lang
   })
 
-document.addEventListener('DOMContentLoaded', ev => {
+$(() => {
   // ====================================
   // Notifications
   // ====================================
 
-  window.addEventListener('beforeunload', () => {
+  $(window).bind('beforeunload', () => {
     store.dispatch('startLoading')
+  })
+  $(document).ajaxSend(() => {
+    store.dispatch('startLoading')
+  }).ajaxComplete(() => {
+    store.dispatch('stopLoading')
   })
 
   // ====================================
@@ -117,21 +129,25 @@ document.addEventListener('DOMContentLoaded', ev => {
   // ====================================
 
   const i18n = new VueI18Next(i18next)
-  window.wiki = new Vue({
-    mixins: [helpers],
-    components: {},
-    store,
-    i18n,
-    el: '#root',
-    methods: {
-      changeTheme(opts) {
-        this.$el.className = `has-stickynav is-primary-${opts.primary} is-alternate-${opts.alt}`
-        this.$refs.header.className = `nav is-${opts.primary}`
-        this.$refs.footer.className = `footer is-${opts.footer}`
+  if (document.querySelector('#root')) {
+    window.wikijs = new Vue({
+      mixins: [helpers],
+      components: {},
+      store,
+      i18n,
+      el: '#root',
+      methods: {
+        changeTheme(opts) {
+          this.$el.className = `has-stickynav is-primary-${opts.primary} is-alternate-${opts.alt}`
+          this.$refs.header.className = `nav is-${opts.primary}`
+          this.$refs.footer.className = `footer is-${opts.footer}`
+        }
+      },
+      mounted() {
+        $('a:not(.toc-anchor)').smoothScroll({ speed: 500, offset: -50 })
+        $('#header').sticky({ topSpacing: 0 })
+        $('.sidebar-pagecontents').sticky({ topSpacing: 15, bottomSpacing: 75 })
       }
-    },
-    mounted() {
-
-    }
-  })
+    })
+  }
 })
