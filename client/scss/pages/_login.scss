@@ -9,23 +9,65 @@
   justify-content: center;
 
   &-container {
+    position: relative;
     display: flex;
-    width: 650px;
+    width: 450px;
     align-items: stretch;
     box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+
+    &.is-expanded {
+      width: 650px;
+    }
+
+    @include until($tablet) {
+      width: 350px;
+
+      &.is-expanded {
+        width: 400px;
+      }
+    }
+  }
+
+  &-error {
+    position: absolute;
+    bottom: 100%;
+    width: 100%;
+    min-height: 50px;
+    background-image: radial-gradient(ellipse at top left, rgba(mc('red', '900'),.9) 0%,rgba(mc('red', '400'),.8) 100%);
+    border: 1px solid #FFF;
+    color: #FFF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    strong {
+      font-weight: 600;
+      text-transform: uppercase;
+      display: block;
+      padding: 0 1rem 0 0;
+      border-right: 1px solid #FFF;
+    }
+    span {
+      padding: 0 0 0 1rem;
+      display: block;
+    }
   }
 
   &-providers {
     display: flex;
     flex-direction: column;
-    width: 200px;
+    width: 250px;
     border: 1px solid #FFF;
     background-color: mc('grey', '900');
     z-index: 1;
 
+    @include until($tablet) {
+      width: 50px;
+    }
+
     button {
       flex: 1 1;
-      padding: 0 15px;
+      padding: 5px 15px;
       border: none;
       color: #FFF;
       background-color: mc('grey', '800');
@@ -34,6 +76,18 @@
       font-weight: 600;
       text-align: left;
       min-height: 40px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      transition: all .4s ease;
+
+      @include until($tablet) {
+        justify-content: center;
+      }
+
+      &:hover {
+        background-color: mc('grey', '600');
+      }
 
       &:first-child {
         border-top: none;
@@ -48,10 +102,36 @@
       i {
         margin-right: 10px;
         font-size: 16px;
+
+        @include until($tablet) {
+          margin-right: 0;
+          font-size: 20px;
+        }
+      }
+
+      svg {
+        margin-right: 10px;
+        width: auto;
+        height: 20px;
+        max-width: 18px;
+        max-height: 20px;
+
+        path {
+          fill: #FFF;
+        }
+
+        @include until($tablet) {
+          margin-right: 0;
+          font-size: 20px;
+        }
       }
 
       span {
         font-weight: 600;
+
+        @include until($tablet) {
+          display: none;
+        }
       }
     }
   }
@@ -59,13 +139,17 @@
   &-frame {
     background-image: radial-gradient(circle at top left, rgba(255,255,255,1) 0%,rgba(240,240,240,.6) 100%);
     border: 1px solid #FFF;
-    width: 450px;
+    width: 400px;
     padding: 1rem;
     color: mc('grey', '700');
     display: flex;
     justify-content: center;
     flex-direction: column;
     text-align: center;
+
+    @include until($tablet) {
+      width: 350px;
+    }
 
     h1 {
       font-size: 2rem;
@@ -81,29 +165,6 @@
       color: mc('grey', '700');
       padding: 0;
       margin: 0 0 25px 0;
-    }
-
-    h3 {
-      font-size: 1.25rem;
-      font-weight: normal;
-      color: #FB8C00;
-      padding: 0;
-      margin: 0;
-      animation: shake 1s ease;
-
-      > .fa {
-        margin-right: 7px;
-      }
-
-    }
-
-    h4 {
-      font-size: .8rem;
-      font-weight: normal;
-      color: rgba(255,255,255,0.7);
-      padding: 0;
-      margin: 0 0 15px 0;
-      animation: fadeIn 3s ease;
     }
 
     form {
@@ -147,14 +208,10 @@
     font-weight: 400;
     text-shadow: 1px 1px 0 #000;
 
-    .icon {
-      font-size: 1.2rem;
-      margin: 0 8px;
-    }
-
     a {
       font-weight: 600;
       color: #FFF;
+      margin-left: .25rem;
     }
 
   }

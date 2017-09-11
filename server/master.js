@@ -16,6 +16,7 @@ module.exports = Promise.join(
   // Load global modules
   // ----------------------------------------
 
+  wiki.auth = require('./modules/auth').init()
   wiki.disk = require('./modules/disk').init()
   wiki.docs = require('./modules/documents').init()
   wiki.git = require('./modules/git').init(false)
@@ -38,7 +39,6 @@ module.exports = Promise.join(
   const http = require('http')
   const i18nBackend = require('i18next-node-fs-backend')
   const path = require('path')
-  const passport = require('passport')
   const passportSocketIo = require('passport.socketio')
   const session = require('express-session')
   const SessionRedisStore = require('connect-redis')(session)
@@ -78,10 +78,6 @@ module.exports = Promise.join(
   // Passport Authentication
   // ----------------------------------------
 
-  require('./modules/auth').init(passport)
-  wiki.rights = require('./modules/rights')
-  // wiki.rights.init()
-
   let sessionStore = new SessionRedisStore({
     client: wiki.redis
   })
@@ -95,8 +91,8 @@ module.exports = Promise.join(
     saveUninitialized: false
   }))
   app.use(flash())
-  app.use(passport.initialize())
-  app.use(passport.session())
+  app.use(wiki.auth.passport.initialize())
+  app.use(wiki.auth.passport.session())
 
   // ----------------------------------------
   // SEO
@@ -135,6 +131,7 @@ module.exports = Promise.join(
   // View accessible data
   // ----------------------------------------
 
+  app.locals.basedir = wiki.ROOTPATH
   app.locals._ = require('lodash')
   app.locals.t = wiki.lang.t.bind(wiki.lang)
   app.locals.moment = require('moment')

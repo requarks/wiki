@@ -3,10 +3,16 @@
 /* global wiki */
 
 const _ = require('lodash')
+const passport = require('passport')
+const fs = require('fs-extra')
+const path = require('path')
 
 module.exports = {
-  init(passport) {
-  // Serialization user methods
+  strategies: {},
+  init() {
+    this.passport = passport
+
+    // Serialization user methods
 
     passport.serializeUser(function (user, done) {
       done(null, user._id)
@@ -27,20 +33,26 @@ module.exports = {
 
     // Load authentication strategies
 
-    wiki.config.authStrategies = {
-      list: _.pickBy(wiki.config.auth, strategy => strategy.enabled),
-      socialEnabled: (_.chain(wiki.config.auth).omit('local').filter(['enabled', true]).value().length > 0)
-    }
-
-    _.forOwn(wiki.config.authStrategies.list, (strategyConfig, strategyName) => {
-      strategyConfig.callbackURL = `${wiki.config.site.host}/login/${strategyName}/callback`
-      require(`../authentication/${strategyName}`)(passport, strategyConfig)
-      wiki.logger.info(`Authentication Provider ${_.upperFirst(strategyName)}: OK`)
+    _.forOwn(wiki.config.auth.strategies, (strategyConfig, strategyKey) => {
+      strategyConfig.callbackURL = `${wiki.config.site.host}${wiki.config.site.path}/login/${strategyKey}/callback`
+      let strategy = require(`../authentication/${strategyKey}`)
+      strategy.init(passport, strategyConfig)
+      fs.readFile(path.join(wiki.ROOTPATH, `assets/svg/auth-icon-${strategyKey}.svg`), 'utf8').then(iconData => {
+        strategy.icon = iconData
+      }).catch(err => {
+        if (err.code === 'ENOENT') {
+          strategy.icon = '[missing icon]'
+        } else {
+          wiki.logger.error(err)
+        }
+      })
+      this.strategies[strategy.key] = strategy
+      wiki.logger.info(`Authentication Provider ${strategyKey}: OK`)
     })
 
     // Create Guest account for first-time
 
-    return wiki.db.User.findOne({
+    wiki.db.User.findOne({
       where: {
         provider: 'local',
         email: 'guest@example.com'
@@ -88,5 +100,7 @@ module.exports = {
     //     })
     //   } else { return true }
     // })
+
+    return this
   }
 }

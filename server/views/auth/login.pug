@@ -3,52 +3,30 @@ extends ../master.pug
 block body
   body
     .login#root
-      .login-container
-        if config.authStrategies.socialEnabled
+      .login-container(:class={ "is-expanded": hasMultipleStrategies })
+        if flash.length > 0
+          .login-error
+            strong
+              i.icon-warning-outline
+              = flash[0].title
+            span= flash[0].message
+        if hasMultipleStrategies
           .login-providers
-            button.is-active(onclick='window.location.assign("/login/ms")')
+            button.is-active(title=t('auth:providers.local'))
               i.nc-icon-outline.ui-1_database
               span= t('auth:providers.local')
-            if config.auth.microsoft && config.auth.microsoft.enabled
-              button(onclick='window.location.assign("/login/ms")')
-                i.icon-windows2
-                span= t('auth:providers.windowslive')
-            if config.auth.azure && config.auth.azure.enabled
-              button(onclick='window.location.assign("/login/azure")')
-                i.icon-windows2
-                span= t('auth:providers.azure')
-            if config.auth.google && config.auth.google.enabled
-              button(onclick='window.location.assign("/login/google")')
-                i.icon-google
-                span= t('auth:providers.google')
-            if config.auth.facebook && config.auth.facebook.enabled
-              button(onclick='window.location.assign("/login/facebook")')
-                i.icon-facebook
-                span= t('auth:providers.facebook')
-            if config.auth.github && config.auth.github.enabled
-              button(onclick='window.location.assign("/login/github")')
-                i.icon-github
-                span= t('auth:providers.github')
-            if config.auth.slack && config.auth.slack.enabled
-              button(onclick='window.location.assign("/login/slack")')
-                i.icon-slack
-                span= t('auth:providers.slack')
+            each strategy in authStrategies
+              button(onclick='window.location.assign("/login/' + strategy.key + '")', title=strategy.title)
+                != strategy.icon
+                span= strategy.title
         .login-frame
           h1= config.site.title
           h2= t('auth:loginrequired')
-          if appflash.length > 0
-            h3
-              i.icon-warning-outline
-              = appflash[0].title
-            h4= appflash[0].message
-          if config.auth.local.enabled
-            form(method='post', action='/login')
-              input#login-user(type='text', name='email', placeholder=t('auth:fields.emailuser'))
-              input#login-pass(type='password', name='password', placeholder=t('auth:fields.password'))
-              button.button.is-light-green.is-fullwidth(type='submit')
-                span= t('auth:actions.login')
+          form(method='post', action='/login')
+            input#login-user(type='text', name='email', placeholder=t('auth:fields.emailuser'))
+            input#login-pass(type='password', name='password', placeholder=t('auth:fields.password'))
+            button.button.is-light-green.is-fullwidth(type='submit')
+              span= t('auth:actions.login')
       .login-copyright
-        = t('footer.poweredby') + ' '
-        a.icon(href='https://github.com/Requarks/wiki')
-          i.icon-github
-        a(href='https://wiki.requarks.io/') Wiki.js
+        = t('footer.poweredby')
+        a(href='https://wiki.js.org', rel='external', title='Wiki.js') Wiki.js
