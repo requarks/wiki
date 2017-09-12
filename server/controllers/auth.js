@@ -1,5 +1,3 @@
-'use strict'
-
 /* global wiki */
 
 const Promise = require('bluebird')
@@ -8,6 +6,7 @@ const router = express.Router()
 const ExpressBrute = require('express-brute')
 const ExpressBruteRedisStore = require('express-brute-redis')
 const moment = require('moment')
+const _ = require('lodash')
 
 /**
  * Setup Express-Brute
