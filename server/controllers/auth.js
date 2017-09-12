@@ -5,7 +5,6 @@
 const Promise = require('bluebird')
 const express = require('express')
 const router = express.Router()
-const passport = require('passport')
 const ExpressBrute = require('express-brute')
 const ExpressBruteRedisStore = require('express-brute-redis')
 const moment = require('moment')
@@ -45,16 +44,16 @@ router.get('/login', function (req, res, next) {
 router.post('/login', bruteforce.prevent, function (req, res, next) {
   new Promise((resolve, reject) => {
     // [1] LOCAL AUTHENTICATION
-    passport.authenticate('local', function (err, user, info) {
+    wiki.auth.passport.authenticate('local', function (err, user, info) {
       if (err) { return reject(err) }
       if (!user) { return reject(new Error('INVALID_LOGIN')) }
       resolve(user)
     })(req, res, next)
   }).catch({ message: 'INVALID_LOGIN' }, err => {
-    if (appconfig.auth.ldap && appconfig.auth.ldap.enabled) {
+    if (_.has(wiki.config.auth.strategy, 'ldap')) {
       // [2] LDAP AUTHENTICATION
       return new Promise((resolve, reject) => {
-        passport.authenticate('ldapauth', function (err, user, info) {
+        wiki.auth.passport.authenticate('ldapauth', function (err, user, info) {
           if (err) { return reject(err) }
           if (info && info.message) { return reject(new Error(info.message)) }
           if (!user) { return reject(new Error('INVALID_LOGIN')) }
@@ -94,19 +93,19 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
  * Social Login
  */
 
-router.get('/login/ms', passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }))
-router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
-router.get('/login/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }))
-router.get('/login/github', passport.authenticate('github', { scope: ['user:email'] }))
-router.get('/login/slack', passport.authenticate('slack', { scope: ['identity.basic', 'identity.email'] }))
-router.get('/login/azure', passport.authenticate('azure_ad_oauth2'))
+router.get('/login/ms', wiki.auth.passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }))
+router.get('/login/google', wiki.auth.passport.authenticate('google', { scope: ['profile', 'email'] }))
+router.get('/login/facebook', wiki.auth.passport.authenticate('facebook', { scope: ['public_profile', 'email'] }))
+router.get('/login/github', wiki.auth.passport.authenticate('github', { scope: ['user:email'] }))
+router.get('/login/slack', wiki.auth.passport.authenticate('slack', { scope: ['identity.basic', 'identity.email'] }))
+router.get('/login/azure', wiki.auth.passport.authenticate('azure_ad_oauth2'))
 
-router.get('/login/ms/callback', passport.authenticate('windowslive', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/google/callback', passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/github/callback', passport.authenticate('github', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/slack/callback', passport.authenticate('slack', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/azure/callback', passport.authenticate('azure_ad_oauth2', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/ms/callback', wiki.auth.passport.authenticate('windowslive', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/google/callback', wiki.auth.passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/facebook/callback', wiki.auth.passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/github/callback', wiki.auth.passport.authenticate('github', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/slack/callback', wiki.auth.passport.authenticate('slack', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/azure/callback', wiki.auth.passport.authenticate('azure_ad_oauth2', { failureRedirect: '/login', successRedirect: '/' }))
 
 /**
  * Logout

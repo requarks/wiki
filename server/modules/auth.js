@@ -33,6 +33,8 @@ module.exports = {
 
     // Load authentication strategies
 
+    wiki.config.auth.strategies.local = {}
+
     _.forOwn(wiki.config.auth.strategies, (strategyConfig, strategyKey) => {
       strategyConfig.callbackURL = `${wiki.config.site.host}${wiki.config.site.path}/login/${strategyKey}/callback`
       let strategy = require(`../authentication/${strategyKey}`)
