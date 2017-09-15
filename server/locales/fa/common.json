@@ -1,0 +1,51 @@
+{
+  "wiki": "ویکی",
+  "header": {
+    "overview": "بررسی اجمالی",
+    "createdoc": "ایجاد سند جدید"
+  },
+  "footer": {
+    "poweredby": "ساخته شده به وسیله",
+    "home": "خانه",
+    "top": "بازگشت به بالای صفحه"
+  },
+  "sidebar": {
+    "nav": "ناوبری",
+    "navigation": "ناوبری",
+    "pagecontents": "محتویات صفحه",
+    "pastversions": "نسخه های پیشین"
+  },
+  "nav": {
+    "account": "حساب کاربری",
+    "allpages": "تمام صفحات",
+    "create": "ايجاد کردن",
+    "discard": "دور انداختن",
+    "edit": "ویرایش",
+    "history": "تاریخچه",
+    "login": "ورود",
+    "logout": "خروج",
+    "move": "انتقال",
+    "myprofile": "پروفایل من",
+    "normalview": "چشم‌انداز معمولی",
+    "root": "خانه",
+    "savechanges": "ذخیره تغییرات",
+    "savedocument": "ذخیره سند",
+    "settings": "تنظیمات",
+    "source": "منبع",
+    "stats": "آمار",
+    "sysinfo": "اطلاعات سیستم",
+    "syssettings": "تنظیمات سیستم",
+    "theme": "تم رنگ",
+    "users": "کاربران",
+    "viewlatest": "مشاهده آخرین"
+  },
+  "welcome": {
+    "title": "به ویکی خودتان خوش آمدید!",
+    "subtitle": "شروع و ساختن صفحه اصلی",
+    "createhome": "ایجاد صفحه اصلی"
+  },
+  "loading": {
+    "source": "درحال بارگیری منبع...",
+    "editor": "در حال بارگیری ویرایشگر..."
+  }
+}

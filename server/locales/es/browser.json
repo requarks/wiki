@@ -45,6 +45,16 @@
     "videosupportedtitle": "Los siguientes están soportados:",
     "videotitle": "Insertar Video"
   },
+  "history": {
+    "pastversions": "Versiones Previas",
+    "timestamp": "Marca de tiempo",
+    "author": "Autor",
+    "commit": "Commit",
+    "comparewith": "Comparar con...",
+    "view": "Ver",
+    "reverttoversion": "Volver a la Versión",
+    "sidebyside": "Vista lado a lado"
+  },
   "modal": {
     "abort": "Abortar",
     "anchorerror": "Falló la copia del Portapapeles. Copie la URL manualmente.",

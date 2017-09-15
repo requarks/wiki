@@ -28,7 +28,7 @@ html
 
     block head
 
-  body
+  body(class={ 'rtl': appconfig.langRtl })
     #root.has-stickynav(class=['is-primary-' + appconfig.theme.primary, 'is-alternate-' + appconfig.theme.alt])
       include ./common/header.pug
       alert

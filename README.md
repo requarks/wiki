@@ -53,12 +53,12 @@ You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/bl
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.8 - Stable
+### 1.0.9 - Stable
 ![Progress](http://progressed.io/bar/100)
 
-- [x] Fix: Azure AD client Id is now referenced correctly ([#219](https://github.com/Requarks/wiki/issues/219))
-- [x] Fix: Git Branch is now referenced correctly ([#215](https://github.com/Requarks/wiki/issues/215))
-- [x] Updated dependencies
+- [x] Persian (farsi) locale is now available (thanks to @ashkang)
+- [x] Added Support for right-to-left languages
+- [x] Fix: Browser locale files not generated properly (ported from dev branch)
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/25)
@@ -118,6 +118,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] French
 - [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes)*
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
+- [x] Persian - *Thanks to [@ashkang](https://github.com/ashkang)*
 - [x] Portuguese - *Thanks to [@felipeplets](https://github.com/felipeplets)*
 - [x] Russian - *Thanks to [@efimlosev](https://github.com/efimlosev)*
 - [x] Spanish - *Thanks to [@MatiasArriola](https://github.com/MatiasArriola)*

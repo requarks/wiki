@@ -1,0 +1,30 @@
+{
+  "alreadyexists": "این ورودی از پیش وجود دارد!",
+  "debugmsg": "ردپای دقیق برای اشکال زدائی",
+  "fileexists": "فایل {{path}} از پیش وجود دارد.",
+  "forbidden": "ممنوع",
+  "forbiddendetail": "متاسفانه شما اجازه لازم برای دسترسی به این صفحه را ندارید.",
+  "generic": "اشتباهی رخ داد",
+  "invalidaction": "عمل نامعتبر",
+  "invaliddestfolder": "پوشه مقصد نامعتبر است!",
+  "invalidfiletype": "نوع فایل نامعتبر است",
+  "invalidfolder": "پوشه نامعتبر",
+  "invalidoperation": "عملیات نامعتبر!",
+  "invalidpath": "مسیر صفحه نامعتبر است",
+  "invaliduserid": "شناسه کاربری نامعتبر",
+  "newpasswordtooshort": "گذرواژه جدید بسیار کوتاه است!",
+  "notexist": "مدخل {{path}} وجود ندارد!",
+  "notexistdetail": "آیا میخواهید این مدخل را ایجاد کنید؟",
+  "parentinvalid": "مدخل والد یک فایل معتبر نیست",
+  "parentisroot": "مدخل والد ریشه است.",
+  "remotetoolarge": "فایل خارجی بسیار بزرگ است",
+  "reservedname": "نمیتوانید سندی با این نام ایجاد کنید، چرا که نام این سند توسط سیستم رزرو شده است.",
+  "savefailed": "ذخیره سند با مشکل مواجه شد",
+  "starterfailed": "محتوای آغازگر بارگیری نشد!",
+  "unauthorized": "غیر مجاز",
+  "actions": {
+    "create": "ايجاد كردن",
+    "gohome": "بازگشت به خانه",
+    "loginas": "ورود به سیستم به عنوان..."
+  }
+}
