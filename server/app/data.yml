@@ -15,6 +15,7 @@ defaults:
       maxImageFileSize: 3,
       maxOtherFileSize: 100
     lang: en
+    langRtl: false
     public: false
     auth:
       defaultReadAccess: false

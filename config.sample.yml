@@ -44,9 +44,12 @@ uploads:
 # ---------------------------------------------------------------------
 # Site Language
 # ---------------------------------------------------------------------
-# Possible values: en, es, fr, ko, ru or zh
+# Possible values: en, de, es, fa, fr, ko, nl, pt, ru, sr, tr or zh
 
 lang: en
+
+# Enable for right to left languages (e.g. arabic):
+langRtl: false
 
 # ---------------------------------------------------------------------
 # Site Authentication
