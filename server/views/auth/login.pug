@@ -2,8 +2,8 @@ extends ../master.pug
 
 block body
   body
-    .login#root
-      .login-container(:class={ "is-expanded": hasMultipleStrategies })
+    .login#root(class={ "is-error": flash.length > 0 })
+      .login-container(class={ "is-expanded": hasMultipleStrategies })
         if flash.length > 0
           .login-error
             strong
@@ -25,7 +25,7 @@ block body
           form(method='post', action='/login')
             input#login-user(type='text', name='email', placeholder=t('auth:fields.emailuser'))
             input#login-pass(type='password', name='password', placeholder=t('auth:fields.password'))
-            button.button.is-light-green.is-fullwidth(type='submit')
+            button.button.is-light-blue.is-fullwidth(type='submit')
               span= t('auth:actions.login')
       .login-copyright
         = t('footer.poweredby')

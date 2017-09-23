@@ -35,8 +35,8 @@ const bruteforce = new ExpressBrute(EBstore, {
  */
 router.get('/login', function (req, res, next) {
   res.render('auth/login', {
-    authStrategies: wiki.auth.strategies,
-    hasMultipleStrategies: Object.keys(wiki.config.auth.strategies).length > 0
+    authStrategies: _.reject(wiki.auth.strategies, { key: 'local' }),
+    hasMultipleStrategies: Object.keys(wiki.config.auth.strategies).length > 1
   })
 })
 

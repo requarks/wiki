@@ -1,22 +1,41 @@
 .login {
-  background-size: cover;
-  background-position: center center;
-  background-image: url('../images/bg.jpg');
+  background-image: linear-gradient(to right, mc('blue', '400'), mc('blue', '600'));
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 
+  &.is-error {
+    background-image: linear-gradient(to right, mc('red', '400'), mc('red', '600'));
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    background-image: url('../svg/login-bg.svg');
+    background-position: center bottom;
+    background-size: cover;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
   &-container {
     position: relative;
     display: flex;
-    width: 450px;
+    width: 400px;
     align-items: stretch;
-    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.2);
+    border-radius: 6px;
 
     &.is-expanded {
       width: 650px;
+
+      .login-frame {
+        border-radius: 0 6px 6px 0;
+      }
     }
 
     @include until($tablet) {
@@ -30,22 +49,24 @@
 
   &-error {
     position: absolute;
-    bottom: 100%;
+    bottom: 105%;
     width: 100%;
     min-height: 50px;
-    background-image: radial-gradient(ellipse at top left, rgba(mc('red', '900'),.9) 0%,rgba(mc('red', '400'),.8) 100%);
-    border: 1px solid #FFF;
-    color: #FFF;
+    background-image: radial-gradient(ellipse at top left, rgba(255,255,255,.9) 0%,rgba(255,255,255,.8) 100%);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    border-radius: 6px;
+    color: mc('red', '800');
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 1rem;
 
     strong {
       font-weight: 600;
       text-transform: uppercase;
       display: block;
       padding: 0 1rem 0 0;
-      border-right: 1px solid #FFF;
+      border-right: 1px solid mc('red', '200');
     }
     span {
       padding: 0 0 0 1rem;
@@ -57,9 +78,12 @@
     display: flex;
     flex-direction: column;
     width: 250px;
-    border: 1px solid #FFF;
+
+    border-right: none;
+    border-radius: 6px 0 0 6px;
     background-color: mc('grey', '900');
     z-index: 1;
+    overflow: hidden;
 
     @include until($tablet) {
       width: 50px;
@@ -70,8 +94,8 @@
       padding: 5px 15px;
       border: none;
       color: #FFF;
-      background-color: mc('grey', '800');
-      border-top: 1px solid mc('grey', '900');
+      background-color: mc('light-blue', '800');
+      border-top: 1px solid mc('light-blue', '900');
       font-family: $core-font-standard;
       font-weight: 600;
       text-align: left;
@@ -86,7 +110,7 @@
       }
 
       &:hover {
-        background-color: mc('grey', '600');
+        background-color: mc('light-blue', '600');
       }
 
       &:first-child {
@@ -96,7 +120,7 @@
       &.is-active {
         background-color: mc('grey', '100');
         background-image: radial-gradient(circle at top left, rgba(mc('grey', '200'),1) 0%,rgba(255,255,255,1) 100%);
-        color: mc('grey', '700');
+        color: mc('light-blue', '700');
       }
 
       i {
@@ -137,8 +161,8 @@
   }
 
   &-frame {
-    background-image: radial-gradient(circle at top left, rgba(255,255,255,1) 0%,rgba(240,240,240,.6) 100%);
-    border: 1px solid #FFF;
+    background-image: radial-gradient(circle at top left, rgba(255,255,255,1) 5%,rgba(240,240,240,.6) 100%);
+    border-radius: 6px;
     width: 400px;
     padding: 1rem;
     color: mc('grey', '700');
@@ -154,7 +178,7 @@
     h1 {
       font-size: 2rem;
       font-weight: 600;
-      color: mc('grey', '700');
+      color: mc('light-blue', '700');
       padding: 0;
       margin: 0;
     }
@@ -176,7 +200,7 @@
       width: 100%;
       border: 1px solid #FFF;
       border-radius: 3px;
-      background-color: rgba(255,255,255,.7);
+      background-color: rgba(255,255,255,.9);
       padding: 0 15px;
       height: 40px;
       margin: 0 0 10px 0;
@@ -188,7 +212,7 @@
 
       &:focus {
         outline: none;
-        border-color: mc('grey','400');
+        border-color: mc('light-blue','500');
       }
 
     }
@@ -204,13 +228,12 @@
     bottom: 10vh;
     width: 100%;
     z-index: 2;
-    color: #FFF;
+    color: mc('grey', '500');
     font-weight: 400;
-    text-shadow: 1px 1px 0 #000;
 
     a {
       font-weight: 600;
-      color: #FFF;
+      color: mc('light-blue', '500');
       margin-left: .25rem;
     }
 
