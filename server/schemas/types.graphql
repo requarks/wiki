@@ -114,6 +114,11 @@ type Tag implements Base {
   documents: [Document]
 }
 
+type Translation {
+  key: String!
+  value: String!
+}
+
 # A User
 type User implements Base {
   id: Int!
@@ -142,6 +147,7 @@ type Query {
   rights(id: Int): [Right]
   settings(key: String): [Setting]
   tags(key: String): [Tag]
+  translations(locale: String!, namespace: String!): [Translation]
   users(id: Int, email: String, provider: String, providerId: String, role: UserRole): [User]
 }
 

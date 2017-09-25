@@ -11,6 +11,7 @@ const WindowsLiveStrategy = require('passport-windowslive').Strategy
 module.exports = {
   key: 'microsoft',
   title: 'Microsoft Account',
+  useForm: false,
   props: ['clientId', 'clientSecret', 'callbackURL'],
   init (passport, conf) {
     passport.use('windowslive',

@@ -1,4 +1,3 @@
-'use strict'
 
 const gql = require('graphql')
 

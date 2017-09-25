@@ -20,7 +20,7 @@ module.exports = Promise.join(
   wiki.disk = require('./modules/disk').init()
   wiki.docs = require('./modules/documents').init()
   wiki.git = require('./modules/git').init(false)
-  wiki.lang = require('i18next')
+  wiki.lang = require('./modules/localization').init()
   wiki.mark = require('./modules/markdown')
   wiki.search = require('./modules/search').init()
   wiki.upl = require('./modules/uploads').init()
@@ -37,13 +37,10 @@ module.exports = Promise.join(
   const favicon = require('serve-favicon')
   const flash = require('connect-flash')
   const http = require('http')
-  const i18nBackend = require('i18next-node-fs-backend')
   const path = require('path')
-  const passportSocketIo = require('passport.socketio')
   const session = require('express-session')
   const SessionRedisStore = require('connect-redis')(session)
   const graceful = require('node-graceful')
-  const socketio = require('socket.io')
   const graphqlApollo = require('apollo-server-express')
   const graphqlSchema = require('./modules/graphql')
 
@@ -101,23 +98,6 @@ module.exports = Promise.join(
   app.use(mw.seo)
 
   // ----------------------------------------
-  // Localization Engine
-  // ----------------------------------------
-
-  wiki.lang.use(i18nBackend).init({
-    load: 'languageOnly',
-    ns: ['common', 'admin', 'auth', 'errors', 'git'],
-    defaultNS: 'common',
-    saveMissing: false,
-    preload: [wiki.config.site.lang],
-    lng: wiki.config.site.lang,
-    fallbackLng: 'en',
-    backend: {
-      loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
-    }
-  })
-
-  // ----------------------------------------
   // View Engine Setup
   // ----------------------------------------
 
@@ -133,7 +113,7 @@ module.exports = Promise.join(
 
   app.locals.basedir = wiki.ROOTPATH
   app.locals._ = require('lodash')
-  app.locals.t = wiki.lang.t.bind(wiki.lang)
+  app.locals.t = wiki.lang.engine.t.bind(wiki.lang)
   app.locals.moment = require('moment')
   app.locals.moment.locale(wiki.config.site.lang)
   app.locals.config = wiki.config
@@ -173,11 +153,10 @@ module.exports = Promise.join(
   // Start HTTP server
   // ----------------------------------------
 
-  wiki.logger.info(`HTTP/WS Server on port: ${wiki.config.port}`)
+  wiki.logger.info(`HTTP Server on port: ${wiki.config.port}`)
 
   app.set('port', wiki.config.port)
-  var server = http.createServer(app)
-  var io = socketio(server)
+  let server = http.createServer(app)
 
   server.listen(wiki.config.port)
   server.on('error', (error) => {
@@ -199,35 +178,14 @@ module.exports = Promise.join(
   })
 
   server.on('listening', () => {
-    wiki.logger.info('HTTP/WS Server: RUNNING')
+    wiki.logger.info('HTTP Server: RUNNING')
   })
-
-  // ----------------------------------------
-  // WebSocket
-  // ----------------------------------------
-
-  io.use(passportSocketIo.authorize({
-    key: 'wikijs.sid',
-    store: sessionStore,
-    secret: wiki.config.site.sessionSecret,
-    cookieParser,
-    success: (data, accept) => {
-      accept()
-    },
-    fail: (data, message, error, accept) => {
-      accept()
-    }
-  }))
-
-  io.on('connection', ctrl.ws)
 
   // ----------------------------------------
   // Graceful shutdown
   // ----------------------------------------
 
   graceful.on('exit', () => {
-    // wiki.logger.info('- SHUTTING DOWN - Terminating Background Agent...')
-    // bgAgent.kill()
     wiki.logger.info('- SHUTTING DOWN - Performing git sync...')
     return global.git.resync().then(() => {
       wiki.logger.info('- SHUTTING DOWN - Git sync successful. Now safe to exit.')

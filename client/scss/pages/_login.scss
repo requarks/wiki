@@ -81,7 +81,6 @@
 
     border-right: none;
     border-radius: 6px 0 0 6px;
-    background-color: mc('grey', '900');
     z-index: 1;
     overflow: hidden;
 
@@ -94,8 +93,8 @@
       padding: 5px 15px;
       border: none;
       color: #FFF;
-      background-color: mc('light-blue', '800');
-      border-top: 1px solid mc('light-blue', '900');
+      background: linear-gradient(to right, rgba(mc('light-blue', '800'), .7), rgba(mc('light-blue', '800'), 1));
+      border-top: 1px solid rgba(mc('light-blue', '900'), .5);
       font-family: $core-font-standard;
       font-weight: 600;
       text-align: left;
@@ -110,7 +109,7 @@
       }
 
       &:hover {
-        background-color: mc('light-blue', '600');
+        background-color: mc('light-blue', '900');
       }
 
       &:first-child {

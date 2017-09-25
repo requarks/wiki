@@ -12,6 +12,7 @@ const fs = require('fs')
 module.exports = {
   key: 'ldap',
   title: 'LDAP / Active Directory',
+  useForm: true,
   props: ['url', 'bindDn', 'bindCredentials', 'searchBase', 'searchFilter', 'tlsEnabled', 'tlsCertPath'],
   init (passport, conf) {
     passport.use('ldapauth',

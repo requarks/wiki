@@ -11,6 +11,7 @@ const FacebookStrategy = require('passport-facebook').Strategy
 module.exports = {
   key: 'facebook',
   title: 'Facebook',
+  useForm: false,
   props: ['clientId', 'clientSecret', 'callbackURL'],
   init (passport, conf) {
     passport.use('facebook',

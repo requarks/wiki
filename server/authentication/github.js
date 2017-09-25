@@ -11,6 +11,7 @@ const GitHubStrategy = require('passport-github2').Strategy
 module.exports = {
   key: 'github',
   title: 'GitHub',
+  useForm: false,
   props: ['clientId', 'clientSecret', 'callbackURL'],
   init (passport, conf) {
     passport.use('github',

@@ -6,10 +6,14 @@
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
+import { ApolloClient, createBatchingNetworkInterface } from 'apollo-client'
 import store from './store'
-import i18next from 'i18next'
-import i18nextXHR from 'i18next-xhr-backend'
-import VueI18Next from '@panter/vue-i18next'
+
+// ====================================
+// Load Modules
+// ====================================
+
+import localization from './modules/localization'
 
 // ====================================
 // Load Helpers
@@ -29,6 +33,7 @@ import editorFileComponent from './components/editor-file.vue'
 import editorVideoComponent from './components/editor-video.vue'
 import historyComponent from './components/history.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
+import loginComponent from './components/login.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
 import modalDeleteUserComponent from './components/modal-delete-user.vue'
@@ -50,12 +55,23 @@ import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
 
 // ====================================
+// Initialize Apollo Client (GraphQL)
+// ====================================
+
+window.apollo = new ApolloClient({
+  networkInterface: createBatchingNetworkInterface({
+    uri: window.location.protocol + '//' + window.location.host + siteConfig.path + '/graphql'
+  }),
+  connectToDevTools: true
+})
+
+// ====================================
 // Initialize Vue Modules
 // ====================================
 
 Vue.use(VueResource)
 Vue.use(VueClipboards)
-Vue.use(VueI18Next)
+Vue.use(localization.VueI18Next)
 Vue.use(helpers)
 
 // ====================================
@@ -76,6 +92,7 @@ Vue.component('editorFile', editorFileComponent)
 Vue.component('editorVideo', editorVideoComponent)
 Vue.component('history', historyComponent)
 Vue.component('loadingSpinner', loadingSpinnerComponent)
+Vue.component('login', loginComponent)
 Vue.component('modalCreatePage', modalCreatePageComponent)
 Vue.component('modalCreateUser', modalCreateUserComponent)
 Vue.component('modalDeleteUser', modalDeleteUserComponent)
@@ -88,20 +105,6 @@ Vue.component('search', searchComponent)
 Vue.component('sourceView', sourceViewComponent)
 Vue.component('toggle', toggleComponent)
 Vue.component('tree', treeComponent)
-
-// ====================================
-// Load Localization strings
-// ====================================
-
-i18next
-  .use(i18nextXHR)
-  .init({
-    backend: {
-      loadPath: siteConfig.path + '/js/i18n/{{lng}}.json'
-    },
-    lng: siteConfig.lang,
-    fallbackLng: siteConfig.lang
-  })
 
 document.addEventListener('DOMContentLoaded', ev => {
   // ====================================
@@ -116,13 +119,13 @@ document.addEventListener('DOMContentLoaded', ev => {
   // Bootstrap Vue
   // ====================================
 
-  const i18n = new VueI18Next(i18next)
+  const i18n = localization.init()
   window.wiki = new Vue({
     mixins: [helpers],
     components: {},
     store,
     i18n,
-    el: '#root',
+    el: '#app',
     methods: {
       changeTheme(opts) {
         this.$el.className = `has-stickynav is-primary-${opts.primary} is-alternate-${opts.alt}`

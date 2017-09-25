@@ -11,6 +11,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy
 module.exports = {
   key: 'google',
   title: 'Google ID',
+  useForm: false,
   props: ['clientId', 'clientSecret', 'callbackURL'],
   init (passport, conf) {
     passport.use('google',

@@ -17,6 +17,7 @@ const FolderResolvers = require('../schemas/resolvers-folder')
 const GroupResolvers = require('../schemas/resolvers-group')
 const SettingResolvers = require('../schemas/resolvers-setting')
 const TagResolvers = require('../schemas/resolvers-tag')
+const TranslationResolvers = require('../schemas/resolvers-translation')
 const UserResolvers = require('../schemas/resolvers-user')
 
 const resolvers = _.merge(
@@ -27,6 +28,7 @@ const resolvers = _.merge(
   GroupResolvers,
   SettingResolvers,
   TagResolvers,
+  TranslationResolvers,
   UserResolvers,
   DateScalar
 )

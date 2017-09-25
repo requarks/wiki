@@ -11,6 +11,7 @@ const SlackStrategy = require('passport-slack').Strategy
 module.exports = {
   key: 'slack',
   title: 'Slack',
+  useForm: false,
   props: ['clientId', 'clientSecret', 'callbackURL'],
   init (passport, conf) {
     passport.use('slack',

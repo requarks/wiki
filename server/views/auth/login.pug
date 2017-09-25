@@ -2,31 +2,5 @@ extends ../master.pug
 
 block body
   body
-    .login#root(class={ "is-error": flash.length > 0 })
-      .login-container(class={ "is-expanded": hasMultipleStrategies })
-        if flash.length > 0
-          .login-error
-            strong
-              i.icon-warning-outline
-              = flash[0].title
-            span= flash[0].message
-        if hasMultipleStrategies
-          .login-providers
-            button.is-active(title=t('auth:providers.local'))
-              i.nc-icon-outline.ui-1_database
-              span= t('auth:providers.local')
-            each strategy in authStrategies
-              button(onclick='window.location.assign("/login/' + strategy.key + '")', title=strategy.title)
-                != strategy.icon
-                span= strategy.title
-        .login-frame
-          h1= config.site.title
-          h2= t('auth:loginrequired')
-          form(method='post', action='/login')
-            input#login-user(type='text', name='email', placeholder=t('auth:fields.emailuser'))
-            input#login-pass(type='password', name='password', placeholder=t('auth:fields.password'))
-            button.button.is-light-blue.is-fullwidth(type='submit')
-              span= t('auth:actions.login')
-      .login-copyright
-        = t('footer.poweredby')
-        a(href='https://wiki.js.org', rel='external', title='Wiki.js') Wiki.js
+    #app.is-fullscreen
+      login
