@@ -60,12 +60,20 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 ### 1.0.9 - Stable
 ![Progress](http://progressed.io/bar/100)
 
+**Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
+
 - [x] Persian (farsi) locale is now available (thanks to @ashkang)
-- [x] Added Support for right-to-left languages
+- [x] Added support for right-to-left languages
 - [x] Fix: Browser locale files not generated properly (ported from dev branch)
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/25)
+![Progress](http://progressed.io/bar/30)
+
+**Goals**:
+  - Decouple front-end and back-end completely.
+  - All operations and queries will be made via GraphQL API.
+  - New fully responsive layout, with better customization capabilities.
+  - Full localization support, especially for non-latin languages.
 
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
@@ -78,13 +86,14 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Rights
   - [x] Settings
   - [x] Tags
+  - [x] Translations
   - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
 - [ ] New Login page
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
 - [x] Docker support + Auto compile/publish to Docker Hub
-- [ ] Support sub-directory installations (e.g. example.com/wiki)
+- [x] Support sub-directory installations (e.g. example.com/wiki)
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
 - [x] Make use of all available CPU cores, distributed jobs queue
