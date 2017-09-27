@@ -6,5 +6,5 @@
 
 <!--- FOR FEATURE REQUESTS: Use the feature request board instead: https://wikijs.canny.io/features --->
 
-<!-- Love wikijs? Please consider supporting our collective:
+<!-- Love Wiki.js? Please consider supporting our collective:
 👉  https://opencollective.com/wikijs/donate -->
