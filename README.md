@@ -1,6 +1,6 @@
 ![Wiki.js](https://raw.githubusercontent.com/Requarks/wiki-site/1.0/assets/images/logo.png)
 
-[![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat-square&maxAge=3600)](https://github.com/Requarks/wiki/releases)
+[![Backers on Open Collective](https://opencollective.com/wikijs/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/wikijs/sponsors/badge.svg)](#sponsors) [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat-square&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat-square)](https://github.com/requarks/wiki/blob/master/LICENSE)
 [![npm](https://img.shields.io/badge/npm-wiki.js-blue.svg?style=flat-square)](https://www.npmjs.com/package/wiki.js)
 [![Downloads](https://img.shields.io/github/downloads/Requarks/wiki/total.svg?style=flat-square)](https://www.npmjs.com/package/wiki.js)
@@ -143,3 +143,33 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 
 ![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)  
 [DigitalOcean](https://www.digitalocean.com/) for providing hosting of the Wiki.js documentation site.
+
+## Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute]](CONTRIBUTING.md).
+<a href="graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/wikijs#backer)]
+
+<a href="https://opencollective.com/wikijs#backers" target="_blank"><img src="https://opencollective.com/wikijs/backers.svg?width=890"></a>
+
+
+## Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/wikijs#sponsor)]
+
+<a href="https://opencollective.com/wikijs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/2/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/3/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/4/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/5/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/6/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/wikijs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/9/avatar.svg"></a>
+
+
