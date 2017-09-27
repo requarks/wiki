@@ -2,7 +2,7 @@
 
 ## Introduction
 
-First, thank you for considering contributing to wikijs! It's people like you that make the open source community such a great community! 😊
+First, thank you for considering contributing to Wiki.js! It's people like you that make the open source community such a great community! 😊
 
 We welcome any type of contribution, not only code. You can help with 
 - **QA**: file bug reports, the more details you can give the better (e.g. screenshots with the console open)
@@ -38,7 +38,7 @@ You can also reach us at hello@wikijs.opencollective.com.
 
 ### Contributors
 
-Thank you to all the people who have already contributed to wikijs!
+Thank you to all the people who have already contributed to Wiki.js!
 <a href="graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
 
 
