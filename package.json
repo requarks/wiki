@@ -10,7 +10,8 @@
     "build": "node tools/fuse",
     "dev": "node tools/fuse -d",
     "dev-configure": "node tools/fuse -c",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "opencollective postinstall"
   },
   "bin": {
     "wiki": "wiki.js"
@@ -93,6 +94,7 @@
     "multer": "~1.3.0",
     "node-2fa": "~1.1.2",
     "node-graceful": "~0.2.3",
+    "opencollective": "~1.0.3",
     "ora": "~1.3.0",
     "passport": "~0.4.0",
     "passport-azure-ad-oauth2": "0.0.4",
@@ -172,5 +174,10 @@
       "**/?(*.)(spec|test).js?(x)"
     ],
     "verbose": true
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/wikijs",
+    "logo": "https://opencollective.com/opencollective/logo.txt"
   }
 }
