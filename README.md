@@ -67,7 +67,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fix: Browser locale files not generated properly (ported from dev branch)
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/30)
+![Progress](http://progressed.io/bar/35)
 
 **Goals**:
   - Decouple front-end and back-end completely.
