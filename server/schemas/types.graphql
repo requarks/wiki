@@ -31,6 +31,14 @@ interface Base {
 
 # TYPES
 
+type AuthenticationProvider {
+  id: String!
+  useForm: Boolean!
+  title: String!
+  props: [String]
+  config: String
+}
+
 type Comment implements Base {
   id: Int!
   createdAt: Date
@@ -97,6 +105,12 @@ type Right implements Base {
   group: Group!
 }
 
+type SearchResult {
+  path: String
+  title: String
+  tags: [String]
+}
+
 type Setting implements Base {
   id: Int!
   createdAt: Date
@@ -139,12 +153,14 @@ type OperationResult {
 
 # Query (Read)
 type Query {
+  authentication(mode: String!): [AuthenticationProvider]
   comments(id: Int): [Comment]
   documents(id: Int, path: String): [Document]
   files(id: Int): [File]
   folders(id: Int, name: String): [Folder]
   groups(id: Int, name: String): [Group]
   rights(id: Int): [Right]
+  search(q: String, tags: [String]): [SearchResult]
   settings(key: String): [Setting]
   tags(key: String): [Tag]
   translations(locale: String!, namespace: String!): [Translation]

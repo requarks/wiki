@@ -39,7 +39,7 @@ export default {
     siteTitle() {
       return siteConfig.title
     }
-  }
+  },
   methods: {
     selectProvider(key, useForm) {
 
