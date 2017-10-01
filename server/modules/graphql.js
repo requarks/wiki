@@ -10,6 +10,7 @@ const _ = require('lodash')
 const typeDefs = fs.readFileSync(path.join(wiki.SERVERPATH, 'schemas/types.graphql'), 'utf8')
 
 const DateScalar = require('../schemas/scalar-date')
+const AuthenticationResolvers = require('../schemas/resolvers-authentication')
 const CommentResolvers = require('../schemas/resolvers-comment')
 const DocumentResolvers = require('../schemas/resolvers-document')
 const FileResolvers = require('../schemas/resolvers-file')
@@ -21,6 +22,7 @@ const TranslationResolvers = require('../schemas/resolvers-translation')
 const UserResolvers = require('../schemas/resolvers-user')
 
 const resolvers = _.merge(
+  AuthenticationResolvers,
   CommentResolvers,
   DocumentResolvers,
   FileResolvers,

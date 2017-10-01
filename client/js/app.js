@@ -3,6 +3,8 @@
 /* global siteConfig */
 /* eslint-disable no-new */
 
+import CONSTANTS from './constants'
+
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
@@ -55,10 +57,17 @@ import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
 
 // ====================================
+// Initialize Global Vars
+// ====================================
+
+window.wiki = null
+window.CONSTANTS = CONSTANTS
+
+// ====================================
 // Initialize Apollo Client (GraphQL)
 // ====================================
 
-window.apollo = new ApolloClient({
+window.graphQL = new ApolloClient({
   networkInterface: createBatchingNetworkInterface({
     uri: window.location.protocol + '//' + window.location.host + siteConfig.path + '/graphql'
   }),

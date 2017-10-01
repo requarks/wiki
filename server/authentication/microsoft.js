@@ -14,7 +14,7 @@ module.exports = {
   useForm: false,
   props: ['clientId', 'clientSecret', 'callbackURL'],
   init (passport, conf) {
-    passport.use('windowslive',
+    passport.use('microsoft',
       new WindowsLiveStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

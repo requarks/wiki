@@ -7,11 +7,8 @@
           | {{ error.title }}
         span {{ error.message }}
       .login-providers(v-show='strategies.length > 1')
-        button.is-active(:title='$t("auth:providers.local")')
-          i.nc-icon-outline.ui-1_database
-          span {{ $t('auth:providers.local') }}
-        button(v-for='strategy in strategies', @onclick='selectProvider(strategy.key, strategy.useForm)', :title='strategy.title')
-          //-!= strategy.icon
+        button(v-for='strategy in strategies', :class='{ "is-active": strategy.key === selectedStrategy }', @click='selectStrategy(strategy.key, strategy.useForm)', :title='strategy.title')
+          em(v-html='strategy.icon')
           span {{ strategy.title }}
       .login-frame
         h1 {{ siteTitle }}
@@ -32,7 +29,8 @@ export default {
   data() {
     return {
       error: false,
-      strategies: []
+      strategies: [],
+      selectedStrategy: 'local'
     }
   },
   computed: {
@@ -41,9 +39,31 @@ export default {
     }
   },
   methods: {
-    selectProvider(key, useForm) {
-
+    selectStrategy(key, useForm) {
+      this.selectedStrategy = key
+      if (!useForm) {
+        window.location.assign(siteConfig.path + '/login/' + key)
+      }
+    },
+    refreshStrategies() {
+      graphQL.query({
+        query: CONSTANTS.GRAPHQL.GQL_QUERY_AUTHENTICATION,
+        variables: {
+          mode: 'active'
+        }
+      }).then(resp => {
+        if (resp.data.authentication) {
+          this.strategies = resp.data.authentication
+        } else {
+          throw new Error('No authentication providers available!')
+        }
+      }).catch(err => {
+        console.error(err)
+      })
     }
+  },
+  mounted() {
+    this.refreshStrategies()
   }
 }
 </script>

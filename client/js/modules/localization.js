@@ -1,11 +1,10 @@
 import i18next from 'i18next'
 import i18nextXHR from 'i18next-xhr-backend'
 import i18nextCache from 'i18next-localstorage-cache'
-import gql from 'graphql-tag'
 import VueI18Next from '@panter/vue-i18next'
 import loSet from 'lodash/set'
 
-/* global siteConfig */
+/* global siteConfig, graphQL, CONSTANTS */
 
 module.exports = {
   VueI18Next,
@@ -19,16 +18,12 @@ module.exports = {
           parse: (data) => data,
           ajax: (url, opts, cb, data) => {
             let langParams = url.split('/')
-            console.info(langParams)
-            window.apollo.query({
-              query: gql`
-                {
-                  translations(locale:"${langParams[0]}", namespace:"${langParams[1]}") {
-                    key
-                    value
-                  }
-                }
-              `
+            graphQL.query({
+              query: CONSTANTS.GRAPHQL.GQL_QUERY_TRANSLATIONS,
+              variables: {
+                locale: langParams[0],
+                namespace: langParams[1]
+              }
             }).then(resp => {
               let ns = {}
               if (resp.data.translations.length > 0) {

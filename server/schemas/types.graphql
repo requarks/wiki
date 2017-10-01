@@ -32,10 +32,11 @@ interface Base {
 # TYPES
 
 type AuthenticationProvider {
-  id: String!
+  key: String!
   useForm: Boolean!
   title: String!
   props: [String]
+  icon: String
   config: String
 }
 
