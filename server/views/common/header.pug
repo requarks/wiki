@@ -3,7 +3,7 @@
   nav.nav#header(class=['is-' + appconfig.theme.primary], ref='header')
     .nav-left
       block rootNavLeft
-        a.nav-item(href='/')
+        a.nav-item(href=appconfig.host + '/')
           h1
             i.nc-icon-outline.ui-2_layers
             = appconfig.title

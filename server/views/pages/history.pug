@@ -3,7 +3,7 @@ extends ../layout.pug
 block rootNavRight
   i.nav-item#notifload
   .nav-item
-    a.button(href='/' + pageData.meta._id)
+    a.button(href=appconfig.host + '/' + pageData.meta._id)
       i.nc-icon-outline.ui-3_select
       span= t('nav.viewlatest')
 

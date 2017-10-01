@@ -27,7 +27,7 @@ block adminContent
           td.is-icon
             i.nc-icon-outline.users_single-05.is-grey
           td
-            a(href='/admin/users/' + usr._id)= usr.name
+            a(href=appconfig.host + '/admin/users/' + usr._id)= usr.name
           td= usr.email
           td.is-centered.has-icons
             case usr.provider
