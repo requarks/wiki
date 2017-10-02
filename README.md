@@ -143,8 +143,8 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 ![Browserstack](https://wiki.js.org/assets/images/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)  
-[DigitalOcean](https://www.digitalocean.com/) for providing hosting of the Wiki.js documentation site.
+[![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)](https://m.do.co/c/5f7445bfa4d0)  
+[DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
 ## Contributors
 
