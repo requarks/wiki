@@ -6,16 +6,15 @@
  * Client & Server compiler / bundler / watcher
  */
 
+const autoprefixer = require('autoprefixer')
 const colors = require('colors/safe')
 const fsbx = require('fuse-box')
 const nodemon = require('nodemon')
-const babel = require('babel-core')
-const uglify = require('uglify-es')
 const fs = require('fs-extra')
 
-// ======================================================
+// -------------------------------------------------------
 // Parse cmd arguments
-// ======================================================
+// -------------------------------------------------------
 
 const args = require('yargs')
   .option('d', {
@@ -23,30 +22,21 @@ const args = require('yargs')
     describe: 'Start in Developer mode',
     type: 'boolean'
   })
-  .option('c', {
-    alias: 'dev-configure',
-    describe: 'Start in Configure Developer mode',
-    type: 'boolean'
-  })
   .help('h')
   .alias('h', 'help')
   .argv
 
-let mode = 'build'
-const dev = args.d || args.c
-if (args.d) {
+const dev = args.dev
+
+if (dev) {
   console.info(colors.bgWhite.black(' Starting Fuse in DEVELOPER mode... '))
-  mode = 'dev'
-} else if (args.c) {
-  console.info(colors.bgWhite.black(' Starting Fuse in CONFIGURE DEVELOPER mode... '))
-  mode = 'dev-configure'
 } else {
   console.info(colors.bgWhite.black(' Starting Fuse in BUILD mode... '))
 }
 
-// ======================================================
+// -------------------------------------------------------
 // BUILD VARS
-// ======================================================
+// -------------------------------------------------------
 
 const ALIASES = {
   'brace-ext-modelist': 'brace/ext/modelist.js',
@@ -71,16 +61,31 @@ const SHIMS = {
   }
 }
 
-// ======================================================
+// -------------------------------------------------------
 // Global Tasks
-// ======================================================
+// -------------------------------------------------------
 
 console.info(colors.white('└── ') + colors.green('Running global tasks...'))
 let globalTasks = require('./fuse_tasks')
 
-// ======================================================
-// Fuse Tasks
-// ======================================================
+// -------------------------------------------------------
+// FUSEBOX PRODUCER
+// -------------------------------------------------------
+
+const babelrc = fs.readJsonSync('.babelrc')
+const scssChain = [
+  fsbx.SassPlugin({
+    includePaths: ['node_modules'],
+    outputStyle: dev ? 'nested' : 'compressed'
+  }),
+  fsbx.PostCSS([
+    autoprefixer({
+      remove: false,
+      browsers: babelrc.presets[0][1].targets.browsers
+    })
+  ]),
+  fsbx.CSSPlugin()
+]
 
 globalTasks.then(() => {
   let fuse = fsbx.FuseBox.init({
@@ -91,101 +96,60 @@ globalTasks.then(() => {
     tsConfig: './tsconfig.json',
     plugins: [
       fsbx.EnvPlugin({ NODE_ENV: (dev) ? 'development' : 'production' }),
-      fsbx.VuePlugin(),
-      ['.scss', fsbx.SassPlugin({ outputStyle: (dev) ? 'nested' : 'compressed' }), fsbx.CSSPlugin()],
-      fsbx.BabelPlugin({ comments: false, presets: ['es2015'] }),
+      fsbx.VueComponentPlugin({
+        script: fsbx.BabelPlugin(babelrc),
+        template: fsbx.ConsolidatePlugin({
+          engine: 'pug'
+        }),
+        style: scssChain
+      }),
+      scssChain,
+      fsbx.BabelPlugin(babelrc),
       fsbx.JSONPlugin()
-      /* !dev && fsbx.QuantumPlugin({
-        target: 'browser',
-        uglify: true,
-        api: (core) => {
-          core.solveComputed('default/js/components/editor-codeblock.vue', {
-            mapping: '/js/ace/ace.js',
-            fn: (statement, core) => {
-              statement.setExpression(`'/js/ace/ace.js'`)
-            }
-          })
-          core.solveComputed('default/js/components/editor.component.js', {
-            mapping: '/js/simplemde/simplemde.min.js',
-            fn: (statement, core) => {
-              statement.setExpression(`'/js/simplemde/simplemde.min.js'`)
-            }
-          })
-        }
-      }) */
-      // !dev && fsbx.UglifyESPlugin()
     ],
     debug: false,
     log: true
   })
 
-  const bundleVendor = fuse.bundle('vendor').shim(SHIMS).instructions('~ index.js') // eslint-disable-line no-unused-vars
-  const bundleApp = fuse.bundle('app').instructions('!> [index.js]')
-  // const bundleApp = fuse.bundle('app').shim(SHIMS).instructions('> index.js')
-  const bundleSetup = fuse.bundle('configure').instructions('> configure.js')
+  // -------------------------------------------------------
+  // FUSEBOX DEV
+  // -------------------------------------------------------
 
-  switch (mode) {
-    case 'dev':
-      bundleApp.hmr().watch()
-      fuse.dev({ httpServer: false })
-      break
-    case 'dev-configure':
-      bundleSetup.watch()
-      break
+  if (dev) {
+    fuse.dev({
+      port: 5555,
+      httpServer: false
+    })
   }
+
+  // -------------------------------------------------------
+  // FUSEBOX BUNDLES
+  // -------------------------------------------------------
+
+  if (dev) {
+    fuse.bundle('libs').shim(SHIMS).instructions('~ index.js')
+    fuse.bundle('app').instructions('!> [index.js]').hmr({ reload: true }).watch()
+  } else {
+    fuse.bundle('bundle.min.js').shim(SHIMS).instructions('> index.js')
+  }
+
+  // -------------------------------------------------------
+  // FUSEBOX RUN
+  // -------------------------------------------------------
 
   fuse.run().then(() => {
     console.info(colors.green.bold('\nAssets compilation + bundling completed.'))
 
     if (dev) {
       nodemon({
-        exec: (args.d) ? 'node server' : 'node wiki configure',
-        ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/'],
+        exec: 'node server',
+        ignore: ['assets/', 'client/', 'data/', 'repo/', 'tests/', 'tools/'],
         ext: 'js json graphql',
-        watch: (args.d) ? ['server'] : ['server/configure.js'],
+        watch: ['server'],
         env: { 'NODE_ENV': 'development' }
       })
-    } else {
-      console.info(colors.yellow.bold('\nTranspiling vendor bundle...'))
-      let appCode = babel.transform(fs.readFileSync('./assets/js/app.js', 'utf8'), {
-        babelrc: false,
-        compact: false,
-        filename: 'app.js',
-        plugins: ['transform-object-assign']
-      }).code
-      let vendorCode = babel.transform(fs.readFileSync('./assets/js/vendor.js', 'utf8'), {
-        babelrc: false,
-        comments: false,
-        compact: false,
-        filename: 'vendor.js',
-        plugins: [
-          'transform-es2015-arrow-functions',
-          'transform-es2015-block-scoped-functions',
-          'transform-es2015-block-scoping',
-          'transform-es2015-classes',
-          'transform-es2015-computed-properties',
-          'transform-es2015-destructuring',
-          'transform-es2015-duplicate-keys',
-          'transform-es2015-for-of',
-          'transform-es2015-function-name',
-          'transform-es2015-literals',
-          'transform-es2015-object-super',
-          'transform-es2015-parameters',
-          'transform-es2015-shorthand-properties',
-          'transform-es2015-spread',
-          'transform-es2015-sticky-regex',
-          'transform-es2015-template-literals',
-          'transform-es2015-typeof-symbol',
-          'transform-es2015-unicode-regex'
-        ]
-      }).code
-      console.info(colors.yellow.bold('Minifing bundles...'))
-      fs.writeFileSync('./assets/js/vendor.js', uglify.minify(vendorCode).code, 'utf8')
-      fs.writeFileSync('./assets/js/app.js', uglify.minify(appCode).code, 'utf8')
-      fs.writeFileSync('./assets/js/configure.js', uglify.minify(fs.readFileSync('./assets/js/configure.js', 'utf8')).code, 'utf8')
-      console.info(colors.green.bold('\nBUILD SUCCEEDED.'))
-      return true
     }
+    return true
   }).catch(err => {
     console.error(colors.red(' X Bundle compilation failed! ' + err.message))
     process.exit(1)

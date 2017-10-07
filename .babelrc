@@ -1,0 +1,20 @@
+{
+  "comments": false,
+  "presets": [
+    ["env", {
+      "targets": {
+        "browsers": [
+          "last 6 Chrome major versions",
+          "last 6 Firefox major versions",
+          "last 4 Safari major versions",
+          "last 4 Edge major versions",
+          "last 3 iOS major versions",
+          "last 3 Android major versions",
+          "last 2 ChromeAndroid major versions",
+          "Explorer 11"
+        ]
+      }
+    }],
+    "stage-2"
+  ]
+}
