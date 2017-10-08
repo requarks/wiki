@@ -75,13 +75,14 @@ module.exports = {
         }
       }
     }).then(results => {
-      if (_.isArray(results) && results.length > 0) {
+      if (_.isArray(results) && results.length === subsets.length) {
         results.forEach(result => {
           wiki.config[result.key] = result.config
         })
         return true
       } else {
-        return Promise.reject(new Error('Invalid DB Configuration result set'))
+        wiki.logger.warn('DB Configuration is empty or incomplete.')
+        return false
       }
     })
   }

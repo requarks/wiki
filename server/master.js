@@ -1,17 +1,6 @@
-'use strict'
-
 /* global wiki */
 
-const Promise = require('bluebird')
-
-wiki.redis = require('./modules/redis').init()
-wiki.queue = require('./modules/queue').init()
-
-module.exports = Promise.join(
-  wiki.db.onReady,
-  wiki.configSvc.loadFromDb(),
-  wiki.queue.clean()
-).then(() => {
+module.exports = () => {
   // ----------------------------------------
   // Load global modules
   // ----------------------------------------
@@ -194,7 +183,4 @@ module.exports = Promise.join(
   })
 
   return true
-}).catch(err => {
-  wiki.logger.error(err)
-  process.exit(1)
-})
+}

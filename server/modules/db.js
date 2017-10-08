@@ -75,7 +75,7 @@ module.exports = {
         min: 0,
         idle: 10000
       },
-      logging: false,
+      logging: log => { wiki.logger.log('verbose', log) },
       operatorsAliases
     })
 
@@ -92,10 +92,10 @@ module.exports = {
 
     fs
       .readdirSync(dbModelsPath)
-      .filter(function (file) {
+      .filter(file => {
         return (file.indexOf('.') !== 0 && file.indexOf('_') !== 0)
       })
-      .forEach(function (file) {
+      .forEach(file => {
         let modelName = _.upperFirst(_.camelCase(_.split(file, '.')[0]))
         self[modelName] = self.inst.import(path.join(dbModelsPath, file))
       })
@@ -110,8 +110,8 @@ module.exports = {
       // -> Sync DB Schemas
       syncSchemas() {
         return self.inst.sync({
-          force: false,
-          logging: false
+          force: true,
+          logging: log => { wiki.logger.log('verbose', log) }
         })
       },
       // -> Set Connection App Name
@@ -129,7 +129,7 @@ module.exports = {
 
     // Perform init tasks
 
-    self.onReady = Promise.each(initTasksQueue, t => t())
+    self.onReady = Promise.each(initTasksQueue, t => t()).return(true)
 
     return self
   }

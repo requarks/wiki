@@ -1,5 +1,3 @@
-'use strict'
-
 // ===========================================
 // Wiki.js
 // Licensed under AGPLv3
@@ -13,7 +11,8 @@ let wiki = {
   IS_MASTER: cluster.isMaster,
   ROOTPATH: process.cwd(),
   SERVERPATH: path.join(process.cwd(), 'server'),
-  configSvc: require('./modules/config')
+  configSvc: require('./modules/config'),
+  kernel: require('./modules/kernel')
 }
 global.wiki = wiki
 
@@ -38,37 +37,7 @@ wiki.logger = require('./modules/logger').init()
 wiki.db = require('./modules/db').init()
 
 // ----------------------------------------
-// Start Cluster
+// Start Kernel
 // ----------------------------------------
 
-const numCPUs = require('os').cpus().length
-let numWorkers = (wiki.config.workers > 0) ? wiki.config.workers : numCPUs
-if (numWorkers > numCPUs) {
-  numWorkers = numCPUs
-}
-
-if (cluster.isMaster) {
-  wiki.logger.info('=======================================')
-  wiki.logger.info('= Wiki.js =============================')
-  wiki.logger.info('=======================================')
-
-  require('./master').then(() => {
-    // -> Create background workers
-    for (let i = 0; i < numWorkers; i++) {
-      cluster.fork()
-    }
-
-    // -> Queue post-init tasks
-
-    wiki.queue.uplClearTemp.add({}, {
-      repeat: { cron: '*/15 * * * *' }
-    })
-  })
-
-  cluster.on('exit', (worker, code, signal) => {
-    wiki.logger.info(`Background Worker #${worker.id} was terminated.`)
-  })
-} else {
-  wiki.logger.info(`Background Worker #${cluster.worker.id} is initializing...`)
-  require('./worker')
-}
+wiki.kernel.init()

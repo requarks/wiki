@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     provider: {
-      type: DataTypes.ENUM(wiki.data.authProviders),
+      type: DataTypes.STRING,
       allowNull: false
     },
     providerId: {
@@ -37,6 +37,15 @@ module.exports = (sequelize, DataTypes) => {
     role: {
       type: DataTypes.ENUM('admin', 'user', 'guest'),
       allowNull: false
+    },
+    tfaIsActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    tfaSecret: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     timestamps: true,

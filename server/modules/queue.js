@@ -30,7 +30,7 @@ module.exports = {
       })
     }).then(() => {
       wiki.logger.info('Purging old queue jobs: OK')
-    }).catch(err => {
+    }).return(true).catch(err => {
       wiki.logger.error(err)
     })
   }

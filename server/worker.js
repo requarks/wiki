@@ -1,5 +1,3 @@
-'use strict'
-
 /* global wiki */
 
 const Promise = require('bluebird')
