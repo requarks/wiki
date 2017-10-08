@@ -1,5 +1,3 @@
-'use strict'
-
 /* global wiki */
 
 const fs = require('fs')
@@ -9,8 +7,6 @@ const path = require('path')
 const cfgHelper = require('../helpers/config')
 
 module.exports = {
-  SUBSETS: ['auth', 'features', 'git', 'logging', 'site', 'theme', 'uploads'],
-
   /**
    * Load root config from disk
    */
@@ -64,7 +60,7 @@ module.exports = {
    */
   loadFromDb(subsets) {
     if (!_.isArray(subsets) || subsets.length === 0) {
-      subsets = this.SUBSETS
+      subsets = wiki.data.configNamespaces
     }
 
     return wiki.db.Setting.findAll({

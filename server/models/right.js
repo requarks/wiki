@@ -1,5 +1,3 @@
-'use strict'
-
 /**
  * Right schema
  */

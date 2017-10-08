@@ -1,5 +1,3 @@
-'use strict'
-
 /**
  * Associate DB Model relations
  */

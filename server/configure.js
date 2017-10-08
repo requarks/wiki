@@ -1,12 +1,8 @@
-'use strict'
+const path = require('path')
 
-module.exports = (port, spinner) => {
-  const path = require('path')
+/* global wiki */
 
-  const ROOTPATH = process.cwd()
-  const SERVERPATH = path.join(ROOTPATH, 'server')
-  const IS_DEBUG = process.env.NODE_ENV === 'development'
-
+module.exports = () => {
   // ----------------------------------------
   // Load modules
   // ----------------------------------------
@@ -26,28 +22,30 @@ module.exports = (port, spinner) => {
   // Define Express App
   // ----------------------------------------
 
-  var app = express()
+  let app = express()
   app.use(compression())
 
-  var server
+  let server
 
   // ----------------------------------------
   // Public Assets
   // ----------------------------------------
 
-  app.use(favicon(path.join(ROOTPATH, 'assets', 'favicon.ico')))
-  app.use(express.static(path.join(ROOTPATH, 'assets')))
+  app.use(favicon(path.join(wiki.ROOTPATH, 'assets', 'favicon.ico')))
+  app.use(express.static(path.join(wiki.ROOTPATH, 'assets')))
 
   // ----------------------------------------
   // View Engine Setup
   // ----------------------------------------
 
-  app.set('views', path.join(SERVERPATH, 'views'))
+  app.set('views', path.join(wiki.SERVERPATH, 'views'))
   app.set('view engine', 'pug')
 
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: false }))
 
+  app.locals.config = wiki.config
+  app.locals.data = wiki.data
   app.locals._ = require('lodash')
 
   // ----------------------------------------
@@ -55,22 +53,7 @@ module.exports = (port, spinner) => {
   // ----------------------------------------
 
   app.get('*', (req, res) => {
-    let langs = []
-    let conf = {}
-    try {
-      langs = yaml.safeLoad(fs.readFileSync(path.join(SERVERPATH, 'app/data.yml'), 'utf8')).langs
-      conf = yaml.safeLoad(fs.readFileSync(path.join(ROOTPATH, 'config.yml'), 'utf8'))
-    } catch (err) {
-      console.error(err)
-    }
-    res.render('configure/index', {
-      langs,
-      conf,
-      runmode: {
-        staticPort: (process.env.WIKI_JS_HEROKU || process.env.WIKI_JS_DOCKER),
-        staticMongo: (!_.isNil(process.env.WIKI_JS_HEROKU))
-      }
-    })
+    res.render('configure/index')
   })
 
   /**
@@ -81,14 +64,14 @@ module.exports = (port, spinner) => {
       () => {
         const semver = require('semver')
         if (!semver.satisfies(semver.clean(process.version), '>=6.9.0')) {
-          throw new Error('Node.js version is too old. Minimum is v6.11.1.')
+          throw new Error('Node.js version is too old. Minimum is 6.11.1.')
         }
-        return 'Node.js ' + process.version + ' detected.'
+        return 'Node.js ' + process.version + ' detected. Minimum is 6.11.1.'
       },
       () => {
         return Promise.try(() => {
           require('crypto')
-        }).catch(err => { // eslint-disable-line handle-callback-err
+        }).catch(err => {
           throw new Error('Crypto Node.js module is not available.')
         }).return('Node.js Crypto module is available.')
       },
@@ -102,9 +85,9 @@ module.exports = (port, spinner) => {
             }
             let gitver = _.head(stdout.match(/[\d]+\.[\d]+(\.[\d]+)?/gi))
             if (!gitver || !semver.satisfies(semver.clean(gitver), '>=2.7.4')) {
-              reject(new Error('Git version is too old. Minimum is v2.7.4.'))
+              reject(new Error('Git version is too old. Minimum is 2.7.4.'))
             }
-            resolve('Git v' + gitver + ' detected. Minimum is v2.7.4.')
+            resolve('Git ' + gitver + ' detected. Minimum is 2.7.4.')
           })
         })
       },
@@ -118,8 +101,8 @@ module.exports = (port, spinner) => {
       () => {
         let fs = require('fs')
         return Promise.try(() => {
-          fs.accessSync(path.join(ROOTPATH, 'config.yml'), (fs.constants || fs).W_OK)
-        }).catch(err => { // eslint-disable-line handle-callback-err
+          fs.accessSync(path.join(wiki.ROOTPATH, 'config.yml'), (fs.constants || fs).W_OK)
+        }).catch(err => {
           throw new Error('config.yml file is not writable by Node.js process or was not created properly.')
         }).return('config.yml is writable by the setup process.')
       }
@@ -174,8 +157,8 @@ module.exports = (port, spinner) => {
     const exec = require('execa')
     const url = require('url')
 
-    const dataDir = path.resolve(ROOTPATH, cfgHelper.parseConfigValue(req.body.pathData))
-    const gitDir = path.resolve(ROOTPATH, cfgHelper.parseConfigValue(req.body.pathRepo))
+    const dataDir = path.resolve(wiki.ROOTPATH, cfgHelper.parseConfigValue(req.body.pathData))
+    const gitDir = path.resolve(wiki.ROOTPATH, cfgHelper.parseConfigValue(req.body.pathRepo))
 
     let gitRemoteUrl = ''
 
@@ -315,7 +298,7 @@ module.exports = (port, spinner) => {
           }
         })
       }),
-      fs.readFileAsync(path.join(ROOTPATH, 'config.yml'), 'utf8').then(confRaw => {
+      fs.readFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), 'utf8').then(confRaw => {
         let conf = yaml.safeLoad(confRaw)
         conf.title = req.body.title
         conf.host = req.body.host
@@ -356,12 +339,12 @@ module.exports = (port, spinner) => {
         return crypto.randomBytesAsync(32).then(buf => {
           conf.sessionSecret = buf.toString('hex')
           confRaw = yaml.safeDump(conf)
-          return fs.writeFileAsync(path.join(ROOTPATH, 'config.yml'), confRaw)
+          return fs.writeFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), confRaw)
         })
       })
     ).then(() => {
       if (process.env.IS_HEROKU) {
-        return fs.outputJsonAsync(path.join(SERVERPATH, 'app/heroku.json'), { configured: true })
+        return fs.outputJsonAsync(path.join(wiki.SERVERPATH, 'app/heroku.json'), { configured: true })
       } else {
         return true
       }
@@ -377,7 +360,7 @@ module.exports = (port, spinner) => {
    */
   app.post('/restart', (req, res) => {
     res.status(204).end()
-    server.destroy(() => {
+    /* server.destroy(() => {
       spinner.text = 'Setup wizard terminated. Restarting in normal mode...'
       _.delay(() => {
         const exec = require('execa')
@@ -386,7 +369,7 @@ module.exports = (port, spinner) => {
           process.exit(0)
         })
       }, 1000)
-    })
+    }) */
   })
 
   // ----------------------------------------
@@ -403,9 +386,9 @@ module.exports = (port, spinner) => {
     res.status(err.status || 500)
     res.send({
       message: err.message,
-      error: IS_DEBUG ? err : {}
+      error: wiki.IS_DEBUG ? err : {}
     })
-    spinner.fail(err.message)
+    wiki.logger.error(err.message)
     process.exit(1)
   })
 
@@ -413,11 +396,11 @@ module.exports = (port, spinner) => {
   // Start HTTP server
   // ----------------------------------------
 
-  spinner.text = 'Starting HTTP server...'
+  wiki.logger.info(`HTTP Server on port: ${wiki.config.port}`)
 
-  app.set('port', port)
+  app.set('port', wiki.config.port)
   server = http.createServer(app)
-  server.listen(port)
+  server.listen(wiki.config.port)
 
   var openConnections = []
 
@@ -443,10 +426,10 @@ module.exports = (port, spinner) => {
 
     switch (error.code) {
       case 'EACCES':
-        spinner.fail('Listening on port ' + port + ' requires elevated privileges!')
+        wiki.logger.error('Listening on port ' + wiki.config.port + ' requires elevated privileges!')
         return process.exit(1)
       case 'EADDRINUSE':
-        spinner.fail('Port ' + port + ' is already in use!')
+        wiki.logger.error('Port ' + wiki.config.port + ' is already in use!')
         return process.exit(1)
       default:
         throw error
@@ -454,6 +437,6 @@ module.exports = (port, spinner) => {
   })
 
   server.on('listening', () => {
-    spinner.text = 'Browse to http://localhost:' + port + ' to configure Wiki.js!'
+    wiki.logger.info('HTTP Server: RUNNING')
   })
 }

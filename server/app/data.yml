@@ -24,6 +24,17 @@ defaults:
     ha:
       nodeuid: primary
       readonly: false
+    site:
+      path: ''
+    title: Wiki.js
+configNamespaces:
+  - auth
+  - features
+  - git
+  - logging
+  - site
+  - theme
+  - uploads
 queues:
   - gitSync
   - uplClearTemp

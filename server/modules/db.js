@@ -110,7 +110,7 @@ module.exports = {
       // -> Sync DB Schemas
       syncSchemas() {
         return self.inst.sync({
-          force: true,
+          force: false,
           logging: log => { wiki.logger.log('verbose', log) }
         })
       },

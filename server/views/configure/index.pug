@@ -1,31 +1,9 @@
-doctype html
-html(data-logic='configure')
-  head
-    meta(http-equiv='X-UA-Compatible', content='IE=edge')
-    meta(charset='UTF-8')
-    title Wiki.js | Configure
+extends ../master.pug
 
-    // Favicon
-    each favsize in [32, 96, 16]
-      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
-
-    // JS / CSS
-    script(type='text/javascript').
-      var appconfig = !{JSON.stringify(conf)};
-      var runmode = !{JSON.stringify(runmode)};
-    script(type='text/javascript', src='/js/vendor.js')
-    script(type='text/javascript', src='/js/configure.js')
-
+block body
   body
-    #root
-      #header-container
-        nav.nav#header
-          .nav-left
-            a.nav-item
-              h1
-                i.icon-layers
-                | Wiki.js
-      main
+    #app.config-manager
+      config-manager(inline-template)
         .container
           transition(name='tst-welcome')
             .welcome(v-if='state === "welcome" || state === "restart"')
@@ -47,7 +25,7 @@ html(data-logic='configure')
                   p Detailed information about installation and usage can be found on the #[a(href='https://docs.wiki.requarks.io/') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
+                  button.button.is-small.is-light-blue(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
 
             //- ==============================================
             //- SYSTEM CHECK
@@ -69,9 +47,9 @@ html(data-logic='configure')
                   p(v-if='!loading && !syscheck.ok') #[i.icon-square-cross] Error: {{ syscheck.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
-                  button.button.is-teal(v-on:click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
-                  button.button.is-light-blue(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
+                  button.button.is-small.is-teal(v-on:click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
+                  button.button.is-small.is-light-blue(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- GENERAL
@@ -93,17 +71,16 @@ html(data-logic='configure')
                       label.label Host
                       input(type='text', placeholder='http://', v-model='conf.host', data-vv-scope='general', name='ipt-host', v-validate='{ required: true, min: 4 }')
                       span.desc The full URL to your wiki, without the trailing slash. E.g.: http://wiki.domain.com. Note that sub-folders are #[u not supported].
-                  if !runmode.staticPort
-                    section
-                      p.control
-                        label.label Port
-                        input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
-                        span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>$(PORT)</strong> to use PORT environment variable.
+                  section
+                    p.control
+                      label.label Port
+                      input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
+                      span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>$(PORT)</strong> to use PORT environment variable.
                   section
                     p.control
                       label.label Site UI Language
-                      select(v-model='conf.lang')
-                        each lg in langs
+                      select(v-model='conf.site.lang')
+                        each lg in data.langs
                           option(value=lg.id)= lg.name
                       span.desc The language in which navigation, help and other UI elements will be displayed.
                   section
@@ -113,8 +90,8 @@ html(data-logic='configure')
                       span.desc Should the site be accessible (read only) without login.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back
-                  button.button.is-light-blue(v-on:click='proceedToConsiderations', v-bind:disabled='loading || errors.any("general")') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back
+                  button.button.is-small.is-light-blue(v-on:click='proceedToConsiderations', v-bind:disabled='loading || errors.any("general")') Continue
 
             //- ==============================================
             //- CONSIDERATIONS
@@ -144,8 +121,8 @@ html(data-logic='configure')
                     p The host URL you specified is localhost. Unless you are a developer running Wiki.js locally on your machine, this is not recommended!
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
-                  button.button.is-light-blue(v-on:click='proceedToDb', v-bind:disabled='loading') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
+                  button.button.is-small.is-light-blue(v-on:click='proceedToDb', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- DATABASE
@@ -166,8 +143,8 @@ html(data-logic='configure')
                       span.desc The connection string to your MongoDB server. Leave the default localhost value if MongoDB is installed on the same server.<br />You can also specify an environment variable as the connection string, e.g. $(MONGO_URI).
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Back
-                  button.button.is-light-blue(v-on:click='proceedToDbcheck', v-bind:disabled='loading || errors.any("db")') Connect
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToConsiderations', v-bind:disabled='loading') Back
+                  button.button.is-small.is-light-blue(v-on:click='proceedToDbcheck', v-bind:disabled='loading || errors.any("db")') Connect
 
             //- ==============================================
             //- DATABASE CHECK
@@ -186,9 +163,9 @@ html(data-logic='configure')
                   p(v-if='!loading && !dbcheck.ok') #[i.icon-square-cross] Error: {{ dbcheck.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
-                  button.button.is-teal(v-on:click='proceedToDbcheck', v-if='!loading && !dbcheck.ok') Try Again
-                  button.button.is-light-blue(v-on:click='proceedToPaths', v-if='loading || dbcheck.ok', v-bind:disabled='loading') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-small.is-teal(v-on:click='proceedToDbcheck', v-if='!loading && !dbcheck.ok') Try Again
+                  button.button.is-small.is-light-blue(v-on:click='proceedToPaths', v-if='loading || dbcheck.ok', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- PATHS
@@ -214,8 +191,8 @@ html(data-logic='configure')
                       span.desc The path where the local git repository will be created, used to store content in markdown files and uploads.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
-                  button.button.is-light-blue(v-on:click='proceedToGit', v-bind:disabled='loading || errors.any("paths")') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToDb', v-bind:disabled='loading') Back
+                  button.button.is-small.is-light-blue(v-on:click='proceedToGit', v-bind:disabled='loading || errors.any("paths")') Continue
 
             //- ==============================================
             //- GIT
@@ -279,9 +256,9 @@ html(data-logic='configure')
                         span.desc The default/fallback email to use when creating commits to the git repository.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToPaths', v-bind:disabled='loading') Back
-                  button.button.is-light-blue.is-outlined(v-on:click='conf.gitUseRemote = false; proceedToGitCheck()', v-bind:disabled='loading') Skip this step
-                  button.button.is-light-blue(v-on:click='conf.gitUseRemote = true; proceedToGitCheck()', v-bind:disabled='loading || errors.any("git")') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToPaths', v-bind:disabled='loading') Back
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='conf.gitUseRemote = false; proceedToGitCheck()', v-bind:disabled='loading') Skip this step
+                  button.button.is-small.is-light-blue(v-on:click='conf.gitUseRemote = true; proceedToGitCheck()', v-bind:disabled='loading || errors.any("git")') Continue
             
             //- ==============================================
             //- GIT CHECK
@@ -303,9 +280,9 @@ html(data-logic='configure')
                   p(v-if='!loading && !gitcheck.ok') #[i.icon-square-cross] Error: {{ gitcheck.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
-                  button.button.is-teal(v-on:click='proceedToGitCheck', v-if='!loading && !gitcheck.ok') Try Again
-                  button.button.is-light-blue(v-on:click='proceedToAdmin', v-if='loading || gitcheck.ok', v-bind:disabled='loading') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
+                  button.button.is-small.is-teal(v-on:click='proceedToGitCheck', v-if='!loading && !gitcheck.ok') Try Again
+                  button.button.is-small.is-light-blue(v-on:click='proceedToAdmin', v-if='loading || gitcheck.ok', v-bind:disabled='loading') Continue
 
             //- ==============================================
             //- ADMINISTRATOR ACCOUNT
@@ -337,8 +314,8 @@ html(data-logic='configure')
                         span.desc Verify your password again.
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
-                  button.button.is-light-blue(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("admin")') Continue
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
+                  button.button.is-small.is-light-blue(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("admin")') Continue
 
             //- ==============================================
             //- FINAL
@@ -359,9 +336,9 @@ html(data-logic='configure')
                   p(v-if='!loading && !final.ok') #[i.icon-square-cross] Error: {{ final.error }}
                 .panel-footer
                   .progress-bar: div(v-bind:style='{width: currentProgress}')
-                  button.button.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
-                  button.button.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
-                  button.button.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
+                  button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
+                  button.button.is-small.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
+                  button.button.is-small.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
 
             //- ==============================================
             //- RESTART
@@ -376,11 +353,4 @@ html(data-logic='configure')
                   p #[i.icon-loader.animated.rotateIn.infinite] Restarting Wiki.js in normal mode...
                   p You'll automatically be redirected to the homepage when ready. This usually takes about 30 seconds.
                 .panel-footer
-                  button.button.is-green(disabled='disabled') Start
-
-      footer.footer
-        span
-          | Powered by 
-          a(href='https://github.com/Requarks/wiki') Wiki.js
-          | .
-    block outside
+                  button.button.is-small.is-green(disabled='disabled') Start

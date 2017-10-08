@@ -97,7 +97,11 @@
       background-color: mc('grey', '300') !important;
       color: mc('grey', '500') !important;
     }
-	}
+  }
+
+  &.is-small {
+    height: 30px;
+  }
 
 }
 
