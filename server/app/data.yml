@@ -26,6 +26,7 @@ defaults:
       readonly: false
     site:
       path: ''
+      lang: en
     title: Wiki.js
 configNamespaces:
   - auth
@@ -86,6 +87,9 @@ langs:
   -
     id: ko
     name: Korean - 한국어
+  -
+    id: fa
+    name: Persian (Fārsi) - فارسی
   -
     id: pt
     name: Portuguese - Português

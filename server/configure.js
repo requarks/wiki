@@ -53,7 +53,9 @@ module.exports = () => {
   // ----------------------------------------
 
   app.get('*', (req, res) => {
-    res.render('configure/index')
+    fs.readJsonAsync(path.join(wiki.ROOTPATH, 'package.json')).then(packageObj => {
+      res.render('configure/index', { packageObj })
+    })
   })
 
   /**
@@ -63,7 +65,7 @@ module.exports = () => {
     Promise.mapSeries([
       () => {
         const semver = require('semver')
-        if (!semver.satisfies(semver.clean(process.version), '>=6.9.0')) {
+        if (!semver.satisfies(semver.clean(process.version), '>=6.11.1')) {
           throw new Error('Node.js version is too old. Minimum is 6.11.1.')
         }
         return 'Node.js ' + process.version + ' detected. Minimum is 6.11.1.'
@@ -110,43 +112,6 @@ module.exports = () => {
       res.json({ ok: true, results })
     }).catch(err => {
       res.json({ ok: false, error: err.message })
-    })
-  })
-
-  /**
-   * Check the DB connection
-   */
-  app.post('/dbcheck', (req, res) => {
-    let mongo = require('mongodb').MongoClient
-    let mongoURI = cfgHelper.parseConfigValue(req.body.db)
-    mongo.connect(mongoURI, {
-      autoReconnect: false,
-      reconnectTries: 2,
-      reconnectInterval: 1000,
-      connectTimeoutMS: 5000,
-      socketTimeoutMS: 5000
-    }, (err, db) => {
-      if (err === null) {
-        // Try to create a test collection
-        db.createCollection('test', (err, results) => {
-          if (err === null) {
-            // Try to drop test collection
-            db.dropCollection('test', (err, results) => {
-              if (err === null) {
-                res.json({ ok: true })
-              } else {
-                res.json({ ok: false, error: 'Unable to delete test collection. Verify permissions. ' + err.message })
-              }
-              db.close()
-            })
-          } else {
-            res.json({ ok: false, error: 'Unable to create test collection. Verify permissions. ' + err.message })
-            db.close()
-          }
-        })
-      } else {
-        res.json({ ok: false, error: err.message })
-      }
     })
   })
 

@@ -1,6 +1,6 @@
 'use strict'
 
-/* global db, lang, rights, winston */
+/* global wiki */
 
 var express = require('express')
 var router = express.Router()
@@ -33,14 +33,14 @@ router.post('/profile', (req, res) => {
     return res.render('error-forbidden')
   }
 
-  return db.User.findById(req.user.id).then((usr) => {
+  return wiki.db.User.findById(req.user.id).then((usr) => {
     usr.name = _.trim(req.body.name)
     if (usr.provider === 'local' && req.body.password !== '********') {
       let nPwd = _.trim(req.body.password)
       if (nPwd.length < 6) {
         return Promise.reject(new Error('New Password too short!'))
       } else {
-        return db.User.hashPassword(nPwd).then((pwd) => {
+        return wiki.db.User.hashPassword(nPwd).then((pwd) => {
           usr.password = pwd
           return usr.save()
         })
@@ -61,9 +61,9 @@ router.get('/stats', (req, res) => {
   }
 
   Promise.all([
-    db.Entry.count(),
-    db.UplFile.count(),
-    db.User.count()
+    wiki.db.Entry.count(),
+    wiki.db.UplFile.count(),
+    wiki.db.User.count()
   ]).spread((totalEntries, totalUploads, totalUsers) => {
     return res.render('pages/admin/stats', {
       totalEntries, totalUploads, totalUsers, adminTab: 'stats'
@@ -78,7 +78,7 @@ router.get('/users', (req, res) => {
     return res.render('error-forbidden')
   }
 
-  db.User.find({})
+  wiki.db.User.find({})
     .select('-password -rights')
     .sort('name email')
     .exec().then((usrs) => {
@@ -95,7 +95,7 @@ router.get('/users/:id', (req, res) => {
     return res.render('error-forbidden')
   }
 
-  db.User.findById(req.params.id)
+  wiki.db.User.findById(req.params.id)
     .select('-password -providerId')
     .exec().then((usr) => {
       let usrOpts = {
@@ -137,12 +137,12 @@ router.post('/users/create', (req, res) => {
     return res.status(400).json({ msg: 'Name is missing' })
   }
 
-  db.User.findOne({ email: nUsr.email, provider: nUsr.provider }).then(exUsr => {
+  wiki.db.User.findOne({ email: nUsr.email, provider: nUsr.provider }).then(exUsr => {
     if (exUsr) {
       return res.status(400).json({ msg: 'User already exists!' }) || true
     }
 
-    let pwdGen = (nUsr.provider === 'local') ? db.User.hashPassword(nUsr.password) : Promise.resolve(true)
+    let pwdGen = (nUsr.provider === 'local') ? wiki.db.User.hashPassword(nUsr.password) : Promise.resolve(true)
     return pwdGen.then(nPwd => {
       if (nUsr.provider !== 'local') {
         nUsr.password = ''
@@ -158,37 +158,37 @@ router.post('/users/create', (req, res) => {
         deny: false
       }]
 
-      return db.User.create(nUsr).then(() => {
+      return wiki.db.User.create(nUsr).then(() => {
         return res.json({ ok: true })
       })
     }).catch(err => {
-      winston.warn(err)
+      wiki.logger.warn(err)
       return res.status(500).json({ msg: err })
     })
   }).catch(err => {
-    winston.warn(err)
+    wiki.logger.warn(err)
     return res.status(500).json({ msg: err })
   })
 })
 
 router.post('/users/:id', (req, res) => {
   if (!res.locals.rights.manage) {
-    return res.status(401).json({ msg: lang.t('errors:unauthorized') })
+    return res.status(401).json({ msg: wiki.lang.t('errors:unauthorized') })
   }
 
   if (!validator.isMongoId(req.params.id)) {
-    return res.status(400).json({ msg: lang.t('errors:invaliduserid') })
+    return res.status(400).json({ msg: wiki.lang.t('errors:invaliduserid') })
   }
 
-  return db.User.findById(req.params.id).then((usr) => {
+  return wiki.db.User.findById(req.params.id).then((usr) => {
     usr.name = _.trim(req.body.name)
     usr.rights = JSON.parse(req.body.rights)
     if (usr.provider === 'local' && req.body.password !== '********') {
       let nPwd = _.trim(req.body.password)
       if (nPwd.length < 6) {
-        return Promise.reject(new Error(lang.t('errors:newpasswordtooshort')))
+        return Promise.reject(new Error(wiki.lang.t('errors:newpasswordtooshort')))
       } else {
-        return db.User.hashPassword(nPwd).then((pwd) => {
+        return wiki.db.User.hashPassword(nPwd).then((pwd) => {
           usr.password = pwd
           return usr.save()
         })
@@ -199,7 +199,7 @@ router.post('/users/:id', (req, res) => {
   }).then((usr) => {
     // Update guest rights for future requests
     if (usr.provider === 'local' && usr.email === 'guest') {
-      rights.guest = usr
+      wiki.rights.guest = usr
     }
     return usr
   }).then(() => {
@@ -214,14 +214,14 @@ router.post('/users/:id', (req, res) => {
  */
 router.delete('/users/:id', (req, res) => {
   if (!res.locals.rights.manage) {
-    return res.status(401).json({ msg: lang.t('errors:unauthorized') })
+    return res.status(401).json({ msg: wiki.lang.t('errors:unauthorized') })
   }
 
   if (!validator.isMongoId(req.params.id)) {
-    return res.status(400).json({ msg: lang.t('errors:invaliduserid') })
+    return res.status(400).json({ msg: wiki.lang.t('errors:invaliduserid') })
   }
 
-  return db.User.findByIdAndRemove(req.params.id).then(() => {
+  return wiki.db.User.findByIdAndRemove(req.params.id).then(() => {
     return res.json({ ok: true })
   }).catch((err) => {
     res.status(500).json({ ok: false, msg: err.message })
@@ -249,7 +249,7 @@ router.get('/system', (req, res) => {
     cwd: process.cwd()
   }
 
-  fs.readJsonAsync(path.join(ROOTPATH, 'package.json')).then(packageObj => {
+  fs.readJsonAsync(path.join(wiki.ROOTPATH, 'package.json')).then(packageObj => {
     axios.get('https://api.github.com/repos/Requarks/wiki/releases/latest').then(resp => {
       let sysversion = {
         current: 'v' + packageObj.version,
@@ -259,7 +259,7 @@ router.get('/system', (req, res) => {
 
       res.render('pages/admin/system', { adminTab: 'system', hostInfo, sysversion })
     }).catch(err => {
-      winston.warn(err)
+      wiki.logger.warn(err)
       res.render('pages/admin/system', { adminTab: 'system', hostInfo, sysversion: { current: 'v' + packageObj.version } })
     })
   })
@@ -287,19 +287,19 @@ router.post('/theme', (req, res) => {
     return res.render('error-forbidden')
   }
 
-  if (!validator.isIn(req.body.primary, appdata.colors)) {
+  if (!validator.isIn(req.body.primary, wiki.data.colors)) {
     return res.status(406).json({ msg: 'Primary color is invalid.' })
-  } else if (!validator.isIn(req.body.alt, appdata.colors)) {
+  } else if (!validator.isIn(req.body.alt, wiki.data.colors)) {
     return res.status(406).json({ msg: 'Alternate color is invalid.' })
-  } else if (!validator.isIn(req.body.footer, appdata.colors)) {
+  } else if (!validator.isIn(req.body.footer, wiki.data.colors)) {
     return res.status(406).json({ msg: 'Footer color is invalid.' })
   }
 
-  appconfig.theme.primary = req.body.primary
-  appconfig.theme.alt = req.body.alt
-  appconfig.theme.footer = req.body.footer
-  appconfig.theme.code.dark = req.body.codedark === 'true'
-  appconfig.theme.code.colorize = req.body.codecolorize === 'true'
+  wiki.config.theme.primary = req.body.primary
+  wiki.config.theme.alt = req.body.alt
+  wiki.config.theme.footer = req.body.footer
+  wiki.config.theme.code.dark = req.body.codedark === 'true'
+  wiki.config.theme.code.colorize = req.body.codecolorize === 'true'
 
   return res.json({ msg: 'OK' })
 })

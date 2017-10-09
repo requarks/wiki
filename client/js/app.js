@@ -8,6 +8,7 @@ import CONSTANTS from './constants'
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
+import VeeValidate from 'vee-validate'
 import { ApolloClient, createBatchingNetworkInterface } from 'apollo-client'
 import store from './store'
 
@@ -83,6 +84,17 @@ Vue.use(VueResource)
 Vue.use(VueClipboards)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
+Vue.use(VeeValidate, {
+  enableAutoClasses: true,
+  classNames: {
+    touched: 'is-touched', // the control has been blurred
+    untouched: 'is-untouched', // the control hasn't been blurred
+    valid: 'is-valid', // model is valid
+    invalid: 'is-invalid', // model is invalid
+    pristine: 'is-pristine', // control has not been interacted with
+    dirty: 'is-dirty' // control has been interacted with
+  }
+})
 
 // ====================================
 // Register Vue Components
