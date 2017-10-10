@@ -58,14 +58,12 @@ You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/bl
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.9 - Stable
+### 1.0.10 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 **Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
 
-- [x] Persian (farsi) locale is now available (thanks to @ashkang)
-- [x] Added support for right-to-left languages
-- [x] Fix: Browser locale files not generated properly (ported from dev branch)
+- [x] Delete a page from the UI
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/35)
