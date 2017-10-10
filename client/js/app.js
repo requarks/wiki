@@ -38,6 +38,7 @@ import historyComponent from './components/history.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
+import modalDeletePageComponent from './components/modal-delete-page.vue'
 import modalDeleteUserComponent from './components/modal-delete-user.vue'
 import modalDiscardPageComponent from './components/modal-discard-page.vue'
 import modalMovePageComponent from './components/modal-move-page.vue'
@@ -86,6 +87,7 @@ Vue.component('history', historyComponent)
 Vue.component('loadingSpinner', loadingSpinnerComponent)
 Vue.component('modalCreatePage', modalCreatePageComponent)
 Vue.component('modalCreateUser', modalCreateUserComponent)
+Vue.component('modalDeletePage', modalDeletePageComponent)
 Vue.component('modalDeleteUser', modalDeleteUserComponent)
 Vue.component('modalDiscardPage', modalDiscardPageComponent)
 Vue.component('modalMovePage', modalMovePageComponent)

@@ -173,7 +173,11 @@
 		&.is-outlined {
 			background-color: mc($primary, '500');
 			color: mc($primary, '100');
-		}
+    }
+
+    &.is-icon-only i {
+      margin-right: 0;
+    }
 
 		&:hover {
 			background-color: mc($primary, '700');

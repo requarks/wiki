@@ -246,6 +246,29 @@ module.exports = {
   },
 
   /**
+   * Delete a document.
+   *
+   * @param      {String}            entryPath     The entry path
+   * @return     {Promise<Boolean>}  Resolve on success
+   */
+  deleteDocument(entryPath, author) {
+    let self = this
+    let gitFilePath = entryPath + '.md'
+
+    return this._git.exec('rm', [gitFilePath]).then((cProc) => {
+      let out = cProc.stdout.toString()
+      if (_.includes(out, 'fatal')) {
+        let errorMsg = _.capitalize(_.head(_.split(_.replace(out, 'fatal: ', ''), ',')))
+        throw new Error(errorMsg)
+      }
+      let commitUsr = securityHelper.sanitizeCommitUser(author)
+      return self._git.exec('commit', ['-m', lang.t('git:deleted', { path: gitFilePath }), '--author="' + commitUsr.name + ' <' + commitUsr.email + '>"']).catch((err) => {
+        if (_.includes(err.stdout, 'nothing to commit')) { return true }
+      })
+    })
+  },
+
+  /**
    * Commits uploads changes.
    *
    * @param      {String}   msg     The commit message

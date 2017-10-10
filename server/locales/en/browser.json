@@ -77,6 +77,8 @@
     "delete": "Delete",
     "deletefiletitle": "Delete?",
     "deletefilewarn": "Are you sure you want to delete",
+    "deletepagewarning": "Are you sure you want to delete this page? This action cannot be undone!",
+    "deletepagetitle": "Delete this page?",
     "deleteusertitle": "Delete User Account?",
     "deleteuserwarning": "Are you sure you want to delete this user account? This action cannot be undone!",
     "discard": "Discard",

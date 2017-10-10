@@ -389,6 +389,32 @@ module.exports = {
   },
 
   /**
+   * Delete a document
+   *
+   * @param {String} entryPath The current entry path
+   * @param {Object} author The author user object
+   * @return {Promise} Promise of the operation
+   */
+  remove(entryPath, author) {
+    if (_.isEmpty(entryPath) || entryPath === 'home') {
+      return Promise.reject(new Error(lang.t('errors:invalidpath')))
+    }
+
+    return git.deleteDocument(entryPath, author).then(() => {
+      // Delete old cache version
+
+      let oldEntryCachePath = entryHelper.getCachePath(entryPath)
+      fs.unlinkAsync(oldEntryCachePath).catch((err) => { return true }) // eslint-disable-line handle-callback-err
+
+      // Delete old index entry
+      search.delete(entryPath)
+
+      // Delete entry
+      return db.Entry.deleteOne({ _id: entryPath })
+    })
+  },
+
+  /**
    * Generate a starter page content based on the entry path
    *
    * @param      {String}           entryPath  The entry path
