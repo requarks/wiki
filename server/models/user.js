@@ -71,7 +71,7 @@ userSchema.statics.processProfile = (profile) => {
     email: primaryEmail,
     provider: profile.provider,
     providerId: profile.id,
-    name: profile.displayName || _.split(primaryEmail, '@')[0]
+    name: profile.displayName || profile.cn || _.split(primaryEmail, '@')[0]
   }, {
     new: true
   }).then((user) => {
