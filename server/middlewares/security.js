@@ -25,6 +25,9 @@ module.exports = function (req, res, next) {
 
   // -> Disable IE Compatibility Mode
   res.set('X-UA-Compatible', 'IE=edge')
+  
+  // -> Disables referrer header when navigating to a different origin
+  res.set('Referrer-Policy', 'same-origin')
 
   return next()
 }
