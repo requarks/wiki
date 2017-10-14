@@ -103,6 +103,9 @@ langs:
     id: de
     name: German - Deutsch
   -
+    id: ja
+    name: Japanese - 日本語
+  -
     id: ko
     name: Korean - 한국어
   -
