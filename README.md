@@ -58,12 +58,14 @@ You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/bl
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.10 - Stable
+### 1.0.11 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 **Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
 
-- [x] Delete a page from the UI
+- [x] Japanese localization
+- [x] Fix for name search when using OpenLDAP
+- [x] Added referrer policy header
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/35)
@@ -129,6 +131,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] Dutch - *Thanks to [@weirdwater](https://github.com/weirdwater)*
 - [x] French
 - [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes)*
+- [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields)*
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
 - [x] Persian - *Thanks to [@ashkang](https://github.com/ashkang)*
 - [x] Portuguese - *Thanks to [@felipeplets](https://github.com/felipeplets)*
