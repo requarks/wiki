@@ -1,0 +1,6 @@
+{
+  "added": "{{path}}を追加しました",
+  "deleted": "{{path}}を削除又は名称を変更する",
+  "updated": "{{path}}を変更しました",
+  "uploaded": "{{path}}をアップロード"
+}
