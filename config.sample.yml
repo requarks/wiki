@@ -44,7 +44,7 @@ uploads:
 # ---------------------------------------------------------------------
 # Site Language
 # ---------------------------------------------------------------------
-# Possible values: en, de, es, fa, fr, ko, nl, pt, ru, sr, tr or zh
+# Possible values: en, de, es, fa, fr, ja, ko, nl, pt, ru, sr, tr or zh
 
 lang: en
 
