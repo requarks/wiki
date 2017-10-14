@@ -1,0 +1,82 @@
+{
+  "profile": {
+    "displayname": "表示する名前",
+    "displaynameexample": "山田　太郎",
+    "email": "Eメール",
+    "lastprofileupdate": "最後のプロファイル更新",
+    "membersince": "アカウント登録日",
+    "password": "パスポート",
+    "passwordverify": "パスポートの確認",
+    "provider": "プロバイダ",
+    "savechanges": "保存する",
+    "subtitle": "プロファイルと認証情報",
+    "tfa": "二段認証",
+    "tfadisable": "二段認証を無効にする",
+    "tfadisabled": "無効済み",
+    "tfaenable": "二段認証を有効にする",
+    "tfaenabled": "有効済み"
+  },
+  "stats": {
+    "subtitle": "一般的なサイト統計",
+    "entries": "記事",
+    "uploads": "アップロード",
+    "users": "ユーザー"
+  },
+  "setings": {
+    "subtitle": "サイト設定を管理する"
+  },
+  "system": {
+    "subtitle": "Wikiの情報とユーティリティ",
+    "systemversion": "システムバージョン",
+    "currentversion": "現在のバージョン",
+    "latestversion": "最新バージョン",
+    "upgrade": "アップグレード",
+    "reinstall": "現在のバージョンを再インストールする",
+    "versioncheckfailed": "最新バージョンを照会できません。後で再試行してください。",
+    "administrativetools": "管理ツール",
+    "flushcache": "キャッシュをフラッシュしてインデックスを再構築する",
+    "flushcachetext": "コンテンツや検索結果の期限が滞っているか、最新のコンテンツがない場合は、キャッシュをフラッシュするとこれらの問題を解決できます。",
+    "flushcachebtn": "フラッシュと再構築する",
+    "resetaccounts": "システムアカウントをデフォルトにリセットする",
+    "resetaccountstext": "システムアカウント（ゲストアカウントなど）はデフォルト設定にリセットされます。",
+    "resetaccountsbtn": "システムアカウントをリセットする",
+    "flushsessions": "全てのユーザーセッションをフラッシュする",
+    "flushsessionstext": "全てのユーザーがログアウトし、再度ログインする必要があります。現在のセッションにも影響があります！",
+    "flushsessionsbtn": "セッションをフラッシュする",
+    "hostinfo": "ホスト情報",
+    "os": "オペレーティングシステム",
+    "nodeversion": "Node.jsバージョン",
+    "hostname": "ホスト名",
+    "cores": "CPUコア",
+    "totalmem": "合計メモリ",
+    "cwd": "作業ディレクトリ"
+  },
+  "theme": {
+    "subtitle": "Wikiのテーマを変更する",
+    "primarycolor": "原色",
+    "primarycolordesc": "トップナビゲーションバー、ヘッダー、リンクなどに使用されます",
+    "altcolor": "代替色",
+    "altcolordesc": "サイドバーに使用されます（暗い色調）",
+    "footercolor": "フッターの色",
+    "footercolordesc": "フッターに使用されます（明るい色調）",
+    "codeblock": {
+      "title": "コードブロック",
+      "dark": "暗いテーマを使用する",
+      "colorize": "コードを色分けする"
+    },
+    "savechanges": "保存する",
+    "reset": "デフォルトに戻す"
+  },
+  "users": {
+    "createauthorize": "ユーザーの作成・承認",
+    "subtitle": "ユーザーとアクセス権限の管理",
+    "name": "名前",
+    "email": "Eメール",
+    "provider": "プロバイダ",
+    "createdon": "作成日",
+    "updatedon": "変更日",
+    "returntousers": "ユーザー画面へ",
+    "edituser": "ユーザーの編集",
+    "uniqueid": "一意なID"
+  }
+}
