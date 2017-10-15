@@ -145,6 +145,7 @@
     "fuse-box": "~2.2.2",
     "i18next-xhr-backend": "~1.4.2",
     "jest": "~20.0.4",
+    "jest-junit": "~3.1.0",
     "jquery": "~3.2.1",
     "jquery-contextmenu": "~2.5.0",
     "jquery-simple-upload": "~1.0.0",
@@ -168,12 +169,19 @@
     "vuex": "~2.4.0"
   },
   "jest": {
+    "testResultsProcessor": "./node_modules/jest-junit",
     "collectCoverage": false,
     "testMatch": [
       "**/test/**/*.js?(x)",
       "**/?(*.)(spec|test).js?(x)"
     ],
     "verbose": true
+  },
+  "jest-junit": {
+    "suiteName": "jest test",
+    "output": "./test-results/junit.xml",
+    "classNameTemplate": "{classname}-{title}",
+    "titleTemplate": "{classname}-{title}"
   },
   "collective": {
     "type": "opencollective",
