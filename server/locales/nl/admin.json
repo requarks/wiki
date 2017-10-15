@@ -40,9 +40,9 @@
     "resetaccounts": "Systeem gebruikers terugzetten naar fabrieksinstellingen",
     "resetaccountstext": "De systeem gebruikers (zoals Gast) zullen teruggezet worden naar hun originele instellingen.",
     "resetaccountsbtn": "Systeem accounts terugzetten",
-    "flushsessions": "Actieve gebruikerssessies sluiten",
+    "flushsessions": "Actieve gebruikerssessies beëindigen",
     "flushsessionstext": "Alle actieve gebruikerssessies zullen gesloten worden. Alle gebruikers zullen opnieuw moeten inloggen. Ook jouw huidige sessie zal be-eindigen.",
-    "flushsessionsbtn": "Sessies sluiten",
+    "flushsessionsbtn": "Sessies beëindigen",
     "hostinfo": "Host informatie",
     "os": "Besturingssysteem",
     "nodeversion": "Node.js versie",
@@ -64,12 +64,12 @@
       "dark": "Gebruik donkere thema",
       "colorize": "Gebruik kleuren syntax"
     },
-    "savechanges": "Veranderingen opslaan",
+    "savechanges": "Opslaan",
     "reset": "Standaardinstellingen terugzetten"
   },
   "users": {
     "createauthorize": "Gebruiker aanmaken ",
-    "subtitle": "Beheer gebruikersrechten",
+    "subtitle": "Gebruikers en gebruikersrechten beheren",
     "name": "Naam",
     "email": "E-mailadres",
     "provider": "Inlog dienst",

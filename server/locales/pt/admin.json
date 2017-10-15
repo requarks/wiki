@@ -25,7 +25,7 @@
     "currentversion": "Versão Atual",
     "latestversion": "Última Versão",
     "upgrade": "Atualizar",
-    "reinstall": "Reinstalar versão atual",
+    "reinstall": "Re-instalar versão atual",
     "versioncheckfailed": "Não é possível consultar a versão mais recente. Tente mais tarde.",
     "administrativetools": "Ferramentas Administrativas",
     "flushcache": "Limpar o cache e reconstruir índices",

@@ -12,12 +12,15 @@ block rootNavRight
   loading-spinner
   .nav-item
     if rights.write && pageData.meta.path !== 'home'
+      a.button.is-outlined.is-icon-only(@click='$store.dispatch("modalDeletePage/open")')
+        i.nc-icon-outline.ui-1_trash
       a.button.is-outlined(v-on:click='$store.dispatch("modalMovePage/open")')
         i.nc-icon-outline.arrows-1_shuffle-98
         span= t('nav.move')
-    a.button.is-outlined(href='/source/' + pageData.meta.path)
-      i.nc-icon-outline.education_paper
-      span= t('nav.source')
+    if appconfig.theme.viewSource === 'all' || (rights.write && appconfig.theme.viewSource === 'write')
+      a.button.is-outlined(href='/source/' + pageData.meta.path)
+        i.nc-icon-outline.education_paper
+        span= t('nav.source')
     //-a.button.is-outlined(href='/hist/' + pageData.meta.path)
       i.nc-icon-outline.ui-2_time
       span= t('nav.history')
@@ -82,4 +85,5 @@ block content
 
   modal-create-page(basepath=pageData.meta.path)
   modal-move-page(current-path=pageData.meta.path)
+  modal-delete-page(current-path=pageData.meta.path)
   anchor

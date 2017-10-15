@@ -1,0 +1,30 @@
+{
+  "alreadyexists": "この記事は既に存在します",
+  "debugmsg": "詳細なデバッグトレイル",
+  "fileexists": "ファイル{{path}}は既に存在します。",
+  "forbidden": "禁じられました",
+  "forbiddendetail": "このページにアクセスするために必要な権限がありません。",
+  "generic": "エラーが発生しました",
+  "invalidaction": "無効なアクション.",
+  "invaliddestfolder": "無効なデスティネーションフォルダ",
+  "invalidfiletype": "無効なファイルタイプ",
+  "invalidfolder": "無効なフォルダ.",
+  "invalidoperation": "無効な操作",
+  "invalidpath": "無効なページパス",
+  "invaliduserid": "無効なユーザーID",
+  "newpasswordtooshort": "新しいパスワードが短すぎます",
+  "notexist": "記事{{path}}は存在しません",
+  "notexistdetail": "この記事を作成しますか？",
+  "parentinvalid": "親エントリは有効なファイルではありません。",
+  "parentisroot": "親エントリはトップです。",
+  "remotetoolarge": "モートファイルが大きすぎます",
+  "reservedname": "システムによって予約されているので、この名物名称で記事を作成することはできません。",
+  "savefailed": "記事の保存は失敗しました",
+  "starterfailed": "スターターコンテンツを読み込めませんでした",
+  "unauthorized": "無許可",
+  "actions": {
+    "create": "作成",
+    "gohome": "ホームへ",
+    "loginas": "ログイン..."
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "alreadyexists": "이미 정보가 입력되었습니다.",
+  "alreadyexists": "이미 존재하는 문서입니다.",
   "debugmsg": "상세한 디버그 트레일",
   "fileexists": "{{path}} 이미 존재함",
   "forbidden": "접근 금지",

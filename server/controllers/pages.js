@@ -288,4 +288,29 @@ router.put('/*', (req, res, next) => {
   })
 })
 
+/**
+ * Delete document
+ */
+router.delete('/*', (req, res, next) => {
+  if (!res.locals.rights.write) {
+    return res.json({
+      ok: false,
+      error: lang.t('errors:forbidden')
+    })
+  }
+
+  let safePath = entryHelper.parsePath(req.path)
+
+  entries.remove(safePath, req.user).then(() => {
+    res.json({
+      ok: true
+    })
+  }).catch((err) => {
+    res.json({
+      ok: false,
+      error: err.message
+    })
+  })
+})
+
 module.exports = router

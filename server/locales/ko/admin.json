@@ -1,15 +1,20 @@
 {
   "profile": {
     "displayname": "이름",
-    "displaynameexample": "박준원",
+    "displaynameexample": "홍길동",
     "email": "이메일",
     "lastprofileupdate": "최근 프로필 업데이트",
     "membersince": "회원 가입일",
     "password": "비밀번호",
     "passwordverify": "비밀번호 확인",
     "provider": "제공자",
-    "savechanges": "변경 사항 저장",
-    "subtitle": "프로필 및 인증 정보"
+    "savechanges": "변경사항 저장",
+    "subtitle": "프로필 및 인증 정보",
+    "tfa": "이중 인증",
+    "tfadisable": "이중 인증 해제",
+    "tfadisabled": "사용중지",
+    "tfaenable": "이중 인증 사용",
+    "tfaenabled": "사용"
   },
   "stats": {
     "subtitle": "사이트 전체 통계",
@@ -21,6 +26,7 @@
     "subtitle": "사이트 구성 관리"
   },
   "system": {
+    "subtitle": "위키의 정보 및 유틸리티",
     "systemversion": "시스템 버전",
     "currentversion": "현재 버전",
     "latestversion": "최신 버전",
@@ -36,7 +42,30 @@
     "resetaccountsbtn": "시스템 계정들 재설정",
     "flushsessions": "모든 활성 사용자 세션 플러시",
     "flushsessionstext": "모든 유저들이 로그아웃 됩니다. 당신의 지금 세션도 영향 받습니다.",
-    "flushsessionsbtn": "세션 플러시"
+    "flushsessionsbtn": "세션 플러시",
+    "hostinfo": "서버 정보",
+    "os": "운영 체제",
+    "nodeversion": "Node.js 버전",
+    "hostname": "서버 이름",
+    "cores": "CPU 코어 개수",
+    "totalmem": "총 메모리",
+    "cwd": "작업 폴더"
+  },
+  "theme": {
+    "subtitle": "위키의 색과 느낌을 바꿔보세요",
+    "primarycolor": "기본 색상",
+    "primarycolordesc": "상단 바, 제목, 링크 등에 쓰입니다.",
+    "altcolor": "포인트 색상",
+    "altcolordesc": "사이드 바에 쓰입니다 (어두운 톤)",
+    "footercolor": "하단 바 색상",
+    "footercolordesc": "하단 바에 쓰입니다 (밝은 톤)",
+    "codeblock": {
+      "title": "코드 블록",
+      "dark": "어두운 테마 사용",
+      "colorize": "코드 색상 강조하기"
+    },
+    "savechanges": "변경사항 저장",
+    "reset": "기본값으로 되돌리기"
   },
   "users": {
     "createauthorize": "사용자 생성 / 허가",

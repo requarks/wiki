@@ -9,7 +9,8 @@
     "restart": "node wiki restart",
     "build": "node tools/fuse",
     "dev": "node tools/fuse -d",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "opencollective postinstall"
   },
   "bin": {
     "wiki": "wiki.js"
@@ -175,11 +176,23 @@
     "vuex-persistedstate": "2.0.0"
   },
   "jest": {
+    "testResultsProcessor": "./node_modules/jest-junit",
     "collectCoverage": false,
     "testMatch": [
       "**/test/**/*.js?(x)",
       "**/?(*.)(spec|test).js?(x)"
     ],
     "verbose": true
+  },
+  "jest-junit": {
+    "suiteName": "jest test",
+    "output": "./test-results/junit.xml",
+    "classNameTemplate": "{classname}-{title}",
+    "titleTemplate": "{classname}-{title}"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/wikijs",
+    "logo": "https://opencollective.com/opencollective/logo.txt"
   }
 }

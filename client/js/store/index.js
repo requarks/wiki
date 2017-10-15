@@ -10,6 +10,7 @@ import editorVideo from './modules/editor-video'
 import modalCreatePage from './modules/modal-create-page'
 import modalCreateUser from './modules/modal-create-user'
 import modalDeleteUser from './modules/modal-delete-user'
+import modalDeletePage from './modules/modal-delete-page'
 import modalDiscardPage from './modules/modal-discard-page'
 import modalMovePage from './modules/modal-move-page'
 import modalProfile2fa from './modules/modal-profile-2fa'
@@ -39,6 +40,7 @@ export default new Vuex.Store({
     editorVideo,
     modalCreatePage,
     modalCreateUser,
+    modalDeletePage,
     modalDeleteUser,
     modalDiscardPage,
     modalMovePage,

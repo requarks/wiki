@@ -39,6 +39,9 @@ redis:
   db: 0
   password: null
 
+# Enable for right to left languages (e.g. arabic):
+langRtl: false
+
 # ---------------------------------------------------------------------
 # Background Workers
 # ---------------------------------------------------------------------

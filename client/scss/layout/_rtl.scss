@@ -1,0 +1,28 @@
+.rtl {
+  direction: rtl;
+
+  .button i {
+    margin-left: 8px;
+    margin-right: 0px;
+  }
+
+  .nav-right .nav-item {
+    padding: 0 10px 0 0;
+  }
+
+  .nav-item h1 i {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  .sidebar aside .sidebar-menu li a i {
+    margin-left: 7px;
+    margin-right: 0;
+  }
+
+  .mkcontent {
+    ul {
+      padding: 10px 40px 10px 0;
+    }
+  }
+}

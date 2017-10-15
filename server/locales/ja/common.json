@@ -1,0 +1,51 @@
+{
+  "wiki": "Wiki",
+  "header": {
+    "overview": "概要",
+    "createdoc": "記事を作成する"
+  },
+  "footer": {
+    "poweredby": "Powered by",
+    "home": "ホーム",
+    "top": "トップ"
+  },
+  "sidebar": {
+    "nav": "ナビ",
+    "navigation": "ナビゲーション",
+    "pagecontents": "ページの内容",
+    "pastversions": "履歴"
+  },
+  "nav": {
+    "account": "アカウント",
+    "allpages": "全ての記事",
+    "create": "作成",
+    "discard": "キャンセル",
+    "edit": "編集",
+    "history": "履歴",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "move": "移動",
+    "myprofile": "マイページ",
+    "normalview": "普通の画面",
+    "root": "ホーム",
+    "savechanges": "保存する",
+    "savedocument": "記事を保存する",
+    "settings": "設定",
+    "source": "ソースコード",
+    "stats": "統計",
+    "sysinfo": "システム内容",
+    "syssettings": "システム設定",
+    "theme": "テーマ",
+    "users": "ユーザー",
+    "viewlatest": "最新を見る"
+  },
+  "welcome": {
+    "title": "Wikiへよこそ！",
+    "subtitle": "ます、ホームページを作りましょう。",
+    "createhome": "ホームページの作成"
+  },
+  "loading": {
+    "source": "ソースコードをロード中...",
+    "editor": "編集画面をロード中..."
+  }
+}
