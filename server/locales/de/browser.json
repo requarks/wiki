@@ -45,6 +45,16 @@
     "videosupportedtitle": "Die folgenden sind unterstützt:",
     "videotitle": "Video einfügen"
   },
+  "history": {
+    "pastversions": "Letzte Versionen",
+    "timestamp": "Zeitstempel",
+    "author": "Autor",
+    "commit": "Commit",
+    "comparewith": "Vergleichen mit...",
+    "view": "Ansicht",
+    "reverttoversion": "Zurück zur Version",
+    "sidebyside": "Side-by-Side-Ansicht"
+  },
   "modal": {
     "abort": "Abbrechen",
     "anchorerror": "Einfügen in Zwischenablage fehlgeschlagen. Kopiere die URL manuell.",
@@ -67,6 +77,8 @@
     "delete": "Löschen",
     "deletefiletitle": "Löschen?",
     "deletefilewarn": "Bist du sicher, dass du löschen möchtest?",
+    "deletepagewarning": "Bist du dir sicher, dass du diese Seite löschen möchtest? Diese Aktion ist nicht mehr umkehrbar!",
+    "deletepagetitle": "Diese Seite löschen?",
     "deleteusertitle": "Benutzeraccount löschen?",
     "deleteuserwarning": "Willst du wirklich diesen Benutzeraccount löschen? Diese Aktion kann nicht rückgängig gemacht werden!",
     "discard": "Verwerfen",
