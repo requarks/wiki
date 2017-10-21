@@ -90,6 +90,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Translations
   - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
+- [ ] Themes
 - [ ] New Login page
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
@@ -104,12 +105,8 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Preview changes directly from the editor, without saving
 - [x] Modular authentication providers
 - [ ] High Availability support (multiple concurrent instances)
-
-### Future
-
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
-- [ ] Upgrade from web UI
 
 ## Gitter
 
@@ -130,7 +127,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
 - [x] Dutch - *Thanks to [@weirdwater](https://github.com/weirdwater)*
 - [x] French
-- [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes)*
+- [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes), [@MyZeD](https://github.com/MyZeD)*
 - [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields)*
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
 - [x] Persian - *Thanks to [@ashkang](https://github.com/ashkang)*
