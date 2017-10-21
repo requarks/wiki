@@ -3,6 +3,11 @@ const path = require('path')
 /* global wiki */
 
 module.exports = () => {
+  wiki.config.site = {
+    path: '',
+    title: 'Wiki.js'
+  }
+
   // ----------------------------------------
   // Load modules
   // ----------------------------------------
@@ -354,7 +359,6 @@ module.exports = () => {
       error: wiki.IS_DEBUG ? err : {}
     })
     wiki.logger.error(err.message)
-    process.exit(1)
   })
 
   // ----------------------------------------

@@ -22,11 +22,15 @@ block body
                   i(v-if='loading')
                 .panel-content.is-text
                   p This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
-                  p Detailed information about installation and usage can be found on the #[a(href='https://docs.wiki.requarks.io/') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
+                  p Detailed information about installation and usage can be found on the #[a(href='https://wiki.requarks.io/docs') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
                 .panel-content.form-sections
                   section
                     p #[i.nc-icon-outline.tech_cd-reader] You are about to install Wiki.js #[strong= packageObj.version].
                   section
+                    p.control.is-fullwidth
+                      input#ipt-telemetry(type='checkbox', v-model='conf.telemetry', name='ipt-telemetry')
+                      label.label(for='ipt-telemetry') Enable telemetry
+                      span.desc Help Wiki.js developers improve this app with anonymized #[a(href='https://wiki.requarks.io/docs/telemetry') telemetry].
                     p.control.is-fullwidth
                       input#ipt-upgrade(type='checkbox', v-model='conf.upgrade', name='ipt-upgrade')
                       label.label(for='ipt-upgrade') Upgrade from Wiki.js 1.x

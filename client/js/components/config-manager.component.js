@@ -27,6 +27,7 @@ export default {
         results: []
       },
       conf: {
+        telemetry: true,
         upgrade: false,
         title: siteConfig.title || 'Wiki',
         host: siteConfig.host || 'http://',
