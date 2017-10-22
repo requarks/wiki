@@ -111,6 +111,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 ## Gitter
 
 Want to discuss features, ideas or issues? Join our [gitter channel](https://gitter.im/Requarks/wiki). We are very active and friendly!
+[![Chat on Gitter](https://img.shields.io/badge/chat-on_gitter-CC2B5E.svg?style=flat-square&logo=image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAOCAMAAADUg/YpAAAABlBMVEUAAAD///%2Bl2Z/dAAAAAXRSTlMAQObYZgAAABVJREFUeAFjwAUYYTQByAAh0WicAAAFnwAYeB5bLwAAAABJRU5ErkJggg==)](https://gitter.im/Requarks/wiki)
 
 ## Twitter
 
@@ -126,6 +127,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] English
 - [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
 - [x] Dutch - *Thanks to [@weirdwater](https://github.com/weirdwater)*
+- [x] Estonian - *Thanks to [@vonforum](https://github.com/vonforum)*
 - [x] French
 - [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes), [@MyZeD](https://github.com/MyZeD)*
 - [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields)*
