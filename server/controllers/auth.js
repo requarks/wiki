@@ -1,19 +1,19 @@
-'use strict'
-
-/* global db, lang */
+/* global wiki */
 
 const Promise = require('bluebird')
 const express = require('express')
 const router = express.Router()
-const passport = require('passport')
 const ExpressBrute = require('express-brute')
-const ExpressBruteMongooseStore = require('express-brute-mongoose')
+const ExpressBruteRedisStore = require('express-brute-redis')
 const moment = require('moment')
+const _ = require('lodash')
 
 /**
  * Setup Express-Brute
  */
-const EBstore = new ExpressBruteMongooseStore(db.Bruteforce)
+const EBstore = new ExpressBruteRedisStore({
+  client: wiki.redis
+})
 const bruteforce = new ExpressBrute(EBstore, {
   freeRetries: 5,
   minWait: 60 * 1000,
@@ -22,8 +22,8 @@ const bruteforce = new ExpressBrute(EBstore, {
   failCallback (req, res, next, nextValidRequestDate) {
     req.flash('alert', {
       class: 'error',
-      title: lang.t('auth:errors.toomanyattempts'),
-      message: lang.t('auth:errors.toomanyattemptsmsg', { time: moment(nextValidRequestDate).fromNow() }),
+      title: wiki.lang.t('auth:errors.toomanyattempts'),
+      message: wiki.lang.t('auth:errors.toomanyattemptsmsg', { time: moment(nextValidRequestDate).fromNow() }),
       iconClass: 'fa-times'
     })
     res.redirect('/login')
@@ -35,23 +35,24 @@ const bruteforce = new ExpressBrute(EBstore, {
  */
 router.get('/login', function (req, res, next) {
   res.render('auth/login', {
-    usr: res.locals.usr
+    authStrategies: _.reject(wiki.auth.strategies, { key: 'local' }),
+    hasMultipleStrategies: Object.keys(wiki.config.auth.strategies).length > 1
   })
 })
 
 router.post('/login', bruteforce.prevent, function (req, res, next) {
   new Promise((resolve, reject) => {
     // [1] LOCAL AUTHENTICATION
-    passport.authenticate('local', function (err, user, info) {
+    wiki.auth.passport.authenticate('local', function (err, user, info) {
       if (err) { return reject(err) }
       if (!user) { return reject(new Error('INVALID_LOGIN')) }
       resolve(user)
     })(req, res, next)
   }).catch({ message: 'INVALID_LOGIN' }, err => {
-    if (appconfig.auth.ldap && appconfig.auth.ldap.enabled) {
+    if (_.has(wiki.config.auth.strategy, 'ldap')) {
       // [2] LDAP AUTHENTICATION
       return new Promise((resolve, reject) => {
-        passport.authenticate('ldapauth', function (err, user, info) {
+        wiki.auth.passport.authenticate('ldapauth', function (err, user, info) {
           if (err) { return reject(err) }
           if (info && info.message) { return reject(new Error(info.message)) }
           if (!user) { return reject(new Error('INVALID_LOGIN')) }
@@ -73,13 +74,13 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
     // LOGIN FAIL
     if (err.message === 'INVALID_LOGIN') {
       req.flash('alert', {
-        title: lang.t('auth:errors.invalidlogin'),
-        message: lang.t('auth:errors.invalidloginmsg')
+        title: wiki.lang.t('auth:errors.invalidlogin'),
+        message: wiki.lang.t('auth:errors.invalidloginmsg')
       })
       return res.redirect('/login')
     } else {
       req.flash('alert', {
-        title: lang.t('auth:errors.loginerror'),
+        title: wiki.lang.t('auth:errors.loginerror'),
         message: err.message
       })
       return res.redirect('/login')
@@ -91,19 +92,19 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
  * Social Login
  */
 
-router.get('/login/ms', passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }))
-router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
-router.get('/login/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }))
-router.get('/login/github', passport.authenticate('github', { scope: ['user:email'] }))
-router.get('/login/slack', passport.authenticate('slack', { scope: ['identity.basic', 'identity.email'] }))
-router.get('/login/azure', passport.authenticate('azure_ad_oauth2'))
+router.get('/login/ms', wiki.auth.passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }))
+router.get('/login/google', wiki.auth.passport.authenticate('google', { scope: ['profile', 'email'] }))
+router.get('/login/facebook', wiki.auth.passport.authenticate('facebook', { scope: ['public_profile', 'email'] }))
+router.get('/login/github', wiki.auth.passport.authenticate('github', { scope: ['user:email'] }))
+router.get('/login/slack', wiki.auth.passport.authenticate('slack', { scope: ['identity.basic', 'identity.email'] }))
+router.get('/login/azure', wiki.auth.passport.authenticate('azure_ad_oauth2'))
 
-router.get('/login/ms/callback', passport.authenticate('windowslive', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/google/callback', passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/github/callback', passport.authenticate('github', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/slack/callback', passport.authenticate('slack', { failureRedirect: '/login', successRedirect: '/' }))
-router.get('/login/azure/callback', passport.authenticate('azure_ad_oauth2', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/ms/callback', wiki.auth.passport.authenticate('windowslive', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/google/callback', wiki.auth.passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/facebook/callback', wiki.auth.passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/github/callback', wiki.auth.passport.authenticate('github', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/slack/callback', wiki.auth.passport.authenticate('slack', { failureRedirect: '/login', successRedirect: '/' }))
+router.get('/login/azure/callback', wiki.auth.passport.authenticate('azure_ad_oauth2', { failureRedirect: '/login', successRedirect: '/' }))
 
 /**
  * Logout

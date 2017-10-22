@@ -5,67 +5,49 @@
 name: Wiki.js
 defaults:
   config:
-    title: Wiki
-    host: http://localhost
     port: 80
     paths:
       repo: ./repo
       data: ./data
-    uploads:
-      maxImageFileSize: 3,
-      maxOtherFileSize: 100
-    lang: en
-    langRtl: false
-    public: false
-    auth:
-      defaultReadAccess: false
-      local:
-        enabled: true
-      microsoft:
-        enabled: false
-      google:
-        enabled: false
-      facebook:
-        enabled: false
-      github:
-        enabled: false
-      slack:
-        enabled: false
-      ldap:
-        enabled: false
-      azure:
-        enabled: false
-    db: mongodb://localhost/wiki
-    sessionSecret: null
-    admin: null
-    git:
-      url: null
-      branch: master
-      auth:
-        type: basic
-        username: null
-        password: null
-        privateKey: null
-        sslVerify: true
-      serverEmail: wiki@example.com
-      showUserEmail: true
-    features:
-      linebreaks: true
-      mathjax: true
-    externalLogging:
-      bugsnap: false
-      loggly: false
-      papertrail: false
-      rollbar: false
-      sentry: false
-    theme:
-      primary: indigo
-      alt: blue-grey
-      footer: blue-grey
-      viewSource: false
-      code:
-        dark: true
-        colorize: true
+    db:
+      host: localhost
+      port: 5432
+      user: wikijs
+      pass: wikijsrocks
+      db: wiki
+    redis:
+      host: localhost
+      port: 6379
+      db: 0
+      password: null
+    workers: 0
+    ha:
+      nodeuid: primary
+      readonly: false
+    site:
+      path: ''
+      lang: en
+    title: Wiki.js
+configNamespaces:
+  - auth
+  - features
+  - git
+  - logging
+  - site
+  - theme
+  - uploads
+queues:
+  - gitSync
+  - uplClearTemp
+authProviders:
+  - local
+  - microsoft
+  - google
+  - facebook
+  - github
+  - slack
+  - ldap
+  - azure
 colors:
   - red
   - pink
@@ -108,6 +90,12 @@ langs:
   -
     id: ko
     name: Korean - 한국어
+  -
+    id: fa
+    name: Persian (Fārsi) - فارسی
+  -
+    id: pt
+    name: Portuguese - Português
   -
     id: ru
     name: Russian - Русский

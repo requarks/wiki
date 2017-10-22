@@ -1,7 +1,5 @@
 'use strict'
 
-/* global app */
-
 /**
  * Security Middleware
  *
@@ -12,7 +10,7 @@
  */
 module.exports = function (req, res, next) {
   // -> Disable X-Powered-By
-  app.disable('x-powered-by')
+  req.app.disable('x-powered-by')
 
   // -> Disable Frame Embedding
   res.set('X-Frame-Options', 'deny')

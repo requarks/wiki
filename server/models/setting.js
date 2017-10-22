@@ -1,22 +1,26 @@
-'use strict'
-
-const Mongoose = require('mongoose')
-
 /**
  * Settings schema
- *
- * @type       {<Mongoose.Schema>}
  */
-var settingSchema = Mongoose.Schema({
-  key: {
-    type: String,
-    required: true,
-    index: true
-  },
-  value: {
-    type: String,
-    required: true
-  }
-}, { timestamps: {} })
+module.exports = (sequelize, DataTypes) => {
+  let settingSchema = sequelize.define('setting', {
+    key: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    config: {
+      type: DataTypes.JSONB,
+      allowNull: false
+    }
+  }, {
+    timestamps: true,
+    version: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['key']
+      }
+    ]
+  })
 
-module.exports = Mongoose.model('Setting', settingSchema)
+  return settingSchema
+}

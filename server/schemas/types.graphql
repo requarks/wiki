@@ -1,0 +1,342 @@
+# SCALARS
+
+scalar Date
+
+# ENUMS
+
+enum UserRole {
+  guest
+  user
+  admin
+}
+
+enum FileType {
+  binary
+  image
+}
+
+enum RightRole {
+  read
+  write
+  manage
+}
+
+# INTERFACES
+
+interface Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+}
+
+# TYPES
+
+type AuthenticationProvider {
+  key: String!
+  useForm: Boolean!
+  title: String!
+  props: [String]
+  icon: String
+  config: String
+}
+
+type Comment implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  content: String
+  document: Document!
+  author: User!
+}
+
+type Document implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  path: String!
+  title: String!
+  subtitle: String
+  parentPath: String
+  parentTitle: String
+  isDirectory: Boolean!
+  isEntry: Boolean!
+  searchContent: String
+  comments: [Comment]
+  tags: [Tag]
+}
+
+type File implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  category: FileType!
+  mime: String!
+  extra: String
+  filename: String!
+  basename: String!
+  filesize: Int!
+  folder: Folder
+}
+
+type Folder implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  name: String!
+  files: [File]
+}
+
+type Group implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  name: String!
+  users: [User]
+  rights: [Right]
+}
+
+type Right implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  path: String!
+  role: RightRole!
+  exact: Boolean!
+  allow: Boolean!
+  group: Group!
+}
+
+type SearchResult {
+  path: String
+  title: String
+  tags: [String]
+}
+
+type Setting implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  key: String!
+  config: String!
+}
+
+# Tags are attached to one or more documents
+type Tag implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  key: String!
+  documents: [Document]
+}
+
+type Translation {
+  key: String!
+  value: String!
+}
+
+# A User
+type User implements Base {
+  id: Int!
+  createdAt: Date
+  updatedAt: Date
+  email: String!
+  provider: String!
+  providerId: String
+  name: String
+  role: UserRole!
+  groups: [Group]
+}
+
+type OperationResult {
+  succeded: Boolean!
+  message: String
+}
+
+# Query (Read)
+type Query {
+  authentication(mode: String!): [AuthenticationProvider]
+  comments(id: Int): [Comment]
+  documents(id: Int, path: String): [Document]
+  files(id: Int): [File]
+  folders(id: Int, name: String): [Folder]
+  groups(id: Int, name: String): [Group]
+  rights(id: Int): [Right]
+  search(q: String, tags: [String]): [SearchResult]
+  settings(key: String): [Setting]
+  tags(key: String): [Tag]
+  translations(locale: String!, namespace: String!): [Translation]
+  users(id: Int, email: String, provider: String, providerId: String, role: UserRole): [User]
+}
+
+# Mutations (Create, Update, Delete)
+type Mutation {
+  addRightToGroup(
+    groupId: Int!
+    path: String!
+    role: RightRole!
+    exact: Boolean!
+    allow: Boolean!
+  ): Right
+
+  assignTagToDocument(
+    tagId: Int!
+    documentId: Int!
+  ): OperationResult
+
+  assignUserToGroup(
+    userId: Int!
+    groupId: Int!
+  ): OperationResult
+
+  createComment(
+    userId: Int!
+    documentId: Int!
+    content: String!
+  ): Comment
+
+  createDocument(
+    path: String!
+    title: String!
+    subtitle: String
+  ): Document
+
+  createFolder(
+    name: String!
+  ): Folder
+
+  createGroup(
+    name: String!
+  ): Group
+
+  createTag(
+    name: String!
+  ): Tag
+
+  createUser(
+    email: String!
+    name: String
+    passwordRaw: String
+    provider: String!
+    providerId: String
+    role: UserRole!
+  ): User
+
+  deleteComment(
+    id: Int!
+  ): OperationResult
+
+  deleteDocument(
+    id: Int!
+  ): OperationResult
+
+  deleteFile(
+    id: Int!
+  ): OperationResult
+
+  deleteFolder(
+    id: Int!
+  ): OperationResult
+
+  deleteGroup(
+    id: Int!
+  ): OperationResult
+
+  deleteTag(
+    id: Int!
+  ): OperationResult
+
+  deleteUser(
+    id: Int!
+  ): OperationResult
+
+  modifyComment(
+    id: Int!
+    content: String!
+  ): Document
+
+  modifyDocument(
+    id: Int!
+    title: String
+    subtitle: String
+  ): Document
+
+  modifyUser(
+    id: Int!
+    email: String
+    name: String
+    provider: String
+    providerId: String
+    role: UserRole
+  ): User
+
+  modifyRight(
+    id: Int!
+    path: String
+    role: RightRole
+    exact: Boolean
+    allow: Boolean
+  ): Right
+
+  moveDocument(
+    id: Int!
+    path: String!
+  ): OperationResult
+
+  moveFile(
+    id: Int!
+    folderId: Int!
+  ): OperationResult
+
+  renameFile(
+    id: Int!
+    name: String!
+  ): OperationResult
+
+  renameFolder(
+    id: Int!
+    name: String!
+  ): OperationResult
+
+  renameGroup(
+    id: Int!
+    name: String!
+  ): OperationResult
+
+  renameTag(
+    id: Int!
+    key: String!
+  ): OperationResult
+
+  removeTagFromDocument(
+    tagId: Int!
+    documentId: Int!
+  ): OperationResult
+
+  removeRightFromGroup(
+    rightId: Int!
+  ): OperationResult
+
+  removeUserFromGroup(
+    userId: Int!
+    groupId: Int!
+  ): OperationResult
+
+  resetUserPassword(
+    id: Int!
+  ): OperationResult
+
+  setConfigEntry(
+    key: String!
+    value: String!
+  ): OperationResult
+
+  setUserPassword(
+    id: Int!
+    passwordRaw: String!
+  ): OperationResult
+
+  uploadFile(
+    category: FileType!
+    filename: String!
+  ): File
+}

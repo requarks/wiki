@@ -1,0 +1,28 @@
+name: Default
+author: Nicolas Giard
+site: https://wiki.requarks.io/
+version: 1.0.0
+requirements:
+  minimum: '>= 2.0.0'
+  maximum: '< 3.0.0'
+fields:
+  primary:
+    title: Primary Color
+    description: Used for top navigation bar, headers, links, etc.
+    type: color
+    default: indigo
+  alt:
+    title: Alternate Color
+    description: Used for the sidebar (in a darker tone)
+    type: color
+    default: blue-grey
+  codeDark:
+    title: Code Blocks - Use Dark Theme
+    description: todo
+    type: boolean
+    default: true
+  codeColorize:
+    title: Code Blocks - Colorize syntax
+    description: todo
+    type: boolean
+    default: true

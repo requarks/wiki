@@ -1,35 +1,8 @@
-doctype html
-html
-  head
-    meta(http-equiv='X-UA-Compatible', content='IE=edge')
-    meta(charset='UTF-8')
-    meta(name='viewport', content='width=device-width, initial-scale=1')
-    meta(name='theme-color', content='#009688')
-    meta(name='msapplication-TileColor', content='#009688')
-    meta(name='msapplication-TileImage', content=appconfig.host + '/favicons/ms-icon-144x144.png')
-    title= appconfig.title
+extends ./master.pug
 
-    //- Favicon
-    each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
-      link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href=appconfig.host + '/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
-    link(rel='icon', type='image/png', sizes='192x192', href=appconfig.host + '/favicons/android-icon-192x192.png')
-    each favsize in [32, 96, 16]
-      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href=appconfig.host + '/favicons/favicon-' + favsize + 'x' + favsize + '.png')
-    link(rel='manifest', href=appconfig.host + '/manifest.json')
-
-    //- Site Lang
-    script.
-      var siteLang = '!{appconfig.lang}';
-      var siteRoot = '!{appconfig.host}';
-
-    //- JS / CSS
-    script(type='text/javascript', src=appconfig.host + '/js/vendor.js')
-    script(type='text/javascript', src=appconfig.host + '/js/app.js')
-
-    block head
-
-  body(class={ 'rtl': appconfig.langRtl })
-    #root.has-stickynav(class=['is-primary-' + appconfig.theme.primary, 'is-alternate-' + appconfig.theme.alt])
+block body
+  body
+    #app.has-stickynav(class=['is-primary-' + appconfig.theme.primary, 'is-alternate-' + appconfig.theme.alt])
       include ./common/header.pug
       alert
       main

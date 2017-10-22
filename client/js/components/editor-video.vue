@@ -34,9 +34,9 @@
 
 <script>
   const videoRules = {
-    'youtube': new RegExp(/(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/)|(?:(?:watch)?\?v(?:i)?=|&v(?:i)?=))([^#&?]*).*/, 'i'),
-    'vimeo': new RegExp(/vimeo.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^/]*)\/videos\/|album\/(?:\d+)\/video\/|)(\d+)(?:$|\/|\?)/, 'i'),
-    'dailymotion': new RegExp(/(?:dailymotion\.com(?:\/embed)?(?:\/video|\/hub)|dai\.ly)\/([0-9a-z]+)(?:[-_0-9a-zA-Z]+(?:#video=)?([a-z0-9]+)?)?/, 'i')
+    'youtube': new RegExp('/(?:(?:youtu\\.be\\/|v\\/|vi\\/|u\\/\\w\\/|embed\\/)|(?:(?:watch)?\\?v(?:i)?=|&v(?:i)?=))([^#&?]*).*/', 'i'),
+    'vimeo': new RegExp('/vimeo.com\\/(?:channels\\/(?:\\w+\\/)?|groups\\/(?:[^/]*)\\/videos\\/|album\\/(?:\\d+)\\/video\\/|)(\\d+)(?:$|\\/|\\?)/', 'i'),
+    'dailymotion': new RegExp('/(?:dailymotion\\.com(?:\\/embed)?(?:\\/video|\\/hub)|dai\\.ly)\\/([0-9a-z]+)(?:[-_0-9a-zA-Z]+(?:#video=)?([a-z0-9]+)?)?/', 'i')
   }
 
   export default {

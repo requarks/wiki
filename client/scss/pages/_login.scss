@@ -1,306 +1,264 @@
+.login {
+  background-image: linear-gradient(to right, mc('blue', '400'), mc('blue', '600'));
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-body {
-	padding: 0;
-	margin: 0;
-	font-family: $core-font-standard;
-	font-size: 14px;
-}
+  &.is-error {
+    background-image: linear-gradient(to right, mc('red', '400'), mc('red', '600'));
+  }
 
-a {
-	color: #FFF;
-	transition: color 0.4s ease;
-	text-decoration: none;
+  &::before {
+    content: '';
+    position: absolute;
+    background-image: url('../svg/login-bg.svg');
+    background-position: center bottom;
+    background-size: cover;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+  }
 
-	&:hover {
-		color: mc('orange','600');
-		text-decoration: underline;
-	}
+  &-container {
+    position: relative;
+    display: flex;
+    width: 400px;
+    align-items: stretch;
+    box-shadow: 0 14px 28px rgba(0,0,0,0.2);
+    border-radius: 6px;
 
-}
+    &.is-expanded {
+      width: 650px;
 
-#bg {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1;
-	background-color: #000;
+      .login-frame {
+        border-radius: 0 6px 6px 0;
+        border-left: none;
+      }
+    }
 
-	> div {
-		background-size: cover;
-		background-position: center center;
-		width: 100%;
-		height: 100%;
-		position: absolute;
-		top: 0;
-		left: 0;
-		opacity: 0;
-		visibility: hidden;
-		transition: opacity 3s ease, visibility 3s;
-		animation: bg 30s linear infinite;
+    @include until($tablet) {
+      width: 350px;
 
-		&:nth-child(1) {
-			animation-delay: 10s;
-		}
+      &.is-expanded {
+        width: 400px;
+      }
+    }
+  }
 
-		&:nth-child(2) {
-			animation-delay: 20s;
-		}
+  &-error {
+    position: absolute;
+    bottom: 105%;
+    width: 100%;
+    min-height: 50px;
+    background-image: radial-gradient(ellipse at top left, rgba(255,255,255,.9) 0%,rgba(255,255,255,.8) 100%);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    border-radius: 6px;
+    color: mc('red', '800');
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
 
-	}
+    strong {
+      font-weight: 600;
+      text-transform: uppercase;
+      display: block;
+      padding: 0 1rem 0 0;
+      border-right: 1px solid mc('red', '200');
+    }
+    span {
+      padding: 0 0 0 1rem;
+      display: block;
+    }
+  }
 
-}
+  &-providers {
+    display: flex;
+    flex-direction: column;
+    width: 250px;
 
-#root {
-	position: fixed;
-	top: 15vh;
-	left: 10vw;
-	z-index: 2;
-	color: #FFF;
-	display: flex;
-	flex-direction: column;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    z-index: 1;
+    overflow: hidden;
 
-	h1 {
-		font-size: 4rem;
-		font-weight: bold;
-		color: #FFF;
-		padding: 0;
-		margin: 0;
-		animation: headerIntro 3s ease;
-	}
+    @include until($tablet) {
+      width: 50px;
+    }
 
-	h2 {
-		font-size: 1.5rem;
-		font-weight: normal;
-		color: rgba(255,255,255,0.7);
-		padding: 0;
-		margin: 0 0 25px 0;
-		animation: headerIntro 3s ease;
-	}
+    button {
+      flex: 1 1;
+      padding: 5px 15px;
+      border: none;
+      color: #FFF;
+      background: linear-gradient(to right, rgba(mc('light-blue', '800'), .7), rgba(mc('light-blue', '800'), 1));
+      border-top: 1px solid rgba(mc('light-blue', '900'), .5);
+      font-family: $core-font-standard;
+      font-weight: 600;
+      text-align: left;
+      min-height: 40px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      transition: all .4s ease;
 
-	h3 {
-		font-size: 1.25rem;
-		font-weight: normal;
-		color: #FB8C00;
-		padding: 0;
-		margin: 0;
-		animation: shake 1s ease;
+      &:focus {
+        outline: none;
+      }
 
-		> .fa {
-			margin-right: 7px;
-		}
+      @include until($tablet) {
+        justify-content: center;
+      }
 
-	}
+      &:hover {
+        background-color: mc('light-blue', '900');
+      }
 
-	h4 {
-		font-size: 0.8rem;
-		font-weight: normal;
-		color: rgba(255,255,255,0.7);
-		padding: 0;
-		margin: 0 0 15px 0;
-		animation: fadeIn 3s ease;
-	}
+      &:first-child {
+        border-top: none;
 
-	form {
-		display: flex;
-		flex-direction: column;
-	}
+        &.is-active {
+          border-top: 1px solid rgba(255,255,255, .5);
+        }
+      }
 
-	input[type=text], input[type=password] {
-		width: 350px;
-		max-width: 80vw;
-		border: 1px solid rgba(255,255,255,0.3);
-		border-radius: 3px;
-		background-color: rgba(0,0,0,0.2);
-		padding: 0 15px;
-		height: 40px;
-		margin: 0 0 10px 0;
-		color: #FFF;
-		font-weight: bold;
-		font-size: 14px;
-		transition: all 0.4s ease;
+      &.is-active {
+        background-image: linear-gradient(to right, rgba(255,255,255,1) 0%,rgba(255,255,255,.77) 100%);
+        color: mc('light-blue', '700');
+        cursor: default;
 
-		&:focus {
-			outline: none;
-			border-color: mc('orange','600');
-		}
+        &:hover {
+          background-color: transparent;
+        }
 
-	}
+        svg path {
+          fill: mc('light-blue', '800');
+        }
+      }
 
-	button {
-		background-color: mc('orange','600');
-		color: #FFF;
-		border: 1px solid lighten(mc('orange','600'), 10%);
-		border-radius: 3px;
-		height: 40px;
-		width: 125px;
-		padding: 0;
-		font-weight: bold;
-		margin: 15px 0 0 0;
-		transition: all 0.4s ease;
-		cursor: pointer;
+      i {
+        margin-right: 10px;
+        font-size: 16px;
 
-		span {
-			font-weight: bold;
-		}
+        @include until($tablet) {
+          margin-right: 0;
+          font-size: 20px;
+        }
+      }
 
-		&:focus {
-			outline: none;
-			border-color: #FFF;
-		}
+      svg {
+        margin-right: 10px;
+        width: auto;
+        height: 20px;
+        max-width: 18px;
+        max-height: 20px;
 
-		&:hover {
-			background-color: darken(mc('orange','600'), 10%);
-		}
+        path {
+          fill: #FFF;
+        }
 
-	}
+        @include until($tablet) {
+          margin-right: 0;
+          font-size: 20px;
+        }
+      }
 
-	#social {
-		margin-top: 25px;
+      span {
+        font-weight: 600;
 
-		> span {
-			display: block;
-			font-weight: bold;
-			color: rgba(255,255,255,0.7);
-		}
+        @include until($tablet) {
+          display: none;
+        }
+      }
+    }
+  }
 
-		button {
-			margin-right: 5px;
-			width: auto;
-			padding: 0 15px;
+  &-frame {
+    background-image: radial-gradient(circle at top center, rgba(255,255,255,1) 5%,rgba(255,255,255,.6) 100%);
+    border: 1px solid rgba(255,255,255, .5);
+    border-radius: 6px;
+    width: 400px;
+    padding: 1rem;
+    color: mc('grey', '700');
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
 
-			> i {
-				margin-right: 10px;
-				font-size: 16px;
-			}
+    @include until($tablet) {
+      width: 350px;
+    }
 
-			&.ms {
-				background-color: mc('blue','600');
-				border-color: lighten(mc('blue','600'), 10%);
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: mc('light-blue', '700');
+      text-shadow: 1px 1px 0 #FFF;
+      padding: 0;
+      margin: 0;
+    }
 
-				&:focus {
-					border-color: #FFF;
-				}
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: mc('grey', '700');
+      text-shadow: 1px 1px 0 #FFF;
+      padding: 0;
+      margin: 0 0 25px 0;
+    }
 
-				&:hover {
-					background-color: darken(mc('blue','600'), 10%);
-				}
+    form {
+      display: flex;
+      flex-direction: column;
+    }
 
-			}
+    input[type=text], input[type=password] {
+      width: 100%;
+      border: 1px solid #FFF;
+      border-radius: 3px;
+      background-color: rgba(255,255,255,.9);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255, .25);
+      padding: 0 15px;
+      height: 40px;
+      margin: 0 0 10px 0;
+      color: mc('grey', '700');
+      font-weight: 600;
+      font-size: .8rem;
+      transition: all 0.4s ease;
+      text-align: center;
 
-			&.google {
-				background-color: mc('light-blue','600');
-				border-color: lighten(mc('light-blue','600'), 10%);
+      &:focus {
+        outline: none;
+        border-color: mc('light-blue','500');
+        background-color: rgba(255,255,255,1);
+        box-shadow: inset 0 0 0 3px rgba(mc('light-blue','500'), .25);
+        color: mc('light-blue', '800');
+      }
 
-				&:focus {
-					border-color: #FFF;
-				}
+    }
 
-				&:hover {
-					background-color: darken(mc('light-blue','600'), 10%);
-				}
+  }
 
-			}
+  &-copyright {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 0;
+    bottom: 10vh;
+    width: 100%;
+    z-index: 2;
+    color: mc('grey', '500');
+    font-weight: 400;
 
-			&.facebook {
-				background-color: mc('indigo','600');
-				border-color: lighten(mc('indigo','600'), 10%);
+    a {
+      font-weight: 600;
+      color: mc('light-blue', '500');
+      margin-left: .25rem;
+    }
 
-				&:focus {
-					border-color: #FFF;
-				}
-
-				&:hover {
-					background-color: darken(mc('indigo','600'), 10%);
-				}
-
-			}
-
-      &.github {
-				background-color: mc('blue-grey','700');
-				border-color: lighten(mc('blue-grey','700'), 10%);
-
-				&:focus {
-					border-color: #FFF;
-				}
-
-				&:hover {
-					background-color: darken(mc('blue-grey','700'), 10%);
-				}
-			}
-
-      &.slack {
-				background-color: mc('purple','700');
-				border-color: lighten(mc('purple','700'), 10%);
-
-				&:focus {
-					border-color: #FFF;
-				}
-
-				&:hover {
-					background-color: darken(mc('purple','700'), 10%);
-				}
-			}
-
-		}
-
-	}
-
-}
-
-#copyright {
-	display: flex;
-	align-items: center;
-	justify-content: flex-start;
-	position: absolute;
-	left: 10vw;
-	bottom: 10vh;
-	z-index: 2;
-	color: rgba(255,255,255,0.5);
-	font-weight: bold;
-
-	.icon {
-		font-size: 1.2rem;
-		margin: 0 8px;
-	}
-
-	a {
-		opacity: 0.75;
-	}
-
-}
-
-@include keyframes(bg) {
-	0% {
-		@include prefix(transform, scale(1,1));
-		visibility: visible;
-		opacity: 0;
-	},
-	5% {
-		opacity: 0.5;
-	},
-	33% {
-		opacity: 0.5;
-	},
-	38% {
-		@include prefix(transform, scale(1.2, 1.2));
-		opacity: 0;
-	},
-	39% {
-		visibility: hidden;
-	}
-	100% {
-		visibility: hidden;
-		opacity: 0;
-	}
-}
-
-@include keyframes(headerIntro) {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: 1;
-	}
+  }
 }

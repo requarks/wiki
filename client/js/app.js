@@ -1,28 +1,28 @@
 'use strict'
 
-/* global $, siteRoot */
+/* global siteConfig */
 /* eslint-disable no-new */
+
+import CONSTANTS from './constants'
 
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
-import VueLodash from 'vue-lodash'
+import VeeValidate from 'vee-validate'
+import { ApolloClient, createBatchingNetworkInterface } from 'apollo-client'
 import store from './store'
-import io from 'socket-io-client'
-import i18next from 'i18next'
-import i18nextXHR from 'i18next-xhr-backend'
-import VueI18Next from '@panter/vue-i18next'
-import 'jquery-contextmenu'
-import 'jquery-simple-upload'
-import 'jquery-smooth-scroll'
-import 'jquery-sticky'
+
+// ====================================
+// Load Modules
+// ====================================
+
+import localization from './modules/localization'
 
 // ====================================
 // Load Helpers
 // ====================================
 
 import helpers from './helpers'
-import _ from './helpers/lodash'
 
 // ====================================
 // Load Vue Components
@@ -36,6 +36,7 @@ import editorFileComponent from './components/editor-file.vue'
 import editorVideoComponent from './components/editor-video.vue'
 import historyComponent from './components/history.vue'
 import loadingSpinnerComponent from './components/loading-spinner.vue'
+import loginComponent from './components/login.vue'
 import modalCreatePageComponent from './components/modal-create-page.vue'
 import modalCreateUserComponent from './components/modal-create-user.vue'
 import modalDeletePageComponent from './components/modal-delete-page.vue'
@@ -53,9 +54,28 @@ import adminEditUserComponent from './pages/admin-edit-user.component.js'
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
 import adminThemeComponent from './pages/admin-theme.component.js'
+import configManagerComponent from './components/config-manager.component.js'
 import contentViewComponent from './pages/content-view.component.js'
 import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
+
+// ====================================
+// Initialize Global Vars
+// ====================================
+
+window.wiki = null
+window.CONSTANTS = CONSTANTS
+
+// ====================================
+// Initialize Apollo Client (GraphQL)
+// ====================================
+
+window.graphQL = new ApolloClient({
+  networkInterface: createBatchingNetworkInterface({
+    uri: window.location.protocol + '//' + window.location.host + siteConfig.path + '/graphql'
+  }),
+  connectToDevTools: true
+})
 
 // ====================================
 // Initialize Vue Modules
@@ -63,9 +83,19 @@ import sourceViewComponent from './pages/source-view.component.js'
 
 Vue.use(VueResource)
 Vue.use(VueClipboards)
-Vue.use(VueI18Next)
-Vue.use(VueLodash, _)
+Vue.use(localization.VueI18Next)
 Vue.use(helpers)
+Vue.use(VeeValidate, {
+  enableAutoClasses: true,
+  classNames: {
+    touched: 'is-touched', // the control has been blurred
+    untouched: 'is-untouched', // the control hasn't been blurred
+    valid: 'is-valid', // model is valid
+    invalid: 'is-invalid', // model is invalid
+    pristine: 'is-pristine', // control has not been interacted with
+    dirty: 'is-dirty' // control has been interacted with
+  }
+})
 
 // ====================================
 // Register Vue Components
@@ -78,6 +108,7 @@ Vue.component('adminSettings', adminSettingsComponent)
 Vue.component('adminTheme', adminThemeComponent)
 Vue.component('anchor', anchorComponent)
 Vue.component('colorPicker', colorPickerComponent)
+Vue.component('configManager', configManagerComponent)
 Vue.component('contentView', contentViewComponent)
 Vue.component('editor', editorComponent)
 Vue.component('editorCodeblock', editorCodeblockComponent)
@@ -85,6 +116,7 @@ Vue.component('editorFile', editorFileComponent)
 Vue.component('editorVideo', editorVideoComponent)
 Vue.component('history', historyComponent)
 Vue.component('loadingSpinner', loadingSpinnerComponent)
+Vue.component('login', loginComponent)
 Vue.component('modalCreatePage', modalCreatePageComponent)
 Vue.component('modalCreateUser', modalCreateUserComponent)
 Vue.component('modalDeletePage', modalDeletePageComponent)
@@ -99,52 +131,26 @@ Vue.component('sourceView', sourceViewComponent)
 Vue.component('toggle', toggleComponent)
 Vue.component('tree', treeComponent)
 
-// ====================================
-// Load Localization strings
-// ====================================
-
-i18next
-  .use(i18nextXHR)
-  .init({
-    backend: {
-      loadPath: siteRoot + '/js/i18n/{{lng}}.json'
-    },
-    lng: siteLang,
-    fallbackLng: siteLang
-  })
-
-$(() => {
+document.addEventListener('DOMContentLoaded', ev => {
   // ====================================
   // Notifications
   // ====================================
 
-  $(window).bind('beforeunload', () => {
+  window.addEventListener('beforeunload', () => {
     store.dispatch('startLoading')
   })
-  $(document).ajaxSend(() => {
-    store.dispatch('startLoading')
-  }).ajaxComplete(() => {
-    store.dispatch('stopLoading')
-  })
-
-  // ====================================
-  // Establish WebSocket connection
-  // ====================================
-
-  let socket = io(window.location.origin)
-  window.socket = socket
 
   // ====================================
   // Bootstrap Vue
   // ====================================
 
-  const i18n = new VueI18Next(i18next)
-  window.wikijs = new Vue({
+  const i18n = localization.init()
+  window.wiki = new Vue({
     mixins: [helpers],
     components: {},
     store,
     i18n,
-    el: '#root',
+    el: '#app',
     methods: {
       changeTheme(opts) {
         this.$el.className = `has-stickynav is-primary-${opts.primary} is-alternate-${opts.alt}`
@@ -153,9 +159,7 @@ $(() => {
       }
     },
     mounted() {
-      $('a:not(.toc-anchor)').smoothScroll({ speed: 500, offset: -50 })
-      $('#header').sticky({ topSpacing: 0 })
-      $('.sidebar-pagecontents').sticky({ topSpacing: 15, bottomSpacing: 75 })
+
     }
   })
 })

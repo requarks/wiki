@@ -15,6 +15,7 @@ $primary: 'indigo';
 @import 'components/button';
 @import 'components/collapsable-nav';
 @import 'components/color-picker';
+@import 'components/config-manager';
 @import 'components/footer';
 @import 'components/form';
 @import 'components/grid';
@@ -43,6 +44,7 @@ $primary: 'indigo';
 @import 'layout/_loader';
 @import 'layout/_rtl';
 
-@import 'pages/_welcome';
+@import 'pages/login';
+@import 'pages/welcome';
 
 @import 'base/print';
