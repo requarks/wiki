@@ -79,8 +79,8 @@ auth:
     clientSecret: GITHUB_CLIENT_SECRET
   slack:
     enabled: false
-    clientId: SLACK_CLIENT_ID
-    clientSecret: SLACK_CLIENT_SECRET
+    clientId: 'SLACK_CLIENT_ID'
+    clientSecret: 'SLACK_CLIENT_SECRET'
   ldap:
     enabled: false
     url: ldap://serverhost:389
