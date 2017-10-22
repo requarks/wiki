@@ -17,6 +17,7 @@ import store from './store'
 // ====================================
 
 import localization from './modules/localization'
+import telemetry from './modules/telemetry'
 
 // ====================================
 // Load Helpers

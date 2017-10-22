@@ -121,6 +121,7 @@
     "stream-to-promise": "2.2.0",
     "tar": "4.0.1",
     "through2": "2.0.3",
+    "uuid": "3.1.0",
     "validator": "9.0.0",
     "validator-as-promised": "1.0.2",
     "winston": "2.4.0",
