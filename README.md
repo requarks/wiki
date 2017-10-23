@@ -90,7 +90,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Translations
   - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
-- [x] Telemetry for analytics and crash reporting (Optional and fully anonimized)
+- [x] Telemetry for analytics and crash reporting (Optional and fully anonymized)
 - [x] Docker support + Auto compile/publish to Docker Hub
 - [x] Support sub-directory installations (e.g. example.com/wiki)
 - [x] Make use of all available CPU cores, distributed jobs queue
