@@ -68,7 +68,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Added referrer policy header
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/35)
+![Progress](http://progressed.io/bar/40)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -90,20 +90,22 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Translations
   - [x] Users
 - [x] Migrate to PostgreSQL + Redis datastore
+- [x] Telemetry for analytics and crash reporting (Optional and fully anonimized)
+- [x] Docker support + Auto compile/publish to Docker Hub
+- [x] Support sub-directory installations (e.g. example.com/wiki)
+- [x] Make use of all available CPU cores, distributed jobs queue
+- [x] Modular authentication providers
+- [x] Shared kernel for both app and configuration manager
 - [ ] Themes
 - [ ] New Login page
 - [ ] History / Revert to previous version
 - [ ] Optional Two-Steps Authentication (2FA)
-- [x] Docker support + Auto compile/publish to Docker Hub
-- [x] Support sub-directory installations (e.g. example.com/wiki)
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
-- [x] Make use of all available CPU cores, distributed jobs queue
 - [ ] Tags per document / folder
 - [ ] Comments / Discussion per document
 - [ ] Profile page per user
 - [ ] Preview changes directly from the editor, without saving
-- [x] Modular authentication providers
 - [ ] High Availability support (multiple concurrent instances)
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
