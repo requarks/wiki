@@ -121,7 +121,7 @@ export default {
       }
 
       this.$helpers._.delay(() => {
-        axios.post('/syscheck').then(resp => {
+        axios.post('/syscheck', self.conf).then(resp => {
           if (resp.data.ok === true) {
             self.syscheck.ok = true
             self.syscheck.results = resp.data.results

@@ -22,6 +22,7 @@ module.exports = () => {
   const yaml = require('js-yaml')
   const _ = require('lodash')
   const cfgHelper = require('./helpers/config')
+  const filesize = require('filesize.js')
 
   // ----------------------------------------
   // Define Express App
@@ -59,7 +60,10 @@ module.exports = () => {
 
   app.get('*', (req, res) => {
     fs.readJsonAsync(path.join(wiki.ROOTPATH, 'package.json')).then(packageObj => {
-      res.render('configure/index', { packageObj })
+      res.render('configure/index', {
+        packageObj,
+        telemetryClientID: wiki.telemetry.cid
+      })
     })
   })
 
@@ -67,6 +71,9 @@ module.exports = () => {
    * Perform basic system checks
    */
   app.post('/syscheck', (req, res) => {
+    wiki.telemetry.enabled = (req.body.telemetry === true)
+    wiki.telemetry.sendEvent('setup', 'start')
+
     Promise.mapSeries([
       () => {
         const semver = require('semver')
@@ -103,7 +110,7 @@ module.exports = () => {
         if (os.totalmem() < 1000 * 1000 * 512) {
           throw new Error('Not enough memory. Minimum is 512 MB.')
         }
-        return _.round(os.totalmem() / (1024 * 1024)) + ' MB of system memory available. Minimum is 512 MB.'
+        return filesize(os.totalmem()) + ' of system memory available. Minimum is 512 MB.'
       },
       () => {
         let fs = require('fs')
@@ -124,6 +131,8 @@ module.exports = () => {
    * Check the Git connection
    */
   app.post('/gitcheck', (req, res) => {
+    wiki.telemetry.sendEvent('setup', 'gitcheck')
+
     const exec = require('execa')
     const url = require('url')
 
@@ -212,6 +221,8 @@ module.exports = () => {
    * Finalize
    */
   app.post('/finalize', (req, res) => {
+    wiki.telemetry.sendEvent('setup', 'finalize')
+
     const bcrypt = require('bcryptjs-then')
     const crypto = Promise.promisifyAll(require('crypto'))
     let mongo = require('mongodb').MongoClient
@@ -359,6 +370,7 @@ module.exports = () => {
       error: wiki.IS_DEBUG ? err : {}
     })
     wiki.logger.error(err.message)
+    wiki.telemetry.sendError(err)
   })
 
   // ----------------------------------------

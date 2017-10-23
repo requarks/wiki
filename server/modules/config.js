@@ -37,19 +37,15 @@ module.exports = {
 
     appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
 
-    // Check port
-
     if (appconfig.port < 1) {
       appconfig.port = process.env.PORT || 80
     }
 
-    // Convert booleans
-
     appconfig.public = (appconfig.public === true || _.toLower(appconfig.public) === 'true')
 
-    // List authentication strategies
     wiki.config = appconfig
     wiki.data = appdata
+    wiki.version = require(path.join(wiki.ROOTPATH, 'package.json')).version
   },
 
   /**

@@ -43,6 +43,7 @@
     "bcryptjs-then": "1.0.1",
     "bluebird": "3.5.1",
     "body-parser": "1.18.2",
+    "bugsnag": "2.0.0",
     "bull": "3.3.0",
     "bunyan": "1.8.12",
     "cheerio": "1.0.0-rc.2",

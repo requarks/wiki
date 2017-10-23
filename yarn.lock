@@ -1519,6 +1519,15 @@ buffer-writer@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/buffer-writer/-/buffer-writer-1.0.1.tgz#22a936901e3029afcd7547eb4487ceb697a3bf08"
 
+bugsnag@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/bugsnag/-/bugsnag-2.0.0.tgz#6d30f74aa504bf0fd507abd5537b933c381bcb6b"
+  dependencies:
+    json-stringify-safe "~5.0.1"
+    promise "7.x"
+    request "^2.81.0"
+    stack-trace "~0.0.9"
+
 builtin-modules@^1.0.0, builtin-modules@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/builtin-modules/-/builtin-modules-1.1.1.tgz#270f076c5a72c02f5b65a47df94c5fe3a278892f"
@@ -6148,7 +6157,7 @@ promise-polyfill@^6.0.1:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/promise-polyfill/-/promise-polyfill-6.0.2.tgz#d9c86d3dc4dc2df9016e88946defd69b49b41162"
 
-promise@^7.0.1:
+promise@7.x, promise@^7.0.1:
   version "7.3.1"
   resolved "https://registry.yarnpkg.com/promise/-/promise-7.3.1.tgz#064b72602b18f90f29192b8b1bc418ffd1ebd3bf"
   dependencies:
@@ -7110,7 +7119,7 @@ sshpk@^1.7.0:
     jsbn "~0.1.0"
     tweetnacl "~0.14.0"
 
-stack-trace@0.0.x:
+stack-trace@0.0.x, stack-trace@~0.0.9:
   version "0.0.10"
   resolved "https://registry.yarnpkg.com/stack-trace/-/stack-trace-0.0.10.tgz#547c70b347e8d32b4e108ea1a2a159e5fdde19c0"
 

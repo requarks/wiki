@@ -31,6 +31,12 @@ wiki.configSvc.init()
 wiki.logger = require('./modules/logger').init()
 
 // ----------------------------------------
+// Init Telemetry
+// ----------------------------------------
+
+wiki.telemetry = require('./modules/telemetry').init()
+
+// ----------------------------------------
 // Init DB
 // ----------------------------------------
 
