@@ -78,7 +78,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 **Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
 
-- [x] GraphQL API
+- :white_check_mark: GraphQL API
   - [x] Comments
   - [x] Documents
   - [x] Files
@@ -89,26 +89,26 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Tags
   - [x] Translations
   - [x] Users
-- [x] Migrate to PostgreSQL + Redis datastore
-- [x] Telemetry for analytics and crash reporting (Optional and fully anonymized)
-- [x] Docker support + Auto compile/publish to Docker Hub
-- [x] Support sub-directory installations (e.g. example.com/wiki)
-- [x] Make use of all available CPU cores, distributed jobs queue
-- [x] Modular authentication providers
-- [x] Shared kernel for both app and configuration manager
-- [ ] Themes
-- [ ] New Login page
-- [ ] History / Revert to previous version
-- [ ] Optional Two-Steps Authentication (2FA)
-- [ ] Persist system settings to database instead of file-based
-- [ ] User Groups + Better permissions management
-- [ ] Tags per document / folder
-- [ ] Comments / Discussion per document
-- [ ] Profile page per user
-- [ ] Preview changes directly from the editor, without saving
-- [ ] High Availability support (multiple concurrent instances)
-- [ ] Insert Link modal in Editor
-- [ ] Better simultaneous user editing handling
+- :white_check_mark: Migrate to PostgreSQL + Redis datastore
+- :white_check_mark: Telemetry for analytics and crash reporting (Optional and fully anonymized)
+- :white_check_mark: Docker support + Auto compile/publish to Docker Hub
+- :white_check_mark: Support sub-directory installations (e.g. example.com/wiki)
+- :white_check_mark: Make use of all available CPU cores, distributed jobs queue
+- :white_check_mark: Modular authentication providers
+- :white_check_mark: Shared kernel for both app and configuration manager
+- :large_blue_diamond: Themes
+- :large_blue_diamond: New Login page
+- :large_blue_diamond: Optional Two-Steps Authentication (2FA)
+- :white_large_square: History / Revert to previous version
+- :white_large_square: Persist system settings to database instead of file-based
+- :white_large_square: User Groups + Better permissions management
+- :white_large_square: Tags per document / folder
+- :white_large_square: Comments / Discussion per document
+- :white_large_square: Profile page per user
+- :white_large_square: Preview changes directly from the editor, without saving
+- :white_large_square: High Availability support (multiple concurrent instances)
+- :white_large_square: Insert Link modal in Editor
+- :white_large_square: Better simultaneous user editing handling
 
 ## Gitter
 
