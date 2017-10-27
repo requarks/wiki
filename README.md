@@ -99,6 +99,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] High Availability support (multiple concurrent instances)
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
+- [ ] Multi-language versions of the same page (I18n)
 
 :rocket: = Currently in development
 
