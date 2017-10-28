@@ -47,10 +47,6 @@ const ALIASES = {
   'vue-resource': (dev) ? 'vue-resource/dist/vue-resource.js' : 'vue-resource/dist/vue-resource.es2015.js'
 }
 const SHIMS = {
-  jquery: {
-    source: '../node_modules/jquery/dist/jquery.js',
-    exports: '$'
-  },
   diff2html: {
     source: '../node_modules/diff2html/dist/diff2html.min.js',
     exports: 'Diff2Html'

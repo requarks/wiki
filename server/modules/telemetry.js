@@ -31,7 +31,7 @@ module.exports = {
     return this
   },
   sendError(err) {
-    bugsnag.notify(err)
+    bugsnag.notify(err, { userId: this.cid })
   },
   sendEvent(eventCategory, eventAction, eventLabel) {
     if (!this.enabled) { return false }

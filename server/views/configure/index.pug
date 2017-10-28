@@ -80,33 +80,35 @@ block body
                         label.label Site Title
                         input(type='text', placeholder='e.g. Wiki', v-model='conf.title', data-vv-scope='general', name='ipt-title', v-validate='{ required: true, min: 2 }')
                         span.desc The site title will appear in the top left corner on every page and within the window title bar.
-                    section
-                      p.control.is-fullwidth
-                        label.label Host
-                        input(type='text', placeholder='http://', v-model='conf.host', data-vv-scope='general', name='ipt-host', v-validate='{ required: true, min: 4 }')
-                        span.desc The full URL to your wiki, without the trailing slash, e.g.: http://wiki.domain.com. Make sure to include the port if different than 80/443.
-                    section
-                      p.control
-                        label.label Port
-                        input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
-                        span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>$(PORT)</strong> to use PORT environment variable.
-                    section
-                      p.control
-                        label.label Site UI Language
-                        select(v-model='conf.lang')
-                          each lg in data.langs
-                            option(value=lg.id)= lg.name
-                        span.desc The language in which navigation, help and other UI elements will be displayed.
+                    section.columns
+                      .column.is-half
+                        p.control
+                          label.label Port
+                          input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
+                          span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it. Set #[strong $(PORT)] to use the PORT environment variable.
+                      .column.is-half
+                        p.control.is-fullwidth
+                          label.label Site Relative Path
+                          input(type='text', placeholder='/', v-model='conf.path', data-vv-scope='general', name='ipt-path', v-validate='{ required: true, min: 1 }')
+                          span.desc The relative path to your wiki. Unless you configure a reverse proxy in front of Wiki.js to handle requests made to a sub-directory, #[strong it is recommended to leave the default value].
+                    section.columns
+                      .column.is-half
+                        p.control
+                          label.label Site UI Language
+                          select(v-model='conf.lang')
+                            each lg in data.langs
+                              option(value=lg.id)= lg.name
+                          span.desc The language in which navigation, help and other UI elements will be displayed.
+                      .column.is-half
+                        p.control.is-fullwidth
+                          input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='general', name='ipt-public')
+                          label.label(for='ipt-public') Public Access
+                          span.desc Should the site be accessible (read only) without login.
                     section
                       p.control.is-fullwidth
                         label.label Local Repository Path
                         input(type='text', placeholder='e.g. ./repo', v-model='conf.pathRepo', data-vv-scope='general', name='ipt-repopath', v-validate='{ required: true, min: 2 }')
                         span.desc The path where the local git repository will be created, used to store content in markdown files and uploads.#[br] #[strong It is recommended to leave the default value].
-                    section
-                      p.control.is-fullwidth
-                        input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='general', name='ipt-public')
-                        label.label(for='ipt-public') Public Access
-                        span.desc Should the site be accessible (read only) without login.
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back

@@ -9,7 +9,9 @@ import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
 import VeeValidate from 'vee-validate'
-import { ApolloClient, createBatchingNetworkInterface } from 'apollo-client'
+import { ApolloClient } from 'apollo-client'
+import { HttpLink } from 'apollo-link-http'
+import { InMemoryCache } from 'apollo-cache-inmemory'
 import store from './store'
 
 // ====================================
@@ -71,10 +73,11 @@ window.CONSTANTS = CONSTANTS
 // ====================================
 
 window.graphQL = new ApolloClient({
-  networkInterface: createBatchingNetworkInterface({
+  link: new HttpLink({
     uri: window.location.protocol + '//' + window.location.host + siteConfig.path + '/graphql'
   }),
-  connectToDevTools: true
+  cache: new InMemoryCache(),
+  connectToDevTools: (process.env.node_env === 'development')
 })
 
 // ====================================

@@ -30,7 +30,7 @@ export default {
         telemetry: true,
         upgrade: false,
         title: siteConfig.title || 'Wiki',
-        host: siteConfig.host || 'http://',
+        path: siteConfig.path || '/',
         port: siteConfig.port || 80,
         lang: siteConfig.lang || 'en',
         public: (siteConfig.public === true),
