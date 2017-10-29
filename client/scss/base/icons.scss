@@ -1,0 +1,48 @@
+.icons {
+  display: inline-block;
+  color: mc('grey', '800');
+
+  &.is-text {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    position: relative;
+    top: -0.0625em;
+    stroke: none;
+    fill: none;
+  }
+
+  &.is-16 {
+    width: 16px;
+    height: 16px;
+  }
+  
+  &.is-18 {
+    width: 18px;
+    height: 18px;
+  }
+
+  &.is-20 {
+    width: 20px;
+    height: 20px;
+  }
+
+  &.is-24 {
+    width: 24px;
+    height: 24px;
+  }
+
+  &.has-right-pad {
+    margin-right: .5rem;
+  }
+
+  &.is-outlined {
+    stroke-width: 2px;
+    use {
+      fill: inherit;
+      stroke: mc('grey', '800');
+    }
+  }
+
+}

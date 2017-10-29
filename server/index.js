@@ -36,6 +36,13 @@ wiki.logger = require('./modules/logger').init()
 
 wiki.telemetry = require('./modules/telemetry').init()
 
+process.on('unhandledRejection', (err) => {
+  wiki.telemetry.sendError(err)
+})
+process.on('uncaughtException', (err) => {
+  wiki.telemetry.sendError(err)
+})
+
 // ----------------------------------------
 // Init DB
 // ----------------------------------------

@@ -7,6 +7,7 @@ $primary: 'indigo';
 @import "base/reset";
 @import "base/mixins";
 @import "base/fonts";
+@import "base/icons";
 @import "base/base";
 
 @import "libs/animate";
@@ -45,6 +46,5 @@ $primary: 'indigo';
 @import 'layout/_rtl';
 
 @import 'pages/login';
-@import 'pages/welcome';
 
 @import 'base/print';

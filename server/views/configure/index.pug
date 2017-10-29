@@ -6,10 +6,6 @@ block body
       config-manager(inline-template)
         div
           .container
-            transition(name='tst-welcome')
-              .welcome(v-if='state === "welcome" || state === "restart"')
-                img(src='/images/logo.png', alt='Wiki.js')
-                h2 A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
             .content(v-cloak)
 
               //- ==============================================
@@ -22,11 +18,16 @@ block body
                     span Welcome!
                     i(v-if='loading')
                   .panel-content.is-text
+                    .welcome
+                      img(src='/images/logo.png', alt='Wiki.js')
+                      h2 A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
                     p This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
                     p Detailed information about installation and usage can be found on the #[a(href='https://wiki.requarks.io/docs') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
                   .panel-content.form-sections
                     section
-                      p #[i.nc-icon-outline.tech_cd-reader] You are about to install Wiki.js #[strong= packageObj.version].
+                      p
+                        svg.icons.is-18.is-outlined.has-right-pad.is-text: use(xlink:href="#nc-cd-reader")
+                        span You are about to install Wiki.js #[strong= packageObj.version].
                     section
                       p.control.is-fullwidth
                         input#ipt-telemetry(type='checkbox', v-model='conf.telemetry', name='ipt-telemetry')
@@ -50,14 +51,14 @@ block body
                     span System Check
                     i(v-if='loading')
                   .panel-content.is-text
-                    p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Checking your system for compatibility...
+                    p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href="#nc-ms-dots")] Checking your system for compatibility...
                     p(v-if='!loading && syscheck.ok')
                       ul
-                        li(v-for='rs in syscheck.results') #[i.icon-check] {{rs}}
+                        li(v-for='rs in syscheck.results') #[svg.icons.is-18.is-text: use(xlink:href="#nc-check-bold")] {{rs}}
                     p(v-if='!loading && syscheck.ok')
-                      i.icon-check
+                      svg.icons.is-18.is-text: use(xlink:href="#nc-check-bold")
                       strong  Looks good! No issues so far.
-                    p(v-if='!loading && !syscheck.ok') #[i.icon-square-cross] Error: {{ syscheck.error }}
+                    p(v-if='!loading && !syscheck.ok') #[svg.icons.is-18.is-text: use(xlink:href="#nc-square-remove-12")] Error: {{ syscheck.error }}
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
@@ -128,7 +129,6 @@ block body
                     p
                       ul
                         li - Make sure the upload limit is sufficient. Most web servers have a low limit (e.g. 2 MB) by default.
-                        li - Make sure your web server is configured to allow web sockets. Wiki.js will fallback to standard XHR queries if not available.
                         li - Do not rewrite URLs after the domain. This can cause unexpected issues in Wiki.js navigation.
                         li - Do not remove or alter the client IP when proxying the requests. This can cause the authentication brute force protection to engage unexpectedly.
                     template(v-if='considerations.https')
@@ -137,9 +137,6 @@ block body
                     template(v-if='considerations.port')
                       h3 You are using a non-standard port.
                       p If you are not planning on using a web server / proxy in front of Wiki.js, be aware that users will need to specify the port when accessing the wiki. Make sure this is the intended behavior. Otherwise set a standard HTTP port such as 80.
-                    template(v-if='considerations.localhost')
-                      h3 Are you sure you want to use localhost as the host base URL? #[i.nc-icon-outline.ui-3_alert.animated.fadeOut.infinite]
-                      p The host URL you specified is localhost. Unless you are a developer running Wiki.js locally on your machine, this is not recommended!
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
@@ -221,14 +218,14 @@ block body
                     span Git Repository Check
                     i(v-if='loading')
                   .panel-content.is-text
-                    p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Verifying Git repository settings...
+                    p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href="#nc-ms-dots")] Verifying Git repository settings...
                     p(v-if='!loading && gitcheck.ok')
                       ul
-                        li(v-for='rs in gitcheck.results') #[i.icon-check] {{rs}}
+                        li(v-for='rs in gitcheck.results') #[svg.icons.is-18.is-text: use(xlink:href="#nc-check-bold")] {{rs}}
                     p(v-if='!loading && gitcheck.ok')
-                      i.icon-check
+                      svg.icons.is-18.is-text: use(xlink:href="#nc-check-bold")
                       strong  Git settings are correct!
-                    p(v-if='!loading && !gitcheck.ok') #[i.icon-square-cross] Error: {{ gitcheck.error }}
+                    p(v-if='!loading && !gitcheck.ok') #[svg.icons.is-18.is-text: use(xlink:href="#nc-square-remove-12")] Error: {{ gitcheck.error }}
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
@@ -245,7 +242,7 @@ block body
                     span Administrator Account
                     i(v-if='loading')
                   .panel-content.is-text
-                    p An administrator account will be created for local authentication. From this account, you can create or authorize more users.
+                    p A root administrator account will be created for local authentication. From this account, you can create or authorize more users.
                   .panel-content.form-sections
                     section
                       p.control.is-fullwidth
@@ -266,7 +263,34 @@ block body
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
-                    button.button.is-small.is-light-blue(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("admin")') Continue
+                    button.button.is-small.is-light-blue(v-on:click='proceedToUpgrade', v-bind:disabled='loading || errors.any("admin")') Continue
+              
+              //- ==============================================
+              //- UPGRADE FROM 1.x
+              //- ==============================================
+
+              template(v-else-if='state === "upgrade"')
+                .panel
+                  h2.panel-title.is-featured
+                    span Upgrade from Wiki.js 1.x
+                    i(v-if='loading')
+                  .panel-content.is-text
+                    p Migrating from a Wiki.js 1.x installation is quick and simple.
+                  .panel-content.form-sections
+                    section
+                      p.control.is-fullwidth
+                        label.label Connection String to Wiki.js 1.x MongoDB database
+                        input(type='text', placeholder='mongodb://', v-model='conf.mongo', data-vv-scope='mongo', name='ipt-mongo', v-validate='{ required: true, min: 2 }')
+                        span.desc A MongoDB database connection string where a Wiki.js 1.x installation is located. #[strong No alterations will be made to this database. ]
+                    section
+                      p.control.is-fullwidth
+                        input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='general', name='ipt-public')
+                        label.label(for='ipt-public') Create groups based on individual permissions
+                        span.desc User groups will be created based on existing users permissions. If multiple users have the exact same permission rules, they will be put in the same user group.
+                  .panel-footer
+                    .progress-bar: div(v-bind:style='{width: currentProgress}')
+                    button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
+                    button.button.is-small.is-light-blue(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("general")') Continue
 
               //- ==============================================
               //- FINAL
@@ -307,5 +331,5 @@ block body
                     button.button.is-small.is-green(disabled='disabled') Start
           
           .footer
-            small Wiki.js Configuration Manager
+            small Wiki.js Installation Wizard
             small(v-if='conf.telemetry') Telemetry Client ID: !{telemetryClientID}

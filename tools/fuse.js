@@ -100,6 +100,7 @@ globalTasks.then(() => {
         style: scssChain
       }),
       scssChain,
+      fsbx.RawPlugin(['.svg']),
       fsbx.BabelPlugin(babelrc),
       fsbx.JSONPlugin()
     ],

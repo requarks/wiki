@@ -1,11 +1,31 @@
 .config-manager {
+  background-image: linear-gradient(to right, mc('indigo', '400'), mc('indigo', '600'));
+  width: 100%;
+  min-height: 100%;
+  padding-top: 1rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    background-image: url('../svg/login-bg.svg');
+    background-position: center bottom;
+    background-size: cover;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
   .welcome {
     text-align: center;
-    padding: 50px 0 15px 0;
-    color: mc('grey', '700');
+    padding: 1rem 0 2rem 0;
+    border-bottom: 1px solid mc('indigo', '50');
+    margin-bottom: 1rem;
 
     h2 {
       margin: 0;
+      color: mc('indigo', '700');
+      font-weight: 500;
     }
 
   }
@@ -14,28 +34,14 @@
     display: inline-block;
     color: mc('indigo', '500')
   }
-  i.icon-check {
+  i.ui-1_check-simple {
     color: mc('green', '500')
   }
-  i.icon-square-cross {
+  i.ui-2_ban-bold {
     color: mc('red', '500')
   }
   i.icon-warning-outline {
     color: mc('orange', '500')
-  }
-
-  .tst-welcome-leave-active, .tst-welcome-enter-active {
-    transition: all .5s;
-    overflow-y: hidden;
-  }
-  .tst-welcome-leave, .tst-welcome-enter-to {
-    opacity: 1;
-    max-height: 200px;
-  }
-  .tst-welcome-leave-to, .tst-welcome-enter {
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
   }
 
   .progress-bar {

@@ -32,8 +32,8 @@
     &.is-featured {
       border-top-left-radius: 4px;
       border-top-right-radius: 4px;
-      background-color: mc($primary, '400');
-      border-bottom-color: mc($primary, '500');
+      background-color: mc('indigo', '400');
+      border-bottom-color: mc('indigo', '500');
       color: #FFF;
 
       > i::before {

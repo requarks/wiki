@@ -46,6 +46,7 @@ export default {
         gitAuthSSL: true,
         gitShowUserEmail: true,
         gitServerEmail: '',
+        mongo: 'mongodb://',
         adminEmail: '',
         adminPassword: '',
         adminPasswordConfirm: ''
@@ -81,6 +82,9 @@ export default {
           break
         case 'admin':
           perc = '75%'
+          break
+        case 'upgrade':
+          perc = '85%'
           break
       }
       return perc
@@ -194,6 +198,17 @@ export default {
       self.$nextTick(() => {
         self.$validator.validateAll('admin')
       })
+    },
+    proceedToUpgrade: function (ev) {
+      if (this.conf.upgrade) {
+        this.state = 'upgrade'
+        this.loading = false
+        this.$nextTick(() => {
+          this.$validator.validateAll('upgrade')
+        })
+      } else {
+        this.proceedToFinal()
+      }
     },
     proceedToFinal: function (ev) {
       let self = this
