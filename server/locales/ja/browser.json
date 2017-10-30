@@ -112,7 +112,7 @@
   "search": {
     "didyoumean": "もしかして...?",
     "nomatch": "一致する結果はありません",
-    "placeholder": "検査...",
-    "results": "検査結果"
+    "placeholder": "検索...",
+    "results": "検索結果"
   }
 }
