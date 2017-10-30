@@ -5,7 +5,7 @@
 const Promise = require('bluebird')
 const _ = require('lodash')
 // const searchIndex = require('./search-index')
-const stopWord = require('stopword')
+// const stopWord = require('stopword')
 const streamToPromise = require('stream-to-promise')
 const searchAllowedChars = new RegExp('[^a-z0-9' + wiki.data.regex.cjk + wiki.data.regex.arabic + ' ]', 'g')
 
@@ -22,7 +22,7 @@ module.exports = {
   init () {
     let self = this
     self._isReady = new Promise((resolve, reject) => {
-      /*searchIndex({
+      /* searchIndex({
         deletable: true,
         fieldedSearch: true,
         indexPath: 'wiki',

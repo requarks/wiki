@@ -81,7 +81,7 @@ export default {
         self.isLoading = true
         self.$http.get('/js/ace/mode-' + m + '.js').then(resp => {
           if (resp.ok) {
-            eval(resp.bodyText)
+            eval(resp.bodyText) // eslint-disable-line no-eval
             self.modelistLoaded.push(m)
             ace.acequire('ace/mode/' + m)
             codeEditor.getSession().setMode('ace/mode/' + m)

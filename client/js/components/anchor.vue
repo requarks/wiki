@@ -17,39 +17,39 @@
 </template>
 
 <script>
-  export default {
-    name: 'anchor',
-    data () {
-      return {}
+export default {
+  name: 'anchor',
+  data () {
+    return {}
+  },
+  computed: {
+    anchorURL () {
+      return window.location.href.split('#')[0] + '#' + this.$store.state.anchor.hash
     },
-    computed: {
-      anchorURL () {
-        return window.location.href.split('#')[0] + '#' + this.$store.state.anchor.hash
-      },
-      isShown () {
-        return this.$store.state.anchor.shown
-      }
+    isShown () {
+      return this.$store.state.anchor.shown
+    }
+  },
+  methods: {
+    cancel () {
+      this.$store.dispatch('anchor/close')
     },
-    methods: {
-      cancel () {
-        this.$store.dispatch('anchor/close')
-      },
-      clipboardSuccess () {
-        this.$store.dispatch('alert', {
-          style: 'blue',
-          icon: 'business_notes',
-          msg: this.$t('modal.anchorsuccess')
-        })
-        this.$store.dispatch('anchor/close')
-      },
-      clipboardError () {
-        this.$store.dispatch('alert', {
-          style: 'red',
-          icon: 'business_notes',
-          msg: this.$t('modal.anchorerror')
-        })
-        this.$refs.anchorURLinput.select()
-      }
+    clipboardSuccess () {
+      this.$store.dispatch('alert', {
+        style: 'blue',
+        icon: 'business_notes',
+        msg: this.$t('modal.anchorsuccess')
+      })
+      this.$store.dispatch('anchor/close')
+    },
+    clipboardError () {
+      this.$store.dispatch('alert', {
+        style: 'red',
+        icon: 'business_notes',
+        msg: this.$t('modal.anchorerror')
+      })
+      this.$refs.anchorURLinput.select()
     }
   }
+}
 </script>

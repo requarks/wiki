@@ -24,6 +24,8 @@
 </template>
 
 <script>
+/* global CONSTANTS, graphQL, siteConfig */
+
 export default {
   name: 'login',
   data() {
@@ -67,4 +69,3 @@ export default {
   }
 }
 </script>
-

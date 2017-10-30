@@ -1,6 +1,6 @@
 'use strict'
 
-/* global winston */
+/* global winston, ROOTPATH, appconfig */
 
 const Promise = require('bluebird')
 const crypto = require('crypto')

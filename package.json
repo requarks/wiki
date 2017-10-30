@@ -9,7 +9,7 @@
     "restart": "node wiki restart",
     "build": "node tools/fuse",
     "dev": "node tools/fuse -d",
-    "test": "jest"
+    "test": "eslint --ext .js,.vue . && jest"
   },
   "bin": {
     "wiki": "wiki.js"
@@ -149,6 +149,7 @@
     "eslint-plugin-node": "5.2.1",
     "eslint-plugin-promise": "3.6.0",
     "eslint-plugin-standard": "3.0.1",
+    "eslint-plugin-vue": "3.13.1",
     "fuse-box": "2.4.0",
     "graphql-tag": "^2.5.0",
     "i18next-xhr-backend": "1.4.3",

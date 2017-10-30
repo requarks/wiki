@@ -1,6 +1,6 @@
 'use strict'
 
-/* global appdata, rights */
+/* global rights */
 
 /**
  * Authentication middleware

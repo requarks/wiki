@@ -16,28 +16,28 @@
 </template>
 
 <script>
-  export default {
-    name: 'modal-discard-page',
-    props: ['mode', 'currentPath'],
-    data () {
-      return {}
+export default {
+  name: 'modal-discard-page',
+  props: ['mode', 'currentPath'],
+  data () {
+    return {}
+  },
+  computed: {
+    isShown () {
+      return this.$store.state.modalDiscardPage.shown
+    }
+  },
+  methods: {
+    stay: function () {
+      this.$store.dispatch('modalDiscardPage/close')
     },
-    computed: {
-      isShown () {
-        return this.$store.state.modalDiscardPage.shown
-      }
-    },
-    methods: {
-      stay: function () {
-        this.$store.dispatch('modalDiscardPage/close')
-      },
-      discard: function () {
-        if(this.mode === 'create') {
-          window.location.assign('/')
-        } else {
-          window.location.assign('/' + this.currentPath)
-        }
+    discard: function () {
+      if (this.mode === 'create') {
+        window.location.assign('/')
+      } else {
+        window.location.assign('/' + this.currentPath)
       }
     }
   }
+}
 </script>

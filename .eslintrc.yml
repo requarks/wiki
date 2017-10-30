@@ -1,0 +1,12 @@
+extends:
+  - requarks
+  - plugin:vue/recommended
+env:
+  node: true
+  es6: true
+  jest: true
+globals:
+  document: false
+  navigator: false
+  window: false
+  FuseBox: false

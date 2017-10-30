@@ -33,62 +33,62 @@
 </template>
 
 <script>
-  const videoRules = {
-    'youtube': new RegExp('/(?:(?:youtu\\.be\\/|v\\/|vi\\/|u\\/\\w\\/|embed\\/)|(?:(?:watch)?\\?v(?:i)?=|&v(?:i)?=))([^#&?]*).*/', 'i'),
-    'vimeo': new RegExp('/vimeo.com\\/(?:channels\\/(?:\\w+\\/)?|groups\\/(?:[^/]*)\\/videos\\/|album\\/(?:\\d+)\\/video\\/|)(\\d+)(?:$|\\/|\\?)/', 'i'),
-    'dailymotion': new RegExp('/(?:dailymotion\\.com(?:\\/embed)?(?:\\/video|\\/hub)|dai\\.ly)\\/([0-9a-z]+)(?:[-_0-9a-zA-Z]+(?:#video=)?([a-z0-9]+)?)?/', 'i')
-  }
+const videoRules = {
+  'youtube': new RegExp('/(?:(?:youtu\\.be\\/|v\\/|vi\\/|u\\/\\w\\/|embed\\/)|(?:(?:watch)?\\?v(?:i)?=|&v(?:i)?=))([^#&?]*).*/', 'i'),
+  'vimeo': new RegExp('/vimeo.com\\/(?:channels\\/(?:\\w+\\/)?|groups\\/(?:[^/]*)\\/videos\\/|album\\/(?:\\d+)\\/video\\/|)(\\d+)(?:$|\\/|\\?)/', 'i'),
+  'dailymotion': new RegExp('/(?:dailymotion\\.com(?:\\/embed)?(?:\\/video|\\/hub)|dai\\.ly)\\/([0-9a-z]+)(?:[-_0-9a-zA-Z]+(?:#video=)?([a-z0-9]+)?)?/', 'i')
+}
 
-  export default {
-    name: 'editor-video',
-    data () {
-      return {
-        link: '',
-        isInvalid: false
-      }
-    },
-    computed: {
-      isShown () {
-        return this.$store.state.editorVideo.shown
-      }
-    },
-    methods: {
-      init () {
-        let self = this
-        self.isInvalid = false
-        self._.delay(() => {
-          self.$refs.editorVideoInput.focus()
-        }, 100)
-      },
-      cancel () {
-        this.$store.dispatch('editorVideo/close')
-      },
-      insertVideo () {
-        let self = this
-
-        if (this._.isEmpty(self.link) || self.link.length < 5) {
-          this.isInvalid = true
-          return
-        }
-
-        let videoType = this._.findKey(videoRules, (vr) => {
-          return vr.test(self.link)
-        })
-        if (this._.isNil(videoType)) {
-          videoType = 'video'
-        }
-        let videoText = '[video](' + this.link + '){.' + videoType + '}\n'
-        this.$store.dispatch('editor/insert', videoText)
-        this.$store.dispatch('alert', {
-          style: 'blue',
-          icon: 'media-1_action-74',
-          msg: self.$t('editor.videosuccess')
-        })
-        this.cancel()
-      }
-    },
-    mounted () {
-      this.$root.$on('editorVideo/init', this.init)
+export default {
+  name: 'editor-video',
+  data () {
+    return {
+      link: '',
+      isInvalid: false
     }
+  },
+  computed: {
+    isShown () {
+      return this.$store.state.editorVideo.shown
+    }
+  },
+  methods: {
+    init () {
+      let self = this
+      self.isInvalid = false
+      self._.delay(() => {
+        self.$refs.editorVideoInput.focus()
+      }, 100)
+    },
+    cancel () {
+      this.$store.dispatch('editorVideo/close')
+    },
+    insertVideo () {
+      let self = this
+
+      if (this._.isEmpty(self.link) || self.link.length < 5) {
+        this.isInvalid = true
+        return
+      }
+
+      let videoType = this._.findKey(videoRules, (vr) => {
+        return vr.test(self.link)
+      })
+      if (this._.isNil(videoType)) {
+        videoType = 'video'
+      }
+      let videoText = '[video](' + this.link + '){.' + videoType + '}\n'
+      this.$store.dispatch('editor/insert', videoText)
+      this.$store.dispatch('alert', {
+        style: 'blue',
+        icon: 'media-1_action-74',
+        msg: self.$t('editor.videosuccess')
+      })
+      this.cancel()
+    }
+  },
+  mounted () {
+    this.$root.$on('editorVideo/init', this.init)
   }
+}
 </script>

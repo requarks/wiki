@@ -1,5 +1,3 @@
-'use strict'
-
 /* global wiki */
 
 const Promise = require('bluebird')
@@ -58,8 +56,7 @@ var mkdown = md({
   })
   .use(mdAttrs)
 
-// if (wiki.config.features.mathjax) {
-if (true) {
+if (wiki.config.features.mathjax) {
   mkdown.use(mdMathjax)
 }
 

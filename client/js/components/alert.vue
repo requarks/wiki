@@ -6,16 +6,16 @@
 </template>
 
 <script>
-  export default {
-    name: 'alert',
-    data () {
-      return {}
-    },
-    computed: {
-      shown() { return this.$store.state.alert.shown },
-      style() { return 'is-' + this.$store.state.alert.style },
-      icon() { return 'nc-icon-outline ' + this.$store.state.alert.icon },
-      msg() { return this.$store.state.alert.msg },
-    }
+export default {
+  name: 'alert',
+  data () {
+    return {}
+  },
+  computed: {
+    shown() { return this.$store.state.alert.shown },
+    style() { return 'is-' + this.$store.state.alert.style },
+    icon() { return 'nc-icon-outline ' + this.$store.state.alert.icon },
+    msg() { return this.$store.state.alert.msg }
   }
+}
 </script>

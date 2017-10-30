@@ -1,6 +1,3 @@
-'use strict'
-
-const _ = require('lodash')
 const Promise = require('bluebird')
 const colors = require('colors/safe')
 const fs = Promise.promisifyAll(require('fs-extra'))

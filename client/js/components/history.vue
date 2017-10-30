@@ -44,6 +44,8 @@
 </template>
 
 <script>
+/* global wiki, Diff2HtmlUI */
+
 let diffui
 let diffuiIsReady = false
 export default {
@@ -98,7 +100,7 @@ export default {
       let self = this
       diffuiIsReady = false
       self.current = cm
-      self.$http.post(siteRoot + '/hist', {
+      self.$http.post(wiki.siteRoot + '/hist', {
         path: self.currentPath,
         commit: cm.commit
       }).then(resp => {

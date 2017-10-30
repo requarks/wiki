@@ -18,50 +18,50 @@
 </template>
 
 <script>
-  export default {
-    name: 'modal-create-page',
-    props: ['basepath'],
-    data () {
-      return {
-        currentPath: '',
-        userPath: '',
-        isLoading: false,
-        isInvalid: false
-      }
-    },
-    computed: {
-      isShown () {
-        if(this.$store.state.modalCreatePage.shown) {
-          this.makeSelection()
-        }
-        return this.$store.state.modalCreatePage.shown
-      }
-    },
-    methods: {
-      makeSelection: function () {
-        let self = this;
-        self._.delay(() => {
-          let startPos = (self.currentPath.length > 0) ? self.currentPath.length + 1 : 0
-          self.$helpers.form.setInputSelection(self.$refs.createPageInput, startPos, self.userPath.length)
-        }, 100)
-      },
-      cancel: function () {
-        this.$store.dispatch('modalCreatePage/close')
-      },
-      create: function () {
-        this.isInvalid = false
-        let newDocPath = this.$helpers.pages.makeSafePath(this.userPath)
-        if (this._.isEmpty(newDocPath)) {
-          this.isInvalid = true
-        } else {
-          this.isLoading = true
-          window.location.assign('/create/' + newDocPath)
-        }
-      }
-    },
-    mounted () {
-      this.currentPath = (this.basepath === 'home') ? '' : this.basepath
-      this.userPath = (this._.isEmpty(this.currentPath)) ? 'new-page' : this.currentPath + '/new-page'
+export default {
+  name: 'modal-create-page',
+  props: ['basepath'],
+  data () {
+    return {
+      currentPath: '',
+      userPath: '',
+      isLoading: false,
+      isInvalid: false
     }
+  },
+  computed: {
+    isShown () {
+      if (this.$store.state.modalCreatePage.shown) {
+        this.makeSelection()
+      }
+      return this.$store.state.modalCreatePage.shown
+    }
+  },
+  methods: {
+    makeSelection: function () {
+      let self = this
+      self._.delay(() => {
+        let startPos = (self.currentPath.length > 0) ? self.currentPath.length + 1 : 0
+        self.$helpers.form.setInputSelection(self.$refs.createPageInput, startPos, self.userPath.length)
+      }, 100)
+    },
+    cancel: function () {
+      this.$store.dispatch('modalCreatePage/close')
+    },
+    create: function () {
+      this.isInvalid = false
+      let newDocPath = this.$helpers.pages.makeSafePath(this.userPath)
+      if (this._.isEmpty(newDocPath)) {
+        this.isInvalid = true
+      } else {
+        this.isLoading = true
+        window.location.assign('/create/' + newDocPath)
+      }
+    }
+  },
+  mounted () {
+    this.currentPath = (this.basepath === 'home') ? '' : this.basepath
+    this.userPath = (this._.isEmpty(this.currentPath)) ? 'new-page' : this.currentPath + '/new-page'
   }
+}
 </script>

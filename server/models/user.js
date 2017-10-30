@@ -1,4 +1,4 @@
-/* global wiki */
+/* global wiki, appconfig */
 
 const Promise = require('bluebird')
 const bcrypt = require('bcryptjs-then')

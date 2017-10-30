@@ -1,5 +1,3 @@
-'use strict'
-
 /* global wiki */
 
 const Promise = require('bluebird')
@@ -78,7 +76,7 @@ module.exports = {
         return fs.readFileAsync(cpath).then((contents) => {
           return JSON.parse(contents)
         }).catch((err) => { // eslint-disable-line handle-callback-err
-          winston.error('Corrupted cache file. Deleting it...')
+          wiki.logger.error('Corrupted cache file. Deleting it...')
           fs.unlinkSync(cpath)
           return false
         })
@@ -115,7 +113,7 @@ module.exports = {
     return fs.statAsync(fpath).then((st) => {
       if (st.isFile()) {
         return fs.readFileAsync(fpath, 'utf8').then((contents) => {
-          let htmlProcessor = (options.parseMarkdown) ? mark.parseContent(contents) : Promise.resolve('')
+          let htmlProcessor = (options.parseMarkdown) ? wiki.mark.parseContent(contents) : Promise.resolve('')
 
           // Parse contents
 
@@ -123,8 +121,8 @@ module.exports = {
             let pageData = {
               markdown: (options.includeMarkdown) ? contents : '',
               html,
-              meta: (options.parseMeta) ? mark.parseMeta(contents) : {},
-              tree: (options.parseTree) ? mark.parseTree(contents) : []
+              meta: (options.parseMeta) ? wiki.mark.parseMeta(contents) : {},
+              tree: (options.parseTree) ? wiki.mark.parseTree(contents) : []
             }
 
             if (!pageData.meta.title) {
@@ -147,8 +145,8 @@ module.exports = {
               if (options.cache) {
                 let cacheData = JSON.stringify(_.pick(pageData, ['html', 'meta', 'tree', 'parent']), false, false, false)
                 return fs.writeFileAsync(cpath, cacheData).catch((err) => {
-                  winston.error('Unable to write to cache! Performance may be affected.')
-                  winston.error(err)
+                  wiki.logger.error('Unable to write to cache! Performance may be affected.')
+                  wiki.logger.error(err)
                   return true
                 })
               } else {
@@ -161,7 +159,7 @@ module.exports = {
         return false
       }
     }).catch((err) => { // eslint-disable-line handle-callback-err
-      throw new Promise.OperationalError(lang.t('errors:notexist', { path: entryPath }))
+      throw new Promise.OperationalError(wiki.lang.t('errors:notexist', { path: entryPath }))
     })
   },
 
@@ -181,7 +179,7 @@ module.exports = {
       return fs.statAsync(fpath).then((st) => {
         if (st.isFile()) {
           return fs.readFileAsync(fpath, 'utf8').then((contents) => {
-            let pageMeta = mark.parseMeta(contents)
+            let pageMeta = wiki.mark.parseMeta(contents)
 
             return {
               path: parentPath,
@@ -190,11 +188,11 @@ module.exports = {
             }
           })
         } else {
-          return Promise.reject(new Error(lang.t('errors:parentinvalid')))
+          return Promise.reject(new Error(wiki.lang.t('errors:parentinvalid')))
         }
       })
     } else {
-      return Promise.reject(new Error(lang.t('errors:parentisroot')))
+      return Promise.reject(new Error(wiki.lang.t('errors:parentisroot')))
     }
   },
 
@@ -214,15 +212,15 @@ module.exports = {
       if (st.isFile()) {
         return self.makePersistent(entryPath, contents, author).then(() => {
           return self.updateCache(entryPath).then(entry => {
-            return search.add(entry)
+            return wiki.search.add(entry)
           })
         })
       } else {
-        return Promise.reject(new Error(lang.t('errors:notexist', { path: entryPath })))
+        return Promise.reject(new Error(wiki.lang.t('errors:notexist', { path: entryPath })))
       }
     }).catch((err) => {
-      winston.error(err)
-      return Promise.reject(new Error(lang.t('errors:savefailed')))
+      wiki.logger.error(err)
+      return Promise.reject(new Error(wiki.lang.t('errors:savefailed')))
     })
   },
 
@@ -243,21 +241,21 @@ module.exports = {
       includeParentInfo: true,
       cache: true
     }).catch(err => {
-      winston.error(err)
+      wiki.logger.error(err)
       return err
     }).then((pageData) => {
       return {
         entryPath,
         meta: pageData.meta,
         parent: pageData.parent || {},
-        text: mark.removeMarkdown(pageData.markdown)
+        text: wiki.mark.removeMarkdown(pageData.markdown)
       }
     }).catch(err => {
-      winston.error(err)
+      wiki.logger.error(err)
       return err
     }).then((content) => {
       let parentPath = _.chain(content.entryPath).split('/').initial().join('/').value()
-      return db.Entry.findOneAndUpdate({
+      return wiki.db.Entry.findOneAndUpdate({
         _id: content.entryPath
       }, {
         _id: content.entryPath,
@@ -280,7 +278,7 @@ module.exports = {
         return result
       })
     }).catch(err => {
-      winston.error(err)
+      wiki.logger.error(err)
       return err
     })
   },
@@ -291,12 +289,12 @@ module.exports = {
    * @returns {Promise<Boolean>} Promise of the operation
    */
   updateTreeInfo() {
-    return db.Entry.distinct('parentPath', { parentPath: { $ne: '' } }).then(allPaths => {
+    return wiki.db.Entry.distinct('parentPath', { parentPath: { $ne: '' } }).then(allPaths => {
       if (allPaths.length > 0) {
         return Promise.map(allPaths, pathItem => {
           let parentPath = _.chain(pathItem).split('/').initial().join('/').value()
           let guessedTitle = _.chain(pathItem).split('/').last().startCase().value()
-          return db.Entry.update({ _id: pathItem }, {
+          return wiki.db.Entry.update({ _id: pathItem }, {
             $set: { isDirectory: true },
             $setOnInsert: { isEntry: false, title: guessedTitle, parentPath }
           }, { upsert: true })
@@ -322,15 +320,15 @@ module.exports = {
       if (!docExists) {
         return self.makePersistent(entryPath, contents, author).then(() => {
           return self.updateCache(entryPath).then(entry => {
-            return search.add(entry)
+            return wiki.search.add(entry)
           })
         })
       } else {
-        return Promise.reject(new Error(lang.t('errors:alreadyexists')))
+        return Promise.reject(new Error(wiki.lang.t('errors:alreadyexists')))
       }
     }).catch((err) => {
-      winston.error(err)
-      return Promise.reject(new Error(lang.t('errors:generic')))
+      wiki.logger.error(err)
+      return Promise.reject(new Error(wiki.lang.t('errors:generic')))
     })
   },
 
@@ -346,7 +344,7 @@ module.exports = {
     let fpath = entryHelper.getFullPath(entryPath)
 
     return fs.outputFileAsync(fpath, contents).then(() => {
-      return git.commitDocument(entryPath, author)
+      return wiki.git.commitDocument(entryPath, author)
     })
   },
 
@@ -362,11 +360,11 @@ module.exports = {
     let self = this
 
     if (_.isEmpty(entryPath) || entryPath === 'home') {
-      return Promise.reject(new Error(lang.t('errors:invalidpath')))
+      return Promise.reject(new Error(wiki.lang.t('errors:invalidpath')))
     }
 
-    return git.moveDocument(entryPath, newEntryPath).then(() => {
-      return git.commitDocument(newEntryPath, author).then(() => {
+    return wiki.git.moveDocument(entryPath, newEntryPath).then(() => {
+      return wiki.git.commitDocument(newEntryPath, author).then(() => {
         // Delete old cache version
 
         let oldEntryCachePath = entryHelper.getCachePath(entryPath)
@@ -374,14 +372,14 @@ module.exports = {
 
         // Delete old index entry
 
-        search.delete(entryPath)
+        wiki.search.delete(entryPath)
 
         // Create cache for new entry
 
         return Promise.join(
-          db.Entry.deleteOne({ _id: entryPath }),
+          wiki.db.Entry.deleteOne({ _id: entryPath }),
           self.updateCache(newEntryPath).then(entry => {
-            return search.add(entry)
+            return wiki.search.add(entry)
           })
         )
       })
@@ -397,20 +395,20 @@ module.exports = {
    */
   remove(entryPath, author) {
     if (_.isEmpty(entryPath) || entryPath === 'home') {
-      return Promise.reject(new Error(lang.t('errors:invalidpath')))
+      return Promise.reject(new Error(wiki.lang.t('errors:invalidpath')))
     }
 
-    return git.deleteDocument(entryPath, author).then(() => {
+    return wiki.git.deleteDocument(entryPath, author).then(() => {
       // Delete old cache version
 
       let oldEntryCachePath = entryHelper.getCachePath(entryPath)
       fs.unlinkAsync(oldEntryCachePath).catch((err) => { return true }) // eslint-disable-line handle-callback-err
 
       // Delete old index entry
-      search.delete(entryPath)
+      wiki.search.delete(entryPath)
 
       // Delete entry
-      return db.Entry.deleteOne({ _id: entryPath })
+      return wiki.db.Entry.deleteOne({ _id: entryPath })
     })
   },
 
@@ -423,7 +421,7 @@ module.exports = {
   getStarter(entryPath) {
     let formattedTitle = _.startCase(_.last(_.split(entryPath, '/')))
 
-    return fs.readFileAsync(path.join(SERVERPATH, 'app/content/create.md'), 'utf8').then((contents) => {
+    return fs.readFileAsync(path.join(wiki.SERVERPATH, 'app/content/create.md'), 'utf8').then((contents) => {
       return _.replace(contents, new RegExp('{TITLE}', 'g'), formattedTitle)
     })
   },
@@ -436,17 +434,17 @@ module.exports = {
    * @return {Promise<Array>} List of entries
    */
   getFromTree(basePath, usr) {
-    return db.Entry.find({ parentPath: basePath }, 'title parentPath isDirectory isEntry').sort({ title: 'asc' }).then(results => {
+    return wiki.db.Entry.find({ parentPath: basePath }, 'title parentPath isDirectory isEntry').sort({ title: 'asc' }).then(results => {
       return _.filter(results, r => {
-        return rights.checkRole('/' + r._id, usr.rights, 'read')
+        return wiki.rights.checkRole('/' + r._id, usr.rights, 'read')
       })
     })
   },
 
   getHistory(entryPath) {
-    return db.Entry.findOne({ _id: entryPath, isEntry: true }).then(entry => {
+    return wiki.db.Entry.findOne({ _id: entryPath, isEntry: true }).then(entry => {
       if (!entry) { return false }
-      return git.getHistory(entryPath).then(history => {
+      return wiki.git.getHistory(entryPath).then(history => {
         return {
           meta: entry,
           history

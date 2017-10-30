@@ -18,6 +18,8 @@
 </template>
 
 <script>
+/* global siteRoot, socket, $ */
+
 export default {
   data() {
     return {
@@ -57,9 +59,9 @@ export default {
     },
     searchmoveidx: function (val, oldVal) {
       if (val > 0) {
-        this.searchmovekey = (this.searchmovearr[val - 1])
-          ? 'res.' + this.searchmovearr[val - 1].entryPath
-          : 'sug.' + this.searchmovearr[val - 1]
+        this.searchmovekey = (this.searchmovearr[val - 1]) ?
+          'res.' + this.searchmovearr[val - 1].entryPath :
+          'sug.' + this.searchmovearr[val - 1]
       } else {
         this.searchmovekey = ''
       }

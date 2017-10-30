@@ -18,49 +18,49 @@
 </template>
 
 <script>
-  export default {
-    name: 'modal-delete-page',
-    props: ['currentPath'],
-    data () {
-      return {
-        isLoading: false
-      }
+export default {
+  name: 'modal-delete-page',
+  props: ['currentPath'],
+  data () {
+    return {
+      isLoading: false
+    }
+  },
+  computed: {
+    isShown () {
+      return this.$store.state.modalDeletePage.shown
+    }
+  },
+  methods: {
+    discard () {
+      this.isLoading = false
+      this.$store.dispatch('modalDeletePage/close')
     },
-    computed: {
-      isShown () {
-        return this.$store.state.modalDeletePage.shown
-      }
-    },
-    methods: {
-      discard () {
-        this.isLoading = false
-        this.$store.dispatch('modalDeletePage/close')
-      },
-      deletePage () {
-        let self = this
-        this.isLoading = true
-        this.$http.delete(window.location.href).then(resp => {
-          return resp.json()
-        }).then(resp => {
-          if (resp.ok) {
-            window.location.assign('/')
-          } else {
-            self.isLoading = false
-            self.$store.dispatch('alert', {
-              style: 'red',
-              icon: 'ui-2_square-remove-09',
-              msg: resp.msg
-            })
-          }
-        }).catch(err => {
+    deletePage () {
+      let self = this
+      this.isLoading = true
+      this.$http.delete(window.location.href).then(resp => {
+        return resp.json()
+      }).then(resp => {
+        if (resp.ok) {
+          window.location.assign('/')
+        } else {
           self.isLoading = false
           self.$store.dispatch('alert', {
             style: 'red',
             icon: 'ui-2_square-remove-09',
-            msg: 'Error: ' + err.body.msg
+            msg: resp.msg
           })
+        }
+      }).catch(err => {
+        self.isLoading = false
+        self.$store.dispatch('alert', {
+          style: 'red',
+          icon: 'ui-2_square-remove-09',
+          msg: 'Error: ' + err.body.msg
         })
-      }
+      })
     }
   }
+}
 </script>

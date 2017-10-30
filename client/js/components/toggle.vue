@@ -6,16 +6,16 @@
 </template>
 
 <script>
-  export default {
-    name: 'toggle',
-    props: ['value', 'desc'],
-    data () {
-      return { }
-    },
-    methods: {
-      changeToggle() {
-        this.$emit('input', !this.value)
-      }
+export default {
+  name: 'toggle',
+  props: ['value', 'desc'],
+  data () {
+    return { }
+  },
+  methods: {
+    changeToggle() {
+      this.$emit('input', !this.value)
     }
   }
+}
 </script>
