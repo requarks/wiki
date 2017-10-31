@@ -114,7 +114,11 @@ global.db.onReady.then(() => {
           jobCbStreamDocsResolve = resolve
         })
 
-        klaw(repoPath).on('data', function (item) {
+        klaw(repoPath, {
+          filter: function(pathItem) {
+            return !pathItem.endsWith(".git");
+          }
+        }).on('data', function (item) {
           if (path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
             let entryPath = entryHelper.parsePath(entryHelper.getEntryPathFromFullPath(item.path))
             let cachePath = entryHelper.getCachePath(entryPath)
@@ -151,6 +155,8 @@ global.db.onReady.then(() => {
               })
             )
           }
+        }).on("error", (err, item) => {
+          global.winston.error(err);
         }).on('end', () => {
           jobCbStreamDocsResolve(Promise.all(cacheJobs))
         })
