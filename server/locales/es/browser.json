@@ -77,6 +77,8 @@
     "delete": "Eliminar",
     "deletefiletitle": "¿Eliminar?",
     "deletefilewarn": "¿Confirmas que deseas eliminar?",
+    "deletepagewarning": "¿Confirma que desea eliminar esta página? Esta acción no se puede deshacer!",
+    "deletepagetitle": "¿Eliminar esta página?",
     "deleteusertitle": "¿Eliminar cuenta de usuario?",
     "deleteuserwarning": "¿Confirma que desea eliminar esta cuenta de usuario? Esta acción no se puede deshacer!",
     "discard": "Descartar",

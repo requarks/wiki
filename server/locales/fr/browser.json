@@ -77,6 +77,8 @@
     "delete": "Supprimer",
     "deletefiletitle": "Supprimer",
     "deletefilewarn": "Etes-vous sûr de vouloir supprimer",
+    "deletepagewarning": "Êtes-vous sûr de vouloir supprimer cette page? Impossible de revenir en arrière une fois l'action complétée!",
+    "deletepagetitle": "Supprimer cette page?",
     "deleteusertitle": "Supprimer le compte utilisateur?",
     "deleteuserwarning": "Êtes-vous sûr de vouloir supprimer ce compte utilisateur? Impossible de revenir en arrière une fois l'action complétée!",
     "discard": "Annuler",

@@ -77,6 +77,8 @@
     "delete": "删除",
     "deletefiletitle": "删除？",
     "deletefilewarn": "你确定你要删除",
+    "deletepagewarning": "删除此页面？该操作不能反悔！",
+    "deletepagetitle": "删除此页面",
     "deleteusertitle": "删除用户帐号？",
     "deleteuserwarning": "您确定要删除此用户帐户吗？此操作无法撤销！",
     "discard": "放弃",

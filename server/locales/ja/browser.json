@@ -92,6 +92,7 @@
     "movepageplaceholder": "page-name",
     "movepagetitle": "ページを移動する",
     "movepagewarning": "ページを移動又はページ名を変更する場合、リンクが壊れる可能性があります。その後、このページにリンクしているページは必ず編集してください。",
+    "newfolderinvalid": "フォルダ名は無効です。",
     "newfolderloading": "新しいフォルダを作成中...",
     "newfoldername": "新しいフォルダ名を入力してください：",
     "newfoldernameplaceholder": "folder-name",
