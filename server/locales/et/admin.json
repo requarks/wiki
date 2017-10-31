@@ -1,0 +1,70 @@
+{
+  "profile": {
+    "displayname": "Kuvatud nimi",
+    "displaynameexample": "Mari Maasikas",
+    "email": "E-kiri",
+    "lastprofileupdate": "Viimane profiili uuendus",
+    "membersince": "Liige alates",
+    "password": "Parool",
+    "passwordverify": "Kinnita parool",
+    "provider": "Pakkuja",
+    "savechanges": "Salvesta muudatused",
+    "subtitle": "Profiili ja autentimise info",
+    "tfa": "Kaheastmeline autentimine (2FA)",
+    "tfadisable": "Keela 2FA",
+    "tfadisabled": "Keelatud",
+    "tfaenable": "Luba 2FA",
+    "tfaenabled": "Lubatud"
+  },
+  "stats": {
+    "subtitle": "Üldine üle-saidiline statistika",
+    "entries": "Sissekanded",
+    "uploads": "Üleslaadimised",
+    "users": "Kasutajad"
+  },
+  "settings": {
+    "subtitle": "Halda saidi sätteid"
+  },
+  "system": {
+    "subtitle": "Info ja kasulikkus su vikile",
+    "systemversion": "Süsteemi versioon",
+    "currentversion": "Praegune versioon",
+    "latestversion": "Viimane versioon",
+    "upgrade": "Uuenda",
+    "reinstall": "Installi praegune versioon uuesti",
+    "versioncheckfailed": "Uusima versiooni päring ebaõnnestus. Proovi hiljem uuesti.",
+    "administrativetools": "Haldustööriistad",
+    "flushcache": "Puhasta vahemälu ja ehita indeksid uuesti",
+    "flushcachetext": "Kui sisu või otsingutulemused tunduvad olevat aegunud või ei sisalda viimast sisu, võib vahemälu tühjendamine aidata neid probleeme lahendada.",
+    "flushcachebtn": "Puhasta ja ehita uuesti",
+    "resetaccounts": "Lähtesta süsteemikontod vaikimisi andmetele",
+    "resetaccountstext": "Süsteemikontod (nagu kasutaja Külaline) taastatakse nende vaikimisi sätetele.",
+    "resetaccountsbtn": "Lähtesta süsteemikontod",
+    "flushsessions": "Puhasta kõik aktiivsed seansid",
+    "flushsessionstext": "Kõik kasutajad logitakse välja ja sunnitakse uuesti sisse logima. Samuti mõjutab teie praegust seanssi!",
+    "flushsessionsbtn": "Puhasta seansid",
+    "hostinfo": "Hostiteave",
+    "os": "Operatsioonisüsteem",
+    "nodeversion": "Node.js versioon",
+    "hostname": "Hostinimi",
+    "cores": "CPU tuumad",
+    "totalmem": "Kogu mälu",
+    "cwd": "Aktiivne kataloog"
+  },
+  "theme": {
+    "subtitle": "Muuda oma wiki välimust ja tunnet",
+    "primarycolor": "Peamine värv",
+    "primarycolordesc": "Kasutatakse ülemise navigeerimisriba, päiste, linkide jms jaoks.",
+    "altcolor": "Alternatiivne värv",
+    "altcolordesc": "Kasutatakse külgribal (tumedamal toonil)",
+    "footercolor": "Jaluse värv",
+    "footercolordesc": "Kasutatakse jaluses (heledam toon)",
+    "codeblock": {
+      "title": "Koodilõigud",
+      "dark": "Kasuta tumedat värviskeemi",
+      "colorize": "Värvi koodisüntaks"
+    },
+    "savechanges": "Salvesta muudatused",
+    "reset": "Taasta vaikeväärtustele"
+  }
+}

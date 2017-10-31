@@ -1,0 +1,37 @@
+{
+  "profile": {
+    "displayname": "Nazwa wyświetlana",
+    "displaynameexample": "Jan Kowalski",
+    "email": "Adres e-mail",
+    "lastprofileupdate": "Ostatnia aktualizacja profilu",
+    "membersince": "Dołączenie do wiki",
+    "password": "Hasło",
+    "passwordverify": "Zweryfikuj hasło",
+    "provider": "Dostawca",
+    "savechanges": "Zapisz zmiany",
+    "subtitle": "Informacje nt. profilu i uwierzytelniania",
+    "tfa": "Uwierzytelnianie dwuetapowe",
+    "tfadisable": "Wyłącz 2FA",
+    "tfadisabled": "Wyłączone",
+    "tfaenable": "Włącz 2FA.",
+    "tfaenabled": "Włączone"
+  },
+  "stats": {
+    "subtitle": "Ogólne statystyki",
+    "entries": "Wpisy",
+    "uploads": "Pliki",
+    "users": "Użytkownicy"
+  },
+  "settings": {
+    "subtitle": "Zarządzaj konfiguracją strony"
+  },
+  "system": {
+    "subtitle": "Informacje i narzędzia dla twojej wiki",
+    "systemversion": "Wersja systemu",
+    "currentversion": "Aktualna wersja",
+    "latestversion": "Najnowsza wersja",
+    "upgrade": "Zaktualizuj",
+    "reinstall": "Przeinstaluj aktualną wersję",
+    "versioncheckfailed": "Wystąpił błąd przy sprawdzaniu najnowszej wersji. Spróbuj ponownie później."
+  }
+}

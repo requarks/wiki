@@ -1,0 +1,7 @@
+{
+  "alreadyexists": "See sissekanne on juba olemas!",
+  "debugmsg": "Detailne debugi rada",
+  "fileexists": "Fail {{path}} on juba olemas.",
+  "forbidden": "Keelatud",
+  "forbiddendetail": "Vabandust, sul pole vajalikke õigusi, et seda lehte külastada"
+}

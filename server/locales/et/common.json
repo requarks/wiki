@@ -1,0 +1,33 @@
+{
+  "wiki": "Viki",
+  "header": {
+    "overview": "Ülevaade",
+    "createdoc": "Loo uus dokument"
+  },
+  "footer": {
+    "poweredby": "Jooksutab",
+    "home": "Kodu",
+    "top": "Tagasi üles"
+  },
+  "sidebar": {
+    "nav": "NAV",
+    "navigation": "Navigatsioon",
+    "pagecontents": "Lehe sisu",
+    "pastversions": "Varasemad versioonid"
+  },
+  "nav": {
+    "account": "Konto",
+    "allpages": "Kõik lehed",
+    "create": "Loo uus",
+    "discard": "Loobu",
+    "edit": "Muuda",
+    "history": "Ajalugu",
+    "login": "Logi sisse",
+    "logout": "Logi välja",
+    "move": "Liiguta",
+    "myprofile": "Minu profiil",
+    "normalview": "Tavaline vaade",
+    "root": "Kodu",
+    "savechanges": "Salves"
+  }
+}

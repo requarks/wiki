@@ -1,0 +1,17 @@
+{
+  "wiki": "Wiki",
+  "header": {
+    "overview": "Podsumowanie",
+    "createdoc": "Stwórz nowy dokument"
+  },
+  "footer": {
+    "poweredby": "Oparte na",
+    "home": "Strona główna"
+  },
+  "sidebar": {
+    "nav": "NAWIGACJA",
+    "navigation": "Nawigacja",
+    "pagecontents": "Zawartość strony",
+    "pastversions": "Dawne wersje"
+  }
+}

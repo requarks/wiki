@@ -1,0 +1,6 @@
+{
+  "added": "{{path}} lisatud",
+  "deleted": "Kustutasin/Nimetasin ümber {{path}}",
+  "updated": "Uuendasin {{path}}",
+  "uploaded": "{{path}} üles laetud"
+}

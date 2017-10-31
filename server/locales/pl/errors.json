@@ -1,0 +1,6 @@
+{
+  "alreadyexists": "Taki wpis już istnieje!",
+  "debugmsg": "Szczegółowy opis błędu",
+  "fileexists": "Plik {{path}} już istnieje.",
+  "forbidden": "Zabronione"
+}
