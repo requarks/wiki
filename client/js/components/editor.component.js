@@ -197,13 +197,15 @@ export default {
         ],
         shortcuts: {
           'toggleBlockquote': null,
-          'toggleFullScreen': null
+          'toggleFullScreen': null,
+          'toggleOrderedList': null,
+          'toggleCodeBlock': null          
         }
       })
 
       // Save
       $(window).bind('keydown', (ev) => {
-        if (ev.ctrlKey || ev.metaKey) {
+        if ((ev.ctrlKey || ev.metaKey) && !(ev.altKey)) {
           switch (String.fromCharCode(ev.which).toLowerCase()) {
             case 's':
               ev.preventDefault()
