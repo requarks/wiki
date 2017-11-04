@@ -76,7 +76,7 @@ userSchema.statics.processProfile = (profile) => {
     new: true
   }).then((user) => {
     // Handle unregistered accounts
-    if (!user && profile.provider !== 'local' && (appconfig.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
+    if (!user && profile.provider !== 'local' && (appconfig.auth.defaultAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
       let nUsr = {
         email: primaryEmail,
         provider: profile.provider,
@@ -84,7 +84,7 @@ userSchema.statics.processProfile = (profile) => {
         password: '',
         name: profile.displayName || profile.name || profile.cn,
         rights: [{
-          role: 'read',
+          role: appconfig.auth.defaultAccess === 'write' ? 'write' : 'read',
           path: '/',
           exact: false,
           deny: false

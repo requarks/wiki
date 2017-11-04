@@ -58,7 +58,7 @@ langRtl: false
 public: false
 
 auth:
-  defaultReadAccess: false
+  defaultAccess: false
   local:
     enabled: true
   google:

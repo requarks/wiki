@@ -36,6 +36,25 @@ module.exports = (confPaths) => {
     process.exit(1)
   }
 
+  // Update legacy options
+
+  if (appconfig.auth && appconfig.auth.defaultReadAccess !== undefined) {
+    if (appconfig.auth.defaultAccess === undefined) {
+      console.warn("auth.defaultReadAccess is deprecated, use `defaultAccess: read`")
+      appconfig.auth.defaultAccess = 'read'
+    } else if (appconfig.auth.defaultReadAccess === true) {
+      if (appconfig.auth.defaultAccess === 'write' || !appconfig.auth.defaultAccess) {
+        console.error(new Error('auth.defaultReadAccess conflicts with auth.defaultAccess'))
+        process.exit(1)
+      }
+    } else if (appconfig.auth.defaultReadAccess === false) {
+      if (appconfig.auth.defaultAccess !== false) {
+        console.error(new Error('auth.defaultReadAccess conflicts with auth.defaultAccess'))
+        process.exit(1)
+      }
+    }
+  }
+
   // Merge with defaults
 
   appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
