@@ -76,8 +76,11 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - New fully responsive layout, with better customization capabilities.
   - Full localization support, especially for non-latin languages.
 
-**Breaking Changes**: MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
+**Breaking Changes**:
+  - MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
+  - Node.js 8.9 LTS or later is now the minimum supported version.
 
+**Milestones**:
 - [x] GraphQL API
 - [x] Migrate to PostgreSQL + Redis datastore
 - [x] Telemetry for analytics and crash reporting (Optional and fully anonymized)
