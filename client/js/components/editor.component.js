@@ -199,7 +199,7 @@ export default {
           'toggleBlockquote': null,
           'toggleFullScreen': null,
           'toggleOrderedList': null,
-          'toggleCodeBlock': null          
+          'toggleCodeBlock': null
         }
       })
 
