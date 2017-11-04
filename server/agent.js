@@ -115,8 +115,8 @@ global.db.onReady.then(() => {
         })
 
         klaw(repoPath, {
-          filter: function(pathItem) {
-            return !pathItem.endsWith(".git");
+          filter: pathItem => {
+            return !pathItem.endsWith('.git')
           }
         }).on('data', function (item) {
           if (path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
@@ -155,8 +155,8 @@ global.db.onReady.then(() => {
               })
             )
           }
-        }).on("error", (err, item) => {
-          global.winston.error(err);
+        }).on('error', (err, item) => {
+          global.winston.error(err)
         }).on('end', () => {
           jobCbStreamDocsResolve(Promise.all(cacheJobs))
         })
