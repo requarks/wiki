@@ -68,5 +68,12 @@ module.exports = Promise.mapSeries([
   () => {
     console.info(colors.white('  └── ') + colors.green('Clearing fuse-box cache...'))
     return fs.emptyDirAsync('./.fusebox')
+  },
+  /**
+   * Delete Test Results
+   */
+  () => {
+    console.info(colors.white('  └── ') + colors.green('Clearing test results...'))
+    return fs.remove('./test_results')
   }
 ], f => { return f() })

@@ -1,5 +1,6 @@
 .config-manager {
   background-image: linear-gradient(to right, mc('indigo', '400'), mc('indigo', '600'));
+  background-repeat: no-repeat;
   width: 100%;
   min-height: 100%;
   padding-top: 1rem;
@@ -22,12 +23,37 @@
     border-bottom: 1px solid mc('indigo', '50');
     margin-bottom: 1rem;
 
+    img {
+      max-height: 100px;
+    }
+
     h2 {
       margin: 0;
       color: mc('indigo', '700');
       font-weight: 500;
     }
 
+  }
+
+  .is-logo {
+    text-align: center;
+    padding: .5rem 0 1.5rem 0;
+    border-bottom: 1px solid mc('indigo', '50');
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img {
+      max-height: 64px;
+    }
+
+    h4 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-left: 1.5rem;
+      color: mc('grey', '700');
+    }
   }
 
   i.icon-loader {

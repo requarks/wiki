@@ -77,10 +77,10 @@ module.exports = () => {
     Promise.mapSeries([
       () => {
         const semver = require('semver')
-        if (!semver.satisfies(semver.clean(process.version), '>=8.8.1')) {
-          throw new Error('Node.js version is too old. Minimum is 8.8.1.')
+        if (!semver.satisfies(semver.clean(process.version), '>=8.9.0')) {
+          throw new Error('Node.js version is too old. Minimum is 8.9.0.')
         }
-        return 'Node.js ' + process.version + ' detected. Minimum is 8.8.1.'
+        return 'Node.js ' + process.version + ' detected. Minimum is 8.9.0.'
       },
       () => {
         return Promise.try(() => {

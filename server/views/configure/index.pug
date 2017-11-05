@@ -19,7 +19,7 @@ block body
                     i(v-if='loading')
                   .panel-content.is-text
                     .welcome
-                      img(src='/images/logo.png', alt='Wiki.js')
+                      img(src='svg/logo-wikijs.svg', alt='Wiki.js Logo')
                       h2 A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
                     p This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
                     p Detailed information about installation and usage can be found on the #[a(href='https://wiki.requarks.io/docs') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
@@ -48,9 +48,12 @@ block body
               template(v-else-if='state === "syscheck"')
                 .panel
                   h2.panel-title.is-featured
-                    span System Check
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.is-text
+                    .is-logo
+                      svg.icons.is-64: use(xlink:href='#nc-metrics')
+                      h4 System Check
                     p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#nc-ms-dots')] Checking your system for compatibility...
                     p(v-if='!loading && syscheck.ok')
                       ul
@@ -73,25 +76,17 @@ block body
               template(v-else-if='state === "general"')
                 .panel
                   h2.panel-title.is-featured
-                    span General
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.form-sections
                     section
+                      .is-logo
+                        svg.icons.is-64: use(xlink:href='#nc-butterfly')
+                        h4 General Information
                       p.control.is-fullwidth
                         label.label Site Title
                         input(type='text', placeholder='e.g. Wiki', v-model='conf.title', data-vv-scope='general', name='ipt-title', v-validate='{ required: true, min: 2 }')
                         span.desc The site title will appear in the top left corner on every page and within the window title bar.
-                    section.columns
-                      .column.is-half
-                        p.control
-                          label.label Port
-                          input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
-                          span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it. Set #[strong $(PORT)] to use the PORT environment variable.
-                      .column.is-half
-                        p.control.is-fullwidth
-                          label.label Site Relative Path
-                          input(type='text', placeholder='/', v-model='conf.path', data-vv-scope='general', name='ipt-path', v-validate='{ required: true, min: 1 }')
-                          span.desc The relative path to your wiki. Unless you configure a reverse proxy in front of Wiki.js to handle requests made to a sub-directory, #[strong it is recommended to leave the default value].
                     section.columns
                       .column.is-half
                         p.control
@@ -102,12 +97,23 @@ block body
                           span.desc The language in which navigation, help and other UI elements will be displayed.
                       .column.is-half
                         p.control.is-fullwidth
+                          label.label Site Relative Path
+                          input(type='text', placeholder='/', v-model='conf.path', data-vv-scope='general', name='ipt-path', v-validate='{ required: true, min: 1 }')
+                          span.desc The relative path to your wiki. Unless you configure a reverse proxy in front of Wiki.js to handle requests made to a sub-directory, #[strong it is recommended to leave the default value].
+                    section.columns
+                      .column.is-half
+                        p.control
+                          label.label Server Port
+                          input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
+                          span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it. Set #[strong $(PORT)] to use the PORT environment variable.
+                      .column.is-half
+                        p.control.is-fullwidth
                           input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='general', name='ipt-public')
                           label.label(for='ipt-public') Public Access
                           span.desc Should the site be accessible (read only) without login.
                     section
                       p.control.is-fullwidth
-                        label.label Local Repository Path
+                        label.label Local Server Repository Path
                         input(type='text', placeholder='e.g. ./repo', v-model='conf.pathRepo', data-vv-scope='general', name='ipt-repopath', v-validate='{ required: true, min: 2 }')
                         span.desc The path where the local git repository will be created, used to store content in markdown files and uploads.#[br] #[strong It is recommended to leave the default value].
                   .panel-footer
@@ -122,9 +128,12 @@ block body
               template(v-else-if='state === "considerations"')
                 .panel
                   h2.panel-title.is-featured
-                    span Important Considerations
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.is-text
+                    .is-logo
+                      svg.icons.is-64: use(xlink:href='#nc-radar')
+                      h4 Important Considerations
                     h3 Is Wiki.js going to be behind a web server (e.g. nginx / apache / IIS) or proxy?
                     p
                       ul
@@ -149,9 +158,12 @@ block body
               template(v-else-if='state === "git"')
                 .panel
                   h2.panel-title.is-featured
-                    span Git Repository
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.is-text
+                    .is-logo
+                      img(src='svg/logo-git.svg', alt='Git Logo')
+                      h4 Git Repository
                     p Wiki.js stores article content and uploads locally on disk. All content is then regularly kept in sync with a remote git repository. This acts a backup protection and provides history / revert features. While optional, it is <strong>HIGHLY</strong> recommended to setup the remote git repository connection.
                   .panel-content.form-sections
                     section.columns
