@@ -23,7 +23,7 @@
               header.is-deep-orange Are you sure?
               section
                 label.label You are about to {{ mode }} Wiki.js.
-                span.note You will not be able to access your wiki during the operation. Content will not be affected. However, it is your responsability to ensure you have a backup in the unexpected event content gets lost or corrupted.
+                span.note You will not be able to access your wiki during the operation. Content will not be affected. However, it is your responsibility to ensure you have a backup in the unexpected event content gets lost or corrupted.
               footer
                 a.button.is-grey.is-outlined(@click='upgradeCancel') Abort
                 a.button.is-deep-orange(@click='upgradeStart') Start
