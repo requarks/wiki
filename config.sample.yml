@@ -3,6 +3,7 @@
 #######################################################################
 # Full explanation + examples in the documentation:
 # https://docs.requarks.io/wiki/install
+# You can use an ENV variable by using $(ENV_VAR_NAME) as the value
 
 # ---------------------------------------------------------------------
 # Title of this site
@@ -107,7 +108,6 @@ sessionSecret: 1234567890abcdefghijklmnopqrstuvxyz
 # ---------------------------------------------------------------------
 # Database Connection String
 # ---------------------------------------------------------------------
-# You can also use an ENV variable by using $ENV_VAR_NAME as the value
 
 db: mongodb://localhost:27017/wiki
 
