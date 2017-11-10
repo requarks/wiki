@@ -42,7 +42,7 @@ module.exports = (confPaths) => {
 
   // Check port
 
-  if (appconfig.port < 1) {
+  if (!appconfig.port) {
     appconfig.port = process.env.PORT || 80
   }
 
