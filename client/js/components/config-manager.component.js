@@ -32,6 +32,8 @@ export default {
         adminPasswordConfirm: '',
         gitAuthPass: '',
         gitAuthSSHKey: '',
+        gitAuthSSHKeyEnv: '',
+        gitAuthSSHKeyDB: '',
         gitAuthSSL: true,
         gitAuthType: 'ssh',
         gitAuthUser: '',
@@ -46,6 +48,7 @@ export default {
         pathRepo: './repo',
         port: siteConfig.port || 80,
         public: (siteConfig.public === true),
+        selfregister: (siteConfig.selfregister === true),
         telemetry: true,
         title: siteConfig.title || 'Wiki',
         upgrade: false

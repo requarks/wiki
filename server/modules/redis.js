@@ -23,6 +23,10 @@ module.exports = {
       red.on('ready', () => {
         wiki.logger.info('Redis connection: OK')
       })
+      red.on('error', () => {
+        wiki.logger.error('Failed to connect to Redis instance!')
+        process.exit(1)
+      })
       return red
     } else {
       wiki.logger.error('Invalid Redis configuration!')

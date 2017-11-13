@@ -41,7 +41,6 @@ if (dev) {
 const ALIASES = {
   'brace-ext-modelist': 'brace/ext/modelist.js',
   'simplemde': 'simplemde/dist/simplemde.min.js',
-  'socket-io-client': 'socket.io-client/dist/socket.io.js',
   'vue': (dev) ? 'vue/dist/vue.js' : 'vue/dist/vue.min.js',
   'vue-lodash': 'vue-lodash/dist/vue-lodash.min.js',
   'vue-resource': (dev) ? 'vue-resource/dist/vue-resource.js' : 'vue-resource/dist/vue-resource.es2015.js'
@@ -80,7 +79,11 @@ const scssChain = [
       browsers: babelrc.presets[0][1].targets.browsers
     })
   ]),
-  fsbx.CSSPlugin()
+  fsbx.CSSPlugin(dev ? {} : {
+    group: 'bundle.css',
+    outFile: './assets/css/bundle.css',
+    inject: false
+  })
 ]
 
 globalTasks.then(() => {

@@ -1,5 +1,5 @@
 .config-manager {
-  background-image: linear-gradient(to right, mc('indigo', '400'), mc('indigo', '600'));
+  background-image: linear-gradient(to bottom right, mc('blue', '500'), mc('blue', '700'));
   background-repeat: no-repeat;
   width: 100%;
   min-height: 100%;
@@ -20,7 +20,7 @@
   .welcome {
     text-align: center;
     padding: 1rem 0 2rem 0;
-    border-bottom: 1px solid mc('indigo', '50');
+    border-bottom: 1px solid mc('blue', '50');
     margin-bottom: 1rem;
 
     img {
@@ -38,7 +38,7 @@
   .is-logo {
     text-align: center;
     padding: .5rem 0 1.5rem 0;
-    border-bottom: 1px solid mc('indigo', '50');
+    border-bottom: 1px solid mc('blue', '50');
     margin-bottom: 1rem;
     display: flex;
     justify-content: center;
@@ -58,16 +58,7 @@
 
   i.icon-loader {
     display: inline-block;
-    color: mc('indigo', '500')
-  }
-  i.ui-1_check-simple {
-    color: mc('green', '500')
-  }
-  i.ui-2_ban-bold {
-    color: mc('red', '500')
-  }
-  i.icon-warning-outline {
-    color: mc('orange', '500')
+    color: mc('blue', '500')
   }
 
   .progress-bar {

@@ -13,7 +13,7 @@ import { ApolloClient } from 'apollo-client'
 import { HttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import store from './store'
-import icons from '../svg/icons.svg'
+import icons from '../svg/nc-icons.svg'
 // ====================================
 // Load Modules
 // ====================================

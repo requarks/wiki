@@ -1,5 +1,3 @@
-'use strict'
-
 /* global wiki */
 
 const fs = require('fs')
@@ -85,7 +83,8 @@ module.exports = {
       wiki.logger.info('Database (PostgreSQL) connection: OK')
     }).catch(err => {
       wiki.logger.error('Failed to connect to PostgreSQL instance.')
-      return err
+      wiki.logger.error(err)
+      process.exit(1)
     })
 
     // Load DB Models

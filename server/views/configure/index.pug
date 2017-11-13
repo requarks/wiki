@@ -81,7 +81,7 @@ block body
                   .panel-content.form-sections
                     section
                       .is-logo
-                        svg.icons.is-64: use(xlink:href='#nc-butterfly')
+                        svg.icons.is-64: use(xlink:href='#nc-webpage-2-2')
                         h4 General Information
                       p.control.is-fullwidth
                         label.label Site Title
@@ -111,6 +111,10 @@ block body
                           input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='general', name='ipt-public')
                           label.label(for='ipt-public') Public Access
                           span.desc Should the site be accessible (read only) without login.
+                        p.control.is-fullwidth
+                          input#ipt-selfregister(type='checkbox', v-model='conf.selfregister', data-vv-scope='general', name='ipt-selfregister')
+                          label.label(for='ipt-selfregister') Allow Self-Registration
+                          span.desc Can users create their own account to gain access?
                     section
                       p.control.is-fullwidth
                         label.label Local Server Repository Path
@@ -141,7 +145,7 @@ block body
                         li - Do not rewrite URLs after the domain. This can cause unexpected issues in Wiki.js navigation.
                         li - Do not remove or alter the client IP when proxying the requests. This can cause the authentication brute force protection to engage unexpectedly.
                     template(v-if='considerations.https')
-                      h3 The site will not be using HTTPS? #[i.nc-icon-outline.ui-3_alert.animated.fadeOut.infinite]
+                      h3 The site will not be using HTTPS? #[svg.icons.is-20.is-outlined.animated.fadeOut.infinite: use(xlink:href='#nc-alert')]
                       p The host URL you specified is not HTTPS. It is highly recommended to use HTTPS. You must use a web server / proxy (e.g. nginx / apache / IIS) in front of Wiki.js to use HTTPS. Wiki.js does not provide HTTPS handling by itself.
                     template(v-if='considerations.port')
                       h3 You are using a non-standard port.
@@ -182,8 +186,10 @@ block body
                         p.control.is-fullwidth
                           label.label Authentication
                           select(v-model='conf.gitAuthType')
-                            option(value='ssh') SSH (recommended)
-                            option(value='basic') Basic
+                            option(value='ssh') SSH using Private Key file (recommended)
+                            option(value='sshenv') SSH using Private Key in env. variable
+                            option(value='sshdb') SSH using Private Key in database
+                            option(value='basic') Basic Credentials
                           span.desc The authentication method used to connect to your remote Git repository.
                         p.control.is-fullwidth
                           input#ipt-git-verify-ssl(type='checkbox', v-model='conf.gitAuthSSL')
@@ -203,6 +209,16 @@ block body
                           label.label Private Key location
                           input(type='text', placeholder='e.g. /etc/wiki/keys/git.pem', v-model='conf.gitAuthSSHKey')
                           span.desc The full path to the private key on disk.
+                      .column(v-show='conf.gitAuthType === "sshenv"')
+                        p.control.is-fullwidth
+                          label.label Private Key Environment Variable
+                          input(type='text', placeholder='e.g. GIT_PRIVATE_KEY', v-model='conf.gitAuthSSHKeyEnv')
+                          span.desc The environment variable containing the private key.
+                      .column(v-show='conf.gitAuthType === "sshdb"')
+                        p.control.is-fullwidth
+                          label.label Private Key Contents
+                          textarea(v-model='conf.gitAuthSSHKeyDB')
+                          span.desc Paste the contents of the private key in the above field
                     section.columns
                       .column.is-one-third
                         p.control.is-fullwidth
@@ -227,9 +243,12 @@ block body
               template(v-else-if='state === "gitcheck"')
                 .panel
                   h2.panel-title.is-featured
-                    span Git Repository Check
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.is-text
+                    .is-logo
+                      img(src='svg/logo-git.svg', alt='Git Logo')
+                      h4 Git Repository Check
                     p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#nc-ms-dots')] Verifying Git repository settings...
                     p(v-if='!loading && gitcheck.ok')
                       ul
@@ -251,9 +270,12 @@ block body
               template(v-else-if='state === "admin"')
                 .panel
                   h2.panel-title.is-featured
-                    span Administrator Account
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.is-text
+                    .is-logo
+                      svg.icons.is-64: use(xlink:href='#nc-man-38')
+                      h4 Administrator Account
                     p A root administrator account will be created for local authentication. From this account, you can create or authorize more users.
                   .panel-content.form-sections
                     section
@@ -284,9 +306,12 @@ block body
               template(v-else-if='state === "upgrade"')
                 .panel
                   h2.panel-title.is-featured
-                    span Upgrade from Wiki.js 1.x
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.is-text
+                    .is-logo
+                      svg.icons.is-64: use(xlink:href='#nc-spaceship')
+                      h4 Upgrade from Wiki.js 1.x
                     p Migrating from a Wiki.js 1.x installation is quick and simple.
                   .panel-content.form-sections
                     section
@@ -311,16 +336,19 @@ block body
               template(v-else-if='state === "final"')
                 .panel
                   h2.panel-title.is-featured
-                    span Finalizing
+                    span Wiki.js
                     i(v-if='loading')
                   .panel-content.is-text
-                    p(v-if='loading') #[i.icon-loader.animated.rotateIn.infinite] Finalizing your installation...
-                    p(v-if='!loading && final.ok')
-                      i.icon-check
-                      strong  Wiki.js was configured successfully and is now ready for use.
+                    .is-logo(v-if='loading')
+                      svg.icons.is-64: use(xlink:href='#nc-ms-dots')
+                      h4 Finalizing your installation...
+                    .is-logo(v-if='!loading && final.ok')
+                      svg.icons.is-64: use(xlink:href='#nc-check-bold')
+                      h4 All done!
+                    p(v-if='!loading && final.ok'): strong Wiki.js was configured successfully and is now ready for use.
                     p(v-if='!loading && final.ok')
                       | Click the <strong>Start</strong> button below to start the Wiki.js server.
-                    p(v-if='!loading && !final.ok') #[i.icon-square-cross] Error: {{ final.error }}
+                    p(v-if='!loading && !final.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove-12')] Error: {{ final.error }}
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
