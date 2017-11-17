@@ -40,7 +40,7 @@ export default {
         self.searchload++
         socket.emit('search', { terms: val }, (data) => {
           self.searchres = self._.map(data.match, m => {
-            m.entryPath = `${siteRoot}/${m.entryPath}`
+            m.entryPath = `/${m.entryPath}`
             return m
           })
           self.searchsuggest = data.suggest

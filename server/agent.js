@@ -63,7 +63,7 @@ global.lang
     lng: appconfig.lang,
     fallbackLng: 'en',
     backend: {
-      loadPath: path.join(SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
+      loadPath: '/locales/{{lng}}/{{ns}}.json'
     }
   })
 

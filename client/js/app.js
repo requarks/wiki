@@ -107,7 +107,7 @@ i18next
   .use(i18nextXHR)
   .init({
     backend: {
-      loadPath: siteRoot + '/js/i18n/{{lng}}.json'
+      loadPath: '/js/i18n/{{lng}}.json'
     },
     lng: siteLang,
     fallbackLng: siteLang
