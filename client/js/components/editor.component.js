@@ -30,7 +30,7 @@ export default {
         return resp.json()
       }).then(resp => {
         if (resp.ok) {
-          window.location.assign(siteRoot + '/' + self.currentPath)
+          window.location.assign('/' + self.currentPath)
         } else {
           self.$store.dispatch('alert', {
             style: 'red',

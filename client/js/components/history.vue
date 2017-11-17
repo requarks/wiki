@@ -98,7 +98,7 @@ export default {
       let self = this
       diffuiIsReady = false
       self.current = cm
-      self.$http.post(siteRoot + '/hist', {
+      self.$http.post('/hist', {
         path: self.currentPath,
         commit: cm.commit
       }).then(resp => {

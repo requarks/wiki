@@ -42,7 +42,7 @@
         })
       },
       goto (entryPath) {
-        window.location.assign(siteRoot + '/' + entryPath)
+        window.location.assign('/' + entryPath)
       },
       unfold (entryPath) {
         let self = this
