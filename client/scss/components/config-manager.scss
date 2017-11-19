@@ -1,21 +1,9 @@
 .config-manager {
-  background-image: linear-gradient(to bottom right, mc('blue', '500'), mc('blue', '700'));
-  background-repeat: no-repeat;
+  background-color: #1565c0;
+  background-image: url('../svg/config-bg.svg');
   width: 100%;
   min-height: 100%;
   padding-top: 1rem;
-
-  &::before {
-    content: '';
-    position: absolute;
-    background-image: url('../svg/login-bg.svg');
-    background-position: center bottom;
-    background-size: cover;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-  }
 
   .welcome {
     text-align: center;
@@ -80,5 +68,22 @@
       transition: all 1s ease;
     }
 
+  }
+
+  footer {
+    background-color: mc('blue','800');
+    border-top: 1px solid mc('blue', '700');
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    height: 70px;
+    font-size: 13px;
+    font-weight: 500;
+    color: mc('blue','200');
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
   }
 }

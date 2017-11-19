@@ -8,6 +8,8 @@ module.exports = () => {
     title: 'Wiki.js'
   }
 
+  wiki.system = require('./modules/system')
+
   // ----------------------------------------
   // Load modules
   // ----------------------------------------
@@ -18,11 +20,12 @@ module.exports = () => {
   const favicon = require('serve-favicon')
   const http = require('http')
   const Promise = require('bluebird')
-  const fs = Promise.promisifyAll(require('fs-extra'))
+  const fs = require('fs-extra')
   const yaml = require('js-yaml')
   const _ = require('lodash')
   const cfgHelper = require('./helpers/config')
   const filesize = require('filesize.js')
+  const crypto = Promise.promisifyAll(require('crypto'))
 
   // ----------------------------------------
   // Define Express App
@@ -58,12 +61,11 @@ module.exports = () => {
   // Controllers
   // ----------------------------------------
 
-  app.get('*', (req, res) => {
-    fs.readJsonAsync(path.join(wiki.ROOTPATH, 'package.json')).then(packageObj => {
-      res.render('configure/index', {
-        packageObj,
-        telemetryClientID: wiki.telemetry.cid
-      })
+  app.get('*', async (req, res) => {
+    let packageObj = await fs.readJson(path.join(wiki.ROOTPATH, 'package.json'))
+    res.render('configure/index', {
+      packageObj,
+      telemetryClientID: wiki.telemetry.cid
     })
   })
 
@@ -120,7 +122,7 @@ module.exports = () => {
           throw new Error('config.yml file is not writable by Node.js process or was not created properly.')
         }).return('config.yml is writable by the setup process.')
       }
-    ], test => { return test() }).then(results => {
+    ], test => test()).then(results => {
       res.json({ ok: true, results })
     }).catch(err => {
       res.json({ ok: false, error: err.message })
@@ -151,10 +153,10 @@ module.exports = () => {
 
     Promise.mapSeries([
       () => {
-        return fs.ensureDirAsync(dataDir).return('Data directory path is valid.')
+        return fs.ensureDir(dataDir).then(() => 'Data directory path is valid.')
       },
       () => {
-        return fs.ensureDirAsync(gitDir).return('Git directory path is valid.')
+        return fs.ensureDir(gitDir).then(() => 'Git directory path is valid.')
       },
       () => {
         return exec.stdout('git', ['init'], { cwd: gitDir }).then(result => {
@@ -181,7 +183,10 @@ module.exports = () => {
       },
       () => {
         if (req.body.gitUseRemote === false) { return false }
-        if (req.body.gitAuthType === 'ssh') {
+        if (_.includes(['sshenv', 'sshdb'], req.body.gitAuthType)) {
+          req.body.gitAuthSSHKey = path.join(dataDir, 'ssh/key.pem')
+        }
+        if (_.startsWith(req.body.gitAuthType, 'ssh')) {
           return exec.stdout('git', ['config', '--local', 'core.sshCommand', 'ssh -i "' + req.body.gitAuthSSHKey + '" -o StrictHostKeyChecking=no'], { cwd: gitDir }).then(result => {
             return 'Git SSH Private Key path has been set successfully.'
           })
@@ -220,120 +225,38 @@ module.exports = () => {
   /**
    * Finalize
    */
-  app.post('/finalize', (req, res) => {
+  app.post('/finalize', async (req, res) => {
     wiki.telemetry.sendEvent('setup', 'finalize')
 
-    const bcrypt = require('bcryptjs-then')
-    const crypto = Promise.promisifyAll(require('crypto'))
-    let mongo = require('mongodb').MongoClient
-    let parsedMongoConStr = cfgHelper.parseConfigValue(req.body.db)
-
-    Promise.join(
-      new Promise((resolve, reject) => {
-        mongo.connect(parsedMongoConStr, {
-          autoReconnect: false,
-          reconnectTries: 2,
-          reconnectInterval: 1000,
-          connectTimeoutMS: 5000,
-          socketTimeoutMS: 5000
-        }, (err, db) => {
-          if (err === null) {
-            db.createCollection('users', { strict: false }, (err, results) => {
-              if (err === null) {
-                bcrypt.hash(req.body.adminPassword).then(adminPwdHash => {
-                  db.collection('users').findOneAndUpdate({
-                    provider: 'local',
-                    email: req.body.adminEmail
-                  }, {
-                    provider: 'local',
-                    email: req.body.adminEmail,
-                    name: 'Administrator',
-                    password: adminPwdHash,
-                    rights: [{
-                      role: 'admin',
-                      path: '/',
-                      exact: false,
-                      deny: false
-                    }],
-                    updatedAt: new Date(),
-                    createdAt: new Date()
-                  }, {
-                    upsert: true,
-                    returnOriginal: false
-                  }, (err, results) => {
-                    if (err === null) {
-                      resolve(true)
-                    } else {
-                      reject(err)
-                    }
-                    db.close()
-                  })
-                })
-              } else {
-                reject(err)
-                db.close()
-              }
-            })
-          } else {
-            reject(err)
-          }
+    try {
+      // Upgrade from Wiki.js 1.x?
+      if (req.body.upgrade) {
+        await wiki.system.upgradeFromMongo({
+          mongoCnStr: cfgHelper.parseConfigValue(req.body.upgMongo)
         })
-      }),
-      fs.readFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), 'utf8').then(confRaw => {
-        let conf = yaml.safeLoad(confRaw)
-        conf.title = req.body.title
-        conf.host = req.body.host
-        conf.port = req.body.port
-        conf.paths = {
-          repo: req.body.pathRepo,
-          data: req.body.pathData
-        }
-        conf.uploads = {
-          maxImageFileSize: (conf.uploads && _.isNumber(conf.uploads.maxImageFileSize)) ? conf.uploads.maxImageFileSize : 3,
-          maxOtherFileSize: (conf.uploads && _.isNumber(conf.uploads.maxOtherFileSize)) ? conf.uploads.maxOtherFileSize : 100
-        }
-        conf.lang = req.body.lang
-        conf.public = (req.body.public === true)
-        if (conf.auth && conf.auth.local) {
-          conf.auth.local = { enabled: true }
-        } else {
-          conf.auth = { local: { enabled: true } }
-        }
-        conf.db = req.body.db
-        if (req.body.gitUseRemote === false) {
-          conf.git = false
-        } else {
-          conf.git = {
-            url: req.body.gitUrl,
-            branch: req.body.gitBranch,
-            auth: {
-              type: req.body.gitAuthType,
-              username: req.body.gitAuthUser,
-              password: req.body.gitAuthPass,
-              privateKey: req.body.gitAuthSSHKey,
-              sslVerify: (req.body.gitAuthSSL === true)
-            },
-            showUserEmail: (req.body.gitShowUserEmail === true),
-            serverEmail: req.body.gitServerEmail
-          }
-        }
-        return crypto.randomBytesAsync(32).then(buf => {
-          conf.sessionSecret = buf.toString('hex')
-          confRaw = yaml.safeDump(conf)
-          return fs.writeFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), confRaw)
-        })
-      })
-    ).then(() => {
-      if (process.env.IS_HEROKU) {
-        return fs.outputJsonAsync(path.join(wiki.SERVERPATH, 'app/heroku.json'), { configured: true })
-      } else {
-        return true
       }
-    }).then(() => {
+
+      // Load configuration file
+      let confRaw = await fs.readFile(path.join(wiki.ROOTPATH, 'config.yml'), 'utf8')
+      let conf = yaml.safeLoad(confRaw)
+
+      // Update config
+      conf.host = req.body.host
+      conf.port = req.body.port
+      conf.paths.repo = req.body.pathRepo
+
+      // Generate session secret
+      let sessionSecret = (await crypto.randomBytesAsync(32)).toString('hex')
+      console.info(sessionSecret)
+
+      // Save updated config to file
+      confRaw = yaml.safeDump(conf)
+      await fs.writeFile(path.join(wiki.ROOTPATH, 'config.yml'), confRaw)
+
       res.json({ ok: true })
-    }).catch(err => {
+    } catch (err) {
       res.json({ ok: false, error: err.message })
-    })
+    }
   })
 
   /**

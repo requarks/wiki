@@ -187,7 +187,7 @@ block body
                           label.label Authentication
                           select(v-model='conf.gitAuthType')
                             option(value='ssh') SSH using Private Key file (recommended)
-                            option(value='sshenv') SSH using Private Key in env. variable
+                            option(value='sshenv') SSH using Private Key in environment variable
                             option(value='sshdb') SSH using Private Key in database
                             option(value='basic') Basic Credentials
                           span.desc The authentication method used to connect to your remote Git repository.
@@ -317,11 +317,11 @@ block body
                     section
                       p.control.is-fullwidth
                         label.label Connection String to Wiki.js 1.x MongoDB database
-                        input(type='text', placeholder='mongodb://', v-model='conf.mongo', data-vv-scope='upgrade', name='ipt-mongo', v-validate='{ required: true, min: 2 }')
+                        input(type='text', placeholder='mongodb://', v-model='conf.upgMongo', data-vv-scope='upgrade', name='ipt-mongo', v-validate='{ required: true, min: 2 }')
                         span.desc A MongoDB database connection string where a Wiki.js 1.x installation is located. #[strong No alterations will be made to this database. ]
                     section
                       p.control.is-fullwidth
-                        input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='upgrade', name='ipt-public')
+                        input#ipt-public(type='checkbox', v-model='conf.upgUserGroups', data-vv-scope='upgrade', name='ipt-public')
                         label.label(for='ipt-public') Create groups based on individual permissions
                         span.desc User groups will be created based on existing users permissions. If multiple users have the exact same permission rules, they will be put in the same user group.
                   .panel-footer
@@ -370,6 +370,6 @@ block body
                   .panel-footer
                     button.button.is-small.is-green(disabled='disabled') Start
           
-          .footer
+          footer
             small Wiki.js Installation Wizard
             small(v-if='conf.telemetry') Telemetry Client ID: !{telemetryClientID}

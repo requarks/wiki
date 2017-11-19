@@ -43,7 +43,6 @@ export default {
         gitUrl: '',
         gitUseRemote: (siteConfig.git !== false),
         lang: siteConfig.lang || 'en',
-        mongo: 'mongodb://',
         path: siteConfig.path || '/',
         pathRepo: './repo',
         port: siteConfig.port || 80,
@@ -51,7 +50,9 @@ export default {
         selfregister: (siteConfig.selfregister === true),
         telemetry: true,
         title: siteConfig.title || 'Wiki',
-        upgrade: false
+        upgrade: false,
+        upgMongo: 'mongodb://',
+        upgUserGroups: false
       },
       considerations: {
         https: false,

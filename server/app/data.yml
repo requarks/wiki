@@ -20,9 +20,10 @@ defaults:
       port: 6379
       db: 0
       password: null
+    configMode: interactive
     workers: 0
     ha:
-      nodeuid: primary
+      node: primary
       readonly: false
     site:
       path: ''

@@ -39,8 +39,14 @@ redis:
   db: 0
   password: null
 
-# Enable for right to left languages (e.g. arabic):
-langRtl: false
+# ---------------------------------------------------------------------
+# Configuration Mode
+# ---------------------------------------------------------------------
+# Possible values:
+#  - interactive (default)
+#  - file
+
+configMode: interactive
 
 # ---------------------------------------------------------------------
 # Background Workers
@@ -55,5 +61,5 @@ workers: 0
 # Read the docs BEFORE changing these settings!
 
 ha:
-  nodeuid: primary
+  node: primary
   readonly: false
