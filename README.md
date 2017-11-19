@@ -89,9 +89,11 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Make use of all available CPU cores, distributed jobs queue
 - [x] Modular authentication providers
 - [x] Shared kernel for both app and configuration manager
+- [ ] Improved installation wizard :rocket:
 - [ ] Themes :rocket:
 - [ ] New Login page :rocket:
 - [ ] Optional Two-Steps Authentication (2FA) :rocket:
+- [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
 - [ ] History / Revert to previous version
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
@@ -99,6 +101,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Comments / Discussion per document
 - [ ] Profile page per user
 - [ ] Preview changes directly from the editor, without saving
+- [ ] Diagrams as code (Mermaid module)
 - [ ] High Availability support (multiple concurrent instances)
 - [ ] Insert Link modal in Editor
 - [ ] Better simultaneous user editing handling
