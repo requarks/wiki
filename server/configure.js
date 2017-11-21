@@ -20,7 +20,7 @@ module.exports = () => {
   const favicon = require('serve-favicon')
   const http = require('http')
   const Promise = require('bluebird')
-  const fs = require('fs-extra')
+  const fs = Promise.promisifyAll(require('fs-extra'))
   const yaml = require('js-yaml')
   const _ = require('lodash')
   const cfgHelper = require('./helpers/config')
@@ -236,22 +236,37 @@ module.exports = () => {
         })
       }
 
-      // Load configuration file
-      let confRaw = await fs.readFile(path.join(wiki.ROOTPATH, 'config.yml'), 'utf8')
+      // Update config file
+      let confRaw = await fs.readFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), 'utf8')
       let conf = yaml.safeLoad(confRaw)
 
-      // Update config
-      conf.host = req.body.host
       conf.port = req.body.port
       conf.paths.repo = req.body.pathRepo
 
-      // Generate session secret
-      let sessionSecret = (await crypto.randomBytesAsync(32)).toString('hex')
-      console.info(sessionSecret)
-
-      // Save updated config to file
       confRaw = yaml.safeDump(conf)
-      await fs.writeFile(path.join(wiki.ROOTPATH, 'config.yml'), confRaw)
+      await fs.writeFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), confRaw)
+
+      // Populate config namespaces
+      wiki.config.auth = wiki.config.auth || {}
+      wiki.config.features = wiki.config.features || {}
+      wiki.config.git = wiki.config.git || {}
+      wiki.config.logging = wiki.config.logging || {}
+      wiki.config.site = wiki.config.site || {}
+      wiki.config.theme = wiki.config.theme || {}
+      wiki.config.uploads = wiki.config.uploads || {}
+
+      // Site namespace
+      wiki.config.site.title = req.body.title
+      wiki.config.site.path = req.body.path
+      wiki.config.site.lang = req.body.lang
+      wiki.config.site.rtl = _.includes(wiki.data.rtlLangs, req.body.lang)
+      wiki.config.site.sessionSecret = (await crypto.randomBytesAsync(32)).toString('hex')
+
+      // Auth namespace
+      wiki.config.auth.public = (req.body.public === 'true')
+
+      // Logging namespace
+      wiki.config.logging.telemetry = (req.body.telemetry === 'true')
 
       res.json({ ok: true })
     } catch (err) {

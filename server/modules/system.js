@@ -2,7 +2,7 @@
 
 const Promise = require('bluebird')
 // const pm2 = Promise.promisifyAll(require('pm2'))
-// const _ = require('lodash')
+const _ = require('lodash')
 const cfgHelper = require('../helpers/config')
 
 module.exports = {
@@ -20,7 +20,7 @@ module.exports = {
     return new Promise((resolve, reject) => {
       // Connect to MongoDB
 
-      return mongo.connect(parsedMongoConStr, {
+      mongo.connect(parsedMongoConStr, {
         autoReconnect: false,
         reconnectTries: 2,
         reconnectInterval: 1000,
@@ -34,19 +34,33 @@ module.exports = {
 
           // Check if users table is populated
           let userCount = await users.count()
-          if (userCount < 1) {
-            throw new Error('Users table is empty or invalid!')
+          if (userCount < 2) {
+            throw new Error('MongoDB Upgrade: Users table is empty!')
           }
 
-          // Fetch all users
-          let userData = await users.find({}).toArray()
-          console.info(userData)
+          // Import all users
+          let userData = await users.find({
+            email: {
+              $not: 'guest'
+            }
+          }).toArray()
+          await wiki.db.User.bulkCreate(_.map(userData, usr => {
+            return {
+              email: usr.email,
+              name: usr.name || 'Imported User',
+              password: usr.password || '',
+              provider: usr.provider || 'local',
+              providerId: usr.providerId || '',
+              role: 'user',
+              createdAt: usr.createdAt
+            }
+          }))
 
           resolve(true)
         } catch (err) {
           reject(err)
-          db.close()
         }
+        db.close()
       })
     })
   }

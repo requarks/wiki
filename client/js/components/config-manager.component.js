@@ -51,8 +51,7 @@ export default {
         telemetry: true,
         title: siteConfig.title || 'Wiki',
         upgrade: false,
-        upgMongo: 'mongodb://',
-        upgUserGroups: false
+        upgMongo: 'mongodb://'
       },
       considerations: {
         https: false,

@@ -319,11 +319,6 @@ block body
                         label.label Connection String to Wiki.js 1.x MongoDB database
                         input(type='text', placeholder='mongodb://', v-model='conf.upgMongo', data-vv-scope='upgrade', name='ipt-mongo', v-validate='{ required: true, min: 2 }')
                         span.desc A MongoDB database connection string where a Wiki.js 1.x installation is located. #[strong No alterations will be made to this database. ]
-                    section
-                      p.control.is-fullwidth
-                        input#ipt-public(type='checkbox', v-model='conf.upgUserGroups', data-vv-scope='upgrade', name='ipt-public')
-                        label.label(for='ipt-public') Create groups based on individual permissions
-                        span.desc User groups will be created based on existing users permissions. If multiple users have the exact same permission rules, they will be put in the same user group.
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back

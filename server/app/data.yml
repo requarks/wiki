@@ -108,4 +108,6 @@ langs:
   -
     id: es
     name: Spanish - Español
+rtlLangs:
+  - fa
 # ---------------------------------

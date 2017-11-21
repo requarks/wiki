@@ -29,9 +29,9 @@ const args = require('yargs')
 const dev = args.dev
 
 if (dev) {
-  console.info(colors.bgWhite.black(' Starting Fuse in DEVELOPER mode... '))
+  console.info(colors.bgWhite.black(' Starting Wiki.js in DEVELOPER mode... '))
 } else {
-  console.info(colors.bgWhite.black(' Starting Fuse in BUILD mode... '))
+  console.info(colors.bgWhite.black(' Starting Wiki.js in BUILD mode... '))
 }
 
 // -------------------------------------------------------
