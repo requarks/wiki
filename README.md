@@ -18,6 +18,7 @@
 - **[Getting Started](https://wiki.js.org/get-started.html)**
 - **[Documentation](https://docs.requarks.io/wiki/)**
 - [Requirements](#requirements)
+- [Demo](#demo)
 - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Feature Requests](https://wikijs.canny.io/features)
 - [Milestones](#milestones)
@@ -53,6 +54,12 @@ A docker Wiki.js image is available on Docker Hub:
 [![Docker Image](https://raw.githubusercontent.com/Requarks/wiki-site/master/assets/images/docker-deploy.png)](https://hub.docker.com/r/requarks/wiki/)
 
 You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/blob/master/tools/Dockerfile)) or Docker Compose ([see example](https://github.com/Requarks/wiki/blob/master/tools/docker-compose.yml)) to run Wiki.js.
+
+## Demo
+
+Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](https://docs.requarks.io/wiki/)
+
+> <span style="font-size: .8em;">We do not provide a demo with write access because of potential security / spam issues. The best way to try it is to install it on your own server / computer. It's easy!</span>
 
 ## Milestones
 
