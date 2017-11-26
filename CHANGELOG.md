@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.12] - 2017-11-26
+### Added
+- **Localization**: Estonian locale is now available (thanks to @vonforum)
+
+### Changed
+- **Localization**: Updates to various locales
+- **Misc**: Added quotes to sample Slack config to avoid number parsing
+
+## Fixed
+- **Git**: ignore .git directory when updating cache
+
 ## [v1.0.11] - 2017-10-14
 ### Added
 - **Localization**: Japanese locale is now available (thanks to @johnnyshields)
@@ -237,6 +248,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
+[v1.0.12]: https://github.com/Requarks/wiki/releases/tag/v1.0.11
 [v1.0.11]: https://github.com/Requarks/wiki/releases/tag/v1.0.11
 [v1.0.10]: https://github.com/Requarks/wiki/releases/tag/v1.0.10
 [v1.0.9]: https://github.com/Requarks/wiki/releases/tag/v1.0.9

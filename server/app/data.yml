@@ -97,6 +97,9 @@ langs:
     id: nl
     name: Dutch - Nederlands
   -
+    id: et
+    name: Estonian - Eesti keel
+  -
     id: fr
     name: French - Français
   -
