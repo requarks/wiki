@@ -97,7 +97,7 @@ block body
                           span.desc The language in which navigation, help and other UI elements will be displayed.
                       .column.is-half
                         p.control.is-fullwidth
-                          label.label Site Relative Path
+                          label.label Site Relative URL Path
                           input(type='text', placeholder='/', v-model='conf.path', data-vv-scope='general', name='ipt-path', v-validate='{ required: true, min: 1 }')
                           span.desc The relative path to your wiki. Unless you configure a reverse proxy in front of Wiki.js to handle requests made to a sub-directory, #[strong it is recommended to leave the default value].
                     section.columns
