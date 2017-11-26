@@ -88,7 +88,7 @@ block adminContent
                       option(value='false') Allow
                       option(value='true') Deny
                 td.is-centered.has-action-icons
-                  i.icon-delete.is-red(v-on:click='removeRightsRow(idx)')
+                  i.nc-icon-outline.ui-1_circle-remove.is-red(v-on:click='removeRightsRow(idx)')
               tr(v-if='rights.length < 1', v-cloak)
                 td.is-icon
                 td.is-centered(colspan='3'): em No additional access rights
