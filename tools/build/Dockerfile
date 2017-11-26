@@ -11,6 +11,8 @@ WORKDIR /var/wiki
 COPY supervisord.conf /etc/supervisord.conf
 COPY . /var/wiki
 
+ENV WIKI_JS_HEROKU=1
+
 EXPOSE 3000
 
 CMD ["supervisord", "--nodaemon", "-c", "/etc/supervisord.conf"]
