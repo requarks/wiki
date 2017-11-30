@@ -26,10 +26,6 @@
 - [Translations](#translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
 
-<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/roGruqDX64HMJwmnvjhaQ7kt/Requarks/wiki'>
-  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/roGruqDX64HMJwmnvjhaQ7kt/Requarks/wiki.svg' />
-</a>
-
 ## Requirements
 
 Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
