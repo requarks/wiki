@@ -113,7 +113,7 @@ const scssChain = [
   ]),
   fsbx.CSSPlugin(opts.dev ? {} : {
     group: 'bundle.css',
-    outFile: './assets/css/bundle.css',
+    outFile: '../../assets/css/bundle.css',
     inject: false
   })
 ]
