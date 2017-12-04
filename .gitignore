@@ -25,7 +25,7 @@ newrelic.js
 .fusebox
 
 # Config Files
-config.yml
+/config.yml
 
 # Data directories
 /repo
