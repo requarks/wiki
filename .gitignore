@@ -38,3 +38,6 @@ config.yml
 
 # Test results
 test-results/
+
+# Localization Resources
+/server/locales/*.yml

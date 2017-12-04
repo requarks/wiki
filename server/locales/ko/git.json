@@ -1,6 +1,0 @@
-{
-  "added": "{{path}} 추가 성공",
-  "deleted": "{{path}} 삭제됨",
-  "updated": "{{path}} 업데이트",
-  "uploaded": "{{path}} 업로드 완료"
-}
