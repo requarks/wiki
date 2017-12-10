@@ -10,6 +10,6 @@ A default template is provided when creating a new GitHub issue. Please use it a
 
 Use the feature request board to submit new ideas and vote on which ideas should be integrated first.
 
-:triangular_flag_on_post: [https://wikijs.canny.io/features](https://wikijs.canny.io/features)
+:triangular_flag_on_post: [https://requests.requarks.io/wiki](https://requests.requarks.io/wiki)
 
 *Do not use GitHub issues to submit new feature ideas, as it will closed and you'll be asked to use the feature request board above. GitHub Issues are limited to bugs / issues / help*.
