@@ -20,7 +20,7 @@
 - [Requirements](#requirements)
 - [Demo](#demo)
 - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
-- [Feature Requests](https://wikijs.canny.io/features)
+- [Feature Requests](https://requests.requarks.io/wiki)
 - [Milestones](#milestones)
 - [Chat with us](#gitter)
 - [Translations](#translations) *(We need your help!)*
