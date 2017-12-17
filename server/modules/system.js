@@ -14,6 +14,8 @@ module.exports = {
   async upgradeFromMongo (opts) {
     wiki.telemetry.sendEvent('setup', 'upgradeFromMongo')
 
+    wiki.logger.info('Upgrading from MongoDB...')
+
     let mongo = require('mongodb').MongoClient
     let parsedMongoConStr = cfgHelper.parseConfigValue(opts.mongoCnStr)
 

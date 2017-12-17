@@ -47,7 +47,7 @@ export default {
         pathRepo: './repo',
         port: siteConfig.port || 80,
         public: (siteConfig.public === true),
-        selfregister: (siteConfig.selfregister === true),
+        selfRegister: (siteConfig.selfRegister === true),
         telemetry: true,
         title: siteConfig.title || 'Wiki',
         upgrade: false,

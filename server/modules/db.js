@@ -73,7 +73,7 @@ module.exports = {
         min: 0,
         idle: 10000
       },
-      logging: log => { wiki.logger.log('verbose', log) },
+      logging: log => { wiki.logger.log('debug', log) },
       operatorsAliases
     })
 
@@ -110,7 +110,7 @@ module.exports = {
       syncSchemas() {
         return self.inst.sync({
           force: false,
-          logging: log => { wiki.logger.log('verbose', log) }
+          logging: log => { wiki.logger.log('debug', log) }
         })
       },
       // -> Set Connection App Name

@@ -37,126 +37,126 @@ router.get('/t/*', (req, res, next) => {
   })
 })
 
-router.post('/img', wiki.disk.uploadImgHandler, (req, res, next) => {
-  let destFolder = _.chain(req.body.folder).trim().toLower().value()
+// router.post('/img', wiki.disk.uploadImgHandler, (req, res, next) => {
+//   let destFolder = _.chain(req.body.folder).trim().toLower().value()
 
-  wiki.upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
-    if (!destFolderPath) {
-      res.json({ ok: false, msg: wiki.lang.t('errors:invalidfolder') })
-      return true
-    }
+//   wiki.upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
+//     if (!destFolderPath) {
+//       res.json({ ok: false, msg: wiki.lang.t('errors:invalidfolder') })
+//       return true
+//     }
 
-    Promise.map(req.files, (f) => {
-      let destFilename = ''
-      let destFilePath = ''
+//     Promise.map(req.files, (f) => {
+//       let destFilename = ''
+//       let destFilePath = ''
 
-      return wiki.disk.validateUploadsFilename(f.originalname, destFolder, true).then((fname) => {
-        destFilename = fname
-        destFilePath = path.resolve(destFolderPath, destFilename)
+//       return wiki.disk.validateUploadsFilename(f.originalname, destFolder, true).then((fname) => {
+//         destFilename = fname
+//         destFilePath = path.resolve(destFolderPath, destFilename)
 
-        return readChunk(f.path, 0, 262)
-      }).then((buf) => {
-        // -> Check MIME type by magic number
+//         return readChunk(f.path, 0, 262)
+//       }).then((buf) => {
+//         // -> Check MIME type by magic number
 
-        let mimeInfo = fileType(buf)
-        if (!_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
-          return Promise.reject(new Error(wiki.lang.t('errors:invalidfiletype')))
-        }
-        return true
-      }).then(() => {
-        // -> Move file to final destination
+//         let mimeInfo = fileType(buf)
+//         if (!_.includes(['image/png', 'image/jpeg', 'image/gif', 'image/webp'], mimeInfo.mime)) {
+//           return Promise.reject(new Error(wiki.lang.t('errors:invalidfiletype')))
+//         }
+//         return true
+//       }).then(() => {
+//         // -> Move file to final destination
 
-        return fs.moveAsync(f.path, destFilePath, { clobber: false })
-      }).then(() => {
-        return {
-          ok: true,
-          filename: destFilename,
-          filesize: f.size
-        }
-      }).reflect()
-    }, {concurrency: 3}).then((results) => {
-      let uplResults = _.map(results, (r) => {
-        if (r.isFulfilled()) {
-          return r.value()
-        } else {
-          return {
-            ok: false,
-            msg: r.reason().message
-          }
-        }
-      })
-      res.json({ ok: true, results: uplResults })
-      return true
-    }).catch((err) => {
-      res.json({ ok: false, msg: err.message })
-      return true
-    })
-  })
-})
+//         return fs.moveAsync(f.path, destFilePath, { clobber: false })
+//       }).then(() => {
+//         return {
+//           ok: true,
+//           filename: destFilename,
+//           filesize: f.size
+//         }
+//       }).reflect()
+//     }, {concurrency: 3}).then((results) => {
+//       let uplResults = _.map(results, (r) => {
+//         if (r.isFulfilled()) {
+//           return r.value()
+//         } else {
+//           return {
+//             ok: false,
+//             msg: r.reason().message
+//           }
+//         }
+//       })
+//       res.json({ ok: true, results: uplResults })
+//       return true
+//     }).catch((err) => {
+//       res.json({ ok: false, msg: err.message })
+//       return true
+//     })
+//   })
+// })
 
-router.post('/file', wiki.disk.uploadFileHandler, (req, res, next) => {
-  let destFolder = _.chain(req.body.folder).trim().toLower().value()
+// router.post('/file', wiki.disk.uploadFileHandler, (req, res, next) => {
+//   let destFolder = _.chain(req.body.folder).trim().toLower().value()
 
-  wiki.upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
-    if (!destFolderPath) {
-      res.json({ ok: false, msg: wiki.lang.t('errors:invalidfolder') })
-      return true
-    }
+//   wiki.upl.validateUploadsFolder(destFolder).then((destFolderPath) => {
+//     if (!destFolderPath) {
+//       res.json({ ok: false, msg: wiki.lang.t('errors:invalidfolder') })
+//       return true
+//     }
 
-    Promise.map(req.files, (f) => {
-      let destFilename = ''
-      let destFilePath = ''
+//     Promise.map(req.files, (f) => {
+//       let destFilename = ''
+//       let destFilePath = ''
 
-      return wiki.disk.validateUploadsFilename(f.originalname, destFolder, false).then((fname) => {
-        destFilename = fname
-        destFilePath = path.resolve(destFolderPath, destFilename)
+//       return wiki.disk.validateUploadsFilename(f.originalname, destFolder, false).then((fname) => {
+//         destFilename = fname
+//         destFilePath = path.resolve(destFolderPath, destFilename)
 
-        // -> Move file to final destination
+//         // -> Move file to final destination
 
-        return fs.moveAsync(f.path, destFilePath, { clobber: false })
-      }).then(() => {
-        return {
-          ok: true,
-          filename: destFilename,
-          filesize: f.size
-        }
-      }).reflect()
-    }, {concurrency: 3}).then((results) => {
-      let uplResults = _.map(results, (r) => {
-        if (r.isFulfilled()) {
-          return r.value()
-        } else {
-          return {
-            ok: false,
-            msg: r.reason().message
-          }
-        }
-      })
-      res.json({ ok: true, results: uplResults })
-      return true
-    }).catch((err) => {
-      res.json({ ok: false, msg: err.message })
-      return true
-    })
-  })
-})
+//         return fs.moveAsync(f.path, destFilePath, { clobber: false })
+//       }).then(() => {
+//         return {
+//           ok: true,
+//           filename: destFilename,
+//           filesize: f.size
+//         }
+//       }).reflect()
+//     }, {concurrency: 3}).then((results) => {
+//       let uplResults = _.map(results, (r) => {
+//         if (r.isFulfilled()) {
+//           return r.value()
+//         } else {
+//           return {
+//             ok: false,
+//             msg: r.reason().message
+//           }
+//         }
+//       })
+//       res.json({ ok: true, results: uplResults })
+//       return true
+//     }).catch((err) => {
+//       res.json({ ok: false, msg: err.message })
+//       return true
+//     })
+//   })
+// })
 
-router.get('/*', (req, res, next) => {
-  let fileName = req.params[0]
-  if (!validPathRe.test(fileName)) {
-    return res.sendStatus(404).end()
-  }
+// router.get('/*', (req, res, next) => {
+//   let fileName = req.params[0]
+//   if (!validPathRe.test(fileName)) {
+//     return res.sendStatus(404).end()
+//   }
 
-  // todo: Authentication-based access
+//   // todo: Authentication-based access
 
-  res.sendFile(fileName, {
-    root: wiki.git.getRepoPath() + '/uploads/',
-    dotfiles: 'deny'
-  }, (err) => {
-    if (err) {
-      res.status(err.status).end()
-    }
-  })
-})
+//   res.sendFile(fileName, {
+//     root: wiki.git.getRepoPath() + '/uploads/',
+//     dotfiles: 'deny'
+//   }, (err) => {
+//     if (err) {
+//       res.status(err.status).end()
+//     }
+//   })
+// })
 
 module.exports = router

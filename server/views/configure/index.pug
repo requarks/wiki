@@ -112,7 +112,7 @@ block body
                           label.label(for='ipt-public') Public Access
                           span.desc Should the site be accessible (read only) without login.
                         p.control.is-fullwidth
-                          input#ipt-selfregister(type='checkbox', v-model='conf.selfregister', data-vv-scope='general', name='ipt-selfregister')
+                          input#ipt-selfregister(type='checkbox', v-model='conf.selfRegister', data-vv-scope='general', name='ipt-selfregister')
                           label.label(for='ipt-selfregister') Allow Self-Registration
                           span.desc Can users create their own account to gain access?
                     section
@@ -208,7 +208,7 @@ block body
                         p.control.is-fullwidth
                           label.label Private Key location
                           input(type='text', placeholder='e.g. /etc/wiki/keys/git.pem', v-model='conf.gitAuthSSHKey')
-                          span.desc The full path to the private key on disk.
+                          span.desc The full path to the #[strong unencrypted] private key on disk.
                       .column(v-show='conf.gitAuthType === "sshenv"')
                         p.control.is-fullwidth
                           label.label Private Key Environment Variable

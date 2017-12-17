@@ -54,28 +54,52 @@ module.exports = {
    * @param {Array} subsets Array of subsets to load
    * @returns Promise
    */
-  loadFromDb(subsets) {
+  async loadFromDb(subsets) {
     if (!_.isArray(subsets) || subsets.length === 0) {
       subsets = wiki.data.configNamespaces
     }
 
-    return wiki.db.Setting.findAll({
+    let results = await wiki.db.Setting.findAll({
       attributes: ['key', 'config'],
       where: {
         key: {
           $in: subsets
         }
       }
-    }).then(results => {
-      if (_.isArray(results) && results.length === subsets.length) {
-        results.forEach(result => {
-          wiki.config[result.key] = result.config
-        })
-        return true
-      } else {
-        wiki.logger.warn('DB Configuration is empty or incomplete.')
-        return false
-      }
     })
+    if (_.isArray(results) && results.length === subsets.length) {
+      results.forEach(result => {
+        wiki.config[result.key] = result.config
+      })
+      return true
+    } else {
+      wiki.logger.warn('DB Configuration is empty or incomplete.')
+      return false
+    }
+  },
+  /**
+   * Save config to DB
+   *
+   * @param {Array} subsets Array of subsets to save
+   * @returns Promise
+   */
+  async saveToDb(subsets) {
+    if (!_.isArray(subsets) || subsets.length === 0) {
+      subsets = wiki.data.configNamespaces
+    }
+
+    try {
+      for (let set of subsets) {
+        await wiki.db.Setting.upsert({
+          key: set,
+          config: _.get(wiki.config, set, {})
+        })
+      }
+    } catch (err) {
+      wiki.logger.error(`Failed to save configuration to DB: ${err.message}`)
+      return false
+    }
+
+    return true
   }
 }

@@ -11,10 +11,10 @@ module.exports = {
     // Console
 
     let logger = new (winston.Logger)({
-      level: (wiki.IS_DEBUG) ? 'debug' : 'info',
+      level: wiki.config.logLevel,
       transports: [
         new (winston.transports.Console)({
-          level: (wiki.IS_DEBUG) ? 'debug' : 'info',
+          level: wiki.config.logLevel,
           prettyPrint: true,
           colorize: true,
           silent: false,

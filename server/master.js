@@ -1,6 +1,6 @@
 /* global wiki */
 
-module.exports = () => {
+module.exports = async () => {
   // ----------------------------------------
   // Load global modules
   // ----------------------------------------

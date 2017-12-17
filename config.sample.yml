@@ -1,7 +1,7 @@
 #######################################################################
 # Wiki.js - CONFIGURATION                                             #
 #######################################################################
-# Full explanation + examples in the documentation:
+# Full documentation + examples:
 # https://docs.requarks.io/wiki/install
 
 # ---------------------------------------------------------------------
@@ -40,10 +40,17 @@ redis:
   password: null
 
 # ---------------------------------------------------------------------
+# Log Level
+# ---------------------------------------------------------------------
+# Possible values: error, warn, info (default), verbose, debug, silly
+
+logLevel: info
+
+# ---------------------------------------------------------------------
 # Configuration Mode
 # ---------------------------------------------------------------------
 # Possible values:
-#  - interactive (default)
+#  - interactive (recommended)
 #  - file
 
 configMode: interactive

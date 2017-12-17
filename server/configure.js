@@ -237,6 +237,7 @@ module.exports = () => {
       }
 
       // Update config file
+      wiki.logger.info('Writing config file to disk...')
       let confRaw = await fs.readFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), 'utf8')
       let conf = yaml.safeLoad(confRaw)
 
@@ -256,17 +257,59 @@ module.exports = () => {
       wiki.config.uploads = wiki.config.uploads || {}
 
       // Site namespace
-      wiki.config.site.title = req.body.title
-      wiki.config.site.path = req.body.path
-      wiki.config.site.lang = req.body.lang
-      wiki.config.site.rtl = _.includes(wiki.data.rtlLangs, req.body.lang)
-      wiki.config.site.sessionSecret = (await crypto.randomBytesAsync(32)).toString('hex')
+      _.set(wiki.config.site, 'title', req.body.title)
+      _.set(wiki.config.site, 'path', req.body.path)
+      _.set(wiki.config.site, 'lang', req.body.lang)
+      _.set(wiki.config.site, 'rtl', _.includes(wiki.data.rtlLangs, req.body.lang))
+      _.set(wiki.config.site, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
 
       // Auth namespace
-      wiki.config.auth.public = (req.body.public === 'true')
+      _.set(wiki.config.auth, 'public', req.body.public === 'true')
+      _.set(wiki.config.auth, 'strategies.local.allowSelfRegister', req.body.selfRegister === 'true')
+
+      // Git namespace
+      _.set(wiki.config.git, 'enabled', req.body.gitUseRemote === 'true')
+      if (wiki.config.git.enabled) {
+        _.set(wiki.config.git, 'url', req.body.gitUrl)
+        _.set(wiki.config.git, 'branch', req.body.gitBranch)
+        _.set(wiki.config.git, 'author.defaultEmail', req.body.gitServerEmail)
+        _.set(wiki.config.git, 'author.useUserEmail', req.body.gitShowUserEmail)
+        _.set(wiki.config.git, 'sslVerify', req.body.gitAuthSSL === 'true')
+        _.set(wiki.config.git, 'auth.type', req.body.gitAuthType)
+        switch (wiki.config.git.auth.type) {
+          case 'basic':
+            _.set(wiki.config.git, 'auth.user', req.body.gitAuthUser)
+            _.set(wiki.config.git, 'auth.pass', req.body.gitAuthPass)
+            break
+          case 'ssh':
+            _.set(wiki.config.git, 'auth.keyPath', req.body.gitAuthSSHKey)
+            break
+          case 'sshenv':
+            _.set(wiki.config.git, 'auth.keyEnv', req.body.gitAuthSSHKeyEnv)
+            break
+          case 'sshdb':
+            _.set(wiki.config.git, 'auth.keyContents', req.body.gitAuthSSHKeyDB)
+            break
+        }
+      }
 
       // Logging namespace
       wiki.config.logging.telemetry = (req.body.telemetry === 'true')
+
+      // Save config to DB
+      wiki.logger.info('Persisting config to DB...')
+      await wiki.configSvc.saveToDb()
+
+      // Create root administrator
+      wiki.logger.info('Creating root administrator...')
+      await wiki.db.User.upsert({
+        email: req.body.adminEmail,
+        provider: 'local',
+        password: await wiki.db.User.hashPassword(req.body.adminPassword),
+        name: 'Administrator',
+        role: 'admin',
+        tfaIsActive: false
+      })
 
       res.json({ ok: true })
     } catch (err) {
