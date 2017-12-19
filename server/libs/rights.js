@@ -56,7 +56,7 @@ module.exports = {
       manage: false
     }
     let rt = []
-    let p = _.chain(req.originalUrl).toLower().trim().value()
+    let p = _.chain(req.originalUrl).toLower().trim().replace(/^\/(edit|create)/, '').value()
 
     // Load user rights
 
