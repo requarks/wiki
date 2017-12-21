@@ -132,15 +132,18 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 
 - [x] English
 - [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
+- [x] Czech - *Thanks to [@braniqvranik](https://github.com/braniqvranik)*
 - [x] Dutch - *Thanks to [@weirdwater](https://github.com/weirdwater)*
 - [x] Estonian - *Thanks to [@vonforum](https://github.com/vonforum)*
 - [x] French
 - [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes), [@MyZeD](https://github.com/MyZeD)*
+- [x] Italian - *Thanks to [@CupCakeArmy](https://github.com/CupCakeArmy)*
 - [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields)*
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
 - [x] Persian - *Thanks to [@ashkang](https://github.com/ashkang)*
 - [x] Portuguese - *Thanks to [@felipeplets](https://github.com/felipeplets)*
 - [x] Russian - *Thanks to [@efimlosev](https://github.com/efimlosev)*
+- [x] Slovak - *Thanks to [@braniqvranik](https://github.com/braniqvranik)*
 - [x] Spanish - *Thanks to [@MatiasArriola](https://github.com/MatiasArriola)*
 
 ## Special Thanks
