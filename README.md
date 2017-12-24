@@ -80,6 +80,8 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - All operations and queries will be made via GraphQL API.
   - New fully responsive layout, with better customization capabilities.
   - Full localization support, especially for non-latin languages.
+  
+**Release Date**: Q1 2018
 
 **Breaking Changes**:
   - MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
@@ -93,11 +95,12 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Support sub-directory installations (e.g. example.com/wiki)
 - [x] Make use of all available CPU cores, distributed jobs queue
 - [x] Modular authentication providers
-- [x] Shared kernel for both app and configuration manager
-- [ ] Improved installation wizard :rocket:
-- [ ] Themes :rocket:
+- [x] Shared kernel for both app and setup
+- [x] Improved installation wizard
+- [x] Modular logging providers
 - [ ] New Login page :rocket:
 - [ ] Optional Two-Steps Authentication (2FA) :rocket:
+- [ ] Themes :rocket:
 - [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
 - [ ] History / Revert to previous version
 - [ ] Persist system settings to database instead of file-based
@@ -108,9 +111,10 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Preview changes directly from the editor, without saving
 - [ ] Diagrams as code (Mermaid module)
 - [ ] High Availability support (multiple concurrent instances)
-- [ ] Insert Link modal in Editor
+- [ ] Insert Link modal in Markdown Editor
 - [ ] Better simultaneous user editing handling
-- [ ] Multi-language versions of the same page (I18n)
+- [ ] Multilingual versions of the same page (i18n)
+- [ ] PostgreSQL search engine
 
 :rocket: = Currently in development
 
