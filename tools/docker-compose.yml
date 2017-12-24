@@ -4,12 +4,16 @@ services:
     image: mongo
     expose:
       - '27017'
-    command: '--smallfiles --logpath=/dev/null'
+    command: '--smallfiles --bind_ip wikidb'
+    environment:
+      - 'MONGO_LOG_DIR=/dev/null'
     volumes:
       - ./data/mongo:/data/db
   wikijs:
     image: 'requarks/wiki:latest'
     links:
+      - wikidb
+    depends_on:
       - wikidb
     ports:
       - '80:3000'
