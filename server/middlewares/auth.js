@@ -1,23 +1,16 @@
-'use strict'
-
-/* global rights */
+/* global wiki */
 
 /**
  * Authentication middleware
- *
- * @param      {Express Request}   req     Express Request object
- * @param      {Express Response}  res     Express Response object
- * @param      {Function}          next    Next callback function
- * @return     {any}               void
  */
 module.exports = (req, res, next) => {
   // Is user authenticated ?
 
   if (!req.isAuthenticated()) {
-    if (req.app.locals.appconfig.public !== true) {
+    if (wiki.config.auth.public !== true) {
       return res.redirect('/login')
     } else {
-      req.user = rights.guest
+      // req.user = rights.guest
       res.locals.isGuest = true
     }
   } else {
@@ -26,11 +19,11 @@ module.exports = (req, res, next) => {
 
   // Check permissions
 
-  res.locals.rights = rights.check(req)
+  // res.locals.rights = rights.check(req)
 
-  if (!res.locals.rights.read) {
-    return res.render('error-forbidden')
-  }
+  // if (!res.locals.rights.read) {
+  //   return res.render('error-forbidden')
+  // }
 
   // Expose user data
 

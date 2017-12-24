@@ -63,7 +63,7 @@ module.exports = () => {
 
   app.get('*', async (req, res) => {
     let packageObj = await fs.readJson(path.join(wiki.ROOTPATH, 'package.json'))
-    res.render('configure/index', {
+    res.render('setup', {
       packageObj,
       telemetryClientID: wiki.telemetry.cid
     })
@@ -265,6 +265,7 @@ module.exports = () => {
 
       // Auth namespace
       _.set(wiki.config.auth, 'public', req.body.public === 'true')
+      _.set(wiki.config.auth, 'strategies.local.enabled', true)
       _.set(wiki.config.auth, 'strategies.local.allowSelfRegister', req.body.selfRegister === 'true')
 
       // Git namespace
@@ -311,6 +312,7 @@ module.exports = () => {
         tfaIsActive: false
       })
 
+      wiki.logger.info('Setup is complete!')
       res.json({ ok: true })
     } catch (err) {
       res.json({ ok: false, error: err.message })

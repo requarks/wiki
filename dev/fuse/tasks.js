@@ -10,6 +10,9 @@ const yaml = require('js-yaml')
 const _ = require('lodash')
 
 module.exports = {
+  /**
+   * Fetch Localization Resources from Lokalise
+   */
   async fetchLocalizationResources () {
     console.info(colors.white('  └── ') + colors.green('Fetching latest localization resources...'))
     let langs = await request({
@@ -26,18 +29,22 @@ module.exports = {
         let lang = {}
         let langTotal = 0
         langData.forEach(item => {
-          if (item.is_archived === '1') { return }
-          item.key = _.replace(item.key, '::', '.')
-          _.set(lang, item.key, item.translation)
+          if (item.is_archived === '1' || _.includes(item.key, '::')) { return }
+          let keyParts = item.key.split(':')
+          let keyNamespace = (keyParts.length > 1) ? _.head(keyParts) : 'common'
+          let keyString = _.last(keyParts)
+          _.set(lang, `${keyNamespace}.${keyString}`, item.translation)
           langTotal++
         })
-        let langYaml = yaml.safeDump(lang, {
-          indent: 2,
-          sortKeys: true,
-          lineWidth: 2048
+        _.forOwn(lang, (langObject, langNamespace) => {
+          let langYaml = yaml.safeDump(langObject, {
+            indent: 2,
+            sortKeys: true,
+            lineWidth: 2048
+          })
+          fs.outputFileSync(path.join(process.cwd(), `server/locales/${langKey}/${langNamespace}.yml`), langYaml, 'utf8')
         })
-        fs.writeFileSync(path.join(process.cwd(), `server/locales/${langKey}.yml`), langYaml, 'utf8')
-        console.info(colors.white(`      ${langKey}.yml - ${langTotal} keys written`))
+        console.info(colors.white(`      ${langKey} - ${langTotal} keys written`))
       })
     } else {
       throw new Error('Failed to fetch language list from Lokalise API.')

@@ -29,7 +29,7 @@ module.exports = async () => {
   const path = require('path')
   const session = require('express-session')
   const SessionRedisStore = require('connect-redis')(session)
-  const graceful = require('node-graceful')
+  // const graceful = require('node-graceful')
   const graphqlApollo = require('apollo-server-express')
   const graphqlSchema = require('./modules/graphql')
 
@@ -142,7 +142,7 @@ module.exports = async () => {
   // Start HTTP server
   // ----------------------------------------
 
-  wiki.logger.info(`HTTP Server on port: ${wiki.config.port}`)
+  wiki.logger.info(`HTTP Server on port: [ ${wiki.config.port} ]`)
 
   app.set('port', wiki.config.port)
   let server = http.createServer(app)
@@ -167,20 +167,20 @@ module.exports = async () => {
   })
 
   server.on('listening', () => {
-    wiki.logger.info('HTTP Server: RUNNING')
+    wiki.logger.info('HTTP Server: [ RUNNING ]')
   })
 
   // ----------------------------------------
   // Graceful shutdown
   // ----------------------------------------
 
-  graceful.on('exit', () => {
-    wiki.logger.info('- SHUTTING DOWN - Performing git sync...')
-    return global.git.resync().then(() => {
-      wiki.logger.info('- SHUTTING DOWN - Git sync successful. Now safe to exit.')
-      process.exit()
-    })
-  })
+  // graceful.on('exit', () => {
+  //   wiki.logger.info('- SHUTTING DOWN - Performing git sync...')
+  //   return global.git.resync().then(() => {
+  //     wiki.logger.info('- SHUTTING DOWN - Git sync successful. Now safe to exit.')
+  //     process.exit()
+  //   })
+  // })
 
   return true
 }

@@ -21,6 +21,7 @@ paths:
 # ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
+# PostgreSQL 9.5 or later required
 
 db:
   host: localhost
@@ -32,6 +33,7 @@ db:
 # ---------------------------------------------------------------------
 # Redis
 # ---------------------------------------------------------------------
+# Redis 3.2 or later required
 
 redis:
   host: localhost
@@ -49,11 +51,9 @@ logLevel: info
 # ---------------------------------------------------------------------
 # Configuration Mode
 # ---------------------------------------------------------------------
-# Possible values:
-#  - interactive (recommended)
-#  - file
+# Possible values: auto (default), file, setup
 
-configMode: interactive
+configMode: auto
 
 # ---------------------------------------------------------------------
 # Background Workers

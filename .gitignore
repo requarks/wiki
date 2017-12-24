@@ -15,9 +15,6 @@ npm/node_modules
 .node_repl_history
 npm-debug.log*
 
-# NewRelic APM
-newrelic.js
-
 # Generated assets
 /assets/js
 /assets/css
@@ -41,4 +38,4 @@ newrelic.js
 test-results/
 
 # Localization Resources
-/server/locales/*.yml
+/server/locales/**/*.yml

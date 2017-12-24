@@ -21,7 +21,7 @@ module.exports = {
     if (isPlainObject(wiki.config.redis)) {
       let red = new Redis(wiki.config.redis)
       red.on('ready', () => {
-        wiki.logger.info('Redis connection: OK')
+        wiki.logger.info('Redis connection: [ OK ]')
       })
       red.on('error', () => {
         wiki.logger.error('Failed to connect to Redis instance!')

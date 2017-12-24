@@ -29,7 +29,7 @@ module.exports = {
         keyStream.on('end', resolve)
       })
     }).then(() => {
-      wiki.logger.info('Purging old queue jobs: OK')
+      wiki.logger.info('Purging old queue jobs: [ OK ]')
     }).return(true).catch(err => {
       wiki.logger.error(err)
     })

@@ -37,11 +37,11 @@ module.exports = {
    */
   bootMaster() {
     this.preBootMaster().then(sequenceResults => {
-      if (_.every(sequenceResults, rs => rs === true)) {
+      if (_.every(sequenceResults, rs => rs === true) && wiki.config.configMode !== 'setup') {
         this.postBootMaster()
       } else {
         wiki.logger.info('Starting configuration manager...')
-        require('../configure')()
+        require('../setup')()
       }
       return true
     }).catch(err => {
@@ -52,13 +52,15 @@ module.exports = {
   /**
    * Post-Master Boot Sequence
    */
-  postBootMaster() {
-    require('../master')().then(() => {
-      _.times(this.numWorker, this.spawnWorker)
+  async postBootMaster() {
+    await require('../master')()
 
-      wiki.queue.uplClearTemp.add({}, {
-        repeat: { cron: '*/15 * * * *' }
-      })
+    _.times(this.numWorkers, () => {
+      this.spawnWorker()
+    })
+
+    wiki.queue.uplClearTemp.add({}, {
+      repeat: { cron: '*/15 * * * *' }
     })
 
     cluster.on('exit', (worker, code, signal) => {

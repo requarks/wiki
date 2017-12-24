@@ -1,9 +1,9 @@
-extends ../master.pug
+extends master.pug
 
 block body
   body
-    #app.config-manager
-      config-manager(inline-template)
+    #app.setup
+      setup(inline-template)
         div
           .container
             .content(v-cloak)
@@ -342,7 +342,7 @@ block body
                       h4 All done!
                     p(v-if='!loading && final.ok'): strong Wiki.js was configured successfully and is now ready for use.
                     p(v-if='!loading && final.ok')
-                      | Click the <strong>Start</strong> button below to start the Wiki.js server.
+                      | Click the <strong>Start</strong> button below to launch your newly configured wiki.
                     p(v-if='!loading && !final.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove-12')] Error: {{ final.error }}
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')

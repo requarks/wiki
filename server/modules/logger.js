@@ -1,26 +1,18 @@
-'use strict'
-
 /* global wiki */
 
 const cluster = require('cluster')
+const _ = require('lodash')
+const fs = require('fs-extra')
+const path = require('path')
 
 module.exports = {
+  loggers: {},
   init() {
     let winston = require('winston')
 
-    // Console
-
     let logger = new (winston.Logger)({
       level: wiki.config.logLevel,
-      transports: [
-        new (winston.transports.Console)({
-          level: wiki.config.logLevel,
-          prettyPrint: true,
-          colorize: true,
-          silent: false,
-          timestamp: true
-        })
-      ]
+      transports: []
     })
 
     logger.filters.push((level, msg) => {
@@ -28,52 +20,20 @@ module.exports = {
       return '[' + processName + '] ' + msg
     })
 
-    // External services
-
-    // if (wiki.config.externalLogging.bugsnag) {
-    //   const bugsnagTransport = require('./winston-transports/bugsnag')
-    //   logger.add(bugsnagTransport, {
-    //     level: 'warn',
-    //     key: wiki.config.externalLogging.bugsnag
-    //   })
-    // }
-
-    // if (wiki.config.externalLogging.loggly) {
-    //   require('winston-loggly-bulk')
-    //   logger.add(winston.transports.Loggly, {
-    //     token: wiki.config.externalLogging.loggly.token,
-    //     subdomain: wiki.config.externalLogging.loggly.subdomain,
-    //     tags: ['wiki-js'],
-    //     level: 'warn',
-    //     json: true
-    //   })
-    // }
-
-    // if (wiki.config.externalLogging.papertrail) {
-    //   require('winston-papertrail').Papertrail // eslint-disable-line no-unused-expressions
-    //   logger.add(winston.transports.Papertrail, {
-    //     host: wiki.config.externalLogging.papertrail.host,
-    //     port: wiki.config.externalLogging.papertrail.port,
-    //     level: 'warn',
-    //     program: 'wiki.js'
-    //   })
-    // }
-
-    // if (wiki.config.externalLogging.rollbar) {
-    //   const rollbarTransport = require('./winston-transports/rollbar')
-    //   logger.add(rollbarTransport, {
-    //     level: 'warn',
-    //     key: wiki.config.externalLogging.rollbar
-    //   })
-    // }
-
-    // if (wiki.config.externalLogging.sentry) {
-    //   const sentryTransport = require('./winston-transports/sentry')
-    //   logger.add(sentryTransport, {
-    //     level: 'warn',
-    //     key: wiki.config.externalLogging.sentry
-    //   })
-    // }
+    _.forOwn(_.omitBy(wiki.config.logging.loggers, s => s.enabled === false), (loggerConfig, loggerKey) => {
+      let loggerModule = require(`../extensions/logging/${loggerKey}`)
+      loggerModule.init(logger, loggerConfig)
+      fs.readFile(path.join(wiki.ROOTPATH, `assets/svg/auth-icon-${loggerKey}.svg`), 'utf8').then(iconData => {
+        logger.icon = iconData
+      }).catch(err => {
+        if (err.code === 'ENOENT') {
+          logger.icon = '[missing icon]'
+        } else {
+          logger.error(err)
+        }
+      })
+      this.loggers[logger.key] = loggerModule
+    })
 
     return logger
   }

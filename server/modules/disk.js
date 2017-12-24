@@ -115,7 +115,7 @@ module.exports = {
       wiki.logger.error(err)
     }
 
-    wiki.logger.info('Disk Data Paths: OK')
+    wiki.logger.info('Disk Data Paths: [ OK ]')
   },
 
   /**

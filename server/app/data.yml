@@ -5,6 +5,7 @@
 name: Wiki.js
 defaults:
   config:
+    # File defaults
     port: 80
     paths:
       repo: ./repo
@@ -20,15 +21,30 @@ defaults:
       port: 6379
       db: 0
       password: null
-    configMode: interactive
+    configMode: auto
     workers: 0
     ha:
       node: primary
       readonly: false
+    # DB defaults
+    auth:
+      public: false
+      strategies:
+        local:
+          enabled: true
+          allowSelfRegister: false
+    git:
+      enabled: false
+    logging:
+      telemetry: false
+      loggers:
+        console:
+          enabled: true
     site:
-      path: ''
       lang: en
-    title: Wiki.js
+      path: ''
+      rtl: false
+      title: Wiki.js
 configNamespaces:
   - auth
   - features

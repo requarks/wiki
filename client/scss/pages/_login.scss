@@ -1,5 +1,8 @@
 .login {
-  background-image: linear-gradient(to right, mc('blue', '400'), mc('blue', '600'));
+  background-color: #0288d1;
+  background-image: url('../svg/login-bg-motif.svg');
+  background-repeat: repeat;
+  background-size: 30%;
   width: 100%;
   height: 100%;
   display: flex;

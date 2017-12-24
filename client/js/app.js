@@ -1,7 +1,6 @@
 'use strict'
 
 /* global siteConfig */
-/* eslint-disable no-new */
 
 import CONSTANTS from './constants'
 
@@ -14,6 +13,7 @@ import { HttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import store from './store'
 import icons from '../svg/nc-icons.svg'
+
 // ====================================
 // Load Modules
 // ====================================
@@ -56,7 +56,7 @@ import adminEditUserComponent from './pages/admin-edit-user.component.js'
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
 import adminThemeComponent from './pages/admin-theme.component.js'
-import configManagerComponent from './components/config-manager.component.js'
+import setupComponent from './components/setup.component.js'
 import contentViewComponent from './pages/content-view.component.js'
 import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
@@ -74,7 +74,7 @@ window.CONSTANTS = CONSTANTS
 
 window.graphQL = new ApolloClient({
   link: new HttpLink({
-    uri: window.location.protocol + '//' + window.location.host + siteConfig.path + '/graphql'
+    uri: window.location.protocol + '//' + window.location.host + siteConfig.path + 'graphql'
   }),
   cache: new InMemoryCache(),
   connectToDevTools: (process.env.node_env === 'development')
@@ -111,7 +111,6 @@ Vue.component('adminSettings', adminSettingsComponent)
 Vue.component('adminTheme', adminThemeComponent)
 Vue.component('anchor', anchorComponent)
 Vue.component('colorPicker', colorPickerComponent)
-Vue.component('configManager', configManagerComponent)
 Vue.component('contentView', contentViewComponent)
 Vue.component('editor', editorComponent)
 Vue.component('editorCodeblock', editorCodeblockComponent)
@@ -130,6 +129,7 @@ Vue.component('modalProfile2fa', modalProfile2faComponent)
 Vue.component('modalUpgradeSystem', modalUpgradeSystemComponent)
 Vue.component('pageLoader', pageLoaderComponent)
 Vue.component('search', searchComponent)
+Vue.component('setup', setupComponent)
 Vue.component('sourceView', sourceViewComponent)
 Vue.component('toggle', toggleComponent)
 Vue.component('tree', treeComponent)

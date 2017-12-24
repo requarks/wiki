@@ -31,11 +31,9 @@ module.exports = {
 
     // Load authentication strategies
 
-    wiki.config.auth.strategies.local = {}
-
-    _.forOwn(wiki.config.auth.strategies, (strategyConfig, strategyKey) => {
+    _.forOwn(_.omitBy(wiki.config.auth.strategies, s => s.enabled === false), (strategyConfig, strategyKey) => {
       strategyConfig.callbackURL = `${wiki.config.site.host}${wiki.config.site.path}/login/${strategyKey}/callback`
-      let strategy = require(`../authentication/${strategyKey}`)
+      let strategy = require(`../extensions/authentication/${strategyKey}`)
       strategy.init(passport, strategyConfig)
       fs.readFile(path.join(wiki.ROOTPATH, `assets/svg/auth-icon-${strategyKey}.svg`), 'utf8').then(iconData => {
         strategy.icon = iconData
@@ -47,7 +45,7 @@ module.exports = {
         }
       })
       this.strategies[strategy.key] = strategy
-      wiki.logger.info(`Authentication Provider ${strategyKey}: OK`)
+      wiki.logger.info(`Authentication Provider ${strategyKey}: [ OK ]`)
     })
 
     // Create Guest account for first-time

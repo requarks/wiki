@@ -88,8 +88,8 @@ module.exports = {
         self._repo.exists = false
       })
     }).then(() => {
-      if (wiki.config.git === false) {
-        wiki.logger.warn('Remote Git syncing is disabled. Not recommended!')
+      if (wiki.config.git.enabled === false) {
+        wiki.logger.warn('Git Remote Sync: [ DISABLED ]')
         return Promise.resolve(true)
       }
 
@@ -129,7 +129,7 @@ module.exports = {
       wiki.logger.error('Git remote error!')
       throw err
     }).then(() => {
-      wiki.logger.info('Git Repository: OK')
+      wiki.logger.info('Git Repository: [ OK ]')
       return true
     })
   },

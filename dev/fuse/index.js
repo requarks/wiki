@@ -171,16 +171,6 @@ Promise.mapSeries(tasksToRun, fn => fn()).then(() => {
 
   fuse.run().then(() => {
     console.info(colors.green.bold('\nAssets compilation + bundling completed.'))
-
-    if (opts.dev) {
-      nodemon({
-        exec: 'node server',
-        ignore: ['assets/', 'client/', 'data/', 'dev/', 'node_modules/', 'repo/', 'test/', 'test-results/'],
-        ext: 'js json graphql',
-        watch: ['server'],
-        env: { 'NODE_ENV': 'development' }
-      })
-    }
     return true
   }).catch(err => {
     console.error(colors.red(' X Bundle compilation failed! ' + err.message))
