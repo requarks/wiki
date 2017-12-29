@@ -1,0 +1,82 @@
+{
+  "profile": {
+    "displayname": "Visningsnamn",
+    "displaynameexample": "Anna Andersson",
+    "email": "E-post",
+    "lastprofileupdate": "Senaste profiluppdateringen",
+    "membersince": "Medlem sedan",
+    "password": "Lösenord",
+    "passwordverify": "Verifiera Lösenord",
+    "provider": "Leverantör",
+    "savechanges": "Spara Ändringar",
+    "subtitle": "Profil och autentiseringsinformation",
+    "tfa": "Tvåfaktorsautentisering",
+    "tfadisable": "Avaktivera 2FA",
+    "tfadisabled": "Avaktiverad",
+    "tfaenable": "Aktivera 2FA",
+    "tfaenabled": "Aktiverad"
+  },
+  "stats": {
+    "subtitle": "Generell statistik",
+    "entries": "Inlägg",
+    "uploads": "Uppladdningar",
+    "users": "Användare"
+  },
+  "settings": {
+    "subtitle": "Hantera konfiguration för hemsida"
+  },
+  "system": {
+    "subtitle": "Information och verktyg för din wiki",
+    "systemversion": "Systemversion",
+    "currentversion": "Nuvarande Version",
+    "latestversion": "Senaste Version",
+    "upgrade": "Uppgradera",
+    "reinstall": "Ominstallera nuvarande version",
+    "versioncheckfailed": "Det gick inte att hämta senaste versionen. Försök igen senare.",
+    "administrativetools": "Administrativa Verktyg",
+    "flushcache": "Rensa cache och återställ indexering",
+    "flushcachetext": "Om innehåll eller sökresultat verkar utdaterat eller inte innehåller senaste informationen, så kan det hjälp att rensa cachen.",
+    "flushcachebtn": "Rensa och återställ",
+    "resetaccounts": "Rensa systemkonton till standard",
+    "resetaccountstext": "Systemkonton (så som gästkonton) kommer att bli återställda till standardinställningar.",
+    "resetaccountsbtn": "Återställ Systemkonton",
+    "flushsessions": "Rensa alla aktiva användarsessioner",
+    "flushsessionstext": "Alla användare kommer att bli utloggade och tvingade att logga in på nytt. Din nuvarande session kommer också att påverkas!",
+    "flushsessionsbtn": "Rensa Sessioner",
+    "hostinfo": "Värdinformation",
+    "os": "Operativsystem",
+    "nodeversion": "Node.js Version",
+    "hostname": "Värdnamn",
+    "cores": "CPU Kärnor",
+    "totalmem": "Totalt Minne",
+    "cwd": "Arbetsregister"
+  },
+  "theme": {
+    "subtitle": "Ändra färg och känsla för din wiki",
+    "primarycolor": "Primär Färg",
+    "primarycolordesc": "Används för navigationsbar, sidhuvud, länkar m.m.",
+    "altcolor": "Alternativ Färg",
+    "altcolordesc": "Används för sidobar (i en mörkare ton)",
+    "footercolor": "Färg för sidfot",
+    "footercolordesc": "Används för sidfoten (i en ljusare ton)",
+    "codeblock": {
+      "title": "Kodblock",
+      "dark": "Använd Mörkt Tema",
+      "colorize": "Färga kodsyntax"
+    },
+    "savechanges": "Spara Ändringar",
+    "reset": "Återställ till Standard"
+  },
+  "users": {
+    "createauthorize": "Skapa / Autentisera Användare",
+    "subtitle": "Hantera användare och rättigheter",
+    "name": "Namn",
+    "email": "E-postadress",
+    "provider": "Leverantör",
+    "createdon": "Skapad Den",
+    "updatedon": "Uppdaterad Den",
+    "returntousers": "Återgå till Användare",
+    "edituser": "Ändra Användare",
+    "uniqueid": "Unikt ID"
+  }
+}

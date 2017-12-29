@@ -117,4 +117,7 @@ langs:
   -
     id: es
     name: Spanish - Español
+  -
+    id: sv
+    name: Swedish - Svenska
 # ---------------------------------
