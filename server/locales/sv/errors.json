@@ -1,0 +1,30 @@
+{
+  "alreadyexists": "Detta inlägg existerar redan!",
+  "debugmsg": "Detaljerad felsökningsväg",
+  "fileexists": "Filen {{path}} existerar redan.",
+  "forbidden": "Förbjuden",
+  "forbiddendetail": "Tyvärr har du inte de nödvändiga behörigheterna för att komma åt den här sidan.",
+  "generic": "Oops, något gick fel",
+  "invalidaction": "Ogiltig Åtgärd.",
+  "invaliddestfolder": "Ogiltig Destinationsmapp!",
+  "invalidfiletype": "Ogiltig Filtyp.",
+  "invalidfolder": "Ogiltig Mapp.",
+  "invalidoperation": "Ogiltig Operation!",
+  "invalidpath": "Felaktigt sökväg.",
+  "invaliduserid": "Felaktigt Användar-ID",
+  "newpasswordtooshort": "Nytt lösenord är för kort!",
+  "notexist": "Inlägg {{path}} existerar inte!",
+  "notexistdetail": "Vill du skapa detta inlägg?",
+  "parentinvalid": "Föräldrainlägg är ingen giltlig fil.",
+  "parentisroot": "Föräldrainlägg är root.",
+  "remotetoolarge": "Fjärrfilen är för stor!",
+  "reservedname": "Du kan inte skapa ett dokument med detta namn som är reserverat av systemet.",
+  "savefailed": "Misslyckades att spara dokument",
+  "starterfailed": "Det gick inte att läsa in startmaterialet!",
+  "unauthorized": "Obehörig",
+  "actions": {
+    "create": "Skapa",
+    "gohome": "Gå Hem",
+    "loginas": "Logga in som..."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "added": "Tillagd {{path}}",
+  "deleted": "Borttagen/Omdöpt {{path}}",
+  "updated": "Uppdaterad {{path}}",
+  "uploaded": "Uppladdad {{path}}"
+}

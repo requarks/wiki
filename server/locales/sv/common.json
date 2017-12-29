@@ -1,0 +1,51 @@
+{
+  "wiki": "Wiki",
+  "header": {
+    "overview": "Översikt",
+    "createdoc": "Skapa Nytt Dokument"
+  },
+  "footer": {
+    "poweredby": "Skapad av",
+    "home": "Hem",
+    "top": "Återgå till toppen"
+  },
+  "sidebar": {
+    "nav": "NAV",
+    "navigation": "Navigering",
+    "pagecontents": "Sidinnehåll",
+    "pastversions": "Senaste Versioner"
+  },
+  "nav": {
+    "account": "Konto",
+    "allpages": "Alla Sidor",
+    "create": "Skapa",
+    "discard": "Kasta Bort",
+    "edit": "Ändra",
+    "history": "Historik",
+    "login": "Logga In",
+    "logout": "Logga Ut",
+    "move": "Flytta",
+    "myprofile": "Min Profil",
+    "normalview": "Normal Vy",
+    "root": "Hem",
+    "savechanges": "Spara Ändringar",
+    "savedocument": "Spara Dokument",
+    "settings": "Inställningar",
+    "source": "Källa",
+    "stats": "Statistik",
+    "sysinfo": "Systeminformation",
+    "syssettings": "Systeminställningar",
+    "theme": "Färgtema",
+    "users": "Användare",
+    "viewlatest": "Visa Senaste"
+  },
+  "welcome": {
+    "title": "Välkommen till din wiki!",
+    "subtitle": "Kom igång genom att skapa hemvyn.",
+    "createhome": "Skapa Hemvy"
+  },
+  "loading": {
+    "source": "Laddar källa...",
+    "editor": "Laddar editor..."
+  }
+}
