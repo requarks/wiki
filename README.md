@@ -73,7 +73,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fix: Ignore .git directory when updating cache
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/40)
+![Progress](http://progressed.io/bar/42)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -100,6 +100,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Modular logging providers
 - [ ] New Login page :rocket:
 - [ ] Optional Two-Steps Authentication (2FA) :rocket:
+- [ ] New Navigation Concept :rocket:
 - [ ] Themes :rocket:
 - [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
 - [ ] History / Revert to previous version
