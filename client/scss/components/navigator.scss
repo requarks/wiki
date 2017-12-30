@@ -1,0 +1,133 @@
+.navigator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+
+  &-bar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: stretch;
+    background-color: rgba(mc('grey', '900'), .7);
+  }
+
+  &-fab {
+
+    &-button {
+      width: 50px;
+      height: 50px;
+      background-color: #FFF;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all .4s ease;
+
+      svg use {
+        transition: all .4s ease;
+      }
+
+      &:hover {
+        svg use {
+          color: mc('blue', '500');
+          fill: mc('blue', '500');
+        }
+      }
+    }
+  }
+
+  &-title {
+    background-image: linear-gradient(to bottom right, mc('blue', '500') 0%, mc('blue', '700') 50%, mc('blue', '900') 100%);
+    background-size: 200%;
+    background-repeat: no-repeat;
+    padding: 0 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .4s ease;
+    cursor: pointer;
+
+    &:hover {
+      background-position-y: -50px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      color: #FFF;
+      font-weight: 500;
+    }
+  }
+
+  &-subtitle {
+    background-repeat: no-repeat;
+    background-position-x: -100vw;
+    color: #FFF;
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0 1rem;
+    transition: background-position-x 1s ease;
+
+    &.is-error {
+      background-image: linear-gradient(to right, rgba(mc('red', '500'), 1), rgba(mc('red', '500'), 0));
+    }
+    &.is-warning {
+      background-image: linear-gradient(to right, rgba(mc('orange', '500'), 1), rgba(mc('orange', '500'), 0));
+    }
+    &.is-success {
+      background-image: linear-gradient(to right, rgba(mc('green', '500'), 1), rgba(mc('green', '500'), 0));
+    }
+    &.is-info {
+      background-image: linear-gradient(to right, rgba(mc('blue', '500'), 1), rgba(mc('blue', '500'), 0));
+    }
+
+    &.is-active {
+      background-position-x: 0;
+    }
+
+    svg {
+      margin-right: .5rem;
+      animation: flash 1s linear;
+
+      use {
+        color: #FFF;
+        fill: #FFF;
+        stroke: #FFF;
+        transition: all .4s ease;
+      }
+    }
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 400;
+    }
+  }
+
+  &-action {
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+
+    &-item {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 50px;
+      cursor: pointer;
+
+      svg use {
+        color: #FFF;
+        fill: #FFF;
+        transition: all .4s ease;
+      }
+
+      &:hover {
+        svg use {
+          color: mc('blue', '500');
+          fill: mc('blue', '500');
+        }
+      }
+    }
+  }
+}

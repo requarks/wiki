@@ -13,7 +13,7 @@
     fill: none;
   }
 
-  @each $size in 16,18,20,24,48,64,96,128 {
+  @each $size in 16,18,20,24,32,48,64,96,128 {
     &.is-#{$size} {
       width: #{$size}px;
       height: #{$size}px;

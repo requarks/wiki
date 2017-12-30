@@ -12,7 +12,7 @@ import { ApolloClient } from 'apollo-client'
 import { HttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import store from './store'
-import icons from '../svg/nc-icons.svg'
+import icons from '../svg/icons.svg'
 
 // ====================================
 // Load Modules
@@ -47,6 +47,7 @@ import modalDiscardPageComponent from './components/modal-discard-page.vue'
 import modalMovePageComponent from './components/modal-move-page.vue'
 import modalProfile2faComponent from './components/modal-profile-2fa.vue'
 import modalUpgradeSystemComponent from './components/modal-upgrade-system.vue'
+import navigatorComponent from './components/navigator.vue'
 import pageLoaderComponent from './components/page-loader.vue'
 import searchComponent from './components/search.vue'
 import toggleComponent from './components/toggle.vue'
@@ -127,6 +128,7 @@ Vue.component('modalDiscardPage', modalDiscardPageComponent)
 Vue.component('modalMovePage', modalMovePageComponent)
 Vue.component('modalProfile2fa', modalProfile2faComponent)
 Vue.component('modalUpgradeSystem', modalUpgradeSystemComponent)
+Vue.component('navigator', navigatorComponent)
 Vue.component('pageLoader', pageLoaderComponent)
 Vue.component('search', searchComponent)
 Vue.component('setup', setupComponent)

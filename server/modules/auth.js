@@ -32,9 +32,14 @@ module.exports = {
     // Load authentication strategies
 
     _.forOwn(_.omitBy(wiki.config.auth.strategies, s => s.enabled === false), (strategyConfig, strategyKey) => {
-      strategyConfig.callbackURL = `${wiki.config.site.host}${wiki.config.site.path}/login/${strategyKey}/callback`
+      strategyConfig.callbackURL = `${wiki.config.site.host}${wiki.config.site.path}login/${strategyKey}/callback`
       let strategy = require(`../extensions/authentication/${strategyKey}`)
-      strategy.init(passport, strategyConfig)
+      try {
+        strategy.init(passport, strategyConfig)
+      } catch (err) {
+        wiki.logger.error(`Authentication Provider ${strategyKey}: [ FAILED ]`)
+        wiki.logger.error(err)
+      }
       fs.readFile(path.join(wiki.ROOTPATH, `assets/svg/auth-icon-${strategyKey}.svg`), 'utf8').then(iconData => {
         strategy.icon = iconData
       }).catch(err => {

@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 
-import alert from './modules/alert'
 import anchor from './modules/anchor'
 import editor from './modules/editor'
 import editorCodeblock from './modules/editor-codeblock'
@@ -15,6 +14,7 @@ import modalDiscardPage from './modules/modal-discard-page'
 import modalMovePage from './modules/modal-move-page'
 import modalProfile2fa from './modules/modal-profile-2fa'
 import modalUpgradeSystem from './modules/modal-upgrade-system'
+import navigator from './modules/navigator'
 import pageLoader from './modules/page-loader'
 
 Vue.use(Vuex)
@@ -27,12 +27,12 @@ export default new Vuex.Store({
     loadingChange: (state, loadingState) => { state.loading = loadingState }
   },
   actions: {
+    alert({ dispatch }, opts) { dispatch('navigator/alert', opts) },
     startLoading({ commit }) { commit('loadingChange', true) },
     stopLoading({ commit }) { commit('loadingChange', false) }
   },
   getters: {},
   modules: {
-    alert,
     anchor,
     editor,
     editorCodeblock,
@@ -46,6 +46,7 @@ export default new Vuex.Store({
     modalMovePage,
     modalProfile2fa,
     modalUpgradeSystem,
+    navigator,
     pageLoader
   }
 })

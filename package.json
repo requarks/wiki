@@ -156,6 +156,7 @@
     "fuse-box": "2.5.0-beta.1",
     "graphql-tag": "^2.6.1",
     "i18next-xhr-backend": "1.5.0",
+    "intl": "1.2.5",
     "jest": "22.0.4",
     "jest-junit": "3.4.1",
     "js-cookie": "2.2.0",
@@ -178,7 +179,8 @@
     "vue-template-compiler": "2.5.13",
     "vue-template-es2015-compiler": "1.6.0",
     "vuex": "3.0.1",
-    "vuex-persistedstate": "2.4.2"
+    "vuex-persistedstate": "2.4.2",
+    "whatwg-fetch": "2.0.3"
   },
   "jest": {
     "testResultsProcessor": "./node_modules/jest-junit",

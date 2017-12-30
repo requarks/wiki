@@ -1,5 +1,3 @@
-'use strict'
-
 /* global wiki */
 
 // ------------------------------------
@@ -25,7 +23,7 @@ module.exports = {
         }).catch((err) => {
           return cb(err, null) || true
         })
-      }
-      ))
+      })
+    )
   }
 }

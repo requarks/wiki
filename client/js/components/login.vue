@@ -1,23 +1,18 @@
 <template lang="pug">
   .login(:class='{ "is-error": error }')
     .login-container(:class='{ "is-expanded": strategies.length > 1 }')
-      .login-error(v-if='error')
-        strong
-          i.icon-warning-outline
-          | {{ error.title }}
-        span {{ error.message }}
       .login-providers(v-show='strategies.length > 1')
         button(v-for='strategy in strategies', :class='{ "is-active": strategy.key === selectedStrategy }', @click='selectStrategy(strategy.key, strategy.useForm)', :title='strategy.title')
           em(v-html='strategy.icon')
           span {{ strategy.title }}
+        .login-providers-fill
       .login-frame
         h1 {{ siteTitle }}
         h2 {{ $t('auth:loginrequired') }}
-        form(method='post', action='/login')
-          input#login-user(type='text', name='email', :placeholder='$t("auth:fields.emailuser")')
-          input#login-pass(type='password', name='password', :placeholder='$t("auth:fields.password")')
-          button.button.is-light-blue.is-fullwidth(type='submit')
-            span {{ $t('auth:actions.login') }}
+        input(type='text', name='email', :placeholder='$t("auth:fields.emailuser")')
+        input(type='password', name='password', :placeholder='$t("auth:fields.password")')
+        button.button.is-orange.is-fullwidth(@click='login')
+          span {{ $t('auth:actions.login') }}
     .login-copyright
       span {{ $t('footer.poweredby') }}
       a(href='https://wiki.js.org', rel='external', title='Wiki.js') Wiki.js
@@ -62,9 +57,17 @@ export default {
       }).catch(err => {
         console.error(err)
       })
+    },
+    login() {
+      this.$store.dispatch('alert', {
+        style: 'error',
+        icon: 'gg-warning',
+        msg: 'Email or password is invalid'
+      })
     }
   },
   mounted() {
+    this.$store.commit('navigator/subtitleStatic', 'Login')
     this.refreshStrategies()
   }
 }

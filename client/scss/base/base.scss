@@ -12,12 +12,11 @@ html {
 }
 
 #app {
-  padding-bottom: 67px;
   position: relative;
   min-height: 100%;
 
   &.is-fullscreen {
-    width: 100vw;
+    //width: 100vw;
     height: 100vh;
   }
 }
