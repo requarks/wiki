@@ -9,18 +9,42 @@
       .navigator-title
         h1 {{ siteTitle }}
       .navigator-subtitle(:class='subtitleClass')
-
-        svg.icons.is-24(role='img', v-if='subtitleIcon')
-          title {{subtitleText}}
-          use(:xlink:href='subtitleIconClass')
+        transition(name='navigator-subtitle-icon')
+          svg.icons.is-24.navigator-subtitle-icon(role='img', v-if='subtitleIcon')
+            title {{subtitleText}}
+            use(:xlink:href='subtitleIconClass')
         h2 {{subtitleText}}
       .navigator-action
         .navigator-action-item
           svg.icons.is-32(role='img')
             title User
             use(xlink:href='#nc-user-circle')
-    .navigator-row
-      .navigator-nav
+    transition(name='navigator-sd')
+      .navigator-sd(v-show='sdShown')
+        .navigator-sd-actions
+          a.is-active(href='')
+            svg.icons.is-24(role='img')
+              title Search
+              use(xlink:href='#gg-search')
+          a(href='')
+            svg.icons.is-24(role='img')
+              title New Document
+              use(xlink:href='#nc-plus-circle')
+          a(href='')
+            svg.icons.is-24(role='img')
+              title Navigation
+              use(xlink:href='#nc-pen-red')
+          a(href='')
+            svg.icons.is-24(role='img')
+              title Navigation
+              use(xlink:href='#nc-restore')
+          a(href='')
+            svg.icons.is-24(role='img')
+              title New Document
+              use(xlink:href='#nc-code-editor')
+        .navigator-sd-search
+          input(type='text', placeholder='Search')
+        .navigator-sd-results
 </template>
 
 <script>
@@ -31,7 +55,9 @@ import { mapState } from 'vuex'
 export default {
   name: 'navigator',
   data() {
-    return { }
+    return {
+      sdShown: false
+    }
   },
   computed: {
     ...mapState('navigator', [
@@ -56,11 +82,12 @@ export default {
   },
   methods: {
     toggleMainMenu() {
-      this.$store.dispatch('navigator/alert', {
-        style: 'success',
-        icon: 'nc-check-simple',
-        msg: 'Changes were saved successfully!'
-      })
+      this.sdShown = !this.sdShown
+      // this.$store.dispatch('navigator/alert', {
+      //   style: 'success',
+      //   icon: 'gg-check',
+      //   msg: 'Changes were saved successfully!'
+      // })
     }
   },
   mounted() {

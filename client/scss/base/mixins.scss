@@ -1,17 +1,4 @@
 /**
- * Clearfix
- *
- * @return     {string}  Clearfix attribute
- */
-@mixin clearfix {
-	&:after {
-		content: "";
-		display: table;
-		clear: both;
-	}
-}
-
-/**
  * Placeholder attribute for inputs
  *
  * @return     {string}  Placeholder attributes

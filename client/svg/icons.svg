@@ -358,4 +358,56 @@
             <path d="M2 42h44L24 4 2 42zm24-6h-4v-4h4v4zm0-8h-4v-8h4v8z"></path>
         </g>
     </symbol>
+    <symbol id='gg-check' viewBox="0 0 48 48">
+        <g class="nc-icon-wrapper" fill="currentColor">
+            <path d="M18 32.34L9.66 24l-2.83 2.83L18 38l24-24-2.83-2.83z"></path>
+        </g>
+    </symbol>
+    <symbol id='gg-search' viewBox="0 0 48 48">
+        <g class="nc-icon-wrapper" fill="currentColor">
+            <path d="M31 28h-1.59l-.55-.55C30.82 25.18 32 22.23 32 19c0-7.18-5.82-13-13-13S6 11.82 6 19s5.82 13 13 13c3.23 0 6.18-1.18 8.45-3.13l.55.55V31l10 9.98L40.98 38 31 28zm-12 0c-4.97 0-9-4.03-9-9s4.03-9 9-9 9 4.03 9 9-4.03 9-9 9z"></path>
+        </g>
+    </symbol>
+    <symbol id='nc-plus-circle' viewBox="0 0 48 48">
+        <g class="nc-icon-wrapper">
+            <path fill="#72C472" d="M24,47C11.31738,47,1,36.68262,1,24S11.31738,1,24,1s23,10.31738,23,23S36.68262,47,24,47z"></path>
+            <polygon fill="#FFFFFF" points="36,21 27,21 27,12 21,12 21,21 12,21 12,27 21,27 21,36 27,36 27,27 36,27 "></polygon>
+        </g>
+    </symbol>
+    <symbol id='nc-pen-red' viewBox="0 0 48 48">
+        <g class="nc-icon-wrapper">
+            <polygon fill="#223E49" points="8.183,44.183 7,41 3.817,39.817 2.725,45.275 "></polygon>
+            <polygon fill="#EAD8C5" points="14.493,42.921 12,35.708 5.079,33.507 3.817,39.817 8.183,44.183 "></polygon>
+            <path fill="#335262" d="M34.586,4l-5.293,5.293L33,15l5.707,3.707L44,13.414c0.781-0.781,0.781-2.047,0-2.828L37.414,4 C36.633,3.219,35.367,3.219,34.586,4z"></path>
+            <rect x="2.917" y="20.218" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -11.2804 21.2734)" fill="#E86C60" width="34.244" height="8.071"></rect>
+            <rect x="7.125" y="25.132" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -13.0231 25.4808)" fill="#DD5E58" width="34.244" height="6.657"></rect>
+            <rect x="33" y="7.343" transform="matrix(0.7071 -0.7071 0.7071 0.7071 0.0589 28.1421)" fill="#E6E6E6" width="2" height="13.314"></rect>
+        </g>
+    </symbol>
+    <symbol id='nc-restore' viewBox="0 0 48 48">
+        <g class="nc-icon-wrapper">
+            <path fill="#B3B3B3" d="M24,42c10.539,0,18.992-9.105,17.906-19.862c-0.862-8.531-7.863-15.387-16.409-16.077 c-6.106-0.493-11.83,2.057-15.508,6.629l7.65-1.024l0.531,3.965L6.276,17.223c-0.09,0.012-0.18,0.018-0.269,0.018 c-0.986,0-1.845-0.729-1.979-1.734L2.436,3.612L6.4,3.081l0.886,6.617c4.686-5.496,11.853-8.446,19.428-7.535 c10.097,1.214,18.149,9.444,19.17,19.562C47.212,34.873,36.881,46,24,46C12.213,46,2.561,36.682,2.024,25.026 C1.998,24.464,2.464,24,3.026,24h2.003c0.541,0,0.969,0.431,0.997,0.972C6.532,34.447,14.401,42,24,42z"></path>
+            <path fill="#43A6DD" d="M29.879,32.707l-7.293-7.293C22.211,25.039,22,24.53,22,23.999V15c0-0.552,0.448-1,1-1h2 c0.552,0,1,0.448,1,1v8.172l6.707,6.707c0.391,0.391,0.391,1.024,0,1.414l-1.414,1.414C30.903,33.097,30.269,33.097,29.879,32.707z"></path>
+        </g>
+    </symbol> 
+    <symbol id='nc-code-editor' viewBox="0 0 48 48">
+        <g class="nc-icon-wrapper">
+            <path fill="#444444" d="M47,11V6c0-1.105-0.895-2-2-2H3C1.895,4,1,4.895,1,6v5H47z"></path>
+            <path fill="#606060" d="M45,43H15V11h32v30C47,42.105,46.105,43,45,43z"></path>
+            <circle fill="#E86C60" cx="4.5" cy="7.5" r="1.5"></circle>
+            <circle fill="#EFD358" cx="9.5" cy="7.5" r="1.5"></circle>
+            <circle fill="#72C472" cx="14.5" cy="7.5" r="1.5"></circle>
+            <path fill="#4F4F4F" d="M16,43H3c-1.105,0-2-0.895-2-2V11h15V43z"></path>
+            <rect x="5" y="14" fill="#B3B3B3" width="7" height="2"></rect>
+            <rect x="5" y="20" fill="#B3B3B3" width="5" height="2"></rect>
+            <rect x="5" y="26" fill="#B3B3B3" width="7" height="2"></rect>
+            <rect x="5" y="32" fill="#B3B3B3" width="5" height="2"></rect>
+            <rect x="5" y="38" fill="#B3B3B3" width="7" height="2"></rect>
+            <rect x="20" y="14" fill="#E86C60" width="5" height="2"></rect>
+            <rect x="24" y="20" fill="#EFD358" width="7" height="2"></rect>
+            <rect x="27" y="26" fill="#FFFFFF" width="10" height="2"></rect>
+            <rect x="24" y="32" fill="#EFD358" width="7" height="2"></rect>
+            <rect x="20" y="38" fill="#E86C60" width="5" height="2"></rect>
+        </g>
+    </symbol>
 </svg>
