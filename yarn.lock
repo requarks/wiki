@@ -6164,11 +6164,25 @@ parseurl@~1.3.2:
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/parseurl/-/parseurl-1.3.2.tgz#fc289d4ed8993119460c156253262cdc8de65bf3"
 
+passport-auth0@0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/passport-auth0/-/passport-auth0-0.6.1.tgz#8a6ace06b5d1927aaad15e22e1c43b9b04e5ddee"
+  dependencies:
+    passport-oauth "^1.0.0"
+    request "^2.61.0"
+    xtend "^4.0.0"
+
 passport-azure-ad-oauth2@0.0.4:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/passport-azure-ad-oauth2/-/passport-azure-ad-oauth2-0.0.4.tgz#1a09d8869efd4afd095116e228941961b3a5c120"
   dependencies:
     passport-oauth "1.0.x"
+
+passport-discord@0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/passport-discord/-/passport-discord-0.1.3.tgz#669cc4a770b592f57eb17002ca1743a22e8d7c38"
+  dependencies:
+    passport-oauth2 "^1.2.0"
 
 passport-facebook@2.1.1:
   version "2.1.1"
@@ -6211,7 +6225,7 @@ passport-oauth1@1.x.x:
     passport-strategy "1.x.x"
     utils-merge "1.x.x"
 
-passport-oauth2@1.x.x:
+passport-oauth2@1.x.x, passport-oauth2@^1.1.2, passport-oauth2@^1.2.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/passport-oauth2/-/passport-oauth2-1.4.0.tgz#f62f81583cbe12609be7ce6f160b9395a27b86ad"
   dependencies:
@@ -6220,7 +6234,7 @@ passport-oauth2@1.x.x:
     uid2 "0.0.x"
     utils-merge "1.x.x"
 
-passport-oauth@1.0.x:
+passport-oauth@1.0.x, passport-oauth@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/passport-oauth/-/passport-oauth-1.0.0.tgz#90aff63387540f02089af28cdad39ea7f80d77df"
   dependencies:
@@ -6245,6 +6259,13 @@ passport-slack@0.0.7:
 passport-strategy@1.x.x, passport-strategy@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/passport-strategy/-/passport-strategy-1.0.0.tgz#b5539aa8fc225a3d1ad179476ddf236b440f52e4"
+
+passport-twitch@1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/passport-twitch/-/passport-twitch-1.0.3.tgz#82a4a1fbe19368d44e62f057e93c414a9d4fe7cc"
+  dependencies:
+    passport-oauth2 "^1.1.2"
+    pkginfo "0.2.x"
 
 passport-windowslive@1.0.2:
   version "1.0.2"
@@ -7158,7 +7179,7 @@ request@2, request@^2.65.0, request@^2.67.0, request@^2.79.0, request@^2.81.0:
     tunnel-agent "^0.6.0"
     uuid "^3.0.0"
 
-request@2.83.0, request@^2.83.0:
+request@2.83.0, request@^2.61.0, request@^2.83.0:
   version "2.83.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.83.0.tgz#ca0b65da02ed62935887808e6f510381034e3356"
   dependencies:

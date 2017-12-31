@@ -229,7 +229,7 @@
 
     input[type=text], input[type=password] {
       width: 100%;
-      border: 1px solid rgba(mc('light-blue','500'), .5);
+      border: 1px solid rgba(mc('blue-grey','500'), .5);
       border-radius: 3px;
       background-color: rgba(255,255,255,.9);
       box-shadow: inset 0 0 0 3px rgba(255,255,255, .25);
@@ -253,7 +253,7 @@
     }
 
     .button {
-      background-image: linear-gradient(to top, mc('deep-orange', '400') 0%, mc('deep-orange', '400') 50%, mc('orange', '500') 100%);
+      background-image: linear-gradient(to bottom, mc('blue', '400') 0%, mc('blue', '600') 50%, mc('blue', '700') 100%);
       background-repeat: no-repeat;
       background-size: 100% 200%;
 

@@ -22,26 +22,34 @@
     transition(name='navigator-sd')
       .navigator-sd(v-show='sdShown')
         .navigator-sd-actions
-          a.is-active(href='')
+          a.is-active(href='', title='Search')
             svg.icons.is-24(role='img')
               title Search
               use(xlink:href='#gg-search')
           a(href='')
-            svg.icons.is-24(role='img')
+            svg.icons.is-24(role='img', title='New Document')
               title New Document
               use(xlink:href='#nc-plus-circle')
           a(href='')
-            svg.icons.is-24(role='img')
-              title Navigation
+            svg.icons.is-24(role='img', title='Edit Document')
+              title Edit Document
               use(xlink:href='#nc-pen-red')
           a(href='')
-            svg.icons.is-24(role='img')
-              title Navigation
+            svg.icons.is-24(role='img', title='History')
+              title History
               use(xlink:href='#nc-restore')
           a(href='')
-            svg.icons.is-24(role='img')
-              title New Document
+            svg.icons.is-24(role='img', title='View Source')
+              title View Source
               use(xlink:href='#nc-code-editor')
+          a(href='')
+            svg.icons.is-24(role='img', title='Move Document')
+              title Move Document
+              use(xlink:href='#nc-move')
+          a(href='')
+            svg.icons.is-24(role='img', title='Delete Document')
+              title Delete Document
+              use(xlink:href='#nc-trash')
         .navigator-sd-search
           input(type='text', placeholder='Search')
         .navigator-sd-results

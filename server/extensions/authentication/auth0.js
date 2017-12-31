@@ -1,23 +1,24 @@
 /* global wiki */
 
 // ------------------------------------
-// Slack Account
+// Auth0 Account
 // ------------------------------------
 
-const SlackStrategy = require('passport-slack').Strategy
+const Auth0Strategy = require('passport-auth0').Strategy
 
 module.exports = {
-  key: 'slack',
-  title: 'Slack',
+  key: 'auth0',
+  title: 'Auth0',
   useForm: false,
-  props: ['clientId', 'clientSecret'],
+  props: ['domain', 'clientId', 'clientSecret'],
   init (passport, conf) {
-    passport.use('slack',
-      new SlackStrategy({
+    passport.use('auth0',
+      new Auth0Strategy({
+        domain: conf.domain,
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
-      }, (accessToken, refreshToken, profile, cb) => {
+      }, function (accessToken, refreshToken, profile, cb) {
         wiki.db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {

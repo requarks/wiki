@@ -10,7 +10,7 @@ module.exports = {
   key: 'microsoft',
   title: 'Microsoft Account',
   useForm: false,
-  props: ['clientId', 'clientSecret', 'callbackURL'],
+  props: ['clientId', 'clientSecret'],
   init (passport, conf) {
     passport.use('microsoft',
       new WindowsLiveStrategy({

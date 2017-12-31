@@ -1,23 +1,24 @@
 /* global wiki */
 
 // ------------------------------------
-// Slack Account
+// Twitch Account
 // ------------------------------------
 
-const SlackStrategy = require('passport-slack').Strategy
+const TwitchStrategy = require('passport-twitch').Strategy
 
 module.exports = {
-  key: 'slack',
-  title: 'Slack',
+  key: 'twitch',
+  title: 'Twitch',
   useForm: false,
   props: ['clientId', 'clientSecret'],
   init (passport, conf) {
-    passport.use('slack',
-      new SlackStrategy({
+    passport.use('twitch',
+      new TwitchStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL
-      }, (accessToken, refreshToken, profile, cb) => {
+        callbackURL: conf.callbackURL,
+        scope: 'user_read'
+      }, function (accessToken, refreshToken, profile, cb) {
         wiki.db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {

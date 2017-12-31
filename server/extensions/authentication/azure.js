@@ -10,7 +10,7 @@ module.exports = {
   key: 'azure',
   title: 'Azure Active Directory',
   useForm: false,
-  props: ['clientId', 'clientSecret', 'callbackURL', 'resource', 'tenant'],
+  props: ['clientId', 'clientSecret', 'resource', 'tenant'],
   init (passport, conf) {
     const jwt = require('jsonwebtoken')
     passport.use('azure_ad_oauth2',

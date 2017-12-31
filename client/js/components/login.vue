@@ -9,9 +9,9 @@
       .login-frame
         h1 {{ siteTitle }}
         h2 {{ $t('auth:loginrequired') }}
-        input(type='text', name='email', :placeholder='$t("auth:fields.emailuser")')
-        input(type='password', name='password', :placeholder='$t("auth:fields.password")')
-        button.button.is-orange.is-fullwidth(@click='login')
+        input(type='text', ref='iptEmail', :placeholder='$t("auth:fields.emailuser")')
+        input(type='password', ref='iptPassword', :placeholder='$t("auth:fields.password")')
+        button.button.is-blue.is-fullwidth(@click='login')
           span {{ $t('auth:actions.login') }}
     .login-copyright
       span {{ $t('footer.poweredby') }}
@@ -69,6 +69,7 @@ export default {
   mounted() {
     this.$store.commit('navigator/subtitleStatic', 'Login')
     this.refreshStrategies()
+    this.$refs.iptEmail.focus()
   }
 }
 </script>

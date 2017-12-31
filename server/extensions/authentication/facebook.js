@@ -10,7 +10,7 @@ module.exports = {
   key: 'facebook',
   title: 'Facebook',
   useForm: false,
-  props: ['clientId', 'clientSecret', 'callbackURL'],
+  props: ['clientId', 'clientSecret'],
   init (passport, conf) {
     passport.use('facebook',
       new FacebookStrategy({
