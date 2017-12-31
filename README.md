@@ -94,7 +94,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Docker support + Auto compile/publish to Docker Hub
 - [x] Support sub-directory installations (e.g. example.com/wiki)
 - [x] Make use of all available CPU cores, distributed jobs queue
-- [x] Modular authentication providers
+- [x] Modular authentication providers (+ new Auth0, Discord and Twitch providers)
 - [x] Shared kernel for both app and setup
 - [x] Improved installation wizard
 - [x] Modular logging providers
