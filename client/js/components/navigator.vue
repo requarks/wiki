@@ -26,33 +26,46 @@
             svg.icons.is-24(role='img')
               title Search
               use(xlink:href='#gg-search')
-          a(href='')
-            svg.icons.is-24(role='img', title='New Document')
+          a(href='', title='New Document')
+            svg.icons.is-24(role='img')
               title New Document
               use(xlink:href='#nc-plus-circle')
-          a(href='')
-            svg.icons.is-24(role='img', title='Edit Document')
+          a(href='', title='Edit Document')
+            svg.icons.is-24(role='img')
               title Edit Document
               use(xlink:href='#nc-pen-red')
-          a(href='')
-            svg.icons.is-24(role='img', title='History')
+          a(href='', title='History')
+            svg.icons.is-24(role='img')
               title History
               use(xlink:href='#nc-restore')
-          a(href='')
-            svg.icons.is-24(role='img', title='View Source')
+          a(href='', title='View Source')
+            svg.icons.is-24(role='img')
               title View Source
               use(xlink:href='#nc-code-editor')
-          a(href='')
-            svg.icons.is-24(role='img', title='Move Document')
+          a(href='', title='Move Document')
+            svg.icons.is-24(role='img')
               title Move Document
               use(xlink:href='#nc-move')
-          a(href='')
-            svg.icons.is-24(role='img', title='Delete Document')
+          a(href='', title='Delete Document')
+            svg.icons.is-24(role='img')
               title Delete Document
               use(xlink:href='#nc-trash')
         .navigator-sd-search
-          input(type='text', placeholder='Search')
+          input(type='text', ref='iptSearch', placeholder='Search')
         .navigator-sd-results
+        .navigator-sd-footer
+          a(href='', title='Settings')
+            svg.icons.is-24(role='img')
+              title Settings
+              use(xlink:href='#nc-gear')
+          a(href='', title='Users')
+            svg.icons.is-24(role='img')
+              title Users
+              use(xlink:href='#nc-users')
+          a(href='', title='Assets')
+            svg.icons.is-24(role='img')
+              title Assets
+              use(xlink:href='#nc-image')
 </template>
 
 <script>
@@ -91,6 +104,11 @@ export default {
   methods: {
     toggleMainMenu() {
       this.sdShown = !this.sdShown
+      if (this.sdShown) {
+        this.$nextTick(() => {
+          this.$refs.iptSearch.focus()
+        })
+      }
       // this.$store.dispatch('navigator/alert', {
       //   style: 'success',
       //   icon: 'gg-check',

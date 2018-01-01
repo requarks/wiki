@@ -150,7 +150,6 @@
     width: 350px;
     background-color: #FFF;
     border-radius: 0 0 5px 0;
-    padding: 0 0 1rem 0;
     transition: all .4s ease;
     transform-origin: top left;
 
@@ -180,14 +179,6 @@
         &:hover {
           background-color: #FFF;
         }
-
-        svg {
-          use {
-            color: mc('blue-grey', '500');
-            fill: mc('blue-grey', '500');
-            transition: all .4s ease;
-          }
-        }
       }
     }
 
@@ -197,11 +188,12 @@
       input {
         display: block;
         width: 100%;
-        padding: 0 1rem 0 1rem;
+        padding: 0 3rem 0 1rem;
         height: 40px;
         border: 0;
         font-size: .9rem;
         color: mc('grey', '700');
+        position: relative;
 
         &:focus {
           outline: none;
@@ -209,17 +201,33 @@
         }
       }
 
-      svg {
+      &::after {
+        content: " ";
+        @include spinner(mc('blue', '200'),0.5s,18px);
         position: absolute;
-        width: 20px;
-        height: 20px;
-        top: 9px;
-        left: 15px;
+        display: block;
+        top: 11px;
+        right: 1rem;
+      }
+    }
 
-        use {
-          color: mc('grey', '500');
-          fill: mc('grey', '500');
-          transition: all .4s ease;
+    &-footer {
+      background-color: mc('blue-grey', '100');
+      border-top: 5px solid mc('blue-grey', '200');
+      border-radius: 0 0 5px 0;
+      display: flex;
+      justify-content: center;
+
+      a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 50px;
+        width: 50px;
+        transition: all .4s ease;
+
+        &:hover {
+          background-color: mc('blue-grey', '200');
         }
       }
     }

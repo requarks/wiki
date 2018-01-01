@@ -54,7 +54,7 @@ block body
                     .is-logo
                       svg.icons.is-64: use(xlink:href='#nc-metrics')
                       h4 System Check
-                    p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#nc-ms-dots')] Checking your system for compatibility...
+                    p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#wk-msdots')] Checking your system for compatibility...
                     p(v-if='!loading && syscheck.ok')
                       ul
                         li(v-for='rs in syscheck.results') #[svg.icons.is-18.is-text: use(xlink:href='#nc-check-bold')] {{rs}}
@@ -81,7 +81,7 @@ block body
                   .panel-content.form-sections
                     section
                       .is-logo
-                        svg.icons.is-64: use(xlink:href='#nc-webpage-2-2')
+                        svg.icons.is-64: use(xlink:href='#nc-webpage')
                         h4 General Information
                       p.control.is-fullwidth
                         label.label Site Title
@@ -249,14 +249,14 @@ block body
                     .is-logo
                       img(src='svg/logo-git.svg', alt='Git Logo')
                       h4 Git Repository Check
-                    p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#nc-ms-dots')] Verifying Git repository settings...
+                    p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#wk-msdots')] Verifying Git repository settings...
                     p(v-if='!loading && gitcheck.ok')
                       ul
                         li(v-for='rs in gitcheck.results') #[svg.icons.is-18.is-text: use(xlink:href='#nc-check-bold')] {{rs}}
                     p(v-if='!loading && gitcheck.ok')
                       svg.icons.is-18.is-text: use(xlink:href='#nc-check-bold')
                       strong  Git settings are correct!
-                    p(v-if='!loading && !gitcheck.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove-12')] Error: {{ gitcheck.error }}
+                    p(v-if='!loading && !gitcheck.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove')] Error: {{ gitcheck.error }}
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
@@ -274,7 +274,7 @@ block body
                     i(v-if='loading')
                   .panel-content.is-text
                     .is-logo
-                      svg.icons.is-64: use(xlink:href='#nc-man-38')
+                      svg.icons.is-64: use(xlink:href='#nc-man')
                       h4 Administrator Account
                     p A root administrator account will be created for local authentication. From this account, you can create or authorize more users.
                   .panel-content.form-sections
@@ -335,7 +335,7 @@ block body
                     i(v-if='loading')
                   .panel-content.is-text
                     .is-logo(v-if='loading')
-                      svg.icons.is-64: use(xlink:href='#nc-ms-dots')
+                      svg.icons.is-64: use(xlink:href='#wk-msdots')
                       h4 Finalizing your installation...
                     .is-logo(v-if='!loading && final.ok')
                       svg.icons.is-64: use(xlink:href='#nc-check-bold')
@@ -343,7 +343,7 @@ block body
                     p(v-if='!loading && final.ok'): strong Wiki.js was configured successfully and is now ready for use.
                     p(v-if='!loading && final.ok')
                       | Click the <strong>Start</strong> button below to launch your newly configured wiki.
-                    p(v-if='!loading && !final.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove-12')] Error: {{ final.error }}
+                    p(v-if='!loading && !final.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove')] Error: {{ final.error }}
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
                     button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
