@@ -62,15 +62,13 @@ Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](h
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.12 - Stable
+### 1.0.66 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 **Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
 
-- [x] Estonian locale is now available (thanks to @vonforum)
-- [x] Updates to various locales
-- [x] Added quotes to sample Slack config to avoid number parsing
-- [x] Fix: Ignore .git directory when updating cache
+- [x] Swedish locale is now available (thanks to @pontus-andersson)
+- [x] Fix: Strip /create and /edit when check path permissions
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/42)
