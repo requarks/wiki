@@ -148,6 +148,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] Russian - *Thanks to [@efimlosev](https://github.com/efimlosev)*
 - [x] Slovak - *Thanks to [@braniqvranik](https://github.com/braniqvranik)*
 - [x] Spanish - *Thanks to [@MatiasArriola](https://github.com/MatiasArriola)*
+- [x] Swedish - *Thanks to [@pontus-andersson](https://github.com/pontus-andersson)*
 
 ## Special Thanks
 
