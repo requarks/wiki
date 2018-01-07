@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.66] - 2018-01-07
+### Added
+- **Localization**: Swedish locale is now available (thanks to @pontus-andersson)
+
+## Fixed
+- **Misc**: Strip /create and /edit when check path permissions
+
 ## [v1.0.12] - 2017-11-26
 ### Added
 - **Localization**: Estonian locale is now available (thanks to @vonforum)
