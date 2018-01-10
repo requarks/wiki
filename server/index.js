@@ -11,6 +11,7 @@ let wiki = {
   IS_MASTER: cluster.isMaster,
   ROOTPATH: process.cwd(),
   SERVERPATH: path.join(process.cwd(), 'server'),
+  Error: require('./helpers/error'),
   configSvc: require('./modules/config'),
   kernel: require('./modules/kernel')
 }

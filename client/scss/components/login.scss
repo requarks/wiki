@@ -54,6 +54,15 @@
     border-radius: 6px;
     animation: zoomIn .5s ease;
 
+    &::after {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      content: " ";
+      @include spinner(mc('blue', '500'),0.5s,16px);
+      display: none;
+    }
+
     &.is-expanded {
       width: 650px;
 
@@ -65,6 +74,10 @@
           border-radius: 0;
         }
       }
+    }
+
+    &.is-loading::after {
+      display: block;
     }
 
     @include until($tablet) {
@@ -262,6 +275,16 @@
       }
     }
 
+  }
+
+  &-tfa {
+    position: relative;
+    display: flex;
+    width: 400px;
+    align-items: stretch;
+    box-shadow: 0 14px 28px rgba(0,0,0,0.2);
+    border-radius: 6px;
+    animation: zoomIn .5s ease;
   }
 
   &-copyright {

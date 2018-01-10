@@ -9,8 +9,9 @@ const Promise = require('bluebird')
 
 module.exports = {
   engine: null,
-  namespaces: ['common', 'admin', 'auth', 'errors', 'git'],
+  namespaces: [],
   init() {
+    this.namespaces = wiki.data.localeNamespaces
     this.engine = i18next
     this.engine.use(i18nBackend).init({
       load: 'languageOnly',
@@ -21,12 +22,12 @@ module.exports = {
       lng: wiki.config.site.lang,
       fallbackLng: 'en',
       backend: {
-        loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
+        loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.yml')
       }
     })
     return this
   },
-  getByNamespace(locale, namespace) {
+  async getByNamespace(locale, namespace) {
     if (this.engine.hasResourceBundle(locale, namespace)) {
       let data = this.engine.getResourceBundle(locale, namespace)
       return _.map(dotize.convert(data), (value, key) => {
@@ -39,12 +40,12 @@ module.exports = {
       throw new Error('Invalid locale or namespace')
     }
   },
-  loadLocale(locale) {
+  async loadLocale(locale) {
     return Promise.fromCallback(cb => {
       return this.engine.loadLanguages(locale, cb)
     })
   },
-  setCurrentLocale(locale) {
+  async setCurrentLocale(locale) {
     return Promise.fromCallback(cb => {
       return this.engine.changeLanguage(locale, cb)
     })

@@ -1,8 +1,10 @@
-/* global wiki, appconfig */
+/* global wiki */
 
 const Promise = require('bluebird')
 const bcrypt = require('bcryptjs-then')
 const _ = require('lodash')
+const tfa = require('node-2fa')
+const securityHelper = require('../helpers/security')
 
 /**
  * Users schema
@@ -56,10 +58,108 @@ module.exports = (sequelize, DataTypes) => {
     ]
   })
 
-  userSchema.prototype.validatePassword = function (rawPwd) {
-    return bcrypt.compare(rawPwd, this.password).then((isValid) => {
-      return (isValid) ? true : Promise.reject(new Error(wiki.lang.t('auth:errors:invalidlogin')))
+  userSchema.prototype.validatePassword = async function (rawPwd) {
+    if (await bcrypt.compare(rawPwd, this.password) === true) {
+      return true
+    } else {
+      throw new wiki.Error.AuthLoginFailed()
+    }
+  }
+
+  userSchema.prototype.enableTFA = async function () {
+    let tfaInfo = tfa.generateSecret({
+      name: wiki.config.site.title
     })
+    this.tfaIsActive = true
+    this.tfaSecret = tfaInfo.secret
+    return this.save()
+  }
+
+  userSchema.prototype.disableTFA = async function () {
+    this.tfaIsActive = false
+    this.tfaSecret = ''
+    return this.save()
+  }
+
+  userSchema.prototype.verifyTFA = function (code) {
+    let result = tfa.verifyToken(this.tfaSecret, code)
+    console.info(result)
+    return (result && _.has(result, 'delta') && result.delta === 0)
+  }
+
+  userSchema.login = async (opts, context) => {
+    if (_.has(wiki.config.auth.strategies, opts.provider)) {
+      _.set(context.req, 'body.email', opts.username)
+      _.set(context.req, 'body.password', opts.password)
+
+      // Authenticate
+      return new Promise((resolve, reject) => {
+        wiki.auth.passport.authenticate(opts.provider, async (err, user, info) => {
+          if (err) { return reject(err) }
+          if (!user) { return reject(new wiki.Error.AuthLoginFailed()) }
+
+          // Is 2FA required?
+          if (user.tfaIsActive) {
+            try {
+              let loginToken = await securityHelper.generateToken(32)
+              await wiki.redis.set(`tfa:${loginToken}`, user.id, 'EX', 600)
+              return resolve({
+                succeeded: true,
+                message: 'Login Successful. Awaiting 2FA security code.',
+                tfaRequired: true,
+                tfaLoginToken: loginToken
+              })
+            } catch (err) {
+              wiki.logger.warn(err)
+              return reject(new wiki.Error.AuthGenericError())
+            }
+          } else {
+            // No 2FA, log in user
+            return context.req.logIn(user, err => {
+              if (err) { return reject(err) }
+              resolve({
+                succeeded: true,
+                message: 'Login Successful',
+                tfaRequired: false
+              })
+            })
+          }
+        })(context.req, context.res, () => {})
+      })
+    } else {
+      throw new wiki.Error.AuthProviderInvalid()
+    }
+  }
+
+  userSchema.loginTFA = async (opts, context) => {
+    if (opts.securityCode.length === 6 && opts.loginToken.length === 64) {
+      console.info(opts.loginToken)
+      let result = await wiki.redis.get(`tfa:${opts.loginToken}`)
+      console.info(result)
+      if (result) {
+        console.info('DUDE2')
+        let userId = _.toSafeInteger(result)
+        if (userId && userId > 0) {
+          console.info('DUDE3')
+          let user = await wiki.db.User.findById(userId)
+          if (user && user.verifyTFA(opts.securityCode)) {
+            console.info('DUDE4')
+            return Promise.fromCallback(clb => {
+              context.req.logIn(user, clb)
+            }).return({
+              succeeded: true,
+              message: 'Login Successful'
+            }).catch(err => {
+              wiki.logger.warn(err)
+              throw new wiki.Error.AuthGenericError()
+            })
+          } else {
+            throw new wiki.Error.AuthTFAFailed()
+          }
+        }
+      }
+    }
+    throw new wiki.Error.AuthTFAInvalid()
   }
 
   userSchema.processProfile = (profile) => {
@@ -92,7 +192,7 @@ module.exports = (sequelize, DataTypes) => {
       new: true
     }).then((user) => {
       // Handle unregistered accounts
-      if (!user && profile.provider !== 'local' && (appconfig.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
+      if (!user && profile.provider !== 'local' && (wiki.config.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
         let nUsr = {
           email: primaryEmail,
           provider: profile.provider,

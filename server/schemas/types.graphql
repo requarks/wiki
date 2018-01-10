@@ -148,8 +148,16 @@ type User implements Base {
 }
 
 type OperationResult {
-  succeded: Boolean!
+  succeeded: Boolean!
   message: String
+  data: String
+}
+
+type LoginResult {
+  succeeded: Boolean!
+  message: String
+  tfaRequired: Boolean
+  tfaLoginToken: String
 }
 
 # Query (Read)
@@ -247,6 +255,17 @@ type Mutation {
 
   deleteUser(
     id: Int!
+  ): OperationResult
+
+  login(
+    username: String!
+    password: String!
+    provider: String!
+  ): LoginResult
+
+  loginTFA(
+    loginToken: String!
+    securityCode: String!
   ): OperationResult
 
   modifyComment(

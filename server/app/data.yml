@@ -53,6 +53,9 @@ configNamespaces:
   - site
   - theme
   - uploads
+localeNamespaces:
+  - auth
+  - common
 queues:
   - gitSync
   - uplClearTemp

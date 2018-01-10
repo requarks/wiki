@@ -114,7 +114,17 @@ module.exports = async () => {
 
   app.use('/', ctrl.auth)
 
-  app.use('/graphql', graphqlApollo.graphqlExpress({ schema: graphqlSchema }))
+  app.use('/graphql', (req, res, next) => {
+    graphqlApollo.graphqlExpress({
+      schema: graphqlSchema,
+      context: { req, res },
+      formatError: (err) => {
+        return {
+          message: err.message
+        }
+      }
+    })(req, res, next)
+  })
   app.use('/graphiql', graphqlApollo.graphiqlExpress({ endpointURL: '/graphql' }))
   // app.use('/uploads', mw.auth, ctrl.uploads)
   app.use('/admin', mw.auth, ctrl.admin)

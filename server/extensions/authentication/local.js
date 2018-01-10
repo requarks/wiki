@@ -17,7 +17,12 @@ module.exports = {
         usernameField: 'email',
         passwordField: 'password'
       }, (uEmail, uPassword, done) => {
-        wiki.db.User.findOne({ email: uEmail, provider: 'local' }).then((user) => {
+        wiki.db.User.findOne({
+          where: {
+            email: uEmail,
+            provider: 'local'
+          }
+        }).then((user) => {
           if (user) {
             return user.validatePassword(uPassword).then(() => {
               return done(null, user) || true
@@ -25,7 +30,7 @@ module.exports = {
               return done(err, null)
             })
           } else {
-            return done(new Error('INVALID_LOGIN'), null)
+            return done(new wiki.Error.AuthLoginFailed(), null)
           }
         }).catch((err) => {
           done(err, null)

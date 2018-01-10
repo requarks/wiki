@@ -18,5 +18,23 @@ export default {
         value
       }
     }
+  `,
+  GQL_MUTATION_LOGIN: gql`
+    mutation($username: String!, $password: String!, $provider: String!) {
+      login(username: $username, password: $password, provider: $provider) {
+        succeeded
+        message
+        tfaRequired
+        tfaLoginToken
+      }
+    }
+  `,
+  GQL_MUTATION_LOGINTFA: gql`
+    mutation($loginToken: String!, $securityCode: String!) {
+      loginTFA(loginToken: $loginToken, securityCode: $securityCode) {
+        succeeded
+        message
+      }
+    }
   `
 }
