@@ -83,7 +83,6 @@ module.exports = (sequelize, DataTypes) => {
 
   userSchema.prototype.verifyTFA = function (code) {
     let result = tfa.verifyToken(this.tfaSecret, code)
-    console.info(result)
     return (result && _.has(result, 'delta') && result.delta === 0)
   }
 
@@ -133,17 +132,12 @@ module.exports = (sequelize, DataTypes) => {
 
   userSchema.loginTFA = async (opts, context) => {
     if (opts.securityCode.length === 6 && opts.loginToken.length === 64) {
-      console.info(opts.loginToken)
       let result = await wiki.redis.get(`tfa:${opts.loginToken}`)
-      console.info(result)
       if (result) {
-        console.info('DUDE2')
         let userId = _.toSafeInteger(result)
         if (userId && userId > 0) {
-          console.info('DUDE3')
           let user = await wiki.db.User.findById(userId)
           if (user && user.verifyTFA(opts.securityCode)) {
-            console.info('DUDE4')
             return Promise.fromCallback(clb => {
               context.req.logIn(user, clb)
             }).return({
