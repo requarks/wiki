@@ -71,7 +71,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fix: Strip /create and /edit when check path permissions
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/42)
+![Progress](http://progressed.io/bar/45)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -96,11 +96,12 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Shared kernel for both app and setup
 - [x] Improved installation wizard
 - [x] Modular logging providers
-- [ ] New Login page :rocket:
-- [ ] Optional Two-Steps Authentication (2FA) :rocket:
+- [x] New Login page
+- [x] Two-Factor Authentication (2FA)
 - [ ] New Navigation Concept :rocket:
 - [ ] Themes :rocket:
 - [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
+- [ ] Modular content parser
 - [ ] History / Revert to previous version
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
