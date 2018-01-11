@@ -62,13 +62,12 @@ Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](h
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.66 - Stable
+### 1.0.68 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 **Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
 
-- [x] Swedish locale is now available (thanks to @pontus-andersson)
-- [x] Fix: Strip /create and /edit when check path permissions
+- [x] Added generic OAuth2 authentication provider
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/45)
