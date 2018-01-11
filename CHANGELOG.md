@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.68] - 2018-01-11
+### Added
+- **Authentication**: Generic OAuth2 authentication provider
+
 ## [v1.0.66] - 2018-01-07
 ### Added
 - **Localization**: Swedish locale is now available (thanks to @pontus-andersson)
@@ -255,6 +259,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
+[v1.0.68]: https://github.com/Requarks/wiki/releases/tag/v1.0.68
 [v1.0.66]: https://github.com/Requarks/wiki/releases/tag/v1.0.66
 [v1.0.12]: https://github.com/Requarks/wiki/releases/tag/v1.0.12
 [v1.0.11]: https://github.com/Requarks/wiki/releases/tag/v1.0.11
