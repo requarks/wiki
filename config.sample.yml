@@ -97,6 +97,12 @@ auth:
     clientSecret: APP_SECRET_KEY
     resource: '00000002-0000-0000-c000-000000000000'
     tenant: 'YOUR_TENANT.onmicrosoft.com'
+  oauth2:
+    enabled: false
+    clientId: OAUTH2_CLIENT_ID
+    clientSecret: OAUTH2_CLIENT_SECRET
+    authorizationURL: OAUTH2_AUTH_URL
+    tokenURL: OAUTH2_TOKEN_URL
 
 # ---------------------------------------------------------------------
 # Secret key to use when encrypting sessions

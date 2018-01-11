@@ -205,6 +205,27 @@ module.exports = function (passport) {
       ))
   }
 
+  // OAuth 2
+
+  if (appconfig.auth.oauth2 && appconfig.auth.oauth2.enabled) {
+    const OAuth2Strategy = require('passport-oauth2').Strategy
+    passport.use('oauth2',
+      new OAuth2Strategy({
+        authorizationURL: appconfig.auth.oauth2.authorizationURL,
+        tokenURL: appconfig.auth.oauth2.tokenURL,
+        clientID: appconfig.auth.oauth2.clientId,
+        clientSecret: appconfig.auth.oauth2.clientSecret,
+        callbackURL: appconfig.host + '/login/oauth2/callback'
+      }, (accessToken, refreshToken, profile, cb) => {
+        db.User.processProfile(profile).then((user) => {
+          return cb(null, user) || true
+        }).catch((err) => {
+          return cb(err, null) || true
+        })
+      }
+      ))
+  }
+
   // Create users for first-time
 
   db.onReady.then(() => {
