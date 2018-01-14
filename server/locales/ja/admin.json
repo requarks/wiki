@@ -1,12 +1,12 @@
 {
   "profile": {
-    "displayname": "表示する名前",
+    "displayname": "表示名",
     "displaynameexample": "山田　太郎",
     "email": "Eメール",
     "lastprofileupdate": "最後のプロファイル更新",
     "membersince": "アカウント登録日",
-    "password": "パスポート",
-    "passwordverify": "パスポートの確認",
+    "password": "パスワード",
+    "passwordverify": "パスワードの確認",
     "provider": "プロバイダ",
     "savechanges": "保存する",
     "subtitle": "プロファイルと認証情報",
