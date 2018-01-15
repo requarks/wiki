@@ -70,7 +70,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Added generic OAuth2 authentication provider
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/45)
+![Progress](http://progressed.io/bar/47)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -84,7 +84,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
   - Node.js 8.9 LTS or later is now the minimum supported version.
 
-**Milestones**:
+**2.0 Milestones**:
 - [x] GraphQL API
 - [x] Migrate to PostgreSQL + Redis datastore
 - [x] Telemetry for analytics and crash reporting (Optional and fully anonymized)
@@ -100,7 +100,9 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] New Navigation Concept :rocket:
 - [ ] Themes :rocket:
 - [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
-- [ ] Modular content parser
+- [ ] Modular content parser :rocket:
+- [ ] Modular search engines: PostgreSQL search engine (default)
+- [ ] Multilingual versions of the same page (i18n)
 - [ ] History / Revert to previous version
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
@@ -109,13 +111,13 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Profile page per user
 - [ ] Preview changes directly from the editor, without saving
 - [ ] Diagrams as code (Mermaid module)
-- [ ] High Availability support (multiple concurrent instances)
 - [ ] Insert Link modal in Markdown Editor
-- [ ] Better simultaneous user editing handling
-- [ ] Multilingual versions of the same page (i18n)
-- [ ] PostgreSQL search engine
 
 :rocket: = Currently in development
+
+**TBD Milestones**
+- [ ] Better simultaneous user editing handling
+- [ ] High Availability support (multiple concurrent instances)
 
 ## Gitter
 
@@ -141,7 +143,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] French
 - [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes), [@MyZeD](https://github.com/MyZeD)*
 - [x] Italian - *Thanks to [@CupCakeArmy](https://github.com/CupCakeArmy)*
-- [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields)*
+- [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields), [@JO3QMA](https://github.com/JO3QMA)*
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
 - [x] Persian - *Thanks to [@ashkang](https://github.com/ashkang)*
 - [x] Portuguese - *Thanks to [@felipeplets](https://github.com/felipeplets)*
