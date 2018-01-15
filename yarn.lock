@@ -6184,6 +6184,13 @@ passport-discord@0.1.3:
   dependencies:
     passport-oauth2 "^1.2.0"
 
+passport-dropbox-oauth2@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/passport-dropbox-oauth2/-/passport-dropbox-oauth2-1.1.0.tgz#77c737636e4841944dfb82dfc42c3d8ab782c10e"
+  dependencies:
+    passport-oauth "^1.0.0"
+    pkginfo "^0.2.3"
+
 passport-facebook@2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/passport-facebook/-/passport-facebook-2.1.1.tgz#c39d0b52ae4d59163245a4e21a7b9b6321303311"
@@ -6225,7 +6232,7 @@ passport-oauth1@1.x.x:
     passport-strategy "1.x.x"
     utils-merge "1.x.x"
 
-passport-oauth2@1.x.x, passport-oauth2@^1.1.2, passport-oauth2@^1.2.0:
+passport-oauth2@1.4.0, passport-oauth2@1.x.x, passport-oauth2@^1.1.2, passport-oauth2@^1.2.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/passport-oauth2/-/passport-oauth2-1.4.0.tgz#f62f81583cbe12609be7ce6f160b9395a27b86ad"
   dependencies:
@@ -6472,7 +6479,7 @@ pkg-dir@^1.0.0:
   dependencies:
     find-up "^1.0.0"
 
-pkginfo@0.2.x:
+pkginfo@0.2.x, pkginfo@^0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/pkginfo/-/pkginfo-0.2.3.tgz#7239c42a5ef6c30b8f328439d9b9ff71042490f8"
 

@@ -247,6 +247,9 @@ module.exports = () => {
       confRaw = yaml.safeDump(conf)
       await fs.writeFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), confRaw)
 
+      _.set(wiki.config, 'port', req.body.port)
+      _.set(wiki.config, 'paths.repo', req.body.pathRepo)
+
       // Populate config namespaces
       wiki.config.auth = wiki.config.auth || {}
       wiki.config.features = wiki.config.features || {}
@@ -313,27 +316,22 @@ module.exports = () => {
       })
 
       wiki.logger.info('Setup is complete!')
-      res.json({ ok: true })
+      res.json({
+        ok: true,
+        redirectPath: wiki.config.site.path,
+        redirectPort: wiki.config.port
+      }).end()
+
+      wiki.logger.info('Stopping Setup...')
+      server.destroy(() => {
+        wiki.logger.info('Setup stopped. Starting Wiki.js...')
+        _.delay(() => {
+          wiki.kernel.bootMaster()
+        }, 1000)
+      })
     } catch (err) {
       res.json({ ok: false, error: err.message })
     }
-  })
-
-  /**
-   * Restart in normal mode
-   */
-  app.post('/restart', (req, res) => {
-    res.status(204).end()
-    /* server.destroy(() => {
-      spinner.text = 'Setup wizard terminated. Restarting in normal mode...'
-      _.delay(() => {
-        const exec = require('execa')
-        exec.stdout('node', ['wiki', 'start']).then(result => {
-          spinner.succeed('Wiki.js is now running in normal mode!')
-          process.exit(0)
-        })
-      }, 1000)
-    }) */
   })
 
   // ----------------------------------------

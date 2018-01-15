@@ -1,5 +1,3 @@
-'use strict'
-
 export default {
   name: 'admin-profile',
   props: ['email', 'name', 'provider', 'tfaIsActive'],

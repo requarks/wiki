@@ -15,12 +15,24 @@
             use(:xlink:href='subtitleIconClass')
         h2 {{subtitleText}}
       .navigator-action
-        .navigator-action-item
+        .navigator-action-item(:class='{"is-active": userMenuShown}', @click='toggleUserMenu')
           svg.icons.is-32(role='img')
             title User
             use(xlink:href='#nc-user-circle')
+          transition(name='navigator-action-item-dropdown')
+            ul.navigator-action-item-dropdown(v-show='userMenuShown', v-cloak)
+              li
+                label Account
+                svg.icons.is-24(role='img')
+                  title Account
+                  use(xlink:href='#nc-man-green')
+              li(@click='logout')
+                label Sign out
+                svg.icons.is-24(role='img')
+                  title Sign Out
+                  use(xlink:href='#nc-exit')
     transition(name='navigator-sd')
-      .navigator-sd(v-show='sdShown')
+      .navigator-sd(v-show='sdShown', v-cloak)
         .navigator-sd-actions
           a.is-active(href='', title='Search')
             svg.icons.is-24(role='img')
@@ -77,7 +89,8 @@ export default {
   name: 'navigator',
   data() {
     return {
-      sdShown: false
+      sdShown: false,
+      userMenuShown: false
     }
   },
   computed: {
@@ -104,16 +117,39 @@ export default {
   methods: {
     toggleMainMenu() {
       this.sdShown = !this.sdShown
+      this.userMenuShown = false
       if (this.sdShown) {
         this.$nextTick(() => {
+          this.bindOutsideClick()
           this.$refs.iptSearch.focus()
         })
+      } else {
+        this.unbindOutsideClick()
       }
-      // this.$store.dispatch('navigator/alert', {
-      //   style: 'success',
-      //   icon: 'gg-check',
-      //   msg: 'Changes were saved successfully!'
-      // })
+    },
+    toggleUserMenu() {
+      this.userMenuShown = !this.userMenuShown
+      this.sdShown = false
+      if (this.userMenuShown) {
+        this.bindOutsideClick()
+      } else {
+        this.unbindOutsideClick()
+      }
+    },
+    bindOutsideClick() {
+      document.addEventListener('mousedown', this.handleOutsideClick, false)
+    },
+    unbindOutsideClick() {
+      document.removeEventListener('mousedown', this.handleOutsideClick, false)
+    },
+    handleOutsideClick(ev) {
+      if (!this.$el.contains(ev.target)) {
+        this.sdShown = false
+        this.userMenuShown = false
+      }
+    },
+    logout() {
+      window.location.assign(this.$helpers.resolvePath('logout'))
     }
   },
   mounted() {

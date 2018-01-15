@@ -1,5 +1,3 @@
-'use strict'
-
 export default {
   namespaced: true,
   state: {
@@ -15,7 +13,6 @@ export default {
   },
   actions: {
     open({ commit }, hash) {
-      console.info('MIGUEL!')
       commit('anchorChange', { shown: true, hash })
     },
     close({ commit }) {

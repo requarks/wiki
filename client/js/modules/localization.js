@@ -45,7 +45,7 @@ module.exports = {
         defaultNS: 'common',
         lng: siteConfig.lang,
         fallbackLng: siteConfig.lang,
-        ns: ['common', 'admin', 'auth']
+        ns: ['common', 'auth']
       })
     return new VueI18Next(i18next)
   }

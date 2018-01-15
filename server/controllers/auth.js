@@ -34,10 +34,7 @@ const bruteforce = new ExpressBrute(EBstore, {
  * Login form
  */
 router.get('/login', function (req, res, next) {
-  res.render('auth/login', {
-    authStrategies: _.reject(wiki.auth.strategies, { key: 'local' }),
-    hasMultipleStrategies: Object.keys(wiki.config.auth.strategies).length > 1
-  })
+  res.render('auth/login')
 })
 
 router.post('/login', bruteforce.prevent, function (req, res, next) {

@@ -1,5 +1,3 @@
-'use strict'
-
 /* global $, siteRoot */
 
 let mde

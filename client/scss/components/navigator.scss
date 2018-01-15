@@ -3,6 +3,7 @@
   top: 0;
   left: 0;
   width: 100%;
+  z-index: 100;
 
   &-bar {
     display: flex;
@@ -123,6 +124,7 @@
     display: flex;
     justify-content: flex-end;
     align-items: stretch;
+    position: relative;
 
     &-item {
       display: flex;
@@ -130,6 +132,7 @@
       align-items: center;
       width: 50px;
       cursor: pointer;
+      transition: all .4s ease;
 
       svg use {
         color: #FFF;
@@ -141,6 +144,60 @@
         svg use {
           color: mc('blue', '500');
           fill: mc('blue', '500');
+        }
+      }
+
+      &.is-active {
+        background-color: #FFF;
+
+        svg use {
+          color: mc('grey', '500');
+          fill: mc('grey', '500');
+        }
+      }
+
+      &-dropdown {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        width: 250px;
+        border-radius: 0 0 0 5px;
+        transition: all .4s ease;
+        transform-origin: top right;
+
+        &-enter-active, &-leave-active {
+          transform: scale(1);
+        }
+        &-enter, &-leave-to {
+          transform: scale(.1, 0);
+        }
+
+        li {
+          background-color: #FFF;
+          height: 50px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 .8rem 0 1rem;
+          
+          & + li {
+            border-top: 1px solid mc('grey', '100');
+          }
+
+          &:hover {
+            background-color: mc('grey', '100');
+          }
+          
+          label {
+            font-size: .8rem;
+            font-weight: 600;
+            color: mc('blue', '800');
+            text-transform: uppercase;
+          }
+
+          &:last-child {
+            border-radius: 0 0 0 5px;
+          }
         }
       }
     }

@@ -1,5 +1,3 @@
-'use strict'
-
 export default {
   name: 'admin-theme',
   props: ['themedata'],

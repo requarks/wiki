@@ -24,7 +24,7 @@ export default {
       final: {
         ok: false,
         error: '',
-        results: []
+        redirectUrl: ''
       },
       conf: {
         adminEmail: '',
@@ -219,19 +219,32 @@ export default {
       self.final = {
         ok: false,
         error: '',
-        results: []
+        redirectUrl: ''
       }
 
       this.$helpers._.delay(() => {
         axios.post('/finalize', self.conf).then(resp => {
           if (resp.data.ok === true) {
-            self.final.ok = true
-            self.final.results = resp.data.results
+            self.$helpers._.delay(() => {
+              self.final.ok = true
+              switch (resp.data.redirectPort) {
+                case 80:
+                  self.final.redirectUrl = `http://${window.location.hostname}${resp.data.redirectPath}/login`
+                  break
+                case 443:
+                  self.final.redirectUrl = `https://${window.location.hostname}${resp.data.redirectPath}/login`
+                  break
+                default:
+                  self.final.redirectUrl = `http://${window.location.hostname}:${resp.data.redirectPort}${resp.data.redirectPath}/login`
+                  break
+              }
+              self.loading = false
+            }, 5000)
           } else {
             self.final.ok = false
             self.final.error = resp.data.error
+            self.loading = false
           }
-          self.loading = false
           self.$nextTick()
         }).catch(err => {
           window.alert(err.message)
@@ -239,18 +252,7 @@ export default {
       }, 1000)
     },
     finish: function (ev) {
-      let self = this
-      self.state = 'restart'
-
-      this.$helpers._.delay(() => {
-        axios.post('/restart', {}).then(resp => {
-          this.$helpers._.delay(() => {
-            window.location.assign(self.conf.host)
-          }, 30000)
-        }).catch(err => {
-          window.alert(err.message)
-        })
-      }, 1000)
+      window.location.assign(this.final.redirectUrl)
     }
   }
 }

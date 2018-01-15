@@ -55,7 +55,8 @@ export default {
       this.selectedStrategy = key
       this.screen = 'login'
       if (!useForm) {
-        window.location.assign(siteConfig.path + 'login/' + key)
+        this.isLoading = true
+        window.location.assign(this.$helpers.resolvePath('login/' + key))
       } else {
         this.$refs.iptEmail.focus()
       }

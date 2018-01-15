@@ -339,31 +339,15 @@ block body
                       h4 Finalizing your installation...
                     .is-logo(v-if='!loading && final.ok')
                       svg.icons.is-64: use(xlink:href='#nc-check-bold')
-                      h4 All done!
+                      h4 Installation complete!
                     p(v-if='!loading && final.ok'): strong Wiki.js was configured successfully and is now ready for use.
-                    p(v-if='!loading && final.ok')
-                      | Click the <strong>Start</strong> button below to launch your newly configured wiki.
+                    p(v-if='!loading && final.ok') Click the #[strong Start] button below to access your newly configured wiki.
                     p(v-if='!loading && !final.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove')] Error: {{ final.error }}
                   .panel-footer
                     .progress-bar: div(v-bind:style='{width: currentProgress}')
-                    button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
+                    button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-if='!loading && !final.ok', v-bind:disabled='loading') Back
                     button.button.is-small.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
                     button.button.is-small.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
-
-              //- ==============================================
-              //- RESTART
-              //- ==============================================
-
-              template(v-else-if='state === "restart"')
-                .panel
-                  h2.panel-title.is-featured
-                    span Restarting...
-                    i
-                  .panel-content.is-text
-                    p #[i.icon-loader.animated.rotateIn.infinite] Restarting Wiki.js in normal mode...
-                    p You'll automatically be redirected to the homepage when ready. This usually takes about 30 seconds.
-                  .panel-footer
-                    button.button.is-small.is-green(disabled='disabled') Start
           
           footer
             small Wiki.js Installation Wizard

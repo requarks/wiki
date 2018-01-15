@@ -1,5 +1,3 @@
-'use strict'
-
 export default {
   name: 'admin-edit-user',
   props: ['usrdata'],
