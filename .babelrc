@@ -1,5 +1,5 @@
 {
-  "comments": false,
+  "comments": true,
   "presets": [
     ["env", {
       "targets": {

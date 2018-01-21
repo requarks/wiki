@@ -12,7 +12,6 @@ import { ApolloClient } from 'apollo-client'
 import { HttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import store from './store'
-import icons from '../svg/icons.svg'
 
 // ====================================
 // Load Modules
@@ -172,5 +171,7 @@ document.addEventListener('DOMContentLoaded', ev => {
   // Load Icons
   // ====================================
 
-  document.body.insertAdjacentHTML('beforeend', icons)
+  import(/* webpackChunkName: "icons" */ '../svg/icons.svg').then(icons => {
+    document.body.insertAdjacentHTML('beforeend', icons)
+  })
 })

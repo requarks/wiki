@@ -1,14 +1,4 @@
-@charset "utf-8";
-
-$primary: 'indigo';
-
-@import "base/variables";
-@import "base/material";
-@import "base/reset";
-@import "base/mixins";
-@import "base/fonts";
-@import "base/icons";
-@import "base/base";
+@import "global";
 
 @import "libs/animate";
 
@@ -21,7 +11,6 @@ $primary: 'indigo';
 @import 'components/grid';
 @import 'components/hero';
 @import 'components/history';
-@import 'components/login';
 @import 'components/markdown-content';
 @import 'components/modal';
 @import 'components/nav';

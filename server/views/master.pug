@@ -22,8 +22,9 @@ html
       var siteConfig = !{JSON.stringify(config.site)}
 
     //- JS / CSS
-    script(type='text/javascript', src=config.site.path + 'js/libs.js')
-    script(type='text/javascript', src=config.site.path + 'js/app.js')
+    script(type='text/javascript', src=config.site.path + 'js/manifest.js')
+    script(type='text/javascript', src=config.site.path + 'js/vendor.js')
+    script(type='text/javascript', src=config.site.path + 'js/client.js')
 
     block head
 
