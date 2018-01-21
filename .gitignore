@@ -16,8 +16,7 @@ npm/node_modules
 npm-debug.log*
 
 # Generated assets
-/assets/js
-/assets/css
+/assets
 
 # Fusebox
 .fusebox
