@@ -8,6 +8,7 @@
     "stop": "node wiki stop",
     "restart": "node wiki restart",
     "build": "poi build",
+    "build:analyze": "poi build --analyze",
     "dev:client": "poi watch",
     "dev:server": "nodemon",
     "dev:server:alt": "node-dev server --no-deps --respawn --no-notify",
@@ -190,6 +191,7 @@
     "vue-template-es2015-compiler": "1.6.0",
     "vuex": "3.0.1",
     "vuex-persistedstate": "2.4.2",
+    "webpack-bundle-analyzer": "2.9.2",
     "whatwg-fetch": "2.0.3"
   },
   "jest": {

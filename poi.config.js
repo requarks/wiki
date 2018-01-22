@@ -1,8 +1,9 @@
 const path = require('path')
-const _ = require('lodash')
-const SpriteLoaderPlugin = require('svg-sprite-loader/plugin')
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+// const _ = require('lodash')
+// const SpriteLoaderPlugin = require('svg-sprite-loader/plugin')
 
-module.exports = {
+module.exports = options => ({
   entry: 'client/index.js',
   dist: 'assets',
   staticFolder: 'client/static',
@@ -27,7 +28,7 @@ module.exports = {
   },
   html: false,
   hash: false,
-  sourceMap: true,
+  sourceMap: false,
   extendWebpack (config) {
     // Vue - Default SCSS Imports
     config.module.rule('vue')
@@ -68,8 +69,15 @@ module.exports = {
 
     // Vue with Compiler Alias
     config.resolve.alias.set('vue$', 'vue/dist/vue.common.js')
+
+    // Bundle Analyze
+    if (options.analyze) {
+      config.plugin('analyzer').use(BundleAnalyzerPlugin, [{
+        analyzerMode: 'static'
+      }])
+    }
   },
   webpack (config) {
     return config
   }
-}
+})
