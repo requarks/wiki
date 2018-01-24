@@ -84,7 +84,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
   - Node.js 8.9 LTS or later is now the minimum supported version.
 
-**2.0 Milestones**:
+**2.0 Milestone**:
 - [x] GraphQL API
 - [x] Migrate to PostgreSQL + Redis datastore
 - [x] Telemetry for analytics and crash reporting (Optional and fully anonymized)
@@ -99,21 +99,23 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Two-Factor Authentication (2FA)
 - [ ] New Navigation Concept :rocket:
 - [ ] Themes :rocket:
-- [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
 - [ ] Modular content parser :rocket:
-- [ ] Modular search engines: PostgreSQL search engine (default)
 - [ ] Multilingual versions of the same page (i18n)
 - [ ] History / Revert to previous version
 - [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
+
+:rocket: = Currently in development
+
+**2.1 Milestone**:
+- [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
+- [ ] Modular search engines: PostgreSQL search engine (default)
 - [ ] Tags per document / folder
 - [ ] Comments / Discussion per document
 - [ ] Profile page per user
 - [ ] Preview changes directly from the editor, without saving
 - [ ] Diagrams as code (Mermaid module)
 - [ ] Insert Link modal in Markdown Editor
-
-:rocket: = Currently in development
 
 **TBD Milestones**
 - [ ] Better simultaneous user editing handling
