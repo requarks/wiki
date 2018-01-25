@@ -66,6 +66,11 @@ a {
 	padding: 20px;
 }
 
+.content-column {
+	height: calc(100vh - 120px);
+  overflow: auto !important;
+}
+
 // Visibility
 
 .is-hidden {
