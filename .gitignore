@@ -18,7 +18,8 @@ npm-debug.log*
 # Generated assets
 /assets
 
-# Fusebox
+# Webpack
+.webpack-cache
 .fusebox
 
 # Config Files
