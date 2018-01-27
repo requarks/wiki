@@ -152,10 +152,10 @@ module.exports = async () => {
   wiki.logger.info(`HTTP Server on port: [ ${wiki.config.port} ]`)
 
   app.set('port', wiki.config.port)
-  let server = http.createServer(app)
+  wiki.server = http.createServer(app)
 
-  server.listen(wiki.config.port)
-  server.on('error', (error) => {
+  wiki.server.listen(wiki.config.port)
+  wiki.server.on('error', (error) => {
     if (error.syscall !== 'listen') {
       throw error
     }
@@ -173,7 +173,7 @@ module.exports = async () => {
     }
   })
 
-  server.on('listening', () => {
+  wiki.server.on('listening', () => {
     wiki.logger.info('HTTP Server: [ RUNNING ]')
   })
 

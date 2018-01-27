@@ -11,6 +11,7 @@ const fs = Promise.promisifyAll(require('fs-extra'))
 const pm2 = Promise.promisifyAll(require('pm2'))
 const ora = require('ora')
 const path = require('path')
+const cluster = require('cluster')
 
 const ROOTPATH = process.cwd()
 
@@ -61,10 +62,47 @@ const init = {
    * Restart Wiki.js process(es)
    */
   restart: function () {
-    let self = this
-    return self.stop().delay(1000).then(() => {
-      self.startDetect()
+    return this.stop().delay(1000).then(() => {
+      this.start()
     })
+  },
+  dev() {
+    if (cluster.isMaster) {
+      const webpackConfig = require('./dev/webpack/webpack.dev.js')
+      const webpack = require('webpack')
+      const chokidar = require('chokidar')
+
+      let isWebpackInit = false
+
+      global.DEV = true
+      global.WP = webpack(webpackConfig, (err, stats) => {
+        if (!isWebpackInit) {
+          isWebpackInit = true
+          require('./server')
+
+          const devWatcher = chokidar.watch('./server')
+          devWatcher.on('ready', () => {
+            devWatcher.on('all', () => {
+              console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
+              console.warn('--- Changes detected: Restarting ---')
+              console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
+              global.wiki.server.close(() => {
+                global.wiki = {}
+                for (const workerId in cluster.workers) {
+                  cluster.workers[workerId].kill()
+                }
+                Object.keys(require.cache).forEach(function(id) {
+                  if (/[/\\]server[/\\]/.test(id)) delete require.cache[id]
+                })
+                require('./server')
+              })
+            })
+          })
+        }
+      })
+    } else {
+      require('./server')
+    }
   }
 }
 
@@ -92,6 +130,13 @@ require('yargs') // eslint-disable-line no-unused-expressions
     desc: 'Restart Wiki.js process',
     handler: argv => {
       init.restart()
+    }
+  })
+  .command({
+    command: 'dev',
+    desc: 'Start in Developer Mode',
+    handler: argv => {
+      init.dev()
     }
   })
   .recommendCommands()

@@ -61,7 +61,6 @@ module.exports = Promise.join(
   // ----------------------------------------
 
   process.on('disconnect', () => {
-    wiki.logger.warn('Lost connection to Master. Exiting...')
     process.exit()
   })
 })

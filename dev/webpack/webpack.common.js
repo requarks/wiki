@@ -19,10 +19,8 @@ module.exports = {
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
-    pathinfo: true,
     filename: 'js/[name].js',
-    chunkFilename: 'js/[name].chunk.js',
-    publicPath: '/'
+    chunkFilename: 'js/[name].chunk.js'
   },
   module: {
     rules: [
@@ -86,6 +84,7 @@ module.exports = {
         loader: 'vue-loader',
         options: {
           extractCSS: true,
+          postcss: postCSSConfig,
           loaders: {
             css: [
               {
@@ -93,10 +92,6 @@ module.exports = {
               },
               {
                 loader: 'css-loader'
-              },
-              {
-                loader: 'postcss-loader',
-                options: postCSSConfig
               }
             ],
             scss: [
@@ -105,10 +100,6 @@ module.exports = {
               },
               {
                 loader: 'css-loader'
-              },
-              {
-                loader: 'postcss-loader',
-                options: postCSSConfig
               },
               {
                 loader: 'sass-loader',

@@ -17,8 +17,6 @@ let wiki = {
 }
 global.wiki = wiki
 
-process.env.VIPS_WARNING = false
-
 // if (wiki.IS_DEBUG) {
 //   require('@glimpse/glimpse').init()
 // }

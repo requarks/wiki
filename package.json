@@ -7,10 +7,9 @@
     "start": "node wiki start",
     "stop": "node wiki stop",
     "restart": "node wiki restart",
-    "build": "webpack --config dev/webpack/webpack.prod.js",
-    "build:analyze": "poi build --analyze",
-    "dev:client": "webpack --config dev/webpack/webpack.dev.js",
-    "dev:server": "nodemon",
+    "dev": "node wiki dev",
+    "build": "webpack --profile --config dev/webpack/webpack.prod.js",
+    "watch": "webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --ext .js,.vue . && jest"
   },
   "bin": {
@@ -204,6 +203,7 @@
     "vuex-persistedstate": "2.4.2",
     "webpack": "3.10.0",
     "webpack-bundle-analyzer": "2.9.2",
+    "webpack-hot-middleware": "2.21.0",
     "webpack-merge": "4.1.1",
     "whatwg-fetch": "2.0.3"
   },

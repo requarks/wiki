@@ -64,7 +64,9 @@ module.exports = {
     })
 
     cluster.on('exit', (worker, code, signal) => {
-      wiki.logger.info(`Background Worker #${worker.id} was terminated.`)
+      if (!global.DEV) {
+        wiki.logger.info(`Background Worker #${worker.id} was terminated.`)
+      }
     })
   },
   /**
