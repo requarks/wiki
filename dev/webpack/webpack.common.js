@@ -83,7 +83,7 @@ module.exports = {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: {
-          extractCSS: true,
+          extractCSS: ExtractTextPlugin,
           postcss: postCSSConfig,
           loaders: {
             css: [

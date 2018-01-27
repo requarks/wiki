@@ -107,6 +107,20 @@ module.exports = async () => {
   app.locals.config = wiki.config
 
   // ----------------------------------------
+  // HMR (Dev Mode Only)
+  // ----------------------------------------
+
+  if (global.DEV) {
+    const webpackDevMiddleware = require('webpack-dev-middleware')
+    const webpackHotMiddleware = require('webpack-hot-middleware')
+    app.use(webpackDevMiddleware(global.WP, {
+      publicPath: global.WPCONFIG.output.publicPath,
+      logger: wiki.logger
+    }))
+    app.use(webpackHotMiddleware(global.WP))
+  }
+
+  // ----------------------------------------
   // Controllers
   // ----------------------------------------
 
@@ -149,6 +163,8 @@ module.exports = async () => {
   // Start HTTP server
   // ----------------------------------------
 
+  let srvConnections = {}
+
   wiki.logger.info(`HTTP Server on port: [ ${wiki.config.port} ]`)
 
   app.set('port', wiki.config.port)
@@ -173,9 +189,24 @@ module.exports = async () => {
     }
   })
 
+  wiki.server.on('connection', conn => {
+    let key = `${conn.remoteAddress}:${conn.remotePort}`
+    srvConnections[key] = conn
+    conn.on('close', function() {
+      delete srvConnections[key]
+    })
+  })
+
   wiki.server.on('listening', () => {
     wiki.logger.info('HTTP Server: [ RUNNING ]')
   })
+
+  wiki.server.destroy = (cb) => {
+    wiki.server.close(cb)
+    for (let key in srvConnections) {
+      srvConnections[key].destroy()
+    }
+  }
 
   return true
 }

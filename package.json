@@ -203,6 +203,7 @@
     "vuex-persistedstate": "2.4.2",
     "webpack": "3.10.0",
     "webpack-bundle-analyzer": "2.9.2",
+    "webpack-dev-middleware": "2.0.4",
     "webpack-hot-middleware": "2.21.0",
     "webpack-merge": "4.1.1",
     "whatwg-fetch": "2.0.3"

@@ -68,37 +68,31 @@ const init = {
   },
   dev() {
     if (cluster.isMaster) {
-      const webpackConfig = require('./dev/webpack/webpack.dev.js')
       const webpack = require('webpack')
       const chokidar = require('chokidar')
 
-      let isWebpackInit = false
-
+      global.WPCONFIG = require('./dev/webpack/webpack.dev.js')
       global.DEV = true
-      global.WP = webpack(webpackConfig, (err, stats) => {
-        if (!isWebpackInit) {
-          isWebpackInit = true
-          require('./server')
+      global.WP = webpack(global.WPCONFIG)
+      require('./server')
 
-          const devWatcher = chokidar.watch('./server')
-          devWatcher.on('ready', () => {
-            devWatcher.on('all', () => {
-              console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
-              console.warn('--- Changes detected: Restarting ---')
-              console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
-              global.wiki.server.close(() => {
-                global.wiki = {}
-                for (const workerId in cluster.workers) {
-                  cluster.workers[workerId].kill()
-                }
-                Object.keys(require.cache).forEach(function(id) {
-                  if (/[/\\]server[/\\]/.test(id)) delete require.cache[id]
-                })
-                require('./server')
-              })
+      const devWatcher = chokidar.watch('./server')
+      devWatcher.on('ready', () => {
+        devWatcher.on('all', () => {
+          console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
+          console.warn('--- Changes detected: Restarting ---')
+          console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
+          global.wiki.server.destroy(() => {
+            global.wiki = {}
+            for (const workerId in cluster.workers) {
+              cluster.workers[workerId].kill()
+            }
+            Object.keys(require.cache).forEach(function(id) {
+              if (/[/\\]server[/\\]/.test(id)) delete require.cache[id]
             })
+            require('./server')
           })
-        }
+        })
       })
     } else {
       require('./server')
