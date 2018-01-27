@@ -31,7 +31,7 @@
 - [Special Thanks](#special-thanks)
 - [Contribute](#contributors)
 
-## Requirements
+<h2 align="center">Requirements</h2>
 
 Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
 
@@ -42,13 +42,13 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 > Read the full [prerequisites](https://docs.requarks.io/wiki/prerequisites) article for full details.
 
-## Cloud Install
+<h2 align="center">Cloud Install</h2>
 
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
 
 *Docker Cloud, Azure, IBM Bluemix and more coming soon!*
 
-## Docker
+<h2 align="center">Docker</h2>
 
 A docker Wiki.js image is available on Docker Hub:
 
@@ -56,13 +56,13 @@ A docker Wiki.js image is available on Docker Hub:
 
 You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/blob/master/tools/Dockerfile)) or Docker Compose ([see example](https://github.com/Requarks/wiki/blob/master/tools/docker-compose.yml)) to run Wiki.js.
 
-## Demo
+<h2 align="center">Demo</h2>
 
 Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](https://docs.requarks.io/wiki/)
 
 > <span style="font-size: .8em;">We do not provide a demo with write access because of potential security / spam issues. The best way to try it is to install it on your own server / computer. It's easy!</span>
 
-## Milestones
+<h2 align="center">Milestones</h2>
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
@@ -125,17 +125,17 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Better simultaneous user editing handling
 - [ ] High Availability support (multiple concurrent instances)
 
-## Gitter
+<h2 align="center">Gitter</h2>
 
 Want to discuss features, ideas or issues? Join our [gitter channel](https://gitter.im/Requarks/wiki). We are very active and friendly!  
 [![Chat on Gitter](https://img.shields.io/badge/chat-on_gitter-CC2B5E.svg?style=flat-square&logo=image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAOCAMAAADUg/YpAAAABlBMVEUAAAD///%2Bl2Z/dAAAAAXRSTlMAQObYZgAAABVJREFUeAFjwAUYYTQByAAh0WicAAAFnwAYeB5bLwAAAABJRU5ErkJggg==)](https://gitter.im/Requarks/wiki)
 
-## Twitter
+<h2 align="center">Twitter</h2>
 
 Follow our Twitter feed to learn about upcoming updates and new releases!  
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat-square)](https://twitter.com/requarks)  
 
-## Translations
+<h2 align="center">Translations</h2>
 
 We are looking for translators to make Wiki.js available in multiple languages. If your language is not listed below and would like to contribute to this project, contact us on our [gitter channel](https://gitter.im/Requarks/wiki) and we'll provide you with the necessary tool to add translations, no coding required!
 
@@ -158,7 +158,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] Spanish - *Thanks to [@MatiasArriola](https://github.com/MatiasArriola)*
 - [x] Swedish - *Thanks to [@pontus-andersson](https://github.com/pontus-andersson)*
 
-## Special Thanks
+<h2 align="center">Special Thanks</h2>
 
 ![Browserstack](https://wiki.js.org/assets/images/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
@@ -166,18 +166,18 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 [![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)](https://m.do.co/c/5f7445bfa4d0)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
-## Contributors
+<h2 align="center">Contributors</h2>
 
 This project exists thanks to all the people who contribute. [[Contribute]](CONTRIBUTING.md).
 <a href="graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
 
-## Backers
+<h2 align="center">Backers</h2>
 
 Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/wikijs#backer)]
 
 <a href="https://opencollective.com/wikijs#backers" target="_blank"><img src="https://opencollective.com/wikijs/backers.svg?width=890"></a>
 
-## Sponsors
+<h2 align="center">Sponsors</h2>
 
 Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/wikijs#sponsor)]
 
