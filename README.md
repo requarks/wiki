@@ -1,3 +1,5 @@
+<div align="center">
+
 ![Wiki.js](https://raw.githubusercontent.com/Requarks/wiki-site/1.0/assets/images/logo.png)
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki/releases)
@@ -13,6 +15,8 @@
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat)](https://twitter.com/requarks)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
+
+</div>
 
 - **[Official Website](https://wiki.js.org/)**
 - **[Getting Started](https://wiki.js.org/get-started.html)**
