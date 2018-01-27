@@ -21,7 +21,10 @@ html
     script.
       var siteConfig = !{JSON.stringify(config.site)}
 
-    //- JS / CSS
+    //- CSS
+    link(type='text/css', rel='stylesheet', href=config.site.path + 'css/bundle.css')
+
+    //- JS
     script(type='text/javascript', src=config.site.path + 'js/manifest.js')
     script(type='text/javascript', src=config.site.path + 'js/vendor.js')
     script(type='text/javascript', src=config.site.path + 'js/client.js')

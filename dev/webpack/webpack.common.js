@@ -7,9 +7,16 @@ const ProgressBarPlugin = require('progress-bar-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
+const postCSSConfig = {
+  config: {
+    path: path.join(process.cwd(), 'dev/webpack/postcss.config.js')
+  }
+}
 
 module.exports = {
-  entry: './client/index.js',
+  entry: {
+    client: './client/index.js'
+  },
   output: {
     path: path.join(process.cwd(), 'assets'),
     pathinfo: true,
@@ -45,12 +52,11 @@ module.exports = {
             loader: 'style-loader'
           },
           {
-            loader: 'css-loader',
-            options: {
-              autoprefixer: false,
-              sourceMap: false,
-              minimize: true
-            }
+            loader: 'css-loader'
+          },
+          {
+            loader: 'postcss-loader',
+            options: postCSSConfig
           }
         ]
       },
@@ -60,12 +66,11 @@ module.exports = {
           fallback: 'style-loader',
           use: [
             {
-              loader: 'css-loader',
-              options: {
-                autoprefixer: false,
-                sourceMap: false,
-                minimize: true
-              }
+              loader: 'css-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: postCSSConfig
             },
             {
               loader: 'sass-loader',
@@ -80,18 +85,18 @@ module.exports = {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: {
+          extractCSS: true,
           loaders: {
             css: [
               {
                 loader: 'vue-style-loader'
               },
               {
-                loader: 'css-loader',
-                options: {
-                  autoprefixer: false,
-                  sourceMap: false,
-                  minimize: true
-                }
+                loader: 'css-loader'
+              },
+              {
+                loader: 'postcss-loader',
+                options: postCSSConfig
               }
             ],
             scss: [
@@ -99,12 +104,11 @@ module.exports = {
                 loader: 'vue-style-loader'
               },
               {
-                loader: 'css-loader',
-                options: {
-                  autoprefixer: false,
-                  sourceMap: false,
-                  minimize: true
-                }
+                loader: 'css-loader'
+              },
+              {
+                loader: 'postcss-loader',
+                options: postCSSConfig
               },
               {
                 loader: 'sass-loader',
@@ -119,13 +123,21 @@ module.exports = {
                 }
               }
             ],
-            js: {
-              loader: 'babel-loader',
-              options: {
-                babelrc: path.join(process.cwd(), '.babelrc'),
-                cacheDirectory: true
+            js: [
+              {
+                loader: 'cache-loader',
+                options: {
+                  cacheDirectory: '.webpack-cache'
+                }
+              },
+              {
+                loader: 'babel-loader',
+                options: {
+                  babelrc: path.join(process.cwd(), '.babelrc'),
+                  cacheDirectory: true
+                }
               }
-            }
+            ]
           }
         }
       },
@@ -180,7 +192,16 @@ module.exports = {
     ], {
 
     }),
-    new ExtractTextPlugin('css/bundle.css')
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'vendor',
+      minChunks(module) {
+        return module.context && module.context.includes('node_modules')
+      }
+    }),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'manifest',
+      minChunks: Infinity
+    })
   ],
   resolve: {
     symlinks: true,

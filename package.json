@@ -9,9 +9,8 @@
     "restart": "node wiki restart",
     "build": "webpack --config dev/webpack/webpack.prod.js",
     "build:analyze": "poi build --analyze",
-    "dev:client": "poi watch",
+    "dev:client": "webpack --config dev/webpack/webpack.dev.js",
     "dev:server": "nodemon",
-    "dev:server:alt": "node-dev server --no-deps --respawn --no-notify",
     "test": "eslint --ext .js,.vue . && jest"
   },
   "bin": {
@@ -157,6 +156,7 @@
     "consolidate": "0.15.0",
     "copy-webpack-plugin": "4.3.1",
     "css-loader": "0.28.9",
+    "cssnano": "4.0.0-rc.2",
     "eslint": "4.13.1",
     "eslint-config-requarks": "1.0.7",
     "eslint-config-standard": "11.0.0-beta.0",
@@ -176,6 +176,7 @@
     "node-dev": "3.1.3",
     "node-sass": "4.7.2",
     "nodemon": "1.14.3",
+    "postcss-loader": "2.0.10",
     "postcss-selector-parser": "3.1.1",
     "progress-bar-webpack-plugin": "1.10.0",
     "pug-lint": "2.5.0",
@@ -206,6 +207,12 @@
     "webpack-merge": "4.1.1",
     "whatwg-fetch": "2.0.3"
   },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "Firefox ESR",
+    "not ie < 11"
+  ],
   "jest": {
     "testResultsProcessor": "./node_modules/jest-junit",
     "collectCoverage": false,
