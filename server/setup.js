@@ -58,6 +58,20 @@ module.exports = () => {
   app.locals._ = require('lodash')
 
   // ----------------------------------------
+  // HMR (Dev Mode Only)
+  // ----------------------------------------
+
+  if (global.DEV) {
+    const webpackDevMiddleware = require('webpack-dev-middleware')
+    const webpackHotMiddleware = require('webpack-hot-middleware')
+    app.use(webpackDevMiddleware(global.WP, {
+      publicPath: global.WPCONFIG.output.publicPath,
+      logger: wiki.logger
+    }))
+    app.use(webpackHotMiddleware(global.WP))
+  }
+
+  // ----------------------------------------
   // Controllers
   // ----------------------------------------
 

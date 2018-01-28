@@ -56,7 +56,6 @@ import adminEditUserComponent from './pages/admin-edit-user.component.js'
 import adminProfileComponent from './pages/admin-profile.component.js'
 import adminSettingsComponent from './pages/admin-settings.component.js'
 import adminThemeComponent from './pages/admin-theme.component.js'
-import setupComponent from './components/setup.component.js'
 import contentViewComponent from './pages/content-view.component.js'
 import editorComponent from './components/editor.component.js'
 import sourceViewComponent from './pages/source-view.component.js'
@@ -130,7 +129,7 @@ Vue.component('modalUpgradeSystem', modalUpgradeSystemComponent)
 Vue.component('navigator', navigatorComponent)
 Vue.component('pageLoader', pageLoaderComponent)
 Vue.component('search', searchComponent)
-Vue.component('setup', setupComponent)
+Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.component.js'))
 Vue.component('sourceView', sourceViewComponent)
 Vue.component('toggle', toggleComponent)
 Vue.component('tree', treeComponent)

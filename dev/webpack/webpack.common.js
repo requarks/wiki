@@ -5,6 +5,7 @@ const webpack = require('webpack')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const ProgressBarPlugin = require('progress-bar-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const NameAllModulesPlugin = require('name-all-modules-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const postCSSConfig = {
@@ -183,6 +184,13 @@ module.exports = {
     ], {
 
     }),
+    new webpack.NamedModulesPlugin(),
+    new webpack.NamedChunksPlugin((chunk) => {
+      if (chunk.name) {
+        return chunk.name
+      }
+      return chunk.modules.map(m => path.relative(m.context, m.request)).join('_')
+    }),
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
       minChunks(module) {
@@ -190,9 +198,10 @@ module.exports = {
       }
     }),
     new webpack.optimize.CommonsChunkPlugin({
-      name: 'manifest',
+      name: 'runtime',
       minChunks: Infinity
-    })
+    }),
+    new NameAllModulesPlugin()
   ],
   resolve: {
     symlinks: true,
