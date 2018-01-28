@@ -9,7 +9,9 @@ import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
 import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
-import { HttpLink } from 'apollo-link-http'
+import { ApolloLink } from 'apollo-link'
+import { createApolloFetch } from 'apollo-fetch'
+import { BatchHttpLink } from 'apollo-link-batch-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import store from './store'
 
@@ -71,10 +73,33 @@ window.CONSTANTS = CONSTANTS
 // Initialize Apollo Client (GraphQL)
 // ====================================
 
+const graphQLEndpoint = window.location.protocol + '//' + window.location.host + siteConfig.path + 'graphql'
+
+const apolloFetch = createApolloFetch({
+  uri: graphQLEndpoint,
+  constructOptions: (requestOrRequests, options) => ({
+    ...options,
+    method: 'POST',
+    body: JSON.stringify(requestOrRequests),
+    credentials: 'include'
+  })
+})
+
 window.graphQL = new ApolloClient({
-  link: new HttpLink({
-    uri: window.location.protocol + '//' + window.location.host + siteConfig.path + 'graphql'
-  }),
+  link: ApolloLink.from([
+    new ApolloLink((operation, forward) => {
+      operation.setContext({
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      return forward(operation)
+    }),
+    new BatchHttpLink({
+      fetch: apolloFetch
+    })
+  ]),
   cache: new InMemoryCache(),
   connectToDevTools: (process.env.node_env === 'development')
 })

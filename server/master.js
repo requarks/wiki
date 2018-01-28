@@ -22,6 +22,7 @@ module.exports = async () => {
   const bodyParser = require('body-parser')
   const compression = require('compression')
   const cookieParser = require('cookie-parser')
+  const cors = require('cors')
   const express = require('express')
   const favicon = require('serve-favicon')
   const flash = require('connect-flash')
@@ -48,6 +49,9 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(mw.security)
+  app.use(cors(wiki.config.cors))
+  app.options('*', cors(wiki.config.cors))
+  app.enable('trust proxy')
 
   // ----------------------------------------
   // Public Assets

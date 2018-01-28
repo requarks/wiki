@@ -45,6 +45,12 @@ defaults:
       path: ''
       rtl: false
       title: Wiki.js
+    # System defaults
+    cors:
+      credentials: true
+      maxAge: 600
+      methods: 'GET,POST'
+      origin: true
 configNamespaces:
   - auth
   - features
