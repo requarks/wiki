@@ -154,7 +154,7 @@ Vue.component('modalUpgradeSystem', modalUpgradeSystemComponent)
 Vue.component('navigator', navigatorComponent)
 Vue.component('pageLoader', pageLoaderComponent)
 Vue.component('search', searchComponent)
-Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.component.js'))
+Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
 Vue.component('sourceView', sourceViewComponent)
 Vue.component('toggle', toggleComponent)
 Vue.component('tree', treeComponent)
@@ -174,20 +174,17 @@ document.addEventListener('DOMContentLoaded', ev => {
 
   const i18n = localization.init()
   window.wiki = new Vue({
-    mixins: [helpers],
+    el: '#app',
     components: {},
+    mixins: [helpers],
     store,
     i18n,
-    el: '#app',
     methods: {
       changeTheme(opts) {
         this.$el.className = `has-stickynav is-primary-${opts.primary} is-alternate-${opts.alt}`
         this.$refs.header.className = `nav is-${opts.primary}`
         this.$refs.footer.className = `footer is-${opts.footer}`
       }
-    },
-    mounted() {
-
     }
   })
 

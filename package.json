@@ -179,7 +179,6 @@
     "name-all-modules-plugin": "1.0.1",
     "node-dev": "3.1.3",
     "node-sass": "4.7.2",
-    "nodemon": "1.14.11",
     "offline-plugin": "4.9.0",
     "postcss-loader": "2.0.10",
     "postcss-selector-parser": "3.1.1",
@@ -212,7 +211,8 @@
     "webpack-dev-middleware": "2.0.4",
     "webpack-hot-middleware": "2.21.0",
     "webpack-merge": "4.1.1",
-    "whatwg-fetch": "2.0.3"
+    "whatwg-fetch": "2.0.3",
+    "write-file-webpack-plugin": "4.2.0"
   },
   "browserslist": [
     "> 1%",
