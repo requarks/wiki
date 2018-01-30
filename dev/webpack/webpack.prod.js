@@ -9,14 +9,20 @@ const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack
 
 const common = require('./webpack.common.js')
 
-console.info(process.cwd())
-
 module.exports = merge(common, {
   module: {
     rules: []
   },
   plugins: [
-    new CleanWebpackPlugin(['assets'], { root: process.cwd() }),
+    new CleanWebpackPlugin([
+      'assets/js/*.*',
+      'assets/css/*.*',
+      'assets/*.js',
+      'assets/*.json'
+    ], {
+      root: process.cwd(),
+      verbose: false
+    }),
     new UglifyJSPlugin(),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production')

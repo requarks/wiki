@@ -77,7 +77,7 @@ module.exports = () => {
 
   app.get('*', async (req, res) => {
     let packageObj = await fs.readJson(path.join(wiki.ROOTPATH, 'package.json'))
-    res.render('setup', {
+    res.render('pages/setup', {
       packageObj,
       telemetryClientID: wiki.telemetry.cid
     })
@@ -375,12 +375,12 @@ module.exports = () => {
   wiki.logger.info(`HTTP Server on port: ${wiki.config.port}`)
 
   app.set('port', wiki.config.port)
-  server = http.createServer(app)
-  server.listen(wiki.config.port)
+  wiki.server = http.createServer(app)
+  wiki.server.listen(wiki.config.port)
 
   var openConnections = []
 
-  server.on('connection', (conn) => {
+  wiki.server.on('connection', (conn) => {
     let key = conn.remoteAddress + ':' + conn.remotePort
     openConnections[key] = conn
     conn.on('close', () => {
@@ -388,14 +388,14 @@ module.exports = () => {
     })
   })
 
-  server.destroy = (cb) => {
-    server.close(cb)
+  wiki.server.destroy = (cb) => {
+    wiki.server.close(cb)
     for (let key in openConnections) {
       openConnections[key].destroy()
     }
   }
 
-  server.on('error', (error) => {
+  wiki.server.on('error', (error) => {
     if (error.syscall !== 'listen') {
       throw error
     }
@@ -412,7 +412,7 @@ module.exports = () => {
     }
   })
 
-  server.on('listening', () => {
+  wiki.server.on('listening', () => {
     wiki.logger.info('HTTP Server: RUNNING')
   })
 }

@@ -81,12 +81,11 @@
 </template>
 
 <script>
-/* global CONSTANTS, graphQL, siteConfig */
+/* global siteConfig */
 
 import { mapState } from 'vuex'
 
 export default {
-  name: 'navigator',
   data() {
     return {
       sdShown: false,
@@ -151,8 +150,6 @@ export default {
     logout() {
       window.location.assign(this.$helpers.resolvePath('logout'))
     }
-  },
-  mounted() {
   }
 }
 </script>
