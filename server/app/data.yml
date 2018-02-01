@@ -63,6 +63,7 @@ defaults:
       alt: blue-grey
       footer: blue-grey
       viewSource: false
+      treedepth: 2
       code:
         dark: true
         colorize: true

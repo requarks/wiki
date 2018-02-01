@@ -172,6 +172,7 @@ theme:
   primary: indigo
   alt: blue-grey
   viewSource: all # all | write | false
+  treedepth: 2
   footer: blue-grey
   code:
     dark: true

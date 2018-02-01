@@ -168,7 +168,7 @@ const parseTree = (content) => {
 
   // -> Exclude levels deeper than 2
 
-  _.remove(tocArray, (n) => { return n.level > 2 })
+  _.remove(tocArray, (n) => { return n.level > appconfig.theme.treedepth })
 
   // -> Build tree from flat array
 
