@@ -148,6 +148,7 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 - [x] Estonian - *Thanks to [@vonforum](https://github.com/vonforum)*
 - [x] French
 - [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes), [@MyZeD](https://github.com/MyZeD)*
+- [x] Greek - *Thanks to [@ekchatzi](https://github.com/ekchatzi)*
 - [x] Italian - *Thanks to [@CupCakeArmy](https://github.com/CupCakeArmy)*
 - [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields), [@JO3QMA](https://github.com/JO3QMA)*
 - [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
