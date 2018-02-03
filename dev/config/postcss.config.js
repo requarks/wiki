@@ -7,6 +7,8 @@ module.exports = {
           removeAll: true
         }
       }]
-    }
+    },
+    'postcss-flexbugs-fixes': {},
+    'postcss-flexibility': {}
   }
 }

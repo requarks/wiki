@@ -3,6 +3,7 @@ const merge = require('webpack-merge')
 
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
+const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
 
 const common = require('./webpack.common.js')
 
@@ -15,6 +16,9 @@ module.exports = merge(common, {
     publicPath: '/'
   },
   plugins: [
+    new SimpleProgressWebpackPlugin({
+      format: 'compact'
+    }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('development')
     }),

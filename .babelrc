@@ -1,5 +1,9 @@
 {
   "comments": true,
+  "plugins": [
+    "lodash",
+    "graphql-tag"
+  ],
   "presets": [
     ["env"],
     "stage-2"

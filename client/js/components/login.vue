@@ -31,7 +31,6 @@
 /* global CONSTANTS, graphQL, siteConfig */
 
 export default {
-  name: 'login',
   data () {
     return {
       error: false,
@@ -49,6 +48,11 @@ export default {
     siteTitle () {
       return siteConfig.title
     }
+  },
+  mounted () {
+    this.$store.commit('navigator/subtitleStatic', 'Login')
+    this.refreshStrategies()
+    this.$refs.iptEmail.focus()
   },
   methods: {
     selectStrategy (key, useForm) {
@@ -188,11 +192,6 @@ export default {
         })
       }
     }
-  },
-  mounted () {
-    this.$store.commit('navigator/subtitleStatic', 'Login')
-    this.refreshStrategies()
-    this.$refs.iptEmail.focus()
   }
 }
 </script>

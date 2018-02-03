@@ -71,26 +71,35 @@ const init = {
       const webpack = require('webpack')
       const chokidar = require('chokidar')
 
-      global.WPCONFIG = require('./dev/webpack/webpack.dev.js')
       global.DEV = true
-      global.WP = webpack(global.WPCONFIG)
-      require('./server')
+      global.WP_CONFIG = require('./dev/webpack/webpack.dev.js')
+      global.WP = webpack(global.WP_CONFIG)
+      global.WP_DEV = {
+        devMiddleware: require('webpack-dev-middleware')(global.WP, {
+          publicPath: global.WP_CONFIG.output.publicPath
+        }),
+        hotMiddleware: require('webpack-hot-middleware')(global.WP)
+      }
+      global.WP_DEV.devMiddleware.waitUntilValid(() => {
+        console.info('>>> Starting Wiki.js in DEVELOPER mode...')
+        require('./server')
 
-      const devWatcher = chokidar.watch('./server')
-      devWatcher.on('ready', () => {
-        devWatcher.on('all', () => {
-          console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
-          console.warn('--- Changes detected: Restarting ---')
-          console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
-          global.wiki.server.destroy(() => {
-            global.wiki = {}
-            for (const workerId in cluster.workers) {
-              cluster.workers[workerId].kill()
-            }
-            Object.keys(require.cache).forEach(function(id) {
-              if (/[/\\]server[/\\]/.test(id)) delete require.cache[id]
+        const devWatcher = chokidar.watch('./server')
+        devWatcher.on('ready', () => {
+          devWatcher.on('all', () => {
+            console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
+            console.warn('--- Changes detected: Restarting ---')
+            console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
+            global.wiki.server.destroy(() => {
+              global.wiki = {}
+              for (const workerId in cluster.workers) {
+                cluster.workers[workerId].kill()
+              }
+              Object.keys(require.cache).forEach(function(id) {
+                if (/[/\\]server[/\\]/.test(id)) delete require.cache[id]
+              })
+              require('./server')
             })
-            require('./server')
           })
         })
       })

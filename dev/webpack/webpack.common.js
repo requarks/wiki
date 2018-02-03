@@ -3,16 +3,20 @@ const fs = require('fs-extra')
 const webpack = require('webpack')
 
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const ProgressBarPlugin = require('progress-bar-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const NameAllModulesPlugin = require('name-all-modules-plugin')
+const LodashModuleReplacementPlugin = require('lodash-webpack-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const postCSSConfig = {
   config: {
-    path: path.join(process.cwd(), 'dev/webpack/postcss.config.js')
+    path: path.join(process.cwd(), 'dev/config/postcss.config.js')
   }
 }
+const cacheDir = '.webpack-cache/cache'
+const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
+
+process.noDeprecation = true
 
 module.exports = {
   entry: {
@@ -32,14 +36,14 @@ module.exports = {
           {
             loader: 'cache-loader',
             options: {
-              cacheDirectory: '.webpack-cache'
+              cacheDirectory: cacheDir
             }
           },
           {
             loader: 'babel-loader',
             options: {
               ...babelConfig,
-              cacheDirectory: true
+              cacheDirectory: babelDir
             }
           }
         ]
@@ -64,6 +68,12 @@ module.exports = {
         use: ExtractTextPlugin.extract({
           fallback: 'style-loader',
           use: [
+            {
+              loader: 'cache-loader',
+              options: {
+                cacheDirectory: cacheDir
+              }
+            },
             {
               loader: 'css-loader'
             },
@@ -119,14 +129,14 @@ module.exports = {
               {
                 loader: 'cache-loader',
                 options: {
-                  cacheDirectory: '.webpack-cache'
+                  cacheDirectory: cacheDir
                 }
               },
               {
                 loader: 'babel-loader',
                 options: {
                   babelrc: path.join(process.cwd(), '.babelrc'),
-                  cacheDirectory: true
+                  cacheDirectory: babelDir
                 }
               }
             ]
@@ -173,17 +183,13 @@ module.exports = {
     ]
   },
   plugins: [
-    new ProgressBarPlugin({
-      width: 72,
-      complete: '▇',
-      incomplete: '-'
-    }),
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
     new CopyWebpackPlugin([
       { from: 'client/static' }
     ], {
 
     }),
+    new LodashModuleReplacementPlugin(),
     new webpack.NamedModulesPlugin(),
     new webpack.NamedChunksPlugin((chunk) => {
       if (chunk.name) {
@@ -207,7 +213,10 @@ module.exports = {
     symlinks: true,
     alias: {
       '@': path.join(process.cwd(), 'client'),
-      'vue$': 'vue/dist/vue.common.js'
+      'vue$': 'vue/dist/vue.common.js',
+      // Duplicates fixes:
+      'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
+      'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities')
     },
     extensions: [
       '.js',

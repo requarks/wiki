@@ -1,15 +1,4 @@
 // =======================================
-// Intl polyfill
-// =======================================
-// Requirement: Safari 9 and below
-
-if (!global.Intl) {
-  require('intl')
-  require('intl/locale-data/jsonp/en')
-  require('intl/locale-data/jsonp/fr')
-}
-
-// =======================================
 // Promise polyfill
 // =======================================
 // Requirement: IE 11 and below

@@ -115,13 +115,8 @@ module.exports = async () => {
   // ----------------------------------------
 
   if (global.DEV) {
-    const webpackDevMiddleware = require('webpack-dev-middleware')
-    const webpackHotMiddleware = require('webpack-hot-middleware')
-    app.use(webpackDevMiddleware(global.WP, {
-      publicPath: global.WPCONFIG.output.publicPath,
-      logger: wiki.logger
-    }))
-    app.use(webpackHotMiddleware(global.WP))
+    app.use(global.WP_DEV.devMiddleware)
+    app.use(global.WP_DEV.hotMiddleware)
   }
 
   // ----------------------------------------

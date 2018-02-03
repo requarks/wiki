@@ -1,13 +1,9 @@
 import filesize from 'filesize.js'
+import _ from 'lodash'
 
 /* global siteConfig */
 
-const _ = require('./lodash')
 const helpers = {
-  /**
-   * Minimal set of lodash functions
-   */
-  _,
   /**
    * Convert bytes to humanized form
    * @param {number} rawSize Size in bytes
