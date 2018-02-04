@@ -1,10 +1,10 @@
-/* global wiki */
-
-const fs = require('fs')
-const yaml = require('js-yaml')
 const _ = require('lodash')
-const path = require('path')
 const cfgHelper = require('../helpers/config')
+const fs = require('fs')
+const path = require('path')
+const yaml = require('js-yaml')
+
+/* global wiki */
 
 module.exports = {
   /**

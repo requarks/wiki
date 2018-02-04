@@ -33,7 +33,7 @@ module.exports = {
 
     _.forOwn(_.omitBy(wiki.config.auth.strategies, s => s.enabled === false), (strategyConfig, strategyKey) => {
       strategyConfig.callbackURL = `${wiki.config.site.host}${wiki.config.site.path}login/${strategyKey}/callback`
-      let strategy = require(`../extensions/authentication/${strategyKey}`)
+      let strategy = require(`../modules/authentication/${strategyKey}`)
       try {
         strategy.init(passport, strategyConfig)
       } catch (err) {

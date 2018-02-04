@@ -1,6 +1,6 @@
-/* global wiki */
-
 const Promise = require('bluebird')
+
+/* global wiki */
 
 module.exports = Promise.join(
   wiki.db.onReady,
@@ -16,11 +16,7 @@ module.exports = Promise.join(
   // Load global modules
   // ----------------------------------------
 
-  // wiki.upl = require('./modules/uploads-agent').init()
-  // wiki.git = require('./modules/git').init()
-  // wiki.entries = require('./modules/entries').init()
   wiki.lang = require('i18next')
-  wiki.mark = require('./modules/markdown')
 
   // ----------------------------------------
   // Localization Engine
@@ -36,7 +32,7 @@ module.exports = Promise.join(
     lng: wiki.config.lang,
     fallbackLng: 'en',
     backend: {
-      loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.json')
+      loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.yml')
     }
   })
 

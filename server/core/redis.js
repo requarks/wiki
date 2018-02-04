@@ -1,22 +1,9 @@
-'use strict'
-
-/* global wiki */
-
 const Redis = require('ioredis')
 const { isPlainObject } = require('lodash')
 
-/**
- * Redis module
- *
- * @return     {Object}  Redis client wrapper instance
- */
-module.exports = {
+/* global wiki */
 
-  /**
-   * Initialize Redis client
-   *
-   * @return     {Object}  Redis client instance
-   */
+module.exports = {
   init() {
     if (isPlainObject(wiki.config.redis)) {
       let red = new Redis(wiki.config.redis)
@@ -33,5 +20,4 @@ module.exports = {
       process.exit(1)
     }
   }
-
 }

@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const dotize = require('dotize')
 const i18nBackend = require('i18next-node-fs-backend')
+const i18nMW = require('i18next-express-middleware')
 const i18next = require('i18next')
 const path = require('path')
 const Promise = require('bluebird')
@@ -26,6 +27,9 @@ module.exports = {
       }
     })
     return this
+  },
+  attachMiddleware (app) {
+    app.use(i18nMW.handle(this.engine))
   },
   async getByNamespace(locale, namespace) {
     if (this.engine.hasResourceBundle(locale, namespace)) {

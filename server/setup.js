@@ -8,7 +8,7 @@ module.exports = () => {
     title: 'Wiki.js'
   }
 
-  wiki.system = require('./modules/system')
+  wiki.system = require('./core/system')
 
   // ----------------------------------------
   // Load modules
@@ -62,13 +62,8 @@ module.exports = () => {
   // ----------------------------------------
 
   if (global.DEV) {
-    const webpackDevMiddleware = require('webpack-dev-middleware')
-    const webpackHotMiddleware = require('webpack-hot-middleware')
-    app.use(webpackDevMiddleware(global.WP, {
-      publicPath: global.WPCONFIG.output.publicPath,
-      logger: wiki.logger
-    }))
-    app.use(webpackHotMiddleware(global.WP))
+    app.use(global.WP_DEV.devMiddleware)
+    app.use(global.WP_DEV.hotMiddleware)
   }
 
   // ----------------------------------------
@@ -77,7 +72,7 @@ module.exports = () => {
 
   app.get('*', async (req, res) => {
     let packageObj = await fs.readJson(path.join(wiki.ROOTPATH, 'package.json'))
-    res.render('pages/setup', {
+    res.render('main/setup', {
       packageObj,
       telemetryClientID: wiki.telemetry.cid
     })

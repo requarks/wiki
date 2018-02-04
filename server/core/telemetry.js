@@ -1,8 +1,8 @@
+const _ = require('lodash')
 const axios = require('axios')
 const bugsnag = require('bugsnag')
 const path = require('path')
 const uuid = require('uuid/v4')
-const _ = require('lodash')
 
 /* global wiki */
 

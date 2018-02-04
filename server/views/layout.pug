@@ -2,11 +2,10 @@ extends ./master.pug
 
 block body
   body
-    #app.has-stickynav(class=['is-primary-' + appconfig.theme.primary, 'is-alternate-' + appconfig.theme.alt])
-      include ./common/header.pug
-      alert
+    #app
+      navigator
       main
         block content
-      include ./common/footer.pug
+      footer
 
     block outside

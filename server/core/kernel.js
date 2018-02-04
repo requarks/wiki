@@ -1,6 +1,6 @@
+const _ = require('lodash')
 const cluster = require('cluster')
 const Promise = require('bluebird')
-const _ = require('lodash')
 
 /* global wiki */
 

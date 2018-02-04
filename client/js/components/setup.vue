@@ -353,6 +353,7 @@
 /* global siteConfig */
 
 import axios from 'axios'
+import _ from 'lodash'
 
 export default {
   props: {
@@ -491,7 +492,7 @@ export default {
         results: []
       }
 
-      this.$helpers._.delay(() => {
+      _.delay(() => {
         axios.post('/syscheck', self.conf).then(resp => {
           if (resp.data.ok === true) {
             self.syscheck.ok = true
@@ -517,9 +518,9 @@ export default {
     },
     proceedToConsiderations: function (ev) {
       this.considerations = {
-        https: !this.$helpers._.startsWith(this.conf.host, 'https'),
+        https: false,
         port: false, // TODO
-        localhost: this.$helpers._.includes(this.conf.host, 'localhost')
+        localhost: false
       }
       this.state = 'considerations'
       this.loading = false
@@ -542,7 +543,7 @@ export default {
         error: ''
       }
 
-      this.$helpers._.delay(() => {
+      _.delay(() => {
         axios.post('/gitcheck', self.conf).then(resp => {
           if (resp.data.ok === true) {
             self.gitcheck.ok = true
@@ -587,7 +588,7 @@ export default {
         redirectUrl: ''
       }
 
-      this.$helpers._.delay(() => {
+      _.delay(() => {
         axios.post('/finalize', self.conf).then(resp => {
           if (resp.data.ok === true) {
             self.$helpers._.delay(() => {

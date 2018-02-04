@@ -1,9 +1,9 @@
-/* global wiki */
-
-const cluster = require('cluster')
 const _ = require('lodash')
+const cluster = require('cluster')
 const fs = require('fs-extra')
 const path = require('path')
+
+/* global wiki */
 
 module.exports = {
   loggers: {},
@@ -21,7 +21,7 @@ module.exports = {
     })
 
     _.forOwn(_.omitBy(wiki.config.logging.loggers, s => s.enabled === false), (loggerConfig, loggerKey) => {
-      let loggerModule = require(`../extensions/logging/${loggerKey}`)
+      let loggerModule = require(`../modules/logging/${loggerKey}`)
       loggerModule.init(logger, loggerConfig)
       fs.readFile(path.join(wiki.ROOTPATH, `assets/svg/auth-icon-${loggerKey}.svg`), 'utf8').then(iconData => {
         logger.icon = iconData

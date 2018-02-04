@@ -1,9 +1,7 @@
-'use strict'
-
-/* global wiki */
-
 const Bull = require('bull')
 const Promise = require('bluebird')
+
+/* global wiki */
 
 module.exports = {
   init() {

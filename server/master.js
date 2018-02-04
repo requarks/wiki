@@ -1,36 +1,30 @@
+const autoload = require('auto-load')
+const bodyParser = require('body-parser')
+const compression = require('compression')
+const cookieParser = require('cookie-parser')
+const cors = require('cors')
+const express = require('express')
+const favicon = require('serve-favicon')
+const http = require('http')
+const path = require('path')
+const session = require('express-session')
+const SessionRedisStore = require('connect-redis')(session)
+const graphqlApollo = require('apollo-server-express')
+const graphqlSchema = require('./core/graphql')
+
 /* global wiki */
 
 module.exports = async () => {
   // ----------------------------------------
-  // Load global modules
+  // Load core modules
   // ----------------------------------------
 
-  wiki.auth = require('./modules/auth').init()
-  wiki.disk = require('./modules/disk').init()
-  wiki.docs = require('./modules/documents').init()
-  wiki.git = require('./modules/git').init(false)
-  wiki.lang = require('./modules/localization').init()
-  // wiki.mark = require('./modules/markdown')
-  // wiki.search = require('./modules/search').init()
-  // wiki.upl = require('./modules/uploads').init()
+  wiki.auth = require('./core/auth').init()
+  wiki.lang = require('./core/localization').init()
 
   // ----------------------------------------
-  // Load modules
+  // Load middlewares
   // ----------------------------------------
-
-  const autoload = require('auto-load')
-  const bodyParser = require('body-parser')
-  const compression = require('compression')
-  const cookieParser = require('cookie-parser')
-  const cors = require('cors')
-  const express = require('express')
-  const favicon = require('serve-favicon')
-  const http = require('http')
-  const path = require('path')
-  const session = require('express-session')
-  const SessionRedisStore = require('connect-redis')(session)
-  const graphqlApollo = require('apollo-server-express')
-  const graphqlSchema = require('./modules/graphql')
 
   var mw = autoload(path.join(wiki.SERVERPATH, '/middlewares'))
   var ctrl = autoload(path.join(wiki.SERVERPATH, '/controllers'))
@@ -98,12 +92,17 @@ module.exports = async () => {
   app.use(bodyParser.urlencoded({ extended: false, limit: '1mb' }))
 
   // ----------------------------------------
+  // Localization
+  // ----------------------------------------
+
+  wiki.lang.attachMiddleware(app)
+
+  // ----------------------------------------
   // View accessible data
   // ----------------------------------------
 
   app.locals.basedir = wiki.ROOTPATH
   app.locals._ = require('lodash')
-  app.locals.t = wiki.lang.engine.t.bind(wiki.lang)
   app.locals.moment = require('moment')
   app.locals.moment.locale(wiki.config.site.lang)
   app.locals.config = wiki.config
@@ -157,7 +156,7 @@ module.exports = async () => {
   })
 
   // ----------------------------------------
-  // Start HTTP server
+  // HTTP server
   // ----------------------------------------
 
   let srvConnections = {}

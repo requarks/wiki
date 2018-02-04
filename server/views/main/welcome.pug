@@ -1,0 +1,10 @@
+extends ../master.pug
+
+block body
+  body
+    #app.is-fullscreen
+      .onboarding
+        img(src='/svg/logo-wikijs.svg', alt='Wiki.js')
+        h1= t('welcome.title')
+        h2= t('welcome.subtitle')
+        a.button.is-blue(href='/create/home')= t('welcome.createhome')

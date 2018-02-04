@@ -1,11 +1,9 @@
-'use strict'
+const _ = require('lodash')
+const fs = require('fs')
+const gqlTools = require('graphql-tools')
+const path = require('path')
 
 /* global wiki */
-
-const gqlTools = require('graphql-tools')
-const fs = require('fs')
-const path = require('path')
-const _ = require('lodash')
 
 const typeDefs = fs.readFileSync(path.join(wiki.SERVERPATH, 'schemas/types.graphql'), 'utf8')
 

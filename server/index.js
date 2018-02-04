@@ -12,8 +12,8 @@ let wiki = {
   ROOTPATH: process.cwd(),
   SERVERPATH: path.join(process.cwd(), 'server'),
   Error: require('./helpers/error'),
-  configSvc: require('./modules/config'),
-  kernel: require('./modules/kernel')
+  configSvc: require('./core/config'),
+  kernel: require('./core/kernel')
 }
 global.wiki = wiki
 
@@ -27,13 +27,13 @@ wiki.configSvc.init()
 // Init Logger
 // ----------------------------------------
 
-wiki.logger = require('./modules/logger').init()
+wiki.logger = require('./core/logger').init()
 
 // ----------------------------------------
 // Init Telemetry
 // ----------------------------------------
 
-wiki.telemetry = require('./modules/telemetry').init()
+wiki.telemetry = require('./core/telemetry').init()
 
 process.on('unhandledRejection', (err) => {
   wiki.telemetry.sendError(err)
@@ -46,7 +46,7 @@ process.on('uncaughtException', (err) => {
 // Init DB
 // ----------------------------------------
 
-wiki.db = require('./modules/db').init()
+wiki.db = require('./core/db').init()
 
 // ----------------------------------------
 // Start Kernel

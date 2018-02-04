@@ -34,7 +34,7 @@ const bruteforce = new ExpressBrute(EBstore, {
  * Login form
  */
 router.get('/login', function (req, res, next) {
-  res.render('pages/login')
+  res.render('main/login')
 })
 
 router.post('/login', bruteforce.prevent, function (req, res, next) {

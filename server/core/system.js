@@ -1,9 +1,8 @@
-/* global wiki */
-
-const Promise = require('bluebird')
-// const pm2 = Promise.promisifyAll(require('pm2'))
 const _ = require('lodash')
 const cfgHelper = require('../helpers/config')
+const Promise = require('bluebird')
+
+/* global wiki */
 
 module.exports = {
   /**
