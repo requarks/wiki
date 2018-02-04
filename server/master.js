@@ -10,9 +10,9 @@ module.exports = async () => {
   wiki.docs = require('./modules/documents').init()
   wiki.git = require('./modules/git').init(false)
   wiki.lang = require('./modules/localization').init()
-  wiki.mark = require('./modules/markdown')
-  wiki.search = require('./modules/search').init()
-  wiki.upl = require('./modules/uploads').init()
+  // wiki.mark = require('./modules/markdown')
+  // wiki.search = require('./modules/search').init()
+  // wiki.upl = require('./modules/uploads').init()
 
   // ----------------------------------------
   // Load modules
@@ -25,7 +25,6 @@ module.exports = async () => {
   const cors = require('cors')
   const express = require('express')
   const favicon = require('serve-favicon')
-  const flash = require('connect-flash')
   const http = require('http')
   const path = require('path')
   const session = require('express-session')
@@ -79,7 +78,6 @@ module.exports = async () => {
     resave: false,
     saveUninitialized: false
   }))
-  app.use(flash())
   app.use(wiki.auth.passport.initialize())
   app.use(wiki.auth.passport.session())
 

@@ -5,7 +5,6 @@
 import CONSTANTS from './constants'
 
 import Vue from 'vue'
-import VueResource from 'vue-resource'
 import VueClipboards from 'vue-clipboards'
 import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
@@ -77,7 +76,6 @@ window.graphQL = new ApolloClient({
 // Initialize Vue Modules
 // ====================================
 
-Vue.use(VueResource)
 Vue.use(VueClipboards)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
