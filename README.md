@@ -101,11 +101,17 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Modular logging providers
 - [x] New Login page
 - [x] Two-Factor Authentication (2FA)
-- [ ] New Navigation Concept :rocket:
+- [x] New Navigation Concept
 - [ ] Themes :rocket:
-- [ ] Modular editors, user-selectable: SimpleMDE (markdown), Monaco (code) or TinyMCE (wysiwyg)
-- [ ] Modular content parser :rocket:
-- [ ] Modular search engines: PostgreSQL search engine (default)
+- [ ] Modular editors :rocket:
+  - [ ] SimpleMDE (markdown)
+  - [ ] Monaco (code)
+- [ ] Modular content parsers/renderers :rocket:
+- [ ] Modular search engines
+  - [ ] PostgreSQL search engine
+- [ ] Modular storage engines :rocket:
+  - [ ] Git
+  - [ ] Local Disk
 - [ ] Multilingual versions of the same page (i18n)
 - [ ] History / Revert to previous version
 - [ ] Persist system settings to database instead of file-based
@@ -120,6 +126,14 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Preview changes directly from the editor, without saving
 - [ ] Diagrams as code (Mermaid module)
 - [ ] Insert Link modal in Markdown Editor
+- [ ] Additional storage engines
+  - [ ] Dropbox
+  - [ ] Google Drive
+  - [ ] Amazon S3
+  - [ ] Azure Blob Storage
+  - [ ] Onedrive
+  - [ ] Owncloud
+- [ ] Modular Editor: TinyMCE (wysiwyg)
 
 **TBD Milestone**
 - [ ] Better simultaneous user editing handling
