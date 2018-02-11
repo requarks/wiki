@@ -16,10 +16,21 @@
     top: 0;
     left: 0;
     background-image: url('../static/svg/login-bg-motif.svg');
+    background-position: center center;
     background-repeat: repeat;
     background-size: 500px;
     z-index: 0;
     opacity: .75;
+    animation: onboardingBgReveal 50s linear infinite;
+
+    @include keyframes(onboardingBgReveal) {
+      0% {
+        background-position-y: 0;
+      }
+      100% {
+        background-position-y: -2000px;
+      }
+    }
   }
 
   img {

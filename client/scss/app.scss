@@ -1,39 +1,22 @@
 @import "global";
 
+@import 'base/icons';
+
 @import "libs/animate";
 
-@import 'components/alert';
 @import 'components/button';
-@import 'components/collapsable-nav';
-@import 'components/color-picker';
-@import 'components/footer';
-@import 'components/form';
-@import 'components/grid';
-@import 'components/hero';
-@import 'components/history';
-@import 'components/markdown-content';
-@import 'components/modal';
-@import 'components/nav';
 @import 'components/navigator';
 @import 'components/panel';
-@import 'components/search';
 @import 'components/setup';
-@import 'components/sidebar';
-@import 'components/table';
 @import 'components/toggle';
 @import 'components/typography';
 
 @import 'libs/twemoji-awesome';
 @import 'node_modules/highlight.js/styles/atom-one-dark';
-@import 'node_modules/simplemde/dist/simplemde.min';
 @import 'node_modules/diff2html/dist/diff2html.min';
-
-@import 'components/editor';
 
 @import 'pages/welcome';
 
-@import 'layout/_header';
-@import 'layout/_loader';
 @import 'layout/_rtl';
 
 @import 'base/print';

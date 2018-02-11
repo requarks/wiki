@@ -95,6 +95,7 @@ Vue.use(VeeValidate, {
 // Register Vue Components
 // ====================================
 
+Vue.component('editor', () => import(/* webpackChunkName: "editor" */ './components/editor.vue'))
 Vue.component('login', () => import(/* webpackMode: "eager" */ './components/login.vue'))
 Vue.component('navigator', () => import(/* webpackMode: "eager" */ './components/navigator.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
