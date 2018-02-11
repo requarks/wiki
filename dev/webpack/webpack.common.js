@@ -91,6 +91,26 @@ module.exports = {
         })
       },
       {
+        test: /\.styl$/,
+        use: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [
+            {
+              loader: 'cache-loader',
+              options: {
+                cacheDirectory: cacheDir
+              }
+            },
+            {
+              loader: 'css-loader'
+            },
+            {
+              loader: 'stylus-loader'
+            }
+          ]
+        })
+      },
+      {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: {
@@ -213,7 +233,7 @@ module.exports = {
     symlinks: true,
     alias: {
       '@': path.join(process.cwd(), 'client'),
-      'vue$': 'vue/dist/vue.common.js',
+      'vue$': 'vue/dist/vue.esm.js',
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
       'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities')

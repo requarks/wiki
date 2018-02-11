@@ -33,12 +33,26 @@
           svg.icons.is-18(role='img')
             title Link
             use(xlink:href='#fa-link')
+      .editor-code-toolbar-group
+        .editor-code-toolbar-item
+          svg.icons.is-18(role='img')
+            title Horizontal Bar
+            use(xlink:href='#fa-minus')
     .editor-code-main
       .editor-code-editor
         .editor-code-editor-title Editor
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready="onCmReady")
       .editor-code-preview
         .editor-code-preview-title Preview
+        v-speed-dial(:hover='true', direction='left', transition='slide-y-reverse-transition', :fixed='true', :right='true', :bottom='true')
+          v-btn(color='green', fab, dark, slot='activator')
+            v-icon save
+            v-icon close
+          v-btn(color='red', fab, dark, small): v-icon not_interested
+          v-btn(color='orange', fab, dark, small): v-icon vpn_lock
+          v-btn(color='indigo', fab, dark, small): v-icon restore
+          v-btn(color='brown', fab, dark, small): v-icon archive
+
 </template>
 
 <script>
@@ -75,7 +89,7 @@ export default {
         tabSize: 2,
         mode: 'text/markdown',
         theme: 'base16-dark',
-        lineNumbers: false,
+        lineNumbers: true,
         lineWrapping: true,
         line: true,
         styleActiveLine: true,
@@ -149,6 +163,7 @@ export default {
     flex: 1 1 50%;
     background-color: mc('grey', '100');
     position: relative;
+    padding: 30px 1rem 1rem 1rem;
 
     &-title {
       background-color: mc('blue', '100');
