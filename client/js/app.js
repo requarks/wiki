@@ -12,7 +12,7 @@ import { ApolloLink } from 'apollo-link'
 import { createApolloFetch } from 'apollo-fetch'
 import { BatchHttpLink } from 'apollo-link-batch-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
-import { Vuetify, VApp, VBtn, VIcon, VSpeedDial, VTooltip } from 'vuetify'
+import { Vuetify, VApp, VBtn, VIcon, VList, VMenu, VSpeedDial, VTooltip } from 'vuetify'
 import Hammer from 'hammerjs'
 import store from './store'
 
@@ -96,6 +96,8 @@ Vue.use(Vuetify, {
     VApp,
     VBtn,
     VIcon,
+    VList,
+    VMenu,
     VSpeedDial,
     VTooltip
   }

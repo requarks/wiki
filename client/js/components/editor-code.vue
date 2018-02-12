@@ -15,10 +15,15 @@
             title Strikethrough
             use(xlink:href='#fa-strikethrough')
       .editor-code-toolbar-group
-        .editor-code-toolbar-item.is-dropdown
-          svg.icons.is-18(role='img')
-            title Heading
-            use(xlink:href='#fa-heading')
+        v-menu(offset-y, open-on-hover)
+          .editor-code-toolbar-item.is-dropdown(slot='activator')
+            svg.icons.is-18(role='img')
+              title Heading
+              use(xlink:href='#fa-heading')
+          v-list
+            v-list-tile(v-for='(n, idx) in 6', @click='')
+              v-list-tile-action: v-icon format_size
+              v-list-tile-title Heading {{n}}
       .editor-code-toolbar-group
         .editor-code-toolbar-item
           svg.icons.is-18(role='img')
@@ -33,6 +38,15 @@
           svg.icons.is-18(role='img')
             title Link
             use(xlink:href='#fa-link')
+      .editor-code-toolbar-group
+        .editor-code-toolbar-item
+          svg.icons.is-18(role='img')
+            title Inline Code
+            use(xlink:href='#fa-terminal')
+        .editor-code-toolbar-item
+          svg.icons.is-18(role='img')
+            title Code Block
+            use(xlink:href='#fa-code')
       .editor-code-toolbar-group
         .editor-code-toolbar-item
           svg.icons.is-18(role='img')
