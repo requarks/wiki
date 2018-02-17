@@ -6,6 +6,7 @@ import CONSTANTS from './constants'
 
 import Vue from 'vue'
 import VueClipboards from 'vue-clipboards'
+import VueSimpleBreakpoints from 'vue-simple-breakpoints'
 import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
 import { ApolloLink } from 'apollo-link'
@@ -78,6 +79,7 @@ window.graphQL = new ApolloClient({
 // ====================================
 
 Vue.use(VueClipboards)
+Vue.use(VueSimpleBreakpoints)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
 Vue.use(VeeValidate, {

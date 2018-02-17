@@ -1,20 +1,4 @@
-// =======================================
-// Promise polyfill
-// =======================================
-// Requirement: IE 11 and below
-
-if (!window.Promise) {
-  window.Promise = require('bluebird')
-}
-
-// =======================================
-// Array.from polyfill
-// =======================================
-// Requirement: IE 11 and below
-
-if (!Array.from) {
-  require('./polyfills/array-from')
-}
+require('babel-polyfill')
 
 // =======================================
 // Fetch polyfill

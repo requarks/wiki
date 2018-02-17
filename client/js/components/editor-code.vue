@@ -21,9 +21,13 @@
               title Heading
               use(xlink:href='#fa-heading')
           v-list
-            v-list-tile(v-for='(n, idx) in 6', @click='')
+            v-list-tile(v-for='(n, idx) in 6', @click='', :key='idx')
               v-list-tile-action: v-icon format_size
               v-list-tile-title Heading {{n}}
+        .editor-code-toolbar-item
+          svg.icons.is-18(role='img')
+            title Blockquote
+            use(xlink:href='#fa-quote-left')
       .editor-code-toolbar-group
         .editor-code-toolbar-item
           svg.icons.is-18(role='img')
@@ -58,14 +62,25 @@
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready="onCmReady")
       .editor-code-preview
         .editor-code-preview-title Preview
-        v-speed-dial(:hover='true', direction='left', transition='slide-y-reverse-transition', :fixed='true', :right='true', :bottom='true')
-          v-btn(color='green', fab, dark, slot='activator')
-            v-icon save
-            v-icon close
-          v-btn(color='red', fab, dark, small): v-icon not_interested
-          v-btn(color='orange', fab, dark, small): v-icon vpn_lock
-          v-btn(color='indigo', fab, dark, small): v-icon restore
-          v-btn(color='brown', fab, dark, small): v-icon archive
+      v-speed-dial(:open-on-hover='true', direction='top', transition='slide-y-reverse-transition', :fixed='true', :right='!isMobile', :left='isMobile', :bottom='true')
+        v-btn(color='blue', fab, dark, slot='activator')
+          v-icon add_circle
+          v-icon close
+        v-btn(color='teal', fab, dark): v-icon image
+        v-btn(color='pink', fab, dark): v-icon insert_drive_file
+        v-btn(color='red', fab, dark): v-icon play_circle_outline
+        v-btn(color='purple', fab, dark): v-icon multiline_chart
+        v-btn(color='indigo', fab, dark): v-icon functions
+      v-speed-dial(:open-on-hover='true', :direction='saveMenuDirection', transition='slide-x-reverse-transition', :fixed='true', :right='true', :top='!isMobile', :bottom='isMobile')
+        v-btn(color='blue', fab, dark, slot='activator')
+          v-icon more_horiz
+          v-icon close
+        v-btn(color='blue-grey', fab, dark): v-icon sort_by_alpha
+        v-btn(color='green', fab, dark): v-icon save
+        v-btn(color='red', fab, dark, small): v-icon not_interested
+        v-btn(color='orange', fab, dark, small): v-icon vpn_lock
+        v-btn(color='indigo', fab, dark, small): v-icon restore
+        v-btn(color='brown', fab, dark, small): v-icon archive
 
 </template>
 
@@ -125,6 +140,12 @@ export default {
   computed: {
     cm() {
       return this.$refs.cm.codemirror
+    },
+    isMobile() {
+      return this.$vuetify.breakpoint.smAndDown
+    },
+    saveMenuDirection() {
+      return this.isMobile ? 'top' : 'bottom'
     }
   },
   methods: {
@@ -170,6 +191,10 @@ export default {
       z-index: 2;
       text-transform: uppercase;
       font-size: .7rem;
+
+      @include until($tablet) {
+        display: none;
+      }
     }
   }
 
@@ -178,6 +203,10 @@ export default {
     background-color: mc('grey', '100');
     position: relative;
     padding: 30px 1rem 1rem 1rem;
+
+    @include until($tablet) {
+      display: none;
+    }
 
     &-title {
       background-color: mc('blue', '100');
@@ -203,6 +232,10 @@ export default {
     height: 50px;
     color: #FFF;
     display: flex;
+
+    @include until($tablet) {
+      justify-content: center;
+    }
 
     &-group {
       display: flex;
@@ -231,6 +264,10 @@ export default {
 
       &:hover {
         background-color: mc('blue', '600');
+      }
+
+      @include until($tablet) {
+        width: 35px;
       }
     }
 

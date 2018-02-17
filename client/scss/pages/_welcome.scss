@@ -38,6 +38,10 @@
     filter: grayscale(100%) brightness(160%);
     margin-bottom: 3rem;
     z-index: 2;
+
+    @include until($tablet) {
+      width: 300px;
+    }
   }
   h1 {
     margin-bottom: 1rem;
