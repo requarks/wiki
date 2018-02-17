@@ -68,6 +68,10 @@ html(data-logic='login')
             button.slack(onclick='window.location.assign("/login/slack")')
               i.icon-slack
               span= t('auth:providers.slack')
+          if appconfig.auth.oauth2 && appconfig.auth.oauth2.enabled
+            button.slack(onclick='window.location.assign("/login/oauth2")')
+              i.icon-box
+              span= t('auth:providers.oauth2')
     #copyright
       = t('footer.poweredby') + ' '
       a.icon(href='https://github.com/Requarks/wiki')
