@@ -296,6 +296,7 @@
 
 	background-color: mc('teal', '50');
 	padding: 0;
+  overflow-y:auto;
 	//padding: 7px 20px;
 
 	@each $color, $colorvalue in $material-colors {
