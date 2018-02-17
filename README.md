@@ -66,12 +66,13 @@ Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](h
 
 Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
 
-### 1.0.68 - Stable
+### 1.0.76 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 **Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
 
-- [x] Added generic OAuth2 authentication provider
+- [x] Fixed: Added missing OAuth2 login button
+- [x] Fixed: Overflow issue in modal sidebar
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/47)
