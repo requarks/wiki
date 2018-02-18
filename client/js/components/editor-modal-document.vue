@@ -9,8 +9,10 @@
     v-card.pa-3(tile)
       v-card-text
         v-form
-          v-text-field(label='Title', autofocus, loading='primary')
-          v-text-field(label='Short Description')
+          v-text-field(label='Title', counter='255')
+          v-text-field(label='Short Description', counter='255')
+          v-select(label='Tags', chips, tags, deletable-chips)
+          v-text-field(label='Path', prefix='/', append-icon='folder')
       v-card-actions
         v-btn(color='green', dark) Save
         v-btn Cancel

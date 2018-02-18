@@ -111,7 +111,7 @@ export default {
   },
   data() {
     return {
-      code: 'const a = 10',
+      code: '# Header 1\n\nSample **Text**\n\n## Header 2\nSample Text',
       cmOptions: {
         tabSize: 2,
         mode: 'text/markdown',
