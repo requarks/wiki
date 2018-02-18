@@ -1,6 +1,6 @@
 'use strict'
 
-require('vuetify/src/stylus/app.styl')
+require('vuetify/src/stylus/main.styl')
 require('./scss/app.scss')
 require('./js/compatibility.js')
 require('offline-plugin/runtime').install()

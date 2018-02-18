@@ -2,13 +2,7 @@
   "comments": true,
   "plugins": [
     "lodash",
-    "graphql-tag",
-    ["transform-imports", {
-      "vuetify": {
-        "transform": "vuetify/es5/components/${member}",
-        "preventFullImport": true
-      }
-    }]
+    "graphql-tag"
   ],
   "presets": [
     ["env"],

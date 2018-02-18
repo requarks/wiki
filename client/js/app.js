@@ -13,7 +13,7 @@ import { ApolloLink } from 'apollo-link'
 import { createApolloFetch } from 'apollo-fetch'
 import { BatchHttpLink } from 'apollo-link-batch-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
-import { Vuetify, VApp, VBtn, VIcon, VList, VMenu, VSpeedDial, VTooltip } from 'vuetify'
+import Vuetify from 'vuetify'
 import Hammer from 'hammerjs'
 import store from './store'
 
@@ -93,17 +93,7 @@ Vue.use(VeeValidate, {
     dirty: 'is-dirty' // control has been interacted with
   }
 })
-Vue.use(Vuetify, {
-  components: {
-    VApp,
-    VBtn,
-    VIcon,
-    VList,
-    VMenu,
-    VSpeedDial,
-    VTooltip
-  }
-})
+Vue.use(Vuetify)
 
 // ====================================
 // Register Vue Components

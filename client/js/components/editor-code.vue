@@ -75,13 +75,13 @@
         v-btn(color='blue', fab, dark, slot='activator')
           v-icon more_horiz
           v-icon close
-        v-btn(color='blue-grey', fab, dark): v-icon sort_by_alpha
+        v-btn(color='blue-grey', fab, dark, @click='documentPropsDialog = !documentPropsDialog'): v-icon sort_by_alpha
         v-btn(color='green', fab, dark): v-icon save
         v-btn(color='red', fab, dark, small): v-icon not_interested
         v-btn(color='orange', fab, dark, small): v-icon vpn_lock
         v-btn(color='indigo', fab, dark, small): v-icon restore
         v-btn(color='brown', fab, dark, small): v-icon archive
-
+    editorModalDocument(:is-opened='documentPropsDialog')
 </template>
 
 <script>
@@ -89,15 +89,12 @@ import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
 
 // Theme
-
 import 'codemirror/theme/base16-dark.css'
 
 // Language
-
 import 'codemirror/mode/markdown/markdown.js'
 
 // Addons
-
 import 'codemirror/addon/selection/active-line.js'
 import 'codemirror/addon/display/fullscreen.js'
 import 'codemirror/addon/display/fullscreen.css'
@@ -109,7 +106,8 @@ import 'codemirror/addon/search/match-highlighter.js'
 
 export default {
   components: {
-    codemirror
+    codemirror,
+    editorModalDocument: () => import(/* webpackChunkName: "editor" */ './editor-modal-document.vue')
   },
   data() {
     return {
@@ -134,7 +132,8 @@ export default {
             if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false)
           }
         }
-      }
+      },
+      documentPropsDialog: false
     }
   },
   computed: {
@@ -281,6 +280,25 @@ export default {
 
 .CodeMirror {
   height: auto;
+
+  .cm-header-1 {
+    font-size: 1.5rem;
+  }
+  .cm-header-2 {
+    font-size: 1.25rem;
+  }
+  .cm-header-3 {
+    font-size: 1.15rem;
+  }
+  .cm-header-4 {
+    font-size: 1.1rem;
+  }
+  .cm-header-5 {
+    font-size: 1.05rem;
+  }
+  .cm-header-6 {
+    font-size: 1.025rem;
+  }
 }
 
 .CodeMirror-focused .cm-matchhighlight {
