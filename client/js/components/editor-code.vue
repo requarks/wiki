@@ -1,5 +1,8 @@
 <template lang='pug'>
   .editor-code
+    v-toolbar(color='blue', flat, dense, dark)
+      v-icon(color='blue lighten-5') border_color
+      v-toolbar-title.white--text Sample Page
     .editor-code-toolbar
       .editor-code-toolbar-group
         .editor-code-toolbar-item
@@ -62,8 +65,8 @@
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready="onCmReady")
       .editor-code-preview
         .editor-code-preview-title Preview
-      v-speed-dial(:open-on-hover='true', direction='top', transition='slide-y-reverse-transition', :fixed='true', :right='!isMobile', :left='isMobile', :bottom='true')
-        v-btn(color='blue', fab, dark, slot='activator')
+      v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', :fixed='true', :right='!isMobile', :left='isMobile', :bottom='true')
+        v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
           v-icon add_circle
           v-icon close
         v-btn(color='teal', fab, dark): v-icon image
@@ -71,17 +74,16 @@
         v-btn(color='red', fab, dark): v-icon play_circle_outline
         v-btn(color='purple', fab, dark): v-icon multiline_chart
         v-btn(color='indigo', fab, dark): v-icon functions
-      v-speed-dial(:open-on-hover='true', :direction='saveMenuDirection', transition='slide-x-reverse-transition', :fixed='true', :right='true', :top='!isMobile', :bottom='isMobile')
-        v-btn(color='blue', fab, dark, slot='activator')
-          v-icon more_horiz
-          v-icon close
-        v-btn(color='blue-grey', fab, dark, @click='documentPropsDialog = !documentPropsDialog'): v-icon sort_by_alpha
+      v-speed-dial(v-model='fabMainMenu', :open-on-hover='true', :direction='saveMenuDirection', transition='slide-x-reverse-transition', :fixed='true', :right='true', :top='!isMobile', :bottom='isMobile')
+        v-btn(color='white', fab, light, v-model='fabMainMenu' slot='activator')
+          v-icon(color='blue darken-2') blur_on
+          v-icon(color='blue darken-2') close
+        v-btn(color='blue-grey', fab, dark, @click.native.stop='$parent.pagePropertiesDialog = true'): v-icon sort_by_alpha
         v-btn(color='green', fab, dark): v-icon save
         v-btn(color='red', fab, dark, small): v-icon not_interested
-        v-btn(color='orange', fab, dark, small): v-icon vpn_lock
+        v-btn(color='orange', fab, dark, small, @click.native.stop='$parent.pageAccessDialog = true'): v-icon vpn_lock
         v-btn(color='indigo', fab, dark, small): v-icon restore
         v-btn(color='brown', fab, dark, small): v-icon archive
-    editorModalDocument(:is-opened='documentPropsDialog')
 </template>
 
 <script>
@@ -106,11 +108,12 @@ import 'codemirror/addon/search/match-highlighter.js'
 
 export default {
   components: {
-    codemirror,
-    editorModalDocument: () => import(/* webpackChunkName: "editor" */ './editor-modal-document.vue')
+    codemirror
   },
   data() {
     return {
+      fabMainMenu: false,
+      fabInsertMenu: false,
       code: '# Header 1\n\nSample **Text**\n\n## Header 2\nSample Text',
       cmOptions: {
         tabSize: 2,
@@ -132,8 +135,7 @@ export default {
             if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false)
           }
         }
-      },
-      documentPropsDialog: false
+      }
     }
   },
   computed: {

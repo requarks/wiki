@@ -1,10 +1,10 @@
 <template lang='pug'>
-  v-bottom-sheet(v-model='isOpened', inset)
+  v-bottom-sheet(v-model='isOpened', inset, persistent)
     v-toolbar(color='blue-grey', flat)
       v-icon(color='white') sort_by_alpha
-      v-toolbar-title.white--text Document Properties
+      v-toolbar-title.white--text Page Properties
       v-spacer
-      v-btn(icon, dark)
+      v-btn(icon, dark, @click.native='$parent.pagePropertiesDialog = false')
         v-icon close
     v-card.pa-3(tile)
       v-card-text
@@ -15,7 +15,7 @@
           v-text-field(label='Path', prefix='/', append-icon='folder')
       v-card-actions
         v-btn(color='green', dark) Save
-        v-btn Cancel
+        v-btn(@click.native='$parent.pagePropertiesDialog = false') Cancel
 </template>
 
 <script>
