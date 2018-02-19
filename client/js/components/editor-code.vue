@@ -78,10 +78,10 @@
         v-btn(color='white', fab, light, v-model='fabMainMenu' slot='activator')
           v-icon(color='blue darken-2') blur_on
           v-icon(color='blue darken-2') close
-        v-btn(color='blue-grey', fab, dark, @click.native.stop='$parent.pagePropertiesDialog = true'): v-icon sort_by_alpha
-        v-btn(color='green', fab, dark): v-icon save
+        v-btn(color='blue-grey', fab, dark, @click.native.stop='$parent.openModal(`properties`)'): v-icon sort_by_alpha
+        v-btn(color='green', fab, dark, @click.native.stop='$parent.save()'): v-icon save
         v-btn(color='red', fab, dark, small): v-icon not_interested
-        v-btn(color='orange', fab, dark, small, @click.native.stop='$parent.pageAccessDialog = true'): v-icon vpn_lock
+        v-btn(color='orange', fab, dark, small, @click.native.stop='$parent.openModal(`access`)'): v-icon vpn_lock
         v-btn(color='indigo', fab, dark, small): v-icon restore
         v-btn(color='brown', fab, dark, small): v-icon archive
 </template>
@@ -242,7 +242,7 @@ export default {
       display: flex;
 
       + .editor-code-toolbar-group {
-        border-left: 1px solid rgba(mc('blue', '900'), .75);
+        border-left: 1px solid rgba(mc('blue', '600'), .5);
       }
     }
 

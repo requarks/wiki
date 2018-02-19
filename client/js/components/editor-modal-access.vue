@@ -1,10 +1,10 @@
 <template lang='pug'>
-  v-bottom-sheet(v-model='isOpened', inset, persistent)
+  v-bottom-sheet(v-model='isShown', inset, persistent)
     v-toolbar(color='orange', flat)
       v-icon(color='white') vpn_lock
       v-toolbar-title.white--text Page Access
       v-spacer
-      v-btn(icon, dark, @click.native='$parent.pageAccessDialog = false')
+      v-btn(icon, dark, @click.native='close')
         v-icon close
     v-card.pa-3(tile)
       v-form
@@ -28,24 +28,28 @@
                   v-btn(flat='', color='primary', @click='$refs.menuPublishEnd.save(date)') OK
       v-card-actions
         v-btn(color='green', dark) Save
-        v-btn(@click.native='$parent.pageAccessDialog = false') Cancel
+        v-btn(@click.native='close') Cancel
 </template>
 
 <script>
 export default {
-  props: {
-    isOpened: {
-      type: Boolean,
-      default: false
-    }
-  },
   data() {
     return {
+      isShown: false,
       isPublished: true,
       isPublishStartShown: false,
       isPublishEndShown: false,
       publishStartDate: '',
       publishEndDate: ''
+    }
+  },
+  mounted() {
+    this.isShown = true
+  },
+  methods: {
+    close() {
+      this.isShown = false
+      this.$parent.closeModal()
     }
   }
 }
