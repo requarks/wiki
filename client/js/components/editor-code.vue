@@ -1,7 +1,7 @@
 <template lang='pug'>
   .editor-code
     v-toolbar(color='blue', flat, dense, dark)
-      v-icon(color='blue lighten-5') border_color
+      v-icon(color='blue lighten-5') edit
       v-toolbar-title.white--text Sample Page
     .editor-code-toolbar
       .editor-code-toolbar-group
@@ -126,15 +126,7 @@ export default {
         highlightSelectionMatches: {
           annotateScrollbar: true
         },
-        viewportMargin: 50,
-        extraKeys: {
-          'F11'(cm) {
-            cm.setOption('fullScreen', !cm.getOption('fullScreen'))
-          },
-          'Esc'(cm) {
-            if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false)
-          }
-        }
+        viewportMargin: 50
       }
     }
   },
@@ -151,14 +143,19 @@ export default {
   },
   methods: {
     onCmReady(cm) {
-      cm.setSize(null, 'calc(100vh - 50px)')
-    },
-    onCmFocus(cm) {
-      console.log('the editor is focus!', cm)
-    },
-    onCmCodeChange(newCode) {
-      console.log('this is new code', newCode)
-      this.code = newCode
+      let self = this
+      cm.setSize(null, 'calc(100vh - 100px)')
+      cm.setOption('extraKeys', {
+        'F11'(cm) {
+          cm.setOption('fullScreen', !cm.getOption('fullScreen'))
+        },
+        'Esc'(cm) {
+          if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false)
+        },
+        'Ctrl-S'(cm) {
+          self.$parent.save()
+        }
+      })
     }
   }
 }
@@ -174,7 +171,7 @@ export default {
   &-editor {
     flex: 1 1 50%;
     display: block;
-    min-height: calc(100vh - 50px);
+    min-height: calc(100vh - 100px);
     position: relative;
 
     &-title {
