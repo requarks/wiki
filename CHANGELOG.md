@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.0.78] - 2018-02-23
+### Fixed
+- **Authentication**: Azure AD email getter
+- **Logging**: Missing raven dependency for sentry logging
+
 ## [v1.0.76] - 2018-02-17
 ### Fixed
 - **Authentication**: Added missing OAuth2 login button
@@ -264,6 +269,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
+[v1.0.78]: https://github.com/Requarks/wiki/releases/tag/v1.0.78
 [v1.0.76]: https://github.com/Requarks/wiki/releases/tag/v1.0.76
 [v1.0.68]: https://github.com/Requarks/wiki/releases/tag/v1.0.68
 [v1.0.66]: https://github.com/Requarks/wiki/releases/tag/v1.0.66
