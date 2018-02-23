@@ -48,6 +48,7 @@ var userSchema = Mongoose.Schema({
 
 userSchema.statics.processProfile = (profile) => {
   let primaryEmail = ''
+  let name = ''
   if (_.isArray(profile.emails)) {
     let e = _.find(profile.emails, ['primary', true])
     primaryEmail = (e) ? e.value : _.first(profile.emails).value
@@ -57,12 +58,24 @@ userSchema.statics.processProfile = (profile) => {
     primaryEmail = profile.mail
   } else if (profile.user && profile.user.email && profile.user.email.length > 5) {
     primaryEmail = profile.user.email
+  } else if (_.isString(profile.unique_name) && profile.unique_name.length > 5) {
+    primaryEmail = profile.unique_name
   } else {
     return Promise.reject(new Error(lang.t('auth:errors.invaliduseremail')))
   }
 
   profile.provider = _.lowerCase(profile.provider)
   primaryEmail = _.toLower(primaryEmail)
+
+  if (_.has(profile, 'displayName')) {
+    name = profile.displayName
+  } else if (_.has(profile, 'name')) {
+    name = profile.name
+  } else if (_.has(profile, 'cn')) {
+    name = profile.cn
+  } else {
+    name = _.split(primaryEmail, '@')[0]
+  }
 
   return db.User.findOneAndUpdate({
     email: primaryEmail,
@@ -71,7 +84,7 @@ userSchema.statics.processProfile = (profile) => {
     email: primaryEmail,
     provider: profile.provider,
     providerId: profile.id,
-    name: profile.displayName || profile.cn || _.split(primaryEmail, '@')[0]
+    name
   }, {
     new: true
   }).then((user) => {
@@ -82,7 +95,7 @@ userSchema.statics.processProfile = (profile) => {
         provider: profile.provider,
         providerId: profile.id,
         password: '',
-        name: profile.displayName || profile.name || profile.cn,
+        name,
         rights: [{
           role: 'read',
           path: '/',
