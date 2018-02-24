@@ -62,9 +62,10 @@
     .editor-code-main
       .editor-code-editor
         .editor-code-editor-title Editor
-        codemirror(ref='cm', v-model='code', :options='cmOptions', @ready="onCmReady")
+        codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
       .editor-code-preview
         .editor-code-preview-title Preview
+        .editor-code-preview-content(v-html='previewHTML')
       v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', :fixed='true', :right='!isMobile', :left='isMobile', :bottom='true')
         v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
           v-icon add_circle
@@ -87,6 +88,8 @@
 </template>
 
 <script>
+import _ from 'lodash'
+
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
 
@@ -105,6 +108,16 @@ import 'codemirror/addon/scroll/annotatescrollbar.js'
 import 'codemirror/addon/search/matchesonscrollbar.js'
 import 'codemirror/addon/search/searchcursor.js'
 import 'codemirror/addon/search/match-highlighter.js'
+
+// Markdown-it
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt({
+  html: true,
+  breaks: true,
+  linkify: true,
+  typography: true
+})
 
 export default {
   components: {
@@ -127,7 +140,8 @@ export default {
           annotateScrollbar: true
         },
         viewportMargin: 50
-      }
+      },
+      previewHTML: ''
     }
   },
   computed: {
@@ -156,7 +170,11 @@ export default {
           self.$parent.save()
         }
       })
-    }
+      this.onCmInput(this.code)
+    },
+    onCmInput: _.debounce(function (newContent) {
+      this.previewHTML = md.render(newContent)
+    }, 500)
   }
 }
 </script>

@@ -137,7 +137,7 @@ let bootstrap = () => {
   // Load Icons
   // ====================================
 
-  import(/* webpackChunkName: "icons" */ '../svg/icons.svg').then(icons => {
+  import(/* webpackChunkName: "icons" */ './svg/icons.svg').then(icons => {
     document.body.insertAdjacentHTML('beforeend', icons)
   })
 }

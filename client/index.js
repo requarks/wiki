@@ -2,6 +2,6 @@
 
 require('vuetify/src/stylus/main.styl')
 require('./scss/app.scss')
-require('./js/compatibility.js')
+require('./helpers/compatibility.js')
 require('offline-plugin/runtime').install()
-require('./js/app.js')
+require('./app.js')

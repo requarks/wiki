@@ -199,7 +199,7 @@ export default {
 <style lang="scss">
   .login {
     background-color: mc('blue', '800');
-    background-image: url('../../static/svg/login-bg-motif.svg');
+    background-image: url('../static/svg/login-bg-motif.svg');
     background-repeat: repeat;
     background-size: 200px;
     width: 100%;
@@ -221,7 +221,7 @@ export default {
     &::before {
       content: '';
       position: absolute;
-      background-image: url('../../static/svg/login-bg.svg');
+      background-image: url('../static/svg/login-bg.svg');
       background-position: center bottom;
       background-size: cover;
       top: 0;
