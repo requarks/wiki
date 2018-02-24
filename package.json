@@ -116,6 +116,7 @@
     "pm2": "2.9.3",
     "pug": "2.0.0-rc.4",
     "qr-image": "3.2.0",
+    "raven": "2.4.1",
     "read-chunk": "2.1.0",
     "remove-markdown": "0.2.2",
     "request": "2.83.0",
