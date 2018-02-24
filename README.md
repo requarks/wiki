@@ -42,12 +42,6 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 > Read the full [prerequisites](https://docs.requarks.io/wiki/prerequisites) article for full details.
 
-<h2 align="center">Cloud Install</h2>
-
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
-
-*Docker Cloud, Azure, IBM Bluemix and more coming soon!*
-
 <h2 align="center">Docker</h2>
 
 A docker Wiki.js image is available on Docker Hub:
@@ -55,6 +49,12 @@ A docker Wiki.js image is available on Docker Hub:
 [![Docker Image](https://raw.githubusercontent.com/Requarks/wiki-site/master/assets/images/docker-deploy.png)](https://hub.docker.com/r/requarks/wiki/)
 
 You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/blob/master/tools/Dockerfile)) or Docker Compose ([see example](https://github.com/Requarks/wiki/blob/master/tools/docker-compose.yml)) to run Wiki.js.
+
+<h2 align="center">Cloud Install</h2>
+
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
+
+*Docker Cloud, Azure, IBM Bluemix and more coming soon!*
 
 <h2 align="center">Demo</h2>
 
@@ -103,10 +103,8 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] New Login page
 - [x] Two-Factor Authentication (2FA)
 - [x] New Navigation Concept
-- [ ] Themes :rocket:
-- [ ] Modular editors :rocket:
-  - [ ] SimpleMDE (markdown)
-  - [ ] Monaco (code)
+- [ ] Modular editors
+  - [ ] Markdown editor with live preview :rocket:
 - [ ] Modular content parsers/renderers :rocket:
 - [ ] Modular search engines
   - [ ] PostgreSQL search engine
@@ -127,6 +125,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Preview changes directly from the editor, without saving
 - [ ] Diagrams as code (Mermaid module)
 - [ ] Insert Link modal in Markdown Editor
+- [ ] Themes
 - [ ] Additional storage engines
   - [ ] Dropbox
   - [ ] Google Drive
