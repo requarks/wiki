@@ -10,7 +10,7 @@ module.exports = {
   title: 'Sentry',
   props: ['key'],
   init (logger, conf) {
-    let SentryLogger = winston.transports.RollbarLogger = function (options) {
+    let SentryLogger = winston.transports.SentryLogger = function (options) {
       this.name = 'sentryLogger'
       this.level = options.level || 'warn'
       this.raven = require('raven')
