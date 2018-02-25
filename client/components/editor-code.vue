@@ -93,9 +93,6 @@ import _ from 'lodash'
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
 
-// Theme
-import 'codemirror/theme/base16-dark.css'
-
 // Language
 import 'codemirror/mode/markdown/markdown.js'
 
@@ -168,7 +165,7 @@ export default {
       cmOptions: {
         tabSize: 2,
         mode: 'text/markdown',
-        theme: 'base16-dark',
+        theme: 'wikijs-dark',
         lineNumbers: true,
         lineWrapping: true,
         line: true,
