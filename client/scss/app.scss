@@ -2,17 +2,18 @@
 
 @import 'base/icons';
 
-@import "libs/animate";
+@import "../libs/animate/animate";
 
 @import 'components/button';
+@import 'components/markdown-content';
 @import 'components/navigator';
 @import 'components/panel';
 @import 'components/setup';
 @import 'components/toggle';
 @import 'components/typography';
 
-@import 'libs/twemoji-awesome';
-@import 'node_modules/highlight.js/styles/atom-one-dark';
+@import '../libs/twemoji/twemoji-awesome';
+@import '../libs/prism/prism.css';
 @import 'node_modules/diff2html/dist/diff2html.min';
 
 @import 'pages/welcome';

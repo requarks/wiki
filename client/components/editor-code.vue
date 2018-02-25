@@ -65,7 +65,7 @@
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
       .editor-code-preview
         .editor-code-preview-title Preview
-        .editor-code-preview-content(v-html='previewHTML')
+        .editor-code-preview-content.markdown-content(ref='editorPreview', v-html='previewHTML')
       v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', :fixed='true', :right='!isMobile', :left='isMobile', :bottom='true')
         v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
           v-icon add_circle
@@ -111,12 +111,16 @@ import 'codemirror/addon/search/match-highlighter.js'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
+import Prism from '../libs/prism/prism.js'
 
 const md = new MarkdownIt({
   html: true,
   breaks: true,
   linkify: true,
-  typography: true
+  typography: true,
+  highlight(str, lang) {
+    return `<pre class="line-numbers"><code class="language-${lang}">${str}</code></pre>`
+  }
 })
 
 export default {
@@ -127,7 +131,7 @@ export default {
     return {
       fabMainMenu: false,
       fabInsertMenu: false,
-      code: '# Header 1\n\nSample **Text**\n\n## Header 2\nSample Text',
+      code: '# Header 1\n\nSample **Text**\nhttp://wiki.js.org\n\n## Header 2\nSample Text\n\n```javascript\nvar test = require("test");\n\n// some comment\nconst foo = bar(\'param\') + 1.234;\n```',
       cmOptions: {
         tabSize: 2,
         mode: 'text/markdown',
@@ -174,6 +178,9 @@ export default {
     },
     onCmInput: _.debounce(function (newContent) {
       this.previewHTML = md.render(newContent)
+      this.$nextTick(function() {
+        Prism.highlightAllUnder(this.$refs.editorPreview)
+      })
     }, 500)
   }
 }

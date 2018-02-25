@@ -67,7 +67,6 @@
     "fs-extra": "5.0.0",
     "graphql": "0.13.1",
     "graphql-tools": "2.21.0",
-    "highlight.js": "9.12.0",
     "i18next": "10.4.1",
     "i18next-express-middleware": "1.0.10",
     "i18next-localstorage-cache": "1.1.1",
