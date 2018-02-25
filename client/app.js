@@ -14,6 +14,7 @@ import { createApolloFetch } from 'apollo-fetch'
 import { BatchHttpLink } from 'apollo-link-batch-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import Vuetify from 'vuetify'
+import Velocity from 'velocity-animate'
 import Hammer from 'hammerjs'
 import store from './store'
 
@@ -94,6 +95,8 @@ Vue.use(VeeValidate, {
   }
 })
 Vue.use(Vuetify)
+
+Vue.prototype.Velocity = Velocity
 
 // ====================================
 // Register Vue Components

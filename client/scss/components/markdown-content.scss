@@ -8,7 +8,7 @@
 
   h1, h2, h3, h4, h5, h6 {
     color: mc('blue-grey', '700');
-    font-weight: 600;
+    font-weight: 500;
   }
 
   > * + h1, > * + h2, > * + h3, > * + h4 {
@@ -28,6 +28,7 @@
     font-size: 1.15rem;
     border-bottom: 1px dotted mc('blue-grey', '100');
     margin-bottom: .5rem;
+    color: mc('blue-grey', '500');
   }
   h4 {
     font-size: 1.1rem;
@@ -39,8 +40,30 @@
     font-size: 1.025rem;
   }
 
+  // --------------------------------------------
+  // Paragraphs
+  // --------------------------------------------
   p + p {
     margin-top: 1rem;
+  }
+
+  // --------------------------------------------
+  // Lists
+  // --------------------------------------------
+  ul, ol {
+    & + p {
+      margin-top: .5rem;
+    }
+  }
+
+  ul {
+    list-style-type: square;
+    list-style-position: inside;
+  }
+
+  ol {
+    list-style-type: decimal;
+    list-style-position: inside;
   }
 
   // --------------------------------------------
@@ -57,6 +80,7 @@
       box-shadow: initial;
       display: block;
       font-size: .85rem;
+      font-family: 'Source Code Pro', monospace;
 
       &:after, &:before {
         content: initial;

@@ -195,6 +195,7 @@
     "twemoji-awesome": "1.0.6",
     "uglifyjs-webpack-plugin": "1.2.0",
     "vee-validate": "2.0.4",
+    "velocity-animate": "1.5.1",
     "vue": "2.5.13",
     "vue-clipboards": "1.2.1",
     "vue-codemirror": "4.0.3",

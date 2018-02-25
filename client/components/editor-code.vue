@@ -141,6 +141,21 @@ const md = new MarkdownIt({
   .use(mdMark)
   .use(mdImsize)
 
+// Inject line numbers for preview scroll sync
+let linesMap = []
+function injectLineNumbers (tokens, idx, options, env, slf) {
+  let line
+  if (tokens[idx].map && tokens[idx].level === 0) {
+    line = tokens[idx].map[0]
+    tokens[idx].attrJoin('class', 'line')
+    tokens[idx].attrSet('data-line', String(line))
+    linesMap.push(line)
+  }
+  return slf.renderToken(tokens, idx, options, env, slf)
+}
+md.renderer.rules.paragraph_open = injectLineNumbers
+md.renderer.rules.heading_open = injectLineNumbers
+
 export default {
   components: {
     codemirror
@@ -192,13 +207,34 @@ export default {
           self.$parent.save()
         }
       })
+      cm.on('cursorActivity', this.scrollSync)
       this.onCmInput(this.code)
     },
     onCmInput: _.debounce(function (newContent) {
+      linesMap = []
       this.previewHTML = md.render(newContent)
-      this.$nextTick(function() {
+      this.$nextTick(() => {
         Prism.highlightAllUnder(this.$refs.editorPreview)
+        this.scrollSync(this.cm)
       })
+    }, 500),
+    /**
+     * Update scroll sync
+     */
+    scrollSync: _.debounce(function (cm) {
+      if (cm.somethingSelected()) { return }
+      let currentLine = cm.getCursor().line
+      if (currentLine < 3) {
+        this.Velocity(this.$refs.editorPreview, 'stop', true)
+        this.Velocity(this.$refs.editorPreview.firstChild, 'scroll', { offset: '-50', duration: 1000, container: this.$refs.editorPreview })
+      } else {
+        let closestLine = _.findLast(linesMap, n => n <= currentLine)
+        let destElm = this.$refs.editorPreview.querySelector(`[data-line='${closestLine}']`)
+        if (destElm) {
+          this.Velocity(this.$refs.editorPreview, 'stop', true)
+          this.Velocity(destElm, 'scroll', { offset: '-100', duration: 1000, container: this.$refs.editorPreview })
+        }
+      }
     }, 500)
   }
 }
@@ -212,9 +248,10 @@ export default {
   }
 
   &-editor {
+    background-color: darken(mc('grey', '900'), 4.5%);
     flex: 1 1 50%;
     display: block;
-    min-height: calc(100vh - 100px);
+    height: calc(100vh - 100px);
     position: relative;
 
     &-title {
@@ -229,7 +266,7 @@ export default {
       position: absolute;
       top: 0;
       right: 0;
-      z-index: 2;
+      z-index: 7;
       text-transform: uppercase;
       font-size: .7rem;
 
@@ -243,14 +280,28 @@ export default {
     flex: 1 1 50%;
     background-color: mc('grey', '100');
     position: relative;
-    padding: 30px 1rem 1rem 1rem;
+    height: calc(100vh - 100px);
+    overflow: hidden;
 
     @include until($tablet) {
       display: none;
     }
 
+    &-content {
+      height: calc(100vh - 100px);
+      overflow-y: scroll;
+      padding: 30px 1rem 1rem 1rem;
+      width: calc(100% + 1rem + 17px)
+      // -ms-overflow-style: none;
+
+      // &::-webkit-scrollbar {
+      //   width: 0px;
+      //   background: transparent;
+      // }
+    }
+
     &-title {
-      background-color: mc('blue', '100');
+      background-color: rgba(mc('blue', '100'), .75);
       border-bottom-right-radius: 5px;
       display: inline-flex;
       height: 30px;
@@ -317,6 +368,11 @@ export default {
         color: #FFF;
       }
     }
+  }
+
+  // Fix FAB revealing under codemirror
+  .speed-dial--fixed {
+    z-index: 5;
   }
 }
 
