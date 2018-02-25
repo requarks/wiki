@@ -367,44 +367,132 @@ export default {
     }
   }
 
+  // ==========================================
   // Fix FAB revealing under codemirror
+  // ==========================================
+
   .speed-dial--fixed {
     z-index: 5;
   }
-}
 
-.CodeMirror {
-  height: auto;
+  // ==========================================
+  // CODE MIRROR
+  // ==========================================
 
-  .cm-header-1 {
-    font-size: 1.5rem;
-  }
-  .cm-header-2 {
-    font-size: 1.25rem;
-  }
-  .cm-header-3 {
-    font-size: 1.15rem;
-  }
-  .cm-header-4 {
-    font-size: 1.1rem;
-  }
-  .cm-header-5 {
-    font-size: 1.05rem;
-  }
-  .cm-header-6 {
-    font-size: 1.025rem;
-  }
-}
+  .CodeMirror {
+    height: auto;
 
-.CodeMirror-focused .cm-matchhighlight {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
-  background-position: bottom;
-  background-repeat: repeat-x;
-}
-.cm-matchhighlight {
-  background-color: mc('grey', '800');
-}
-.CodeMirror-selection-highlight-scrollbar {
-  background-color: mc('green', '600');
+    .cm-header-1 {
+      font-size: 1.5rem;
+    }
+    .cm-header-2 {
+      font-size: 1.25rem;
+    }
+    .cm-header-3 {
+      font-size: 1.15rem;
+    }
+    .cm-header-4 {
+      font-size: 1.1rem;
+    }
+    .cm-header-5 {
+      font-size: 1.05rem;
+    }
+    .cm-header-6 {
+      font-size: 1.025rem;
+    }
+  }
+
+  .CodeMirror-focused .cm-matchhighlight {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
+    background-position: bottom;
+    background-repeat: repeat-x;
+  }
+  .cm-matchhighlight {
+    background-color: mc('grey', '800');
+  }
+  .CodeMirror-selection-highlight-scrollbar {
+    background-color: mc('green', '600');
+  }
+
+  .cm-s-wikijs-dark.CodeMirror {
+    background: darken(mc('grey','900'), 3%);
+    color: #e0e0e0;
+  }
+  .cm-s-wikijs-dark div.CodeMirror-selected {
+    background: mc('blue','800');
+  }
+  .cm-s-wikijs-dark .cm-matchhighlight {
+    background: mc('blue','800');
+  }
+  .cm-s-wikijs-dark .CodeMirror-line::selection, .cm-s-wikijs-dark .CodeMirror-line > span::selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::selection {
+    background: mc('red', '500');
+  }
+  .cm-s-wikijs-dark .CodeMirror-line::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::-moz-selection {
+    background: mc('red', '500');
+  }
+  .cm-s-wikijs-dark .CodeMirror-gutters {
+    background: darken(mc('grey','900'), 6%);
+    border-right: 1px solid mc('grey','900');
+  }
+  .cm-s-wikijs-dark .CodeMirror-guttermarker {
+    color: #ac4142;
+  }
+  .cm-s-wikijs-dark .CodeMirror-guttermarker-subtle {
+    color: #505050;
+  }
+  .cm-s-wikijs-dark .CodeMirror-linenumber {
+    color: mc('grey','800');
+  }
+  .cm-s-wikijs-dark .CodeMirror-cursor {
+    border-left: 1px solid #b0b0b0;
+  }
+  .cm-s-wikijs-dark span.cm-comment {
+    color: mc('orange','800');
+  }
+  .cm-s-wikijs-dark span.cm-atom {
+    color: #aa759f;
+  }
+  .cm-s-wikijs-dark span.cm-number {
+    color: #aa759f;
+  }
+  .cm-s-wikijs-dark span.cm-property, .cm-s-wikijs-dark span.cm-attribute {
+    color: #90a959;
+  }
+  .cm-s-wikijs-dark span.cm-keyword {
+    color: #ac4142;
+  }
+  .cm-s-wikijs-dark span.cm-string {
+    color: #f4bf75;
+  }
+  .cm-s-wikijs-dark span.cm-variable {
+    color: #90a959;
+  }
+  .cm-s-wikijs-dark span.cm-variable-2 {
+    color: #6a9fb5;
+  }
+  .cm-s-wikijs-dark span.cm-def {
+    color: #d28445;
+  }
+  .cm-s-wikijs-dark span.cm-bracket {
+    color: #e0e0e0;
+  }
+  .cm-s-wikijs-dark span.cm-tag {
+    color: #ac4142;
+  }
+  .cm-s-wikijs-dark span.cm-link {
+    color: #aa759f;
+  }
+  .cm-s-wikijs-dark span.cm-error {
+    background: #ac4142;
+    color: #b0b0b0;
+  }
+  .cm-s-wikijs-dark .CodeMirror-activeline-background {
+    background: mc('grey','900');
+  }
+  .cm-s-wikijs-dark .CodeMirror-matchingbracket {
+    text-decoration: underline;
+    color: white !important;
+  }
+
 }
 </style>
