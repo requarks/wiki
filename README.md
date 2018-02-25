@@ -75,7 +75,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fixed: Azure AD email getter
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/47)
+![Progress](http://progressed.io/bar/55)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -103,8 +103,17 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] New Login page
 - [x] Two-Factor Authentication (2FA)
 - [x] New Navigation Concept
-- [ ] Modular editors
-  - [ ] Markdown editor with live preview :rocket:
+- [x] Modular editors
+  - [x] Markdown editor
+    - [x] Core Editor
+    - [x] Live Preview
+    - [ ] Toolbar :rocket:
+  - [ ] Operations
+    - [ ] Save :rocket:
+  - [ ] Dialogs
+    - [ ] Properties :rocket:
+    - [ ] Access :rocket:
+    - [ ] Image + File Manager
 - [ ] Modular content parsers/renderers :rocket:
 - [ ] Modular search engines
   - [ ] PostgreSQL search engine
