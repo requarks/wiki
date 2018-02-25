@@ -1,13 +1,14 @@
 .markdown-content {
   font-size: 1rem;
-  color: mc('blue-grey', '900');
+  color: mc('blue-grey', '800');
 
   // --------------------------------------------
   // Headers
   // --------------------------------------------
 
   h1, h2, h3, h4, h5, h6 {
-    color: mc('blue-grey', '800');
+    color: mc('blue-grey', '700');
+    font-weight: 600;
   }
 
   > * + h1, > * + h2, > * + h3, > * + h4 {
@@ -15,16 +16,17 @@
   }
   h1 {
     font-size: 1.5rem;
-    border-bottom: 1px solid mc('blue-grey', '100');
+    border-bottom: 2px solid mc('blue-grey', '100');
     margin-bottom: 1rem;
   }
   h2 {
     font-size: 1.25rem;
-    border-bottom: 1px dotted mc('blue-grey', '100');
+    border-bottom: 1px solid mc('blue-grey', '100');
     margin-bottom: .75rem;
   }
   h3 {
     font-size: 1.15rem;
+    border-bottom: 1px dotted mc('blue-grey', '100');
     margin-bottom: .5rem;
   }
   h4 {
@@ -56,6 +58,15 @@
         content: initial;
         letter-spacing: initial;
       }
+    }
+  }
+
+  .task-list-item {
+    display: flex;
+    align-items: center;
+
+    &-checkbox {
+      margin-right: .5rem;
     }
   }
 }
