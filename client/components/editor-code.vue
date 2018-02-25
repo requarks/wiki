@@ -113,6 +113,14 @@ import 'codemirror/addon/search/match-highlighter.js'
 import MarkdownIt from 'markdown-it'
 import mdEmoji from 'markdown-it-emoji'
 import mdTaskLists from 'markdown-it-task-lists'
+import mdExpandTabs from 'markdown-it-expand-tabs'
+import mdAbbr from 'markdown-it-abbr'
+import mdSup from 'markdown-it-sup'
+import mdSub from 'markdown-it-sub'
+import mdMark from 'markdown-it-mark'
+import mdImsize from 'markdown-it-imsize'
+
+// Prism (Syntax Highlighting)
 import Prism from '../libs/prism/prism.js'
 
 const md = new MarkdownIt({
@@ -126,6 +134,12 @@ const md = new MarkdownIt({
 })
   .use(mdEmoji)
   .use(mdTaskLists)
+  .use(mdExpandTabs)
+  .use(mdAbbr)
+  .use(mdSup)
+  .use(mdSub)
+  .use(mdMark)
+  .use(mdImsize)
 
 export default {
   components: {
