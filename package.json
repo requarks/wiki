@@ -201,6 +201,7 @@
     "vue-codemirror": "4.0.3",
     "vue-hot-reload-api": "2.2.4",
     "vue-loader": "14.1.1",
+    "vue-router": "3.0.1",
     "vue-simple-breakpoints": "1.0.3",
     "vue-template-compiler": "2.5.13",
     "vuetify": "1.0.1",

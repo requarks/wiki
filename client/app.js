@@ -5,6 +5,7 @@
 import CONSTANTS from './constants'
 
 import Vue from 'vue'
+import VueRouter from 'vue-router'
 import VueClipboards from 'vue-clipboards'
 import VueSimpleBreakpoints from 'vue-simple-breakpoints'
 import VeeValidate from 'vee-validate'
@@ -79,6 +80,7 @@ window.graphQL = new ApolloClient({
 // Initialize Vue Modules
 // ====================================
 
+Vue.use(VueRouter)
 Vue.use(VueClipboards)
 Vue.use(VueSimpleBreakpoints)
 Vue.use(localization.VueI18Next)
@@ -102,6 +104,7 @@ Vue.prototype.Velocity = Velocity
 // Register Vue Components
 // ====================================
 
+Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
 Vue.component('editor', () => import(/* webpackChunkName: "editor" */ './components/editor.vue'))
 Vue.component('login', () => import(/* webpackMode: "eager" */ './components/login.vue'))
 Vue.component('navigator', () => import(/* webpackMode: "eager" */ './components/navigator.vue'))

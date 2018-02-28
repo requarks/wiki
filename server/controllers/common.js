@@ -9,6 +9,13 @@ router.get('/e/*', (req, res, next) => {
 })
 
 /**
+ * Administration
+ */
+router.get(['/a', '/a/*'], (req, res, next) => {
+  res.render('main/admin')
+})
+
+/**
  * View document
  */
 router.get('/*', (req, res, next) => {

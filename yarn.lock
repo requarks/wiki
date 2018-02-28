@@ -10412,6 +10412,10 @@ vue-loader@14.1.1:
     vue-style-loader "^4.0.1"
     vue-template-es2015-compiler "^1.6.0"
 
+vue-router@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.0.1.tgz#d9b05ad9c7420ba0f626d6500d693e60092cc1e9"
+
 vue-simple-breakpoints@1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/vue-simple-breakpoints/-/vue-simple-breakpoints-1.0.3.tgz#0ae5b77af4cdbd948b514d2f485686174dc5ff5d"

@@ -20,28 +20,17 @@ html {
   }
 }
 
-body {
-	background-color: lighten(mc('blue-grey','50'), 5%);
-  height: 100%;
-}
+// body {
+// 	background-color: lighten(mc('blue-grey','50'), 5%);
+//   height: 100%;
+// }
 
-main {
-  background-color: mc('blue','500');
-  background-image: linear-gradient(to bottom, mc('blue', '700') 0%, mc('blue', '500') 100%);
-  padding: 50px;
-  min-height: 100vh;
-}
-
-a {
-	color: mc('indigo', '600');
-	text-decoration: none;
-
-	&:hover {
-		color: mc('indigo', '700');
-		text-decoration: underline;
-	}
-}
-
+// main {
+//   background-color: mc('blue','500');
+//   background-image: linear-gradient(to bottom, mc('blue', '700') 0%, mc('blue', '500') 100%);
+//   padding: 50px;
+//   min-height: 100vh;
+// }
 // Container
 
 .container {

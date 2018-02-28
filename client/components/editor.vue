@@ -16,8 +16,8 @@ import _ from 'lodash'
 export default {
   components: {
     editorCode: () => import(/* webpackChunkName: "editor-code" */ './editor-code.vue'),
-    editorModalAccess: () => import(/* webpackChunkName: "editor-common" */ './editor-modal-access.vue'),
-    editorModalProperties: () => import(/* webpackChunkName: "editor-common" */ './editor-modal-properties.vue')
+    editorModalAccess: () => import(/* webpackChunkName: "editor" */ './editor-modal-access.vue'),
+    editorModalProperties: () => import(/* webpackChunkName: "editor" */ './editor-modal-properties.vue')
   },
   data() {
     return {

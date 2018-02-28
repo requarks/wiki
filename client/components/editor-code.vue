@@ -5,7 +5,7 @@
       v-toolbar-title.white--text Sample Page
     .editor-code-toolbar
       .editor-code-toolbar-group
-        .editor-code-toolbar-item
+        .editor-code-toolbar-item(@click='toggleAround("**", "**")')
           svg.icons.is-18(role='img')
             title Bold
             use(xlink:href='#fa-bold')
@@ -90,6 +90,11 @@
 <script>
 import _ from 'lodash'
 
+// ========================================
+// IMPORTS
+// ========================================
+
+// Code Mirror
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
 
@@ -120,6 +125,14 @@ import mdImsize from 'markdown-it-imsize'
 // Prism (Syntax Highlighting)
 import Prism from '../libs/prism/prism.js'
 
+// ========================================
+// INIT
+// ========================================
+
+// Platform detection
+const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
+
+// Markdown Instance
 const md = new MarkdownIt({
   html: true,
   breaks: true,
@@ -138,6 +151,10 @@ const md = new MarkdownIt({
   .use(mdMark)
   .use(mdImsize)
 
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
 // Inject line numbers for preview scroll sync
 let linesMap = []
 function injectLineNumbers (tokens, idx, options, env, slf) {
@@ -152,6 +169,10 @@ function injectLineNumbers (tokens, idx, options, env, slf) {
 }
 md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
+
+// ========================================
+// Vue Component
+// ========================================
 
 export default {
   components: {
@@ -192,19 +213,24 @@ export default {
   methods: {
     onCmReady(cm) {
       let self = this
-      cm.setSize(null, 'calc(100vh - 100px)')
-      cm.setOption('extraKeys', {
-        'F11'(cm) {
+      const keyBindings = {
+        'F11' (cm) {
           cm.setOption('fullScreen', !cm.getOption('fullScreen'))
         },
-        'Esc'(cm) {
+        'Esc' (cm) {
           if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false)
-        },
-        'Ctrl-S'(cm) {
-          self.$parent.save()
         }
+      }
+      _.set(keyBindings, `${CtrlKey}-S`, cm => {
+        self.$parent.save()
       })
-      cm.on('cursorActivity', this.scrollSync)
+
+      cm.setSize(null, 'calc(100vh - 100px)')
+      cm.setOption('extraKeys', keyBindings)
+      cm.on('cursorActivity', cm => {
+        this.toolbarSync(cm)
+        this.scrollSync(cm)
+      })
       this.onCmInput(this.code)
     },
     onCmInput: _.debounce(function (newContent) {
@@ -215,6 +241,17 @@ export default {
         this.scrollSync(this.cm)
       })
     }, 500),
+    /**
+     * Update toolbar state
+     */
+    toolbarSync(cm) {
+      const pos = cm.getCursor('start')
+      const token = cm.getTokenAt(pos)
+
+      if (!token.type) { return }
+
+      console.info(token)
+    },
     /**
      * Update scroll sync
      */
@@ -232,7 +269,10 @@ export default {
           this.Velocity(destElm, 'scroll', { offset: '-100', duration: 1000, container: this.$refs.editorPreview })
         }
       }
-    }, 500)
+    }, 500),
+    toggleAround (before, after) {
+
+    }
   }
 }
 </script>
