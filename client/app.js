@@ -107,6 +107,7 @@ Vue.prototype.Velocity = Velocity
 Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
 Vue.component('editor', () => import(/* webpackChunkName: "editor" */ './components/editor.vue'))
 Vue.component('login', () => import(/* webpackMode: "eager" */ './components/login.vue'))
+Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/nav-header.vue'))
 Vue.component('navigator', () => import(/* webpackMode: "eager" */ './components/navigator.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
 Vue.component('toggle', () => import(/* webpackMode: "eager" */ './components/toggle.vue'))

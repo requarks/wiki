@@ -1,29 +1,6 @@
 <template lang='pug'>
   v-app.admin
-    v-toolbar(color='black', dark, app, clipped-left, fixed, flat)
-      v-toolbar-side-icon(@click.native='')
-      v-toolbar-title
-        span.subheading Wiki.js
-      v-spacer
-      v-btn(icon)
-        v-icon(color='grey') search
-      v-btn(icon, @click.native='darkTheme = !darkTheme')
-        v-icon(color='grey') settings
-      v-menu(offset-y, min-width='300')
-        v-btn(icon, slot='activator')
-          v-icon(color='grey') account_circle
-        v-list.py-0
-          v-list-tile.py-3(avatar)
-            v-list-tile-avatar
-              v-avatar.red(:size='40'): span.white--text.subheading JD
-            v-list-tile-content
-              v-list-tile-title John Doe
-              v-list-tile-sub-title john.doe@example.com
-          v-divider.my-0
-          v-list-tile(@click='')
-            v-list-tile-action: v-icon(color='red') exit_to_app
-            v-list-tile-title Logout
-
+    nav-header
     v-navigation-drawer.pb-0(v-model='adminDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense)
         v-list-tile.pt-2(to='/dashboard')
@@ -65,6 +42,9 @@
         v-list-tile(to='/logging')
           v-list-tile-action: v-icon graphic_eq
           v-list-tile-title Logging
+        v-list-tile(to='/search')
+          v-list-tile-action: v-icon search
+          v-list-tile-title Search Engine
         v-list-tile(to='/storage')
           v-list-tile-action: v-icon storage
           v-list-tile-title Storage
@@ -81,9 +61,10 @@
           v-list-tile-title Developer Tools
 
     v-content
-      router-view
+      transition(name='admin-router')
+        router-view
 
-    v-footer.py-2.justify-center(app, fixed, color='grey lighten-3', inset, height='auto')
+    v-footer.py-2.justify-center(app, absolute, color='grey lighten-3', inset, height='auto')
       .caption.grey--text.text--darken-1 Powered by Wiki.js
 </template>
 
@@ -96,7 +77,11 @@ const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', component: () => import(/* webpackChunkName: "admin" */ './admin-dashboard.vue') },
-    { path: '/general', component: () => import(/* webpackChunkName: "admin" */ './admin-general.vue') }
+    { path: '/general', component: () => import(/* webpackChunkName: "admin" */ './admin-general.vue') },
+    { path: '/locale', component: () => import(/* webpackChunkName: "admin" */ './admin-locale.vue') },
+    { path: '/theme', component: () => import(/* webpackChunkName: "admin" */ './admin-theme.vue') },
+    { path: '/users', component: () => import(/* webpackChunkName: "admin" */ './admin-users.vue') },
+    { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin-system.vue') }
   ]
 })
 
@@ -111,5 +96,18 @@ export default {
 </script>
 
 <style lang='scss'>
+
+.admin-router {
+  &-enter-active, &-leave-active {
+    transition: opacity .25s ease;
+    opacity: 1;
+  }
+  &-enter-active {
+    transition-delay: .25s;
+  }
+  &-enter, &-leave-to {
+    opacity: 0;
+  }
+}
 
 </style>

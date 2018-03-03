@@ -59,13 +59,17 @@
           svg.icons.is-18(role='img')
             title Horizontal Bar
             use(xlink:href='#fa-minus')
+
     .editor-code-main
       .editor-code-editor
-        .editor-code-editor-title Editor
+        .editor-code-editor-title(v-if='previewShown', @click='previewShown = false') Editor
+        .editor-code-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) search
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
-      .editor-code-preview
-        .editor-code-preview-title Preview
-        .editor-code-preview-content.markdown-content(ref='editorPreview', v-html='previewHTML')
+      transition(name='editor-code-preview')
+        .editor-code-preview(v-if='previewShown')
+          .editor-code-preview-title(@click='previewShown = false') Preview
+          .editor-code-preview-content.markdown-content(ref='editorPreview', v-html='previewHTML')
+
       v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', :fixed='true', :right='!isMobile', :left='isMobile', :bottom='true')
         v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
           v-icon add_circle
@@ -196,6 +200,7 @@ export default {
         },
         viewportMargin: 50
       },
+      previewShown: true,
       previewHTML: ''
     }
   },
@@ -256,7 +261,7 @@ export default {
      * Update scroll sync
      */
     scrollSync: _.debounce(function (cm) {
-      if (cm.somethingSelected()) { return }
+      if (!this.previewShown || cm.somethingSelected()) { return }
       let currentLine = cm.getCursor().line
       if (currentLine < 3) {
         this.Velocity(this.$refs.editorPreview, 'stop', true)
@@ -306,6 +311,7 @@ export default {
       z-index: 7;
       text-transform: uppercase;
       font-size: .7rem;
+      cursor: pointer;
 
       @include until($tablet) {
         display: none;
@@ -322,6 +328,19 @@ export default {
 
     @include until($tablet) {
       display: none;
+    }
+
+    &-enter-active, &-leave-active {
+      transition: max-width .5s ease;
+      max-width: 50vw;
+
+      .editor-code-preview-content {
+        width: 50vw;
+        overflow:hidden;
+      }
+    }
+    &-enter, &-leave-to {
+      max-width: 0;
     }
 
     &-content {
@@ -352,6 +371,7 @@ export default {
       z-index: 2;
       text-transform: uppercase;
       font-size: .7rem;
+      cursor: pointer;
     }
   }
 
@@ -412,7 +432,7 @@ export default {
   // ==========================================
 
   .speed-dial--fixed {
-    z-index: 5;
+    z-index: 8;
   }
 
   // ==========================================
