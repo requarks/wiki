@@ -103,6 +103,10 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] New Login page
 - [x] Two-Factor Authentication (2FA)
 - [x] New Navigation Concept
+- [x] New Admin Area
+  - [x] UI
+  - [ ] Manager Users :rocket:
+  - [ ] System Info :rocket:
 - [x] Modular editors
   - [x] Markdown editor
     - [x] Core Editor
@@ -111,12 +115,15 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Operations
     - [ ] Save :rocket:
   - [ ] Dialogs
-    - [ ] Properties :rocket:
-    - [ ] Access :rocket:
+    - [ ] Properties
+    - [ ] Access
     - [ ] Image + File Manager
 - [ ] Modular content parsers/renderers :rocket:
 - [ ] Modular search engines
   - [ ] PostgreSQL search engine
+  - [ ] Algolia
+  - [ ] Elasticsearch
+  - [ ] Solr
 - [ ] Modular storage engines :rocket:
   - [ ] Git
   - [ ] Local Disk
