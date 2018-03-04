@@ -2,7 +2,7 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.blue--text.text--darken-2 General
+        .headline.primary--text General
         .subheading.grey--text Main settings of your wiki
         v-form.pt-3
           v-layout(row wrap)

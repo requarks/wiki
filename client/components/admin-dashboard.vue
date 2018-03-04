@@ -2,7 +2,7 @@
   v-container(fluid, fill-height)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.blue--text.text--darken-2 Dashboard
+        .headline.primary--text Dashboard
         .subheading.grey--text Coming soon
 </template>
 

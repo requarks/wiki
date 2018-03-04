@@ -2,7 +2,7 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.blue--text.text--darken-2 Locale
+        .headline.primary--text Locale
         .subheading.grey--text Set localization options for your wiki
         v-form.pt-3
           v-layout(row wrap)
@@ -21,7 +21,7 @@
                         v-list-tile-title(v-html='data.item.text')
                         v-list-tile-sub-title(v-html='data.item.original')
                   v-divider
-                  v-switch(v-model='rtlEnabled', label='RTL Text Display', color='blue darken-2', persistent-hint, hint='For Right-to-Left languages, e.g. Arabic')
+                  v-switch(v-model='rtlEnabled', label='RTL Text Display', color='primary', persistent-hint, hint='For Right-to-Left languages, e.g. Arabic')
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='blue', dark, dense, flat)

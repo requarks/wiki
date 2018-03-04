@@ -41,6 +41,12 @@ html {
 	padding: 20px;
 }
 
+.datatable {
+  th, td {
+    vertical-align: middle;
+  }
+}
+
 // Visibility
 
 .is-hidden {

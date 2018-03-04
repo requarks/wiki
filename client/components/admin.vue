@@ -81,6 +81,8 @@ const router = new VueRouter({
     { path: '/locale', component: () => import(/* webpackChunkName: "admin" */ './admin-locale.vue') },
     { path: '/theme', component: () => import(/* webpackChunkName: "admin" */ './admin-theme.vue') },
     { path: '/users', component: () => import(/* webpackChunkName: "admin" */ './admin-users.vue') },
+    { path: '/auth', component: () => import(/* webpackChunkName: "admin" */ './admin-auth.vue') },
+    { path: '/search', component: () => import(/* webpackChunkName: "admin" */ './admin-search.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin-system.vue') }
   ]
 })

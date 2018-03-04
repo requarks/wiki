@@ -2,7 +2,7 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row, wrap)
       v-flex(xs12)
-        .headline.blue--text.text--darken-2 System Info
+        .headline.primary--text System Info
         .subheading.grey--text Information about your system
         v-layout.mt-3(row wrap)
           v-flex(lg6 xs12)
@@ -68,7 +68,7 @@
                     v-avatar.light-green(size='40')
                       icon-node-js(fillColor='#FFFFFF')
                   v-list-tile-content
-                    v-list-tile-title v8.9.4
+                    v-list-tile-title 8.9.4
 
                 v-divider
 

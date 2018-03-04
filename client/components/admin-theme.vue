@@ -2,7 +2,7 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.blue--text.text--darken-2 Theme
+        .headline.primary--text Theme
         .subheading.grey--text Modify the look &amp; feel of your wiki
         v-form.pt-3
           v-layout(row wrap)
@@ -21,7 +21,7 @@
                         v-list-tile-title(v-html='data.item.text')
                         v-list-tile-sub-title(v-html='data.item.author')
                   v-divider
-                  v-switch(v-model='darkMode', label='Dark Mode', color='blue darken-2', persistent-hint, hint='Not recommended for accessibility')
+                  v-switch(v-model='darkMode', label='Dark Mode', color='primary', persistent-hint, hint='Not recommended for accessibility')
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='blue', dark, dense, flat)
