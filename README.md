@@ -82,8 +82,9 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - All operations and queries will be made via GraphQL API.
   - New fully responsive layout, with better customization capabilities.
   - Full localization support, especially for non-latin languages.
+  - Modular approach to auth, editors, logging, search and storage.
   
-**Release Date**: Q1 2018
+**Release Date**: Q2 2018
 
 **Breaking Changes**:
   - MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
@@ -138,17 +139,17 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 **2.1 Milestone**
 - [ ] Comments / Discussion per document
 - [ ] Profile page per user
-- [ ] Preview changes directly from the editor, without saving
 - [ ] Diagrams as code (Mermaid module)
-- [ ] Insert Link modal in Markdown Editor
 - [ ] Themes
 - [ ] Additional storage engines
   - [ ] Dropbox
   - [ ] Google Drive
   - [ ] Amazon S3
   - [ ] Azure Blob Storage
+  - [ ] DigitalOcean Spaces
   - [ ] Onedrive
   - [ ] Owncloud
+  - [ ] SCP (SSH)
 - [ ] Modular Editor: TinyMCE (wysiwyg)
 
 **TBD Milestone**
