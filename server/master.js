@@ -11,7 +11,7 @@ const session = require('express-session')
 const SessionRedisStore = require('connect-redis')(session)
 const graphqlApollo = require('apollo-server-express')
 const graphqlSchema = require('./graph')
-const oauth2orize = require('oauth2orize')
+// const oauth2orize = require('oauth2orize')
 
 /* global WIKI */
 
@@ -61,7 +61,7 @@ module.exports = async () => {
   // OAuth2 Server
   // ----------------------------------------
 
-  const OAuth2Server = oauth2orize.createServer()
+  // const OAuth2Server = oauth2orize.createServer()
 
   // ----------------------------------------
   // Passport Authentication
