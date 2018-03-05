@@ -1,35 +1,35 @@
 const Bull = require('bull')
 const Promise = require('bluebird')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   init() {
-    wiki.data.queues.forEach(queueName => {
+    WIKI.data.queues.forEach(queueName => {
       this[queueName] = new Bull(queueName, {
-        prefix: `q-${wiki.config.ha.nodeuid}`,
-        redis: wiki.config.redis
+        prefix: `q-${WIKI.config.ha.nodeuid}`,
+        redis: WIKI.config.redis
       })
     })
     return this
   },
   clean() {
-    return Promise.each(wiki.data.queues, queueName => {
+    return Promise.each(WIKI.data.queues, queueName => {
       return new Promise((resolve, reject) => {
-        let keyStream = wiki.redis.scanStream({
-          match: `q-${wiki.config.ha.nodeuid}:${queueName}:*`
+        let keyStream = WIKI.redis.scanStream({
+          match: `q-${WIKI.config.ha.nodeuid}:${queueName}:*`
         })
         keyStream.on('data', resultKeys => {
           if (resultKeys.length > 0) {
-            wiki.redis.del(resultKeys)
+            WIKI.redis.del(resultKeys)
           }
         })
         keyStream.on('end', resolve)
       })
     }).then(() => {
-      wiki.logger.info('Purging old queue jobs: [ OK ]')
+      WIKI.logger.info('Purging old queue jobs: [ OK ]')
     }).return(true).catch(err => {
-      wiki.logger.error(err)
+      WIKI.logger.error(err)
     })
   }
 }

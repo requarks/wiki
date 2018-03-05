@@ -1,21 +1,21 @@
 
-/* global wiki */
+/* global WIKI */
 
 const gql = require('graphql')
 
 module.exports = {
   Query: {
     groups(obj, args, context, info) {
-      return wiki.db.Group.findAll({ where: args })
+      return WIKI.db.Group.findAll({ where: args })
     }
   },
   Mutation: {
     assignUserToGroup(obj, args) {
-      return wiki.db.Group.findById(args.groupId).then(grp => {
+      return WIKI.db.Group.findById(args.groupId).then(grp => {
         if (!grp) {
           throw new gql.GraphQLError('Invalid Group ID')
         }
-        return wiki.db.User.findById(args.userId).then(usr => {
+        return WIKI.db.User.findById(args.userId).then(usr => {
           if (!usr) {
             throw new gql.GraphQLError('Invalid User ID')
           }
@@ -24,10 +24,10 @@ module.exports = {
       })
     },
     createGroup(obj, args) {
-      return wiki.db.Group.create(args)
+      return WIKI.db.Group.create(args)
     },
     deleteGroup(obj, args) {
-      return wiki.db.Group.destroy({
+      return WIKI.db.Group.destroy({
         where: {
           id: args.id
         },
@@ -35,11 +35,11 @@ module.exports = {
       })
     },
     removeUserFromGroup(obj, args) {
-      return wiki.db.Group.findById(args.groupId).then(grp => {
+      return WIKI.db.Group.findById(args.groupId).then(grp => {
         if (!grp) {
           throw new gql.GraphQLError('Invalid Group ID')
         }
-        return wiki.db.User.findById(args.userId).then(usr => {
+        return WIKI.db.User.findById(args.userId).then(usr => {
           if (!usr) {
             throw new gql.GraphQLError('Invalid User ID')
           }
@@ -48,7 +48,7 @@ module.exports = {
       })
     },
     renameGroup(obj, args) {
-      return wiki.db.Group.update({
+      return WIKI.db.Group.update({
         name: args.name
       }, {
         where: { id: args.id }

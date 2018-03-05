@@ -6,7 +6,7 @@
 const path = require('path')
 const cluster = require('cluster')
 
-let wiki = {
+let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
   IS_MASTER: cluster.isMaster,
   ROOTPATH: process.cwd(),
@@ -15,41 +15,41 @@ let wiki = {
   configSvc: require('./core/config'),
   kernel: require('./core/kernel')
 }
-global.wiki = wiki
+global.WIKI = WIKI
 
-// if (wiki.IS_DEBUG) {
+// if (WIKI.IS_DEBUG) {
 //   require('@glimpse/glimpse').init()
 // }
 
-wiki.configSvc.init()
+WIKI.configSvc.init()
 
 // ----------------------------------------
 // Init Logger
 // ----------------------------------------
 
-wiki.logger = require('./core/logger').init()
+WIKI.logger = require('./core/logger').init()
 
 // ----------------------------------------
 // Init Telemetry
 // ----------------------------------------
 
-wiki.telemetry = require('./core/telemetry').init()
+WIKI.telemetry = require('./core/telemetry').init()
 
 process.on('unhandledRejection', (err) => {
-  wiki.telemetry.sendError(err)
+  WIKI.telemetry.sendError(err)
 })
 process.on('uncaughtException', (err) => {
-  wiki.telemetry.sendError(err)
+  WIKI.telemetry.sendError(err)
 })
 
 // ----------------------------------------
 // Init DB
 // ----------------------------------------
 
-wiki.db = require('./core/db').init()
+WIKI.db = require('./core/db').init()
 
 // ----------------------------------------
 // Start Kernel
 // ----------------------------------------
 
-wiki.kernel.init()
+WIKI.kernel.init()

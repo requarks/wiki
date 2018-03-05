@@ -1,18 +1,18 @@
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   Query: {
     folders(obj, args, context, info) {
-      return wiki.db.Folder.findAll({ where: args })
+      return WIKI.db.Folder.findAll({ where: args })
     }
   },
   Mutation: {
     createFolder(obj, args) {
-      return wiki.db.Folder.create(args)
+      return WIKI.db.Folder.create(args)
     },
     deleteGroup(obj, args) {
-      return wiki.db.Folder.destroy({
+      return WIKI.db.Folder.destroy({
         where: {
           id: args.id
         },
@@ -20,7 +20,7 @@ module.exports = {
       })
     },
     renameFolder(obj, args) {
-      return wiki.db.Folder.update({
+      return WIKI.db.Folder.update({
         name: args.name
       }, {
         where: { id: args.id }

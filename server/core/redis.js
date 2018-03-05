@@ -1,22 +1,22 @@
 const Redis = require('ioredis')
 const { isPlainObject } = require('lodash')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   init() {
-    if (isPlainObject(wiki.config.redis)) {
-      let red = new Redis(wiki.config.redis)
+    if (isPlainObject(WIKI.config.redis)) {
+      let red = new Redis(WIKI.config.redis)
       red.on('ready', () => {
-        wiki.logger.info('Redis connection: [ OK ]')
+        WIKI.logger.info('Redis connection: [ OK ]')
       })
       red.on('error', () => {
-        wiki.logger.error('Failed to connect to Redis instance!')
+        WIKI.logger.error('Failed to connect to Redis instance!')
         process.exit(1)
       })
       return red
     } else {
-      wiki.logger.error('Invalid Redis configuration!')
+      WIKI.logger.error('Invalid Redis configuration!')
       process.exit(1)
     }
   }

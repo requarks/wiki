@@ -1,6 +1,6 @@
 const winston = require('winston')
 
-/* global wiki */
+/* global WIKI */
 
 // ------------------------------------
 // Console
@@ -12,7 +12,7 @@ module.exports = {
   props: [],
   init (logger, conf) {
     logger.add(winston.transports.Console, {
-      level: wiki.config.logLevel,
+      level: WIKI.config.logLevel,
       prettyPrint: true,
       colorize: true,
       silent: false,

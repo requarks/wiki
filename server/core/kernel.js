@@ -2,19 +2,19 @@ const _ = require('lodash')
 const cluster = require('cluster')
 const Promise = require('bluebird')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   numWorkers: 1,
   workers: [],
   init() {
     if (cluster.isMaster) {
-      wiki.logger.info('=======================================')
-      wiki.logger.info('= Wiki.js =============================')
-      wiki.logger.info('=======================================')
+      WIKI.logger.info('=======================================')
+      WIKI.logger.info('= WIKI.js =============================')
+      WIKI.logger.info('=======================================')
 
-      wiki.redis = require('./redis').init()
-      wiki.queue = require('./queue').init()
+      WIKI.redis = require('./redis').init()
+      WIKI.queue = require('./queue').init()
 
       this.setWorkerLimit()
       this.bootMaster()
@@ -27,9 +27,9 @@ module.exports = {
    */
   preBootMaster() {
     return Promise.mapSeries([
-      () => { return wiki.db.onReady },
-      () => { return wiki.configSvc.loadFromDb() },
-      () => { return wiki.queue.clean() }
+      () => { return WIKI.db.onReady },
+      () => { return WIKI.configSvc.loadFromDb() },
+      () => { return WIKI.queue.clean() }
     ], fn => { return fn() })
   },
   /**
@@ -37,15 +37,15 @@ module.exports = {
    */
   bootMaster() {
     this.preBootMaster().then(sequenceResults => {
-      if (_.every(sequenceResults, rs => rs === true) && wiki.config.configMode !== 'setup') {
+      if (_.every(sequenceResults, rs => rs === true) && WIKI.config.configMode !== 'setup') {
         this.postBootMaster()
       } else {
-        wiki.logger.info('Starting configuration manager...')
+        WIKI.logger.info('Starting configuration manager...')
         require('../setup')()
       }
       return true
     }).catch(err => {
-      wiki.logger.error(err)
+      WIKI.logger.error(err)
       process.exit(1)
     })
   },
@@ -59,13 +59,13 @@ module.exports = {
       this.spawnWorker()
     })
 
-    wiki.queue.uplClearTemp.add({}, {
+    WIKI.queue.uplClearTemp.add({}, {
       repeat: { cron: '*/15 * * * *' }
     })
 
     cluster.on('exit', (worker, code, signal) => {
       if (!global.DEV) {
-        wiki.logger.info(`Background Worker #${worker.id} was terminated.`)
+        WIKI.logger.info(`Background Worker #${worker.id} was terminated.`)
       }
     })
   },
@@ -73,7 +73,7 @@ module.exports = {
    * Boot Worker Process
    */
   bootWorker() {
-    wiki.logger.info(`Background Worker #${cluster.worker.id} is initializing...`)
+    WIKI.logger.info(`Background Worker #${cluster.worker.id} is initializing...`)
     require('../worker')
   },
   /**
@@ -87,7 +87,7 @@ module.exports = {
    */
   setWorkerLimit() {
     const numCPUs = require('os').cpus().length
-    this.numWorkers = (wiki.config.workers > 0) ? wiki.config.workers : numCPUs
+    this.numWorkers = (WIKI.config.workers > 0) ? WIKI.config.workers : numCPUs
     if (this.numWorkers > numCPUs) {
       this.numWorkers = numCPUs
     }

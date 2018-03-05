@@ -1,22 +1,22 @@
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   Query: {
     comments(obj, args, context, info) {
-      return wiki.db.Comment.findAll({ where: args })
+      return WIKI.db.Comment.findAll({ where: args })
     }
   },
   Mutation: {
     createComment(obj, args) {
-      return wiki.db.Comment.create({
+      return WIKI.db.Comment.create({
         content: args.content,
         author: args.userId,
         document: args.documentId
       })
     },
     deleteComment(obj, args) {
-      return wiki.db.Comment.destroy({
+      return WIKI.db.Comment.destroy({
         where: {
           id: args.id
         },
@@ -24,7 +24,7 @@ module.exports = {
       })
     },
     modifyComment(obj, args) {
-      return wiki.db.Comment.update({
+      return WIKI.db.Comment.update({
         content: args.content
       }, {
         where: { id: args.id }

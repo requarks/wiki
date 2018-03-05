@@ -28,7 +28,9 @@
               v-btn(color='primary')
                 v-icon(left) chevron_right
                 | Set Providers
-
+              v-btn(color='black', dark)
+                v-icon(left) layers_clear
+                | Flush Sessions
 </template>
 
 <script>

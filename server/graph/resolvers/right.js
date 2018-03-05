@@ -1,21 +1,21 @@
 
-/* global wiki */
+/* global WIKI */
 
 const gql = require('graphql')
 
 module.exports = {
   Query: {
     rights(obj, args, context, info) {
-      return wiki.db.Right.findAll({ where: args })
+      return WIKI.db.Right.findAll({ where: args })
     }
   },
   Mutation: {
     addRightToGroup(obj, args) {
-      return wiki.db.Group.findById(args.groupId).then(grp => {
+      return WIKI.db.Group.findById(args.groupId).then(grp => {
         if (!grp) {
           throw new gql.GraphQLError('Invalid Group ID')
         }
-        return wiki.db.Right.create({
+        return WIKI.db.Right.create({
           path: args.path,
           role: args.role,
           exact: args.exact,
@@ -25,7 +25,7 @@ module.exports = {
       })
     },
     removeRightFromGroup(obj, args) {
-      return wiki.db.Right.destroy({
+      return WIKI.db.Right.destroy({
         where: {
           id: args.rightId
         },
@@ -33,7 +33,7 @@ module.exports = {
       })
     },
     modifyRight(obj, args) {
-      return wiki.db.Right.update({
+      return WIKI.db.Right.update({
         path: args.path,
         role: args.role,
         exact: args.exact,

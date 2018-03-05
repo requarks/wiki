@@ -1,10 +1,10 @@
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   Query: {
     translations (obj, args, context, info) {
-      return wiki.lang.getByNamespace(args.locale, args.namespace)
+      return WIKI.lang.getByNamespace(args.locale, args.namespace)
     }
   },
   Mutation: {},

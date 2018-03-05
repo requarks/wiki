@@ -4,27 +4,27 @@ const bugsnag = require('bugsnag')
 const path = require('path')
 const uuid = require('uuid/v4')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   cid: '',
   enabled: false,
   init() {
     this.cid = uuid()
-    bugsnag.register(wiki.data.telemetry.BUGSNAG_ID, {
-      appVersion: wiki.version,
+    bugsnag.register(WIKI.data.telemetry.BUGSNAG_ID, {
+      appVersion: WIKI.version,
       autoNotify: false,
       hostname: this.cid,
       notifyReleaseStages: ['production'],
-      packageJSON: path.join(wiki.ROOTPATH, 'package.json'),
-      projectRoot: wiki.ROOTPATH,
+      packageJSON: path.join(WIKI.ROOTPATH, 'package.json'),
+      projectRoot: WIKI.ROOTPATH,
       useSSL: true
     })
     bugsnag.onBeforeNotify((notification, originalError) => {
       if (!this.enabled) { return false }
     })
 
-    if (_.get(wiki.config, 'logging.telemetry', false) === true) {
+    if (_.get(WIKI.config, 'logging.telemetry', false) === true) {
       this.enabled = true
     }
 
@@ -37,13 +37,13 @@ module.exports = {
     if (!this.enabled) { return false }
     axios({
       method: 'post',
-      url: wiki.data.telemetry.GA_REMOTE,
+      url: WIKI.data.telemetry.GA_REMOTE,
       headers: {
         'Content-type': 'application/x-www-form-urlencoded'
       },
       params: {
         v: 1, // API version
-        tid: wiki.data.telemetry.GA_ID, // Tracking ID
+        tid: WIKI.data.telemetry.GA_ID, // Tracking ID
         aip: 1, // Anonymize IP
         ds: 'server', // Data source
         cid: this.cid, // Client ID
@@ -54,10 +54,10 @@ module.exports = {
       }
     }).then(resp => {
       if (resp.status !== 200) {
-        wiki.logger.warn('Unable to send analytics telemetry request.')
+        WIKI.logger.warn('Unable to send analytics telemetry request.')
       }
     }, err => {
-      wiki.logger.warn('Unable to send analytics telemetry request.')
+      WIKI.logger.warn('Unable to send analytics telemetry request.')
     })
   }
 }

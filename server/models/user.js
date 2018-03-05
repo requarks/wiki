@@ -1,4 +1,4 @@
-/* global wiki */
+/* global WIKI */
 
 const Promise = require('bluebird')
 const bcrypt = require('bcryptjs-then')
@@ -62,13 +62,13 @@ module.exports = (sequelize, DataTypes) => {
     if (await bcrypt.compare(rawPwd, this.password) === true) {
       return true
     } else {
-      throw new wiki.Error.AuthLoginFailed()
+      throw new WIKI.Error.AuthLoginFailed()
     }
   }
 
   userSchema.prototype.enableTFA = async function () {
     let tfaInfo = tfa.generateSecret({
-      name: wiki.config.site.title
+      name: WIKI.config.site.title
     })
     this.tfaIsActive = true
     this.tfaSecret = tfaInfo.secret
@@ -87,21 +87,21 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   userSchema.login = async (opts, context) => {
-    if (_.has(wiki.config.auth.strategies, opts.provider)) {
+    if (_.has(WIKI.config.auth.strategies, opts.provider)) {
       _.set(context.req, 'body.email', opts.username)
       _.set(context.req, 'body.password', opts.password)
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        wiki.auth.passport.authenticate(opts.provider, async (err, user, info) => {
+        WIKI.auth.passport.authenticate(opts.provider, async (err, user, info) => {
           if (err) { return reject(err) }
-          if (!user) { return reject(new wiki.Error.AuthLoginFailed()) }
+          if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
           // Is 2FA required?
           if (user.tfaIsActive) {
             try {
               let loginToken = await securityHelper.generateToken(32)
-              await wiki.redis.set(`tfa:${loginToken}`, user.id, 'EX', 600)
+              await WIKI.redis.set(`tfa:${loginToken}`, user.id, 'EX', 600)
               return resolve({
                 succeeded: true,
                 message: 'Login Successful. Awaiting 2FA security code.',
@@ -109,8 +109,8 @@ module.exports = (sequelize, DataTypes) => {
                 tfaLoginToken: loginToken
               })
             } catch (err) {
-              wiki.logger.warn(err)
-              return reject(new wiki.Error.AuthGenericError())
+              WIKI.logger.warn(err)
+              return reject(new WIKI.Error.AuthGenericError())
             }
           } else {
             // No 2FA, log in user
@@ -126,17 +126,17 @@ module.exports = (sequelize, DataTypes) => {
         })(context.req, context.res, () => {})
       })
     } else {
-      throw new wiki.Error.AuthProviderInvalid()
+      throw new WIKI.Error.AuthProviderInvalid()
     }
   }
 
   userSchema.loginTFA = async (opts, context) => {
     if (opts.securityCode.length === 6 && opts.loginToken.length === 64) {
-      let result = await wiki.redis.get(`tfa:${opts.loginToken}`)
+      let result = await WIKI.redis.get(`tfa:${opts.loginToken}`)
       if (result) {
         let userId = _.toSafeInteger(result)
         if (userId && userId > 0) {
-          let user = await wiki.db.User.findById(userId)
+          let user = await WIKI.db.User.findById(userId)
           if (user && user.verifyTFA(opts.securityCode)) {
             return Promise.fromCallback(clb => {
               context.req.logIn(user, clb)
@@ -144,16 +144,16 @@ module.exports = (sequelize, DataTypes) => {
               succeeded: true,
               message: 'Login Successful'
             }).catch(err => {
-              wiki.logger.warn(err)
-              throw new wiki.Error.AuthGenericError()
+              WIKI.logger.warn(err)
+              throw new WIKI.Error.AuthGenericError()
             })
           } else {
-            throw new wiki.Error.AuthTFAFailed()
+            throw new WIKI.Error.AuthTFAFailed()
           }
         }
       }
     }
-    throw new wiki.Error.AuthTFAInvalid()
+    throw new WIKI.Error.AuthTFAInvalid()
   }
 
   userSchema.processProfile = (profile) => {
@@ -168,13 +168,13 @@ module.exports = (sequelize, DataTypes) => {
     } else if (profile.user && profile.user.email && profile.user.email.length > 5) {
       primaryEmail = profile.user.email
     } else {
-      return Promise.reject(new Error(wiki.lang.t('auth:errors.invaliduseremail')))
+      return Promise.reject(new Error(WIKI.lang.t('auth:errors.invaliduseremail')))
     }
 
     profile.provider = _.lowerCase(profile.provider)
     primaryEmail = _.toLower(primaryEmail)
 
-    return wiki.db.User.findOneAndUpdate({
+    return WIKI.db.User.findOneAndUpdate({
       email: primaryEmail,
       provider: profile.provider
     }, {
@@ -186,7 +186,7 @@ module.exports = (sequelize, DataTypes) => {
       new: true
     }).then((user) => {
       // Handle unregistered accounts
-      if (!user && profile.provider !== 'local' && (wiki.config.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
+      if (!user && profile.provider !== 'local' && (WIKI.config.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
         let nUsr = {
           email: primaryEmail,
           provider: profile.provider,
@@ -200,9 +200,9 @@ module.exports = (sequelize, DataTypes) => {
             deny: false
           }]
         }
-        return wiki.db.User.create(nUsr)
+        return WIKI.db.User.create(nUsr)
       }
-      return user || Promise.reject(new Error(wiki.lang.t('auth:errors:notyetauthorized')))
+      return user || Promise.reject(new Error(WIKI.lang.t('auth:errors:notyetauthorized')))
     })
   }
 

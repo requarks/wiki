@@ -4,7 +4,7 @@ const fs = require('fs')
 const path = require('path')
 const yaml = require('js-yaml')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   /**
@@ -12,9 +12,9 @@ module.exports = {
    */
   init() {
     let confPaths = {
-      config: path.join(wiki.ROOTPATH, 'config.yml'),
-      data: path.join(wiki.SERVERPATH, 'app/data.yml'),
-      dataRegex: path.join(wiki.SERVERPATH, 'app/regex.js')
+      config: path.join(WIKI.ROOTPATH, 'config.yml'),
+      data: path.join(WIKI.SERVERPATH, 'app/data.yml'),
+      dataRegex: path.join(WIKI.SERVERPATH, 'app/regex.js')
     }
 
     let appconfig = {}
@@ -43,9 +43,9 @@ module.exports = {
 
     appconfig.public = (appconfig.public === true || _.toLower(appconfig.public) === 'true')
 
-    wiki.config = appconfig
-    wiki.data = appdata
-    wiki.version = require(path.join(wiki.ROOTPATH, 'package.json')).version
+    WIKI.config = appconfig
+    WIKI.data = appdata
+    WIKI.version = require(path.join(WIKI.ROOTPATH, 'package.json')).version
   },
 
   /**
@@ -56,10 +56,10 @@ module.exports = {
    */
   async loadFromDb(subsets) {
     if (!_.isArray(subsets) || subsets.length === 0) {
-      subsets = wiki.data.configNamespaces
+      subsets = WIKI.data.configNamespaces
     }
 
-    let results = await wiki.db.Setting.findAll({
+    let results = await WIKI.db.Setting.findAll({
       attributes: ['key', 'config'],
       where: {
         key: {
@@ -69,11 +69,11 @@ module.exports = {
     })
     if (_.isArray(results) && results.length === subsets.length) {
       results.forEach(result => {
-        wiki.config[result.key] = result.config
+        WIKI.config[result.key] = result.config
       })
       return true
     } else {
-      wiki.logger.warn('DB Configuration is empty or incomplete.')
+      WIKI.logger.warn('DB Configuration is empty or incomplete.')
       return false
     }
   },
@@ -85,18 +85,18 @@ module.exports = {
    */
   async saveToDb(subsets) {
     if (!_.isArray(subsets) || subsets.length === 0) {
-      subsets = wiki.data.configNamespaces
+      subsets = WIKI.data.configNamespaces
     }
 
     try {
       for (let set of subsets) {
-        await wiki.db.Setting.upsert({
+        await WIKI.db.Setting.upsert({
           key: set,
-          config: _.get(wiki.config, set, {})
+          config: _.get(WIKI.config, set, {})
         })
       }
     } catch (err) {
-      wiki.logger.error(`Failed to save configuration to DB: ${err.message}`)
+      WIKI.logger.error(`Failed to save configuration to DB: ${err.message}`)
       return false
     }
 

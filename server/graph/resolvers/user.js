@@ -1,18 +1,18 @@
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   Query: {
     users(obj, args, context, info) {
-      return wiki.db.User.findAll({ where: args })
+      return WIKI.db.User.findAll({ where: args })
     }
   },
   Mutation: {
     createUser(obj, args) {
-      return wiki.db.User.create(args)
+      return WIKI.db.User.create(args)
     },
     deleteUser(obj, args) {
-      return wiki.db.User.destroy({
+      return WIKI.db.User.destroy({
         where: {
           id: args.id
         },
@@ -20,7 +20,7 @@ module.exports = {
       })
     },
     login(obj, args, context) {
-      return wiki.db.User.login(args, context).catch(err => {
+      return WIKI.db.User.login(args, context).catch(err => {
         return {
           succeeded: false,
           message: err.message
@@ -28,7 +28,7 @@ module.exports = {
       })
     },
     loginTFA(obj, args, context) {
-      return wiki.db.User.loginTFA(args, context).catch(err => {
+      return WIKI.db.User.loginTFA(args, context).catch(err => {
         return {
           succeeded: false,
           message: err.message
@@ -36,7 +36,7 @@ module.exports = {
       })
     },
     modifyUser(obj, args) {
-      return wiki.db.User.update({
+      return WIKI.db.User.update({
         email: args.email,
         name: args.name,
         provider: args.provider,

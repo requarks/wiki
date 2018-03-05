@@ -1,18 +1,18 @@
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   Query: {
     documents(obj, args, context, info) {
-      return wiki.db.Document.findAll({ where: args })
+      return WIKI.db.Document.findAll({ where: args })
     }
   },
   Mutation: {
     createDocument(obj, args) {
-      return wiki.db.Document.create(args)
+      return WIKI.db.Document.create(args)
     },
     deleteDocument(obj, args) {
-      return wiki.db.Document.destroy({
+      return WIKI.db.Document.destroy({
         where: {
           id: args.id
         },
@@ -20,7 +20,7 @@ module.exports = {
       })
     },
     modifyDocument(obj, args) {
-      return wiki.db.Document.update({
+      return WIKI.db.Document.update({
         title: args.title,
         subtitle: args.subtitle
       }, {
@@ -28,7 +28,7 @@ module.exports = {
       })
     },
     moveDocument(obj, args) {
-      return wiki.db.Document.update({
+      return WIKI.db.Document.update({
         path: args.path
       }, {
         where: { id: args.id }

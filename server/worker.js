@@ -1,38 +1,38 @@
 const Promise = require('bluebird')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = Promise.join(
-  wiki.db.onReady,
-  wiki.configSvc.loadFromDb(['features', 'git', 'logging', 'site', 'uploads'])
+  WIKI.db.onReady,
+  WIKI.configSvc.loadFromDb(['features', 'git', 'logging', 'site', 'uploads'])
 ).then(() => {
   const path = require('path')
 
-  wiki.REPOPATH = path.resolve(wiki.ROOTPATH, wiki.config.paths.repo)
-  wiki.DATAPATH = path.resolve(wiki.ROOTPATH, wiki.config.paths.data)
-  wiki.UPLTEMPPATH = path.join(wiki.DATAPATH, 'temp-upload')
+  WIKI.REPOPATH = path.resolve(WIKI.ROOTPATH, WIKI.config.paths.repo)
+  WIKI.DATAPATH = path.resolve(WIKI.ROOTPATH, WIKI.config.paths.data)
+  WIKI.UPLTEMPPATH = path.join(WIKI.DATAPATH, 'temp-upload')
 
   // ----------------------------------------
   // Load global modules
   // ----------------------------------------
 
-  wiki.lang = require('i18next')
+  WIKI.lang = require('i18next')
 
   // ----------------------------------------
   // Localization Engine
   // ----------------------------------------
 
   const i18nBackend = require('i18next-node-fs-backend')
-  wiki.lang.use(i18nBackend).init({
+  WIKI.lang.use(i18nBackend).init({
     load: 'languageOnly',
     ns: ['common', 'admin', 'auth', 'errors', 'git'],
     defaultNS: 'common',
     saveMissing: false,
-    preload: [wiki.config.lang],
-    lng: wiki.config.lang,
+    preload: [WIKI.config.lang],
+    lng: WIKI.config.lang,
     fallbackLng: 'en',
     backend: {
-      loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.yml')
+      loadPath: path.join(WIKI.SERVERPATH, 'locales/{{lng}}/{{ns}}.yml')
     }
   })
 
@@ -43,12 +43,12 @@ module.exports = Promise.join(
   const Bull = require('bull')
   const autoload = require('auto-load')
 
-  let queues = autoload(path.join(wiki.SERVERPATH, 'queues'))
+  let queues = autoload(path.join(WIKI.SERVERPATH, 'queues'))
 
   for (let queueName in queues) {
     new Bull(queueName, {
-      prefix: `q-${wiki.config.ha.nodeuid}`,
-      redis: wiki.config.redis
+      prefix: `q-${WIKI.config.ha.nodeuid}`,
+      redis: WIKI.config.redis
     }).process(queues[queueName])
   }
 

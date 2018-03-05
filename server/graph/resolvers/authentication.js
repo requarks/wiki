@@ -2,14 +2,20 @@ const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   Query: {
-    authentication(obj, args, context, info) {
+    async authentication() { return {} }
+  },
+  Mutation: {
+    async authentication() { return {} }
+  },
+  AuthenticationQuery: {
+    providers(obj, args, context, info) {
       switch (args.mode) {
         case 'active':
-          let strategies = _.chain(wiki.auth.strategies).map(str => {
+          let strategies = _.chain(WIKI.auth.strategies).map(str => {
             return {
               key: str.key,
               title: str.title,
@@ -26,10 +32,9 @@ module.exports = {
       }
     }
   },
-  Mutation: {},
   AuthenticationProvider: {
     icon (ap, args) {
-      return fs.readFileAsync(path.join(wiki.ROOTPATH, `assets/svg/auth-icon-${ap.key}.svg`), 'utf8').catch(err => {
+      return fs.readFileAsync(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${ap.key}.svg`), 'utf8').catch(err => {
         if (err.code === 'ENOENT') {
           return null
         }

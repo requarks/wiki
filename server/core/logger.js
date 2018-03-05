@@ -3,7 +3,7 @@ const cluster = require('cluster')
 const fs = require('fs-extra')
 const path = require('path')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   loggers: {},
@@ -11,7 +11,7 @@ module.exports = {
     let winston = require('winston')
 
     let logger = new (winston.Logger)({
-      level: wiki.config.logLevel,
+      level: WIKI.config.logLevel,
       transports: []
     })
 
@@ -20,10 +20,10 @@ module.exports = {
       return '[' + processName + '] ' + msg
     })
 
-    _.forOwn(_.omitBy(wiki.config.logging.loggers, s => s.enabled === false), (loggerConfig, loggerKey) => {
+    _.forOwn(_.omitBy(WIKI.config.logging.loggers, s => s.enabled === false), (loggerConfig, loggerKey) => {
       let loggerModule = require(`../modules/logging/${loggerKey}`)
       loggerModule.init(logger, loggerConfig)
-      fs.readFile(path.join(wiki.ROOTPATH, `assets/svg/auth-icon-${loggerKey}.svg`), 'utf8').then(iconData => {
+      fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${loggerKey}.svg`), 'utf8').then(iconData => {
         logger.icon = iconData
       }).catch(err => {
         if (err.code === 'ENOENT') {

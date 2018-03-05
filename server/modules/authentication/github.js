@@ -1,4 +1,4 @@
-/* global wiki */
+/* global WIKI */
 
 // ------------------------------------
 // GitHub Account
@@ -19,7 +19,7 @@ module.exports = {
         callbackURL: conf.callbackURL,
         scope: ['user:email']
       }, (accessToken, refreshToken, profile, cb) => {
-        wiki.db.User.processProfile(profile).then((user) => {
+        WIKI.db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

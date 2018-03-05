@@ -1,6 +1,4 @@
-# SCALARS
 
-scalar Date
 
 # ENUMS
 
@@ -30,15 +28,6 @@ interface Base {
 }
 
 # TYPES
-
-type AuthenticationProvider {
-  key: String!
-  useForm: Boolean!
-  title: String!
-  props: [String]
-  icon: String
-  config: String
-}
 
 type Comment implements Base {
   id: Int!
@@ -162,7 +151,6 @@ type LoginResult {
 
 # Query (Read)
 type Query {
-  authentication(mode: String!): [AuthenticationProvider]
   comments(id: Int): [Comment]
   documents(id: Int, path: String): [Document]
   files(id: Int): [File]

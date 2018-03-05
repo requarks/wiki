@@ -1,0 +1,23 @@
+extend type Query {
+  authentication: AuthenticationQuery
+}
+
+extend type Mutation {
+  authentication: AuthenticationMutation
+}
+
+type AuthenticationQuery {
+  providers: [AuthenticationProvider]
+}
+
+type AuthenticationMutation
+
+type AuthenticationProvider {
+  isEnabled: Boolean!
+  key: String!
+  props: [String]
+  title: String!
+  useForm: Boolean!
+  icon: String
+  config: String
+}

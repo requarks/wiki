@@ -1,4 +1,4 @@
-/* global wiki */
+/* global WIKI */
 
 // ------------------------------------
 // OAuth2 Account
@@ -20,7 +20,7 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
       }, (accessToken, refreshToken, profile, cb) => {
-        wiki.db.User.processProfile(profile).then((user) => {
+        WIKI.db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

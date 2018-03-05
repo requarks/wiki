@@ -1,4 +1,4 @@
-/* global wiki */
+/* global WIKI */
 
 // ------------------------------------
 // Local Account
@@ -17,7 +17,7 @@ module.exports = {
         usernameField: 'email',
         passwordField: 'password'
       }, (uEmail, uPassword, done) => {
-        wiki.db.User.findOne({
+        WIKI.db.User.findOne({
           where: {
             email: uEmail,
             provider: 'local'
@@ -30,7 +30,7 @@ module.exports = {
               return done(err, null)
             })
           } else {
-            return done(new wiki.Error.AuthLoginFailed(), null)
+            return done(new WIKI.Error.AuthLoginFailed(), null)
           }
         }).catch((err) => {
           done(err, null)

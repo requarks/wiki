@@ -4,7 +4,7 @@ const path = require('path')
 const Promise = require('bluebird')
 const Sequelize = require('sequelize')
 
-/* global wiki */
+/* global WIKI */
 
 const operatorsAliases = {
   $eq: Sequelize.Op.eq,
@@ -57,30 +57,30 @@ module.exports = {
    */
   init() {
     let self = this
-    let dbModelsPath = path.join(wiki.SERVERPATH, 'models')
+    let dbModelsPath = path.join(WIKI.SERVERPATH, 'models')
 
     // Define Sequelize instance
 
-    this.inst = new this.Sequelize(wiki.config.db.db, wiki.config.db.user, wiki.config.db.pass, {
-      host: wiki.config.db.host,
-      port: wiki.config.db.port,
+    this.inst = new this.Sequelize(WIKI.config.db.db, WIKI.config.db.user, WIKI.config.db.pass, {
+      host: WIKI.config.db.host,
+      port: WIKI.config.db.port,
       dialect: 'postgres',
       pool: {
         max: 10,
         min: 0,
         idle: 10000
       },
-      logging: log => { wiki.logger.log('debug', log) },
+      logging: log => { WIKI.logger.log('debug', log) },
       operatorsAliases
     })
 
     // Attempt to connect and authenticate to DB
 
     this.inst.authenticate().then(() => {
-      wiki.logger.info('Database (PostgreSQL) connection: [ OK ]')
+      WIKI.logger.info('Database (PostgreSQL) connection: [ OK ]')
     }).catch(err => {
-      wiki.logger.error('Failed to connect to PostgreSQL instance.')
-      wiki.logger.error(err)
+      WIKI.logger.error('Failed to connect to PostgreSQL instance.')
+      WIKI.logger.error(err)
       process.exit(1)
     })
 
@@ -107,16 +107,16 @@ module.exports = {
       syncSchemas() {
         return self.inst.sync({
           force: false,
-          logging: log => { wiki.logger.log('debug', log) }
+          logging: log => { WIKI.logger.log('debug', log) }
         })
       },
       // -> Set Connection App Name
       setAppName() {
-        return self.inst.query(`set application_name = 'Wiki.js'`, { raw: true })
+        return self.inst.query(`set application_name = 'WIKI.js'`, { raw: true })
       }
     }
 
-    let initTasksQueue = (wiki.IS_MASTER) ? [
+    let initTasksQueue = (WIKI.IS_MASTER) ? [
       initTasks.syncSchemas,
       initTasks.setAppName
     ] : [

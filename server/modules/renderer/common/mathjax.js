@@ -5,7 +5,7 @@ const _ = require('lodash')
 // Mathjax
 // ------------------------------------
 
-/* global wiki */
+/* global WIKI */
 
 const mathRegex = [
   {
@@ -67,7 +67,7 @@ module.exports = {
                   resolve(result.svg)
                 } else {
                   resolve(currentMatch[0])
-                  wiki.logger.warn(result.errors.join(', '))
+                  WIKI.logger.warn(result.errors.join(', '))
                 }
               })
             })

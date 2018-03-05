@@ -50,6 +50,9 @@
           v-list-tile-title Storage
         v-divider.my-2
         v-subheader System
+        v-list-tile(to='/api')
+          v-list-tile-action: v-icon call_split
+          v-list-tile-title API Access
         v-list-tile(to='/system')
           v-list-tile-action: v-icon tune
           v-list-tile-title System Info
@@ -83,7 +86,11 @@ const router = new VueRouter({
     { path: '/users', component: () => import(/* webpackChunkName: "admin" */ './admin-users.vue') },
     { path: '/auth', component: () => import(/* webpackChunkName: "admin" */ './admin-auth.vue') },
     { path: '/search', component: () => import(/* webpackChunkName: "admin" */ './admin-search.vue') },
-    { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin-system.vue') }
+    { path: '/storage', component: () => import(/* webpackChunkName: "admin" */ './admin-storage.vue') },
+    { path: '/api', component: () => import(/* webpackChunkName: "admin" */ './admin-api.vue') },
+    { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin-system.vue') },
+    { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin-utilities.vue') },
+    { path: '/dev', component: () => import(/* webpackChunkName: "admin" */ './admin-dev.vue') }
   ]
 })
 

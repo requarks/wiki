@@ -10,31 +10,32 @@ const path = require('path')
 const session = require('express-session')
 const SessionRedisStore = require('connect-redis')(session)
 const graphqlApollo = require('apollo-server-express')
-const graphqlSchema = require('./core/graphql')
+const graphqlSchema = require('./graph')
+const oauth2orize = require('oauth2orize')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = async () => {
   // ----------------------------------------
   // Load core modules
   // ----------------------------------------
 
-  wiki.auth = require('./core/auth').init()
-  wiki.lang = require('./core/localization').init()
+  WIKI.auth = require('./core/auth').init()
+  WIKI.lang = require('./core/localization').init()
 
   // ----------------------------------------
   // Load middlewares
   // ----------------------------------------
 
-  var mw = autoload(path.join(wiki.SERVERPATH, '/middlewares'))
-  var ctrl = autoload(path.join(wiki.SERVERPATH, '/controllers'))
+  var mw = autoload(path.join(WIKI.SERVERPATH, '/middlewares'))
+  var ctrl = autoload(path.join(WIKI.SERVERPATH, '/controllers'))
 
   // ----------------------------------------
   // Define Express App
   // ----------------------------------------
 
   const app = express()
-  wiki.app = app
+  WIKI.app = app
   app.use(compression())
 
   // ----------------------------------------
@@ -42,38 +43,44 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(mw.security)
-  app.use(cors(wiki.config.cors))
-  app.options('*', cors(wiki.config.cors))
+  app.use(cors(WIKI.config.cors))
+  app.options('*', cors(WIKI.config.cors))
   app.enable('trust proxy')
 
   // ----------------------------------------
   // Public Assets
   // ----------------------------------------
 
-  app.use(favicon(path.join(wiki.ROOTPATH, 'assets', 'favicon.ico')))
-  app.use(express.static(path.join(wiki.ROOTPATH, 'assets'), {
+  app.use(favicon(path.join(WIKI.ROOTPATH, 'assets', 'favicon.ico')))
+  app.use(express.static(path.join(WIKI.ROOTPATH, 'assets'), {
     index: false,
     maxAge: '7d'
   }))
+
+  // ----------------------------------------
+  // OAuth2 Server
+  // ----------------------------------------
+
+  const OAuth2Server = oauth2orize.createServer()
 
   // ----------------------------------------
   // Passport Authentication
   // ----------------------------------------
 
   let sessionStore = new SessionRedisStore({
-    client: wiki.redis
+    client: WIKI.redis
   })
 
   app.use(cookieParser())
   app.use(session({
     name: 'wikijs.sid',
     store: sessionStore,
-    secret: wiki.config.site.sessionSecret,
+    secret: WIKI.config.site.sessionSecret,
     resave: false,
     saveUninitialized: false
   }))
-  app.use(wiki.auth.passport.initialize())
-  app.use(wiki.auth.passport.session())
+  app.use(WIKI.auth.passport.initialize())
+  app.use(WIKI.auth.passport.session())
 
   // ----------------------------------------
   // SEO
@@ -85,7 +92,7 @@ module.exports = async () => {
   // View Engine Setup
   // ----------------------------------------
 
-  app.set('views', path.join(wiki.SERVERPATH, 'views'))
+  app.set('views', path.join(WIKI.SERVERPATH, 'views'))
   app.set('view engine', 'pug')
 
   app.use(bodyParser.json({ limit: '1mb' }))
@@ -95,17 +102,17 @@ module.exports = async () => {
   // Localization
   // ----------------------------------------
 
-  wiki.lang.attachMiddleware(app)
+  WIKI.lang.attachMiddleware(app)
 
   // ----------------------------------------
   // View accessible data
   // ----------------------------------------
 
-  app.locals.basedir = wiki.ROOTPATH
+  app.locals.basedir = WIKI.ROOTPATH
   app.locals._ = require('lodash')
   app.locals.moment = require('moment')
-  app.locals.moment.locale(wiki.config.site.lang)
-  app.locals.config = wiki.config
+  app.locals.moment.locale(WIKI.config.site.lang)
+  app.locals.config = WIKI.config
 
   // ----------------------------------------
   // HMR (Dev Mode Only)
@@ -151,7 +158,7 @@ module.exports = async () => {
     res.status(err.status || 500)
     res.render('error', {
       message: err.message,
-      error: wiki.IS_DEBUG ? err : {}
+      error: WIKI.IS_DEBUG ? err : {}
     })
   })
 
@@ -161,13 +168,13 @@ module.exports = async () => {
 
   let srvConnections = {}
 
-  wiki.logger.info(`HTTP Server on port: [ ${wiki.config.port} ]`)
+  WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
 
-  app.set('port', wiki.config.port)
-  wiki.server = http.createServer(app)
+  app.set('port', WIKI.config.port)
+  WIKI.server = http.createServer(app)
 
-  wiki.server.listen(wiki.config.port)
-  wiki.server.on('error', (error) => {
+  WIKI.server.listen(WIKI.config.port)
+  WIKI.server.on('error', (error) => {
     if (error.syscall !== 'listen') {
       throw error
     }
@@ -175,17 +182,17 @@ module.exports = async () => {
     // handle specific listen errors with friendly messages
     switch (error.code) {
       case 'EACCES':
-        wiki.logger.error('Listening on port ' + wiki.config.port + ' requires elevated privileges!')
+        WIKI.logger.error('Listening on port ' + WIKI.config.port + ' requires elevated privileges!')
         return process.exit(1)
       case 'EADDRINUSE':
-        wiki.logger.error('Port ' + wiki.config.port + ' is already in use!')
+        WIKI.logger.error('Port ' + WIKI.config.port + ' is already in use!')
         return process.exit(1)
       default:
         throw error
     }
   })
 
-  wiki.server.on('connection', conn => {
+  WIKI.server.on('connection', conn => {
     let key = `${conn.remoteAddress}:${conn.remotePort}`
     srvConnections[key] = conn
     conn.on('close', function() {
@@ -193,12 +200,12 @@ module.exports = async () => {
     })
   })
 
-  wiki.server.on('listening', () => {
-    wiki.logger.info('HTTP Server: [ RUNNING ]')
+  WIKI.server.on('listening', () => {
+    WIKI.logger.info('HTTP Server: [ RUNNING ]')
   })
 
-  wiki.server.destroy = (cb) => {
-    wiki.server.close(cb)
+  WIKI.server.destroy = (cb) => {
+    WIKI.server.close(cb)
     for (let key in srvConnections) {
       srvConnections[key].destroy()
     }

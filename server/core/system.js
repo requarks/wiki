@@ -2,18 +2,18 @@ const _ = require('lodash')
 const cfgHelper = require('../helpers/config')
 const Promise = require('bluebird')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   /**
-   * Upgrade from Wiki.js 1.x - MongoDB database
+   * Upgrade from WIKI.js 1.x - MongoDB database
    *
    * @param {Object} opts Options object
    */
   async upgradeFromMongo (opts) {
-    wiki.telemetry.sendEvent('setup', 'upgradeFromMongo')
+    WIKI.telemetry.sendEvent('setup', 'upgradeFromMongo')
 
-    wiki.logger.info('Upgrading from MongoDB...')
+    WIKI.logger.info('Upgrading from MongoDB...')
 
     let mongo = require('mongodb').MongoClient
     let parsedMongoConStr = cfgHelper.parseConfigValue(opts.mongoCnStr)
@@ -45,7 +45,7 @@ module.exports = {
               $not: 'guest'
             }
           }).toArray()
-          await wiki.db.User.bulkCreate(_.map(userData, usr => {
+          await WIKI.db.User.bulkCreate(_.map(userData, usr => {
             return {
               email: usr.email,
               name: usr.name || 'Imported User',

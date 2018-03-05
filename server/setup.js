@@ -1,14 +1,14 @@
 const path = require('path')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = () => {
-  wiki.config.site = {
+  WIKI.config.site = {
     path: '',
-    title: 'Wiki.js'
+    title: 'WIKI.js'
   }
 
-  wiki.system = require('./core/system')
+  WIKI.system = require('./core/system')
 
   // ----------------------------------------
   // Load modules
@@ -40,21 +40,21 @@ module.exports = () => {
   // Public Assets
   // ----------------------------------------
 
-  app.use(favicon(path.join(wiki.ROOTPATH, 'assets', 'favicon.ico')))
-  app.use(express.static(path.join(wiki.ROOTPATH, 'assets')))
+  app.use(favicon(path.join(WIKI.ROOTPATH, 'assets', 'favicon.ico')))
+  app.use(express.static(path.join(WIKI.ROOTPATH, 'assets')))
 
   // ----------------------------------------
   // View Engine Setup
   // ----------------------------------------
 
-  app.set('views', path.join(wiki.SERVERPATH, 'views'))
+  app.set('views', path.join(WIKI.SERVERPATH, 'views'))
   app.set('view engine', 'pug')
 
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: false }))
 
-  app.locals.config = wiki.config
-  app.locals.data = wiki.data
+  app.locals.config = WIKI.config
+  app.locals.data = WIKI.data
   app.locals._ = require('lodash')
 
   // ----------------------------------------
@@ -71,10 +71,10 @@ module.exports = () => {
   // ----------------------------------------
 
   app.get('*', async (req, res) => {
-    let packageObj = await fs.readJson(path.join(wiki.ROOTPATH, 'package.json'))
+    let packageObj = await fs.readJson(path.join(WIKI.ROOTPATH, 'package.json'))
     res.render('main/setup', {
       packageObj,
-      telemetryClientID: wiki.telemetry.cid
+      telemetryClientID: WIKI.telemetry.cid
     })
   })
 
@@ -82,8 +82,8 @@ module.exports = () => {
    * Perform basic system checks
    */
   app.post('/syscheck', (req, res) => {
-    wiki.telemetry.enabled = (req.body.telemetry === true)
-    wiki.telemetry.sendEvent('setup', 'start')
+    WIKI.telemetry.enabled = (req.body.telemetry === true)
+    WIKI.telemetry.sendEvent('setup', 'start')
 
     Promise.mapSeries([
       () => {
@@ -126,7 +126,7 @@ module.exports = () => {
       () => {
         let fs = require('fs')
         return Promise.try(() => {
-          fs.accessSync(path.join(wiki.ROOTPATH, 'config.yml'), (fs.constants || fs).W_OK)
+          fs.accessSync(path.join(WIKI.ROOTPATH, 'config.yml'), (fs.constants || fs).W_OK)
         }).catch(err => {
           throw new Error('config.yml file is not writable by Node.js process or was not created properly.')
         }).return('config.yml is writable by the setup process.')
@@ -142,13 +142,13 @@ module.exports = () => {
    * Check the Git connection
    */
   app.post('/gitcheck', (req, res) => {
-    wiki.telemetry.sendEvent('setup', 'gitcheck')
+    WIKI.telemetry.sendEvent('setup', 'gitcheck')
 
     const exec = require('execa')
     const url = require('url')
 
-    const dataDir = path.resolve(wiki.ROOTPATH, cfgHelper.parseConfigValue(req.body.pathData))
-    const gitDir = path.resolve(wiki.ROOTPATH, cfgHelper.parseConfigValue(req.body.pathRepo))
+    const dataDir = path.resolve(WIKI.ROOTPATH, cfgHelper.parseConfigValue(req.body.pathData))
+    const gitDir = path.resolve(WIKI.ROOTPATH, cfgHelper.parseConfigValue(req.body.pathRepo))
 
     let gitRemoteUrl = ''
 
@@ -235,107 +235,107 @@ module.exports = () => {
    * Finalize
    */
   app.post('/finalize', async (req, res) => {
-    wiki.telemetry.sendEvent('setup', 'finalize')
+    WIKI.telemetry.sendEvent('setup', 'finalize')
 
     try {
-      // Upgrade from Wiki.js 1.x?
+      // Upgrade from WIKI.js 1.x?
       if (req.body.upgrade) {
-        await wiki.system.upgradeFromMongo({
+        await WIKI.system.upgradeFromMongo({
           mongoCnStr: cfgHelper.parseConfigValue(req.body.upgMongo)
         })
       }
 
       // Update config file
-      wiki.logger.info('Writing config file to disk...')
-      let confRaw = await fs.readFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), 'utf8')
+      WIKI.logger.info('Writing config file to disk...')
+      let confRaw = await fs.readFileAsync(path.join(WIKI.ROOTPATH, 'config.yml'), 'utf8')
       let conf = yaml.safeLoad(confRaw)
 
       conf.port = req.body.port
       conf.paths.repo = req.body.pathRepo
 
       confRaw = yaml.safeDump(conf)
-      await fs.writeFileAsync(path.join(wiki.ROOTPATH, 'config.yml'), confRaw)
+      await fs.writeFileAsync(path.join(WIKI.ROOTPATH, 'config.yml'), confRaw)
 
-      _.set(wiki.config, 'port', req.body.port)
-      _.set(wiki.config, 'paths.repo', req.body.pathRepo)
+      _.set(WIKI.config, 'port', req.body.port)
+      _.set(WIKI.config, 'paths.repo', req.body.pathRepo)
 
       // Populate config namespaces
-      wiki.config.auth = wiki.config.auth || {}
-      wiki.config.features = wiki.config.features || {}
-      wiki.config.git = wiki.config.git || {}
-      wiki.config.logging = wiki.config.logging || {}
-      wiki.config.site = wiki.config.site || {}
-      wiki.config.theme = wiki.config.theme || {}
-      wiki.config.uploads = wiki.config.uploads || {}
+      WIKI.config.auth = WIKI.config.auth || {}
+      WIKI.config.features = WIKI.config.features || {}
+      WIKI.config.git = WIKI.config.git || {}
+      WIKI.config.logging = WIKI.config.logging || {}
+      WIKI.config.site = WIKI.config.site || {}
+      WIKI.config.theme = WIKI.config.theme || {}
+      WIKI.config.uploads = WIKI.config.uploads || {}
 
       // Site namespace
-      _.set(wiki.config.site, 'title', req.body.title)
-      _.set(wiki.config.site, 'path', req.body.path)
-      _.set(wiki.config.site, 'lang', req.body.lang)
-      _.set(wiki.config.site, 'rtl', _.includes(wiki.data.rtlLangs, req.body.lang))
-      _.set(wiki.config.site, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+      _.set(WIKI.config.site, 'title', req.body.title)
+      _.set(WIKI.config.site, 'path', req.body.path)
+      _.set(WIKI.config.site, 'lang', req.body.lang)
+      _.set(WIKI.config.site, 'rtl', _.includes(WIKI.data.rtlLangs, req.body.lang))
+      _.set(WIKI.config.site, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
 
       // Auth namespace
-      _.set(wiki.config.auth, 'public', req.body.public === 'true')
-      _.set(wiki.config.auth, 'strategies.local.enabled', true)
-      _.set(wiki.config.auth, 'strategies.local.allowSelfRegister', req.body.selfRegister === 'true')
+      _.set(WIKI.config.auth, 'public', req.body.public === 'true')
+      _.set(WIKI.config.auth, 'strategies.local.enabled', true)
+      _.set(WIKI.config.auth, 'strategies.local.allowSelfRegister', req.body.selfRegister === 'true')
 
       // Git namespace
-      _.set(wiki.config.git, 'enabled', req.body.gitUseRemote === 'true')
-      if (wiki.config.git.enabled) {
-        _.set(wiki.config.git, 'url', req.body.gitUrl)
-        _.set(wiki.config.git, 'branch', req.body.gitBranch)
-        _.set(wiki.config.git, 'author.defaultEmail', req.body.gitServerEmail)
-        _.set(wiki.config.git, 'author.useUserEmail', req.body.gitShowUserEmail)
-        _.set(wiki.config.git, 'sslVerify', req.body.gitAuthSSL === 'true')
-        _.set(wiki.config.git, 'auth.type', req.body.gitAuthType)
-        switch (wiki.config.git.auth.type) {
+      _.set(WIKI.config.git, 'enabled', req.body.gitUseRemote === 'true')
+      if (WIKI.config.git.enabled) {
+        _.set(WIKI.config.git, 'url', req.body.gitUrl)
+        _.set(WIKI.config.git, 'branch', req.body.gitBranch)
+        _.set(WIKI.config.git, 'author.defaultEmail', req.body.gitServerEmail)
+        _.set(WIKI.config.git, 'author.useUserEmail', req.body.gitShowUserEmail)
+        _.set(WIKI.config.git, 'sslVerify', req.body.gitAuthSSL === 'true')
+        _.set(WIKI.config.git, 'auth.type', req.body.gitAuthType)
+        switch (WIKI.config.git.auth.type) {
           case 'basic':
-            _.set(wiki.config.git, 'auth.user', req.body.gitAuthUser)
-            _.set(wiki.config.git, 'auth.pass', req.body.gitAuthPass)
+            _.set(WIKI.config.git, 'auth.user', req.body.gitAuthUser)
+            _.set(WIKI.config.git, 'auth.pass', req.body.gitAuthPass)
             break
           case 'ssh':
-            _.set(wiki.config.git, 'auth.keyPath', req.body.gitAuthSSHKey)
+            _.set(WIKI.config.git, 'auth.keyPath', req.body.gitAuthSSHKey)
             break
           case 'sshenv':
-            _.set(wiki.config.git, 'auth.keyEnv', req.body.gitAuthSSHKeyEnv)
+            _.set(WIKI.config.git, 'auth.keyEnv', req.body.gitAuthSSHKeyEnv)
             break
           case 'sshdb':
-            _.set(wiki.config.git, 'auth.keyContents', req.body.gitAuthSSHKeyDB)
+            _.set(WIKI.config.git, 'auth.keyContents', req.body.gitAuthSSHKeyDB)
             break
         }
       }
 
       // Logging namespace
-      wiki.config.logging.telemetry = (req.body.telemetry === 'true')
+      WIKI.config.logging.telemetry = (req.body.telemetry === 'true')
 
       // Save config to DB
-      wiki.logger.info('Persisting config to DB...')
-      await wiki.configSvc.saveToDb()
+      WIKI.logger.info('Persisting config to DB...')
+      await WIKI.configSvc.saveToDb()
 
       // Create root administrator
-      wiki.logger.info('Creating root administrator...')
-      await wiki.db.User.upsert({
+      WIKI.logger.info('Creating root administrator...')
+      await WIKI.db.User.upsert({
         email: req.body.adminEmail,
         provider: 'local',
-        password: await wiki.db.User.hashPassword(req.body.adminPassword),
+        password: await WIKI.db.User.hashPassword(req.body.adminPassword),
         name: 'Administrator',
         role: 'admin',
         tfaIsActive: false
       })
 
-      wiki.logger.info('Setup is complete!')
+      WIKI.logger.info('Setup is complete!')
       res.json({
         ok: true,
-        redirectPath: wiki.config.site.path,
-        redirectPort: wiki.config.port
+        redirectPath: WIKI.config.site.path,
+        redirectPort: WIKI.config.port
       }).end()
 
-      wiki.logger.info('Stopping Setup...')
+      WIKI.logger.info('Stopping Setup...')
       server.destroy(() => {
-        wiki.logger.info('Setup stopped. Starting Wiki.js...')
+        WIKI.logger.info('Setup stopped. Starting WIKI.js...')
         _.delay(() => {
-          wiki.kernel.bootMaster()
+          WIKI.kernel.bootMaster()
         }, 1000)
       })
     } catch (err) {
@@ -357,25 +357,25 @@ module.exports = () => {
     res.status(err.status || 500)
     res.send({
       message: err.message,
-      error: wiki.IS_DEBUG ? err : {}
+      error: WIKI.IS_DEBUG ? err : {}
     })
-    wiki.logger.error(err.message)
-    wiki.telemetry.sendError(err)
+    WIKI.logger.error(err.message)
+    WIKI.telemetry.sendError(err)
   })
 
   // ----------------------------------------
   // Start HTTP server
   // ----------------------------------------
 
-  wiki.logger.info(`HTTP Server on port: ${wiki.config.port}`)
+  WIKI.logger.info(`HTTP Server on port: ${WIKI.config.port}`)
 
-  app.set('port', wiki.config.port)
-  wiki.server = http.createServer(app)
-  wiki.server.listen(wiki.config.port)
+  app.set('port', WIKI.config.port)
+  WIKI.server = http.createServer(app)
+  WIKI.server.listen(WIKI.config.port)
 
   var openConnections = []
 
-  wiki.server.on('connection', (conn) => {
+  WIKI.server.on('connection', (conn) => {
     let key = conn.remoteAddress + ':' + conn.remotePort
     openConnections[key] = conn
     conn.on('close', () => {
@@ -383,31 +383,31 @@ module.exports = () => {
     })
   })
 
-  wiki.server.destroy = (cb) => {
-    wiki.server.close(cb)
+  WIKI.server.destroy = (cb) => {
+    WIKI.server.close(cb)
     for (let key in openConnections) {
       openConnections[key].destroy()
     }
   }
 
-  wiki.server.on('error', (error) => {
+  WIKI.server.on('error', (error) => {
     if (error.syscall !== 'listen') {
       throw error
     }
 
     switch (error.code) {
       case 'EACCES':
-        wiki.logger.error('Listening on port ' + wiki.config.port + ' requires elevated privileges!')
+        WIKI.logger.error('Listening on port ' + WIKI.config.port + ' requires elevated privileges!')
         return process.exit(1)
       case 'EADDRINUSE':
-        wiki.logger.error('Port ' + wiki.config.port + ' is already in use!')
+        WIKI.logger.error('Port ' + WIKI.config.port + ' is already in use!')
         return process.exit(1)
       default:
         throw error
     }
   })
 
-  wiki.server.on('listening', () => {
-    wiki.logger.info('HTTP Server: RUNNING')
+  WIKI.server.on('listening', () => {
+    WIKI.logger.info('HTTP Server: RUNNING')
   })
 }

@@ -20,6 +20,9 @@
               v-btn(color='primary')
                 v-icon(left) chevron_right
                 | Set Engine
+              v-btn(color='black', dark)
+                v-icon(left) refresh
+                | Rebuild Index
         v-tab-item(key='db')
           v-card.pa-3 TODO
         v-tab-item(key='algolia')

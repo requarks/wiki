@@ -1,16 +1,13 @@
 <template lang='pug'>
   v-card(flat)
     v-card(flat, color='grey lighten-5').pa-3.pt-4
-      .headline.blue--text.text--darken-2 Users
-      .subheading.grey--text Manage users
+      .headline.blue--text.text--darken-2 API
+      .subheading.grey--text Manage keys to access the API
     v-card
       v-card-title
         v-btn(color='primary', dark)
           v-icon(left) add
-          | New User
-        v-btn(color='primary', dark)
-          v-icon(left) lock_outline
-          | Authorize User
+          | New API Key
         v-btn(icon)
           v-icon.grey--text refresh
         v-spacer
@@ -50,9 +47,8 @@
             td
               v-checkbox(hide-details, :input-value='props.selected', color='blue darken-2', @click='props.selected = !props.selected')
             td.text-xs-right {{ props.item.id }}
-            td {{ props.item.email }}
             td {{ props.item.name }}
-            td {{ props.item.provider }}
+            td {{ props.item.key }}
             td {{ props.item.createdOn }}
             td {{ props.item.updatedOn }}
             td: v-btn(icon): v-icon.grey--text.text--darken-1 more_horiz
@@ -69,31 +65,13 @@ export default {
       selected: [],
       pagination: {},
       items: [
-        { id: 1, email: 'user@test.com', name: 'John Doe', provider: 'local' },
-        { id: 2, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 3, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 4, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 5, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 6, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 7, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 8, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 9, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 10, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 11, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 12, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 13, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 14, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 15, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 16, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 17, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 18, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 19, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 20, email: 'dude@test.com', name: 'John Doe', provider: 'local' }
+        { id: 1, key: 'user@test.com' },
+        { id: 2, key: 'dude@test.com' },
+        { id: 3, key: 'dude@test.com' }
       ],
       headers: [
-        { text: 'Email', value: 'email' },
         { text: 'Name', value: 'name' },
-        { text: 'Provider', value: 'provider' },
+        { text: 'Key', value: 'key' },
         { text: 'Created On', value: 'createdOn' },
         { text: 'Updated On', value: 'updatedOn' },
         { text: '', value: 'actions', sortable: false, width: 50 }

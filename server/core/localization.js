@@ -6,24 +6,24 @@ const i18next = require('i18next')
 const path = require('path')
 const Promise = require('bluebird')
 
-/* global wiki */
+/* global WIKI */
 
 module.exports = {
   engine: null,
   namespaces: [],
   init() {
-    this.namespaces = wiki.data.localeNamespaces
+    this.namespaces = WIKI.data.localeNamespaces
     this.engine = i18next
     this.engine.use(i18nBackend).init({
       load: 'languageOnly',
       ns: this.namespaces,
       defaultNS: 'common',
       saveMissing: false,
-      preload: [wiki.config.site.lang],
-      lng: wiki.config.site.lang,
+      preload: [WIKI.config.site.lang],
+      lng: WIKI.config.site.lang,
       fallbackLng: 'en',
       backend: {
-        loadPath: path.join(wiki.SERVERPATH, 'locales/{{lng}}/{{ns}}.yml')
+        loadPath: path.join(WIKI.SERVERPATH, 'locales/{{lng}}/{{ns}}.yml')
       }
     })
     return this

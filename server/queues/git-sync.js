@@ -1,6 +1,6 @@
 'use strict'
 
-/* global wiki */
+/* global WIKI */
 
 const Promise = require('bluebird')
 const fs = Promise.promisifyAll(require('fs-extra'))
@@ -10,7 +10,7 @@ const path = require('path')
 const entryHelper = require('../helpers/entry')
 
 module.exports = (job) => {
-  return wiki.git.resync().then(() => {
+  return WIKI.git.resync().then(() => {
     // -> Stream all documents
 
     let cacheJobs = []
@@ -19,7 +19,7 @@ module.exports = (job) => {
       jobCbStreamDocsResolve = resolve
     })
 
-    klaw(wiki.REPOPATH).on('data', function (item) {
+    klaw(WIKI.REPOPATH).on('data', function (item) {
       if (path.extname(item.path) === '.md' && path.basename(item.path) !== 'README.md') {
         let entryPath = entryHelper.parsePath(entryHelper.getEntryPathFromFullPath(item.path))
         let cachePath = entryHelper.getCachePath(entryPath)
@@ -62,7 +62,7 @@ module.exports = (job) => {
 
     return jobCbStreamDocs
   }).then(() => {
-    wiki.logger.info('Git remote repository sync: DONE')
+    WIKI.logger.info('Git remote repository sync: DONE')
     return true
   })
 }
