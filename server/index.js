@@ -17,10 +17,6 @@ let WIKI = {
 }
 global.WIKI = WIKI
 
-// if (WIKI.IS_DEBUG) {
-//   require('@glimpse/glimpse').init()
-// }
-
 WIKI.configSvc.init()
 
 // ----------------------------------------

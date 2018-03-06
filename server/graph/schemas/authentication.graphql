@@ -10,7 +10,13 @@ type AuthenticationQuery {
   providers: [AuthenticationProvider]
 }
 
-type AuthenticationMutation
+type AuthenticationMutation {
+  updateProvider(
+    provider: String!
+    isEnabled: Boolean!
+    config: [KeyValuePairInput]
+  ): DefaultResponse
+}
 
 type AuthenticationProvider {
   isEnabled: Boolean!
@@ -19,5 +25,5 @@ type AuthenticationProvider {
   title: String!
   useForm: Boolean!
   icon: String
-  config: String
+  config: [KeyValuePair]
 }

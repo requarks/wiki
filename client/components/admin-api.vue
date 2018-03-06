@@ -5,6 +5,9 @@
       .subheading.grey--text Manage keys to access the API
     v-card
       v-card-title
+        v-btn(color='green', dark)
+          v-icon(left) power_settings_new
+          | Enable API
         v-btn(color='primary', dark)
           v-icon(left) add
           | New API Key

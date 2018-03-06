@@ -135,7 +135,6 @@
     "yargs": "11.0.0"
   },
   "devDependencies": {
-    "@glimpse/glimpse": "0.22.15",
     "@panter/vue-i18next": "0.9.1",
     "apollo-client-preset": "1.0.8",
     "apollo-fetch": "0.7.0",
@@ -198,6 +197,7 @@
     "vee-validate": "2.0.5",
     "velocity-animate": "1.5.1",
     "vue": "2.5.13",
+    "vue-apollo": "3.0.0-beta.4",
     "vue-clipboards": "1.2.2",
     "vue-codemirror": "4.0.3",
     "vue-hot-reload-api": "2.3.0",
@@ -211,7 +211,7 @@
     "vuex-persistedstate": "2.4.2",
     "webpack": "3.11.0",
     "webpack-bundle-analyzer": "2.11.1",
-    "webpack-dev-middleware": "3.0.0",
+    "webpack-dev-middleware": "2.0.3",
     "webpack-hot-middleware": "2.21.2",
     "webpack-merge": "4.1.2",
     "whatwg-fetch": "2.0.3",

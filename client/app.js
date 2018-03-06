@@ -10,10 +10,9 @@ import VueClipboards from 'vue-clipboards'
 import VueSimpleBreakpoints from 'vue-simple-breakpoints'
 import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
-import { ApolloLink } from 'apollo-link'
-import { createApolloFetch } from 'apollo-fetch'
 import { BatchHttpLink } from 'apollo-link-batch-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
+import VueApollo from 'vue-apollo'
 import Vuetify from 'vuetify'
 import Velocity from 'velocity-animate'
 import Hammer from 'hammerjs'
@@ -36,7 +35,7 @@ import helpers from './helpers'
 // Initialize Global Vars
 // ====================================
 
-window.wiki = null
+window.WIKI = null
 window.boot = boot
 window.CONSTANTS = CONSTANTS
 window.Hammer = Hammer
@@ -47,31 +46,11 @@ window.Hammer = Hammer
 
 const graphQLEndpoint = window.location.protocol + '//' + window.location.host + siteConfig.path + 'graphql'
 
-const apolloFetch = createApolloFetch({
-  uri: graphQLEndpoint,
-  constructOptions: (requestOrRequests, options) => ({
-    ...options,
-    method: 'POST',
-    body: JSON.stringify(requestOrRequests),
-    credentials: 'include'
-  })
-})
-
 window.graphQL = new ApolloClient({
-  link: ApolloLink.from([
-    new ApolloLink((operation, forward) => {
-      operation.setContext({
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      return forward(operation)
-    }),
-    new BatchHttpLink({
-      fetch: apolloFetch
-    })
-  ]),
+  link: new BatchHttpLink({
+    uri: graphQLEndpoint,
+    credentials: 'include'
+  }),
   cache: new InMemoryCache(),
   connectToDevTools: (process.env.node_env === 'development')
 })
@@ -81,6 +60,7 @@ window.graphQL = new ApolloClient({
 // ====================================
 
 Vue.use(VueRouter)
+Vue.use(VueApollo)
 Vue.use(VueClipboards)
 Vue.use(VueSimpleBreakpoints)
 Vue.use(localization.VueI18Next)
@@ -121,15 +101,20 @@ let bootstrap = () => {
     store.dispatch('startLoading')
   })
 
+  const apolloProvider = new VueApollo({
+    defaultClient: window.graphQL
+  })
+
   // ====================================
   // Bootstrap Vue
   // ====================================
 
   const i18n = localization.init()
-  window.wiki = new Vue({
+  window.WIKI = new Vue({
     el: '#app',
     components: {},
     mixins: [helpers],
+    provide: apolloProvider.provide(),
     store,
     i18n
   })

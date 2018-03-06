@@ -29,6 +29,26 @@ interface Base {
 
 # TYPES
 
+type KeyValuePair {
+  key: String!
+  value: String!
+}
+input KeyValuePairInput {
+  key: String!
+  value: String!
+}
+
+type DefaultResponse {
+  operation: ResponseStatus
+}
+
+type ResponseStatus {
+  succeeded: Boolean!
+  code: Int!
+  slug: String!
+  message: String
+}
+
 type Comment implements Base {
   id: Int!
   createdAt: Date

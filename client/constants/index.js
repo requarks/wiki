@@ -1,5 +1,5 @@
-import GRAPHQL from './graphql'
+import GRAPH from './graphql'
 
 export default {
-  GRAPHQL
+  GRAPH
 }

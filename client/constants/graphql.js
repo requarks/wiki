@@ -1,16 +1,26 @@
 import gql from 'graphql-tag'
 
 export default {
-  GQL_QUERY_AUTHENTICATION: gql`
-    query($mode: String!) {
-      authentication(mode:$mode) {
-        key
-        useForm
-        title
-        icon
+  AUTHENTICATION: {
+    QUERY_PROVIDERS: gql`
+      query {
+        authentication {
+          providers {
+            isEnabled
+            key
+            props
+            title
+            useForm
+            icon
+            config {
+              key
+              value
+            }
+          }
+        }
       }
-    }
-  `,
+    `
+  },
   GQL_QUERY_TRANSLATIONS: gql`
     query($locale: String!, $namespace: String!) {
       translations(locale:$locale, namespace:$namespace) {

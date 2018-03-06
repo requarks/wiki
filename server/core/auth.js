@@ -4,6 +4,7 @@ const _ = require('lodash')
 const passport = require('passport')
 const fs = require('fs-extra')
 const path = require('path')
+const autoload = require('auto-load')
 
 module.exports = {
   strategies: {},
@@ -31,26 +32,29 @@ module.exports = {
 
     // Load authentication strategies
 
-    _.forOwn(_.omitBy(WIKI.config.auth.strategies, s => s.enabled === false), (strategyConfig, strategyKey) => {
-      strategyConfig.callbackURL = `${WIKI.config.site.host}${WIKI.config.site.path}login/${strategyKey}/callback`
-      let strategy = require(`../modules/authentication/${strategyKey}`)
-      try {
-        strategy.init(passport, strategyConfig)
-      } catch (err) {
-        WIKI.logger.error(`Authentication Provider ${strategyKey}: [ FAILED ]`)
-        WIKI.logger.error(err)
+    const modules = _.values(autoload(path.join(WIKI.SERVERPATH, 'modules/authentication')))
+    _.forEach(modules, (strategy) => {
+      const strategyConfig = _.get(WIKI.config.auth.strategies, strategy.key, {})
+      strategyConfig.callbackURL = `${WIKI.config.site.host}${WIKI.config.site.path}login/${strategy.key}/callback`
+      if (strategyConfig.isEnabled) {
+        try {
+          strategy.init(passport, strategyConfig)
+        } catch (err) {
+          WIKI.logger.error(`Authentication Provider ${strategy.title}: [ FAILED ]`)
+          WIKI.logger.error(err)
+        }
       }
-      fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${strategyKey}.svg`), 'utf8').then(iconData => {
+      fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${strategy.key}.svg`), 'utf8').then(iconData => {
         strategy.icon = iconData
       }).catch(err => {
         if (err.code === 'ENOENT') {
           strategy.icon = '[missing icon]'
         } else {
-          WIKI.logger.error(err)
+          WIKI.logger.warn(err)
         }
       })
       this.strategies[strategy.key] = strategy
-      WIKI.logger.info(`Authentication Provider ${strategyKey}: [ OK ]`)
+      WIKI.logger.info(`Authentication Provider ${strategy.title}: [ OK ]`)
     })
 
     // Create Guest account for first-time
