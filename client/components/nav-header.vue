@@ -4,7 +4,7 @@
     v-toolbar-title
       span.subheading Wiki.js
     v-spacer
-    v-progress-circular.mr-3(indeterminate, color='blue', v-if='$apollo.loading')
+    v-progress-circular.mr-3(indeterminate, color='blue', v-show='$apollo.loading')
     v-btn(icon)
       v-icon(color='grey') search
     v-btn(icon, @click.native='darkTheme = !darkTheme')
@@ -27,7 +27,9 @@
 
 <script>
 export default {
-
+  data() {
+    return {}
+  }
 }
 </script>
 

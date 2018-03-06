@@ -68,9 +68,9 @@ export default {
       selected: [],
       pagination: {},
       items: [
-        { id: 1, key: 'user@test.com' },
-        { id: 2, key: 'dude@test.com' },
-        { id: 3, key: 'dude@test.com' }
+        { id: 1, key: 'xxxxxxxxxxxxx' },
+        { id: 2, key: 'xxxxxxxxxxxxy' },
+        { id: 3, key: 'xxxxxxxxxxxxz' }
       ],
       headers: [
         { text: 'Name', value: 'name' },

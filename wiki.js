@@ -90,8 +90,8 @@ const init = {
             console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
             console.warn('--- Changes detected: Restarting ---')
             console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
-            global.wiki.server.destroy(() => {
-              global.wiki = {}
+            global.WIKI.server.destroy(() => {
+              global.WIKI = {}
               for (const workerId in cluster.workers) {
                 cluster.workers[workerId].kill()
               }

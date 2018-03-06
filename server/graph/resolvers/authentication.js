@@ -17,8 +17,10 @@ module.exports = {
         return {
           isEnabled: true,
           key: str.key,
+          props: str.props,
           title: str.title,
-          useForm: str.useForm
+          useForm: str.useForm,
+          config: []
         }
       }).sortBy(['title']).value()
     }
