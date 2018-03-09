@@ -30,6 +30,8 @@
 <script>
 /* global CONSTANTS, graphQL, siteConfig */
 
+import _ from 'lodash'
+
 export default {
   data () {
     return {
@@ -68,13 +70,10 @@ export default {
     refreshStrategies () {
       this.isLoading = true
       graphQL.query({
-        query: CONSTANTS.GRAPHQL.GQL_QUERY_AUTHENTICATION,
-        variables: {
-          mode: 'active'
-        }
+        query: CONSTANTS.GRAPH.AUTHENTICATION.QUERY_LOGIN_PROVIDERS
       }).then(resp => {
-        if (resp.data.authentication) {
-          this.strategies = resp.data.authentication
+        if (_.has(resp, 'data.authentication.providers')) {
+          this.strategies = _.get(resp, 'data.authentication.providers', [])
         } else {
           throw new Error('No authentication providers available!')
         }

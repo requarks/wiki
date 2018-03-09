@@ -1,6 +1,9 @@
 const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
+const graphHelper = require('../../helpers/graph')
+
+// const getFieldNames = require('graphql-list-fields')
 
 /* global WIKI */
 
@@ -13,16 +16,17 @@ module.exports = {
   },
   AuthenticationQuery: {
     providers(obj, args, context, info) {
-      return _.chain(WIKI.auth.strategies).map(str => {
-        return {
-          isEnabled: true,
-          key: str.key,
-          props: str.props,
-          title: str.title,
-          useForm: str.useForm,
-          config: []
-        }
-      }).sortBy(['title']).value()
+      let prv = _.map(WIKI.auth.strategies, str => ({
+        isEnabled: true,
+        key: str.key,
+        props: str.props,
+        title: str.title,
+        useForm: str.useForm,
+        config: []
+      }))
+      if (args.filter) { prv = graphHelper.filter(prv, args.filter) }
+      if (args.orderBy) { prv = graphHelper.orderBy(prv, args.orderBy) }
+      return prv
     }
   },
   AuthenticationProvider: {

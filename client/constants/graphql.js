@@ -11,11 +11,25 @@ export default {
             props
             title
             useForm
-            icon
             config {
               key
               value
             }
+          }
+        }
+      }
+    `,
+    QUERY_LOGIN_PROVIDERS: gql`
+      query {
+        authentication {
+          providers(
+            filter: "isEnabled eq true",
+            orderBy: "title ASC"
+          ) {
+            key
+            title
+            useForm
+            icon
           }
         }
       }

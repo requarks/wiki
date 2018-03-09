@@ -7,7 +7,10 @@ extend type Mutation {
 }
 
 type AuthenticationQuery {
-  providers: [AuthenticationProvider]
+  providers(
+    filter: String
+    orderBy: String
+  ): [AuthenticationProvider]
 }
 
 type AuthenticationMutation {
