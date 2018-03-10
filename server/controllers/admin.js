@@ -298,8 +298,8 @@ router.post('/theme', (req, res) => {
   appconfig.theme.primary = req.body.primary
   appconfig.theme.alt = req.body.alt
   appconfig.theme.footer = req.body.footer
-  appconfig.theme.code.dark = req.body.codedark === 'true'
-  appconfig.theme.code.colorize = req.body.codecolorize === 'true'
+  appconfig.theme.code.dark = (req.body.codedark === 'true' || req.body.codedark === true)
+  appconfig.theme.code.colorize = (req.body.codecolorize === 'true' || req.body.codecolorize === true)
 
   return res.json({ msg: 'OK' })
 })

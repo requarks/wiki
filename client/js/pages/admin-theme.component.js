@@ -44,8 +44,8 @@ export default {
       this.primary = 'indigo'
       this.alt = 'blue-grey'
       this.footer = 'blue-grey'
-      this.codedark = 'true'
-      this.codecolorize = 'true'
+      this.codedark = true
+      this.codecolorize = true
     }
   },
   mounted() {
@@ -53,7 +53,7 @@ export default {
     this.primary = theme.primary
     this.alt = theme.alt
     this.footer = theme.footer
-    this.codedark = theme.code.dark.toString()
-    this.codecolorize = theme.code.colorize.toString()
+    this.codedark = (theme.code.dark === true || theme.code.dark === 'true')
+    this.codecolorize = (theme.code.colorize === true || theme.code.colorize === 'true')
   }
 }
