@@ -27,6 +27,19 @@ var mkdown = md({
   linkify: true,
   typography: true,
   highlight(str, lang) {
+    if (appconfig.theme.code.colorize && lang && lang.indexOf('_') && !hljs.getLanguage(lang)) {
+      let eLang = lang.split('_')
+      if (hljs.getLanguage(eLang.join(''))){
+        lang = eLang.join('')
+      } else {
+        for (let i = 0; i < eLang.length; i++) {
+          if (hljs.getLanguage(eLang[i])) {
+            lang = eLang[i]
+            break
+          }
+        }
+      }
+    }
     if (appconfig.theme.code.colorize && lang && hljs.getLanguage(lang)) {
       try {
         return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
