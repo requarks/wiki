@@ -182,6 +182,7 @@
     "name-all-modules-plugin": "1.0.1",
     "node-sass": "4.7.2",
     "offline-plugin": "4.9.0",
+    "optimize-css-assets-webpack-plugin": "3.2.0",
     "postcss-flexbugs-fixes": "3.3.0",
     "postcss-flexibility": "2.0.0",
     "postcss-loader": "2.1.1",

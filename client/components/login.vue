@@ -106,16 +106,16 @@ export default {
       } else {
         this.isLoading = true
         graphQL.mutate({
-          mutation: CONSTANTS.GRAPHQL.GQL_MUTATION_LOGIN,
+          mutation: CONSTANTS.GRAPH.AUTHENTICATION.MUTATION_LOGIN,
           variables: {
             username: this.username,
             password: this.password,
             provider: this.selectedStrategy
           }
         }).then(resp => {
-          if (resp.data.login) {
-            let respObj = resp.data.login
-            if (respObj.succeeded === true) {
+          if (_.has(resp, 'data.authentication.login')) {
+            let respObj = _.get(resp, 'data.authentication.login', {})
+            if (respObj.operation.succeeded === true) {
               if (respObj.tfaRequired === true) {
                 this.screen = 'tfa'
                 this.securityCode = ''
@@ -132,7 +132,7 @@ export default {
               }
               this.isLoading = false
             } else {
-              throw new Error(respObj.message)
+              throw new Error(respObj.operation.message)
             }
           } else {
             throw new Error('Authentication is unavailable.')
@@ -159,15 +159,15 @@ export default {
       } else {
         this.isLoading = true
         graphQL.mutate({
-          mutation: CONSTANTS.GRAPHQL.GQL_MUTATION_LOGINTFA,
+          mutation: CONSTANTS.GRAPH.AUTHENTICATION.MUTATION_LOGINTFA,
           variables: {
             loginToken: this.loginToken,
             securityCode: this.securityCode
           }
         }).then(resp => {
-          if (resp.data.loginTFA) {
-            let respObj = resp.data.loginTFA
-            if (respObj.succeeded === true) {
+          if (_.has(resp, 'data.authentication.loginTFA')) {
+            let respObj = _.get(resp, 'data.authentication.loginTFA', {})
+            if (respObj.operation.succeeded === true) {
               this.$store.dispatch('alert', {
                 style: 'success',
                 icon: 'gg-check',
@@ -175,7 +175,7 @@ export default {
               })
               this.isLoading = false
             } else {
-              throw new Error(respObj.message)
+              throw new Error(respObj.operation.message)
             }
           } else {
             throw new Error('Authentication is unavailable.')
@@ -380,6 +380,10 @@ export default {
             margin-right: 0;
             font-size: 20px;
           }
+        }
+
+        em {
+          height: 20px;
         }
 
         span {

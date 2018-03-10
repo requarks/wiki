@@ -29,6 +29,30 @@ module.exports = {
       return prv
     }
   },
+  AuthenticationMutation: {
+    async login(obj, args, context) {
+      try {
+        let authResult = await WIKI.db.User.login(args, context)
+        return {
+          ...authResult,
+          operation: graphHelper.generateSuccess('Login success')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async loginTFA(obj, args, context) {
+      try {
+        let authResult = await WIKI.db.User.loginTFA(args, context)
+        return {
+          ...authResult,
+          operation: graphHelper.generateSuccess('TFA success')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    }
+  },
   AuthenticationProvider: {
     icon (ap, args) {
       return fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${ap.key}.svg`), 'utf8').catch(err => {

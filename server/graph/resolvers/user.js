@@ -19,22 +19,6 @@ module.exports = {
         limit: 1
       })
     },
-    login(obj, args, context) {
-      return WIKI.db.User.login(args, context).catch(err => {
-        return {
-          succeeded: false,
-          message: err.message
-        }
-      })
-    },
-    loginTFA(obj, args, context) {
-      return WIKI.db.User.loginTFA(args, context).catch(err => {
-        return {
-          succeeded: false,
-          message: err.message
-        }
-      })
-    },
     modifyUser(obj, args) {
       return WIKI.db.User.update({
         email: args.email,

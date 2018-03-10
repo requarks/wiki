@@ -1,0 +1,6 @@
+extends ../master.pug
+
+block body
+  body
+    #app.setup.is-fullscreen
+      setup(telemetry-id=telemetryClientID, wiki-version=packageObj.version, :langs!=JSON.stringify(data.langs).replace(/"/g, "'"))

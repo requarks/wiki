@@ -12,8 +12,7 @@ module.exports = merge(common, {
     client: ['./client/index.js', 'webpack-hot-middleware/client']
   },
   output: {
-    pathinfo: true,
-    publicPath: '/'
+    pathinfo: true
   },
   plugins: [
     new SimpleProgressWebpackPlugin({

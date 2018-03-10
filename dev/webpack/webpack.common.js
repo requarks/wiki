@@ -5,7 +5,6 @@ const webpack = require('webpack')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const NameAllModulesPlugin = require('name-all-modules-plugin')
-const LodashModuleReplacementPlugin = require('lodash-webpack-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const postCSSConfig = {
@@ -24,6 +23,7 @@ module.exports = {
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
+    publicPath: '/',
     filename: 'js/[name].js',
     chunkFilename: 'js/[name].chunk.js'
   },
@@ -105,6 +105,10 @@ module.exports = {
               loader: 'css-loader'
             },
             {
+              loader: 'postcss-loader',
+              options: postCSSConfig
+            },
+            {
               loader: 'stylus-loader'
             }
           ]
@@ -114,37 +118,43 @@ module.exports = {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: {
-          extractCSS: ExtractTextPlugin,
-          postcss: postCSSConfig,
           loaders: {
-            css: [
-              {
-                loader: 'vue-style-loader'
-              },
-              {
-                loader: 'css-loader'
-              }
-            ],
-            scss: [
-              {
-                loader: 'vue-style-loader'
-              },
-              {
-                loader: 'css-loader'
-              },
-              {
-                loader: 'sass-loader',
-                options: {
-                  sourceMap: false
+            css: ExtractTextPlugin.extract({
+              fallback: 'vue-style-loader',
+              use: [
+                {
+                  loader: 'css-loader'
+                },
+                {
+                  loader: 'postcss-loader',
+                  options: postCSSConfig
                 }
-              },
-              {
-                loader: 'sass-resources-loader',
-                options: {
-                  resources: path.join(process.cwd(), '/client/scss/global.scss')
+              ]
+            }),
+            scss: ExtractTextPlugin.extract({
+              fallback: 'vue-style-loader',
+              use: [
+                {
+                  loader: 'css-loader'
+                },
+                {
+                  loader: 'postcss-loader',
+                  options: postCSSConfig
+                },
+                {
+                  loader: 'sass-loader',
+                  options: {
+                    sourceMap: false
+                  }
+                },
+                {
+                  loader: 'sass-resources-loader',
+                  options: {
+                    resources: path.join(process.cwd(), '/client/scss/global.scss')
+                  }
                 }
-              }
-            ],
+              ]
+            }),
             js: [
               {
                 loader: 'cache-loader',
@@ -209,7 +219,6 @@ module.exports = {
     ], {
 
     }),
-    new LodashModuleReplacementPlugin(),
     new webpack.NamedModulesPlugin(),
     new webpack.NamedChunksPlugin((chunk) => {
       if (chunk.name) {
@@ -237,7 +246,8 @@ module.exports = {
       'mdi': path.resolve(process.cwd(), 'node_modules/vue-material-design-icons'),
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
-      'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities')
+      'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),
+      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro')
     },
     extensions: [
       '.js',

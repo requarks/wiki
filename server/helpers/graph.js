@@ -2,6 +2,23 @@ const _ = require('lodash')
 const Filter = require('scim-query-filter-parser')
 
 module.exports = {
+  generateSuccess (msg) {
+    return {
+      succeeded: true,
+      code: 0,
+      slug: 'ok',
+      message: _.defaultTo(msg, 'Operation succeeded.')
+    }
+  },
+  generateError (err, complete = true) {
+    const error = {
+      succeeded: false,
+      code: err.code || 1,
+      slug: err.name,
+      message: err.message || 'An unexpected error occured.'
+    }
+    return (complete) ? { operation: error } : error
+  },
   filter (arr, filterString) {
     const prvFilter = new Filter(_.toString(filterString).replace(/'/g, `"`))
     return arr.filter(prvFilter.test)

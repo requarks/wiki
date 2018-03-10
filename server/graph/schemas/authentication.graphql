@@ -1,3 +1,7 @@
+# ===============================================
+# AUTHENTICATION
+# ===============================================
+
 extend type Query {
   authentication: AuthenticationQuery
 }
@@ -6,6 +10,10 @@ extend type Mutation {
   authentication: AuthenticationMutation
 }
 
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
 type AuthenticationQuery {
   providers(
     filter: String
@@ -13,13 +21,32 @@ type AuthenticationQuery {
   ): [AuthenticationProvider]
 }
 
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
 type AuthenticationMutation {
+  login(
+    username: String!
+    password: String!
+    provider: String!
+  ): AuthenticationLoginResponse
+
+  loginTFA(
+    loginToken: String!
+    securityCode: String!
+  ): DefaultResponse
+
   updateProvider(
     provider: String!
     isEnabled: Boolean!
     config: [KeyValuePairInput]
   ): DefaultResponse
 }
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
 
 type AuthenticationProvider {
   isEnabled: Boolean!
@@ -29,4 +56,10 @@ type AuthenticationProvider {
   useForm: Boolean!
   icon: String
   config: [KeyValuePair]
+}
+
+type AuthenticationLoginResponse {
+  operation: ResponseStatus
+  tfaRequired: Boolean
+  tfaLoginToken: String
 }

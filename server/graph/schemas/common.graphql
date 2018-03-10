@@ -162,13 +162,6 @@ type OperationResult {
   data: String
 }
 
-type LoginResult {
-  succeeded: Boolean!
-  message: String
-  tfaRequired: Boolean
-  tfaLoginToken: String
-}
-
 # Query (Read)
 type Query {
   comments(id: Int): [Comment]
@@ -263,17 +256,6 @@ type Mutation {
 
   deleteUser(
     id: Int!
-  ): OperationResult
-
-  login(
-    username: String!
-    password: String!
-    provider: String!
-  ): LoginResult
-
-  loginTFA(
-    loginToken: String!
-    securityCode: String!
   ): OperationResult
 
   modifyComment(

@@ -19,7 +19,7 @@ module.exports = {
           ajax: (url, opts, cb, data) => {
             let langParams = url.split('/')
             graphQL.query({
-              query: CONSTANTS.GRAPHQL.GQL_QUERY_TRANSLATIONS,
+              query: CONSTANTS.GRAPH.TRANSLATIONS.QUERY_NAMESPACE,
               variables: {
                 locale: langParams[0],
                 namespace: langParams[1]

@@ -33,32 +33,46 @@ export default {
           }
         }
       }
+    `,
+    MUTATION_LOGIN: gql`
+      mutation($username: String!, $password: String!, $provider: String!) {
+        authentication {
+          login(username: $username, password: $password, provider: $provider) {
+            operation {
+              succeeded
+              code
+              slug
+              message
+            }
+            tfaRequired
+            tfaLoginToken
+          }
+        }
+      }
+    `,
+    MUTATION_LOGINTFA: gql`
+      mutation($loginToken: String!, $securityCode: String!) {
+        authentication {
+          loginTFA(loginToken: $loginToken, securityCode: $securityCode) {
+            operation {
+              succeeded
+              code
+              slug
+              message
+            }
+          }
+        }
+      }
     `
   },
-  GQL_QUERY_TRANSLATIONS: gql`
-    query($locale: String!, $namespace: String!) {
-      translations(locale:$locale, namespace:$namespace) {
-        key
-        value
+  TRANSLATIONS: {
+    QUERY_NAMESPACE: gql`
+      query($locale: String!, $namespace: String!) {
+        translations(locale:$locale, namespace:$namespace) {
+          key
+          value
+        }
       }
-    }
-  `,
-  GQL_MUTATION_LOGIN: gql`
-    mutation($username: String!, $password: String!, $provider: String!) {
-      login(username: $username, password: $password, provider: $provider) {
-        succeeded
-        message
-        tfaRequired
-        tfaLoginToken
-      }
-    }
-  `,
-  GQL_MUTATION_LOGINTFA: gql`
-    mutation($loginToken: String!, $securityCode: String!) {
-      loginTFA(loginToken: $loginToken, securityCode: $securityCode) {
-        succeeded
-        message
-      }
-    }
-  `
+    `
+  }
 }

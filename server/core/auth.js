@@ -33,10 +33,12 @@ module.exports = {
     // Load authentication strategies
 
     const modules = _.values(autoload(path.join(WIKI.SERVERPATH, 'modules/authentication')))
+    console.info(WIKI.config.auth)
     _.forEach(modules, (strategy) => {
       const strategyConfig = _.get(WIKI.config.auth.strategies, strategy.key, {})
       strategyConfig.callbackURL = `${WIKI.config.site.host}${WIKI.config.site.path}login/${strategy.key}/callback`
       if (strategyConfig.isEnabled) {
+        console.info(strategy.title)
         try {
           strategy.init(passport, strategyConfig)
         } catch (err) {

@@ -103,8 +103,6 @@ module.exports = (sequelize, DataTypes) => {
               let loginToken = await securityHelper.generateToken(32)
               await WIKI.redis.set(`tfa:${loginToken}`, user.id, 'EX', 600)
               return resolve({
-                succeeded: true,
-                message: 'Login Successful. Awaiting 2FA security code.',
                 tfaRequired: true,
                 tfaLoginToken: loginToken
               })
@@ -117,8 +115,6 @@ module.exports = (sequelize, DataTypes) => {
             return context.req.logIn(user, err => {
               if (err) { return reject(err) }
               resolve({
-                succeeded: true,
-                message: 'Login Successful',
                 tfaRequired: false
               })
             })
