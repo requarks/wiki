@@ -1,351 +1,312 @@
 <template lang="pug">
-  div
-    .container
-      .content(v-cloak)
+  v-app.setup
+    v-toolbar(color='blue darken-2', dark, app, clipped-left, fixed, flat)
+      v-spacer
+      v-toolbar-title
+        span.subheading Wiki.js Setup
+      v-spacer
+    v-content
+      v-progress-linear.ma-0(indeterminate, height='4', :active='loading')
+      v-stepper.elevation-0(v-model='state')
+        v-stepper-header
+          v-stepper-step(step='1' :complete='state > 1')
+            | Welcome
+            small Wiki.js Installation Wizard
+          v-divider
+          v-stepper-step(step='2' :complete='state > 2')
+            | System Check
+            small Checking your system for compatibility
+          v-divider
+          v-stepper-step(step='3' :complete='state > 3')
+            | General Information
+            small Site Title, Language and Access
+          v-divider
+          v-stepper-step(step='4' :complete='state > 4')
+            | Administration Account
+            small Create the admin account
+          v-divider(v-if='this.conf.upgrade')
+          v-stepper-step(step='5' :complete='state > 5', v-if='this.conf.upgrade')
+            | Upgrade from Wiki.js 1.x
+            small Migrate your existing installation
+          v-divider
+          v-stepper-step(:step='this.conf.upgrade ? 6 : 5' :complete='this.conf.upgrade ? state > 5 : state > 6')
+            | Final Steps
+            small Finalizing your installation
 
-        //- ==============================================
-        //- WELCOME
-        //- ==============================================
+        v-stepper-items
+          //- ==============================================
+          //- WELCOME
+          //- ==============================================
 
-        template(v-if='state === "welcome"')
-          .panel
-            h2.panel-title.is-featured
-              span Welcome!
-              i(v-if='loading')
-            .panel-content.is-text
-              .welcome
-                img(src='svg/logo-wikijs.svg', alt='Wiki.js Logo')
-                h2 A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
-              p This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
-              p Detailed information about installation and usage can be found on the #[a(href='https://wiki.requarks.io/docs') official documentation site]. #[br] Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
-            .panel-content.form-sections
-              section
-                p
-                  svg.icons.is-18.is-outlined.has-right-pad.is-text: use(xlink:href='#nc-cd-reader')
-                  span You are about to install Wiki.js #[strong {{wikiVersion}}].
-              section
-                p.control.is-fullwidth
-                  input#ipt-telemetry(type='checkbox', v-model='conf.telemetry', name='ipt-telemetry')
-                  label.label(for='ipt-telemetry') Allow Telemetry
-                  span.desc Help Wiki.js developers improve this app with anonymized #[a(href='https://wiki.requarks.io/docs/telemetry') telemetry].
-                p.control.is-fullwidth
-                  input#ipt-upgrade(type='checkbox', v-model='conf.upgrade', name='ipt-upgrade')
-                  label.label(for='ipt-upgrade') Upgrade from Wiki.js 1.x
-                  span.desc Check this box if you are upgrading from Wiki.js 1.x and wish to migrate your existing data.
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Start
+          v-stepper-content(step='1')
+            v-card.text-xs-center.pa-3(flat)
+              img(src='svg/logo-wikijs.svg', alt='Wiki.js Logo', style='width: 300px;')
+            v-container
+              .body-2.py-2 This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
+              .body-1
+                | Detailed information about installation and usage can be found on the #[a(href='https://wiki.requarks.io/docs') official documentation site].
+                br
+                | Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
+              .body-1.pt-3
+                svg.icons.is-18.is-outlined.has-right-pad.is-text: use(xlink:href='#nc-cd-reader')
+                span You are about to install Wiki.js #[strong {{wikiVersion}}].
+              v-divider
+              v-form
+                v-checkbox(
+                  color='primary',
+                  v-model='conf.telemetry',
+                  label='Allow Telemetry',
+                  persistent-hint,
+                  hint='Help Wiki.js developers improve this app with anonymized telemetry.'
+                )
+                v-checkbox.mt-3(
+                  color='primary',
+                  v-model='conf.upgrade',
+                  label='Upgrade from Wiki.js 1.x',
+                  persistent-hint,
+                  hint='Check this box if you are upgrading from Wiki.js 1.x and wish to migrate your existing data.'
+                )
+            v-divider
+            .text-xs-center
+              v-btn(color='primary', @click='proceedToSyscheck', :disabled='loading') Start
 
-        //- ==============================================
-        //- SYSTEM CHECK
-        //- ==============================================
+          //- ==============================================
+          //- SYSTEM CHECK
+          //- ==============================================
 
-        template(v-else-if='state === "syscheck"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.is-text
-              .is-logo
-                svg.icons.is-64: use(xlink:href='#nc-metrics')
-                h4 System Check
-              p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#wk-msdots')] Checking your system for compatibility...
-              p(v-if='!loading && syscheck.ok')
-                ul
-                  li(v-for='rs in syscheck.results') #[svg.icons.is-18.is-text: use(xlink:href='#nc-check-bold')] {{rs}}
-              p(v-if='!loading && syscheck.ok')
-                svg.icons.is-18.is-text: use(xlink:href='#nc-check-bold')
-                strong  Looks good! No issues so far.
-              p(v-if='!loading && !syscheck.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove-12')] Error: {{ syscheck.error }}
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToWelcome', v-bind:disabled='loading') Back
-              button.button.is-small.is-teal(v-on:click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
-              button.button.is-small.is-red.is-outlined(v-on:click='proceedToGeneral', v-if='!loading && !syscheck.ok') Continue Anyway
-              button.button.is-small.is-light-blue(v-on:click='proceedToGeneral', v-if='loading || syscheck.ok', v-bind:disabled='loading') Continue
+          v-stepper-content(step='2')
+            v-card.text-xs-center(flat)
+              svg.icons.is-64: use(xlink:href='#nc-metrics')
+              .subheading System Check
+            v-container
+              v-layout(row, align-center, v-if='loading')
+                v-progress-circular(v-if='loading', indeterminate, color='blue')
+                .body-2.blue--text.ml-3 Checking your system for compatibility...
+              v-alert(type='success', outline, :value='!loading && syscheck.ok') Looks good! No issues so far.
+              v-alert(type='error', outline, :value='!loading && !syscheck.ok') {{ syscheck.error }}
+              v-list.mt-3(two-line, v-if='!loading && syscheck.ok', dense)
+                template(v-for='(rs, n) in syscheck.results')
+                  v-divider(v-if='n > 0', inset)
+                  v-list-tile
+                    v-list-tile-avatar(color='green lighten-5')
+                      v-icon(color='green') check
+                    v-list-tile-content
+                      v-list-tile-title {{rs.title}}
+                      v-list-tile-sub-title {{rs.subtitle}}
+            v-divider
+            .text-xs-center
+              v-btn(@click='proceedToWelcome', :disabled='loading') Back
+              v-btn(color='primary', @click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
+              v-btn(color='red', dark, @click='proceedToGeneral', v-if='!loading && !syscheck.ok') Continue Anyway
+              v-btn(color='primary', @click='proceedToGeneral', v-if='loading || syscheck.ok', :disabled='loading') Continue
 
-        //- ==============================================
-        //- GENERAL
-        //- ==============================================
+          //- ==============================================
+          //- GENERAL
+          //- ==============================================
 
-        template(v-else-if='state === "general"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.form-sections
-              section
-                .is-logo
-                  svg.icons.is-64: use(xlink:href='#nc-webpage')
-                  h4 General Information
-                p.control.is-fullwidth
-                  label.label Site Title
-                  input(type='text', placeholder='e.g. Wiki', v-model='conf.title', data-vv-scope='general', name='ipt-title', v-validate='{ required: true, min: 2 }')
-                  span.desc The site title will appear in the top left corner on every page and within the window title bar.
-              section.columns
-                .column.is-half
-                  p.control
-                    label.label Site UI Language
-                    select(v-model='conf.lang')
-                      option(:value='lg.id', v-for='lg in langs') {{lg.name}}
-                    span.desc The language in which navigation, help and other UI elements will be displayed.
-                .column.is-half
-                  p.control.is-fullwidth
-                    label.label Site Relative URL Path
-                    input(type='text', placeholder='/', v-model='conf.path', data-vv-scope='general', name='ipt-path', v-validate='{ required: true, min: 1 }')
-                    span.desc The relative path to your wiki. Unless you configure a reverse proxy in front of Wiki.js to handle requests made to a sub-directory, #[strong it is recommended to leave the default value].
-              section.columns
-                .column.is-half
-                  p.control
-                    label.label Server Port
-                    input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
-                    span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it. Set #[strong $(PORT)] to use the PORT environment variable.
-                .column.is-half
-                  p.control.is-fullwidth
-                    input#ipt-public(type='checkbox', v-model='conf.public', data-vv-scope='general', name='ipt-public')
-                    label.label(for='ipt-public') Public Access
-                    span.desc Should the site be accessible (read only) without login.
-                  p.control.is-fullwidth
-                    input#ipt-selfregister(type='checkbox', v-model='conf.selfRegister', data-vv-scope='general', name='ipt-selfregister')
-                    label.label(for='ipt-selfregister') Allow Self-Registration
-                    span.desc Can users create their own account to gain access?
-              section
-                p.control.is-fullwidth
-                  label.label Local Server Repository Path
-                  input(type='text', placeholder='e.g. ./repo', v-model='conf.pathRepo', data-vv-scope='general', name='ipt-repopath', v-validate='{ required: true, min: 2 }')
-                  span.desc The path where the local git repository will be created, used to store content in markdown files and uploads.#[br] #[strong It is recommended to leave the default value].
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToSyscheck', v-bind:disabled='loading') Back
-              button.button.is-small.is-light-blue(v-on:click='proceedToConsiderations', v-bind:disabled='loading || errors.any("general")') Continue
+          v-stepper-content(step='3')
+            v-card.text-xs-center(flat)
+              svg.icons.is-64: use(xlink:href='#nc-webpage')
+              .subheading General Information
+            v-form
+              v-container
+                v-layout(row, wrap)
+                  v-flex(xs12)
+                    v-text-field(
+                      v-model='conf.title',
+                      label='Site Title',
+                      :counter='255',
+                      persistent-hint,
+                      hint='The site title will appear in the top left corner on every page and within the window title bar.',
+                      v-validate='{ required: true, min: 2 }',
+                      data-vv-name='siteTitle',
+                      data-vv-as='Site Title',
+                      data-vv-scope='general',
+                      :error-messages='errors.collect(`siteTitle`)'
+                    )
+                v-layout(row, wrap).mt-3
+                  v-flex.pr-3(xs12, sm4)
+                    v-select(
+                      v-model='conf.lang',
+                      :items='langs',
+                      label='Site UI Language',
+                      item-value='id',
+                      item-text='name',
+                      persistent-hint,
+                      hint='The language in which navigation, help and other UI elements will be displayed.'
+                    )
+                      template(slot='item', slot-scope='data')
+                        v-list-tile-avatar
+                          v-avatar.blue.white--text(tile, size='40', v-html='data.item.id.toUpperCase()')
+                        v-list-tile-content
+                          v-list-tile-title(v-html='data.item.name')
+                          v-list-tile-sub-title(v-html='data.item.original')
+                  v-flex(xs12, sm8)
+                    v-text-field(
+                      v-model='conf.pathContent',
+                      label='Content Data Path',
+                      persistent-hint,
+                      hint='The path where content is stored (markdown files, uploads, etc.)',
+                      v-validate='{ required: true, min: 2 }',
+                      data-vv-name='pathContent',
+                      data-vv-as='Content Data Path',
+                      data-vv-scope='general',
+                      :error-messages='errors.collect(`pathContent`)'
+                    )
+                v-layout(row, wrap).mt-3
+                  v-flex.pr-3(xs12, sm4)
+                    v-text-field(
+                      v-model='conf.port',
+                      label='Server Port',
+                      persistent-hint,
+                      hint='The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it. Set $(PORT) to use the PORT environment variable.',
+                      v-validate='{ required: true }',
+                      data-vv-name='port',
+                      data-vv-as='Port',
+                      data-vv-scope='general',
+                      :error-messages='errors.collect(`port`)'
+                    )
+                  v-flex(xs12, sm8)
+                    v-text-field(
+                      v-model='conf.pathData',
+                      label='Temporary Data Path',
+                      persistent-hint,
+                      hint='The path where temporary data is stored (cache, thumbnails, temporary upload files, etc.)',
+                      v-validate='{ required: true, min: 2 }',
+                      data-vv-name='pathData',
+                      data-vv-as='Temporary Data Path',
+                      data-vv-scope='general',
+                      :error-messages='errors.collect(`pathData`)'
+                    )
+                v-layout(row, wrap).mt-3
+                  v-flex(xs12)
+                    v-checkbox(
+                      color='primary',
+                      v-model='conf.public',
+                      label='Public Access',
+                      persistent-hint,
+                      hint='Should the site be accessible (read only) without login.'
+                    )
+                    v-checkbox.mt-2(
+                      color='primary',
+                      v-model='conf.selfRegister',
+                      label='Allow Self-Registration',
+                      persistent-hint,
+                      hint='Can users create their own account to gain access?'
+                    )
+            v-divider
+            .text-xs-center
+              v-btn(@click='proceedToSyscheck', :disabled='loading') Back
+              v-btn(color='primary', @click='proceedToAdmin', :disabled='loading') Continue
 
-        //- ==============================================
-        //- CONSIDERATIONS
-        //- ==============================================
+          //- ==============================================
+          //- ADMINISTRATOR ACCOUNT
+          //- ==============================================
 
-        template(v-else-if='state === "considerations"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.is-text
-              .is-logo
-                svg.icons.is-64: use(xlink:href='#nc-radar')
-                h4 Important Considerations
-              h3 Is Wiki.js going to be behind a web server (e.g. nginx / apache / IIS) or proxy?
-              p
-                ul
-                  li - Make sure the upload limit is sufficient. Most web servers have a low limit (e.g. 2 MB) by default.
-                  li - Do not rewrite URLs after the domain. This can cause unexpected issues in Wiki.js navigation.
-                  li - Do not remove or alter the client IP when proxying the requests. This can cause the authentication brute force protection to engage unexpectedly.
-              template(v-if='considerations.https')
-                h3 The site will not be using HTTPS? #[svg.icons.is-20.is-outlined.animated.fadeOut.infinite: use(xlink:href='#nc-alert')]
-                p The host URL you specified is not HTTPS. It is highly recommended to use HTTPS. You must use a web server / proxy (e.g. nginx / apache / IIS) in front of Wiki.js to use HTTPS. Wiki.js does not provide HTTPS handling by itself.
-              template(v-if='considerations.port')
-                h3 You are using a non-standard port.
-                p If you are not planning on using a web server / proxy in front of Wiki.js, be aware that users will need to specify the port when accessing the wiki. Make sure this is the intended behavior. Otherwise set a standard HTTP port such as 80.
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
-              button.button.is-small.is-light-blue(v-on:click='proceedToGit', v-bind:disabled='loading') Continue
+          v-stepper-content(step='4')
+            v-card.text-xs-center(flat)
+              svg.icons.is-64: use(xlink:href='#nc-man-black')
+              .subheading Administrator Account
+              .body-2 A root administrator account will be created for local authentication. From this account, you can create or authorize more users.
+            v-form
+              v-container
+                v-layout(row, wrap)
+                  v-flex(xs12)
+                    v-text-field(
+                      autofocus
+                      v-model='conf.adminEmail',
+                      label='Administrator Email',
+                      hint='The email address of the administrator account',
+                      v-validate='{ required: true, email: true }',
+                      data-vv-name='adminEmail',
+                      data-vv-as='Administrator Email',
+                      data-vv-scope='admin',
+                      :error-messages='errors.collect(`adminEmail`)'
+                    )
+                  v-flex.pr-3(xs6)
+                    v-text-field(
+                      ref='adminPassword',
+                      v-model='conf.adminPassword',
+                      label='Password',
+                      hint='At least 8 characters long.',
+                      v-validate='{ required: true, min: 8 }',
+                      data-vv-name='adminPassword',
+                      data-vv-as='Password',
+                      data-vv-scope='admin',
+                      :error-messages='errors.collect(`adminPassword`)'
+                    )
+                  v-flex(xs6)
+                    v-text-field(
+                      v-model='conf.adminPasswordConfirm',
+                      label='Confirm Password',
+                      hint='Verify your password again.',
+                      v-validate='{ required: true, confirmed: `$adminPassword` }',
+                      data-vv-name='adminPasswordConfirm',
+                      data-vv-as='Confirm Password',
+                      data-vv-scope='admin',
+                      :error-messages='errors.collect(`adminPasswordConfirm`)'
+                    )
+              .text-xs-center
+                v-btn(@click='proceedToGeneral', :disabled='loading') Back
+                v-btn(color='primary', @click='proceedToUpgrade', :disabled='loading') Continue
 
-        //- ==============================================
-        //- GIT
-        //- ==============================================
+          //- ==============================================
+          //- UPGRADE FROM 1.x
+          //- ==============================================
 
-        template(v-else-if='state === "git"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.is-text
-              .is-logo
-                img(src='svg/logo-git.svg', alt='Git Logo')
-                h4 Git Repository
-              p Wiki.js stores article content and uploads locally on disk. All content is then regularly kept in sync with a remote git repository. This acts a backup protection and provides history / revert features. While optional, it is <strong>HIGHLY</strong> recommended to setup the remote git repository connection.
-            .panel-content.form-sections
-              section.columns
-                .column.is-two-thirds
-                  p.control.is-fullwidth
-                    label.label Repository URL
-                    input(type='text', placeholder='e.g. git@github.com/org/repo.git or https://github.com/org/repo', v-model='conf.gitUrl', data-vv-scope='git', name='ipt-giturl', v-validate='{ required: true, min: 5 }')
-                    span.desc The full git repository URL to connect to.
-                .column
-                  p.control.is-fullwidth
-                    label.label Branch
-                    input(type='text', placeholder='e.g. master', v-model='conf.gitBranch', data-vv-scope='git', name='ipt-gitbranch', v-validate='{ required: true, min: 2 }')
-                    span.desc The git branch to use when synchronizing changes.
-              section.columns
-                .column.is-one-third
-                  p.control.is-fullwidth
-                    label.label Authentication
-                    select(v-model='conf.gitAuthType')
-                      option(value='ssh') SSH using Private Key file (recommended)
-                      option(value='sshenv') SSH using Private Key in environment variable
-                      option(value='sshdb') SSH using Private Key in database
-                      option(value='basic') Basic Credentials
-                    span.desc The authentication method used to connect to your remote Git repository.
-                  p.control.is-fullwidth
-                    input#ipt-git-verify-ssl(type='checkbox', v-model='conf.gitAuthSSL')
-                    label.label(for='ipt-git-verify-ssl') Verify SSL
-                .column(v-show='conf.gitAuthType === "basic"')
-                  p.control.is-fullwidth
-                    label.label Username
-                    input(type='text', v-model='conf.gitAuthUser')
-                    span.desc The username for the remote git connection.
-                .column(v-show='conf.gitAuthType === "basic"')
-                  p.control.is-fullwidth
-                    label.label Password
-                    input(type='password', v-model='conf.gitAuthPass')
-                    span.desc The password for the remote git connection.
-                .column(v-show='conf.gitAuthType === "ssh"')
-                  p.control.is-fullwidth
-                    label.label Private Key location
-                    input(type='text', placeholder='e.g. /etc/wiki/keys/git.pem', v-model='conf.gitAuthSSHKey')
-                    span.desc The full path to the #[strong unencrypted] private key on disk.
-                .column(v-show='conf.gitAuthType === "sshenv"')
-                  p.control.is-fullwidth
-                    label.label Private Key Environment Variable
-                    input(type='text', placeholder='e.g. GIT_PRIVATE_KEY', v-model='conf.gitAuthSSHKeyEnv')
-                    span.desc The environment variable containing the private key.
-                .column(v-show='conf.gitAuthType === "sshdb"')
-                  p.control.is-fullwidth
-                    label.label Private Key Contents
-                    textarea(v-model='conf.gitAuthSSHKeyDB')
-                    span.desc Paste the contents of the private key in the above field
-              section.columns
-                .column.is-one-third
-                  p.control.is-fullwidth
-                    input#ipt-git-show-user-email(type='checkbox', v-model='conf.gitShowUserEmail')
-                    label.label(for='ipt-git-show-user-email') Commit using User Email
-                    span.desc When enabled, commits are made as the current user name and email. If unchecked, the current user name will still be used but the default commit author email will be used instead.
-                .column
-                  p.control.is-fullwidth
-                    label.label Default Commit Author Email
-                    input(type='text', placeholder='e.g. user@example.com', v-model.number='conf.gitServerEmail', data-vv-scope='git', name='ipt-gitsrvemail', v-validate='{ required: true, email: true }')
-                    span.desc The default/fallback email to use when creating commits to the git repository.
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGeneral', v-bind:disabled='loading') Back
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='conf.gitUseRemote = false; proceedToGitCheck()', v-bind:disabled='loading') Skip this step
-              button.button.is-small.is-light-blue(v-on:click='conf.gitUseRemote = true; proceedToGitCheck()', v-bind:disabled='loading || errors.any("git")') Continue
+          v-stepper-content(step='5', v-if='conf.upgrade')
+            v-card.text-xs-center(flat)
+              svg.icons.is-64: use(xlink:href='#nc-spaceship')
+              .subheading Upgrade from Wiki.js 1.x
+              .body-2 Migrating from a Wiki.js 1.x installation is quick and simple.
+            v-form
+              v-container
+                v-layout(row)
+                  v-flex(xs12)
+                    v-text-field(
+                      v-model='conf.upgMongo',
+                      placeholder='mongodb://',
+                      label='Connection String to Wiki.js 1.x MongoDB database',
+                      persistent-hint,
+                      hint='A MongoDB database connection string where a Wiki.js 1.x installation is located. No alterations will be made to this database.',
+                      v-validate='{ required: true, min: 2 }',
+                      data-vv-name='upgMongo',
+                      data-vv-as='MongoDB Connection String',
+                      data-vv-scope='upgrade',
+                      :error-messages='errors.collect(`upgMongo`)'
+                    )
+            .text-xs-center
+              v-btn(@click='proceedToAdmin', :disabled='loading') Back
+              v-btn(color='primary', @click='proceedToFinal', :disabled='loading') Continue
 
-        //- ==============================================
-        //- GIT CHECK
-        //- ==============================================
+          //- ==============================================
+          //- FINAL
+          //- ==============================================
 
-        template(v-else-if='state === "gitcheck"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.is-text
-              .is-logo
-                img(src='svg/logo-git.svg', alt='Git Logo')
-                h4 Git Repository Check
-              p(v-if='loading') #[svg.icons.is-24.is-text: use(xlink:href='#wk-msdots')] Verifying Git repository settings...
-              p(v-if='!loading && gitcheck.ok')
-                ul
-                  li(v-for='rs in gitcheck.results') #[svg.icons.is-18.is-text: use(xlink:href='#nc-check-bold')] {{rs}}
-              p(v-if='!loading && gitcheck.ok')
-                svg.icons.is-18.is-text: use(xlink:href='#nc-check-bold')
-                strong  Git settings are correct!
-              p(v-if='!loading && !gitcheck.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove')] Error: {{ gitcheck.error }}
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
-              button.button.is-small.is-teal(v-on:click='proceedToGitCheck', v-if='!loading && !gitcheck.ok') Try Again
-              button.button.is-small.is-light-blue(v-on:click='proceedToAdmin', v-if='loading || gitcheck.ok', v-bind:disabled='loading') Continue
-
-        //- ==============================================
-        //- ADMINISTRATOR ACCOUNT
-        //- ==============================================
-
-        template(v-else-if='state === "admin"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.is-text
-              .is-logo
-                svg.icons.is-64: use(xlink:href='#nc-man-black')
-                h4 Administrator Account
-              p A root administrator account will be created for local authentication. From this account, you can create or authorize more users.
-            .panel-content.form-sections
-              section
-                p.control.is-fullwidth
-                  label.label Administrator Email
-                  input(type='text', placeholder='e.g. admin@example.com', v-model='conf.adminEmail', data-vv-scope='admin', name='ipt-adminemail', v-validate='{ required: true, email: true }')
-                  span.desc The email address of the administrator account
-              section.columns
-                .column
-                  p.control.is-fullwidth
-                    label.label Password
-                    input(type='password', v-model='conf.adminPassword', data-vv-scope='admin', name='ipt-adminpwd', v-validate='{ required: true, min: 8 }')
-                    span.desc At least 8 characters long.
-                .column
-                  p.control.is-fullwidth
-                    label.label Confirm Password
-                    input(type='password', v-model='conf.adminPasswordConfirm', data-vv-scope='admin', name='ipt-adminpwd2', v-validate='{ required: true, confirmed: "ipt-adminpwd" }')
-                    span.desc Verify your password again.
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToGit', v-bind:disabled='loading') Back
-              button.button.is-small.is-light-blue(v-on:click='proceedToUpgrade', v-bind:disabled='loading || errors.any("admin")') Continue
-
-        //- ==============================================
-        //- UPGRADE FROM 1.x
-        //- ==============================================
-
-        template(v-else-if='state === "upgrade"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.is-text
-              .is-logo
-                svg.icons.is-64: use(xlink:href='#nc-spaceship')
-                h4 Upgrade from Wiki.js 1.x
-              p Migrating from a Wiki.js 1.x installation is quick and simple.
-            .panel-content.form-sections
-              section
-                p.control.is-fullwidth
-                  label.label Connection String to Wiki.js 1.x MongoDB database
-                  input(type='text', placeholder='mongodb://', v-model='conf.upgMongo', data-vv-scope='upgrade', name='ipt-mongo', v-validate='{ required: true, min: 2 }')
-                  span.desc A MongoDB database connection string where a Wiki.js 1.x installation is located. #[strong No alterations will be made to this database. ]
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-bind:disabled='loading') Back
-              button.button.is-small.is-light-blue(v-on:click='proceedToFinal', v-bind:disabled='loading || errors.any("general")') Continue
-
-        //- ==============================================
-        //- FINAL
-        //- ==============================================
-
-        template(v-else-if='state === "final"')
-          .panel
-            h2.panel-title.is-featured
-              span Wiki.js
-              i(v-if='loading')
-            .panel-content.is-text
-              .is-logo(v-if='loading')
-                svg.icons.is-64: use(xlink:href='#wk-msdots')
-                h4 Finalizing your installation...
-              .is-logo(v-if='!loading && final.ok')
+          v-stepper-content(:step='conf.upgrade ? 6 : 5')
+            v-card.text-xs-center(flat)
+              template(v-if='loading')
+                v-progress-circular(size='64', indeterminate, color='blue')
+                .subheading Finalizing your installation...
+              template(v-else-if='final.ok')
                 svg.icons.is-64: use(xlink:href='#nc-check-bold')
-                h4 Installation complete!
-              p(v-if='!loading && final.ok'): strong Wiki.js was configured successfully and is now ready for use.
-              p(v-if='!loading && final.ok') Click the #[strong Start] button below to access your newly configured wiki.
-              p(v-if='!loading && !final.ok') #[svg.icons.is-18.is-text: use(xlink:href='#nc-square-remove')] Error: {{ final.error }}
-            .panel-footer
-              .progress-bar: div(v-bind:style='{width: currentProgress}')
-              button.button.is-small.is-light-blue.is-outlined(v-on:click='proceedToAdmin', v-if='!loading && !final.ok', v-bind:disabled='loading') Back
-              button.button.is-small.is-teal(v-on:click='proceedToFinal', v-if='!loading && !final.ok') Try Again
-              button.button.is-small.is-green(v-on:click='finish', v-if='loading || final.ok', v-bind:disabled='loading') Start
+                .subheading Installation complete!
+              template(v-else)
+                svg.icons.is-64: use(xlink:href='#nc-square-remove')
+                .subheading Something went wrong...
+            v-container
+              v-alert(type='success', outline, :value='!loading && final.ok') Wiki.js was configured successfully and is now ready for use.
+              v-alert(type='error', outline, :value='!loading && !final.ok') {{ final.error }}
+            v-divider
+            .text-xs-center
+              v-btn(@click='!conf.upgrade ? proceedToAdmin() : proceedToUpgrade()', :disabled='loading') Back
+              v-btn(color='primary', @click='proceedToFinal', v-if='!loading && !final.ok') Try Again
+              v-btn(color='success', @click='finish', v-if='loading || final.ok', :disabled='loading') Continue
 
-    footer
-      small Wiki.js Installation Wizard
-      small(v-if='conf.telemetry') Telemetry Client ID: {{telemetryId}}
+    v-footer.pa-3(app, absolute, color='grey darken-3', height='auto')
+      .caption.grey--text Wiki.js
+      v-spacer
+      .caption.grey--text(v-if='conf.telemetry') Telemetry Client ID: {{telemetryId}}
 </template>
 
 <script>
@@ -373,19 +334,11 @@ export default {
   data() {
     return {
       loading: false,
-      state: 'welcome',
+      state: 1,
       syscheck: {
         ok: false,
         error: '',
         results: []
-      },
-      dbcheck: {
-        ok: false,
-        error: ''
-      },
-      gitcheck: {
-        ok: false,
-        error: ''
       },
       final: {
         ok: false,
@@ -396,21 +349,9 @@ export default {
         adminEmail: '',
         adminPassword: '',
         adminPasswordConfirm: '',
-        gitAuthPass: '',
-        gitAuthSSHKey: '',
-        gitAuthSSHKeyEnv: '',
-        gitAuthSSHKeyDB: '',
-        gitAuthSSL: true,
-        gitAuthType: 'ssh',
-        gitAuthUser: '',
-        gitBranch: 'master',
-        gitServerEmail: '',
-        gitShowUserEmail: true,
-        gitUrl: '',
-        gitUseRemote: (siteConfig.git !== false),
         lang: siteConfig.lang || 'en',
-        path: siteConfig.path || '/',
-        pathRepo: './repo',
+        pathData: './data',
+        pathContent: './content',
         port: siteConfig.port || 80,
         public: (siteConfig.public === true),
         selfRegister: (siteConfig.selfRegister === true),
@@ -418,75 +359,19 @@ export default {
         title: siteConfig.title || 'Wiki',
         upgrade: false,
         upgMongo: 'mongodb://'
-      },
-      considerations: {
-        https: false,
-        port: false,
-        localhost: false
       }
     }
-  },
-  computed: {
-    currentProgress: function () {
-      let perc = '0%'
-      switch (this.state) {
-        case 'welcome':
-          perc = '0%'
-          break
-        case 'syscheck':
-          perc = (this.syscheck.ok) ? '15%' : '5%'
-          break
-        case 'general':
-          perc = '25%'
-          break
-        case 'considerations':
-          perc = '30%'
-          break
-        case 'git':
-          perc = '50%'
-          break
-        case 'gitcheck':
-          perc = (this.gitcheck.ok) ? '70%' : '55%'
-          break
-        case 'admin':
-          perc = '75%'
-          break
-        case 'upgrade':
-          perc = '85%'
-          break
-      }
-      return perc
-    }
-  },
-  mounted: function () {
-    /* if (appconfig.paths) {
-      this.conf.pathData = appconfig.paths.data || './data'
-      this.conf.pathRepo = appconfig.paths.repo || './repo'
-    }
-    if (appconfig.git !== false && _.isPlainObject(appconfig.git)) {
-      this.conf.gitUrl = appconfig.git.url || ''
-      this.conf.gitBranch = appconfig.git.branch || 'master'
-      this.conf.gitShowUserEmail = (appconfig.git.showUserEmail !== false)
-      this.conf.gitServerEmail = appconfig.git.serverEmail || ''
-      if (_.isPlainObject(appconfig.git.auth)) {
-        this.conf.gitAuthType = appconfig.git.auth.type || 'ssh'
-        this.conf.gitAuthSSHKey = appconfig.git.auth.privateKey || ''
-        this.conf.gitAuthUser = appconfig.git.auth.username || ''
-        this.conf.gitAuthPass = appconfig.git.auth.password || ''
-        this.conf.gitAuthSSL = (appconfig.git.auth.sslVerify !== false)
-      }
-    } */
   },
   methods: {
-    proceedToWelcome: function (ev) {
-      this.state = 'welcome'
+    proceedToWelcome () {
+      this.state = 1
       this.loading = false
     },
-    proceedToSyscheck: function (ev) {
+    proceedToSyscheck () {
       let self = this
-      this.state = 'syscheck'
+      this.state = 2
       this.loading = true
-      self.syscheck = {
+      this.syscheck = {
         ok: false,
         error: '',
         results: []
@@ -508,90 +393,60 @@ export default {
         })
       }, 1000)
     },
-    proceedToGeneral: function (ev) {
-      let self = this
-      self.state = 'general'
-      self.loading = false
-      self.$nextTick(() => {
-        self.$validator.validateAll('general')
-      })
-    },
-    proceedToConsiderations: function (ev) {
-      this.considerations = {
-        https: false,
-        port: false, // TODO
-        localhost: false
-      }
-      this.state = 'considerations'
+    proceedToGeneral () {
+      this.state = 3
       this.loading = false
     },
-    proceedToGit: function (ev) {
-      let self = this
-      self.state = 'git'
-      self.loading = false
-      self.$nextTick(() => {
-        self.$validator.validateAll('git')
-      })
+    async proceedToAdmin () {
+      if (this.state < 4) {
+        const validationSuccess = await this.$validator.validateAll('general')
+        if (!validationSuccess) {
+          this.state = 3
+          return
+        }
+      }
+      this.state = 4
+      this.loading = false
     },
-    proceedToGitCheck: function (ev) {
-      let self = this
-      this.state = 'gitcheck'
-      this.loading = true
-      self.gitcheck = {
-        ok: false,
-        results: [],
-        error: ''
+    async proceedToUpgrade () {
+      if (this.state < 5) {
+        const validationSuccess = await this.$validator.validateAll('admin')
+        if (!validationSuccess) {
+          this.state = 4
+          return
+        }
       }
 
-      _.delay(() => {
-        axios.post('/gitcheck', self.conf).then(resp => {
-          if (resp.data.ok === true) {
-            self.gitcheck.ok = true
-            self.gitcheck.results = resp.data.results
-          } else {
-            self.gitcheck.ok = false
-            self.gitcheck.error = resp.data.error
-          }
-          self.loading = false
-          self.$nextTick()
-        }).catch(err => {
-          window.alert(err.message)
-        })
-      }, 1000)
-    },
-    proceedToAdmin: function (ev) {
-      let self = this
-      self.state = 'admin'
-      self.loading = false
-      self.$nextTick(() => {
-        self.$validator.validateAll('admin')
-      })
-    },
-    proceedToUpgrade: function (ev) {
       if (this.conf.upgrade) {
-        this.state = 'upgrade'
+        this.state = 5
         this.loading = false
-        this.$nextTick(() => {
-          this.$validator.validateAll('upgrade')
-        })
       } else {
         this.proceedToFinal()
       }
     },
-    proceedToFinal: function (ev) {
-      let self = this
-      self.state = 'final'
-      self.loading = true
-      self.final = {
+    async proceedToFinal () {
+      if (this.conf.upgrade && this.state < 6) {
+        const validationSuccess = await this.$validator.validateAll('upgrade')
+        if (!validationSuccess) {
+          this.state = 5
+          return
+        }
+      }
+
+      this.state = this.conf.upgrade ? 6 : 5
+      this.loading = true
+      this.final = {
         ok: false,
         error: '',
         redirectUrl: ''
       }
+      this.$forceUpdate()
+      let self = this
 
       _.delay(() => {
         axios.post('/finalize', self.conf).then(resp => {
           if (resp.data.ok === true) {
-            self.$helpers._.delay(() => {
+            _.delay(() => {
               self.final.ok = true
               switch (resp.data.redirectPort) {
                 case 80:
@@ -617,10 +472,14 @@ export default {
         })
       }, 1000)
     },
-    finish: function (ev) {
+    finish () {
       window.location.assign(this.final.redirectUrl)
     }
   }
 }
 
 </script>
+
+<style lang='scss'>
+
+</style>

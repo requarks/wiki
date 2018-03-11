@@ -44,7 +44,7 @@ window.Hammer = Hammer
 // Initialize Apollo Client (GraphQL)
 // ====================================
 
-const graphQLEndpoint = window.location.protocol + '//' + window.location.host + siteConfig.path + 'graphql'
+const graphQLEndpoint = window.location.protocol + '//' + window.location.host + '/graphql'
 
 window.graphQL = new ApolloClient({
   link: new BatchHttpLink({
@@ -65,17 +65,7 @@ Vue.use(VueClipboards)
 Vue.use(VueSimpleBreakpoints)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
-Vue.use(VeeValidate, {
-  enableAutoClasses: true,
-  classNames: {
-    touched: 'is-touched', // the control has been blurred
-    untouched: 'is-untouched', // the control hasn't been blurred
-    valid: 'is-valid', // model is valid
-    invalid: 'is-invalid', // model is invalid
-    pristine: 'is-pristine', // control has not been interacted with
-    dirty: 'is-dirty' // control has been interacted with
-  }
-})
+Vue.use(VeeValidate, { events: '' })
 Vue.use(Vuetify)
 
 Vue.prototype.Velocity = Velocity

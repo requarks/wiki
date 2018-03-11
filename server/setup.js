@@ -34,8 +34,6 @@ module.exports = () => {
   let app = express()
   app.use(compression())
 
-  let server
-
   // ----------------------------------------
   // Public Assets
   // ----------------------------------------
@@ -91,14 +89,20 @@ module.exports = () => {
         if (!semver.satisfies(semver.clean(process.version), '>=8.9.0')) {
           throw new Error('Node.js version is too old. Minimum is 8.9.0.')
         }
-        return 'Node.js ' + process.version + ' detected. Minimum is 8.9.0.'
+        return {
+          title: 'Node.js ' + process.version + ' detected.',
+          subtitle: ' Minimum is 8.9.0.'
+        }
       },
       () => {
         return Promise.try(() => {
           require('crypto')
         }).catch(err => {
           throw new Error('Crypto Node.js module is not available.')
-        }).return('Node.js Crypto module is available.')
+        }).return({
+          title: 'Node.js Crypto module is available.',
+          subtitle: 'Crypto module is required.'
+        })
       },
       () => {
         const exec = require('child_process').exec
@@ -112,16 +116,22 @@ module.exports = () => {
             if (!gitver || !semver.satisfies(semver.clean(gitver), '>=2.7.4')) {
               reject(new Error('Git version is too old. Minimum is 2.7.4.'))
             }
-            resolve('Git ' + gitver + ' detected. Minimum is 2.7.4.')
+            resolve({
+              title: 'Git ' + gitver + ' detected.',
+              subtitle: 'Minimum is 2.7.4.'
+            })
           })
         })
       },
       () => {
         const os = require('os')
-        if (os.totalmem() < 1000 * 1000 * 512) {
-          throw new Error('Not enough memory. Minimum is 512 MB.')
+        if (os.totalmem() < 1000 * 1000 * 768) {
+          throw new Error('Not enough memory. Minimum is 768 MB.')
         }
-        return filesize(os.totalmem()) + ' of system memory available. Minimum is 512 MB.'
+        return {
+          title: filesize(os.totalmem()) + ' of system memory available.',
+          subtitle: 'Minimum is 768 MB.'
+        }
       },
       () => {
         let fs = require('fs')
@@ -129,7 +139,10 @@ module.exports = () => {
           fs.accessSync(path.join(WIKI.ROOTPATH, 'config.yml'), (fs.constants || fs).W_OK)
         }).catch(err => {
           throw new Error('config.yml file is not writable by Node.js process or was not created properly.')
-        }).return('config.yml is writable by the setup process.')
+        }).return({
+          title: 'config.yml is writable by the setup process.',
+          subtitle: 'Setup will write to this file.'
+        })
       }
     ], test => test()).then(results => {
       res.json({ ok: true, results })
@@ -251,13 +264,14 @@ module.exports = () => {
       let conf = yaml.safeLoad(confRaw)
 
       conf.port = req.body.port
-      conf.paths.repo = req.body.pathRepo
+      conf.paths.data = req.body.pathData
+      conf.paths.content = req.body.pathContent
 
       confRaw = yaml.safeDump(conf)
       await fs.writeFileAsync(path.join(WIKI.ROOTPATH, 'config.yml'), confRaw)
 
       _.set(WIKI.config, 'port', req.body.port)
-      _.set(WIKI.config, 'paths.repo', req.body.pathRepo)
+      _.set(WIKI.config, 'paths.content', req.body.pathContent)
 
       // Populate config namespaces
       WIKI.config.auth = WIKI.config.auth || {}
@@ -270,7 +284,6 @@ module.exports = () => {
 
       // Site namespace
       _.set(WIKI.config.site, 'title', req.body.title)
-      _.set(WIKI.config.site, 'path', req.body.path)
       _.set(WIKI.config.site, 'lang', req.body.lang)
       _.set(WIKI.config.site, 'rtl', _.includes(WIKI.data.rtlLangs, req.body.lang))
       _.set(WIKI.config.site, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
@@ -279,32 +292,6 @@ module.exports = () => {
       _.set(WIKI.config.auth, 'public', req.body.public === 'true')
       _.set(WIKI.config.auth, 'strategies.local.enabled', true)
       _.set(WIKI.config.auth, 'strategies.local.allowSelfRegister', req.body.selfRegister === 'true')
-
-      // Git namespace
-      _.set(WIKI.config.git, 'enabled', req.body.gitUseRemote === 'true')
-      if (WIKI.config.git.enabled) {
-        _.set(WIKI.config.git, 'url', req.body.gitUrl)
-        _.set(WIKI.config.git, 'branch', req.body.gitBranch)
-        _.set(WIKI.config.git, 'author.defaultEmail', req.body.gitServerEmail)
-        _.set(WIKI.config.git, 'author.useUserEmail', req.body.gitShowUserEmail)
-        _.set(WIKI.config.git, 'sslVerify', req.body.gitAuthSSL === 'true')
-        _.set(WIKI.config.git, 'auth.type', req.body.gitAuthType)
-        switch (WIKI.config.git.auth.type) {
-          case 'basic':
-            _.set(WIKI.config.git, 'auth.user', req.body.gitAuthUser)
-            _.set(WIKI.config.git, 'auth.pass', req.body.gitAuthPass)
-            break
-          case 'ssh':
-            _.set(WIKI.config.git, 'auth.keyPath', req.body.gitAuthSSHKey)
-            break
-          case 'sshenv':
-            _.set(WIKI.config.git, 'auth.keyEnv', req.body.gitAuthSSHKeyEnv)
-            break
-          case 'sshdb':
-            _.set(WIKI.config.git, 'auth.keyContents', req.body.gitAuthSSHKeyDB)
-            break
-        }
-      }
 
       // Logging namespace
       WIKI.config.logging.telemetry = (req.body.telemetry === 'true')
@@ -332,7 +319,7 @@ module.exports = () => {
       }).end()
 
       WIKI.logger.info('Stopping Setup...')
-      server.destroy(() => {
+      WIKI.server.destroy(() => {
         WIKI.logger.info('Setup stopped. Starting WIKI.js...')
         _.delay(() => {
           WIKI.kernel.bootMaster()

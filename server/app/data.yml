@@ -42,7 +42,6 @@ defaults:
           enabled: true
     site:
       lang: en
-      path: ''
       rtl: false
       title: Wiki.js
     # System defaults
@@ -103,36 +102,47 @@ langs:
   -
     id: en
     name: English
+    original: English
   -
     id: zh
-    name: Chinese - 中文
+    name: Chinese
+    original: 中文
   -
     id: nl
-    name: Dutch - Nederlands
+    name: Dutch
+    original: Nederlands
   -
     id: fr
-    name: French - Français
+    name: French
+    original: Français
   -
     id: de
-    name: German - Deutsch
+    name: German
+    original: Deutsch
   -
     id: ja
-    name: Japanese - 日本語
+    name: Japanese
+    original: 日本語
   -
     id: ko
-    name: Korean - 한국어
+    name: Korean
+    original: 한국어
   -
     id: fa
-    name: Persian (Fārsi) - فارسی
+    name: Persian (Fārsi)
+    original: فارسی
   -
     id: pt
-    name: Portuguese - Português
+    name: Portuguese
+    original: Português
   -
     id: ru
-    name: Russian - Русский
+    name: Russian
+    original: Русский
   -
     id: es
-    name: Spanish - Español
+    name: Spanish
+    original: Español
 rtlLangs:
   - fa
 # ---------------------------------

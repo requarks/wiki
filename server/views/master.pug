@@ -3,34 +3,34 @@ html
   head
     meta(http-equiv='X-UA-Compatible', content='IE=edge')
     meta(charset='UTF-8')
-    meta(name='viewport', content='width=device-width, initial-scale=1')
-    meta(name='theme-color', content='#0288d1')
-    meta(name='msapplication-TileColor', content='#0288d1')
-    meta(name='msapplication-TileImage', content=config.site.path + 'favicons/ms-icon-144x144.png')
+    meta(name='viewport', content='user-scalable=yes, width=device-width, initial-scale=1, maximum-scale=5')
+    meta(name='theme-color', content='#333333')
+    meta(name='msapplication-TileColor', content='#333333')
+    meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
     title= config.site.title
 
     //- Favicon
     each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
-      link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href=config.site.path + 'favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
-    link(rel='icon', type='image/png', sizes='192x192', href=config.site.path + 'favicons/android-icon-192x192.png')
+      link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href='/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
+    link(rel='icon', type='image/png', sizes='192x192', href='/favicons/android-icon-192x192.png')
     each favsize in [32, 96, 16]
-      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href=config.site.path + 'favicons/favicon-' + favsize + 'x' + favsize + '.png')
-    link(rel='manifest', href=config.site.path + 'manifest.json')
+      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
+    link(rel='manifest', href='/manifest.json')
 
     //- Site Lang
     script.
       var siteConfig = !{JSON.stringify(config.site)}
 
     //- CSS
-    link(type='text/css', rel='stylesheet', href=config.site.path + 'css/bundle.css')
+    link(type='text/css', rel='stylesheet', href='/css/bundle.css')
     link(type='text/css', rel='stylesheet', href='https://fonts.googleapis.com/icon?family=Roboto:400,500,700|Source+Code+Pro:400,700|Material+Icons')
     link(type='text/css', rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/material-design-iconic-font/2.2.0/css/material-design-iconic-font.min.css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-iconic-font/2.2.0/css/material-design-iconic-font.min.css" />
 
     //- JS
-    script(type='text/javascript', src=config.site.path + 'js/runtime.js')
-    script(type='text/javascript', src=config.site.path + 'js/vendor.js')
-    script(type='text/javascript', src=config.site.path + 'js/client.js')
+    script(type='text/javascript', src='/js/runtime.js')
+    script(type='text/javascript', src='/js/vendor.js')
+    script(type='text/javascript', src='/js/client.js')
 
     block head
 
