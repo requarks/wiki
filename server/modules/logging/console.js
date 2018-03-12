@@ -11,12 +11,12 @@ module.exports = {
   title: 'Console',
   props: [],
   init (logger, conf) {
-    logger.add(winston.transports.Console, {
+    logger.add(new winston.transports.Console({
       level: WIKI.config.logLevel,
       prettyPrint: true,
       colorize: true,
       silent: false,
       timestamp: true
-    })
+    }))
   }
 }

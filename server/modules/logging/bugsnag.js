@@ -24,9 +24,9 @@ module.exports = {
       callback(null, true)
     }
 
-    logger.add(BugsnagLogger, {
+    logger.add(new BugsnagLogger({
       level: 'warn',
       key: conf.key
-    })
+    }))
   }
 }

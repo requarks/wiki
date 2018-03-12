@@ -3,8 +3,9 @@ extends ../master.pug
 block body
   body
     #app.is-fullscreen
-      .onboarding
-        img(src='/svg/logo-wikijs.svg', alt='Wiki.js')
-        h1= t('welcome.title')
-        h2= t('welcome.subtitle')
-        a.button.is-blue(href='/e/home')= t('welcome.createhome')
+      v-app
+        .onboarding
+          img(src='/svg/logo-wikijs.svg', alt='Wiki.js')
+          h1= t('welcome.title')
+          h2= t('welcome.subtitle')
+          v-btn(color='primary', href='/e/home')= t('welcome.createhome')

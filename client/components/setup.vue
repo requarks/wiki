@@ -40,7 +40,7 @@
 
           v-stepper-content(step='1')
             v-card.text-xs-center.pa-3(flat)
-              img(src='svg/logo-wikijs.svg', alt='Wiki.js Logo', style='width: 300px;')
+              img(src='/svg/logo-wikijs.svg', alt='Wiki.js Logo', style='width: 300px;')
             v-container
               .body-2.py-2 This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
               .body-1

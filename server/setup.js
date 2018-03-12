@@ -276,7 +276,6 @@ module.exports = () => {
       // Populate config namespaces
       WIKI.config.auth = WIKI.config.auth || {}
       WIKI.config.features = WIKI.config.features || {}
-      WIKI.config.git = WIKI.config.git || {}
       WIKI.config.logging = WIKI.config.logging || {}
       WIKI.config.site = WIKI.config.site || {}
       WIKI.config.theme = WIKI.config.theme || {}
@@ -290,7 +289,7 @@ module.exports = () => {
 
       // Auth namespace
       _.set(WIKI.config.auth, 'public', req.body.public === 'true')
-      _.set(WIKI.config.auth, 'strategies.local.enabled', true)
+      _.set(WIKI.config.auth, 'strategies.local.isEnabled', true)
       _.set(WIKI.config.auth, 'strategies.local.allowSelfRegister', req.body.selfRegister === 'true')
 
       // Logging namespace

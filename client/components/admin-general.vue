@@ -7,27 +7,48 @@
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
-              v-card
-                v-toolbar(color='blue', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading Site Info
-                  v-btn(fab, absolute, right, bottom, small, light): v-icon save
-                v-card-text
-                  v-text-field(label='Site Title', required, :counter='50', v-model='siteTitle')
-                  v-text-field(label='Site Description', :counter='255')
-                  v-text-field(label='Site Keywords', :counter='255')
-                  v-select(label='Meta Robots', chips, tags, :items='metaRobots', v-model='metaRobotsSelection')
+              v-form
+                v-card
+                  v-toolbar(color='primary', dark, dense, flat)
+                    v-toolbar-title
+                      .subheading Site Info
+                  v-subheader General
+                  .px-3
+                    v-text-field(label='Site Title', required, :counter='50', v-model='siteTitle', prepend-icon='public')
+                    v-divider
+                  v-subheader SEO
+                  .px-3
+                    v-text-field(label='Site Description', :counter='255', prepend-icon='public')
+                    v-text-field(label='Site Keywords', :counter='255', prepend-icon='public')
+                    v-select(label='Meta Robots', chips, tags, :items='metaRobots', v-model='metaRobotsSelection', prepend-icon='public')
+                  v-divider
+                  .px-3.pb-3
+                    v-btn(color='primary') Save
             v-flex(lg6 xs12)
               v-card
-                v-toolbar(color='blue', dark, dense, flat)
+                v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Site Branding
                 v-card-text ---
+              v-card.mt-3
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title
+                    .subheading Maintenance Mode
+                v-card-text
+                  .body-1 Maintenance mode restrict access to the site to administrators only, regarless of current permissions.
+                  v-btn.mt-3(color='orange darken-2', dark)
+                    icon-home-alert.mr-2(fillColor='#FFFFFF')
+                    | Turn On Maintenance Mode
 
 </template>
 
 <script>
+import IconHomeAlert from 'mdi/home-alert'
+
 export default {
+  components: {
+    IconHomeAlert
+  },
   data() {
     return {
       siteTitle: 'Wiki.js',

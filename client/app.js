@@ -1,7 +1,5 @@
 'use strict'
 
-/* global siteConfig */
-
 import CONSTANTS from './constants'
 
 import Vue from 'vue'

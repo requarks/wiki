@@ -24,9 +24,9 @@ module.exports = {
       callback(null, true)
     }
 
-    logger.add(SentryLogger, {
+    logger.add(new SentryLogger({
       level: 'warn',
       key: conf.key
-    })
+    }))
   }
 }

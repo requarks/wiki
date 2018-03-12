@@ -4,7 +4,7 @@ const Promise = require('bluebird')
 
 module.exports = Promise.join(
   WIKI.db.onReady,
-  WIKI.configSvc.loadFromDb(['features', 'git', 'logging', 'site', 'uploads'])
+  WIKI.configSvc.loadFromDb(['features', 'logging', 'site', 'uploads'])
 ).then(() => {
   const path = require('path')
 
@@ -25,7 +25,7 @@ module.exports = Promise.join(
   const i18nBackend = require('i18next-node-fs-backend')
   WIKI.lang.use(i18nBackend).init({
     load: 'languageOnly',
-    ns: ['common', 'admin', 'auth', 'errors', 'git'],
+    ns: ['common', 'admin', 'auth', 'errors'],
     defaultNS: 'common',
     saveMissing: false,
     preload: [WIKI.config.lang],

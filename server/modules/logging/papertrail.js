@@ -10,11 +10,11 @@ module.exports = {
   props: ['host', 'port'],
   init (logger, conf) {
     require('winston-papertrail').Papertrail // eslint-disable-line no-unused-expressions
-    logger.add(winston.transports.Papertrail, {
+    logger.add(new winston.transports.Papertrail({
       host: conf.host,
       port: conf.port,
       level: 'warn',
       program: 'wiki.js'
-    })
+    }))
   }
 }

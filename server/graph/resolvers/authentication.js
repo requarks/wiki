@@ -17,7 +17,7 @@ module.exports = {
   AuthenticationQuery: {
     providers(obj, args, context, info) {
       let prv = _.map(WIKI.auth.strategies, str => ({
-        isEnabled: true,
+        isEnabled: str.config.isEnabled,
         key: str.key,
         props: str.props,
         title: str.title,

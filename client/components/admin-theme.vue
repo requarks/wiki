@@ -8,10 +8,9 @@
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-card
-                v-toolbar(color='blue', dark, dense, flat)
+                v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Theme
-                  v-btn(fab, absolute, right, bottom, small, light): v-icon save
                 v-card-text
                   v-select(:items='themes', prepend-icon='palette', v-model='selectedTheme', label='Site Theme', persistent-hint, hint='Themes affect how content pages are displayed. Other site sections (such as the editor or admin area) are not affected.')
                     template(slot='item', slot-scope='data')
@@ -22,12 +21,15 @@
                         v-list-tile-sub-title(v-html='data.item.author')
                   v-divider
                   v-switch(v-model='darkMode', label='Dark Mode', color='primary', persistent-hint, hint='Not recommended for accessibility')
+                v-divider
+                .px-3.pb-3
+                  v-btn(color='primary') Save
             v-flex(lg6 xs12)
               v-card
-                v-toolbar(color='blue', dark, dense, flat)
+                v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Theme Options
-                v-list
+                    .subheading ---
+                v-card-text ---
 </template>
 
 <script>

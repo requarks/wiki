@@ -24,9 +24,9 @@ module.exports = {
       callback(null, true)
     }
 
-    logger.add(RollbarLogger, {
+    logger.add(new RollbarLogger({
       level: 'warn',
       key: conf.key
-    })
+    }))
   }
 }

@@ -4,7 +4,7 @@
       .pa-3.pt-4
         .headline.primary--text Search Engine
         .subheading.grey--text Configure the search capabilities of your wiki
-      v-tabs(color='grey lighten-4', grow, slider-color='primary', show-arrows)
+      v-tabs(color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows)
         v-tab(key='settings'): v-icon settings
         v-tab(key='db') Database
         v-tab(key='algolia') Algolia
