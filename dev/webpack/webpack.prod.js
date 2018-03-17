@@ -1,4 +1,3 @@
-const webpack = require('webpack')
 const merge = require('webpack-merge')
 
 const CleanWebpackPlugin = require('clean-webpack-plugin')
@@ -25,9 +24,6 @@ module.exports = merge(common, {
     ], {
       root: process.cwd(),
       verbose: false
-    }),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('production')
     }),
     new OptimizeCssAssetsPlugin({
       cssProcessorOptions: { discardComments: { removeAll: true } },

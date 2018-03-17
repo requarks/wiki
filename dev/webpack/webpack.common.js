@@ -4,6 +4,9 @@ const webpack = require('webpack')
 
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const postCSSConfig = {
@@ -24,7 +27,7 @@ module.exports = {
     path: path.join(process.cwd(), 'assets'),
     publicPath: '/',
     filename: 'js/[name].js',
-    chunkFilename: 'js/[name].chunk.js',
+    chunkFilename: 'js/[name].js',
     globalObject: 'this'
   },
   module: {
@@ -195,17 +198,37 @@ module.exports = {
     }),
     new MiniCssExtractPlugin({
       filename: 'css/bundle.css',
-      chunkFilename: 'css/[name].chunk.css'
+      chunkFilename: 'css/[name].css'
+    }),
+    new HtmlWebpackPlugin({
+      template: 'dev/templates/master.pug',
+      filename: '../server/views/master.pug',
+      hash: true,
+      inject: 'head'
+    }),
+    new HtmlWebpackPugPlugin(),
+    new ScriptExtHtmlWebpackPlugin({
+      sync: 'runtime.js',
+      defaultAttribute: 'async'
     })
   ],
   optimization: {
     namedModules: true,
+    namedChunks: true,
     splitChunks: {
-      name: 'vendor',
-      minChunks: 2
+      cacheGroups: {
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true
+        },
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10
+        }
+      }
     },
-    noEmitOnErrors: true,
-    concatenateModules: true
+    runtimeChunk: 'single'
   },
   resolve: {
     mainFields: ['browser', 'main', 'module'],

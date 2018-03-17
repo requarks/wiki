@@ -19,7 +19,6 @@ module.exports = merge(common, {
       format: 'compact'
     }),
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('development'),
       '__REACT_DEVTOOLS_GLOBAL_HOOK__': '({ isDisabled: true })'
     }),
     new WriteFilePlugin(),
