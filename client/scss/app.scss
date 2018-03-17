@@ -14,7 +14,9 @@
 
 // @import '../libs/twemoji/twemoji-awesome';
 @import '../libs/prism/prism.css';
-@import 'node_modules/diff2html/dist/diff2html.min';
+// @import 'node_modules/diff2html/dist/diff2html.min';
+
+@import 'node_modules/graphiql/graphiql';
 
 @import 'pages/welcome';
 

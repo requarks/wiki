@@ -91,7 +91,7 @@ const router = new VueRouter({
     { path: '/api', component: () => import(/* webpackChunkName: "admin" */ './admin-api.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin-utilities.vue') },
-    { path: '/dev', component: () => import(/* webpackChunkName: "admin" */ './admin-dev.vue') }
+    { path: '/dev', component: () => import(/* webpackChunkName: "admin-dev" */ './admin-dev.vue') }
   ]
 })
 

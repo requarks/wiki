@@ -209,6 +209,10 @@ module.exports = {
             loader: 'raw-loader'
           }
         ]
+      },
+      {
+        test: /\.flow$/,
+        loader: 'ignore-loader'
       }
     ]
   },
