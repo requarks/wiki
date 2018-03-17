@@ -1,18 +1,15 @@
 const webpack = require('webpack')
 const merge = require('webpack-merge')
-const path = require('path')
 
 const CleanWebpackPlugin = require('clean-webpack-plugin')
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OfflinePlugin = require('offline-plugin')
-const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin')
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 
 const common = require('./webpack.common.js')
 
 module.exports = merge(common, {
+  mode: 'production',
   module: {
     rules: []
   },
@@ -29,28 +26,21 @@ module.exports = merge(common, {
       root: process.cwd(),
       verbose: false
     }),
-    new UglifyJSPlugin({
-      cache: path.join(process.cwd(), '.webpack-cache/uglify'),
-      parallel: true
-    }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production')
-    }),
-    new ExtractTextPlugin({
-      filename: 'css/bundle.css',
-      allChunks: true
     }),
     new OptimizeCssAssetsPlugin({
       cssProcessorOptions: { discardComments: { removeAll: true } },
       canPrint: true
     }),
     new OfflinePlugin({
+      ServiceWorker: {
+        minify: false
+      },
       publicPath: '/',
       externals: ['/'],
       caches: {
         main: [
-          'js/runtime.js',
-          'js/vendor.js',
           'js/client.js'
         ],
         additional: [
@@ -61,19 +51,6 @@ module.exports = merge(common, {
         ]
       },
       safeToUseOptionalCaches: true
-    }),
-    new DuplicatePackageCheckerPlugin(),
-    // Disable Extract Text Plugin stats:
-    {
-      apply(compiler) {
-        compiler.plugin('done', stats => {
-          if (Array.isArray(stats.compilation.children)) {
-            stats.compilation.children = stats.compilation.children.filter(child => {
-              return child.name.indexOf('extract-text-webpack-plugin') !== 0
-            })
-          }
-        })
-      }
-    }
+    })
   ]
 })

@@ -3,8 +3,7 @@ const fs = require('fs-extra')
 const webpack = require('webpack')
 
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
-const NameAllModulesPlugin = require('name-all-modules-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const postCSSConfig = {
@@ -25,7 +24,8 @@ module.exports = {
     path: path.join(process.cwd(), 'assets'),
     publicPath: '/',
     filename: 'js/[name].js',
-    chunkFilename: 'js/[name].chunk.js'
+    chunkFilename: 'js/[name].chunk.js',
+    globalObject: 'this'
   },
   module: {
     rules: [
@@ -51,12 +51,8 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          {
-            loader: 'style-loader'
-          },
-          {
-            loader: 'css-loader'
-          },
+          MiniCssExtractPlugin.loader,
+          'css-loader',
           {
             loader: 'postcss-loader',
             options: postCSSConfig
@@ -65,96 +61,70 @@ module.exports = {
       },
       {
         test: /\.scss$/,
-        use: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [
-            {
-              loader: 'cache-loader',
-              options: {
-                cacheDirectory: cacheDir
-              }
-            },
-            {
-              loader: 'css-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: postCSSConfig
-            },
-            {
-              loader: 'sass-loader',
-              options: {
-                sourceMap: false
-              }
+        use: [
+          'style-loader',
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: postCSSConfig
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              sourceMap: false
             }
-          ]
-        })
+          }
+        ]
       },
       {
         test: /\.styl$/,
-        use: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [
-            {
-              loader: 'cache-loader',
-              options: {
-                cacheDirectory: cacheDir
-              }
-            },
-            {
-              loader: 'css-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: postCSSConfig
-            },
-            {
-              loader: 'stylus-loader'
-            }
-          ]
-        })
+        use: [
+          'style-loader',
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: postCSSConfig
+          },
+          'stylus-loader'
+        ]
       },
       {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: {
           loaders: {
-            css: ExtractTextPlugin.extract({
-              fallback: 'vue-style-loader',
-              use: [
-                {
-                  loader: 'css-loader'
-                },
-                {
-                  loader: 'postcss-loader',
-                  options: postCSSConfig
+            css: [
+              'vue-style-loader',
+              MiniCssExtractPlugin.loader,
+              'css-loader',
+              {
+                loader: 'postcss-loader',
+                options: postCSSConfig
+              }
+            ],
+            scss: [
+              'vue-style-loader',
+              MiniCssExtractPlugin.loader,
+              'css-loader',
+              {
+                loader: 'postcss-loader',
+                options: postCSSConfig
+              },
+              {
+                loader: 'sass-loader',
+                options: {
+                  sourceMap: false
                 }
-              ]
-            }),
-            scss: ExtractTextPlugin.extract({
-              fallback: 'vue-style-loader',
-              use: [
-                {
-                  loader: 'css-loader'
-                },
-                {
-                  loader: 'postcss-loader',
-                  options: postCSSConfig
-                },
-                {
-                  loader: 'sass-loader',
-                  options: {
-                    sourceMap: false
-                  }
-                },
-                {
-                  loader: 'sass-resources-loader',
-                  options: {
-                    resources: path.join(process.cwd(), '/client/scss/global.scss')
-                  }
+              },
+              {
+                loader: 'sass-resources-loader',
+                options: {
+                  resources: path.join(process.cwd(), '/client/scss/global.scss')
                 }
-              ]
-            }),
+              }
+            ],
             js: [
               {
                 loader: 'cache-loader',
@@ -223,26 +193,22 @@ module.exports = {
     ], {
 
     }),
-    new webpack.NamedModulesPlugin(),
-    new webpack.NamedChunksPlugin((chunk) => {
-      if (chunk.name) {
-        return chunk.name
-      }
-      return chunk.modules.map(m => path.relative(m.context, m.request)).join('_')
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      minChunks(module) {
-        return module.context && module.context.includes('node_modules')
-      }
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'runtime',
-      minChunks: Infinity
-    }),
-    new NameAllModulesPlugin()
+    new MiniCssExtractPlugin({
+      filename: 'css/bundle.css',
+      chunkFilename: 'css/[name].chunk.css'
+    })
   ],
+  optimization: {
+    namedModules: true,
+    splitChunks: {
+      name: 'vendor',
+      minChunks: 2
+    },
+    noEmitOnErrors: true,
+    concatenateModules: true
+  },
   resolve: {
+    mainFields: ['browser', 'main', 'module'],
     symlinks: true,
     alias: {
       '@': path.join(process.cwd(), 'client'),
@@ -264,6 +230,10 @@ module.exports = {
   },
   node: {
     fs: 'empty'
+  },
+  stats: {
+    children: false,
+    entrypoints: false
   },
   target: 'web'
 }

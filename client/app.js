@@ -57,6 +57,8 @@ window.graphQL = new ApolloClient({
 // Initialize Vue Modules
 // ====================================
 
+Vue.config.productionTip = false
+
 Vue.use(VueRouter)
 Vue.use(VueApollo)
 Vue.use(VueClipboards)
