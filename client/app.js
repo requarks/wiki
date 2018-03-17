@@ -120,7 +120,7 @@ let bootstrap = () => {
   // ====================================
 
   import(/* webpackChunkName: "icons" */ './svg/icons.svg').then(icons => {
-    document.body.insertAdjacentHTML('beforeend', icons)
+    document.body.insertAdjacentHTML('beforeend', icons.default)
   })
 }
 
