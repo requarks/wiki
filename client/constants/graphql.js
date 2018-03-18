@@ -65,6 +65,31 @@ export default {
       }
     `
   },
+  SYSTEM: {
+    QUERY_INFO: gql`
+      query {
+        system {
+          info {
+            currentVersion
+            latestVersion
+            latestVersionReleaseDate
+            operatingSystem
+            hostname
+            cpuCores
+            ramTotal
+            workingDirectory
+            nodeVersion
+            redisVersion
+            redisUsedRAM
+            redisTotalRAM
+            redisHost
+            postgreVersion
+            postgreHost
+          }
+        }
+      }
+    `
+  },
   TRANSLATIONS: {
     QUERY_NAMESPACE: gql`
       query($locale: String!, $namespace: String!) {

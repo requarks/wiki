@@ -37,9 +37,13 @@ type SystemInfo {
   operatingSystem: String
   hostname: String
   cpuCores: Int
-  ramTotal: Int
+  ramTotal: String
   workingDirectory: String
   nodeVersion: String
   redisVersion: String
+  redisUsedRAM: String
+  redisTotalRAM: String
+  redisHost: String
   postgreVersion: String
+  postgreHost: String
 }
