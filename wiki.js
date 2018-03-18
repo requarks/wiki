@@ -84,7 +84,10 @@ const init = {
         console.info('>>> Starting Wiki.js in DEVELOPER mode...')
         require('./server')
 
-        const devWatcher = chokidar.watch('./server')
+        const devWatcher = chokidar.watch([
+          './server',
+          '!./server/views/master.pug'
+        ])
         devWatcher.on('ready', () => {
           devWatcher.on('all', () => {
             console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')

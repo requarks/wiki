@@ -1,30 +1,39 @@
 <template lang="pug">
-  .login(:class='{ "is-error": error }')
-    .login-container(:class='{ "is-expanded": strategies.length > 1, "is-loading": isLoading }')
-      .login-providers(v-show='strategies.length > 1')
-        button(v-for='strategy in strategies', :class='{ "is-active": strategy.key === selectedStrategy }', @click='selectStrategy(strategy.key, strategy.useForm)', :title='strategy.title')
-          em(v-html='strategy.icon')
-          span {{ strategy.title }}
-        .login-providers-fill
-      .login-frame(v-show='screen === "login"')
-        h1 {{ siteTitle }}
-        h2 {{ $t('auth:loginRequired') }}
-        input(type='text', ref='iptEmail', v-model='username', :placeholder='$t("auth:fields.emailUser")')
-        input(type='password', ref='iptPassword', v-model='password', :placeholder='$t("auth:fields.password")', @keyup.enter='login')
-        button.button.is-blue.is-fullwidth(@click='login')
-          span {{ $t('auth:actions.login') }}
-      .login-frame(v-show='screen === "tfa"')
-        .login-frame-icon
-          svg.icons.is-48(role='img')
-            title {{ $t('auth:tfa.title') }}
-            use(xlink:href='#nc-key')
-        h2 {{ $t('auth:tfa.subtitle') }}
-        input(type='text', ref='iptTFA', v-model='securityCode', :placeholder='$t("auth:tfa.placeholder")', @keyup.enter='verifySecurityCode')
-        button.button.is-blue.is-fullwidth(@click='verifySecurityCode')
-          span {{ $t('auth:tfa.verifyToken') }}
-    .login-copyright
-      span {{ $t('footer.poweredBy') }}
-      a(href='https://wiki.js.org', rel='external', title='Wiki.js') Wiki.js
+  v-app
+    .login(:class='{ "is-error": error }')
+      .login-container(:class='{ "is-expanded": strategies.length > 1, "is-loading": isLoading }')
+        .login-providers(v-show='strategies.length > 1')
+          button(v-for='strategy in strategies', :class='{ "is-active": strategy.key === selectedStrategy }', @click='selectStrategy(strategy.key, strategy.useForm)', :title='strategy.title')
+            em(v-html='strategy.icon')
+            span {{ strategy.title }}
+          .login-providers-fill
+        .login-frame(v-show='screen === "login"')
+          h1.text-xs-center.display-1 {{ siteTitle }}
+          h2.text-xs-center.subheading {{ $t('auth:loginRequired') }}
+          v-text-field(solo, ref='iptEmail', v-model='username', :placeholder='$t("auth:fields.emailUser")')
+          v-text-field.mt-2(
+            solo,
+            ref='iptPassword',
+            v-model='password',
+            :append-icon='hidePassword ? "visibility" : "visibility_off"',
+            :append-icon-cb='() => (hidePassword = !hidePassword)',
+            :type='hidePassword ? "password" : "text"',
+            :placeholder='$t("auth:fields.password")',
+            @keyup.enter='login'
+          )
+          v-btn.mt-3(block, large, color='primary', @click='login') {{ $t('auth:actions.login') }}
+        .login-frame(v-show='screen === "tfa"')
+          .login-frame-icon
+            svg.icons.is-48(role='img')
+              title {{ $t('auth:tfa.title') }}
+              use(xlink:href='#nc-key')
+          h2 {{ $t('auth:tfa.subtitle') }}
+          input(type='text', ref='iptTFA', v-model='securityCode', :placeholder='$t("auth:tfa.placeholder")', @keyup.enter='verifySecurityCode')
+          button.button.is-blue.is-fullwidth(@click='verifySecurityCode')
+            span {{ $t('auth:tfa.verifyToken') }}
+      .login-copyright
+        span {{ $t('footer.poweredBy') }}
+        a(href='https://wiki.js.org', rel='external', title='Wiki.js') Wiki.js
 </template>
 
 <script>
@@ -41,6 +50,7 @@ export default {
       screen: 'login',
       username: '',
       password: '',
+      hidePassword: true,
       securityCode: '',
       loginToken: '',
       isLoading: false
@@ -408,10 +418,7 @@ export default {
       width: 400px;
       padding: 1rem;
       color: mc('grey', '700');
-      display: flex;
-      justify-content: center;
-      flex-direction: column;
-      text-align: center;
+      display: block;
 
       @include until($tablet) {
         width: 100%;
@@ -421,7 +428,7 @@ export default {
 
       h1 {
         font-size: 2rem;
-        font-weight: 600;
+        font-weight: 400;
         color: mc('light-blue', '700');
         text-shadow: 1px 1px 0 #FFF;
         padding: 0;
@@ -436,47 +443,6 @@ export default {
         padding: 0;
         margin: 0 0 25px 0;
       }
-
-      form {
-        display: flex;
-        flex-direction: column;
-      }
-
-      input[type=text], input[type=password] {
-        width: 100%;
-        border: 1px solid rgba(mc('blue-grey','500'), .5);
-        border-radius: 3px;
-        background-color: rgba(255,255,255,.9);
-        box-shadow: inset 0 0 0 3px rgba(255,255,255, .25);
-        padding: 0 15px;
-        height: 40px;
-        margin: 0 0 10px 0;
-        color: mc('grey', '700');
-        font-weight: 600;
-        font-size: .8rem;
-        transition: all 0.4s ease;
-        text-align: center;
-
-        &:focus {
-          outline: none;
-          border-color: mc('light-blue','500');
-          background-color: rgba(255,255,255,1);
-          box-shadow: inset 0 0 8px rgba(mc('light-blue','500'), .5);
-          color: mc('light-blue', '800');
-        }
-
-      }
-
-      .button {
-        background-image: linear-gradient(to bottom, mc('blue', '400') 0%, mc('blue', '600') 50%, mc('blue', '700') 100%);
-        background-repeat: no-repeat;
-        background-size: 100% 200%;
-
-        &:hover {
-          background-position-y: 100%;
-        }
-      }
-
     }
 
     &-tfa {

@@ -42,15 +42,6 @@ html {
   display: none !important;
 }
 
-.is-hidden-until-scroll {
-  max-height: 0;
-  overflow: hidden;
-  transition: all .6s ease;
-}
-.is-sticky .is-hidden-until-scroll {
-  max-height: 30px;
-}
-
 .is-hidden-mobile {
   @include mobile {
     display: none !important;

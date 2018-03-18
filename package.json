@@ -11,7 +11,7 @@
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "build:locales": "node dev/tasks/localization",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
-    "test": "eslint --ext .js,.vue . && jest"
+    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest"
   },
   "bin": {
     "wiki": "wiki.js"
@@ -174,6 +174,7 @@
     "file-loader": "1.1.11",
     "graphiql": "0.11.11",
     "graphql-tag": "^2.8.0",
+    "graphql-voyager": "1.0.0-rc.15",
     "hammerjs": "2.0.8",
     "html-webpack-plugin": "3.0.6",
     "html-webpack-pug-plugin": "0.3.0",
@@ -187,9 +188,11 @@
     "node-sass": "4.7.2",
     "offline-plugin": "4.9.0",
     "optimize-css-assets-webpack-plugin": "4.0.0",
+    "postcss-cssnext": "3.1.0",
     "postcss-flexbugs-fixes": "3.3.0",
     "postcss-flexibility": "2.0.0",
-    "postcss-loader": "2.1.1",
+    "postcss-import": "11.1.0",
+    "postcss-loader": "2.1.2",
     "postcss-selector-parser": "3.1.1",
     "pug-lint": "2.5.0",
     "pug-loader": "2.3.0",
@@ -248,6 +251,39 @@
     "output": "./test-results/junit.xml",
     "classNameTemplate": "{classname}-{title}",
     "titleTemplate": "{classname}-{title}"
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {},
+      "cssnano": {
+        "preset": [
+          "default",
+          {
+            "discardComments": {
+              "removeAll": true
+            }
+          }
+        ]
+      },
+      "postcss-flexbugs-fixes": {},
+      "postcss-flexibility": {}
+    }
+  },
+  "pugLintConfig": {
+    "disallowDuplicateAttributes": true,
+    "disallowIdAttributeWithStaticValue": true,
+    "disallowMultipleLineBreaks": true,
+    "requireClassLiteralsBeforeAttributes": true,
+    "requireIdLiteralsBeforeAttributes": true,
+    "requireLineFeedAtFileEnd": true,
+    "requireLowerCaseAttributes": true,
+    "requireLowerCaseTags": true,
+    "requireSpaceAfterCodeOperator": true,
+    "requireStrictEqualityOperators": true,
+    "validateAttributeQuoteMarks": "'",
+    "validateAttributeSeparator": ", ",
+    "validateDivTags": true,
+    "validateIndentation": 2
   },
   "nodemonConfig": {
     "exec": "node server --dev",

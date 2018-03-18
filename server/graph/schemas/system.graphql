@@ -1,0 +1,45 @@
+# ===============================================
+# SYSTEM
+# ===============================================
+
+extend type Query {
+  system: SystemQuery
+}
+
+extend type Mutation {
+  system: SystemMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type SystemQuery {
+  info: SystemInfo
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type SystemMutation {
+  todo: String
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type SystemInfo {
+  currentVersion: String
+  latestVersion: String
+  latestVersionReleaseDate: Date
+  operatingSystem: String
+  hostname: String
+  cpuCores: Int
+  ramTotal: Int
+  workingDirectory: String
+  nodeVersion: String
+  redisVersion: String
+  postgreVersion: String
+}

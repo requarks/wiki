@@ -4,19 +4,14 @@
 @import "base/base";
 @import 'base/icons';
 
-@import "../libs/animate/animate";
+// @import "../libs/animate/animate";
 
-@import 'components/button';
 @import 'components/markdown-content';
 @import 'components/navigator';
-@import 'components/toggle';
-@import 'components/typography';
 
 // @import '../libs/twemoji/twemoji-awesome';
 @import '../libs/prism/prism.css';
 // @import 'node_modules/diff2html/dist/diff2html.min';
-
-@import 'node_modules/graphiql/graphiql';
 
 @import 'pages/welcome';
 

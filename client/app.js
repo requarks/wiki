@@ -80,7 +80,6 @@ Vue.component('login', () => import(/* webpackMode: "eager" */ './components/log
 Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/nav-header.vue'))
 Vue.component('navigator', () => import(/* webpackMode: "eager" */ './components/navigator.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
-Vue.component('toggle', () => import(/* webpackMode: "eager" */ './components/toggle.vue'))
 
 let bootstrap = () => {
   // ====================================
