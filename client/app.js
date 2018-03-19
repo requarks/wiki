@@ -1,7 +1,5 @@
 'use strict'
 
-import CONSTANTS from './constants'
-
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import VueClipboards from 'vue-clipboards'
@@ -35,7 +33,6 @@ import helpers from './helpers'
 
 window.WIKI = null
 window.boot = boot
-window.CONSTANTS = CONSTANTS
 window.Hammer = Hammer
 
 // ====================================
@@ -78,7 +75,6 @@ Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './component
 Vue.component('editor', () => import(/* webpackChunkName: "editor" */ './components/editor.vue'))
 Vue.component('login', () => import(/* webpackMode: "eager" */ './components/login.vue'))
 Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/nav-header.vue'))
-Vue.component('navigator', () => import(/* webpackMode: "eager" */ './components/navigator.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
 
 let bootstrap = () => {

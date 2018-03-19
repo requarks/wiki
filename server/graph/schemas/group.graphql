@@ -1,0 +1,69 @@
+# ===============================================
+# GROUPS
+# ===============================================
+
+extend type Query {
+  groups: GroupQuery
+}
+
+extend type Mutation {
+  groups: GroupMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type GroupQuery {
+  list(
+    filter: String
+    orderBy: String
+  ): [Group]
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type GroupMutation {
+  create(
+    name: String!
+  ): GroupResponse
+
+  update(
+    id: Int!
+    name: String!
+  ): GroupResponse
+
+  delete(
+    id: Int!
+  ): DefaultResponse
+
+  assignUser(
+    groupId: Int!
+    userId: Int!
+  ): DefaultResponse
+
+  unassignUser(
+    groupId: Int!
+    userId: Int!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type GroupResponse {
+  operation: ResponseStatus!
+  group: Group
+}
+
+type Group {
+  id: Int!
+  name: String!
+  rights: [String]
+  users: [User]
+  createdAt: Date!
+  updatedAt: Date!
+}

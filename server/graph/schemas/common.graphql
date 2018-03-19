@@ -95,15 +95,6 @@ type Folder implements Base {
   files: [File]
 }
 
-type Group implements Base {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  name: String!
-  users: [User]
-  rights: [Right]
-}
-
 type Right implements Base {
   id: Int!
   createdAt: Date
@@ -168,7 +159,6 @@ type Query {
   documents(id: Int, path: String): [Document]
   files(id: Int): [File]
   folders(id: Int, name: String): [Folder]
-  groups(id: Int, name: String): [Group]
   rights(id: Int): [Right]
   search(q: String, tags: [String]): [SearchResult]
   settings(key: String): [Setting]
@@ -192,11 +182,6 @@ type Mutation {
     documentId: Int!
   ): OperationResult
 
-  assignUserToGroup(
-    userId: Int!
-    groupId: Int!
-  ): OperationResult
-
   createComment(
     userId: Int!
     documentId: Int!
@@ -212,10 +197,6 @@ type Mutation {
   createFolder(
     name: String!
   ): Folder
-
-  createGroup(
-    name: String!
-  ): Group
 
   createTag(
     name: String!
@@ -243,10 +224,6 @@ type Mutation {
   ): OperationResult
 
   deleteFolder(
-    id: Int!
-  ): OperationResult
-
-  deleteGroup(
     id: Int!
   ): OperationResult
 
@@ -306,11 +283,6 @@ type Mutation {
     name: String!
   ): OperationResult
 
-  renameGroup(
-    id: Int!
-    name: String!
-  ): OperationResult
-
   renameTag(
     id: Int!
     key: String!
@@ -323,11 +295,6 @@ type Mutation {
 
   removeRightFromGroup(
     rightId: Int!
-  ): OperationResult
-
-  removeUserFromGroup(
-    userId: Int!
-    groupId: Int!
   ): OperationResult
 
   resetUserPassword(

@@ -2,9 +2,10 @@ import i18next from 'i18next'
 import i18nextXHR from 'i18next-xhr-backend'
 import i18nextCache from 'i18next-localstorage-cache'
 import VueI18Next from '@panter/vue-i18next'
-import loSet from 'lodash/set'
+import _ from 'lodash'
+import gql from 'graphql-tag'
 
-/* global siteConfig, graphQL, CONSTANTS */
+/* global siteConfig, graphQL */
 
 module.exports = {
   VueI18Next,
@@ -19,7 +20,14 @@ module.exports = {
           ajax: (url, opts, cb, data) => {
             let langParams = url.split('/')
             graphQL.query({
-              query: CONSTANTS.GRAPH.TRANSLATIONS.QUERY_NAMESPACE,
+              query: gql`
+                query($locale: String!, $namespace: String!) {
+                  translations(locale:$locale, namespace:$namespace) {
+                    key
+                    value
+                  }
+                }
+              `,
               variables: {
                 locale: langParams[0],
                 namespace: langParams[1]
@@ -28,7 +36,7 @@ module.exports = {
               let ns = {}
               if (resp.data.translations.length > 0) {
                 resp.data.translations.forEach(entry => {
-                  loSet(ns, entry.key, entry.value)
+                  _.set(ns, entry.key, entry.value)
                 })
               }
               return cb(ns, {status: '200'})

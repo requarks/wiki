@@ -1,8 +1,5 @@
 <template lang='pug'>
   .editor-code
-    v-toolbar(color='blue', flat, dense, dark)
-      v-icon(color='blue lighten-5') edit
-      v-toolbar-title.white--text Sample Page
     .editor-code-toolbar
       .editor-code-toolbar-group
         .editor-code-toolbar-item(@click='toggleAround("**", "**")')
@@ -70,7 +67,7 @@
           .editor-code-preview-title(@click='previewShown = false') Preview
           .editor-code-preview-content.markdown-content(ref='editorPreview', v-html='previewHTML')
 
-      v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', :fixed='true', :right='!isMobile', :left='isMobile', :bottom='true')
+      v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, right, bottom)
         v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
           v-icon add_circle
           v-icon close
@@ -79,16 +76,6 @@
         v-btn(color='red', fab, dark): v-icon play_circle_outline
         v-btn(color='purple', fab, dark): v-icon multiline_chart
         v-btn(color='indigo', fab, dark): v-icon functions
-      v-speed-dial(v-model='fabMainMenu', :open-on-hover='true', :direction='saveMenuDirection', transition='slide-x-reverse-transition', :fixed='true', :right='true', :top='!isMobile', :bottom='isMobile')
-        v-btn(color='white', fab, light, v-model='fabMainMenu' slot='activator')
-          v-icon(color='blue darken-2') blur_on
-          v-icon(color='blue darken-2') close
-        v-btn(color='blue-grey', fab, dark, @click.native.stop='$parent.openModal(`properties`)'): v-icon sort_by_alpha
-        v-btn(color='green', fab, dark, @click.native.stop='$parent.save()'): v-icon save
-        v-btn(color='red', fab, dark, small): v-icon not_interested
-        v-btn(color='orange', fab, dark, small, @click.native.stop='$parent.openModal(`access`)'): v-icon vpn_lock
-        v-btn(color='indigo', fab, dark, small): v-icon restore
-        v-btn(color='brown', fab, dark, small): v-icon archive
 </template>
 
 <script>
@@ -184,7 +171,6 @@ export default {
   },
   data() {
     return {
-      fabMainMenu: false,
       fabInsertMenu: false,
       code: '# Header 1\n\nSample **Text**\nhttp://wiki.js.org\n:rocket: :) :( :| :P\n\n## Header 2\nSample Text\n\n```javascript\nvar test = require("test");\n\n// some comment\nconst foo = bar(\'param\') + 1.234;\n```\n\n### Header 3\nLorem *ipsum* ~~text~~',
       cmOptions: {
@@ -210,9 +196,6 @@ export default {
     },
     isMobile() {
       return this.$vuetify.breakpoint.smAndDown
-    },
-    saveMenuDirection() {
-      return this.isMobile ? 'top' : 'bottom'
     }
   },
   methods: {

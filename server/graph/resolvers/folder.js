@@ -11,7 +11,7 @@ module.exports = {
     createFolder(obj, args) {
       return WIKI.db.Folder.create(args)
     },
-    deleteGroup(obj, args) {
+    deleteFolder(obj, args) {
       return WIKI.db.Folder.destroy({
         where: {
           id: args.id

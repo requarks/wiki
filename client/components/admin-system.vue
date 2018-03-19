@@ -23,7 +23,7 @@
                     v-list-tile-title Latest Version
                     v-list-tile-sub-title {{ info.latestVersion }}
                   v-list-tile-action
-                    v-list-tile-action-text Published 4 days ago
+                    v-list-tile-action-text Published X days ago
 
                 v-divider
 
@@ -105,11 +105,11 @@
 </template>
 
 <script>
+import gql from 'graphql-tag'
+
 import IconCube from 'mdi/cube'
 import IconDatabase from 'mdi/database'
 import IconNodeJs from 'mdi/nodejs'
-
-/* global CONSTANTS */
 
 export default {
   components: {
@@ -125,7 +125,29 @@ export default {
   },
   apollo: {
     info: {
-      query: CONSTANTS.GRAPH.SYSTEM.QUERY_INFO,
+      query: gql`
+        query {
+          system {
+            info {
+              currentVersion
+              latestVersion
+              latestVersionReleaseDate
+              operatingSystem
+              hostname
+              cpuCores
+              ramTotal
+              workingDirectory
+              nodeVersion
+              redisVersion
+              redisUsedRAM
+              redisTotalRAM
+              redisHost
+              postgreVersion
+              postgreHost
+            }
+          }
+        }
+      `,
       update: (data) => data.system.info
     }
   },

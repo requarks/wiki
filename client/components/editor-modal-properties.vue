@@ -31,7 +31,7 @@ export default {
   methods: {
     close() {
       this.isShown = false
-      this.$parent.closeModal()
+      this.$parent.$parent.closeModal()
     }
   }
 }

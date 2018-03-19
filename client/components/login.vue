@@ -1,5 +1,6 @@
 <template lang="pug">
   v-app
+    nav-header
     .login(:class='{ "is-error": error }')
       .login-container(:class='{ "is-expanded": strategies.length > 1, "is-loading": isLoading }')
         .login-providers(v-show='strategies.length > 1')
@@ -37,9 +38,10 @@
 </template>
 
 <script>
-/* global CONSTANTS, graphQL, siteConfig */
+/* global graphQL, siteConfig */
 
 import _ from 'lodash'
+import gql from 'graphql-tag'
 
 export default {
   data () {
@@ -80,7 +82,21 @@ export default {
     refreshStrategies () {
       this.isLoading = true
       graphQL.query({
-        query: CONSTANTS.GRAPH.AUTHENTICATION.QUERY_LOGIN_PROVIDERS
+        query: gql`
+          query {
+            authentication {
+              providers(
+                filter: "isEnabled eq true",
+                orderBy: "title ASC"
+              ) {
+                key
+                title
+                useForm
+                icon
+              }
+            }
+          }
+        `
       }).then(resp => {
         if (_.has(resp, 'data.authentication.providers')) {
           this.strategies = _.get(resp, 'data.authentication.providers', [])
@@ -116,7 +132,22 @@ export default {
       } else {
         this.isLoading = true
         graphQL.mutate({
-          mutation: CONSTANTS.GRAPH.AUTHENTICATION.MUTATION_LOGIN,
+          mutation: gql`
+            mutation($username: String!, $password: String!, $provider: String!) {
+              authentication {
+                login(username: $username, password: $password, provider: $provider) {
+                  operation {
+                    succeeded
+                    code
+                    slug
+                    message
+                  }
+                  tfaRequired
+                  tfaLoginToken
+                }
+              }
+            }
+          `,
           variables: {
             username: this.username,
             password: this.password,
@@ -169,7 +200,20 @@ export default {
       } else {
         this.isLoading = true
         graphQL.mutate({
-          mutation: CONSTANTS.GRAPH.AUTHENTICATION.MUTATION_LOGINTFA,
+          mutation: gql`
+            mutation($loginToken: String!, $securityCode: String!) {
+              authentication {
+                loginTFA(loginToken: $loginToken, securityCode: $securityCode) {
+                  operation {
+                    succeeded
+                    code
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
           variables: {
             loginToken: this.loginToken,
             securityCode: this.securityCode

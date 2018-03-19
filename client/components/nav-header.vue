@@ -1,7 +1,40 @@
 <template lang='pug'>
-  v-toolbar(color='black', dark, app, clipped-left, fixed, flat)
-    v-toolbar-side-icon(@click.native='')
-      v-icon view_module
+  v-toolbar(color='black', dark, app, clipped-left, fixed, flat, dense)
+    v-menu(open-on-hover, offset-y, bottom, left, nudge-top='-18', min-width='250')
+      v-toolbar-side-icon(slot='activator')
+        v-icon view_module
+      v-list(dense)
+        v-list-tile(avatar, href='/')
+          v-list-tile-avatar: v-icon(color='blue') home
+          v-list-tile-content Home
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='green') add_box
+          v-list-tile-content New Page
+        v-divider.my-0
+        v-subheader Current Page
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='indigo') edit
+          v-list-tile-content Edit
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='indigo') history
+          v-list-tile-content History
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='indigo') code
+          v-list-tile-content View Source
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='indigo') forward
+          v-list-tile-content Move / Rename
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='red darken-2') delete
+          v-list-tile-content Delete
+        v-divider.my-0
+        v-subheader Assets
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='blue-grey') burst_mode
+          v-list-tile-content Images
+        v-list-tile(avatar, @click='')
+          v-list-tile-avatar: v-icon(color='blue-grey') description
+          v-list-tile-content Files
     v-toolbar-title
       span.subheading Wiki.js
     v-spacer
@@ -29,6 +62,7 @@
         )
     v-spacer
     v-progress-circular.mr-3(indeterminate, color='blue', v-show='$apollo.loading')
+    slot(name='actions')
     transition(name='navHeaderSearch')
       v-btn(icon, @click='searchToggle', v-if='!searchIsShown')
         v-icon(color='grey') search
@@ -57,6 +91,7 @@
 export default {
   data() {
     return {
+      menuIsShown: true,
       searchIsLoading: false,
       searchIsShown: false,
       search: ''

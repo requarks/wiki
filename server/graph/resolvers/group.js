@@ -5,12 +5,18 @@ const gql = require('graphql')
 
 module.exports = {
   Query: {
-    groups(obj, args, context, info) {
+    async groups() { return {} }
+  },
+  Mutation: {
+    async groups() { return {} }
+  },
+  GroupQuery: {
+    list(obj, args, context, info) {
       return WIKI.db.Group.findAll({ where: args })
     }
   },
-  Mutation: {
-    assignUserToGroup(obj, args) {
+  GroupMutation: {
+    assignUser(obj, args) {
       return WIKI.db.Group.findById(args.groupId).then(grp => {
         if (!grp) {
           throw new gql.GraphQLError('Invalid Group ID')
@@ -23,10 +29,10 @@ module.exports = {
         })
       })
     },
-    createGroup(obj, args) {
+    create(obj, args) {
       return WIKI.db.Group.create(args)
     },
-    deleteGroup(obj, args) {
+    delete(obj, args) {
       return WIKI.db.Group.destroy({
         where: {
           id: args.id
@@ -34,7 +40,7 @@ module.exports = {
         limit: 1
       })
     },
-    removeUserFromGroup(obj, args) {
+    unassignUser(obj, args) {
       return WIKI.db.Group.findById(args.groupId).then(grp => {
         if (!grp) {
           throw new gql.GraphQLError('Invalid Group ID')
@@ -47,7 +53,7 @@ module.exports = {
         })
       })
     },
-    renameGroup(obj, args) {
+    update(obj, args) {
       return WIKI.db.Group.update({
         name: args.name
       }, {

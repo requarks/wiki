@@ -114,5 +114,12 @@ export default {
 
 #voyager {
   height: calc(100vh - 250px);
+
+  .title-area {
+    display: none;
+  }
+  .type-doc {
+    margin-top: 5px;
+  }
 }
 </style>

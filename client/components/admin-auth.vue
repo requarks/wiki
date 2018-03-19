@@ -66,8 +66,7 @@
 
 <script>
 import _ from 'lodash'
-
-/* global CONSTANTS */
+import gql from 'graphql-tag'
 
 export default {
   data() {
@@ -84,7 +83,23 @@ export default {
   },
   apollo: {
     providers: {
-      query: CONSTANTS.GRAPH.AUTHENTICATION.QUERY_PROVIDERS,
+      query: gql`
+        query {
+          authentication {
+            providers {
+              isEnabled
+              key
+              props
+              title
+              useForm
+              config {
+                key
+                value
+              }
+            }
+          }
+        }
+      `,
       update: (data) => data.authentication.providers
     }
   },
