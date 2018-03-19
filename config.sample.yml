@@ -80,6 +80,7 @@ auth:
     clientSecret: GITHUB_CLIENT_SECRET
   slack:
     enabled: false
+    allowDomains: []
     clientId: 'SLACK_CLIENT_ID'
     clientSecret: 'SLACK_CLIENT_SECRET'
   ldap:
