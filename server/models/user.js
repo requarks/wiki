@@ -89,8 +89,8 @@ userSchema.statics.processProfile = (profile) => {
     new: true
   }).then((user) => {
     // Handle unregistered accounts
-    if (!user && profile.provider !== 'local' && (appconfig.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure'
-                                                  || profile.provider === 'slack' && appconfig.auth.slack.autoRegisterIds.includes(profile.team.id)) ) {
+    if (!user && profile.provider !== 'local' && (appconfig.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure' ||
+                                                  (profile.provider === 'slack' && appconfig.auth.slack.autoRegisterIds.includes(profile.team.id)))) {
       let nUsr = {
         email: primaryEmail,
         provider: profile.provider,
