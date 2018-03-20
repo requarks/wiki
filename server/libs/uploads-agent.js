@@ -235,6 +235,7 @@ module.exports = {
     return jimp.read(sourcePath).then(img => {
       return img
         .contain(150, 150)
+        .rgba(false)
         .write(destPath)
     })
   },
