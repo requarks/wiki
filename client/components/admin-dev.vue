@@ -17,6 +17,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import GraphiQL from 'graphiql'
@@ -48,6 +49,8 @@ const fetcher = (qry, respType) => {
   })
 }
 
+let graphiQLInstance
+
 export default {
   data() {
     return {
@@ -68,8 +71,15 @@ export default {
     renderGraphiQL() {
       ReactDOM.render(
         React.createElement(GraphiQL, {
-          fetcher: qry => fetcher(qry, 'text'),
-          query: null,
+          ref(el) { graphiQLInstance = el },
+          async fetcher(qry) {
+            let resp = await fetcher(qry, 'text')
+            _.delay(() => {
+              graphiQLInstance.resultComponent.viewer.refresh()
+            }, 500)
+            return resp
+          },
+          query: '',
           response: null,
           variables: null,
           operationName: null,
@@ -77,6 +87,9 @@ export default {
         }),
         document.getElementById('graphiql')
       )
+      graphiQLInstance.queryEditorComponent.editor.refresh()
+      graphiQLInstance.variableEditorComponent.editor.refresh()
+      graphiQLInstance.state.variableEditorOpen = true
     },
     renderVoyager() {
       ReactDOM.render(
@@ -94,7 +107,7 @@ export default {
 <style lang='scss'>
 
 #graphiql {
-  height: calc(100vh - 250px);
+  height: calc(100vh - 230px);
 
   .topBar {
     background-color: mc('grey', '200');

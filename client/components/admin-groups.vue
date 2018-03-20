@@ -10,7 +10,7 @@
             v-icon(left) add
             | New Group
           v-card
-            v-card-title.headline.grey--text.text--darken-2 New Group
+            .dialog-header.is-short New Group
             v-card-text
               v-text-field(v-model='newGroupName', label='Group Name', autofocus, counter='255')
             v-card-actions

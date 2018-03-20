@@ -1,0 +1,11 @@
+.dialog-header {
+  background-color: mc('blue', '700');
+  background: radial-gradient(ellipse at top, mc('blue', '500'), transparent),
+            radial-gradient(ellipse at bottom, mc('blue', '800'), transparent);
+  height: 60px;
+  color: #FFF;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  font-size: 1.2rem;
+}

@@ -58,8 +58,6 @@
 <script>
 import _ from 'lodash'
 
-/* global CONSTANTS */
-
 export default {
   data() {
     return {
@@ -73,12 +71,12 @@ export default {
       return _.filter(this.services, 'isEnabled')
     }
   },
-  apollo: {
-    services: {
-      query: CONSTANTS.GRAPH.AUTHENTICATION.QUERY_PROVIDERS,
-      update: (data) => data.authentication.providers
-    }
-  },
+  // apollo: {
+  //   services: {
+  //     query: CONSTANTS.GRAPH.AUTHENTICATION.QUERY_PROVIDERS,
+  //     update: (data) => data.authentication.providers
+  //   }
+  // },
   methods: {
     async refresh() {
       await this.$apollo.queries.services.refetch()
