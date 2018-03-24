@@ -87,12 +87,12 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 **Release Date**: Q2 2018
 
 **Breaking Changes**:
-  - MongoDB is being phased out in favor of PostgreSQL + Redis. An upgrade tool will be provided to migrate existing data to the new system.
+  - MongoDB is being phased out in favor of PostgreSQL/MySQL/SQLite + Redis. An upgrade tool will be provided to migrate existing data to the new system.
   - Node.js 8.9 LTS or later is now the minimum supported version.
 
 **2.0 Milestone**:
 - [x] GraphQL API
-- [x] Migrate to PostgreSQL + Redis datastore
+- [x] Migrate to Sequelize + Redis datastore
 - [x] Telemetry for analytics and crash reporting (Optional and fully anonymized)
 - [x] Docker support + Auto compile/publish to Docker Hub
 - [x] Support sub-directory installations (e.g. example.com/wiki)
@@ -106,20 +106,21 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] New Navigation Concept
 - [x] New Admin Area
   - [x] UI
+  - [x] System Info
+  - [ ] Manager Groups :rocket:
   - [ ] Manager Users :rocket:
-  - [ ] System Info :rocket:
 - [x] Modular editors
   - [x] Markdown editor
     - [x] Core Editor
     - [x] Live Preview
-    - [ ] Toolbar :rocket:
+    - [ ] Toolbar
   - [ ] Operations
-    - [ ] Save :rocket:
+    - [ ] Save
   - [ ] Dialogs
     - [ ] Properties
     - [ ] Access
     - [ ] Image + File Manager
-- [ ] Modular content parsers/renderers :rocket:
+- [ ] Modular content parsers/renderers
 - [ ] Modular search engines
   - [ ] PostgreSQL search engine
   - [ ] Algolia
