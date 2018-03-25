@@ -1,0 +1,13 @@
+query {
+  authentication {
+    providers(
+      filter: "isEnabled eq true",
+      orderBy: "title ASC"
+    ) {
+      key
+      title
+      useForm
+      icon
+    }
+  }
+}

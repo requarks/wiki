@@ -55,7 +55,7 @@ type GroupMutation {
 # -----------------------------------------------
 
 type GroupResponse {
-  operation: ResponseStatus!
+  responseResult: ResponseStatus!
   group: Group
 }
 
@@ -64,6 +64,7 @@ type Group {
   name: String!
   rights: [String]
   users: [User]
+  userCount: Int
   createdAt: Date!
   updatedAt: Date!
 }

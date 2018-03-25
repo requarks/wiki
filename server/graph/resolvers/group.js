@@ -1,3 +1,4 @@
+const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
 
@@ -11,8 +12,22 @@ module.exports = {
     async groups() { return {} }
   },
   GroupQuery: {
-    list(obj, args, context, info) {
-      return WIKI.db.Group.findAll({ where: args })
+    async list(obj, args, context, info) {
+      return WIKI.db.Group.findAll({
+        attributes: {
+          include: [[WIKI.db.inst.fn('COUNT', WIKI.db.inst.col('users.id')), 'userCount']]
+        },
+        include: [{
+          model: WIKI.db.User,
+          attributes: [],
+          through: {
+            attributes: []
+          }
+        }],
+        raw: true,
+        // TODO: Figure out how to exclude these extra fields...
+        group: ['group.id', 'users->userGroups.createdAt', 'users->userGroups.updatedAt', 'users->userGroups.version', 'users->userGroups.userId', 'users->userGroups.groupId']
+      })
     }
   },
   GroupMutation: {
@@ -29,8 +44,15 @@ module.exports = {
         })
       })
     },
-    create(obj, args) {
-      return WIKI.db.Group.create(args)
+    async create(obj, args) {
+      const group = await WIKI.db.Group.create({
+        name: args.name
+      })
+      console.info(group)
+      return {
+        responseResult: graphHelper.generateSuccess('Group created successfully.'),
+        group
+      }
     },
     delete(obj, args) {
       return WIKI.db.Group.destroy({

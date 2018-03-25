@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'application/octet-stream'
     },
     extra: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       allowNull: true
     },
     filename: {

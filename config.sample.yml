@@ -21,14 +21,21 @@ paths:
 # ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
-# PostgreSQL 9.5 or later required
+# Supported Database Engines:
+# - postgres = PostgreSQL 9.5 or later
+# - mysql = MySQL 5.7.8 or later
+# - sqlite = SQLite 3.9 or later
 
 db:
+  type: postgres
+  # PostgreSQL and MySQL only:
   host: localhost
   port: 5432
   user: wikijs
   pass: wikijsrocks
   db: wiki
+  # SQLite only:
+  storage: path/to/database.sqlite
 
 # ---------------------------------------------------------------------
 # Redis

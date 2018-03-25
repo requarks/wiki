@@ -5,7 +5,7 @@ module.exports = {
   generateSuccess (msg) {
     return {
       succeeded: true,
-      code: 0,
+      errorCode: 0,
       slug: 'ok',
       message: _.defaultTo(msg, 'Operation succeeded.')
     }
@@ -13,11 +13,11 @@ module.exports = {
   generateError (err, complete = true) {
     const error = {
       succeeded: false,
-      code: err.code || 1,
+      errorCode: err.code || 1,
       slug: err.name,
       message: err.message || 'An unexpected error occured.'
     }
-    return (complete) ? { operation: error } : error
+    return (complete) ? { responseResult: error } : error
   },
   filter (arr, filterString) {
     const prvFilter = new Filter(_.toString(filterString).replace(/'/g, `"`))

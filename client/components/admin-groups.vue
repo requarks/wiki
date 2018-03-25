@@ -2,7 +2,7 @@
   v-card(flat)
     v-card(flat, color='grey lighten-5').pa-3.pt-4
       .headline.blue--text.text--darken-2 Groups
-      .subheading.grey--text Manage groups
+      .subheading.grey--text Manage groups and their permissions
     v-card
       v-card-title
         v-dialog(v-model='newGroupDialog', max-width='500')
@@ -17,7 +17,7 @@
               v-spacer
               v-btn(flat, @click='newGroupDialog = false') Cancel
               v-btn(color='primary', @click='createGroup') Create
-        v-btn(icon)
+        v-btn(icon, @click='refresh')
           v-icon.grey--text refresh
         v-spacer
         v-text-field(append-icon='search', label='Search', single-line, hide-details, v-model='search')
@@ -44,6 +44,11 @@
 </template>
 
 <script>
+import _ from 'lodash'
+
+import groupsQuery from 'gql/admin-groups-query-list.gql'
+import createGroupMutation from 'gql/admin-groups-mutation-create.gql'
+
 export default {
   data() {
     return {
@@ -71,18 +76,53 @@ export default {
     }
   },
   methods: {
+    async refresh() {
+      await this.$apollo.queries.groups.refetch()
+      this.$store.commit('showNotification', {
+        message: 'Groups have been refreshed.',
+        style: 'success',
+        icon: 'cached'
+      })
+    },
     async createGroup() {
-      // try {
-      //   const resp = await this.$apollo.mutate({
-      //     mutation: CONSTANTS.GRAPH.GROUPS.CREATE,
-      //     variables: {
-      //       name: this.newGroupName
-      //     }
-      //   })
+      this.newGroupDialog = false
+      try {
+        await this.$apollo.mutate({
+          mutation: createGroupMutation,
+          variables: {
+            name: this.newGroupName
+          },
+          update (store, resp) {
+            const data = _.get(resp, 'data.groups.create', { responseResult: {} })
+            if (data.responseResult.succeeded === true) {
+              const apolloData = store.readQuery({ query: groupsQuery })
+              apolloData.groups.list.push(data.group)
+              store.writeQuery({ query: groupsQuery, data: apolloData })
+            } else {
+              throw new Error(data.responseResult.message)
+            }
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-create')
+          }
+        })
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `Group has been created successfully.`,
+          icon: 'check'
+        })
+      } catch (err) {
 
-      // } catch (err) {
-
-      // }
+      }
+    }
+  },
+  apollo: {
+    groups: {
+      query: groupsQuery,
+      update: (data) => data.groups.list,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')
+      }
     }
   }
 }

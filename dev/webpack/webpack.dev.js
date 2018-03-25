@@ -163,6 +163,11 @@ module.exports = {
         ]
       },
       {
+        test: /\.(graphql|gql)$/,
+        exclude: /node_modules/,
+        loader: 'graphql-tag/loader'
+      },
+      {
         test: /.jsx$/,
         loader: 'babel-loader',
         exclude: /node_modules/,
@@ -226,7 +231,8 @@ module.exports = {
     alias: {
       '@': path.join(process.cwd(), 'client'),
       'vue$': 'vue/dist/vue.esm.js',
-      'mdi': path.resolve(process.cwd(), 'node_modules/vue-material-design-icons'),
+      'gql': path.join(process.cwd(), 'client/graph'),
+      'mdi': path.join(process.cwd(), 'node_modules/vue-material-design-icons'),
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
       'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),

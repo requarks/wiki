@@ -39,12 +39,12 @@ input KeyValuePairInput {
 }
 
 type DefaultResponse {
-  operation: ResponseStatus
+  responseResult: ResponseStatus
 }
 
 type ResponseStatus {
   succeeded: Boolean!
-  code: Int!
+  errorCode: Int!
   slug: String!
   message: String
 }

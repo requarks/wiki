@@ -1,0 +1,12 @@
+mutation($loginToken: String!, $securityCode: String!) {
+  authentication {
+    loginTFA(loginToken: $loginToken, securityCode: $securityCode) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     config: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       allowNull: false
     }
   }, {

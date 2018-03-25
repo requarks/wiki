@@ -64,7 +64,8 @@ module.exports = {
     this.inst = new this.Sequelize(WIKI.config.db.db, WIKI.config.db.user, WIKI.config.db.pass, {
       host: WIKI.config.db.host,
       port: WIKI.config.db.port,
-      dialect: 'postgres',
+      dialect: WIKI.config.db.type,
+      storage: WIKI.config.db.storage,
       pool: {
         max: 10,
         min: 0,
@@ -77,9 +78,9 @@ module.exports = {
     // Attempt to connect and authenticate to DB
 
     this.inst.authenticate().then(() => {
-      WIKI.logger.info('Database (PostgreSQL) connection: [ OK ]')
+      WIKI.logger.info(`Database (${WIKI.config.db.type}) connection: [ OK ]`)
     }).catch(err => {
-      WIKI.logger.error('Failed to connect to PostgreSQL instance.')
+      WIKI.logger.error(`Failed to connect to ${WIKI.config.db.type} instance.`)
       WIKI.logger.error(err)
       process.exit(1)
     })
@@ -112,7 +113,10 @@ module.exports = {
       },
       // -> Set Connection App Name
       setAppName() {
-        return self.inst.query(`set application_name = 'WIKI.js'`, { raw: true })
+        switch (WIKI.config.db.type) {
+          case 'postgres':
+            return self.inst.query(`set application_name = 'WIKI.js'`, { raw: true })
+        }
       }
     }
 

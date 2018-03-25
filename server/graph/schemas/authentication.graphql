@@ -59,7 +59,7 @@ type AuthenticationProvider {
 }
 
 type AuthenticationLoginResponse {
-  operation: ResponseStatus
+  responseResult: ResponseStatus
   tfaRequired: Boolean
   tfaLoginToken: String
 }

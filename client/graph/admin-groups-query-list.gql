@@ -1,0 +1,11 @@
+query {
+  groups {
+    list {
+      id
+      name
+      userCount
+      createdAt
+      updatedAt
+    }
+  }
+}

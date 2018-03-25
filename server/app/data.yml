@@ -11,11 +11,13 @@ defaults:
       repo: ./repo
       data: ./data
     db:
+      type: postgres
       host: localhost
       port: 5432
       user: wikijs
       pass: wikijsrocks
       db: wiki
+      storage: ./db.sqlite
     redis:
       host: localhost
       port: 6379

@@ -61,7 +61,7 @@
           color='blue'
         )
     v-spacer
-    v-progress-circular.mr-3(indeterminate, color='blue', v-show='$apollo.loading')
+    v-progress-circular.mr-3(indeterminate, color='blue', v-show='isLoading')
     slot(name='actions')
     transition(name='navHeaderSearch')
       v-btn(icon, @click='searchToggle', v-if='!searchIsShown')
@@ -88,6 +88,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
   data() {
     return {
@@ -96,6 +98,9 @@ export default {
       searchIsShown: false,
       search: ''
     }
+  },
+  computed: {
+    ...mapGetters(['isLoading'])
   },
   methods: {
     searchToggle() {

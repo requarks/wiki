@@ -38,10 +38,13 @@
 </template>
 
 <script>
-/* global graphQL, siteConfig */
+/* global siteConfig */
 
 import _ from 'lodash'
-import gql from 'graphql-tag'
+
+import strategiesQuery from 'gql/login-query-strategies.gql'
+import loginMutation from 'gql/login-mutation-login.gql'
+import tfaMutation from 'gql/login-mutation-tfa.gql'
 
 export default {
   data () {
@@ -81,22 +84,8 @@ export default {
     },
     refreshStrategies () {
       this.isLoading = true
-      graphQL.query({
-        query: gql`
-          query {
-            authentication {
-              providers(
-                filter: "isEnabled eq true",
-                orderBy: "title ASC"
-              ) {
-                key
-                title
-                useForm
-                icon
-              }
-            }
-          }
-        `
+      this.$apollo.query({
+        query: strategiesQuery
       }).then(resp => {
         if (_.has(resp, 'data.authentication.providers')) {
           this.strategies = _.get(resp, 'data.authentication.providers', [])
@@ -131,23 +120,8 @@ export default {
         this.$refs.iptPassword.focus()
       } else {
         this.isLoading = true
-        graphQL.mutate({
-          mutation: gql`
-            mutation($username: String!, $password: String!, $provider: String!) {
-              authentication {
-                login(username: $username, password: $password, provider: $provider) {
-                  operation {
-                    succeeded
-                    code
-                    slug
-                    message
-                  }
-                  tfaRequired
-                  tfaLoginToken
-                }
-              }
-            }
-          `,
+        this.$apollo.mutate({
+          mutation: loginMutation,
           variables: {
             username: this.username,
             password: this.password,
@@ -199,21 +173,8 @@ export default {
         this.$refs.iptTFA.focus()
       } else {
         this.isLoading = true
-        graphQL.mutate({
-          mutation: gql`
-            mutation($loginToken: String!, $securityCode: String!) {
-              authentication {
-                loginTFA(loginToken: $loginToken, securityCode: $securityCode) {
-                  operation {
-                    succeeded
-                    code
-                    slug
-                    message
-                  }
-                }
-              }
-            }
-          `,
+        this.$apollo.mutate({
+          mutation: tfaMutation,
           variables: {
             loginToken: this.loginToken,
             securityCode: this.securityCode

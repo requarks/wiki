@@ -1,0 +1,14 @@
+mutation($username: String!, $password: String!, $provider: String!) {
+  authentication {
+    login(username: $username, password: $password, provider: $provider) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+      tfaRequired
+      tfaLoginToken
+    }
+  }
+}

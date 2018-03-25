@@ -93,23 +93,14 @@
                   v-list-tile-content
                     v-list-tile-title {{ info.postgreVersion }}
                     v-list-tile-sub-title {{ info.postgreHost }}
-
-    v-snackbar(
-      color='success'
-      top
-      v-model='refreshCompleted'
-    )
-      v-icon.mr-3(dark) cached
-      | System Info has been refreshed.
-
 </template>
 
 <script>
-import gql from 'graphql-tag'
-
 import IconCube from 'mdi/cube'
 import IconDatabase from 'mdi/database'
 import IconNodeJs from 'mdi/nodejs'
+
+import systemInfoQuery from 'gql/admin-system-query-info.gql'
 
 export default {
   components: {
@@ -119,42 +110,26 @@ export default {
   },
   data() {
     return {
-      info: {},
-      refreshCompleted: false
-    }
-  },
-  apollo: {
-    info: {
-      query: gql`
-        query {
-          system {
-            info {
-              currentVersion
-              latestVersion
-              latestVersionReleaseDate
-              operatingSystem
-              hostname
-              cpuCores
-              ramTotal
-              workingDirectory
-              nodeVersion
-              redisVersion
-              redisUsedRAM
-              redisTotalRAM
-              redisHost
-              postgreVersion
-              postgreHost
-            }
-          }
-        }
-      `,
-      update: (data) => data.system.info
+      info: {}
     }
   },
   methods: {
     async refresh() {
       await this.$apollo.queries.info.refetch()
-      this.refreshCompleted = true
+      this.$store.commit('showNotification', {
+        message: 'System Info has been refreshed.',
+        style: 'success',
+        icon: 'cached'
+      })
+    }
+  },
+  apollo: {
+    info: {
+      query: systemInfoQuery,
+      update: (data) => data.system.info,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-system-refresh')
+      }
     }
   }
 }

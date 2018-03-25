@@ -35,7 +35,7 @@ module.exports = {
         let authResult = await WIKI.db.User.login(args, context)
         return {
           ...authResult,
-          operation: graphHelper.generateSuccess('Login success')
+          responseResult: graphHelper.generateSuccess('Login success')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -46,7 +46,7 @@ module.exports = {
         let authResult = await WIKI.db.User.loginTFA(args, context)
         return {
           ...authResult,
-          operation: graphHelper.generateSuccess('TFA success')
+          responseResult: graphHelper.generateSuccess('TFA success')
         }
       } catch (err) {
         return graphHelper.generateError(err)
