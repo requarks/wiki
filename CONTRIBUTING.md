@@ -15,6 +15,11 @@ We welcome any type of contribution, not only code. You can help with
 
 Working on your first Pull Request? You can learn how from this *free* series, [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
 
+## Commits Formatting
+Your commits message should follow the semantic commit style as presented in this [article](https://seesparkbox.com/foundry/semantic_commit_messages)
+
+e.g. `fix: edit user textbox trigger`, `refactor: markdown rendering method to es6`
+
 ## Submitting code
 
 Any code change should be submitted as a pull request. The description should explain what the code does and give steps to execute it. The pull request should also contain tests.
