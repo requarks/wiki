@@ -48,19 +48,21 @@ module.exports = {
       const group = await WIKI.db.Group.create({
         name: args.name
       })
-      console.info(group)
       return {
         responseResult: graphHelper.generateSuccess('Group created successfully.'),
         group
       }
     },
-    delete(obj, args) {
-      return WIKI.db.Group.destroy({
+    async delete(obj, args) {
+      await WIKI.db.Group.destroy({
         where: {
           id: args.id
         },
         limit: 1
       })
+      return {
+        responseResult: graphHelper.generateSuccess('Group has been deleted.')
+      }
     },
     unassignUser(obj, args) {
       return WIKI.db.Group.findById(args.groupId).then(grp => {

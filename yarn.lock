@@ -7992,7 +7992,7 @@ moment-timezone@^0.5.0, moment-timezone@^0.5.x:
   dependencies:
     moment ">= 2.9.0"
 
-moment@2.21.0:
+moment@2.21.0, moment@^2.11.1:
   version "2.21.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.21.0.tgz#2a114b51d2a6ec9e6d83cf803f838a878d8a023a"
 
@@ -12766,6 +12766,12 @@ vue-loader@14.2.1:
 vue-material-design-icons@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/vue-material-design-icons/-/vue-material-design-icons-1.2.1.tgz#3231ffc3c4aadbaf9de06e9c29b6994691f010aa"
+
+vue-moment@3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/vue-moment/-/vue-moment-3.2.0.tgz#28cd2b313831ae83953f646ac4785a2cc724e412"
+  dependencies:
+    moment "^2.11.1"
 
 vue-router@3.0.1:
   version "3.0.1"

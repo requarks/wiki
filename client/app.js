@@ -12,6 +12,8 @@ import VueApollo from 'vue-apollo'
 import Vuetify from 'vuetify'
 import Velocity from 'velocity-animate'
 import Hammer from 'hammerjs'
+import moment from 'moment'
+import VueMoment from 'vue-moment'
 import store from './store'
 
 // ====================================
@@ -64,6 +66,7 @@ Vue.use(localization.VueI18Next)
 Vue.use(helpers)
 Vue.use(VeeValidate, { events: '' })
 Vue.use(Vuetify)
+Vue.use(VueMoment, { moment })
 
 Vue.prototype.Velocity = Velocity
 

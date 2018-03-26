@@ -12,7 +12,7 @@
           v-card
             .dialog-header.is-short New Group
             v-card-text
-              v-text-field(v-model='newGroupName', label='Group Name', autofocus, counter='255')
+              v-text-field(v-model='newGroupName', label='Group Name', autofocus, counter='255', @keyup.enter='createGroup')
             v-card-actions
               v-spacer
               v-btn(flat, @click='newGroupDialog = false') Cancel
@@ -20,23 +20,22 @@
         v-btn(icon, @click='refresh')
           v-icon.grey--text refresh
         v-spacer
-        v-text-field(append-icon='search', label='Search', single-line, hide-details, v-model='search')
+        v-text-field(solo, append-icon='search', label='Search', single-line, hide-details, v-model='search')
       v-data-table(
-        v-model='selected'
         :items='groups',
         :headers='headers',
         :search='search',
         :pagination.sync='pagination',
         :rows-per-page-items='[15]'
-        hide-actions,
-        disable-initial-sort
+        hide-actions
       )
         template(slot='items', slot-scope='props')
-          tr(:active='props.selected')
+          tr.is-clickable(:active='props.selected', @click='$router.push("/groups/" + props.item.id)')
             td.text-xs-right {{ props.item.id }}
             td {{ props.item.name }}
             td {{ props.item.userCount }}
-            td: v-btn(icon): v-icon.grey--text.text--darken-1 more_horiz
+            td {{ props.item.createdAt | moment('calendar') }}
+            td {{ props.item.updatedAt | moment('calendar') }}
         template(slot='no-data')
           v-alert.ma-3(icon='warning', :value='true', outline) No groups to display.
       .text-xs-center.py-2(v-if='groups.length > 15')
@@ -48,20 +47,22 @@ import _ from 'lodash'
 
 import groupsQuery from 'gql/admin-groups-query-list.gql'
 import createGroupMutation from 'gql/admin-groups-mutation-create.gql'
+import deleteGroupMutation from 'gql/admin-groups-mutation-delete.gql'
 
 export default {
   data() {
     return {
       newGroupDialog: false,
       newGroupName: '',
-      selected: [],
+      selectedGroup: {},
       pagination: {},
       groups: [],
       headers: [
         { text: 'ID', value: 'id', width: 50, align: 'right' },
         { text: 'Name', value: 'name' },
         { text: 'Users', value: 'userCount', width: 200 },
-        { text: '', value: 'actions', sortable: false, width: 50 }
+        { text: 'Created', value: 'createdAt', width: 250 },
+        { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
       search: ''
     }
@@ -96,6 +97,7 @@ export default {
             const data = _.get(resp, 'data.groups.create', { responseResult: {} })
             if (data.responseResult.succeeded === true) {
               const apolloData = store.readQuery({ query: groupsQuery })
+              data.group.userCount = 0
               apolloData.groups.list.push(data.group)
               store.writeQuery({ query: groupsQuery, data: apolloData })
             } else {
@@ -106,13 +108,48 @@ export default {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-create')
           }
         })
+        this.newGroupName = ''
         this.$store.commit('showNotification', {
           style: 'success',
           message: `Group has been created successfully.`,
           icon: 'check'
         })
       } catch (err) {
-
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'warning'
+        })
+      }
+    },
+    async deleteGroupConfirm(group) {
+      this.deleteGroupDialog = true
+      this.selectedGroup = group
+    },
+    async deleteGroup() {
+      this.deleteGroupDialog = false
+      try {
+        await this.$apollo.mutate({
+          mutation: deleteGroupMutation,
+          variables: {
+            id: this.selectedGroup.id
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-delete')
+          }
+        })
+        await this.$apollo.queries.groups.refetch()
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `Group ${this.selectedGroup.name} has been deleted.`,
+          icon: 'delete'
+        })
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'warning'
+        })
       }
     }
   },

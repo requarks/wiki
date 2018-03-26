@@ -18,7 +18,11 @@ type GroupQuery {
   list(
     filter: String
     orderBy: String
-  ): [Group]
+  ): [GroupMinimal]
+
+  single(
+    id: String!
+  ): Group
 }
 
 # -----------------------------------------------
@@ -59,12 +63,19 @@ type GroupResponse {
   group: Group
 }
 
+type GroupMinimal {
+  id: Int!
+  name: String!
+  userCount: Int
+  createdAt: Date!
+  updatedAt: Date!
+}
+
 type Group {
   id: Int!
   name: String!
   rights: [String]
   users: [User]
-  userCount: Int
   createdAt: Date!
   updatedAt: Date!
 }

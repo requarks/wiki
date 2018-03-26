@@ -97,6 +97,7 @@ const router = new VueRouter({
     { path: '/stats', component: () => import(/* webpackChunkName: "admin" */ './admin-stats.vue') },
     { path: '/theme', component: () => import(/* webpackChunkName: "admin" */ './admin-theme.vue') },
     { path: '/groups', component: () => import(/* webpackChunkName: "admin" */ './admin-groups.vue') },
+    { path: '/groups/:id', component: () => import(/* webpackChunkName: "admin" */ './admin-groups-edit.vue') },
     { path: '/users', component: () => import(/* webpackChunkName: "admin" */ './admin-users.vue') },
     { path: '/auth', component: () => import(/* webpackChunkName: "admin" */ './admin-auth.vue') },
     { path: '/rendering', component: () => import(/* webpackChunkName: "admin" */ './admin-rendering.vue') },

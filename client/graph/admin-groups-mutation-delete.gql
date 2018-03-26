@@ -1,0 +1,12 @@
+mutation ($id: Int!) {
+  groups {
+    delete(id: $id) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

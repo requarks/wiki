@@ -8,4 +8,10 @@
   align-items: center;
   padding: 0 1rem;
   font-size: 1.2rem;
+
+  &.is-red {
+    background-color: mc('red', '700');
+    background: radial-gradient(ellipse at top, mc('red', '500'), transparent),
+              radial-gradient(ellipse at bottom, mc('red', '800'), transparent);
+  }
 }

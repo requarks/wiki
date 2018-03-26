@@ -1,0 +1,22 @@
+query ($id: Int!) {
+  groups {
+    single(id: $id) {
+      id
+      name
+      rights {
+        id
+        path
+        role
+        exact
+        allow
+      }
+      users {
+        id
+        name
+        email
+      }
+      createdAt
+      updatedAt
+    }
+  }
+}
