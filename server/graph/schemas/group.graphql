@@ -21,7 +21,7 @@ type GroupQuery {
   ): [GroupMinimal]
 
   single(
-    id: String!
+    id: Int!
   ): Group
 }
 
@@ -74,7 +74,7 @@ type GroupMinimal {
 type Group {
   id: Int!
   name: String!
-  rights: [String]
+  rights: [Right]
   users: [User]
   createdAt: Date!
   updatedAt: Date!

@@ -4,7 +4,7 @@
       .headline.blue--text.text--darken-2 Edit Group
       .subheading.grey--text {{group.name}}
       v-btn(color='primary', fab, absolute, bottom, right, small, to='/groups'): v-icon arrow_upward
-    v-tabs(color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows)
+    v-tabs(v-model='tab', color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows)
       v-tab(key='properties') Properties
       v-tab(key='rights') Permissions
       v-tab(key='users') Users
@@ -32,7 +32,39 @@
                   v-btn(color='red', dark, @click='deleteGroup') Delete
 
       v-tab-item(key='rights', :transition='false', :reverse-transition='false')
-        v-card Test
+        v-card
+          v-card-title.pb-0
+            v-btn(color='primary')
+              v-icon(left) add
+              | Add Rule
+            v-spacer
+            v-btn(flat)
+              v-icon(left) vertical_align_bottom
+              | Import Rules
+          v-list(dense, two-line)
+            v-list-tile.grey.lighten-5.px-2
+              v-list-tile-avatar(color='red'): v-icon(color='white') remove_circle
+              v-list-tile-content
+                v-list-tile-title /javascript/*
+                v-list-tile-sub-title.caption #[strong WRITE]
+              v-list-tile-action
+                v-btn(icon): v-icon(color='grey') delete
+            v-divider(inset).my-0
+            v-list-tile.grey.lighten-5.px-2
+              v-list-tile-avatar(color='green'): v-icon(color='white') check
+              v-list-tile-content
+                v-list-tile-title /javascript/*
+                v-list-tile-sub-title.caption #[strong WRITE]
+              v-list-tile-action
+                v-btn(icon): v-icon(color='grey') delete
+            v-divider(inset).my-0
+            v-list-tile.grey.lighten-5.px-2
+              v-list-tile-avatar(color='green'): v-icon(color='white') check
+              v-list-tile-content
+                v-list-tile-title /javascript/*
+                v-list-tile-sub-title.caption #[strong READ]
+              v-list-tile-action
+                v-btn(icon): v-icon(color='grey') delete
 
       v-tab-item(key='users', :transition='false', :reverse-transition='false')
         v-card
@@ -41,7 +73,7 @@
               v-icon(left) assignment_ind
               | Assign User
           v-data-table(
-            :items='users',
+            :items='group.users',
             :headers='headers',
             :search='search',
             :pagination.sync='pagination',
@@ -52,9 +84,7 @@
               tr(:active='props.selected')
                 td.text-xs-right {{ props.item.id }}
                 td {{ props.item.name }}
-                td {{ props.item.userCount }}
-                td {{ props.item.createdAt | moment('calendar') }}
-                td {{ props.item.updatedAt | moment('calendar') }}
+                td {{ props.item.email }}
                 td
                   v-menu(bottom, right, min-width='200')
                     v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
@@ -70,7 +100,7 @@
 </template>
 
 <script>
-import groupsQuery from 'gql/admin-groups-query-list.gql'
+import groupQuery from 'gql/admin-groups-query-single.gql'
 import deleteGroupMutation from 'gql/admin-groups-mutation-delete.gql'
 
 export default {
@@ -78,7 +108,8 @@ export default {
     return {
       group: {
         id: 7,
-        name: 'Editors'
+        name: 'Editors',
+        users: []
       },
       deleteGroupDialog: false,
       pagination: {},
@@ -87,11 +118,10 @@ export default {
         { text: 'ID', value: 'id', width: 50, align: 'right' },
         { text: 'Name', value: 'name' },
         { text: 'Email', value: 'email' },
-        { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 },
         { text: '', value: 'actions', sortable: false, width: 50 }
       ],
-      search: ''
+      search: '',
+      tab: '1'
     }
   },
   computed: {
@@ -136,9 +166,14 @@ export default {
     }
   },
   apollo: {
-    users: {
-      query: groupsQuery,
-      update: (data) => data.groups.list,
+    group: {
+      query: groupQuery,
+      variables() {
+        return {
+          id: this.$route.params.id
+        }
+      },
+      update: (data) => data.groups.single,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')
       }

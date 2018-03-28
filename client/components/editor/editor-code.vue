@@ -114,7 +114,7 @@ import mdMark from 'markdown-it-mark'
 import mdImsize from 'markdown-it-imsize'
 
 // Prism (Syntax Highlighting)
-import Prism from '../libs/prism/prism.js'
+import Prism from '@/libs/prism/prism.js'
 
 // ========================================
 // INIT

@@ -28,6 +28,9 @@ module.exports = {
         // TODO: Figure out how to exclude these extra fields...
         group: ['group.id', 'users->userGroups.createdAt', 'users->userGroups.updatedAt', 'users->userGroups.version', 'users->userGroups.userId', 'users->userGroups.groupId']
       })
+    },
+    async single(obj, args, context, info) {
+      return WIKI.db.Group.findById(args.id)
     }
   },
   GroupMutation: {
