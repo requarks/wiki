@@ -34,37 +34,46 @@
       v-tab-item(key='rights', :transition='false', :reverse-transition='false')
         v-card
           v-card-title.pb-0
-            v-btn(color='primary')
-              v-icon(left) add
-              | Add Rule
+            v-subheader
+              v-icon.mr-2 border_color
+              .subheading Read and Write
             v-spacer
-            v-btn(flat)
+            v-btn(flat, outline)
+              v-icon(left) arrow_drop_down
+              | Load Preset
+            v-btn(flat, outline)
               v-icon(left) vertical_align_bottom
               | Import Rules
-          v-list(dense, two-line)
-            v-list-tile.grey.lighten-5.px-2
-              v-list-tile-avatar(color='red'): v-icon(color='white') remove_circle
-              v-list-tile-content
-                v-list-tile-title /javascript/*
-                v-list-tile-sub-title.caption #[strong WRITE]
-              v-list-tile-action
-                v-btn(icon): v-icon(color='grey') delete
-            v-divider(inset).my-0
-            v-list-tile.grey.lighten-5.px-2
-              v-list-tile-avatar(color='green'): v-icon(color='white') check
-              v-list-tile-content
-                v-list-tile-title /javascript/*
-                v-list-tile-sub-title.caption #[strong WRITE]
-              v-list-tile-action
-                v-btn(icon): v-icon(color='grey') delete
-            v-divider(inset).my-0
-            v-list-tile.grey.lighten-5.px-2
-              v-list-tile-avatar(color='green'): v-icon(color='white') check
-              v-list-tile-content
-                v-list-tile-title /javascript/*
-                v-list-tile-sub-title.caption #[strong READ]
-              v-list-tile-action
-                v-btn(icon): v-icon(color='grey') delete
+          .pa-3.pl-4
+            criterias
+          v-divider.my-0
+          v-card-title.pb-0
+            v-subheader
+              v-icon.mr-2 pageview
+              .subheading Read Only
+            v-spacer
+            v-btn(flat, outline)
+              v-icon(left) arrow_drop_down
+              | Load Preset
+            v-btn(flat, outline)
+              v-icon(left) vertical_align_bottom
+              | Import Rules
+          .pa-3.pl-4
+            criterias
+          v-divider.my-0
+          v-card-title.pb-0
+            v-subheader Legend
+          .px-4.pb-4
+            .body-1.px-1.py-2 Any number of rules can be used at the same time. However, some rules requires more processing time than others. Rule types are color-coded as followed:
+            .caption
+              v-icon(color='blue') stop
+              span Fast rules. None or insignificant latency introduced to all page loads.
+            .caption
+              v-icon(color='orange') stop
+              span Medium rules. Some latency added to all page loads.
+            .caption
+              v-icon(color='red') stop
+              span Slow rules. May adds noticeable latency to all page loads. Avoid using in multiple rules.
 
       v-tab-item(key='users', :transition='false', :reverse-transition='false')
         v-card
@@ -100,10 +109,15 @@
 </template>
 
 <script>
+import Criterias from '../common/criterias.vue'
+
 import groupQuery from 'gql/admin-groups-query-single.gql'
 import deleteGroupMutation from 'gql/admin-groups-mutation-delete.gql'
 
 export default {
+  components: {
+    Criterias
+  },
   data() {
     return {
       group: {
