@@ -120,4 +120,7 @@ langs:
   -
     id: sv
     name: Swedish - Svenska
+  -
+    id: tr
+    name: Turkish - Türkçe
 # ---------------------------------

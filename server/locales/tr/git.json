@@ -1,1 +1,6 @@
-{ }
+{
+  "added": "{{path}} eklendi",
+  "deleted": "{{path}} silindi / yeniden isimlendirildi",
+  "updated": "{{path}} güncellendi",
+  "uploaded": "{{path}} karşıya yüklendi"
+}

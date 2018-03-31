@@ -1,1 +1,82 @@
-{ }
+{
+  "profile": {
+    "displayname": "Görünen Ad",
+    "displaynameexample": "Mustafa Çalışkan",
+    "email": "Email",
+    "lastprofileupdate": "Profildeki son değişiklik",
+    "membersince": "Üye olunan tarih",
+    "password": "Şifre",
+    "passwordverify": "Şifre Doğrula",
+    "provider": "Sağlayıcı",
+    "savechanges": "Değişiklikleri Onayla",
+    "subtitle": "Profil ve Yetki Bilgileri",
+    "tfa": "İki-Aşamalı Kimlik Doğrulama",
+    "tfadisable": "2FA - Engelle",
+    "tfadisabled": "Engellendi",
+    "tfaenable": "2FA - Etkinleştir",
+    "tfaenabled": "Etkinleştirildi"
+  },
+  "stats": {
+    "subtitle": "Site içi istatistikler",
+    "entries": "Girdiler",
+    "uploads": "Yüklemeler",
+    "users": "Kullanıcılar"
+  },
+  "settings": {
+    "subtitle": "Site ayarlarını yönet"
+  },
+  "system": {
+    "subtitle": "Wiki projeniz için bilgilendirme ve araçlar",
+    "systemversion": "Sistem Sürümü",
+    "currentversion": "Kullanılan Sürüm",
+    "latestversion": "Güncel Sürüm",
+    "upgrade": "Yükselt",
+    "reinstall": "Kullanılan sürümü tekrar yükle",
+    "versioncheckfailed": "Güncel sürüm yüklenemedi. Daha sonra tekrar deneyin.",
+    "administrativetools": "Yönetici Araçları",
+    "flushcache": "Önbelleği temizle ve indeksleri tekrar yapılandır",
+    "flushcachetext": "İçerikler veya arama sonuçları güncel değil ise, ya da güncel içerikleri göstermiyorsa, önbelleği temizlemek bu sorunları çözebilir.",
+    "flushcachebtn": "Temizle ve Yeniden Kur",
+    "resetaccounts": "Sistem hesaplarını sıfırla",
+    "resetaccountstext": "Sistem hesapları (Misafir hesabı gibi), varsayılan ayarlarına geri döndürülecek.",
+    "resetaccountsbtn": "Sistem Hesaplarını Sıfırla",
+    "flushsessions": "Tüm faal, kullanıcı oturumlarını temizle",
+    "flushsessionstext": "Tüm kullanıcılar çıkış yapacak ve tekrar giriş yapmaya zorlanacak. Sizin oturumunuz da dahil!",
+    "flushsessionsbtn": "Oturumları Temizle",
+    "hostinfo": "Ana Bilgisayar Hakkında",
+    "os": "İşletim Sistemi",
+    "nodeversion": "Node.js Sürümü",
+    "hostname": "Ana Bilgisayar Adı",
+    "cores": "CPU Çekirdek Adedi",
+    "totalmem": "Toplam Hafıza",
+    "cwd": "Çalışma Dizini"
+  },
+  "theme": {
+    "subtitle": "Wiki projenizin görünüşünü değiştirin",
+    "primarycolor": "Birincil Renk",
+    "primarycolordesc": "Üst navigasyon çubuğu, üstbilgi, linkler vb. için kullanılır.",
+    "altcolor": "İkincil Renk",
+    "altcolordesc": "Kenar çubuğu için kullanılır (daha koyu bir ton)",
+    "footercolor": "Altbilgi Rengi",
+    "footercolordesc": "Altbilgi için kullanılır (daha açık bir ton)",
+    "codeblock": {
+      "title": "Kod Blokları",
+      "dark": "Karanlık Tema Kullan",
+      "colorize": "Programlama diline göre renklendir"
+    },
+    "savechanges": "Değişiklikleri Kaydet",
+    "reset": "Ayarları Sıfırla"
+  },
+  "users": {
+    "createauthorize": "Kullanıcı Ekle / Yetkilendir",
+    "subtitle": "Kullanıcıları ve erişim haklarını düzenle",
+    "name": "İsim",
+    "email": "Email Adresi",
+    "provider": "Sağlayıcı",
+    "createdon": "Oluşturulduğu Tarih",
+    "updatedon": "Güncellendiği Tarih",
+    "returntousers": "Kullanıcılara Geri Dön",
+    "edituser": "Kullanıcıyı Düzenle",
+    "uniqueid": "Eşsiz ID"
+  }
+}
