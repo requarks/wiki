@@ -1,1 +1,30 @@
-{ }
+{
+  "alreadyexists": "Bu girdi zaten mevcut!",
+  "debugmsg": "Detaylı hata ayıklama izi",
+  "fileexists": "Bu dosya {{path}} zaten mevcut.",
+  "forbidden": "Yasaklanmış",
+  "forbiddendetail": "Üzgünüz, bu sayfaya erişmek için gerekli izinlere sahip değilsiniz.",
+  "generic": "Hoop! Birşeyler yanlış gitti!",
+  "invalidaction": "Geçersiz Eylem.",
+  "invaliddestfolder": "Geçersiz Hedef Klasörü!",
+  "invalidfiletype": "Geçersiz Dosya Türü.",
+  "invalidfolder": "Geçersiz Klasör.",
+  "invalidoperation": "Geçersiz İşlem!",
+  "invalidpath": "Geçersiz sayfa yolu.",
+  "invaliduserid": "Geçersiz Kullanıcı ID",
+  "newpasswordtooshort": "Yeni şifre çok kısa!",
+  "notexist": "Bu girdi, {{path}}, mevcut değil!",
+  "notexistdetail": "Bu girdiyi oluşturmak ister misiniz?",
+  "parentinvalid": "Üst girdi geçerli bir dosya değil.",
+  "parentisroot": "Üst girdi köktür.",
+  "remotetoolarge": "Uzak dosya çok büyük!",
+  "reservedname": "Sistem tarafından ayrıldığı için bu isme sahip bir belge oluşturamazsınız..",
+  "savefailed": "Belge kaydedilemedi!",
+  "starterfailed": "Başlangıç içeriği yüklenemedi!",
+  "unauthorized": "Yetki Seviyesi Yetersiz",
+  "actions": {
+    "create": "Oluştur",
+    "gohome": "Anasayfaya Git",
+    "loginas": "Şu hesap ile giriş yap..."
+  }
+}

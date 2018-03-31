@@ -1,1 +1,51 @@
-{ }
+{
+  "wiki": "Wiki",
+  "header": {
+    "overview": "Genel Bakış",
+    "createdoc": "Yeni Belge Ekle"
+  },
+  "footer": {
+    "poweredby": "Altyapı:",
+    "home": "Anasayfa",
+    "top": "Başa dön"
+  },
+  "sidebar": {
+    "nav": "NAV",
+    "navigation": "Navigasyon",
+    "pagecontents": "Sayfa İçerikleri",
+    "pastversions": "Geçmiş Sürümler"
+  },
+  "nav": {
+    "account": "Hesap",
+    "allpages": "Tüm Sayfalar",
+    "create": "Oluştur",
+    "discard": "İptal",
+    "edit": "Düzenle",
+    "history": "Geçmiş",
+    "login": "Oturum Aç",
+    "logout": "Oturum Kapat",
+    "move": "Taşı",
+    "myprofile": "Profilim",
+    "normalview": "Normal Görünüm",
+    "root": "Anasayfa",
+    "savechanges": "Değişiklikleri Kaydet",
+    "savedocument": "Belgeyi Kaydet",
+    "settings": "Ayarlar",
+    "source": "Kaynak",
+    "stats": "İstatistikler",
+    "sysinfo": "Sistem Bilgisi",
+    "syssettings": "Sistem Ayarları",
+    "theme": "Tema-Renk Ayarları",
+    "users": "Kullanıcılar",
+    "viewlatest": "Güncellemeri Görüntüle"
+  },
+  "welcome": {
+    "title": "Wiki projene hoşgeldin!",
+    "subtitle": "Hadi ilk iş olarak anasayfanı oluşturalım.",
+    "createhome": "Anasayfa Oluştur"
+  },
+  "loading": {
+    "source": "Kaynak yükleniyor...",
+    "editor": "Editör yükleniyor..."
+  }
+}
