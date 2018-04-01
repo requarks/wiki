@@ -30,15 +30,6 @@
                   v-toolbar-title
                     .subheading Site Branding
                 v-card-text ---
-              v-card.mt-3
-                v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading Maintenance Mode
-                v-card-text
-                  .body-1 Maintenance mode restrict access to the site to administrators only, regarless of current permissions.
-                  v-btn.mt-3(color='orange darken-2', dark)
-                    icon-home-alert.mr-2(fillColor='#FFFFFF')
-                    | Turn On Maintenance Mode
 
 </template>
 

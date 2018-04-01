@@ -21,11 +21,17 @@
     v-select(v-if='item.type === "country"', solo, :items='countries', v-model='item.value', placeholder='Countries...', multiple, item-text='name', item-value='code')
     v-text-field(v-else-if='item.type === "path"', solo, v-model='item.value', label='Path (e.g. /section)')
     v-text-field(v-else-if='item.type === "date"', solo, @click.native.stop='dateActivator = true', v-model='item.value', label='YYYY-MM-DD', readonly)
+    v-text-field(v-else-if='item.type === "time"', solo, @click.native.stop='timeActivator = true', v-model='item.value', label='HH:MM', readonly)
+    v-select(v-else-if='item.type === "group"', solo, :items='groups', v-model='item.value', placeholder='Group...', item-text='name', item-value='id')
     v-text-field.blue-grey.lighten-4(v-else, solo, disabled)
 
     v-dialog(lazy, v-model='dateActivator', width='290px', ref='dateDialog')
       v-date-picker(v-model='item.value', scrollable, color='primary')
         v-btn(flat, color='primary' @click='$refs.dateDialog.save(date)', block) ok
+
+    v-dialog(lazy, v-model='timeActivator', width='300px', ref='timeDialog')
+      v-time-picker(v-model='item.value', scrollable, color='primary')
+        v-btn(flat, color='primary' @click='$refs.timeDialog.save(time)', block) ok
 
     v-btn(icon, @click='remove'): v-icon(color='blue-grey') clear
 </template>
@@ -60,7 +66,10 @@ export default {
       },
       dateActivator: false,
       dateDialog: false,
+      timeActivator: false,
+      timeDialog: false,
       countries: [],
+      groups: [],
       criteriaTypes: [
         { text: 'Path', value: 'path', icon: 'space_bar', color: 'blue', description: 'Match the path of the document being viewed.' },
         { text: 'Date', value: 'date', icon: 'date_range', color: 'blue', description: 'Match the current calendar day.' },
