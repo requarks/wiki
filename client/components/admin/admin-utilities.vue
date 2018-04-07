@@ -85,10 +85,36 @@
               v-btn(outline, color='grey')
                 v-icon(left) autorenew
                 span Reset Client ID
+
+      v-tab-item(key='support', :transition='false', :reverse-transition='false')
+        v-card.pa-3
+          v-subheader Report a bug
+          .body-1.pl-3 Bugs can be reported using GitHub issues on the project repository page.
+          v-btn.ml-3.mt-3(depressed, dark, color='grey darken-2', href='https://github.com/Requarks/wiki/issues', target='_blank')
+            icon-github-circle.mr-3(fillColor='#FFFFFF')
+            span Submit an issue
+          v-divider
+          v-subheader Suggest a New Feature / Enhancement
+          .body-1.pl-3 Have an idea for a new feature or something that could be improved?
+          v-btn.ml-3.mt-3(depressed, dark, color='indigo', href='https://requests.requarks.io/wiki', target='_blank')
+            v-icon(left) lightbulb_outline
+            span Submit an idea
+          v-divider
+          v-subheader Questions / Comments
+          .body-1.pl-3 Join our gitter channel. We are very active and friendly!
+          v-btn.ml-3.mt-3(depressed, dark, color='pink', href='https://gitter.im/Requarks/wiki', target='_blank')
+            v-icon(left) chat
+            span Launch Gitter
+
 </template>
 
 <script>
+import IconGithubCircle from 'mdi/github-circle'
+
 export default {
+  components: {
+    IconGithubCircle
+  },
   data() {
     return {
       tab: '0',
