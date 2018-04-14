@@ -35,12 +35,24 @@
       .login-copyright
         span {{ $t('footer.poweredBy') }}
         a(href='https://wiki.js.org', rel='external', title='Wiki.js') Wiki.js
+
+    v-snackbar(
+      :color='notification.style'
+      bottom,
+      right,
+      multi-line,
+      v-model='notificationState'
+    )
+      .text-xs-left
+        v-icon.mr-3(dark) {{ notification.icon }}
+        span {{ notification.message }}
 </template>
 
 <script>
 /* global siteConfig */
 
 import _ from 'lodash'
+import { mapState } from 'vuex'
 
 import strategiesQuery from 'gql/login-query-strategies.gql'
 import loginMutation from 'gql/login-mutation-login.gql'
@@ -62,12 +74,16 @@ export default {
     }
   },
   computed: {
+    ...mapState(['notification']),
+    notificationState: {
+      get() { return this.notification.isActive },
+      set(newState) { this.$store.commit('updateNotificationState', newState) }
+    },
     siteTitle () {
       return siteConfig.title
     }
   },
   mounted () {
-    this.$store.commit('navigator/subtitleStatic', 'Login')
     this.refreshStrategies()
     this.$refs.iptEmail.focus()
   },
@@ -95,27 +111,27 @@ export default {
         this.isLoading = false
       }).catch(err => {
         console.error(err)
-        this.$store.dispatch('alert', {
-          style: 'error',
-          icon: 'gg-warning',
-          msg: err.message
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'warning'
         })
         this.isLoading = false
       })
     },
     login () {
       if (this.username.length < 2) {
-        this.$store.dispatch('alert', {
-          style: 'error',
-          icon: 'gg-warning',
-          msg: 'Enter a valid email / username.'
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Enter a valid email / username.',
+          icon: 'warning'
         })
         this.$refs.iptEmail.focus()
       } else if (this.password.length < 2) {
-        this.$store.dispatch('alert', {
-          style: 'error',
-          icon: 'gg-warning',
-          msg: 'Enter a valid password.'
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Enter a valid password.',
+          icon: 'warning'
         })
         this.$refs.iptPassword.focus()
       } else {
@@ -130,7 +146,7 @@ export default {
         }).then(resp => {
           if (_.has(resp, 'data.authentication.login')) {
             let respObj = _.get(resp, 'data.authentication.login', {})
-            if (respObj.operation.succeeded === true) {
+            if (respObj.responseResult.succeeded === true) {
               if (respObj.tfaRequired === true) {
                 this.screen = 'tfa'
                 this.securityCode = ''
@@ -139,25 +155,26 @@ export default {
                   this.$refs.iptTFA.focus()
                 })
               } else {
-                this.$store.dispatch('alert', {
+                this.$store.commit('showNotification', {
+                  message: 'Login successful!',
                   style: 'success',
-                  icon: 'gg-check',
-                  msg: 'Login successful!'
+                  icon: 'check'
                 })
+                window.location.replace('/') // TEMPORARY - USE RETURNURL
               }
               this.isLoading = false
             } else {
-              throw new Error(respObj.operation.message)
+              throw new Error(respObj.responseResult.message)
             }
           } else {
             throw new Error('Authentication is unavailable.')
           }
         }).catch(err => {
           console.error(err)
-          this.$store.dispatch('alert', {
-            style: 'error',
-            icon: 'gg-warning',
-            msg: err.message
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: err.message,
+            icon: 'warning'
           })
           this.isLoading = false
         })
@@ -165,10 +182,10 @@ export default {
     },
     verifySecurityCode () {
       if (this.securityCode.length !== 6) {
-        this.$store.dispatch('alert', {
-          style: 'error',
-          icon: 'gg-warning',
-          msg: 'Enter a valid security code.'
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Enter a valid security code.',
+          icon: 'warning'
         })
         this.$refs.iptTFA.focus()
       } else {
@@ -182,25 +199,25 @@ export default {
         }).then(resp => {
           if (_.has(resp, 'data.authentication.loginTFA')) {
             let respObj = _.get(resp, 'data.authentication.loginTFA', {})
-            if (respObj.operation.succeeded === true) {
-              this.$store.dispatch('alert', {
+            if (respObj.responseResult.succeeded === true) {
+              this.$store.commit('showNotification', {
+                message: 'Login successful!',
                 style: 'success',
-                icon: 'gg-check',
-                msg: 'Login successful!'
+                icon: 'check'
               })
               this.isLoading = false
             } else {
-              throw new Error(respObj.operation.message)
+              throw new Error(respObj.responseResult.message)
             }
           } else {
             throw new Error('Authentication is unavailable.')
           }
         }).catch(err => {
           console.error(err)
-          this.$store.dispatch('alert', {
-            style: 'error',
-            icon: 'gg-warning',
-            msg: err.message
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: err.message,
+            icon: 'warning'
           })
           this.isLoading = false
         })

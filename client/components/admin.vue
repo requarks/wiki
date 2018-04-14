@@ -62,6 +62,10 @@
         v-list-tile(to='/dev')
           v-list-tile-action: v-icon weekend
           v-list-tile-title Developer Tools
+        v-divider.my-2
+        v-list-tile(to='/contribute')
+          v-list-tile-action: v-icon favorite
+          v-list-tile-title Contribute to Wiki.js
 
     v-content
       transition(name='admin-router')
@@ -108,7 +112,8 @@ const router = new VueRouter({
     { path: '/api', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-api.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
-    { path: '/dev', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev.vue') }
+    { path: '/dev', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev.vue') },
+    { path: '/contribute', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-contribute.vue') }
   ]
 })
 
