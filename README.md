@@ -84,7 +84,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - Full localization support, especially for non-latin languages.
   - Modular approach to auth, editors, logging, search and storage.
   
-**Release Date**: Q2 2018
+**Release Date**: Q3 2018
 
 **Breaking Changes**:
   - MongoDB is being phased out in favor of PostgreSQL/MySQL/SQLite + Redis. An upgrade tool will be provided to migrate existing data to the new system.
@@ -109,6 +109,9 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] System Info
   - [ ] Manager Groups :rocket:
   - [ ] Manager Users :rocket:
+- [x] Requarks Graph [:octocat:](https://github.com/Requarks/graph)
+  - [x] Countries
+  - [x] Locales + translations
 - [x] Modular editors
   - [x] Markdown editor
     - [x] Core Editor
@@ -126,7 +129,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Algolia
   - [ ] Elasticsearch
   - [ ] Solr
-- [ ] Modular storage engines :rocket:
+- [ ] Modular storage engines
   - [ ] Git
   - [ ] Local Disk
 - [ ] Multilingual versions of the same page (i18n)
