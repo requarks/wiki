@@ -78,7 +78,7 @@
       v-tab-item(key='users', :transition='false', :reverse-transition='false')
         v-card
           v-card-title.pb-0
-            v-btn(color='primary')
+            v-btn(color='primary', @click='assignUser')
               v-icon(left) assignment_ind
               | Assign User
           v-data-table(
@@ -106,17 +106,21 @@
               v-alert.ma-3(icon='warning', :value='true', outline) No users to display.
           .text-xs-center.py-2(v-if='users.length > 15')
             v-pagination(v-model='pagination.page', :length='pages')
+
+    user-search(v-model='searchUserDialog')
 </template>
 
 <script>
 import Criterias from '../common/criterias.vue'
+import UserSearch from '../common/user-search.vue'
 
 import groupQuery from 'gql/admin-groups-query-single.gql'
 import deleteGroupMutation from 'gql/admin-groups-mutation-delete.gql'
 
 export default {
   components: {
-    Criterias
+    Criterias,
+    UserSearch
   },
   data() {
     return {
@@ -126,6 +130,7 @@ export default {
         users: []
       },
       deleteGroupDialog: false,
+      searchUserDialog: false,
       pagination: {},
       users: [],
       headers: [
@@ -177,6 +182,9 @@ export default {
           icon: 'warning'
         })
       }
+    },
+    assignUser() {
+      this.searchUserDialog = true
     }
   },
   apollo: {
