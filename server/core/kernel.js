@@ -10,7 +10,7 @@ module.exports = {
   init() {
     if (cluster.isMaster) {
       WIKI.logger.info('=======================================')
-      WIKI.logger.info('= WIKI.js =============================')
+      WIKI.logger.info('= Wiki.js =============================')
       WIKI.logger.info('=======================================')
 
       WIKI.redis = require('./redis').init()
@@ -55,13 +55,7 @@ module.exports = {
   async postBootMaster() {
     await require('../master')()
 
-    _.times(this.numWorkers, () => {
-      this.spawnWorker()
-    })
-
-    WIKI.queue.uplClearTemp.add({}, {
-      repeat: { cron: '*/15 * * * *' }
-    })
+    WIKI.queue.start()
 
     cluster.on('exit', (worker, code, signal) => {
       if (!global.DEV) {

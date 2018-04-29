@@ -1,0 +1,14 @@
+{
+  localization {
+    locales {
+      code
+      createdAt
+      isInstalled
+      installDate
+      isRTL
+      name
+      nativeName
+      updatedAt
+    }
+  }
+}

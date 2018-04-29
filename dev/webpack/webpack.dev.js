@@ -2,6 +2,7 @@ const webpack = require('webpack')
 const path = require('path')
 const fs = require('fs-extra')
 
+const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
@@ -73,6 +74,12 @@ module.exports = {
             options: {
               sourceMap: false
             }
+          },
+          {
+            loader: 'sass-resources-loader',
+            options: {
+              resources: path.join(process.cwd(), '/client/scss/global.scss')
+            }
           }
         ]
       },
@@ -87,43 +94,14 @@ module.exports = {
       },
       {
         test: /\.vue$/,
-        loader: 'vue-loader',
-        options: {
-          loaders: {
-            scss: [
-              'vue-style-loader',
-              'css-loader',
-              'postcss-loader',
-              {
-                loader: 'sass-loader',
-                options: {
-                  sourceMap: false
-                }
-              },
-              {
-                loader: 'sass-resources-loader',
-                options: {
-                  resources: path.join(process.cwd(), '/client/scss/global.scss')
-                }
-              }
-            ],
-            js: [
-              {
-                loader: 'cache-loader',
-                options: {
-                  cacheDirectory: cacheDir
-                }
-              },
-              {
-                loader: 'babel-loader',
-                options: {
-                  babelrc: path.join(process.cwd(), '.babelrc'),
-                  cacheDirectory: babelDir
-                }
-              }
-            ]
-          }
-        }
+        loader: 'vue-loader'
+      },
+      {
+        test: /\.pug$/,
+        exclude: [
+          path.join(process.cwd(), 'dev')
+        ],
+        loader: 'pug-plain-loader'
       },
       {
         test: /\.(png|jpg|gif)$/,
@@ -182,6 +160,7 @@ module.exports = {
     ]
   },
   plugins: [
+    new VueLoaderPlugin(),
     new CopyWebpackPlugin([
       { from: 'client/static' },
       { from: './node_modules/graphql-voyager/dist/voyager.worker.js', to: 'js/' }

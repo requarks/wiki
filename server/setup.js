@@ -283,7 +283,7 @@ module.exports = () => {
 
       // Site namespace
       _.set(WIKI.config.site, 'title', req.body.title)
-      _.set(WIKI.config.site, 'lang', req.body.lang)
+      _.set(WIKI.config.site, 'lang', 'en')
       _.set(WIKI.config.site, 'rtl', _.includes(WIKI.data.rtlLangs, req.body.lang))
       _.set(WIKI.config.site, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
 
@@ -308,6 +308,16 @@ module.exports = () => {
         name: 'Administrator',
         role: 'admin',
         tfaIsActive: false
+      })
+
+      // Create default locale
+      WIKI.logger.info('Installing default locale...')
+      await WIKI.db.Locale.upsert({
+        code: 'en',
+        strings: require('./locales/default.json'),
+        isRTL: false,
+        name: 'English',
+        nativeName: 'English'
       })
 
       WIKI.logger.info('Setup is complete!')

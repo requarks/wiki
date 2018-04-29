@@ -8,7 +8,7 @@
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-card
-                v-toolbar(color='primary', dark, dense, flat)
+                v-toolbar(color='grey darken-3', dark, dense, flat)
                   v-toolbar-title
                     .subheading Theme
                 v-card-text
@@ -20,16 +20,16 @@
                         v-list-tile-title(v-html='data.item.text')
                         v-list-tile-sub-title(v-html='data.item.author')
                   v-divider
-                  v-switch(v-model='darkMode', label='Dark Mode', color='primary', persistent-hint, hint='Not recommended for accessibility')
+                  v-switch(v-model='darkMode', label='Dark Mode', color='primary', persistent-hint, hint='Not recommended for accessibility.')
                 v-divider
                 .px-3.pb-3
                   v-btn(color='primary') Save
             v-flex(lg6 xs12)
               v-card
-                v-toolbar(color='primary', dark, dense, flat)
+                v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
-                    .subheading ---
-                v-card-text ---
+                    .subheading Download Themes
+                v-card-text.caption -- Coming soon --
 </template>
 
 <script>

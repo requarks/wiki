@@ -111,7 +111,7 @@
             v-form
               v-container
                 v-layout(row, wrap)
-                  v-flex(xs12)
+                  v-flex(xs12, sm6).pr-3
                     v-text-field(
                       v-model='conf.title',
                       label='Site Title',
@@ -124,37 +124,7 @@
                       data-vv-scope='general',
                       :error-messages='errors.collect(`siteTitle`)'
                     )
-                v-layout(row, wrap).mt-3
-                  v-flex.pr-3(xs12, sm4)
-                    v-select(
-                      v-model='conf.lang',
-                      :items='langs',
-                      label='Site UI Language',
-                      item-value='id',
-                      item-text='name',
-                      persistent-hint,
-                      hint='The language in which navigation, help and other UI elements will be displayed.'
-                    )
-                      template(slot='item', slot-scope='data')
-                        v-list-tile-avatar
-                          v-avatar.blue.white--text(tile, size='40', v-html='data.item.id.toUpperCase()')
-                        v-list-tile-content
-                          v-list-tile-title(v-html='data.item.name')
-                          v-list-tile-sub-title(v-html='data.item.original')
-                  v-flex(xs12, sm8)
-                    v-text-field(
-                      v-model='conf.pathContent',
-                      label='Content Data Path',
-                      persistent-hint,
-                      hint='The path where content is stored (markdown files, uploads, etc.)',
-                      v-validate='{ required: true, min: 2 }',
-                      data-vv-name='pathContent',
-                      data-vv-as='Content Data Path',
-                      data-vv-scope='general',
-                      :error-messages='errors.collect(`pathContent`)'
-                    )
-                v-layout(row, wrap).mt-3
-                  v-flex.pr-3(xs12, sm4)
+                  v-flex.pr-3(xs12, sm6)
                     v-text-field(
                       v-model='conf.port',
                       label='Server Port',
@@ -166,7 +136,20 @@
                       data-vv-scope='general',
                       :error-messages='errors.collect(`port`)'
                     )
-                  v-flex(xs12, sm8)
+                v-layout(row, wrap).mt-3
+                  v-flex(xs12, sm6).pr-3
+                    v-text-field(
+                      v-model='conf.pathContent',
+                      label='Content Data Path',
+                      persistent-hint,
+                      hint='The path where content is stored (markdown files, uploads, etc.)',
+                      v-validate='{ required: true, min: 2 }',
+                      data-vv-name='pathContent',
+                      data-vv-as='Content Data Path',
+                      data-vv-scope='general',
+                      :error-messages='errors.collect(`pathContent`)'
+                    )
+                  v-flex(xs12, sm6)
                     v-text-field(
                       v-model='conf.pathData',
                       label='Temporary Data Path',

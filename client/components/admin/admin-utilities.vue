@@ -14,7 +14,7 @@
           v-layout(row, wrap)
             v-flex(xs12, sm6)
               v-card
-                v-toolbar(color='primary', dark, dense, flat)
+                v-toolbar(color='grey darken-3', dark, dense, flat)
                   v-toolbar-title
                     .subheading Authentication
                 v-subheader Flush User Sessions
@@ -31,14 +31,25 @@
                     span Proceed
             v-flex(xs12, sm6)
               v-card
-                v-toolbar(color='primary', dark, dense, flat)
+                v-toolbar(color='grey darken-3', dark, dense, flat)
                   v-toolbar-title
                     .subheading Maintenance Mode
                 v-card-text
                   .body-1 Maintenance mode restrict access to the site to administrators only, regarless of current permissions.
-                  v-btn.mt-3(color='orange darken-2', dark)
+                  v-btn.mt-3.ml-0(color='orange darken-2', depressed, dark)
                     icon-home-alert.mr-2(fillColor='#FFFFFF')
                     | Turn On Maintenance Mode
+              v-card.mt-3
+                v-toolbar(color='grey darken-3', dark, dense, flat)
+                  v-toolbar-title
+                    .subheading Graph Endpoint
+                v-card-text
+                  .body-1 The Graph API Endpoint from which remote resources like locales, themes and plugins are fetched.
+                  .caption Do not change unless you know what you're doing!
+                  v-text-field.my-2.grey.lighten-3(solo, flat, label='Graph Endpoint', value='https://graph.requarks.io')
+                  v-btn.ml-0(color='primary', depressed, dark)
+                    v-icon(left) chevron_right
+                    span Save
 
       v-tab-item(key='telemetry', :transition='false', :reverse-transition='false')
         v-card.pa-3
@@ -110,10 +121,12 @@
 
 <script>
 import IconGithubCircle from 'mdi/github-circle'
+import IconHomeAlert from 'mdi/home-alert'
 
 export default {
   components: {
-    IconGithubCircle
+    IconGithubCircle,
+    IconHomeAlert
   },
   data() {
     return {

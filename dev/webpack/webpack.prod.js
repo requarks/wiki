@@ -11,6 +11,7 @@ const OfflinePlugin = require('offline-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
+const { VueLoaderPlugin } = require('vue-loader')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
@@ -26,8 +27,8 @@ module.exports = {
   output: {
     path: path.join(process.cwd(), 'assets'),
     publicPath: '/',
-    filename: 'js/[name].js',
-    chunkFilename: 'js/[name].js',
+    filename: 'js/[name].[hash].js',
+    chunkFilename: 'js/[name].[chunkhash].js',
     globalObject: 'this'
   },
   module: {
@@ -78,6 +79,12 @@ module.exports = {
             options: {
               sourceMap: false
             }
+          },
+          {
+            loader: 'sass-resources-loader',
+            options: {
+              resources: path.join(process.cwd(), '/client/scss/global.scss')
+            }
           }
         ]
       },
@@ -93,44 +100,14 @@ module.exports = {
       },
       {
         test: /\.vue$/,
-        loader: 'vue-loader',
-        options: {
-          loaders: {
-            scss: [
-              'vue-style-loader',
-              MiniCssExtractPlugin.loader,
-              'css-loader',
-              'postcss-loader',
-              {
-                loader: 'sass-loader',
-                options: {
-                  sourceMap: false
-                }
-              },
-              {
-                loader: 'sass-resources-loader',
-                options: {
-                  resources: path.join(process.cwd(), '/client/scss/global.scss')
-                }
-              }
-            ],
-            js: [
-              {
-                loader: 'cache-loader',
-                options: {
-                  cacheDirectory: cacheDir
-                }
-              },
-              {
-                loader: 'babel-loader',
-                options: {
-                  babelrc: path.join(process.cwd(), '.babelrc'),
-                  cacheDirectory: babelDir
-                }
-              }
-            ]
-          }
-        }
+        loader: 'vue-loader'
+      },
+      {
+        test: /\.pug$/,
+        exclude: [
+          path.join(process.cwd(), 'dev')
+        ],
+        loader: 'pug-plain-loader'
       },
       {
         test: /\.(png|jpg|gif)$/,
@@ -189,19 +166,20 @@ module.exports = {
     ]
   },
   plugins: [
+    new VueLoaderPlugin(),
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
     new CopyWebpackPlugin([
       { from: 'client/static' },
       { from: './node_modules/graphql-voyager/dist/voyager.worker.js', to: 'js/' }
     ], {}),
     new MiniCssExtractPlugin({
-      filename: 'css/bundle.css',
-      chunkFilename: 'css/[name].css'
+      filename: 'css/bundle.[hash].css',
+      chunkFilename: 'css/[name].[chunkhash].css'
     }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/master.pug',
       filename: '../server/views/master.pug',
-      hash: true,
+      hash: false,
       inject: 'head'
     }),
     new HtmlWebpackPugPlugin(),

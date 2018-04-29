@@ -1,0 +1,45 @@
+# ===============================================
+# LOCALIZATION
+# ===============================================
+
+extend type Query {
+  localization: LocalizationQuery
+}
+
+extend type Mutation {
+  localization: LocalizationMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type LocalizationQuery {
+  locales: [LocalizationLocale]
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type LocalizationMutation {
+  updateLocale(
+    localeId: String!
+    autoUpdate: Boolean!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type LocalizationLocale {
+  code: String!
+  createdAt: Date!
+  installDate: Date
+  isInstalled: Boolean!
+  isRTL: Boolean!
+  name: String!
+  nativeName: String!
+  updatedAt: Date!
+}

@@ -1,9 +1,7 @@
 const _ = require('lodash')
 const dotize = require('dotize')
-const i18nBackend = require('i18next-node-fs-backend')
 const i18nMW = require('i18next-express-middleware')
 const i18next = require('i18next')
-const path = require('path')
 const Promise = require('bluebird')
 
 /* global WIKI */
@@ -14,17 +12,14 @@ module.exports = {
   init() {
     this.namespaces = WIKI.data.localeNamespaces
     this.engine = i18next
-    this.engine.use(i18nBackend).init({
+    this.engine.init({
       load: 'languageOnly',
       ns: this.namespaces,
       defaultNS: 'common',
       saveMissing: false,
       preload: [WIKI.config.site.lang],
       lng: WIKI.config.site.lang,
-      fallbackLng: 'en',
-      backend: {
-        loadPath: path.join(WIKI.SERVERPATH, 'locales/{{lng}}/{{ns}}.yml')
-      }
+      fallbackLng: 'en'
     })
     return this
   },

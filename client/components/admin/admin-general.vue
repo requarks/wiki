@@ -34,12 +34,8 @@
 </template>
 
 <script>
-import IconHomeAlert from 'mdi/home-alert'
 
 export default {
-  components: {
-    IconHomeAlert
-  },
   data() {
     return {
       siteTitle: 'Wiki.js',

@@ -76,4 +76,5 @@ workers: 0
 
 ha:
   node: primary
+  uid: master
   readonly: false

@@ -23,7 +23,7 @@ WIKI.configSvc.init()
 // Init Logger
 // ----------------------------------------
 
-WIKI.logger = require('./core/logger').init()
+WIKI.logger = require('./core/logger').init('MASTER')
 
 // ----------------------------------------
 // Init Telemetry

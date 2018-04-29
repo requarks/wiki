@@ -27,6 +27,7 @@ defaults:
     workers: 0
     ha:
       node: primary
+      uid: master
       readonly: false
     # DB defaults
     auth:
@@ -62,88 +63,16 @@ configNamespaces:
 localeNamespaces:
   - auth
   - common
-queues:
-  - gitSync
-  - uplClearTemp
+jobs:
+  purgeUploads:
+    onInit: true
+    cron: '*/15 * * * *'
+  syncGraphLocales:
+    onInit: true
+    cron: '0 0 * * *'
 telemetry:
   BUGSNAG_ID: 'bb4b324d0675bcbba10025617fd2cec8'
   BUGSNAG_REMOTE: 'https://notify.bugsnag.com'
   GA_ID: 'UA-9094100-7'
   GA_REMOTE: 'https://www.google-analytics.com/collect'
-authProviders:
-  - local
-  - microsoft
-  - google
-  - facebook
-  - github
-  - slack
-  - ldap
-  - azure
-colors:
-  - red
-  - pink
-  - purple
-  - deep-purple
-  - indigo
-  - blue
-  - light-blue
-  - cyan
-  - teal
-  - green
-  - light-green
-  - lime
-  - yellow
-  - amber
-  - orange
-  - deep-orange
-  - brown
-  - grey
-  - blue-grey
-langs:
-  -
-    id: en
-    name: English
-    original: English
-  -
-    id: zh
-    name: Chinese
-    original: 中文
-  -
-    id: nl
-    name: Dutch
-    original: Nederlands
-  -
-    id: fr
-    name: French
-    original: Français
-  -
-    id: de
-    name: German
-    original: Deutsch
-  -
-    id: ja
-    name: Japanese
-    original: 日本語
-  -
-    id: ko
-    name: Korean
-    original: 한국어
-  -
-    id: fa
-    name: Persian (Fārsi)
-    original: فارسی
-  -
-    id: pt
-    name: Portuguese
-    original: Português
-  -
-    id: ru
-    name: Russian
-    original: Русский
-  -
-    id: es
-    name: Spanish
-    original: Español
-rtlLangs:
-  - fa
 # ---------------------------------

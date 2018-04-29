@@ -3,4 +3,4 @@ extends ../master.pug
 block body
   body
     #app
-      setup(telemetry-id=telemetryClientID, wiki-version=packageObj.version, :langs!=JSON.stringify(data.langs).replace(/"/g, "'"))
+      setup(telemetry-id=telemetryClientID, wiki-version=packageObj.version)
