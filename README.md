@@ -20,7 +20,7 @@
 
 - **[Official Website](https://wiki.js.org/)**
 - **[Getting Started](https://wiki.js.org/get-started.html)**
-- **[Documentation](https://docs-legacy.requarks.io/wiki)**
+- **[Documentation](https://docs.requarks.io/wiki)**
 - [Requirements](#requirements)
 - [Demo](#demo)
 - [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
@@ -40,7 +40,7 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 - Git **2.7.4** or later
 - An empty Git repository (optional)
 
-> Read the full [prerequisites](https://docs-legacy.requarks.io/wiki/prerequisites) article for full details.
+> Read the full [prerequisites](https://docs.requarks.io/wiki/install/prerequisites) article for full details.
 
 <h2 align="center">Docker</h2>
 
@@ -58,13 +58,13 @@ You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/bl
 
 <h2 align="center">Demo</h2>
 
-Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](https://docs-legacy.requarks.io/wiki)
+The legacy Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](https://docs-legacy.requarks.io/wiki)
 
 > <span style="font-size: .8em;">We do not provide a demo with write access because of potential security / spam issues. The best way to try it is to install it on your own server / computer. It's easy!</span>
 
 <h2 align="center">Milestones</h2>
 
-Current and upcoming milestones *(major features only, see the [changelog](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md) for complete list of features and bug fixes)*:
+Current and upcoming milestones *(major features only, see the [changelog](https://docs.requarks.io/wiki/developers/changelog) for complete list of features and bug fixes)*:
 
 ### 1.0.78 - Stable
 ![Progress](http://progressed.io/bar/100)
