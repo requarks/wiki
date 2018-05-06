@@ -15,6 +15,7 @@
                   v-select(:items='installedLocales'
                     prepend-icon='public'
                     v-model='selectedLocale'
+                    item-value='code'
                     item-text='name'
                     label='Site Locale'
                     persistent-hint
@@ -39,7 +40,9 @@
                   )
                 v-divider
                 .px-3.pb-3
-                  v-btn(color='primary') Save
+                  v-btn(color='primary', :loading='loading', @click='save')
+                    v-icon(left) chevron_right
+                    span Save
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='teal', dark, dense, flat)
@@ -65,18 +68,47 @@
 import _ from 'lodash'
 
 import localesQuery from 'gql/admin-locale-query-list.gql'
+import localesMutation from 'gql/admin-locale-mutation-save.gql'
 
 export default {
   data() {
     return {
+      loading: false,
       locales: [],
       selectedLocale: 'en',
-      autoUpdate: true
+      autoUpdate: false
     }
   },
   computed: {
     installedLocales() {
       return _.filter(this.locales, ['isInstalled', true])
+    }
+  },
+  methods: {
+    async save() {
+      this.loading = true
+      const respRaw = await this.$apollo.mutate({
+        mutation: localesMutation,
+        variables: {
+          locale: this.selectedLocale,
+          autoUpdate: this.autoUpdate
+        }
+      })
+      const resp = _.get(respRaw, 'data.localization.updateLocale.responseResult', {})
+      if (resp.succeeded) {
+        this.$store.commit('showNotification', {
+          message: 'Locale settings updated successfully.',
+          style: 'success',
+          icon: 'check'
+        })
+      } else {
+        this.$store.commit('showNotification', {
+          message: `Error: ${resp.message}`,
+          style: 'error',
+          icon: 'warning'
+        })
+      }
+      this.loading = false
     }
   },
   apollo: {
@@ -86,6 +118,14 @@ export default {
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-locale-refresh')
       }
+    },
+    selectedLocale: {
+      query: localesQuery,
+      update: (data) => data.localization.config.locale
+    },
+    autoUpdate: {
+      query: localesQuery,
+      update: (data) => data.localization.config.autoUpdate
     }
   }
 }

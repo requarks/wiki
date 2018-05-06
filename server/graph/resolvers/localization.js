@@ -39,9 +39,13 @@ module.exports = {
   LocalizationMutation: {
     async updateLocale(obj, args, context) {
       try {
-        let authResult = await WIKI.db.User.login(args, context)
+        WIKI.config.site.lang = args.locale
+        WIKI.config.site.langAutoUpdate = args.autoUpdate
+        await WIKI.configSvc.saveToDb(['site'])
+
+        await WIKI.lang.setCurrentLocale(args.locale)
+
         return {
-          ...authResult,
           responseResult: graphHelper.generateSuccess('Login success')
         }
       } catch (err) {

@@ -1,7 +1,11 @@
 query {
   system {
     info {
+      configFile
       currentVersion
+      dbType
+      dbVersion
+      dbHost
       latestVersion
       latestVersionReleaseDate
       operatingSystem
@@ -14,8 +18,6 @@ query {
       redisUsedRAM
       redisTotalRAM
       redisHost
-      postgreVersion
-      postgreHost
     }
   }
 }

@@ -25,7 +25,7 @@ type LocalizationQuery {
 
 type LocalizationMutation {
   updateLocale(
-    localeId: String!
+    locale: String!
     autoUpdate: Boolean!
   ): DefaultResponse
 }

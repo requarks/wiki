@@ -58,6 +58,12 @@
                   v-list-tile-content
                     v-list-tile-title Working Directory
                     v-list-tile-sub-title {{ info.workingDirectory }}
+                v-list-tile(avatar)
+                  v-list-tile-avatar
+                    v-icon.blue-grey.white--text settings
+                  v-list-tile-content
+                    v-list-tile-title Configuration File
+                    v-list-tile-sub-title {{ info.configFile }}
 
           v-flex(lg6 xs12)
             v-card.pb-3
@@ -85,14 +91,14 @@
 
                 v-divider
 
-                v-subheader PostgreSQL
+                v-subheader {{ info.dbType }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-avatar.indigo.darken-1(size='40')
                       icon-database(fillColor='#FFFFFF')
                   v-list-tile-content
-                    v-list-tile-title {{ info.postgreVersion }}
-                    v-list-tile-sub-title {{ info.postgreHost }}
+                    v-list-tile-title {{ info.dbVersion }}
+                    v-list-tile-sub-title {{ info.dbHost }}
 </template>
 
 <script>

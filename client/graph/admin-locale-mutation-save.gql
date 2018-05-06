@@ -1,0 +1,12 @@
+mutation($locale: String!, $autoUpdate: Boolean!) {
+  localization {
+    updateLocale(locale: $locale, autoUpdate: $autoUpdate) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

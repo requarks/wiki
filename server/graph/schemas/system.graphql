@@ -31,19 +31,21 @@ type SystemMutation {
 # -----------------------------------------------
 
 type SystemInfo {
+  configFile: String
+  cpuCores: Int
   currentVersion: String
+  dbHost: String
+  dbType: String
+  dbVersion: String
+  hostname: String
   latestVersion: String
   latestVersionReleaseDate: Date
-  operatingSystem: String
-  hostname: String
-  cpuCores: Int
-  ramTotal: String
-  workingDirectory: String
   nodeVersion: String
-  redisVersion: String
-  redisUsedRAM: String
-  redisTotalRAM: String
+  operatingSystem: String
+  ramTotal: String
   redisHost: String
-  postgreVersion: String
-  postgreHost: String
+  redisTotalRAM: String
+  redisUsedRAM: String
+  redisVersion: String
+  workingDirectory: String
 }

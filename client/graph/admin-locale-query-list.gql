@@ -10,5 +10,9 @@
       nativeName
       updatedAt
     }
+    config {
+      locale
+      autoUpdate
+    }
   }
 }
