@@ -16,6 +16,7 @@ extend type Mutation {
 
 type LocalizationQuery {
   locales: [LocalizationLocale]
+  config: LocalizationConfig
 }
 
 # -----------------------------------------------
@@ -42,4 +43,9 @@ type LocalizationLocale {
   name: String!
   nativeName: String!
   updatedAt: Date!
+}
+
+type LocalizationConfig {
+  locale: String!
+  autoUpdate: Boolean!
 }

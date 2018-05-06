@@ -17,10 +17,22 @@ module.exports = {
       ns: this.namespaces,
       defaultNS: 'common',
       saveMissing: false,
-      preload: [WIKI.config.site.lang],
       lng: WIKI.config.site.lang,
       fallbackLng: 'en'
     })
+
+    // Load fallback defaults
+    const enFallback = require('../locales/default.json')
+    if (_.isPlainObject(enFallback)) {
+      _.forOwn(enFallback, (data, ns) => {
+        this.namespaces.push(ns)
+        this.engine.addResourceBundle('en', ns, data)
+      })
+    }
+
+    // Load current language
+    this.loadLocale(WIKI.config.site.lang, { silent: true })
+
     return this
   },
   attachMiddleware (app) {
@@ -39,10 +51,22 @@ module.exports = {
       throw new Error('Invalid locale or namespace')
     }
   },
-  async loadLocale(locale) {
-    return Promise.fromCallback(cb => {
-      return this.engine.loadLanguages(locale, cb)
+  async loadLocale(locale, opts = { silent: false }) {
+    const res = await WIKI.db.Locale.findOne({
+      where: {
+        code: locale
+      }
     })
+    if (res) {
+      if (_.isPlainObject(res.strings)) {
+        _.forOwn(res.strings, (data, ns) => {
+          this.namespaces.push(ns)
+          this.engine.addResourceBundle(locale, ns, data, true, true)
+        })
+      }
+    } else if (!opts.silent) {
+      throw new Error('No such locale in local store.')
+    }
   },
   async setCurrentLocale(locale) {
     return Promise.fromCallback(cb => {

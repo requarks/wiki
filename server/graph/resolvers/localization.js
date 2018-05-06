@@ -28,6 +28,12 @@ module.exports = {
           installDate: isInstalled ? _.find(localLocales, ['code', rl.code]).updatedAt : null
         }
       })
+    },
+    async config(obj, args, context, info) {
+      return {
+        locale: WIKI.config.site.lang,
+        autoUpdate: WIKI.config.site.langAutoUpdate
+      }
     }
   },
   LocalizationMutation: {
