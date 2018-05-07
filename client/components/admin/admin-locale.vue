@@ -55,12 +55,14 @@
                     v-list-tile-content
                       v-list-tile-title(v-html='lc.name')
                       v-list-tile-sub-title(v-html='lc.nativeName')
-                    v-list-tile-action(v-if='lc.isInstalled && lc.installDate < lc.updatedAt')
+                    v-list-tile-action(v-if='lc.isInstalled && lc.installDate < lc.updatedAt', @click='download(lc.code)')
                       v-icon.blue--text cached
                     v-list-tile-action(v-else-if='lc.isInstalled')
                       v-icon.green--text check
+                    v-list-tile-action(v-else-if='lc.isDownloading')
+                      v-progress-circular(indeterminate, color='blue', size='20', :width='3')
                     v-list-tile-action(v-else)
-                      v-btn(icon, @click='')
+                      v-btn(icon, @click='download(lc)')
                         v-icon.grey--text cloud_download
 </template>
 
@@ -68,7 +70,8 @@
 import _ from 'lodash'
 
 import localesQuery from 'gql/admin-locale-query-list.gql'
-import localesMutation from 'gql/admin-locale-mutation-save.gql'
+import localesDownloadMutation from 'gql/admin-locale-mutation-download.gql'
+import localesSaveMutation from 'gql/admin-locale-mutation-save.gql'
 
 export default {
   data() {
@@ -85,10 +88,36 @@ export default {
     }
   },
   methods: {
+    async download(lc) {
+      lc.isDownloading = true
+      const respRaw = await this.$apollo.mutate({
+        mutation: localesDownloadMutation,
+        variables: {
+          locale: lc.code
+        }
+      })
+      const resp = _.get(respRaw, 'data.localization.downloadLocale.responseResult', {})
+      if (resp.succeeded) {
+        lc.isDownloading = false
+        lc.isInstalled = true
+        this.$store.commit('showNotification', {
+          message: `Locale ${lc.name} has been installed successfully.`,
+          style: 'success',
+          icon: 'get_app'
+        })
+      } else {
+        this.$store.commit('showNotification', {
+          message: `Error: ${resp.message}`,
+          style: 'error',
+          icon: 'warning'
+        })
+      }
+      this.isDownloading = false
+    },
     async save() {
       this.loading = true
       const respRaw = await this.$apollo.mutate({
-        mutation: localesMutation,
+        mutation: localesSaveMutation,
         variables: {
           locale: this.selectedLocale,
           autoUpdate: this.autoUpdate
@@ -114,7 +143,7 @@ export default {
   apollo: {
     locales: {
       query: localesQuery,
-      update: (data) => data.localization.locales,
+      update: (data) => data.localization.locales.map(lc => ({ ...lc, isDownloading: false })),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-locale-refresh')
       }

@@ -37,6 +37,21 @@ module.exports = {
     }
   },
   LocalizationMutation: {
+    async downloadLocale(obj, args, context) {
+      try {
+        const job = await WIKI.queue.job.fetchGraphLocale.add({
+          locale: args.locale
+        }, {
+          timeout: 30000
+        })
+        await job.finished()
+        return {
+          responseResult: graphHelper.generateSuccess('Locale downloaded successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
     async updateLocale(obj, args, context) {
       try {
         WIKI.config.site.lang = args.locale
@@ -46,7 +61,7 @@ module.exports = {
         await WIKI.lang.setCurrentLocale(args.locale)
 
         return {
-          responseResult: graphHelper.generateSuccess('Login success')
+          responseResult: graphHelper.generateSuccess('Locale config updated')
         }
       } catch (err) {
         return graphHelper.generateError(err)

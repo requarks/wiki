@@ -1,0 +1,12 @@
+mutation($locale: String!) {
+  localization {
+    downloadLocale(locale: $locale) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

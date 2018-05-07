@@ -64,6 +64,9 @@ localeNamespaces:
   - auth
   - common
 jobs:
+  fetchGraphLocale:
+    onInit: false
+    cron: false
   purgeUploads:
     onInit: true
     cron: '*/15 * * * *'

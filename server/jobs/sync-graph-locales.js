@@ -41,14 +41,17 @@ module.exports = async (job) => {
 
     if (WIKI.config.site.langAutoUpdate) {
       const respStrings = await apollo({
-        query: `{
+        query: `query ($code: String!) {
           localization {
-            strings(code: "${WIKI.config.site.lang}") {
+            strings(code: $code) {
               key
               value
             }
           }
-        }`
+        }`,
+        variables: {
+          code: WIKI.config.site.lang
+        }
       })
       const strings = _.get(respStrings, 'data.localization.strings', [])
       let lcObj = {}
@@ -57,7 +60,7 @@ module.exports = async (job) => {
         _.set(lcObj, row.key.replace(':', '.'), row.value)
       })
 
-      WIKI.db.Locale.upsert({
+      await WIKI.db.Locale.upsert({
         code: WIKI.config.site.lang,
         strings: lcObj,
         isRTL: currentLocale.isRTL,

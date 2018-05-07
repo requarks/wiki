@@ -24,10 +24,12 @@ module.exports = {
           removeOnComplete: true
         })
       }
-      this.job[queueName].add({}, {
-        repeat: { cron: queueParams.cron },
-        removeOnComplete: true
-      })
+      if (queueParams.cron) {
+        this.job[queueName].add({}, {
+          repeat: { cron: queueParams.cron },
+          removeOnComplete: true
+        })
+      }
     })
   },
   async clean() {

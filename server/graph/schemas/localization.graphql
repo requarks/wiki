@@ -24,6 +24,10 @@ type LocalizationQuery {
 # -----------------------------------------------
 
 type LocalizationMutation {
+  downloadLocale(
+    locale: String!
+  ): DefaultResponse
+
   updateLocale(
     locale: String!
     autoUpdate: Boolean!
