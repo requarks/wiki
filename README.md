@@ -107,6 +107,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] New Admin Area
   - [x] UI
   - [x] System Info
+  - [x] Locales
   - [ ] Manager Groups :rocket:
   - [ ] Manager Users :rocket:
 - [x] Requarks Graph [:octocat:](https://github.com/Requarks/graph)
