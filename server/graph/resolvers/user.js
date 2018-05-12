@@ -3,15 +3,42 @@
 
 module.exports = {
   Query: {
-    users(obj, args, context, info) {
-      return WIKI.db.User.findAll({ where: args })
-    }
+    async users() { return {} }
   },
   Mutation: {
-    createUser(obj, args) {
+    async users() { return {} }
+  },
+  UserQuery: {
+    async list(obj, args, context, info) {
+      return WIKI.db.User.findAll({
+        attributes: {
+          exclude: ['password', 'tfaSecret']
+        },
+        raw: true
+      })
+    },
+    async search(obj, args, context, info) {
+      return WIKI.db.User.findAll({
+        where: {
+          $or: [
+            { email: { $like: `%${args.query}%` } },
+            { name: { $like: `%${args.query}%` } }
+          ]
+        },
+        limit: 10,
+        attributes: ['id', 'email', 'name', 'provider', 'role', 'createdAt', 'updatedAt'],
+        raw: true
+      })
+    },
+    async single(obj, args, context, info) {
+      return WIKI.db.User.findById(args.id)
+    }
+  },
+  UserMutation: {
+    create(obj, args) {
       return WIKI.db.User.create(args)
     },
-    deleteUser(obj, args) {
+    delete(obj, args) {
       return WIKI.db.User.destroy({
         where: {
           id: args.id
@@ -19,7 +46,7 @@ module.exports = {
         limit: 1
       })
     },
-    modifyUser(obj, args) {
+    update(obj, args) {
       return WIKI.db.User.update({
         email: args.email,
         name: args.name,
@@ -30,10 +57,10 @@ module.exports = {
         where: { id: args.id }
       })
     },
-    resetUserPassword(obj, args) {
+    resetPassword(obj, args) {
       return false
     },
-    setUserPassword(obj, args) {
+    setPassword(obj, args) {
       return false
     }
   },

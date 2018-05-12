@@ -4,6 +4,7 @@ query ($query: String!) {
       id
       name
       email
+      provider
     }
   }
 }

@@ -8,7 +8,7 @@
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-card
-                v-toolbar(color='grey darken-3', dark, dense, flat)
+                v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Locale Settings
                 v-card-text
@@ -38,8 +38,9 @@
                     persistent-hint
                     hint='Automatically download updates to this locale as they become available.'
                   )
-                v-divider
-                .px-3.pb-3
+                v-divider.my-0
+                v-card-actions.grey.lighten-4
+                  v-spacer
                   v-btn(color='primary', :loading='loading', @click='save')
                     v-icon(left) chevron_right
                     span Save
@@ -49,7 +50,7 @@
                   v-toolbar-title
                     .subheading Download Locale
                 v-list
-                  v-list-tile(v-for='lc in locales')
+                  v-list-tile(v-for='lc in locales', :key='lc.code')
                     v-list-tile-avatar
                       v-avatar.teal.white--text(tile, size='40') {{lc.code.toUpperCase()}}
                     v-list-tile-content
@@ -159,7 +160,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss'>
-
-</style>

@@ -2,12 +2,6 @@
 
 # ENUMS
 
-enum UserRole {
-  guest
-  user
-  admin
-}
-
 enum FileType {
   binary
   image
@@ -134,19 +128,6 @@ type Translation {
   value: String!
 }
 
-# A User
-type User implements Base {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  email: String!
-  provider: String!
-  providerId: String
-  name: String
-  role: UserRole!
-  groups: [Group]
-}
-
 type OperationResult {
   succeeded: Boolean!
   message: String
@@ -164,7 +145,6 @@ type Query {
   settings(key: String): [Setting]
   tags(key: String): [Tag]
   translations(locale: String!, namespace: String!): [Translation]
-  users(id: Int, email: String, provider: String, providerId: String, role: UserRole): [User]
 }
 
 # Mutations (Create, Update, Delete)
@@ -202,15 +182,6 @@ type Mutation {
     name: String!
   ): Tag
 
-  createUser(
-    email: String!
-    name: String
-    passwordRaw: String
-    provider: String!
-    providerId: String
-    role: UserRole!
-  ): User
-
   deleteComment(
     id: Int!
   ): OperationResult
@@ -231,10 +202,6 @@ type Mutation {
     id: Int!
   ): OperationResult
 
-  deleteUser(
-    id: Int!
-  ): OperationResult
-
   modifyComment(
     id: Int!
     content: String!
@@ -245,15 +212,6 @@ type Mutation {
     title: String
     subtitle: String
   ): Document
-
-  modifyUser(
-    id: Int!
-    email: String
-    name: String
-    provider: String
-    providerId: String
-    role: UserRole
-  ): User
 
   modifyRight(
     id: Int!
@@ -297,18 +255,9 @@ type Mutation {
     rightId: Int!
   ): OperationResult
 
-  resetUserPassword(
-    id: Int!
-  ): OperationResult
-
   setConfigEntry(
     key: String!
     value: String!
-  ): OperationResult
-
-  setUserPassword(
-    id: Int!
-    passwordRaw: String!
   ): OperationResult
 
   uploadFile(

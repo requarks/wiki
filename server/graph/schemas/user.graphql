@@ -1,56 +1,68 @@
 # ===============================================
-# GROUPS
+# USERS
 # ===============================================
 
 extend type Query {
-  groups: GroupQuery
+  users: UserQuery
 }
 
 extend type Mutation {
-  groups: GroupMutation
+  users: UserMutation
 }
 
 # -----------------------------------------------
 # QUERIES
 # -----------------------------------------------
 
-type GroupQuery {
+type UserQuery {
   list(
     filter: String
     orderBy: String
-  ): [GroupMinimal]
+  ): [UserMinimal]
+
+  search(
+    query: String!
+  ): [UserMinimal]
 
   single(
     id: Int!
-  ): Group
+  ): User
 }
 
 # -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
-type GroupMutation {
+type UserMutation {
   create(
-    name: String!
-  ): GroupResponse
+    email: String!
+    name: String
+    passwordRaw: String
+    provider: String!
+    providerId: String
+    role: UserRole!
+  ): UserResponse
 
   update(
     id: Int!
-    name: String!
-  ): DefaultResponse
+    email: String
+    name: String
+    provider: String
+    providerId: String
+    role: UserRole
+  ): UserResponse
 
   delete(
     id: Int!
   ): DefaultResponse
 
-  assignUser(
-    groupId: Int!
-    userId: Int!
+  resetPassword(
+    id: Int!
   ): DefaultResponse
 
-  unassignUser(
-    groupId: Int!
-    userId: Int!
+  setPassword(
+    id: Int!
+    passwordRaw: String!
   ): DefaultResponse
 }
 
@@ -58,24 +70,32 @@ type GroupMutation {
 # TYPES
 # -----------------------------------------------
 
-type GroupResponse {
+enum UserRole {
+  guest
+  user
+  admin
+}
+
+type UserResponse {
   responseResult: ResponseStatus!
-  group: Group
+  user: User
 }
 
-type GroupMinimal {
+type UserMinimal {
   id: Int!
   name: String!
-  userCount: Int
-  createdAt: Date!
-  updatedAt: Date!
+  email: String!
+  provider: String!
 }
 
-type Group {
+type User {
   id: Int!
   name: String!
-  rights: [Right]
-  users: [User]
+  email: String!
+  provider: String!
+  providerId: String
+  role: UserRole!
   createdAt: Date!
   updatedAt: Date!
+  groups: [Group]
 }

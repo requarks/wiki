@@ -34,18 +34,19 @@ module.exports = {
     }
   },
   GroupMutation: {
-    assignUser(obj, args) {
-      return WIKI.db.Group.findById(args.groupId).then(grp => {
-        if (!grp) {
-          throw new gql.GraphQLError('Invalid Group ID')
-        }
-        return WIKI.db.User.findById(args.userId).then(usr => {
-          if (!usr) {
-            throw new gql.GraphQLError('Invalid User ID')
-          }
-          return grp.addUser(usr)
-        })
-      })
+    async assignUser(obj, args) {
+      const grp = await WIKI.db.Group.findById(args.groupId)
+      if (!grp) {
+        throw new gql.GraphQLError('Invalid Group ID')
+      }
+      const usr = await WIKI.db.User.findById(args.userId)
+      if (!usr) {
+        throw new gql.GraphQLError('Invalid User ID')
+      }
+      await grp.addUser(usr)
+      return {
+        responseResult: graphHelper.generateSuccess('User has been assigned to group.')
+      }
     },
     async create(obj, args) {
       const group = await WIKI.db.Group.create({
@@ -67,25 +68,29 @@ module.exports = {
         responseResult: graphHelper.generateSuccess('Group has been deleted.')
       }
     },
-    unassignUser(obj, args) {
-      return WIKI.db.Group.findById(args.groupId).then(grp => {
-        if (!grp) {
-          throw new gql.GraphQLError('Invalid Group ID')
-        }
-        return WIKI.db.User.findById(args.userId).then(usr => {
-          if (!usr) {
-            throw new gql.GraphQLError('Invalid User ID')
-          }
-          return grp.removeUser(usr)
-        })
-      })
+    async unassignUser(obj, args) {
+      const grp = await WIKI.db.Group.findById(args.groupId)
+      if (!grp) {
+        throw new gql.GraphQLError('Invalid Group ID')
+      }
+      const usr = await WIKI.db.User.findById(args.userId)
+      if (!usr) {
+        throw new gql.GraphQLError('Invalid User ID')
+      }
+      await grp.removeUser(usr)
+      return {
+        responseResult: graphHelper.generateSuccess('User has been unassigned from group.')
+      }
     },
-    update(obj, args) {
-      return WIKI.db.Group.update({
+    async update(obj, args) {
+      await WIKI.db.Group.update({
         name: args.name
       }, {
         where: { id: args.id }
       })
+      return {
+        responseResult: graphHelper.generateSuccess('Group has been updated.')
+      }
     }
   },
   Group: {

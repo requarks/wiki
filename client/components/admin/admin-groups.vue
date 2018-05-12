@@ -156,6 +156,7 @@ export default {
   apollo: {
     groups: {
       query: groupsQuery,
+      fetchPolicy: 'network-only',
       update: (data) => data.groups.list,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')

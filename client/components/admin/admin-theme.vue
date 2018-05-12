@@ -8,7 +8,7 @@
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-card
-                v-toolbar(color='grey darken-3', dark, dense, flat)
+                v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Theme
                 v-card-text
@@ -21,9 +21,12 @@
                         v-list-tile-sub-title(v-html='data.item.author')
                   v-divider
                   v-switch(v-model='darkMode', label='Dark Mode', color='primary', persistent-hint, hint='Not recommended for accessibility.')
-                v-divider
-                .px-3.pb-3
-                  v-btn(color='primary') Save
+                v-divider.my-0
+                v-card-actions.grey.lighten-4
+                  v-spacer
+                  v-btn(color='primary', :loading='loading', @click='save')
+                    v-icon(left) chevron_right
+                    span Save
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='teal', dark, dense, flat)

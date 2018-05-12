@@ -2,7 +2,7 @@
   v-card
     v-card(flat, color='grey lighten-5').pa-3.pt-4
       .headline.blue--text.text--darken-2 Edit Group
-      .subheading.grey--text {{group.name}}
+      .subheading.grey--text {{name}}
       v-btn(color='primary', fab, absolute, bottom, right, small, to='/groups'): v-icon arrow_upward
     v-tabs(v-model='tab', color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows)
       v-tab(key='properties') Properties
@@ -12,9 +12,9 @@
       v-tab-item(key='properties', :transition='false', :reverse-transition='false')
         v-card
           v-card-text
-            v-text-field(v-model='group.name', label='Group Name', counter='255', prepend-icon='people')
+            v-text-field(v-model='name', label='Group Name', counter='255', prepend-icon='people')
           v-card-actions.pa-3
-            v-btn(color='primary', @click='')
+            v-btn(color='primary', @click='updateGroup')
               v-icon(left) check
               | Save Changes
             .caption.ml-4.grey--text ID: {{group.id}}
@@ -25,7 +25,7 @@
                 | Delete Group
               v-card
                 .dialog-header.is-red Delete Group?
-                v-card-text Are you sure you want to delete group #[strong {{ group.name }}]? All users will be unassigned from this group.
+                v-card-text Are you sure you want to delete group #[strong {{ name }}]? All users will be unassigned from this group.
                 v-card-actions
                   v-spacer
                   v-btn(flat, @click='deleteGroupDialog = false') Cancel
@@ -78,7 +78,7 @@
       v-tab-item(key='users', :transition='false', :reverse-transition='false')
         v-card
           v-card-title.pb-0
-            v-btn(color='primary', @click='assignUser')
+            v-btn(color='primary', @click='searchUserDialog = true')
               v-icon(left) assignment_ind
               | Assign User
           v-data-table(
@@ -98,7 +98,7 @@
                   v-menu(bottom, right, min-width='200')
                     v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
                     v-list
-                      v-list-tile(@click='deleteGroupConfirm(props.item)')
+                      v-list-tile(@click='unassignUser(props.item.id)')
                         v-list-tile-action: v-icon(color='orange') highlight_off
                         v-list-tile-content
                           v-list-tile-title Unassign
@@ -107,7 +107,7 @@
           .text-xs-center.py-2(v-if='users.length > 15')
             v-pagination(v-model='pagination.page', :length='pages')
 
-    user-search(v-model='searchUserDialog')
+    user-search(v-model='searchUserDialog', @select='assignUser')
 </template>
 
 <script>
@@ -115,7 +115,10 @@ import Criterias from '../common/criterias.vue'
 import UserSearch from '../common/user-search.vue'
 
 import groupQuery from 'gql/admin-groups-query-single.gql'
+import assignUserMutation from 'gql/admin-groups-mutation-assign.gql'
 import deleteGroupMutation from 'gql/admin-groups-mutation-delete.gql'
+import unassignUserMutation from 'gql/admin-groups-mutation-unassign.gql'
+import updateGroupMutation from 'gql/admin-groups-mutation-update.gql'
 
 export default {
   components: {
@@ -125,10 +128,11 @@ export default {
   data() {
     return {
       group: {
-        id: 7,
-        name: 'Editors',
+        id: 0,
+        name: '',
         users: []
       },
+      name: '',
       deleteGroupDialog: false,
       searchUserDialog: false,
       pagination: {},
@@ -152,10 +156,36 @@ export default {
       return Math.ceil(this.pagination.totalItems / this.pagination.rowsPerPage)
     }
   },
+  watch: {
+    group(newValue, oldValue) {
+      this.name = newValue.name
+    }
+  },
   methods: {
-    async deleteGroupConfirm(group) {
-      this.deleteGroupDialog = true
-      this.selectedGroup = group
+    async updateGroup() {
+      try {
+        await this.$apollo.mutate({
+          mutation: updateGroupMutation,
+          variables: {
+            id: this.group.id,
+            name: this.name
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-update')
+          }
+        })
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `Group changes have been saved.`,
+          icon: 'check'
+        })
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'warning'
+        })
+      }
     },
     async deleteGroup() {
       this.deleteGroupDialog = false
@@ -183,8 +213,57 @@ export default {
         })
       }
     },
-    assignUser() {
-      this.searchUserDialog = true
+    async assignUser(id) {
+      try {
+        await this.$apollo.mutate({
+          mutation: assignUserMutation,
+          variables: {
+            groupId: this.group.id,
+            userId: id
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-assign')
+          }
+        })
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `User has been assigned to ${this.group.name}.`,
+          icon: 'assignment_ind'
+        })
+        this.$apollo.queries.group.refetch()
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'warning'
+        })
+      }
+    },
+    async unassignUser(id) {
+      try {
+        await this.$apollo.mutate({
+          mutation: unassignUserMutation,
+          variables: {
+            groupId: this.group.id,
+            userId: id
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-unassign')
+          }
+        })
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `User has been unassigned from ${this.group.name}.`,
+          icon: 'assignment_ind'
+        })
+        this.$apollo.queries.group.refetch()
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'warning'
+        })
+      }
     }
   },
   apollo: {
@@ -195,6 +274,7 @@ export default {
           id: this.$route.params.id
         }
       },
+      fetchPolicy: 'network-only',
       update: (data) => data.groups.single,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')

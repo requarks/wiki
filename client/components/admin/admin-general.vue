@@ -21,15 +21,20 @@
                     v-text-field(label='Site Description', :counter='255', prepend-icon='public')
                     v-text-field(label='Site Keywords', :counter='255', prepend-icon='public')
                     v-select(label='Meta Robots', chips, tags, :items='metaRobots', v-model='metaRobotsSelection', prepend-icon='public')
-                  v-divider
-                  .px-3.pb-3
-                    v-btn(color='primary') Save
+                  v-divider.my-0
+                  v-card-actions.grey.lighten-4
+                    v-spacer
+                    v-btn(color='primary')
+                      v-icon(left) chevron_right
+                      span Save
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Site Branding
-                v-card-text ---
+                v-card-text
+                  v-text-field(label='Logo', prepend-icon='image')
+                  v-divider
 
 </template>
 

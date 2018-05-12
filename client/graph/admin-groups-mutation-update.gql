@@ -1,0 +1,12 @@
+mutation ($id: Int!, $name: String!) {
+  groups {
+    update(id: $id, name: $name) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}
