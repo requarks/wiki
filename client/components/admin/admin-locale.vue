@@ -12,12 +12,13 @@
                   v-toolbar-title
                     .subheading Locale Settings
                 v-card-text
-                  v-select(:items='installedLocales'
-                    prepend-icon='public'
+                  v-select(
+                    :items='installedLocales'
+                    prepend-icon='language'
                     v-model='selectedLocale'
                     item-value='code'
                     item-text='name'
-                    label='Site Locale'
+                    :label='namespacing ? "Base Locale" : "Site Locale"'
                     persistent-hint
                     hint='All UI text elements will be displayed in selected language.'
                   )
@@ -36,8 +37,61 @@
                     label='Update Automatically'
                     color='primary'
                     persistent-hint
-                    hint='Automatically download updates to this locale as they become available.'
+                    :hint='namespacing ? "Automatically download updates to all namespaced locales enabled below." : "Automatically download updates to this locale as they become available."'
                   )
+                v-divider.my-0
+                v-card-actions.grey.lighten-4
+                  v-spacer
+                  v-btn(color='primary', :loading='loading', @click='save')
+                    v-icon(left) chevron_right
+                    span Save
+
+              v-card.mt-3
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title
+                    .subheading Multilingual Namespacing
+                v-card-text
+                  v-switch(
+                    v-model='namespacing'
+                    label='Multilingual Namespaces'
+                    color='primary'
+                    persistent-hint
+                    hint='Enables multiple language versions of the same page.'
+                    )
+                  v-alert.mt-3(
+                    outline
+                    color='orange'
+                    :value='true'
+                    icon='warning'
+                    )
+                    span The locale code will be prefixed to all paths. (e.g. /en/page-name)
+                    .caption.grey--text Paths without a locale code will be automatically redirected to the base locale defined above.
+                  v-divider
+                  v-select(
+                    :disabled='!namespacing'
+                    :items='installedLocales'
+                    prepend-icon='language'
+                    multiple
+                    chips
+                    deletable-chips
+                    v-model='namespaces'
+                    item-value='code'
+                    item-text='name'
+                    label='Active Namespaces'
+                    persistent-hint
+                    hint='List of locales enabled for multilingual namespacing. The base locale defined above will always be included regardless of this selection.'
+                    )
+                    template(slot='item', slot-scope='data')
+                      template(v-if='typeof data.item !== "object"')
+                        v-list-tile-content(v-text='data.item')
+                      template(v-else)
+                        v-list-tile-avatar
+                          v-avatar.blue.white--text(tile, size='40', v-html='data.item.code.toUpperCase()')
+                        v-list-tile-content
+                          v-list-tile-title(v-html='data.item.name')
+                          v-list-tile-sub-title(v-html='data.item.nativeName')
+                        v-list-tile-action
+                          v-checkbox(:input-value='data.tile.props.value', color='primary', value)
                 v-divider.my-0
                 v-card-actions.grey.lighten-4
                   v-spacer
@@ -49,22 +103,26 @@
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
                     .subheading Download Locale
-                v-list
-                  v-list-tile(v-for='lc in locales', :key='lc.code')
-                    v-list-tile-avatar
-                      v-avatar.teal.white--text(tile, size='40') {{lc.code.toUpperCase()}}
-                    v-list-tile-content
-                      v-list-tile-title(v-html='lc.name')
-                      v-list-tile-sub-title(v-html='lc.nativeName')
-                    v-list-tile-action(v-if='lc.isInstalled && lc.installDate < lc.updatedAt', @click='download(lc.code)')
-                      v-icon.blue--text cached
-                    v-list-tile-action(v-else-if='lc.isInstalled')
-                      v-icon.green--text check
-                    v-list-tile-action(v-else-if='lc.isDownloading')
-                      v-progress-circular(indeterminate, color='blue', size='20', :width='3')
-                    v-list-tile-action(v-else)
-                      v-btn(icon, @click='download(lc)')
-                        v-icon.grey--text cloud_download
+                v-list(two-line, dense)
+                  template(v-for='(lc, idx) in locales')
+                    v-list-tile(:key='lc.code')
+                      v-list-tile-avatar
+                        v-avatar.teal.white--text(size='40') {{lc.code.toUpperCase()}}
+                      v-list-tile-content
+                        v-list-tile-title(v-html='lc.name')
+                        v-list-tile-sub-title(v-html='lc.nativeName')
+                      v-list-tile-action(v-if='lc.isRTL')
+                        v-chip(label, small).caption.grey--text.text--darken-2 RTL
+                      v-list-tile-action(v-if='lc.isInstalled && lc.installDate < lc.updatedAt', @click='download(lc.code)')
+                        v-icon.blue--text cached
+                      v-list-tile-action(v-else-if='lc.isInstalled')
+                        v-icon.green--text check
+                      v-list-tile-action(v-else-if='lc.isDownloading')
+                        v-progress-circular(indeterminate, color='blue', size='20', :width='3')
+                      v-list-tile-action(v-else)
+                        v-btn(icon, @click='download(lc)')
+                          v-icon.grey--text cloud_download
+                    v-divider.my-0(inset, v-if='idx < locales.length - 1')
 </template>
 
 <script>
@@ -80,7 +138,9 @@ export default {
       loading: false,
       locales: [],
       selectedLocale: 'en',
-      autoUpdate: false
+      autoUpdate: false,
+      namespacing: false,
+      namespaces: []
     }
   },
   computed: {
