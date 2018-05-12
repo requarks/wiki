@@ -108,8 +108,8 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] UI
   - [x] System Info
   - [x] Locales
-  - [ ] Manager Groups :rocket:
-  - [ ] Manager Users :rocket:
+  - [x] Manage Groups
+  - [ ] Manage Users
 - [x] Requarks Graph [:octocat:](https://github.com/Requarks/graph)
   - [x] Countries
   - [x] Locales + translations
@@ -119,7 +119,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
     - [x] Live Preview
     - [ ] Toolbar
   - [ ] Operations
-    - [ ] Save
+    - [ ] Save :rocket:
   - [ ] Dialogs
     - [ ] Properties
     - [ ] Access
