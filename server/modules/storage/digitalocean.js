@@ -1,6 +1,6 @@
 module.exports = {
-  key: 'git',
-  title: 'Git',
+  key: 'digitalocean',
+  title: 'DigialOcean Spaces',
   props: [],
   activate() {
 

@@ -1,6 +1,6 @@
 module.exports = {
-  key: 'git',
-  title: 'Git',
+  key: 'scp',
+  title: 'SCP (SSH)',
   props: [],
   activate() {
 

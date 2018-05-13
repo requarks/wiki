@@ -1,6 +1,6 @@
 module.exports = {
-  key: 'git',
-  title: 'Git',
+  key: 'azure',
+  title: 'Azure Blob Storage',
   props: [],
   activate() {
 

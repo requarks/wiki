@@ -1,6 +1,6 @@
 module.exports = {
-  key: 'git',
-  title: 'Git',
+  key: 'gdrive',
+  title: 'Google Drive',
   props: [],
   activate() {
 

@@ -1,7 +1,7 @@
 module.exports = {
-  key: 'elasticsearch',
-  title: 'Elasticsearch',
-  props: [],
+  key: 'azure',
+  title: 'Azure Search',
+  props: ['apiKey', 'applicationID'],
   activate(opts) {
 
   },
