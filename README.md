@@ -92,12 +92,12 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 **2.0 Milestone**:
 - [x] GraphQL API
-- [x] Migrate to Sequelize + Redis datastore
+- [x] Migrate to Objection.js + Redis datastore
 - [x] Telemetry for analytics and crash reporting (Optional and fully anonymized)
 - [x] Docker support + Auto compile/publish to Docker Hub
-- [x] Support sub-directory installations (e.g. example.com/wiki)
 - [x] Make use of all available CPU cores, distributed jobs queue
 - [x] Modular authentication providers (+ new Auth0, Discord and Twitch providers)
+- [x] Persist system settings to database instead of file-based
 - [x] Shared kernel for both app and setup
 - [x] Improved installation wizard
 - [x] Modular logging providers
@@ -126,16 +126,14 @@ Current and upcoming milestones *(major features only, see the [changelog](https
     - [ ] Image + File Manager
 - [ ] Modular content parsers/renderers
 - [ ] Modular search engines
-  - [ ] PostgreSQL search engine
+  - [ ] DB
+  - [ ] Azure Search
   - [ ] Algolia
-  - [ ] Elasticsearch
-  - [ ] Solr
 - [ ] Modular storage engines
   - [ ] Git
   - [ ] Local Disk
 - [ ] Multilingual versions of the same page (i18n)
 - [ ] History / Revert to previous version
-- [ ] Persist system settings to database instead of file-based
 - [ ] User Groups + Better permissions management
 - [ ] Tags per document / folder
 
@@ -146,6 +144,9 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Profile page per user
 - [ ] Diagrams as code (Mermaid module)
 - [ ] Themes
+- [ ] Additional search engines
+  - [ ] Elasticsearch
+  - [ ] Solr
 - [ ] Additional storage engines
   - [ ] Dropbox
   - [ ] Google Drive
