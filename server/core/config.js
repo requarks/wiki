@@ -59,17 +59,10 @@ module.exports = {
       subsets = WIKI.data.configNamespaces
     }
 
-    let results = await WIKI.db.Setting.findAll({
-      attributes: ['key', 'config'],
-      where: {
-        key: {
-          $in: subsets
-        }
-      }
-    })
+    let results = await WIKI.db.settings.query().select(['key', 'value']).whereIn('key', subsets)
     if (_.isArray(results) && results.length === subsets.length) {
       results.forEach(result => {
-        WIKI.config[result.key] = result.config
+        WIKI.config[result.key] = result.value
       })
       return true
     } else {
@@ -88,14 +81,18 @@ module.exports = {
       subsets = WIKI.data.configNamespaces
     }
 
+    let trx = await WIKI.db.Objection.transaction.start(WIKI.db.knex)
+
     try {
       for (let set of subsets) {
-        await WIKI.db.Setting.upsert({
-          key: set,
-          config: _.get(WIKI.config, set, {})
-        })
+        console.info(set)
+        await WIKI.db.settings.query(trx).patch({
+          value: _.get(WIKI.config, set, {})
+        }).where('key', set)
       }
+      await trx.commit()
     } catch (err) {
+      await trx.rollback(err)
       WIKI.logger.error(`Failed to save configuration to DB: ${err.message}`)
       return false
     }

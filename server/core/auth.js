@@ -18,7 +18,7 @@ module.exports = {
     })
 
     passport.deserializeUser(function (id, done) {
-      WIKI.db.User.findById(id).then((user) => {
+      WIKI.db.users.query().findById(id).then((user) => {
         if (user) {
           done(null, user)
         } else {
@@ -57,57 +57,6 @@ module.exports = {
       this.strategies[strategy.key] = strategy
       WIKI.logger.info(`Authentication Provider ${strategy.title}: [ OK ]`)
     })
-
-    // Create Guest account for first-time
-
-    WIKI.db.User.findOne({
-      where: {
-        provider: 'local',
-        email: 'guest@example.com'
-      }
-    }).then((c) => {
-      if (c < 1) {
-        return WIKI.db.User.create({
-          provider: 'local',
-          email: 'guest@example.com',
-          name: 'Guest',
-          password: '',
-          role: 'guest'
-        }).then(() => {
-          WIKI.logger.info('[AUTH] Guest account created successfully!')
-          return true
-        }).catch((err) => {
-          WIKI.logger.error('[AUTH] An error occured while creating guest account:')
-          WIKI.logger.error(err)
-          return err
-        })
-      }
-    })
-
-    // .then(() => {
-    //   if (process.env.WIKI_JS_HEROKU) {
-    //     return WIKI.db.User.findOne({ provider: 'local', email: process.env.WIKI_ADMIN_EMAIL }).then((c) => {
-    //       if (c < 1) {
-    //         // Create root admin account (HEROKU ONLY)
-
-    //         return WIKI.db.User.create({
-    //           provider: 'local',
-    //           email: process.env.WIKI_ADMIN_EMAIL,
-    //           name: 'Administrator',
-    //           password: '$2a$04$MAHRw785Xe/Jd5kcKzr3D.VRZDeomFZu2lius4gGpZZ9cJw7B7Mna', // admin123 (default)
-    //           role: 'admin'
-    //         }).then(() => {
-    //           WIKI.logger.info('[AUTH] Root admin account created successfully!')
-    //           return true
-    //         }).catch((err) => {
-    //           WIKI.logger.error('[AUTH] An error occured while creating root admin account:')
-    //           WIKI.logger.error(err)
-    //           return err
-    //         })
-    //       } else { return true }
-    //     })
-    //   } else { return true }
-    // })
 
     return this
   }

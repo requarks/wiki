@@ -23,12 +23,13 @@ paths:
 # ---------------------------------------------------------------------
 # Supported Database Engines:
 # - postgres = PostgreSQL 9.5 or later
-# - mysql = MySQL 5.7.8 or later
+# - mysql = MySQL 8.0 / MariaDB 10.2.7 or later
+# - mssql = MS SQL Server 2012 or later
 # - sqlite = SQLite 3.9 or later
 
 db:
   type: postgres
-  # PostgreSQL and MySQL only:
+  # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
   host: localhost
   port: 5432
   user: wikijs

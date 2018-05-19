@@ -1,55 +1,18 @@
 const _ = require('lodash')
-const fs = require('fs')
+const autoload = require('auto-load')
 const path = require('path')
 const Promise = require('bluebird')
-const Sequelize = require('sequelize')
+const Knex = require('knex')
+const Objection = require('objection')
 
 /* global WIKI */
-
-const operatorsAliases = {
-  $eq: Sequelize.Op.eq,
-  $ne: Sequelize.Op.ne,
-  $gte: Sequelize.Op.gte,
-  $gt: Sequelize.Op.gt,
-  $lte: Sequelize.Op.lte,
-  $lt: Sequelize.Op.lt,
-  $not: Sequelize.Op.not,
-  $in: Sequelize.Op.in,
-  $notIn: Sequelize.Op.notIn,
-  $is: Sequelize.Op.is,
-  $like: Sequelize.Op.like,
-  $notLike: Sequelize.Op.notLike,
-  $iLike: Sequelize.Op.iLike,
-  $notILike: Sequelize.Op.notILike,
-  $regexp: Sequelize.Op.regexp,
-  $notRegexp: Sequelize.Op.notRegexp,
-  $iRegexp: Sequelize.Op.iRegexp,
-  $notIRegexp: Sequelize.Op.notIRegexp,
-  $between: Sequelize.Op.between,
-  $notBetween: Sequelize.Op.notBetween,
-  $overlap: Sequelize.Op.overlap,
-  $contains: Sequelize.Op.contains,
-  $contained: Sequelize.Op.contained,
-  $adjacent: Sequelize.Op.adjacent,
-  $strictLeft: Sequelize.Op.strictLeft,
-  $strictRight: Sequelize.Op.strictRight,
-  $noExtendRight: Sequelize.Op.noExtendRight,
-  $noExtendLeft: Sequelize.Op.noExtendLeft,
-  $and: Sequelize.Op.and,
-  $or: Sequelize.Op.or,
-  $any: Sequelize.Op.any,
-  $all: Sequelize.Op.all,
-  $values: Sequelize.Op.values,
-  $col: Sequelize.Op.col
-}
 
 /**
  * PostgreSQL DB module
  */
 module.exports = {
-  Sequelize,
-  Op: Sequelize.Op,
-
+  Objection,
+  knex: null,
   /**
    * Initialize DB
    *
@@ -57,65 +20,63 @@ module.exports = {
    */
   init() {
     let self = this
-    let dbModelsPath = path.join(WIKI.SERVERPATH, 'models')
 
-    // Define Sequelize instance
-
-    this.inst = new this.Sequelize(WIKI.config.db.db, WIKI.config.db.user, WIKI.config.db.pass, {
+    let dbClient = null
+    const dbConfig = (!_.isEmpty(process.env.WIKI_DB_CONNSTR)) ? process.env.WIKI_DB_CONNSTR : {
       host: WIKI.config.db.host,
+      user: WIKI.config.db.user,
+      password: WIKI.config.db.pass,
+      database: WIKI.config.db.db,
       port: WIKI.config.db.port,
-      dialect: WIKI.config.db.type,
-      storage: WIKI.config.db.storage,
-      pool: {
-        max: 10,
-        min: 0,
-        idle: 10000
-      },
-      logging: log => { WIKI.logger.log('debug', log) },
-      operatorsAliases
+      filename: WIKI.config.db.storage
+    }
+
+    switch (WIKI.config.db.type) {
+      case 'postgres':
+        dbClient = 'pg'
+        break
+      case 'mysql':
+        dbClient = 'mysql2'
+        break
+      case 'mssql':
+        dbClient = 'mssql'
+        break
+      case 'sqlite':
+        dbClient = 'sqlite3'
+        break
+      default:
+        WIKI.logger.error('Invalid DB Type')
+        process.exit(1)
+    }
+
+    this.knex = Knex({
+      client: dbClient,
+      useNullAsDefault: true,
+      connection: dbConfig,
+      debug: WIKI.IS_DEBUG
     })
 
-    // Attempt to connect and authenticate to DB
-
-    this.inst.authenticate().then(() => {
-      WIKI.logger.info(`Database (${WIKI.config.db.type}) connection: [ OK ]`)
-    }).catch(err => {
-      WIKI.logger.error(`Failed to connect to ${WIKI.config.db.type} instance.`)
-      WIKI.logger.error(err)
-      process.exit(1)
-    })
+    Objection.Model.knex(this.knex)
 
     // Load DB Models
 
-    fs
-      .readdirSync(dbModelsPath)
-      .filter(file => {
-        return (file.indexOf('.') !== 0 && file.indexOf('_') !== 0)
-      })
-      .forEach(file => {
-        let modelName = _.upperFirst(_.camelCase(_.split(file, '.')[0]))
-        self[modelName] = self.inst.import(path.join(dbModelsPath, file))
-      })
-
-    // Associate DB Models
-
-    require(path.join(dbModelsPath, '_relations.js'))(self)
+    const models = autoload(path.join(WIKI.SERVERPATH, 'db/models'))
 
     // Set init tasks
 
     let initTasks = {
-      // -> Sync DB Schemas
-      syncSchemas() {
-        return self.inst.sync({
-          force: false,
-          logging: log => { WIKI.logger.log('debug', log) }
+      // -> Migrate DB Schemas
+      async syncSchemas() {
+        return self.knex.migrate.latest({
+          directory: path.join(WIKI.SERVERPATH, 'db/migrations'),
+          tableName: 'migrations'
         })
       },
       // -> Set Connection App Name
-      setAppName() {
+      async setAppName() {
         switch (WIKI.config.db.type) {
           case 'postgres':
-            return self.inst.query(`set application_name = 'WIKI.js'`, { raw: true })
+            return self.knex.raw(`set application_name = 'Wiki.js'`)
         }
       }
     }
@@ -131,6 +92,9 @@ module.exports = {
 
     this.onReady = Promise.each(initTasksQueue, t => t()).return(true)
 
-    return this
+    return {
+      ...this,
+      ...models
+    }
   }
 }

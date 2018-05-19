@@ -10,52 +10,35 @@ module.exports = {
   },
   UserQuery: {
     async list(obj, args, context, info) {
-      return WIKI.db.User.findAll({
-        attributes: {
-          exclude: ['password', 'tfaSecret']
-        },
-        raw: true
-      })
+      return WIKI.db.users.query()
+        .select('id', 'email', 'name', 'provider', 'role', 'createdAt', 'updatedAt')
     },
     async search(obj, args, context, info) {
-      return WIKI.db.User.findAll({
-        where: {
-          $or: [
-            { email: { $like: `%${args.query}%` } },
-            { name: { $like: `%${args.query}%` } }
-          ]
-        },
-        limit: 10,
-        attributes: ['id', 'email', 'name', 'provider', 'role', 'createdAt', 'updatedAt'],
-        raw: true
-      })
+      return WIKI.db.users.query()
+        .where('email', 'like', `%${args.query}%`)
+        .orWhere('name', 'like', `%${args.query}%`)
+        .limit(10)
+        .select('id', 'email', 'name', 'provider', 'role', 'createdAt', 'updatedAt')
     },
     async single(obj, args, context, info) {
-      return WIKI.db.User.findById(args.id)
+      return WIKI.db.users.query().findById(args.id)
     }
   },
   UserMutation: {
     create(obj, args) {
-      return WIKI.db.User.create(args)
+      return WIKI.db.users.query().insertAndFetch(args)
     },
     delete(obj, args) {
-      return WIKI.db.User.destroy({
-        where: {
-          id: args.id
-        },
-        limit: 1
-      })
+      return WIKI.db.users.query().deleteById(args.id)
     },
     update(obj, args) {
-      return WIKI.db.User.update({
+      return WIKI.db.users.query().patch({
         email: args.email,
         name: args.name,
         provider: args.provider,
         providerId: args.providerId,
         role: args.role
-      }, {
-        where: { id: args.id }
-      })
+      }).where('id', args.id)
     },
     resetPassword(obj, args) {
       return false

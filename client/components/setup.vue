@@ -220,10 +220,11 @@
                     )
                   v-flex(xs6)
                     v-text-field(
+                      ref='adminPasswordConfirm',
                       v-model='conf.adminPasswordConfirm',
                       label='Confirm Password',
                       hint='Verify your password again.',
-                      v-validate='{ required: true, confirmed: `$adminPassword` }',
+                      v-validate='{ required: true, min: 8 }',
                       data-vv-name='adminPasswordConfirm',
                       data-vv-as='Confirm Password',
                       data-vv-scope='admin',
@@ -308,10 +309,6 @@ export default {
     wikiVersion: {
       type: String,
       required: true
-    },
-    langs: {
-      type: Array,
-      required: true
     }
   },
   data() {
@@ -394,7 +391,7 @@ export default {
     async proceedToUpgrade () {
       if (this.state < 5) {
         const validationSuccess = await this.$validator.validateAll('admin')
-        if (!validationSuccess) {
+        if (!validationSuccess || this.conf.adminPassword !== this.conf.adminPasswordConfirm) {
           this.state = 4
           return
         }

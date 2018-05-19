@@ -5,7 +5,7 @@ const path = require('path')
 module.exports = () => {
   WIKI.config.site = {
     path: '',
-    title: 'WIKI.js'
+    title: 'Wiki.js'
   }
 
   WIKI.system = require('./core/system')
@@ -298,22 +298,46 @@ module.exports = () => {
 
       // Save config to DB
       WIKI.logger.info('Persisting config to DB...')
-      await WIKI.configSvc.saveToDb()
+      await WIKI.db.settings.query().insert([
+        { key: 'auth', value: WIKI.config.auth },
+        { key: 'features', value: WIKI.config.features },
+        { key: 'logging', value: WIKI.config.logging },
+        { key: 'site', value: WIKI.config.site },
+        { key: 'theme', value: WIKI.config.theme },
+        { key: 'uploads', value: WIKI.config.uploads }
+      ])
 
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
-      await WIKI.db.User.upsert({
+      await WIKI.db.users.query().insert({
         email: req.body.adminEmail,
         provider: 'local',
-        password: await WIKI.db.User.hashPassword(req.body.adminPassword),
+        password: req.body.adminPassword,
         name: 'Administrator',
         role: 'admin',
         tfaIsActive: false
       })
 
+      // Create Guest account
+      WIKI.logger.info('Creating root administrator...')
+      const guestUsr = await WIKI.db.users.query().findOne({
+        provider: 'local',
+        email: 'guest@example.com'
+      })
+      if (!guestUsr) {
+        await WIKI.db.users.query().insert({
+          provider: 'local',
+          email: 'guest@example.com',
+          name: 'Guest',
+          password: '',
+          role: 'guest',
+          tfaIsActive: false
+        })
+      }
+
       // Create default locale
       WIKI.logger.info('Installing default locale...')
-      await WIKI.db.Locale.upsert({
+      await WIKI.db.locales.query().insert({
         code: 'en',
         strings: require('./locales/default.json'),
         isRTL: false,
@@ -330,7 +354,7 @@ module.exports = () => {
 
       WIKI.logger.info('Stopping Setup...')
       WIKI.server.destroy(() => {
-        WIKI.logger.info('Setup stopped. Starting WIKI.js...')
+        WIKI.logger.info('Setup stopped. Starting Wiki.js...')
         _.delay(() => {
           WIKI.kernel.bootMaster()
         }, 1000)

@@ -32,7 +32,7 @@ module.exports = {
   AuthenticationMutation: {
     async login(obj, args, context) {
       try {
-        let authResult = await WIKI.db.User.login(args, context)
+        let authResult = await WIKI.db.users.login(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('Login success')
@@ -43,7 +43,7 @@ module.exports = {
     },
     async loginTFA(obj, args, context) {
       try {
-        let authResult = await WIKI.db.User.loginTFA(args, context)
+        let authResult = await WIKI.db.users.loginTFA(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('TFA success')

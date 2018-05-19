@@ -60,13 +60,13 @@ module.exports = async (job) => {
         _.set(lcObj, row.key.replace(':', '.'), row.value)
       })
 
-      await WIKI.db.Locale.upsert({
+      await WIKI.db.locales.query().update({
         code: WIKI.config.site.lang,
         strings: lcObj,
         isRTL: currentLocale.isRTL,
         name: currentLocale.name,
         nativeName: currentLocale.nativeName
-      })
+      }).where('code', WIKI.config.site.lang)
     }
 
     WIKI.logger.info('Syncing locales with Graph endpoint: [ COMPLETED ]')

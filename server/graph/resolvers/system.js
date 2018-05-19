@@ -10,7 +10,8 @@ const path = require('path')
 const dbTypes = {
   mysql: 'MySQL / MariaDB',
   postgres: 'PostgreSQL',
-  sqlite: 'SQLite'
+  sqlite: 'SQLite',
+  mssql: 'MS SQL Server'
 }
 
 module.exports = {
@@ -28,12 +29,14 @@ module.exports = {
         osLabel = `${os.type()} - ${osInfo.dist} (${osInfo.codename || os.platform()}) ${osInfo.release || os.release()} ${os.arch()}`
       }
 
+      console.info(WIKI.db.knex.client)
+
       return {
         configFile: path.join(process.cwd(), 'config.yml'),
         currentVersion: WIKI.version,
         dbType: _.get(dbTypes, WIKI.config.db.type, 'Unknown DB'),
-        dbVersion: WIKI.db.inst.options.databaseVersion,
-        dbHost: WIKI.db.inst.options.host,
+        dbVersion: _.get(WIKI.db, 'knex.client.version', 'Unknown version'),
+        dbHost: WIKI.config.db.host,
         latestVersion: WIKI.version, // TODO
         latestVersionReleaseDate: new Date(), // TODO
         operatingSystem: osLabel,

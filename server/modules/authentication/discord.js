@@ -19,7 +19,7 @@ module.exports = {
         callbackURL: conf.callbackURL,
         scope: 'identify email'
       }, function (accessToken, refreshToken, profile, cb) {
-        WIKI.db.User.processProfile(profile).then((user) => {
+        WIKI.db.users.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

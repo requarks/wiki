@@ -24,7 +24,7 @@ module.exports = {
         let waadProfile = jwt.decode(params.id_token)
         waadProfile.id = waadProfile.oid
         waadProfile.provider = 'azure'
-        WIKI.db.User.processProfile(waadProfile).then((user) => {
+        WIKI.db.users.processProfile(waadProfile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

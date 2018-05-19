@@ -33,7 +33,7 @@ module.exports = {
       }, (profile, cb) => {
         profile.provider = 'ldap'
         profile.id = profile.dn
-        WIKI.db.User.processProfile(profile).then((user) => {
+        WIKI.db.users.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

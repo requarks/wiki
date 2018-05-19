@@ -17,14 +17,12 @@ module.exports = {
         usernameField: 'email',
         passwordField: 'password'
       }, (uEmail, uPassword, done) => {
-        WIKI.db.User.findOne({
-          where: {
-            email: uEmail,
-            provider: 'local'
-          }
+        WIKI.db.users.query().findOne({
+          email: uEmail,
+          provider: 'local'
         }).then((user) => {
           if (user) {
-            return user.validatePassword(uPassword).then(() => {
+            return user.verifyPassword(uPassword).then(() => {
               return done(null, user) || true
             }).catch((err) => {
               return done(err, null)

@@ -13,12 +13,7 @@ module.exports = {
   LocalizationQuery: {
     async locales(obj, args, context, info) {
       let remoteLocales = await WIKI.redis.get('locales')
-      let localLocales = await WIKI.db.Locale.findAll({
-        attributes: {
-          exclude: ['strings']
-        },
-        raw: true
-      })
+      let localLocales = await WIKI.db.locales.query().select('id', 'code', 'isRTL', 'name', 'nativeName', 'createdAt', 'updatedAt')
       remoteLocales = (remoteLocales) ? JSON.parse(remoteLocales) : localLocales
       return _.map(remoteLocales, rl => {
         let isInstalled = _.some(localLocales, ['code', rl.code])
