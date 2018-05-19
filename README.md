@@ -87,7 +87,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 **Release Date**: Q3 2018
 
 **Breaking Changes**:
-  - MongoDB is being phased out in favor of PostgreSQL/MySQL/SQLite + Redis. An upgrade tool will be provided to migrate existing data to the new system.
+  - MongoDB is being phased out in favor of PostgreSQL/MySQL/MSSQL/SQLite + Redis. An upgrade tool will be provided to migrate existing data to the new system.
   - Node.js 8.9 LTS or later is now the minimum supported version.
 
 **2.0 Milestone**:
