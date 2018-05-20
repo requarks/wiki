@@ -250,6 +250,8 @@ module.exports = () => {
   app.post('/finalize', async (req, res) => {
     WIKI.telemetry.sendEvent('setup', 'finalize')
 
+    console.error('DUDE')
+
     try {
       // Upgrade from WIKI.js 1.x?
       if (req.body.upgrade) {
@@ -307,6 +309,16 @@ module.exports = () => {
         { key: 'uploads', value: WIKI.config.uploads }
       ])
 
+      // Create default locale
+      WIKI.logger.info('Installing default locale...')
+      await WIKI.db.locales.query().insert({
+        code: 'en',
+        strings: require('./locales/default.json'),
+        isRTL: false,
+        name: 'English',
+        nativeName: 'English'
+      })
+
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
       await WIKI.db.users.query().insert({
@@ -315,6 +327,7 @@ module.exports = () => {
         password: req.body.adminPassword,
         name: 'Administrator',
         role: 'admin',
+        locale: 'en',
         tfaIsActive: false
       })
 
@@ -331,19 +344,10 @@ module.exports = () => {
           name: 'Guest',
           password: '',
           role: 'guest',
+          locale: 'en',
           tfaIsActive: false
         })
       }
-
-      // Create default locale
-      WIKI.logger.info('Installing default locale...')
-      await WIKI.db.locales.query().insert({
-        code: 'en',
-        strings: require('./locales/default.json'),
-        isRTL: false,
-        name: 'English',
-        nativeName: 'English'
-      })
 
       WIKI.logger.info('Setup is complete!')
       res.json({

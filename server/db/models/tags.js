@@ -1,19 +1,21 @@
 const Model = require('objection').Model
 
 /**
- * Groups model
+ * Tags model
  */
-module.exports = class Group extends Model {
-  static get tableName() { return 'groups' }
+module.exports = class Tag extends Model {
+  static get tableName() { return 'tags' }
 
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['name'],
+      required: ['tag'],
 
       properties: {
         id: {type: 'integer'},
-        name: {type: 'string'},
+        tag: {type: 'string'},
+        title: {type: 'string'},
+
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -22,16 +24,16 @@ module.exports = class Group extends Model {
 
   static get relationMappings() {
     return {
-      users: {
+      pages: {
         relation: Model.ManyToManyRelation,
-        modelClass: require('./users'),
+        modelClass: require('./pages'),
         join: {
-          from: 'groups.id',
+          from: 'tags.id',
           through: {
-            from: 'userGroups.groupId',
-            to: 'userGroups.userId'
+            from: 'pageTags.tagId',
+            to: 'pageTags.pageId'
           },
-          to: 'users.id'
+          to: 'pages.id'
         }
       }
     }

@@ -23,12 +23,12 @@ module.exports = {
         }).then((user) => {
           if (user) {
             return user.verifyPassword(uPassword).then(() => {
-              return done(null, user) || true
+              done(null, user)
             }).catch((err) => {
-              return done(err, null)
+              done(err, null)
             })
           } else {
-            return done(new WIKI.Error.AuthLoginFailed(), null)
+            done(new WIKI.Error.AuthLoginFailed(), null)
           }
         }).catch((err) => {
           done(err, null)

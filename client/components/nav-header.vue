@@ -31,10 +31,7 @@
         v-subheader Assets
         v-list-tile(avatar, @click='')
           v-list-tile-avatar: v-icon(color='blue-grey') burst_mode
-          v-list-tile-content Images
-        v-list-tile(avatar, @click='')
-          v-list-tile-avatar: v-icon(color='blue-grey') description
-          v-list-tile-content Files
+          v-list-tile-content Images &amp; Files
     v-toolbar-title
       span.subheading Wiki.js
     v-spacer

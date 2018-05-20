@@ -1,0 +1,78 @@
+# ===============================================
+# PAGES
+# ===============================================
+
+extend type Query {
+  pages: PageQuery
+}
+
+extend type Mutation {
+  pages: PageMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type PageQuery {
+  list(
+    filter: String
+    orderBy: String
+  ): [PageMinimal]
+
+  single(
+    id: Int!
+  ): Page
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type PageMutation {
+  create(
+    description: String
+    isPublished: Boolean
+    locale: String
+    path: String!
+    publishEndDate: Date
+    publishStartDate: Date
+    tags: [String]
+    title: String!
+  ): PageResponse
+
+  update(
+    id: Int!
+    name: String!
+  ): DefaultResponse
+
+  delete(
+    id: Int!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type PageResponse {
+  responseResult: ResponseStatus!
+  page: Page
+}
+
+type PageMinimal {
+  id: Int!
+  name: String!
+  userCount: Int
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+type Page {
+  id: Int!
+  name: String!
+  rights: [Right]
+  users: [User]
+  createdAt: Date!
+  updatedAt: Date!
+}

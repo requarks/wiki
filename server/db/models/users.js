@@ -29,6 +29,7 @@ module.exports = class User extends Model {
         role: {type: 'string', enum: ['admin', 'guest', 'user']},
         tfaIsActive: {type: 'boolean', default: false},
         tfaSecret: {type: 'string'},
+        locale: {type: 'string'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -36,11 +37,10 @@ module.exports = class User extends Model {
   }
 
   static get relationMappings() {
-    const Group = require('./groups')
     return {
       groups: {
         relation: Model.ManyToManyRelation,
-        modelClass: Group,
+        modelClass: require('./groups'),
         join: {
           from: 'users.id',
           through: {
@@ -79,7 +79,7 @@ module.exports = class User extends Model {
   }
 
   async verifyPassword(pwd) {
-    if (await bcrypt.compare(this.password, pwd) === true) {
+    if (await bcrypt.compare(pwd, this.password) === true) {
       return true
     } else {
       throw new WIKI.Error.AuthLoginFailed()

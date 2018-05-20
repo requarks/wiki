@@ -1,73 +1,70 @@
 <template lang='pug'>
   .editor-code
-    .editor-code-toolbar
-      .editor-code-toolbar-group
-        .editor-code-toolbar-item(@click='toggleAround("**", "**")')
+    v-toolbar.editor-code-toolbar.px-3(dense, color='primary', dark)
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Bold
+          use(xlink:href='#fa-bold')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Italic
+          use(xlink:href='#fa-italic')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Strikethrough
+          use(xlink:href='#fa-strikethrough')
+      v-menu(offset-y, open-on-hover)
+        v-btn(icon, slot='activator').mx-0
           svg.icons.is-18(role='img')
-            title Bold
-            use(xlink:href='#fa-bold')
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Italic
-            use(xlink:href='#fa-italic')
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Strikethrough
-            use(xlink:href='#fa-strikethrough')
-      .editor-code-toolbar-group
-        v-menu(offset-y, open-on-hover)
-          .editor-code-toolbar-item.is-dropdown(slot='activator')
-            svg.icons.is-18(role='img')
-              title Heading
-              use(xlink:href='#fa-heading')
-          v-list
-            v-list-tile(v-for='(n, idx) in 6', @click='', :key='idx')
-              v-list-tile-action: v-icon format_size
-              v-list-tile-title Heading {{n}}
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Blockquote
-            use(xlink:href='#fa-quote-left')
-      .editor-code-toolbar-group
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Unordered List
-            use(xlink:href='#fa-list-ul')
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Ordered List
-            use(xlink:href='#fa-list-ol')
-      .editor-code-toolbar-group
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Link
-            use(xlink:href='#fa-link')
-      .editor-code-toolbar-group
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Inline Code
-            use(xlink:href='#fa-terminal')
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Code Block
-            use(xlink:href='#fa-code')
-      .editor-code-toolbar-group
-        .editor-code-toolbar-item
-          svg.icons.is-18(role='img')
-            title Horizontal Bar
-            use(xlink:href='#fa-minus')
+            title Heading
+            use(xlink:href='#fa-heading')
+        v-list
+          v-list-tile(v-for='(n, idx) in 6', @click='', :key='idx')
+            v-list-tile-action
+              svg.icons.is-18(role='img')
+                title Heading {{n}}
+                use(xlink:href='#fa-heading')
+            v-list-tile-title Heading {{n}}
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Blockquote
+          use(xlink:href='#fa-quote-left')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Unordered List
+          use(xlink:href='#fa-list-ul')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Ordered List
+          use(xlink:href='#fa-list-ol')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Link
+          use(xlink:href='#fa-link')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Inline Code
+          use(xlink:href='#fa-terminal')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Code Block
+          use(xlink:href='#fa-code')
+      v-btn(icon).mx-0
+        svg.icons.is-18(role='img')
+          title Horizontal Bar
+          use(xlink:href='#fa-minus')
 
     .editor-code-main
       .editor-code-editor
         .editor-code-editor-title(v-if='previewShown', @click='previewShown = false') Editor
-        .editor-code-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) search
+        .editor-code-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
       transition(name='editor-code-preview')
         .editor-code-preview(v-if='previewShown')
           .editor-code-preview-title(@click='previewShown = false') Preview
           .editor-code-preview-content.markdown-content(ref='editorPreview', v-html='previewHTML')
 
-      v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, right, bottom)
+      v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, left, bottom)
         v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
           v-icon add_circle
           v-icon close
@@ -276,7 +273,7 @@ export default {
     background-color: darken(mc('grey', '900'), 4.5%);
     flex: 1 1 50%;
     display: block;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 96px);
     position: relative;
 
     &-title {
@@ -361,46 +358,10 @@ export default {
   &-toolbar {
     background-color: mc('blue', '700');
     background-image: linear-gradient(to bottom, mc('blue', '700') 0%, mc('blue','800') 100%);
-    height: 50px;
     color: #FFF;
-    display: flex;
 
     @include until($tablet) {
       justify-content: center;
-    }
-
-    &-group {
-      display: flex;
-
-      + .editor-code-toolbar-group {
-        border-left: 1px solid rgba(mc('blue', '600'), .5);
-      }
-    }
-
-    &-item {
-      width: 40px;
-      height: 50px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: all .4s ease;
-      cursor: pointer;
-
-      &:first-child {
-        padding-left: .5rem;
-      }
-
-      &:last-child {
-        padding-right: .5rem;
-      }
-
-      &:hover {
-        background-color: mc('blue', '600');
-      }
-
-      @include until($tablet) {
-        width: 35px;
-      }
     }
 
     svg {
