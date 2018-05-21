@@ -78,6 +78,7 @@ Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './component
 Vue.component('editor', () => import(/* webpackChunkName: "editor" */ './components/editor.vue'))
 Vue.component('login', () => import(/* webpackMode: "eager" */ './components/login.vue'))
 Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/nav-header.vue'))
+Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
 
 let bootstrap = () => {

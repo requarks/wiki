@@ -16,6 +16,13 @@ router.get(['/a', '/a/*'], (req, res, next) => {
 })
 
 /**
+ * Profile
+ */
+router.get(['/p', '/p/*'], (req, res, next) => {
+  res.render('main/profile')
+})
+
+/**
  * View document
  */
 router.get('/*', (req, res, next) => {

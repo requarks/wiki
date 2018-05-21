@@ -99,14 +99,14 @@ exports.up = knex => {
     // PAGE TAGS ---------------------------
     .createTable('pageTags', table => {
       table.increments('id').primary()
-      table.integer('pageId').unsigned().references('id').inTable('pages')
-      table.integer('tagId').unsigned().references('id').inTable('tags')
+      table.integer('pageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
+      table.integer('tagId').unsigned().references('id').inTable('tags').onDelete('CASCADE')
     })
     // USER GROUPS -------------------------
     .createTable('userGroups', table => {
       table.increments('id').primary()
-      table.integer('userId').unsigned().references('id').inTable('users')
-      table.integer('groupId').unsigned().references('id').inTable('groups')
+      table.integer('userId').unsigned().references('id').inTable('users').onDelete('CASCADE')
+      table.integer('groupId').unsigned().references('id').inTable('groups').onDelete('CASCADE')
     })
     // =====================================
     // REFERENCES

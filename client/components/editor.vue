@@ -14,7 +14,7 @@
       v-dialog(v-model='dialogProgress', persistent, max-width='350')
         v-card(color='blue darken-3', dark)
           v-card-text.text-xs-center.py-4
-            v-progress-circular(indeterminate, color='white', width='1')
+            v-progress-circular(indeterminate, color='white', :width='1')
             .subheading Processing
             .caption.blue--text.text--lighten-3 Please wait...
 </template>

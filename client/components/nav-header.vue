@@ -3,7 +3,7 @@
     v-menu(open-on-hover, offset-y, bottom, left, nudge-top='-18', min-width='250')
       v-toolbar-side-icon(slot='activator')
         v-icon view_module
-      v-list(dense)
+      v-list(dense).py-0
         v-list-tile(avatar, href='/')
           v-list-tile-avatar: v-icon(color='blue') home
           v-list-tile-content Home
