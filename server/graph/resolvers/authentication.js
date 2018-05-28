@@ -15,18 +15,17 @@ module.exports = {
     async authentication() { return {} }
   },
   AuthenticationQuery: {
-    providers(obj, args, context, info) {
-      let prv = _.map(WIKI.auth.strategies, str => ({
-        isEnabled: str.config.isEnabled,
-        key: str.key,
-        props: str.props,
-        title: str.title,
-        useForm: str.useForm,
-        config: []
+    async providers(obj, args, context, info) {
+      let strategies = await WIKI.db.authentication.query().orderBy('title')
+      strategies = strategies.map(stg => ({
+        ...stg,
+        config: _.transform(stg.config, (res, value, key) => {
+          res.push({ key, value })
+        }, [])
       }))
-      if (args.filter) { prv = graphHelper.filter(prv, args.filter) }
-      if (args.orderBy) { prv = graphHelper.orderBy(prv, args.orderBy) }
-      return prv
+      if (args.filter) { strategies = graphHelper.filter(strategies, args.filter) }
+      if (args.orderBy) { strategies = graphHelper.orderBy(strategies, args.orderBy) }
+      return strategies
     }
   },
   AuthenticationMutation: {

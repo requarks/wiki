@@ -34,7 +34,7 @@ module.exports = {
   async activateStrategies() {
     try {
       // Unload any active strategies
-      WIKI.auth.strategies = []
+      WIKI.auth.strategies = {}
       const currentStrategies = _.keys(passport._strategies)
       _.pull(currentStrategies, 'session')
       _.forEach(currentStrategies, stg => { passport.unuse(stg) })

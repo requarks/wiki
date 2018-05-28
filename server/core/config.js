@@ -67,19 +67,18 @@ module.exports = {
    * @returns Promise
    */
   async saveToDb(keys) {
-    let trx = await WIKI.db.Objection.transaction.start(WIKI.db.knex)
-
     try {
       for (let key of keys) {
-        const value = _.get(WIKI.config, key, null)
-        let affectedRows = await WIKI.db.settings.query(trx).patch({ value }).where('key', key)
+        let value = _.get(WIKI.config, key, null)
+        if (!_.isPlainObject(value)) {
+          value = { v: value }
+        }
+        let affectedRows = await WIKI.db.settings.query().patch({ value }).where('key', key)
         if (affectedRows === 0 && value) {
-          await WIKI.db.settings.query(trx).insert({ key, value })
+          await WIKI.db.settings.query().insert({ key, value })
         }
       }
-      await trx.commit()
     } catch (err) {
-      await trx.rollback(err)
       WIKI.logger.error(`Failed to save configuration to DB: ${err.message}`)
       return false
     }

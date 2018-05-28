@@ -271,30 +271,31 @@ module.exports = () => {
       await fs.writeFileAsync(path.join(WIKI.ROOTPATH, 'config.yml'), confRaw)
 
       // Set config
-      _.set(WIKI.config, 'defaultEditor', true)
+      _.set(WIKI.config, 'defaultEditor', 'markdown')
       _.set(WIKI.config, 'graphEndpoint', 'https://graph.requarks.io')
-      _.set(WIKI.config, 'lang', 'en')
-      _.set(WIKI.config, 'langAutoUpdate', true)
-      _.set(WIKI.config, 'langRTL', false)
+      _.set(WIKI.config, 'lang.code', 'en')
+      _.set(WIKI.config, 'lang.autoUpdate', true)
+      _.set(WIKI.config, 'lang.namespacing', false)
+      _.set(WIKI.config, 'lang.namespaces', [])
       _.set(WIKI.config, 'paths.content', req.body.pathContent)
+      _.set(WIKI.config, 'paths.data', req.body.pathData)
       _.set(WIKI.config, 'port', req.body.port)
       _.set(WIKI.config, 'public', req.body.public === 'true')
       _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
-      _.set(WIKI.config, 'telemetry', req.body.telemetry === 'true')
+      _.set(WIKI.config, 'telemetry.isEnabled', req.body.telemetry === 'true')
+      _.set(WIKI.config, 'telemetry.clientId', WIKI.telemetry.cid)
       _.set(WIKI.config, 'title', req.body.title)
 
       // Save config to DB
       WIKI.logger.info('Persisting config to DB...')
-      await WIKI.db.settings.query().insert([
-        { key: 'defaultEditor', value: { v: WIKI.config.defaultEditor } },
-        { key: 'graphEndpoint', value: { v: WIKI.config.graphEndpoint } },
-        { key: 'lang', value: { v: WIKI.config.lang } },
-        { key: 'langAutoUpdate', value: { v: WIKI.config.langAutoUpdate } },
-        { key: 'langRTL', value: { v: WIKI.config.langRTL } },
-        { key: 'public', value: { v: WIKI.config.public } },
-        { key: 'sessionSecret', value: { v: WIKI.config.sessionSecret } },
-        { key: 'telemetry', value: { v: WIKI.config.telemetry } },
-        { key: 'title', value: { v: WIKI.config.title } }
+      await WIKI.configSvc.saveToDb([
+        'defaultEditor',
+        'graphEndpoint',
+        'lang',
+        'public',
+        'sessionSecret',
+        'telemetry',
+        'title'
       ])
 
       // Create default locale

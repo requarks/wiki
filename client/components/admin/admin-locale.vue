@@ -64,7 +64,7 @@
                     :value='true'
                     icon='warning'
                     )
-                    span The locale code will be prefixed to all paths. (e.g. /en/page-name)
+                    span The locale code will be prefixed to all paths. (e.g. /{{ selectedLocale }}/page-name)
                     .caption.grey--text Paths without a locale code will be automatically redirected to the base locale defined above.
                   v-divider
                   v-select(
@@ -181,7 +181,9 @@ export default {
         mutation: localesSaveMutation,
         variables: {
           locale: this.selectedLocale,
-          autoUpdate: this.autoUpdate
+          autoUpdate: this.autoUpdate,
+          namespacing: this.namespacing,
+          namespaces: this.namespaces
         }
       })
       const resp = _.get(respRaw, 'data.localization.updateLocale.responseResult', {})
@@ -216,6 +218,14 @@ export default {
     autoUpdate: {
       query: localesQuery,
       update: (data) => data.localization.config.autoUpdate
+    },
+    namespacing: {
+      query: localesQuery,
+      update: (data) => data.localization.config.namespacing
+    },
+    namespaces: {
+      query: localesQuery,
+      update: (data) => data.localization.config.namespaces
     }
   }
 }

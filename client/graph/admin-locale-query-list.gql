@@ -13,6 +13,8 @@
     config {
       locale
       autoUpdate
+      namespacing
+      namespaces
     }
   }
 }

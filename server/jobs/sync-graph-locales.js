@@ -34,11 +34,11 @@ module.exports = async (job) => {
     })
     const locales = _.sortBy(_.get(respList, 'data.localization.locales', []), 'name').map(lc => ({...lc, isInstalled: (lc.code === 'en')}))
     WIKI.redis.set('locales', JSON.stringify(locales))
-    const currentLocale = _.find(locales, ['code', WIKI.config.site.lang])
+    const currentLocale = _.find(locales, ['code', WIKI.config.lang.code])
 
     // -> Download locale strings
 
-    if (WIKI.config.site.langAutoUpdate) {
+    if (WIKI.config.langAutoUpdate) {
       const respStrings = await apollo({
         query: `query ($code: String!) {
           localization {
@@ -49,7 +49,7 @@ module.exports = async (job) => {
           }
         }`,
         variables: {
-          code: WIKI.config.site.lang
+          code: WIKI.config.lang.code
         }
       })
       const strings = _.get(respStrings, 'data.localization.strings', [])
@@ -60,12 +60,12 @@ module.exports = async (job) => {
       })
 
       await WIKI.db.locales.query().update({
-        code: WIKI.config.site.lang,
+        code: WIKI.config.lang.code,
         strings: lcObj,
         isRTL: currentLocale.isRTL,
         name: currentLocale.name,
         nativeName: currentLocale.nativeName
-      }).where('code', WIKI.config.site.lang)
+      }).where('code', WIKI.config.lang.code)
     }
 
     WIKI.logger.info('Syncing locales with Graph endpoint: [ COMPLETED ]')

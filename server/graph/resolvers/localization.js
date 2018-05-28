@@ -26,8 +26,10 @@ module.exports = {
     },
     async config(obj, args, context, info) {
       return {
-        locale: WIKI.config.site.lang,
-        autoUpdate: WIKI.config.site.langAutoUpdate
+        locale: WIKI.config.lang.code,
+        autoUpdate: WIKI.config.lang.autoUpdate,
+        namespacing: WIKI.config.lang.namespacing,
+        namespaces: WIKI.config.lang.namespaces
       }
     }
   },
@@ -49,9 +51,11 @@ module.exports = {
     },
     async updateLocale(obj, args, context) {
       try {
-        WIKI.config.site.lang = args.locale
-        WIKI.config.site.langAutoUpdate = args.autoUpdate
-        await WIKI.configSvc.saveToDb(['site'])
+        WIKI.config.lang.code = args.locale
+        WIKI.config.lang.autoUpdate = args.autoUpdate
+        WIKI.config.lang.namespacing = args.namespacing
+        WIKI.config.lang.namespaces = args.namespaces
+        await WIKI.configSvc.saveToDb(['lang'])
 
         await WIKI.lang.setCurrentLocale(args.locale)
 

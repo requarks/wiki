@@ -31,6 +31,8 @@ type LocalizationMutation {
   updateLocale(
     locale: String!
     autoUpdate: Boolean!
+    namespacing: Boolean!
+    namespaces: [String]!
   ): DefaultResponse
 }
 
@@ -52,4 +54,6 @@ type LocalizationLocale {
 type LocalizationConfig {
   locale: String!
   autoUpdate: Boolean!
+  namespacing: Boolean!
+  namespaces: [String]!
 }
