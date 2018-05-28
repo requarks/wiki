@@ -1,10 +1,9 @@
-/* global WIKI */
-
-const _ = require('lodash')
 const passport = require('passport')
 const fs = require('fs-extra')
+const _ = require('lodash')
 const path = require('path')
-const autoload = require('auto-load')
+
+/* global WIKI */
 
 module.exports = {
   strategies: {},
@@ -30,34 +29,39 @@ module.exports = {
       })
     })
 
-    // Load authentication strategies
-
-    const modules = _.values(autoload(path.join(WIKI.SERVERPATH, 'modules/authentication')))
-    _.forEach(modules, (strategy) => {
-      const strategyConfig = _.get(WIKI.config.auth.strategies, strategy.key, { isEnabled: false })
-      strategyConfig.callbackURL = `${WIKI.config.site.host}${WIKI.config.site.path}login/${strategy.key}/callback`
-      strategy.config = strategyConfig
-      if (strategyConfig.isEnabled) {
-        try {
-          strategy.init(passport, strategyConfig)
-        } catch (err) {
-          WIKI.logger.error(`Authentication Provider ${strategy.title}: [ FAILED ]`)
-          WIKI.logger.error(err)
-        }
-      }
-      fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${strategy.key}.svg`), 'utf8').then(iconData => {
-        strategy.icon = iconData
-      }).catch(err => {
-        if (err.code === 'ENOENT') {
-          strategy.icon = '[missing icon]'
-        } else {
-          WIKI.logger.warn(err)
-        }
-      })
-      this.strategies[strategy.key] = strategy
-      WIKI.logger.info(`Authentication Provider ${strategy.title}: [ OK ]`)
-    })
-
     return this
+  },
+  async activateStrategies() {
+    try {
+      // Unload any active strategies
+      WIKI.auth.strategies = []
+      const currentStrategies = _.keys(passport._strategies)
+      _.pull(currentStrategies, 'session')
+      _.forEach(currentStrategies, stg => { passport.unuse(stg) })
+
+      // Load enable strategies
+      const enabledStrategies = await WIKI.db.authentication.getEnabledStrategies()
+      for (let idx in enabledStrategies) {
+        const stg = enabledStrategies[idx]
+        const strategy = require(`../modules/authentication/${stg.key}`)
+        stg.config.callbackURL = `${WIKI.config.site.host}/login/${stg.key}/callback`
+        strategy.init(passport, stg.config)
+
+        fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${strategy.key}.svg`), 'utf8').then(iconData => {
+          strategy.icon = iconData
+        }).catch(err => {
+          if (err.code === 'ENOENT') {
+            strategy.icon = '[missing icon]'
+          } else {
+            WIKI.logger.warn(err)
+          }
+        })
+        WIKI.auth.strategies[stg.key] = strategy
+        WIKI.logger.info(`Authentication Strategy ${stg.title}: [ OK ]`)
+      }
+    } catch (err) {
+      WIKI.logger.error(`Authentication Strategy: [ FAILED ]`)
+      WIKI.logger.error(err)
+    }
   }
 }

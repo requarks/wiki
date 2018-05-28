@@ -7,15 +7,14 @@ const { createApolloFetch } = require('apollo-fetch')
 WIKI.redis = require('../core/redis').init()
 WIKI.db = require('../core/db').init()
 
-const apollo = createApolloFetch({
-  uri: 'https://graph.requarks.io'
-})
-
 module.exports = async (job) => {
   WIKI.logger.info('Syncing locales with Graph endpoint...')
 
   try {
-    await WIKI.configSvc.loadFromDb(['site'])
+    await WIKI.configSvc.loadFromDb()
+    const apollo = createApolloFetch({
+      uri: WIKI.config.graphEndpoint
+    })
 
     // -> Fetch locales list
 

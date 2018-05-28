@@ -87,19 +87,26 @@ const init = {
         const devWatcher = chokidar.watch([
           './server',
           '!./server/views/master.pug'
-        ])
+        ], {
+          ignoreInitial: true,
+          atomic: 400
+        })
         devWatcher.on('ready', () => {
-          devWatcher.on('all', () => {
+          devWatcher.on('all', async () => {
             console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
             console.warn('--- Changes detected: Restarting ---')
             console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
+            console.warn('--- Closing DB connections...')
+            await global.WIKI.db.knex.destroy()
+            console.warn('--- Closing Redis connections...')
+            await global.WIKI.redis.quit()
+            console.warn('--- Closing Server connections...')
             global.WIKI.server.destroy(() => {
               global.WIKI = {}
-              for (const workerId in cluster.workers) {
-                cluster.workers[workerId].kill()
-              }
               Object.keys(require.cache).forEach(function(id) {
-                if (/[/\\]server[/\\]/.test(id)) delete require.cache[id]
+                if (/[/\\]server[/\\]/.test(id)) {
+                  delete require.cache[id]
+                }
               })
               require('./server')
             })

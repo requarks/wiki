@@ -250,8 +250,6 @@ module.exports = () => {
   app.post('/finalize', async (req, res) => {
     WIKI.telemetry.sendEvent('setup', 'finalize')
 
-    console.error('DUDE')
-
     try {
       // Upgrade from WIKI.js 1.x?
       if (req.body.upgrade) {
@@ -272,41 +270,31 @@ module.exports = () => {
       confRaw = yaml.safeDump(conf)
       await fs.writeFileAsync(path.join(WIKI.ROOTPATH, 'config.yml'), confRaw)
 
-      _.set(WIKI.config, 'port', req.body.port)
+      // Set config
+      _.set(WIKI.config, 'defaultEditor', true)
+      _.set(WIKI.config, 'graphEndpoint', 'https://graph.requarks.io')
+      _.set(WIKI.config, 'lang', 'en')
+      _.set(WIKI.config, 'langAutoUpdate', true)
+      _.set(WIKI.config, 'langRTL', false)
       _.set(WIKI.config, 'paths.content', req.body.pathContent)
-
-      // Populate config namespaces
-      WIKI.config.auth = WIKI.config.auth || {}
-      WIKI.config.features = WIKI.config.features || {}
-      WIKI.config.logging = WIKI.config.logging || {}
-      WIKI.config.site = WIKI.config.site || {}
-      WIKI.config.theme = WIKI.config.theme || {}
-      WIKI.config.uploads = WIKI.config.uploads || {}
-
-      // Site namespace
-      _.set(WIKI.config.site, 'title', req.body.title)
-      _.set(WIKI.config.site, 'lang', 'en')
-      _.set(WIKI.config.site, 'langAutoUpdate', true)
-      _.set(WIKI.config.site, 'rtl', false)
-      _.set(WIKI.config.site, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
-
-      // Auth namespace
-      _.set(WIKI.config.auth, 'public', req.body.public === 'true')
-      _.set(WIKI.config.auth, 'strategies.local.isEnabled', true)
-      _.set(WIKI.config.auth, 'strategies.local.allowSelfRegister', req.body.selfRegister === 'true')
-
-      // Logging namespace
-      WIKI.config.logging.telemetry = (req.body.telemetry === 'true')
+      _.set(WIKI.config, 'port', req.body.port)
+      _.set(WIKI.config, 'public', req.body.public === 'true')
+      _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+      _.set(WIKI.config, 'telemetry', req.body.telemetry === 'true')
+      _.set(WIKI.config, 'title', req.body.title)
 
       // Save config to DB
       WIKI.logger.info('Persisting config to DB...')
       await WIKI.db.settings.query().insert([
-        { key: 'auth', value: WIKI.config.auth },
-        { key: 'features', value: WIKI.config.features },
-        { key: 'logging', value: WIKI.config.logging },
-        { key: 'site', value: WIKI.config.site },
-        { key: 'theme', value: WIKI.config.theme },
-        { key: 'uploads', value: WIKI.config.uploads }
+        { key: 'defaultEditor', value: { v: WIKI.config.defaultEditor } },
+        { key: 'graphEndpoint', value: { v: WIKI.config.graphEndpoint } },
+        { key: 'lang', value: { v: WIKI.config.lang } },
+        { key: 'langAutoUpdate', value: { v: WIKI.config.langAutoUpdate } },
+        { key: 'langRTL', value: { v: WIKI.config.langRTL } },
+        { key: 'public', value: { v: WIKI.config.public } },
+        { key: 'sessionSecret', value: { v: WIKI.config.sessionSecret } },
+        { key: 'telemetry', value: { v: WIKI.config.telemetry } },
+        { key: 'title', value: { v: WIKI.config.title } }
       ])
 
       // Create default locale
@@ -319,8 +307,20 @@ module.exports = () => {
         nativeName: 'English'
       })
 
+      // Load authentication strategies + enable local
+      await WIKI.db.authentication.refreshStrategiesFromDisk()
+      await WIKI.db.authentication.query().patch({ isEnabled: true }).where('key', 'local')
+
+      // Load editors + enable default
+      await WIKI.db.editors.refreshEditorsFromDisk()
+      await WIKI.db.editors.query().patch({ isEnabled: true }).where('key', 'markdown')
+
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
+      await WIKI.db.users.query().delete().where({
+        provider: 'local',
+        email: req.body.adminEmail
+      })
       await WIKI.db.users.query().insert({
         email: req.body.adminEmail,
         provider: 'local',
@@ -328,11 +328,12 @@ module.exports = () => {
         name: 'Administrator',
         role: 'admin',
         locale: 'en',
+        defaultEditor: 'markdown',
         tfaIsActive: false
       })
 
       // Create Guest account
-      WIKI.logger.info('Creating root administrator...')
+      WIKI.logger.info('Creating guest account...')
       const guestUsr = await WIKI.db.users.query().findOne({
         provider: 'local',
         email: 'guest@example.com'
@@ -345,6 +346,7 @@ module.exports = () => {
           password: '',
           role: 'guest',
           locale: 'en',
+          defaultEditor: 'markdown',
           tfaIsActive: false
         })
       }
@@ -355,6 +357,8 @@ module.exports = () => {
         redirectPath: WIKI.config.site.path,
         redirectPort: WIKI.config.port
       }).end()
+
+      WIKI.config.setup = false
 
       WIKI.logger.info('Stopping Setup...')
       WIKI.server.destroy(() => {
@@ -392,7 +396,7 @@ module.exports = () => {
   // Start HTTP server
   // ----------------------------------------
 
-  WIKI.logger.info(`HTTP Server on port: ${WIKI.config.port}`)
+  WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
 
   app.set('port', WIKI.config.port)
   WIKI.server = http.createServer(app)
@@ -433,6 +437,6 @@ module.exports = () => {
   })
 
   WIKI.server.on('listening', () => {
-    WIKI.logger.info('HTTP Server: RUNNING')
+    WIKI.logger.info('HTTP Server: [ RUNNING ]')
   })
 }

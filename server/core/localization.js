@@ -17,7 +17,7 @@ module.exports = {
       ns: this.namespaces,
       defaultNS: 'common',
       saveMissing: false,
-      lng: WIKI.config.site.lang,
+      lng: WIKI.config.lang,
       fallbackLng: 'en'
     })
 
@@ -31,7 +31,7 @@ module.exports = {
     }
 
     // Load current language
-    this.loadLocale(WIKI.config.site.lang, { silent: true })
+    this.loadLocale(WIKI.config.lang, { silent: true })
 
     return this
   },
@@ -55,6 +55,7 @@ module.exports = {
     const res = await WIKI.db.locales.query().findOne('code', locale)
     if (res) {
       if (_.isPlainObject(res.strings)) {
+        console.info(res.strings)
         _.forOwn(res.strings, (data, ns) => {
           this.namespaces.push(ns)
           this.engine.addResourceBundle(locale, ns, data, true, true)

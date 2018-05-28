@@ -53,6 +53,20 @@ module.exports = {
       client: dbClient,
       useNullAsDefault: true,
       connection: dbConfig,
+      pool: {
+        async afterCreate(conn, done) {
+          // -> Set Connection App Name
+          switch (WIKI.config.db.type) {
+            case 'postgres':
+              await conn.query(`set application_name = 'Wiki.js'`)
+              done()
+              break
+            default:
+              done()
+              break
+          }
+        }
+      },
       debug: WIKI.IS_DEBUG
     })
 
@@ -71,21 +85,13 @@ module.exports = {
           directory: path.join(WIKI.SERVERPATH, 'db/migrations'),
           tableName: 'migrations'
         })
-      },
-      // -> Set Connection App Name
-      async setAppName() {
-        switch (WIKI.config.db.type) {
-          case 'postgres':
-            return self.knex.raw(`set application_name = 'Wiki.js'`)
-        }
       }
     }
 
     let initTasksQueue = (WIKI.IS_MASTER) ? [
-      initTasks.syncSchemas,
-      initTasks.setAppName
+      initTasks.syncSchemas
     ] : [
-      initTasks.setAppName
+      () => { return Promise.resolve() }
     ]
 
     // Perform init tasks

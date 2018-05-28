@@ -209,8 +209,12 @@
                   v-flex.pr-3(xs6)
                     v-text-field(
                       ref='adminPassword',
+                      counter='255'
                       v-model='conf.adminPassword',
                       label='Password',
+                      :append-icon="pwdMode ? 'visibility' : 'visibility_off'"
+                      :append-icon-cb="() => (pwdMode = !pwdMode)"
+                      :type="pwdMode ? 'password' : 'text'"
                       hint='At least 8 characters long.',
                       v-validate='{ required: true, min: 8 }',
                       data-vv-name='adminPassword',
@@ -221,8 +225,12 @@
                   v-flex(xs6)
                     v-text-field(
                       ref='adminPasswordConfirm',
+                      counter='255'
                       v-model='conf.adminPasswordConfirm',
                       label='Confirm Password',
+                      :append-icon="pwdConfirmMode ? 'visibility' : 'visibility_off'"
+                      :append-icon-cb="() => (pwdConfirmMode = !pwdConfirmMode)"
+                      :type="pwdConfirmMode ? 'password' : 'text'"
                       hint='Verify your password again.',
                       v-validate='{ required: true, min: 8 }',
                       data-vv-name='adminPasswordConfirm',
@@ -339,7 +347,9 @@ export default {
         title: siteConfig.title || 'Wiki',
         upgrade: false,
         upgMongo: 'mongodb://'
-      }
+      },
+      pwdMode: true,
+      pwdConfirmMode: true
     }
   },
   methods: {

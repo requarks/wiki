@@ -23,12 +23,29 @@ exports.up = knex => {
       table.string('slug').notNullable()
       table.integer('parentId').unsigned().references('id').inTable('assetFolders')
     })
+    // AUTHENTICATION ----------------------
+    .createTable('authentication', table => {
+      table.increments('id').primary()
+      table.string('key').notNullable().unique()
+      table.string('title').notNullable()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.boolean('useForm').notNullable().defaultTo(false)
+      table.jsonb('config').notNullable()
+    })
     // COMMENTS ----------------------------
     .createTable('comments', table => {
       table.increments('id').primary()
       table.text('content').notNullable()
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+    })
+    // EDITORS -----------------------------
+    .createTable('editors', table => {
+      table.increments('id').primary()
+      table.string('key').notNullable().unique()
+      table.string('title').notNullable()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.jsonb('config')
     })
     // GROUPS ------------------------------
     .createTable('groups', table => {
@@ -54,6 +71,7 @@ exports.up = knex => {
       table.string('path').notNullable()
       table.string('title').notNullable()
       table.string('description')
+      table.boolean('isPrivate').notNullable().defaultTo(false)
       table.boolean('isPublished').notNullable().defaultTo(false)
       table.string('publishStartDate')
       table.string('publishEndDate')
@@ -66,8 +84,15 @@ exports.up = knex => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
       table.jsonb('value')
-      table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+    })
+    // STORAGE -----------------------------
+    .createTable('storage', table => {
+      table.increments('id').primary()
+      table.string('key').notNullable().unique()
+      table.string('title').notNullable()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.jsonb('config')
     })
     // TAGS --------------------------------
     .createTable('tags', table => {
@@ -82,16 +107,17 @@ exports.up = knex => {
       table.increments('id').primary()
       table.string('email').notNullable()
       table.string('name').notNullable()
-      table.string('provider').notNullable().defaultTo('local')
       table.string('providerId')
       table.string('password')
       table.boolean('tfaIsActive').notNullable().defaultTo(false)
       table.string('tfaSecret')
       table.enum('role', ['admin', 'guest', 'user']).notNullable().defaultTo('guest')
+      table.string('jobTitle').defaultTo('')
+      table.string('location').defaultTo('')
+      table.string('pictureUrl')
+      table.string('timezone').notNullable().defaultTo('America/New_York')
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
-
-      table.unique(['provider', 'email'])
     })
     // =====================================
     // RELATION TABLES
@@ -120,11 +146,16 @@ exports.up = knex => {
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
     .table('pages', table => {
+      table.string('editor').references('key').inTable('editors')
       table.string('locale', 2).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
     .table('users', table => {
-      table.string('locale', 2).references('code').inTable('locales')
+      table.string('provider').references('key').inTable('authentication').notNullable().defaultTo('local')
+      table.string('locale', 2).references('code').inTable('locales').notNullable().defaultTo('en')
+      table.string('defaultEditor').references('key').inTable('editors').notNullable().defaultTo('markdown')
+
+      table.unique(['provider', 'email'])
     })
 }
 

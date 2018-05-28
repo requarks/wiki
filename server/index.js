@@ -4,11 +4,10 @@
 // ===========================================
 
 const path = require('path')
-const cluster = require('cluster')
 
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
-  IS_MASTER: cluster.isMaster,
+  IS_MASTER: true,
   ROOTPATH: process.cwd(),
   SERVERPATH: path.join(process.cwd(), 'server'),
   Error: require('./helpers/error'),
@@ -32,17 +31,13 @@ WIKI.logger = require('./core/logger').init('MASTER')
 WIKI.telemetry = require('./core/telemetry').init()
 
 process.on('unhandledRejection', (err) => {
+  WIKI.logger.warn(err)
   WIKI.telemetry.sendError(err)
 })
 process.on('uncaughtException', (err) => {
+  WIKI.logger.warn(err)
   WIKI.telemetry.sendError(err)
 })
-
-// ----------------------------------------
-// Init DB
-// ----------------------------------------
-
-WIKI.db = require('./core/db').init()
 
 // ----------------------------------------
 // Start Kernel

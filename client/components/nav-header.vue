@@ -58,7 +58,7 @@
           color='blue'
         )
     v-spacer
-    v-progress-circular.mr-3(indeterminate, color='blue', v-show='isLoading')
+    v-progress-circular.mr-3(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
     slot(name='actions')
     transition(name='navHeaderSearch')
       v-btn(icon, @click='searchToggle', v-if='!searchIsShown')

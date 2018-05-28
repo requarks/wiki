@@ -41,6 +41,8 @@
 import VueRouter from 'vue-router'
 import { mapState } from 'vuex'
 
+/* global WIKI */
+
 const router = new VueRouter({
   mode: 'history',
   base: '/p',
@@ -51,6 +53,15 @@ const router = new VueRouter({
     { path: '/pages', component: () => import(/* webpackChunkName: "profile" */ './profile/pages.vue') },
     { path: '/comments', component: () => import(/* webpackChunkName: "profile" */ './profile/comments.vue') }
   ]
+})
+
+router.beforeEach((to, from, next) => {
+  WIKI.$store.commit('loadingStart', 'profile')
+  next()
+})
+
+router.afterEach((to, from) => {
+  WIKI.$store.commit('loadingStop', 'profile')
 })
 
 export default {

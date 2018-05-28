@@ -50,45 +50,32 @@ module.exports = {
 
   /**
    * Load config from DB
-   *
-   * @param {Array} subsets Array of subsets to load
-   * @returns Promise
    */
-  async loadFromDb(subsets) {
-    if (!_.isArray(subsets) || subsets.length === 0) {
-      subsets = WIKI.data.configNamespaces
-    }
-
-    let results = await WIKI.db.settings.query().select(['key', 'value']).whereIn('key', subsets)
-    if (_.isArray(results) && results.length === subsets.length) {
-      results.forEach(result => {
-        WIKI.config[result.key] = result.value
-      })
-      return true
+  async loadFromDb() {
+    let conf = await WIKI.db.settings.getConfig()
+    if (conf) {
+      WIKI.config = _.defaultsDeep(conf, WIKI.config)
     } else {
-      WIKI.logger.warn('DB Configuration is empty or incomplete.')
-      return false
+      WIKI.logger.warn('DB Configuration is empty or incomplete. Switching to Setup mode...')
+      WIKI.config.setup = true
     }
   },
   /**
    * Save config to DB
    *
-   * @param {Array} subsets Array of subsets to save
+   * @param {Array} keys Array of keys to save
    * @returns Promise
    */
-  async saveToDb(subsets) {
-    if (!_.isArray(subsets) || subsets.length === 0) {
-      subsets = WIKI.data.configNamespaces
-    }
-
+  async saveToDb(keys) {
     let trx = await WIKI.db.Objection.transaction.start(WIKI.db.knex)
 
     try {
-      for (let set of subsets) {
-        console.info(set)
-        await WIKI.db.settings.query(trx).patch({
-          value: _.get(WIKI.config, set, {})
-        }).where('key', set)
+      for (let key of keys) {
+        const value = _.get(WIKI.config, key, null)
+        let affectedRows = await WIKI.db.settings.query(trx).patch({ value }).where('key', key)
+        if (affectedRows === 0 && value) {
+          await WIKI.db.settings.query(trx).insert({ key, value })
+        }
       }
       await trx.commit()
     } catch (err) {

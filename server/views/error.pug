@@ -1,13 +1,26 @@
 extends ./master.pug
 
 block body
-  body(class='is-error')
-    .container
-      a(href='/'): img(src=config.site.path + '/images/logo.png')
-      h1= message
-      h2= t('errors:generic')
-      a.button.is-amber.is-inverted.is-featured(href=config.site.path+ '/')= t('errors:actions.gohome')
-
-      if error.stack
-        h3= t('errors:debugmsg')
-        pre: code #{error.stack}
+  #app.is-fullscreen
+    v-app(dark)
+      .app-error
+        v-container
+          .pt-5
+            v-layout(row)
+              v-flex(xs10)
+                a(href='/'): img(src='/svg/logo-wikijs.svg')
+              v-flex(xs2).text-xs-right
+                v-btn(href='/', depressed, color='red darken-3')
+                  v-icon(left) home
+                  span Home
+            v-alert(color='grey', outline, :value='true', icon='error')
+              strong.red--text.text--lighten-3 Oops, something went wrong...
+              .body-1.red--text.text--lighten-2= message
+            
+            if error.stack
+              v-expansion-panel.mt-5
+                v-expansion-panel-content.red.darken-3(:value='true')
+                  div(slot='header') View Debug Trace
+                  v-card(color='grey darken-4')
+                    v-card-text
+                      pre: code #{error.stack}

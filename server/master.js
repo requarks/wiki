@@ -75,7 +75,7 @@ module.exports = async () => {
   app.use(session({
     name: 'wikijs.sid',
     store: sessionStore,
-    secret: WIKI.config.site.sessionSecret,
+    secret: WIKI.config.sessionSecret,
     resave: false,
     saveUninitialized: false
   }))

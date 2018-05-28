@@ -30,6 +30,9 @@ module.exports = class User extends Model {
         tfaIsActive: {type: 'boolean', default: false},
         tfaSecret: {type: 'string'},
         locale: {type: 'string'},
+        jobTitle: {type: 'string'},
+        location: {type: 'string'},
+        pictureUrl: {type: 'string'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
