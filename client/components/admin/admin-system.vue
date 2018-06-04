@@ -132,6 +132,7 @@ export default {
   apollo: {
     info: {
       query: systemInfoQuery,
+      fetchPolicy: 'network-only',
       update: (data) => data.system.info,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-system-refresh')

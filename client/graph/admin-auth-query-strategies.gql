@@ -1,0 +1,15 @@
+query {
+  authentication {
+    strategies {
+      isEnabled
+      key
+      props
+      title
+      useForm
+      config {
+        key
+        value
+      }
+    }
+  }
+}

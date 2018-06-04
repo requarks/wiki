@@ -15,7 +15,7 @@ module.exports = {
     async authentication() { return {} }
   },
   AuthenticationQuery: {
-    async providers(obj, args, context, info) {
+    async strategies(obj, args, context, info) {
       let strategies = await WIKI.db.authentication.query().orderBy('title')
       strategies = strategies.map(stg => ({
         ...stg,
@@ -52,7 +52,7 @@ module.exports = {
       }
     }
   },
-  AuthenticationProvider: {
+  AuthenticationStrategy: {
     icon (ap, args) {
       return fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${ap.key}.svg`), 'utf8').catch(err => {
         if (err.code === 'ENOENT') {

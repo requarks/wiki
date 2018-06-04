@@ -15,10 +15,10 @@ extend type Mutation {
 # -----------------------------------------------
 
 type AuthenticationQuery {
-  providers(
+  strategies(
     filter: String
     orderBy: String
-  ): [AuthenticationProvider]
+  ): [AuthenticationStrategy]
 }
 
 # -----------------------------------------------
@@ -37,7 +37,7 @@ type AuthenticationMutation {
     securityCode: String!
   ): DefaultResponse
 
-  updateProvider(
+  updateStrategy(
     provider: String!
     isEnabled: Boolean!
     config: [KeyValuePairInput]
@@ -48,7 +48,7 @@ type AuthenticationMutation {
 # TYPES
 # -----------------------------------------------
 
-type AuthenticationProvider {
+type AuthenticationStrategy {
   isEnabled: Boolean!
   key: String!
   props: [String]

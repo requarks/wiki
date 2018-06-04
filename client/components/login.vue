@@ -1,8 +1,10 @@
 <template lang="pug">
   v-app
     nav-header
-    .login(:class='{ "is-error": error }')
+    .login
       .login-container(:class='{ "is-expanded": strategies.length > 1, "is-loading": isLoading }')
+        .login-mascot
+          img(src='/svg/henry-reading.svg', alt='Henry')
         .login-providers(v-show='strategies.length > 1')
           button(v-for='strategy in strategies', :class='{ "is-active": strategy.key === selectedStrategy }', @click='selectStrategy(strategy.key, strategy.useForm)', :title='strategy.title')
             em(v-html='strategy.icon')
@@ -160,7 +162,9 @@ export default {
                   style: 'success',
                   icon: 'check'
                 })
-                window.location.replace('/') // TEMPORARY - USE RETURNURL
+                _.delay(() => {
+                  window.location.replace('/') // TEMPORARY - USE RETURNURL
+                }, 1000)
               }
               this.isLoading = false
             } else {
@@ -205,6 +209,9 @@ export default {
                 style: 'success',
                 icon: 'check'
               })
+              _.delay(() => {
+                window.location.replace('/') // TEMPORARY - USE RETURNURL
+              }, 1000)
               this.isLoading = false
             } else {
               throw new Error(respObj.responseResult.message)
@@ -273,6 +280,20 @@ export default {
       left: 0;
       width: 100vw;
       height: 25vh;
+    }
+
+    &-mascot {
+      width: 200px;
+      height: 200px;
+      position: absolute;
+      top: -180px;
+      left: 50%;
+      margin-left: -100px;
+      z-index: 10;
+
+      @include until($tablet) {
+        display: none;
+      }
     }
 
     &-container {
@@ -453,7 +474,7 @@ export default {
         font-weight: 400;
         color: mc('light-blue', '700');
         text-shadow: 1px 1px 0 #FFF;
-        padding: 0;
+        padding: 1rem 0 0 0;
         margin: 0;
       }
 
