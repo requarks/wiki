@@ -1,77 +1,81 @@
 <template lang='pug'>
-  v-app.admin
+  v-app(:dark='darkMode').admin
     nav-header
     v-navigation-drawer.pb-0(v-model='adminDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense)
         v-list-tile.pt-2(to='/dashboard')
-          v-list-tile-action: v-icon dashboard
+          v-list-tile-avatar: v-icon dashboard
           v-list-tile-title Dashboard
         v-divider.my-2
         v-subheader Site
         v-list-tile(to='/general')
-          v-list-tile-action: v-icon widgets
+          v-list-tile-avatar: v-icon widgets
           v-list-tile-title General
         v-list-tile(to='/locale')
-          v-list-tile-action: v-icon language
+          v-list-tile-avatar: v-icon language
           v-list-tile-title Locale
         v-list-tile(to='/stats')
-          v-list-tile-action: v-icon show_chart
+          v-list-tile-avatar: v-icon show_chart
           v-list-tile-title Statistics
         v-list-tile(to='/theme')
-          v-list-tile-action: v-icon palette
+          v-list-tile-avatar: v-icon palette
           v-list-tile-title Theme
         v-divider.my-2
         v-subheader Users
         v-list-tile(to='/groups')
-          v-list-tile-action: v-icon people
+          v-list-tile-avatar: v-icon people
           v-list-tile-title Groups
         v-list-tile(to='/users')
-          v-list-tile-action: v-icon perm_identity
+          v-list-tile-avatar: v-icon perm_identity
           v-list-tile-title Users
+          v-list-tile-action
+            .justify-end
+              v-chip(small, disabled, color='grey lighten-4')
+                .caption.grey--text 1
         v-divider.my-2
         v-subheader Modules
         v-list-tile(to='/auth')
-          v-list-tile-action: v-icon lock_outline
+          v-list-tile-avatar: v-icon lock_outline
           v-list-tile-title Authentication
         v-list-tile(to='/rendering')
-          v-list-tile-action: v-icon system_update_alt
+          v-list-tile-avatar: v-icon system_update_alt
           v-list-tile-title Content Rendering
         v-list-tile(to='/editor')
-          v-list-tile-action: v-icon transform
+          v-list-tile-avatar: v-icon transform
           v-list-tile-title Editor
         v-list-tile(to='/logging')
-          v-list-tile-action: v-icon graphic_eq
+          v-list-tile-avatar: v-icon graphic_eq
           v-list-tile-title Logging
         v-list-tile(to='/search')
-          v-list-tile-action: v-icon search
+          v-list-tile-avatar: v-icon search
           v-list-tile-title Search Engine
         v-list-tile(to='/storage')
-          v-list-tile-action: v-icon storage
+          v-list-tile-avatar: v-icon storage
           v-list-tile-title Storage
         v-divider.my-2
         v-subheader System
         v-list-tile(to='/api')
-          v-list-tile-action: v-icon call_split
+          v-list-tile-avatar: v-icon call_split
           v-list-tile-title API Access
         v-list-tile(to='/system')
-          v-list-tile-action: v-icon tune
+          v-list-tile-avatar: v-icon tune
           v-list-tile-title System Info
         v-list-tile(to='/utilities')
-          v-list-tile-action: v-icon build
+          v-list-tile-avatar: v-icon build
           v-list-tile-title Utilities
         v-list-tile(to='/dev')
-          v-list-tile-action: v-icon weekend
+          v-list-tile-avatar: v-icon weekend
           v-list-tile-title Developer Tools
         v-divider.my-2
         v-list-tile(to='/contribute')
-          v-list-tile-action: v-icon favorite
+          v-list-tile-avatar: v-icon favorite
           v-list-tile-title Contribute to Wiki.js
 
     v-content
       transition(name='admin-router')
         router-view
 
-    v-footer.py-2.justify-center(app, absolute, color='grey lighten-3', inset, height='auto')
+    v-footer.py-2.justify-center(app, absolute, :color='darkMode ? "" : "grey lighten-3"', inset, height='auto')
       .caption.grey--text.text--darken-1 Powered by Wiki.js
 
     v-snackbar(
@@ -89,6 +93,12 @@
 <script>
 import VueRouter from 'vue-router'
 import { mapState } from 'vuex'
+
+import adminStore from '@/store/admin'
+
+/* global WIKI */
+
+WIKI.$store.registerModule('admin', adminStore)
 
 const router = new VueRouter({
   mode: 'history',
@@ -113,7 +123,7 @@ const router = new VueRouter({
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
     { path: '/dev', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev.vue') },
-    { path: '/contribute', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-contribute.vue') }
+    { path: '/contribute', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-contribute.vue') }
   ]
 })
 
@@ -124,7 +134,10 @@ export default {
     }
   },
   computed: {
-    ...mapState(['notification']),
+    ...mapState({
+      notification: state => state.notification,
+      darkMode: state => state.admin.theme.dark
+    }),
     notificationState: {
       get() { return this.notification.isActive },
       set(newState) { this.$store.commit('updateNotificationState', newState) }

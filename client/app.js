@@ -80,6 +80,7 @@ Vue.component('login', () => import(/* webpackMode: "eager" */ './components/log
 Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/nav-header.vue'))
 Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
+Vue.component('v-card-chin', () => import(/* webpackMode: "eager" */ './components/common/v-card-chin.vue'))
 
 let bootstrap = () => {
   // ====================================

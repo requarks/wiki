@@ -21,8 +21,7 @@
                     v-text-field(label='Site Description', :counter='255', prepend-icon='public')
                     v-text-field(label='Site Keywords', :counter='255', prepend-icon='public')
                     v-select(label='Meta Robots', chips, tags, :items='metaRobots', v-model='metaRobotsSelection', prepend-icon='public')
-                  v-divider.my-0
-                  v-card-actions.grey.lighten-4
+                  v-card-chin
                     v-spacer
                     v-btn(color='primary')
                       v-icon(left) chevron_right

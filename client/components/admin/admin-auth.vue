@@ -1,9 +1,9 @@
 <template lang='pug'>
-  v-card(tile, color='grey lighten-5')
+  v-card(tile, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"')
     .pa-3.pt-4
       .headline.primary--text Authentication
       .subheading.grey--text Configure the authentication settings of your wiki
-    v-tabs(color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows)
+    v-tabs(:color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
       v-tab(key='settings'): v-icon settings
       v-tab(v-for='strategy in activeStrategies', :key='strategy.key') {{ strategy.title }}
 
@@ -41,8 +41,7 @@
             v-text-field.ml-3(label='Limit to specific email domains', prepend-icon='mail_outline')
             v-text-field.ml-3(label='Assign to group', prepend-icon='people')
 
-    v-divider.my-0
-    v-card-actions.grey.lighten-4
+    v-card-chin
       v-btn(color='primary')
         v-icon(left) chevron_right
         span Save

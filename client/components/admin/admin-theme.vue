@@ -21,8 +21,7 @@
                         v-list-tile-sub-title(v-html='data.item.author')
                   v-divider
                   v-switch(v-model='darkMode', label='Dark Mode', color='primary', persistent-hint, hint='Not recommended for accessibility.')
-                v-divider.my-0
-                v-card-actions.grey.lighten-4
+                v-card-chin
                   v-spacer
                   v-btn(color='primary', :loading='loading', @click='save')
                     v-icon(left) chevron_right
@@ -44,6 +43,12 @@ export default {
       ],
       selectedTheme: 'default',
       darkMode: false
+    }
+  },
+  watch: {
+    darkMode(newValue, oldValue) {
+      this.$store.commit('admin/setThemeDarkMode', newValue)
+      console.info(this.$vuetify.dark)
     }
   }
 }

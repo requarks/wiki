@@ -1,18 +1,24 @@
 <template lang='pug'>
-  v-card(flat)
-    v-card(color='grey lighten-5')
-      .pa-3.pt-4
-        .headline.primary--text Developer Tools
-        .subheading.grey--text ¯\_(ツ)_/¯
-      v-tabs(v-model='selectedTab', color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows, @input='tabChanged')
-        v-tab(key='0') Graph API Playground
-        v-tab(key='1') Graph API Map
-      v-tabs-items(v-model='selectedTab')
-        v-tab-item(key='0', :transition='false', :reverse-transition='false')
-          #graphiql
+  div
+    v-card(flat, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
+      .headline.primary--text Developer Tools
+      .subheading.grey--text ¯\_(ツ)_/¯
+    v-tabs(
+      v-model='selectedTab'
+      :color='$vuetify.dark ? "primary" : "grey lighten-4"'
+      fixed-tabs
+      :slider-color='$vuetify.dark ? "white" : "primary"'
+      show-arrows
+      @input='tabChanged'
+      )
+      v-tab(key='0') Graph API Playground
+      v-tab(key='1') Graph API Map
+    v-tabs-items(v-model='selectedTab')
+      v-tab-item(key='0', :transition='false', :reverse-transition='false')
+        #graphiql
 
-        v-tab-item(key='1', :transition='false', :reverse-transition='false')
-          #voyager
+      v-tab-item(key='1', :transition='false', :reverse-transition='false')
+        #voyager
 
 </template>
 

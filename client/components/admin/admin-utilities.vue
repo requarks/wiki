@@ -1,20 +1,19 @@
 <template lang='pug'>
-  v-card(flat)
-    v-card(color='grey lighten-5')
-      .pa-3.pt-4
-        .headline.primary--text Utilities
-        .subheading.grey--text Maintenance and troubleshooting tools
-    v-tabs(v-model='tab', color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows)
+  div
+    v-card(flat, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
+      .headline.primary--text Utilities
+      .subheading.grey--text Maintenance and troubleshooting tools
+    v-tabs(:color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
       v-tab(key='tools') Tools
       v-tab(key='telemetry') Telemetry
       v-tab(key='telemetry') Support
 
       v-tab-item(key='tools', :transition='false', :reverse-transition='false')
-        v-container.grey.lighten-5(fluid, grid-list-lg)
+        v-container(fluid, grid-list-lg, :class='$vuetify.dark ? "" : "grey lighten-5"')
           v-layout(row, wrap)
             v-flex(xs12, sm6)
               v-card
-                v-toolbar(color='grey darken-3', dark, dense, flat)
+                v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
                   v-toolbar-title
                     .subheading Authentication
                 v-subheader Flush User Sessions
@@ -31,7 +30,7 @@
                     span Proceed
             v-flex(xs12, sm6)
               v-card
-                v-toolbar(color='grey darken-3', dark, dense, flat)
+                v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
                   v-toolbar-title
                     .subheading Maintenance Mode
                 v-card-text
@@ -40,7 +39,7 @@
                     icon-home-alert.mr-2(fillColor='#FFFFFF')
                     | Turn On Maintenance Mode
               v-card.mt-3
-                v-toolbar(color='grey darken-3', dark, dense, flat)
+                v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
                   v-toolbar-title
                     .subheading Graph Endpoint
                 v-card-text

@@ -39,8 +39,7 @@
                     persistent-hint
                     :hint='namespacing ? "Automatically download updates to all namespaced locales enabled below." : "Automatically download updates to this locale as they become available."'
                   )
-                v-divider.my-0
-                v-card-actions.grey.lighten-4
+                v-card-chin
                   v-spacer
                   v-btn(color='primary', :loading='loading', @click='save')
                     v-icon(left) chevron_right
@@ -92,8 +91,7 @@
                           v-list-tile-sub-title(v-html='data.item.nativeName')
                         v-list-tile-action
                           v-checkbox(:input-value='data.tile.props.value', color='primary', value)
-                v-divider.my-0
-                v-card-actions.grey.lighten-4
+                v-card-chin
                   v-spacer
                   v-btn(color='primary', :loading='loading', @click='save')
                     v-icon(left) chevron_right

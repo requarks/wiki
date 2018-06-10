@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-card(flat)
-    v-card(flat, color='grey lighten-5').pa-3.pt-4
+    v-card(flat, tile, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
       .headline.blue--text.text--darken-2 API
       .subheading.grey--text Manage keys to access the API
     v-card

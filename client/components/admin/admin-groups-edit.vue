@@ -1,10 +1,10 @@
 <template lang='pug'>
   v-card
-    v-card(flat, color='grey lighten-5').pa-3.pt-4
+    v-card(flat, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
       .headline.blue--text.text--darken-2 Edit Group
       .subheading.grey--text {{name}}
       v-btn(color='primary', fab, absolute, bottom, right, small, to='/groups'): v-icon arrow_upward
-    v-tabs(v-model='tab', color='grey lighten-4', fixed-tabs, slider-color='primary', show-arrows)
+    v-tabs(v-model='tab', :color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
       v-tab(key='properties') Properties
       v-tab(key='rights') Permissions
       v-tab(key='users') Users
