@@ -7,7 +7,7 @@ html
     meta(name='theme-color', content='#333333')
     meta(name='msapplication-TileColor', content='#333333')
     meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
-    title= config.site.title
+    title= config.title
 
     //- Favicon
     each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
@@ -19,7 +19,7 @@ html
 
     //- Site Lang
     script.
-      var siteConfig = !{JSON.stringify(config.site)}
+      var siteConfig = !{JSON.stringify({ title: config.title, theme: config.theming.theme, darkMode: config.theming.darkMode, lang: config.lang.code })}
 
     //- CSS
     link(type='text/css', rel='stylesheet', href='https://fonts.googleapis.com/icon?family=Roboto:400,500,700|Source+Code+Pro:400,700|Material+Icons')

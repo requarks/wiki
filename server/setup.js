@@ -284,6 +284,8 @@ module.exports = () => {
       _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
       _.set(WIKI.config, 'telemetry.isEnabled', req.body.telemetry === 'true')
       _.set(WIKI.config, 'telemetry.clientId', WIKI.telemetry.cid)
+      _.set(WIKI.config, 'theming.theme', 'default')
+      _.set(WIKI.config, 'theming.darkMode', false)
       _.set(WIKI.config, 'title', req.body.title)
 
       // Save config to DB
@@ -295,6 +297,7 @@ module.exports = () => {
         'public',
         'sessionSecret',
         'telemetry',
+        'theming',
         'title'
       ])
 

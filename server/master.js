@@ -111,7 +111,7 @@ module.exports = async () => {
   app.locals.basedir = WIKI.ROOTPATH
   app.locals._ = require('lodash')
   app.locals.moment = require('moment')
-  app.locals.moment.locale(WIKI.config.site.lang)
+  app.locals.moment.locale(WIKI.config.lang.code)
   app.locals.config = WIKI.config
 
   // ----------------------------------------

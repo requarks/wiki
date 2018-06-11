@@ -1,0 +1,12 @@
+mutation($theme: String!, $darkMode: Boolean!) {
+  theming {
+    setConfig(theme: $theme, darkMode: $darkMode) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

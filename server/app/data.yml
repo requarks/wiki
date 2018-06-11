@@ -24,21 +24,21 @@ defaults:
       db: 0
       password: null
     # DB defaults
-    auth:
-      public: false
-      strategies:
-        local:
-          isEnabled: true
-          allowSelfRegister: false
-    logging:
-      telemetry: false
-      loggers:
-        console:
-          enabled: true
-    site:
-      lang: en
-      rtl: false
-      title: Wiki.js
+    defaultEditor: 'markdown'
+    graphEndpoint: 'https://graph.requarks.io'
+    lang:
+      code: en
+      autoUpdate: true
+      namespaces: []
+      namespacing: false
+    public: false
+    telemetry:
+      clientId: ''
+      isEnabled: false
+    title: Wiki.js
+    theming:
+      theme: 'default'
+      darkMode: false
     # System defaults
     setup: false
     cors:

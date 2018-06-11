@@ -1,4 +1,4 @@
-const _ = require('lodash')
+// const _ = require('lodash')
 const winston = require('winston')
 
 /* global WIKI */
@@ -16,11 +16,17 @@ module.exports = {
       )
     })
 
-    _.forOwn(_.omitBy(WIKI.config.logging.loggers, s => s.enabled === false), (loggerConfig, loggerKey) => {
-      let loggerModule = require(`../modules/logging/${loggerKey}`)
-      loggerModule.init(logger, loggerConfig)
-      this.loggers[logger.key] = loggerModule
-    })
+    // Init Console (default)
+
+    let loggerConsoleModule = require(`../modules/logging/console`)
+    loggerConsoleModule.init(logger)
+    this.loggers['console'] = loggerConsoleModule
+
+    // _.forOwn(_.omitBy(WIKI.config.logging.loggers, s => s.enabled === false), (loggerConfig, loggerKey) => {
+    //   let loggerModule = require(`../modules/logging/${loggerKey}`)
+    //   loggerModule.init(logger, loggerConfig)
+    //   this.loggers[logger.key] = loggerModule
+    // })
 
     return logger
   }

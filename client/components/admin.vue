@@ -7,7 +7,7 @@
           v-list-tile-avatar: v-icon dashboard
           v-list-tile-title Dashboard
         v-divider.my-2
-        v-subheader Site
+        v-subheader.pl-4 Site
         v-list-tile(to='/general')
           v-list-tile-avatar: v-icon widgets
           v-list-tile-title General
@@ -21,7 +21,7 @@
           v-list-tile-avatar: v-icon palette
           v-list-tile-title Theme
         v-divider.my-2
-        v-subheader Users
+        v-subheader.pl-4 Users
         v-list-tile(to='/groups')
           v-list-tile-avatar: v-icon people
           v-list-tile-title Groups
@@ -33,19 +33,19 @@
               v-chip(small, disabled, color='grey lighten-4')
                 .caption.grey--text 1
         v-divider.my-2
-        v-subheader Modules
+        v-subheader.pl-4 Modules
         v-list-tile(to='/auth')
           v-list-tile-avatar: v-icon lock_outline
           v-list-tile-title Authentication
-        v-list-tile(to='/rendering')
-          v-list-tile-avatar: v-icon system_update_alt
-          v-list-tile-title Content Rendering
         v-list-tile(to='/editor')
           v-list-tile-avatar: v-icon transform
           v-list-tile-title Editor
         v-list-tile(to='/logging')
           v-list-tile-avatar: v-icon graphic_eq
           v-list-tile-title Logging
+        v-list-tile(to='/rendering')
+          v-list-tile-avatar: v-icon system_update_alt
+          v-list-tile-title Rendering
         v-list-tile(to='/search')
           v-list-tile-avatar: v-icon search
           v-list-tile-title Search Engine
@@ -53,7 +53,7 @@
           v-list-tile-avatar: v-icon storage
           v-list-tile-title Storage
         v-divider.my-2
-        v-subheader System
+        v-subheader.pl-4 System
         v-list-tile(to='/api')
           v-list-tile-avatar: v-icon call_split
           v-list-tile-title API Access
@@ -96,7 +96,7 @@ import { mapState } from 'vuex'
 
 import adminStore from '@/store/admin'
 
-/* global WIKI */
+/* global WIKI, siteConfig */
 
 WIKI.$store.registerModule('admin', adminStore)
 
@@ -143,7 +143,10 @@ export default {
       set(newState) { this.$store.commit('updateNotificationState', newState) }
     }
   },
-  router
+  router,
+  mounted() {
+    this.$store.commit('admin/setThemeDarkMode', siteConfig.darkMode)
+  }
 }
 </script>
 

@@ -2,7 +2,7 @@
   v-container(fluid, fill-height)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.primary--text Content Rendering
+        .headline.primary--text Rendering
         .subheading.grey--text Configure how content is rendered
 </template>
 

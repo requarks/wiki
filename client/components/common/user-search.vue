@@ -15,12 +15,13 @@
           v-show='searchLoading'
           )
       v-card-text
-        v-text-field.blue.lighten-5(
+        v-text-field(
           solo
           flat
           label='Search Users...'
           v-model='search'
           prepend-icon='search'
+          :class='$vuetify.dark ? "grey darken-4" : "blue lighten-5"'
           color='primary'
           ref='searchIpt'
           )
@@ -35,8 +36,7 @@
               v-list-tile-action
                 v-icon(color='primary') arrow_forward
             v-divider.my-0(v-if='idx < items.length - 1')
-      v-divider.my-0
-      v-card-actions.grey.lighten-4
+      v-card-chin
         v-spacer
         v-btn(
           flat

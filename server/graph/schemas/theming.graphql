@@ -1,0 +1,46 @@
+# ===============================================
+# THEMES
+# ===============================================
+
+extend type Query {
+  theming: ThemingQuery
+}
+
+extend type Mutation {
+  theming: ThemingMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type ThemingQuery {
+  themes: [ThemingTheme]
+  config: ThemingConfig
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type ThemingMutation {
+  setConfig(
+    theme: String!
+    darkMode: Boolean!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type ThemingConfig {
+  theme: String
+  darkMode: Boolean
+}
+
+type ThemingTheme {
+  key: String
+  title: String
+  author: String
+}

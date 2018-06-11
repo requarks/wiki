@@ -41,10 +41,11 @@ module.exports = {
 
       // Load enable strategies
       const enabledStrategies = await WIKI.db.authentication.getEnabledStrategies()
+      console.info(enabledStrategies)
       for (let idx in enabledStrategies) {
         const stg = enabledStrategies[idx]
         const strategy = require(`../modules/authentication/${stg.key}`)
-        stg.config.callbackURL = `${WIKI.config.site.host}/login/${stg.key}/callback`
+        stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback` // TODO: config.host
         strategy.init(passport, stg.config)
 
         fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${strategy.key}.svg`), 'utf8').then(iconData => {

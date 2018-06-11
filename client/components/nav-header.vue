@@ -33,7 +33,7 @@
           v-list-tile-avatar: v-icon(color='blue-grey') burst_mode
           v-list-tile-content Images &amp; Files
     v-toolbar-title
-      span.subheading Wiki.js
+      span.subheading {{title}}
     v-spacer
     transition(name='navHeaderSearch')
       v-text-field(
@@ -87,6 +87,8 @@
 <script>
 import { mapGetters } from 'vuex'
 
+/* global siteConfig */
+
 export default {
   data() {
     return {
@@ -97,7 +99,8 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['isLoading'])
+    ...mapGetters(['isLoading']),
+    title() { return siteConfig.title }
   },
   methods: {
     searchToggle() {
