@@ -1,0 +1,6 @@
+query($locale: String!, $namespace: String!) {
+  translations(locale:$locale, namespace:$namespace) {
+    key
+    value
+  }
+}

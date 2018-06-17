@@ -3,9 +3,10 @@ import i18nextXHR from 'i18next-xhr-backend'
 import i18nextCache from 'i18next-localstorage-cache'
 import VueI18Next from '@panter/vue-i18next'
 import _ from 'lodash'
-import gql from 'graphql-tag'
 
 /* global siteConfig, graphQL */
+
+import localeQuery from 'gql/common-locale-query.gql'
 
 module.exports = {
   VueI18Next,
@@ -20,14 +21,7 @@ module.exports = {
           ajax: (url, opts, cb, data) => {
             let langParams = url.split('/')
             graphQL.query({
-              query: gql`
-                query($locale: String!, $namespace: String!) {
-                  translations(locale:$locale, namespace:$namespace) {
-                    key
-                    value
-                  }
-                }
-              `,
+              query: localeQuery,
               variables: {
                 locale: langParams[0],
                 namespace: langParams[1]

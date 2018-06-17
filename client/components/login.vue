@@ -61,6 +61,7 @@ import loginMutation from 'gql/login-mutation-login.gql'
 import tfaMutation from 'gql/login-mutation-tfa.gql'
 
 export default {
+  i18nOptions: { namespaces: 'auth' },
   data () {
     return {
       error: false,

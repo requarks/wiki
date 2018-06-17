@@ -5,78 +5,78 @@
       v-list(dense)
         v-list-tile.pt-2(to='/dashboard')
           v-list-tile-avatar: v-icon dashboard
-          v-list-tile-title Dashboard
+          v-list-tile-title {{ $t('admin:dashboard.title') }}
         v-divider.my-2
-        v-subheader.pl-4 Site
+        v-subheader.pl-4 {{ $t('admin:nav.site') }}
         v-list-tile(to='/general')
           v-list-tile-avatar: v-icon widgets
-          v-list-tile-title General
+          v-list-tile-title {{ $t('admin:general.title') }}
         v-list-tile(to='/locale')
           v-list-tile-avatar: v-icon language
-          v-list-tile-title Locale
+          v-list-tile-title {{ $t('admin:locale.title') }}
         v-list-tile(to='/stats')
           v-list-tile-avatar: v-icon show_chart
-          v-list-tile-title Statistics
+          v-list-tile-title {{ $t('admin:stats.title') }}
         v-list-tile(to='/theme')
           v-list-tile-avatar: v-icon palette
-          v-list-tile-title Theme
+          v-list-tile-title {{ $t('admin:theme.title') }}
         v-divider.my-2
-        v-subheader.pl-4 Users
+        v-subheader.pl-4 {{ $t('admin:nav.users') }}
         v-list-tile(to='/groups')
           v-list-tile-avatar: v-icon people
-          v-list-tile-title Groups
+          v-list-tile-title {{ $t('admin:groups.title') }}
         v-list-tile(to='/users')
           v-list-tile-avatar: v-icon perm_identity
-          v-list-tile-title Users
+          v-list-tile-title {{ $t('admin:users.title') }}
           v-list-tile-action
             .justify-end
               v-chip(small, disabled, color='grey lighten-4')
                 .caption.grey--text 1
         v-divider.my-2
-        v-subheader.pl-4 Modules
+        v-subheader.pl-4 {{ $t('admin:nav.modules') }}
         v-list-tile(to='/auth')
           v-list-tile-avatar: v-icon lock_outline
-          v-list-tile-title Authentication
+          v-list-tile-title {{ $t('admin:auth.title') }}
         v-list-tile(to='/editor')
           v-list-tile-avatar: v-icon transform
-          v-list-tile-title Editor
+          v-list-tile-title {{ $t('admin:editor.title') }}
         v-list-tile(to='/logging')
           v-list-tile-avatar: v-icon graphic_eq
-          v-list-tile-title Logging
+          v-list-tile-title {{ $t('admin:logging.title') }}
         v-list-tile(to='/rendering')
           v-list-tile-avatar: v-icon system_update_alt
-          v-list-tile-title Rendering
+          v-list-tile-title {{ $t('admin:rendering.title') }}
         v-list-tile(to='/search')
           v-list-tile-avatar: v-icon search
-          v-list-tile-title Search Engine
+          v-list-tile-title {{ $t('admin:search.title') }}
         v-list-tile(to='/storage')
           v-list-tile-avatar: v-icon storage
-          v-list-tile-title Storage
+          v-list-tile-title {{ $t('admin:storage.title') }}
         v-divider.my-2
-        v-subheader.pl-4 System
+        v-subheader.pl-4 {{ $t('admin:nav.system') }}
         v-list-tile(to='/api')
           v-list-tile-avatar: v-icon call_split
-          v-list-tile-title API Access
+          v-list-tile-title {{ $t('admin:api.title') }}
         v-list-tile(to='/system')
           v-list-tile-avatar: v-icon tune
-          v-list-tile-title System Info
+          v-list-tile-title {{ $t('admin:system.title') }}
         v-list-tile(to='/utilities')
           v-list-tile-avatar: v-icon build
-          v-list-tile-title Utilities
+          v-list-tile-title {{ $t('admin:utilities.title') }}
         v-list-tile(to='/dev')
           v-list-tile-avatar: v-icon weekend
-          v-list-tile-title Developer Tools
+          v-list-tile-title {{ $t('admin:dev.title') }}
         v-divider.my-2
         v-list-tile(to='/contribute')
           v-list-tile-avatar: v-icon favorite
-          v-list-tile-title Contribute to Wiki.js
+          v-list-tile-title {{ $t('admin:contribute.title') }}
 
     v-content
       transition(name='admin-router')
         router-view
 
     v-footer.py-2.justify-center(app, absolute, :color='darkMode ? "" : "grey lighten-3"', inset, height='auto')
-      .caption.grey--text.text--darken-1 Powered by Wiki.js
+      .caption.grey--text.text--darken-1 {{ $t('common:footer.poweredBy') }} Wiki.js
 
     v-snackbar(
       :color='notification.style'
@@ -128,6 +128,7 @@ const router = new VueRouter({
 })
 
 export default {
+  i18nOptions: { namespaces: 'admin' },
   data() {
     return {
       adminDrawerShown: true

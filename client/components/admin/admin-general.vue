@@ -2,8 +2,8 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.primary--text General
-        .subheading.grey--text Main settings of your wiki
+        .headline.primary--text {{ $t('admin:general.title') }}
+        .subheading.grey--text {{ $t('admin:general.subtitle') }}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
@@ -11,7 +11,7 @@
                 v-card
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title
-                      .subheading Site Info
+                      .subheading {{ $t('admin:general.siteInfo') }}
                   v-subheader General
                   .px-3
                     v-text-field(label='Site Title', required, :counter='50', v-model='siteTitle', prepend-icon='public')
@@ -30,10 +30,40 @@
               v-card
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Site Branding
+                    .subheading {{ $t('admin:general.siteBranding') }}
                 v-card-text
-                  v-text-field(label='Logo', prepend-icon='image')
+                  v-layout.pa-3(row, align-center)
+                    v-avatar(size='120', color='grey lighten-3', :tile='useSquareLogo')
+                    .ml-4
+                      v-layout(row, align-center)
+                        v-btn(color='teal', depressed, dark)
+                          v-icon(left) cloud_upload
+                          span Upload Logo
+                        v-btn(color='teal', depressed, disabled)
+                          v-icon(left) clear
+                          span Clear
+                      .caption.grey--text An image of 120x120 pixels is recommended for best results.
+                      .caption.grey--text SVG, PNG or JPG files only.
+                  v-switch(
+                    v-model='useSquareLogo'
+                    label='Use Square Logo Frame'
+                    color='primary'
+                    persistent-hint
+                    hint='Check this option if a round logo frame doesn\'t work with your logo.'
+                    )
                   v-divider
+                  v-switch(
+                    v-model='displayMascot'
+                    label='Display Wiki.js Mascot'
+                    color='primary'
+                    persistent-hint
+                    hint='Uncheck this box if you don\'t want Henry, Wiki.js mascot, to be displayed on client-facing pages.'
+                    )
+                v-card-chin
+                  v-spacer
+                  v-btn(color='primary')
+                    v-icon(left) chevron_right
+                    span Save
 
 </template>
 
@@ -44,7 +74,9 @@ export default {
     return {
       siteTitle: 'Wiki.js',
       metaRobotsSelection: ['Index', 'Follow'],
-      metaRobots: ['Index', 'Follow', 'No Index', 'No Follow']
+      metaRobots: ['Index', 'Follow', 'No Index', 'No Follow'],
+      useSquareLogo: false,
+      displayMascot: true
     }
   }
 }

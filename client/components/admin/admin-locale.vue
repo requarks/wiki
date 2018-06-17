@@ -2,25 +2,25 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.primary--text Locale
-        .subheading.grey--text Set localization options for your wiki
+        .headline.primary--text {{ $t('admin:locale.title') }}
+        .subheading.grey--text {{ $t('admin:locale.subtitle') }}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Locale Settings
+                    .subheading {{ $t('admin:locale.settings') }}
                 v-card-text
                   v-select(
                     :items='installedLocales'
                     prepend-icon='language'
                     v-model='selectedLocale'
                     item-value='code'
-                    item-text='name'
-                    :label='namespacing ? "Base Locale" : "Site Locale"'
+                    item-text='nativeName'
+                    :label='namespacing ? $t("admin:locale.base.labelWithNS") : $t("admin:locale.base.label")'
                     persistent-hint
-                    hint='All UI text elements will be displayed in selected language.'
+                    :hint='$t("admin:locale.base.hint")'
                   )
                     template(slot='item', slot-scope='data')
                       template(v-if='typeof data.item !== "object"')
@@ -34,28 +34,28 @@
                   v-divider
                   v-switch(
                     v-model='autoUpdate'
-                    label='Update Automatically'
+                    :label='$t("admin:locale.autoUpdate.label")'
                     color='primary'
                     persistent-hint
-                    :hint='namespacing ? "Automatically download updates to all namespaced locales enabled below." : "Automatically download updates to this locale as they become available."'
+                    :hint='namespacing ? $t("admin:locale.autoUpdate.hintWithNS") : $t("admin:locale.autoUpdate.hint")'
                   )
                 v-card-chin
                   v-spacer
                   v-btn(color='primary', :loading='loading', @click='save')
                     v-icon(left) chevron_right
-                    span Save
+                    span {{ $t('common:actions.save') }}
 
               v-card.mt-3
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Multilingual Namespacing
+                    .subheading {{ $t('admin:locale.namespacing') }}
                 v-card-text
                   v-switch(
                     v-model='namespacing'
-                    label='Multilingual Namespaces'
+                    :label='$t("admin:locale.namespaces.label")'
                     color='primary'
                     persistent-hint
-                    hint='Enables multiple language versions of the same page.'
+                    :hint='$t("admin:locale.namespaces.hint")'
                     )
                   v-alert.mt-3(
                     outline
@@ -63,8 +63,8 @@
                     :value='true'
                     icon='warning'
                     )
-                    span The locale code will be prefixed to all paths. (e.g. /{{ selectedLocale }}/page-name)
-                    .caption.grey--text Paths without a locale code will be automatically redirected to the base locale defined above.
+                    span {{ $t('admin:locale.namespacingPrefixWarning.title', { langCode: selectedLocale }) }}
+                    .caption.grey--text {{ $t('admin:locale.namespacingPrefixWarning.subtitle') }}
                   v-divider
                   v-select(
                     :disabled='!namespacing'
@@ -76,9 +76,9 @@
                     v-model='namespaces'
                     item-value='code'
                     item-text='name'
-                    label='Active Namespaces'
+                    :label='$t("admin:locale.activeNamespaces.label")'
                     persistent-hint
-                    hint='List of locales enabled for multilingual namespacing. The base locale defined above will always be included regardless of this selection.'
+                    :hint='$t("admin:locale.activeNamespaces.hint")'
                     )
                     template(slot='item', slot-scope='data')
                       template(v-if='typeof data.item !== "object"')
@@ -95,12 +95,12 @@
                   v-spacer
                   v-btn(color='primary', :loading='loading', @click='save')
                     v-icon(left) chevron_right
-                    span Save
+                    span {{ $t('common:actions.save') }}
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Download Locale
+                    .subheading {{ $t('admin:locale.download') }}
                 v-list(two-line, dense)
                   template(v-for='(lc, idx) in locales')
                     v-list-tile(:key='lc.code')
@@ -125,6 +125,8 @@
 
 <script>
 import _ from 'lodash'
+
+/* global WIKI */
 
 import localesQuery from 'gql/admin-locale-query-list.gql'
 import localesDownloadMutation from 'gql/admin-locale-mutation-download.gql'
@@ -186,6 +188,7 @@ export default {
       })
       const resp = _.get(respRaw, 'data.localization.updateLocale.responseResult', {})
       if (resp.succeeded) {
+        WIKI.$i18n.i18next.changeLanguage(this.selectedLocale)
         this.$store.commit('showNotification', {
           message: 'Locale settings updated successfully.',
           style: 'success',

@@ -54,6 +54,7 @@ configNamespaces:
   - theme
   - uploads
 localeNamespaces:
+  - admin
   - auth
   - common
 jobs:

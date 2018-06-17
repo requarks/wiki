@@ -30,8 +30,8 @@ module.exports = {
       })
     }
 
-    // Load current language
-    this.loadLocale(WIKI.config.lang.code, { silent: true })
+    // Load current language + namespaces
+    this.refreshNamespaces(true)
 
     return this
   },
@@ -64,8 +64,16 @@ module.exports = {
       throw new Error('No such locale in local store.')
     }
   },
+  async refreshNamespaces (silent = false) {
+    await this.loadLocale(WIKI.config.lang.code, { silent })
+    if (WIKI.config.lang.namespacing) {
+      for (let ns of WIKI.config.lang.namespaces) {
+        await this.loadLocale(ns, { silent })
+      }
+    }
+  },
   async setCurrentLocale(locale) {
-    return Promise.fromCallback(cb => {
+    await Promise.fromCallback(cb => {
       return this.engine.changeLanguage(locale, cb)
     })
   }
