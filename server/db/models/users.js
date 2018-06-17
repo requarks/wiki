@@ -171,13 +171,13 @@ module.exports = class User extends Model {
   }
 
   static async login (opts, context) {
-    if (_.has(WIKI.config.auth.strategies, opts.provider)) {
+    if (_.has(WIKI.auth.strategies, opts.strategy)) {
       _.set(context.req, 'body.email', opts.username)
       _.set(context.req, 'body.password', opts.password)
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate(opts.provider, async (err, user, info) => {
+        WIKI.auth.passport.authenticate(opts.strategy, async (err, user, info) => {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 

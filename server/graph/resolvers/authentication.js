@@ -16,7 +16,7 @@ module.exports = {
   },
   AuthenticationQuery: {
     async strategies(obj, args, context, info) {
-      let strategies = await WIKI.db.authentication.query().orderBy('title')
+      let strategies = await WIKI.db.authentication.getEnabledStrategies()
       strategies = strategies.map(stg => ({
         ...stg,
         config: _.transform(stg.config, (res, value, key) => {

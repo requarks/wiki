@@ -86,10 +86,12 @@ export default {
     }
   },
   mounted () {
-    this.refreshStrategies()
     this.$refs.iptEmail.focus()
   },
   methods: {
+    /**
+     * SELECT STRATEGY
+     */
     selectStrategy (key, useForm) {
       this.selectedStrategy = key
       this.screen = 'login'
@@ -100,28 +102,10 @@ export default {
         this.$refs.iptEmail.focus()
       }
     },
-    refreshStrategies () {
-      this.isLoading = true
-      this.$apollo.query({
-        query: strategiesQuery
-      }).then(resp => {
-        if (_.has(resp, 'data.authentication.providers')) {
-          this.strategies = _.get(resp, 'data.authentication.providers', [])
-        } else {
-          throw new Error('No authentication providers available!')
-        }
-        this.isLoading = false
-      }).catch(err => {
-        console.error(err)
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: err.message,
-          icon: 'warning'
-        })
-        this.isLoading = false
-      })
-    },
-    login () {
+    /**
+     * LOGIN
+     */
+    async login () {
       if (this.username.length < 2) {
         this.$store.commit('showNotification', {
           style: 'red',
@@ -138,14 +122,15 @@ export default {
         this.$refs.iptPassword.focus()
       } else {
         this.isLoading = true
-        this.$apollo.mutate({
-          mutation: loginMutation,
-          variables: {
-            username: this.username,
-            password: this.password,
-            provider: this.selectedStrategy
-          }
-        }).then(resp => {
+        try {
+          let resp = await this.$apollo.mutate({
+            mutation: loginMutation,
+            variables: {
+              username: this.username,
+              password: this.password,
+              strategy: this.selectedStrategy
+            }
+          })
           if (_.has(resp, 'data.authentication.login')) {
             let respObj = _.get(resp, 'data.authentication.login', {})
             if (respObj.responseResult.succeeded === true) {
@@ -173,7 +158,7 @@ export default {
           } else {
             throw new Error('Authentication is unavailable.')
           }
-        }).catch(err => {
+        } catch (err) {
           console.error(err)
           this.$store.commit('showNotification', {
             style: 'red',
@@ -181,9 +166,12 @@ export default {
             icon: 'warning'
           })
           this.isLoading = false
-        })
+        }
       }
     },
+    /**
+     * VERIFY TFA CODE
+     */
     verifySecurityCode () {
       if (this.securityCode.length !== 6) {
         this.$store.commit('showNotification', {
@@ -228,6 +216,16 @@ export default {
           })
           this.isLoading = false
         })
+      }
+    }
+  },
+  apollo: {
+    strategies: {
+      query: strategiesQuery,
+      update: (data) => data.authentication.strategies,
+      watchLoading (isLoading) {
+        this.isLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'login-strategies-refresh')
       }
     }
   }

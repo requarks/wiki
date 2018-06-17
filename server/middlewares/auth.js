@@ -7,7 +7,7 @@ module.exports = (req, res, next) => {
   // Is user authenticated ?
 
   if (!req.isAuthenticated()) {
-    if (WIKI.config.auth.public !== true) {
+    if (WIKI.config.public !== true) {
       return res.redirect('/login')
     } else {
       // req.user = rights.guest

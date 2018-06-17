@@ -29,7 +29,7 @@ type AuthenticationMutation {
   login(
     username: String!
     password: String!
-    provider: String!
+    strategy: String!
   ): AuthenticationLoginResponse
 
   loginTFA(
@@ -38,7 +38,7 @@ type AuthenticationMutation {
   ): DefaultResponse
 
   updateStrategy(
-    provider: String!
+    strategy: String!
     isEnabled: Boolean!
     config: [KeyValuePairInput]
   ): DefaultResponse

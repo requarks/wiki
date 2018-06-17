@@ -1,6 +1,6 @@
 query {
   authentication {
-    providers(
+    strategies(
       filter: "isEnabled eq true",
       orderBy: "title ASC"
     ) {

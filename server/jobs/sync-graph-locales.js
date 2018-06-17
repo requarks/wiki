@@ -38,7 +38,7 @@ module.exports = async (job) => {
 
     // -> Download locale strings
 
-    if (WIKI.config.langAutoUpdate) {
+    if (WIKI.config.lang.autoUpdate) {
       const respStrings = await apollo({
         query: `query ($code: String!) {
           localization {
