@@ -210,7 +210,7 @@ module.exports = {
       let out = cProc.stdout.toString()
       return _.includes(out, gitFilePath)
     }).then((isTracked) => {
-      commitMsg = (isTracked) ? lang.t('git:updated', { path: gitFilePath }) : lang.t('git:added', { path: gitFilePath })
+      commitMsg = (isTracked) ? lang.t('git:updated', { path: gitFilePath, interpolation: { escapeValue: false } }) : lang.t('git:added', { path: gitFilePath, interpolation: { escapeValue: false } })
       return self._git.add(gitFilePath)
     }).then(() => {
       let commitUsr = securityHelper.sanitizeCommitUser(author)
