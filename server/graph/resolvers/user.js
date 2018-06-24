@@ -21,7 +21,10 @@ module.exports = {
         .select('id', 'email', 'name', 'provider', 'role', 'createdAt', 'updatedAt')
     },
     async single(obj, args, context, info) {
-      return WIKI.db.users.query().findById(args.id)
+      let usr = await WIKI.db.users.query().findById(args.id)
+      usr.password = ''
+      usr.tfaSecret = ''
+      return usr
     }
   },
   UserMutation: {

@@ -1,12 +1,16 @@
 'use strict'
 
+/* global siteConfig */
+
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import VueClipboards from 'vue-clipboards'
 import VueSimpleBreakpoints from 'vue-simple-breakpoints'
 import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
-import { BatchHttpLink } from 'apollo-link-batch-http'
+import { createPersistedQueryLink } from 'apollo-link-persisted-queries'
+// import { BatchHttpLink } from 'apollo-link-batch-http'
+import { createHttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import VueApollo from 'vue-apollo'
 import Vuetify from 'vuetify'
@@ -37,17 +41,22 @@ window.WIKI = null
 window.boot = boot
 window.Hammer = Hammer
 
+moment.locale(siteConfig.lang)
+
 // ====================================
 // Initialize Apollo Client (GraphQL)
 // ====================================
 
 const graphQLEndpoint = window.location.protocol + '//' + window.location.host + '/graphql'
 
+const graphQLLink = createPersistedQueryLink().concat(createHttpLink({
+  includeExtensions: true,
+  uri: graphQLEndpoint,
+  credentials: 'include'
+}))
+
 window.graphQL = new ApolloClient({
-  link: new BatchHttpLink({
-    uri: graphQLEndpoint,
-    credentials: 'include'
-  }),
+  link: graphQLLink,
   cache: new InMemoryCache(),
   connectToDevTools: (process.env.node_env === 'development')
 })

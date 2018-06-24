@@ -2,8 +2,8 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row, wrap)
       v-flex(xs12)
-        .headline.primary--text System Info
-        .subheading.grey--text Information about your system
+        .headline.primary--text {{ $t('admin:system.title') }}
+        .subheading.grey--text {{ $t('admin:system.subtitle') }}
         v-layout.mt-3(row wrap)
           v-flex(lg6 xs12)
             v-card
@@ -14,55 +14,55 @@
                   v-list-tile-avatar
                     v-icon.blue.white--text system_update_alt
                   v-list-tile-content
-                    v-list-tile-title Current Version
+                    v-list-tile-title {{ $t('admin:system.currentVersion') }}
                     v-list-tile-sub-title {{ info.currentVersion }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue.white--text open_in_browser
                   v-list-tile-content
-                    v-list-tile-title Latest Version
+                    v-list-tile-title {{ $t('admin:system.latestVersion') }}
                     v-list-tile-sub-title {{ info.latestVersion }}
                   v-list-tile-action
-                    v-list-tile-action-text Published X days ago
+                    v-list-tile-action-text {{ $t('admin:system.published') }} {{ info.latestVersionReleaseDate | moment('from') }}
 
                 v-divider
 
-                v-subheader Host Information
+                v-subheader {{ $t('admin:system.hostInfo') }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue-grey.white--text bubble_chart
                   v-list-tile-content
-                    v-list-tile-title Operating System
+                    v-list-tile-title {{ $t('admin:system.os') }}
                     v-list-tile-sub-title {{ info.operatingSystem }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue-grey.white--text computer
                   v-list-tile-content
-                    v-list-tile-title Hostname
+                    v-list-tile-title {{ $t('admin:system.hostname') }}
                     v-list-tile-sub-title {{ info.hostname }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue-grey.white--text nfc
                   v-list-tile-content
-                    v-list-tile-title CPU Cores
+                    v-list-tile-title {{ $t('admin:system.cpuCores') }}
                     v-list-tile-sub-title {{ info.cpuCores }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue-grey.white--text memory
                   v-list-tile-content
-                    v-list-tile-title Total RAM
+                    v-list-tile-title {{ $t('admin:system.totalRAM') }}
                     v-list-tile-sub-title {{ info.ramTotal }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue-grey.white--text last_page
                   v-list-tile-content
-                    v-list-tile-title Working Directory
+                    v-list-tile-title {{ $t('admin:system.workingDirectory') }}
                     v-list-tile-sub-title {{ info.workingDirectory }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue-grey.white--text settings
                   v-list-tile-content
-                    v-list-tile-title Configuration File
+                    v-list-tile-title {{ $t('admin:system.configFile') }}
                     v-list-tile-sub-title {{ info.configFile }}
 
           v-flex(lg6 xs12)
@@ -87,7 +87,7 @@
                     v-list-tile-title {{ info.redisVersion }}
                     v-list-tile-sub-title {{ info.redisHost }}
                   v-list-tile-action
-                    v-list-tile-action-text RAM Usage: {{ info.redisUsedRAM }} / {{ info.redisTotalRAM }}
+                    v-list-tile-action-text {{ $t('admin:system.ramUsage', { used: info.redisUsedRAM, total: info.redisTotalRAM }) }}
 
                 v-divider
 

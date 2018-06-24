@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const fs = require('fs')
-const gqlTools = require('graphql-tools')
+// const gqlTools = require('graphql-tools')
 const path = require('path')
 const autoload = require('auto-load')
 
@@ -24,11 +24,14 @@ resolversObj.forEach(resolver => {
   _.merge(resolvers, resolver)
 })
 
-const Schema = gqlTools.makeExecutableSchema({
-  typeDefs,
-  resolvers
-})
+// const Schema = gqlTools.makeExecutableSchema({
+//   typeDefs,
+//   resolvers
+// })
 
 WIKI.logger.info(`GraphQL Schema: [ OK ]`)
 
-module.exports = Schema
+module.exports = {
+  typeDefs,
+  resolvers
+}

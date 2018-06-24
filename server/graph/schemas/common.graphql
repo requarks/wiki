@@ -13,14 +13,6 @@ enum RightRole {
   manage
 }
 
-# INTERFACES
-
-interface Base {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-}
-
 # TYPES
 
 type KeyValuePair {
@@ -43,7 +35,7 @@ type ResponseStatus {
   message: String
 }
 
-type Comment implements Base {
+type Comment {
   id: Int!
   createdAt: Date
   updatedAt: Date
@@ -52,7 +44,7 @@ type Comment implements Base {
   author: User!
 }
 
-type Document implements Base {
+type Document {
   id: Int!
   createdAt: Date
   updatedAt: Date
@@ -68,7 +60,7 @@ type Document implements Base {
   tags: [Tag]
 }
 
-type File implements Base {
+type File {
   id: Int!
   createdAt: Date
   updatedAt: Date
@@ -81,7 +73,7 @@ type File implements Base {
   folder: Folder
 }
 
-type Folder implements Base {
+type Folder {
   id: Int!
   createdAt: Date
   updatedAt: Date
@@ -89,7 +81,7 @@ type Folder implements Base {
   files: [File]
 }
 
-type Right implements Base {
+type Right {
   id: Int!
   createdAt: Date
   updatedAt: Date
@@ -106,7 +98,7 @@ type SearchResult {
   tags: [String]
 }
 
-type Setting implements Base {
+type Setting {
   id: Int!
   createdAt: Date
   updatedAt: Date
@@ -115,7 +107,7 @@ type Setting implements Base {
 }
 
 # Tags are attached to one or more documents
-type Tag implements Base {
+type Tag {
   id: Int!
   createdAt: Date
   updatedAt: Date

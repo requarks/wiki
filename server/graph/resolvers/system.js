@@ -29,8 +29,6 @@ module.exports = {
         osLabel = `${os.type()} - ${osInfo.dist} (${osInfo.codename || os.platform()}) ${osInfo.release || os.release()} ${os.arch()}`
       }
 
-      console.info(WIKI.db.knex.client)
-
       return {
         configFile: path.join(process.cwd(), 'config.yml'),
         currentVersion: WIKI.version,

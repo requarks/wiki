@@ -19,6 +19,8 @@ const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
 
 process.noDeprecation = true
 
+fs.emptyDirSync(path.join(process.cwd(), 'assets'))
+
 module.exports = {
   mode: 'production',
   entry: {
@@ -149,7 +151,10 @@ module.exports = {
       {
         test: /\.(graphql|gql)$/,
         exclude: /node_modules/,
-        loader: 'graphql-tag/loader'
+        use: [
+          { loader: 'graphql-persisted-document-loader' },
+          { loader: 'graphql-tag/loader' }
+        ]
       },
       {
         test: /.jsx$/,

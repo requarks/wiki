@@ -189,6 +189,7 @@ export default {
       const resp = _.get(respRaw, 'data.localization.updateLocale.responseResult', {})
       if (resp.succeeded) {
         WIKI.$i18n.i18next.changeLanguage(this.selectedLocale)
+        WIKI.$moment.locale(this.selectedLocale)
         this.$store.commit('showNotification', {
           message: 'Locale settings updated successfully.',
           style: 'success',
@@ -207,6 +208,7 @@ export default {
   apollo: {
     locales: {
       query: localesQuery,
+      fetchPolicy: 'network-only',
       update: (data) => data.localization.locales.map(lc => ({ ...lc, isDownloading: false })),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-locale-refresh')

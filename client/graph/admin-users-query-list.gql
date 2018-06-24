@@ -1,0 +1,13 @@
+query {
+  users {
+    list {
+      id
+      name
+      email
+      provider
+      role
+      createdAt
+      updatedAt
+    }
+  }
+}

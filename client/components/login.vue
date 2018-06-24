@@ -35,7 +35,7 @@
           button.button.is-blue.is-fullwidth(@click='verifySecurityCode')
             span {{ $t('auth:tfa.verifyToken') }}
       .login-copyright
-        span {{ $t('footer.poweredBy') }}
+        span {{ $t('common:footer.poweredBy') }}
         a(href='https://wiki.js.org', rel='external', title='Wiki.js') Wiki.js
 
     v-snackbar(

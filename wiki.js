@@ -12,6 +12,8 @@ const pm2 = Promise.promisifyAll(require('pm2'))
 const ora = require('ora')
 const path = require('path')
 const cluster = require('cluster')
+const _ = require('lodash')
+const chalk = require('chalk')
 
 const ROOTPATH = process.cwd()
 
@@ -81,8 +83,18 @@ const init = {
         hotMiddleware: require('webpack-hot-middleware')(global.WP)
       }
       global.WP_DEV.devMiddleware.waitUntilValid(() => {
-        console.info('>>> Starting Wiki.js in DEVELOPER mode...')
+        console.info(chalk.yellow.bold('>>> Starting Wiki.js in DEVELOPER mode...'))
         require('./server')
+
+        process.stdin.setEncoding('utf8')
+        process.stdin.on('data', data => {
+          if (_.trim(data) === 'rs') {
+            console.warn(chalk.yellow.bold('--- >>>>>>>>>>>>>>>>>>>>>>>> ---'))
+            console.warn(chalk.yellow.bold('--- Manual restart requested ---'))
+            console.warn(chalk.yellow.bold('--- <<<<<<<<<<<<<<<<<<<<<<<< ---'))
+            this.reload()
+          }
+        })
 
         const devWatcher = chokidar.watch([
           './server',
@@ -92,30 +104,38 @@ const init = {
           atomic: 400
         })
         devWatcher.on('ready', () => {
-          devWatcher.on('all', async () => {
-            console.warn('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---')
-            console.warn('--- Changes detected: Restarting ---')
-            console.warn('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---')
-            console.warn('--- Closing DB connections...')
-            await global.WIKI.db.knex.destroy()
-            console.warn('--- Closing Redis connections...')
-            await global.WIKI.redis.quit()
-            console.warn('--- Closing Server connections...')
-            global.WIKI.server.destroy(() => {
-              global.WIKI = {}
-              Object.keys(require.cache).forEach(function(id) {
-                if (/[/\\]server[/\\]/.test(id)) {
-                  delete require.cache[id]
-                }
-              })
-              require('./server')
-            })
+          devWatcher.on('all', () => {
+            console.warn(chalk.yellow.bold('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---'))
+            console.warn(chalk.yellow.bold('--- Changes detected: Restarting ---'))
+            console.warn(chalk.yellow.bold('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---'))
+            this.reload()
           })
         })
       })
     } else {
       require('./server')
     }
+  },
+  async reload() {
+    console.warn(chalk.yellow('--- Closing DB connections...'))
+    await global.WIKI.db.knex.destroy()
+    console.warn(chalk.yellow('--- Closing Redis connections...'))
+    await global.WIKI.redis.quit()
+    console.warn(chalk.yellow('--- Closing Server connections...'))
+    global.WIKI.server.destroy(() => {
+      global.WIKI = {}
+      Object.keys(require.cache).forEach(id => {
+        if (/[/\\]server[/\\]/.test(id)) {
+          delete require.cache[id]
+        }
+      })
+      Object.keys(module.constructor._pathCache).forEach(cacheKey => {
+        if (/[/\\]server[/\\]/.test(cacheKey)) {
+          delete module.constructor._pathCache[cacheKey]
+        }
+      })
+      require('./server')
+    })
   }
 }
 

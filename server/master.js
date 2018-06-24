@@ -9,8 +9,7 @@ const http = require('http')
 const path = require('path')
 const session = require('express-session')
 const SessionRedisStore = require('connect-redis')(session)
-const graphqlApollo = require('apollo-server-express')
-const graphqlSchema = require('./graph')
+const { ApolloServer } = require('apollo-server-express')
 // const oauth2orize = require('oauth2orize')
 
 /* global WIKI */
@@ -124,23 +123,34 @@ module.exports = async () => {
   }
 
   // ----------------------------------------
-  // Controllers
+  // Apollo Server (GraphQL)
+  // ----------------------------------------
+
+  const graphqlSchema = require('./graph')
+  const apolloServer = new ApolloServer({
+    ...graphqlSchema,
+    context: ({ req, res }) => ({ req, res })
+  })
+  apolloServer.applyMiddleware({ app })
+
+  // ----------------------------------------
+  // Routing
   // ----------------------------------------
 
   app.use('/', ctrl.auth)
 
-  app.use('/graphql', (req, res, next) => {
-    graphqlApollo.graphqlExpress({
-      schema: graphqlSchema,
-      context: { req, res },
-      formatError: (err) => {
-        return {
-          message: err.message
-        }
-      }
-    })(req, res, next)
-  })
-  app.use('/graphiql', graphqlApollo.graphiqlExpress({ endpointURL: '/graphql' }))
+  // app.use('/graphql', (req, res, next) => {
+  //   graphqlApollo.graphqlExpress({
+  //     schema: graphqlSchema,
+  //     context: { req, res },
+  //     formatError: (err) => {
+  //       return {
+  //         message: err.message
+  //       }
+  //     }
+  //   })(req, res, next)
+  // })
+  // app.use('/graphiql', graphqlApollo.graphiqlExpress({ endpointURL: '/graphql' }))
 
   app.use('/', mw.auth, ctrl.common)
 
