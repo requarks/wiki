@@ -22,13 +22,21 @@ module.exports = class Authentication extends Model {
         title: {type: 'string'},
         isEnabled: {type: 'boolean'},
         useForm: {type: 'boolean'},
-        config: {type: 'object'}
+        config: {type: 'object'},
+        selfRegistration: {type: 'boolean'},
+        domainWhitelist: {type: 'object'},
+        autoEnrollGroups: {type: 'object'}
       }
     }
   }
 
-  static async getEnabledStrategies() {
-    return WIKI.db.authentication.query().where({ isEnabled: true })
+  static async getStrategies() {
+    const strategies = await WIKI.db.authentication.query()
+    return strategies.map(str => ({
+      ...str,
+      domainWhitelist: _.get(str.domainWhitelist, 'v', []),
+      autoEnrollGroups: _.get(str.autoEnrollGroups, 'v', [])
+    }))
   }
 
   static async refreshStrategiesFromDisk() {
@@ -46,7 +54,10 @@ module.exports = class Authentication extends Model {
             config: _.reduce(strategy.props, (result, value, key) => {
               _.set(result, value, '')
               return result
-            }, {})
+            }, {}),
+            selfRegistration: false,
+            domainWhitelist: { v: [] },
+            autoEnrollGroups: { v: [] }
           })
         }
       })

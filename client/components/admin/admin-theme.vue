@@ -50,7 +50,7 @@
 <script>
 import _ from 'lodash'
 
-import themeSaveMutation from 'gql/admin-theme-mutation-save.gql'
+import themeSaveMutation from 'gql/admin/theme/theme-mutation-save.gql'
 
 export default {
   data() {

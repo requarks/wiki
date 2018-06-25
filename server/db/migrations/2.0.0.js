@@ -31,6 +31,9 @@ exports.up = knex => {
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.boolean('useForm').notNullable().defaultTo(false)
       table.jsonb('config').notNullable()
+      table.boolean('selfRegistration').notNullable().defaultTo(false)
+      table.jsonb('domainWhitelist').notNullable()
+      table.jsonb('autoEnrollGroups').notNullable()
     })
     // COMMENTS ----------------------------
     .createTable('comments', table => {

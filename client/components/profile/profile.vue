@@ -17,8 +17,7 @@
             v-text-field(label='Name', :counter='255', v-model='name', prepend-icon='person')
             v-text-field(label='Job Title', :counter='255', prepend-icon='accessibility')
             v-text-field(label='Location / Office', :counter='255', prepend-icon='location_on')
-          v-divider.my-0
-          v-card-actions.grey.lighten-4
+          v-card-chin
             v-spacer
             v-btn(color='primary')
               v-icon(left) chevron_right
@@ -29,8 +28,13 @@
               .subheading Authentication
           v-card-text
             v-subheader.pl-0 Provider
-            v-toolbar(flat, color='purple lighten-5', dense).purple--text.text--darken-4
-              v-icon(color='purple darken-4') supervised_user_circle
+            v-toolbar(
+              flat
+              :color='darkMode ? "grey darken-2" : "purple lighten-5"'
+              dense
+              :class='darkMode ? "grey--text text--lighten-1" : "purple--text text--darken-4"'
+              )
+              v-icon(:color='darkMode ? "grey lighten-1" : "purple darken-4"') supervised_user_circle
               .subheading.ml-3 Local
             v-divider
             v-subheader.pl-0 Two-Factor Authentication (2FA)
@@ -72,12 +76,16 @@
 </template>
 
 <script>
+/* global siteConfig */
 
 export default {
   data() {
     return {
       name: 'John Doe'
     }
+  },
+  computed: {
+    darkMode() { return siteConfig.darkMode }
   }
 }
 </script>

@@ -114,11 +114,11 @@
 import Criterias from '../common/criterias.vue'
 import UserSearch from '../common/user-search.vue'
 
-import groupQuery from 'gql/admin-groups-query-single.gql'
-import assignUserMutation from 'gql/admin-groups-mutation-assign.gql'
-import deleteGroupMutation from 'gql/admin-groups-mutation-delete.gql'
-import unassignUserMutation from 'gql/admin-groups-mutation-unassign.gql'
-import updateGroupMutation from 'gql/admin-groups-mutation-update.gql'
+import groupQuery from 'gql/admin/groups/groups-query-single.gql'
+import assignUserMutation from 'gql/admin/groups/groups-mutation-assign.gql'
+import deleteGroupMutation from 'gql/admin/groups/groups-mutation-delete.gql'
+import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
+import updateGroupMutation from 'gql/admin/groups/groups-mutation-update.gql'
 
 export default {
   components: {

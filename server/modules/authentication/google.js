@@ -8,7 +8,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy
 
 module.exports = {
   key: 'google',
-  title: 'Google ID',
+  title: 'Google',
   useForm: false,
   props: ['clientId', 'clientSecret'],
   init (passport, conf) {

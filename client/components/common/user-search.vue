@@ -48,7 +48,7 @@
 <script>
 import _ from 'lodash'
 
-import searchUsersQuery from 'gql/common-users-query-search.gql'
+import searchUsersQuery from 'gql/common/common-users-query-search.gql'
 
 export default {
   filters: {

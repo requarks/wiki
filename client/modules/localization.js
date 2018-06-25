@@ -6,7 +6,7 @@ import _ from 'lodash'
 
 /* global siteConfig, graphQL */
 
-import localeQuery from 'gql/common-locale-query.gql'
+import localeQuery from 'gql/common/common-locale-query.gql'
 
 module.exports = {
   VueI18Next,

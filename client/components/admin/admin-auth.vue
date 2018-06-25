@@ -9,7 +9,8 @@
 
       v-tab-item(key='settings', :transition='false', :reverse-transition='false')
         v-card.pa-3(flat, tile)
-          v-subheader.pl-0.pb-2 Select which authentication strategies to enable:
+          .body-2.grey--text.text--darken-1 Select which authentication strategies to enable:
+          .caption.grey--text.pb-2 Some strategies require additional configuration in their dedicated tab (when selected).
           v-form
             v-checkbox(
               v-for='strategy in strategies',
@@ -27,19 +28,36 @@
           v-form
             v-subheader.pl-0 Strategy Configuration
             .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1') This strategy has no configuration options you can modify.
-            v-text-field(v-else, v-for='cfg in strategy.config', :key='cfg.key', :label='cfg.key', prepend-icon='settings_applications')
+            v-text-field(
+              v-else
+              v-for='cfg in strategy.config'
+              :key='cfg.key'
+              :label='cfg.key'
+              v-model='cfg.value'
+              prepend-icon='settings_applications'
+              )
             v-divider
             v-subheader.pl-0 Registration
             v-switch.ml-3(
-              v-model='auths',
+              v-model='allowSelfRegistration',
               label='Allow self-registration',
               :value='true',
               color='primary',
               hint='Allow any user successfully authorized by the strategy to access the wiki.',
               persistent-hint
             )
-            v-text-field.ml-3(label='Limit to specific email domains', prepend-icon='mail_outline')
-            v-text-field.ml-3(label='Assign to group', prepend-icon='people')
+            v-text-field.ml-3(
+              label='Limit to specific email domains'
+              prepend-icon='mail_outline'
+              hint='Domain(s) seperated by comma. (e.g. domain1.com, domain2.com)'
+              persistent-hint
+              )
+            v-text-field.ml-3(
+              label='Assign to group'
+              prepend-icon='people'
+              hint='Automatically assign new users to these groups.'
+              persistent-hint
+              )
 
     v-card-chin
       v-btn(color='primary')
@@ -54,14 +72,17 @@
 <script>
 import _ from 'lodash'
 
-import strategiesQuery from 'gql/admin-auth-query-strategies.gql'
-import strategiesSaveMutation from 'gql/admin-auth-mutation-save-strategies.gql'
+import strategiesQuery from 'gql/admin/auth/auth-query-strategies.gql'
+import strategiesSaveMutation from 'gql/admin/auth/auth-mutation-save-strategies.gql'
 
 export default {
   data() {
     return {
       strategies: [],
-      selectedStrategies: ['local']
+      selectedStrategies: ['local'],
+      selfRegistration: false,
+      domainWhitelist: [],
+      autoEnrollGroups: []
     }
   },
   computed: {

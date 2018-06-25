@@ -24,7 +24,7 @@ module.exports = {
     return arr.filter(prvFilter.test)
   },
   orderBy (arr, orderString) {
-    let orderParams = _.zip(orderString.split(',').map(ord => _.trim(ord).split(' ').map(_.trim)))
+    let orderParams = _.zip(...orderString.split(',').map(ord => _.trim(ord).split(' ').map(_.trim)))
     return _.orderBy(arr, orderParams[0], orderParams[1])
   }
 }

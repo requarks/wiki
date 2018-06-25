@@ -1,6 +1,6 @@
 query {
   authentication {
-    strategies {
+    strategies(orderBy: "title ASC") {
       isEnabled
       key
       props
@@ -10,6 +10,9 @@ query {
         key
         value
       }
+      selfRegistration
+      domainWhitelist
+      autoEnrollGroups
     }
   }
 }

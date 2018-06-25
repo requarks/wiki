@@ -13,7 +13,7 @@
             .dialog-header.is-short New Group
             v-card-text
               v-text-field(v-model='newGroupName', label='Group Name', autofocus, counter='255', @keyup.enter='createGroup')
-            v-card-actions
+            v-card-chin
               v-spacer
               v-btn(flat, @click='newGroupDialog = false') Cancel
               v-btn(color='primary', @click='createGroup') Create
@@ -45,9 +45,9 @@
 <script>
 import _ from 'lodash'
 
-import groupsQuery from 'gql/admin-groups-query-list.gql'
-import createGroupMutation from 'gql/admin-groups-mutation-create.gql'
-import deleteGroupMutation from 'gql/admin-groups-mutation-delete.gql'
+import groupsQuery from 'gql/admin/groups/groups-query-list.gql'
+import createGroupMutation from 'gql/admin/groups/groups-mutation-create.gql'
+import deleteGroupMutation from 'gql/admin/groups/groups-mutation-delete.gql'
 
 export default {
   data() {

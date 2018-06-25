@@ -56,6 +56,9 @@ type AuthenticationStrategy {
   useForm: Boolean!
   icon: String
   config: [KeyValuePair]
+  selfRegistration: Boolean!
+  domainWhitelist: [String]!
+  autoEnrollGroups: [String]!
 }
 
 type AuthenticationLoginResponse {

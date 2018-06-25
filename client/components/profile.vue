@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app.profile
+  v-app(:dark='darkMode').profile
     nav-header
     v-navigation-drawer.pb-0(v-model='profileDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense)
@@ -22,7 +22,7 @@
       transition(name='profile-router')
         router-view
 
-    v-footer.py-2.justify-center(app, absolute, color='grey lighten-3', inset, height='auto')
+    v-footer.py-2.justify-center(app, absolute, :color='darkMode ? "" : "grey lighten-3"', inset, height='auto')
       .caption.grey--text.text--darken-1 Powered by Wiki.js
 
     v-snackbar(
@@ -41,7 +41,7 @@
 import VueRouter from 'vue-router'
 import { mapState } from 'vuex'
 
-/* global WIKI */
+/* global WIKI, siteConfig */
 
 const router = new VueRouter({
   mode: 'history',
@@ -75,7 +75,8 @@ export default {
     notificationState: {
       get() { return this.notification.isActive },
       set(newState) { this.$store.commit('updateNotificationState', newState) }
-    }
+    },
+    darkMode() { return siteConfig.darkMode }
   },
   router
 }

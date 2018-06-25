@@ -56,9 +56,9 @@
 import _ from 'lodash'
 import { mapState } from 'vuex'
 
-import strategiesQuery from 'gql/login-query-strategies.gql'
-import loginMutation from 'gql/login-mutation-login.gql'
-import tfaMutation from 'gql/login-mutation-tfa.gql'
+import strategiesQuery from 'gql/login/login-query-strategies.gql'
+import loginMutation from 'gql/login/login-mutation-login.gql'
+import tfaMutation from 'gql/login/login-mutation-tfa.gql'
 
 export default {
   i18nOptions: { namespaces: 'auth' },

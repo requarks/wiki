@@ -18,8 +18,7 @@
                     v-divider
                     v-subheader.pl-0 Timezone
                     v-select.grey.lighten-5(solo, flat)
-                  v-divider.my-0
-                  v-card-actions.grey.lighten-4
+                  v-card-chin
                     v-spacer
                     v-btn(color='primary')
                       v-icon(left) chevron_right
@@ -32,8 +31,7 @@
                 v-card-text
                   v-subheader.pl-0 Default Editor
                   v-select.grey.lighten-5(solo, flat)
-                v-divider.my-0
-                v-card-actions.grey.lighten-4
+                v-card-chin
                   v-spacer
                   v-btn(color='primary')
                     v-icon(left) chevron_right
@@ -42,10 +40,14 @@
 </template>
 
 <script>
+/* global siteConfig */
 
 export default {
   data() {
     return { }
+  },
+  computed: {
+    darkMode() { return siteConfig.darkMode }
   }
 }
 </script>
