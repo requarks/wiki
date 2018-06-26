@@ -75,7 +75,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fixed: Azure AD email getter
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/57)
+![Progress](http://progressed.io/bar/58)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -111,6 +111,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Manage Groups
   - [ ] Manage Users
   - [x] Manage Authentication Strategies
+  - [x] Manage Storage Targets
 - [x] Requarks Graph [:octocat:](https://github.com/Requarks/graph)
   - [x] Countries
   - [x] Locales + translations
