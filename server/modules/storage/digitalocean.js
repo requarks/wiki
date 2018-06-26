@@ -1,7 +1,7 @@
 module.exports = {
   key: 'digitalocean',
   title: 'DigialOcean Spaces',
-  props: [],
+  props: ['accessKeyId', 'accessSecret', 'region', 'bucket'],
   activate() {
 
   },

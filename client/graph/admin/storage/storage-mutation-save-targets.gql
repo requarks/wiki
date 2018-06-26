@@ -1,0 +1,12 @@
+mutation($strategies: [AuthenticationStrategyInput]) {
+  authentication {
+    updateStrategies(strategies: $strategies) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

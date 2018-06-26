@@ -1,0 +1,51 @@
+# ===============================================
+# STORAGE
+# ===============================================
+
+extend type Query {
+  storage: StorageQuery
+}
+
+extend type Mutation {
+  storage: StorageMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type StorageQuery {
+  targets(
+    filter: String
+    orderBy: String
+  ): [StorageTarget]
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type StorageMutation {
+  updateTargets(
+    targets: [StorageTargetInput]
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type StorageTarget {
+  isEnabled: Boolean!
+  key: String!
+  title: String!
+  mode: String
+  config: [KeyValuePair]
+}
+
+input StorageTargetInput {
+  isEnabled: Boolean!
+  key: String!
+  mode: String!
+  config: [KeyValuePairInput]
+}

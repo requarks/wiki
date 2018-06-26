@@ -1,0 +1,14 @@
+query {
+  storage {
+    targets(orderBy: "title ASC") {
+      isEnabled
+      key
+      title
+      mode
+      config {
+        key
+        value
+      }
+    }
+  }
+}

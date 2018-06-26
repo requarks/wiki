@@ -319,6 +319,9 @@ module.exports = () => {
       await WIKI.db.editors.refreshEditorsFromDisk()
       await WIKI.db.editors.query().patch({ isEnabled: true }).where('key', 'markdown')
 
+      // Load storage targets
+      await WIKI.db.storage.refreshTargetsFromDisk()
+
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
       await WIKI.db.users.query().delete().where({

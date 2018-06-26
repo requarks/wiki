@@ -95,6 +95,7 @@ exports.up = knex => {
       table.string('key').notNullable().unique()
       table.string('title').notNullable()
       table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.enum('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
       table.jsonb('config')
     })
     // TAGS --------------------------------

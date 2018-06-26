@@ -75,7 +75,7 @@
     v-card-chin
       v-btn(color='primary', @click='save')
         v-icon(left) chevron_right
-        span Save
+        span Apply Configuration
       v-spacer
       v-btn(icon, @click='refresh')
         v-icon.grey--text refresh
@@ -126,7 +126,7 @@ export default {
         }
       })
       this.$store.commit('showNotification', {
-        message: 'Strategies saved successfully.',
+        message: 'Authentication configuration saved successfully.',
         style: 'success',
         icon: 'check'
       })
