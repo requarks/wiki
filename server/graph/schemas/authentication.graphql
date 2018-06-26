@@ -37,10 +37,8 @@ type AuthenticationMutation {
     securityCode: String!
   ): DefaultResponse
 
-  updateStrategy(
-    strategy: String!
-    isEnabled: Boolean!
-    config: [KeyValuePairInput]
+  updateStrategies(
+    strategies: [AuthenticationStrategyInput]
   ): DefaultResponse
 }
 
@@ -58,11 +56,20 @@ type AuthenticationStrategy {
   config: [KeyValuePair]
   selfRegistration: Boolean!
   domainWhitelist: [String]!
-  autoEnrollGroups: [String]!
+  autoEnrollGroups: [Int]!
 }
 
 type AuthenticationLoginResponse {
   responseResult: ResponseStatus
   tfaRequired: Boolean
   tfaLoginToken: String
+}
+
+input AuthenticationStrategyInput {
+  isEnabled: Boolean!
+  key: String!
+  config: [KeyValuePairInput]
+  selfRegistration: Boolean!
+  domainWhitelist: [String]!
+  autoEnrollGroups: [Int]!
 }

@@ -1,6 +1,6 @@
-mutation($locale: String!, $autoUpdate: Boolean!, $namespacing: Boolean!, $namespaces: [String]!) {
-  localization {
-    updateLocale(locale: $locale, autoUpdate: $autoUpdate, namespacing: $namespacing, namespaces: $namespaces) {
+mutation($strategies: [AuthenticationStrategyInput]) {
+  authentication {
+    updateStrategies(strategies: $strategies) {
       responseResult {
         succeeded
         errorCode

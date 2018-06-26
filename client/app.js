@@ -49,11 +49,33 @@ moment.locale(siteConfig.lang)
 
 const graphQLEndpoint = window.location.protocol + '//' + window.location.host + '/graphql'
 
-const graphQLLink = createPersistedQueryLink().concat(createHttpLink({
-  includeExtensions: true,
-  uri: graphQLEndpoint,
-  credentials: 'include'
-}))
+const graphQLLink = createPersistedQueryLink().concat(
+  createHttpLink({
+    includeExtensions: true,
+    uri: graphQLEndpoint,
+    credentials: 'include',
+    fetch: (uri, options) => {
+      // Strip __typename fields from variables
+      let body = JSON.parse(options.body)
+      // body = body.map(bd => {
+      //   return ({
+      //     ...bd,
+      //     variables: JSON.parse(JSON.stringify(bd.variables), (key, value) => { return key === '__typename' ? undefined : value })
+      //   })
+      // })
+      body = {
+        ...body,
+        variables: JSON.parse(JSON.stringify(body.variables), (key, value) => { return key === '__typename' ? undefined : value })
+      }
+      options.body = JSON.stringify(body)
+
+      // Inject authentication token
+      options.headers.Authorization = `Bearer TODO`
+
+      return fetch(uri, options)
+    }
+  })
+)
 
 window.graphQL = new ApolloClient({
   link: graphQLLink,

@@ -50,6 +50,27 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    async updateStrategies(obj, args, context) {
+      try {
+        for (let str of args.strategies) {
+          await WIKI.db.authentication.query().patch({
+            isEnabled: str.isEnabled,
+            config: _.reduce(str.config, (result, value, key) => {
+              _.set(result, value.key, value.value)
+              return result
+            }, {}),
+            selfRegistration: str.selfRegistration,
+            domainWhitelist: { v: str.domainWhitelist },
+            autoEnrollGroups: { v: str.autoEnrollGroups }
+          }).where('key', str.key)
+        }
+        return {
+          responseResult: graphHelper.generateSuccess('Strategies updated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   AuthenticationStrategy: {
