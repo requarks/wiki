@@ -10,7 +10,10 @@ module.exports = {
   key: 'github',
   title: 'GitHub',
   useForm: false,
-  props: ['clientId', 'clientSecret'],
+  props: {
+    clientId: String,
+    clientSecret: String
+  },
   init (passport, conf) {
     passport.use('github',
       new GitHubStrategy({

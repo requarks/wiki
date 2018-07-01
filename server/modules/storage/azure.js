@@ -1,7 +1,11 @@
 module.exports = {
   key: 'azure',
   title: 'Azure Blob Storage',
-  props: [],
+  props: {
+    accountName: String,
+    accountKey: String,
+    container: String
+  },
   activate() {
 
   },

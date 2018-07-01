@@ -1,7 +1,9 @@
 module.exports = {
   key: 'disk',
   title: 'Local FS',
-  props: ['path'],
+  props: {
+    path: String
+  },
   activate() {
 
   },

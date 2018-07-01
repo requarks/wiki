@@ -12,7 +12,7 @@
           .body-2.grey--text.text--darken-1 Select which authentication strategies to enable:
           .caption.grey--text.pb-2 Some strategies require additional configuration in their dedicated tab (when selected).
           v-form
-            v-checkbox(
+            v-checkbox.my-1(
               v-for='strategy in strategies'
               v-model='strategy.isEnabled'
               :key='strategy.key'
@@ -27,14 +27,30 @@
           v-form
             v-subheader.pl-0 Strategy Configuration
             .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1') This strategy has no configuration options you can modify.
-            v-text-field(
-              v-else
-              v-for='cfg in strategy.config'
-              :key='cfg.key'
-              :label='cfg.key'
-              v-model='cfg.value'
-              prepend-icon='settings_applications'
+            template(v-else, v-for='cfg in strategy.config')
+              v-select(
+                v-if='cfg.value.type === "string" && cfg.value.enum'
+                :items='cfg.value.enum'
+                :key='cfg.key'
+                :label='cfg.key | startCase'
+                v-model='cfg.value.value'
+                prepend-icon='settings_applications'
               )
+              v-switch(
+                v-else-if='cfg.value.type === "boolean"'
+                :key='cfg.key'
+                :label='cfg.key | startCase'
+                v-model='cfg.value.value'
+                color='primary'
+                prepend-icon='settings_applications'
+                )
+              v-text-field(
+                v-else
+                :key='cfg.key'
+                :label='cfg.key | startCase'
+                v-model='cfg.value.value'
+                prepend-icon='settings_applications'
+                )
             v-divider
             v-subheader.pl-0 Registration
             .pr-3
@@ -90,6 +106,9 @@ import strategiesQuery from 'gql/admin/auth/auth-query-strategies.gql'
 import strategiesSaveMutation from 'gql/admin/auth/auth-mutation-save-strategies.gql'
 
 export default {
+  filters: {
+    startCase(val) { return _.startCase(val) }
+  },
   data() {
     return {
       groups: [],
@@ -122,7 +141,7 @@ export default {
             'selfRegistration',
             'domainWhitelist',
             'autoEnrollGroups'
-          ]))
+          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: cfg.value.value}))}))
         }
       })
       this.$store.commit('showNotification', {
@@ -137,7 +156,7 @@ export default {
     strategies: {
       query: strategiesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.authentication.strategies),
+      update: (data) => _.cloneDeep(data.authentication.strategies).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))})),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-refresh')
       }

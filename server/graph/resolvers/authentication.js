@@ -19,9 +19,9 @@ module.exports = {
       let strategies = await WIKI.db.authentication.getStrategies()
       strategies = strategies.map(stg => ({
         ...stg,
-        config: _.transform(stg.config, (res, value, key) => {
-          res.push({ key, value })
-        }, [])
+        config: _.sortBy(_.transform(stg.config, (res, value, key) => {
+          res.push({ key, value: JSON.stringify(value) })
+        }, []), 'key')
       }))
       if (args.filter) { strategies = graphHelper.filter(strategies, args.filter) }
       if (args.orderBy) { strategies = graphHelper.orderBy(strategies, args.orderBy) }
@@ -57,7 +57,7 @@ module.exports = {
           await WIKI.db.authentication.query().patch({
             isEnabled: str.isEnabled,
             config: _.reduce(str.config, (result, value, key) => {
-              _.set(result, value.key, value.value)
+              _.set(result, `${value.key}.value`, value.value)
               return result
             }, {}),
             selfRegistration: str.selfRegistration,

@@ -1,6 +1,6 @@
-mutation($strategies: [AuthenticationStrategyInput]) {
-  authentication {
-    updateStrategies(strategies: $strategies) {
+mutation($targets: [StorageTargetInput]) {
+  storage {
+    updateTargets(targets: $targets) {
       responseResult {
         succeeded
         errorCode

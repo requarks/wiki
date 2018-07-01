@@ -1,7 +1,10 @@
 module.exports = {
   key: 'gdrive',
   title: 'Google Drive',
-  props: [],
+  props: {
+    clientId: String,
+    clientSecret: String
+  },
   activate() {
 
   },

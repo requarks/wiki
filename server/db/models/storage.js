@@ -2,6 +2,7 @@ const Model = require('objection').Model
 const autoload = require('auto-load')
 const path = require('path')
 const _ = require('lodash')
+const commonHelper = require('../../helpers/common')
 
 /* global WIKI */
 
@@ -43,8 +44,22 @@ module.exports = class Storage extends Model {
             title: target.title,
             isEnabled: false,
             mode: 'push',
-            config: _.reduce(target.props, (result, value, key) => {
-              _.set(result, value, '')
+            config: _.transform(target.props, (result, value, key) => {
+              if (_.isPlainObject(value)) {
+                let cfgValue = {
+                  type: typeof value.type(),
+                  value: !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value)
+                }
+                if (_.isArray(value.enum)) {
+                  cfgValue.enum = value.enum
+                }
+                _.set(result, key, cfgValue)
+              } else {
+                _.set(result, key, {
+                  type: typeof value(),
+                  value: commonHelper.getTypeDefaultValue(value)
+                })
+              }
               return result
             }, {})
           })

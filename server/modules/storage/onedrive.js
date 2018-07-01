@@ -1,7 +1,10 @@
 module.exports = {
   key: 'onedrive',
   title: 'OneDrive',
-  props: [],
+  props: {
+    clientId: String,
+    clientSecret: String
+  },
   activate() {
 
   },

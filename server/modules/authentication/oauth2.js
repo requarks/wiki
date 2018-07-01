@@ -10,7 +10,12 @@ module.exports = {
   key: 'oauth2',
   title: 'OAuth2',
   useForm: false,
-  props: ['clientId', 'clientSecret', 'authorizationURL', 'tokenURL'],
+  props: {
+    clientId: String,
+    clientSecret: String,
+    authorizationURL: String,
+    tokenURL: String
+  },
   init (passport, conf) {
     passport.use('oauth2',
       new OAuth2Strategy({

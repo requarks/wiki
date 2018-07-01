@@ -17,17 +17,31 @@
                   v-toolbar-title
                     .subheading Authentication
                 v-subheader Flush User Sessions
-                v-card-text.pt-0
+                v-card-text.pt-0.pl-4
                   .body-1 This will cause all users to be logged out. You will need to log back in after the operation.
                   v-btn(depressed).ml-0
                     v-icon(left, color='grey') build
                     span Proceed
+                v-divider.my-0
                 v-subheader Reset Guest User
-                v-card-text.pt-0
+                v-card-text.pt-0.pl-4
                   .body-1 This will reset the guest user to its default parameters and permissions.
                   v-btn(depressed).ml-0
                     v-icon(left, color='grey') build
                     span Proceed
+              v-card.mt-3
+                v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
+                  v-toolbar-title
+                    .subheading Modules
+                v-subheader Rescan Modules
+                v-card-text.pt-0.pl-4
+                  .body-1 Look for new modules on disk. Existing configurations will be merged.
+                  v-btn(depressed).ml-0
+                    v-icon(left, color='grey') youtube_searched_for
+                    span Authentication
+                  v-btn(depressed).ml-0
+                    v-icon(left, color='grey') youtube_searched_for
+                    span Storage
             v-flex(xs12, sm6)
               v-card
                 v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)

@@ -1,7 +1,10 @@
 module.exports = {
   key: 'dropbox',
   title: 'Dropbox',
-  props: [],
+  props: {
+    appKey: String,
+    appSecret: String
+  },
   activate() {
 
   },

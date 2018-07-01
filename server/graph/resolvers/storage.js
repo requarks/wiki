@@ -13,11 +13,11 @@ module.exports = {
   StorageQuery: {
     async targets(obj, args, context, info) {
       let targets = await WIKI.db.storage.getTargets()
-      targets = targets.map(stg => ({
-        ...stg,
-        config: _.transform(stg.config, (res, value, key) => {
-          res.push({ key, value })
-        }, [])
+      targets = targets.map(tgt => ({
+        ...tgt,
+        config: _.sortBy(_.transform(tgt.config, (res, value, key) => {
+          res.push({ key, value: JSON.stringify(value) })
+        }, []), 'key')
       }))
       if (args.filter) { targets = graphHelper.filter(targets, args.filter) }
       if (args.orderBy) { targets = graphHelper.orderBy(targets, args.orderBy) }
@@ -32,7 +32,7 @@ module.exports = {
             isEnabled: tgt.isEnabled,
             mode: tgt.mode,
             config: _.reduce(tgt.config, (result, value, key) => {
-              _.set(result, value.key, value.value)
+              _.set(result, `${value.key}.value`, value.value)
               return result
             }, {})
           }).where('key', tgt.key)

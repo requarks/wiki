@@ -10,7 +10,10 @@ module.exports = {
   key: 'dropbox',
   title: 'Dropbox',
   useForm: false,
-  props: ['clientId', 'clientSecret'],
+  props: {
+    clientId: String,
+    clientSecret: String
+  },
   init (passport, conf) {
     passport.use('dropbox',
       new DropboxStrategy({

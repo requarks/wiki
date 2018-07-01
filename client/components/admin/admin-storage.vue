@@ -12,7 +12,7 @@
           .body-2.grey--text.text--darken-1 Select which storage targets to enable:
           .caption.grey--text.pb-2 Some storage targets require additional configuration in their dedicated tab (when selected).
           v-form
-            v-checkbox(
+            v-checkbox.my-1(
               v-for='tgt in targets'
               v-model='tgt.isEnabled'
               :key='tgt.key'
@@ -27,14 +27,30 @@
           v-form
             v-subheader.pl-0 Target Configuration
             .body-1.ml-3(v-if='!tgt.config || tgt.config.length < 1') This storage target has no configuration options you can modify.
-            v-text-field(
-              v-else
-              v-for='cfg in tgt.config'
-              :key='cfg.key'
-              :label='cfg.key'
-              v-model='cfg.value'
-              prepend-icon='settings_applications'
+            template(v-else, v-for='cfg in tgt.config')
+              v-select(
+                v-if='cfg.value.type === "string" && cfg.value.enum'
+                :items='cfg.value.enum'
+                :key='cfg.key'
+                :label='cfg.key | startCase'
+                v-model='cfg.value.value'
+                prepend-icon='settings_applications'
               )
+              v-switch(
+                v-else-if='cfg.value.type === "boolean"'
+                :key='cfg.key'
+                :label='cfg.key | startCase'
+                v-model='cfg.value.value'
+                color='primary'
+                prepend-icon='settings_applications'
+                )
+              v-text-field(
+                v-else
+                :key='cfg.key'
+                :label='cfg.key | startCase'
+                v-model='cfg.value.value'
+                prepend-icon='settings_applications'
+                )
             v-divider
             v-subheader.pl-0 Sync Direction
             .body-1.ml-3 Choose how content synchronization is handled for this storage target.
@@ -80,6 +96,9 @@ import targetsQuery from 'gql/admin/storage/storage-query-targets.gql'
 import targetsSaveMutation from 'gql/admin/storage/storage-mutation-save-targets.gql'
 
 export default {
+  filters: {
+    startCase(val) { return _.startCase(val) }
+  },
   data() {
     return {
       targets: []
@@ -109,7 +128,7 @@ export default {
             'key',
             'config',
             'mode'
-          ]))
+          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: cfg.value.value}))}))
         }
       })
       this.$store.commit('showNotification', {
@@ -124,7 +143,7 @@ export default {
     targets: {
       query: targetsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.storage.targets),
+      update: (data) => _.cloneDeep(data.storage.targets).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))})),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-storage-refresh')
       }

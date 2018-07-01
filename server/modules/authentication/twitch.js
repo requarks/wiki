@@ -10,7 +10,10 @@ module.exports = {
   key: 'twitch',
   title: 'Twitch',
   useForm: false,
-  props: ['clientId', 'clientSecret'],
+  props: {
+    clientId: String,
+    clientSecret: String
+  },
   init (passport, conf) {
     passport.use('twitch',
       new TwitchStrategy({

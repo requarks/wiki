@@ -10,7 +10,10 @@ module.exports = {
   key: 'slack',
   title: 'Slack',
   useForm: false,
-  props: ['clientId', 'clientSecret'],
+  props: {
+    clientId: String,
+    clientSecret: String
+  },
   init (passport, conf) {
     passport.use('slack',
       new SlackStrategy({

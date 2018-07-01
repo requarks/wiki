@@ -10,7 +10,11 @@ module.exports = {
   key: 'auth0',
   title: 'Auth0',
   useForm: false,
-  props: ['domain', 'clientId', 'clientSecret'],
+  props: {
+    domain: String,
+    clientId: String,
+    clientSecret: String
+  },
   init (passport, conf) {
     passport.use('auth0',
       new Auth0Strategy({

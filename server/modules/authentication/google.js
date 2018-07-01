@@ -10,7 +10,10 @@ module.exports = {
   key: 'google',
   title: 'Google',
   useForm: false,
-  props: ['clientId', 'clientSecret'],
+  props: {
+    clientId: String,
+    clientSecret: String
+  },
   init (passport, conf) {
     passport.use('google',
       new GoogleStrategy({

@@ -10,7 +10,7 @@ module.exports = {
   key: 'local',
   title: 'Local',
   useForm: true,
-  props: [],
+  props: {},
   init (passport, conf) {
     passport.use('local',
       new LocalStrategy({
