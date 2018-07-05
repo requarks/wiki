@@ -42,19 +42,18 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 > Read the full [prerequisites](https://docs.requarks.io/wiki/install/prerequisites) article for full details.
 
-<h2 align="center">Docker</h2>
+<h2 align="center">Docker / Cloud Install</h2>
 
-A docker Wiki.js image is available on Docker Hub:
-
-<a href="https://hub.docker.com/r/requarks/wiki/" title="Docker Image"><img src="https://raw.githubusercontent.com/Requarks/wiki-site/master/assets/svg/deploy-docker.svg" alt="Docker Image" height="40" /></a>
+A docker Wiki.js image is available on Docker Hub:  
+<a href="https://hub.docker.com/r/requarks/wiki/" title="Docker Image"><img src="https://wiki.js.org/assets/svg/deploy-docker.svg" alt="Docker Image" height="40" /></a>
 
 You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/blob/master/tools/Dockerfile)) or Docker Compose ([see example](https://github.com/Requarks/wiki/blob/master/tools/docker-compose.yml)) to run Wiki.js.
 
-<h2 align="center">Cloud Install</h2>
+Deploy to Heroku in just a few clicks using this pre-built deployment template:  
+<a href="https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku" title="Deploy to Heroku"><img src="https://wiki.js.org/assets/svg/deploy-heroku.svg" alt="Deploy to Heroku" height="40" /></a>
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku)
-
-*Docker Cloud, Azure, IBM Bluemix and more coming soon!*
+Deploy to IBM Cloud Foundry in just a few clicks using this pre-built deployment template:  
+<a href="https://hub.docker.com/r/requarks/wiki/" title="Deploy to IBM Cloud"><img src="https://wiki.js.org/assets/svg/deploy-ibm-cloud.svg" alt="Deploy to IBM Cloud" height="40" /></a>
 
 <h2 align="center">Demo</h2>
 
