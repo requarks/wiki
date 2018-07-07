@@ -5,10 +5,13 @@ module.exports = {
     appKey: String,
     appSecret: String
   },
-  activate() {
+  activated(opts) {
 
   },
-  deactivate() {
+  deactivated(opts) {
+
+  },
+  init(opts) {
 
   },
   created(opts) {

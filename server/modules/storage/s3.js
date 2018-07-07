@@ -7,10 +7,13 @@ module.exports = {
     region: String,
     bucket: String
   },
-  activate() {
+  activated(opts) {
 
   },
-  deactivate() {
+  deactivated(opts) {
+
+  },
+  init(opts) {
 
   },
   created(opts) {

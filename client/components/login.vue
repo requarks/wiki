@@ -13,15 +13,16 @@
         .login-frame(v-show='screen === "login"')
           h1.text-xs-center.display-1 {{ siteTitle }}
           h2.text-xs-center.subheading {{ $t('auth:loginRequired') }}
-          v-text-field(solo, ref='iptEmail', v-model='username', :placeholder='$t("auth:fields.emailUser")')
+          v-text-field(solo, hide-details, ref='iptEmail', v-model='username', :placeholder='$t("auth:fields.emailUser")')
           v-text-field.mt-2(
-            solo,
-            ref='iptPassword',
-            v-model='password',
-            :append-icon='hidePassword ? "visibility" : "visibility_off"',
-            :append-icon-cb='() => (hidePassword = !hidePassword)',
-            :type='hidePassword ? "password" : "text"',
-            :placeholder='$t("auth:fields.password")',
+            solo
+            hide-details
+            ref='iptPassword'
+            v-model='password'
+            :append-icon='hidePassword ? "visibility" : "visibility_off"'
+            :append-icon-cb='() => (hidePassword = !hidePassword)'
+            :type='hidePassword ? "password" : "text"'
+            :placeholder='$t("auth:fields.password")'
             @keyup.enter='login'
           )
           v-btn.mt-3(block, large, color='primary', @click='login') {{ $t('auth:actions.login') }}

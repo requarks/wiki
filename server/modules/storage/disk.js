@@ -4,10 +4,13 @@ module.exports = {
   props: {
     path: String
   },
-  activate() {
+  activated(opts) {
 
   },
-  deactivate() {
+  deactivated(opts) {
+
+  },
+  init(opts) {
 
   },
   created(opts) {

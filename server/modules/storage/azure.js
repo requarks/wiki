@@ -6,10 +6,13 @@ module.exports = {
     accountKey: String,
     container: String
   },
-  activate() {
+  activated(opts) {
 
   },
-  deactivate() {
+  deactivated(opts) {
+
+  },
+  init(opts) {
 
   },
   created(opts) {

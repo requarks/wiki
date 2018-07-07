@@ -5,10 +5,13 @@ module.exports = {
     clientId: String,
     clientSecret: String
   },
-  activate() {
+  activated(opts) {
 
   },
-  deactivate() {
+  deactivated(opts) {
+
+  },
+  init(opts) {
 
   },
   created(opts) {

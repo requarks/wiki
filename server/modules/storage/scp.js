@@ -14,10 +14,13 @@ module.exports = {
       default: '~'
     }
   },
-  activate() {
+  activated(opts) {
 
   },
-  deactivate() {
+  deactivated(opts) {
+
+  },
+  init(opts) {
 
   },
   created(opts) {

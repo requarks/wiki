@@ -20,10 +20,13 @@ module.exports = {
     basicUsername: String,
     basicPassword: String
   },
-  activate() {
+  activated(opts) {
 
   },
-  deactivate() {
+  deactivated(opts) {
+
+  },
+  init(opts) {
 
   },
   created(opts) {
