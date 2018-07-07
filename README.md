@@ -64,6 +64,8 @@ The legacy Wiki.js documentation site is actually running Wiki.js! [Check it out
 
 Current and upcoming milestones *(major features only, see the [changelog](https://docs.requarks.io/wiki/developers/changelog) for complete list of features and bug fixes)*:
 
+:bookmark_tabs: See [project board](https://waffle.io/Requarks/wiki) to keep track of current progress.
+
 ### 1.0.78 - Stable
 ![Progress](http://progressed.io/bar/100)
 
