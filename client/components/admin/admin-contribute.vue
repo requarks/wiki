@@ -9,14 +9,14 @@
         a(href='https://requarks.io', target='_blank') requarks.io
         a(href='https://github.com/Requarks/wiki/graphs/contributors', target='_blank') {{ $t('admin:contribute.openSourceContributors') }}
       .body-1.pt-3.pl-3 {{ $t('admin:contribute.needYourHelp') }}
-      v-divider
+      v-divider.mt-3
       v-subheader {{ $t('admin:contribute.fundOurWork') }}
       .body-1.pl-3 {{ $t('admin:contribute.openCollective') }}
       v-card-actions.mt-3.ml-2
         v-btn(depressed, color='primary', href='https://opencollective.com/wikijs')
           v-icon(left) local_atm
           span {{ $t('admin:contribute.makeADonation') }}
-      v-divider
+      v-divider.mt-3
       v-subheader {{ $t('admin:contribute.contribute') }}
       .body-1.pl-3
         ul
@@ -26,7 +26,7 @@
             a(href='https://github.com/Requarks/wiki/issues', target='_blank') Github
           i18next(path='admin:contribute.helpTranslate', tag='li')
             a(href='https://gitter.im/Requarks/wiki', target='_blank') Gitter
-      v-divider
+      v-divider.mt-3
       v-subheader {{ $t('admin:contribute.spreadTheWord') }}
       .body-1.pl-3
         ul

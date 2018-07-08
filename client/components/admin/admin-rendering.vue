@@ -169,7 +169,7 @@
                   persistent-hint
                   hint='Links will automatically be converted to clickable links.'
                   )
-                v-divider
+                v-divider.mt-3
                 v-switch(
                   v-model='linkify'
                   label='Automatically convert line breaks'
@@ -177,7 +177,7 @@
                   persistent-hint
                   hint='Add linebreaks within paragraphs.'
                   )
-                v-divider
+                v-divider.mt-3
                 v-switch(
                   v-model='linkify'
                   label='Highlight code blocks'

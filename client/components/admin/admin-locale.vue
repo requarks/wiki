@@ -31,7 +31,7 @@
                         v-list-tile-content
                           v-list-tile-title(v-html='data.item.name')
                           v-list-tile-sub-title(v-html='data.item.nativeName')
-                  v-divider
+                  v-divider.mt-3
                   v-switch(
                     v-model='autoUpdate'
                     :label='$t("admin:locale.autoUpdate.label")'
@@ -65,7 +65,7 @@
                     )
                     span {{ $t('admin:locale.namespacingPrefixWarning.title', { langCode: selectedLocale }) }}
                     .caption.grey--text {{ $t('admin:locale.namespacingPrefixWarning.subtitle') }}
-                  v-divider
+                  v-divider.mt-3.mb-4
                   v-select(
                     :disabled='!namespacing'
                     :items='installedLocales'

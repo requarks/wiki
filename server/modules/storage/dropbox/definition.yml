@@ -1,0 +1,6 @@
+key: dropbox
+title: Dropbox
+author: requarks.io
+props:
+  appKey: String
+  appSecret: String

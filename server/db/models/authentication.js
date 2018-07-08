@@ -2,7 +2,6 @@ const Model = require('objection').Model
 const autoload = require('auto-load')
 const path = require('path')
 const _ = require('lodash')
-const commonHelper = require('../../helpers/common')
 
 /* global WIKI */
 
@@ -56,7 +55,7 @@ module.exports = class Authentication extends Model {
               if (_.isPlainObject(value)) {
                 let cfgValue = {
                   type: typeof value.type(),
-                  value: !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value)
+                  value: !_.isNil(value.default) ? value.default : new value() // eslint-disable-line new-cap
                 }
                 if (_.isArray(value.enum)) {
                   cfgValue.enum = value.enum
@@ -65,7 +64,7 @@ module.exports = class Authentication extends Model {
               } else {
                 _.set(result, key, {
                   type: typeof value(),
-                  value: commonHelper.getTypeDefaultValue(value)
+                  value: new value() // eslint-disable-line new-cap
                 })
               }
               return result

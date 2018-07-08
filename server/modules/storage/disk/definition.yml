@@ -1,0 +1,5 @@
+key: disk
+title: Local FS
+author: requarks.io
+props:
+  path: String

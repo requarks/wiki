@@ -26,7 +26,7 @@
                       v-list-tile-content
                         v-list-tile-title(v-html='data.item.text')
                         v-list-tile-sub-title(v-html='data.item.author')
-                  v-divider
+                  v-divider.mt-3
                   v-switch(
                     v-model='darkMode'
                     label='Dark Mode'

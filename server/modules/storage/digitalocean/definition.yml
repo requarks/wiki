@@ -1,0 +1,10 @@
+key: digitalocean
+title: DigialOcean Spaces
+author: requarks.io
+props:
+  accessKeyId: String
+  accessSecret: String
+  region:
+    type: String
+    default: nyc3
+  bucket: String

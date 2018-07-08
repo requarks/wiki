@@ -51,7 +51,7 @@
                 v-model='cfg.value.value'
                 prepend-icon='settings_applications'
                 )
-            v-divider
+            v-divider.mt-3
             v-subheader.pl-0 Registration
             .pr-3
               v-switch.ml-3(

@@ -1,17 +1,18 @@
-const _ = require('lodash')
-
 module.exports = {
   /**
    * Get default value of type
    *
-   * @param {any} Type Primitive Type
+   * @param {any} type primitive type name
    * @returns Default value
    */
-  getTypeDefaultValue (Type) {
-    if (_.isArray(Type)) {
-      return _.head(Type)
-    } else {
-      return new Type()
+  getTypeDefaultValue (type) {
+    switch (type.toLowerCase()) {
+      case 'string':
+        return ''
+      case 'number':
+        return 0
+      case 'boolean':
+        return false
     }
   }
 }

@@ -1,0 +1,7 @@
+key: azure
+title: Azure Blob Storage
+author: requarks.io
+props:
+  accountName: String
+  accountKey: String
+  container: String

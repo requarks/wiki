@@ -15,7 +15,7 @@
                   v-subheader General
                   .px-3
                     v-text-field(label='Site Title', required, :counter='50', v-model='siteTitle', prepend-icon='public')
-                    v-divider
+                  v-divider.mt-3
                   v-subheader SEO
                   .px-3
                     v-text-field(label='Site Description', :counter='255', prepend-icon='public')
@@ -51,7 +51,7 @@
                     persistent-hint
                     hint='Check this option if a round logo frame doesn\'t work with your logo.'
                     )
-                  v-divider
+                  v-divider.mt-3
                   v-switch(
                     v-model='displayMascot'
                     label='Display Wiki.js Mascot'

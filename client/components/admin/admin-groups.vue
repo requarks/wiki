@@ -22,10 +22,10 @@
         v-spacer
         v-text-field(solo, append-icon='search', label='Search', single-line, hide-details, v-model='search')
       v-data-table(
-        :items='groups',
-        :headers='headers',
-        :search='search',
-        :pagination.sync='pagination',
+        :items='groups'
+        :headers='headers'
+        :search='search'
+        :pagination.sync='pagination'
         :rows-per-page-items='[15]'
         hide-actions
       )

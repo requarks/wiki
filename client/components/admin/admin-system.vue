@@ -25,7 +25,7 @@
                   v-list-tile-action
                     v-list-tile-action-text {{ $t('admin:system.published') }} {{ info.latestVersionReleaseDate | moment('from') }}
 
-                v-divider
+                v-divider.mt-3
 
                 v-subheader {{ $t('admin:system.hostInfo') }}
                 v-list-tile(avatar)
@@ -76,7 +76,7 @@
                   v-list-tile-content
                     v-list-tile-title {{ info.nodeVersion }}
 
-                v-divider
+                v-divider.mt-3
 
                 v-subheader Redis
                 v-list-tile(avatar)
@@ -89,7 +89,7 @@
                   v-list-tile-action
                     v-list-tile-action-text {{ $t('admin:system.ramUsage', { used: info.redisUsedRAM, total: info.redisTotalRAM }) }}
 
-                v-divider
+                v-divider.mt-3
 
                 v-subheader {{ info.dbType }}
                 v-list-tile(avatar)

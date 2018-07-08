@@ -1,0 +1,6 @@
+key: onedrive
+title: OneDrive
+author: requarks.io
+props:
+  clientId: String
+  clientSecret: String

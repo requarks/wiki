@@ -1,7 +1,8 @@
 const Model = require('objection').Model
-const autoload = require('auto-load')
 const path = require('path')
+const fs = require('fs-extra')
 const _ = require('lodash')
+const yaml = require('js-yaml')
 const commonHelper = require('../../helpers/common')
 
 /* global WIKI */
@@ -35,9 +36,18 @@ module.exports = class Storage extends Model {
   static async refreshTargetsFromDisk() {
     try {
       const dbTargets = await WIKI.db.storage.query()
-      const diskTargets = autoload(path.join(WIKI.SERVERPATH, 'modules/storage'))
+
+      // -> Fetch definitions from disk
+      const storageDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/storage'))
+      let diskTargets = []
+      for (let dir of storageDirs) {
+        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/storage', dir, 'definition.yml'), 'utf8')
+        diskTargets.push(yaml.safeLoad(def))
+      }
+
+      // -> Insert new targets
       let newTargets = []
-      _.forOwn(diskTargets, (target, targetKey) => {
+      _.forEach(diskTargets, target => {
         if (!_.some(dbTargets, ['key', target.key])) {
           newTargets.push({
             key: target.key,
@@ -47,8 +57,8 @@ module.exports = class Storage extends Model {
             config: _.transform(target.props, (result, value, key) => {
               if (_.isPlainObject(value)) {
                 let cfgValue = {
-                  type: typeof value.type(),
-                  value: !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value)
+                  type: value.type.toLowerCase(),
+                  value: !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value.type)
                 }
                 if (_.isArray(value.enum)) {
                   cfgValue.enum = value.enum
@@ -56,7 +66,7 @@ module.exports = class Storage extends Model {
                 _.set(result, key, cfgValue)
               } else {
                 _.set(result, key, {
-                  type: typeof value(),
+                  type: value.toLowerCase(),
                   value: commonHelper.getTypeDefaultValue(value)
                 })
               }

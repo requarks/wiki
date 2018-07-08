@@ -51,7 +51,7 @@
                 v-model='cfg.value.value'
                 prepend-icon='settings_applications'
                 )
-            v-divider
+            v-divider.mt-3
             v-subheader.pl-0 Sync Direction
             .body-1.ml-3 Choose how content synchronization is handled for this storage target.
             .pr-3.pt-3

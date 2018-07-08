@@ -1,0 +1,6 @@
+key: gdrive
+title: Google Drive
+author: requarks.io
+props:
+  clientId: String
+  clientSecret: String
