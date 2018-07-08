@@ -1,7 +1,9 @@
 const Model = require('objection').Model
-const autoload = require('auto-load')
+const fs = require('fs-extra')
 const path = require('path')
 const _ = require('lodash')
+const yaml = require('js-yaml')
+const commonHelper = require('../../helpers/common')
 
 /* global WIKI */
 
@@ -42,9 +44,17 @@ module.exports = class Authentication extends Model {
   static async refreshStrategiesFromDisk() {
     try {
       const dbStrategies = await WIKI.db.authentication.query()
-      const diskStrategies = autoload(path.join(WIKI.SERVERPATH, 'modules/authentication'))
+
+      // -> Fetch definitions from disk
+      const authDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/authentication'))
+      let diskStrategies = []
+      for (let dir of authDirs) {
+        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/authentication', dir, 'definition.yml'), 'utf8')
+        diskStrategies.push(yaml.safeLoad(def))
+      }
+
       let newStrategies = []
-      _.forOwn(diskStrategies, (strategy, strategyKey) => {
+      _.forEach(diskStrategies, strategy => {
         if (!_.some(dbStrategies, ['key', strategy.key])) {
           newStrategies.push({
             key: strategy.key,
@@ -54,8 +64,8 @@ module.exports = class Authentication extends Model {
             config: _.transform(strategy.props, (result, value, key) => {
               if (_.isPlainObject(value)) {
                 let cfgValue = {
-                  type: typeof value.type(),
-                  value: !_.isNil(value.default) ? value.default : new value() // eslint-disable-line new-cap
+                  type: value.type.toLowerCase(),
+                  value: !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value.type)
                 }
                 if (_.isArray(value.enum)) {
                   cfgValue.enum = value.enum
@@ -63,8 +73,8 @@ module.exports = class Authentication extends Model {
                 _.set(result, key, cfgValue)
               } else {
                 _.set(result, key, {
-                  type: typeof value(),
-                  value: new value() // eslint-disable-line new-cap
+                  type: value.toLowerCase(),
+                  value: commonHelper.getTypeDefaultValue(value)
                 })
               }
               return result

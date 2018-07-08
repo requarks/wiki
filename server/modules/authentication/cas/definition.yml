@@ -1,0 +1,7 @@
+key: cas
+title: CAS
+author: requarks.io
+useForm: false
+props:
+  ssoBaseURL: String
+  serverBaseURL: String

@@ -1,0 +1,7 @@
+key: github
+title: GitHub
+author: requarks.io
+useForm: false
+props:
+  clientId: String
+  clientSecret: String

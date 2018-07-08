@@ -1,26 +1,15 @@
 /* global WIKI */
 
 // ------------------------------------
-// OAuth2 Account
+// Slack Account
 // ------------------------------------
 
-const OAuth2Strategy = require('passport-oauth2').Strategy
+const SlackStrategy = require('passport-slack').Strategy
 
 module.exports = {
-  key: 'oauth2',
-  title: 'OAuth2',
-  useForm: false,
-  props: {
-    clientId: String,
-    clientSecret: String,
-    authorizationURL: String,
-    tokenURL: String
-  },
   init (passport, conf) {
-    passport.use('oauth2',
-      new OAuth2Strategy({
-        authorizationURL: conf.authorizationURL,
-        tokenURL: conf.tokenURL,
+    passport.use('slack',
+      new SlackStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
@@ -30,7 +19,7 @@ module.exports = {
         }).catch((err) => {
           return cb(err, null) || true
         })
-      })
-    )
+      }
+      ))
   }
 }

@@ -1,0 +1,7 @@
+key: google
+title: Google
+author: requarks.io
+useForm: false
+props:
+  clientId: String
+  clientSecret: String

@@ -1,26 +1,19 @@
 /* global WIKI */
 
 // ------------------------------------
-// Twitch Account
+// Facebook Account
 // ------------------------------------
 
-const TwitchStrategy = require('passport-twitch').Strategy
+const FacebookStrategy = require('passport-facebook').Strategy
 
 module.exports = {
-  key: 'twitch',
-  title: 'Twitch',
-  useForm: false,
-  props: {
-    clientId: String,
-    clientSecret: String
-  },
   init (passport, conf) {
-    passport.use('twitch',
-      new TwitchStrategy({
+    passport.use('facebook',
+      new FacebookStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
-        scope: 'user_read'
+        profileFields: ['id', 'displayName', 'email']
       }, function (accessToken, refreshToken, profile, cb) {
         WIKI.db.users.processProfile(profile).then((user) => {
           return cb(null, user) || true

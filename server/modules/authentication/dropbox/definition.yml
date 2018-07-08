@@ -1,0 +1,7 @@
+key: dropbox
+title: Dropbox
+author: requarks.io
+useForm: false
+props:
+  clientId: String
+  clientSecret: String

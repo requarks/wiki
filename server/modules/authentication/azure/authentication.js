@@ -7,21 +7,6 @@
 const AzureAdOAuth2Strategy = require('passport-azure-ad-oauth2').Strategy
 
 module.exports = {
-  key: 'azure',
-  title: 'Azure Active Directory',
-  useForm: false,
-  props: {
-    clientId: String,
-    clientSecret: String,
-    resource: {
-      type: String,
-      default: '00000002-0000-0000-c000-000000000000'
-    },
-    tenant: {
-      type: String,
-      default: 'YOUR_TENANT.onmicrosoft.com'
-    }
-  },
   init (passport, conf) {
     const jwt = require('jsonwebtoken')
     passport.use('azure_ad_oauth2',

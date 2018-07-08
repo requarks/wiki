@@ -1,0 +1,9 @@
+key: oauth2
+title: OAuth2
+author: requarks.io
+useForm: false
+props:
+  clientId: String
+  clientSecret: String
+  authorizationURL: String
+  tokenURL: String

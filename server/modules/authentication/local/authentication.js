@@ -7,10 +7,6 @@
 const LocalStrategy = require('passport-local').Strategy
 
 module.exports = {
-  key: 'local',
-  title: 'Local',
-  useForm: true,
-  props: {},
   init (passport, conf) {
     passport.use('local',
       new LocalStrategy({

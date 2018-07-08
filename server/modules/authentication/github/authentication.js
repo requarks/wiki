@@ -1,28 +1,20 @@
 /* global WIKI */
 
 // ------------------------------------
-// Auth0 Account
+// GitHub Account
 // ------------------------------------
 
-const Auth0Strategy = require('passport-auth0').Strategy
+const GitHubStrategy = require('passport-github2').Strategy
 
 module.exports = {
-  key: 'auth0',
-  title: 'Auth0',
-  useForm: false,
-  props: {
-    domain: String,
-    clientId: String,
-    clientSecret: String
-  },
   init (passport, conf) {
-    passport.use('auth0',
-      new Auth0Strategy({
-        domain: conf.domain,
+    passport.use('github',
+      new GitHubStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL
-      }, function (accessToken, refreshToken, profile, cb) {
+        callbackURL: conf.callbackURL,
+        scope: ['user:email']
+      }, (accessToken, refreshToken, profile, cb) => {
         WIKI.db.users.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {

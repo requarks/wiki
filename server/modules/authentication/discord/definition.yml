@@ -1,0 +1,7 @@
+key: discord
+title: Discord
+author: requarks.io
+useForm: false
+props:
+  clientId: String
+  clientSecret: String

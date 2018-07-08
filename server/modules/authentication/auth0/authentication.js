@@ -1,32 +1,26 @@
 /* global WIKI */
 
 // ------------------------------------
-// Google ID Account
+// Auth0 Account
 // ------------------------------------
 
-const GoogleStrategy = require('passport-google-oauth20').Strategy
+const Auth0Strategy = require('passport-auth0').Strategy
 
 module.exports = {
-  key: 'google',
-  title: 'Google',
-  useForm: false,
-  props: {
-    clientId: String,
-    clientSecret: String
-  },
   init (passport, conf) {
-    passport.use('google',
-      new GoogleStrategy({
+    passport.use('auth0',
+      new Auth0Strategy({
+        domain: conf.domain,
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
-      }, (accessToken, refreshToken, profile, cb) => {
+      }, function (accessToken, refreshToken, profile, cb) {
         WIKI.db.users.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true
         })
-      })
-    )
+      }
+      ))
   }
 }

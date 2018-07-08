@@ -8,33 +8,6 @@ const LdapStrategy = require('passport-ldapauth').Strategy
 const fs = require('fs')
 
 module.exports = {
-  key: 'ldap',
-  title: 'LDAP / Active Directory',
-  useForm: true,
-  props: {
-    url: {
-      type: String,
-      default: 'ldap://serverhost:389'
-    },
-    bindDn: {
-      type: String,
-      default: `cn='root'`
-    },
-    bindCredentials: String,
-    searchBase: {
-      type: String,
-      default: 'o=users,o=example.com'
-    },
-    searchFilter: {
-      type: String,
-      default: '(uid={{username}})'
-    },
-    tlsEnabled: {
-      type: Boolean,
-      default: false
-    },
-    tlsCertPath: String
-  },
   init (passport, conf) {
     passport.use('ldapauth',
       new LdapStrategy({

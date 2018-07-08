@@ -7,13 +7,6 @@
 const DiscordStrategy = require('passport-discord').Strategy
 
 module.exports = {
-  key: 'discord',
-  title: 'Discord',
-  useForm: false,
-  props: {
-    clientId: String,
-    clientSecret: String
-  },
   init (passport, conf) {
     passport.use('discord',
       new DiscordStrategy({

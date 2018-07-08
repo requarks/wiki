@@ -110,6 +110,7 @@
     "passport": "0.4.0",
     "passport-auth0": "0.6.1",
     "passport-azure-ad-oauth2": "0.0.4",
+    "passport-cas": "0.1.1",
     "passport-discord": "0.1.3",
     "passport-dropbox-oauth2": "1.1.0",
     "passport-facebook": "2.1.1",

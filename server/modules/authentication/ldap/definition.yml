@@ -1,0 +1,22 @@
+key: ldap
+title: LDAP / Active Directory
+author: requarks.io
+useForm: true
+props:
+  url:
+    type: String
+    default: 'ldap://serverhost:389'
+  bindDn:
+    type: String
+    default: cn='root'
+  bindCredentials: String
+  searchBase:
+    type: String
+    default: 'o=users,o=example.com'
+  searchFilter:
+    type: String
+    default: '(uid={{username}})'
+  tlsEnabled:
+    type: Boolean
+    default: false
+  tlsCertPath: String

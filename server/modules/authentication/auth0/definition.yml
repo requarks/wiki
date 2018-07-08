@@ -1,0 +1,8 @@
+key: auth0
+title: Auth0
+author: requarks.io
+useForm: false
+props:
+  domain: String
+  clientId: String
+  clientSecret: String
