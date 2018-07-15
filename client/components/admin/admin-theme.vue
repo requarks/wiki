@@ -49,6 +49,7 @@
 
 <script>
 import _ from 'lodash'
+import { sync } from 'vuex-pathify'
 
 import themeSaveMutation from 'gql/admin/theme/theme-mutation-save.gql'
 
@@ -60,21 +61,17 @@ export default {
         { text: 'Default', author: 'requarks.io', value: 'default' }
       ],
       selectedTheme: 'default',
-      darkMode: false,
       darkModeInitial: false
     }
   },
-  watch: {
-    darkMode(newValue, oldValue) {
-      this.$store.commit('admin/setThemeDarkMode', newValue)
-    }
+  computed: {
+    darkMode: sync('admin/theme@dark')
   },
   mounted() {
-    this.darkMode = this.$store.state.admin.theme.dark
     this.darkModeInitial = this.darkMode
   },
   beforeDestroy() {
-    this.$store.commit('admin/setThemeDarkMode', this.darkModeInitial)
+    this.darkMode = this.darkModeInitial
   },
   methods: {
     async save () {

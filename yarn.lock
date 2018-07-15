@@ -4259,6 +4259,12 @@ env-variable@0.0.x:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/env-variable/-/env-variable-0.0.4.tgz#0d6280cf507d84242befe35a512b5ae4be77c54e"
 
+epic-spinners@1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/epic-spinners/-/epic-spinners-1.0.3.tgz#f8ec3c59a4132de74acfe4edc0a8e1ce8b0c8312"
+  dependencies:
+    vue "2.5.16"
+
 errno@^0.1.3, errno@~0.1.7:
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/errno/-/errno-0.1.7.tgz#4684d71779ad39af177e3f007996f7c67c852618"
@@ -12856,6 +12862,12 @@ vuedraggable@2.16.0:
 vuetify@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-1.1.1.tgz#8d8f64306a45aaf862487addae8decf082dac0a3"
+
+vuex-pathify@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/vuex-pathify/-/vuex-pathify-1.1.0.tgz#a908d5c9cd85ac42212332182f5ba9f060948fec"
+  dependencies:
+    lodash.clonedeep "^4.5.0"
 
 vuex-persistedstate@2.5.4:
   version "2.5.4"

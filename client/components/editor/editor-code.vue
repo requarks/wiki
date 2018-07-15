@@ -1,6 +1,6 @@
 <template lang='pug'>
   .editor-code
-    v-toolbar.editor-code-toolbar.px-3(dense, color='primary', dark)
+    v-toolbar.editor-code-toolbar(dense, color='primary', dark)
       v-btn(icon).mx-0
         svg.icons.is-18(role='img')
           title Bold

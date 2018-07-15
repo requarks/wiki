@@ -1,0 +1,7 @@
+mutation {
+  page {
+    create {
+      page
+    }
+  }
+}

@@ -1,11 +1,15 @@
 import _ from 'lodash'
 import Vue from 'vue'
 import Vuex from 'vuex'
+import pathify from 'vuex-pathify'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   strict: process.env.NODE_ENV !== 'production',
+  plugins: [
+    pathify.plugin
+  ],
   state: {
     loadingStack: [],
     notification: {
