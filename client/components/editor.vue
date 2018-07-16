@@ -4,9 +4,12 @@
       template(slot='actions')
         v-btn(outline, color='green', @click.native.stop='save')
           v-icon(color='green', left) check
-          span.white--text Save
-        v-btn(icon): v-icon(color='red') close
-        v-btn(icon, @click.native.stop='openModal(`properties`)'): v-icon(color='white') sort_by_alpha
+          span.white--text(v-if='mode === "create"') {{ $t('common:actions.create') }}
+          span.white--text(v-else) {{ $t('common:actions.save') }}
+        v-btn.is-icon(outline, color='red').mx-0: v-icon(color='red') close
+        v-btn(outline, color='blue', @click.native.stop='openModal(`properties`)', dark)
+          v-icon(left) sort_by_alpha
+          span.white--text {{ $t('editor:page') }}
     v-content
       editor-code
       component(:is='currentModal')
@@ -24,6 +27,7 @@
 
 <script>
 import _ from 'lodash'
+import { get } from 'vuex-pathify'
 import { AtomSpinner } from 'epic-spinners'
 
 import savePageMutation from 'gql/editor/save.gql'
@@ -44,6 +48,16 @@ export default {
     return {
       currentModal: '',
       dialogProgress: false
+    }
+  },
+  computed: {
+    mode: get('editor/mode')
+  },
+  mounted() {
+    if (this.mode === 'create') {
+      _.delay(() => {
+        this.openModal('properties')
+      }, 500)
     }
   },
   methods: {

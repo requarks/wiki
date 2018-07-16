@@ -2,7 +2,6 @@
   v-bottom-sheet(
     v-model='isShown'
     inset
-    persistent
     )
     .dialog-header
       v-icon(color='white') sort_by_alpha
@@ -19,6 +18,7 @@
       v-card-text
         v-subheader.pl-0 Page Info
         v-text-field(
+          ref='iptTitle'
           outline
           background-color='grey lighten-2'
           label='Title'
@@ -43,101 +43,120 @@
       v-divider
       v-card-text
         v-subheader.pl-0 Tags
-        v-select(
+        v-combobox(
           background-color='grey lighten-2'
           chips
           deletable-chips
           hide-details
           label='Tags'
           outline
-          tags
+          multiple
           v-model='tags'
           single-line
           )
       v-divider
-      v-card-text
+      v-card-text.pb-5
         v-subheader.pl-0 Publishing State
-        v-layout(row, wrap)
-          v-flex(xs4)
-            v-switch(
-              label='Published'
-              v-model='isPublished'
-              color='primary'
-              )
-          v-flex(xs4)
-            v-menu(
-              ref='menuPublishStart'
-              lazy=''
-              :close-on-content-click='false'
-              v-model='isPublishStartShown'
-              transition='scale-transition'
-              offset-y=''
-              full-width=''
-              :nudge-right='40'
-              min-width='290px'
-              :return-value.sync='publishStartDate'
-              )
-              v-text-field(
-                slot='activator'
-                label='Publish starting on...'
-                v-model='publishStartDate'
-                prepend-icon='event'
-                readonly)
-              v-date-picker(
-                v-model='publishStartDate'
-                :min='(new Date()).toISOString().substring(0, 10)'
-                reactive
+        v-container.pa-0(fluid, grid-list-lg)
+          v-layout(row, wrap)
+            v-flex(xs12, md4)
+              v-switch(
+                label='Published'
+                v-model='isPublished'
+                color='primary'
                 )
-                v-spacer
-                v-btn(
-                  flat=''
-                  color='primary'
-                  @click='isPublishStartShown = false'
-                  ) Cancel
-                v-btn(
-                  flat=''
-                  color='primary'
-                  @click='$refs.menuPublishStart.save(date)'
-                  ) OK
-          v-flex(xs4)
-            v-menu(
-              ref='menuPublishEnd'
-              lazy=''
-              :close-on-content-click='false'
-              v-model='isPublishEndShown'
-              transition='scale-transition'
-              offset-y=''
-              full-width=''
-              :nudge-right='40'
-              min-width='290px'
-              :return-value.sync='publishEndDate'
-              )
-              v-text-field(
-                slot='activator'
-                label='Publish ending on...'
-                v-model='publishEndDate'
-                prepend-icon='event'
-                readonly
+            v-flex(xs12, md4)
+              v-dialog(
+                ref='menuPublishStart'
+                lazy
+                :close-on-content-click='false'
+                v-model='isPublishStartShown'
+                :return-value.sync='publishStartDate'
+                full-width
+                width='460px'
+                :disabled='!isPublished'
                 )
-              v-date-picker(
-                v-model='publishEndDate'
-                :min='(new Date()).toISOString().substring(0, 10)'
-                reactive
+                v-text-field(
+                  slot='activator'
+                  label='Publish starting on...'
+                  v-model='publishStartDate'
+                  prepend-icon='event'
+                  readonly
+                  outline
+                  background-color='grey lighten-2'
+                  clearable
+                  hint='Leave empty for no start date'
+                  persistent-hint
+                  :disabled='!isPublished'
+                  )
+                v-date-picker(
+                  v-model='publishStartDate'
+                  :min='(new Date()).toISOString().substring(0, 10)'
+                  color='primary'
+                  reactive
+                  scrollable
+                  landscape
+                  )
+                  v-spacer
+                  v-btn(
+                    flat=''
+                    color='primary'
+                    @click='isPublishStartShown = false'
+                    ) Cancel
+                  v-btn(
+                    flat=''
+                    color='primary'
+                    @click='$refs.menuPublishStart.save(publishStartDate)'
+                    ) OK
+            v-flex(xs12, md4)
+              v-dialog(
+                ref='menuPublishEnd'
+                lazy
+                :close-on-content-click='false'
+                v-model='isPublishEndShown'
+                :return-value.sync='publishEndDate'
+                full-width
+                width='460px'
+                :disabled='!isPublished'
                 )
-                v-spacer
-                v-btn(
-                  flat=''
+                v-text-field(
+                  slot='activator'
+                  label='Publish ending on...'
+                  v-model='publishEndDate'
+                  prepend-icon='event'
+                  readonly
+                  outline
+                  background-color='grey lighten-2'
+                  clearable
+                  hint='Leave empty for no end date'
+                  persistent-hint
+                  :disabled='!isPublished'
+                  )
+                v-date-picker(
+                  v-model='publishEndDate'
+                  :min='(new Date()).toISOString().substring(0, 10)'
                   color='primary'
-                  @click='isPublishEndShown = false'
-                  ) Cancel
-                v-btn(
-                  flat=''
-                  color='primary'
-                  @click='$refs.menuPublishEnd.save(date)'
-                  ) OK
+                  reactive
+                  scrollable
+                  landscape
+                  )
+                  v-spacer
+                  v-btn(
+                    flat=''
+                    color='primary'
+                    @click='isPublishEndShown = false'
+                    ) Cancel
+                  v-btn(
+                    flat=''
+                    color='primary'
+                    @click='$refs.menuPublishEnd.save(publishEndDate)'
+                    ) OK
+
+    v-tour(name='editorPropertiesTour', :steps='tourSteps')
 </template>
 
 <script>
+import _ from 'lodash'
 import { sync } from 'vuex-pathify'
 
 export default {
@@ -145,7 +164,13 @@ export default {
     return {
       isShown: false,
       isPublishStartShown: false,
-      isPublishEndShown: false
+      isPublishEndShown: false,
+      tourSteps: [
+        {
+          target: '.dialog-header',
+          content: `First-time tour help here. <strong>TODO</strong>!`
+        }
+      ]
     }
   },
   computed: {
@@ -159,6 +184,10 @@ export default {
   },
   mounted() {
     this.isShown = true
+    _.delay(() => {
+      this.$refs.iptTitle.focus()
+      // this.$tours['editorPropertiesTour'].start()
+    }, 500)
   },
   methods: {
     close() {

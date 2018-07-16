@@ -18,6 +18,7 @@ import Velocity from 'velocity-animate'
 import Hammer from 'hammerjs'
 import moment from 'moment'
 import VueMoment from 'vue-moment'
+import VueTour from 'vue-tour'
 import store from './store'
 
 // ====================================
@@ -98,6 +99,7 @@ Vue.use(helpers)
 Vue.use(VeeValidate, { events: '' })
 Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
+Vue.use(VueTour)
 
 Vue.prototype.Velocity = Velocity
 

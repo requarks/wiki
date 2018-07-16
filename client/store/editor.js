@@ -6,9 +6,10 @@ const state = {
   tags: [],
   path: '',
   isPublished: true,
-  publishEtartDate: '',
+  publishStartDate: '',
   publishEndDate: '',
-  locale: 'en'
+  locale: 'en',
+  mode: 'create'
 }
 
 export default {
