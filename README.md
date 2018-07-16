@@ -124,7 +124,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Operations
     - [ ] Save :rocket:
   - [ ] Dialogs
-    - [ ] Properties
+    - [x] Properties
     - [ ] Access
     - [ ] Image + File Manager
 - [ ] Modular content parsers/renderers
@@ -134,7 +134,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Algolia
 - [ ] Modular storage engines
   - [ ] Git
-  - [ ] Local Disk
+  - [ ] Local Disk :rocket:
 - [ ] Multilingual versions of the same page (i18n)
 - [ ] History / Revert to previous version
 - [ ] User Groups + Better permissions management
