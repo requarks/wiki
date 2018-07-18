@@ -28,6 +28,8 @@
 - [Feature Requests](https://requests.requarks.io/wiki)
 - [Milestones](#milestones)
 - [Chat with us](#gitter)
+- [Donate](https://opencollective.com/wikijs)
+- [T-Shirts Shop](#t-shirts-shop)
 - [Translations](#translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
 - [Contribute](#contributors)
