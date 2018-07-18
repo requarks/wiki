@@ -175,6 +175,10 @@ Want to discuss features, ideas or issues? Join our [gitter channel](https://git
 Follow our Twitter feed to learn about upcoming updates and new releases!  
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat-square)](https://twitter.com/requarks)  
 
+<h2 align="center">T-Shirts Shop</h2>
+
+Want to donate to this project but get something in return as well? Check out our amazing t-shirts for men, women and kids, as well as other goodies: [Wiki.js Shop](https://wikijs.threadless.com/)
+
 <h2 align="center">Translations</h2>
 
 We are looking for translators to make Wiki.js available in multiple languages. If your language is not listed below and would like to contribute to this project, contact us on our [gitter channel](https://gitter.im/Requarks/wiki) and we'll provide you with the necessary tool to add translations, no coding required!
