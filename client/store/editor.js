@@ -1,15 +1,16 @@
 import { make } from 'vuex-pathify'
 
 const state = {
-  title: '',
+  content: '',
   description: '',
-  tags: [],
-  path: '',
   isPublished: true,
-  publishStartDate: '',
-  publishEndDate: '',
   locale: 'en',
-  mode: 'create'
+  mode: 'create',
+  path: '',
+  publishEndDate: '',
+  publishStartDate: '',
+  tags: [],
+  title: ''
 }
 
 export default {

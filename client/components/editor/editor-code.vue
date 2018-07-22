@@ -220,6 +220,7 @@ export default {
     },
     onCmInput: _.debounce(function (newContent) {
       linesMap = []
+      this.$store.set('editor/content', newContent)
       this.previewHTML = md.render(newContent)
       this.$nextTick(() => {
         Prism.highlightAllUnder(this.$refs.editorPreview)

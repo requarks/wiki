@@ -22,16 +22,9 @@ module.exports = {
   },
   PageMutation: {
     async create(obj, args, context) {
-      const page = await WIKI.db.pages.query().insertAndFetch({
-        path: args.path,
-        title: args.title,
-        description: args.description,
+      const page = await WIKI.db.pages.createPage({
+        ...args,
         isPrivate: false,
-        isPublished: args.isPublished,
-        publishStartDate: args.publishStartDate,
-        publishEndDate: args.publishEndDate,
-        localeCode: args.locale,
-        editorKey: args.editor,
         authorId: context.req.user.id
       })
       return {

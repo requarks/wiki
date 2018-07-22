@@ -1,5 +1,7 @@
 const Model = require('objection').Model
 
+/* global WIKI */
+
 /**
  * Pages model
  */
@@ -74,5 +76,23 @@ module.exports = class Page extends Model {
   $beforeInsert() {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
+  }
+
+  static async createPage(opts) {
+    const page = await WIKI.db.pages.query().insertAndFetch({
+      authorId: opts.authorId,
+      content: opts.content,
+      description: opts.description,
+      editorKey: opts.editor,
+      isPrivate: opts.isPrivate,
+      isPublished: opts.isPublished,
+      localeCode: opts.locale,
+      path: opts.path,
+      publishEndDate: opts.publishEndDate,
+      publishStartDate: opts.publishStartDate,
+      title: opts.title
+    })
+    await WIKI.db.storage.createPage(page)
+    return page
   }
 }

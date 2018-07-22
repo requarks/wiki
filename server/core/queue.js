@@ -10,10 +10,14 @@ module.exports = {
   init() {
     _.forOwn(WIKI.data.jobs, (queueParams, queueName) => {
       this.job[queueName] = new Bull(queueName, {
-        prefix: `q-${WIKI.config.ha.uid}`,
+        prefix: `queue`,
         redis: WIKI.config.redis
       })
-      this.job[queueName].process(path.join(WIKI.SERVERPATH, `jobs/${_.kebabCase(queueName)}.js`))
+      if (queueParams.concurrency > 0) {
+        this.job[queueName].process(queueParams.concurrency, path.join(WIKI.SERVERPATH, `jobs/${_.kebabCase(queueName)}.js`))
+      } else {
+        this.job[queueName].process(path.join(WIKI.SERVERPATH, `jobs/${_.kebabCase(queueName)}.js`))
+      }
     })
     return this
   },
@@ -36,7 +40,7 @@ module.exports = {
     return Promise.each(_.keys(WIKI.data.jobs), queueName => {
       return new Promise((resolve, reject) => {
         let keyStream = WIKI.redis.scanStream({
-          match: `q-${WIKI.config.ha.uid}:${queueName}:*`
+          match: `queue:${queueName}:*`
         })
         keyStream.on('data', resultKeys => {
           if (resultKeys.length > 0) {

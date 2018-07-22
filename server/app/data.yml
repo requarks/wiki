@@ -61,12 +61,19 @@ jobs:
   fetchGraphLocale:
     onInit: false
     cron: false
+    concurrency: 0
   purgeUploads:
     onInit: true
     cron: '*/15 * * * *'
+    concurrency: 0
   syncGraphLocales:
     onInit: true
     cron: '0 0 * * *'
+    concurrency: 0
+  syncStorage:
+    onInit: false
+    cron: false
+    concurrency: 1
 telemetry:
   BUGSNAG_ID: 'bb4b324d0675bcbba10025617fd2cec8'
   BUGSNAG_REMOTE: 'https://notify.bugsnag.com'

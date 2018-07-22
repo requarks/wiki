@@ -12,10 +12,15 @@
       v-divider.mt-3
       v-subheader {{ $t('admin:contribute.fundOurWork') }}
       .body-1.pl-3 {{ $t('admin:contribute.openCollective') }}
-      v-card-actions.mt-3.ml-2
+      v-card-actions.ml-2
         v-btn(depressed, color='primary', href='https://opencollective.com/wikijs')
           v-icon(left) local_atm
           span {{ $t('admin:contribute.makeADonation') }}
+      .body-1.mt-3.pl-3 {{ $t('admin:contribute.tshirts') }}
+      v-card-actions.ml-2
+        v-btn(depressed, color='primary', href='https://wikijs.threadless.com')
+          v-icon(left) shopping_cart
+          span {{ $t('admin:contribute.shop') }}
       v-divider.mt-3
       v-subheader {{ $t('admin:contribute.contribute') }}
       .body-1.pl-3

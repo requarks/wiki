@@ -1,6 +1,6 @@
-mutation ($description: String, $editor: String, $isPublished: Boolean!, $locale: String!, $path: String!, $publishEndDate: Date, $publishStartDate: Date, $tags: [String], $title: String!) {
+mutation ($content: String!, $description: String!, $editor: String!, $isPrivate: Boolean!, $isPublished: Boolean!, $locale: String!, $path: String!, $publishEndDate: Date, $publishStartDate: Date, $tags: [String]!, $title: String!) {
   pages {
-    create(description: $description, editor: $editor, isPublished: $isPublished, locale: $locale, path: $path, publishEndDate: $publishEndDate, publishStartDate: $publishStartDate, tags: $tags, title: $title) {
+    create(content: $content, description: $description, editor: $editor, isPrivate: $isPrivate, isPublished: $isPublished, locale: $locale, path: $path, publishEndDate: $publishEndDate, publishStartDate: $publishStartDate, tags: $tags, title: $title) {
       responseResult {
         succeeded
         errorCode

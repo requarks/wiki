@@ -94,9 +94,11 @@ export default {
         const resp = await this.$apollo.mutate({
           mutation: createPageMutation,
           variables: {
+            content: this.$store.get('editor/content'),
             description: this.$store.get('editor/description'),
             editor: 'markdown',
             locale: this.$store.get('editor/locale'),
+            isPrivate: false,
             isPublished: this.$store.get('editor/isPublished'),
             path: this.$store.get('editor/path'),
             publishEndDate: this.$store.get('editor/publishEndDate'),

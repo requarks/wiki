@@ -34,20 +34,22 @@ type PageQuery {
 
 type PageMutation {
   create(
-    description: String
-    editor: String
+    content: String!
+    description: String!
+    editor: String!
     isPublished: Boolean!
-    isPrivate: Boolean
+    isPrivate: Boolean!
     locale: String!
     path: String!
     publishEndDate: Date
     publishStartDate: Date
-    tags: [String]
+    tags: [String]!
     title: String!
   ): PageResponse
 
   update(
     id: Int!
+    content: String
     description: String
     editor: String
     isPublished: Boolean

@@ -193,7 +193,6 @@ module.exports = class User extends Model {
   }
 
   static async login (opts, context) {
-    console.info(context)
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
       _.set(context.req, 'body.email', opts.username)
       _.set(context.req, 'body.password', opts.password)

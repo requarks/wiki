@@ -1,23 +1,23 @@
 module.exports = {
-  async activated(opts) {
+  async activated() {
 
   },
-  async deactivated(opts) {
+  async deactivated() {
 
   },
-  async init(opts) {
+  async init() {
 
   },
-  async created(opts) {
+  async created() {
 
   },
-  async updated(opts) {
+  async updated() {
 
   },
-  async deleted(opts) {
+  async deleted() {
 
   },
-  async renamed(opts) {
+  async renamed() {
 
   }
 }
