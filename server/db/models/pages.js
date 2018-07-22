@@ -49,11 +49,19 @@ module.exports = class Page extends Model {
           to: 'users.id'
         }
       },
+      editor: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./editors'),
+        join: {
+          from: 'pages.editorKey',
+          to: 'editors.key'
+        }
+      },
       locale: {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./locales'),
         join: {
-          from: 'users.locale',
+          from: 'pages.localeCode',
           to: 'locales.code'
         }
       }

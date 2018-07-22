@@ -23,13 +23,11 @@ module.exports = class User extends Model {
         id: {type: 'integer'},
         email: {type: 'string', format: 'email'},
         name: {type: 'string', minLength: 1, maxLength: 255},
-        provider: {type: 'string', minLength: 1, maxLength: 255},
         providerId: {type: 'number'},
         password: {type: 'string'},
         role: {type: 'string', enum: ['admin', 'guest', 'user']},
         tfaIsActive: {type: 'boolean', default: false},
         tfaSecret: {type: 'string'},
-        locale: {type: 'string'},
         jobTitle: {type: 'string'},
         location: {type: 'string'},
         pictureUrl: {type: 'string'},
@@ -51,6 +49,30 @@ module.exports = class User extends Model {
             to: 'userGroups.groupId'
           },
           to: 'groups.id'
+        }
+      },
+      provider: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./authentication'),
+        join: {
+          from: 'users.providerKey',
+          to: 'authentication.key'
+        }
+      },
+      defaultEditor: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./editors'),
+        join: {
+          from: 'users.editorKey',
+          to: 'editors.key'
+        }
+      },
+      locale: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./locales'),
+        join: {
+          from: 'users.localeCode',
+          to: 'locales.code'
         }
       }
     }

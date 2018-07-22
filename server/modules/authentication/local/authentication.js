@@ -15,7 +15,7 @@ module.exports = {
       }, (uEmail, uPassword, done) => {
         WIKI.db.users.query().findOne({
           email: uEmail,
-          provider: 'local'
+          providerKey: 'local'
         }).then((user) => {
           if (user) {
             return user.verifyPassword(uPassword).then(() => {

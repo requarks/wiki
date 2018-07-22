@@ -32,30 +32,46 @@
           counter='255'
           v-model='description'
           )
-        v-text-field(
-          outline
-          background-color='grey lighten-2'
-          label='Path'
-          prefix='/'
-          append-icon='folder'
-          v-model='path'
-          )
       v-divider
-      v-card-text
-        v-subheader.pl-0 Tags
+      v-card-text.grey.lighten-5
+        v-subheader.pl-0 Path &amp; Categorization
+        v-container.pa-0(fluid, grid-list-lg)
+          v-layout(row, wrap)
+            v-flex(xs12, md2)
+              v-select(
+                outline
+                background-color='grey lighten-2'
+                label='Locale'
+                suffix='/'
+                :items='namespaces'
+                v-model='locale'
+                hide-details
+              )
+            v-flex(xs12, md10)
+              v-text-field(
+                outline
+                background-color='grey lighten-2'
+                label='Path'
+                append-icon='folder'
+                v-model='path'
+                hint='Do not include any leading or trailing slashes.'
+                persistent-hint
+                @click:append='showPathSelector'
+                )
         v-combobox(
           background-color='grey lighten-2'
           chips
           deletable-chips
-          hide-details
           label='Tags'
           outline
           multiple
           v-model='tags'
           single-line
+          hint='Use tags to categorize your pages and make them easier to find.'
+          persistent-hint
           )
       v-divider
-      v-card-text.pb-5
+      v-card-text.pb-5.grey.lighten-4
         v-subheader.pl-0 Publishing State
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
@@ -64,6 +80,8 @@
                 label='Published'
                 v-model='isPublished'
                 color='primary'
+                hint='Unpublished pages can still be seen by users having write permissions.'
+                persistent-hint
                 )
             v-flex(xs12, md4)
               v-dialog(
@@ -165,6 +183,7 @@ export default {
       isShown: false,
       isPublishStartShown: false,
       isPublishEndShown: false,
+      namespaces: ['en'],
       tourSteps: [
         {
           target: '.dialog-header',
@@ -176,6 +195,7 @@ export default {
   computed: {
     title: sync('editor/title'),
     description: sync('editor/description'),
+    locale: sync('editor/locale'),
     tags: sync('editor/tags'),
     path: sync('editor/path'),
     isPublished: sync('editor/isPublished'),
@@ -193,6 +213,13 @@ export default {
     close() {
       this.isShown = false
       this.$parent.$parent.closeModal()
+    },
+    showPathSelector() {
+      this.$store.commit('showNotification', {
+        message: 'Coming soon!',
+        style: 'purple',
+        icon: 'directions_boat'
+      })
     }
   }
 }

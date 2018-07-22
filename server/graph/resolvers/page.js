@@ -11,35 +11,44 @@ module.exports = {
   },
   PageQuery: {
     async list(obj, args, context, info) {
-      return WIKI.db.groups.query().select(
-        'groups.*',
-        WIKI.db.groups.relatedQuery('users').count().as('userCount')
+      return WIKI.db.pages.query().select(
+        'pages.*',
+        WIKI.db.pages.relatedQuery('users').count().as('userCount')
       )
     },
     async single(obj, args, context, info) {
-      return WIKI.db.groups.query().findById(args.id)
+      return WIKI.db.pages.query().findById(args.id)
     }
   },
   PageMutation: {
-    async create(obj, args) {
-      const group = await WIKI.db.pages.query().insertAndFetch({
-        name: args.name
+    async create(obj, args, context) {
+      const page = await WIKI.db.pages.query().insertAndFetch({
+        path: args.path,
+        title: args.title,
+        description: args.description,
+        isPrivate: false,
+        isPublished: args.isPublished,
+        publishStartDate: args.publishStartDate,
+        publishEndDate: args.publishEndDate,
+        localeCode: args.locale,
+        editorKey: args.editor,
+        authorId: context.req.user.id
       })
       return {
-        responseResult: graphHelper.generateSuccess('Group created successfully.'),
-        group
+        responseResult: graphHelper.generateSuccess('Page created successfully.'),
+        page
       }
     },
     async delete(obj, args) {
       await WIKI.db.groups.query().deleteById(args.id)
       return {
-        responseResult: graphHelper.generateSuccess('Group has been deleted.')
+        responseResult: graphHelper.generateSuccess('Page has been deleted.')
       }
     },
     async update(obj, args) {
       await WIKI.db.groups.query().patch({ name: args.name }).where('id', args.id)
       return {
-        responseResult: graphHelper.generateSuccess('Group has been updated.')
+        responseResult: graphHelper.generateSuccess('Page has been updated.')
       }
     }
   },

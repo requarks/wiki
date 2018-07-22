@@ -325,7 +325,7 @@ module.exports = () => {
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
       await WIKI.db.users.query().delete().where({
-        provider: 'local',
+        providerKey: 'local',
         email: req.body.adminEmail
       })
       await WIKI.db.users.query().insert({
@@ -342,7 +342,7 @@ module.exports = () => {
       // Create Guest account
       WIKI.logger.info('Creating guest account...')
       const guestUsr = await WIKI.db.users.query().findOne({
-        provider: 'local',
+        providerKey: 'local',
         email: 'guest@example.com'
       })
       if (!guestUsr) {

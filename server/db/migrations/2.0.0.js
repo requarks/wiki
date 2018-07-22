@@ -150,16 +150,16 @@ exports.up = knex => {
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
     .table('pages', table => {
-      table.string('editor').references('key').inTable('editors')
-      table.string('locale', 2).references('code').inTable('locales')
+      table.string('editorKey').references('key').inTable('editors')
+      table.string('localeCode', 2).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
     .table('users', table => {
-      table.string('provider').references('key').inTable('authentication').notNullable().defaultTo('local')
-      table.string('locale', 2).references('code').inTable('locales').notNullable().defaultTo('en')
+      table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')
+      table.string('localeCode', 2).references('code').inTable('locales').notNullable().defaultTo('en')
       table.string('defaultEditor').references('key').inTable('editors').notNullable().defaultTo('markdown')
 
-      table.unique(['provider', 'email'])
+      table.unique(['providerKey', 'email'])
     })
 }
 

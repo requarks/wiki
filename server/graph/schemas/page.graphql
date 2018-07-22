@@ -21,7 +21,10 @@ type PageQuery {
   ): [PageMinimal]
 
   single(
-    id: Int!
+    id: Int
+    path: String
+    locale: String
+    isPrivate: Boolean
   ): Page
 }
 
@@ -32,8 +35,10 @@ type PageQuery {
 type PageMutation {
   create(
     description: String
-    isPublished: Boolean
-    locale: String
+    editor: String
+    isPublished: Boolean!
+    isPrivate: Boolean
+    locale: String!
     path: String!
     publishEndDate: Date
     publishStartDate: Date
@@ -43,7 +48,15 @@ type PageMutation {
 
   update(
     id: Int!
-    name: String!
+    description: String
+    editor: String
+    isPublished: Boolean
+    locale: String
+    path: String
+    publishEndDate: Date
+    publishStartDate: Date
+    tags: [String]
+    title: String
   ): DefaultResponse
 
   delete(

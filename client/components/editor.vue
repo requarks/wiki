@@ -21,16 +21,27 @@
               :size='60'
               color='#FFF'
               )
-            .subheading Processing
-            .caption.blue--text.text--lighten-3 Please wait...
+            .subheading {{ $t('editor:save.processing') }}
+            .caption.blue--text.text--lighten-3 {{ $t('editor:save.pleaseWait') }}
+
+    v-snackbar(
+      :color='notification.style'
+      bottom,
+      right,
+      multi-line,
+      v-model='notificationState'
+    )
+      .text-xs-left
+        v-icon.mr-3(dark) {{ notification.icon }}
+        span {{ notification.message }}
 </template>
 
 <script>
 import _ from 'lodash'
-import { get } from 'vuex-pathify'
+import { get, sync } from 'vuex-pathify'
 import { AtomSpinner } from 'epic-spinners'
 
-import savePageMutation from 'gql/editor/save.gql'
+import createPageMutation from 'gql/editor/create.gql'
 
 import editorStore from '@/store/editor'
 
@@ -51,7 +62,9 @@ export default {
     }
   },
   computed: {
-    mode: get('editor/mode')
+    mode: get('editor/mode'),
+    notification: get('notification'),
+    notificationState: sync('notification@isActive')
   },
   mounted() {
     if (this.mode === 'create') {
@@ -77,12 +90,35 @@ export default {
     },
     async save() {
       this.showProgressDialog('saving')
-      // const resp = await this.$apollo.mutate({
-      //   mutation: savePageMutation,
-      //   variables: {
+      if (this.$store.get('editor/mode') === 'create') {
+        const resp = await this.$apollo.mutate({
+          mutation: createPageMutation,
+          variables: {
+            description: this.$store.get('editor/description'),
+            editor: 'markdown',
+            locale: this.$store.get('editor/locale'),
+            isPublished: this.$store.get('editor/isPublished'),
+            path: this.$store.get('editor/path'),
+            publishEndDate: this.$store.get('editor/publishEndDate'),
+            publishStartDate: this.$store.get('editor/publishStartDate'),
+            tags: this.$store.get('editor/tags'),
+            title: this.$store.get('editor/title')
+          }
+        })
+        if (_.get(resp, 'data.pages.create.responseResult.succeeded')) {
+          this.$store.commit('showNotification', {
+            message: this.$t('editor:save.success'),
+            style: 'success',
+            icon: 'check'
+          })
+          this.$store.set('editor/mode', 'update')
+        } else {
 
-      //   }
-      // })
+        }
+      } else {
+
+      }
+      this.hideProgressDialog()
     }
   }
 }
