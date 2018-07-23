@@ -7,13 +7,24 @@
       v-icon(color='white') sort_by_alpha
       .subheading.white--text.ml-2 Page Properties
       v-spacer
-      v-btn(
+      v-btn.mx-0(
         outline
         dark
         @click.native='close'
         )
-        v-icon(left) close
-        span Close
+        v-icon(left) check
+        span {{ $t('common:actions.ok') }}
+      v-menu
+        v-btn.is-icon(
+          slot='activator'
+          outline
+          dark
+          )
+          v-icon more_horiz
+        v-list
+          v-list-tile
+            v-list-tile-avatar: v-icon delete
+            v-list-tile-title Delete Page
     v-card(tile)
       v-card-text
         v-subheader.pl-0 Page Info

@@ -6,7 +6,9 @@
           v-icon(color='green', left) check
           span.white--text(v-if='mode === "create"') {{ $t('common:actions.create') }}
           span.white--text(v-else) {{ $t('common:actions.save') }}
-        v-btn.is-icon(outline, color='red').mx-0: v-icon(color='red') close
+        v-btn(outline, color='red').mx-0
+          v-icon(color='red', left) close
+          span.white--text {{ $t('common:actions.discard') }}
         v-btn(outline, color='blue', @click.native.stop='openModal(`properties`)', dark)
           v-icon(left) sort_by_alpha
           span.white--text {{ $t('editor:page') }}
@@ -42,6 +44,7 @@ import { get, sync } from 'vuex-pathify'
 import { AtomSpinner } from 'epic-spinners'
 
 import createPageMutation from 'gql/editor/create.gql'
+import updatePageMutation from 'gql/editor/update.gql'
 
 import editorStore from '@/store/editor'
 
@@ -90,35 +93,79 @@ export default {
     },
     async save() {
       this.showProgressDialog('saving')
-      if (this.$store.get('editor/mode') === 'create') {
-        const resp = await this.$apollo.mutate({
-          mutation: createPageMutation,
-          variables: {
-            content: this.$store.get('editor/content'),
-            description: this.$store.get('editor/description'),
-            editor: 'markdown',
-            locale: this.$store.get('editor/locale'),
-            isPrivate: false,
-            isPublished: this.$store.get('editor/isPublished'),
-            path: this.$store.get('editor/path'),
-            publishEndDate: this.$store.get('editor/publishEndDate'),
-            publishStartDate: this.$store.get('editor/publishStartDate'),
-            tags: this.$store.get('editor/tags'),
-            title: this.$store.get('editor/title')
-          }
-        })
-        if (_.get(resp, 'data.pages.create.responseResult.succeeded')) {
-          this.$store.commit('showNotification', {
-            message: this.$t('editor:save.success'),
-            style: 'success',
-            icon: 'check'
+      try {
+        if (this.$store.get('editor/mode') === 'create') {
+          // --------------------------------------------
+          // -> CREATE PAGE
+          // --------------------------------------------
+
+          let resp = await this.$apollo.mutate({
+            mutation: createPageMutation,
+            variables: {
+              content: this.$store.get('editor/content'),
+              description: this.$store.get('editor/description'),
+              editor: 'markdown',
+              locale: this.$store.get('editor/locale'),
+              isPrivate: false,
+              isPublished: this.$store.get('editor/isPublished'),
+              path: this.$store.get('editor/path'),
+              publishEndDate: this.$store.get('editor/publishEndDate'),
+              publishStartDate: this.$store.get('editor/publishStartDate'),
+              tags: this.$store.get('editor/tags'),
+              title: this.$store.get('editor/title')
+            }
           })
-          this.$store.set('editor/mode', 'update')
+          resp = _.get(resp, 'data.pages.create', {})
+          if (_.get(resp, 'responseResult.succeeded')) {
+            this.$store.commit('showNotification', {
+              message: this.$t('editor:save.success'),
+              style: 'success',
+              icon: 'check'
+            })
+            this.$store.set('editor/id', _.get(resp, 'page.id'))
+            this.$store.set('editor/mode', 'update')
+          } else {
+            throw new Error(_.get(resp, 'responseResult.message'))
+          }
         } else {
+          // --------------------------------------------
+          // -> UPDATE EXISTING PAGE
+          // --------------------------------------------
 
+          let resp = await this.$apollo.mutate({
+            mutation: updatePageMutation,
+            variables: {
+              id: this.$store.get('editor/id'),
+              content: this.$store.get('editor/content'),
+              description: this.$store.get('editor/description'),
+              editor: 'markdown',
+              locale: this.$store.get('editor/locale'),
+              isPrivate: false,
+              isPublished: this.$store.get('editor/isPublished'),
+              path: this.$store.get('editor/path'),
+              publishEndDate: this.$store.get('editor/publishEndDate'),
+              publishStartDate: this.$store.get('editor/publishStartDate'),
+              tags: this.$store.get('editor/tags'),
+              title: this.$store.get('editor/title')
+            }
+          })
+          resp = _.get(resp, 'data.pages.update', {})
+          if (_.get(resp, 'responseResult.succeeded')) {
+            this.$store.commit('showNotification', {
+              message: this.$t('editor:save.success'),
+              style: 'success',
+              icon: 'check'
+            })
+          } else {
+            throw new Error(_.get(resp, 'responseResult.message'))
+          }
         }
-      } else {
-
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          message: err.message,
+          style: 'error',
+          icon: 'warning'
+        })
       }
       this.hideProgressDialog()
     }

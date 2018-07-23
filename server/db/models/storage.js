@@ -87,12 +87,12 @@ module.exports = class Storage extends Model {
     }
   }
 
-  static async createPage(page) {
+  static async pageEvent(event, page) {
     const targets = await WIKI.db.storage.query().where('isEnabled', true)
     if (targets && targets.length > 0) {
       _.forEach(targets, target => {
         WIKI.queue.job.syncStorage.add({
-          event: 'created',
+          event,
           target,
           page
         }, {

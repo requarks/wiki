@@ -68,6 +68,19 @@ exports.up = knex => {
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
+    // PAGE HISTORY ------------------------
+    .createTable('pageHistory', table => {
+      table.increments('id').primary()
+      table.string('path').notNullable()
+      table.string('title').notNullable()
+      table.string('description')
+      table.boolean('isPrivate').notNullable().defaultTo(false)
+      table.boolean('isPublished').notNullable().defaultTo(false)
+      table.string('publishStartDate')
+      table.string('publishEndDate')
+      table.text('content')
+      table.string('createdAt').notNullable()
+    })
     // PAGES -------------------------------
     .createTable('pages', table => {
       table.increments('id').primary()
@@ -126,6 +139,12 @@ exports.up = knex => {
     // =====================================
     // RELATION TABLES
     // =====================================
+    // PAGE HISTORY TAGS ---------------------------
+    .createTable('pageHistoryTags', table => {
+      table.increments('id').primary()
+      table.integer('pageId').unsigned().references('id').inTable('pageHistory').onDelete('CASCADE')
+      table.integer('tagId').unsigned().references('id').inTable('tags').onDelete('CASCADE')
+    })
     // PAGE TAGS ---------------------------
     .createTable('pageTags', table => {
       table.increments('id').primary()
@@ -149,10 +168,17 @@ exports.up = knex => {
       table.integer('pageId').unsigned().references('id').inTable('pages')
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
+    .table('pageHistory', table => {
+      table.integer('pageId').unsigned().references('id').inTable('pages')
+      table.string('editorKey').references('key').inTable('editors')
+      table.string('localeCode', 2).references('code').inTable('locales')
+      table.integer('authorId').unsigned().references('id').inTable('users')
+    })
     .table('pages', table => {
       table.string('editorKey').references('key').inTable('editors')
       table.string('localeCode', 2).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
+      table.integer('creatorId').unsigned().references('id').inTable('users')
     })
     .table('users', table => {
       table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')

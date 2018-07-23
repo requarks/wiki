@@ -52,6 +52,7 @@ type PageMutation {
     content: String
     description: String
     editor: String
+    isPrivate: Boolean
     isPublished: Boolean
     locale: String
     path: String
@@ -59,7 +60,7 @@ type PageMutation {
     publishStartDate: Date
     tags: [String]
     title: String
-  ): DefaultResponse
+  ): PageResponse
 
   delete(
     id: Int!

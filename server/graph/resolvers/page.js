@@ -24,7 +24,6 @@ module.exports = {
     async create(obj, args, context) {
       const page = await WIKI.db.pages.createPage({
         ...args,
-        isPrivate: false,
         authorId: context.req.user.id
       })
       return {
@@ -38,10 +37,14 @@ module.exports = {
         responseResult: graphHelper.generateSuccess('Page has been deleted.')
       }
     },
-    async update(obj, args) {
-      await WIKI.db.groups.query().patch({ name: args.name }).where('id', args.id)
+    async update(obj, args, context) {
+      const page = await WIKI.db.pages.updatePage({
+        ...args,
+        authorId: context.req.user.id
+      })
       return {
-        responseResult: graphHelper.generateSuccess('Page has been updated.')
+        responseResult: graphHelper.generateSuccess('Page has been updated.'),
+        page
       }
     }
   },

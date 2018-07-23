@@ -50,7 +50,7 @@
               .body-1.pt-3
                 svg.icons.is-18.is-outlined.has-right-pad.is-text: use(xlink:href='#nc-cd-reader')
                 span You are about to install Wiki.js #[strong {{wikiVersion}}].
-              v-divider
+              v-divider.mt-3
               v-form
                 v-checkbox(
                   color='primary',
@@ -67,7 +67,7 @@
                   hint='Check this box if you are upgrading from Wiki.js 1.x and wish to migrate your existing data.'
                 )
             v-divider
-            .text-xs-center
+            .pt-3.text-xs-center
               v-btn(color='primary', @click='proceedToSyscheck', :disabled='loading') Start
 
           //- ==============================================
@@ -94,7 +94,7 @@
                       v-list-tile-title {{rs.title}}
                       v-list-tile-sub-title {{rs.subtitle}}
             v-divider
-            .text-xs-center
+            .pt-3.text-xs-center
               v-btn(@click='proceedToWelcome', :disabled='loading') Back
               v-btn(color='primary', @click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
               v-btn(color='red', dark, @click='proceedToGeneral', v-if='!loading && !syscheck.ok') Continue Anyway
@@ -113,6 +113,8 @@
                 v-layout(row, wrap)
                   v-flex(xs12, sm6).pr-3
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       v-model='conf.title',
                       label='Site Title',
                       :counter='255',
@@ -126,6 +128,8 @@
                     )
                   v-flex.pr-3(xs12, sm6)
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       v-model='conf.port',
                       label='Server Port',
                       persistent-hint,
@@ -139,6 +143,8 @@
                 v-layout(row, wrap).mt-3
                   v-flex(xs12, sm6).pr-3
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       v-model='conf.pathContent',
                       label='Content Data Path',
                       persistent-hint,
@@ -151,6 +157,8 @@
                     )
                   v-flex(xs12, sm6)
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       v-model='conf.pathData',
                       label='Temporary Data Path',
                       persistent-hint,
@@ -170,15 +178,8 @@
                       persistent-hint,
                       hint='Should the site be accessible (read only) without login.'
                     )
-                    v-checkbox.mt-2(
-                      color='primary',
-                      v-model='conf.selfRegister',
-                      label='Allow Self-Registration',
-                      persistent-hint,
-                      hint='Can users create their own account to gain access?'
-                    )
             v-divider
-            .text-xs-center
+            .pt-3.text-xs-center
               v-btn(@click='proceedToSyscheck', :disabled='loading') Back
               v-btn(color='primary', @click='proceedToAdmin', :disabled='loading') Continue
 
@@ -196,7 +197,8 @@
                 v-layout(row, wrap)
                   v-flex(xs12)
                     v-text-field(
-                      autofocus
+                      outline
+                      background-color='grey lighten-2'
                       v-model='conf.adminEmail',
                       label='Administrator Email',
                       hint='The email address of the administrator account',
@@ -208,6 +210,8 @@
                     )
                   v-flex.pr-3(xs6)
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       ref='adminPassword',
                       counter='255'
                       v-model='conf.adminPassword',
@@ -224,6 +228,8 @@
                     )
                   v-flex(xs6)
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       ref='adminPasswordConfirm',
                       counter='255'
                       v-model='conf.adminPasswordConfirm',
@@ -238,7 +244,7 @@
                       data-vv-scope='admin',
                       :error-messages='errors.collect(`adminPasswordConfirm`)'
                     )
-              .text-xs-center
+              .pt-3.text-xs-center
                 v-btn(@click='proceedToGeneral', :disabled='loading') Back
                 v-btn(color='primary', @click='proceedToUpgrade', :disabled='loading') Continue
 
@@ -256,6 +262,8 @@
                 v-layout(row)
                   v-flex(xs12)
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       v-model='conf.upgMongo',
                       placeholder='mongodb://',
                       label='Connection String to Wiki.js 1.x MongoDB database',
@@ -267,7 +275,7 @@
                       data-vv-scope='upgrade',
                       :error-messages='errors.collect(`upgMongo`)'
                     )
-            .text-xs-center
+            .pt-3.text-xs-center
               v-btn(@click='proceedToAdmin', :disabled='loading') Back
               v-btn(color='primary', @click='proceedToFinal', :disabled='loading') Continue
 
@@ -290,7 +298,7 @@
               v-alert(type='success', outline, :value='!loading && final.ok') Wiki.js was configured successfully and is now ready for use.
               v-alert(type='error', outline, :value='!loading && !final.ok') {{ final.error }}
             v-divider
-            .text-xs-center
+            .pt-3.text-xs-center
               v-btn(@click='!conf.upgrade ? proceedToAdmin() : proceedToUpgrade()', :disabled='loading') Back
               v-btn(color='primary', @click='proceedToFinal', v-if='!loading && !final.ok') Try Again
               v-btn(color='success', @click='finish', v-if='loading || final.ok', :disabled='loading') Continue
@@ -342,7 +350,6 @@ export default {
         pathContent: './content',
         port: siteConfig.port || 80,
         public: (siteConfig.public === true),
-        selfRegister: (siteConfig.selfRegister === true),
         telemetry: true,
         title: siteConfig.title || 'Wiki',
         upgrade: false,

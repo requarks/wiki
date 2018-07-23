@@ -3,10 +3,10 @@ const Model = require('objection').Model
 /* global WIKI */
 
 /**
- * Pages model
+ * Page History model
  */
-module.exports = class Page extends Model {
-  static get tableName() { return 'pages' }
+module.exports = class PageHistory extends Model {
+  static get tableName() { return 'pageHistory' }
 
   static get jsonSchema () {
     return {
@@ -23,8 +23,7 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
 
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        createdAt: {type: 'string'}
       }
     }
   }
@@ -35,27 +34,27 @@ module.exports = class Page extends Model {
         relation: Model.ManyToManyRelation,
         modelClass: require('./tags'),
         join: {
-          from: 'pages.id',
+          from: 'pageHistory.id',
           through: {
-            from: 'pageTags.pageId',
-            to: 'pageTags.tagId'
+            from: 'pageHistoryTags.pageId',
+            to: 'pageHistoryTags.tagId'
           },
           to: 'tags.id'
+        }
+      },
+      page: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./pages'),
+        join: {
+          from: 'pageHistory.pageId',
+          to: 'pages.id'
         }
       },
       author: {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./users'),
         join: {
-          from: 'pages.authorId',
-          to: 'users.id'
-        }
-      },
-      creator: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: require('./users'),
-        join: {
-          from: 'pages.creatorId',
+          from: 'pageHistory.authorId',
           to: 'users.id'
         }
       },
@@ -63,7 +62,7 @@ module.exports = class Page extends Model {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./editors'),
         join: {
-          from: 'pages.editorKey',
+          from: 'pageHistory.editorKey',
           to: 'editors.key'
         }
       },
@@ -71,56 +70,31 @@ module.exports = class Page extends Model {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./locales'),
         join: {
-          from: 'pages.localeCode',
+          from: 'pageHistory.localeCode',
           to: 'locales.code'
         }
       }
     }
   }
 
-  $beforeUpdate() {
-    this.updatedAt = new Date().toISOString()
-  }
   $beforeInsert() {
     this.createdAt = new Date().toISOString()
-    this.updatedAt = new Date().toISOString()
   }
 
-  static async createPage(opts) {
-    const page = await WIKI.db.pages.query().insertAndFetch({
+  static async addVersion(opts) {
+    await WIKI.db.pageHistory.query().insert({
+      pageId: opts.id,
       authorId: opts.authorId,
       content: opts.content,
-      creatorId: opts.authorId,
       description: opts.description,
-      editorKey: opts.editor,
+      editorKey: opts.editorKey,
       isPrivate: opts.isPrivate,
       isPublished: opts.isPublished,
-      localeCode: opts.locale,
+      localeCode: opts.localeCode,
       path: opts.path,
       publishEndDate: opts.publishEndDate,
       publishStartDate: opts.publishStartDate,
       title: opts.title
     })
-    await WIKI.db.storage.pageEvent({
-      event: 'created',
-      page
-    })
-    return page
-  }
-
-  static async updatePage(opts) {
-    const ogPage = await WIKI.db.pages.query().findById(opts.id)
-    if (!ogPage) {
-      throw new Error('Invalid Page Id')
-    }
-    await WIKI.db.pageHistory.addVersion(ogPage)
-    const page = await WIKI.db.pages.query().patchAndFetch({
-      title: opts.title
-    }).where('id', opts.id)
-    await WIKI.db.storage.pageEvent({
-      event: 'updated',
-      page
-    })
-    return page
   }
 }
