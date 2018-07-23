@@ -124,7 +124,10 @@ Current and upcoming milestones *(major features only, see the [changelog](https
     - [x] Live Preview
     - [ ] Toolbar
   - [ ] Operations
-    - [ ] Save :rocket:
+    - [x] Create
+    - [x] Update
+    - [ ] Move / Rename :rocket:
+    - [ ] Delete :rocket:
   - [ ] Dialogs
     - [x] Properties
     - [ ] Access
