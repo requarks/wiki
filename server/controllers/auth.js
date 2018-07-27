@@ -66,7 +66,7 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
     return req.logIn(user, function (err) {
       if (err) { return next(err) }
       req.brute.reset(function () {
-        return res.redirect('/')
+        return res.redirect(req.session.redirectTo || '/')
       })
     }) || true
   }).catch(err => {
