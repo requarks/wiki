@@ -303,7 +303,7 @@ module.exports = () => {
 
       // Create default locale
       WIKI.logger.info('Installing default locale...')
-      await WIKI.db.locales.query().insert({
+      await WIKI.models.locales.query().insert({
         code: 'en',
         strings: require('./locales/default.json'),
         isRTL: false,
@@ -312,23 +312,23 @@ module.exports = () => {
       })
 
       // Load authentication strategies + enable local
-      await WIKI.db.authentication.refreshStrategiesFromDisk()
-      await WIKI.db.authentication.query().patch({ isEnabled: true }).where('key', 'local')
+      await WIKI.models.authentication.refreshStrategiesFromDisk()
+      await WIKI.models.authentication.query().patch({ isEnabled: true }).where('key', 'local')
 
       // Load editors + enable default
-      await WIKI.db.editors.refreshEditorsFromDisk()
-      await WIKI.db.editors.query().patch({ isEnabled: true }).where('key', 'markdown')
+      await WIKI.models.editors.refreshEditorsFromDisk()
+      await WIKI.models.editors.query().patch({ isEnabled: true }).where('key', 'markdown')
 
       // Load storage targets
-      await WIKI.db.storage.refreshTargetsFromDisk()
+      await WIKI.models.storage.refreshTargetsFromDisk()
 
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
-      await WIKI.db.users.query().delete().where({
+      await WIKI.models.users.query().delete().where({
         providerKey: 'local',
         email: req.body.adminEmail
       })
-      await WIKI.db.users.query().insert({
+      await WIKI.models.users.query().insert({
         email: req.body.adminEmail,
         provider: 'local',
         password: req.body.adminPassword,
@@ -341,12 +341,12 @@ module.exports = () => {
 
       // Create Guest account
       WIKI.logger.info('Creating guest account...')
-      const guestUsr = await WIKI.db.users.query().findOne({
+      const guestUsr = await WIKI.models.users.query().findOne({
         providerKey: 'local',
         email: 'guest@example.com'
       })
       if (!guestUsr) {
-        await WIKI.db.users.query().insert({
+        await WIKI.models.users.query().insert({
           provider: 'local',
           email: 'guest@example.com',
           name: 'Guest',

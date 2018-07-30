@@ -5,7 +5,7 @@ const { createApolloFetch } = require('apollo-fetch')
 /* global WIKI */
 
 WIKI.redis = require('../core/redis').init()
-WIKI.db = require('../core/db').init()
+WIKI.models = require('../core/db').init()
 
 module.exports = async (job) => {
   WIKI.logger.info(`Fetching locale ${job.data.locale} from Graph endpoint...`)
@@ -39,8 +39,8 @@ module.exports = async (job) => {
     const locales = await WIKI.redis.get('locales')
     if (locales) {
       const currentLocale = _.find(JSON.parse(locales), ['code', job.data.locale]) || {}
-      await WIKI.db.locales.query().delete().where('code', job.data.locale)
-      await WIKI.db.locales.query().insert({
+      await WIKI.models.locales.query().delete().where('code', job.data.locale)
+      await WIKI.models.locales.query().insert({
         code: job.data.locale,
         strings: lcObj,
         isRTL: currentLocale.isRTL,

@@ -79,6 +79,7 @@ exports.up = knex => {
       table.string('publishStartDate')
       table.string('publishEndDate')
       table.text('content')
+      table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
     })
     // PAGES -------------------------------
@@ -92,6 +93,7 @@ exports.up = knex => {
       table.string('publishStartDate')
       table.string('publishEndDate')
       table.text('content')
+      table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })

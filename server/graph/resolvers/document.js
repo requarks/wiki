@@ -4,15 +4,15 @@
 module.exports = {
   Query: {
     documents(obj, args, context, info) {
-      return WIKI.db.Document.findAll({ where: args })
+      return WIKI.models.Document.findAll({ where: args })
     }
   },
   Mutation: {
     createDocument(obj, args) {
-      return WIKI.db.Document.create(args)
+      return WIKI.models.Document.create(args)
     },
     deleteDocument(obj, args) {
-      return WIKI.db.Document.destroy({
+      return WIKI.models.Document.destroy({
         where: {
           id: args.id
         },
@@ -20,7 +20,7 @@ module.exports = {
       })
     },
     modifyDocument(obj, args) {
-      return WIKI.db.Document.update({
+      return WIKI.models.Document.update({
         title: args.title,
         subtitle: args.subtitle
       }, {
@@ -28,7 +28,7 @@ module.exports = {
       })
     },
     moveDocument(obj, args) {
-      return WIKI.db.Document.update({
+      return WIKI.models.Document.update({
         path: args.path
       }, {
         where: { id: args.id }

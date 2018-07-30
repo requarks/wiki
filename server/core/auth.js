@@ -17,7 +17,7 @@ module.exports = {
     })
 
     passport.deserializeUser(function (id, done) {
-      WIKI.db.users.query().findById(id).then((user) => {
+      WIKI.models.users.query().findById(id).then((user) => {
         if (user) {
           done(null, user)
         } else {
@@ -40,7 +40,7 @@ module.exports = {
       _.forEach(currentStrategies, stg => { passport.unuse(stg) })
 
       // Load enabled strategies
-      const enabledStrategies = await WIKI.db.authentication.getStrategies()
+      const enabledStrategies = await WIKI.models.authentication.getStrategies()
       for (let idx in enabledStrategies) {
         const stg = enabledStrategies[idx]
         if (!stg.isEnabled) { continue }

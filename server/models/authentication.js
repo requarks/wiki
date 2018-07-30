@@ -3,7 +3,7 @@ const fs = require('fs-extra')
 const path = require('path')
 const _ = require('lodash')
 const yaml = require('js-yaml')
-const commonHelper = require('../../helpers/common')
+const commonHelper = require('../helpers/common')
 
 /* global WIKI */
 
@@ -33,7 +33,7 @@ module.exports = class Authentication extends Model {
   }
 
   static async getStrategies() {
-    const strategies = await WIKI.db.authentication.query()
+    const strategies = await WIKI.models.authentication.query()
     return strategies.map(str => ({
       ...str,
       domainWhitelist: _.get(str.domainWhitelist, 'v', []),
@@ -43,7 +43,7 @@ module.exports = class Authentication extends Model {
 
   static async refreshStrategiesFromDisk() {
     try {
-      const dbStrategies = await WIKI.db.authentication.query()
+      const dbStrategies = await WIKI.models.authentication.query()
 
       // -> Fetch definitions from disk
       const authDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/authentication'))
@@ -86,7 +86,7 @@ module.exports = class Authentication extends Model {
         }
       })
       if (newStrategies.length > 0) {
-        await WIKI.db.authentication.query().insert(newStrategies)
+        await WIKI.models.authentication.query().insert(newStrategies)
         WIKI.logger.info(`Loaded ${newStrategies.length} new authentication strategies: [ OK ]`)
       } else {
         WIKI.logger.info(`No new authentication strategies found: [ SKIPPED ]`)

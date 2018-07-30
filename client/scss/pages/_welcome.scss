@@ -33,11 +33,28 @@
     }
   }
 
+  &::after {
+    content: '';
+    display: block;
+    width: 95vw;
+    height: 95vh;
+    border: 3px dotted rgba(255,255,255,.2);
+    border-radius: 50px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    z-index: 1;
+  }
+
   img {
     width: 500px;
     filter: grayscale(100%) brightness(160%);
     margin-bottom: 3rem;
     z-index: 2;
+    animation-duration: 3s;
 
     @include until($tablet) {
       width: 300px;
@@ -52,7 +69,7 @@
     margin-bottom: 3rem;
     z-index: 2;
   }
-  .button {
+  .v-btn {
     z-index: 2;
   }
 }

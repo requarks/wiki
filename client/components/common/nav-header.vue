@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-toolbar(color='black', dark, app, clipped-left, fixed, flat, dense)
+  v-toolbar(color='black', dark, app, clipped-left, fixed, flat, :dense='dense')
     v-menu(open-on-hover, offset-y, bottom, left, nudge-top='-18', min-width='250')
       v-toolbar-side-icon(slot='activator')
         v-icon view_module
@@ -41,15 +41,15 @@
         v-if='searchIsShown',
         v-model='search',
         clearable,
-        color='blue',
+        color='white',
         label='Search...',
         single-line,
+        solo
+        flat
         hide-details,
-        append-icon='search',
-        :append-icon-cb='searchEnter',
+        prepend-inner-icon='search',
         :loading='searchIsLoading',
-        @keyup.enter='searchEnter',
-        @keyup.esc='searchToggle'
+        @keyup.enter='searchEnter'
       )
         v-progress-linear(
           indeterminate,
@@ -58,11 +58,9 @@
           color='blue'
         )
     v-spacer
-    v-progress-circular.mr-3(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
+    .navHeaderLoading.mr-3
+      v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
     slot(name='actions')
-    transition(name='navHeaderSearch')
-      v-btn(icon, @click='searchToggle', v-if='!searchIsShown')
-        v-icon(color='grey') search
     v-btn(icon, href='/a')
       v-icon(color='grey') settings
     v-menu(offset-y, min-width='300')
@@ -90,11 +88,21 @@ import { mapGetters } from 'vuex'
 /* global siteConfig */
 
 export default {
+  props: {
+    dense: {
+      type: Boolean,
+      default: false
+    },
+    hideSearch: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       menuIsShown: true,
       searchIsLoading: false,
-      searchIsShown: false,
+      searchIsShown: true,
       search: ''
     }
   },
@@ -102,16 +110,12 @@ export default {
     ...mapGetters(['isLoading']),
     title() { return siteConfig.title }
   },
+  created() {
+    if (this.hideSearch || this.dense) {
+      this.searchIsShown = false
+    }
+  },
   methods: {
-    searchToggle() {
-      this.searchIsLoading = false
-      this.searchIsShown = !this.searchIsShown
-      if (this.searchIsShown) {
-        this.$nextTick(() => {
-          this.$refs.searchField.focus()
-        })
-      }
-    },
     searchEnter() {
       this.searchIsLoading = true
     }
@@ -130,7 +134,10 @@ export default {
   }
   &-enter, &-leave-to {
     opacity: 0;
-    transform: translateY(-25px);
+    transform: scale(.7, .7);
   }
+}
+.navHeaderLoading { // To avoid search bar jumping
+  width: 22px;
 }
 </style>

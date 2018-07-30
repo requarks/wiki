@@ -118,7 +118,7 @@ const init = {
   },
   async reload() {
     console.warn(chalk.yellow('--- Closing DB connections...'))
-    await global.WIKI.db.knex.destroy()
+    await global.WIKI.models.knex.destroy()
     console.warn(chalk.yellow('--- Closing Redis connections...'))
     await global.WIKI.redis.quit()
     console.warn(chalk.yellow('--- Closing Server connections...'))

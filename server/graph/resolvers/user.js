@@ -10,18 +10,18 @@ module.exports = {
   },
   UserQuery: {
     async list(obj, args, context, info) {
-      return WIKI.db.users.query()
+      return WIKI.models.users.query()
         .select('id', 'email', 'name', 'provider', 'role', 'createdAt', 'updatedAt')
     },
     async search(obj, args, context, info) {
-      return WIKI.db.users.query()
+      return WIKI.models.users.query()
         .where('email', 'like', `%${args.query}%`)
         .orWhere('name', 'like', `%${args.query}%`)
         .limit(10)
         .select('id', 'email', 'name', 'provider', 'role', 'createdAt', 'updatedAt')
     },
     async single(obj, args, context, info) {
-      let usr = await WIKI.db.users.query().findById(args.id)
+      let usr = await WIKI.models.users.query().findById(args.id)
       usr.password = ''
       usr.tfaSecret = ''
       return usr
@@ -29,13 +29,13 @@ module.exports = {
   },
   UserMutation: {
     create(obj, args) {
-      return WIKI.db.users.query().insertAndFetch(args)
+      return WIKI.models.users.query().insertAndFetch(args)
     },
     delete(obj, args) {
-      return WIKI.db.users.query().deleteById(args.id)
+      return WIKI.models.users.query().deleteById(args.id)
     },
     update(obj, args) {
-      return WIKI.db.users.query().patch({
+      return WIKI.models.users.query().patch({
         email: args.email,
         name: args.name,
         provider: args.provider,

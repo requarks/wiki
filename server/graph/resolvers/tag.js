@@ -6,16 +6,16 @@ const gql = require('graphql')
 module.exports = {
   Query: {
     tags(obj, args, context, info) {
-      return WIKI.db.Tag.findAll({ where: args })
+      return WIKI.models.Tag.findAll({ where: args })
     }
   },
   Mutation: {
     assignTagToDocument(obj, args) {
-      return WIKI.db.Tag.findById(args.tagId).then(tag => {
+      return WIKI.models.Tag.findById(args.tagId).then(tag => {
         if (!tag) {
           throw new gql.GraphQLError('Invalid Tag ID')
         }
-        return WIKI.db.Document.findById(args.documentId).then(doc => {
+        return WIKI.models.Document.findById(args.documentId).then(doc => {
           if (!doc) {
             throw new gql.GraphQLError('Invalid Document ID')
           }
@@ -24,10 +24,10 @@ module.exports = {
       })
     },
     createTag(obj, args) {
-      return WIKI.db.Tag.create(args)
+      return WIKI.models.Tag.create(args)
     },
     deleteTag(obj, args) {
-      return WIKI.db.Tag.destroy({
+      return WIKI.models.Tag.destroy({
         where: {
           id: args.id
         },
@@ -35,11 +35,11 @@ module.exports = {
       })
     },
     removeTagFromDocument(obj, args) {
-      return WIKI.db.Tag.findById(args.tagId).then(tag => {
+      return WIKI.models.Tag.findById(args.tagId).then(tag => {
         if (!tag) {
           throw new gql.GraphQLError('Invalid Tag ID')
         }
-        return WIKI.db.Document.findById(args.documentId).then(doc => {
+        return WIKI.models.Document.findById(args.documentId).then(doc => {
           if (!doc) {
             throw new gql.GraphQLError('Invalid Document ID')
           }
@@ -48,7 +48,7 @@ module.exports = {
       })
     },
     renameTag(obj, args) {
-      return WIKI.db.Group.update({
+      return WIKI.models.Group.update({
         key: args.key
       }, {
         where: { id: args.id }

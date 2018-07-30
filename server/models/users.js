@@ -3,7 +3,7 @@
 const bcrypt = require('bcryptjs-then')
 const _ = require('lodash')
 const tfa = require('node-2fa')
-const securityHelper = require('../../helpers/security')
+const securityHelper = require('../helpers/security')
 const Model = require('objection').Model
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
@@ -151,7 +151,7 @@ module.exports = class User extends Model {
     profile.provider = _.lowerCase(profile.provider)
     primaryEmail = _.toLower(primaryEmail)
 
-    let user = await WIKI.db.users.query().findOne({
+    let user = await WIKI.models.users.query().findOne({
       email: primaryEmail,
       provider: profile.provider
     })
@@ -163,7 +163,7 @@ module.exports = class User extends Model {
         name: profile.displayName || _.split(primaryEmail, '@')[0]
       })
     } else {
-      user = await WIKI.db.users.query().insertAndFetch({
+      user = await WIKI.models.users.query().insertAndFetch({
         email: primaryEmail,
         provider: profile.provider,
         providerId: profile.id,
@@ -186,7 +186,7 @@ module.exports = class User extends Model {
     //       deny: false
     //     }]
     //   }
-    //   return WIKI.db.users.query().insert(nUsr)
+    //   return WIKI.models.users.query().insert(nUsr)
     // }
 
     return user
@@ -238,7 +238,7 @@ module.exports = class User extends Model {
       if (result) {
         let userId = _.toSafeInteger(result)
         if (userId && userId > 0) {
-          let user = await WIKI.db.users.query().findById(userId)
+          let user = await WIKI.models.users.query().findById(userId)
           if (user && user.verifyTFA(opts.securityCode)) {
             return Promise.fromCallback(clb => {
               context.req.logIn(user, clb)

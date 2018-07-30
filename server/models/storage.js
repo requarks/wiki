@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const yaml = require('js-yaml')
-const commonHelper = require('../../helpers/common')
+const commonHelper = require('../helpers/common')
 
 /* global WIKI */
 
@@ -30,12 +30,12 @@ module.exports = class Storage extends Model {
   }
 
   static async getTargets() {
-    return WIKI.db.storage.query()
+    return WIKI.models.storage.query()
   }
 
   static async refreshTargetsFromDisk() {
     try {
-      const dbTargets = await WIKI.db.storage.query()
+      const dbTargets = await WIKI.models.storage.query()
 
       // -> Fetch definitions from disk
       const storageDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/storage'))
@@ -44,10 +44,29 @@ module.exports = class Storage extends Model {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/storage', dir, 'definition.yml'), 'utf8')
         diskTargets.push(yaml.safeLoad(def))
       }
+      WIKI.data.storage = diskTargets.map(target => ({
+        ...target,
+        props: _.transform(target.props, (result, value, key) => {
+          let defaultValue = ''
+          if (_.isPlainObject(value)) {
+            defaultValue = !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value.type)
+          } else {
+            defaultValue = commonHelper.getTypeDefaultValue(value)
+          }
+          _.set(result, key, {
+            default: defaultValue,
+            type: (value.type || value).toLowerCase(),
+            title: value.title || _.startCase(key),
+            hint: value.hint || false,
+            enum: value.enum || false
+          })
+          return result
+        }, {})
+      }))
 
       // -> Insert new targets
       let newTargets = []
-      _.forEach(diskTargets, target => {
+      for (let target of WIKI.data.storage) {
         if (!_.some(dbTargets, ['key', target.key])) {
           newTargets.push({
             key: target.key,
@@ -55,28 +74,25 @@ module.exports = class Storage extends Model {
             isEnabled: false,
             mode: 'push',
             config: _.transform(target.props, (result, value, key) => {
-              if (_.isPlainObject(value)) {
-                let cfgValue = {
-                  type: value.type.toLowerCase(),
-                  value: !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value.type)
-                }
-                if (_.isArray(value.enum)) {
-                  cfgValue.enum = value.enum
-                }
-                _.set(result, key, cfgValue)
-              } else {
-                _.set(result, key, {
-                  type: value.toLowerCase(),
-                  value: commonHelper.getTypeDefaultValue(value)
-                })
-              }
+              _.set(result, key, value.default)
               return result
             }, {})
           })
+        } else {
+          const targetConfig = _.get(_.find(dbTargets, ['key', target.key]), 'config', {})
+          await WIKI.models.storage.query().patch({
+            title: target.title,
+            config: _.transform(target.props, (result, value, key) => {
+              if (!_.has(result, key)) {
+                _.set(result, key, value.default)
+              }
+              return result
+            }, targetConfig)
+          }).where('key', target.key)
         }
-      })
+      }
       if (newTargets.length > 0) {
-        await WIKI.db.storage.query().insert(newTargets)
+        await WIKI.models.storage.query().insert(newTargets)
         WIKI.logger.info(`Loaded ${newTargets.length} new storage targets: [ OK ]`)
       } else {
         WIKI.logger.info(`No new storage targets found: [ SKIPPED ]`)
@@ -87,8 +103,8 @@ module.exports = class Storage extends Model {
     }
   }
 
-  static async pageEvent(event, page) {
-    const targets = await WIKI.db.storage.query().where('isEnabled', true)
+  static async pageEvent({ event, page }) {
+    const targets = await WIKI.models.storage.query().where('isEnabled', true)
     if (targets && targets.length > 0) {
       _.forEach(targets, target => {
         WIKI.queue.job.syncStorage.add({

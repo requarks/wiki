@@ -33,7 +33,7 @@ module.exports = {
         configFile: path.join(process.cwd(), 'config.yml'),
         currentVersion: WIKI.version,
         dbType: _.get(dbTypes, WIKI.config.db.type, 'Unknown DB'),
-        dbVersion: _.get(WIKI.db, 'knex.client.version', 'Unknown version'),
+        dbVersion: _.get(WIKI.models, 'knex.client.version', 'Unknown version'),
         dbHost: WIKI.config.db.host,
         latestVersion: WIKI.version, // TODO
         latestVersionReleaseDate: new Date(), // TODO

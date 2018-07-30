@@ -52,7 +52,7 @@ module.exports = {
     }
   },
   async loadLocale(locale, opts = { silent: false }) {
-    const res = await WIKI.db.locales.query().findOne('code', locale)
+    const res = await WIKI.models.locales.query().findOne('code', locale)
     if (res) {
       if (_.isPlainObject(res.strings)) {
         _.forOwn(res.strings, (data, ns) => {

@@ -1,6 +1,6 @@
 <template lang="pug">
   .editor
-    nav-header
+    nav-header(dense)
       template(slot='actions')
         v-btn(outline, color='green', @click.native.stop='save')
           v-icon(color='green', left) check

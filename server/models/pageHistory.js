@@ -82,7 +82,7 @@ module.exports = class PageHistory extends Model {
   }
 
   static async addVersion(opts) {
-    await WIKI.db.pageHistory.query().insert({
+    await WIKI.models.pageHistory.query().insert({
       pageId: opts.id,
       authorId: opts.authorId,
       content: opts.content,

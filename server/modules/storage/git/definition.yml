@@ -5,16 +5,32 @@ props:
   authType:
     type: String
     default: 'ssh'
+    title: Authentication Type
+    hint: Use SSH for maximum security.
     enum:
       - 'basic'
       - 'ssh'
-  repoUrl: String
+  repoUrl:
+    type: String
+    title: Repository URI
+    hint: Git-compliant URI (e.g. git@github.com:org/repo.git for ssh, https://github.com/org/repo.git for basic)
   branch:
     type: String
     default: 'master'
   verifySSL:
     type: Boolean
     default: true
-  sshPrivateKeyPath: String
-  basicUsername: String
-  basicPassword: String
+    title: Verify SSL Certificate
+    hint: Some hosts requires SSL certificate checking to be disabled. Leave enabled for proper security.
+  sshPrivateKeyPath:
+    type: String
+    title: SSH Private Key Path
+    hint: SSH Authentication Only - Absolute path to the key. The key must NOT be passphrase-protected.
+  basicUsername:
+    type: String
+    title: Username
+    hint: Basic Authentication Only
+  basicPassword:
+    type: String
+    title: Password / PAT
+    hint: Basic Authentication Only

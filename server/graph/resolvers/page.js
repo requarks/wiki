@@ -11,18 +11,18 @@ module.exports = {
   },
   PageQuery: {
     async list(obj, args, context, info) {
-      return WIKI.db.pages.query().select(
+      return WIKI.models.pages.query().select(
         'pages.*',
-        WIKI.db.pages.relatedQuery('users').count().as('userCount')
+        WIKI.models.pages.relatedQuery('users').count().as('userCount')
       )
     },
     async single(obj, args, context, info) {
-      return WIKI.db.pages.query().findById(args.id)
+      return WIKI.models.pages.query().findById(args.id)
     }
   },
   PageMutation: {
     async create(obj, args, context) {
-      const page = await WIKI.db.pages.createPage({
+      const page = await WIKI.models.pages.createPage({
         ...args,
         authorId: context.req.user.id
       })
@@ -32,13 +32,13 @@ module.exports = {
       }
     },
     async delete(obj, args) {
-      await WIKI.db.groups.query().deleteById(args.id)
+      await WIKI.models.groups.query().deleteById(args.id)
       return {
         responseResult: graphHelper.generateSuccess('Page has been deleted.')
       }
     },
     async update(obj, args, context) {
-      const page = await WIKI.db.pages.updatePage({
+      const page = await WIKI.models.pages.updatePage({
         ...args,
         authorId: context.req.user.id
       })

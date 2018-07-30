@@ -5,7 +5,7 @@ const { createApolloFetch } = require('apollo-fetch')
 /* global WIKI */
 
 WIKI.redis = require('../core/redis').init()
-WIKI.db = require('../core/db').init()
+WIKI.models = require('../core/db').init()
 
 module.exports = async (job) => {
   WIKI.logger.info('Syncing locales with Graph endpoint...')
@@ -59,7 +59,7 @@ module.exports = async (job) => {
         _.set(lcObj, row.key.replace(':', '.'), row.value)
       })
 
-      await WIKI.db.locales.query().update({
+      await WIKI.models.locales.query().update({
         code: WIKI.config.lang.code,
         strings: lcObj,
         isRTL: currentLocale.isRTL,

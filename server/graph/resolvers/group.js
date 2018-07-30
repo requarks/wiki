@@ -13,22 +13,22 @@ module.exports = {
   },
   GroupQuery: {
     async list(obj, args, context, info) {
-      return WIKI.db.groups.query().select(
+      return WIKI.models.groups.query().select(
         'groups.*',
-        WIKI.db.groups.relatedQuery('users').count().as('userCount')
+        WIKI.models.groups.relatedQuery('users').count().as('userCount')
       )
     },
     async single(obj, args, context, info) {
-      return WIKI.db.groups.query().findById(args.id)
+      return WIKI.models.groups.query().findById(args.id)
     }
   },
   GroupMutation: {
     async assignUser(obj, args) {
-      const grp = await WIKI.db.groups.query().findById(args.groupId)
+      const grp = await WIKI.models.groups.query().findById(args.groupId)
       if (!grp) {
         throw new gql.GraphQLError('Invalid Group ID')
       }
-      const usr = await WIKI.db.users.query().findById(args.userId)
+      const usr = await WIKI.models.users.query().findById(args.userId)
       if (!usr) {
         throw new gql.GraphQLError('Invalid User ID')
       }
@@ -38,7 +38,7 @@ module.exports = {
       }
     },
     async create(obj, args) {
-      const group = await WIKI.db.groups.query().insertAndFetch({
+      const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name
       })
       return {
@@ -47,17 +47,17 @@ module.exports = {
       }
     },
     async delete(obj, args) {
-      await WIKI.db.groups.query().deleteById(args.id)
+      await WIKI.models.groups.query().deleteById(args.id)
       return {
         responseResult: graphHelper.generateSuccess('Group has been deleted.')
       }
     },
     async unassignUser(obj, args) {
-      const grp = await WIKI.db.groups.query().findById(args.groupId)
+      const grp = await WIKI.models.groups.query().findById(args.groupId)
       if (!grp) {
         throw new gql.GraphQLError('Invalid Group ID')
       }
-      const usr = await WIKI.db.users.query().findById(args.userId)
+      const usr = await WIKI.models.users.query().findById(args.userId)
       if (!usr) {
         throw new gql.GraphQLError('Invalid User ID')
       }
@@ -67,7 +67,7 @@ module.exports = {
       }
     },
     async update(obj, args) {
-      await WIKI.db.groups.query().patch({ name: args.name }).where('id', args.id)
+      await WIKI.models.groups.query().patch({ name: args.name }).where('id', args.id)
       return {
         responseResult: graphHelper.generateSuccess('Group has been updated.')
       }

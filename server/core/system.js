@@ -45,7 +45,7 @@ module.exports = {
               $not: 'guest'
             }
           }).toArray()
-          await WIKI.db.User.bulkCreate(_.map(userData, usr => {
+          await WIKI.models.User.bulkCreate(_.map(userData, usr => {
             return {
               email: usr.email,
               name: usr.name || 'Imported User',

@@ -52,7 +52,7 @@ module.exports = {
    * Load config from DB
    */
   async loadFromDb() {
-    let conf = await WIKI.db.settings.getConfig()
+    let conf = await WIKI.models.settings.getConfig()
     if (conf) {
       WIKI.config = _.defaultsDeep(conf, WIKI.config)
     } else {
@@ -73,9 +73,9 @@ module.exports = {
         if (!_.isPlainObject(value)) {
           value = { v: value }
         }
-        let affectedRows = await WIKI.db.settings.query().patch({ value }).where('key', key)
+        let affectedRows = await WIKI.models.settings.query().patch({ value }).where('key', key)
         if (affectedRows === 0 && value) {
-          await WIKI.db.settings.query().insert({ key, value })
+          await WIKI.models.settings.query().insert({ key, value })
         }
       }
     } catch (err) {

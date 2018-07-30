@@ -13,7 +13,7 @@ module.exports = {
         usernameField: 'email',
         passwordField: 'password'
       }, (uEmail, uPassword, done) => {
-        WIKI.db.users.query().findOne({
+        WIKI.models.users.query().findOne({
           email: uEmail,
           providerKey: 'local'
         }).then((user) => {

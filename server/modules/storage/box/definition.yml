@@ -1,0 +1,7 @@
+key: box
+title: Box
+author: requarks.io
+props:
+  clientId: String
+  clientSecret: String
+  rootFolder: String

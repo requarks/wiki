@@ -27,12 +27,12 @@ module.exports = class Editor extends Model {
   }
 
   static async getEnabledEditors() {
-    return WIKI.db.editors.query().where({ isEnabled: true })
+    return WIKI.models.editors.query().where({ isEnabled: true })
   }
 
   static async refreshEditorsFromDisk() {
     try {
-      const dbEditors = await WIKI.db.editors.query()
+      const dbEditors = await WIKI.models.editors.query()
       const diskEditors = autoload(path.join(WIKI.SERVERPATH, 'modules/editor'))
       let newEditors = []
       _.forOwn(diskEditors, (strategy, strategyKey) => {
@@ -49,7 +49,7 @@ module.exports = class Editor extends Model {
         }
       })
       if (newEditors.length > 0) {
-        await WIKI.db.editors.query().insert(newEditors)
+        await WIKI.models.editors.query().insert(newEditors)
         WIKI.logger.info(`Loaded ${newEditors.length} new editors: [ OK ]`)
       } else {
         WIKI.logger.info(`No new editors found: [ SKIPPED ]`)

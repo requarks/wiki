@@ -6,7 +6,7 @@ module.exports = {
     WIKI.logger.info('= Wiki.js =============================')
     WIKI.logger.info('=======================================')
 
-    WIKI.db = require('./db').init()
+    WIKI.models = require('./db').init()
     WIKI.redis = require('./redis').init()
     WIKI.queue = require('./queue').init()
 
@@ -18,7 +18,7 @@ module.exports = {
    */
   async preBootMaster() {
     try {
-      await WIKI.db.onReady
+      await WIKI.models.onReady
       await WIKI.configSvc.loadFromDb()
       await WIKI.queue.clean()
     } catch (err) {
@@ -48,6 +48,7 @@ module.exports = {
    */
   async postBootMaster() {
     await WIKI.auth.activateStrategies()
+    await WIKI.models.storage.refreshTargetsFromDisk()
     await WIKI.queue.start()
   }
 }

@@ -15,7 +15,7 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
       }, function (accessToken, refreshToken, profile, cb) {
-        WIKI.db.users.processProfile(profile).then((user) => {
+        WIKI.models.users.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

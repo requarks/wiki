@@ -1,5 +1,8 @@
 key: disk
-title: Local FS
+title: Local File System
 author: requarks.io
 props:
-  path: String
+  path:
+    type: String
+    title: Path
+    hint: Absolute path without a trailing slash (e.g. /home/wiki/backup, C:\wiki\backup)

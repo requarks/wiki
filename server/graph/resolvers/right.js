@@ -6,16 +6,16 @@ const gql = require('graphql')
 module.exports = {
   Query: {
     rights(obj, args, context, info) {
-      return WIKI.db.Right.findAll({ where: args })
+      return WIKI.models.Right.findAll({ where: args })
     }
   },
   Mutation: {
     addRightToGroup(obj, args) {
-      return WIKI.db.Group.findById(args.groupId).then(grp => {
+      return WIKI.models.Group.findById(args.groupId).then(grp => {
         if (!grp) {
           throw new gql.GraphQLError('Invalid Group ID')
         }
-        return WIKI.db.Right.create({
+        return WIKI.models.Right.create({
           path: args.path,
           role: args.role,
           exact: args.exact,
@@ -25,7 +25,7 @@ module.exports = {
       })
     },
     removeRightFromGroup(obj, args) {
-      return WIKI.db.Right.destroy({
+      return WIKI.models.Right.destroy({
         where: {
           id: args.rightId
         },
@@ -33,7 +33,7 @@ module.exports = {
       })
     },
     modifyRight(obj, args) {
-      return WIKI.db.Right.update({
+      return WIKI.models.Right.update({
         path: args.path,
         role: args.role,
         exact: args.exact,

@@ -22,6 +22,7 @@ module.exports = class Page extends Model {
         publishStartDate: {type: 'string'},
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
+        contentType: {type: 'string'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -87,7 +88,7 @@ module.exports = class Page extends Model {
   }
 
   static async createPage(opts) {
-    const page = await WIKI.db.pages.query().insertAndFetch({
+    const page = await WIKI.models.pages.query().insertAndFetch({
       authorId: opts.authorId,
       content: opts.content,
       creatorId: opts.authorId,
@@ -101,7 +102,7 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate,
       title: opts.title
     })
-    await WIKI.db.storage.pageEvent({
+    await WIKI.models.storage.pageEvent({
       event: 'created',
       page
     })
@@ -109,15 +110,21 @@ module.exports = class Page extends Model {
   }
 
   static async updatePage(opts) {
-    const ogPage = await WIKI.db.pages.query().findById(opts.id)
+    const ogPage = await WIKI.models.pages.query().findById(opts.id)
     if (!ogPage) {
       throw new Error('Invalid Page Id')
     }
-    await WIKI.db.pageHistory.addVersion(ogPage)
-    const page = await WIKI.db.pages.query().patchAndFetch({
+    await WIKI.models.pageHistory.addVersion(ogPage)
+    const page = await WIKI.models.pages.query().patchAndFetchById(ogPage.id, {
+      authorId: opts.authorId,
+      content: opts.content,
+      description: opts.description,
+      isPublished: opts.isPublished,
+      publishEndDate: opts.publishEndDate,
+      publishStartDate: opts.publishStartDate,
       title: opts.title
-    }).where('id', opts.id)
-    await WIKI.db.storage.pageEvent({
+    })
+    await WIKI.models.storage.pageEvent({
       event: 'updated',
       page
     })

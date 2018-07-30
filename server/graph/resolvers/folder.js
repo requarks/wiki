@@ -4,15 +4,15 @@
 module.exports = {
   Query: {
     folders(obj, args, context, info) {
-      return WIKI.db.Folder.findAll({ where: args })
+      return WIKI.models.Folder.findAll({ where: args })
     }
   },
   Mutation: {
     createFolder(obj, args) {
-      return WIKI.db.Folder.create(args)
+      return WIKI.models.Folder.create(args)
     },
     deleteFolder(obj, args) {
-      return WIKI.db.Folder.destroy({
+      return WIKI.models.Folder.destroy({
         where: {
           id: args.id
         },
@@ -20,7 +20,7 @@ module.exports = {
       })
     },
     renameFolder(obj, args) {
-      return WIKI.db.Folder.update({
+      return WIKI.models.Folder.update({
         name: args.name
       }, {
         where: { id: args.id }

@@ -18,7 +18,6 @@
               :key='tgt.key'
               :label='tgt.title'
               color='primary'
-              :disabled='tgt.key === `local`'
               hide-details
             )
 
@@ -30,26 +29,38 @@
             template(v-else, v-for='cfg in tgt.config')
               v-select(
                 v-if='cfg.value.type === "string" && cfg.value.enum'
+                outline
+                background-color='grey lighten-2'
                 :items='cfg.value.enum'
                 :key='cfg.key'
-                :label='cfg.key | startCase'
+                :label='cfg.value.title'
                 v-model='cfg.value.value'
                 prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
               )
               v-switch(
                 v-else-if='cfg.value.type === "boolean"'
                 :key='cfg.key'
-                :label='cfg.key | startCase'
+                :label='cfg.value.title'
                 v-model='cfg.value.value'
                 color='primary'
                 prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
                 )
               v-text-field(
                 v-else
+                outline
+                background-color='grey lighten-2'
                 :key='cfg.key'
-                :label='cfg.key | startCase'
+                :label='cfg.value.title'
                 v-model='cfg.value.value'
                 prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
                 )
             v-divider.mt-3
             v-subheader.pl-0 Sync Direction

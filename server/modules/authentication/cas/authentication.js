@@ -13,7 +13,7 @@ module.exports = {
         ssoBaseURL: conf.ssoBaseURL,
         serverBaseURL: conf.serverBaseURL
       }, (profile, cb) => {
-        WIKI.db.users.processProfile(profile).then((user) => {
+        WIKI.models.users.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
           return cb(err, null) || true

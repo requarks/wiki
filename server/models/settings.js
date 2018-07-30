@@ -32,7 +32,7 @@ module.exports = class Setting extends Model {
   }
 
   static async getConfig() {
-    const settings = await WIKI.db.settings.query()
+    const settings = await WIKI.models.settings.query()
     if (settings.length > 0) {
       return _.reduce(settings, (res, val, key) => {
         _.set(res, val.key, (val.value.v) ? val.value.v : val.value)

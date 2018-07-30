@@ -57,6 +57,7 @@
                 :items='namespaces'
                 v-model='locale'
                 hide-details
+                :disabled='mode !== "create"'
               )
             v-flex(xs12, md10)
               v-text-field(
@@ -68,6 +69,7 @@
                 hint='Do not include any leading or trailing slashes.'
                 persistent-hint
                 @click:append='showPathSelector'
+                :disabled='mode !== "create"'
                 )
         v-combobox(
           background-color='grey lighten-2'
@@ -186,7 +188,7 @@
 
 <script>
 import _ from 'lodash'
-import { sync } from 'vuex-pathify'
+import { sync, get } from 'vuex-pathify'
 
 export default {
   data() {
@@ -204,6 +206,7 @@ export default {
     }
   },
   computed: {
+    mode: get('editor/mode'),
     title: sync('editor/title'),
     description: sync('editor/description'),
     locale: sync('editor/locale'),

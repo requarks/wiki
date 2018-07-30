@@ -16,7 +16,7 @@ module.exports = {
   },
   AuthenticationQuery: {
     async strategies(obj, args, context, info) {
-      let strategies = await WIKI.db.authentication.getStrategies()
+      let strategies = await WIKI.models.authentication.getStrategies()
       strategies = strategies.map(stg => ({
         ...stg,
         config: _.sortBy(_.transform(stg.config, (res, value, key) => {
@@ -31,7 +31,7 @@ module.exports = {
   AuthenticationMutation: {
     async login(obj, args, context) {
       try {
-        let authResult = await WIKI.db.users.login(args, context)
+        let authResult = await WIKI.models.users.login(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('Login success')
@@ -42,7 +42,7 @@ module.exports = {
     },
     async loginTFA(obj, args, context) {
       try {
-        let authResult = await WIKI.db.users.loginTFA(args, context)
+        let authResult = await WIKI.models.users.loginTFA(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('TFA success')
@@ -54,7 +54,7 @@ module.exports = {
     async updateStrategies(obj, args, context) {
       try {
         for (let str of args.strategies) {
-          await WIKI.db.authentication.query().patch({
+          await WIKI.models.authentication.query().patch({
             isEnabled: str.isEnabled,
             config: _.reduce(str.config, (result, value, key) => {
               _.set(result, `${value.key}.value`, value.value)

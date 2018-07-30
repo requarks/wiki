@@ -13,14 +13,34 @@
                     v-toolbar-title
                       .subheading {{ $t('admin:general.siteInfo') }}
                   v-subheader General
-                  .px-3
+                  .px-3.pb-3
                     v-text-field(label='Site Title', required, :counter='50', v-model='siteTitle', prepend-icon='public')
-                  v-divider.mt-3
+                  v-divider
                   v-subheader SEO
-                  .px-3
+                  .px-3.pb-3
                     v-text-field(label='Site Description', :counter='255', prepend-icon='public')
                     v-text-field(label='Site Keywords', :counter='255', prepend-icon='public')
                     v-select(label='Meta Robots', chips, tags, :items='metaRobots', v-model='metaRobotsSelection', prepend-icon='public')
+                  v-divider
+                  v-subheader Analytics
+                  .px-3.pb-3
+                    v-text-field(
+                      label='Google Analytics ID'
+                      :counter='255'
+                      prepend-icon='public'
+                      persistent-hint
+                      hint='Property tracking ID for Google Analytics.'
+                      )
+                  v-divider
+                  v-subheader Footer Copyright
+                  .px-3.pb-3
+                    v-text-field(
+                      label='Company / Organization Name'
+                      :counter='255'
+                      prepend-icon='public'
+                      persistent-hint
+                      hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
+                      )
                   v-card-chin
                     v-spacer
                     v-btn(color='primary')
