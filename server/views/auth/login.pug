@@ -72,6 +72,10 @@ html(data-logic='login')
             button.slack(onclick='window.location.assign("/login/oauth2")')
               i.icon-box
               span= t('auth:providers.oauth2')
+          if appconfig.auth.oidc && appconfig.auth.oidc.enabled
+            button.slack(onclick='window.location.assign("/login/oidc")')
+              i.icon-box
+              span= t('auth:providers.oidc')
     #copyright
       = t('footer.poweredby') + ' '
       a.icon(href='https://github.com/Requarks/wiki')

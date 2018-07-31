@@ -3,6 +3,7 @@
 /* global appconfig, appdata, db, lang, winston */
 
 const fs = require('fs')
+const _ = require('lodash')
 
 module.exports = function (passport) {
   // Serialization user methods
@@ -224,6 +225,33 @@ module.exports = function (passport) {
         })
       }
       ))
+  }
+
+  // OpenID Connect
+
+  if (appconfig.auth.oidc && appconfig.auth.oidc.enabled) {
+    const OIDCStrategy = require('passport-openidconnect').Strategy
+    passport.use('oidc', new OIDCStrategy({
+      userInfoURL: appconfig.auth.oidc.userInfoUrl,
+      authorizationURL: appconfig.auth.oidc.authorizationURL,
+      tokenURL: appconfig.auth.oidc.tokenURL,
+      clientID: appconfig.auth.oidc.clientId,
+      clientSecret: appconfig.auth.oidc.clientSecret,
+      issuer: appconfig.auth.oidc.issuer,
+      callbackURL: appconfig.host + '/login/oidc/callback'
+    }, (iss, sub, profile, jwtClaims, accessToken, refreshToken, params, cb) => {
+      db.User.processProfile({
+        id: jwtClaims.sub,
+        provider: 'oidc',
+        email: _.get(jwtClaims, appconfig.auth.oidc.emailClaim),
+        name: _.get(jwtClaims, appconfig.auth.oidc.usernameClaim)
+      }).then((user) => {
+        return cb(null, user) || true
+      }).catch((err) => {
+        return cb(err, null) || true
+      })
+    }
+    ))
   }
 
   // Create users for first-time

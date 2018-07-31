@@ -103,6 +103,7 @@
     "passport-google-oauth20": "~1.0.0",
     "passport-ldapauth": "~2.0.0",
     "passport-local": "~1.0.0",
+    "passport-openidconnect": "~0.0.2",
     "passport-slack": "0.0.7",
     "passport-windowslive": "~1.0.2",
     "passport.socketio": "~3.7.0",
