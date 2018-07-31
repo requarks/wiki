@@ -103,7 +103,16 @@ auth:
     clientSecret: OAUTH2_CLIENT_SECRET
     authorizationURL: OAUTH2_AUTH_URL
     tokenURL: OAUTH2_TOKEN_URL
-
+  oidc:
+    enabled: false
+    clientId: OPENID_CONNECT_CLIENT_ID
+    clientSecret: OPENID_CONNECT_CLIENT_SECRET
+    issuer: OPENID_CONNECT_ISSUER
+    userInfoUrl: OPENID_CONNECT_USER_INFO_URL
+    authorizationURL: OPENID_CONNECT_AUTHORIZATION_URL
+    tokenURL: OPENID_CONNECT_TOKEN_URL
+    emailClaim: OPENID_CONNECT_EMAIL_CLAIM_PATH
+    usernameClaim: OPENID_CONNECT_USERNAME_CLAIM_PATH
 # ---------------------------------------------------------------------
 # Secret key to use when encrypting sessions
 # ---------------------------------------------------------------------

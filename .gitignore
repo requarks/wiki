@@ -38,3 +38,6 @@ config.yml
 
 # Test results
 test-results/
+
+# VS Code Local History extension
+.history
