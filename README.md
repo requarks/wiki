@@ -69,13 +69,15 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 
 :bookmark_tabs: See [project board](https://waffle.io/Requarks/wiki) to keep track of current progress.
 
-### 1.0.78 - Stable
+### 1.0.102 - Stable
 ![Progress](http://progressed.io/bar/100)
 
 **Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
 
-- [x] Fixed: Missing raven dependency for sentry logging
-- [x] Fixed: Azure AD email getter
+- [x] Added: Open ID Connection provider (thanks to @sazulo)
+- [x] Added: Turkish locale is now available (thanks to @MrSimsek)
+- [x] Fixed: Paths in git commits are no longer escaped (thanks to @EricFromCanada)
+- [x] Fixed: Fixed potential bug when uploading certain images (thanks to @Gnurdle)
 
 ### 2.0.0 - Dev
 ![Progress](http://progressed.io/bar/58)
