@@ -278,6 +278,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Updated dependencies + snyk policy
 
+[v1.0.102]: https://github.com/Requarks/wiki/releases/tag/v1.0.102
 [v1.0.78]: https://github.com/Requarks/wiki/releases/tag/v1.0.78
 [v1.0.76]: https://github.com/Requarks/wiki/releases/tag/v1.0.76
 [v1.0.68]: https://github.com/Requarks/wiki/releases/tag/v1.0.68
