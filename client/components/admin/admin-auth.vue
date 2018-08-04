@@ -25,31 +25,49 @@
       v-tab-item(v-for='(strategy, n) in activeStrategies', :key='strategy.key', :transition='false', :reverse-transition='false')
         v-card.pa-3(flat, tile)
           v-form
+            .authlogo
+              img(:src='strategy.logo', :alt='strategy.title')
+            v-subheader.pl-0 {{strategy.title}}
+            .caption {{strategy.description}}
+            .caption: a(:href='strategy.website') {{strategy.website}}
+            v-divider.mt-3
             v-subheader.pl-0 Strategy Configuration
             .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1') This strategy has no configuration options you can modify.
             template(v-else, v-for='cfg in strategy.config')
               v-select(
                 v-if='cfg.value.type === "string" && cfg.value.enum'
+                outline
+                background-color='grey lighten-2'
                 :items='cfg.value.enum'
                 :key='cfg.key'
-                :label='cfg.key | startCase'
+                :label='cfg.value.title'
                 v-model='cfg.value.value'
                 prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
               )
               v-switch(
                 v-else-if='cfg.value.type === "boolean"'
                 :key='cfg.key'
-                :label='cfg.key | startCase'
+                :label='cfg.value.title'
                 v-model='cfg.value.value'
                 color='primary'
                 prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
                 )
               v-text-field(
                 v-else
+                outline
+                background-color='grey lighten-2'
                 :key='cfg.key'
-                :label='cfg.key | startCase'
+                :label='cfg.value.title'
                 v-model='cfg.value.value'
                 prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
                 )
             v-divider.mt-3
             v-subheader.pl-0 Registration
@@ -61,18 +79,21 @@
                 hint='Allow any user successfully authorized by the strategy to access the wiki.'
                 persistent-hint
               )
-              v-select.ml-3(
+              v-combobox.ml-3.mt-3(
                 label='Limit to specific email domains'
                 v-model='strategy.domainWhitelist'
                 prepend-icon='mail_outline'
+                outline
+                background-color='grey lighten-2'
                 persistent-hint
                 deletable-chips
                 clearable
                 multiple
                 chips
-                tags
                 )
-              v-select.ml-3(
+              v-autocomplete.ml-3(
+                outline
+                background-color='grey lighten-2'
                 :items='groups'
                 item-text='name'
                 item-value='id'
@@ -82,7 +103,6 @@
                 hint='Automatically assign new users to these groups.'
                 persistent-hint
                 deletable-chips
-                autocomplete
                 clearable
                 multiple
                 chips
@@ -173,6 +193,20 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang='scss' scoped>
+
+.authlogo {
+  width: 250px;
+  height: 85px;
+  float:right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  img {
+    max-width: 100%;
+    max-height: 50px;
+  }
+}
 
 </style>

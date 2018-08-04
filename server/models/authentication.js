@@ -16,14 +16,12 @@ module.exports = class Authentication extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['key', 'title', 'isEnabled', 'useForm'],
+      required: ['key', 'isEnabled'],
 
       properties: {
         id: {type: 'integer'},
         key: {type: 'string'},
-        title: {type: 'string'},
         isEnabled: {type: 'boolean'},
-        useForm: {type: 'boolean'},
         config: {type: 'object'},
         selfRegistration: {type: 'boolean'},
         domainWhitelist: {type: 'object'},
@@ -52,39 +50,37 @@ module.exports = class Authentication extends Model {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/authentication', dir, 'definition.yml'), 'utf8')
         diskStrategies.push(yaml.safeLoad(def))
       }
+      WIKI.data.authentication = diskStrategies.map(strategy => ({
+        ...strategy,
+        props: commonHelper.parseModuleProps(strategy.props)
+      }))
 
       let newStrategies = []
-      _.forEach(diskStrategies, strategy => {
+      for (let strategy of WIKI.data.authentication) {
         if (!_.some(dbStrategies, ['key', strategy.key])) {
           newStrategies.push({
             key: strategy.key,
-            title: strategy.title,
             isEnabled: false,
-            useForm: strategy.useForm,
             config: _.transform(strategy.props, (result, value, key) => {
-              if (_.isPlainObject(value)) {
-                let cfgValue = {
-                  type: value.type.toLowerCase(),
-                  value: !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value.type)
-                }
-                if (_.isArray(value.enum)) {
-                  cfgValue.enum = value.enum
-                }
-                _.set(result, key, cfgValue)
-              } else {
-                _.set(result, key, {
-                  type: value.toLowerCase(),
-                  value: commonHelper.getTypeDefaultValue(value)
-                })
-              }
+              _.set(result, key, value.default)
               return result
             }, {}),
             selfRegistration: false,
             domainWhitelist: { v: [] },
             autoEnrollGroups: { v: [] }
           })
+        } else {
+          const strategyConfig = _.get(_.find(dbStrategies, ['key', strategy.key]), 'config', {})
+          await WIKI.models.authentication.query().patch({
+            config: _.transform(strategy.props, (result, value, key) => {
+              if (!_.has(result, key)) {
+                _.set(result, key, value.default)
+              }
+              return result
+            }, strategyConfig)
+          }).where('key', strategy.key)
         }
-      })
+      }
       if (newStrategies.length > 0) {
         await WIKI.models.authentication.query().insert(newStrategies)
         WIKI.logger.info(`Loaded ${newStrategies.length} new authentication strategies: [ OK ]`)

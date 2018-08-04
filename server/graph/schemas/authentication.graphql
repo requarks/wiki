@@ -51,7 +51,10 @@ type AuthenticationStrategy {
   key: String!
   props: [String]
   title: String!
+  description: String
   useForm: Boolean!
+  logo: String
+  website: String
   icon: String
   config: [KeyValuePair]
   selfRegistration: Boolean!

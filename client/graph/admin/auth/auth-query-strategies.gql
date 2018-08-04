@@ -3,9 +3,11 @@ query {
     strategies(orderBy: "title ASC") {
       isEnabled
       key
-      props
       title
+      description
       useForm
+      logo
+      website
       config {
         key
         value

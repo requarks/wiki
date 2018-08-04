@@ -1,6 +1,9 @@
 key: facebook
 title: Facebook
+description: Facebook is an online social media and social networking service company.
 author: requarks.io
+logo: https://static.requarks.io/logo/facebook.svg
+website: https://facebook.com/
 useForm: false
 props:
   clientId: String

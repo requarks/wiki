@@ -1,6 +1,9 @@
 key: github
 title: GitHub
+description: GitHub Inc. is a web-based hosting service for version control using Git.
 author: requarks.io
+logo: https://static.requarks.io/logo/github.svg
+website: https://github.com
 useForm: false
 props:
   clientId: String

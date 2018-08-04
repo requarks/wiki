@@ -1,6 +1,9 @@
 key: slack
 title: Slack
+description: Slack is a cloud-based set of proprietary team collaboration tools and services.
 author: requarks.io
+logo: https://static.requarks.io/logo/slack.svg
+website: https://api.slack.com/docs/oauth
 useForm: false
 props:
   clientId: String

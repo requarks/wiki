@@ -76,7 +76,9 @@
         router-view
 
     v-footer.py-2.justify-center(app, absolute, :color='darkMode ? "" : "grey lighten-3"', inset, height='auto')
-      .caption.grey--text.text--darken-1 {{ $t('common:footer.poweredBy') }} Wiki.js
+      .caption.grey--text.text--darken-1
+        span(v-if='company && company.length > 0') {{ $t('common:footer.copyright', { company: company, year: currentYear }) }} |&nbsp;
+        span {{ $t('common:footer.poweredBy') }} Wiki.js
 
     v-snackbar(
       :color='notification.style'
@@ -92,11 +94,11 @@
 
 <script>
 import VueRouter from 'vue-router'
-import { mapState } from 'vuex'
+import { get, sync } from 'vuex-pathify'
 
 import adminStore from '@/store/admin'
 
-/* global WIKI, siteConfig */
+/* global WIKI */
 
 WIKI.$store.registerModule('admin', adminStore)
 
@@ -131,23 +133,17 @@ export default {
   i18nOptions: { namespaces: 'admin' },
   data() {
     return {
+      currentYear: (new Date()).getFullYear(),
       adminDrawerShown: true
     }
   },
   computed: {
-    ...mapState({
-      notification: state => state.notification,
-      darkMode: state => state.admin.theme.dark
-    }),
-    notificationState: {
-      get() { return this.notification.isActive },
-      set(newState) { this.$store.commit('updateNotificationState', newState) }
-    }
+    company: get('site/company'),
+    notification: get('notification'),
+    darkMode: get('admin/theme@dark'),
+    notificationState: sync('notification@isActive')
   },
-  router,
-  mounted() {
-    this.$store.commit('admin/setThemeDarkMode', siteConfig.darkMode)
-  }
+  router
 }
 </script>
 

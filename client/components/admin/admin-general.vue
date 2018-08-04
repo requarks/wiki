@@ -36,6 +36,7 @@
                   .px-3.pb-3
                     v-text-field(
                       label='Company / Organization Name'
+                      v-model='company'
                       :counter='255'
                       prepend-icon='public'
                       persistent-hint
@@ -89,15 +90,20 @@
 
 <script>
 
+import { sync } from 'vuex-pathify'
+
 export default {
   data() {
     return {
-      siteTitle: 'Wiki.js',
       metaRobotsSelection: ['Index', 'Follow'],
       metaRobots: ['Index', 'Follow', 'No Index', 'No Follow'],
       useSquareLogo: false,
       displayMascot: true
     }
+  },
+  computed: {
+    siteTitle: sync('site/title'),
+    company: sync('site/company')
   }
 }
 </script>

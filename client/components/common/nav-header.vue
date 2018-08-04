@@ -83,9 +83,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-
-/* global siteConfig */
+import { get } from 'vuex-pathify'
 
 export default {
   props: {
@@ -107,8 +105,8 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['isLoading']),
-    title() { return siteConfig.title }
+    isLoading: get('isLoading'),
+    title: get('site/title')
   },
   created() {
     if (this.hideSearch || this.dense) {

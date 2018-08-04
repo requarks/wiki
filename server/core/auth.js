@@ -2,6 +2,13 @@ const passport = require('passport')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
+const NodeCache = require('node-cache')
+
+const userCache = new NodeCache({
+  stdTTL: 10,
+  checkperiod: 600,
+  deleteOnExpire: true
+})
 
 /* global WIKI */
 
@@ -17,16 +24,22 @@ module.exports = {
     })
 
     passport.deserializeUser(function (id, done) {
-      WIKI.models.users.query().findById(id).then((user) => {
-        if (user) {
-          done(null, user)
-        } else {
-          done(new Error(WIKI.lang.t('auth:errors:usernotfound')), null)
-        }
-        return true
-      }).catch((err) => {
-        done(err, null)
-      })
+      const usr = userCache.get(id)
+      if (usr) {
+        done(null, usr)
+      } else {
+        WIKI.models.users.query().findById(id).then((user) => {
+          if (user) {
+            userCache.set(id, user)
+            done(null, user)
+          } else {
+            done(new Error(WIKI.lang.t('auth:errors:usernotfound')), null)
+          }
+          return true
+        }).catch((err) => {
+          done(err, null)
+        })
+      }
     })
 
     return this

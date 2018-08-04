@@ -1,0 +1,16 @@
+key: oidc
+title: Generic OpenID Connect
+description: OpenID Connect 1.0 is a simple identity layer on top of the OAuth 2.0 protocol.
+author: requarks.io
+logo: https://static.requarks.io/logo/oidc.svg
+website: http://openid.net/connect/
+useForm: false
+props:
+  clientId: String
+  clientSecret: String
+  authorizationURL: String
+  tokenURL: String
+  issuer: String
+  userInfoUrl: String
+  emailClaim: String
+  usernameClaim: String

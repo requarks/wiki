@@ -15,8 +15,8 @@ module.exports = {
       let targets = await WIKI.models.storage.getTargets()
       targets = targets.map(tgt => {
         const targetInfo = _.find(WIKI.data.storage, ['key', tgt.key]) || {}
-        console.info(targetInfo)
         return {
+          ...targetInfo,
           ...tgt,
           config: _.sortBy(_.transform(tgt.config, (res, value, key) => {
             const configData = _.get(targetInfo.props, key, {})

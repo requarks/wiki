@@ -47,6 +47,7 @@ module.exports = {
    * Post-Master Boot Sequence
    */
   async postBootMaster() {
+    await WIKI.models.authentication.refreshStrategiesFromDisk()
     await WIKI.auth.activateStrategies()
     await WIKI.models.storage.refreshTargetsFromDisk()
     await WIKI.queue.start()

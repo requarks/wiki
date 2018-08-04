@@ -1,0 +1,21 @@
+key: okta
+title: Okta
+description: Okta provide secure identity management and single sign-on to any application.
+author: requarks.io
+logo: https://static.requarks.io/logo/okta.svg
+website: https://www.okta.com/
+useForm: false
+props:
+  clientId:
+    type: String
+    hint: 20 chars alphanumeric string
+  clientSecret:
+    type: String
+    hint: 40 chars alphanumeric string with a hyphen(s)
+  idp:
+    title: Identity Provider ID (idp)
+    type: String
+    hint: (optional) 20 chars alphanumeric string
+  audience:
+    type: String
+    hint: Okta domain (e.g. https://example.okta.com, https://example.oktapreview.com)

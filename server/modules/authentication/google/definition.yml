@@ -1,6 +1,9 @@
 key: google
 title: Google
+description: Google specializes in Internet-related services and products, which include online advertising technologies, search engine, cloud computing, software, and hardware.
 author: requarks.io
+logo: https://static.requarks.io/logo/google.svg
+website: https://console.developers.google.com/
 useForm: false
 props:
   clientId: String

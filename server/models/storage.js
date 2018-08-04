@@ -16,12 +16,11 @@ module.exports = class Storage extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['key', 'title', 'isEnabled'],
+      required: ['key', 'isEnabled'],
 
       properties: {
         id: {type: 'integer'},
         key: {type: 'string'},
-        title: {type: 'string'},
         isEnabled: {type: 'boolean'},
         mode: {type: 'string'},
         config: {type: 'object'}
@@ -46,22 +45,7 @@ module.exports = class Storage extends Model {
       }
       WIKI.data.storage = diskTargets.map(target => ({
         ...target,
-        props: _.transform(target.props, (result, value, key) => {
-          let defaultValue = ''
-          if (_.isPlainObject(value)) {
-            defaultValue = !_.isNil(value.default) ? value.default : commonHelper.getTypeDefaultValue(value.type)
-          } else {
-            defaultValue = commonHelper.getTypeDefaultValue(value)
-          }
-          _.set(result, key, {
-            default: defaultValue,
-            type: (value.type || value).toLowerCase(),
-            title: value.title || _.startCase(key),
-            hint: value.hint || false,
-            enum: value.enum || false
-          })
-          return result
-        }, {})
+        props: commonHelper.parseModuleProps(target.props)
       }))
 
       // -> Insert new targets
@@ -70,7 +54,6 @@ module.exports = class Storage extends Model {
         if (!_.some(dbTargets, ['key', target.key])) {
           newTargets.push({
             key: target.key,
-            title: target.title,
             isEnabled: false,
             mode: 'push',
             config: _.transform(target.props, (result, value, key) => {
@@ -81,7 +64,6 @@ module.exports = class Storage extends Model {
         } else {
           const targetConfig = _.get(_.find(dbTargets, ['key', target.key]), 'config', {})
           await WIKI.models.storage.query().patch({
-            title: target.title,
             config: _.transform(target.props, (result, value, key) => {
               if (!_.has(result, key)) {
                 _.set(result, key, value.default)

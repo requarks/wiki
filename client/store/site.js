@@ -3,9 +3,9 @@ import { make } from 'vuex-pathify'
 /* global siteConfig */
 
 const state = {
-  theme: {
-    dark: siteConfig.darkMode
-  }
+  company: '',
+  mascot: true,
+  title: siteConfig.title
 }
 
 export default {

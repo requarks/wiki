@@ -1,6 +1,9 @@
 key: auth0
 title: Auth0
+description: Auth0 provides universal identity platform for web, mobile, IoT, and internal applications.
 author: requarks.io
+logo: https://static.requarks.io/logo/auth0.svg
+website: https://auth0.com/
 useForm: false
 props:
   domain: String

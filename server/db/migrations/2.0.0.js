@@ -27,9 +27,7 @@ exports.up = knex => {
     .createTable('authentication', table => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
-      table.string('title').notNullable()
       table.boolean('isEnabled').notNullable().defaultTo(false)
-      table.boolean('useForm').notNullable().defaultTo(false)
       table.jsonb('config').notNullable()
       table.boolean('selfRegistration').notNullable().defaultTo(false)
       table.jsonb('domainWhitelist').notNullable()
@@ -108,7 +106,6 @@ exports.up = knex => {
     .createTable('storage', table => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
-      table.string('title').notNullable()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.enum('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
       table.jsonb('config')

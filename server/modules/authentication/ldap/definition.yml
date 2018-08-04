@@ -1,22 +1,36 @@
 key: ldap
 title: LDAP / Active Directory
+description: Active Directory is a directory service that Microsoft developed for the Windows domain networks.
 author: requarks.io
+logo: https://static.requarks.io/logo/active-directory.svg
+website: https://www.microsoft.com/windowsserver
 useForm: true
 props:
   url:
+    title: URL
     type: String
     default: 'ldap://serverhost:389'
+    hint: (e.g. ldap://serverhost:389)
   bindDn:
+    title: Bind DN
     type: String
     default: cn='root'
-  bindCredentials: String
+    hint: The dstinguished name (dn) of the account used for binding.
+  bindCredentials:
+    type: String
+    hint: The password of the account used for binding.
   searchBase:
     type: String
     default: 'o=users,o=example.com'
   searchFilter:
     type: String
     default: '(uid={{username}})'
+    hint: The query to use to match username. {{username}} must be present.
   tlsEnabled:
+    title: Use TLS
     type: Boolean
     default: false
-  tlsCertPath: String
+  tlsCertPath:
+    title: TLS Certificate Path
+    type: String
+    hint: Absolute path to the TLS certificate on the server.

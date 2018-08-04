@@ -17,12 +17,23 @@ module.exports = {
   AuthenticationQuery: {
     async strategies(obj, args, context, info) {
       let strategies = await WIKI.models.authentication.getStrategies()
-      strategies = strategies.map(stg => ({
-        ...stg,
-        config: _.sortBy(_.transform(stg.config, (res, value, key) => {
-          res.push({ key, value: JSON.stringify(value) })
-        }, []), 'key')
-      }))
+      strategies = strategies.map(stg => {
+        const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
+        return {
+          ...strategyInfo,
+          ...stg,
+          config: _.sortBy(_.transform(stg.config, (res, value, key) => {
+            const configData = _.get(strategyInfo.props, key, {})
+            res.push({
+              key,
+              value: JSON.stringify({
+                ...configData,
+                value
+              })
+            })
+          }, []), 'key')
+        }
+      })
       if (args.filter) { strategies = graphHelper.filter(strategies, args.filter) }
       if (args.orderBy) { strategies = graphHelper.orderBy(strategies, args.orderBy) }
       return strategies

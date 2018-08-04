@@ -1,6 +1,9 @@
 key: discord
 title: Discord
+description: Discord is a proprietary freeware VoIP application designed for gaming communities, that specializes in text, video and audio communication between users in a chat channel.
 author: requarks.io
+logo: https://static.requarks.io/logo/discord.svg
+website: https://discordapp.com/
 useForm: false
 props:
   clientId: String

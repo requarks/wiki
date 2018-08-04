@@ -1,6 +1,9 @@
 key: microsoft
-title: Microsoft Account
+title: Microsoft
+description: Microsoft is a software company, best known for it's Windows, Office, Azure, Xbox and Surface products.
 author: requarks.io
+logo: https://static.requarks.io/logo/microsoft.svg
+website: https://apps.dev.microsoft.com/
 useForm: false
 props:
   clientId: String
