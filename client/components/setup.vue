@@ -286,14 +286,19 @@
           v-stepper-content(:step='conf.upgrade ? 6 : 5')
             v-card.text-xs-center(flat)
               template(v-if='loading')
-                v-progress-circular(size='64', indeterminate, color='blue')
-                .subheading Finalizing your installation...
+                .mt-3(style='width: 64px; display:inline-block;')
+                  atom-spinner(
+                    :animation-duration='800'
+                    :size='64'
+                    color='#1976d2'
+                    )
+                .subheading.primary--text.mt-3 Finalizing your installation...
               template(v-else-if='final.ok')
                 svg.icons.is-64: use(xlink:href='#nc-check-bold')
-                .subheading Installation complete!
+                .subheading.green--text Installation complete!
               template(v-else)
                 svg.icons.is-64: use(xlink:href='#nc-square-remove')
-                .subheading Something went wrong...
+                .subheading.red--text Something went wrong...
             v-container
               v-alert(type='success', outline, :value='!loading && final.ok') Wiki.js was configured successfully and is now ready for use.
               v-alert(type='error', outline, :value='!loading && !final.ok') {{ final.error }}
@@ -315,8 +320,12 @@
 
 import axios from 'axios'
 import _ from 'lodash'
+import { AtomSpinner } from 'epic-spinners'
 
 export default {
+  components: {
+    AtomSpinner
+  },
   props: {
     telemetryId: {
       type: String,

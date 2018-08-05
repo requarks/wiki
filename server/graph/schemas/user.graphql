@@ -85,14 +85,14 @@ type UserMinimal {
   id: Int!
   name: String!
   email: String!
-  provider: String!
+  providerKey: String!
 }
 
 type User {
   id: Int!
   name: String!
   email: String!
-  provider: String!
+  providerKey: String!
   providerId: String
   role: UserRole!
   createdAt: Date!

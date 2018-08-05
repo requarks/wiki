@@ -24,6 +24,12 @@
       v-tab-item(v-for='(tgt, n) in activeTargets', :key='tgt.key', :transition='false', :reverse-transition='false')
         v-card.pa-3(flat, tile)
           v-form
+            .targetlogo
+              img(:src='tgt.logo', :alt='tgt.title')
+            v-subheader.pl-0 {{tgt.title}}
+            .caption {{tgt.description}}
+            .caption: a(:href='tgt.website') {{tgt.website}}
+            v-divider.mt-3
             v-subheader.pl-0 Target Configuration
             .body-1.ml-3(v-if='!tgt.config || tgt.config.length < 1') This storage target has no configuration options you can modify.
             template(v-else, v-for='cfg in tgt.config')
@@ -163,6 +169,20 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang='scss' scoped>
+
+.targetlogo {
+  width: 250px;
+  height: 85px;
+  float:right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  img {
+    max-width: 100%;
+    max-height: 50px;
+  }
+}
 
 </style>

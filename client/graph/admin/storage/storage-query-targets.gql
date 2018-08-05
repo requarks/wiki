@@ -4,6 +4,9 @@ query {
       isEnabled
       key
       title
+      description
+      logo
+      website
       mode
       config {
         key

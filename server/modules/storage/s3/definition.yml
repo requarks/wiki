@@ -1,6 +1,9 @@
 key: s3
 title: Amazon S3
+description: Amazon S3 is a cloud computing web service offered by Amazon Web Services which provides object storage.
 author: requarks.io
+logo: https://static.requarks.io/logo/aws-s3.svg
+website: https://aws.amazon.com/s3/
 props:
   accessKeyId: String
   accessSecret: String

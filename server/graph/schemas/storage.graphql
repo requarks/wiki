@@ -39,6 +39,9 @@ type StorageTarget {
   isEnabled: Boolean!
   key: String!
   title: String!
+  description: String
+  logo: String
+  website: String
   mode: String
   config: [KeyValuePair]
 }

@@ -39,6 +39,46 @@
                   v-btn(color='primary', :loading='loading', @click='save')
                     v-icon(left) chevron_right
                     span Save
+              v-card.mt-3
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title
+                    .subheading Code Injection
+                v-card-text
+                  v-textarea(
+                    v-model='injectCSS'
+                    label='CSS Override'
+                    outline
+                    background-color='grey lighten-1'
+                    color='primary'
+                    persistent-hint
+                    hint='CSS code to inject after system default CSS'
+                    auto-grow
+                    )
+                  v-textarea.mt-2(
+                    v-model='injectHeader'
+                    label='Site Header'
+                    outline
+                    background-color='grey lighten-1'
+                    color='primary'
+                    persistent-hint
+                    hint='HTML code to be injected just before the closing head tag'
+                    auto-grow
+                    )
+                  v-textarea.mt-2(
+                    v-model='injectFooter'
+                    label='Site Footer'
+                    outline
+                    background-color='grey lighten-1'
+                    color='primary'
+                    persistent-hint
+                    hint='HTML code to be injected just before the closing body tag'
+                    auto-grow
+                    )
+                v-card-chin
+                  v-spacer
+                  v-btn(color='primary', :loading='loading', @click='save')
+                    v-icon(left) chevron_right
+                    span Save
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='teal', dark, dense, flat)
@@ -61,7 +101,10 @@ export default {
         { text: 'Default', author: 'requarks.io', value: 'default' }
       ],
       selectedTheme: 'default',
-      darkModeInitial: false
+      darkModeInitial: false,
+      injectCSS: '',
+      injectHeader: '',
+      injectFooter: ''
     }
   },
   computed: {

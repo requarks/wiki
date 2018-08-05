@@ -1,6 +1,9 @@
 key: scp
 title: SCP (SSH)
+description: SSH is a software package that enables secure system administration and file transfers over insecure networks.
 author: requarks.io
+logo: https://static.requarks.io/logo/ssh.svg
+website: https://www.ssh.com/ssh/
 props:
   host: String
   port:

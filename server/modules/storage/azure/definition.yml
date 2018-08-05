@@ -1,6 +1,9 @@
 key: azure
 title: Azure Blob Storage
+description: Azure Blob Storage by Microsoft provides massively scalable object storage for unstructured data.
 author: requarks.io
+logo: https://static.requarks.io/logo/azure.svg
+website: https://azure.microsoft.com/services/storage/blobs/
 props:
   accountName: String
   accountKey: String

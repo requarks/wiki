@@ -21,9 +21,10 @@
           label='Search Users...'
           v-model='search'
           prepend-icon='search'
-          :class='$vuetify.dark ? "grey darken-4" : "blue lighten-5"'
+          :background-color='$vuetify.dark ? "grey darken-4" : "blue lighten-5"'
           color='primary'
           ref='searchIpt'
+          hide-details
           )
         v-list(two-line)
           template(v-for='(usr, idx) in items')

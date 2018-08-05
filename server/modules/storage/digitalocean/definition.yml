@@ -1,6 +1,9 @@
 key: digitalocean
-title: DigialOcean Spaces
+title: DigitalOcean Spaces
+description: DigitalOcean provides developers and businesses a reliable, easy-to-use cloud computing platform of virtual servers (Droplets), object storage (Spaces) and more.
 author: requarks.io
+logo: https://static.requarks.io/logo/digitalocean.svg
+website: https://www.digitalocean.com/products/spaces/
 props:
   accessKeyId: String
   accessSecret: String
