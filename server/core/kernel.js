@@ -1,9 +1,11 @@
+const _ = require('lodash')
+
 /* global WIKI */
 
 module.exports = {
   async init() {
     WIKI.logger.info('=======================================')
-    WIKI.logger.info('= Wiki.js =============================')
+    WIKI.logger.info(`= Wiki.js ${_.padEnd(WIKI.version + ' ', 29, '=')}`)
     WIKI.logger.info('=======================================')
 
     WIKI.models = require('./db').init()
@@ -48,8 +50,9 @@ module.exports = {
    */
   async postBootMaster() {
     await WIKI.models.authentication.refreshStrategiesFromDisk()
-    await WIKI.auth.activateStrategies()
     await WIKI.models.storage.refreshTargetsFromDisk()
+
+    await WIKI.auth.activateStrategies()
     await WIKI.queue.start()
   }
 }

@@ -22,24 +22,11 @@
       transition(name='profile-router')
         router-view
 
-    v-footer.py-2.justify-center(app, absolute, :color='darkMode ? "" : "grey lighten-3"', inset, height='auto')
-      .caption.grey--text.text--darken-1 Powered by Wiki.js
-
-    v-snackbar(
-      :color='notification.style'
-      bottom,
-      right,
-      multi-line,
-      v-model='notificationState'
-    )
-      .text-xs-left
-        v-icon.mr-3(dark) {{ notification.icon }}
-        span {{ notification.message }}
+    nav-footer
 </template>
 
 <script>
 import VueRouter from 'vue-router'
-import { mapState } from 'vuex'
 
 /* global WIKI, siteConfig */
 
@@ -71,11 +58,6 @@ export default {
     }
   },
   computed: {
-    ...mapState(['notification']),
-    notificationState: {
-      get() { return this.notification.isActive },
-      set(newState) { this.$store.commit('updateNotificationState', newState) }
-    },
     darkMode() { return siteConfig.darkMode }
   },
   router

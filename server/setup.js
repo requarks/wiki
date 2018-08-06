@@ -270,6 +270,12 @@ module.exports = () => {
       confRaw = yaml.safeDump(conf)
       await fs.writeFileAsync(path.join(WIKI.ROOTPATH, 'config.yml'), confRaw)
 
+      // Create directory structure
+      await fs.ensureDir(conf.paths.data)
+      await fs.ensureDir(path.join(conf.paths.data, 'cache'))
+      await fs.ensureDir(path.join(conf.paths.data, 'temp-upload'))
+      await fs.ensureDir(conf.paths.content)
+
       // Set config
       _.set(WIKI.config, 'defaultEditor', 'markdown')
       _.set(WIKI.config, 'graphEndpoint', 'https://graph.requarks.io')

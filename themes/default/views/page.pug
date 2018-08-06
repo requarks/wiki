@@ -1,0 +1,65 @@
+extends /master.pug
+
+block head
+
+block body
+  #app
+    v-app
+      nav-header
+      v-navigation-drawer.pb-0.primary(dark, app, fixed, clipped, left, permanent)
+        v-list(dense)
+          v-list-tile.pt-2
+            v-list-tile-avatar: v-icon home
+            v-list-tile-title Home
+          v-divider.my-2
+          v-subheader.pl-4 Navigation
+          v-list-tile
+            v-list-tile-avatar: v-icon stars
+            v-list-tile-title The Universe
+
+      v-content
+        v-toolbar(color='grey lighten-3', flat, dense)
+          v-breadcrumbs.pl-0(divider='/')
+            v-breadcrumbs-item Universe
+            v-breadcrumbs-item Galaxy
+            v-breadcrumbs-item Solar System
+            v-breadcrumbs-item Planet Earth
+        
+        v-divider
+        v-layout(row)
+          v-flex(xs10)
+            v-toolbar(color='grey lighten-4', flat, :height='90')
+              div
+                .headline.grey--text.text--darken-3 Planet Earth
+                .caption.grey--text.text--darken-1 The 3rd planet of the solar system
+              v-spacer
+              v-icon public
+
+            .pa-3 Earth is the third planet from the Sun and the only astronomical object known to harbor life. According to radiometric dating and other sources of evidence, Earth formed over 4.5 billion years ago.[24][25][26] Earth's gravity interacts with other objects in space, especially the Sun and the Moon, Earth's only natural satellite. Earth revolves around the Sun in 365.26 days, a period known as an Earth year. During this time, Earth rotates about its axis about 366.26 times.[n 5]
+            .pa-3 Earth's axis of rotation is tilted with respect to its orbital plane, producing seasons on Earth.[27] The gravitational interaction between Earth and the Moon causes ocean tides, stabilizes Earth's orientation on its axis, and gradually slows its rotation.[28] Earth is the densest planet in the Solar System and the largest of the four terrestrial planets.
+            .pa-3 Earth's lithosphere is divided into several rigid tectonic plates that migrate across the surface over periods of many millions of years. About 71% of Earth's surface is covered with water, mostly by oceans.[29] The remaining 29% is land consisting of continents and islands that together have many lakes, rivers and other sources of water that contribute to the hydrosphere. The majority of Earth's polar regions are covered in ice, including the Antarctic ice sheet and the sea ice of the Arctic ice pack. Earth's interior remains active with a solid iron inner core, a liquid outer core that generates the Earth's magnetic field, and a convecting mantle that drives plate tectonics.
+            .pa-3 Within the first billion years of Earth's history, life appeared in the oceans and began to affect the Earth's atmosphere and surface, leading to the proliferation of aerobic and anaerobic organisms. Some geological evidence indicates that life may have arisen as much as 4.1 billion years ago. Since then, the combination of Earth's distance from the Sun, physical properties, and geological history have allowed life to evolve and thrive.[30][31] In the history of the Earth, biodiversity has gone through long periods of expansion, occasionally punctuated by mass extinction events. Over 99% of all species[32] that ever lived on Earth are extinct.[33][34] Estimates of the number of species on Earth today vary widely;[35][36][37] most species have not been described.[38] Over 7.6 billion humans live on Earth and depend on its biosphere and natural resources for their survival.[39] Humans have developed diverse societies and cultures; politically, the world has about 200 sovereign states.
+          v-flex(xs2, fill-height)
+            v-list.grey.lighten-3(dense)
+              v-subheader.pl-4 Table of contents
+              v-list-tile
+                v-list-tile-avatar: v-icon chevron_right
+                v-list-tile-title Test
+              v-list-tile
+                v-list-tile-avatar: v-icon chevron_right
+                v-list-tile-title Test
+              v-list-tile
+                v-list-tile-avatar: v-icon chevron_right
+                v-list-tile-title Test
+              v-divider.my-2
+              v-subheader.pl-4 Metadata
+              v-list-tile
+                v-list-tile-avatar: v-icon chevron_right
+                v-list-tile-title Test
+              v-list-tile
+                v-list-tile-avatar: v-icon chevron_right
+                v-list-tile-title Test
+              v-list-tile
+                v-list-tile-avatar: v-icon chevron_right
+                v-list-tile-title Test
+      nav-footer

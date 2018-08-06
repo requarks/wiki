@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const chalk = require('chalk')
 const cfgHelper = require('../helpers/config')
 const fs = require('fs')
 const path = require('path')
@@ -17,6 +18,8 @@ module.exports = {
       dataRegex: path.join(WIKI.SERVERPATH, 'app/regex.js')
     }
 
+    process.stdout.write(chalk.blue(`Loading configuration from ${confPaths.config}... `))
+
     let appconfig = {}
     let appdata = {}
 
@@ -28,8 +31,12 @@ module.exports = {
       )
       appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
       appdata.regex = require(confPaths.dataRegex)
-    } catch (ex) {
-      console.error(ex)
+      console.info(chalk.green.bold(`OK`))
+    } catch (err) {
+      console.error(chalk.red.bold(`FAILED`))
+      console.error(err.message)
+
+      console.error(chalk.red.bold(`>>> Unable to read configuration file! Did you create the config.yml file?`))
       process.exit(1)
     }
 
