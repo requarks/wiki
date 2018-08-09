@@ -1,13 +1,14 @@
 const webpack = require('webpack')
 const path = require('path')
 const fs = require('fs-extra')
+const yargs = require('yargs').argv
+const _ = require('lodash')
 
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const OfflinePlugin = require('offline-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
@@ -208,24 +209,10 @@ module.exports = {
       cssProcessorOptions: { discardComments: { removeAll: true } },
       canPrint: true
     }),
-    new OfflinePlugin({
-      ServiceWorker: {
-        minify: false
-      },
-      publicPath: '/',
-      externals: ['/'],
-      caches: {
-        main: [
-          'js/client.js'
-        ],
-        additional: [
-          ':externals:'
-        ],
-        optional: [
-          'js/*.chunk.js'
-        ]
-      },
-      safeToUseOptionalCaches: true
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default')),
+      '__REACT_DEVTOOLS_GLOBAL_HOOK__': '({ isDisabled: true })'
     })
   ],
   optimization: {

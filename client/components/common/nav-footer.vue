@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-footer.py-2.justify-center(app, absolute, :color='darkMode ? "" : "grey lighten-3"', inset, height='auto')
+  v-footer.justify-center(:color='darkMode ? "" : "grey lighten-3"', inset)
     .caption.grey--text.text--darken-1
       span(v-if='company && company.length > 0') {{ $t('common:footer.copyright', { company: company, year: currentYear }) }} |&nbsp;
       span {{ $t('common:footer.poweredBy') }} Wiki.js

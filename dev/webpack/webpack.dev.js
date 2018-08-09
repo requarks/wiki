@@ -1,6 +1,8 @@
 const webpack = require('webpack')
 const path = require('path')
 const fs = require('fs-extra')
+const yargs = require('yargs').argv
+const _ = require('lodash')
 
 const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
@@ -181,7 +183,8 @@ module.exports = {
       format: 'compact'
     }),
     new webpack.DefinePlugin({
-      'process.env': { NODE_ENV: '"development"' },
+      'process.env.NODE_ENV': JSON.stringify('development'),
+      'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default')),
       '__REACT_DEVTOOLS_GLOBAL_HOOK__': '({ isDisabled: true })'
     }),
     new WriteFilePlugin(),

@@ -115,6 +115,7 @@ Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './component
 Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
 Vue.component('v-card-chin', () => import(/* webpackMode: "eager" */ './components/common/v-card-chin.vue'))
+Vue.component('page', () => import(/* webpackChunkName: "theme-page" */ './themes/' + process.env.CURRENT_THEME + '/components/app.vue'))
 
 let bootstrap = () => {
   // ====================================

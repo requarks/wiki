@@ -1,0 +1,7 @@
+name: Default
+author: requarks.io
+site: https://wiki.requarks.io/
+version: 1.0.0
+requirements:
+  minimum: '>= 2.0.0'
+  maximum: '< 3.0.0'

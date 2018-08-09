@@ -14,10 +14,18 @@
                       .subheading Display
                   v-card-text
                     v-subheader.pl-0 Locale
-                    v-select.grey.lighten-5(solo, flat)
-                    v-divider
+                    v-select(
+                      outline
+                      background-color='grey lighten-2'
+                      hide-details
+                      )
+                    v-divider.mt-3
                     v-subheader.pl-0 Timezone
-                    v-select.grey.lighten-5(solo, flat)
+                    v-select(
+                      outline
+                      background-color='grey lighten-2'
+                      hide-details
+                      )
                   v-card-chin
                     v-spacer
                     v-btn(color='primary')
@@ -30,7 +38,11 @@
                     .subheading Editing
                 v-card-text
                   v-subheader.pl-0 Default Editor
-                  v-select.grey.lighten-5(solo, flat)
+                  v-select(
+                    outline
+                    background-color='grey lighten-2'
+                    hide-details
+                    )
                 v-card-chin
                   v-spacer
                   v-btn(color='primary')

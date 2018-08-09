@@ -88,10 +88,12 @@ module.exports = class Page extends Model {
   }
 
   static async createPage(opts) {
+    await WIKI.models.pages.renderPage(opts)
     const page = await WIKI.models.pages.query().insertAndFetch({
       authorId: opts.authorId,
       content: opts.content,
       creatorId: opts.authorId,
+      contentType: _.get(WIKI.data.editors, `${opts.editor}.contentType`, 'text'),
       description: opts.description,
       editorKey: opts.editor,
       isPrivate: opts.isPrivate,
@@ -129,5 +131,12 @@ module.exports = class Page extends Model {
       page
     })
     return page
+  }
+
+  static async renderPage(opts) {
+    WIKI.queue.job.renderPage.add(opts, {
+      removeOnComplete: true,
+      removeOnFail: true
+    })
   }
 }
