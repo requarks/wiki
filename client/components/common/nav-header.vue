@@ -32,13 +32,13 @@
         v-list-tile(avatar, @click='')
           v-list-tile-avatar: v-icon(color='blue-grey') burst_mode
           v-list-tile-content Images &amp; Files
-    v-toolbar-title
+    v-toolbar-title.ml-2
       span.subheading {{title}}
     v-spacer
     transition(name='navHeaderSearch')
       v-text-field(
         ref='searchField',
-        v-if='searchIsShown',
+        v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
         v-model='search',
         clearable,
         color='white',
@@ -61,6 +61,8 @@
     .navHeaderLoading.mr-3
       v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
     slot(name='actions')
+    v-btn(v-if='searchIsShown && $vuetify.breakpoint.smAndDown', icon)
+      v-icon(color='grey') search
     v-tooltip(bottom)
       v-btn(icon, href='/a', slot='activator')
         v-icon(color='grey') settings

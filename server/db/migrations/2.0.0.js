@@ -44,9 +44,8 @@ exports.up = knex => {
     .createTable('editors', table => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
-      table.string('title').notNullable()
       table.boolean('isEnabled').notNullable().defaultTo(false)
-      table.jsonb('config')
+      table.jsonb('config').notNullable()
     })
     // GROUPS ------------------------------
     .createTable('groups', table => {

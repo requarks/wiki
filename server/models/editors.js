@@ -36,10 +36,10 @@ module.exports = class Editor extends Model {
       const dbEditors = await WIKI.models.editors.query()
 
       // -> Fetch definitions from disk
-      const editorDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/editors'))
+      const editorDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/editor'))
       let diskEditors = []
       for (let dir of editorDirs) {
-        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/editors', dir, 'definition.yml'), 'utf8')
+        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/editor', dir, 'definition.yml'), 'utf8')
         diskEditors.push(yaml.safeLoad(def))
       }
       WIKI.data.editors = diskEditors.map(editor => ({
@@ -72,7 +72,7 @@ module.exports = class Editor extends Model {
         }
       }
       if (newEditors.length > 0) {
-        await WIKI.models.storage.query().insert(newEditors)
+        await WIKI.models.editors.query().insert(newEditors)
         WIKI.logger.info(`Loaded ${newEditors.length} new editors: [ OK ]`)
       } else {
         WIKI.logger.info(`No new editors found: [ SKIPPED ]`)
