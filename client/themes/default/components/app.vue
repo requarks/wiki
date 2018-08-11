@@ -37,7 +37,8 @@
           v-breadcrumbs-item Galaxy
           v-breadcrumbs-item Solar System
           v-breadcrumbs-item Planet Earth
-
+        v-spacer
+        status-indicator(active, pulse)
       v-divider
       v-layout(row)
         v-flex(xs12, lg9, xl10)
@@ -45,6 +46,7 @@
             div
               .headline.grey--text.text--darken-3 {{title}}
               .caption.grey--text.text--darken-1 {{description}}
+          v-divider
           .contents
             slot(name='contents')
         v-flex(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
@@ -58,33 +60,41 @@
               v-btn(icon, slot='activator')
                 v-icon(color='grey') edit
               span Edit Page
-          v-list.grey.lighten-3(dense)
-            v-subheader.pl-4 Table of contents
+          v-divider
+          v-list.grey.lighten-3.pb-3(dense)
+            v-subheader.pl-4.primary--text Table of contents
+            vue-tree-navigation.treenav(:items='toc', :defaultOpenLevel='1')
+          v-divider
+          v-list.grey.lighten-4(dense)
+            v-subheader.pl-4.teal--text Tags
             v-list-tile
-              v-list-tile-avatar: v-icon chevron_right
-              v-list-tile-title Introduction
+              v-list-tile-avatar: v-icon(color='teal') label
+              v-list-tile-title Astrophysics
+            v-divider(inset)
             v-list-tile
-              v-list-tile-avatar: v-icon chevron_right
-              v-list-tile-title Cities
-            v-list-tile(inset)
-              v-list-tile-avatar: v-icon chevron_right
-              v-list-tile-title New York
-            v-divider.my-2
-            v-subheader.pl-4 Metadata
+              v-list-tile-avatar: v-icon(color='teal') label
+              v-list-tile-title Space
+            v-divider(inset)
             v-list-tile
-              v-list-tile-avatar: v-icon chevron_right
-              v-list-tile-title Test
-            v-list-tile
-              v-list-tile-avatar: v-icon chevron_right
-              v-list-tile-title Test
-            v-list-tile
-              v-list-tile-avatar: v-icon chevron_right
-              v-list-tile-title Test
+              v-list-tile-avatar: v-icon(color='teal') label
+              v-list-tile-title Planets
+          v-divider
+          v-toolbar(color='grey lighten-3', flat, dense)
+            v-spacer
+            v-btn(icon): v-icon(color='grey') bookmark
+            v-btn(icon): v-icon(color='grey') share
+            v-btn(icon): v-icon(color='grey') print
+            v-spacer
     nav-footer
 </template>
 
 <script>
+import { StatusIndicator } from 'vue-status-indicator'
+
 export default {
+  components: {
+    StatusIndicator
+  },
   props: {
     title: {
       type: String,
@@ -97,7 +107,36 @@ export default {
   },
   data() {
     return {
-      navOpen: false
+      navOpen: false,
+      toc: [
+        {
+          name: 'Introduction',
+          element: 'introduction'
+        },
+        {
+          name: 'Cities',
+          element: 'cities',
+          children: [
+            {
+              name: 'New York',
+              element: 'contact',
+              children: [
+                { name: 'E-mail', element: 'email' },
+                { name: 'Phone', element: 'phone' }
+              ]
+            },
+            {
+              name: 'Chicago',
+              element: 'contact',
+              children: [
+                { name: 'E-mail', element: 'email' },
+                { name: 'Phone', element: 'phone' }
+              ]
+            }
+          ]
+        },
+        { name: 'Population', external: 'https://github.com' }
+      ]
     }
   },
   computed: {

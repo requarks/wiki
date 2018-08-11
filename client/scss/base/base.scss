@@ -1,6 +1,5 @@
 html {
   box-sizing: border-box;
-  font-family: $core-font-standard;
   height: 100%;
 }
 *, *:before, *:after {
@@ -11,75 +10,11 @@ html {
   display: none;
 }
 
-#app {
+#root {
   position: relative;
   min-height: 100%;
 
   &.is-fullscreen {
     height: 100vh;
-  }
-}
-
-// Container
-
-.container {
-  position: relative;
-}
-
-.content {
-	padding: 20px;
-}
-
-.datatable {
-  th, td {
-    vertical-align: middle;
-  }
-}
-
-// Visibility
-
-.is-hidden {
-  display: none !important;
-}
-
-.is-hidden-mobile {
-  @include mobile {
-    display: none !important;
-  }
-}
-
-.is-hidden-tablet {
-  @include tablet {
-    display: none !important;
-  }
-}
-
-.is-hidden-tablet-only {
-  @include tablet-only {
-    display: none !important;
-  }
-}
-
-.is-hidden-touch {
-  @include touch {
-    display: none !important;
-  }
-}
-
-.is-hidden-desktop {
-  @include desktop {
-    display: none !important;
-  }
-}
-
-.is-hidden-desktop-only {
-  @include desktop-only {
-    display: none !important;
-  }
-}
-
-.is-hidden-widescreen {
-  @include widescreen {
-    display: none !important;
   }
 }

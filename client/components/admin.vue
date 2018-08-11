@@ -80,12 +80,7 @@
 
 <script>
 import VueRouter from 'vue-router'
-
-import adminStore from '@/store/admin'
-
-/* global WIKI */
-
-WIKI.$store.registerModule('admin', adminStore)
+import { get } from 'vuex-pathify'
 
 const router = new VueRouter({
   mode: 'history',
@@ -120,6 +115,9 @@ export default {
     return {
       adminDrawerShown: true
     }
+  },
+  computed: {
+    darkMode: get('site/dark')
   },
   router
 }

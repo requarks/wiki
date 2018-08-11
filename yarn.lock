@@ -12524,6 +12524,12 @@ vue-simple-breakpoints@1.0.3:
   dependencies:
     simple-breakpoints "^1.1.1"
 
+vue-status-indicator@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/vue-status-indicator/-/vue-status-indicator-1.1.0.tgz#53f69fe62950f0291e00331ae63379221e6f1c8e"
+  dependencies:
+    vue "^2.5.11"
+
 vue-style-loader@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/vue-style-loader/-/vue-style-loader-4.1.0.tgz#7588bd778e2c9f8d87bfc3c5a4a039638da7a863"
@@ -12550,11 +12556,17 @@ vue-tour@1.0.1:
     popper.js "^1.12.9"
     vue "^2.5.13"
 
+vue-tree-navigation@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/vue-tree-navigation/-/vue-tree-navigation-3.0.1.tgz#1225f10ad7725ad03aeb8414116aa92e589dc720"
+  dependencies:
+    vue "^2.5.11"
+
 vue@2.5.16, vue@^2.5.13:
   version "2.5.16"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.5.16.tgz#07edb75e8412aaeed871ebafa99f4672584a0085"
 
-vue@2.5.17:
+vue@2.5.17, vue@^2.5.11:
   version "2.5.17"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.5.17.tgz#0f8789ad718be68ca1872629832ed533589c6ada"
 

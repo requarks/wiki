@@ -1,18 +1,19 @@
 @import "global";
 
 @import "base/base";
-@import 'base/icons';
 
 @import "../libs/animate/animate";
 
 @import 'components/markdown-content';
-@import 'components/btn';
-@import 'components/data-table';
-@import 'components/dialog';
+@import 'components/v-btn';
+@import 'components/v-data-table';
+@import 'components/v-dialog';
+@import 'components/vue-tree-navigation';
 
 // @import '../libs/twemoji/twemoji-awesome';
 @import '../libs/prism/prism.css';
 @import '~vue-tour/dist/vue-tour.css';
+@import '~vue-status-indicator/styles.css';
 // @import 'node_modules/diff2html/dist/diff2html.min';
 
 @import 'pages/welcome';

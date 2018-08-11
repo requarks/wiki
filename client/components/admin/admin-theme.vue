@@ -108,7 +108,7 @@ export default {
     }
   },
   computed: {
-    darkMode: sync('admin/theme@dark')
+    darkMode: sync('site/dark')
   },
   mounted() {
     this.darkModeInitial = this.darkMode
