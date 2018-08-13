@@ -1,5 +1,21 @@
 <template lang='pug'>
-  v-toolbar(color='black', dark, app, clipped-left, fixed, flat)
+  v-toolbar.nav-header(color='black', dark, app, clipped-left, fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
+    v-toolbar(color='deep-purple', flat, slot='extension', v-if='searchIsShown && $vuetify.breakpoint.smAndDown')
+      v-text-field(
+        ref='searchFieldMobile',
+        v-model='search',
+        clearable,
+        background-color='deep-purple'
+        color='white',
+        label='Search...',
+        single-line,
+        solo
+        flat
+        hide-details,
+        prepend-inner-icon='search',
+        :loading='searchIsLoading',
+        @keyup.enter='searchEnter'
+      )
     v-menu(open-on-hover, offset-y, bottom, left, min-width='250')
       v-toolbar-side-icon(slot='activator')
         v-icon view_module
@@ -32,9 +48,9 @@
         v-list-tile(avatar, @click='')
           v-list-tile-avatar: v-icon(color='blue-grey') burst_mode
           v-list-tile-content Images &amp; Files
-    v-toolbar-title.ml-2
+    v-toolbar-title(:class='{ "ml-2": $vuetify.breakpoint.mdAndUp, "ml-0": $vuetify.breakpoint.smAndDown }')
       span.subheading {{title}}
-    v-spacer
+    v-spacer(v-if='searchIsShown && $vuetify.breakpoint.mdAndUp')
     transition(name='navHeaderSearch')
       v-text-field(
         ref='searchField',
@@ -61,7 +77,11 @@
     .navHeaderLoading.mr-3
       v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
     slot(name='actions')
-    v-btn(v-if='searchIsShown && $vuetify.breakpoint.smAndDown', icon)
+    v-btn(
+      v-if='!hideSearch && $vuetify.breakpoint.smAndDown'
+      @click='searchToggle'
+      icon
+      )
       v-icon(color='grey') search
     v-tooltip(bottom)
       v-btn(icon, href='/a', slot='activator')
@@ -90,6 +110,7 @@
 
 <script>
 import { get } from 'vuex-pathify'
+import _ from 'lodash'
 
 export default {
   props: {
@@ -115,11 +136,19 @@ export default {
     title: get('site/title')
   },
   created() {
-    if (this.hideSearch || this.dense) {
+    if (this.hideSearch || this.dense || this.$vuetify.breakpoint.smAndDown) {
       this.searchIsShown = false
     }
   },
   methods: {
+    searchToggle() {
+      this.searchIsShown = !this.searchIsShown
+      if (this.searchIsShown) {
+        _.delay(() => {
+          this.$refs.searchFieldMobile.focus()
+        }, 200)
+      }
+    },
     searchEnter() {
       this.searchIsLoading = true
     },
@@ -146,6 +175,21 @@ export default {
 </script>
 
 <style lang='scss'>
+
+.nav-header {
+  .v-toolbar__extension {
+    padding: 0;
+
+    .v-toolbar__content {
+      padding: 0;
+    }
+    .v-text-field .v-input__prepend-inner {
+      padding: 0 14px 0 5px;
+      padding-right: 14px;
+    }
+  }
+}
+
 .navHeaderSearch {
   &-enter-active, &-leave-active {
     transition: opacity .25s ease, transform .25s ease;

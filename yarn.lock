@@ -12983,6 +12983,10 @@ xtend@^4.0.0, xtend@~4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.1.tgz#a5c6d532be656e23db820efb943a1f04998d63af"
 
+xterm@3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/xterm/-/xterm-3.6.0.tgz#9b95cd23a338e5842343aec1a104f094c5153e7c"
+
 y18n@^3.2.1:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/y18n/-/y18n-3.2.1.tgz#6d15fba884c08679c0d77e88e7759e811e07fa41"

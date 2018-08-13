@@ -265,6 +265,7 @@ export default {
       left: 0;
       width: 100vw;
       height: 25vh;
+      z-index: 1;
     }
 
     &-mascot {
@@ -289,6 +290,7 @@ export default {
       box-shadow: 0 14px 28px rgba(0,0,0,0.2);
       border-radius: 6px;
       animation: zoomIn .5s ease;
+      z-index: 2;
 
       &::after {
         position: absolute;

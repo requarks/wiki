@@ -1,58 +1,54 @@
 <template lang='pug'>
   .editor-code
     v-toolbar.editor-code-toolbar(dense, color='primary', dark)
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Bold
-          use(xlink:href='#fa-bold')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Italic
-          use(xlink:href='#fa-italic')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Strikethrough
-          use(xlink:href='#fa-strikethrough')
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon format_bold
+        span Bold
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon format_italic
+        span Italic
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon format_strikethrough
+        span Strikethrough
       v-menu(offset-y, open-on-hover)
         v-btn(icon, slot='activator').mx-0
-          svg.icons.is-18(role='img')
-            title Heading
-            use(xlink:href='#fa-heading')
+          v-icon font_download
         v-list
           v-list-tile(v-for='(n, idx) in 6', @click='', :key='idx')
             v-list-tile-action
-              svg.icons.is-18(role='img')
-                title Heading {{n}}
-                use(xlink:href='#fa-heading')
+              v-icon font_download
             v-list-tile-title Heading {{n}}
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Blockquote
-          use(xlink:href='#fa-quote-left')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Unordered List
-          use(xlink:href='#fa-list-ul')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Ordered List
-          use(xlink:href='#fa-list-ol')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Link
-          use(xlink:href='#fa-link')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Inline Code
-          use(xlink:href='#fa-terminal')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Code Block
-          use(xlink:href='#fa-code')
-      v-btn(icon).mx-0
-        svg.icons.is-18(role='img')
-          title Horizontal Bar
-          use(xlink:href='#fa-minus')
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon format_quote
+        span Blockquote
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon format_list_bulleted
+        span Unordered List
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon format_list_numbered
+        span Ordered List
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon insert_link
+        span Link
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon space_bar
+        span Inline Code
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon code
+        span Code Block
+      v-tooltip(top)
+        v-btn(icon, slot='activator').mx-0
+          v-icon remove
+        span Horizontal Bar
 
     .editor-code-main
       .editor-code-editor
@@ -361,13 +357,11 @@ export default {
     background-image: linear-gradient(to bottom, mc('blue', '700') 0%, mc('blue','800') 100%);
     color: #FFF;
 
-    @include until($tablet) {
-      justify-content: center;
-    }
+    .v-toolbar__content {
+      padding-left: 16px;
 
-    svg {
-      use {
-        color: #FFF;
+      @include until($tablet) {
+        padding-left: 8px;
       }
     }
   }

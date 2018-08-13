@@ -2,16 +2,29 @@
   .editor
     nav-header(dense)
       template(slot='actions')
-        v-btn(outline, color='green', @click.native.stop='save')
-          v-icon(color='green', left) check
-          span.white--text(v-if='mode === "create"') {{ $t('common:actions.create') }}
-          span.white--text(v-else) {{ $t('common:actions.save') }}
-        v-btn(outline, color='red').mx-0
-          v-icon(color='red', left) close
-          span.white--text {{ $t('common:actions.discard') }}
-        v-btn(outline, color='blue', @click.native.stop='openModal(`properties`)', dark)
-          v-icon(left) sort_by_alpha
-          span.white--text {{ $t('editor:page') }}
+        v-btn(
+          outline
+          color='green'
+          @click.native.stop='save'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          )
+          v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') check
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+        v-btn.mx-0(
+          outline
+          color='red'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          )
+          v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
+        v-btn(
+          outline
+          color='blue'
+          @click.native.stop='openModal(`properties`)'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          )
+          v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
     v-content
       editor-code
       component(:is='currentModal')

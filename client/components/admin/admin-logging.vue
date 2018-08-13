@@ -25,7 +25,7 @@
             v-btn(color='primary')
               v-icon(left) chevron_right
               | Set Services
-            v-btn(color='black', dark)
+            v-btn(color='black', dark, @click='toggleConsole')
               v-icon(left) keyboard
               | View Console
             v-btn(color='black', dark)
@@ -45,21 +45,21 @@
               v-icon(left) chevron_right
               | Save Configuration
 
-    v-snackbar(
-      color='success'
-      top
-      v-model='refreshCompleted'
-    )
-      v-icon.mr-3(dark) cached
-      | List of logging services has been refreshed.
+    logging-console(v-model='showConsole')
 </template>
 
 <script>
 import _ from 'lodash'
 
+import LoggingConsole from './admin-logging-console.vue'
+
 export default {
+  components: {
+    LoggingConsole
+  },
   data() {
     return {
+      showConsole: false,
       services: [],
       selectedServices: ['console'],
       refreshCompleted: false
@@ -80,6 +80,9 @@ export default {
     async refresh() {
       await this.$apollo.queries.services.refetch()
       this.refreshCompleted = true
+    },
+    toggleConsole () {
+      this.showConsole = !this.showConsole
     }
   }
 }

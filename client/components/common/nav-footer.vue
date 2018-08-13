@@ -1,8 +1,8 @@
 <template lang="pug">
   v-footer.justify-center(:color='color', inset)
     .caption.grey--text.text--darken-1
-      span(v-if='company && company.length > 0') {{ $t('common:footer.copyright', { company: company, year: currentYear }) }} |&nbsp;
-      span {{ $t('common:footer.poweredBy') }} Wiki.js
+      span(v-if='company && company.length > 0') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
+      span {{ $t('common:footer.poweredBy') }} #[a(href='https://wiki.js.org', ref='nofollow') Wiki.js]
 
     v-snackbar(
       :color='notification.style'
@@ -50,11 +50,21 @@ export default {
 </script>
 
 <style lang="scss">
-  .v-footer.altbg {
-    background: mc('theme', 'primary');
+  .v-footer {
+    a {
+      text-decoration: none;
+    }
 
-    span {
-      color: mc('blue', '300');
+    &.altbg {
+      background: mc('theme', 'primary');
+
+      span {
+        color: mc('blue', '300');
+      }
+
+      a {
+        color: mc('blue', '200');
+      }
     }
   }
 </style>

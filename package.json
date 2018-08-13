@@ -254,7 +254,8 @@
     "webpack-hot-middleware": "2.22.3",
     "webpack-merge": "4.1.4",
     "whatwg-fetch": "2.0.4",
-    "write-file-webpack-plugin": "4.3.2"
+    "write-file-webpack-plugin": "4.3.2",
+    "xterm": "3.6.0"
   },
   "browserslist": [
     "> 1%",
