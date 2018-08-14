@@ -201,7 +201,7 @@ app.set('port', appconfig.port)
 var server = http.createServer(app)
 var io = socketio(server)
 
-server.listen(appconfig.port)
+server.listen(appconfig.port, appconfig.listenAddress)
 server.on('error', (error) => {
   if (error.syscall !== 'listen') {
     throw error

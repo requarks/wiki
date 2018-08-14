@@ -7,6 +7,7 @@ defaults:
   config:
     title: Wiki
     host: http://localhost
+    listenAddress: 0.0.0.0
     port: 80
     paths:
       repo: ./repo
