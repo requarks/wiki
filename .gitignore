@@ -29,6 +29,7 @@ npm-debug.log*
 /repo
 /data
 /uploads
+*.sqlite
 
 # IDE exclude
 .idea

@@ -12,7 +12,7 @@ exports.up = knex => {
       table.enum('kind', ['binary', 'image']).notNullable().defaultTo('binary')
       table.string('mime').notNullable().defaultTo('application/octet-stream')
       table.integer('fileSize').unsigned().comment('In kilobytes')
-      table.jsonb('metadata')
+      table.json('metadata')
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
@@ -28,10 +28,10 @@ exports.up = knex => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
       table.boolean('isEnabled').notNullable().defaultTo(false)
-      table.jsonb('config').notNullable()
+      table.json('config').notNullable()
       table.boolean('selfRegistration').notNullable().defaultTo(false)
-      table.jsonb('domainWhitelist').notNullable()
-      table.jsonb('autoEnrollGroups').notNullable()
+      table.json('domainWhitelist').notNullable()
+      table.json('autoEnrollGroups').notNullable()
     })
     // COMMENTS ----------------------------
     .createTable('comments', table => {
@@ -45,7 +45,7 @@ exports.up = knex => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
       table.boolean('isEnabled').notNullable().defaultTo(false)
-      table.jsonb('config').notNullable()
+      table.json('config').notNullable()
     })
     // GROUPS ------------------------------
     .createTable('groups', table => {
@@ -58,7 +58,7 @@ exports.up = knex => {
     .createTable('locales', table => {
       table.increments('id').primary()
       table.string('code', 2).notNullable().unique()
-      table.jsonb('strings')
+      table.json('strings')
       table.boolean('isRTL').notNullable().defaultTo(false)
       table.string('name').notNullable()
       table.string('nativeName').notNullable()
@@ -99,7 +99,7 @@ exports.up = knex => {
     .createTable('settings', table => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
-      table.jsonb('value')
+      table.json('value')
       table.string('updatedAt').notNullable()
     })
     // STORAGE -----------------------------
@@ -108,7 +108,7 @@ exports.up = knex => {
       table.string('key').notNullable().unique()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.enum('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
-      table.jsonb('config')
+      table.json('config')
     })
     // TAGS --------------------------------
     .createTable('tags', table => {

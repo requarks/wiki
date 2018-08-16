@@ -33,6 +33,7 @@ module.exports = class Storage extends Model {
   }
 
   static async refreshTargetsFromDisk() {
+    let trx
     try {
       const dbTargets = await WIKI.models.storage.query()
 
@@ -74,7 +75,11 @@ module.exports = class Storage extends Model {
         }
       }
       if (newTargets.length > 0) {
-        await WIKI.models.storage.query().insert(newTargets)
+        trx = await WIKI.models.Objection.transaction.start(WIKI.models.knex)
+        for (let target of newTargets) {
+          await WIKI.models.storage.query(trx).insert(target)
+        }
+        await trx.commit()
         WIKI.logger.info(`Loaded ${newTargets.length} new storage targets: [ OK ]`)
       } else {
         WIKI.logger.info(`No new storage targets found: [ SKIPPED ]`)
@@ -82,6 +87,9 @@ module.exports = class Storage extends Model {
     } catch (err) {
       WIKI.logger.error(`Failed to scan or load new storage providers: [ FAILED ]`)
       WIKI.logger.error(err)
+      if (trx) {
+        trx.rollback()
+      }
     }
   }
 

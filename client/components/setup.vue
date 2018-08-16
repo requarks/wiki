@@ -48,7 +48,7 @@
                 br
                 | Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
               .body-1.pt-3
-                svg.icons.is-18.is-outlined.has-right-pad.is-text: use(xlink:href='#nc-cd-reader')
+                v-icon.mr-2 system_update
                 span You are about to install Wiki.js #[strong {{wikiVersion}}].
               v-divider.mt-3
               v-form

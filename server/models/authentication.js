@@ -40,6 +40,7 @@ module.exports = class Authentication extends Model {
   }
 
   static async refreshStrategiesFromDisk() {
+    let trx
     try {
       const dbStrategies = await WIKI.models.authentication.query()
 
@@ -82,7 +83,11 @@ module.exports = class Authentication extends Model {
         }
       }
       if (newStrategies.length > 0) {
-        await WIKI.models.authentication.query().insert(newStrategies)
+        trx = await WIKI.models.Objection.transaction.start(WIKI.models.knex)
+        for (let strategy of newStrategies) {
+          await WIKI.models.authentication.query(trx).insert(strategy)
+        }
+        await trx.commit()
         WIKI.logger.info(`Loaded ${newStrategies.length} new authentication strategies: [ OK ]`)
       } else {
         WIKI.logger.info(`No new authentication strategies found: [ SKIPPED ]`)
@@ -90,6 +95,9 @@ module.exports = class Authentication extends Model {
     } catch (err) {
       WIKI.logger.error(`Failed to scan or load new authentication providers: [ FAILED ]`)
       WIKI.logger.error(err)
+      if (trx) {
+        trx.rollback()
+      }
     }
   }
 }

@@ -1,0 +1,33 @@
+.icons {
+  display: inline-block;
+  color: mc('grey', '800');
+  &.is-text {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    position: relative;
+    top: -0.0625em;
+    stroke: none;
+    fill: none;
+  }
+  @each $size in 16,18,20,24,32,48,64,96,128 {
+    &.is-#{$size} {
+      width: #{$size}px;
+      height: #{$size}px;
+    }
+  }
+  &.has-right-pad {
+    margin-right: .5rem;
+  }
+  &.is-outlined {
+    stroke-width: 2px;
+    use {
+      fill: inherit;
+      stroke: mc('grey', '800');
+    }
+  }
+}
+.material-design-icon {
+  display: inline-flex;
+}

@@ -8,7 +8,7 @@ const Objection = require('objection')
 /* global WIKI */
 
 /**
- * PostgreSQL DB module
+ * ORM DB module
  */
 module.exports = {
   Objection,
@@ -22,13 +22,12 @@ module.exports = {
     let self = this
 
     let dbClient = null
-    const dbConfig = (!_.isEmpty(process.env.WIKI_DB_CONNSTR)) ? process.env.WIKI_DB_CONNSTR : {
+    let dbConfig = (!_.isEmpty(process.env.WIKI_DB_CONNSTR)) ? process.env.WIKI_DB_CONNSTR : {
       host: WIKI.config.db.host,
       user: WIKI.config.db.user,
       password: WIKI.config.db.pass,
       database: WIKI.config.db.db,
-      port: WIKI.config.db.port,
-      filename: WIKI.config.db.storage
+      port: WIKI.config.db.port
     }
 
     switch (WIKI.config.db.type) {
@@ -43,6 +42,7 @@ module.exports = {
         break
       case 'sqlite':
         dbClient = 'sqlite3'
+        dbConfig = { filename: WIKI.config.db.storage }
         break
       default:
         WIKI.logger.error('Invalid DB Type')

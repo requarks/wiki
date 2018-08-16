@@ -70,7 +70,7 @@ module.exports = () => {
 
   app.get('*', async (req, res) => {
     let packageObj = await fs.readJson(path.join(WIKI.ROOTPATH, 'package.json'))
-    res.render('main/setup', {
+    res.render('setup', {
       packageObj,
       telemetryClientID: WIKI.telemetry.cid
     })
