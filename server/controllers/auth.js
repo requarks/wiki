@@ -92,7 +92,7 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
  */
 
 router.get('/login/ms', passport.authenticate('windowslive', { scope: ['wl.signin', 'wl.basic', 'wl.emails'] }))
-router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
+router.get('/login/google', passport.authenticate('google', { hd: appconfig.auth.google.hd, scope: ['profile', 'email'] }))
 router.get('/login/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }))
 router.get('/login/github', passport.authenticate('github', { scope: ['user:email'] }))
 router.get('/login/slack', passport.authenticate('slack', { scope: ['identity.basic', 'identity.email'] }))

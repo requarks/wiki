@@ -66,6 +66,7 @@ auth:
     enabled: true
     clientId: GOOGLE_CLIENT_ID
     clientSecret: GOOGLE_CLIENT_SECRET
+    hd: 'example.com' # This is optional and can be removed
   microsoft:
     enabled: true
     clientId: MS_APP_ID

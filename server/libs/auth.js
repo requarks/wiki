@@ -61,6 +61,9 @@ module.exports = function (passport) {
         clientSecret: appconfig.auth.google.clientSecret,
         callbackURL: appconfig.host + '/login/google/callback'
       }, (accessToken, refreshToken, profile, cb) => {
+        if (appconfig.auth.google.hd && profile._json.domain !== appconfig.auth.google.hd) {
+          return cb(new Error('Wrong domain!'), null) || true
+        }
         db.User.processProfile(profile).then((user) => {
           return cb(null, user) || true
         }).catch((err) => {
