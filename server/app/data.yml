@@ -66,6 +66,10 @@ jobs:
     onInit: true
     cron: '*/15 * * * *'
     concurrency: 0
+  renderPage:
+    onInit: false
+    cron: false
+    concurrency: 1
   syncGraphLocales:
     onInit: true
     cron: '0 0 * * *'

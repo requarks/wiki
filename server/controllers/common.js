@@ -1,5 +1,8 @@
 const express = require('express')
 const router = express.Router()
+const pageHelper = require('../helpers/page')
+
+/* global WIKI */
 
 /**
  * Create/Edit document
@@ -25,15 +28,20 @@ router.get(['/p', '/p/*'], (req, res, next) => {
 /**
  * View document
  */
-router.get('/', (req, res, next) => {
-  res.render('welcome')
-})
-
-/**
- * View document
- */
-router.get('/*', (req, res, next) => {
-  res.render('page')
+router.get('/*', async (req, res, next) => {
+  const pageArgs = pageHelper.parsePath(req.path)
+  const page = await WIKI.models.pages.getPage({
+    path: pageArgs.path,
+    locale: pageArgs.locale,
+    userId: req.user.id
+  })
+  if (page) {
+    res.render('page')
+  } else if (pageArgs.path === 'home') {
+    res.render('welcome')
+  } else {
+    res.render('new')
+  }
 })
 
 module.exports = router

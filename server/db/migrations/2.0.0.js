@@ -87,6 +87,7 @@ exports.up = knex => {
       table.string('description')
       table.boolean('isPrivate').notNullable().defaultTo(false)
       table.boolean('isPublished').notNullable().defaultTo(false)
+      table.string('privateNS')
       table.string('publishStartDate')
       table.string('publishEndDate')
       table.text('content')

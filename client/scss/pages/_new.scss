@@ -1,5 +1,5 @@
-.onboarding {
-  background: linear-gradient(to bottom, mc('grey', '900') 0%, mc('grey', '800') 100%);
+.newpage {
+  background: linear-gradient(to bottom, mc('blue', '900') 0%, mc('blue', '800') 100%);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -15,13 +15,13 @@
     position: absolute;
     top: 0;
     left: 0;
-    background-image: url('../static/svg/motif-blocks.svg');
+    background-image: url('../static/svg/motif-circuit.svg');
     background-position: center center;
     background-repeat: repeat;
-    background-size: 500px;
+    background-size: 200px;
     z-index: 0;
     opacity: .75;
-    animation: onboardingBgReveal 50s linear infinite;
+    animation: onboardingBgReveal 80s linear infinite;
 
     @include keyframes(onboardingBgReveal) {
       0% {
@@ -33,6 +33,20 @@
     }
   }
 
+  &::after {
+    content: '';
+    position: absolute;
+    background-color: #0d47a1;
+    background-image: url('../static/svg/motif-overlay.svg');
+    background-attachment: fixed;
+    background-size: cover;
+    opacity: .5;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
   &-content {
     display: flex;
     flex-direction: column;
@@ -42,16 +56,16 @@
   }
 
   img {
-    width: 500px;
-    filter: grayscale(100%) brightness(160%);
+    height: 250px;
     margin-bottom: 3rem;
     z-index: 2;
     animation-duration: 3s;
 
     @include until($tablet) {
-      width: 300px;
+      height: 200px;
     }
   }
+
   h1 {
     font-size: 1.5rem;
     margin-bottom: 1rem;

@@ -3,100 +3,106 @@ package main
 import (
 	"fmt"
 	"runtime"
-	"time"
 
-	"github.com/gosuri/uiprogress"
-	"github.com/manifoldco/promptui"
-	"github.com/ttacon/chalk"
+	"github.com/bugsnag/bugsnag-go"
+	"github.com/fatih/color"
+	"gopkg.in/AlecAivazis/survey.v1"
 )
 
-var logo = `
- __    __ _ _    _    _
-/ / /\ \ (_) | _(_)  (_)___
-\ \/  \/ / | |/ / |  | / __|
- \  /\  /| |   <| |_ | \__ \
-  \/  \/ |_|_|\_\_(_)/ |___/
-                   |__/
-`
-
-var finish = `
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-|                                                   |
-|    Open http://localhost:3000/ in your browser    |
-|    to complete the installation!                  |
-|                                                   |
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-`
+var qs = []*survey.Question{
+	{
+		Name: "location",
+		Prompt: &survey.Input{
+			Message: "Where do you want to install Wiki.js?",
+			Default: "./wiki",
+		},
+		Validate: survey.Required,
+	},
+	{
+		Name: "dbtype",
+		Prompt: &survey.Select{
+			Message: "Select a DB Driver:",
+			Options: []string{"MariabDB", "MS SQL Server", "MySQL", "PostgreSQL", "SQLite"},
+			Default: "PostgreSQL",
+		},
+	},
+	{
+		Name: "port",
+		Prompt: &survey.Input{
+			Message: "Server Port:",
+			Default: "3000",
+		},
+	},
+}
 
 func main() {
-	fmt.Println(chalk.Yellow.Color(logo))
-	fmt.Println(chalk.Bold.TextStyle("Installer for Wiki.js 2.x"))
+	bugsnag.Configure(bugsnag.Configuration{
+		APIKey:       "37770b3b08864599fd47c4edba5aa656",
+		ReleaseStage: "dev",
+	})
+
+	bold := color.New(color.FgWhite).Add(color.Bold)
+
+	logo := `
+  __    __ _ _    _    _
+ / / /\ \ (_) | _(_)  (_)___
+ \ \/  \/ / | |/ / |  | / __|
+  \  /\  /| |   <| |_ | \__ \
+   \/  \/ |_|_|\_\_(_)/ |___/
+                    |__/
+  `
+	color.Yellow(logo)
+
+	bold.Println("\nInstaller for Wiki.js 2.x")
 	fmt.Printf("%s-%s\n\n", runtime.GOOS, runtime.GOARCH)
 
 	// Check system requirements
 
-	fmt.Println(chalk.Bold.TextStyle("Verifying system requirements..."))
+	bold.Println("Verifying system requirements...")
 	CheckNodeJs()
 	CheckRAM()
-	fmt.Println(chalk.Bold.TextStyle("\nSetup"))
+	fmt.Println()
 
-	// Prompt for build to install
+	// the answers will be written to this struct
+	answers := struct {
+		Location string
+		DBType   string `survey:"dbtype"`
+		Port     int
+	}{}
 
-	promptBuild := promptui.Select{
-		Label: "Select Build to install",
-		Items: []string{"Stable", "Dev"},
-		Templates: &promptui.SelectTemplates{
-			Help:     " ",
-			Selected: chalk.Green.Color("✔") + " Build: {{ . }}",
-		},
-	}
-
-	_, _, err := promptBuild.Run()
-
+	// perform the questions
+	err := survey.Ask(qs, &answers)
 	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
+		fmt.Println(err.Error())
 		return
 	}
 
-	// Choose database driver
-
-	promptDB := promptui.Select{
-		Label: "Select database driver",
-		Items: []string{"MariaDB", "MySQL", "MS SQL Server", "PostgreSQL", "SQLite"},
-		Templates: &promptui.SelectTemplates{
-			Help:     " ",
-			Selected: chalk.Green.Color("✔") + " Database Driver: {{ . }}",
-		},
-		Size: 10,
-	}
-
-	_, _, err = promptDB.Run()
-
-	// Port
-
-	promptPort := promptui.Prompt{
-		Label:   "Port",
-		Default: "3000",
-		Templates: &promptui.PromptTemplates{
-			Success: chalk.Green.Color("✔") + " Port: {{ . }}",
-		},
-	}
-
-	_, err = promptPort.Run()
+	fmt.Printf("%s chose %d.", answers.Location, answers.Port)
 
 	// Download archives...
 
-	fmt.Println(chalk.Bold.TextStyle("\nDownloading packages..."))
+	bold.Println("\nDownloading packages...")
 
-	uiprogress.Start()
-	bar := uiprogress.AddBar(100)
+	// uiprogress.Start()
+	// bar := uiprogress.AddBar(100)
 
-	bar.AppendCompleted()
-	bar.PrependElapsed()
+	// bar.AppendCompleted()
+	// bar.PrependElapsed()
 
-	for bar.Incr() {
-		time.Sleep(time.Millisecond * 20)
-	}
+	// for bar.Incr() {
+	// 	time.Sleep(time.Millisecond * 20)
+	// }
 
-	fmt.Println("\n" + chalk.Yellow.Color(finish))
+	finish := `
+  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  |                                                   |
+  |    Open http://localhost:3000/ in your browser    |
+  |    to complete the installation!                  |
+  |                                                   |
+  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  `
+	color.Yellow("\n\n" + finish)
+
+	fmt.Println("Press any key to continue.")
+	fmt.Scanln()
 }

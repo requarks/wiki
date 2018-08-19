@@ -1,4 +1,5 @@
 const Model = require('objection').Model
+const _ = require('lodash')
 
 /* global WIKI */
 
@@ -19,6 +20,7 @@ module.exports = class Page extends Model {
         title: {type: 'string'},
         description: {type: 'string'},
         isPublished: {type: 'boolean'},
+        privateNS: {type: 'string'},
         publishStartDate: {type: 'string'},
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
@@ -85,6 +87,27 @@ module.exports = class Page extends Model {
   $beforeInsert() {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
+  }
+
+  static async getPage(opts) {
+    const page = await WIKI.models.pages.query().where({
+      path: opts.path,
+      localeCode: opts.locale
+    }).andWhere(builder => {
+      builder.where({
+        isPublished: true
+      }).orWhere({
+        isPublished: false,
+        authorId: opts.userId
+      })
+    }).andWhere(builder => {
+      if (opts.private) {
+        builder.where({ isPrivate: true, privateNS: opts.privateNS })
+      } else {
+        builder.where({ isPrivate: false })
+      }
+    }).first()
+    return page
   }
 
   static async createPage(opts) {
