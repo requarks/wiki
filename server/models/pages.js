@@ -116,7 +116,7 @@ module.exports = class Page extends Model {
       authorId: opts.authorId,
       content: opts.content,
       creatorId: opts.authorId,
-      contentType: _.get(WIKI.data.editors, `${opts.editor}.contentType`, 'text'),
+      contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
       description: opts.description,
       editorKey: opts.editor,
       isPrivate: opts.isPrivate,

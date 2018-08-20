@@ -1,0 +1,29 @@
+key: markdownCore
+title: Core
+description: Basic Markdown Parser
+author: requarks.io
+dependsOn: []
+props:
+  linkify:
+    type: Boolean
+    default: true
+    title: Automatically convert links
+    hint: Links will automatically be converted to clickable links.
+  linebreaks:
+    type: Boolean
+    default: true
+    title: Automatically convert line breaks
+    hint: Add linebreaks within paragraphs.
+  highlightCode:
+    type: Boolean
+    default: true
+    title: Highlight code blocks
+    hint: Add syntax coloring to code blocks.
+  codeTheme:
+    type: String
+    default: light
+    title: Code Color Theme
+    hint: Color theme for code blocks
+    enum:
+      - light
+      - dark

@@ -59,7 +59,7 @@
     height: 250px;
     margin-bottom: 3rem;
     z-index: 2;
-    animation-duration: 3s;
+    animation-duration: 2s;
 
     @include until($tablet) {
       height: 200px;

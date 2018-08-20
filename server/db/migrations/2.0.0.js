@@ -96,6 +96,13 @@ exports.up = knex => {
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
+    // STORAGE -----------------------------
+    .createTable('renderers', table => {
+      table.increments('id').primary()
+      table.string('key').notNullable().unique()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.json('config')
+    })
     // SETTINGS ----------------------------
     .createTable('settings', table => {
       table.increments('id').primary()
@@ -108,7 +115,7 @@ exports.up = knex => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
       table.boolean('isEnabled').notNullable().defaultTo(false)
-      table.enum('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
+      table.string('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
       table.json('config')
     })
     // TAGS --------------------------------

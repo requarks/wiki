@@ -37,8 +37,10 @@
           v-breadcrumbs-item Galaxy
           v-breadcrumbs-item Solar System
           v-breadcrumbs-item Planet Earth
-        v-spacer
-        status-indicator(active, pulse)
+        template(v-if='!isPublished')
+          v-spacer
+          .caption.red--text Unpublished
+          status-indicator.ml-3(negative, pulse)
       v-divider
       v-layout(row)
         v-flex(xs12, lg9, xl10)
@@ -53,11 +55,11 @@
           v-toolbar(color='grey lighten-4', flat, :height='90')
             div
               .caption.grey--text.text--lighten-1 Last edited by
-              .body-2.grey--text.text--darken-3 John Doe
-              .caption.grey--text.text--darken-1 Monday at 12:34 PM
+              .body-2.grey--text.text--darken-3 {{ authorName }}
+              .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
             v-spacer
-            v-tooltip(bottom)
-              v-btn(icon, slot='activator')
+            v-tooltip(left)
+              v-btn(icon, slot='activator', :href='"/e/" + path')
                 v-icon(color='grey') edit
               span Edit Page
           v-divider
@@ -81,9 +83,15 @@
           v-divider
           v-toolbar(color='grey lighten-3', flat, dense)
             v-spacer
-            v-btn(icon): v-icon(color='grey') bookmark
-            v-btn(icon): v-icon(color='grey') share
-            v-btn(icon): v-icon(color='grey') print
+            v-tooltip(bottom)
+              v-btn(icon, slot='activator'): v-icon(color='grey') bookmark
+              span Bookmark
+            v-tooltip(bottom)
+              v-btn(icon, slot='activator'): v-icon(color='grey') share
+              span Share
+            v-tooltip(bottom)
+              v-btn(icon, slot='activator'): v-icon(color='grey') print
+              span Print Format
             v-spacer
     nav-footer
 </template>
@@ -96,6 +104,14 @@ export default {
     StatusIndicator
   },
   props: {
+    locale: {
+      type: String,
+      default: 'en'
+    },
+    path: {
+      type: String,
+      default: 'home'
+    },
     title: {
       type: String,
       default: 'Untitled Page'
@@ -103,6 +119,30 @@ export default {
     description: {
       type: String,
       default: ''
+    },
+    createdAt: {
+      type: String,
+      default: ''
+    },
+    updatedAt: {
+      type: String,
+      default: ''
+    },
+    tags: {
+      type: Array,
+      default: () => ([])
+    },
+    authorName: {
+      type: String,
+      default: 'Unknown'
+    },
+    authorId: {
+      type: Number,
+      default: 0
+    },
+    isPublished: {
+      type: Boolean,
+      default: false
     }
   },
   data() {

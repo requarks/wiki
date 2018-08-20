@@ -1,0 +1,7 @@
+key: markdownPlantuml
+title: PlantUML
+description: Generate diagrams from PlantUML syntax
+author: requarks.io
+dependsOn:
+  - markdownCore
+props: {}

@@ -33,10 +33,11 @@ router.get('/*', async (req, res, next) => {
   const page = await WIKI.models.pages.getPage({
     path: pageArgs.path,
     locale: pageArgs.locale,
-    userId: req.user.id
+    userId: req.user.id,
+    private: false
   })
   if (page) {
-    res.render('page')
+    res.render('page', { page })
   } else if (pageArgs.path === 'home') {
     res.render('welcome')
   } else {

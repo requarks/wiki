@@ -1,0 +1,7 @@
+key: markdownExpandtabs
+title: Expand Tabs
+description: Replace tabs with spaces in code blocks
+author: requarks.io
+dependsOn:
+  - markdownCore
+props: {}

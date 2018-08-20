@@ -2,6 +2,8 @@ require('../core/worker')
 
 /* global WIKI */
 
+WIKI.models = require('../core/db').init()
+
 module.exports = async (job) => {
   WIKI.logger.info(`Rendering page ${job.data.path}...`)
 

@@ -1,0 +1,7 @@
+key: markdownMathjax
+title: Mathjax Pre-Processor
+description: Pre-parse TeX blocks for Mathjax
+author: requarks.io
+dependsOn:
+  - markdownCore
+props: {}

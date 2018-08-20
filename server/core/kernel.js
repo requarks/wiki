@@ -50,6 +50,7 @@ module.exports = {
    */
   async postBootMaster() {
     await WIKI.models.authentication.refreshStrategiesFromDisk()
+    await WIKI.models.editors.refreshEditorsFromDisk()
     await WIKI.models.storage.refreshTargetsFromDisk()
 
     await WIKI.auth.activateStrategies()
