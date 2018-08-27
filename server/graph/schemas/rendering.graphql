@@ -1,0 +1,55 @@
+# ===============================================
+# RENDERING
+# ===============================================
+
+extend type Query {
+  rendering: RenderingQuery
+}
+
+extend type Mutation {
+  rendering: RenderingMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type RenderingQuery {
+  renderers(
+    filter: String
+    orderBy: String
+  ): [Renderer]
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type RenderingMutation {
+  updateRenderers(
+    renderers: [RendererInput]
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type Renderer {
+  isEnabled: Boolean!
+  key: String!
+  title: String!
+  description: String
+  icon: String
+  dependsOn: String
+  input: String
+  output: String
+  config: [KeyValuePair]
+}
+
+input RendererInput {
+  isEnabled: Boolean!
+  key: String!
+  mode: String!
+  config: [KeyValuePairInput]
+}

@@ -2,7 +2,9 @@ key: markdownCore
 title: Core
 description: Basic Markdown Parser
 author: requarks.io
-dependsOn: []
+input: markdown
+output: html
+icon: crop_free
 props:
   linkify:
     type: Boolean

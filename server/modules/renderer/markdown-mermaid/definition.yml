@@ -2,6 +2,7 @@ key: markdownMermaid
 title: Mermaid
 description: Generate flowcharts from Mermaid syntax
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: merge_type
+enabledDefault: false
+dependsOn: markdownCore
 props: {}

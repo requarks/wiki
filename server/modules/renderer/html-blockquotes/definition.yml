@@ -1,7 +1,8 @@
-key: markdownAbbr
-title: Abbreviations
-description: Parse abbreviations into abbr tags
+key: htmlBlockquotes
+title: Blockquotes
+description: Embed audio players for audio content
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: insert_comment
+enabledDefault: true
+dependsOn: htmlCore
 props: {}

@@ -1,0 +1,12 @@
+mutation($renderers: [RendererInput]) {
+  rendering {
+    updateRenderers(renderers: $renderers) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

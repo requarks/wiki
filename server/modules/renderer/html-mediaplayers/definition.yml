@@ -1,7 +1,8 @@
-key: markdownAbbr
-title: Abbreviations
-description: Parse abbreviations into abbr tags
+key: htmlMedia
+title: Media Players
+description: Embed players such as Youtube, Vimeo, Soundcloud, etc.
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: subscriptions
+enabledDefault: false
+dependsOn: htmlCore
 props: {}

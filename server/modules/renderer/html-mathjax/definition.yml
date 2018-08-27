@@ -1,7 +1,8 @@
-key: markdownAbbr
-title: Abbreviations
-description: Parse abbreviations into abbr tags
+key: htmlMathjax
+title: Mathjax Processor
+description: TeX/MathML Math Equations Parser
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: functions
+enabledDefault: false
+dependsOn: htmlCore
 props: {}

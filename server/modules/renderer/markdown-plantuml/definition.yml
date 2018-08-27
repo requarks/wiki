@@ -2,6 +2,7 @@ key: markdownPlantuml
 title: PlantUML
 description: Generate diagrams from PlantUML syntax
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: multiline_chart
+enabledDefault: false
+dependsOn: markdownCore
 props: {}

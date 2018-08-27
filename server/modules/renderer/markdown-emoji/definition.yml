@@ -2,6 +2,7 @@ key: markdownEmoji
 title: Emoji
 description: Convert tags to emojis
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: tag_faces
+enabledDefault: true
+dependsOn: markdownCore
 props: {}

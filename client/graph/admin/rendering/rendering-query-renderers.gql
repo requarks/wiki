@@ -1,0 +1,18 @@
+{
+  rendering {
+    renderers {
+      isEnabled
+      key
+      title
+      description
+      icon
+      dependsOn
+      input
+      output
+      config {
+        key
+        value
+      }
+    }
+  }
+}

@@ -1,7 +1,8 @@
-key: markdownAbbr
-title: Abbreviations
-description: Parse abbreviations into abbr tags
+key: htmlAsciinema
+title: Asciinema
+description: Embed asciinema players from compatible links
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: subtitles
+enabledDefault: false
+dependsOn: htmlCore
 props: {}

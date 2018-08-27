@@ -14,22 +14,14 @@
             small Wiki.js Installation Wizard
           v-divider
           v-stepper-step(step='2' :complete='state > 2')
-            | System Check
-            small Checking your system for compatibility
-          v-divider
-          v-stepper-step(step='3' :complete='state > 3')
-            | General Information
-            small Site Title, Language and Access
-          v-divider
-          v-stepper-step(step='4' :complete='state > 4')
             | Administration Account
             small Create the admin account
           v-divider(v-if='this.conf.upgrade')
-          v-stepper-step(step='5' :complete='state > 5', v-if='this.conf.upgrade')
+          v-stepper-step(step='3' :complete='state > 3', v-if='this.conf.upgrade')
             | Upgrade from Wiki.js 1.x
             small Migrate your existing installation
           v-divider
-          v-stepper-step(:step='this.conf.upgrade ? 6 : 5' :complete='this.conf.upgrade ? state > 5 : state > 6')
+          v-stepper-step(:step='this.conf.upgrade ? 4 : 3' :complete='this.conf.upgrade ? state > 3 : state > 4')
             | Final Steps
             small Finalizing your installation
 
@@ -68,126 +60,13 @@
                 )
             v-divider
             .pt-3.text-xs-center
-              v-btn(color='primary', @click='proceedToSyscheck', :disabled='loading') Start
-
-          //- ==============================================
-          //- SYSTEM CHECK
-          //- ==============================================
-
-          v-stepper-content(step='2')
-            v-card.text-xs-center(flat)
-              svg.icons.is-64: use(xlink:href='#nc-metrics')
-              .subheading System Check
-            v-container
-              v-layout(row, align-center, v-if='loading')
-                v-progress-circular(v-if='loading', indeterminate, color='blue')
-                .body-2.blue--text.ml-3 Checking your system for compatibility...
-              v-alert(type='success', outline, :value='!loading && syscheck.ok') Looks good! No issues so far.
-              v-alert(type='error', outline, :value='!loading && !syscheck.ok') {{ syscheck.error }}
-              v-list.mt-3(two-line, v-if='!loading && syscheck.ok', dense)
-                template(v-for='(rs, n) in syscheck.results')
-                  v-divider(v-if='n > 0', inset)
-                  v-list-tile
-                    v-list-tile-avatar(color='green lighten-5')
-                      v-icon(color='green') check
-                    v-list-tile-content
-                      v-list-tile-title {{rs.title}}
-                      v-list-tile-sub-title {{rs.subtitle}}
-            v-divider
-            .pt-3.text-xs-center
-              v-btn(@click='proceedToWelcome', :disabled='loading') Back
-              v-btn(color='primary', @click='proceedToSyscheck', v-if='!loading && !syscheck.ok') Check Again
-              v-btn(color='red', dark, @click='proceedToGeneral', v-if='!loading && !syscheck.ok') Continue Anyway
-              v-btn(color='primary', @click='proceedToGeneral', v-if='loading || syscheck.ok', :disabled='loading') Continue
-
-          //- ==============================================
-          //- GENERAL
-          //- ==============================================
-
-          v-stepper-content(step='3')
-            v-card.text-xs-center(flat)
-              svg.icons.is-64: use(xlink:href='#nc-webpage')
-              .subheading General Information
-            v-form
-              v-container
-                v-layout(row, wrap)
-                  v-flex(xs12, sm6).pr-3
-                    v-text-field(
-                      outline
-                      background-color='grey lighten-2'
-                      v-model='conf.title',
-                      label='Site Title',
-                      :counter='255',
-                      persistent-hint,
-                      hint='The site title will appear in the top left corner on every page and within the window title bar.',
-                      v-validate='{ required: true, min: 2 }',
-                      data-vv-name='siteTitle',
-                      data-vv-as='Site Title',
-                      data-vv-scope='general',
-                      :error-messages='errors.collect(`siteTitle`)'
-                    )
-                  v-flex.pr-3(xs12, sm6)
-                    v-text-field(
-                      outline
-                      background-color='grey lighten-2'
-                      v-model='conf.port',
-                      label='Server Port',
-                      persistent-hint,
-                      hint='The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it. Set $(PORT) to use the PORT environment variable.',
-                      v-validate='{ required: true }',
-                      data-vv-name='port',
-                      data-vv-as='Port',
-                      data-vv-scope='general',
-                      :error-messages='errors.collect(`port`)'
-                    )
-                v-layout(row, wrap).mt-3
-                  v-flex(xs12, sm6).pr-3
-                    v-text-field(
-                      outline
-                      background-color='grey lighten-2'
-                      v-model='conf.pathContent',
-                      label='Content Data Path',
-                      persistent-hint,
-                      hint='The path where content is stored (markdown files, uploads, etc.)',
-                      v-validate='{ required: true, min: 2 }',
-                      data-vv-name='pathContent',
-                      data-vv-as='Content Data Path',
-                      data-vv-scope='general',
-                      :error-messages='errors.collect(`pathContent`)'
-                    )
-                  v-flex(xs12, sm6)
-                    v-text-field(
-                      outline
-                      background-color='grey lighten-2'
-                      v-model='conf.pathData',
-                      label='Temporary Data Path',
-                      persistent-hint,
-                      hint='The path where temporary data is stored (cache, thumbnails, temporary upload files, etc.)',
-                      v-validate='{ required: true, min: 2 }',
-                      data-vv-name='pathData',
-                      data-vv-as='Temporary Data Path',
-                      data-vv-scope='general',
-                      :error-messages='errors.collect(`pathData`)'
-                    )
-                v-layout(row, wrap).mt-3
-                  v-flex(xs12)
-                    v-checkbox(
-                      color='primary',
-                      v-model='conf.public',
-                      label='Public Access',
-                      persistent-hint,
-                      hint='Should the site be accessible (read only) without login.'
-                    )
-            v-divider
-            .pt-3.text-xs-center
-              v-btn(@click='proceedToSyscheck', :disabled='loading') Back
-              v-btn(color='primary', @click='proceedToAdmin', :disabled='loading') Continue
+              v-btn(color='primary', @click='proceedToAdmin', :disabled='loading') Start
 
           //- ==============================================
           //- ADMINISTRATOR ACCOUNT
           //- ==============================================
 
-          v-stepper-content(step='4')
+          v-stepper-content(step='2')
             v-card.text-xs-center(flat)
               svg.icons.is-64: use(xlink:href='#nc-man-black')
               .subheading Administrator Account
@@ -245,14 +124,14 @@
                       :error-messages='errors.collect(`adminPasswordConfirm`)'
                     )
               .pt-3.text-xs-center
-                v-btn(@click='proceedToGeneral', :disabled='loading') Back
+                v-btn(@click='proceedToWelcome', :disabled='loading') Back
                 v-btn(color='primary', @click='proceedToUpgrade', :disabled='loading') Continue
 
           //- ==============================================
           //- UPGRADE FROM 1.x
           //- ==============================================
 
-          v-stepper-content(step='5', v-if='conf.upgrade')
+          v-stepper-content(step='3', v-if='conf.upgrade')
             v-card.text-xs-center(flat)
               svg.icons.is-64: use(xlink:href='#nc-spaceship')
               .subheading Upgrade from Wiki.js 1.x
@@ -283,7 +162,7 @@
           //- FINAL
           //- ==============================================
 
-          v-stepper-content(:step='conf.upgrade ? 6 : 5')
+          v-stepper-content(:step='conf.upgrade ? 4 : 3')
             v-card.text-xs-center(flat)
               template(v-if='loading')
                 .mt-3(style='width: 64px; display:inline-block;')
@@ -340,11 +219,6 @@ export default {
     return {
       loading: false,
       state: 1,
-      syscheck: {
-        ok: false,
-        error: '',
-        results: []
-      },
       final: {
         ok: false,
         error: '',
@@ -354,13 +228,7 @@ export default {
         adminEmail: '',
         adminPassword: '',
         adminPasswordConfirm: '',
-        lang: siteConfig.lang || 'en',
-        pathData: './data',
-        pathContent: './content',
-        port: siteConfig.port || 80,
-        public: (siteConfig.public === true),
         telemetry: true,
-        title: siteConfig.title || 'Wiki',
         upgrade: false,
         upgMongo: 'mongodb://'
       },
@@ -373,73 +241,43 @@ export default {
       this.state = 1
       this.loading = false
     },
-    proceedToSyscheck () {
-      let self = this
-      this.state = 2
-      this.loading = true
-      this.syscheck = {
-        ok: false,
-        error: '',
-        results: []
-      }
-
-      _.delay(() => {
-        axios.post('/syscheck', self.conf).then(resp => {
-          if (resp.data.ok === true) {
-            self.syscheck.ok = true
-            self.syscheck.results = resp.data.results
-          } else {
-            self.syscheck.ok = false
-            self.syscheck.error = resp.data.error
-          }
-          self.loading = false
-          self.$nextTick()
-        }).catch(err => {
-          window.alert(err.message)
-        })
-      }, 1000)
-    },
-    proceedToGeneral () {
-      this.state = 3
-      this.loading = false
-    },
     async proceedToAdmin () {
-      if (this.state < 4) {
+      if (this.state < 2) {
         const validationSuccess = await this.$validator.validateAll('general')
         if (!validationSuccess) {
-          this.state = 3
+          this.state = 1
           return
         }
       }
-      this.state = 4
+      this.state = 2
       this.loading = false
     },
     async proceedToUpgrade () {
-      if (this.state < 5) {
+      if (this.state < 3) {
         const validationSuccess = await this.$validator.validateAll('admin')
         if (!validationSuccess || this.conf.adminPassword !== this.conf.adminPasswordConfirm) {
-          this.state = 4
+          this.state = 2
           return
         }
       }
 
       if (this.conf.upgrade) {
-        this.state = 5
+        this.state = 3
         this.loading = false
       } else {
         this.proceedToFinal()
       }
     },
     async proceedToFinal () {
-      if (this.conf.upgrade && this.state < 6) {
+      if (this.conf.upgrade && this.state < 4) {
         const validationSuccess = await this.$validator.validateAll('upgrade')
         if (!validationSuccess) {
-          this.state = 5
+          this.state = 3
           return
         }
       }
 
-      this.state = this.conf.upgrade ? 6 : 5
+      this.state = this.conf.upgrade ? 4 : 3
       this.loading = true
       this.final = {
         ok: false,

@@ -2,6 +2,7 @@ key: markdownFootnotes
 title: Footnotes
 description: Parse footnotes references
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: low_priority
+enabledDefault: true
+dependsOn: markdownCore
 props: {}

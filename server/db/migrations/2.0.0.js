@@ -96,7 +96,7 @@ exports.up = knex => {
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
-    // STORAGE -----------------------------
+    // RENDERERS ---------------------------
     .createTable('renderers', table => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
@@ -199,14 +199,19 @@ exports.up = knex => {
 exports.down = knex => {
   return knex.schema
     .dropTableIfExists('userGroups')
+    .dropTableIfExists('pageHistoryTags')
+    .dropTableIfExists('pageHistory')
     .dropTableIfExists('pageTags')
     .dropTableIfExists('assets')
     .dropTableIfExists('assetFolders')
     .dropTableIfExists('comments')
+    .dropTableIfExists('editors')
     .dropTableIfExists('groups')
     .dropTableIfExists('locales')
     .dropTableIfExists('pages')
+    .dropTableIfExists('renderers')
     .dropTableIfExists('settings')
+    .dropTableIfExists('storage')
     .dropTableIfExists('tags')
     .dropTableIfExists('users')
 }

@@ -1,7 +1,8 @@
-key: markdownAbbr
-title: Abbreviations
-description: Parse abbreviations into abbr tags
+key: htmlSecurity
+title: Security
+description: Filter and strips potentially dangerous content
 author: requarks.io
-dependsOn:
-  - markdownCore
+icon: whatshot
+enabledDefault: true
+dependsOn: htmlCore
 props: {}
