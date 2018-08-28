@@ -18,6 +18,10 @@ module.exports = {
       dataRegex: path.join(WIKI.SERVERPATH, 'app/regex.js')
     }
 
+    if (process.env.dockerdev) {
+      confPaths.config = path.join(WIKI.ROOTPATH, 'dev/docker/config.yml')
+    }
+
     process.stdout.write(chalk.blue(`Loading configuration from ${confPaths.config}... `))
 
     let appconfig = {}

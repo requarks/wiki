@@ -1,12 +1,19 @@
-FROM requarks/wiki:latest
+# -- DEV DOCKERFILE --
+# -- DO NOT USE IN PRODUCTION! --
 
-# Replace with your email address:
-ENV WIKI_ADMIN_EMAIL admin@example.com
+FROM node:8-alpine
+LABEL maintainer "requarks.io"
+
+RUN apk update && \
+    apk add bash curl git python make g++ --no-cache && \
+    mkdir -p /var/wiki
 
 WORKDIR /var/wiki
+COPY package.json .
+RUN yarn --silent
 
-# Replace your-config.yml with the path to your config file:
-ADD your-config.yml config.yml
+ENV dockerdev 1
 
 EXPOSE 3000
-ENTRYPOINT [ "node", "server" ]
+
+CMD ["tail", "-f", "/dev/null"]

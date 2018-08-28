@@ -1,0 +1,16 @@
+port: 3000
+paths:
+  content: ./content
+  data: ./data
+db:
+  type: postgres
+  host: db
+  port: 5432
+  user: wikijs
+  pass: wikijsrocks
+  db: wiki
+redis:
+  host: redis
+  port: 6379
+  db: 0
+logLevel: info
