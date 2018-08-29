@@ -10,7 +10,11 @@
     "dev": "node wiki dev",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
-    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest"
+    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
+    "docker:dev:up": "docker-compose up -d && docker-compose exec wiki yarn dev",
+    "docker:dev:down": "docker-compose down",
+    "docker:dev:rebuild": "docker-compose build",
+    "docker:build": "docker-compose run wiki yarn build && docker-compose down"
   },
   "bin": {
     "wiki": "wiki.js"
@@ -25,7 +29,8 @@
     "docs",
     "documentation",
     "markdown",
-    "guides"
+    "guides",
+    "knowledge base"
   ],
   "author": "Nicolas Giard",
   "license": "AGPL-3.0",
