@@ -4,7 +4,7 @@ services:
     image: mongo
     expose:
       - '27017'
-    command: '--smallfiles --bind_ip wikidb'
+    command: '--smallfiles'
     environment:
       - 'MONGO_LOG_DIR=/dev/null'
     volumes:
