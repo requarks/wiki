@@ -18,7 +18,7 @@ module.exports = {
 
     // Init Console (default)
 
-    let loggerConsoleModule = require(`../modules/logging/console`)
+    let loggerConsoleModule = require(`../modules/logging/console/logger`)
     loggerConsoleModule.init(logger)
     this.loggers['console'] = loggerConsoleModule
 
