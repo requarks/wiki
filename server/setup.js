@@ -142,8 +142,15 @@ module.exports = () => {
       await WIKI.models.editors.refreshEditorsFromDisk()
       await WIKI.models.editors.query().patch({ isEnabled: true }).where('key', 'markdown')
 
+      // Load loggers
+      await WIKI.models.loggers.refreshLoggersFromDisk()
+
       // Load renderers
       await WIKI.models.renderers.refreshRenderersFromDisk()
+
+      // Load search engines + enable default
+      await WIKI.models.searchEngines.refreshSearchEnginesFromDisk()
+      await WIKI.models.searchEngines.query().patch({ isEnabled: true }).where('key', 'db')
 
       // Load storage targets
       await WIKI.models.storage.refreshTargetsFromDisk()

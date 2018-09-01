@@ -1,0 +1,8 @@
+key: newrelic
+title: New Relic
+description: New Relic's digital intelligence platform lets developers, ops, and tech teams measure and monitor the performance of their applications and infrastructure.
+author: requarks.io
+logo: https://static.requarks.io/logo/newrelic.svg
+website: https://newrelic.com/
+defaultLevel: warn
+props: {}

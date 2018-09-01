@@ -65,6 +65,14 @@ exports.up = knex => {
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
+    // LOGGING ----------------------------
+    .createTable('loggers', table => {
+      table.increments('id').primary()
+      table.string('key').notNullable().unique()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.string('level').notNullable().defaultTo('warn')
+      table.json('config')
+    })
     // PAGE HISTORY ------------------------
     .createTable('pageHistory', table => {
       table.increments('id').primary()
@@ -98,6 +106,13 @@ exports.up = knex => {
     })
     // RENDERERS ---------------------------
     .createTable('renderers', table => {
+      table.increments('id').primary()
+      table.string('key').notNullable().unique()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.json('config')
+    })
+    // SEARCH ------------------------------
+    .createTable('searchEngines', table => {
       table.increments('id').primary()
       table.string('key').notNullable().unique()
       table.boolean('isEnabled').notNullable().defaultTo(false)

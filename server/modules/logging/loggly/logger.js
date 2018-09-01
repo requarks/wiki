@@ -5,9 +5,6 @@ const winston = require('winston')
 // ------------------------------------
 
 module.exports = {
-  key: 'loggly',
-  title: 'Loggly',
-  props: ['token', 'subdomain'],
   init (logger, conf) {
     require('winston-loggly-bulk')
     logger.add(new winston.transports.Loggly({

@@ -1,0 +1,8 @@
+key: logstash
+title: Logstash
+description: Logstash is an open source tool for collecting, parsing, and storing logs for future use.
+author: requarks.io
+logo: https://static.requarks.io/logo/logstash.svg
+website: https://www.elastic.co/products/logstash
+defaultLevel: warn
+props: {}

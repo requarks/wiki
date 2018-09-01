@@ -1,0 +1,8 @@
+key: raygun
+title: Raygun
+description: Error, crash and performance monitoring for software teams.
+author: requarks.io
+logo: https://static.requarks.io/logo/raygun.svg
+website: https://raygun.com/
+defaultLevel: warn
+props: {}

@@ -7,9 +7,6 @@ const _ = require('lodash')
 // ------------------------------------
 
 module.exports = {
-  key: 'bugsnag',
-  title: 'Bugsnag',
-  props: ['key'],
   init (logger, conf) {
     let BugsnagLogger = winston.transports.BugsnagLogger = function (options) {
       this.name = 'bugsnagLogger'

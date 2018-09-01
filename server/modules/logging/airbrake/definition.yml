@@ -1,0 +1,8 @@
+key: airbrake
+title: Airbrake
+description: Airbrake is the leading exception reporting service, currently providing error monitoring for 50,000 applications with support for 18 programming languages.
+author: requarks.io
+logo: https://static.requarks.io/logo/airbrake.svg
+website: https://airbrake.io/
+defaultLevel: warn
+props: {}

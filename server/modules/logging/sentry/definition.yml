@@ -1,0 +1,11 @@
+key: sentry
+title: Sentry
+description: Open-source error tracking that helps developers monitor and fix crashes in real time.
+author: requarks.io
+logo: https://static.requarks.io/logo/sentry.svg
+website: https://sentry.io/
+defaultLevel: warn
+props:
+  key:
+    type: String
+    title: Key

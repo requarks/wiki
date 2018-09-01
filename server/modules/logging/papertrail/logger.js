@@ -5,9 +5,6 @@ const winston = require('winston')
 // ------------------------------------
 
 module.exports = {
-  key: 'papertrail',
-  title: 'Papertrail',
-  props: ['host', 'port'],
   init (logger, conf) {
     require('winston-papertrail').Papertrail // eslint-disable-line no-unused-expressions
     logger.add(new winston.transports.Papertrail({

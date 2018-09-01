@@ -7,9 +7,6 @@ const _ = require('lodash')
 // ------------------------------------
 
 module.exports = {
-  key: 'rollbar',
-  title: 'Rollbar',
-  props: ['key'],
   init (logger, conf) {
     let RollbarLogger = winston.transports.RollbarLogger = function (options) {
       this.name = 'rollbarLogger'

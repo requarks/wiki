@@ -18,9 +18,13 @@ module.exports = {
 
     // Init Console (default)
 
-    let loggerConsoleModule = require(`../modules/logging/console`)
-    loggerConsoleModule.init(logger)
-    this.loggers['console'] = loggerConsoleModule
+    logger.add(new winston.transports.Console({
+      level: WIKI.config.logLevel,
+      prettyPrint: true,
+      colorize: true,
+      silent: false,
+      timestamp: true
+    }))
 
     // _.forOwn(_.omitBy(WIKI.config.logging.loggers, s => s.enabled === false), (loggerConfig, loggerKey) => {
     //   let loggerModule = require(`../modules/logging/${loggerKey}`)

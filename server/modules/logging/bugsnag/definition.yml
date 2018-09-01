@@ -1,0 +1,12 @@
+key: bugsnag
+title: Bugsnag
+description: Bugsnag monitors apps for errors that impact customers & reports all diagnostic data.
+author: requarks.io
+logo: https://static.requarks.io/logo/bugsnag.svg
+website: https://www.bugsnag.com/
+defaultLevel: warn
+props:
+  key:
+    type: String
+    title: Key
+    hint: Bugsnag Project Notifier key

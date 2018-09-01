@@ -6,9 +6,6 @@ const winston = require('winston')
 // ------------------------------------
 
 module.exports = {
-  key: 'sentry',
-  title: 'Sentry',
-  props: ['key'],
   init (logger, conf) {
     let SentryLogger = winston.transports.SentryLogger = function (options) {
       this.name = 'sentryLogger'
