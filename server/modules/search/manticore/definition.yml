@@ -1,0 +1,7 @@
+key: manticore
+title: Manticore Search
+description: High performance full-text search engine with SQL and JSON support.
+author: requarks.io
+logo: https://static.requarks.io/logo/manticore.svg
+website: https://manticoresearch.com/
+props: {}

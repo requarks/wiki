@@ -11,12 +11,11 @@
 port: 80
 
 # ---------------------------------------------------------------------
-# Data Directories
+# IP address the server should listen to
 # ---------------------------------------------------------------------
+# Do not change unless you know what you are doing!
 
-paths:
-  content: ./content
-  data: ./data
+bindIP: 0.0.0.0
 
 # ---------------------------------------------------------------------
 # Database

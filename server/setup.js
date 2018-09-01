@@ -1,4 +1,5 @@
 const path = require('path')
+const os = require('os')
 
 /* global WIKI */
 
@@ -89,16 +90,11 @@ module.exports = () => {
         })
       }
 
-      // Update config file
-      WIKI.logger.info('Writing config file to disk...')
-      let confRaw = await fs.readFileAsync(path.join(WIKI.ROOTPATH, 'config.yml'), 'utf8')
-      let conf = yaml.safeLoad(confRaw)
-
       // Create directory structure
-      await fs.ensureDir(conf.paths.data)
-      await fs.ensureDir(path.join(conf.paths.data, 'cache'))
-      await fs.ensureDir(path.join(conf.paths.data, 'temp-upload'))
-      await fs.ensureDir(conf.paths.content)
+      const tmpPath = path.join(os.tmpdir(), 'wikijs')
+      await fs.ensureDir(tmpPath)
+      await fs.ensureDir(path.join(tmpPath, 'cache'))
+      await fs.ensureDir(path.join(tmpPath, 'uploads'))
 
       // Set config
       _.set(WIKI.config, 'defaultEditor', 'markdown')
@@ -237,7 +233,7 @@ module.exports = () => {
 
   app.set('port', WIKI.config.port)
   WIKI.server = http.createServer(app)
-  WIKI.server.listen(WIKI.config.port)
+  WIKI.server.listen(WIKI.config.port, WIKI.config.bindIP)
 
   var openConnections = []
 

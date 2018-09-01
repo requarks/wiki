@@ -7,9 +7,7 @@ defaults:
   config:
     # File defaults
     port: 80
-    paths:
-      repo: ./repo
-      data: ./data
+    bindIP: 0.0.0.0
     db:
       type: postgres
       host: localhost

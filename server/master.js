@@ -170,7 +170,7 @@ module.exports = async () => {
   app.set('port', WIKI.config.port)
   WIKI.server = http.createServer(app)
 
-  WIKI.server.listen(WIKI.config.port)
+  WIKI.server.listen(WIKI.config.port, WIKI.config.bindIP)
   WIKI.server.on('error', (error) => {
     if (error.syscall !== 'listen') {
       throw error
