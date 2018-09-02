@@ -2,6 +2,6 @@ key: aws
 title: AWS CloudSearch
 description: Amazon CloudSearch is a managed service in the AWS Cloud that makes it simple and cost-effective to set up, manage, and scale a search solution for your website or application.
 author: requarks.io
-logo: https://static.requarks.io/logo/aws.svg
+logo: https://static.requarks.io/logo/aws-cloudsearch.svg
 website: https://aws.amazon.com/cloudsearch/
 props: {}

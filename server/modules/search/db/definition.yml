@@ -2,6 +2,6 @@ key: db
 title: Database (built-in)
 description: Default database-based search engine.
 author: requarks.io
-logo: https://static.requarks.io/logo/db.svg
+logo: https://static.requarks.io/logo/database.svg
 website: https://www.requarks.io/
 props: {}

@@ -1,0 +1,12 @@
+mutation($searchEngines: [SearchEngineInput]) {
+  search {
+    updateSearchEngines(searchEngines: $searchEngines) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

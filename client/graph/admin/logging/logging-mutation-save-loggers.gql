@@ -1,0 +1,12 @@
+mutation($loggers: [LoggerInput]) {
+  logging {
+    updateLoggers(loggers: $loggers) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

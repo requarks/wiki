@@ -92,12 +92,6 @@ type Right {
   group: Group!
 }
 
-type SearchResult {
-  path: String
-  title: String
-  tags: [String]
-}
-
 type Setting {
   id: Int!
   createdAt: Date
@@ -133,7 +127,6 @@ type Query {
   files(id: Int): [File]
   folders(id: Int, name: String): [Folder]
   rights(id: Int): [Right]
-  search(q: String, tags: [String]): [SearchResult]
   settings(key: String): [Setting]
   tags(key: String): [Tag]
   translations(locale: String!, namespace: String!): [Translation]

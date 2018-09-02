@@ -1,0 +1,52 @@
+# ===============================================
+# SEARCH
+# ===============================================
+
+extend type Query {
+  search: SearchQuery
+}
+
+extend type Mutation {
+  search: SearchMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type SearchQuery {
+  searchEngines(
+    filter: String
+    orderBy: String
+  ): [SearchEngine]
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type SearchMutation {
+  updateSearchEngines(
+    searchEngines: [SearchEngineInput]
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type SearchEngine {
+  isEnabled: Boolean!
+  key: String!
+  title: String!
+  description: String
+  logo: String
+  website: String
+  config: [KeyValuePair]
+}
+
+input SearchEngineInput {
+  isEnabled: Boolean!
+  key: String!
+  config: [KeyValuePairInput]
+}
