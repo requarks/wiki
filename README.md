@@ -80,7 +80,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fixed: Fixed potential bug when uploading certain images (thanks to @Gnurdle)
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/58)
+![Progress](http://progressed.io/bar/60)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -111,12 +111,18 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] New Navigation Concept
 - [x] New Admin Area
   - [x] UI
-  - [x] System Info
   - [x] Locales
   - [x] Manage Groups
   - [ ] Manage Users
   - [x] Manage Authentication Strategies
+  - [x] Manage Editors
+  - [x] Manage Logging
+  - [ ] Manage Rendering :rocket:
+  - [x] Manage Search Engines
   - [x] Manage Storage Targets
+  - [x] System Info
+  - [x] Developer Tools
+  - [x] Contribute
 - [x] Requarks Graph [:octocat:](https://github.com/Requarks/graph)
   - [x] Countries
   - [x] Locales + translations
@@ -128,17 +134,14 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Operations
     - [x] Create
     - [x] Update
-    - [ ] Move / Rename :rocket:
-    - [ ] Delete :rocket:
+    - [ ] Move / Rename
+    - [ ] Delete
   - [ ] Dialogs
     - [x] Properties
-    - [ ] Access
     - [ ] Image + File Manager
 - [ ] Modular content parsers/renderers
 - [ ] Modular search engines
   - [ ] DB
-  - [ ] Azure Search
-  - [ ] Algolia
 - [ ] Modular storage engines
   - [ ] Git
   - [ ] Local Disk :rocket:
@@ -155,8 +158,13 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [ ] Diagrams as code (Mermaid module)
 - [ ] Themes
 - [ ] Additional search engines
+  - [ ] AWS CloudSearch
+  - [ ] Algolia
+  - [ ] Azure Search
   - [ ] Elasticsearch
+  - [ ] Manticore Search
   - [ ] Solr
+  - [ ] Sphinx Search
 - [ ] Additional storage engines
   - [ ] Dropbox
   - [ ] Google Drive
