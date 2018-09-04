@@ -47,7 +47,7 @@
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
               )
-              v-switch(
+              v-switch.mb-3(
                 v-else-if='cfg.value.type === "boolean"'
                 :key='cfg.key'
                 :label='cfg.value.title'

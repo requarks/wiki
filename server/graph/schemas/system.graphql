@@ -37,15 +37,18 @@ type SystemInfo {
   dbHost: String
   dbType: String
   dbVersion: String
+  groupsTotal: Int
   hostname: String
   latestVersion: String
   latestVersionReleaseDate: Date
   nodeVersion: String
   operatingSystem: String
+  pagesTotal: Int
   ramTotal: String
   redisHost: String
   redisTotalRAM: String
   redisUsedRAM: String
   redisVersion: String
+  usersTotal: Int
   workingDirectory: String
 }

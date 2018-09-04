@@ -1,0 +1,83 @@
+key: saml
+title: SAML 2.0
+description: Security Assertion Markup Language 2.0 (SAML 2.0) is a version of the SAML standard for exchanging authentication and authorization data between security domains.
+author: requarks.io
+logo: https://static.requarks.io/logo/saml.svg
+website: https://wiki.oasis-open.org/security/FrontPage
+useForm: false
+props:
+  entryPoint:
+    type: String
+    title: Entry Point
+    hint: Identity provider entrypoint (URL)
+  issuer:
+    type: String
+    title: Issuer
+    hint: Issuer string to supply to Identity Provider
+  audience:
+    type: String
+    title: Audience
+    hint: Expected SAML response Audience (if not provided, Audience won't be verified)
+  cert:
+    type: String
+    title: Certificate
+    hint: Public PEM-encoded X.509 signing certificate contents in base64 (e.g. 'MIICizCCAfQCCQCY8tKaMc0BMjANBgkqh ... W=='). If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
+  privateCert:
+    type: String
+    title: Private Certificate
+    hint: PEM formatted key used to sign the certificate.
+  decryptionPvk:
+    type: String
+    title: Decryption Private Key
+    hint: (optional) Private key that will be used to attempt to decrypt any encrypted assertions that are received.
+  signatureAlgorithm:
+    type: String
+    title: Signature Algorithm
+    hint: Signature algorithm used for signing requests
+    default: sha1
+    enum:
+      - sha1
+      - sha256
+      - sha512
+  identifierFormat:
+    type: String
+    title: Name Identifier format
+    default: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'
+  acceptedClockSkewMs:
+    type: Number
+    title: Accepted Clock Skew Milleseconds
+    hint: Time in milliseconds of skew that is acceptable between client and server when checking OnBefore and NotOnOrAfter assertion condition validity timestamps. Setting to -1 will disable checking these conditions entirely.
+    default: 0
+  disableRequestedAuthnContext:
+    type: Boolean
+    title: Disable Requested Auth Context
+    hint: If enabled, do not request a specific authentication context. This is known to help when authenticating against Active Directory (AD FS) servers.
+    default: false
+  authnContext:
+    type: String
+    title: Auth Context
+    hint: Name identifier format to request auth context.
+    default: urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport
+  forceAuthn:
+    type: Boolean
+    title: Force Initial Re-authentication
+    hint: If enabled, the initial SAML request from the service provider specifies that the IdP should force re-authentication of the user, even if they possess a valid session.
+    default: false
+  providerName:
+    type: String
+    title: Provider Name
+    hint: Optional human-readable name of the requester for use by the presenter's user agent or the identity provider.
+    default: wiki.js
+  skipRequestCompression:
+    type: Boolean
+    title: Skip Request Compression
+    hint: If enabled, the SAML request from the service provider won't be compressed.
+    default: false
+  authnRequestBinding:
+    type: String
+    title: Request Binding
+    hint: Binding used for request authentication from IDP.
+    default: 'HTTP-Redirect'
+    enum:
+      - HTTP-Redirect
+      - HTTP-POST

@@ -14,7 +14,7 @@
               )
               v-icon.mr-2 line_weight
               .subheading Pipeline
-            v-expansion-panel.adm-rendering-pipeline
+            v-expansion-panel.adm-rendering-pipeline(v-model='selectedCore')
               v-expansion-panel-content(
                 hide-actions
                 v-for='core in cores'
@@ -31,20 +31,21 @@
                   v-icon.mx-2 arrow_forward
                   .caption {{core.output}}
                 v-list(two-line, dense)
-                  v-list-tile(
-                    avatar
-                    v-for='rdr in core.children'
-                    :key='rdr.key'
-                    )
-                    v-list-tile-avatar
-                      v-icon(color='grey') {{rdr.icon}}
-                    v-list-tile-content
-                      v-list-tile-title {{rdr.title}}
-                      v-list-tile-sub-title {{rdr.description}}
-                    v-list-tile-avatar
-                      v-icon(color='green', small, v-if='rdr.isEnabled') lens
-                      v-icon(color='red', small, v-else) trip_origin
-                  v-divider.my-0
+                  template(v-for='(rdr, n) in core.children')
+                    v-list-tile(
+                      avatar
+                      :key='rdr.key'
+                      @click=''
+                      )
+                      v-list-tile-avatar
+                        v-icon(color='grey') {{rdr.icon}}
+                      v-list-tile-content
+                        v-list-tile-title {{rdr.title}}
+                        v-list-tile-sub-title {{rdr.description}}
+                      v-list-tile-avatar
+                        v-icon(color='green', small, v-if='rdr.isEnabled') lens
+                        v-icon(color='red', small, v-else) trip_origin
+                    v-divider.my-0(v-if='n < core.children.length - 1')
 
           v-flex(lg9 xs12)
             v-card
@@ -112,6 +113,7 @@ import renderersQuery from 'gql/admin/rendering/rendering-query-renderers.gql'
 export default {
   data() {
     return {
+      selectedCore: 0,
       linkify: true,
       codeTheme: 'Light',
       renderers: []
@@ -123,6 +125,13 @@ export default {
         core.children = _.concat([_.cloneDeep(core)], _.filter(this.renderers, ['dependsOn', core.key]))
         return core
       })
+    }
+  },
+  watch: {
+    renderers(newValue, oldValue) {
+      _.delay(() => {
+        this.selectedCore = _.findIndex(this.cores, ['key', 'markdownCore'])
+      }, 500)
     }
   },
   apollo: {

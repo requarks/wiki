@@ -1,7 +1,7 @@
 <template lang='pug'>
   v-app(:dark='darkMode').admin
     nav-header
-    v-navigation-drawer.pb-0(v-model='adminDrawerShown', app, fixed, clipped, left, permanent)
+    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense)
         v-list-tile.pt-2(to='/dashboard')
           v-list-tile-avatar: v-icon dashboard
@@ -71,7 +71,7 @@
           v-list-tile-avatar: v-icon favorite
           v-list-tile-title {{ $t('admin:contribute.title') }}
 
-    v-content
+    v-content(:class='darkMode ? "grey darken-4" : ""')
       transition(name='admin-router')
         router-view
 
@@ -135,6 +135,22 @@ export default {
   }
   &-enter, &-leave-to {
     opacity: 0;
+  }
+}
+
+.admin-sidebar {
+  .v-list__tile--active {
+    background-color: rgba(mc('theme', 'primary'), .1);
+
+    .v-icon {
+      color: mc('theme', 'primary')
+    }
+  }
+}
+
+.theme--dark {
+  .admin-sidebar .v-list__tile--active {
+    background-color: rgba(0,0,0, .2);
   }
 }
 

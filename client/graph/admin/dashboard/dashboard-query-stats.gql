@@ -1,0 +1,11 @@
+query {
+  system {
+    info {
+      currentVersion
+      latestVersion
+      groupsTotal
+      pagesTotal
+      usersTotal
+    }
+  }
+}
