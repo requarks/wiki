@@ -51,6 +51,7 @@
           v-divider
           .contents
             slot(name='contents')
+
         v-flex(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
           v-toolbar(color='grey lighten-4', flat, :height='90')
             div
@@ -68,6 +69,18 @@
             vue-tree-navigation.treenav(:items='toc', :defaultOpenLevel='1')
           v-divider
           v-list.grey.lighten-4(dense)
+            v-subheader.pl-4.yellow--text.text--darken-4 Rating
+            .text-xs-center
+              v-rating(
+                v-model='rating'
+                color='yellow darken-3'
+                background-color='grey lighten-1'
+                half-increments
+                hover
+              )
+              .pb-2.caption.grey--text 5 votes
+          v-divider
+          v-list.grey.lighten-3(dense)
             v-subheader.pl-4.teal--text Tags
             v-list-tile
               v-list-tile-avatar: v-icon(color='teal') label
@@ -81,7 +94,7 @@
               v-list-tile-avatar: v-icon(color='teal') label
               v-list-tile-title Planets
           v-divider
-          v-toolbar(color='grey lighten-3', flat, dense)
+          v-toolbar(color='grey lighten-4', flat, dense)
             v-spacer
             v-tooltip(bottom)
               v-btn(icon, slot='activator'): v-icon(color='grey') bookmark
@@ -183,6 +196,14 @@ export default {
     navShown: {
       get() { return this.navOpen || this.$vuetify.breakpoint.smAndUp },
       set(val) { this.navOpen = val }
+    },
+    rating: {
+      get () {
+        return 3.5
+      },
+      set (val) {
+
+      }
     }
   },
   methods: {

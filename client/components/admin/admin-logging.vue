@@ -12,7 +12,7 @@
           .body-2.grey--text.text--darken-1 Select which logging service to enable:
           .caption.grey--text.pb-2 Some loggers require additional configuration in their dedicated tab (when selected).
           v-form
-            v-checkbox.my-1(
+            v-checkbox.my-0(
               v-for='(logger, n) in loggers'
               v-model='logger.isEnabled'
               :key='logger.key'

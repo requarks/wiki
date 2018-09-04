@@ -12,7 +12,7 @@
           .body-2.grey--text.text--darken-1 Select which storage targets to enable:
           .caption.grey--text.pb-2 Some storage targets require additional configuration in their dedicated tab (when selected).
           v-form
-            v-checkbox.my-1(
+            v-checkbox.my-0(
               v-for='tgt in targets'
               v-model='tgt.isEnabled'
               :key='tgt.key'

@@ -139,8 +139,8 @@
 </template>
 
 <script>
-import IconGithubCircle from 'mdi/github-circle'
-import IconHomeAlert from 'mdi/home-alert'
+import IconGithubCircle from 'mdi/GithubCircle'
+import IconHomeAlert from 'mdi/HomeAlert'
 
 export default {
   components: {

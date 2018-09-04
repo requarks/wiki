@@ -12,7 +12,7 @@
           .body-2.grey--text.text--darken-1 Select which authentication strategies to enable:
           .caption.grey--text.pb-2 Some strategies require additional configuration in their dedicated tab (when selected).
           v-form
-            v-checkbox.my-1(
+            v-checkbox.my-0(
               v-for='strategy in strategies'
               v-model='strategy.isEnabled'
               :key='strategy.key'

@@ -44,7 +44,7 @@
                       )
                   v-card-chin
                     v-spacer
-                    v-btn(color='primary')
+                    v-btn(color='primary', @click='save')
                       v-icon(left) chevron_right
                       span Save
             v-flex(lg6 xs12)
@@ -82,7 +82,33 @@
                     )
                 v-card-chin
                   v-spacer
-                  v-btn(color='primary')
+                  v-btn(color='primary', @click='save')
+                    v-icon(left) chevron_right
+                    span Save
+
+              v-card.mt-3
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title
+                    .subheading Features
+                v-card-text
+                  v-switch(
+                    v-model='featurePageRatings'
+                    label='Page Ratings'
+                    color='primary'
+                    persistent-hint
+                    hint='Allow users to rate pages.'
+                    )
+                  v-divider.mt-3
+                  v-switch(
+                    v-model='featurePersonalWiki'
+                    label='Personal Wikis'
+                    color='primary'
+                    persistent-hint
+                    hint='Allow users to have their own personal wiki.'
+                    )
+                v-card-chin
+                  v-spacer
+                  v-btn(color='primary', @click='save')
                     v-icon(left) chevron_right
                     span Save
 
@@ -98,12 +124,23 @@ export default {
       metaRobotsSelection: ['Index', 'Follow'],
       metaRobots: ['Index', 'Follow', 'No Index', 'No Follow'],
       useSquareLogo: false,
-      displayMascot: true
+      displayMascot: true,
+      featurePageRatings: false,
+      featurePersonalWiki: true
     }
   },
   computed: {
     siteTitle: sync('site/title'),
     company: sync('site/company')
+  },
+  methods: {
+    async save () {
+      this.$store.commit('showNotification', {
+        message: 'Configuration saved successfully.',
+        style: 'success',
+        icon: 'check'
+      })
+    }
   }
 }
 </script>

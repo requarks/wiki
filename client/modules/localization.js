@@ -8,7 +8,7 @@ import _ from 'lodash'
 
 import localeQuery from 'gql/common/common-locale-query.gql'
 
-module.exports = {
+export default {
   VueI18Next,
   init() {
     i18next
