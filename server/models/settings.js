@@ -8,6 +8,7 @@ const _ = require('lodash')
  */
 module.exports = class Setting extends Model {
   static get tableName() { return 'settings' }
+  static get idColumn() { return 'key' }
 
   static get jsonSchema () {
     return {
@@ -15,7 +16,6 @@ module.exports = class Setting extends Model {
       required: ['key', 'value'],
 
       properties: {
-        id: {type: 'integer'},
         key: {type: 'string'},
         value: {type: 'object'},
         createdAt: {type: 'string'},

@@ -12,6 +12,7 @@ const commonHelper = require('../helpers/common')
  */
 module.exports = class Authentication extends Model {
   static get tableName() { return 'authentication' }
+  static get idColumn() { return 'key' }
 
   static get jsonSchema () {
     return {
@@ -19,7 +20,6 @@ module.exports = class Authentication extends Model {
       required: ['key', 'isEnabled'],
 
       properties: {
-        id: {type: 'integer'},
         key: {type: 'string'},
         isEnabled: {type: 'boolean'},
         config: {type: 'object'},

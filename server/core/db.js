@@ -34,6 +34,7 @@ module.exports = {
       case 'postgres':
         dbClient = 'pg'
         break
+      case 'mariadb':
       case 'mysql':
         dbClient = 'mysql2'
         break
@@ -52,6 +53,7 @@ module.exports = {
     this.knex = Knex({
       client: dbClient,
       useNullAsDefault: true,
+      asyncStackTraces: WIKI.IS_DEBUG,
       connection: dbConfig,
       pool: {
         async afterCreate(conn, done) {

@@ -25,8 +25,7 @@ exports.up = knex => {
     })
     // AUTHENTICATION ----------------------
     .createTable('authentication', table => {
-      table.increments('id').primary()
-      table.string('key').notNullable().unique()
+      table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config').notNullable()
       table.boolean('selfRegistration').notNullable().defaultTo(false)
@@ -42,8 +41,7 @@ exports.up = knex => {
     })
     // EDITORS -----------------------------
     .createTable('editors', table => {
-      table.increments('id').primary()
-      table.string('key').notNullable().unique()
+      table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config').notNullable()
     })
@@ -56,8 +54,7 @@ exports.up = knex => {
     })
     // LOCALES -----------------------------
     .createTable('locales', table => {
-      table.increments('id').primary()
-      table.string('code', 2).notNullable().unique()
+      table.string('code', 2).notNullable().primary()
       table.json('strings')
       table.boolean('isRTL').notNullable().defaultTo(false)
       table.string('name').notNullable()
@@ -67,8 +64,7 @@ exports.up = knex => {
     })
     // LOGGING ----------------------------
     .createTable('loggers', table => {
-      table.increments('id').primary()
-      table.string('key').notNullable().unique()
+      table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.string('level').notNullable().defaultTo('warn')
       table.json('config')
@@ -106,29 +102,25 @@ exports.up = knex => {
     })
     // RENDERERS ---------------------------
     .createTable('renderers', table => {
-      table.increments('id').primary()
-      table.string('key').notNullable().unique()
+      table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config')
     })
     // SEARCH ------------------------------
     .createTable('searchEngines', table => {
-      table.increments('id').primary()
-      table.string('key').notNullable().unique()
+      table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config')
     })
     // SETTINGS ----------------------------
     .createTable('settings', table => {
-      table.increments('id').primary()
-      table.string('key').notNullable().unique()
+      table.string('key').notNullable().primary()
       table.json('value')
       table.string('updatedAt').notNullable()
     })
     // STORAGE -----------------------------
     .createTable('storage', table => {
-      table.increments('id').primary()
-      table.string('key').notNullable().unique()
+      table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.string('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
       table.json('config')

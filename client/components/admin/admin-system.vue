@@ -97,11 +97,13 @@
                     v-avatar.indigo.darken-1(size='40')
                       icon-database(fillColor='#FFFFFF')
                   v-list-tile-content
-                    v-list-tile-title {{ info.dbVersion }}
+                    v-list-tile-title(v-html='dbVersion')
                     v-list-tile-sub-title {{ info.dbHost }}
 </template>
 
 <script>
+import _ from 'lodash'
+
 import IconCube from 'mdi/cube'
 import IconDatabase from 'mdi/database'
 import IconNodeJs from 'mdi/nodejs'
@@ -117,6 +119,11 @@ export default {
   data() {
     return {
       info: {}
+    }
+  },
+  computed: {
+    dbVersion() {
+      return _.get(this.info, 'dbVersion', '').replace(/(?:\r\n|\r|\n)/g, '<br />')
     }
   },
   methods: {

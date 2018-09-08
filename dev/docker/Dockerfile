@@ -1,7 +1,7 @@
 # -- DEV DOCKERFILE --
 # -- DO NOT USE IN PRODUCTION! --
 
-FROM node:8-alpine
+FROM node:10-alpine
 LABEL maintainer "requarks.io"
 
 RUN apk update && \

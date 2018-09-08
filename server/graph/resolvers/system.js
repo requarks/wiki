@@ -8,7 +8,8 @@ const path = require('path')
 /* global WIKI */
 
 const dbTypes = {
-  mysql: 'MySQL / MariaDB',
+  mysql: 'MySQL',
+  mariadb: 'MariaDB',
   postgres: 'PostgreSQL',
   sqlite: 'SQLite',
   mssql: 'MS SQL Server'
@@ -35,11 +36,33 @@ module.exports = {
     dbType() {
       return _.get(dbTypes, WIKI.config.db.type, 'Unknown DB')
     },
-    dbVersion() {
-      return _.get(WIKI.models, 'knex.client.version', 'Unknown version')
+    async dbVersion() {
+      let version = 'Unknown Version'
+      switch (WIKI.config.db.type) {
+        case 'mariadb':
+        case 'mysql':
+          const resultMYSQL = await WIKI.models.knex.raw('SELECT VERSION() as version;')
+          version = _.get(resultMYSQL, '[0][0].version', 'Unknown Version')
+          break
+        case 'mssql':
+          const resultMSSQL = await WIKI.models.knex.raw('SELECT @@VERSION as version;')
+          version = _.get(resultMSSQL, '[0].version', 'Unknown Version')
+          break
+        case 'postgres':
+          version = _.get(WIKI.models, 'knex.client.version', 'Unknown Version')
+          break
+        case 'sqlite':
+          version = _.get(WIKI.models, 'knex.client.driver.VERSION', 'Unknown Version')
+          break
+      }
+      return version
     },
     dbHost() {
-      return WIKI.config.db.host
+      if (WIKI.config.db.type === 'sqlite') {
+        return WIKI.config.db.storage
+      } else {
+        return WIKI.config.db.host
+      }
     },
     latestVersion() {
       return '2.0.0' // TODO

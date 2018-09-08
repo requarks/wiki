@@ -5,6 +5,7 @@ const Model = require('objection').Model
  */
 module.exports = class User extends Model {
   static get tableName() { return 'locales' }
+  static get idColumn() { return 'code' }
 
   static get jsonSchema () {
     return {
@@ -12,7 +13,6 @@ module.exports = class User extends Model {
       required: ['code', 'name'],
 
       properties: {
-        id: {type: 'integer'},
         code: {type: 'string'},
         strings: {type: 'object'},
         isRTL: {type: 'boolean', default: false},

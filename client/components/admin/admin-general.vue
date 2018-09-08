@@ -125,7 +125,7 @@ export default {
       metaRobots: ['Index', 'Follow', 'No Index', 'No Follow'],
       useSquareLogo: false,
       displayMascot: true,
-      featurePageRatings: false,
+      featurePageRatings: true,
       featurePersonalWiki: true
     }
   },
