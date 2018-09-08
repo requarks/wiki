@@ -80,7 +80,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fixed: Fixed potential bug when uploading certain images (thanks to @Gnurdle)
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/60)
+![Progress](http://progressed.io/bar/65)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -89,11 +89,11 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - Full localization support, especially for non-latin languages.
   - Modular approach to auth, editors, logging, search and storage.
   
-**Release Date**: Q3 2018
+**Release Date**: Q4 2018
 
 **Breaking Changes**:
   - MongoDB is being phased out in favor of PostgreSQL/MySQL/MSSQL/SQLite + Redis. An upgrade tool will be provided to migrate existing data to the new system.
-  - Node.js 8.9 LTS or later is now the minimum supported version.
+  - Node.js 10 LTS or later will be the minimum supported version.
 
 **2.0 Milestone**:
 - [x] GraphQL API
