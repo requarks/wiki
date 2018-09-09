@@ -1,6 +1,7 @@
 <template lang='pug'>
   v-card(flat)
     v-card(flat, tile, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
+      .admin-header-icon: v-icon(size='80', color='grey lighten-2') call_split
       .headline.blue--text.text--darken-2 API
       .subheading.grey--text Manage keys to access the API
     v-card

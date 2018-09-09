@@ -2,6 +2,7 @@
   v-container(fluid, fill-height)
     v-layout(row wrap)
       v-flex(xs12)
+        .admin-header-icon: v-icon(size='80', color='grey lighten-2') show_chart
         .headline.primary--text Statistics
         .subheading.grey--text Useful information about your wiki
         .pa-3

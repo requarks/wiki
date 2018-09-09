@@ -1,6 +1,7 @@
 <template lang='pug'>
   v-card(flat)
     v-card(flat, tile, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
+      .admin-header-icon: v-icon(size='80', color='grey lighten-2') perm_identity
       .headline.blue--text.text--darken-2 Users
       .subheading.grey--text Manage users
     v-card

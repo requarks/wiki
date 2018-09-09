@@ -1,6 +1,7 @@
 <template lang='pug'>
   v-card(tile, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"')
     .pa-3.pt-4
+      .admin-header-icon: v-icon(size='80', color='grey lighten-2') graphic_eq
       .headline.primary--text Logging
       .subheading.grey--text Configure the system logger(s)
     v-tabs(:color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)

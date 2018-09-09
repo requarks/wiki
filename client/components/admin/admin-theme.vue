@@ -2,6 +2,7 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
+        .admin-header-icon: v-icon(size='80', color='grey lighten-2') palette
         .headline.primary--text Theme
         .subheading.grey--text Modify the look &amp; feel of your wiki
         v-form.pt-3

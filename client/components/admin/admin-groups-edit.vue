@@ -1,6 +1,7 @@
 <template lang='pug'>
   v-card
     v-card(flat, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
+      .admin-header-icon: v-icon(size='80', color='grey lighten-2') people
       .headline.blue--text.text--darken-2 Edit Group
       .subheading.grey--text {{name}}
       v-btn(color='primary', fab, absolute, bottom, right, small, to='/groups'): v-icon arrow_upward
