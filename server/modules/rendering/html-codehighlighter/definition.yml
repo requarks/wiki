@@ -1,0 +1,8 @@
+key: htmlCodehighlighter
+title: Code Highlighting
+description: Syntax highlighter for programming code
+author: requarks.io
+icon: palette
+enabledDefault: true
+dependsOn: htmlCore
+props: {}

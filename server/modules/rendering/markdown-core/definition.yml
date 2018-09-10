@@ -44,8 +44,3 @@ props:
       - Russian
       - Spanish
       - Swedish
-  highlightCode:
-    type: Boolean
-    default: true
-    title: Highlight code blocks
-    hint: Add syntax coloring to code blocks.

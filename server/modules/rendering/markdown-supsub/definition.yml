@@ -1,0 +1,18 @@
+key: markdownSupsub
+title: Subscript/Superscript
+description: Parse subscript and superscript tags
+author: requarks.io
+icon: format_size
+enabledDefault: true
+dependsOn: markdownCore
+props:
+  subEnabled:
+    type: Boolean
+    title: Subscript
+    hint: Enable subscript tags
+    default: true
+  supEnabled:
+    type: Boolean
+    title: Supercript
+    hint: Enable supercript tags
+    default: true

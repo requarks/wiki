@@ -3,6 +3,6 @@ title: Media Players
 description: Embed players such as Youtube, Vimeo, Soundcloud, etc.
 author: requarks.io
 icon: subscriptions
-enabledDefault: false
+enabledDefault: true
 dependsOn: htmlCore
 props: {}

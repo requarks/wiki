@@ -105,7 +105,7 @@ module.exports = class Renderer extends Model {
 
       // Build tree
       const rawCores = _.filter(renderers, renderer => !_.has(renderer, 'dependsOn')).map(core => {
-        core.children = _.concat([_.cloneDeep(core)], _.filter(renderers, ['dependsOn', core.key]))
+        core.children = _.filter(renderers, ['dependsOn', core.key])
         return core
       })
 

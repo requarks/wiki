@@ -1,5 +1,4 @@
 const md = require('markdown-it')
-// const hljs = require('highlight.js')
 const _ = require('lodash')
 
 const quoteStyles = {
@@ -26,16 +25,15 @@ module.exports = {
       typographer: this.config.typographer,
       quotes: _.get(quoteStyles, this.config.quotes, quoteStyles.English),
       highlight(str, lang) {
-        // if (this.config.highlightCode && lang && hljs.getLanguage(lang)) {
-        //   try {
-        //     return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
-        //   } catch (err) {
-        //     return '<pre><code>' + _.escape(str) + '</code></pre>'
-        //   }
-        // }
         return '<pre><code>' + _.escape(str) + '</code></pre>'
       }
     })
+
+    for (let child of this.children) {
+      console.info(child)
+      const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
+      renderer.init(mkdown, child.config)
+    }
 
     return mkdown.render(this.input)
   }

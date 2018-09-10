@@ -1,8 +1,8 @@
-key: markdownMermaid
+key: htmlMermaid
 title: Mermaid
 description: Generate flowcharts from Mermaid syntax
 author: requarks.io
 icon: merge_type
 enabledDefault: false
-dependsOn: markdownCore
+dependsOn: htmlCore
 props: {}
