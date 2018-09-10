@@ -92,7 +92,7 @@
         v-btn(icon, slot='activator')
           v-icon(color='grey') account_circle
         span Account
-      v-list.py-0
+      v-list.py-0(:light='!$vuetify.dark')
         v-list-tile.py-3(avatar)
           v-list-tile-avatar
             v-avatar.red(:size='40'): span.white--text.subheading JD

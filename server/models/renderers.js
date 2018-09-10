@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const yaml = require('js-yaml')
+const DepGraph = require('dependency-graph').DepGraph
 const commonHelper = require('../helpers/common')
 
 /* global WIKI */
@@ -37,10 +38,10 @@ module.exports = class Renderer extends Model {
       const dbRenderers = await WIKI.models.renderers.query()
 
       // -> Fetch definitions from disk
-      const rendererDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/renderer'))
+      const rendererDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/rendering'))
       let diskRenderers = []
       for (let dir of rendererDirs) {
-        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/renderer', dir, 'definition.yml'), 'utf8')
+        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/rendering', dir, 'definition.yml'), 'utf8')
         diskRenderers.push(yaml.safeLoad(def))
       }
       WIKI.data.renderers = diskRenderers.map(renderer => ({
@@ -91,18 +92,66 @@ module.exports = class Renderer extends Model {
     }
   }
 
-  static async pageEvent({ event, page }) {
-    const targets = await WIKI.models.storage.query().where('isEnabled', true)
-    if (targets && targets.length > 0) {
-      _.forEach(targets, target => {
-        WIKI.queue.job.syncStorage.add({
-          event,
-          target,
-          page
-        }, {
-          removeOnComplete: true
+  static async getRenderingPipeline(contentType) {
+    const renderersDb = await WIKI.models.renderers.query().where('isEnabled', true)
+    if (renderersDb && renderersDb.length > 0) {
+      const renderers = renderersDb.map(rdr => {
+        const renderer = _.find(WIKI.data.renderers, ['key', rdr.key])
+        return {
+          ...renderer,
+          config: rdr.config
+        }
+      })
+
+      // Build tree
+      const rawCores = _.filter(renderers, renderer => !_.has(renderer, 'dependsOn')).map(core => {
+        core.children = _.concat([_.cloneDeep(core)], _.filter(renderers, ['dependsOn', core.key]))
+        return core
+      })
+
+      // Build dependency graph
+      const graph = new DepGraph({ circular: true })
+      rawCores.map(core => { graph.addNode(core.key) })
+      rawCores.map(core => {
+        rawCores.map(coreTarget => {
+          if (core.key !== coreTarget.key) {
+            if (core.output === coreTarget.input) {
+              graph.addDependency(core.key, coreTarget.key)
+            }
+          }
         })
       })
+
+      // Filter unused cores
+      let activeCoreKeys = _.filter(rawCores, ['input', contentType]).map(core => core.key)
+      _.clone(activeCoreKeys).map(coreKey => {
+        activeCoreKeys = _.union(activeCoreKeys, graph.dependenciesOf(coreKey))
+      })
+      const activeCores = _.filter(rawCores, core => _.includes(activeCoreKeys, core.key))
+
+      // Rebuild dependency graph with active cores
+      const graphActive = new DepGraph({ circular: true })
+      activeCores.map(core => { graphActive.addNode(core.key) })
+      activeCores.map(core => {
+        activeCores.map(coreTarget => {
+          if (core.key !== coreTarget.key) {
+            if (core.output === coreTarget.input) {
+              graphActive.addDependency(core.key, coreTarget.key)
+            }
+          }
+        })
+      })
+
+      // Reorder cores in reverse dependency order
+      let orderedCores = []
+      _.reverse(graphActive.overallOrder()).map(coreKey => {
+        orderedCores.push(_.find(rawCores, ['key', coreKey]))
+      })
+
+      return orderedCores
+    } else {
+      WIKI.logger.error(`Rendering pipeline is empty!`)
+      return false
     }
   }
 }

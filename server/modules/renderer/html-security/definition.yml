@@ -1,8 +1,0 @@
-key: htmlSecurity
-title: Security
-description: Filter and strips potentially dangerous content
-author: requarks.io
-icon: whatshot
-enabledDefault: true
-dependsOn: htmlCore
-props: {}

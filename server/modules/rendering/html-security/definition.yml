@@ -1,0 +1,18 @@
+key: htmlSecurity
+title: Security
+description: Filter and strips potentially dangerous content
+author: requarks.io
+icon: whatshot
+enabledDefault: true
+dependsOn: htmlCore
+props:
+  stripJS:
+    type: Boolean
+    title: Strip Javascript
+    default: false
+    hint: Javascript code within code blocks won't be affected
+  filterBadWords:
+    type: Boolean
+    title: Filter Bad Words
+    default: false
+    hint: Replace bad words with asterisks

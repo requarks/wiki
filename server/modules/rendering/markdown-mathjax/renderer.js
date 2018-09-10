@@ -5,10 +5,6 @@ const mdMathjax = require('markdown-it-mathjax')()
 // ------------------------------------
 
 module.exports = {
-  key: 'markdown/mathjax',
-  title: 'Mathjax Preprocessor',
-  dependsOn: [],
-  props: [],
   init (md, conf) {
     md.use(mdMathjax)
   }

@@ -5,10 +5,6 @@ const mdEmoji = require('markdown-it-emoji')
 // ------------------------------------
 
 module.exports = {
-  key: 'markdown/emoji',
-  title: 'Emoji',
-  dependsOn: [],
-  props: [],
   init (md, conf) {
     md.use(mdEmoji)
   }

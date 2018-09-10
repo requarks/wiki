@@ -1,0 +1,51 @@
+key: markdownCore
+title: Core
+description: Basic Markdown Parser
+author: requarks.io
+input: markdown
+output: html
+icon: crop_free
+props:
+  allowHTML:
+    type: Boolean
+    default: true
+    title: Allow HTML
+    hint: Enable HTML tags in content
+  linkify:
+    type: Boolean
+    default: true
+    title: Automatically convert links
+    hint: Links will automatically be converted to clickable links.
+  linebreaks:
+    type: Boolean
+    default: true
+    title: Automatically convert line breaks
+    hint: Add linebreaks within paragraphs.
+  typographer:
+    type: Boolean
+    default: false
+    title: Typographer
+    hint: Enable some language-neutral replacement + quotes beautification
+  quotes:
+    type: String
+    default: English
+    title: Quotes style
+    hint: When typographer is enabled. Double + single quotes replacement pairs. e.g. «»„“ for Russian, „“‚‘ for German, etc.
+    enum:
+      - Chinese
+      - English
+      - French
+      - German
+      - Greek
+      - Japanese
+      - Hungarian
+      - Polish
+      - Portuguese
+      - Russian
+      - Spanish
+      - Swedish
+  highlightCode:
+    type: Boolean
+    default: true
+    title: Highlight code blocks
+    hint: Add syntax coloring to code blocks.

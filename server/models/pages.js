@@ -111,7 +111,6 @@ module.exports = class Page extends Model {
   }
 
   static async createPage(opts) {
-    await WIKI.models.pages.renderPage(opts)
     const page = await WIKI.models.pages.query().insertAndFetch({
       authorId: opts.authorId,
       content: opts.content,
@@ -127,6 +126,7 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate,
       title: opts.title
     })
+    await WIKI.models.pages.renderPage(page)
     await WIKI.models.storage.pageEvent({
       event: 'created',
       page
@@ -149,6 +149,7 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate,
       title: opts.title
     })
+    await WIKI.models.pages.renderPage(page)
     await WIKI.models.storage.pageEvent({
       event: 'updated',
       page
@@ -156,8 +157,12 @@ module.exports = class Page extends Model {
     return page
   }
 
-  static async renderPage(opts) {
-    WIKI.queue.job.renderPage.add(opts, {
+  static async renderPage(page) {
+    const pipeline = await WIKI.models.renderers.getRenderingPipeline(page.contentType)
+    WIKI.queue.job.renderPage.add({
+      page,
+      pipeline
+    }, {
       removeOnComplete: true,
       removeOnFail: true
     })

@@ -6,10 +6,6 @@ const _ = require('lodash')
 // ------------------------------------
 
 module.exports = {
-  key: 'markdown/expand-tabs',
-  title: 'Expand Tabs',
-  dependsOn: [],
-  props: ['tabWidth'],
   init (md, conf) {
     md.use(mdExpandTabs, {
       tabWidth: _.toInteger(conf.tabWidth || 4)

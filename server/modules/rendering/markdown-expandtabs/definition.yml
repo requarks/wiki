@@ -5,4 +5,9 @@ author: requarks.io
 icon: space_bar
 enabledDefault: true
 dependsOn: markdownCore
-props: {}
+props:
+  tabWidth:
+    type: Number
+    title: Tab Width
+    hint: Amount of spaces for each tab
+    default: 4
