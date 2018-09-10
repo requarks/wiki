@@ -5,7 +5,7 @@ block rootNavCenter
 block content
   .container
     .welcome
-      img(src='/images/logo.png', alt='Wiki.js')
+      img(src=appconfig.host + '/images/logo.png', alt='Wiki.js')
       h1= t('welcome.title')
       h2= t('welcome.subtitle')
-      a.button.is-indigo(href='/create/home')= t('welcome.createhome')
+      a.button.is-indigo(href=appconfig.host + '/create/home')= t('welcome.createhome')

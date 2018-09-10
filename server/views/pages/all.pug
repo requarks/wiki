@@ -8,17 +8,17 @@ block content
           span= t('sidebar.nav')
         ul.sidebar-menu
           li
-            a(href='/')
+            a(href=appconfig.host + '/')
               i.nc-icon-outline.ui-1_home-minimal
               span= t('nav.root')
           if !isGuest
             li
-              a(href='/admin')
+              a(href=appconfig.host + '/admin')
                 i.nc-icon-outline.ui-1_settings-gear-63
                 span= t('nav.account')
           else
             li
-              a(href='/login')
+              a(href=appconfig.host + '/login')
                 i.nc-icon-outline.arrows-1_log-in
                 span= t('nav.login')
     tree

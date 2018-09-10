@@ -3,7 +3,7 @@ extends ./_layout.pug
 block rootNavRight
   loading-spinner
   .nav-item
-    a.button(href='/admin/users')
+    a.button(href=appconfig.host + '/admin/users')
       i.nc-icon-outline.arrows-2_corner-left-round
       span= t('admin:users.returntousers')
 
@@ -109,7 +109,7 @@ block adminContent
               button.button.is-green(v-on:click='saveUser')
                 i.nc-icon-outline.ui-1_check
                 span Save Changes
-              a.button.button.is-grey.is-outlined(href='/admin/users')
+              a.button.button.is-grey.is-outlined(href=appconfig.host + '/admin/users')
                 i.nc-icon-outline.ui-1_simple-remove
                 span Discard
           .column.is-narrow

@@ -18,14 +18,14 @@ block rootNavRight
         i.nc-icon-outline.arrows-1_shuffle-98
         span= t('nav.move')
     if appconfig.theme.viewSource === 'all' || (rights.write && appconfig.theme.viewSource === 'write')
-      a.button.is-outlined(href='/source/' + pageData.meta.path)
+      a.button.is-outlined(href=appconfig.host + '/source/' + pageData.meta.path)
         i.nc-icon-outline.education_paper
         span= t('nav.source')
-    //-a.button.is-outlined(href='/hist/' + pageData.meta.path)
+    //-a.button.is-outlined(href=appconfig.host + '/hist/' + pageData.meta.path)
       i.nc-icon-outline.ui-2_time
       span= t('nav.history')
     if rights.write
-      a.button(href='/edit/' + pageData.meta.path)
+      a.button(href=appconfig.host + '/edit/' + pageData.meta.path)
         i.nc-icon-outline.ui-1_edit-76
         span= t('nav.edit')
       a.button(v-on:click='$store.dispatch("modalCreatePage/open")')
@@ -45,26 +45,26 @@ block content
               span= t('sidebar.navigation')
             ul.sidebar-menu
               li
-                a(href='/')
+                a(href=appconfig.host + '/')
                   i.nc-icon-outline.ui-1_home-minimal
                   span= t('nav.root')
               li
-                a(href='/all')
+                a(href=appconfig.host + '/all')
                   i.nc-icon-outline.business_hierarchy-55
                   span= t('nav.allpages')
               if pageData.parent
                 li
-                  a(href='/' + pageData.parent.path)
+                  a(href=appconfig.host + '/' + pageData.parent.path)
                     i.icon-reply
                     span= pageData.parent.title
               if !isGuest
                 li
-                  a(href='/admin')
+                  a(href=appconfig.host + '/admin')
                     i.nc-icon-outline.ui-1_settings-gear-63
                     span= t('nav.settings')
               else
                 li
-                  a(href='/login')
+                  a(href=appconfig.host + '/login')
                     i.nc-icon-outline.arrows-1_log-in
                     span= t('nav.login')
           aside.sidebar-pagecontents

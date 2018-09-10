@@ -25,5 +25,5 @@ block content
   editor-file
   editor-video
   editor-codeblock
-  modal-discard-page(mode='edit', current-path=pageData.meta.path)
+  modal-discard-page(mode='edit', current-path=appconfig.host + '/' + pageData.meta.path)
   page-loader(text=t('loading.editor'))

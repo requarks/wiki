@@ -6,15 +6,15 @@ html(data-logic='login')
     meta(name='viewport', content='width=device-width, initial-scale=1')
     meta(name='theme-color', content='#009688')
     meta(name='msapplication-TileColor', content='#009688')
-    meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
+    meta(name='msapplication-TileImage', content=appconfig.host + '/favicons/ms-icon-144x144.png')
     title= appconfig.title
 
     // Favicon
     each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
-      link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href='/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
-    link(rel='icon', type='image/png', sizes='192x192', href='/favicons/android-icon-192x192.png')
+      link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href=appconfig.host + '/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
+    link(rel='icon', type='image/png', sizes='192x192', href=appconfig.host + '/favicons/android-icon-192x192.png')
     each favsize in [32, 96, 16]
-      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
+      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href=appconfig.host + '/favicons/favicon-' + favsize + 'x' + favsize + '.png')
     link(rel='manifest', href='/manifest.json')
 
     // JS / CSS
@@ -24,7 +24,7 @@ html(data-logic='login')
   body
     #bg
       each bg in _.sampleSize([1, 2, 3],3)
-        div(style='background-image:url(/images/bg_' + bg + '.jpg);')
+        div(style='background-image:url(' + appconfig.host + '/images/bg_' + bg + '.jpg);')
     #root
       h1= appconfig.title
       h2= t('auth:loginrequired')
@@ -34,7 +34,7 @@ html(data-logic='login')
           = appflash[0].title
         h4= appflash[0].message
       if appconfig.auth.local.enabled
-        form(method='post', action='/login')
+        form(method='post', action=appconfig.host + '/login')
           input#login-user(type='text', name='email', placeholder=t('auth:fields.emailuser'))
           input#login-pass(type='password', name='password', placeholder=t('auth:fields.password'))
           button(type='submit')= t('auth:actions.login')
@@ -45,27 +45,27 @@ html(data-logic='login')
           else
             span= t('auth:loginusing')
           if appconfig.auth.microsoft && appconfig.auth.microsoft.enabled
-            button.ms(onclick='window.location.assign("/login/ms")')
+            button.ms(onclick='window.location.assign("' + appconfig.host + '/login/ms")')
               i.icon-windows2
               span= t('auth:providers.windowslive')
           if appconfig.auth.azure && appconfig.auth.azure.enabled
-            button.ms(onclick='window.location.assign("/login/azure")')
+            button.ms(onclick='window.location.assign("' + appconfig.host + '/login/azure")')
               i.icon-windows2
               span= t('auth:providers.azure')
           if appconfig.auth.google && appconfig.auth.google.enabled
-            button.google(onclick='window.location.assign("/login/google")')
+            button.google(onclick='window.location.assign("' + appconfig.host + '/login/google")')
               i.icon-google
               span= t('auth:providers.google')
           if appconfig.auth.facebook && appconfig.auth.facebook.enabled
-            button.facebook(onclick='window.location.assign("/login/facebook")')
+            button.facebook(onclick='window.location.assign("' + appconfig.host + '/login/facebook")')
               i.icon-facebook
               span= t('auth:providers.facebook')
           if appconfig.auth.github && appconfig.auth.github.enabled
-            button.github(onclick='window.location.assign("/login/github")')
+            button.github(onclick='window.location.assign("' + appconfig.host + '/login/github")')
               i.icon-github
               span= t('auth:providers.github')
           if appconfig.auth.slack && appconfig.auth.slack.enabled
-            button.slack(onclick='window.location.assign("/login/slack")')
+            button.slack(onclick='window.location.assign("' + appconfig.host + '/login/slack")')
               i.icon-slack
               span= t('auth:providers.slack')
           if appconfig.auth.oauth2 && appconfig.auth.oauth2.enabled
