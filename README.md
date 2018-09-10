@@ -139,7 +139,9 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Dialogs
     - [x] Properties
     - [ ] Image + File Manager
-- [ ] Modular content parsers/renderers
+- [x] Modular content parsers/renderers
+  - [x] Markdown
+  - [ ] HTML :rocket:
 - [ ] Modular search engines
   - [ ] DB
 - [ ] Modular storage engines
