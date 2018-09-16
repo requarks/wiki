@@ -90,10 +90,10 @@ module.exports = () => {
       }
 
       // Create directory structure
-      const tmpPath = path.join(os.tmpdir(), 'wikijs')
-      await fs.ensureDir(tmpPath)
-      await fs.ensureDir(path.join(tmpPath, 'cache'))
-      await fs.ensureDir(path.join(tmpPath, 'uploads'))
+      const dataPath = path.join(process.cwd(), 'data')
+      await fs.ensureDir(dataPath)
+      await fs.ensureDir(path.join(dataPath, 'cache'))
+      await fs.ensureDir(path.join(dataPath, 'uploads'))
 
       // Set config
       _.set(WIKI.config, 'defaultEditor', 'markdown')

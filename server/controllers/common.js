@@ -34,7 +34,7 @@ router.get('/*', async (req, res, next) => {
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
-    private: false
+    isPrivate: false
   })
   if (page) {
     res.render('page', { page })

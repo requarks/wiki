@@ -20,7 +20,17 @@ module.exports = async (job) => {
         input: output
       })
     }
-    console.info(output)
+
+    // Save to DB
+    await WIKI.models.pages.query()
+      .patch({ render: output })
+      .where('id', job.data.page.id)
+
+    // Save to cache
+    await WIKI.models.pages.savePageToCache({
+      ...job.data.page,
+      render: output
+    })
 
     WIKI.logger.info(`Rendering page ${job.data.page.path}: [ COMPLETED ]`)
   } catch (err) {

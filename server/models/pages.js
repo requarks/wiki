@@ -1,5 +1,9 @@
 const Model = require('objection').Model
 const _ = require('lodash')
+const JSBinType = require('js-binary').Type
+const pageHelper = require('../helpers/page')
+const path = require('path')
+const fs = require('fs-extra')
 
 /* global WIKI */
 
@@ -17,6 +21,7 @@ module.exports = class Page extends Model {
       properties: {
         id: {type: 'integer'},
         path: {type: 'string'},
+        hash: {type: 'string'},
         title: {type: 'string'},
         description: {type: 'string'},
         isPublished: {type: 'boolean'},
@@ -89,35 +94,33 @@ module.exports = class Page extends Model {
     this.updatedAt = new Date().toISOString()
   }
 
-  static async getPage(opts) {
-    const page = await WIKI.models.pages.query().where({
-      path: opts.path,
-      localeCode: opts.locale
-    }).andWhere(builder => {
-      builder.where({
-        isPublished: true
-      }).orWhere({
-        isPublished: false,
-        authorId: opts.userId
-      })
-    }).andWhere(builder => {
-      if (opts.private) {
-        builder.where({ isPrivate: true, privateNS: opts.privateNS })
-      } else {
-        builder.where({ isPrivate: false })
-      }
-    }).first()
-    return page
+  static get cacheSchema() {
+    return new JSBinType({
+      authorId: 'uint',
+      authorName: 'string',
+      createdAt: 'string',
+      creatorId: 'uint',
+      creatorName: 'string',
+      description: 'string',
+      isPrivate: 'boolean',
+      isPublished: 'boolean',
+      publishEndDate: 'string',
+      publishStartDate: 'string',
+      render: 'string',
+      title: 'string',
+      updatedAt: 'string'
+    })
   }
 
   static async createPage(opts) {
-    const page = await WIKI.models.pages.query().insertAndFetch({
+    await WIKI.models.pages.query().insert({
       authorId: opts.authorId,
       content: opts.content,
       creatorId: opts.authorId,
       contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
       description: opts.description,
       editorKey: opts.editor,
+      hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' }),
       isPrivate: opts.isPrivate,
       isPublished: opts.isPublished,
       localeCode: opts.locale,
@@ -126,6 +129,7 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate,
       title: opts.title
     })
+    const page = await WIKI.models.pages.getPageFromDb(opts)
     await WIKI.models.pages.renderPage(page)
     await WIKI.models.storage.pageEvent({
       event: 'created',
@@ -140,7 +144,7 @@ module.exports = class Page extends Model {
       throw new Error('Invalid Page Id')
     }
     await WIKI.models.pageHistory.addVersion(ogPage)
-    const page = await WIKI.models.pages.query().patchAndFetchById(ogPage.id, {
+    await WIKI.models.pages.query().patch({
       authorId: opts.authorId,
       content: opts.content,
       description: opts.description,
@@ -148,7 +152,8 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate,
       publishStartDate: opts.publishStartDate,
       title: opts.title
-    })
+    }).where('id', ogPage.id)
+    const page = await WIKI.models.pages.getPageFromDb(opts)
     await WIKI.models.pages.renderPage(page)
     await WIKI.models.storage.pageEvent({
       event: 'updated',
@@ -166,5 +171,89 @@ module.exports = class Page extends Model {
       removeOnComplete: true,
       removeOnFail: true
     })
+  }
+
+  static async getPage(opts) {
+    let page = await WIKI.models.pages.getPageFromCache(opts)
+    if (!page) {
+      page = await WIKI.models.pages.getPageFromDb(opts)
+      await WIKI.models.pages.savePageToCache(page)
+    }
+    return page
+  }
+
+  static async getPageFromDb(opts) {
+    const page = await WIKI.models.pages.query()
+      .column([
+        'pages.*',
+        {
+          authorName: 'author.name',
+          creatorName: 'creator.name'
+        }
+      ])
+      .joinRelation('author')
+      .joinRelation('creator')
+      .where({
+        'pages.path': opts.path,
+        'pages.localeCode': opts.locale
+      })
+      .andWhere(builder => {
+        builder.where({
+          'pages.isPublished': true
+        }).orWhere({
+          'pages.isPublished': false,
+          'pages.authorId': opts.userId
+        })
+      })
+      .andWhere(builder => {
+        if (opts.isPrivate) {
+          builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
+        } else {
+          builder.where({ 'pages.isPrivate': false })
+        }
+      })
+      .first()
+    return page
+  }
+
+  static async savePageToCache(page) {
+    const cachePath = path.join(process.cwd(), `data/cache/${page.hash}.bin`)
+    await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
+      authorId: page.authorId,
+      authorName: page.authorName,
+      createdAt: page.createdAt,
+      creatorId: page.creatorId,
+      creatorName: page.creatorName,
+      description: page.description,
+      isPrivate: page.isPrivate === 1,
+      isPublished: page.isPublished === 1,
+      publishEndDate: page.publishEndDate,
+      publishStartDate: page.publishStartDate,
+      render: page.render,
+      title: page.title,
+      updatedAt: page.updatedAt
+    }))
+  }
+
+  static async getPageFromCache(opts) {
+    const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const cachePath = path.join(process.cwd(), `data/cache/${pageHash}.bin`)
+
+    try {
+      const pageBuffer = await fs.readFile(cachePath)
+      let page = WIKI.models.pages.cacheSchema.decode(pageBuffer)
+      return {
+        ...page,
+        path: opts.path,
+        localeCode: opts.locale,
+        isPrivate: opts.isPrivate
+      }
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        return false
+      }
+      WIKI.logger.error(err)
+      throw err
+    }
   }
 }

@@ -16,6 +16,7 @@ module.exports = class PageHistory extends Model {
       properties: {
         id: {type: 'integer'},
         path: {type: 'string'},
+        hash: {type: 'string'},
         title: {type: 'string'},
         description: {type: 'string'},
         isPublished: {type: 'boolean'},
@@ -88,6 +89,7 @@ module.exports = class PageHistory extends Model {
       content: opts.content,
       description: opts.description,
       editorKey: opts.editorKey,
+      hash: opts.hash,
       isPrivate: opts.isPrivate,
       isPublished: opts.isPublished,
       localeCode: opts.localeCode,

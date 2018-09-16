@@ -6,8 +6,9 @@
       .subheading.grey--text Maintenance and troubleshooting tools
     v-tabs(:color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
       v-tab(key='tools') Tools
+      v-tab(key='cache') Cache
       v-tab(key='telemetry') Telemetry
-      v-tab(key='telemetry') Support
+      v-tab(key='support') Support
 
       v-tab-item(key='tools', :transition='false', :reverse-transition='false')
         v-container(fluid, grid-list-lg, :class='$vuetify.dark ? "" : "grey lighten-5"')

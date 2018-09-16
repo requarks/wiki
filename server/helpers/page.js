@@ -1,5 +1,6 @@
 const qs = require('querystring')
 const _ = require('lodash')
+const crypto = require('crypto')
 
 module.exports = {
   /**
@@ -26,5 +27,11 @@ module.exports = {
     }
     pathObj.path = _.join(pathParts, '/')
     return pathObj
+  },
+  /**
+   * Generate unique hash from page
+   */
+  generateHash(opts) {
+    return crypto.createHash('sha1').update(`${opts.locale}|${opts.path}|${opts.privateNS}`).digest('hex')
   }
 }
