@@ -23,11 +23,7 @@ const mathRegex = [
 ]
 
 module.exports = {
-  key: 'common/mathjax',
-  title: 'Mathjax',
-  dependsOn: [],
-  props: [],
-  init (conf) {
+  init ($, config) {
     mathjax.config({
       MathJax: {
         jax: ['input/TeX', 'input/MathML', 'output/SVG'],

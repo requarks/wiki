@@ -129,7 +129,12 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate,
       title: opts.title
     })
-    const page = await WIKI.models.pages.getPageFromDb(opts)
+    const page = await WIKI.models.pages.getPageFromDb({
+      path: opts.path,
+      locale: opts.locale,
+      userId: opts.authorId,
+      isPrivate: opts.isPrivate
+    })
     await WIKI.models.pages.renderPage(page)
     await WIKI.models.storage.pageEvent({
       event: 'created',
@@ -153,7 +158,12 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate,
       title: opts.title
     }).where('id', ogPage.id)
-    const page = await WIKI.models.pages.getPageFromDb(opts)
+    const page = await WIKI.models.pages.getPageFromDb({
+      path: ogPage.path,
+      locale: ogPage.localeCode,
+      userId: ogPage.authorId,
+      isPrivate: ogPage.isPrivate
+    })
     await WIKI.models.pages.renderPage(page)
     await WIKI.models.storage.pageEvent({
       event: 'updated',

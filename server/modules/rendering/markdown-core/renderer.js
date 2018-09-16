@@ -25,12 +25,11 @@ module.exports = {
       typographer: this.config.typographer,
       quotes: _.get(quoteStyles, this.config.quotes, quoteStyles.English),
       highlight(str, lang) {
-        return '<pre><code>' + _.escape(str) + '</code></pre>'
+        return `<pre><code lang="${lang}">${_.escape(str)}</code></pre>`
       }
     })
 
     for (let child of this.children) {
-      console.info(child)
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
       renderer.init(mkdown, child.config)
     }
