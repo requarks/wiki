@@ -1,74 +1,8 @@
 <template lang='pug'>
   .editor-code
-    v-toolbar.editor-code-toolbar(dense, color='primary', dark)
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon format_bold
-        span Bold
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon format_italic
-        span Italic
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon format_strikethrough
-        span Strikethrough
-      v-menu(offset-y, open-on-hover)
-        v-btn(icon, slot='activator').mx-0
-          v-icon font_download
-        v-list
-          v-list-tile(v-for='(n, idx) in 6', @click='', :key='idx')
-            v-list-tile-action
-              v-icon font_download
-            v-list-tile-title Heading {{n}}
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon format_quote
-        span Blockquote
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon format_list_bulleted
-        span Unordered List
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon format_list_numbered
-        span Ordered List
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon insert_link
-        span Link
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon space_bar
-        span Inline Code
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon code
-        span Code Block
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon remove
-        span Horizontal Bar
-
     .editor-code-main
       .editor-code-editor
-        .editor-code-editor-title(v-if='previewShown', @click='previewShown = false') Editor
-        .editor-code-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
-      transition(name='editor-code-preview')
-        .editor-code-preview(v-if='previewShown')
-          .editor-code-preview-title(@click='previewShown = false') Preview
-          .editor-code-preview-content.markdown-content(ref='editorPreview', v-html='previewHTML')
-
-      v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, left, bottom)
-        v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
-          v-icon add_circle
-          v-icon close
-        v-btn(color='teal', fab, dark): v-icon image
-        v-btn(color='pink', fab, dark): v-icon insert_drive_file
-        v-btn(color='red', fab, dark): v-icon play_circle_outline
-        v-btn(color='purple', fab, dark): v-icon multiline_chart
-        v-btn(color='indigo', fab, dark): v-icon functions
 </template>
 
 <script>
@@ -95,64 +29,12 @@ import 'codemirror/addon/search/matchesonscrollbar.js'
 import 'codemirror/addon/search/searchcursor.js'
 import 'codemirror/addon/search/match-highlighter.js'
 
-// Markdown-it
-import MarkdownIt from 'markdown-it'
-import mdEmoji from 'markdown-it-emoji'
-import mdTaskLists from 'markdown-it-task-lists'
-import mdExpandTabs from 'markdown-it-expand-tabs'
-import mdAbbr from 'markdown-it-abbr'
-import mdSup from 'markdown-it-sup'
-import mdSub from 'markdown-it-sub'
-import mdMark from 'markdown-it-mark'
-import mdImsize from 'markdown-it-imsize'
-
-// Prism (Syntax Highlighting)
-import Prism from '@/libs/prism/prism.js'
-
 // ========================================
 // INIT
 // ========================================
 
 // Platform detection
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
-
-// Markdown Instance
-const md = new MarkdownIt({
-  html: true,
-  breaks: true,
-  linkify: true,
-  typography: true,
-  highlight(str, lang) {
-    return `<pre class="line-numbers"><code class="language-${lang}">${str}</code></pre>`
-  }
-})
-  .use(mdEmoji)
-  .use(mdTaskLists)
-  .use(mdExpandTabs)
-  .use(mdAbbr)
-  .use(mdSup)
-  .use(mdSub)
-  .use(mdMark)
-  .use(mdImsize)
-
-// ========================================
-// HELPER FUNCTIONS
-// ========================================
-
-// Inject line numbers for preview scroll sync
-let linesMap = []
-function injectLineNumbers (tokens, idx, options, env, slf) {
-  let line
-  if (tokens[idx].map && tokens[idx].level === 0) {
-    line = tokens[idx].map[0]
-    tokens[idx].attrJoin('class', 'line')
-    tokens[idx].attrSet('data-line', String(line))
-    linesMap.push(line)
-  }
-  return slf.renderToken(tokens, idx, options, env, slf)
-}
-md.renderer.rules.paragraph_open = injectLineNumbers
-md.renderer.rules.heading_open = injectLineNumbers
 
 // ========================================
 // Vue Component
@@ -164,11 +46,10 @@ export default {
   },
   data() {
     return {
-      fabInsertMenu: false,
-      code: '# Header 1\n\nSample **Text**\nhttp://wiki.js.org\n:rocket: :) :( :| :P\n\n## Header 2\nSample Text\n\n```javascript\nvar test = require("test");\n\n// some comment\nconst foo = bar(\'param\') + 1.234;\n```\n\n### Header 3\nLorem *ipsum* ~~text~~',
+      code: '<h1>Title</h1>\n\n<p>Some text here</p>',
       cmOptions: {
         tabSize: 2,
-        mode: 'text/markdown',
+        mode: 'text/html',
         theme: 'wikijs-dark',
         lineNumbers: true,
         lineWrapping: true,
@@ -178,9 +59,7 @@ export default {
           annotateScrollbar: true
         },
         viewportMargin: 50
-      },
-      previewShown: true,
-      previewHTML: ''
+      }
     }
   },
   computed: {
@@ -206,55 +85,13 @@ export default {
         self.$parent.save()
       })
 
-      cm.setSize(null, 'calc(100vh - 100px)')
+      cm.setSize(null, 'calc(100vh - 64px)')
       cm.setOption('extraKeys', keyBindings)
-      cm.on('cursorActivity', cm => {
-        this.toolbarSync(cm)
-        this.scrollSync(cm)
-      })
       this.onCmInput(this.code)
     },
     onCmInput: _.debounce(function (newContent) {
-      linesMap = []
       this.$store.set('editor/content', newContent)
-      this.previewHTML = md.render(newContent)
-      this.$nextTick(() => {
-        Prism.highlightAllUnder(this.$refs.editorPreview)
-        this.scrollSync(this.cm)
-      })
-    }, 500),
-    /**
-     * Update toolbar state
-     */
-    toolbarSync(cm) {
-      const pos = cm.getCursor('start')
-      const token = cm.getTokenAt(pos)
-
-      if (!token.type) { return }
-
-      console.info(token)
-    },
-    /**
-     * Update scroll sync
-     */
-    scrollSync: _.debounce(function (cm) {
-      if (!this.previewShown || cm.somethingSelected()) { return }
-      let currentLine = cm.getCursor().line
-      if (currentLine < 3) {
-        this.Velocity(this.$refs.editorPreview, 'stop', true)
-        this.Velocity(this.$refs.editorPreview.firstChild, 'scroll', { offset: '-50', duration: 1000, container: this.$refs.editorPreview })
-      } else {
-        let closestLine = _.findLast(linesMap, n => n <= currentLine)
-        let destElm = this.$refs.editorPreview.querySelector(`[data-line='${closestLine}']`)
-        if (destElm) {
-          this.Velocity(this.$refs.editorPreview, 'stop', true)
-          this.Velocity(destElm, 'scroll', { offset: '-100', duration: 1000, container: this.$refs.editorPreview })
-        }
-      }
-    }, 500),
-    toggleAround (before, after) {
-
-    }
+    }, 500)
   }
 }
 </script>
@@ -294,84 +131,6 @@ export default {
         display: none;
       }
     }
-  }
-
-  &-preview {
-    flex: 1 1 50%;
-    background-color: mc('grey', '100');
-    position: relative;
-    height: calc(100vh - 100px);
-    overflow: hidden;
-
-    @include until($tablet) {
-      display: none;
-    }
-
-    &-enter-active, &-leave-active {
-      transition: max-width .5s ease;
-      max-width: 50vw;
-
-      .editor-code-preview-content {
-        width: 50vw;
-        overflow:hidden;
-      }
-    }
-    &-enter, &-leave-to {
-      max-width: 0;
-    }
-
-    &-content {
-      height: calc(100vh - 100px);
-      overflow-y: scroll;
-      padding: 30px 1rem 1rem 1rem;
-      width: calc(100% + 1rem + 17px)
-      // -ms-overflow-style: none;
-
-      // &::-webkit-scrollbar {
-      //   width: 0px;
-      //   background: transparent;
-      // }
-    }
-
-    &-title {
-      background-color: rgba(mc('blue', '100'), .75);
-      border-bottom-right-radius: 5px;
-      display: inline-flex;
-      height: 30px;
-      justify-content: center;
-      align-items: center;
-      padding: 0 1rem;
-      color: mc('blue', '800');
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 2;
-      text-transform: uppercase;
-      font-size: .7rem;
-      cursor: pointer;
-    }
-  }
-
-  &-toolbar {
-    background-color: mc('blue', '700');
-    background-image: linear-gradient(to bottom, mc('blue', '700') 0%, mc('blue','800') 100%);
-    color: #FFF;
-
-    .v-toolbar__content {
-      padding-left: 16px;
-
-      @include until($tablet) {
-        padding-left: 8px;
-      }
-    }
-  }
-
-  // ==========================================
-  // Fix FAB revealing under codemirror
-  // ==========================================
-
-  .speed-dial--fixed {
-    z-index: 8;
   }
 
   // ==========================================

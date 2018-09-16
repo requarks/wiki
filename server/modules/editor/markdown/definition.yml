@@ -1,6 +1,6 @@
 key: markdown
 title: Markdown
-description: Default Markdown editor
+description: Basic Markdown editor
 contentType: markdown
 author: requarks.io
 props: {}

@@ -156,9 +156,9 @@ let bootstrap = () => {
   // Load Icons
   // ====================================
 
-  import(/* webpackChunkName: "icons" */ './svg/icons.svg').then(icons => {
-    document.body.insertAdjacentHTML('beforeend', icons.default)
-  })
+  // import(/* webpackChunkName: "icons" */ './svg/icons.svg').then(icons => {
+  //   document.body.insertAdjacentHTML('beforeend', icons.default)
+  // })
 }
 
 window.boot.onDOMReady(bootstrap)

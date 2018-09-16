@@ -26,7 +26,7 @@
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
     v-content
-      editor-code
+      component(:is='currentEditor')
       component(:is='currentModal')
       v-dialog(v-model='dialogProgress', persistent, max-width='350')
         v-card(color='blue darken-3', dark)
@@ -38,6 +38,39 @@
               )
             .subheading {{ $t('editor:save.processing') }}
             .caption.blue--text.text--lighten-3 {{ $t('editor:save.pleaseWait') }}
+      v-dialog(v-model='dialogEditorSelector', persistent, max-width='550')
+        v-card(color='blue darken-3', dark)
+          v-card-text.text-xs-center.py-4
+            .subheading Which editor do you want to use?
+            v-container(grid-list-lg, fluid)
+              v-layout(row, wrap, justify-center)
+                v-flex(xs4)
+                  v-card(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-xs-center(@click='selectEditor("code")')
+                      v-icon(large, color='primary') code
+                      .body-2.mt-2 Code
+                v-flex(xs4)
+                  v-card(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-xs-center(@click='selectEditor("markdown")')
+                      v-icon(large, color='primary') list_alt
+                      .body-2.mt-2 Markdown
+                v-flex(xs4)
+                  v-card.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-xs-center(@click='selectEditor("wysiwyg")')
+                      v-icon(large, color='grey darken-1') web
+                      .body-2.mt-2.grey--text.text--darken-2 Visual Builder
 
     v-snackbar(
       :color='notification.style'
@@ -69,12 +102,16 @@ export default {
   components: {
     AtomSpinner,
     editorCode: () => import(/* webpackChunkName: "editor-code" */ './editor/editor-code.vue'),
+    editorMarkdown: () => import(/* webpackChunkName: "editor-markdown" */ './editor/editor-markdown.vue'),
+    editorWysiwyg: () => import(/* webpackChunkName: "editor-wysiwyg" */ './editor/editor-wysiwyg.vue'),
     editorModalProperties: () => import(/* webpackChunkName: "editor" */ './editor/editor-modal-properties.vue')
   },
   data() {
     return {
       currentModal: '',
-      dialogProgress: false
+      currentEditor: '',
+      dialogProgress: false,
+      dialogEditorSelector: false
     }
   },
   computed: {
@@ -85,11 +122,20 @@ export default {
   mounted() {
     if (this.mode === 'create') {
       _.delay(() => {
-        this.openModal('properties')
+        this.dialogEditorSelector = true
       }, 500)
     }
   },
   methods: {
+    selectEditor(name) {
+      this.currentEditor = `editor${_.startCase(name)}`
+      this.dialogEditorSelector = false
+      if (this.mode === 'create') {
+        _.delay(() => {
+          this.openModal('properties')
+        }, 500)
+      }
+    },
     openModal(name) {
       this.currentModal = `editorModal${_.startCase(name)}`
     },
