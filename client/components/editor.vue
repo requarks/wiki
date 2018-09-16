@@ -276,6 +276,11 @@ export default {
 
 <style lang='scss'>
 
+  .editor {
+    background-color: mc('grey', '900');
+    min-height: 100vh;
+  }
+
   .atom-spinner.is-inline {
     display: inline-block;
   }
