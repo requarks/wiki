@@ -101,10 +101,48 @@ WIKI.$store.registerModule('editor', editorStore)
 export default {
   components: {
     AtomSpinner,
-    editorCode: () => import(/* webpackChunkName: "editor-code" */ './editor/editor-code.vue'),
-    editorMarkdown: () => import(/* webpackChunkName: "editor-markdown" */ './editor/editor-markdown.vue'),
-    editorWysiwyg: () => import(/* webpackChunkName: "editor-wysiwyg" */ './editor/editor-wysiwyg.vue'),
-    editorModalProperties: () => import(/* webpackChunkName: "editor" */ './editor/editor-modal-properties.vue')
+    editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
+    editorMarkdown: () => import(/* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'),
+    editorWysiwyg: () => import(/* webpackChunkName: "editor-wysiwyg", webpackMode: "lazy" */ './editor/editor-wysiwyg.vue'),
+    editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue')
+  },
+  props: {
+    locale: {
+      type: String,
+      default: 'en'
+    },
+    path: {
+      type: String,
+      default: 'home'
+    },
+    title: {
+      type: String,
+      default: 'Untitled Page'
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    tags: {
+      type: Array,
+      default: () => ([])
+    },
+    isPublished: {
+      type: Boolean,
+      default: false
+    },
+    initEditor: {
+      type: String,
+      default: null
+    },
+    initMode: {
+      type: String,
+      default: 'create'
+    },
+    initContent: {
+      type: String,
+      default: null
+    }
   },
   data() {
     return {
@@ -120,10 +158,14 @@ export default {
     notificationState: sync('notification@isActive')
   },
   mounted() {
+    this.$store.set('editor/mode', this.initMode || 'create')
+    this.$store.set('editor/content', this.initContent ? window.atob(this.initContent) : '# Header\n\nYour content here')
     if (this.mode === 'create') {
       _.delay(() => {
         this.dialogEditorSelector = true
       }, 500)
+    } else {
+      this.selectEditor(this.initEditor || 'markdown')
     }
   },
   methods: {

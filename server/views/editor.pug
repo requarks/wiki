@@ -3,4 +3,14 @@ extends master.pug
 block body
   #root
     v-app
-      editor
+      editor(
+        locale=page.localeCode
+        path=page.path
+        title=page.title
+        description=page.description
+        tags=page.tags
+        :is-published=page.isPublished
+        init-mode=page.mode
+        init-editor=page.editorKey
+        init-content=page.content
+        )

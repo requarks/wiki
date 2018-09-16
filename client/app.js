@@ -110,13 +110,13 @@ Vue.prototype.Velocity = Velocity
 // ====================================
 
 Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
-Vue.component('editor', () => import(/* webpackChunkName: "editor" */ './components/editor.vue'))
-Vue.component('login', () => import(/* webpackMode: "eager" */ './components/login.vue'))
+Vue.component('editor', () => import(/* webpackPrefetch: -100, webpackChunkName: "editor" */ './components/editor.vue'))
+Vue.component('login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
 Vue.component('nav-footer', () => import(/* webpackMode: "eager" */ './components/common/nav-footer.vue'))
-Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
+Vue.component('nav-header', () => import(/* webpackMode: "lazy" */ './components/common/nav-header.vue'))
 Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
 Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
-Vue.component('v-card-chin', () => import(/* webpackMode: "eager" */ './components/common/v-card-chin.vue'))
+Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
 Vue.component('page', () => import(/* webpackChunkName: "theme-page" */ './themes/' + process.env.CURRENT_THEME + '/components/app.vue'))
 
 let bootstrap = () => {

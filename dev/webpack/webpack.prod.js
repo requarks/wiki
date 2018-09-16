@@ -126,7 +126,8 @@ module.exports = {
       {
         test: /\.svg$/,
         exclude: [
-          path.join(process.cwd(), 'client/svg')
+          path.join(process.cwd(), 'client/svg'),
+          path.join(process.cwd(), 'node_modules/grapesjs')
         ],
         use: [
           {
@@ -156,6 +157,19 @@ module.exports = {
           { loader: 'graphql-persisted-document-loader' },
           { loader: 'graphql-tag/loader' }
         ]
+      },
+      {
+        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+        exclude: [
+          path.join(process.cwd(), 'client')
+        ],
+        use: [{
+          loader: 'file-loader',
+          options: {
+            name: '[name].[ext]',
+            outputPath: 'fonts/'
+          }
+        }]
       },
       {
         test: /.jsx$/,

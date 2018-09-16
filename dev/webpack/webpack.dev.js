@@ -137,8 +137,7 @@ module.exports = {
       {
         test: /\.svg$/,
         include: [
-          path.join(process.cwd(), 'client/svg'),
-          path.join(process.cwd(), 'node_modules/grapesjs/src/styles/fonts/main-fonts.svg')
+          path.join(process.cwd(), 'client/svg')
         ],
         use: [
           {
@@ -156,6 +155,9 @@ module.exports = {
       },
       {
         test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+        exclude: [
+          path.join(process.cwd(), 'client')
+        ],
         use: [{
           loader: 'file-loader',
           options: {

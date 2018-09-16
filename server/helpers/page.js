@@ -21,8 +21,11 @@ module.exports = {
 
     // Extract Info
     let pathParts = _.filter(_.split(rawPath, '/'), p => !_.isEmpty(p))
+    if (pathParts[0].length === 1) {
+      pathParts.shift()
+    }
     if (pathParts[0].length === 2) {
-      pathObj = pathParts[0]
+      pathObj.locale = pathParts[0]
       pathParts.shift()
     }
     pathObj.path = _.join(pathParts, '/')

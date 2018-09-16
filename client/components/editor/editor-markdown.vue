@@ -165,7 +165,7 @@ export default {
   data() {
     return {
       fabInsertMenu: false,
-      code: '# Header 1\n\nSample **Text**\nhttp://wiki.js.org\n:rocket: :) :( :| :P\n\n## Header 2\nSample Text\n\n```javascript\nvar test = require("test");\n\n// some comment\nconst foo = bar(\'param\') + 1.234;\n```\n\n### Header 3\nLorem *ipsum* ~~text~~',
+      code: this.$store.get('editor/content'),
       cmOptions: {
         tabSize: 2,
         mode: 'text/markdown',

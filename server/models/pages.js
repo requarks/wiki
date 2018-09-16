@@ -187,7 +187,9 @@ module.exports = class Page extends Model {
     let page = await WIKI.models.pages.getPageFromCache(opts)
     if (!page) {
       page = await WIKI.models.pages.getPageFromDb(opts)
-      await WIKI.models.pages.savePageToCache(page)
+      if (page) {
+        await WIKI.models.pages.savePageToCache(page)
+      }
     }
     return page
   }

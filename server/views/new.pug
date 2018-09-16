@@ -8,7 +8,7 @@ block body
           img.animated.fadeIn(src='/svg/henry-thinking.svg', alt='Henry')
           .headline= t('newpage.title')
           .subheading.mt-3= t('newpage.subtitle')
-          v-btn.mt-5(href='/e/home', large)
+          v-btn.mt-5(href='/e' + pagePath, large)
             v-icon(left) add
             span= t('newpage.create')
           v-btn.mt-2(color='blue lighten-4', href='javascript:window.history.go(-1);', large, outline)
