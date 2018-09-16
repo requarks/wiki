@@ -80,7 +80,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
 - [x] Fixed: Fixed potential bug when uploading certain images (thanks to @Gnurdle)
 
 ### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/65)
+![Progress](http://progressed.io/bar/70)
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -123,6 +123,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] System Info
   - [x] Developer Tools
   - [x] Contribute
+- [x] New Cache Engine
 - [x] Requarks Graph [:octocat:](https://github.com/Requarks/graph)
   - [x] Countries
   - [x] Locales + translations
