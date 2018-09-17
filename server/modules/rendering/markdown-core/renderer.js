@@ -25,7 +25,7 @@ module.exports = {
       typographer: this.config.typographer,
       quotes: _.get(quoteStyles, this.config.quotes, quoteStyles.English),
       highlight(str, lang) {
-        return `<pre><code lang="${lang}">${_.escape(str)}</code></pre>`
+        return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
       }
     })
 

@@ -49,7 +49,7 @@
               .headline.grey--text.text--darken-3 {{title}}
               .caption.grey--text.text--darken-1 {{description}}
           v-divider
-          .contents
+          .contents(ref='container')
             slot(name='contents')
 
         v-flex(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
@@ -111,6 +111,7 @@
 
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
+import Prism from '@/libs/prism/prism.js'
 
 export default {
   components: {
@@ -205,6 +206,9 @@ export default {
 
       }
     }
+  },
+  mounted () {
+    Prism.highlightAllUnder(this.$refs.container)
   },
   methods: {
     toggleNavigation () {

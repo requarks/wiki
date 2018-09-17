@@ -3,15 +3,12 @@ const hljs = require('highlight.js')
 module.exports = {
   async init($, config) {
     $('pre > code').each((idx, elm) => {
-      const lang = $(elm).attr('lang')
-      if (lang) {
-        $(elm).html(hljs.highlight(lang, $(elm).text(), true).value)
-      } else {
+      const codeClasses = $(elm).attr('class') || ''
+      if (codeClasses.indexOf('language-') < 0) {
         const result = hljs.highlightAuto($(elm).text())
-        $(elm).html(result.value)
-        $(elm).attr('lang', result.language)
+        $(elm).addClass('language-', result.language)
       }
-      $(elm).parent().addClass('hljs')
+      $(elm).parent().addClass('prismjs line-numbers')
     })
   }
 }
