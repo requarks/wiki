@@ -1,43 +1,5 @@
-# Logs
-logs
-*.log
-/logs
-
-# Deployment builds
-dist
-
-# Dependency directories
 node_modules
-npm/node_modules
-
-# NPM / Yarn
-.npm
-.node_repl_history
-npm-debug.log*
-
-# NewRelic APM
-newrelic.js
-
-# Generated assets
-/assets/js
-
-# Fusebox
-.fusebox
-
-# Config Files
-config.yml
-
-# Data directories
-/repo
-/data
-/uploads
-
-# IDE exclude
-.idea
-*.sublime-*
-
-# Test results
-test-results/
-
-# VS Code Local History extension
-.history
+dist
+.tmp
+bower_components
+test/bower_components
