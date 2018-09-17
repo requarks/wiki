@@ -114,6 +114,7 @@
     "read-chunk": "~3.0.0",
     "remove-markdown": "~0.3.0",
     "request": "~2.88.0",
+    "resolve-up": "~1.0.0",
     "search-index-adder": "~0.4.0",
     "search-index-searcher": "~0.4.2",
     "semver": "~5.5.1",
