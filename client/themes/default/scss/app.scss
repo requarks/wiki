@@ -3,6 +3,26 @@
 .contents {
   color: mc('grey', '800');
 
+  h1, h2, h3, h4, h5, h6 {
+    position: relative;
+
+    &:hover {
+      .toc-anchor {
+        display: block;
+      }
+    }
+
+    .toc-anchor {
+      display: none;
+      position: absolute;
+      right: 1rem;
+      bottom: .5rem;
+      font-size: 1.25rem;
+      text-decoration: none;
+      color: mc('grey', '500');
+    }
+  }
+
   h1 {
     padding-left: 24px;
     color: mc('blue', '800');

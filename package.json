@@ -147,6 +147,7 @@
     "semver": "5.5.1",
     "serve-favicon": "2.5.0",
     "sqlite3": "4.0.2",
+    "uslug": "1.0.4",
     "uuid": "3.3.2",
     "validator": "10.7.1",
     "validator-as-promised": "1.0.2",
