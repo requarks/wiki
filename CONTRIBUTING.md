@@ -1,9 +1,6 @@
 # Contribute
-
 ## Introduction
-
 First, thank you for considering contributing to Wiki.js! It's people like you that make the open source community such a great community! 😊
-
 We welcome any type of contribution, not only code. You can help with 
 - **QA**: file bug reports, the more details you can give the better (e.g. screenshots with the console open)
 - **Marketing**: writing blog posts, howto's, printing stickers, ...
@@ -23,12 +20,9 @@ e.g. `fix: edit user textbox trigger`, `refactor: markdown rendering method to e
 ## Submitting code
 
 Any code change should be submitted as a pull request. The description should explain what the code does and give steps to execute it. The pull request should also contain tests.
-
 ## Code review process
-
 The bigger the pull request, the longer it will take to review and merge. Try to break down large pull requests in smaller chunks that are easier to review and merge.
 It is also always helpful to have some context for your pull request. What was the purpose? Why does it matter to you?
-
 ## Financial contributions
 
 We also welcome financial contributions in full transparency on our [open collective](https://opencollective.com/wikijs).
