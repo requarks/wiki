@@ -105,17 +105,10 @@
 <script>
 import _ from 'lodash'
 
-import IconCube from 'mdi/cube'
-import IconDatabase from 'mdi/database'
-import IconNodeJs from 'mdi/nodejs'
-
 import systemInfoQuery from 'gql/admin/system/system-query-info.gql'
 
 export default {
   components: {
-    IconCube,
-    IconDatabase,
-    IconNodeJs
   },
   data() {
     return {
