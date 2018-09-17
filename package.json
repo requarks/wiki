@@ -42,5 +42,10 @@
         "single"
       ]
     }
+  },
+  "dependencies": {
+    "generator-jhipster": "~5.3.4",
+    "yeoman-generator": "~3.1.1",
+    "yo": "~2.0.5"
   }
 }
