@@ -105,9 +105,9 @@
 <script>
 import _ from 'lodash'
 
-import IconCube from 'mdi/cube'
-import IconDatabase from 'mdi/database'
-import IconNodeJs from 'mdi/nodejs'
+import IconCube from 'mdi/Cube'
+import IconDatabase from 'mdi/Database'
+import IconNodeJs from 'mdi/Nodejs'
 
 import systemInfoQuery from 'gql/admin/system/system-query-info.gql'
 
