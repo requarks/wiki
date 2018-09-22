@@ -11,7 +11,7 @@ module.exports = {
         uri: 'https://opencollective.com/wikijs/members/all.json',
         json: true
       })
-      const dude = _.filter(resp, c => {
+      return _.filter(resp, c => {
         return c.role === 'BACKER' && c.totalAmountDonated > 0
       }).map(c => ({
         company: _.get(c, 'company', '') || '',
@@ -26,8 +26,6 @@ module.exports = {
         twitter: _.get(c, 'twitter', '') || '',
         website: _.get(c, 'website', '') || ''
       }))
-      console.info(dude)
-      return dude
     }
   }
 }
