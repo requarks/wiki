@@ -1,0 +1,33 @@
+# ===============================================
+# CONTRIBUTE
+# ===============================================
+
+extend type Query {
+  contribute: ContributeQuery
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type ContributeQuery {
+  contributors: [ContributeContributor]
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type ContributeContributor {
+  company: String!
+  currency: String!
+  description: String!
+  id: Int!
+  image: String!
+  name: String!
+  profile: String!
+  tier: String!
+  totalDonated: Int!
+  twitter: String!
+  website: String!
+}

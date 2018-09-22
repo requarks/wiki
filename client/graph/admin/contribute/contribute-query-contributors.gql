@@ -1,0 +1,17 @@
+query {
+  contribute {
+    contributors {
+      company
+      currency
+      description
+      id
+      image
+      name
+      profile
+      tier
+      totalDonated
+      twitter
+      website
+    }
+  }
+}
