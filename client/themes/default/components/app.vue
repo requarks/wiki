@@ -11,21 +11,7 @@
       :temporary='$vuetify.breakpoint.xs'
       v-model='navShown'
       )
-      v-list(dense)
-        v-list-tile.pt-2(href='/')
-          v-list-tile-avatar: v-icon home
-          v-list-tile-title Home
-        v-divider.my-2
-        v-subheader.pl-4 Navigation
-        v-list-tile
-          v-list-tile-avatar: v-icon stars
-          v-list-tile-title The Universe
-        v-list-tile
-          v-list-tile-avatar: v-icon directions_boat
-          v-list-tile-title Ships
-        v-list-tile
-          v-list-tile-avatar: v-icon local_airport
-          v-list-tile-title Airports
+      nav-sidebar
 
     v-content
       v-toolbar(color='grey lighten-3', flat, dense)
@@ -33,6 +19,7 @@
           v-icon(color='grey darken-2', left) menu
           span Navigation
         v-breadcrumbs.pl-0(v-else, divider='/')
+          v-breadcrumbs-item: v-icon home
           v-breadcrumbs-item Universe
           v-breadcrumbs-item Galaxy
           v-breadcrumbs-item Solar System

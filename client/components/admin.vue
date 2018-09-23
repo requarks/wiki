@@ -14,12 +14,12 @@
         v-list-tile(to='/locale')
           v-list-tile-avatar: v-icon language
           v-list-tile-title {{ $t('admin:locale.title') }}
+        v-list-tile(to='/navigation')
+          v-list-tile-avatar: v-icon near_me
+          v-list-tile-title {{ $t('admin:navigation.title') }}
         v-list-tile(to='/pages')
           v-list-tile-avatar: v-icon insert_drive_file
           v-list-tile-title {{ $t('admin:pages.title') }}
-        v-list-tile(to='/stats')
-          v-list-tile-avatar: v-icon show_chart
-          v-list-tile-title {{ $t('admin:stats.title') }}
         v-list-tile(to='/theme')
           v-list-tile-avatar: v-icon palette
           v-list-tile-title {{ $t('admin:theme.title') }}
@@ -93,8 +93,8 @@ const router = new VueRouter({
     { path: '/dashboard', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-dashboard.vue') },
     { path: '/general', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-general.vue') },
     { path: '/locale', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-locale.vue') },
+    { path: '/navigation', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-navigation.vue') },
     { path: '/pages', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages.vue') },
-    { path: '/stats', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-stats.vue') },
     { path: '/theme', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-theme.vue') },
     { path: '/groups', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups.vue') },
     { path: '/groups/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups-edit.vue') },
