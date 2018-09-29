@@ -1,4 +1,12 @@
 {
+  "common": {
+    "footer": {
+      "poweredBy": "Powered by"
+    },
+    "welcome": {
+      "title": "Welcome to your wiki!"
+    }
+  },
   "auth": {
     "actions": {
       "login": "Log In"

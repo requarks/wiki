@@ -5,7 +5,7 @@
       v-toolbar-title
         span.subheading Wiki.js Setup
       v-spacer
-    v-content
+    v-content.white
       v-progress-linear.ma-0(indeterminate, height='4', :active='loading')
       v-stepper.elevation-0(v-model='state')
         v-stepper-header
@@ -33,17 +33,19 @@
           v-stepper-content(step='1')
             v-card.text-xs-center.pa-3(flat)
               img(src='/svg/logo-wikijs.svg', alt='Wiki.js Logo', style='width: 300px;')
-            v-container
+            .text-xs-center
               .body-2.py-2 This installation wizard will guide you through the steps needed to get your wiki up and running in no time!
-              .body-1
-                | Detailed information about installation and usage can be found on the #[a(href='https://wiki.requarks.io/docs') official documentation site].
-                br
-                | Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
-              .body-1.pt-3
-                v-icon.mr-2 system_update
-                span You are about to install Wiki.js #[strong {{wikiVersion}}].
-              v-divider.mt-3
-              v-form
+              .body-1 Detailed information about installation and usage can be found on the #[a(href='https://wiki.requarks.io/docs') official documentation site].
+              .body-1 Should you have any question or would like to report something that doesn't look right, feel free to create a new issue on the #[a(href='https://github.com/Requarks/wiki/issues') GitHub project].
+              .body-1.py-3
+                v-icon.mr-2(color='indigo') open_in_browser
+                span.indigo--text You are about to install Wiki.js #[strong {{wikiVersion}}].
+              v-btn.mt-4(color='primary', @click='proceedToAdmin', :disabled='loading', large)
+                span Start
+                v-icon(right) arrow_forward
+              v-divider.my-5
+              .body-2 Additional Setup Options
+              div(style='display:inline-block;')
                 v-checkbox(
                   color='primary',
                   v-model='conf.telemetry',
@@ -58,9 +60,6 @@
                   persistent-hint,
                   hint='Check this box if you are upgrading from Wiki.js 1.x and wish to migrate your existing data.'
                 )
-            v-divider
-            .pt-3.text-xs-center
-              v-btn(color='primary', @click='proceedToAdmin', :disabled='loading') Start
 
           //- ==============================================
           //- ADMINISTRATOR ACCOUNT
@@ -81,11 +80,13 @@
                       v-model='conf.adminEmail',
                       label='Administrator Email',
                       hint='The email address of the administrator account',
+                      persistent-hint
                       v-validate='{ required: true, email: true }',
                       data-vv-name='adminEmail',
                       data-vv-as='Administrator Email',
                       data-vv-scope='admin',
                       :error-messages='errors.collect(`adminEmail`)'
+                      ref='adminEmailInput'
                     )
                   v-flex.pr-3(xs6)
                     v-text-field(
@@ -96,9 +97,10 @@
                       v-model='conf.adminPassword',
                       label='Password',
                       :append-icon="pwdMode ? 'visibility' : 'visibility_off'"
-                      :append-icon-cb="() => (pwdMode = !pwdMode)"
+                      @click:append="() => (pwdMode = !pwdMode)"
                       :type="pwdMode ? 'password' : 'text'"
                       hint='At least 8 characters long.',
+                      persistent-hint
                       v-validate='{ required: true, min: 8 }',
                       data-vv-name='adminPassword',
                       data-vv-as='Password',
@@ -114,14 +116,16 @@
                       v-model='conf.adminPasswordConfirm',
                       label='Confirm Password',
                       :append-icon="pwdConfirmMode ? 'visibility' : 'visibility_off'"
-                      :append-icon-cb="() => (pwdConfirmMode = !pwdConfirmMode)"
+                      @click:append="() => (pwdConfirmMode = !pwdConfirmMode)"
                       :type="pwdConfirmMode ? 'password' : 'text'"
                       hint='Verify your password again.',
+                      persistent-hint
                       v-validate='{ required: true, min: 8 }',
                       data-vv-name='adminPasswordConfirm',
                       data-vv-as='Confirm Password',
                       data-vv-scope='admin',
                       :error-messages='errors.collect(`adminPasswordConfirm`)'
+                      @keyup.enter='proceedToUpgrade'
                     )
               .pt-3.text-xs-center
                 v-btn(@click='proceedToWelcome', :disabled='loading') Back
@@ -194,9 +198,6 @@
 </template>
 
 <script>
-
-/* global siteConfig */
-
 import axios from 'axios'
 import _ from 'lodash'
 import { AtomSpinner } from 'epic-spinners'
@@ -251,6 +252,9 @@ export default {
       }
       this.state = 2
       this.loading = false
+      _.delay(() => {
+        this.$refs.adminEmailInput.focus()
+      }, 400)
     },
     async proceedToUpgrade () {
       if (this.state < 3) {
@@ -292,17 +296,6 @@ export default {
           if (resp.data.ok === true) {
             _.delay(() => {
               self.final.ok = true
-              switch (resp.data.redirectPort) {
-                case 80:
-                  self.final.redirectUrl = `http://${window.location.hostname}${resp.data.redirectPath}/login`
-                  break
-                case 443:
-                  self.final.redirectUrl = `https://${window.location.hostname}${resp.data.redirectPath}/login`
-                  break
-                default:
-                  self.final.redirectUrl = `http://${window.location.hostname}:${resp.data.redirectPort}${resp.data.redirectPath}/login`
-                  break
-              }
               self.loading = false
             }, 5000)
           } else {
@@ -317,7 +310,7 @@ export default {
       }, 1000)
     },
     finish () {
-      window.location.assign(this.final.redirectUrl)
+      window.location.assign('/login')
     }
   }
 }

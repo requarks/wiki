@@ -12,6 +12,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
+const SriWebpackPlugin = require('webpack-subresource-integrity')
 const { VueLoaderPlugin } = require('vue-loader')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
@@ -25,14 +26,16 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets'))
 module.exports = {
   mode: 'production',
   entry: {
-    client: './client/index.js'
+    app: './client/index-app.js',
+    setup: './client/index-setup.js'
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
     publicPath: '/',
     filename: 'js/[name].[hash].js',
     chunkFilename: 'js/[name].[chunkhash].js',
-    globalObject: 'this'
+    globalObject: 'this',
+    crossOriginLoading: 'use-credentials'
   },
   module: {
     rules: [
@@ -200,12 +203,24 @@ module.exports = {
       template: 'dev/templates/master.pug',
       filename: '../server/views/master.pug',
       hash: false,
-      inject: 'head'
+      inject: false,
+      excludeChunks	: ['setup']
+    }),
+    new HtmlWebpackPlugin({
+      template: 'dev/templates/setup.pug',
+      filename: '../server/views/setup.pug',
+      hash: false,
+      inject: false,
+      excludeChunks: ['app']
     }),
     new HtmlWebpackPugPlugin(),
     new ScriptExtHtmlWebpackPlugin({
       sync: 'runtime.js',
       defaultAttribute: 'async'
+    }),
+    new SriWebpackPlugin({
+      hashFuncNames: ['sha256', 'sha512'],
+      enabled: true
     }),
     new SimpleProgressWebpackPlugin({
       format: 'expanded'

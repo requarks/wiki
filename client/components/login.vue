@@ -19,7 +19,7 @@
             ref='iptPassword'
             v-model='password'
             :append-icon='hidePassword ? "visibility" : "visibility_off"'
-            :append-icon-cb='() => (hidePassword = !hidePassword)'
+            @click:append='() => (hidePassword = !hidePassword)'
             :type='hidePassword ? "password" : "text"'
             :placeholder='$t("auth:fields.password")'
             @keyup.enter='login'

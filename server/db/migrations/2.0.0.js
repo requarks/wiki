@@ -77,6 +77,12 @@ exports.up = knex => {
       table.string('level').notNullable().defaultTo('warn')
       table.json('config')
     })
+    // NAVIGATION ----------------------------
+    .createTable('navigation', table => {
+      table.charset('utf8mb4')
+      table.string('key').notNullable().primary()
+      table.json('config')
+    })
     // PAGE HISTORY ------------------------
     .createTable('pageHistory', table => {
       table.charset('utf8mb4')
@@ -236,6 +242,7 @@ exports.down = knex => {
     .dropTableIfExists('editors')
     .dropTableIfExists('groups')
     .dropTableIfExists('locales')
+    .dropTableIfExists('navigation')
     .dropTableIfExists('pages')
     .dropTableIfExists('renderers')
     .dropTableIfExists('settings')

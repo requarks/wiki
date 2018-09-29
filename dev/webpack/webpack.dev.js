@@ -9,6 +9,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
+const SriWebpackPlugin = require('webpack-subresource-integrity')
 const WriteFilePlugin = require('write-file-webpack-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
@@ -22,7 +23,8 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets'))
 module.exports = {
   mode: 'development',
   entry: {
-    client: ['./client/index.js', 'webpack-hot-middleware/client']
+    app: ['./client/index-app.js', 'webpack-hot-middleware/client'],
+    setup: ['./client/index-setup.js', 'webpack-hot-middleware/client']
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
@@ -30,7 +32,8 @@ module.exports = {
     filename: 'js/[name].js',
     chunkFilename: 'js/[name].js',
     globalObject: 'this',
-    pathinfo: true
+    pathinfo: true,
+    crossOriginLoading: 'use-credentials'
   },
   module: {
     rules: [
@@ -190,9 +193,21 @@ module.exports = {
       template: 'dev/templates/master.pug',
       filename: '../server/views/master.pug',
       hash: false,
-      inject: 'head'
+      inject: false,
+      excludeChunks	: ['setup']
+    }),
+    new HtmlWebpackPlugin({
+      template: 'dev/templates/setup.pug',
+      filename: '../server/views/setup.pug',
+      hash: false,
+      inject: false,
+      excludeChunks: ['app']
     }),
     new HtmlWebpackPugPlugin(),
+    new SriWebpackPlugin({
+      hashFuncNames: ['sha256', 'sha512'],
+      enabled: false
+    }),
     new SimpleProgressWebpackPlugin({
       format: 'compact'
     }),

@@ -32,6 +32,7 @@ module.exports = class Editor extends Model {
   }
 
   static async refreshEditorsFromDisk() {
+    let trx
     try {
       const dbEditors = await WIKI.models.editors.query()
 
@@ -72,7 +73,11 @@ module.exports = class Editor extends Model {
         }
       }
       if (newEditors.length > 0) {
-        await WIKI.models.editors.query().insert(newEditors)
+        trx = await WIKI.models.Objection.transaction.start(WIKI.models.knex)
+        for (let editor of newEditors) {
+          await WIKI.models.editors.query(trx).insert(editor)
+        }
+        await trx.commit()
         WIKI.logger.info(`Loaded ${newEditors.length} new editors: [ OK ]`)
       } else {
         WIKI.logger.info(`No new editors found: [ SKIPPED ]`)

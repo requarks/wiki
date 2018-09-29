@@ -1,0 +1,12 @@
+{
+  navigation {
+    tree {
+      id
+      kind
+      label
+      icon
+      targetType
+      target
+    }
+  }
+}

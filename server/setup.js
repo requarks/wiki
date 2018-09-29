@@ -277,5 +277,8 @@ module.exports = () => {
 
   WIKI.server.on('listening', () => {
     WIKI.logger.info('HTTP Server: [ RUNNING ]')
+    WIKI.logger.info('========================================')
+    WIKI.logger.info(`Browse to http://localhost:${WIKI.config.port}/`)
+    WIKI.logger.info('========================================')
   })
 }

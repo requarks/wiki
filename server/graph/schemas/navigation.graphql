@@ -1,0 +1,51 @@
+# ===============================================
+# NAVIGATION
+# ===============================================
+
+extend type Query {
+  navigation: NavigationQuery
+}
+
+extend type Mutation {
+  navigation: NavigationMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type NavigationQuery {
+  tree: [NavigationItem]!
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type NavigationMutation {
+  updateTree(
+    tree: [NavigationItemInput]!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type NavigationItem {
+  id: String!
+  kind: String!
+  label: String
+  icon: String
+  targetType: String
+  target: String
+}
+
+input NavigationItemInput {
+  id: String!
+  kind: String!
+  label: String
+  icon: String
+  targetType: String
+  target: String
+}

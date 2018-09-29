@@ -1,5 +1,3 @@
-'use strict'
-
 /* global siteConfig */
 
 import Vue from 'vue'
@@ -116,7 +114,6 @@ Vue.component('nav-footer', () => import(/* webpackMode: "eager" */ './component
 Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
 Vue.component('nav-sidebar', () => import(/* webpackMode: "eager" */ './components/common/nav-sidebar.vue'))
 Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
-Vue.component('setup', () => import(/* webpackChunkName: "setup" */ './components/setup.vue'))
 Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
 Vue.component('page', () => import(/* webpackChunkName: "theme-page" */ './themes/' + process.env.CURRENT_THEME + '/components/app.vue'))
 
@@ -142,7 +139,7 @@ let bootstrap = () => {
     el: '#root',
     components: {},
     mixins: [helpers],
-    provide: apolloProvider.provide(),
+    apolloProvider,
     store,
     i18n
   })
