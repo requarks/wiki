@@ -8,8 +8,11 @@ import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
 import { createPersistedQueryLink } from 'apollo-link-persisted-queries'
 // import { BatchHttpLink } from 'apollo-link-batch-http'
+import { split } from 'apollo-link'
 import { createHttpLink } from 'apollo-link-http'
+import { WebSocketLink } from 'apollo-link-ws'
 import { InMemoryCache } from 'apollo-cache-inmemory'
+import { getMainDefinition } from 'apollo-utilities'
 import VueApollo from 'vue-apollo'
 import Vuetify from 'vuetify'
 import Velocity from 'velocity-animate'
@@ -48,6 +51,7 @@ moment.locale(siteConfig.lang)
 // ====================================
 
 const graphQLEndpoint = window.location.protocol + '//' + window.location.host + '/graphql'
+const graphQLWSEndpoint = ((window.location.protocol === 'https:') ? 'wss:' : 'ws:') + '//' + window.location.host + '/graphql-subscriptions'
 
 const graphQLLink = createPersistedQueryLink().concat(
   createHttpLink({
@@ -77,8 +81,19 @@ const graphQLLink = createPersistedQueryLink().concat(
   })
 )
 
+const graphQLWSLink = new WebSocketLink({
+  uri: graphQLWSEndpoint,
+  options: {
+    reconnect: true,
+    lazy: true
+  }
+})
+
 window.graphQL = new ApolloClient({
-  link: graphQLLink,
+  link: split(({ query }) => {
+    const { kind, operation } = getMainDefinition(query)
+    return kind === 'OperationDefinition' && operation === 'subscription'
+  }, graphQLWSLink, graphQLLink),
   cache: new InMemoryCache(),
   connectToDevTools: (process.env.node_env === 'development')
 })

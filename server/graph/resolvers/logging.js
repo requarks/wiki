@@ -10,6 +10,11 @@ module.exports = {
   Mutation: {
     async logging() { return {} }
   },
+  Subscription: {
+    loggingLiveTrail: {
+      subscribe: () => WIKI.GQLEmitter.asyncIterator('livetrail')
+    }
+  },
   LoggingQuery: {
     async loggers(obj, args, context, info) {
       let loggers = await WIKI.models.loggers.getLoggers()

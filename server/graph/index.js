@@ -3,10 +3,17 @@ const fs = require('fs')
 // const gqlTools = require('graphql-tools')
 const path = require('path')
 const autoload = require('auto-load')
+const PubSub = require('graphql-subscriptions').PubSub
+const util = require('util')
+const winston = require('winston')
 
 /* global WIKI */
 
 WIKI.logger.info(`Loading GraphQL Schema...`)
+
+// Init Subscription PubSub
+
+WIKI.GQLEmitter = new PubSub()
 
 // Schemas
 
@@ -24,10 +31,25 @@ resolversObj.forEach(resolver => {
   _.merge(resolvers, resolver)
 })
 
-// const Schema = gqlTools.makeExecutableSchema({
-//   typeDefs,
-//   resolvers
-// })
+// Live Trail Logger (admin)
+
+let LiveTrailLogger = winston.transports.LiveTrailLogger = function (options) {
+  this.name = 'livetrailLogger'
+  this.level = 'debug'
+}
+util.inherits(LiveTrailLogger, winston.Transport)
+LiveTrailLogger.prototype.log = function (level, msg, meta, callback) {
+  WIKI.GQLEmitter.publish('livetrail', {
+    loggingLiveTrail: {
+      timestamp: new Date(),
+      level,
+      output: msg
+    }
+  })
+  callback(null, true)
+}
+
+WIKI.logger.add(new LiveTrailLogger({}))
 
 WIKI.logger.info(`GraphQL Schema: [ OK ]`)
 

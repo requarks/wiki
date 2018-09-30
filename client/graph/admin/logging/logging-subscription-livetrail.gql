@@ -1,0 +1,7 @@
+subscription {
+  loggingLiveTrail {
+    level
+    output
+    timestamp
+  }
+}

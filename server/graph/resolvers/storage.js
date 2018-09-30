@@ -43,7 +43,7 @@ module.exports = {
             isEnabled: tgt.isEnabled,
             mode: tgt.mode,
             config: _.reduce(tgt.config, (result, value, key) => {
-              _.set(result, `${value.key}`, value.value)
+              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result
             }, {})
           }).where('key', tgt.key)

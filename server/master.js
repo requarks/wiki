@@ -129,7 +129,13 @@ module.exports = async () => {
   const graphqlSchema = require('./graph')
   const apolloServer = new ApolloServer({
     ...graphqlSchema,
-    context: ({ req, res }) => ({ req, res })
+    context: ({ req, res }) => ({ req, res }),
+    subscriptions: {
+      onConnect: (connectionParams, webSocket) => {
+
+      },
+      path: '/graphql-subscriptions'
+    }
   })
   apolloServer.applyMiddleware({ app })
 
@@ -169,6 +175,7 @@ module.exports = async () => {
 
   app.set('port', WIKI.config.port)
   WIKI.server = http.createServer(app)
+  apolloServer.installSubscriptionHandlers(WIKI.server)
 
   WIKI.server.listen(WIKI.config.port, WIKI.config.bindIP)
   WIKI.server.on('error', (error) => {

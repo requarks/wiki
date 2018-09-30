@@ -1,9 +1,12 @@
 <template lang='pug'>
-  v-card
-    v-card(flat, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
-      .admin-header-icon: v-icon(size='80', color='grey lighten-2') people
-      .headline.blue--text.text--darken-2 Edit Group
-      .subheading.grey--text {{name}}
+  v-container(fluid, grid-list-lg)
+    v-layout(row wrap)
+      v-flex(xs12)
+        .admin-header
+          v-icon(size='80', color='grey lighten-2') people
+          .admin-header-title
+            .headline.blue--text.text--darken-2 Edit Group
+            .subheading.grey--text {{name}}
       v-btn(color='primary', fab, absolute, bottom, right, small, to='/groups'): v-icon arrow_upward
     v-tabs(v-model='tab', :color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
       v-tab(key='properties') Properties

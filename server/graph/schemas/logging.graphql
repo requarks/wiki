@@ -10,6 +10,10 @@ extend type Mutation {
   logging: LoggingMutation
 }
 
+extend type Subscription {
+  loggingLiveTrail: LoggerTrailLine
+}
+
 # -----------------------------------------------
 # QUERIES
 # -----------------------------------------------
@@ -51,4 +55,10 @@ input LoggerInput {
   key: String!
   level: String!
   config: [KeyValuePairInput]
+}
+
+type LoggerTrailLine {
+  level: String!
+  output: String!
+  timestamp: Date!
 }

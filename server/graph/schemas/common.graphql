@@ -250,3 +250,5 @@ type Mutation {
     filename: String!
   ): File
 }
+
+type Subscription

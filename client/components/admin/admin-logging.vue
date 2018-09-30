@@ -11,9 +11,9 @@
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh
           v-btn(color='black', dark, depressed, @click='toggleConsole', large)
-            v-icon(left) keyboard
-            span View Console
-          v-btn(color='primary', @click='save', depressed, large)
+            ConsoleLineIcon.mr-3
+            span Live Trail
+          v-btn.mr-0(color='primary', @click='save', depressed, large)
             v-icon(left) chevron_right
             span Apply Configuration
 
@@ -112,9 +112,12 @@ import LoggingConsole from './admin-logging-console.vue'
 import loggersQuery from 'gql/admin/logging/logging-query-loggers.gql'
 import loggersSaveMutation from 'gql/admin/logging/logging-mutation-save-loggers.gql'
 
+import ConsoleLineIcon from 'mdi/ConsoleLine'
+
 export default {
   components: {
-    LoggingConsole
+    LoggingConsole,
+    ConsoleLineIcon
   },
   data() {
     return {
@@ -147,7 +150,7 @@ export default {
             'key',
             'config',
             'level'
-          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: cfg.value.value}))}))
+          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
         }
       })
       this.$store.commit('showNotification', {
@@ -156,6 +159,9 @@ export default {
         icon: 'check'
       })
       this.$store.commit(`loadingStop`, 'admin-logging-saveloggers')
+    },
+    toggleConsole() {
+      this.showConsole = !this.showConsole
     }
   },
   apollo: {

@@ -26,6 +26,8 @@ import _ from 'lodash'
 import { Terminal } from 'xterm'
 import * as fit from 'xterm/lib/addons/fit/fit'
 
+import livetrailSubscription from 'gql/admin/logging/logging-subscription-livetrail.gql'
+
 Terminal.applyAddon(fit)
 
 export default {
@@ -49,6 +51,8 @@ export default {
           this.term = new Terminal()
           this.term.open(this.$refs.consoleContainer)
           this.term.writeln('Connecting to \x1B[1;3;31mconsole output\x1B[0m...')
+
+          this.attach()
         }, 100)
       } else {
         this.term.dispose()
@@ -57,8 +61,7 @@ export default {
     }
   },
   mounted() {
-    this.term = new Terminal()
-    this.term.open(this.$refs.consoleContainer)
+
   },
   methods: {
     clear() {
@@ -66,6 +69,26 @@ export default {
     },
     close() {
       this.isShown = false
+    },
+    attach() {
+      const self = this
+      const observer = this.$apollo.subscribe({
+        query: livetrailSubscription
+      })
+      observer.subscribe({
+        next(data) {
+          const item = _.get(data, `data.loggingLiveTrail`, {})
+          console.info(item)
+          self.term.writeln(`${item.level}: ${item.output}`)
+        },
+        error(error) {
+          self.$store.commit('showNotification', {
+            style: 'red',
+            message: error.message,
+            icon: 'warning'
+          })
+        }
+      })
     }
   }
 }

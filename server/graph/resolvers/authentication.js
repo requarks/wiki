@@ -68,7 +68,7 @@ module.exports = {
           await WIKI.models.authentication.query().patch({
             isEnabled: str.isEnabled,
             config: _.reduce(str.config, (result, value, key) => {
-              _.set(result, `${value.key}.value`, value.value)
+              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result
             }, {}),
             selfRegistration: str.selfRegistration,

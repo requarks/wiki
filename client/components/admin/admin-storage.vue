@@ -148,7 +148,7 @@ export default {
             'key',
             'config',
             'mode'
-          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: cfg.value.value}))}))
+          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
         }
       })
       this.$store.commit('showNotification', {

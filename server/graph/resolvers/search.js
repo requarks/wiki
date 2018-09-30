@@ -42,7 +42,7 @@ module.exports = {
           await WIKI.models.searchEngines.query().patch({
             isEnabled: searchEngine.isEnabled,
             config: _.reduce(searchEngine.config, (result, value, key) => {
-              _.set(result, `${value.key}`, value.value)
+              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result
             }, {})
           }).where('key', searchEngine.key)
