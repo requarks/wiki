@@ -10,7 +10,7 @@
           v-spacer
           v-btn(color='grey', outline, @click='refresh', large)
             v-icon.grey--text refresh
-          v-btn(color='primary', depressed, @click='save', large)
+          v-btn(color='primary', depressed, large, @click='newpage')
             v-icon(left) add
             span New Page
         v-card.mt-3
@@ -33,6 +33,8 @@
               v-alert.ma-3(icon='warning', :value='true', outline) No pages to display.
           .text-xs-center.py-2(v-if='groups.length > 15')
             v-pagination(v-model='pagination.page', :length='pages')
+
+    page-selector(v-model='pageSelectorShown', mode='new')
 </template>
 
 <script>
@@ -50,7 +52,8 @@ export default {
         { text: 'Created', value: 'createdAt', width: 250 },
         { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
-      search: ''
+      search: '',
+      pageSelectorShown: false
     }
   },
   computed: {
@@ -70,6 +73,9 @@ export default {
         style: 'success',
         icon: 'cached'
       })
+    },
+    newpage() {
+      this.pageSelectorShown = true
     }
   }
 }
