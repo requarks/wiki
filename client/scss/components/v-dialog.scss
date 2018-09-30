@@ -1,7 +1,7 @@
 .dialog-header {
   background-color: mc('blue', '700');
-  background: radial-gradient(ellipse at top, mc('blue', '500'), transparent),
-            radial-gradient(ellipse at bottom, mc('blue', '800'), transparent);
+  background: radial-gradient(ellipse at top, mc('blue', '500'), mc('blue', '700')),
+            radial-gradient(ellipse at bottom, mc('blue', '800'), mc('blue', '700'));
   height: 60px;
   color: #FFF;
   display: flex;
@@ -11,7 +11,7 @@
 
   &.is-red {
     background-color: mc('red', '700');
-    background: radial-gradient(ellipse at top, mc('red', '500'), transparent),
-              radial-gradient(ellipse at bottom, mc('red', '800'), transparent);
+    background: radial-gradient(ellipse at top, mc('red', '500'), mc('red', '700')),
+              radial-gradient(ellipse at bottom, mc('red', '800'), mc('red', '700'));
   }
 }
