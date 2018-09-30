@@ -1,10 +1,12 @@
 <template lang='pug'>
-  v-container(fluid, fill-height, grid-list-lg)
+  v-container(fluid, grid-list-lg)
     v-layout(row, wrap)
       v-flex(xs12)
-        .admin-header-icon: v-icon(size='80', color='grey lighten-2') tune
-        .headline.primary--text {{ $t('admin:system.title') }}
-        .subheading.grey--text {{ $t('admin:system.subtitle') }}
+        .admin-header
+          v-icon(size='80', color='grey lighten-2') tune
+          .admin-header-title
+            .headline.primary--text {{ $t('admin:system.title') }}
+            .subheading.grey--text {{ $t('admin:system.subtitle') }}
         v-layout.mt-3(row wrap)
           v-flex(lg6 xs12)
             v-card

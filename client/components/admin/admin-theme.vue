@@ -1,10 +1,16 @@
 <template lang='pug'>
-  v-container(fluid, fill-height, grid-list-lg)
+  v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .admin-header-icon: v-icon(size='80', color='grey lighten-2') palette
-        .headline.primary--text Theme
-        .subheading.grey--text Modify the look &amp; feel of your wiki
+        .admin-header
+          v-icon(size='80', color='grey lighten-2') palette
+          .admin-header-title
+            .headline.primary--text Theme
+            .subheading.grey--text Modify the look &amp; feel of your wiki
+          v-spacer
+          v-btn(color='success', depressed, @click='save', large, :loading='loading')
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
@@ -15,6 +21,8 @@
                 v-card-text
                   v-select(
                     :items='themes'
+                    outline
+                    background-color='grey lighten-2'
                     prepend-icon='palette'
                     v-model='selectedTheme'
                     label='Site Theme'
@@ -35,11 +43,6 @@
                     persistent-hint
                     hint='Not recommended for accessibility. May not be supported by all themes.'
                     )
-                v-card-chin
-                  v-spacer
-                  v-btn(color='primary', :loading='loading', @click='save')
-                    v-icon(left) chevron_right
-                    span Save
               v-card.mt-3
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
@@ -57,7 +60,7 @@
                     )
                   v-textarea.mt-2(
                     v-model='injectHeader'
-                    label='Site Header'
+                    label='Head HTML Injection'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
@@ -67,7 +70,7 @@
                     )
                   v-textarea.mt-2(
                     v-model='injectFooter'
-                    label='Site Footer'
+                    label='Body HTML Injection'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
@@ -75,11 +78,6 @@
                     hint='HTML code to be injected just before the closing body tag'
                     auto-grow
                     )
-                v-card-chin
-                  v-spacer
-                  v-btn(color='primary', :loading='loading', @click='save')
-                    v-icon(left) chevron_right
-                    span Save
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='teal', dark, dense, flat)

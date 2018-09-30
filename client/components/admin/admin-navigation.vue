@@ -1,15 +1,25 @@
 <template lang='pug'>
-  v-container(fluid, fill-height)
+  v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .admin-header-icon: v-icon(size='80', color='grey lighten-2') near_me
-        .headline.primary--text {{$t('navigation.title')}}
-        .subheading.grey--text {{$t('navigation.subtitle')}}
+        .admin-header
+          v-icon(size='80', color='grey lighten-2') near_me
+          .admin-header-title
+            .headline.primary--text {{$t('navigation.title')}}
+            .subheading.grey--text {{$t('navigation.subtitle')}}
+          v-spacer
+          v-btn(color='success', depressed, @click='save', large)
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
         v-container.pa-0.mt-3(fluid, grid-list-lg)
           v-layout(row)
             v-flex(style='flex: 0 0 350px;')
               v-card
-                v-list.primary.py-2(dense, dark)
+                v-list.py-2(dense, dark, :class='navTree.length < 1 ? "grey lighten-4" : "primary"')
+                  v-list-tile(v-if='navTree.length < 1')
+                    v-list-tile-avatar: v-icon(color='grey') explore_off
+                    v-list-tile-content
+                      .caption.grey--text {{$t('navigation.emptyList')}}
                   draggable(v-model='navTree')
                     template(v-for='navItem in navTree')
                       v-list-tile(
@@ -48,9 +58,6 @@
                       v-list-tile(@click='addItem("divider")')
                         v-list-tile-avatar: v-icon power_input
                         v-list-tile-title {{$t('navigation.divider')}}
-                  v-btn.ml-2(color='success', depressed, block, @click='save')
-                    v-icon(left) check
-                    span {{$t('common:actions.save')}}
             v-flex
               v-card(v-if='current.kind === "link"')
                 v-toolbar(dense, color='blue', flat, dark)
@@ -112,8 +119,8 @@
                   v-icon(left) delete
                   span {{$t('navigation.delete', { kind: $t('navigation.divider') })}}
               v-card(v-else)
-                v-card-text.grey--text {{$t('navigation.noSelectionText')}}
-
+                v-card-text.grey--text(v-if='navTree.length > 0') {{$t('navigation.noSelectionText')}}
+                v-card-text.grey--text(v-else) {{$t('navigation.noItemsText')}}
 </template>
 
 <script>

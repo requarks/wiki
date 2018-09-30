@@ -1,10 +1,16 @@
 <template lang='pug'>
-  v-container(fluid, fill-height, grid-list-lg)
+  v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .admin-header-icon: v-icon(size='80', color='grey lighten-2') widgets
-        .headline.primary--text {{ $t('admin:general.title') }}
-        .subheading.grey--text {{ $t('admin:general.subtitle') }}
+        .admin-header
+          v-icon(size='80', color='grey lighten-2') widgets
+          .admin-header-title
+            .headline.primary--text {{ $t('admin:general.title') }}
+            .subheading.grey--text {{ $t('admin:general.subtitle') }}
+          v-spacer
+          v-btn(color='success', depressed, @click='save', large)
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
@@ -15,17 +21,48 @@
                       .subheading {{ $t('admin:general.siteInfo') }}
                   v-subheader General
                   .px-3.pb-3
-                    v-text-field(label='Site Title', required, :counter='50', v-model='siteTitle', prepend-icon='public')
+                    v-text-field(
+                      outline
+                      background-color='grey lighten-2'
+                      label='Site Title'
+                      required
+                      :counter='50'
+                      v-model='siteTitle'
+                      prepend-icon='public'
+                      )
                   v-divider
                   v-subheader SEO
                   .px-3.pb-3
-                    v-text-field(label='Site Description', :counter='255', prepend-icon='public')
-                    v-text-field(label='Site Keywords', :counter='255', prepend-icon='public')
-                    v-select(label='Meta Robots', chips, tags, :items='metaRobots', v-model='metaRobotsSelection', prepend-icon='public')
+                    v-text-field(
+                      outline
+                      background-color='grey lighten-2'
+                      label='Site Description'
+                      :counter='255'
+                      prepend-icon='public'
+                      )
+                    v-text-field(
+                      outline
+                      background-color='grey lighten-2'
+                      label='Site Keywords'
+                      :counter='255'
+                      prepend-icon='public'
+                      )
+                    v-select(
+                      outline
+                      background-color='grey lighten-2'
+                      label='Meta Robots'
+                      chips
+                      tags
+                      :items='metaRobots'
+                      v-model='metaRobotsSelection'
+                      prepend-icon='public'
+                      )
                   v-divider
                   v-subheader Analytics
                   .px-3.pb-3
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       label='Google Analytics ID'
                       :counter='255'
                       prepend-icon='public'
@@ -36,6 +73,8 @@
                   v-subheader Footer Copyright
                   .px-3.pb-3
                     v-text-field(
+                      outline
+                      background-color='grey lighten-2'
                       label='Company / Organization Name'
                       v-model='company'
                       :counter='255'
@@ -43,11 +82,6 @@
                       persistent-hint
                       hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
                       )
-                  v-card-chin
-                    v-spacer
-                    v-btn(color='primary', @click='save')
-                      v-icon(left) chevron_right
-                      span Save
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='primary', dark, dense, flat)
@@ -81,11 +115,6 @@
                     persistent-hint
                     hint='Uncheck this box if you don\'t want Henry, Wiki.js mascot, to be displayed on client-facing pages.'
                     )
-                v-card-chin
-                  v-spacer
-                  v-btn(color='primary', @click='save')
-                    v-icon(left) chevron_right
-                    span Save
 
               v-card.mt-3
                 v-toolbar(color='primary', dark, dense, flat)
@@ -107,11 +136,6 @@
                     persistent-hint
                     hint='Allow users to have their own personal wiki.'
                     )
-                v-card-chin
-                  v-spacer
-                  v-btn(color='primary', @click='save')
-                    v-icon(left) chevron_right
-                    span Save
 
 </template>
 

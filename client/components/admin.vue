@@ -20,6 +20,9 @@
         v-list-tile(to='/pages')
           v-list-tile-avatar: v-icon insert_drive_file
           v-list-tile-title {{ $t('admin:pages.title') }}
+          v-list-tile-action
+            v-chip(small, disabled, color='grey lighten-4')
+              .caption.grey--text 123
         v-list-tile(to='/theme')
           v-list-tile-avatar: v-icon palette
           v-list-tile-title {{ $t('admin:theme.title') }}
@@ -32,9 +35,8 @@
           v-list-tile-avatar: v-icon perm_identity
           v-list-tile-title {{ $t('admin:users.title') }}
           v-list-tile-action
-            .justify-end
-              v-chip(small, disabled, color='grey lighten-4')
-                .caption.grey--text 1
+            v-chip(small, disabled, color='grey lighten-4')
+              .caption.grey--text 1
         v-divider.my-2
         v-subheader.pl-4 {{ $t('admin:nav.modules') }}
         v-list-tile(to='/auth')
@@ -158,11 +160,14 @@ export default {
   }
 }
 
-.admin-header-icon {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+.admin-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
 
+  &-title {
+    margin-left: 1rem;
+  }
 }
 
 </style>

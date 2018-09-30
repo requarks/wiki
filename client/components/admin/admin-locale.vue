@@ -1,10 +1,16 @@
 <template lang='pug'>
-  v-container(fluid, fill-height, grid-list-lg)
-    v-layout(row wrap)
+  v-container(fluid, grid-list-lg)
+    v-layout(row, wrap)
       v-flex(xs12)
-        .admin-header-icon: v-icon(size='80', color='grey lighten-2') language
-        .headline.primary--text {{ $t('admin:locale.title') }}
-        .subheading.grey--text {{ $t('admin:locale.subtitle') }}
+        .admin-header
+          v-icon(size='80', color='grey lighten-2') language
+          .admin-header-title
+            .headline.primary--text {{ $t('admin:locale.title') }}
+            .subheading.grey--text {{ $t('admin:locale.subtitle') }}
+          v-spacer
+          v-btn(color='success', depressed, @click='save', large, :loading='loading')
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
@@ -14,6 +20,8 @@
                     .subheading {{ $t('admin:locale.settings') }}
                 v-card-text
                   v-select(
+                    outline
+                    background-color='grey lighten-2'
                     :items='installedLocales'
                     prepend-icon='language'
                     v-model='selectedLocale'
@@ -40,11 +48,6 @@
                     persistent-hint
                     :hint='namespacing ? $t("admin:locale.autoUpdate.hintWithNS") : $t("admin:locale.autoUpdate.hint")'
                   )
-                v-card-chin
-                  v-spacer
-                  v-btn(color='primary', :loading='loading', @click='save')
-                    v-icon(left) chevron_right
-                    span {{ $t('common:actions.save') }}
 
               v-card.mt-3
                 v-toolbar(color='primary', dark, dense, flat)
@@ -92,11 +95,6 @@
                           v-list-tile-sub-title(v-html='data.item.nativeName')
                         v-list-tile-action
                           v-checkbox(:input-value='data.tile.props.value', color='primary', value)
-                v-card-chin
-                  v-spacer
-                  v-btn(color='primary', :loading='loading', @click='save')
-                    v-icon(left) chevron_right
-                    span {{ $t('common:actions.save') }}
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='teal', dark, dense, flat)

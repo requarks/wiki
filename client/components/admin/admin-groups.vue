@@ -1,46 +1,47 @@
 <template lang='pug'>
-  v-card(flat)
-    v-card(flat, tile, :color='$vuetify.dark ? "grey darken-4" : "grey lighten-5"').pa-3.pt-4
-      .admin-header-icon: v-icon(size='80', color='grey lighten-2') people
-      .headline.blue--text.text--darken-2 Groups
-      .subheading.grey--text Manage groups and their permissions
-    v-card
-      v-card-title
-        v-dialog(v-model='newGroupDialog', max-width='500')
-          v-btn(color='primary', dark, slot='activator')
-            v-icon(left) add
-            | New Group
-          v-card
-            .dialog-header.is-short New Group
-            v-card-text
-              v-text-field(v-model='newGroupName', label='Group Name', autofocus, counter='255', @keyup.enter='createGroup')
-            v-card-chin
-              v-spacer
-              v-btn(flat, @click='newGroupDialog = false') Cancel
-              v-btn(color='primary', @click='createGroup') Create
-        v-btn(icon, @click='refresh')
-          v-icon.grey--text refresh
-        v-spacer
-        v-text-field(solo, append-icon='search', label='Search', single-line, hide-details, v-model='search')
-      v-data-table(
-        :items='groups'
-        :headers='headers'
-        :search='search'
-        :pagination.sync='pagination'
-        :rows-per-page-items='[15]'
-        hide-actions
-      )
-        template(slot='items', slot-scope='props')
-          tr.is-clickable(:active='props.selected', @click='$router.push("/groups/" + props.item.id)')
-            td.text-xs-right {{ props.item.id }}
-            td {{ props.item.name }}
-            td {{ props.item.userCount }}
-            td {{ props.item.createdAt | moment('calendar') }}
-            td {{ props.item.updatedAt | moment('calendar') }}
-        template(slot='no-data')
-          v-alert.ma-3(icon='warning', :value='true', outline) No groups to display.
-      .text-xs-center.py-2(v-if='groups.length > 15')
-        v-pagination(v-model='pagination.page', :length='pages')
+  v-container(fluid, grid-list-lg)
+    v-layout(row wrap)
+      v-flex(xs12)
+        .admin-header
+          v-icon(size='80', color='grey lighten-2') people
+          .admin-header-title
+            .headline.blue--text.text--darken-2 Groups
+            .subheading.grey--text Manage groups and their permissions
+          v-spacer
+          v-btn(color='grey', outline, @click='refresh', large)
+            v-icon refresh
+          v-dialog(v-model='newGroupDialog', max-width='500')
+            v-btn(color='primary', depressed, slot='activator', large)
+              v-icon(left) add
+              span New Group
+            v-card
+              .dialog-header.is-short New Group
+              v-card-text
+                v-text-field(v-model='newGroupName', label='Group Name', autofocus, counter='255', @keyup.enter='createGroup')
+              v-card-chin
+                v-spacer
+                v-btn(flat, @click='newGroupDialog = false') Cancel
+                v-btn(color='primary', @click='createGroup') Create
+        v-card.mt-3
+          v-data-table(
+            :items='groups'
+            :headers='headers'
+            :search='search'
+            :pagination.sync='pagination'
+            :rows-per-page-items='[15]'
+            hide-actions
+          )
+            template(slot='items', slot-scope='props')
+              tr.is-clickable(:active='props.selected', @click='$router.push("/groups/" + props.item.id)')
+                td.text-xs-right {{ props.item.id }}
+                td {{ props.item.name }}
+                td {{ props.item.userCount }}
+                td {{ props.item.createdAt | moment('calendar') }}
+                td {{ props.item.updatedAt | moment('calendar') }}
+            template(slot='no-data')
+              v-alert.ma-3(icon='warning', :value='true', outline) No groups to display.
+          .text-xs-center.py-2(v-if='groups.length > 15')
+            v-pagination(v-model='pagination.page', :length='pages')
 </template>
 
 <script>
