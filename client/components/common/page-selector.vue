@@ -4,17 +4,6 @@
       .dialog-header
         span Select Page Location
         v-spacer
-        v-text-field.mr-3(
-          solo
-          flat
-          background-color='blue darken-2'
-          dark
-          prepend-inner-icon='search'
-          label='Search...'
-          clearable
-          :height='20'
-          hide-details
-          )
         v-progress-circular(
           indeterminate
           color='white'
@@ -25,8 +14,10 @@
       .d-flex(style='min-height:400px;')
         v-flex(xs4).grey.lighten-3
           v-toolbar(color='grey lighten-2', dense, flat)
-            v-btn(icon): v-icon(color='grey') arrow_upward
+            .body-2.grey--text.text--darken-2 Folders
             v-spacer
+            v-divider.mx-3(vertical)
+            v-btn(icon): v-icon(color='grey') arrow_upward
             v-btn(icon): v-icon(color='grey darken-2') create_new_folder
           v-list.grey.lighten-3(dense)
             v-list-tile.primary(dark)
@@ -38,7 +29,18 @@
               v-list-tile-title Folder B
         v-flex(xs8)
           v-toolbar(color='grey lighten-4', dense, flat)
-            v-spacer
+            .body-2.grey--text.text--darken-2 Pages
+            v-divider.ml-4(vertical)
+            v-text-field(
+              prepend-inner-icon='search'
+              label='Search...'
+              hide-details
+              solo
+              flat
+              background-color='grey lighten-4'
+              clearable
+              )
+            v-divider.mx-3(vertical)
             v-btn(icon): v-icon(color='grey') forward
             v-btn(icon): v-icon(color='grey') delete
           v-list(dense)
@@ -62,6 +64,9 @@
           solo
           hide-details
           v-model='location'
+          flat
+          prepend-inner-icon='subdirectory_arrow_right'
+          clearable
         )
       v-card-chin
         v-spacer
