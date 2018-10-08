@@ -3,6 +3,7 @@ title: LDAP / Active Directory
 description: Active Directory is a directory service that Microsoft developed for the Windows domain networks.
 author: requarks.io
 logo: https://static.requarks.io/logo/active-directory.svg
+color: blue darken-3
 website: https://www.microsoft.com/windowsserver
 useForm: true
 props:

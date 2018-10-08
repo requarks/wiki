@@ -3,6 +3,7 @@ title: Facebook
 description: Facebook is an online social media and social networking service company.
 author: requarks.io
 logo: https://static.requarks.io/logo/facebook.svg
+color: indigo
 website: https://facebook.com/
 useForm: false
 props:

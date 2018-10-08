@@ -1,13 +1,14 @@
 query {
   authentication {
     strategies(
-      filter: "isEnabled eq true",
-      orderBy: "title ASC"
+      isEnabled: true
     ) {
       key
       title
       useForm
       icon
+      color
+      selfRegistration
     }
   }
 }

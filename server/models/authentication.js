@@ -30,13 +30,13 @@ module.exports = class Authentication extends Model {
     }
   }
 
-  static async getStrategies() {
-    const strategies = await WIKI.models.authentication.query()
-    return strategies.map(str => ({
+  static async getStrategies(isEnabled) {
+    const strategies = await WIKI.models.authentication.query().where(_.isBoolean(isEnabled) ? { isEnabled } : {})
+    return _.sortBy(strategies.map(str => ({
       ...str,
       domainWhitelist: _.get(str.domainWhitelist, 'v', []),
       autoEnrollGroups: _.get(str.autoEnrollGroups, 'v', [])
-    }))
+    })), ['title'])
   }
 
   static async refreshStrategiesFromDisk() {

@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs-then')
 const _ = require('lodash')
 const tfa = require('node-2fa')
 const securityHelper = require('../helpers/security')
+const jwt = require('jsonwebtoken')
 const Model = require('objection').Model
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
@@ -199,7 +200,7 @@ module.exports = class User extends Model {
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate(opts.strategy, async (err, user, info) => {
+        WIKI.auth.passport.authenticate(opts.strategy, { session: false }, async (err, user, info) => {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
@@ -218,9 +219,11 @@ module.exports = class User extends Model {
             }
           } else {
             // No 2FA, log in user
-            return context.req.logIn(user, err => {
+            return context.req.logIn(user, { session: false }, async err => {
               if (err) { return reject(err) }
+              const jwtToken = await WIKI.models.users.refreshToken(user)
               resolve({
+                jwt: jwtToken.token,
                 tfaRequired: false
               })
             })
@@ -229,6 +232,33 @@ module.exports = class User extends Model {
       })
     } else {
       throw new WIKI.Error.AuthProviderInvalid()
+    }
+  }
+
+  static async refreshToken(user) {
+    if (_.isSafeInteger(user)) {
+      user = await WIKI.models.users.query().findById(user)
+      if (!user) {
+        WIKI.logger.warn(`Failed to refresh token for user ${user}: Not found.`)
+        throw new WIKI.Error.AuthGenericError()
+      }
+    }
+    return {
+      token: jwt.sign({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        pictureUrl: user.pictureUrl,
+        timezone: user.timezone,
+        localeCode: user.localeCode,
+        defaultEditor: user.defaultEditor,
+        permissions: []
+      }, WIKI.config.sessionSecret, {
+        expiresIn: '10s',
+        audience: 'urn:wiki.js', // TODO: use value from admin
+        issuer: 'urn:wiki.js'
+      }),
+      user
     }
   }
 

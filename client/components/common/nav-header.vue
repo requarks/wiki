@@ -103,7 +103,7 @@
         v-list-tile(href='/p')
           v-list-tile-action: v-icon(color='red') person
           v-list-tile-title Profile
-        v-list-tile(href='/logout')
+        v-list-tile(@click='logout')
           v-list-tile-action: v-icon(color='red') exit_to_app
           v-list-tile-title Logout
 </template>
@@ -111,6 +111,7 @@
 <script>
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
+import Cookies from 'js-cookie'
 
 export default {
   props: {
@@ -169,6 +170,10 @@ export default {
     },
     pageDelete () {
 
+    },
+    logout () {
+      Cookies.remove('jwt')
+      window.location.assign('/')
     }
   }
 }

@@ -9,7 +9,7 @@ stop: ## Stop Wiki.js
 restart: ## Restart Wiki.js
 	node wiki restart
 
-dev: ## Start Wiki.js in development mode
+dev-up: ## Start Wiki.js in development mode
 	node wiki dev
 
 build: ## Build Wiki.js client assets

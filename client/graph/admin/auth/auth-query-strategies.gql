@@ -1,6 +1,6 @@
 query {
   authentication {
-    strategies(orderBy: "title ASC") {
+    strategies {
       isEnabled
       key
       title

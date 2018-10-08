@@ -6917,7 +6917,7 @@ jsonify@~0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/jsonify/-/jsonify-0.0.0.tgz#2c74b6ee41d93ca51b7b5aaee8f503631d252a73"
 
-jsonwebtoken@8.3.0:
+jsonwebtoken@8.3.0, jsonwebtoken@^8.2.0:
   version "8.3.0"
   resolved "https://registry.yarnpkg.com/jsonwebtoken/-/jsonwebtoken-8.3.0.tgz#056c90eee9a65ed6e6c72ddb0a1d325109aaf643"
   dependencies:
@@ -8855,6 +8855,13 @@ passport-google-oauth20@1.0.0:
   resolved "https://registry.yarnpkg.com/passport-google-oauth20/-/passport-google-oauth20-1.0.0.tgz#3b960e8a1d70d1dbe794615c827c68c40392a5d0"
   dependencies:
     passport-oauth2 "1.x.x"
+
+passport-jwt@4.0.0:
+  version "4.0.0"
+  resolved "http://registry.npmjs.org/passport-jwt/-/passport-jwt-4.0.0.tgz#7f0be7ba942e28b9f5d22c2ebbb8ce96ef7cf065"
+  dependencies:
+    jsonwebtoken "^8.2.0"
+    passport-strategy "^1.0.0"
 
 passport-ldapauth@2.1.0:
   version "2.1.0"
@@ -12963,6 +12970,10 @@ vue-tree-navigation@3.0.1:
   resolved "https://registry.yarnpkg.com/vue-tree-navigation/-/vue-tree-navigation-3.0.1.tgz#1225f10ad7725ad03aeb8414116aa92e589dc720"
   dependencies:
     vue "^2.5.11"
+
+vue2-animate@2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/vue2-animate/-/vue2-animate-2.1.0.tgz#93eee5f381d8d6493bae0507bcad6b615fdacb7f"
 
 vue@2.5.16, vue@^2.5.13:
   version "2.5.16"
