@@ -55,6 +55,8 @@ exports.up = knex => {
       table.charset('utf8mb4')
       table.increments('id').primary()
       table.string('name').notNullable()
+      table.json('permissions').notNullable()
+      table.boolean('isSystem').notNullable().defaultTo(false)
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
@@ -118,6 +120,17 @@ exports.up = knex => {
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
+    // PAGE TREE ---------------------------
+    .createTable('pageTree', table => {
+      table.charset('utf8mb4')
+      table.increments('id').primary()
+      table.string('path').notNullable()
+      table.integer('depth').unsigned().notNullable()
+      table.string('title').notNullable()
+      table.boolean('isPrivate').notNullable().defaultTo(false)
+      table.boolean('isFolder').notNullable().defaultTo(false)
+      table.string('privateNS')
+    })
     // RENDERERS ---------------------------
     .createTable('renderers', table => {
       table.charset('utf8mb4')
@@ -166,7 +179,6 @@ exports.up = knex => {
       table.string('password')
       table.boolean('tfaIsActive').notNullable().defaultTo(false)
       table.string('tfaSecret')
-      table.enum('role', ['admin', 'guest', 'user']).notNullable().defaultTo('guest')
       table.string('jobTitle').defaultTo('')
       table.string('location').defaultTo('')
       table.string('pictureUrl')
@@ -220,6 +232,11 @@ exports.up = knex => {
       table.string('localeCode', 2).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
       table.integer('creatorId').unsigned().references('id').inTable('users')
+    })
+    .table('pageTree', table => {
+      table.integer('parent').unsigned().references('id').inTable('pageTree')
+      table.integer('pageId').unsigned().references('id').inTable('pages')
+      table.string('localeCode', 2).references('code').inTable('locales')
     })
     .table('users', table => {
       table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')

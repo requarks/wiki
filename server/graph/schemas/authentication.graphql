@@ -16,8 +16,7 @@ extend type Mutation {
 
 type AuthenticationQuery {
   strategies(
-    filter: String
-    orderBy: String
+    isEnabled: Boolean
   ): [AuthenticationStrategy]
 }
 
@@ -54,16 +53,18 @@ type AuthenticationStrategy {
   description: String
   useForm: Boolean!
   logo: String
+  color: String
   website: String
   icon: String
-  config: [KeyValuePair]
+  config: [KeyValuePair] @auth(requires: ["manage:system"])
   selfRegistration: Boolean!
-  domainWhitelist: [String]!
-  autoEnrollGroups: [Int]!
+  domainWhitelist: [String]! @auth(requires: ["manage:system"])
+  autoEnrollGroups: [Int]! @auth(requires: ["manage:system"])
 }
 
 type AuthenticationLoginResponse {
   responseResult: ResponseStatus
+  jwt: String
   tfaRequired: Boolean
   tfaLoginToken: String
 }

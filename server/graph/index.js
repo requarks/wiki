@@ -31,6 +31,10 @@ resolversObj.forEach(resolver => {
   _.merge(resolvers, resolver)
 })
 
+// Directives
+
+let schemaDirectives = autoload(path.join(WIKI.SERVERPATH, 'graph/directives'))
+
 // Live Trail Logger (admin)
 
 let LiveTrailLogger = winston.transports.LiveTrailLogger = function (options) {
@@ -55,5 +59,6 @@ WIKI.logger.info(`GraphQL Schema: [ OK ]`)
 
 module.exports = {
   typeDefs,
-  resolvers
+  resolvers,
+  schemaDirectives
 }

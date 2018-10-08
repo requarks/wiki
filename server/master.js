@@ -7,8 +7,6 @@ const express = require('express')
 const favicon = require('serve-favicon')
 const http = require('http')
 const path = require('path')
-const session = require('express-session')
-const SessionRedisStore = require('connect-redis')(session)
 const { ApolloServer } = require('apollo-server-express')
 // const oauth2orize = require('oauth2orize')
 
@@ -66,20 +64,9 @@ module.exports = async () => {
   // Passport Authentication
   // ----------------------------------------
 
-  let sessionStore = new SessionRedisStore({
-    client: WIKI.redis
-  })
-
   app.use(cookieParser())
-  app.use(session({
-    name: 'wikijs.sid',
-    store: sessionStore,
-    secret: WIKI.config.sessionSecret,
-    resave: false,
-    saveUninitialized: false
-  }))
   app.use(WIKI.auth.passport.initialize())
-  app.use(WIKI.auth.passport.session())
+  app.use(mw.auth.jwt)
 
   // ----------------------------------------
   // SEO
@@ -145,7 +132,7 @@ module.exports = async () => {
 
   app.use('/', ctrl.auth)
 
-  app.use('/', mw.auth, ctrl.common)
+  app.use('/', mw.auth.checkPath, ctrl.common)
 
   // ----------------------------------------
   // Error handling

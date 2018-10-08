@@ -3,8 +3,6 @@ const fs = require('fs-extra')
 const path = require('path')
 const graphHelper = require('../../helpers/graph')
 
-// const getFieldNames = require('graphql-list-fields')
-
 /* global WIKI */
 
 module.exports = {
@@ -16,7 +14,7 @@ module.exports = {
   },
   AuthenticationQuery: {
     async strategies(obj, args, context, info) {
-      let strategies = await WIKI.models.authentication.getStrategies()
+      let strategies = await WIKI.models.authentication.getStrategies(args.isEnabled)
       strategies = strategies.map(stg => {
         const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
         return {
@@ -34,8 +32,6 @@ module.exports = {
           }, []), 'key')
         }
       })
-      if (args.filter) { strategies = graphHelper.filter(strategies, args.filter) }
-      if (args.orderBy) { strategies = graphHelper.orderBy(strategies, args.orderBy) }
       return strategies
     }
   },

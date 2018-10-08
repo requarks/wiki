@@ -13,6 +13,10 @@ enum RightRole {
   manage
 }
 
+# DIRECTIVES
+
+directive @auth(requires: [String]) on QUERY | FIELD_DEFINITION | ARGUMENT_DEFINITION
+
 # TYPES
 
 type KeyValuePair {

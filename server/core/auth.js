@@ -1,14 +1,10 @@
 const passport = require('passport')
+const passportJWT = require('passport-jwt')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
-const NodeCache = require('node-cache')
 
-const userCache = new NodeCache({
-  stdTTL: 10,
-  checkperiod: 600,
-  deleteOnExpire: true
-})
+const securityHelper = require('../helpers/security')
 
 /* global WIKI */
 
@@ -24,22 +20,16 @@ module.exports = {
     })
 
     passport.deserializeUser(function (id, done) {
-      const usr = userCache.get(id)
-      if (usr) {
-        done(null, usr)
-      } else {
-        WIKI.models.users.query().findById(id).then((user) => {
-          if (user) {
-            userCache.set(id, user)
-            done(null, user)
-          } else {
-            done(new Error(WIKI.lang.t('auth:errors:usernotfound')), null)
-          }
-          return true
-        }).catch((err) => {
-          done(err, null)
-        })
-      }
+      WIKI.models.users.query().findById(id).then((user) => {
+        if (user) {
+          done(null, user)
+        } else {
+          done(new Error(WIKI.lang.t('auth:errors:usernotfound')), null)
+        }
+        return true
+      }).catch((err) => {
+        done(err, null)
+      })
     })
 
     return this
@@ -51,6 +41,16 @@ module.exports = {
       const currentStrategies = _.keys(passport._strategies)
       _.pull(currentStrategies, 'session')
       _.forEach(currentStrategies, stg => { passport.unuse(stg) })
+
+      // Load JWT
+      passport.use('jwt', new passportJWT.Strategy({
+        jwtFromRequest: securityHelper.extractJWT,
+        secretOrKey: WIKI.config.sessionSecret,
+        audience: 'urn:wiki.js', // TODO: use value from admin
+        issuer: 'urn:wiki.js'
+      }, (jwtPayload, cb) => {
+        cb(null, jwtPayload)
+      }))
 
       // Load enabled strategies
       const enabledStrategies = await WIKI.models.authentication.getStrategies()

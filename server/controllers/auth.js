@@ -5,6 +5,7 @@ const express = require('express')
 const router = express.Router()
 const ExpressBrute = require('express-brute')
 const ExpressBruteRedisStore = require('express-brute-redis')
+const jwt = require('jsonwebtoken')
 const moment = require('moment')
 const _ = require('lodash')
 
@@ -40,7 +41,7 @@ router.get('/login', function (req, res, next) {
 router.post('/login', bruteforce.prevent, function (req, res, next) {
   new Promise((resolve, reject) => {
     // [1] LOCAL AUTHENTICATION
-    WIKI.auth.passport.authenticate('local', function (err, user, info) {
+    WIKI.auth.passport.authenticate('local', { session: false }, function (err, user, info) {
       if (err) { return reject(err) }
       if (!user) { return reject(new Error('INVALID_LOGIN')) }
       resolve(user)
@@ -49,7 +50,7 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
     if (_.has(WIKI.config.auth.strategy, 'ldap')) {
       // [2] LDAP AUTHENTICATION
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate('ldapauth', function (err, user, info) {
+        WIKI.auth.passport.authenticate('ldapauth', { session: false }, function (err, user, info) {
           if (err) { return reject(err) }
           if (info && info.message) { return reject(new Error(info.message)) }
           if (!user) { return reject(new Error('INVALID_LOGIN')) }
@@ -61,12 +62,12 @@ router.post('/login', bruteforce.prevent, function (req, res, next) {
     }
   }).then((user) => {
     // LOGIN SUCCESS
-    return req.logIn(user, function (err) {
+    return req.logIn(user, { session: false }, function (err) {
       if (err) { return next(err) }
       req.brute.reset(function () {
         return res.redirect('/')
       })
-    }) || true
+    })
   }).catch(err => {
     // LOGIN FAIL
     if (err.message === 'INVALID_LOGIN') {

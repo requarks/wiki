@@ -22,6 +22,7 @@ import VueMoment from 'vue-moment'
 import VueTour from 'vue-tour'
 import VueTreeNavigation from 'vue-tree-navigation'
 import store from './store'
+import Cookies from 'js-cookie'
 
 // ====================================
 // Load Modules
@@ -74,7 +75,10 @@ const graphQLLink = createPersistedQueryLink().concat(
       options.body = JSON.stringify(body)
 
       // Inject authentication token
-      options.headers.Authorization = `Bearer TODO`
+      const jwtToken = Cookies.get('jwt')
+      if (jwtToken) {
+        options.headers.Authorization = `Bearer ${jwtToken}`
+      }
 
       return fetch(uri, options)
     }

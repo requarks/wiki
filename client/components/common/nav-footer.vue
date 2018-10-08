@@ -1,14 +1,14 @@
 <template lang="pug">
-  v-footer.justify-center(:color='color', inset)
+  v-footer.justify-center(:color='bgColor', inset)
     .caption.grey--text.text--darken-1
       span(v-if='company && company.length > 0') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
       span {{ $t('common:footer.poweredBy') }} #[a(href='https://wiki.js.org', ref='nofollow') Wiki.js]
 
     v-snackbar(
       :color='notification.style'
-      bottom,
-      right,
-      multi-line,
+      bottom
+      right
+      multi-line
       v-model='notificationState'
     )
       .text-xs-left
@@ -21,9 +21,13 @@ import { get, sync } from 'vuex-pathify'
 
 export default {
   props: {
-    altbg: {
-      type: Boolean,
-      default: false
+    color: {
+      type: String,
+      default: 'grey lighten-3'
+    },
+    darkColor: {
+      type: String,
+      default: 'grey darken-3'
     }
   },
   data() {
@@ -36,13 +40,11 @@ export default {
     notification: get('notification'),
     darkMode: get('site/dark'),
     notificationState: sync('notification@isActive'),
-    color() {
-      if (this.altbg) {
-        return 'altbg'
-      } else if (!this.darkMode) {
-        return 'grey lighten-3'
+    bgColor() {
+      if (!this.darkMode) {
+        return this.color
       } else {
-        return ''
+        return this.darkColor
       }
     }
   }

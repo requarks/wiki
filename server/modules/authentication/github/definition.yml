@@ -3,6 +3,7 @@ title: GitHub
 description: GitHub Inc. is a web-based hosting service for version control using Git.
 author: requarks.io
 logo: https://static.requarks.io/logo/github.svg
+color: grey darken-3
 website: https://github.com
 useForm: false
 props:

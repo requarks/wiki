@@ -1,5 +1,4 @@
 const path = require('path')
-const os = require('os')
 
 /* global WIKI */
 
@@ -133,6 +132,20 @@ module.exports = () => {
         nativeName: 'English'
       })
 
+      // Create default locale
+
+      WIKI.logger.info('Creating default groups...')
+      const adminGroup = await WIKI.models.groups.query().insert({
+        name: 'Administrators',
+        permissions: JSON.stringify(['manage:system']),
+        isSystem: true
+      })
+      const guestGroup = await WIKI.models.groups.query().insert({
+        name: 'Guests',
+        permissions: JSON.stringify(['read:page:/']),
+        isSystem: true
+      })
+
       // Load authentication strategies + enable local
       await WIKI.models.authentication.refreshStrategiesFromDisk()
       await WIKI.models.authentication.query().patch({ isEnabled: true }).where('key', 'local')
@@ -160,35 +173,33 @@ module.exports = () => {
         providerKey: 'local',
         email: req.body.adminEmail
       })
-      await WIKI.models.users.query().insert({
+      const adminUser = await WIKI.models.users.query().insert({
         email: req.body.adminEmail,
         provider: 'local',
         password: req.body.adminPassword,
         name: 'Administrator',
-        role: 'admin',
         locale: 'en',
         defaultEditor: 'markdown',
         tfaIsActive: false
       })
+      await adminUser.$relatedQuery('groups').relate(adminGroup.id)
 
       // Create Guest account
       WIKI.logger.info('Creating guest account...')
-      const guestUsr = await WIKI.models.users.query().findOne({
+      await WIKI.models.users.query().delete().where({
         providerKey: 'local',
         email: 'guest@example.com'
       })
-      if (!guestUsr) {
-        await WIKI.models.users.query().insert({
-          provider: 'local',
-          email: 'guest@example.com',
-          name: 'Guest',
-          password: '',
-          role: 'guest',
-          locale: 'en',
-          defaultEditor: 'markdown',
-          tfaIsActive: false
-        })
-      }
+      const guestUser = await WIKI.models.users.query().insert({
+        provider: 'local',
+        email: 'guest@example.com',
+        name: 'Guest',
+        password: '',
+        locale: 'en',
+        defaultEditor: 'markdown',
+        tfaIsActive: false
+      })
+      await guestUser.$relatedQuery('groups').relate(guestGroup.id)
 
       WIKI.logger.info('Setup is complete!')
       res.json({
