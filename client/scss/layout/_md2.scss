@@ -1,7 +1,17 @@
 .md2 {
 
-  &.v-text-field .v-input__slot {
-    border-radius: 28px;
+  &.v-text-field {
+    .v-input__slot {
+      border-radius: 7px;
+    }
+  }
+
+  &.v-btn {
+    border-radius: 7px;
+  }
+
+  &.v-card {
+    border-radius: 7px;
   }
 
 }

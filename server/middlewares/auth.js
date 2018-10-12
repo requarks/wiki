@@ -13,12 +13,9 @@ module.exports = {
     WIKI.auth.passport.authenticate('jwt', {session: false}, async (err, user, info) => {
       if (err) { return next() }
 
-      console.info(err, user, info)
-
       // Expired but still valid within 7 days, just renew
       if (info instanceof jwt.TokenExpiredError && moment().subtract(7, 'days').isBefore(info.expiredAt)) {
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
-        console.info(jwtPayload)
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
           user = newToken.user

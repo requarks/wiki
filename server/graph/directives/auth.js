@@ -1,5 +1,6 @@
 const { SchemaDirectiveVisitor } = require('graphql-tools')
 const { defaultFieldResolver } = require('graphql')
+const _ = require('lodash')
 
 class AuthDirective extends SchemaDirectiveVisitor {
   visitObject(type) {
@@ -39,11 +40,13 @@ class AuthDirective extends SchemaDirectiveVisitor {
         }
 
         const context = args[2]
-        console.info(context.req.user)
-        // const user = await getUser(context.headers.authToken)
-        // if (!user.hasRole(requiredScopes)) {
-        //   throw new Error('not authorized')
-        // }
+        if (!context.req.user) {
+          throw new Error('Unauthorized')
+        }
+
+        if (!_.some(context.req.user.permissions, pm => _.includes(requiredScopes, pm))) {
+          throw new Error('Forbidden')
+        }
 
         return resolve.apply(this, args)
       }

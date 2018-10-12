@@ -252,9 +252,9 @@ module.exports = class User extends Model {
         timezone: user.timezone,
         localeCode: user.localeCode,
         defaultEditor: user.defaultEditor,
-        permissions: []
+        permissions: ['manage:system']
       }, WIKI.config.sessionSecret, {
-        expiresIn: '10s',
+        expiresIn: '30m',
         audience: 'urn:wiki.js', // TODO: use value from admin
         issuer: 'urn:wiki.js'
       }),
