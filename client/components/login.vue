@@ -11,7 +11,7 @@
             offset-xl4, xl4
             )
             transition(name='zoom')
-              v-card.elevation-5.radius-7(v-show='isShown')
+              v-card.elevation-5.md2(v-show='isShown')
                 v-toolbar(color='primary', flat, dense, dark)
                   v-spacer
                   .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
@@ -59,7 +59,7 @@
                     )
                 v-card-actions.pb-4
                   v-spacer
-                  v-btn(
+                  v-btn.md2(
                     v-if='screen === "login"'
                     block
                     large
@@ -68,7 +68,7 @@
                     round
                     :loading='isLoading'
                     ) {{ $t('auth:actions.login') }}
-                  v-btn(
+                  v-btn.md2(
                     v-if='screen === "tfa"'
                     block
                     large

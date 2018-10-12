@@ -24,16 +24,14 @@ module.exports = {
     })
   },
 
-  async extractJWT (req) {
-    return passportJWT.ExtractJwt.fromExtractors([
-      passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
-      (req) => {
-        let token = null
-        if (req && req.cookies) {
-          token = req.cookies['jwt']
-        }
-        return token
+  extractJWT: passportJWT.ExtractJwt.fromExtractors([
+    passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
+    (req) => {
+      let token = null
+      if (req && req.cookies) {
+        token = req.cookies['jwt']
       }
-    ])(req)
-  }
+      return token
+    }
+  ])
 }
