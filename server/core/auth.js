@@ -73,7 +73,7 @@ module.exports = {
           }
         })
         WIKI.auth.strategies[stg.key] = strategy
-        WIKI.logger.info(`Authentication Strategy ${stg.title}: [ OK ]`)
+        WIKI.logger.info(`Authentication Strategy ${stg.key}: [ OK ]`)
       }
     } catch (err) {
       WIKI.logger.error(`Authentication Strategy: [ FAILED ]`)

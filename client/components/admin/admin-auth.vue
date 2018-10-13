@@ -20,19 +20,51 @@
             v-tab(v-for='strategy in activeStrategies', :key='strategy.key') {{ strategy.title }}
 
             v-tab-item(key='settings', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
-                .body-2.grey--text.text--darken-1 Select which authentication strategies to enable:
-                .caption.grey--text.pb-2 Some strategies require additional configuration in their dedicated tab (when selected).
-                v-form
-                  v-checkbox.my-0(
-                    v-for='strategy in strategies'
-                    v-model='strategy.isEnabled'
-                    :key='strategy.key'
-                    :label='strategy.title'
-                    color='primary'
-                    :disabled='strategy.key === `local`'
-                    hide-details
-                  )
+                v-container.pa-3(fluid, grid-list-md)
+                  v-layout(row, wrap)
+                    v-flex(xs12, md6)
+                      .body-2.grey--text.text--darken-1 Select which authentication strategies to enable:
+                      .caption.grey--text.pb-2 Some strategies require additional configuration in their dedicated tab (when selected).
+                      v-form
+                        v-checkbox.my-0(
+                          v-for='strategy in strategies'
+                          v-model='strategy.isEnabled'
+                          :key='strategy.key'
+                          :label='strategy.title'
+                          color='primary'
+                          :disabled='strategy.key === `local`'
+                          hide-details
+                        )
+                    v-flex(xs12, md6)
+                      .pa-3.grey.radius-7(:class='$vuetify.dark ? "darken-4" : "lighten-5"')
+                        .body-2.grey--text.text--darken-1 Advanced Settings
+                        v-text-field.mt-3.md2(
+                          v-model='jwtAudience'
+                          outline
+                          background-color='grey lighten-2'
+                          prepend-icon='account_balance'
+                          label='JWT Audience'
+                          hint='Audience URN used in JWT issued upon login. Usually your domain name. (e.g. urn:your.domain.com)'
+                          persistent-hint
+                        )
+                        v-text-field.mt-3.md2(
+                          v-model='jwtExpiration'
+                          outline
+                          background-color='grey lighten-2'
+                          prepend-icon='schedule'
+                          label='Token Expiration'
+                          hint='The expiration period of a token until it must be renewed. (default: 30m)'
+                          persistent-hint
+                        )
+                        v-text-field.mt-3.md2(
+                          v-model='jwtRenewablePeriod'
+                          outline
+                          background-color='grey lighten-2'
+                          prepend-icon='update'
+                          label='Token Renewal Period'
+                          hint='The maximum period a token can be renewed when expired. (default: 14d)'
+                          persistent-hint
+                        )
 
             v-tab-item(v-for='(strategy, n) in activeStrategies', :key='strategy.key', :transition='false', :reverse-transition='false')
               v-card.pa-3(flat, tile)
@@ -135,7 +167,10 @@ export default {
   data() {
     return {
       groups: [],
-      strategies: []
+      strategies: [],
+      jwtAudience: 'urn:wiki.js',
+      jwtExpiration: '30m',
+      jwtRenewablePeriod: '14d'
     }
   },
   computed: {
