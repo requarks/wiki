@@ -55,7 +55,12 @@ Deploy to Heroku using this pre-built deployment template:
 <a href="https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku" title="Deploy to Heroku"><img src="https://wiki.js.org/assets/svg/deploy-heroku.svg" alt="Deploy to Heroku" height="36" /></a>
 
 Deploy to IBM Cloud Foundry using this pre-built deployment template *(thanks to [@seafre](https://github.com/seafre))*:  
-<a href="https://console.bluemix.net/devops/setup/deploy?repository=https://github.com/Requarks/wiki-ibm-cloud-foundry" title="Deploy to IBM Cloud"><img src="https://wiki.js.org/assets/svg/deploy-ibm-cloud.svg" alt="Deploy to IBM Cloud" height="36" /></a>
+<a href="https://console.bluemix.net/devops/setup/deploy?repository=https://github.com/Requarks/wiki-ibm-cloud-foundry" title="Deploy to IBM Cloud"><img src="https://wiki.js.org/assets/svg/deploy-ibm-cloud.svg" alt="Deploy to IBM Cloud" height="36" /></a>   
+
+
+Deploy to Microsoft Azure:  
+<a href="https://deploy.azure.com/?repository=https://github.com/Requarks/wiki" title="Deploy to Azure"><img src="https://azuredeploy.net/deploybutton.png" alt="Deploy to Azure" height="36" /></a>     
+
 
 <h2 align="center">Demo</h2>
 
