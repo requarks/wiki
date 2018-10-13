@@ -72,6 +72,7 @@ module.exports = {
             autoEnrollGroups: { v: str.autoEnrollGroups }
           }).where('key', str.key)
         }
+        await WIKI.auth.activateStrategies()
         return {
           responseResult: graphHelper.generateSuccess('Strategies updated successfully')
         }

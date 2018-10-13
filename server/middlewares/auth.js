@@ -14,7 +14,7 @@ module.exports = {
       if (err) { return next() }
 
       // Expired but still valid within 7 days, just renew
-      if (info instanceof jwt.TokenExpiredError && moment().subtract(7, 'days').isBefore(info.expiredAt)) {
+      if (info instanceof jwt.TokenExpiredError && moment().subtract(14, 'days').isBefore(info.expiredAt)) {
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
@@ -24,7 +24,7 @@ module.exports = {
           if (req.get('content-type') === 'application/json') {
             res.headers('new-jwt', newToken.token)
           } else {
-            res.cookie('jwt', newToken.token, { expires: moment().add(7, 'days').toDate() })
+            res.cookie('jwt', newToken.token, { expires: moment().add(365, 'days').toDate() })
           }
         } catch (err) {
           return next()
