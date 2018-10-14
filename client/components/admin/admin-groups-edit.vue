@@ -127,6 +127,8 @@
 </template>
 
 <script>
+import _ from 'lodash'
+
 import Criterias from '../common/criterias.vue'
 import UserSearch from '../common/user-search.vue'
 
@@ -287,7 +289,7 @@ export default {
       query: groupQuery,
       variables() {
         return {
-          id: this.$route.params.id
+          id: _.toSafeInteger(this.$route.params.id)
         }
       },
       fetchPolicy: 'network-only',
