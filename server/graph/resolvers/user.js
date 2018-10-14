@@ -11,14 +11,14 @@ module.exports = {
   UserQuery: {
     async list(obj, args, context, info) {
       return WIKI.models.users.query()
-        .select('id', 'email', 'name', 'providerKey', 'role', 'createdAt', 'updatedAt')
+        .select('id', 'email', 'name', 'providerKey', 'createdAt')
     },
     async search(obj, args, context, info) {
       return WIKI.models.users.query()
         .where('email', 'like', `%${args.query}%`)
         .orWhere('name', 'like', `%${args.query}%`)
         .limit(10)
-        .select('id', 'email', 'name', 'providerKey', 'role', 'createdAt', 'updatedAt')
+        .select('id', 'email', 'name', 'providerKey', 'createdAt')
     },
     async single(obj, args, context, info) {
       let usr = await WIKI.models.users.query().findById(args.id)

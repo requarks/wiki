@@ -1,0 +1,12 @@
+query {
+  authentication {
+    strategies(
+      isEnabled: true
+    ) {
+      key
+      title
+      icon
+      color
+    }
+  }
+}

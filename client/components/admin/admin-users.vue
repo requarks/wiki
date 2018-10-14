@@ -8,99 +8,97 @@
             .headline.blue--text.text--darken-2 Users
             .subheading.grey--text Manage users
           v-spacer
-          v-btn(outline, color='grey', large)
+          v-btn(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn(color='primary', large, depressed)
+          v-btn(color='primary', large, depressed, @click='authorizeUser')
             v-icon(left) lock_outline
-            span Authorize User
-          v-btn(color='primary', large, depressed)
+            span Authorize Social User
+          v-btn(color='primary', large, depressed, @click='createUser')
             v-icon(left) add
-            span New User
+            span New Local User
         v-card.mt-3
           v-data-table(
             v-model='selected'
-            :items='items',
+            :items='users',
             :headers='headers',
             :search='search',
             :pagination.sync='pagination',
             :rows-per-page-items='[15]'
-            select-all,
             hide-actions,
             disable-initial-sort
           )
             template(slot='headers', slot-scope='props')
               tr
-                th(width='50')
-                th.text-xs-right(
-                  width='80'
-                  :class='[`column sortable`, pagination.descending ? `desc` : `asc`, pagination.sortBy === `id` ? `active` : ``]'
-                  @click='changeSort(`id`)'
-                )
-                  v-icon(small) arrow_upward
-                  | ID
+                //- th(width='50')
                 th.text-xs-left(
                   v-for='header in props.headers'
                   :key='header.text'
                   :width='header.width'
-                  :class='[`column sortable`, pagination.descending ? `desc` : `asc`, header.value === pagination.sortBy ? `active` : ``]'
+                  :class='[`column`, header.sortable ? `sortable` : ``, pagination.descending ? `desc` : `asc`, header.value === pagination.sortBy ? `active` : ``]'
                   @click='changeSort(header.value)'
                 )
                   | {{ header.text }}
-                  v-icon(small) arrow_upward
+                  v-icon(small, v-if='header.sortable') arrow_upward
             template(slot='items', slot-scope='props')
               tr(:active='props.selected')
-                td
+                //- td
                   v-checkbox(hide-details, :input-value='props.selected', color='blue darken-2', @click='props.selected = !props.selected')
                 td.text-xs-right {{ props.item.id }}
+                td: strong {{ props.item.name }}
                 td {{ props.item.email }}
-                td {{ props.item.name }}
-                td {{ props.item.provider }}
-                td {{ props.item.createdOn }}
-                td {{ props.item.updatedOn }}
-                td: v-btn(icon): v-icon.grey--text.text--darken-1 more_horiz
+                td {{ props.item.providerKey }}
+                td {{ props.item.createdAt | moment('from') }}
+                td
+                  v-menu(bottom, right, min-width='200')
+                    v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
+                    v-list
+                      v-list-tile(@click='')
+                        v-list-tile-action
+                          v-icon(color='primary') edit
+                        v-list-tile-content
+                          v-list-tile-title Edit
+                      v-list-tile(@click='')
+                        v-list-tile-action
+                          v-icon(color='red') block
+                        v-list-tile-content
+                          v-list-tile-title Block
             template(slot='no-data')
-              v-alert(icon='warning', :value='true') No users to display!
+              .pa-3
+                v-alert(icon='warning', :value='true', outline) No users to display!
           .text-xs-center.py-2
             v-pagination(v-model='pagination.page', :length='pages')
+
+    user-authorize(v-model='isAuthorizeDialogShown')
+    user-create(v-model='isCreateDialogShown')
 </template>
 
 <script>
+import usersQuery from 'gql/admin/users/users-query-list.gql'
+
+import UserAuthorize from './admin-users-authorize.vue'
+import UserCreate from './admin-users-create.vue'
+
 export default {
+  components: {
+    UserAuthorize,
+    UserCreate
+  },
   data() {
     return {
       selected: [],
       pagination: {},
-      items: [
-        { id: 1, email: 'user@test.com', name: 'John Doe', provider: 'local' },
-        { id: 2, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 3, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 4, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 5, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 6, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 7, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 8, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 9, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 10, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 11, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 12, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 13, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 14, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 15, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 16, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 17, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 18, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 19, email: 'dude@test.com', name: 'John Doe', provider: 'local' },
-        { id: 20, email: 'dude@test.com', name: 'John Doe', provider: 'local' }
-      ],
+      users: [],
       headers: [
-        { text: 'Email', value: 'email' },
-        { text: 'Name', value: 'name' },
-        { text: 'Provider', value: 'provider' },
-        { text: 'Created On', value: 'createdOn' },
-        { text: 'Updated On', value: 'updatedOn' },
+        { text: 'ID', value: 'id', width: 80, sortable: true },
+        { text: 'Name', value: 'name', sortable: true },
+        { text: 'Email', value: 'email', sortable: true },
+        { text: 'Provider', value: 'provider', sortable: true },
+        { text: 'Created', value: 'createdAt', sortable: true },
         { text: '', value: 'actions', sortable: false, width: 50 }
       ],
-      search: ''
+      search: '',
+      isAuthorizeDialogShown: false,
+      isCreateDialogShown: false
     }
   },
   computed: {
@@ -113,6 +111,20 @@ export default {
     }
   },
   methods: {
+    authorizeUser() {
+      this.isAuthorizeDialogShown = true
+    },
+    createUser() {
+      this.isCreateDialogShown = true
+    },
+    async refresh() {
+      await this.$apollo.queries.users.refetch()
+      this.$store.commit('showNotification', {
+        message: 'Users list has been refreshed.',
+        style: 'success',
+        icon: 'cached'
+      })
+    },
     changeSort (column) {
       if (this.pagination.sortBy === column) {
         this.pagination.descending = !this.pagination.descending
@@ -126,6 +138,16 @@ export default {
         this.selected = []
       } else {
         this.selected = this.items.slice()
+      }
+    }
+  },
+  apollo: {
+    users: {
+      query: usersQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => data.users.list,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
       }
     }
   }

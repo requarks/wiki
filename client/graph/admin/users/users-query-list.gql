@@ -5,9 +5,7 @@ query {
       name
       email
       providerKey
-      role
       createdAt
-      updatedAt
     }
   }
 }

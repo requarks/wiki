@@ -7,109 +7,121 @@
           .admin-header-title
             .headline.blue--text.text--darken-2 Edit Group
             .subheading.grey--text {{name}}
-      v-btn(color='primary', fab, absolute, bottom, right, small, to='/groups'): v-icon arrow_upward
-    v-tabs(v-model='tab', :color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
-      v-tab(key='properties') Properties
-      v-tab(key='rights') Permissions
-      v-tab(key='users') Users
+          v-spacer
+          v-btn(color='indigo', large, outline, to='/groups')
+            v-icon arrow_back
+          v-dialog(v-model='deleteGroupDialog', max-width='500')
+            v-btn(color='red', large, outline, slot='activator')
+              v-icon(color='red') delete
+            v-card
+              .dialog-header.is-red Delete Group?
+              v-card-text Are you sure you want to delete group #[strong {{ name }}]? All users will be unassigned from this group.
+              v-card-actions
+                v-spacer
+                v-btn(flat, @click='deleteGroupDialog = false') Cancel
+                v-btn(color='red', dark, @click='deleteGroup') Delete
+          v-btn(color='primary', large, depressed, @click='updateGroup')
+            v-icon(left) check
+            span Update Group
+        v-card.mt-3
+          v-tabs(v-model='tab', :color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
+            v-tab(key='properties') Properties
+            v-tab(key='permissions') Permissions
+            v-tab(key='rules') Page Rules
+            v-tab(key='users') Users
 
-      v-tab-item(key='properties', :transition='false', :reverse-transition='false')
-        v-card
-          v-card-text
-            v-text-field(v-model='name', label='Group Name', counter='255', prepend-icon='people')
-          v-card-actions.pa-3
-            v-btn(color='primary', @click='updateGroup')
-              v-icon(left) check
-              | Save Changes
-            .caption.ml-4.grey--text ID: {{group.id}}
-            v-spacer
-            v-dialog(v-model='deleteGroupDialog', max-width='500')
-              v-btn(color='red', flat, @click='', slot='activator')
-                v-icon(left) delete
-                | Delete Group
+            v-tab-item(key='properties', :transition='false', :reverse-transition='false')
               v-card
-                .dialog-header.is-red Delete Group?
-                v-card-text Are you sure you want to delete group #[strong {{ name }}]? All users will be unassigned from this group.
-                v-card-actions
+                v-card-text
+                  v-text-field(
+                    outline
+                    background-color='grey lighten-3'
+                    v-model='name'
+                    label='Group Name'
+                    counter='255'
+                    prepend-icon='people'
+                    )
+                  v-divider
+                  .caption.mt-3.grey--text ID: {{group.id}}
+
+            v-tab-item(key='permissions', :transition='false', :reverse-transition='false')
+              v-card
+
+            v-tab-item(key='rules', :transition='false', :reverse-transition='false')
+              v-card
+                v-card-title.pb-0
+                  v-subheader
+                    v-icon.mr-2 border_color
+                    .subheading Read and Write
                   v-spacer
-                  v-btn(flat, @click='deleteGroupDialog = false') Cancel
-                  v-btn(color='red', dark, @click='deleteGroup') Delete
+                  v-btn(flat, outline)
+                    v-icon(left) arrow_drop_down
+                    | Load Preset
+                  v-btn(flat, outline)
+                    v-icon(left) vertical_align_bottom
+                    | Import Rules
+                .pa-3.pl-4
+                  criterias
+                v-divider.my-0
+                v-card-title.pb-0
+                  v-subheader
+                    v-icon.mr-2 pageview
+                    .subheading Read Only
+                  v-spacer
+                  v-btn(flat, outline)
+                    v-icon(left) arrow_drop_down
+                    | Load Preset
+                  v-btn(flat, outline)
+                    v-icon(left) vertical_align_bottom
+                    | Import Rules
+                .pa-3.pl-4
+                  criterias
+                v-divider.my-0
+                v-card-title.pb-0
+                  v-subheader Legend
+                .px-4.pb-4
+                  .body-1.px-1.py-2 Any number of rules can be used at the same time. However, some rules requires more processing time than others. Rule types are color-coded as followed:
+                  .caption
+                    v-icon(color='blue') stop
+                    span Fast rules. None or insignificant latency introduced to all page loads.
+                  .caption
+                    v-icon(color='orange') stop
+                    span Medium rules. Some latency added to all page loads.
+                  .caption
+                    v-icon(color='red') stop
+                    span Slow rules. May adds noticeable latency to all page loads. Avoid using in multiple rules.
 
-      v-tab-item(key='rights', :transition='false', :reverse-transition='false')
-        v-card
-          v-card-title.pb-0
-            v-subheader
-              v-icon.mr-2 border_color
-              .subheading Read and Write
-            v-spacer
-            v-btn(flat, outline)
-              v-icon(left) arrow_drop_down
-              | Load Preset
-            v-btn(flat, outline)
-              v-icon(left) vertical_align_bottom
-              | Import Rules
-          .pa-3.pl-4
-            criterias
-          v-divider.my-0
-          v-card-title.pb-0
-            v-subheader
-              v-icon.mr-2 pageview
-              .subheading Read Only
-            v-spacer
-            v-btn(flat, outline)
-              v-icon(left) arrow_drop_down
-              | Load Preset
-            v-btn(flat, outline)
-              v-icon(left) vertical_align_bottom
-              | Import Rules
-          .pa-3.pl-4
-            criterias
-          v-divider.my-0
-          v-card-title.pb-0
-            v-subheader Legend
-          .px-4.pb-4
-            .body-1.px-1.py-2 Any number of rules can be used at the same time. However, some rules requires more processing time than others. Rule types are color-coded as followed:
-            .caption
-              v-icon(color='blue') stop
-              span Fast rules. None or insignificant latency introduced to all page loads.
-            .caption
-              v-icon(color='orange') stop
-              span Medium rules. Some latency added to all page loads.
-            .caption
-              v-icon(color='red') stop
-              span Slow rules. May adds noticeable latency to all page loads. Avoid using in multiple rules.
-
-      v-tab-item(key='users', :transition='false', :reverse-transition='false')
-        v-card
-          v-card-title.pb-0
-            v-btn(color='primary', @click='searchUserDialog = true')
-              v-icon(left) assignment_ind
-              | Assign User
-          v-data-table(
-            :items='group.users',
-            :headers='headers',
-            :search='search',
-            :pagination.sync='pagination',
-            :rows-per-page-items='[15]'
-            hide-actions
-          )
-            template(slot='items', slot-scope='props')
-              tr(:active='props.selected')
-                td.text-xs-right {{ props.item.id }}
-                td {{ props.item.name }}
-                td {{ props.item.email }}
-                td
-                  v-menu(bottom, right, min-width='200')
-                    v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
-                    v-list
-                      v-list-tile(@click='unassignUser(props.item.id)')
-                        v-list-tile-action: v-icon(color='orange') highlight_off
-                        v-list-tile-content
-                          v-list-tile-title Unassign
-            template(slot='no-data')
-              v-alert.ma-3(icon='warning', :value='true', outline) No users to display.
-          .text-xs-center.py-2(v-if='users.length > 15')
-            v-pagination(v-model='pagination.page', :length='pages')
+            v-tab-item(key='users', :transition='false', :reverse-transition='false')
+              v-card
+                v-card-title.pb-0
+                  v-btn(color='primary', @click='searchUserDialog = true')
+                    v-icon(left) assignment_ind
+                    | Assign User
+                v-data-table(
+                  :items='group.users',
+                  :headers='headers',
+                  :search='search',
+                  :pagination.sync='pagination',
+                  :rows-per-page-items='[15]'
+                  hide-actions
+                )
+                  template(slot='items', slot-scope='props')
+                    tr(:active='props.selected')
+                      td.text-xs-right {{ props.item.id }}
+                      td {{ props.item.name }}
+                      td {{ props.item.email }}
+                      td
+                        v-menu(bottom, right, min-width='200')
+                          v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
+                          v-list
+                            v-list-tile(@click='unassignUser(props.item.id)')
+                              v-list-tile-action: v-icon(color='orange') highlight_off
+                              v-list-tile-content
+                                v-list-tile-title Unassign
+                  template(slot='no-data')
+                    v-alert.ma-3(icon='warning', :value='true', outline) No users to display.
+                .text-xs-center.py-2(v-if='users.length > 15')
+                  v-pagination(v-model='pagination.page', :length='pages')
 
     user-search(v-model='searchUserDialog', @select='assignUser')
 </template>

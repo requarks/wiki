@@ -22,7 +22,7 @@ module.exports = {
 
           // Try headers, otherwise cookies for response
           if (req.get('content-type') === 'application/json') {
-            res.headers('new-jwt', newToken.token)
+            res.set('new-jwt', newToken.token)
           } else {
             res.cookie('jwt', newToken.token, { expires: moment().add(365, 'days').toDate() })
           }
