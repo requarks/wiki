@@ -17,7 +17,17 @@
             v-card
               .dialog-header.is-short New Group
               v-card-text
-                v-text-field(v-model='newGroupName', label='Group Name', autofocus, counter='255', @keyup.enter='createGroup')
+                v-text-field.md2(
+                  solo,
+                  flat,
+                  background-color='grey lighten-4'
+                  prepend-icon='people'
+                  v-model='newGroupName'
+                  label='Group Name'
+                  counter='255'
+                  @keyup.enter='createGroup'
+                  ref='groupNameInput'
+                  )
               v-card-chin
                 v-spacer
                 v-btn(flat, @click='newGroupDialog = false') Cancel
@@ -38,6 +48,10 @@
                 td {{ props.item.userCount }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
+                td
+                  v-tooltip(left, v-if='props.item.isSystem')
+                    v-icon(slot='activator') lock_outline
+                    span System Group
             template(slot='no-data')
               v-alert.ma-3(icon='warning', :value='true', outline) No groups to display.
           .text-xs-center.py-2(v-if='groups.length > 15')
@@ -64,7 +78,8 @@ export default {
         { text: 'Name', value: 'name' },
         { text: 'Users', value: 'userCount', width: 200 },
         { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 }
+        { text: 'Last Updated', value: 'updatedAt', width: 250 },
+        { text: '', value: 'isSystem', width: 20, sortable: false }
       ],
       search: ''
     }

@@ -10,7 +10,7 @@
           v-spacer
           v-btn(color='indigo', large, outline, to='/groups')
             v-icon arrow_back
-          v-dialog(v-model='deleteGroupDialog', max-width='500')
+          v-dialog(v-model='deleteGroupDialog', max-width='500', v-if='!group.isSystem')
             v-btn(color='red', large, outline, slot='activator')
               v-icon(color='red') delete
             v-card
@@ -45,14 +45,29 @@
                   .caption.mt-3.grey--text ID: {{group.id}}
 
             v-tab-item(key='permissions', :transition='false', :reverse-transition='false')
-              v-card
+              v-container.pa-3(fluid, grid-list-md)
+                v-layout(row, wrap)
+                  v-flex(xs12, md6, lg4, v-for='pmGroup in permissions')
+                    v-card.md2.grey.lighten-5(flat)
+                      v-subheader {{pmGroup.category}}
+                      v-card-text.pt-0
+                        template(v-for='(pm, idx) in pmGroup.items')
+                          v-checkbox.pt-0(
+                            :key='pm.permission'
+                            :label='pm.permission'
+                            :hint='pm.hint'
+                            persistent-hint
+                            color='primary'
+                            v-model='group.permissions'
+                            :value='pm.permission'
+                            :append-icon='pm.warning ? "warning" : null',
+                            :disabled='(group.isSystem && pm.restrictedForSystem) || group.id === 1 || pm.disabled'
+                          )
+                          v-divider.mt-3(v-if='idx < pmGroup.items.length - 1')
 
             v-tab-item(key='rules', :transition='false', :reverse-transition='false')
               v-card
                 v-card-title.pb-0
-                  v-subheader
-                    v-icon.mr-2 border_color
-                    .subheading Read and Write
                   v-spacer
                   v-btn(flat, outline)
                     v-icon(left) arrow_drop_down
@@ -62,39 +77,12 @@
                     | Import Rules
                 .pa-3.pl-4
                   criterias
-                v-divider.my-0
-                v-card-title.pb-0
-                  v-subheader
-                    v-icon.mr-2 pageview
-                    .subheading Read Only
-                  v-spacer
-                  v-btn(flat, outline)
-                    v-icon(left) arrow_drop_down
-                    | Load Preset
-                  v-btn(flat, outline)
-                    v-icon(left) vertical_align_bottom
-                    | Import Rules
-                .pa-3.pl-4
-                  criterias
-                v-divider.my-0
-                v-card-title.pb-0
-                  v-subheader Legend
-                .px-4.pb-4
-                  .body-1.px-1.py-2 Any number of rules can be used at the same time. However, some rules requires more processing time than others. Rule types are color-coded as followed:
-                  .caption
-                    v-icon(color='blue') stop
-                    span Fast rules. None or insignificant latency introduced to all page loads.
-                  .caption
-                    v-icon(color='orange') stop
-                    span Medium rules. Some latency added to all page loads.
-                  .caption
-                    v-icon(color='red') stop
-                    span Slow rules. May adds noticeable latency to all page loads. Avoid using in multiple rules.
 
             v-tab-item(key='users', :transition='false', :reverse-transition='false')
               v-card
                 v-card-title.pb-0
-                  v-btn(color='primary', @click='searchUserDialog = true')
+                  v-spacer
+                  v-btn(color='primary', outline, flat, @click='searchUserDialog = true')
                     v-icon(left) assignment_ind
                     | Assign User
                 v-data-table(
@@ -148,12 +136,138 @@ export default {
       group: {
         id: 0,
         name: '',
+        isSystem: false,
+        permissions: [],
+        pageRules: [],
         users: []
       },
       name: '',
       deleteGroupDialog: false,
       searchUserDialog: false,
       pagination: {},
+      permissions: [
+        {
+          category: 'Content',
+          items: [
+            {
+              permission: 'read:pages',
+              hint: 'Can view pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
+              permission: 'write:pages',
+              hint: 'Can view and create new pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
+              permission: 'manage:pages',
+              hint: 'Can view, create, edit and move existing pages as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
+              permission: 'delete:pages',
+              hint: 'Can delete existing pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
+              permission: 'write:assets',
+              hint: 'Can upload assets (such as images and files), as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
+              permission: 'read:comments',
+              hint: 'Can view comments, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
+              permission: 'write:comments',
+              hint: 'Can post new comments, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            }
+          ]
+        },
+        {
+          category: 'Users',
+          items: [
+            {
+              permission: 'write:users',
+              hint: 'Can create or authorize new users, but not modify existing ones',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'manage:users',
+              hint: 'Can manage all users (but not users with administrative permissions)',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'write:groups',
+              hint: 'Can manage groups and assign CONTENT permissions / page rules',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'manage:groups',
+              hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
+              warning: true,
+              restrictedForSystem: true,
+              disabled: false
+            }
+          ]
+        },
+        {
+          category: 'Administration',
+          items: [
+            {
+              permission: 'manage:navigation',
+              hint: 'Can manage the site navigation',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'manage:theme',
+              hint: 'Can manage and modify themes',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'manage:api',
+              hint: 'Can generate and revoke API keys',
+              warning: true,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'manage:system',
+              hint: 'Can manage and access everything. Root administrator.',
+              warning: true,
+              restrictedForSystem: true,
+              disabled: true
+
+            }
+          ]
+        }
+      ],
       users: [],
       headers: [
         { text: 'ID', value: 'id', width: 50, align: 'right' },

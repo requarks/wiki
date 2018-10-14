@@ -3,6 +3,7 @@ query {
     list {
       id
       name
+      isSystem
       userCount
       createdAt
       updatedAt

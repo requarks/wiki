@@ -18,11 +18,11 @@ type GroupQuery {
   list(
     filter: String
     orderBy: String
-  ): [GroupMinimal]
+  ): [GroupMinimal] @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   single(
     id: Int!
-  ): Group
+  ): Group @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -32,26 +32,26 @@ type GroupQuery {
 type GroupMutation {
   create(
     name: String!
-  ): GroupResponse
+  ): GroupResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   update(
     id: Int!
     name: String!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   delete(
     id: Int!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   assignUser(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   unassignUser(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -66,6 +66,7 @@ type GroupResponse {
 type GroupMinimal {
   id: Int!
   name: String!
+  isSystem: Boolean!
   userCount: Int
   createdAt: Date!
   updatedAt: Date!
@@ -74,8 +75,10 @@ type GroupMinimal {
 type Group {
   id: Int!
   name: String!
-  rights: [Right]
-  users: [User]
+  isSystem: Boolean!
+  permissions: [String]!
+  pageRules: [Right]
+  users: [UserMinimal]
   createdAt: Date!
   updatedAt: Date!
 }

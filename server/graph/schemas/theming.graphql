@@ -15,8 +15,8 @@ extend type Mutation {
 # -----------------------------------------------
 
 type ThemingQuery {
-  themes: [ThemingTheme]
-  config: ThemingConfig
+  themes: [ThemingTheme] @auth(requires: ["manage:theme", "manage:system"])
+  config: ThemingConfig @auth(requires: ["manage:theme", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -27,7 +27,7 @@ type ThemingMutation {
   setConfig(
     theme: String!
     darkMode: Boolean!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:theme", "manage:system"])
 }
 
 # -----------------------------------------------

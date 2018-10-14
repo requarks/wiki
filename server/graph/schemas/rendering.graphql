@@ -18,7 +18,7 @@ type RenderingQuery {
   renderers(
     filter: String
     orderBy: String
-  ): [Renderer]
+  ): [Renderer] @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -28,7 +28,7 @@ type RenderingQuery {
 type RenderingMutation {
   updateRenderers(
     renderers: [RendererInput]
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

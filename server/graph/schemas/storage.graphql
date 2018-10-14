@@ -18,7 +18,7 @@ type StorageQuery {
   targets(
     filter: String
     orderBy: String
-  ): [StorageTarget]
+  ): [StorageTarget] @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -28,7 +28,7 @@ type StorageQuery {
 type StorageMutation {
   updateTargets(
     targets: [StorageTargetInput]
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

@@ -26,14 +26,14 @@ type LocalizationQuery {
 type LocalizationMutation {
   downloadLocale(
     locale: String!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 
   updateLocale(
     locale: String!
     autoUpdate: Boolean!
     namespacing: Boolean!
     namespaces: [String]!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

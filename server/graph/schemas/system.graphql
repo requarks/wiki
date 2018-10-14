@@ -15,7 +15,7 @@ extend type Mutation {
 # -----------------------------------------------
 
 type SystemQuery {
-  info: SystemInfo
+  info: SystemInfo @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

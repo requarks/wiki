@@ -18,7 +18,7 @@ type SearchQuery {
   searchEngines(
     filter: String
     orderBy: String
-  ): [SearchEngine]
+  ): [SearchEngine] @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -28,7 +28,7 @@ type SearchQuery {
 type SearchMutation {
   updateSearchEngines(
     searchEngines: [SearchEngineInput]
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
