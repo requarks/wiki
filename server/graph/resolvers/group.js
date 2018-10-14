@@ -39,7 +39,9 @@ module.exports = {
     },
     async create(obj, args) {
       const group = await WIKI.models.groups.query().insertAndFetch({
-        name: args.name
+        name: args.name,
+        permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
+        isSystem: false
       })
       return {
         responseResult: graphHelper.generateSuccess('Group created successfully.'),

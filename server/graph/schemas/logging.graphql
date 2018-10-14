@@ -22,7 +22,7 @@ type LoggingQuery {
   loggers(
     filter: String
     orderBy: String
-  ): [Logger]
+  ): [Logger] @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -32,7 +32,7 @@ type LoggingQuery {
 type LoggingMutation {
   updateLoggers(
     loggers: [LoggerInput]
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

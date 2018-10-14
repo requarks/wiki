@@ -45,7 +45,7 @@ type PageMutation {
     publishStartDate: Date
     tags: [String]!
     title: String!
-  ): PageResponse
+  ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   update(
     id: Int!
@@ -60,11 +60,11 @@ type PageMutation {
     publishStartDate: Date
     tags: [String]
     title: String
-  ): PageResponse
+  ): PageResponse @auth(requires: ["manage:pages", "manage:system"])
 
   delete(
     id: Int!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["delete:pages", "manage:system"])
 }
 
 # -----------------------------------------------

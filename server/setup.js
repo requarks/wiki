@@ -142,7 +142,7 @@ module.exports = () => {
       })
       const guestGroup = await WIKI.models.groups.query().insert({
         name: 'Guests',
-        permissions: JSON.stringify(['read:page:/']),
+        permissions: JSON.stringify(['read:pages']),
         isSystem: true
       })
 

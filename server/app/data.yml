@@ -76,6 +76,12 @@ jobs:
     onInit: false
     cron: false
     concurrency: 1
+groups:
+  defaultPermissions:
+    - 'manage:pages'
+    - 'write:assets'
+    - 'read:comments'
+    - 'write:comments'
 telemetry:
   BUGSNAG_ID: 'bb4b324d0675bcbba10025617fd2cec8'
   BUGSNAG_REMOTE: 'https://notify.bugsnag.com'

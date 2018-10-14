@@ -18,15 +18,15 @@ type UserQuery {
   list(
     filter: String
     orderBy: String
-  ): [UserMinimal]
+  ): [UserMinimal] @auth(requires: ["write:users", "manage:users", "manage:system"])
 
   search(
     query: String!
-  ): [UserMinimal]
+  ): [UserMinimal] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
 
   single(
     id: Int!
-  ): User
+  ): User @auth(requires: ["manage:users", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -41,7 +41,7 @@ type UserMutation {
     provider: String!
     providerId: String
     role: UserRole!
-  ): UserResponse
+  ): UserResponse @auth(requires: ["write:users", "manage:users", "manage:system"])
 
   update(
     id: Int!
@@ -50,11 +50,11 @@ type UserMutation {
     provider: String
     providerId: String
     role: UserRole
-  ): UserResponse
+  ): UserResponse @auth(requires: ["manage:users", "manage:system"])
 
   delete(
     id: Int!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
   resetPassword(
     id: Int!

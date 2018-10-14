@@ -38,7 +38,7 @@ type AuthenticationMutation {
 
   updateStrategies(
     strategies: [AuthenticationStrategyInput]
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

@@ -3,7 +3,9 @@ query ($id: Int!) {
     single(id: $id) {
       id
       name
-      rights {
+      isSystem
+      permissions
+      pageRules {
         id
         path
         role
