@@ -86,6 +86,7 @@ type UserMinimal {
   name: String!
   email: String!
   providerKey: String!
+  createdAt: Date!
 }
 
 type User {
