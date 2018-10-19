@@ -25,7 +25,7 @@ type NavigationQuery {
 type NavigationMutation {
   updateTree(
     tree: [NavigationItemInput]!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
 }
 
 # -----------------------------------------------

@@ -48,7 +48,7 @@
               v-container.pa-3(fluid, grid-list-md)
                 v-layout(row, wrap)
                   v-flex(xs12, md6, lg4, v-for='pmGroup in permissions')
-                    v-card.md2.grey.lighten-5(flat)
+                    v-card.md2.grey(flat, :class='$vuetify.dark ? "darken-4" : "lighten-5"')
                       v-subheader {{pmGroup.category}}
                       v-card-text.pt-0
                         template(v-for='(pm, idx) in pmGroup.items')

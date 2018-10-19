@@ -29,7 +29,6 @@
           )
             template(slot='headers', slot-scope='props')
               tr
-                //- th(width='50')
                 th.text-xs-left(
                   v-for='header in props.headers'
                   :key='header.text'
@@ -40,7 +39,7 @@
                   | {{ header.text }}
                   v-icon(small, v-if='header.sortable') arrow_upward
             template(slot='items', slot-scope='props')
-              tr(:active='props.selected')
+              tr.is-clickable(:active='props.selected', @click='$router.push("/users/" + props.item.id)')
                 //- td
                   v-checkbox(hide-details, :input-value='props.selected', color='blue darken-2', @click='props.selected = !props.selected')
                 td.text-xs-right {{ props.item.id }}
