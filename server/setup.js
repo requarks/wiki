@@ -201,6 +201,23 @@ module.exports = () => {
       })
       await guestUser.$relatedQuery('groups').relate(guestGroup.id)
 
+      // Create site nav
+
+      WIKI.logger.info('Creating default site navigation')
+      await WIKI.models.navigation.query().delete().where({ key: 'site' })
+      await WIKI.models.navigation.query().insert({
+        key: 'site',
+        config: JSON.stringify([
+          {
+            icon: 'home',
+            kind: 'link',
+            label: 'Home',
+            target: '/',
+            targetType: 'home'
+          }
+        ])
+      })
+
       WIKI.logger.info('Setup is complete!')
       res.json({
         ok: true,

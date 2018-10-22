@@ -16,12 +16,18 @@ module.exports = class Navigation extends Model {
 
       properties: {
         key: {type: 'string'},
-        config: {type: 'object'}
+        config: {type: 'array', items: {type: 'object'}}
       }
     }
   }
 
   static async getTree() {
-    return WIKI.models.navigation.query()
+    const navTree = await WIKI.models.navigation.query().findOne('key', 'site')
+    if (navTree) {
+      return navTree.config
+    } else {
+      WIKI.logger.warn('Site Navigation is missing or corrupted.')
+      return []
+    }
   }
 }

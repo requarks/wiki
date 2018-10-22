@@ -8,6 +8,8 @@
             .headline.primary--text {{$t('navigation.title')}}
             .subheading.grey--text {{$t('navigation.subtitle')}}
           v-spacer
+          v-btn(outline, color='grey', @click='refresh', large)
+            v-icon refresh
           v-btn(color='success', depressed, @click='save', large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
@@ -185,20 +187,38 @@ export default {
     async save() {
       this.$store.commit(`loadingStart`, 'admin-navigation-save')
       try {
-        await this.$apollo.mutate({
+        const resp = await this.$apollo.mutate({
           mutation: treeSaveMutation,
           variables: {
             tree: this.navTree
           }
         })
+        if (_.get(resp, 'data.navigation.updateTree.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            message: this.$t('navigation.saveSuccess'),
+            style: 'success',
+            icon: 'check'
+          })
+        } else {
+          throw new Error(_.get(resp, 'data.navigation.updateTree.responseResult.message', 'An unexpected error occured.'))
+        }
       } catch (err) {
         this.$store.commit('showNotification', {
-          message: this.$t('navigation.saveSuccess'),
-          style: 'success',
-          icon: 'check'
+          message: err.message,
+          style: 'red',
+          icon: 'warning'
         })
       }
       this.$store.commit(`loadingStop`, 'admin-navigation-save')
+    },
+    async refresh() {
+      await this.$apollo.queries.navTree.refetch()
+      this.current = {}
+      this.$store.commit('showNotification', {
+        message: 'Navigation has been refreshed.',
+        style: 'success',
+        icon: 'cached'
+      })
     }
   },
   apollo: {

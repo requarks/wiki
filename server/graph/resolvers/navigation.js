@@ -12,22 +12,16 @@ module.exports = {
   },
   NavigationQuery: {
     async tree(obj, args, context, info) {
-      // let renderers = await WIKI.models.renderers.getRenderers()
-      return []
+      return WIKI.models.navigation.getTree()
     }
   },
   NavigationMutation: {
     async updateTree(obj, args, context) {
       try {
-        // for (let rdr of args.renderers) {
-        //   await WIKI.models.storage.query().patch({
-        //     isEnabled: rdr.isEnabled,
-        //     config: _.reduce(rdr.config, (result, value, key) => {
-        //       _.set(result, `${value.key}`, value.value)
-        //       return result
-        //     }, {})
-        //   }).where('key', rdr.key)
-        // }
+        await WIKI.models.navigation.query().patch({
+          config: args.tree
+        }).where('key', 'site')
+
         return {
           responseResult: graphHelper.generateSuccess('Navigation updated successfully')
         }
