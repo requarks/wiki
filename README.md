@@ -117,6 +117,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [x] Manage Authentication Strategies
   - [x] Manage Editors
   - [x] Manage Logging
+  - [x] Manage Navigation
   - [ ] Manage Rendering :rocket:
   - [x] Manage Search Engines
   - [x] Manage Storage Targets
@@ -142,14 +143,14 @@ Current and upcoming milestones *(major features only, see the [changelog](https
     - [ ] Image + File Manager
 - [x] Modular content parsers/renderers
   - [x] Markdown
-  - [ ] HTML :rocket:
+  - [ ] HTML
 - [ ] Modular search engines
   - [ ] DB
 - [ ] Modular storage engines
   - [ ] Git
-  - [ ] Local Disk :rocket:
+  - [ ] Local Disk
 - [ ] Multilingual versions of the same page (i18n)
-- [ ] History / Revert to previous version
+- [ ] History / Revert to previous version :rocket:
 - [ ] User Groups + Better permissions management
 - [ ] Tags per document / folder
 
@@ -178,6 +179,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Owncloud
   - [ ] SCP (SSH)
 - [ ] Modular Editor: TinyMCE (wysiwyg)
+- [ ] Kubernetes / Helm Installation
 
 **TBD Milestone**
 - [ ] Better simultaneous user editing handling
