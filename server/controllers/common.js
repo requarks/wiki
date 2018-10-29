@@ -48,6 +48,24 @@ router.get(['/p', '/p/*'], (req, res, next) => {
 /**
  * View document
  */
+router.get(['/h', '/h/*'], async (req, res, next) => {
+  const pageArgs = pageHelper.parsePath(req.path)
+  const page = await WIKI.models.pages.getPage({
+    path: pageArgs.path,
+    locale: pageArgs.locale,
+    userId: req.user.id,
+    isPrivate: false
+  })
+  if (page) {
+    res.render('history', { page })
+  } else {
+    res.redirect(`/${pageArgs.path}`)
+  }
+})
+
+/**
+ * View document
+ */
 router.get('/*', async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path)
   const page = await WIKI.models.pages.getPage({

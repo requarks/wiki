@@ -4,6 +4,7 @@ import Vuex from 'vuex'
 import pathify from 'vuex-pathify' // eslint-disable-line import/no-duplicates
 import { make } from 'vuex-pathify' // eslint-disable-line import/no-duplicates
 
+import page from './page'
 import site from './site'
 
 Vue.use(Vuex)
@@ -49,6 +50,7 @@ export default new Vuex.Store({
   },
   actions: { },
   modules: {
+    page,
     site
   }
 })

@@ -134,7 +134,8 @@ export default {
   },
   computed: {
     isLoading: get('isLoading'),
-    title: get('site/title')
+    title: get('site/title'),
+    path: get('page/path')
   },
   created() {
     if (this.hideSearch || this.dense || this.$vuetify.breakpoint.smAndDown) {
@@ -157,10 +158,10 @@ export default {
 
     },
     pageEdit () {
-
+      window.location.assign(`/e/${this.path}`)
     },
     pageHistory () {
-
+      window.location.assign(`/h/${this.path}`)
     },
     pageSource () {
 

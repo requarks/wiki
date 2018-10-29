@@ -194,6 +194,18 @@ export default {
       }
     }
   },
+  created() {
+    this.$store.commit('page/SET_AUTHOR_ID', this.authorId)
+    this.$store.commit('page/SET_AUTHOR_NAME', this.authorName)
+    this.$store.commit('page/SET_CREATED_AT', this.createdAt)
+    this.$store.commit('page/SET_DESCRIPTION', this.description)
+    this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
+    this.$store.commit('page/SET_LOCALE', this.locale)
+    this.$store.commit('page/SET_PATH', this.path)
+    this.$store.commit('page/SET_TAGS', this.tags)
+    this.$store.commit('page/SET_TITLE', this.title)
+    this.$store.commit('page/SET_UPDATED_AT', this.updatedAt)
+  },
   mounted () {
     Prism.highlightAllUnder(this.$refs.container)
   },
