@@ -207,7 +207,7 @@ module.exports = () => {
       await WIKI.models.navigation.query().delete().where({ key: 'site' })
       await WIKI.models.navigation.query().insert({
         key: 'site',
-        config: JSON.stringify([
+        config: [
           {
             icon: 'home',
             kind: 'link',
@@ -215,7 +215,7 @@ module.exports = () => {
             target: '/',
             targetType: 'home'
           }
-        ])
+        ]
       })
 
       WIKI.logger.info('Setup is complete!')
