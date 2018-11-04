@@ -10,8 +10,9 @@ RUN apk update && \
 
 WORKDIR /var/wiki
 
-COPY ./package.json /var/wiki/package.json
-COPY ./client /var/wiki/client
+COPY ./package.json ./package.json
+COPY ./dev ./dev
+COPY ./client ./client
 
 RUN yarn
 RUN yarn build
@@ -34,10 +35,11 @@ WORKDIR /var/wiki
 COPY ./dev/build/supervisord.conf /etc/supervisord.conf
 COPY --from=assets /var/wiki/assets ./assets
 COPY --from=assets /var/wiki/node_modules ./node_modules
-COPY ./server /var/wiki/server
-COPY ./config.sample.yml /var/wiki/config.yml
-COPY ./package.json /var/wiki/package.json
-COPY ./LICENSE /var/wiki/LICENSE
+COPY --from=assets /var/wiki/server ./server
+COPY ./server ./server
+COPY ./config.sample.yml ./config.yml
+COPY ./package.json ./package.json
+COPY ./LICENSE ./LICENSE
 
 EXPOSE 3000
 
