@@ -10,9 +10,12 @@ RUN apk update && \
 
 WORKDIR /var/wiki
 
-COPY ./package.json ./package.json
-COPY ./dev ./dev
 COPY ./client ./client
+COPY ./dev ./dev
+COPY ./package.json ./package.json
+COPY ./.babelrc ./.babelrc
+COPY ./.eslintignore ./.eslintignore
+COPY ./.eslintrc.yml ./.eslintrc.yml
 
 RUN yarn
 RUN yarn build
