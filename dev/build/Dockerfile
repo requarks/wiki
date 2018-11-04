@@ -40,7 +40,7 @@ COPY --from=assets /var/wiki/assets ./assets
 COPY --from=assets /var/wiki/node_modules ./node_modules
 COPY --from=assets /var/wiki/server ./server
 COPY ./server ./server
-COPY ./config.sample.yml ./config.yml
+COPY ./dev/build/config.yml ./config.yml
 COPY ./package.json ./package.json
 COPY ./LICENSE ./LICENSE
 

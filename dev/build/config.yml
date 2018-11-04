@@ -1,0 +1,16 @@
+port: $(PORT)
+bindIP: 0.0.0.0
+db:
+  type: $(DB_TYPE)
+  host: $(DB_HOST)
+  port: $(DB_PORT)
+  user: $(DB_USER)
+  pass: $(DB_PASS)
+  db: $(DB_NAME)
+  storage: $(DB_FILEPATH)
+redis:
+  host: $(REDIS_HOST)
+  port: $(REDIS_PORT)
+  db: $(REDIS_DB)
+  password: $(REDIS_PASS)
+logLevel: info
