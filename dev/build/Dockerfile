@@ -31,7 +31,8 @@ LABEL maintainer="requarks.io"
 RUN apk update && \
     apk add bash curl git openssh supervisor --no-cache && \
     rm -rf /var/cache/apk/* && \
-    mkdir -p /var/wiki
+    mkdir -p /var/wiki && \
+    mkdir -p /logs
 
 WORKDIR /var/wiki
 
