@@ -22,21 +22,21 @@ const mdRemove = require('remove-markdown')
 // Load plugins
 
 var mkdown = md({
-  html: true,
-  breaks: appconfig.features.linebreaks,
-  linkify: true,
-  typography: true,
-  highlight(str, lang) {
-    if (appconfig.theme.code.colorize && lang && hljs.getLanguage(lang)) {
-      try {
-        return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
-      } catch (err) {
-        return '<pre><code>' + _.escape(str) + '</code></pre>'
+    html: true,
+    breaks: appconfig.features.linebreaks,
+    linkify: true,
+    typography: true,
+    highlight(str, lang) {
+      if (appconfig.theme.code.colorize && lang && hljs.getLanguage(lang)) {
+        try {
+          return '<pre class="hljs"><code>' + hljs.highlight(lang, str, true).value + '</code></pre>'
+        } catch (err) {
+          return '<pre><code>' + _.escape(str) + '</code></pre>'
+        }
       }
+      return '<pre><code>' + _.escape(str) + '</code></pre>'
     }
-    return '<pre><code>' + _.escape(str) + '</code></pre>'
-  }
-})
+  })
   .use(mdEmoji)
   .use(mdTaskLists)
   .use(mdAbbr)
@@ -69,8 +69,7 @@ mkdown.renderer.rules.emoji = function (token, idx) {
 
 // Video rules
 
-const videoRules = [
-  {
+const videoRules = [{
     selector: 'a.youtube',
     regexp: new RegExp(/(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/)|(?:(?:watch)?\?v(?:i)?=|&v(?:i)?=))([^#&?]*).*/i),
     output: '<iframe width="640" height="360" src="https://www.youtube.com/embed/{0}?rel=0" frameborder="0" allowfullscreen></iframe>'
@@ -93,10 +92,8 @@ const videoRules = [
 ]
 
 // Regex
-
-const textRegex = new RegExp('\\b[a-z0-9-.,' + appdata.regex.cjk + appdata.regex.arabic + ']+\\b', 'g')
-const mathRegex = [
-  {
+const textRegex = new RegExp('(^|\\s)[a-z0-9-.,' + appdata.regex.cjk + appdata.regex.arabic + appdata.regex.cyr + ']+(?=\\s|$)', 'g')
+const mathRegex = [{
     format: 'TeX',
     regex: /\\\[([\s\S]*?)\\\]/g
   },
@@ -168,7 +165,9 @@ const parseTree = (content) => {
 
   // -> Exclude levels deeper than 2
 
-  _.remove(tocArray, (n) => { return n.level > 2 })
+  _.remove(tocArray, (n) => {
+    return n.level > 2
+  })
 
   // -> Build tree from flat array
 
