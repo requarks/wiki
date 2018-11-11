@@ -7,7 +7,7 @@ const _ = require('lodash')
 const searchIndex = require('./search-index')
 const stopWord = require('stopword')
 const streamToPromise = require('stream-to-promise')
-const searchAllowedChars = new RegExp('[^a-z0-9' + appdata.regex.cjk + appdata.regex.arabic + ' ]', 'g')
+const searchAllowedChars = new RegExp('[^a-z0-9' + appdata.regex.cjk + appdata.regex.arabic + appdata.regex.cyr + ' ]', 'g')
 
 module.exports = {
 
@@ -19,7 +19,7 @@ module.exports = {
    *
    * @return {undefined} Void
    */
-  init () {
+  init() {
     let self = this
     self._isReady = new Promise((resolve, reject) => {
       searchIndex({
@@ -51,7 +51,7 @@ module.exports = {
    * @param      {Object}   content  Document content
    * @return     {Promise}  Promise of the add operation
    */
-  add (content) {
+  add(content) {
     let self = this
 
     if (!content.isEntry) {
@@ -62,32 +62,33 @@ module.exports = {
       return self.delete(content._id).then(() => {
         return self._si.concurrentAddAsync({
           fieldOptions: [{
-            fieldName: 'entryPath',
-            searchable: true,
-            weight: 2
-          },
-          {
-            fieldName: 'title',
-            nGramLength: [1, 2],
-            searchable: true,
-            weight: 3
-          },
-          {
-            fieldName: 'subtitle',
-            searchable: true,
-            weight: 1,
-            storeable: false
-          },
-          {
-            fieldName: 'parent',
-            searchable: false
-          },
-          {
-            fieldName: 'content',
-            searchable: true,
-            weight: 0,
-            storeable: false
-          }]
+              fieldName: 'entryPath',
+              searchable: true,
+              weight: 2
+            },
+            {
+              fieldName: 'title',
+              nGramLength: [1, 2],
+              searchable: true,
+              weight: 3
+            },
+            {
+              fieldName: 'subtitle',
+              searchable: true,
+              weight: 1,
+              storeable: false
+            },
+            {
+              fieldName: 'parent',
+              searchable: false
+            },
+            {
+              fieldName: 'content',
+              searchable: true,
+              weight: 0,
+              storeable: false
+            }
+          ]
         }, [{
           entryPath: content._id,
           title: content.title,
@@ -112,13 +113,15 @@ module.exports = {
    * @param      {String}   The     entry path
    * @return     {Promise}  Promise of the operation
    */
-  delete (entryPath) {
+  delete(entryPath) {
     let self = this
 
     return self._isReady.then(() => {
       return streamToPromise(self._si.search({
         query: [{
-          AND: { 'entryPath': [entryPath] }
+          AND: {
+            'entryPath': [entryPath]
+          }
         }]
       })).then((results) => {
         if (results && results.length > 0) {
@@ -142,7 +145,7 @@ module.exports = {
    *
    * @returns {Promise} Promise of the flush operation
    */
-  flush () {
+  flush() {
     let self = this
     return self._isReady.then(() => {
       return self._si.flushAsync()
@@ -155,7 +158,7 @@ module.exports = {
    * @param {Array<String>} terms
    * @returns {Promise<Object>} Hits and suggestions
    */
-  find (terms) {
+  find(terms) {
     let self = this
     terms = _.chain(terms)
       .deburr()
@@ -165,12 +168,16 @@ module.exports = {
       .value()
     let arrTerms = _.chain(terms)
       .split(' ')
-      .filter((f) => { return !_.isEmpty(f) })
+      .filter((f) => {
+        return !_.isEmpty(f)
+      })
       .value()
 
     return streamToPromise(self._si.search({
       query: [{
-        AND: { '*': arrTerms }
+        AND: {
+          '*': arrTerms
+        }
       }],
       pageSize: 10
     })).then((hits) => {
