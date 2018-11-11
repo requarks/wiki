@@ -207,14 +207,14 @@ export default {
   },
   computed: {
     mode: get('editor/mode'),
-    title: sync('editor/title'),
-    description: sync('editor/description'),
-    locale: sync('editor/locale'),
-    tags: sync('editor/tags'),
-    path: sync('editor/path'),
-    isPublished: sync('editor/isPublished'),
-    publishStartDate: sync('editor/publishStartDate'),
-    publishEndDate: sync('editor/publishEndDate')
+    title: sync('page/title'),
+    description: sync('page/description'),
+    locale: sync('page/locale'),
+    tags: sync('page/tags'),
+    path: sync('page/path'),
+    isPublished: sync('page/isPublished'),
+    publishStartDate: sync('page/publishStartDate'),
+    publishEndDate: sync('page/publishEndDate')
   },
   mounted() {
     this.isShown = true

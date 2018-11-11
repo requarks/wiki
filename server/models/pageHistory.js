@@ -23,6 +23,7 @@ module.exports = class PageHistory extends Model {
         publishStartDate: {type: 'string'},
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
+        contentType: {type: 'string'},
 
         createdAt: {type: 'string'}
       }
@@ -87,6 +88,7 @@ module.exports = class PageHistory extends Model {
       pageId: opts.id,
       authorId: opts.authorId,
       content: opts.content,
+      contentType: opts.contentType,
       description: opts.description,
       editorKey: opts.editorKey,
       hash: opts.hash,

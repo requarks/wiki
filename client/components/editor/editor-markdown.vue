@@ -206,7 +206,7 @@ export default {
         self.$parent.save()
       })
 
-      cm.setSize(null, 'calc(100vh - 100px)')
+      cm.setSize(null, 'calc(100vh - 112px)')
       cm.setOption('extraKeys', keyBindings)
       cm.on('cursorActivity', cm => {
         this.toolbarSync(cm)
@@ -270,7 +270,7 @@ export default {
     background-color: darken(mc('grey', '900'), 4.5%);
     flex: 1 1 50%;
     display: block;
-    height: calc(100vh - 96px);
+    height: calc(100vh - 112px);
     position: relative;
 
     &-title {
@@ -300,7 +300,7 @@ export default {
     flex: 1 1 50%;
     background-color: mc('grey', '100');
     position: relative;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 112px);
     overflow: hidden;
 
     @include until($tablet) {
@@ -321,7 +321,7 @@ export default {
     }
 
     &-content {
-      height: calc(100vh - 100px);
+      height: calc(100vh - 112px);
       overflow-y: scroll;
       padding: 30px 1rem 1rem 1rem;
       width: calc(100% + 1rem + 17px)

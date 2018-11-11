@@ -4,6 +4,7 @@ const getos = Promise.promisify(require('getos'))
 const os = require('os')
 const filesize = require('filesize')
 const path = require('path')
+const fs = require('fs-extra')
 
 /* global WIKI */
 
@@ -75,6 +76,10 @@ module.exports = {
       if (os.platform() === 'linux') {
         const osInfo = await getos()
         osLabel = `${os.type()} - ${osInfo.dist} (${osInfo.codename || os.platform()}) ${osInfo.release || os.release()} ${os.arch()}`
+      }
+      const isDockerized = await fs.pathExists('/.dockerenv')
+      if (isDockerized) {
+        osLabel = `${osLabel} (Docker Container)`
       }
       return osLabel
     },

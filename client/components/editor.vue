@@ -142,6 +142,10 @@ export default {
     initContent: {
       type: String,
       default: null
+    },
+    pageId: {
+      type: Number,
+      default: 0
     }
   },
   data() {
@@ -158,6 +162,7 @@ export default {
     notificationState: sync('notification@isActive')
   },
   created() {
+    this.$store.commit('page/SET_ID', this.pageId)
     this.$store.commit('page/SET_DESCRIPTION', this.description)
     this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
     this.$store.commit('page/SET_LOCALE', this.locale)
@@ -212,16 +217,16 @@ export default {
             mutation: createPageMutation,
             variables: {
               content: this.$store.get('editor/content'),
-              description: this.$store.get('editor/description'),
+              description: this.$store.get('page/description'),
               editor: 'markdown',
-              locale: this.$store.get('editor/locale'),
+              locale: this.$store.get('page/locale'),
               isPrivate: false,
-              isPublished: this.$store.get('editor/isPublished'),
-              path: this.$store.get('editor/path'),
-              publishEndDate: this.$store.get('editor/publishEndDate'),
-              publishStartDate: this.$store.get('editor/publishStartDate'),
-              tags: this.$store.get('editor/tags'),
-              title: this.$store.get('editor/title')
+              isPublished: this.$store.get('page/isPublished'),
+              path: this.$store.get('page/path'),
+              publishEndDate: this.$store.get('page/publishEndDate'),
+              publishStartDate: this.$store.get('page/publishStartDate'),
+              tags: this.$store.get('page/tags'),
+              title: this.$store.get('page/title')
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -244,18 +249,18 @@ export default {
           let resp = await this.$apollo.mutate({
             mutation: updatePageMutation,
             variables: {
-              id: this.$store.get('editor/id'),
+              id: this.$store.get('page/id'),
               content: this.$store.get('editor/content'),
-              description: this.$store.get('editor/description'),
+              description: this.$store.get('page/description'),
               editor: 'markdown',
-              locale: this.$store.get('editor/locale'),
+              locale: this.$store.get('page/locale'),
               isPrivate: false,
-              isPublished: this.$store.get('editor/isPublished'),
-              path: this.$store.get('editor/path'),
-              publishEndDate: this.$store.get('editor/publishEndDate'),
-              publishStartDate: this.$store.get('editor/publishStartDate'),
-              tags: this.$store.get('editor/tags'),
-              title: this.$store.get('editor/title')
+              isPublished: this.$store.get('page/isPublished'),
+              path: this.$store.get('page/path'),
+              publishEndDate: this.$store.get('page/publishEndDate'),
+              publishStartDate: this.$store.get('page/publishStartDate'),
+              tags: this.$store.get('page/tags'),
+              title: this.$store.get('page/title')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})

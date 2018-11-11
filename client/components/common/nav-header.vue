@@ -17,7 +17,7 @@
         @keyup.enter='searchEnter'
       )
     v-menu(open-on-hover, offset-y, bottom, left, min-width='250')
-      v-toolbar-side-icon(slot='activator')
+      v-toolbar-side-icon.btn-animate-app(slot='activator')
         v-icon view_module
       v-list(dense, :light='!$vuetify.dark').py-0
         v-list-tile(avatar, href='/')
@@ -84,12 +84,12 @@
       )
       v-icon(color='grey') search
     v-tooltip(bottom)
-      v-btn(icon, href='/a', slot='activator')
+      v-btn.btn-animate-rotate(icon, href='/a', slot='activator')
         v-icon(color='grey') settings
       span Admin
     v-menu(offset-y, min-width='300')
       v-tooltip(bottom, slot='activator')
-        v-btn(icon, slot='activator')
+        v-btn.btn-animate-grow(icon, slot='activator', outline, color='grey darken-3')
           v-icon(color='grey') account_circle
         span Account
       v-list.py-0(:light='!$vuetify.dark')
@@ -212,4 +212,5 @@ export default {
 .navHeaderLoading { // To avoid search bar jumping
   width: 22px;
 }
+
 </style>

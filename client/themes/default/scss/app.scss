@@ -87,13 +87,25 @@
   }
 
   code {
-    background-color: transparent;
+    background-color: rgba(mc('pink', '500'), .1);
+    padding: 0 5px;
+    color: mc('pink', '800');
     font-family: 'Source Code Pro', monospace;
     font-weight: normal;
     font-size: 1rem;
+    box-shadow: none;
 
     &::before, &::after {
       display: none;
+    }
+  }
+
+  ol, ul {
+    padding: 1rem 24px 0 24px;
+    list-style-position: inside;
+
+    li + li {
+      margin-top: .5rem;
     }
   }
 
@@ -106,6 +118,9 @@
     margin: 1rem 24px;
 
     > code {
+      background-color: transparent;
+      padding: 0;
+      color: #FFF;
       box-shadow: initial;
       display: block;
       font-size: .85rem;

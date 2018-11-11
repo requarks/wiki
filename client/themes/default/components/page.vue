@@ -47,7 +47,7 @@
               .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
             v-spacer
             v-tooltip(left)
-              v-btn(icon, slot='activator', :href='"/e/" + path')
+              v-btn.btn-animate-edit(icon, slot='activator', :href='"/e/" + path')
                 v-icon(color='grey') edit
               span Edit Page
           v-divider
