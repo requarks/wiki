@@ -1,4 +1,5 @@
 const path = require('path')
+const uuid = require('uuid/v4')
 
 /* global WIKI */
 
@@ -209,6 +210,7 @@ module.exports = () => {
         key: 'site',
         config: [
           {
+            id: uuid(),
             icon: 'home',
             kind: 'link',
             label: 'Home',

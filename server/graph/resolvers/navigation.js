@@ -21,6 +21,7 @@ module.exports = {
         await WIKI.models.navigation.query().patch({
           config: args.tree
         }).where('key', 'site')
+        await WIKI.redis.set('nav:sidebar', JSON.stringify(args.tree), 'EX', 300)
 
         return {
           responseResult: graphHelper.generateSuccess('Navigation updated successfully')

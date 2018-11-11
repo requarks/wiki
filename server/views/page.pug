@@ -16,4 +16,17 @@ block body
       :author-id=page.authorId
       :is-published=page.isPublished
       )
+      template(slot='sidebar')
+        each navItem in sidebar
+          if navItem.kind === 'link'
+            v-list-tile(
+              href=navItem.target
+              )
+              v-list-tile-avatar
+                v-icon= navItem.icon
+              v-list-tile-title= navItem.label
+          else if navItem.kind === 'divider'
+            v-divider.my-2
+          else if navItem.kind === 'header'
+            v-subheader.pl-4= navItem.label
       template(slot='contents')!= page.render

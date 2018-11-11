@@ -75,7 +75,8 @@ router.get('/*', async (req, res, next) => {
     isPrivate: false
   })
   if (page) {
-    res.render('page', { page })
+    const sidebar = await WIKI.models.navigation.getTree({ cache: true })
+    res.render('page', { page, sidebar })
   } else if (pageArgs.path === 'home') {
     res.render('welcome')
   } else {

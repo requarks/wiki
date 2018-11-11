@@ -12,6 +12,7 @@
       v-model='navShown'
       )
       nav-sidebar
+        slot(name='sidebar')
 
     v-content
       v-toolbar(color='grey lighten-3', flat, dense)

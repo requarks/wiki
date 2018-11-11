@@ -21,9 +21,18 @@ module.exports = class Navigation extends Model {
     }
   }
 
-  static async getTree() {
+  static async getTree({ cache = false } = {}) {
+    if (cache) {
+      const navTreeCached = await WIKI.redis.get('nav:sidebar')
+      if (navTreeCached) {
+        return JSON.parse(navTreeCached)
+      }
+    }
     const navTree = await WIKI.models.navigation.query().findOne('key', 'site')
     if (navTree) {
+      if (cache) {
+        await WIKI.redis.set('nav:sidebar', JSON.stringify(navTree.config), 'EX', 300)
+      }
       return navTree.config
     } else {
       WIKI.logger.warn('Site Navigation is missing or corrupted.')
