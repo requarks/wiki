@@ -19,12 +19,14 @@
         v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
           v-icon(color='grey darken-2', left) menu
           span Navigation
-        v-breadcrumbs.pl-0(v-else, divider='/')
-          v-breadcrumbs-item: v-icon home
-          v-breadcrumbs-item Universe
-          v-breadcrumbs-item Galaxy
-          v-breadcrumbs-item Solar System
-          v-breadcrumbs-item Planet Earth
+        v-breadcrumbs.breadcrumbs-nav.pl-0(
+          v-else
+          :items='breadcrumbs'
+          divider='/'
+          )
+          template(slot='item', slot-scope='props')
+            v-icon(v-if='props.item.path === "/"', small) home
+            v-btn.ma-0(v-else, :href='props.item.path', small, flat) {{props.item.name}}
         template(v-if='!isPublished')
           v-spacer
           .caption.red--text Unpublished
@@ -150,6 +152,13 @@ export default {
   data() {
     return {
       navOpen: false,
+      breadcrumbs: [
+        { path: '/', name: 'Home' },
+        { path: '/universe', name: 'Universe' },
+        { path: '/universe/galaxy', name: 'Galaxy' },
+        { path: '/universe/galaxy/solar-system', name: 'Solar System' },
+        { path: '/universe/galaxy/solar-system/planet-earth', name: 'Planet Earth' }
+      ],
       toc: [
         {
           name: 'Introduction',
@@ -219,5 +228,20 @@ export default {
 </script>
 
 <style lang="scss">
+
+.breadcrumbs-nav {
+  .v-btn {
+    min-width: 0;
+    &__content {
+      text-transform: none;
+    }
+  }
+  .v-breadcrumbs__divider:nth-child(2n) {
+    padding: 0 6px;
+  }
+  .v-breadcrumbs__divider:nth-child(2) {
+    padding: 0 6px 0 12px;
+  }
+}
 
 </style>

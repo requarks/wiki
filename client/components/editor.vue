@@ -39,13 +39,13 @@
             .subheading {{ $t('editor:save.processing') }}
             .caption.blue--text.text--lighten-3 {{ $t('editor:save.pleaseWait') }}
       v-dialog(v-model='dialogEditorSelector', persistent, max-width='550')
-        v-card(color='blue darken-3', dark)
+        v-card.radius-7(color='blue darken-3', dark)
           v-card-text.text-xs-center.py-4
-            .subheading Which editor do you want to use?
+            .subheading Which editor do you want to use for this page?
             v-container(grid-list-lg, fluid)
               v-layout(row, wrap, justify-center)
                 v-flex(xs4)
-                  v-card(
+                  v-card.radius-7(
                     hover
                     light
                     ripple
@@ -54,7 +54,7 @@
                       v-icon(large, color='primary') code
                       .body-2.mt-2 Code
                 v-flex(xs4)
-                  v-card(
+                  v-card.radius-7(
                     hover
                     light
                     ripple
@@ -63,7 +63,7 @@
                       v-icon(large, color='primary') list_alt
                       .body-2.mt-2 Markdown
                 v-flex(xs4)
-                  v-card.grey(
+                  v-card.radius-7.grey(
                     hover
                     light
                     ripple
@@ -71,6 +71,7 @@
                     v-card-text.text-xs-center(@click='selectEditor("wysiwyg")')
                       v-icon(large, color='grey darken-1') web
                       .body-2.mt-2.grey--text.text--darken-2 Visual Builder
+            .caption.blue--text.text--lighten-2 This cannot be changed later.
 
     v-snackbar(
       :color='notification.style'

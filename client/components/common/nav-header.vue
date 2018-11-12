@@ -106,6 +106,8 @@
         v-list-tile(@click='logout')
           v-list-tile-action: v-icon(color='red') exit_to_app
           v-list-tile-title Logout
+
+    page-selector(mode='create', v-model='newPageModal')
 </template>
 
 <script>
@@ -129,7 +131,8 @@ export default {
       menuIsShown: true,
       searchIsLoading: false,
       searchIsShown: true,
-      search: ''
+      search: '',
+      newPageModal: false
     }
   },
   computed: {
@@ -155,7 +158,7 @@ export default {
       this.searchIsLoading = true
     },
     pageNew () {
-
+      this.newPageModal = true
     },
     pageEdit () {
       window.location.assign(`/e/${this.path}`)
