@@ -96,8 +96,8 @@ module.exports = class PageHistory extends Model {
       isPublished: opts.isPublished,
       localeCode: opts.localeCode,
       path: opts.path,
-      publishEndDate: opts.publishEndDate,
-      publishStartDate: opts.publishStartDate,
+      publishEndDate: opts.publishEndDate || '',
+      publishStartDate: opts.publishStartDate || '',
       title: opts.title
     })
   }

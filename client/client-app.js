@@ -21,7 +21,6 @@ import Hammer from 'hammerjs'
 import moment from 'moment'
 import VueMoment from 'vue-moment'
 import VueTour from 'vue-tour'
-import VueTreeNavigation from 'vue-tree-navigation'
 import store from './store'
 import Cookies from 'js-cookie'
 
@@ -149,7 +148,6 @@ Vue.use(VeeValidate, { events: '' })
 Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
 Vue.use(VueTour)
-Vue.use(VueTreeNavigation)
 
 Vue.prototype.Velocity = Velocity
 

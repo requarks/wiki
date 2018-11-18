@@ -224,8 +224,8 @@ export default {
               isPrivate: false,
               isPublished: this.$store.get('page/isPublished'),
               path: this.$store.get('page/path'),
-              publishEndDate: this.$store.get('page/publishEndDate'),
-              publishStartDate: this.$store.get('page/publishStartDate'),
+              publishEndDate: this.$store.get('page/publishEndDate') || '',
+              publishStartDate: this.$store.get('page/publishStartDate') || '',
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -258,8 +258,8 @@ export default {
               isPrivate: false,
               isPublished: this.$store.get('page/isPublished'),
               path: this.$store.get('page/path'),
-              publishEndDate: this.$store.get('page/publishEndDate'),
-              publishStartDate: this.$store.get('page/publishStartDate'),
+              publishEndDate: this.$store.get('page/publishEndDate') || '',
+              publishStartDate: this.$store.get('page/publishStartDate') || '',
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }

@@ -116,6 +116,7 @@ exports.up = knex => {
       table.string('publishEndDate')
       table.text('content')
       table.text('render')
+      table.json('toc')
       table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()

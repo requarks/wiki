@@ -2,6 +2,7 @@
 
 .contents {
   color: mc('grey', '800');
+  padding-bottom: 50px;
 
   h1, h2, h3, h4, h5, h6 {
     position: relative;
@@ -26,7 +27,7 @@
   h1 {
     padding-left: 24px;
     color: mc('blue', '800');
-    margin-top: 1rem;
+    margin-top: 2rem;
     position: relative;
 
     &::after {

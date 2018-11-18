@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app
+  v-app(v-scroll='upBtnScroll')
     nav-header
     v-navigation-drawer.primary(
       dark
@@ -15,23 +15,24 @@
         slot(name='sidebar')
 
     v-content
-      v-toolbar(color='grey lighten-3', flat, dense)
-        v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
-          v-icon(color='grey darken-2', left) menu
-          span Navigation
-        v-breadcrumbs.breadcrumbs-nav.pl-0(
-          v-else
-          :items='breadcrumbs'
-          divider='/'
-          )
-          template(slot='item', slot-scope='props')
-            v-icon(v-if='props.item.path === "/"', small) home
-            v-btn.ma-0(v-else, :href='props.item.path', small, flat) {{props.item.name}}
-        template(v-if='!isPublished')
-          v-spacer
-          .caption.red--text Unpublished
-          status-indicator.ml-3(negative, pulse)
-      v-divider
+      template(v-if='path !== `home`')
+        v-toolbar(color='grey lighten-3', flat, dense)
+          v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
+            v-icon(color='grey darken-2', left) menu
+            span Navigation
+          v-breadcrumbs.breadcrumbs-nav.pl-0(
+            v-else
+            :items='breadcrumbs'
+            divider='/'
+            )
+            template(slot='item', slot-scope='props')
+              v-icon(v-if='props.item.path === "/"', small) home
+              v-btn.ma-0(v-else, :href='props.item.path', small, flat) {{props.item.name}}
+          template(v-if='!isPublished')
+            v-spacer
+            .caption.red--text Unpublished
+            status-indicator.ml-3(negative, pulse)
+        v-divider
       v-layout(row)
         v-flex(xs12, lg9, xl10)
           v-toolbar(color='grey lighten-4', flat, :height='90')
@@ -54,10 +55,20 @@
                 v-icon(color='grey') edit
               span Edit Page
           v-divider
-          v-list.grey.lighten-3.pb-3(dense)
-            v-subheader.pl-4.primary--text Table of contents
-            vue-tree-navigation.treenav(:items='toc', :defaultOpenLevel='1')
-          v-divider
+          template(v-if='toc.length')
+            v-list.grey.lighten-3.pb-3(dense)
+              v-subheader.pl-4.primary--text Table of contents
+              template(v-for='(tocItem, tocIdx) in toc')
+                v-list-tile(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
+                  v-icon(color='grey') arrow_right
+                  v-list-tile-title.pl-3 {{tocItem.title}}
+                v-divider.ml-4(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
+                template(v-for='tocSubItem in tocItem.children')
+                  v-list-tile(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
+                    v-icon.pl-3(color='grey lighten-1') arrow_right
+                    v-list-tile-title.pl-3.caption {{tocSubItem.title}}
+                  v-divider(inset, v-if='tocIdx < toc.length - 1')
+            v-divider
           v-list.grey.lighten-4(dense)
             v-subheader.pl-4.yellow--text.text--darken-4 Rating
             .text-xs-center
@@ -97,6 +108,9 @@
               span Print Format
             v-spacer
     nav-footer
+    v-fab-transition
+      v-btn(v-if='upBtnShown', fab, fixed, bottom, right, small, @click='$vuetify.goTo(0, scrollOpts)', color='primary')
+        v-icon arrow_upward
 </template>
 
 <script>
@@ -147,46 +161,27 @@ export default {
     isPublished: {
       type: Boolean,
       default: false
+    },
+    toc: {
+      type: Array,
+      default: () => []
     }
   },
   data() {
     return {
       navOpen: false,
+      upBtnShown: false,
+      scrollOpts: {
+        duration: 1500,
+        offset: -75,
+        easing: 'easeInOutCubic'
+      },
       breadcrumbs: [
         { path: '/', name: 'Home' },
         { path: '/universe', name: 'Universe' },
         { path: '/universe/galaxy', name: 'Galaxy' },
         { path: '/universe/galaxy/solar-system', name: 'Solar System' },
         { path: '/universe/galaxy/solar-system/planet-earth', name: 'Planet Earth' }
-      ],
-      toc: [
-        {
-          name: 'Introduction',
-          element: 'introduction'
-        },
-        {
-          name: 'Cities',
-          element: 'cities',
-          children: [
-            {
-              name: 'New York',
-              element: 'contact',
-              children: [
-                { name: 'E-mail', element: 'email' },
-                { name: 'Phone', element: 'phone' }
-              ]
-            },
-            {
-              name: 'Chicago',
-              element: 'contact',
-              children: [
-                { name: 'E-mail', element: 'email' },
-                { name: 'Phone', element: 'phone' }
-              ]
-            }
-          ]
-        },
-        { name: 'Population', external: 'https://github.com' }
       ]
     }
   },
@@ -222,6 +217,10 @@ export default {
   methods: {
     toggleNavigation () {
       this.navOpen = !this.navOpen
+    },
+    upBtnScroll () {
+      const scrollOffset = window.pageYOffset || document.documentElement.scrollTop
+      this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     }
   }
 }

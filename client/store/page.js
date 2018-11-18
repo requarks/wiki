@@ -9,6 +9,8 @@ const state = {
   isPublished: true,
   locale: 'en',
   path: '',
+  publishEndDate: '',
+  publishStartDate: '',
   tags: [],
   title: '',
   updatedAt: ''

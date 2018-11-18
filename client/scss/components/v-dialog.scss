@@ -14,4 +14,10 @@
     background: radial-gradient(ellipse at top, mc('red', '500'), mc('red', '700')),
               radial-gradient(ellipse at bottom, mc('red', '800'), mc('red', '700'));
   }
+
+  &.is-dark {
+    background-color: mc('grey', '900');
+    background: radial-gradient(ellipse at top, mc('grey', '800'), mc('grey', '900')),
+              radial-gradient(ellipse at bottom, mc('grey', '800'), mc('grey', '900'));
+  }
 }

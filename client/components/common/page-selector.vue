@@ -1,7 +1,8 @@
 <template lang="pug">
   v-dialog(v-model='isShown', lazy, max-width='850px')
     v-card.page-selector
-      .dialog-header
+      .dialog-header.is-dark
+        v-icon.mr-2(color='white') find_in_page
         span Select Page Location
         v-spacer
         v-progress-circular(
@@ -59,7 +60,7 @@
             v-list-tile
               v-list-tile-avatar: v-icon insert_drive_file
               v-list-tile-title File D
-      v-card-text.grey.lighten-2.pa-2
+      v-card-text.grey.lighten-1.pa-2
         v-text-field(
           solo
           hide-details

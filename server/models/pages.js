@@ -108,6 +108,7 @@ module.exports = class Page extends Model {
       publishStartDate: 'string',
       render: 'string',
       title: 'string',
+      toc: 'string',
       updatedAt: 'string'
     })
   }
@@ -125,9 +126,10 @@ module.exports = class Page extends Model {
       isPublished: opts.isPublished,
       localeCode: opts.locale,
       path: opts.path,
-      publishEndDate: opts.publishEndDate,
-      publishStartDate: opts.publishStartDate,
-      title: opts.title
+      publishEndDate: opts.publishEndDate || '',
+      publishStartDate: opts.publishStartDate || '',
+      title: opts.title,
+      toc: '[]'
     })
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
@@ -154,8 +156,8 @@ module.exports = class Page extends Model {
       content: opts.content,
       description: opts.description,
       isPublished: opts.isPublished,
-      publishEndDate: opts.publishEndDate,
-      publishStartDate: opts.publishStartDate,
+      publishEndDate: opts.publishEndDate || '',
+      publishStartDate: opts.publishStartDate || '',
       title: opts.title
     }).where('id', ogPage.id)
     const page = await WIKI.models.pages.getPageFromDb({
@@ -243,6 +245,7 @@ module.exports = class Page extends Model {
       publishStartDate: page.publishStartDate,
       render: page.render,
       title: page.title,
+      toc: page.toc,
       updatedAt: page.updatedAt
     }))
   }
