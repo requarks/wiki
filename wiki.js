@@ -121,6 +121,9 @@ const init = {
     await global.WIKI.models.knex.destroy()
     console.warn(chalk.yellow('--- Closing Redis connections...'))
     await global.WIKI.redis.quit()
+    await global.WIKI.redisSub.quit()
+    console.warn(chalk.yellow('--- Closing Queue connections...'))
+    await global.WIKI.queue.quit()
     console.warn(chalk.yellow('--- Closing Server connections...'))
     global.WIKI.server.destroy(() => {
       global.WIKI = {}

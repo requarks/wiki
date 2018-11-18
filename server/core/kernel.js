@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const EventEmitter = require('events')
 
 /* global WIKI */
 
@@ -23,6 +24,8 @@ module.exports = {
       await WIKI.models.onReady
       await WIKI.configSvc.loadFromDb()
       await WIKI.queue.clean()
+      WIKI.events = new EventEmitter()
+      WIKI.redisSub = require('./redis').subscribe()
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)

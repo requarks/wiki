@@ -4,8 +4,8 @@ const fs = require('fs')
 const path = require('path')
 const autoload = require('auto-load')
 const PubSub = require('graphql-subscriptions').PubSub
-const util = require('util')
-const winston = require('winston')
+const { LEVEL, MESSAGE } = require('triple-beam')
+const Transport = require('winston-transport')
 
 /* global WIKI */
 
@@ -37,20 +37,24 @@ let schemaDirectives = autoload(path.join(WIKI.SERVERPATH, 'graph/directives'))
 
 // Live Trail Logger (admin)
 
-let LiveTrailLogger = winston.transports.LiveTrailLogger = function (options) {
-  this.name = 'livetrailLogger'
-  this.level = 'debug'
-}
-util.inherits(LiveTrailLogger, winston.Transport)
-LiveTrailLogger.prototype.log = function (level, msg, meta, callback) {
-  WIKI.GQLEmitter.publish('livetrail', {
-    loggingLiveTrail: {
-      timestamp: new Date(),
-      level,
-      output: msg
-    }
-  })
-  callback(null, true)
+class LiveTrailLogger extends Transport {
+  constructor(opts) {
+    super(opts)
+
+    this.name = 'liveTrailLogger'
+    this.level = 'debug'
+  }
+
+  log (info, callback = () => {}) {
+    WIKI.GQLEmitter.publish('livetrail', {
+      loggingLiveTrail: {
+        timestamp: new Date(),
+        level: info[LEVEL],
+        output: info[MESSAGE]
+      }
+    })
+    callback(null, true)
+  }
 }
 
 WIKI.logger.add(new LiveTrailLogger({}))

@@ -36,6 +36,11 @@ module.exports = {
       }
     })
   },
+  async quit() {
+    for (const queueName in this.job) {
+      await this.job[queueName].close()
+    }
+  },
   async clean() {
     return Promise.each(_.keys(WIKI.data.jobs), queueName => {
       return new Promise((resolve, reject) => {

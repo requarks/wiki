@@ -19,5 +19,19 @@ module.exports = {
       WIKI.logger.error('Invalid Redis configuration!')
       process.exit(1)
     }
+  },
+  subscribe() {
+    let red = this.init()
+    red.on('message', (channel, msg) => {
+      WIKI.events.emit(channel, msg)
+    })
+    red.subscribe('localization', (err, count) => {
+      if (err) {
+        WIKI.logger.error(err)
+        process.exit(1)
+      }
+      WIKI.logger.info('Redis Subscriber connection: [ OK ]')
+    })
+    return red
   }
 }

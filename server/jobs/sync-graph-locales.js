@@ -68,6 +68,8 @@ module.exports = async (job) => {
       }).where('code', WIKI.config.lang.code)
     }
 
+    await WIKI.redis.publish('localization', 'reload')
+
     WIKI.logger.info('Syncing locales with Graph endpoint: [ COMPLETED ]')
   } catch (err) {
     WIKI.logger.error('Syncing locales with Graph endpoint: [ FAILED ]')

@@ -33,6 +33,15 @@ module.exports = {
     // Load current language + namespaces
     this.refreshNamespaces(true)
 
+    // Listen for localization events
+    WIKI.events.on('localization', (action) => {
+      switch (action) {
+        case 'reload':
+          this.refreshNamespaces()
+          break
+      }
+    })
+
     return this
   },
   attachMiddleware (app) {

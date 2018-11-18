@@ -133,7 +133,7 @@ module.exports = () => {
         nativeName: 'English'
       })
 
-      // Create default locale
+      // Create default groups
 
       WIKI.logger.info('Creating default groups...')
       const adminGroup = await WIKI.models.groups.query().insert({

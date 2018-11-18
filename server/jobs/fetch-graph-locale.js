@@ -51,6 +51,8 @@ module.exports = async (job) => {
       throw new Error('Failed to fetch cached locales list! Restart server to resolve this issue.')
     }
 
+    await WIKI.redis.publish('localization', 'reload')
+
     WIKI.logger.info(`Fetching locale ${job.data.locale} from Graph endpoint: [ COMPLETED ]`)
   } catch (err) {
     WIKI.logger.error(`Fetching locale ${job.data.locale} from Graph endpoint: [ FAILED ]`)
