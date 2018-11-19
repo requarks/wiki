@@ -13,7 +13,8 @@ const state = {
   publishStartDate: '',
   tags: [],
   title: '',
-  updatedAt: ''
+  updatedAt: '',
+  mode: ''
 }
 
 export default {

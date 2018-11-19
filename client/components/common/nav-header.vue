@@ -26,23 +26,27 @@
         v-list-tile(avatar, @click='pageNew')
           v-list-tile-avatar: v-icon(color='green') add_box
           v-list-tile-content New Page
-        v-divider.my-0
-        v-subheader Current Page
-        v-list-tile(avatar, @click='pageEdit')
-          v-list-tile-avatar: v-icon(color='indigo') edit
-          v-list-tile-content Edit
-        v-list-tile(avatar, @click='pageHistory')
-          v-list-tile-avatar: v-icon(color='indigo') history
-          v-list-tile-content History
-        v-list-tile(avatar, @click='pageSource')
-          v-list-tile-avatar: v-icon(color='indigo') code
-          v-list-tile-content View Source
-        v-list-tile(avatar, @click='pageMove')
-          v-list-tile-avatar: v-icon(color='indigo') forward
-          v-list-tile-content Move / Rename
-        v-list-tile(avatar, @click='pageDelete')
-          v-list-tile-avatar: v-icon(color='red darken-2') delete
-          v-list-tile-content Delete
+        template(v-if='path && path.length')
+          v-divider.my-0
+          v-subheader Current Page
+          v-list-tile(avatar, @click='pageView', v-if='mode !== `view`')
+            v-list-tile-avatar: v-icon(color='indigo') subject
+            v-list-tile-content View
+          v-list-tile(avatar, @click='pageEdit', v-if='mode !== `edit`')
+            v-list-tile-avatar: v-icon(color='indigo') edit
+            v-list-tile-content Edit
+          v-list-tile(avatar, @click='pageHistory', v-if='mode !== `history`')
+            v-list-tile-avatar: v-icon(color='indigo') history
+            v-list-tile-content History
+          v-list-tile(avatar, @click='pageSource', v-if='mode !== `source`')
+            v-list-tile-avatar: v-icon(color='indigo') code
+            v-list-tile-content View Source
+          v-list-tile(avatar, @click='pageMove')
+            v-list-tile-avatar: v-icon(color='indigo') forward
+            v-list-tile-content Move / Rename
+          v-list-tile(avatar, @click='pageDelete')
+            v-list-tile-avatar: v-icon(color='red darken-2') delete
+            v-list-tile-content Delete
         v-divider.my-0
         v-subheader Assets
         v-list-tile(avatar, @click='')
@@ -138,7 +142,8 @@ export default {
   computed: {
     isLoading: get('isLoading'),
     title: get('site/title'),
-    path: get('page/path')
+    path: get('page/path'),
+    mode: get('page/mode')
   },
   created() {
     if (this.hideSearch || this.dense || this.$vuetify.breakpoint.smAndDown) {
@@ -160,6 +165,9 @@ export default {
     pageNew () {
       this.newPageModal = true
     },
+    pageView () {
+      window.location.assign(`/${this.path}`)
+    },
     pageEdit () {
       window.location.assign(`/e/${this.path}`)
     },
@@ -167,7 +175,7 @@ export default {
       window.location.assign(`/h/${this.path}`)
     },
     pageSource () {
-
+      window.location.assign(`/s/${this.path}`)
     },
     pageMove () {
 

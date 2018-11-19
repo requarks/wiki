@@ -122,6 +122,8 @@ export default {
     this.$store.commit('page/SET_ID', this.id)
     this.$store.commit('page/SET_LOCALE', this.locale)
     this.$store.commit('page/SET_PATH', this.path)
+
+    this.$store.commit('page/SET_MODE', 'history')
   },
   methods: {
     goLive() {

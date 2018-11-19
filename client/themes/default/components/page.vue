@@ -210,6 +210,8 @@ export default {
     this.$store.commit('page/SET_TAGS', this.tags)
     this.$store.commit('page/SET_TITLE', this.title)
     this.$store.commit('page/SET_UPDATED_AT', this.updatedAt)
+
+    this.$store.commit('page/SET_MODE', 'view')
   },
   mounted () {
     Prism.highlightAllUnder(this.$refs.container)

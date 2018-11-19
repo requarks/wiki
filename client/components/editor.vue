@@ -12,19 +12,19 @@
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
         v-btn.mx-0(
           outline
-          color='red'
-          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
-          )
-          v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
-        v-btn(
-          outline
           color='blue'
           @click.native.stop='openModal(`properties`)'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
+        v-btn(
+          outline
+          color='red'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          )
+          v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
     v-content
       component(:is='currentEditor')
       component(:is='currentModal')
@@ -170,6 +170,8 @@ export default {
     this.$store.commit('page/SET_PATH', this.path)
     this.$store.commit('page/SET_TAGS', this.tags)
     this.$store.commit('page/SET_TITLE', this.title)
+
+    this.$store.commit('page/SET_MODE', 'edit')
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')

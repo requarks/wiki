@@ -125,7 +125,10 @@ export default {
   computed: {
     darkMode: get('site/dark')
   },
-  router
+  router,
+  created() {
+    this.$store.commit('page/SET_MODE', 'admin')
+  }
 }
 </script>
 

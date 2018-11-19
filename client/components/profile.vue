@@ -60,7 +60,10 @@ export default {
   computed: {
     darkMode() { return siteConfig.darkMode }
   },
-  router
+  router,
+  created() {
+    this.$store.commit('page/SET_MODE', 'profile')
+  }
 }
 </script>
 
