@@ -221,10 +221,33 @@ router.post('/hist', (req, res, next) => {
   })
 })
 
+const validPathRe = new RegExp('^([a-z0-9/-' + appdata.regex.cjk + appdata.regex.arabic + ']+\\.[a-z0-9]+)$')
+
 /**
  * View document
  */
 router.get('/*', (req, res, next) => {
+
+  if (!res.locals.rights.write) {
+    return res.json({
+      ok: false,
+      error: lang.t('errors:forbidden')
+    })
+  }
+
+  let fileName = req.path
+  if (validPathRe.test(fileName)) {
+    res.sendFile(fileName, {
+      root: git.getRepoPath(),
+      dotfiles: 'deny'
+    }, (err) => {
+      if (err) {
+        res.status(err.status).end()
+      }
+    })
+    return true
+  }
+
   let safePath = entryHelper.parsePath(req.path)
 
   entries.fetch(safePath).then((pageData) => {
