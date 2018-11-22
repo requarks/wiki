@@ -221,7 +221,7 @@ router.post('/hist', (req, res, next) => {
   })
 })
 
-const validPathRe = new RegExp('^([a-z0-9/-' + appdata.regex.cjk + appdata.regex.arabic + ']+\\.[a-z0-9]+)$')
+const validPathRe = new RegExp('^(.+/[a-z0-9-' + appdata.regex.cjk + appdata.regex.arabic + ']+\\.[a-z0-9]+)$')
 
 /**
  * View document
