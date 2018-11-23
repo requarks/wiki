@@ -231,7 +231,7 @@ router.get('/*', (req, res, next) => {
     if (pageData) {
       res.render('pages/view', { pageData })
     } else {
-      res.render('error-notexist', {
+      res.status(404).render('error-notexist', {
         newpath: safePath
       })
     }
@@ -240,7 +240,7 @@ router.get('/*', (req, res, next) => {
     if (safePath === 'home') {
       res.render('pages/welcome')
     } else {
-      res.render('error-notexist', {
+      res.status(404).render('error-notexist', {
         message: err.message,
         newpath: safePath
       })
