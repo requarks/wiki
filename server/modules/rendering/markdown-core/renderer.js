@@ -1,5 +1,6 @@
 const md = require('markdown-it')
 const mdAnchor = require('markdown-it-anchor')
+const mdAttrs = require('markdown-it-attrs')
 const _ = require('lodash')
 const uslug = require('uslug')
 
@@ -38,6 +39,8 @@ module.exports = {
       permalinkSymbol: '¶',
       permalinkBefore: true
     })
+
+    mkdown.use(mdAttrs)
 
     for (let child of this.children) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)

@@ -58,7 +58,7 @@
       transition(name='editor-code-preview')
         .editor-code-preview(v-if='previewShown')
           .editor-code-preview-title(@click='previewShown = false') Preview
-          .editor-code-preview-content.markdown-content(ref='editorPreview', v-html='previewHTML')
+          .editor-code-preview-content.contents(ref='editorPreview', v-html='previewHTML')
 
       v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, left, bottom)
         v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
@@ -97,6 +97,7 @@ import 'codemirror/addon/search/match-highlighter.js'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
+import mdAttrs from 'markdown-it-attrs'
 import mdEmoji from 'markdown-it-emoji'
 import mdTaskLists from 'markdown-it-task-lists'
 import mdExpandTabs from 'markdown-it-expand-tabs'
@@ -126,8 +127,9 @@ const md = new MarkdownIt({
     return `<pre class="line-numbers"><code class="language-${lang}">${str}</code></pre>`
   }
 })
+  .use(mdAttrs)
   .use(mdEmoji)
-  .use(mdTaskLists)
+  .use(mdTaskLists, {label: true, labelAfter: true})
   .use(mdExpandTabs)
   .use(mdAbbr)
   .use(mdSup)
@@ -323,7 +325,7 @@ export default {
     &-content {
       height: calc(100vh - 112px);
       overflow-y: scroll;
-      padding: 30px 1rem 1rem 1rem;
+      padding: 1rem 1rem 1rem 0;
       width: calc(100% + 1rem + 17px)
       // -ms-overflow-style: none;
 

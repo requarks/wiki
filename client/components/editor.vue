@@ -22,6 +22,7 @@
           outline
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          @click.native.stop='exit'
           )
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
@@ -285,6 +286,9 @@ export default {
         })
       }
       this.hideProgressDialog()
+    },
+    exit() {
+
     }
   }
 }

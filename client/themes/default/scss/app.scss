@@ -4,6 +4,10 @@
   color: mc('grey', '800');
   padding-bottom: 50px;
 
+  // ---------------------------------
+  // HEADERS
+  // ---------------------------------
+
   h1, h2, h3, h4, h5, h6 {
     position: relative;
 
@@ -81,14 +85,74 @@
     }
   }
 
+  // ---------------------------------
+  // PARAGRAPHS
+  // ---------------------------------
+
   p {
     padding: 1rem 24px 0 24px;
     margin: 0;
     text-align: justify;
   }
 
+  blockquote {
+    padding: 0 0 1rem 0;
+    border: 1px solid mc('blue', '500');
+    border-radius: .5rem;
+    margin: 1rem;
+
+    &.is-info {
+      background-color: mc('blue', '50');
+      background-image: radial-gradient(ellipse at top, mc('blue', '50'), lighten(mc('blue', '50'), 5%));
+      border-color: mc('blue', '100');
+      box-shadow: 0 0 2px 0 mc('blue', '100');
+
+      code {
+        background-color: mc('blue', '50');
+        color: mc('blue', '800');
+      }
+    }
+    &.is-warning {
+      background-color: mc('orange', '50');
+      background-image: radial-gradient(ellipse at top, mc('orange', '50'), lighten(mc('orange', '50'), 5%));
+      border-color: mc('orange', '100');
+      box-shadow: 0 0 2px 0 mc('orange', '100');
+
+      code {
+        background-color: mc('orange', '50');
+        color: mc('orange', '800');
+      }
+    }
+    &.is-danger {
+      background-color: mc('red', '50');
+      background-image: radial-gradient(ellipse at top, mc('red', '50'), lighten(mc('red', '50'), 5%));
+      border-color: mc('red', '100');
+      box-shadow: 0 0 2px 0 mc('red', '100');
+
+      code {
+        background-color: mc('red', '50');
+        color: mc('red', '800');
+      }
+    }
+    &.is-success {
+      background-color: mc('green', '50');
+      background-image: radial-gradient(ellipse at top, mc('green', '50'), lighten(mc('green', '50'), 5%));
+      border-color: mc('green', '100');
+      box-shadow: 0 0 2px 0 mc('green', '100');
+
+      code {
+        background-color: mc('green', '50');
+        color: mc('green', '800');
+      }
+    }
+  }
+
+  // ---------------------------------
+  // CODE
+  // ---------------------------------
+
   code {
-    background-color: rgba(mc('indigo', '50'), 1);
+    background-color: mc('indigo', '50');
     padding: 0 5px;
     color: mc('indigo', '800');
     font-family: 'Source Code Pro', monospace;
@@ -130,6 +194,43 @@
       &:after, &:before {
         content: initial;
         letter-spacing: initial;
+      }
+    }
+  }
+
+  // ---------------------------------
+  // TASK LISTS
+  // ---------------------------------
+
+  .task-list-item {
+    position: relative;
+
+    &-checkbox[disabled] {
+      display: none;
+
+      & + label {
+        padding-left: 1.4rem;
+      }
+
+      & + label::before {
+        position: absolute;
+        left: 1rem;
+        top: 2px;
+        content: ' ';
+        display: block;
+        width: 1.1rem;
+        height: 1.1rem;
+        background-color: #FFF;
+        border: 1px solid mc('grey', '400');
+        border-radius: 2px;
+        font-weight: bold;
+        font-size: .8rem;
+        line-height: 1rem;
+        text-align: center;
+      }
+
+      &[checked] + label::before  {
+        content: '✓';
       }
     }
   }
