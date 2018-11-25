@@ -197,7 +197,7 @@ module.exports = class Page extends Model {
   }
 
   static async getPageFromDb(opts) {
-    const page = await WIKI.models.pages.query()
+    return WIKI.models.pages.query()
       .column([
         'pages.*',
         {
@@ -227,7 +227,6 @@ module.exports = class Page extends Model {
         }
       })
       .first()
-    return page
   }
 
   static async savePageToCache(page) {

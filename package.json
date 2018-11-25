@@ -60,6 +60,7 @@
     "cookie-parser": "1.4.3",
     "cors": "2.8.5",
     "dependency-graph": "0.7.2",
+    "diff": "3.5.0",
     "diff2html": "2.5.0",
     "dotize": "^0.2.0",
     "execa": "1.0.0",

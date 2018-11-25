@@ -95,6 +95,13 @@
     text-align: justify;
   }
 
+  hr {
+    margin: 1rem;
+    height: 1px;
+    border: none;
+    background-color: mc('grey', '400');
+  }
+
   blockquote {
     padding: 0 0 1rem 0;
     border: 1px solid mc('blue', '500');
@@ -204,17 +211,18 @@
 
   .task-list-item {
     position: relative;
+    list-style-type: none;
 
     &-checkbox[disabled] {
       display: none;
 
       & + label {
-        padding-left: 1.4rem;
+        padding-left: 1.5rem;
       }
 
       & + label::before {
         position: absolute;
-        left: 1rem;
+        left: 0;
         top: 2px;
         content: ' ';
         display: block;
@@ -232,6 +240,10 @@
       &[checked] + label::before  {
         content: '✓';
       }
+    }
+
+    .contains-task-list {
+      padding: .5rem 0 0 1.5rem;
     }
   }
 

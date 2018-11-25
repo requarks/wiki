@@ -4,9 +4,8 @@ block head
 
 block body
   #root
-    history(
-      :page-id=page.id
+    page-source(
+      page-id=page.id
       locale=page.localeCode
       path=page.path
-      live-content=page.content
-      )
+      )= page.content

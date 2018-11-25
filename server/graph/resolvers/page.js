@@ -10,6 +10,12 @@ module.exports = {
     async pages() { return {} }
   },
   PageQuery: {
+    async history(obj, args, context, info) {
+      return WIKI.models.pageHistory.getHistory({
+        pageId: args.id,
+        offset: args.offset || 0
+      })
+    },
     async list(obj, args, context, info) {
       return WIKI.models.pages.query().select(
         'pages.*',

@@ -1,0 +1,13 @@
+query($id: Int!, $offset: Int) {
+  pages {
+    history(id:$id, offset:$offset) {
+      versionId
+      authorId
+      authorName
+      actionType
+      valueBefore
+      valueAfter
+      createdAt
+    }
+  }
+}

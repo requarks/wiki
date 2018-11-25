@@ -31,17 +31,7 @@
         v-flex(xs8)
           v-toolbar(color='grey darken-2', dark, dense, flat)
             .body-2 Pages
-            v-divider.ml-4(vertical)
-            v-text-field(
-              prepend-inner-icon='search'
-              label='Search...'
-              hide-details
-              solo
-              background-color='grey darken-2'
-              flat
-              clearable
-              )
-            v-divider.mx-3(vertical)
+            v-spacer
             v-btn(icon): v-icon forward
             v-btn(icon): v-icon delete
           v-list(dense)

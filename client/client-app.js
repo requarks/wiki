@@ -158,6 +158,7 @@ Vue.prototype.Velocity = Velocity
 Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
 Vue.component('editor', () => import(/* webpackPrefetch: -100, webpackChunkName: "editor" */ './components/editor.vue'))
 Vue.component('history', () => import(/* webpackChunkName: "history" */ './components/history.vue'))
+Vue.component('page-source', () => import(/* webpackChunkName: "source" */ './components/source.vue'))
 Vue.component('login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
 Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
 Vue.component('page-selector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))

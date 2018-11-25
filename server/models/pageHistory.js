@@ -1,4 +1,5 @@
 const Model = require('objection').Model
+const _ = require('lodash')
 
 /* global WIKI */
 
@@ -100,5 +101,54 @@ module.exports = class PageHistory extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title
     })
+  }
+
+  static async getHistory({ pageId, offset = 0 }) {
+    const history = await WIKI.models.pageHistory.query()
+      .column([
+        'pageHistory.id',
+        'pageHistory.path',
+        'pageHistory.authorId',
+        'pageHistory.createdAt',
+        {
+          authorName: 'author.name'
+        }
+      ])
+      .joinRelation('author')
+      .where({
+        'pageHistory.pageId': pageId
+      })
+      .orderBy('pageHistory.createdAt', 'asc')
+      .offset(offset)
+      .limit(20)
+
+    let prevPh = null
+
+    return _.reduce(history, (res, ph) => {
+      let actionType = 'edit'
+      let valueBefore = null
+      let valueAfter = null
+
+      if (!prevPh && offset === 0) {
+        actionType = 'initial'
+      } else if (_.get(prevPh, 'path', '') !== ph.path) {
+        actionType = 'move'
+        valueBefore = _.get(prevPh, 'path', '')
+        valueAfter = ph.path
+      }
+
+      res.unshift({
+        versionId: ph.id,
+        authorId: ph.authorId,
+        authorName: ph.authorName,
+        actionType,
+        valueBefore,
+        valueAfter,
+        createdAt: ph.createdAt
+      })
+
+      prevPh = ph
+      return res
+    }, [])
   }
 }

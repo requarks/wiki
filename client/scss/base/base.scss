@@ -20,7 +20,7 @@ html {
 }
 
 
-@for $i from 1 through 25 {
+@for $i from 0 through 25 {
   .radius-#{$i} {
     border-radius: #{$i}px;
   }

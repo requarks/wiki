@@ -15,6 +15,11 @@ extend type Mutation {
 # -----------------------------------------------
 
 type PageQuery {
+  history(
+    id: Int!
+    offset: Int
+  ): [PageHistory]
+
   list(
     filter: String
     orderBy: String
@@ -91,4 +96,14 @@ type Page {
   users: [User]
   createdAt: Date!
   updatedAt: Date!
+}
+
+type PageHistory {
+  versionId: Int!
+  authorId: Int!
+  authorName: String!
+  actionType: String!
+  valueBefore: String
+  valueAfter: String
+  createdAt: Date!
 }
