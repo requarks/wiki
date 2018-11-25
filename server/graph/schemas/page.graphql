@@ -17,8 +17,9 @@ extend type Mutation {
 type PageQuery {
   history(
     id: Int!
-    offset: Int
-  ): [PageHistory]
+    offsetPage: Int
+    offsetSize: Int
+  ): PageHistoryResult
 
   list(
     filter: String
@@ -106,4 +107,9 @@ type PageHistory {
   valueBefore: String
   valueAfter: String
   createdAt: Date!
+}
+
+type PageHistoryResult {
+  trail: [PageHistory]
+  total: Int!
 }

@@ -103,7 +103,7 @@ module.exports = class PageHistory extends Model {
     })
   }
 
-  static async getHistory({ pageId, offset = 0 }) {
+  static async getHistory({ pageId, offsetPage = 0, offsetSize = 100 }) {
     const history = await WIKI.models.pageHistory.query()
       .column([
         'pageHistory.id',
@@ -118,37 +118,61 @@ module.exports = class PageHistory extends Model {
       .where({
         'pageHistory.pageId': pageId
       })
-      .orderBy('pageHistory.createdAt', 'asc')
-      .offset(offset)
-      .limit(20)
+      .orderBy('pageHistory.createdAt', 'desc')
+      .page(offsetPage, offsetSize)
 
     let prevPh = null
+    const upperLimit = (offsetPage + 1) * offsetSize
 
-    return _.reduce(history, (res, ph) => {
-      let actionType = 'edit'
-      let valueBefore = null
-      let valueAfter = null
+    if (history.total >= upperLimit) {
+      prevPh = await WIKI.models.pageHistory.query()
+        .column([
+          'pageHistory.id',
+          'pageHistory.path',
+          'pageHistory.authorId',
+          'pageHistory.createdAt',
+          {
+            authorName: 'author.name'
+          }
+        ])
+        .joinRelation('author')
+        .where({
+          'pageHistory.pageId': pageId
+        })
+        .orderBy('pageHistory.createdAt', 'desc')
+        .offset((offsetPage + 1) * offsetSize)
+        .limit(1)
+        .first()
+    }
 
-      if (!prevPh && offset === 0) {
-        actionType = 'initial'
-      } else if (_.get(prevPh, 'path', '') !== ph.path) {
-        actionType = 'move'
-        valueBefore = _.get(prevPh, 'path', '')
-        valueAfter = ph.path
-      }
+    return {
+      trail: _.reduce(_.reverse(history.results), (res, ph) => {
+        let actionType = 'edit'
+        let valueBefore = null
+        let valueAfter = null
 
-      res.unshift({
-        versionId: ph.id,
-        authorId: ph.authorId,
-        authorName: ph.authorName,
-        actionType,
-        valueBefore,
-        valueAfter,
-        createdAt: ph.createdAt
-      })
+        if (!prevPh && history.total < upperLimit) {
+          actionType = 'initial'
+        } else if (_.get(prevPh, 'path', '') !== ph.path) {
+          actionType = 'move'
+          valueBefore = _.get(prevPh, 'path', '')
+          valueAfter = ph.path
+        }
 
-      prevPh = ph
-      return res
-    }, [])
+        res.unshift({
+          versionId: ph.id,
+          authorId: ph.authorId,
+          authorName: ph.authorName,
+          actionType,
+          valueBefore,
+          valueAfter,
+          createdAt: ph.createdAt
+        })
+
+        prevPh = ph
+        return res
+      }, []),
+      total: history.total
+    }
   }
 }

@@ -5,48 +5,49 @@
       v-toolbar(color='primary', dark)
         .subheading Viewing history of page #[strong /{{path}}]
         v-spacer
-        .caption.blue--text.text--lighten-3 ID {{pageId}}
+        .caption.blue--text.text--lighten-3.mr-4 Trail Length: {{total}}
+        .caption.blue--text.text--lighten-3 ID: {{pageId}}
         v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Live Version
       v-container(fluid, grid-list-xl)
         v-layout(row, wrap)
           v-flex(xs4)
-            v-chip.ma-0.grey--text.text--darken-2(
+            v-chip.ma-0(
               label
               small
-              color='grey lighten-2'
+              :color='darkMode ? `grey darken-2` : `grey lighten-2`'
+              :class='darkMode ? `grey--text text--lighten-2` : `grey--text text--darken-2`'
               )
               span Live
             v-timeline(
               dense
               )
-              v-timeline-item(
-                v-for='ph in trail'
+              v-timeline-item.pb-2(
+                v-for='(ph, idx) in trail'
                 :key='ph.versionId'
                 :small='ph.actionType === `edit`'
                 fill-dot
                 :color='trailColor(ph.actionType)'
                 :icon='trailIcon(ph.actionType)'
+                :class='idx >= trail.length - 1 ? `pb-4` : `pb-2`'
                 )
                 v-card.radius-7(flat, :class='trailBgColor(ph.actionType)')
-                  v-toolbar(flat, :color='trailBgColor(ph.actionType)')
+                  v-toolbar(flat, :color='trailBgColor(ph.actionType)', height='40')
                     v-chip.ml-0.mr-3(
                       v-if='diffSource === ph.versionId'
-                      label
                       small
                       color='pink'
                       )
                       .caption.white--text Source
                     v-chip.ml-0.mr-3(
                       v-if='diffTarget === ph.versionId'
-                      label
                       small
                       color='pink'
                       )
                       .caption.white--text Target
-                    .caption(v-if='ph.actionType === `edit`') Edited by {{ ph.authorName }}
-                    .caption(v-else-if='ph.actionType === `move`') Moved from #[strong {{ph.valueBefore}}] to #[strong {{ph.valueAfter}}] by {{ ph.authorName }}
-                    .caption(v-else-if='ph.actionType === `initial`') Created by {{ ph.authorName }}
-                    .caption(v-else) Unknown Action by {{ ph.authorName }}
+                    .caption(v-if='ph.actionType === `edit`') Edited by #[strong {{ ph.authorName }}]
+                    .caption(v-else-if='ph.actionType === `move`') Moved from #[strong {{ph.valueBefore}}] to #[strong {{ph.valueAfter}}] by #[strong {{ ph.authorName }}]
+                    .caption(v-else-if='ph.actionType === `initial`') Created by #[strong {{ ph.authorName }}]
+                    .caption(v-else) Unknown Action by #[strong {{ ph.authorName }}]
                     v-spacer
                     .caption {{ ph.createdAt | moment('calendar') }}
                     v-menu(offset-x, left)
@@ -76,20 +77,30 @@
                           v-list-tile-avatar: v-icon call_split
                           v-list-tile-title Branch off from here
 
-            v-chip.ma-0.grey--text.text--darken-2(
+            v-btn.ma-0.radius-7(
+              v-if='total > trail.length'
+              block
+              color='grey darken-2'
+              @click='loadMore'
+              )
+              .caption.white--text Load More...
+
+            v-chip.ma-0(
+              v-else
               label
               small
-              color='grey lighten-2'
+              :color='darkMode ? `grey darken-2` : `grey lighten-2`'
+              :class='darkMode ? `grey--text text--lighten-2` : `grey--text text--darken-2`'
               ) End of history trail
 
           v-flex(xs8)
             v-card.radius-7
               v-card-text
-                v-card.grey.lighten-4.radius-7(flat)
+                v-card.grey.radius-7(flat, :class='darkMode ? `darken-2` : `lighten-4`')
                   v-card-text
                     .subheading Page Title
                     .caption Some page description
-                .mt-3(v-html='diffHTML')
+                v-card.mt-3(light, v-html='diffHTML')
 
     nav-footer
 </template>
@@ -129,7 +140,8 @@ export default {
       trail: [],
       diffSource: 0,
       diffTarget: 0,
-      offset: 0
+      offsetPage: 0,
+      total: 0
     }
   },
   computed: {
@@ -173,6 +185,28 @@ export default {
     setDiffTarget(versionId) {
       this.diffTarget = versionId
     },
+    loadMore() {
+      this.offsetPage++
+      this.$apollo.queries.trail.fetchMore({
+        variables: {
+          id: this.pageId,
+          offsetPage: this.offsetPage,
+          offsetSize: 25
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          return {
+            pages: {
+              history: {
+                total: previousResult.pages.history.total,
+                trail: [...previousResult.pages.history.trail, ...fetchMoreResult.pages.history.trail],
+                __typename: previousResult.pages.history.__typename
+              },
+              __typename: previousResult.pages.__typename
+            }
+          }
+        }
+      })
+    },
     trailColor(actionType) {
       switch (actionType) {
         case 'edit':
@@ -200,11 +234,11 @@ export default {
     trailBgColor(actionType) {
       switch (actionType) {
         case 'move':
-          return 'purple lighten-5'
+          return this.darkMode ? 'purple' : 'purple lighten-5'
         case 'initial':
-          return 'teal lighten-5'
+          return this.darkMode ? 'teal darken-3' : 'teal lighten-5'
         default:
-          return 'grey lighten-3'
+          return this.darkMode ? 'grey darken-3' : 'grey lighten-3'
       }
     }
   },
@@ -214,10 +248,15 @@ export default {
       variables() {
         return {
           id: this.pageId,
-          offset: 0
+          offsetPage: 0,
+          offsetSize: 25
         }
       },
-      update: (data) => data.pages.history,
+      manual: true,
+      result({ data, loading, networkStatus }) {
+        this.total = data.pages.history.total
+        this.trail = data.pages.history.trail
+      },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'history-trail-refresh')
       }

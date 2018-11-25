@@ -1,13 +1,16 @@
-query($id: Int!, $offset: Int) {
+query($id: Int!, $offsetPage: Int, $offsetSize: Int) {
   pages {
-    history(id:$id, offset:$offset) {
-      versionId
-      authorId
-      authorName
-      actionType
-      valueBefore
-      valueAfter
-      createdAt
+    history(id:$id, offsetPage:$offsetPage, offsetSize:$offsetSize) {
+      trail {
+        versionId
+        authorId
+        authorName
+        actionType
+        valueBefore
+        valueAfter
+        createdAt
+      }
+      total
     }
   }
 }

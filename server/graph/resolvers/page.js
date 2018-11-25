@@ -13,7 +13,8 @@ module.exports = {
     async history(obj, args, context, info) {
       return WIKI.models.pageHistory.getHistory({
         pageId: args.id,
-        offset: args.offset || 0
+        offsetPage: args.offsetPage || 0,
+        offsetSize: args.offsetSize || 100
       })
     },
     async list(obj, args, context, info) {
