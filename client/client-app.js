@@ -17,6 +17,7 @@ import { getMainDefinition } from 'apollo-utilities'
 import VueApollo from 'vue-apollo'
 import Vuetify from 'vuetify'
 import Velocity from 'velocity-animate'
+import Vuescroll from 'vuescroll/dist/vuescroll-native'
 import Hammer from 'hammerjs'
 import moment from 'moment'
 import VueMoment from 'vue-moment'
@@ -147,6 +148,7 @@ Vue.use(helpers)
 Vue.use(VeeValidate, { events: '' })
 Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
+Vue.use(Vuescroll)
 Vue.use(VueTour)
 
 Vue.prototype.Velocity = Velocity

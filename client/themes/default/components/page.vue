@@ -11,8 +11,9 @@
       :temporary='$vuetify.breakpoint.xs'
       v-model='navShown'
       )
-      nav-sidebar
-        slot(name='sidebar')
+      vue-scroll(:ops='scrollStyle')
+        nav-sidebar
+          slot(name='sidebar')
 
     v-content
       template(v-if='path !== `home`')
@@ -182,7 +183,25 @@ export default {
         { path: '/universe/galaxy', name: 'Galaxy' },
         { path: '/universe/galaxy/solar-system', name: 'Solar System' },
         { path: '/universe/galaxy/solar-system/planet-earth', name: 'Planet Earth' }
-      ]
+      ],
+      scrollStyle: {
+        vuescroll: {},
+        scrollPanel: {
+          initialScrollX: 0.01, // fix scrollbar not disappearing on load
+          scrollingX: false,
+          speed: 50
+        },
+        rail: {
+          gutterOfEnds: '2px'
+        },
+        bar: {
+          onlyShowBarOnScroll: false,
+          background: '#42A5F5',
+          hoverStyle: {
+            background: '#64B5F6'
+          }
+        }
+      }
     }
   },
   computed: {
