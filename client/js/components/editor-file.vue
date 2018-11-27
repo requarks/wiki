@@ -245,15 +245,25 @@
 
         this.$nextTick(() => {
           socket.emit('uploadsCreateFolder', { foldername: self.newFolderName }, (data) => {
-            self.folders = data
-            self.currentFolder = self.newFolderName
-            self.files = []
-            self.isLoading = false
-            self.$store.dispatch('alert', {
-              style: 'blue',
-              icon: 'files_folder-check',
-              msg: self.$t('modal.newfoldersuccess', { name: self.newFolderName })
-            })
+
+            if(data == false){
+              self.isLoading = false
+              self.$store.dispatch('alert', {
+                style: 'red',
+                icon: 'ui-2_square-remove-09',
+                msg: self.$t('modal.nopermission')
+              })
+            } else {
+              self.folders = data
+              self.currentFolder = self.newFolderName
+              self.files = []
+              self.isLoading = false
+              self.$store.dispatch('alert', {
+                style: 'red',
+                icon: 'ui-2_square-remove-09',
+                msg: self.$t('modal.newfoldersuccess', { name: self.newFolderName })
+              })
+            }
           })
         })
       },
@@ -377,13 +387,22 @@
         this.isLoadingText = this.$t('editor.filedeleteloading')
         this.isLoading = true
         this.$nextTick(() => {
-          socket.emit('uploadsDeleteFile', { uid: this.deleteFileId }, (data) => {
-            self.loadFiles()
-            self.$store.dispatch('alert', {
-              style: 'blue',
-              icon: 'ui-1_trash',
-              msg: self.$t('editor.filedeletesuccess')
-            })
+          socket.emit('uploadsDeleteFile', { uid: this.deleteFileId, folder: this.currentFolder }, (data) => {
+            if(data == false){
+              self.isLoading = false
+              self.$store.dispatch('alert', {
+                style: 'red',
+                icon: 'ui-2_square-remove-09',
+                msg: self.$t('modal.nopermission')
+              })
+            } else {
+              self.loadFiles()
+              self.$store.dispatch('alert', {
+                style: 'blue',
+                icon: 'ui-1_trash',
+                msg: self.$t('editor.filedeletesuccess')
+              })
+            }
           })
         })
       },

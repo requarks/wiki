@@ -45,7 +45,13 @@ module.exports = (socket) => {
     socket.on('uploadsGetFolders', (data, cb) => {
       cb = cb || _.noop
       upl.getUploadsFolders().then((f) => {
-        return cb(f) || true
+        var folders = [];
+        f.forEach(function(_f){
+          if(rights.checkRole('/'+_f, socket.request.user.rights, 'read')) {
+            folders.push(_f);
+          }
+        });
+        return cb(folders) || true
       })
     })
 
@@ -72,9 +78,13 @@ module.exports = (socket) => {
 
     socket.on('uploadsDeleteFile', (data, cb) => {
       cb = cb || _.noop
-      upl.deleteUploadsFile(data.uid).then((f) => {
-        return cb(f) || true
-      })
+      if(rights.checkRole('/'+data.folder, socket.request.user.rights, 'write')) {
+        upl.deleteUploadsFile(data.uid).then((f) => {
+          return cb(f) || true
+        })
+      } else {
+        return cb(false) || false;
+      }
     })
 
     socket.on('uploadsFetchFileFromURL', (data, cb) => {
@@ -91,26 +101,35 @@ module.exports = (socket) => {
 
     socket.on('uploadsRenameFile', (data, cb) => {
       cb = cb || _.noop
-      upl.moveUploadsFile(data.uid, data.folder, data.filename).then((f) => {
-        return cb({ ok: true }) || true
-      }).catch((err) => {
-        return cb({
-          ok: false,
-          msg: err.message
-        }) || true
-      })
+
+      if(!rights.checkRole('/'+data.folder, socket.request.user.rights, 'write')) {
+        return cb({ ok: false, msg: lang.t('modal:nopermission') }) || true
+      } else {
+        upl.moveUploadsFile(data.uid, data.folder, data.filename).then((f) => {
+          return cb({ ok: true }) || true
+        }).catch((err) => {
+          return cb({
+            ok: false,
+            msg: err.message
+          }) || true
+        })
+      }
     })
 
     socket.on('uploadsMoveFile', (data, cb) => {
       cb = cb || _.noop
-      upl.moveUploadsFile(data.uid, data.folder).then((f) => {
-        return cb({ ok: true }) || true
-      }).catch((err) => {
-        return cb({
-          ok: false,
-          msg: err.message
-        }) || true
-      })
+      if(!rights.checkRole('/'+data.folder, socket.request.user.rights, 'write')) {
+        return cb({ ok: false, msg: lang.t('modal:nopermission') }) || true
+      } else {
+        upl.moveUploadsFile(data.uid, data.folder).then((f) => {
+          return cb({ ok: true }) || true
+        }).catch((err) => {
+          return cb({
+            ok: false,
+            msg: err.message
+          }) || true
+        })
+      }
     })
   }
 }

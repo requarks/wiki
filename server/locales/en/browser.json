@@ -98,6 +98,7 @@
     "newfoldernameplaceholder": "folder name",
     "newfoldersuccess": "New folder {{name}} created.",
     "newfoldertitle": "New Folder",
+    "nopermission": "You do not have permission for this operation!",
     "renamefile": "Rename",
     "renamefileerror": "Rename error: {{err}}",
     "renamefileinvalid": "This filename is invalid!",
