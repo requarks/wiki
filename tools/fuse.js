@@ -12,6 +12,8 @@ const nodemon = require('nodemon')
 const babel = require('babel-core')
 const uglify = require('uglify-es')
 const fs = require('fs-extra')
+const path = require('path')
+const configPath = path.resolve(__dirname, '../config.yml')
 
 // ======================================================
 // Parse cmd arguments
@@ -35,6 +37,10 @@ const args = require('yargs')
 let mode = 'build'
 const dev = args.d || args.c
 if (args.d) {
+  if (!fs.existsSync(configPath)) {
+    console.warn(colors.yellow("Missing 'config.yml' configuration file. Please run 'yarn run dev-configure'."))
+    process.exit(0)
+  }
   console.info(colors.bgWhite.black(' Starting Fuse in DEVELOPER mode... '))
   mode = 'dev'
 } else if (args.c) {
