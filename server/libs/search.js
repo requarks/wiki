@@ -7,7 +7,7 @@ const _ = require('lodash')
 const searchIndex = require('./search-index')
 const stopWord = require('stopword')
 const streamToPromise = require('stream-to-promise')
-const searchAllowedChars = new RegExp('[^a-z0-9' + appdata.regex.cjk + appdata.regex.arabic + ' ]', 'g')
+  const searchAllowedChars = new RegExp('[^a-z0-9' + appdata.regex.cjk + appdata.regex.arabic + appdata.regex.cyrillic + ' ]', 'g')
 
 module.exports = {
 
