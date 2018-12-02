@@ -123,8 +123,8 @@ app.use(passport.session())
 
 app.use(mw.seo)
 app.get('/robots.txt', function (req, res) {
-  res.type('text/plain');
-  res.send('User-agent: *\nDisallow: /admin\nDisallow: /edit');
+  res.type('text/plain')
+  res.send('User-agent: *\nDisallow: /admin\nDisallow: /edit')
 })
 
 // ----------------------------------------
