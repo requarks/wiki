@@ -13,7 +13,7 @@
           v-show='searchLoading'
           )
       .d-flex(style='min-height:400px;')
-        v-flex(xs4).grey.lighten-3
+        v-flex(xs4).grey(:class='darkMode ? `darken-4` : `lighten-3`')
           v-toolbar(color='grey darken-3', dark, dense, flat)
             .body-2 Folders
             v-spacer
@@ -50,7 +50,7 @@
             v-list-tile
               v-list-tile-avatar: v-icon insert_drive_file
               v-list-tile-title File D
-      v-card-text.grey.lighten-1.pa-2
+      v-card-text.grey.pa-2(:class='darkMode ? `darken-3-d5` : `lighten-1`')
         v-text-field(
           solo
           hide-details
@@ -68,6 +68,8 @@
 </template>
 
 <script>
+import { get } from 'vuex-pathify'
+
 export default {
   props: {
     value: {
@@ -88,6 +90,7 @@ export default {
     }
   },
   computed: {
+    darkMode: get('site/dark'),
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }

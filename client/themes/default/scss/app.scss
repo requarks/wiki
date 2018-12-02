@@ -4,6 +4,10 @@
   color: mc('grey', '800');
   padding-bottom: 50px;
 
+  @at-root .theme--dark & {
+    color: mc('grey', '300');
+  }
+
   // ---------------------------------
   // HEADERS
   // ---------------------------------
@@ -34,6 +38,10 @@
     margin-top: 2rem;
     position: relative;
 
+    @at-root .theme--dark & {
+      color: mc('blue', '500');
+    }
+
     &::after {
       content: '';
       position: absolute;
@@ -54,6 +62,10 @@
     color: mc('grey', '800');
     position: relative;
 
+    @at-root .theme--dark & {
+      color: mc('grey', '500');
+    }
+
     &::after {
       content: '';
       position: absolute;
@@ -62,6 +74,10 @@
       width: 100%;
       height: 1px;
       background: linear-gradient(to right, mc('grey', '700'), rgba(mc('grey', '700'), 0));
+
+      @at-root .theme--dark & {
+        background: linear-gradient(to right, mc('grey', '300'), rgba(mc('grey', '700'), 0));
+      }
     }
 
     & + h3 {
@@ -73,6 +89,10 @@
     padding: 8px 0 0 0;
     color: mc('grey', '700');
     position: relative;
+
+    @at-root .theme--dark & {
+      color: mc('grey', '600');
+    }
 
     &::after {
       content: '';
@@ -100,6 +120,10 @@
     height: 1px;
     border: none;
     background-color: mc('grey', '400');
+
+    @at-root .theme--dark & {
+      background-color: mc('grey', '700');
+    }
   }
 
   blockquote {
@@ -118,6 +142,13 @@
         background-color: mc('blue', '50');
         color: mc('blue', '800');
       }
+
+      @at-root .theme--dark & {
+        background-color: mc('blue', '900');
+        background-image: radial-gradient(ellipse at top, mc('blue', '900'), darken(mc('blue', '900'), 5%));
+        border-color: mc('blue', '500');
+        box-shadow: 0 0 2px 0 mc('grey', '900');
+      }
     }
     &.is-warning {
       background-color: mc('orange', '50');
@@ -128,6 +159,13 @@
       code {
         background-color: mc('orange', '50');
         color: mc('orange', '800');
+      }
+
+      @at-root .theme--dark & {
+        background-color: mc('orange', '900');
+        background-image: radial-gradient(ellipse at top, mc('orange', '900'), darken(mc('orange', '900'), 5%));
+        border-color: mc('orange', '500');
+        box-shadow: 0 0 2px 0 mc('grey', '900');
       }
     }
     &.is-danger {
@@ -140,6 +178,13 @@
         background-color: mc('red', '50');
         color: mc('red', '800');
       }
+
+      @at-root .theme--dark & {
+        background-color: mc('red', '900');
+        background-image: radial-gradient(ellipse at top, mc('red', '900'), darken(mc('red', '900'), 5%));
+        border-color: mc('red', '500');
+        box-shadow: 0 0 2px 0 mc('grey', '900');
+      }
     }
     &.is-success {
       background-color: mc('green', '50');
@@ -150,6 +195,13 @@
       code {
         background-color: mc('green', '50');
         color: mc('green', '800');
+      }
+
+      @at-root .theme--dark & {
+        background-color: mc('green', '900');
+        background-image: radial-gradient(ellipse at top, mc('green', '900'), darken(mc('green', '900'), 5%));
+        border-color: mc('green', '500');
+        box-shadow: 0 0 2px 0 mc('grey', '900');
       }
     }
   }
@@ -235,6 +287,11 @@
         font-size: .8rem;
         line-height: 1rem;
         text-align: center;
+
+        @at-root .theme--dark & {
+          background-color: mc('grey', '900');
+          border-color: mc('grey', '700');
+        }
       }
 
       &[checked] + label::before  {

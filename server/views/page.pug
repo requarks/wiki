@@ -14,7 +14,7 @@ block body
       updated-at=page.updatedAt
       author-name=page.authorName
       :author-id=page.authorId
-      :is-published=page.isPublished
+      :is-published=page.isPublished.toString()
       :toc=page.toc
       )
       template(slot='sidebar')

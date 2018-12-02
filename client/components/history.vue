@@ -108,11 +108,10 @@
 <script>
 import { Diff2Html } from 'diff2html'
 import { createPatch } from 'diff'
+import { get } from 'vuex-pathify'
 import _ from 'lodash'
 
 import historyTrailQuery from 'gql/history/history-trail-query.gql'
-
-/* global siteConfig */
 
 export default {
   props: {
@@ -145,7 +144,7 @@ export default {
     }
   },
   computed: {
-    darkMode() { return siteConfig.darkMode },
+    darkMode: get('site/dark'),
     diffs() {
       return createPatch(`/${this.path}`, this.sourceText, this.targetText)
     },

@@ -305,6 +305,10 @@ export default {
     height: calc(100vh - 112px);
     overflow: hidden;
 
+    @at-root .theme--dark & {
+      background-color: mc('grey', '900');
+    }
+
     @include until($tablet) {
       display: none;
     }

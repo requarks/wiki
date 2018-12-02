@@ -126,6 +126,8 @@ const init = {
     await global.WIKI.queue.quit()
     console.warn(chalk.yellow('--- Closing Server connections...'))
     global.WIKI.server.destroy(() => {
+      console.warn(chalk.yellow('--- Purging node modules cache...'))
+
       global.WIKI = {}
       Object.keys(require.cache).forEach(id => {
         if (/[/\\]server[/\\]/.test(id)) {
@@ -137,6 +139,12 @@ const init = {
           delete module.constructor._pathCache[cacheKey]
         }
       })
+
+      console.warn(chalk.yellow('--- Unregistering process listeners...'))
+
+      process.removeAllListeners('unhandledRejection')
+      process.removeAllListeners('uncaughtException')
+
       require('./server')
     })
   }

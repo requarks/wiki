@@ -22,12 +22,12 @@
             v-subheader {{ $t('admin:contribute.fundOurWork') }}
             .body-1.pl-3 {{ $t('admin:contribute.openCollective') }}
             v-card-actions.ml-2
-              v-btn(outline, color='primary', href='https://opencollective.com/wikijs')
+              v-btn(outline, :color='darkMode ? `blue lighten-1` : `primary`', href='https://opencollective.com/wikijs')
                 v-icon(left) local_atm
                 span {{ $t('admin:contribute.makeADonation') }}
             .body-1.mt-3.pl-3 {{ $t('admin:contribute.tshirts') }}
             v-card-actions.ml-2
-              v-btn(outline, color='primary', href='https://wikijs.threadless.com')
+              v-btn(outline, :color='darkMode ? `blue lighten-1` : `primary`', href='https://wikijs.threadless.com')
                 v-icon(left) shopping_cart
                 span {{ $t('admin:contribute.shop') }}
             v-divider.mt-3
@@ -94,6 +94,7 @@
 
 <script>
 import _ from 'lodash'
+import { get } from 'vuex-pathify'
 
 import groupsQuery from 'gql/admin/contribute/contribute-query-contributors.gql'
 
@@ -109,6 +110,7 @@ export default {
     }
   },
   computed: {
+    darkMode: get('site/dark'),
     sponsors() {
       return _.filter(this.contributors, ['tier', 'sponsors'])
     },

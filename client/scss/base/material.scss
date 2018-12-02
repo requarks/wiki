@@ -322,7 +322,7 @@ $material-colors: (
   )
 );
 
-@function material-color($color-name, $color-variant: '500') {
+@function mc($color-name, $color-variant: '500') {
   $color: map-get(map-get($material-colors, $color-name),$color-variant);
   @if $color {
 	@return $color;
@@ -330,35 +330,4 @@ $material-colors: (
 	// Libsass still doesn't seem to support @error
 	@warn "=> ERROR: COLOR NOT FOUND! <= | Your $color-name, $color-variant combination did not match any of the values in the $material-colors map.";
   }
-}
-
-@function mc($color-name, $color-variant: '500') {
-	@return material-color($color-name, $color-variant);
-}
-
-/**
- * Material Elevation
- */
-@mixin md-elevation-0 {
-  box-shadow: none !important;
-}
-
-@mixin md-elevation-1 {
-  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2) !important;
-}
-
-@mixin md-elevation-2 {
-  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
-}
-
-@mixin md-elevation-3 {
-  box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.3) !important;
-}
-
-@mixin md-elevation-4 {
-  box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.3) !important;
-}
-
-@mixin md-elevation-5 {
-  box-shadow: 0 16px 24px 2px rgba(0, 0, 0, 0.14), 0 6px 30px 5px rgba(0, 0, 0, 0.12), 0 8px 10px -5px rgba(0, 0, 0, 0.3) !important;
 }

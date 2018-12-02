@@ -1,7 +1,8 @@
 <template lang="pug">
-  v-app(v-scroll='upBtnScroll')
+  v-app(v-scroll='upBtnScroll', :dark='darkMode')
     nav-header
-    v-navigation-drawer.primary(
+    v-navigation-drawer(
+      :class='darkMode ? `grey darken-3` : `primary`'
       dark
       app
       clipped
@@ -12,12 +13,12 @@
       v-model='navShown'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar
+        nav-sidebar(:color='darkMode ? `grey darken-3` : `primary`')
           slot(name='sidebar')
 
     v-content
       template(v-if='path !== `home`')
-        v-toolbar(color='grey lighten-3', flat, dense)
+        v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
           v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
             v-icon(color='grey darken-2', left) menu
             span Navigation
@@ -36,19 +37,19 @@
         v-divider
       v-layout(row)
         v-flex(xs12, lg9, xl10)
-          v-toolbar(color='grey lighten-4', flat, :height='90')
+          v-toolbar(:color='darkMode ? `grey darken-4` : `grey lighten-4`', flat, :height='90')
             div
-              .headline.grey--text.text--darken-3 {{title}}
+              .headline.grey--text(:class='darkMode ? `text-lighten-2` : `text--darken-3`') {{title}}
               .caption.grey--text.text--darken-1 {{description}}
           v-divider
           .contents(ref='container')
             slot(name='contents')
 
         v-flex(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
-          v-toolbar(color='grey lighten-4', flat, :height='90')
+          v-toolbar(:color='darkMode ? `grey darken-4` : `grey lighten-4`', flat, :height='90')
             div
               .caption.grey--text.text--lighten-1 Last edited by
-              .body-2.grey--text.text--darken-3 {{ authorName }}
+              .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
               .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
             v-spacer
             v-tooltip(left)
@@ -57,8 +58,8 @@
               span Edit Page
           v-divider
           template(v-if='toc.length')
-            v-list.grey.lighten-3.pb-3(dense)
-              v-subheader.pl-4.primary--text Table of contents
+            v-list.grey.pb-3(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
+              v-subheader.pl-4(:class='darkMode ? `blue--text text--lighten-1` : `primary--text`') Table of contents
               template(v-for='(tocItem, tocIdx) in toc')
                 v-list-tile(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
                   v-icon(color='grey') arrow_right
@@ -70,7 +71,7 @@
                     v-list-tile-title.pl-3.caption {{tocSubItem.title}}
                   v-divider(inset, v-if='tocIdx < toc.length - 1')
             v-divider
-          v-list.grey.lighten-4(dense)
+          v-list.grey(dense, :class='darkMode ? `darken-3` : `lighten-4`')
             v-subheader.pl-4.yellow--text.text--darken-4 Rating
             .text-xs-center
               v-rating(
@@ -82,7 +83,7 @@
               )
               .pb-2.caption.grey--text 5 votes
           v-divider
-          v-list.grey.lighten-3(dense)
+          v-list.grey(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
             v-subheader.pl-4.teal--text Tags
             v-list-tile
               v-list-tile-avatar: v-icon(color='teal') label
@@ -96,7 +97,7 @@
               v-list-tile-avatar: v-icon(color='teal') label
               v-list-tile-title Planets
           v-divider
-          v-toolbar(color='grey lighten-4', flat, dense)
+          v-toolbar(:color='darkMode ? `grey darken-3` : `grey lighten-4`', flat, dense)
             v-spacer
             v-tooltip(bottom)
               v-btn(icon, slot='activator'): v-icon(color='grey') bookmark
@@ -117,6 +118,7 @@
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
 import Prism from '@/libs/prism/prism.js'
+import { get } from 'vuex-pathify'
 
 export default {
   components: {
@@ -205,6 +207,7 @@ export default {
     }
   },
   computed: {
+    darkMode: get('site/dark'),
     navShown: {
       get() { return this.navOpen || this.$vuetify.breakpoint.smAndUp },
       set(val) { this.navOpen = val }

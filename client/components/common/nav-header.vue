@@ -19,7 +19,7 @@
     v-menu(open-on-hover, offset-y, bottom, left, min-width='250')
       v-toolbar-side-icon.btn-animate-app(slot='activator')
         v-icon view_module
-      v-list(dense, :light='!$vuetify.dark').py-0
+      v-list(dense, :light='!$vuetify.dark', :dark='$vuetify.dark', :class='$vuetify.dark ? `grey darken-4` : ``').py-0
         v-list-tile(avatar, href='/')
           v-list-tile-avatar: v-icon(color='blue') home
           v-list-tile-content Home

@@ -238,13 +238,13 @@ module.exports = class Page extends Model {
       creatorId: page.creatorId,
       creatorName: page.creatorName,
       description: page.description,
-      isPrivate: page.isPrivate === 1,
-      isPublished: page.isPublished === 1,
+      isPrivate: page.isPrivate === 1 || page.isPrivate === true,
+      isPublished: page.isPublished === 1 || page.isPublished === true,
       publishEndDate: page.publishEndDate,
       publishStartDate: page.publishStartDate,
       render: page.render,
       title: page.title,
-      toc: page.toc,
+      toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
       updatedAt: page.updatedAt
     }))
   }

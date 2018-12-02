@@ -25,3 +25,30 @@ html {
     border-radius: #{$i}px;
   }
 }
+
+@for $i from 1 through 5 {
+  .grey.darken-2-d#{$i} {
+    background-color: darken(mc('grey', '700'), percentage($i/100)) !important;
+    border-color: darken(mc('grey', '700'), percentage($i/100)) !important;
+  }
+  .grey.darken-2-l#{$i} {
+    background-color: lighten(mc('grey', '700'), percentage($i/100)) !important;
+    border-color: lighten(mc('grey', '700'), percentage($i/100)) !important;
+  }
+  .grey.darken-3-d#{$i} {
+    background-color: darken(mc('grey', '800'), percentage($i/100)) !important;
+    border-color: darken(mc('grey', '800'), percentage($i/100)) !important;
+  }
+  .grey.darken-3-l#{$i} {
+    background-color: lighten(mc('grey', '800'), percentage($i/100)) !important;
+    border-color: lighten(mc('grey', '800'), percentage($i/100)) !important;
+  }
+  .grey.darken-4-d#{$i} {
+    background-color: darken(mc('grey', '900'), percentage($i/100)) !important;
+    border-color: darken(mc('grey', '900'), percentage($i/100)) !important;
+  }
+  .grey.darken-4-l#{$i} {
+    background-color: lighten(mc('grey', '900'), percentage($i/100)) !important;
+    border-color: lighten(mc('grey', '900'), percentage($i/100)) !important;
+  }
+}

@@ -9,7 +9,7 @@
         v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Normal View
       v-card(tile)
         v-card-text
-          v-card.grey.lighten-4.radius-7(flat)
+          v-card.grey.radius-7(flat, :class='darkMode ? `darken-4` : `lighten-4`')
             v-card-text
               pre
                 code
@@ -19,7 +19,7 @@
 </template>
 
 <script>
-/* global siteConfig */
+import { get } from 'vuex-pathify'
 
 export default {
   props: {
@@ -40,7 +40,7 @@ export default {
     return {}
   },
   computed: {
-    darkMode() { return siteConfig.darkMode }
+    darkMode: get('site/dark')
   },
   created () {
     this.$store.commit('page/SET_ID', this.id)
@@ -66,6 +66,11 @@ export default {
     font-family: 'Source Code Pro', sans-serif;
     font-weight: 400;
     font-size: 1rem;
+
+    @at-root .theme--dark.source pre > code {
+      background-color: mc('grey', '900');
+      color: mc('grey', '400');
+    }
 
     &::before {
       display: none;

@@ -1,5 +1,5 @@
 <template lang="pug">
-  .editor
+  v-app.editor(:dark='darkMode')
     nav-header(dense)
       template(slot='actions')
         v-btn(
@@ -159,6 +159,7 @@ export default {
     }
   },
   computed: {
+    darkMode: get('site/dark'),
     mode: get('editor/mode'),
     notification: get('notification'),
     notificationState: sync('notification@isActive')

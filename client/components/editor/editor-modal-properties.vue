@@ -44,7 +44,7 @@
           v-model='description'
           )
       v-divider
-      v-card-text.grey.lighten-5
+      v-card-text.grey(:class='darkMode ? `darken-3-d3` : `lighten-5`')
         v-subheader.pl-0 Path &amp; Categorization
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
@@ -84,7 +84,7 @@
           persistent-hint
           )
       v-divider
-      v-card-text.pb-5.grey.lighten-4
+      v-card-text.pb-5.grey(:class='darkMode ? `darken-3-d5` : `lighten-4`')
         v-subheader.pl-0 Publishing State
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
@@ -206,6 +206,7 @@ export default {
     }
   },
   computed: {
+    darkMode: get('site/dark'),
     mode: get('editor/mode'),
     title: sync('page/title'),
     description: sync('page/description'),
