@@ -87,29 +87,46 @@
       icon
       )
       v-icon(color='grey') search
-    v-tooltip(bottom)
+    v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
       v-btn.btn-animate-rotate(icon, href='/a', slot='activator')
         v-icon(color='grey') settings
       span Admin
     v-menu(offset-y, min-width='300')
       v-tooltip(bottom, slot='activator')
-        v-btn.btn-animate-grow(icon, slot='activator', outline, color='grey darken-3')
+        v-btn.btn-animate-grow(icon, slot='activator', outline, :color='isAuthenticated ? `blue` : `grey darken-3`')
           v-icon(color='grey') account_circle
         span Account
-      v-list.py-0(:light='!$vuetify.dark')
-        v-list-tile.py-3(avatar)
-          v-list-tile-avatar
-            v-avatar.red(:size='40'): span.white--text.subheading JD
-          v-list-tile-content
-            v-list-tile-title John Doe
-            v-list-tile-sub-title john.doe@example.com
-        v-divider.my-0
-        v-list-tile(href='/p')
-          v-list-tile-action: v-icon(color='red') person
-          v-list-tile-title Profile
-        v-list-tile(@click='logout')
-          v-list-tile-action: v-icon(color='red') exit_to_app
-          v-list-tile-title Logout
+      v-list.py-0
+        template(v-if='isAuthenticated')
+          v-list-tile.py-3.grey(avatar, :class='$vuetify.dark ? `darken-4-l5` : `lighten-5`')
+            v-list-tile-avatar
+              v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
+                span.white--text.subheading {{picture.initials}}
+              v-avatar(v-else-if='picture.kind === `image`', :size='40')
+                v-img(:src='picture.url')
+            v-list-tile-content
+              v-list-tile-title {{name}}
+              v-list-tile-sub-title {{email}}
+          v-divider.my-0
+          v-list-tile(href='/w')
+            v-list-tile-action: v-icon(color='blue') web
+            v-list-tile-title My Wiki
+          v-divider.my-0
+          v-list-tile(href='/p')
+            v-list-tile-action: v-icon(color='blue') person
+            v-list-tile-title Profile
+          v-divider.my-0
+          v-list-tile(@click='logout')
+            v-list-tile-action: v-icon(color='red') exit_to_app
+            v-list-tile-title Logout
+        template(v-else)
+          v-list-tile(href='/login')
+            v-list-tile-action: v-icon(color='grey') person
+            v-list-tile-title Login
+          v-divider.my-0
+          v-list-tile(href='/register')
+            v-list-tile-action: v-icon(color='grey') person_add
+            v-list-tile-title Register
 
     page-selector(mode='create', v-model='newPageModal')
 </template>
@@ -143,7 +160,33 @@ export default {
     isLoading: get('isLoading'),
     title: get('site/title'),
     path: get('page/path'),
-    mode: get('page/mode')
+    mode: get('page/mode'),
+    name: get('user/name'),
+    email: get('user/email'),
+    pictureUrl: get('user/pictureUrl'),
+    isAuthenticated: get('user/authenticated'),
+    permissions: get('user/permissions'),
+    picture() {
+      if (this.pictureUrl && this.pictureUrl.length > 1) {
+        return {
+          kind: 'image',
+          url: this.pictureUrl
+        }
+      } else {
+        const nameParts = this.name.toUpperCase().split(' ')
+        let initials = _.head(nameParts).charAt(0)
+        if (nameParts.length > 1) {
+          initials += _.last(nameParts).charAt(0)
+        }
+        return {
+          kind: 'initials',
+          initials
+        }
+      }
+    },
+    isAdmin() {
+      return _.includes(this.permissions, 'manage:system')
+    }
   },
   created() {
     if (this.hideSearch || this.dense || this.$vuetify.breakpoint.smAndDown) {

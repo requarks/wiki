@@ -25,6 +25,7 @@ module.exports = () => {
   const _ = require('lodash')
   const cfgHelper = require('./helpers/config')
   const crypto = Promise.promisifyAll(require('crypto'))
+  const pem2jwk = require('pem-jwk').pem2jwk
 
   // ----------------------------------------
   // Define Express App
@@ -90,6 +91,7 @@ module.exports = () => {
       }
 
       // Create directory structure
+      WIKI.logger.info('Creating data directories...')
       const dataPath = path.join(process.cwd(), 'data')
       await fs.ensureDir(dataPath)
       await fs.ensureDir(path.join(dataPath, 'cache'))
@@ -110,6 +112,26 @@ module.exports = () => {
       _.set(WIKI.config, 'theming.darkMode', false)
       _.set(WIKI.config, 'title', 'Wiki.js')
 
+      // Generate certificates
+      WIKI.logger.info('Generating certificates...')
+      const certs = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: {
+          type: 'pkcs1',
+          format: 'pem'
+        },
+        privateKeyEncoding: {
+          type: 'pkcs1',
+          format: 'pem',
+          cipher: 'aes-256-cbc',
+          passphrase: WIKI.config.sessionSecret
+        }
+      })
+
+      _.set(WIKI.config, 'certs.jwk', pem2jwk(certs.publicKey))
+      _.set(WIKI.config, 'certs.public', certs.publicKey)
+      _.set(WIKI.config, 'certs.private', certs.privateKey)
+
       // Save config to DB
       WIKI.logger.info('Persisting config to DB...')
       await WIKI.configSvc.saveToDb([
@@ -120,7 +142,8 @@ module.exports = () => {
         'sessionSecret',
         'telemetry',
         'theming',
-        'title'
+        'title',
+        'certs'
       ])
 
       // Create default locale

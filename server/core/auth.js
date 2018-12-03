@@ -45,7 +45,7 @@ module.exports = {
       // Load JWT
       passport.use('jwt', new passportJWT.Strategy({
         jwtFromRequest: securityHelper.extractJWT,
-        secretOrKey: WIKI.config.sessionSecret,
+        secretOrKey: WIKI.config.certs.public,
         audience: 'urn:wiki.js', // TODO: use value from admin
         issuer: 'urn:wiki.js'
       }, (jwtPayload, cb) => {

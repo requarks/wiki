@@ -155,6 +155,12 @@ export default {
 
 <style lang='scss'>
 
+.admin {
+  &.theme--light {
+    background-color: lighten(mc('grey', '200'), 2%);
+  }
+}
+
 .admin-router {
   &-enter-active, &-leave-active {
     transition: opacity .25s ease;
@@ -173,7 +179,7 @@ export default {
     background-color: rgba(mc('theme', 'primary'), .1);
 
     .v-icon {
-      color: mc('theme', 'primary')
+      color: mc('theme', 'primary');
     }
   }
 }
@@ -181,6 +187,11 @@ export default {
 .theme--dark {
   .admin-sidebar .v-list__tile--active {
     background-color: rgba(0,0,0, .2);
+    color: mc('blue', '500') !important;
+
+    .v-icon {
+      color: mc('blue', '500');
+    }
   }
 }
 

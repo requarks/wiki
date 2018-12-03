@@ -15,7 +15,7 @@
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-form
-                v-card
+                v-card.wiki-form
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title
                       .subheading {{ $t('admin:general.siteInfo') }}
@@ -23,7 +23,6 @@
                   .px-3.pb-3
                     v-text-field(
                       outline
-                      background-color='grey lighten-2'
                       label='Site Title'
                       required
                       :counter='50'
@@ -35,21 +34,18 @@
                   .px-3.pb-3
                     v-text-field(
                       outline
-                      background-color='grey lighten-2'
                       label='Site Description'
                       :counter='255'
                       prepend-icon='public'
                       )
                     v-text-field(
                       outline
-                      background-color='grey lighten-2'
                       label='Site Keywords'
                       :counter='255'
                       prepend-icon='public'
                       )
                     v-select(
                       outline
-                      background-color='grey lighten-2'
                       label='Meta Robots'
                       chips
                       tags
@@ -62,7 +58,6 @@
                   .px-3.pb-3
                     v-text-field(
                       outline
-                      background-color='grey lighten-2'
                       label='Google Analytics ID'
                       :counter='255'
                       prepend-icon='public'
@@ -74,7 +69,6 @@
                   .px-3.pb-3
                     v-text-field(
                       outline
-                      background-color='grey lighten-2'
                       label='Company / Organization Name'
                       v-model='company'
                       :counter='255'
@@ -83,7 +77,7 @@
                       hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
                       )
             v-flex(lg6 xs12)
-              v-card
+              v-card.wiki-form
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:general.siteBranding') }}
@@ -116,7 +110,7 @@
                     hint='Uncheck this box if you don\'t want Henry, Wiki.js mascot, to be displayed on client-facing pages.'
                     )
 
-              v-card.mt-3
+              v-card.wiki-form.mt-3
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Features
@@ -141,7 +135,7 @@
 
 <script>
 
-import { sync } from 'vuex-pathify'
+import { get, sync } from 'vuex-pathify'
 
 export default {
   data() {
@@ -155,6 +149,7 @@ export default {
     }
   },
   computed: {
+    darkMode: get('site/dark'),
     siteTitle: sync('site/title'),
     company: sync('site/company')
   },

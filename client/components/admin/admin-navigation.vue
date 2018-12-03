@@ -61,40 +61,51 @@
                         v-list-tile-avatar: v-icon power_input
                         v-list-tile-title {{$t('navigation.divider')}}
             v-flex
-              v-card(v-if='current.kind === "link"')
+              v-card.wiki-form(v-if='current.kind === "link"')
                 v-toolbar(dense, color='blue', flat, dark)
                   .subheading {{$t('navigation.edit', { kind: $t('navigation.link') })}}
                 v-card-text
                   v-text-field(
                     outline
-                    background-color='grey lighten-2'
                     :label='$t("navigation.label")'
                     prepend-icon='title'
                     v-model='current.label'
                   )
                   v-text-field(
                     outline
-                    background-color='grey lighten-2'
                     :label='$t("navigation.icon")'
                     prepend-icon='casino'
                     v-model='current.icon'
                   )
                   v-select(
                     outline
-                    background-color='grey lighten-2'
                     :label='$t("navigation.targetType")'
                     prepend-icon='near_me'
                     :items='navTypes'
                     v-model='current.targetType'
                   )
                   v-text-field(
-                    v-if='current.targetType === "external"'
+                    v-if='current.targetType === `external`'
                     outline
-                    background-color='grey lighten-2'
                     :label='$t("navigation.target")'
                     prepend-icon='near_me'
                     v-model='current.target'
                   )
+                  v-btn(
+                    v-else-if='current.targetType === "page"'
+                    color='indigo'
+                    dark
+                    )
+                    v-icon(left) search
+                    span Select Page...
+                  v-text-field(
+                    v-else-if='current.targetType === `search`'
+                    outline
+                    :label='$t("navigation.navType.searchQuery")'
+                    prepend-icon='search'
+                    v-model='current.target'
+                  )
+
                 v-card-chin
                   v-spacer
                   v-btn(color='red', outline, @click='deleteItem(current)')

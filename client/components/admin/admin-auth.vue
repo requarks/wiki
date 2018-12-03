@@ -67,7 +67,7 @@
                         )
 
             v-tab-item(v-for='(strategy, n) in activeStrategies', :key='strategy.key', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
+              v-card.wiki-form.pa-3(flat, tile)
                 v-form
                   .authlogo
                     img(:src='strategy.logo', :alt='strategy.title')

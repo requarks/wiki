@@ -253,7 +253,11 @@ module.exports = class User extends Model {
         localeCode: user.localeCode,
         defaultEditor: user.defaultEditor,
         permissions: ['manage:system']
-      }, WIKI.config.sessionSecret, {
+      }, {
+        key: WIKI.config.certs.private,
+        passphrase: WIKI.config.sessionSecret
+      }, {
+        algorithm: 'RS256',
         expiresIn: '30m',
         audience: 'urn:wiki.js', // TODO: use value from admin
         issuer: 'urn:wiki.js'

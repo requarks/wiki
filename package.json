@@ -136,6 +136,7 @@
     "passport-slack": "0.0.7",
     "passport-twitch": "1.0.3",
     "passport-windowslive": "1.0.2",
+    "pem-jwk": "1.5.1",
     "pg": "7.6.1",
     "pg-hstore": "2.3.2",
     "pm2": "3.2.2",

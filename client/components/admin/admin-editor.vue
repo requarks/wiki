@@ -27,7 +27,7 @@
                   v-radio-group(v-model='selectedEditor')
                     v-radio(v-for='(editor, n) in editors', :key='n', :label='editor.text', :value='editor.value', color='primary')
             v-tab-item(key='code', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
+              v-card.wiki-form.pa-3(flat, tile)
                 v-form
                   v-subheader Editor Configuration
                   .body-1.ml-3 This editor has no configuration options you can modify.

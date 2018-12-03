@@ -14,7 +14,7 @@
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
-              v-card
+              v-card.wiki-form
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Theme
@@ -43,7 +43,7 @@
                     persistent-hint
                     hint='Not recommended for accessibility. May not be supported by all themes.'
                     )
-              v-card.mt-3
+              v-card.wiki-form.mt-3
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Code Injection

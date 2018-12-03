@@ -83,20 +83,15 @@
               )
               .pb-2.caption.grey--text 5 votes
           v-divider
-          v-list.grey(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
-            v-subheader.pl-4.teal--text Tags
-            v-list-tile
-              v-list-tile-avatar: v-icon(color='teal') label
-              v-list-tile-title Astrophysics
-            v-divider(inset)
-            v-list-tile
-              v-list-tile-avatar: v-icon(color='teal') label
-              v-list-tile-title Space
-            v-divider(inset)
-            v-list-tile
-              v-list-tile-avatar: v-icon(color='teal') label
-              v-list-tile-title Planets
-          v-divider
+          template(v-if='tags.length')
+            v-list.grey(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
+              v-subheader.pl-4.teal--text Tags
+              template(v-for='(tag, idx) in tags')
+                v-list-tile(:href='`/t/` + tag.slug')
+                  v-list-tile-avatar: v-icon(color='teal') label
+                  v-list-tile-title {{tag.title}}
+                v-divider(inset, v-if='idx < tags.length - 1')
+            v-divider
           v-toolbar(:color='darkMode ? `grey darken-3` : `grey lighten-4`', flat, dense)
             v-spacer
             v-tooltip(bottom)

@@ -60,7 +60,7 @@
                 v-divider.my-0(v-if='n < core.children.length - 1')
 
       v-flex(lg9, xs12)
-        v-card
+        v-card.wiki-form
           v-toolbar(
             color='grey darken-1'
             dark
@@ -84,7 +84,6 @@
               v-select(
                 v-if='cfg.value.type === "string" && cfg.value.enum'
                 outline
-                background-color='grey lighten-2'
                 :items='cfg.value.enum'
                 :key='cfg.key'
                 :label='cfg.value.title'
@@ -105,7 +104,6 @@
               v-text-field(
                 v-else
                 outline
-                background-color='grey lighten-2'
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'

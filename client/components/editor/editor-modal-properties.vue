@@ -25,7 +25,7 @@
           v-list-tile
             v-list-tile-avatar: v-icon delete
             v-list-tile-title Delete Page
-    v-card(tile)
+    v-card.wiki-form(tile)
       v-card-text
         v-subheader.pl-0 Page Info
         v-text-field(

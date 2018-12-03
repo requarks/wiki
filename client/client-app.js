@@ -48,6 +48,8 @@ window.Hammer = Hammer
 
 moment.locale(siteConfig.lang)
 
+store.commit('user/REFRESH_AUTH')
+
 // ====================================
 // Initialize Apollo Client (GraphQL)
 // ====================================

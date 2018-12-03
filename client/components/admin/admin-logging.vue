@@ -37,7 +37,7 @@
                   )
 
             v-tab-item(v-for='(logger, n) in activeLoggers', :key='logger.key', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
+              v-card.wiki-form.pa-3(flat, tile)
                 v-form
                   .loggerlogo
                     img(:src='logger.logo', :alt='logger.title')

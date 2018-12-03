@@ -1,7 +1,14 @@
 <template lang="pug">
   .criterias-item
     //- Type
-    v-select(solo, :items='filteredCriteriaTypes', v-model='item.type', placeholder='Rule Type', ref='typeSelect')
+    v-select(
+      solo
+      :items='filteredCriteriaTypes'
+      v-model='item.type'
+      placeholder='Rule Type'
+      ref='typeSelect'
+      hide-details
+      )
       template(slot='item', slot-scope='data')
         v-list-tile-avatar
           v-avatar(:color='data.item.color', size='40', tile): v-icon(color='white') {{ data.item.icon }}
@@ -10,7 +17,15 @@
           v-list-tile-sub-title.caption(v-html='data.item.description')
 
     //- Operator
-    v-select(solo, :items='filteredCriteriaOperators', v-model='item.operator', placeholder='Operator', :disabled='!item.type', :class='!item.type ? "blue-grey lighten-4" : ""')
+    v-select(
+      solo
+      :items='filteredCriteriaOperators'
+      v-model='item.operator'
+      placeholder='Operator'
+      :disabled='!item.type'
+      :class='!item.type ? "blue-grey lighten-4" : ""'
+      hide-details
+      )
       template(slot='item', slot-scope='data')
         v-list-tile-avatar
           v-avatar.white--text(color='blue', size='30', tile) {{ data.item.icon }}
@@ -18,12 +33,58 @@
           v-list-tile-title(v-html='data.item.text')
 
     //- Value
-    v-select(v-if='item.type === "country"', solo, :items='countries', v-model='item.value', placeholder='Countries...', multiple, item-text='name', item-value='code')
-    v-text-field(v-else-if='item.type === "path"', solo, v-model='item.value', label='Path (e.g. /section)')
-    v-text-field(v-else-if='item.type === "date"', solo, @click.native.stop='dateActivator = true', v-model='item.value', label='YYYY-MM-DD', readonly)
-    v-text-field(v-else-if='item.type === "time"', solo, @click.native.stop='timeActivator = true', v-model='item.value', label='HH:MM', readonly)
-    v-select(v-else-if='item.type === "group"', solo, :items='groups', v-model='item.value', placeholder='Group...', item-text='name', item-value='id')
-    v-text-field.blue-grey.lighten-4(v-else, solo, disabled)
+    v-select(
+      v-if='item.type === "country"'
+      solo
+      :items='countries'
+      v-model='item.value'
+      placeholder='Countries...'
+      multiple
+      item-text='name'
+      item-value='code'
+      hide-details
+      )
+    v-text-field(
+      v-else-if='item.type === "path"'
+      solo
+      v-model='item.value'
+      label='Path (e.g. /section)'
+      hide-details
+      )
+    v-text-field(
+      v-else-if='item.type === "date"'
+      solo
+      @click.native.stop='dateActivator = true'
+      v-model='item.value'
+      label='YYYY-MM-DD'
+      readonly
+      hide-details
+      )
+    v-text-field(
+      v-else-if='item.type === "time"'
+      solo
+      @click.native.stop='timeActivator = true'
+      v-model='item.value'
+      label='HH:MM'
+      readonly
+      hide-details
+      )
+    v-select(
+      v-else-if='item.type === "group"'
+      solo
+      :items='groups'
+      v-model='item.value'
+      placeholder='Group...'
+      item-text='name'
+      item-value='id'
+      hide-details
+      )
+    v-text-field.blue-grey.lighten-4(
+      v-else
+      solo
+      disabled
+      hide-details
+      )
 
     v-dialog(lazy, v-model='dateActivator', width='290px', ref='dateDialog')
       v-date-picker(v-model='item.value', scrollable, color='primary')

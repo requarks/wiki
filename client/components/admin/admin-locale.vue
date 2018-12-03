@@ -14,14 +14,13 @@
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
-              v-card
+              v-card.wiki-form
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:locale.settings') }}
                 v-card-text
                   v-select(
                     outline
-                    background-color='grey lighten-2'
                     :items='installedLocales'
                     prepend-icon='language'
                     v-model='selectedLocale'
@@ -49,7 +48,7 @@
                     :hint='namespacing ? $t("admin:locale.autoUpdate.hintWithNS") : $t("admin:locale.autoUpdate.hint")'
                   )
 
-              v-card.mt-3
+              v-card.wiki-form.mt-3
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:locale.namespacing') }}
@@ -71,6 +70,7 @@
                     .caption.grey--text {{ $t('admin:locale.namespacingPrefixWarning.subtitle') }}
                   v-divider.mt-3.mb-4
                   v-select(
+                    outline
                     :disabled='!namespacing'
                     :items='installedLocales'
                     prepend-icon='language'
