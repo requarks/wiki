@@ -1,7 +1,7 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:10-alpine AS assets
+FROM node:10.14-alpine AS assets
 
 RUN apk update && \
     apk add yarn g++ make python --no-cache && \
@@ -25,7 +25,7 @@ RUN yarn --production
 # ===============
 # --- Release ---
 # ===============
-FROM node:10-alpine
+FROM node:10.14-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk update && \
@@ -42,6 +42,7 @@ COPY --from=assets /var/wiki/node_modules ./node_modules
 COPY ./server ./server
 COPY --from=assets /var/wiki/server/views ./server/views
 COPY ./dev/build/config.yml ./config.yml
+COPY ./dev/docker/wait.sh ./wait.sh
 COPY ./package.json ./package.json
 COPY ./LICENSE ./LICENSE
 

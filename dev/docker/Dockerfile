@@ -1,7 +1,7 @@
 # -- DEV DOCKERFILE --
 # -- DO NOT USE IN PRODUCTION! --
 
-FROM node:10-alpine
+FROM node:10.14-alpine
 LABEL maintainer "requarks.io"
 
 RUN apk update && \
@@ -11,6 +11,7 @@ RUN apk update && \
 WORKDIR /var/wiki
 COPY package.json .
 RUN yarn --silent
+COPY ./dev/docker/init.sh ./init.sh
 
 ENV dockerdev 1
 

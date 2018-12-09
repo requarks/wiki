@@ -11,10 +11,10 @@
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
-    "docker:dev:up": "docker-compose up -d && docker-compose exec wiki yarn dev",
-    "docker:dev:down": "docker-compose down",
-    "docker:dev:rebuild": "docker-compose build",
-    "docker:build": "docker-compose run wiki yarn build && docker-compose down"
+    "docker:dev:up": "docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . up -d && docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec wiki yarn dev",
+    "docker:dev:down": "docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down",
+    "docker:dev:rebuild": "docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . build --no-cache --force-rm",
+    "docker:build": "docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . run wiki yarn build && docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down"
   },
   "bin": {
     "wiki": "wiki.js"

@@ -42,6 +42,7 @@ services:
     volumes:
       - .:/var/wiki
       - /var/wiki/node_modules
+    command: ["sh", "./dev/docker/init.sh"]
 
 networks:
   wikinet:

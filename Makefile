@@ -23,18 +23,18 @@ test: ## Run code linting tests
 	pug-lint server/views && jest
 
 docker-dev-up: ## Run dockerized dev environment
-	docker-compose up -d
-	docker-compose exec wiki yarn dev
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . up -d
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec wiki yarn dev
 
 docker-dev-down: ## Shutdown dockerized dev environment
-	docker-compose down
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down
 
 docker-dev-rebuild: ## Rebuild dockerized dev image
-	docker-compose build
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . build --no-cache --force-rm
 
 docker-build: ## Run assets generation build in docker
-	docker-compose run wiki yarn build
-	docker-compose down
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . run wiki yarn build
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down
 
 help: ## Display help
 	@echo ''
