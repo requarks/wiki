@@ -1,7 +1,9 @@
 <template lang='pug'>
-  v-bottom-sheet(
+  v-dialog(
     v-model='isShown'
-    inset
+    persistent
+    lazy
+    width='1100'
     )
     .dialog-header
       v-icon(color='white') sort_by_alpha
@@ -14,17 +16,6 @@
         )
         v-icon(left) check
         span {{ $t('common:actions.ok') }}
-      v-menu
-        v-btn.is-icon(
-          slot='activator'
-          outline
-          dark
-          )
-          v-icon more_horiz
-        v-list
-          v-list-tile
-            v-list-tile-avatar: v-icon delete
-            v-list-tile-title Delete Page
     v-card.wiki-form(tile)
       v-card-text
         v-subheader.pl-0 Page Info
@@ -42,6 +33,8 @@
           label='Short Description'
           counter='255'
           v-model='description'
+          persistent-hint
+          hint='Shown below the title'
           )
       v-divider
       v-card-text.grey(:class='darkMode ? `darken-3-d3` : `lighten-5`')
@@ -93,7 +86,7 @@
                 label='Published'
                 v-model='isPublished'
                 color='primary'
-                hint='Unpublished pages can still be seen by users having write permissions.'
+                hint='Unpublished pages can still be seen by users having write permissions on this page.'
                 persistent-hint
                 )
             v-flex(xs12, md4)
@@ -191,9 +184,14 @@ import _ from 'lodash'
 import { sync, get } from 'vuex-pathify'
 
 export default {
+  props: {
+    value: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
-      isShown: false,
       isPublishStartShown: false,
       isPublishEndShown: false,
       namespaces: ['en'],
@@ -206,6 +204,10 @@ export default {
     }
   },
   computed: {
+    isShown: {
+      get() { return this.value },
+      set(val) { this.$emit('input', val) }
+    },
     darkMode: get('site/dark'),
     mode: get('editor/mode'),
     title: sync('page/title'),
@@ -217,17 +219,19 @@ export default {
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate')
   },
-  mounted() {
-    this.isShown = true
-    _.delay(() => {
-      this.$refs.iptTitle.focus()
-      // this.$tours['editorPropertiesTour'].start()
-    }, 500)
+  watch: {
+    value(newValue, oldValue) {
+      if(newValue) {
+        _.delay(() => {
+          this.$refs.iptTitle.focus()
+          // this.$tours['editorPropertiesTour'].start()
+        }, 500)
+      }
+    }
   },
   methods: {
     close() {
       this.isShown = false
-      this.$parent.$parent.closeModal()
     },
     showPathSelector() {
       this.$store.commit('showNotification', {

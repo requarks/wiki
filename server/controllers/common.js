@@ -98,7 +98,7 @@ router.get('/*', async (req, res, next) => {
   } else if (pageArgs.path === 'home') {
     res.render('welcome')
   } else {
-    res.render('new', { pagePath: req.path })
+    res.status(404).render('new', { pagePath: req.path })
   }
 })
 

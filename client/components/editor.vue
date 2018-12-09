@@ -10,15 +10,16 @@
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') check
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
-        v-btn.mx-0(
+        v-btn(
           outline
           color='blue'
-          @click.native.stop='openModal(`properties`)'
-          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          @click.native.stop='openPropsModal'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": mode === `create`, "ml-0": mode !== `create` }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
         v-btn(
+          v-if='mode === `create`'
           outline
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
@@ -28,7 +29,7 @@
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
     v-content
       component(:is='currentEditor')
-      component(:is='currentModal')
+      editor-modal-properties(v-model='dialogProps')
       v-dialog(v-model='dialogProgress', persistent, max-width='350')
         v-card(color='blue darken-3', dark)
           v-card-text.text-xs-center.py-4
@@ -54,6 +55,7 @@
                     v-card-text.text-xs-center(@click='selectEditor("code")')
                       v-icon(large, color='primary') code
                       .body-2.mt-2 Code
+                      .caption.grey--text Raw HTML
                 v-flex(xs4)
                   v-card.radius-7(
                     hover
@@ -63,6 +65,7 @@
                     v-card-text.text-xs-center(@click='selectEditor("markdown")')
                       v-icon(large, color='primary') list_alt
                       .body-2.mt-2 Markdown
+                      .caption.grey--text Default
                 v-flex(xs4)
                   v-card.radius-7.grey(
                     hover
@@ -72,7 +75,8 @@
                     v-card-text.text-xs-center(@click='selectEditor("wysiwyg")')
                       v-icon(large, color='grey darken-1') web
                       .body-2.mt-2.grey--text.text--darken-2 Visual Builder
-            .caption.blue--text.text--lighten-2 This cannot be changed later.
+                      .caption.grey--text.text--darken-1 Drag-n-drop
+            .caption.blue--text.text--lighten-2 This cannot be changed once the page is created.
 
     v-snackbar(
       :color='notification.style'
@@ -131,7 +135,7 @@ export default {
     },
     isPublished: {
       type: Boolean,
-      default: false
+      default: true
     },
     initEditor: {
       type: String,
@@ -152,8 +156,8 @@ export default {
   },
   data() {
     return {
-      currentModal: '',
       currentEditor: '',
+      dialogProps: false,
       dialogProgress: false,
       dialogEditorSelector: false
     }
@@ -192,17 +196,12 @@ export default {
       this.dialogEditorSelector = false
       if (this.mode === 'create') {
         _.delay(() => {
-          this.openModal('properties')
+          this.dialogProps = true
         }, 500)
       }
     },
-    openModal(name) {
-      this.currentModal = `editorModal${_.startCase(name)}`
-    },
-    closeModal() {
-      _.delay(() => {
-        this.currentModal = ``
-      }, 500)
+    openPropsModal(name) {
+      this.dialogProps = true
     },
     showProgressDialog(textKey) {
       this.dialogProgress = true
@@ -298,7 +297,7 @@ export default {
 <style lang='scss'>
 
   .editor {
-    background-color: mc('grey', '900');
+    background-color: mc('grey', '900') !important;
     min-height: 100vh;
   }
 
