@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') people
+          img(src='/svg/icon-people.svg', alt='Groups', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Groups
             .subheading.grey--text Manage groups and their permissions

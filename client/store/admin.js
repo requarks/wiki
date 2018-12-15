@@ -3,8 +3,12 @@ import { make } from 'vuex-pathify'
 /* global siteConfig */
 
 const state = {
-  theme: {
-    dark: siteConfig.darkMode
+  info: {
+    currentVersion: 'n/a',
+    latestVersion: 'n/a',
+    groupsTotal: 0,
+    pagesTotal: 0,
+    usersTotal: 0
   }
 }
 

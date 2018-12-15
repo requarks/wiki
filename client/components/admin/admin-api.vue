@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') call_split
+          img(src='/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 API
             .subheading.grey--text Manage keys to access the API

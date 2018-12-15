@@ -23,7 +23,7 @@
             v-list-tile-title {{ $t('admin:pages.title') }}
             v-list-tile-action
               v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
-                .caption.grey--text 123
+                .caption.grey--text {{ info.pagesTotal }}
           v-list-tile(to='/theme')
             v-list-tile-avatar: v-icon palette
             v-list-tile-title {{ $t('admin:theme.title') }}
@@ -32,12 +32,15 @@
           v-list-tile(to='/groups')
             v-list-tile-avatar: v-icon people
             v-list-tile-title {{ $t('admin:groups.title') }}
+            v-list-tile-action
+              v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                .caption.grey--text {{ info.groupsTotal }}
           v-list-tile(to='/users')
             v-list-tile-avatar: v-icon perm_identity
             v-list-tile-title {{ $t('admin:users.title') }}
             v-list-tile-action
               v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
-                .caption.grey--text 1
+                .caption.grey--text {{ info.usersTotal }}
           v-divider.my-2
           v-subheader.pl-4 {{ $t('admin:nav.modules') }}
           v-list-tile(to='/auth')
@@ -86,7 +89,15 @@
 
 <script>
 import VueRouter from 'vue-router'
-import { get } from 'vuex-pathify'
+import { get, sync } from 'vuex-pathify'
+
+import statsQuery from 'gql/admin/dashboard/dashboard-query-stats.gql'
+
+import adminStore from '@/store/admin'
+
+/* global WIKI */
+
+WIKI.$store.registerModule('admin', adminStore)
 
 const router = new VueRouter({
   mode: 'history',
@@ -102,6 +113,7 @@ const router = new VueRouter({
     { path: '/groups', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups.vue') },
     { path: '/groups/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups-edit.vue') },
     { path: '/users', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-users.vue') },
+    { path: '/users/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-users-edit.vue') },
     { path: '/auth', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-auth.vue') },
     { path: '/rendering', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-rendering.vue') },
     { path: '/editor', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-editor.vue') },
@@ -144,11 +156,25 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark')
+    darkMode: get('site/dark'),
+    info: sync('admin/info')
   },
   router,
   created() {
     this.$store.commit('page/SET_MODE', 'admin')
+  },
+  apollo: {
+    info: {
+      query: statsQuery,
+      fetchPolicy: 'network-only',
+      manual: true,
+      result({ data, loading, networkStatus }) {
+        this.info = data.system.info
+      },
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-stats-refresh')
+      }
+    }
   }
 }
 </script>

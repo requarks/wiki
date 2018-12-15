@@ -50,13 +50,23 @@
             v-list-tile
               v-list-tile-avatar: v-icon insert_drive_file
               v-list-tile-title File D
-      v-card-text.grey.pa-2(:class='darkMode ? `darken-3-d5` : `lighten-1`')
+      v-card-actions.grey.pa-2(:class='darkMode ? `darken-3-d5` : `lighten-1`')
+        v-select(
+          solo
+          dark
+          background-color='grey darken-3-d2'
+          hide-details
+          single-line
+          :items='namespaces'
+          style='flex: 0 0 100px;'
+          v-model='currentLocale'
+          )
         v-text-field(
           solo
           hide-details
-          v-model='location'
+          prefix='/'
+          v-model='currentPath'
           flat
-          prepend-inner-icon='subdirectory_arrow_right'
           clearable
         )
       v-card-chin
@@ -76,17 +86,31 @@ export default {
       type: Boolean,
       default: false
     },
+    path: {
+      type: String,
+      default: 'new-page'
+    },
+    locale: {
+      type: String,
+      default: 'en'
+    },
     mode: {
       type: String,
       default: 'create'
+    },
+    openHandler: {
+      type: Function,
+      default: () => {}
     }
   },
   data() {
     return {
       searchLoading: false,
-      location: '/new-page',
+      currentLocale: 'en',
+      currentPath: 'new-page',
       tree: [],
-      treeChildren: []
+      treeChildren: [],
+      namespaces: ['en']
     }
   },
   computed: {
@@ -105,13 +129,25 @@ export default {
       ]
     }
   },
+  watch: {
+    isShown(newValue, oldValue) {
+      if (newValue && !oldValue) {
+        this.currentPath = this.path
+        this.currentLocale = this.locale
+      }
+    }
+  },
   methods: {
     close() {
       this.isShown = false
     },
     open() {
-      if (this.mode === 'create') {
-        window.location.assign(`/e${this.location}`)
+      const exit = this.openHandler({
+        locale: this.currentLocale,
+        path: this.currentPath
+      })
+      if (exit !== false) {
+        this.close()
       }
     },
     async fetchFolders(item) {

@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') build
+          img(src='/svg/icon-maintenance.svg', alt='Utilities', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Utilities
             .subheading.grey--text Maintenance and troubleshooting tools

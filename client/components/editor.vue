@@ -40,40 +40,50 @@
               )
             .subheading {{ $t('editor:save.processing') }}
             .caption.blue--text.text--lighten-3 {{ $t('editor:save.pleaseWait') }}
-      v-dialog(v-model='dialogEditorSelector', persistent, max-width='550')
+      v-dialog(v-model='dialogEditorSelector', persistent, max-width='700')
         v-card.radius-7(color='blue darken-3', dark)
           v-card-text.text-xs-center.py-4
             .subheading Which editor do you want to use for this page?
             v-container(grid-list-lg, fluid)
               v-layout(row, wrap, justify-center)
-                v-flex(xs4)
+                v-flex(xs3)
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-xs-center(@click='selectEditor("api")')
+                      img(src='/svg/icon-rest-api.svg', alt='API', style='width: 36px;')
+                      .body-2.mt-2.grey--text.text--darken-2 API Docs
+                      .caption.grey--text.text--darken-1 REST / GraphQL
+                v-flex(xs3)
                   v-card.radius-7(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-xs-center(@click='selectEditor("code")')
-                      v-icon(large, color='primary') code
+                      img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
                       .body-2.mt-2 Code
                       .caption.grey--text Raw HTML
-                v-flex(xs4)
+                v-flex(xs3)
                   v-card.radius-7(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-xs-center(@click='selectEditor("markdown")')
-                      v-icon(large, color='primary') list_alt
+                      img(src='/svg/icon-markdown.svg', alt='Markdown', style='width: 36px;')
                       .body-2.mt-2 Markdown
                       .caption.grey--text Default
-                v-flex(xs4)
+                v-flex(xs3)
                   v-card.radius-7.grey(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-xs-center(@click='selectEditor("wysiwyg")')
-                      v-icon(large, color='grey darken-1') web
+                      img(src='/svg/icon-open-in-browser.svg', alt='Visual Builder', style='width: 36px;')
                       .body-2.mt-2.grey--text.text--darken-2 Visual Builder
                       .caption.grey--text.text--darken-1 Drag-n-drop
             .caption.blue--text.text--lighten-2 This cannot be changed once the page is created.

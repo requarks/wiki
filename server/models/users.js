@@ -32,6 +32,7 @@ module.exports = class User extends Model {
         jobTitle: {type: 'string'},
         location: {type: 'string'},
         pictureUrl: {type: 'string'},
+        isSystem: {type: 'boolean'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }

@@ -39,6 +39,9 @@ defaults:
       darkMode: false
     # System defaults
     setup: false
+    paths:
+      content: ./content
+      data: ./data
     cors:
       credentials: true
       maxAge: 600

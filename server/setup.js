@@ -94,7 +94,7 @@ module.exports = () => {
       WIKI.logger.info('Creating data directories...')
       const dataPath = path.join(process.cwd(), 'data')
       await fs.ensureDir(dataPath)
-      await fs.ensureDir(path.join(dataPath, 'cache'))
+      await fs.emptyDir(path.join(dataPath, 'cache'))
       await fs.ensureDir(path.join(dataPath, 'uploads'))
 
       // Set config
@@ -221,7 +221,8 @@ module.exports = () => {
         password: '',
         locale: 'en',
         defaultEditor: 'markdown',
-        tfaIsActive: false
+        tfaIsActive: false,
+        isSystem: true
       })
       await guestUser.$relatedQuery('groups').relate(guestGroup.id)
 

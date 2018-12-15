@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') lock_outline
+          img(src='/svg/icon-unlock.svg', alt='Authentication', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Authentication
             .subheading.grey--text Configure the authentication settings of your wiki

@@ -28,6 +28,17 @@ services:
     ports:
       - "15432:5432"
 
+  adminer:
+    image: adminer:latest
+    environment:
+      ADMINER_DESIGN: pappu687
+    logging:
+      driver: "none"
+    networks:
+      - wikinet
+    ports:
+      - "3001:8080"
+
   wiki:
     build:
       context: .

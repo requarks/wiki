@@ -38,18 +38,16 @@ type UserMutation {
     email: String!
     name: String
     passwordRaw: String
-    provider: String!
+    providerKey: String!
     providerId: String
-    role: UserRole!
   ): UserResponse @auth(requires: ["write:users", "manage:users", "manage:system"])
 
   update(
     id: Int!
     email: String
     name: String
-    provider: String
+    providerKey: String
     providerId: String
-    role: UserRole
   ): UserResponse @auth(requires: ["manage:users", "manage:system"])
 
   delete(
@@ -70,12 +68,6 @@ type UserMutation {
 # TYPES
 # -----------------------------------------------
 
-enum UserRole {
-  guest
-  user
-  admin
-}
-
 type UserResponse {
   responseResult: ResponseStatus!
   user: User
@@ -86,6 +78,7 @@ type UserMinimal {
   name: String!
   email: String!
   providerKey: String!
+  isSystem: Boolean!
   createdAt: Date!
 }
 
@@ -95,8 +88,11 @@ type User {
   email: String!
   providerKey: String!
   providerId: String
-  role: UserRole!
+  isSystem: Boolean!
+  location: String!
+  jobTitle: String!
+  timezone: String!
   createdAt: Date!
   updatedAt: Date!
-  groups: [Group]
+  groups: [Group]!
 }

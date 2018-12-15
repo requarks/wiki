@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') storage
+          img(src='/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Storage
             .subheading.grey--text Set backup and sync targets for your content

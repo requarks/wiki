@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') perm_identity
+          img(src='/svg/icon-customer.svg', alt='Users', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Users
             .subheading.grey--text Manage users
@@ -48,24 +48,16 @@
                 td {{ props.item.providerKey }}
                 td {{ props.item.createdAt | moment('from') }}
                 td
-                  v-menu(bottom, right, min-width='200')
-                    v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
-                    v-list
-                      v-list-tile(@click='')
-                        v-list-tile-action
-                          v-icon(color='primary') edit
-                        v-list-tile-content
-                          v-list-tile-title Edit
-                      v-list-tile(@click='')
-                        v-list-tile-action
-                          v-icon(color='red') block
-                        v-list-tile-content
-                          v-list-tile-title Block
+                  v-tooltip(left, v-if='props.item.isSystem')
+                    v-icon(slot='activator') lock_outline
+                    span System User
             template(slot='no-data')
               .pa-3
                 v-alert(icon='warning', :value='true', outline) No users to display!
-          .text-xs-center.py-2
+          v-card-chin
+            v-spacer
             v-pagination(v-model='pagination.page', :length='pages')
+            v-spacer
 
     user-authorize(v-model='isAuthorizeDialogShown')
     user-create(v-model='isCreateDialogShown')

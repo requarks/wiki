@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') search
+          img(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Search Engine
             .subheading.grey--text Configure the search capabilities of your wiki

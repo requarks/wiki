@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') language
+          img(src='/svg/icon-globe-earth.svg', alt='Locale', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{ $t('admin:locale.title') }}
             .subheading.grey--text {{ $t('admin:locale.subtitle') }}

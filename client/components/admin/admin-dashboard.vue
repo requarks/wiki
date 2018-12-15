@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') dashboard
+          img(src='/svg/icon-browse-page.svg', alt='Dashboard', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{ $t('admin:dashboard.title') }}
             .subheading.grey--text {{ $t('admin:dashboard.subtitle') }}
@@ -92,8 +92,7 @@
 
 <script>
 import AnimatedNumber from 'animated-number-vue'
-
-import statsQuery from 'gql/admin/dashboard/dashboard-query-stats.gql'
+import { get } from 'vuex-pathify'
 
 export default {
   components: {
@@ -101,13 +100,6 @@ export default {
   },
   data() {
     return {
-      info: {
-        currentVersion: 'n/a',
-        latestVersion: 'n/a',
-        groupsTotal: 0,
-        pagesTotal: 0,
-        usersTotal: 0
-      },
       recentPages: [],
       popularPages: []
     }
@@ -115,20 +107,11 @@ export default {
   computed: {
     isLatestVersion() {
       return this.info.currentVersion === this.info.latestVersion
-    }
+    },
+    info: get('admin/info')
   },
   methods: {
     round(val) { return Math.round(val) }
-  },
-  apollo: {
-    info: {
-      query: statsQuery,
-      fetchPolicy: 'network-only',
-      update: (data) => data.system.info,
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-system-refresh')
-      }
-    }
   }
 }
 </script>

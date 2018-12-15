@@ -5,6 +5,7 @@ query {
       name
       email
       providerKey
+      isSystem
       createdAt
     }
   }

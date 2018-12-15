@@ -5,12 +5,12 @@ block body
     v-app
       .newpage
         .newpage-content
-          img.animated.fadeIn(src='/svg/henry-thinking.svg', alt='Henry')
+          img.animated.fadeIn(src='/svg/icon-close-window.svg', alt='Henry')
           .headline= t('newpage.title')
           .subheading.mt-3= t('newpage.subtitle')
           v-btn.mt-5(href='/e' + pagePath, large)
             v-icon(left) add
             span= t('newpage.create')
-          v-btn.mt-2(color='blue lighten-4', href='javascript:window.history.go(-1);', large, outline)
+          v-btn.mt-2(color='purple lighten-3', href='javascript:window.history.go(-1);', large, outline)
             v-icon(left) arrow_back
             span= t('newpage.goback')

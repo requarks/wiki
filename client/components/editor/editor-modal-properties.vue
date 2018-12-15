@@ -176,6 +176,7 @@
                     @click='$refs.menuPublishEnd.save(publishEndDate)'
                     ) OK
 
+    page-selector(mode='create', v-model='pageSelectorShown', :path='path', :locale='locale', :open-handler='setPath')
     v-tour(name='editorPropertiesTour', :steps='tourSteps')
 </template>
 
@@ -194,6 +195,7 @@ export default {
     return {
       isPublishStartShown: false,
       isPublishEndShown: false,
+      pageSelectorShown: false,
       namespaces: ['en'],
       tourSteps: [
         {
@@ -234,11 +236,11 @@ export default {
       this.isShown = false
     },
     showPathSelector() {
-      this.$store.commit('showNotification', {
-        message: 'Coming soon!',
-        style: 'purple',
-        icon: 'directions_boat'
-      })
+      this.pageSelectorShown = true
+    },
+    setPath({ path, locale }) {
+      this.locale = locale
+      this.path = path
     }
   }
 }

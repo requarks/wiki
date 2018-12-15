@@ -3,11 +3,13 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') people
+          img(src='/svg/icon-social-group.svg', alt='Edit Group', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Edit Group
             .subheading.grey--text {{name}}
           v-spacer
+          .caption.grey--text ID #[strong {{group.id}}]
+          v-divider.mx-3(vertical)
           v-btn(color='indigo', large, outline, to='/groups')
             v-icon arrow_back
           v-dialog(v-model='deleteGroupDialog', max-width='500', v-if='!group.isSystem')
@@ -24,7 +26,7 @@
             v-icon(left) check
             span Update Group
         v-card.mt-3
-          v-tabs(v-model='tab', :color='$vuetify.dark ? "primary" : "grey lighten-4"', fixed-tabs, :slider-color='$vuetify.dark ? "white" : "primary"', show-arrows)
+          v-tabs(v-model='tab', :color='$vuetify.dark ? "primary" : "grey darken-2"', fixed-tabs, slider-color='white', show-arrows, dark)
             v-tab(key='properties') Properties
             v-tab(key='permissions') Permissions
             v-tab(key='rules') Page Rules
@@ -41,8 +43,6 @@
                     counter='255'
                     prepend-icon='people'
                     )
-                  v-divider
-                  .caption.mt-3.grey--text ID: {{group.id}}
 
             v-tab-item(key='permissions', :transition='false', :reverse-transition='false')
               v-container.pa-3(fluid, grid-list-md)

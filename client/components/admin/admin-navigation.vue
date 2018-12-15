@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') near_me
+          img(src='/svg/icon-triangle-arrow.svg', alt='Navigation', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{$t('navigation.title')}}
             .subheading.grey--text {{$t('navigation.subtitle')}}

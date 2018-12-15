@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') palette
+          img(src='/svg/icon-paint-palette.svg', alt='Theme', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Theme
             .subheading.grey--text Modify the look &amp; feel of your wiki

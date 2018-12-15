@@ -128,7 +128,7 @@
             v-list-tile-action: v-icon(color='grey') person_add
             v-list-tile-title Register
 
-    page-selector(mode='create', v-model='newPageModal')
+    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate')
 </template>
 
 <script>
@@ -207,6 +207,9 @@ export default {
     },
     pageNew () {
       this.newPageModal = true
+    },
+    pageNewCreate ({ path, locale }) {
+      window.location.assign(`/e/${path}`)
     },
     pageView () {
       window.location.assign(`/${this.path}`)

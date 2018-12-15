@@ -15,6 +15,12 @@
               radial-gradient(ellipse at bottom, mc('red', '800'), mc('red', '700'));
   }
 
+  &.is-indigo {
+    background-color: mc('indigo', '700');
+    background: radial-gradient(ellipse at top, mc('indigo', '500'), mc('indigo', '700')),
+              radial-gradient(ellipse at bottom, mc('indigo', '800'), mc('indigo', '700'));
+  }
+
   &.is-dark {
     background-color: mc('grey', '900');
     background: radial-gradient(ellipse at top, mc('grey', '800'), mc('grey', '900')),

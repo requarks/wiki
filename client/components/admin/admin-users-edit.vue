@@ -3,148 +3,193 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') perm_identity
+          img(src='/svg/icon-male-user.svg', alt='Edit User', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2 Users
-            .subheading.grey--text Manage users
+            .headline.blue--text.text--darken-2 Edit User
+            .subheading.grey--text {{user.name}}
           v-spacer
-          v-btn(outline, color='grey', large, @click='refresh')
-            v-icon refresh
-          v-btn(color='primary', large, depressed, @click='authorizeUser')
-            v-icon(left) lock_outline
-            span Authorize Social User
-          v-btn(color='primary', large, depressed, @click='createUser')
-            v-icon(left) add
-            span New Local User
+          .caption.grey--text ID #[strong {{user.id}}]
+          v-divider.mx-3(vertical)
+          v-btn(color='indigo', large, outline, to='/users')
+            v-icon arrow_back
+          v-dialog(v-model='deleteUserDialog', max-width='500', v-if='user.id !== currentUserId && !user.isSystem')
+            v-btn(color='red', large, outline, slot='activator')
+              v-icon(color='red') delete
+            v-card
+              .dialog-header.is-red Delete User?
+              v-card-text Are you sure you want to delete user #[strong {{ user.name }}]?
+              v-card-actions
+                v-spacer
+                v-btn(flat, @click='deleteUserDialog = false') Cancel
+                v-btn(color='red', dark, @click='deleteUser') Delete
+          v-btn(color='primary', large, depressed, @click='updateUser')
+            v-icon(left) check
+            span Update User
+      v-flex(xs5)
+        v-card
+          v-toolbar(color='primary', dense, dark, flat)
+            v-icon.mr-2 directions_run
+            span Basic Info
+          v-list.py-0(two-line, dense)
+            v-list-tile
+              v-list-tile-avatar
+                v-icon alternate_email
+              v-list-tile-content
+                v-list-tile-title Email
+                v-list-tile-sub-title {{ user.email }}
+              v-list-tile-action
+                  v-btn(icon, color='grey', flat)
+                    v-icon edit
+            v-divider
+            v-list-tile
+              v-list-tile-avatar
+                v-icon person
+              v-list-tile-content
+                v-list-tile-title Display Name
+                v-list-tile-sub-title {{ user.name }}
+              v-list-tile-action
+                  v-btn(icon, color='grey', flat)
+                    v-icon edit
         v-card.mt-3
-          v-data-table(
-            v-model='selected'
-            :items='users',
-            :headers='headers',
-            :search='search',
-            :pagination.sync='pagination',
-            :rows-per-page-items='[15]'
-            hide-actions,
-            disable-initial-sort
-          )
-            template(slot='headers', slot-scope='props')
-              tr
-                th.text-xs-left(
-                  v-for='header in props.headers'
-                  :key='header.text'
-                  :width='header.width'
-                  :class='[`column`, header.sortable ? `sortable` : ``, pagination.descending ? `desc` : `asc`, header.value === pagination.sortBy ? `active` : ``]'
-                  @click='changeSort(header.value)'
-                )
-                  | {{ header.text }}
-                  v-icon(small, v-if='header.sortable') arrow_upward
-            template(slot='items', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='$router.push("/users/" + props.item.id)')
-                //- td
-                  v-checkbox(hide-details, :input-value='props.selected', color='blue darken-2', @click='props.selected = !props.selected')
-                td.text-xs-right {{ props.item.id }}
-                td: strong {{ props.item.name }}
-                td {{ props.item.email }}
-                td {{ props.item.providerKey }}
-                td {{ props.item.createdAt | moment('from') }}
-                td
-                  v-menu(bottom, right, min-width='200')
-                    v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
-                    v-list
-                      v-list-tile(@click='')
-                        v-list-tile-action
-                          v-icon(color='primary') edit
-                        v-list-tile-content
-                          v-list-tile-title Edit
-                      v-list-tile(@click='')
-                        v-list-tile-action
-                          v-icon(color='red') block
-                        v-list-tile-content
-                          v-list-tile-title Block
-            template(slot='no-data')
-              .pa-3
-                v-alert(icon='warning', :value='true', outline) No users to display!
-          .text-xs-center.py-2
-            v-pagination(v-model='pagination.page', :length='pages')
+          v-toolbar(color='primary', dense, dark, flat)
+            v-icon.mr-2 lock_outline
+            span Authentication
+          v-list.py-0(two-line, dense)
+            v-list-tile
+              v-list-tile-avatar
+                v-icon business
+              v-list-tile-content
+                v-list-tile-title Provider
+                v-list-tile-sub-title {{ user.providerKey }}
+              v-list-tile-action
+                v-img(src='https://static.requarks.io/logo/wikijs.svg', alt='')
+            template(v-if='user.providerKey === `local`')
+              v-divider
+              v-list-tile
+                v-list-tile-avatar
+                  v-icon security
+                v-list-tile-content
+                  v-list-tile-title Password
+                  v-list-tile-sub-title ********
+                v-list-tile-action
+                    v-btn(icon, color='grey', flat)
+                      v-icon cached
+                v-list-tile-action
+                    v-btn(icon, color='grey', flat)
+                      v-icon email
+              v-divider
+              v-list-tile
+                v-list-tile-avatar
+                  v-icon screen_lock_portrait
+                v-list-tile-content
+                  v-list-tile-title Two Factor Authentication (2FA)
+                  v-list-tile-sub-title.red--text Inactive
+                v-list-tile-action
+                    v-btn(icon, color='grey', flat)
+                      v-icon power_settings_new
+              template(v-if='user.providerId')
+                v-divider
+                v-list-tile
+                  v-list-tile-avatar
+                    v-icon person
+                  v-list-tile-content
+                    v-list-tile-title Provider Id
+                    v-list-tile-sub-title {{ user.providerId }}
+        v-card.mt-3
+          v-toolbar(color='primary', dense, dark, flat)
+            v-icon.mr-2 people
+            span User Groups
+          v-list(dense)
+            template(v-for='(group, idx) in user.groups')
+              v-list-tile
+                v-list-tile-avatar
+                  v-icon people_outline
+                v-list-tile-content
+                  v-list-tile-title {{group.name}}
+                v-list-tile-action
+                  v-btn(icon, color='red', flat)
+                    v-icon clear
+              v-divider(v-if='idx < user.groups.length - 1')
+          v-card-chin
+            v-spacer
+            v-btn(small, color='primary', flat)
+              v-icon(left) how_to_reg
+              span Assign to group
+      v-flex(xs7)
+        v-card
+          v-toolbar(color='primary', dense, dark, flat)
+            v-icon.mr-2 directions_walk
+            span Extended Metadata
+          v-list.py-0(two-line, dense)
+            v-list-tile
+              v-list-tile-avatar
+                v-icon public
+              v-list-tile-content
+                v-list-tile-title Location
+                v-list-tile-sub-title {{ user.location }}
+              v-list-tile-action
+                  v-btn(icon, color='grey', flat)
+                    v-icon edit
+            v-divider
+            v-list-tile
+              v-list-tile-avatar
+                v-icon local_library
+              v-list-tile-content
+                v-list-tile-title Job Title
+                v-list-tile-sub-title {{ user.jobTitle }}
+              v-list-tile-action
+                  v-btn(icon, color='grey', flat)
+                    v-icon edit
+            v-divider
+            v-list-tile
+              v-list-tile-avatar
+                v-icon map
+              v-list-tile-content
+                v-list-tile-title Timezone
+                v-list-tile-sub-title {{ user.timezone }}
+              v-list-tile-action
+                  v-btn(icon, color='grey', flat)
+                    v-icon edit
+        v-card.mt-3
+          v-toolbar(color='primary', dense, dark, flat)
+            v-icon.mr-2 insert_drive_file
+            span Content
+          v-card-text
+            em.caption.grey--text Coming soon
 
-    user-authorize(v-model='isAuthorizeDialogShown')
-    user-create(v-model='isCreateDialogShown')
 </template>
-
 <script>
-import usersQuery from 'gql/admin/users/users-query-list.gql'
+import _ from 'lodash'
+import { get } from 'vuex-pathify'
 
-import UserAuthorize from './admin-users-authorize.vue'
-import UserCreate from './admin-users-create.vue'
+import userQuery from 'gql/admin/users/users-query-single.gql'
 
 export default {
-  components: {
-    UserAuthorize,
-    UserCreate
-  },
   data() {
     return {
-      selected: [],
-      pagination: {},
-      users: [],
-      headers: [
-        { text: 'ID', value: 'id', width: 80, sortable: true },
-        { text: 'Name', value: 'name', sortable: true },
-        { text: 'Email', value: 'email', sortable: true },
-        { text: 'Provider', value: 'provider', sortable: true },
-        { text: 'Created', value: 'createdAt', sortable: true },
-        { text: '', value: 'actions', sortable: false, width: 50 }
-      ],
-      search: '',
-      isAuthorizeDialogShown: false,
-      isCreateDialogShown: false
+      deleteUserDialog: false,
+      user: {
+
+      }
     }
   },
   computed: {
-    pages () {
-      if (this.pagination.rowsPerPage == null || this.pagination.totalItems == null) {
-        return 0
-      }
-
-      return Math.ceil(this.pagination.totalItems / this.pagination.rowsPerPage)
-    }
+    currentUserId: get('user/id')
   },
   methods: {
-    authorizeUser() {
-      this.isAuthorizeDialogShown = true
-    },
-    createUser() {
-      this.isCreateDialogShown = true
-    },
-    async refresh() {
-      await this.$apollo.queries.users.refetch()
-      this.$store.commit('showNotification', {
-        message: 'Users list has been refreshed.',
-        style: 'success',
-        icon: 'cached'
-      })
-    },
-    changeSort (column) {
-      if (this.pagination.sortBy === column) {
-        this.pagination.descending = !this.pagination.descending
-      } else {
-        this.pagination.sortBy = column
-        this.pagination.descending = false
-      }
-    },
-    toggleAll () {
-      if (this.selected.length) {
-        this.selected = []
-      } else {
-        this.selected = this.items.slice()
-      }
-    }
+    deleteUser() {},
+    updateUser() {}
   },
   apollo: {
-    users: {
-      query: usersQuery,
+    user: {
+      query: userQuery,
+      variables() {
+        return {
+          id: _.toSafeInteger(this.$route.params.id)
+        }
+      },
       fetchPolicy: 'network-only',
-      update: (data) => data.users.list,
+      update: (data) => data.users.single,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
       }

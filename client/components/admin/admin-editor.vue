@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') transform
+          img(src='/svg/icon-web-design.svg', alt='Editor', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Editor
             .subheading.grey--text Configure the content editor

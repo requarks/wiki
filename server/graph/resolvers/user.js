@@ -11,7 +11,7 @@ module.exports = {
   UserQuery: {
     async list(obj, args, context, info) {
       return WIKI.models.users.query()
-        .select('id', 'email', 'name', 'providerKey', 'createdAt')
+        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'createdAt')
     },
     async search(obj, args, context, info) {
       return WIKI.models.users.query()
@@ -22,6 +22,7 @@ module.exports = {
     },
     async single(obj, args, context, info) {
       let usr = await WIKI.models.users.query().findById(args.id)
+      console.info(usr)
       usr.password = ''
       usr.tfaSecret = ''
       return usr
@@ -39,8 +40,7 @@ module.exports = {
         email: args.email,
         name: args.name,
         provider: args.provider,
-        providerId: args.providerId,
-        role: args.role
+        providerId: args.providerId
       }).where('id', args.id)
     },
     resetPassword(obj, args) {
@@ -52,7 +52,7 @@ module.exports = {
   },
   User: {
     groups(usr) {
-      return usr.getGroups()
+      return usr.$relatedQuery('groups')
     }
   }
 }

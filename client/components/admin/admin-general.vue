@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') widgets
+          img(src='/svg/icon-categorize.svg', alt='General', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{ $t('admin:general.title') }}
             .subheading.grey--text {{ $t('admin:general.subtitle') }}
@@ -60,7 +60,7 @@
                       outline
                       label='Google Analytics ID'
                       :counter='255'
-                      prepend-icon='public'
+                      prepend-icon='timeline'
                       persistent-hint
                       hint='Property tracking ID for Google Analytics.'
                       )
@@ -72,7 +72,7 @@
                       label='Company / Organization Name'
                       v-model='company'
                       :counter='255'
-                      prepend-icon='public'
+                      prepend-icon='business'
                       persistent-hint
                       hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
                       )

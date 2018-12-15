@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') favorite
+          img(src='/svg/icon-heart-health.svg', alt='Contribute', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{ $t('admin:contribute.title') }}
             .subheading.grey--text {{ $t('admin:contribute.subtitle') }}

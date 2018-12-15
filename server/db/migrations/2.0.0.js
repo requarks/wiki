@@ -184,6 +184,7 @@ exports.up = knex => {
       table.string('location').defaultTo('')
       table.string('pictureUrl')
       table.string('timezone').notNullable().defaultTo('America/New_York')
+      table.boolean('isSystem').notNullable().defaultTo(false)
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })

@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') tune
+          img(src='/svg/icon-tune.svg', alt='System Info', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{ $t('admin:system.title') }}
             .subheading.grey--text {{ $t('admin:system.subtitle') }}

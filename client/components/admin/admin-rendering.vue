@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') system_update_alt
+          img(src='/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Rendering
             .subheading.grey--text Configure how content is rendered

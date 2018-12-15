@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon(size='80', color='grey lighten-2') graphic_eq
+          img(src='/svg/icon-registry-editor.svg', alt='Logging', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Logging
             .subheading.grey--text Configure the system logger(s)
