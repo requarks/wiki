@@ -30,8 +30,6 @@ services:
 
   adminer:
     image: adminer:latest
-    environment:
-      ADMINER_DESIGN: pappu687
     logging:
       driver: "none"
     networks:

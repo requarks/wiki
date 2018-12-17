@@ -36,6 +36,12 @@ type AuthenticationMutation {
     securityCode: String!
   ): DefaultResponse
 
+  register(
+    email: String!
+    password: String!
+    name: String!
+  ): AuthenticationRegisterResponse
+
   updateStrategies(
     strategies: [AuthenticationStrategyInput]
   ): DefaultResponse @auth(requires: ["manage:system"])
@@ -67,6 +73,11 @@ type AuthenticationLoginResponse {
   jwt: String
   tfaRequired: Boolean
   tfaLoginToken: String
+}
+
+type AuthenticationRegisterResponse {
+  responseResult: ResponseStatus
+  jwt: String
 }
 
 input AuthenticationStrategyInput {

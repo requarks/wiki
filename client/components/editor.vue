@@ -30,16 +30,6 @@
     v-content
       component(:is='currentEditor')
       editor-modal-properties(v-model='dialogProps')
-      v-dialog(v-model='dialogProgress', persistent, max-width='350')
-        v-card(color='blue darken-3', dark)
-          v-card-text.text-xs-center.py-4
-            atom-spinner.is-inline(
-              :animation-duration='1000'
-              :size='60'
-              color='#FFF'
-              )
-            .subheading {{ $t('editor:save.processing') }}
-            .caption.blue--text.text--lighten-3 {{ $t('editor:save.pleaseWait') }}
       v-dialog(v-model='dialogEditorSelector', persistent, max-width='700')
         v-card.radius-7(color='blue darken-3', dark)
           v-card-text.text-xs-center.py-4
@@ -88,6 +78,7 @@
                       .caption.grey--text.text--darken-1 Drag-n-drop
             .caption.blue--text.text--lighten-2 This cannot be changed once the page is created.
 
+    loader(v-model='dialogProgress', :title='$t(`editor:save.processing`)', :subtitle='$t(`editor:save.pleaseWait`)')
     v-snackbar(
       :color='notification.style'
       bottom,

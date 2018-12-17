@@ -38,7 +38,7 @@ module.exports = {
   AuthenticationMutation: {
     async login(obj, args, context) {
       try {
-        let authResult = await WIKI.models.users.login(args, context)
+        const authResult = await WIKI.models.users.login(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('Login success')
@@ -49,10 +49,26 @@ module.exports = {
     },
     async loginTFA(obj, args, context) {
       try {
-        let authResult = await WIKI.models.users.loginTFA(args, context)
+        const authResult = await WIKI.models.users.loginTFA(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('TFA success')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async register(obj, args, context) {
+      try {
+        await WIKI.models.users.register(args, context)
+        const authResult = await WIKI.models.users.login({
+          username: args.email,
+          password: args.password,
+          strategy: 'local'
+        }, context)
+        return {
+          jwt: authResult.jwt,
+          responseResult: graphHelper.generateSuccess('Registration success')
         }
       } catch (err) {
         return graphHelper.generateError(err)

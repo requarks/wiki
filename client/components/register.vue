@@ -1,0 +1,303 @@
+<template lang="pug">
+  v-app
+    .register
+      v-container(grid-list-lg)
+        v-layout(row, wrap)
+          v-flex(
+            xs12
+            offset-sm1, sm10
+            offset-md2, md8
+            offset-lg3, lg6
+            offset-xl4, xl4
+            )
+            transition(name='zoom')
+              v-card.elevation-5.md2(v-show='isShown')
+                v-toolbar(color='indigo', flat, dense, dark)
+                  v-spacer
+                  .subheading {{ $t('auth:registerTitle') }}
+                  v-spacer
+                v-card-text.text-xs-center
+                  h1.display-1.indigo--text.py-2 {{ siteTitle }}
+                  .body-2 {{ $t('auth:registerSubTitle') }}
+                  v-text-field.md2.mt-3(
+                    solo
+                    flat
+                    prepend-icon='email'
+                    background-color='grey lighten-4'
+                    hide-details
+                    ref='iptEmail'
+                    v-model='email'
+                    :placeholder='$t("auth:fields.email")'
+                    color='indigo'
+                    )
+                  v-text-field.md2.mt-2(
+                    solo
+                    flat
+                    prepend-icon='vpn_key'
+                    background-color='grey lighten-4'
+                    ref='iptPassword'
+                    v-model='password'
+                    :append-icon='hidePassword ? "visibility" : "visibility_off"'
+                    @click:append='() => (hidePassword = !hidePassword)'
+                    :type='hidePassword ? "password" : "text"'
+                    :placeholder='$t("auth:fields.password")'
+                    color='indigo'
+                    loading
+                    )
+                    password-strength(slot='progress', v-model='password')
+                  v-text-field.md2.mt-2(
+                    solo
+                    flat
+                    prepend-icon='vpn_key'
+                    background-color='grey lighten-4'
+                    hide-details
+                    ref='iptVerifyPassword'
+                    v-model='verifyPassword'
+                    @click:append='() => (hidePassword = !hidePassword)'
+                    type='password'
+                    :placeholder='$t("auth:fields.verifyPassword")'
+                    color='indigo'
+                  )
+                  v-text-field.md2.mt-2(
+                    solo
+                    flat
+                    prepend-icon='person'
+                    background-color='grey lighten-4'
+                    hide-details
+                    ref='iptName'
+                    v-model='name'
+                    :placeholder='$t("auth:fields.name")'
+                    @keyup.enter='register'
+                    color='indigo'
+                    )
+                v-card-actions.pb-4
+                  v-spacer
+                  v-btn.md2(
+                    block
+                    large
+                    dark
+                    color='indigo'
+                    @click='register'
+                    round
+                    :loading='isLoading'
+                    ) {{ $t('auth:actions.register') }}
+                  v-spacer
+                v-divider
+                v-card-actions.py-3.grey.lighten-4
+                  v-spacer
+                  i18next.caption(path='auth:switchToLogin.text', tag='div')
+                    a.caption(href='/login', place='link') {{ $t('auth:switchToLogin.link') }}
+                  v-spacer
+
+    loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
+    nav-footer(color='grey darken-4', dark-color='grey darken-4')
+</template>
+
+<script>
+/* global siteConfig */
+
+import _ from 'lodash'
+import Cookies from 'js-cookie'
+import validate from 'validate.js'
+import PasswordStrength from './common/password-strength.vue'
+
+import registerMutation from 'gql/register/register-mutation-create.gql'
+
+export default {
+  i18nOptions: { namespaces: 'auth' },
+  components: {
+    PasswordStrength
+  },
+  data () {
+    return {
+      email: '',
+      password: '',
+      verifyPassword: '',
+      name: '',
+      hidePassword: true,
+      isLoading: false,
+      isShown: false
+    }
+  },
+  computed: {
+    siteTitle () {
+      return siteConfig.title
+    }
+  },
+  mounted () {
+    this.isShown = true
+    this.$nextTick(() => {
+      this.$refs.iptEmail.focus()
+    })
+  },
+  methods: {
+    /**
+     * REGISTER
+     */
+    async register () {
+      const validation = validate({
+        email: this.email,
+        password: this.password,
+        verifyPassword: this.verifyPassword,
+        name: this.name
+      }, {
+        email: {
+          presence: {
+            message: this.$t('auth:missingEmail'),
+            allowEmpty: false
+          },
+          email: {
+            message: this.$t('auth:invalidEmail')
+          }
+        },
+        password: {
+          presence: {
+            message: this.$t('auth:missingPassword'),
+            allowEmpty: false
+          },
+          length: {
+            minimum: 6,
+            tooShort: this.$t('auth:passwordTooShort')
+          }
+        },
+        verifyPassword: {
+          equality: {
+            attribute: 'password',
+            message: this.$t('auth:passwordNotMatch')
+          }
+        },
+        name: {
+          presence: {
+            message: this.$t('auth:missingName'),
+            allowEmpty: false
+          },
+          length: {
+            minimum: 2,
+            maximum: 255,
+            tooShort: this.$t('auth:nameTooShort'),
+            tooLong: this.$t('auth:nameTooLong')
+          }
+        },
+      }, { fullMessages: false })
+
+      if (validation) {
+        if(validation.email) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: validation.email[0],
+            icon: 'warning'
+          })
+          this.$refs.iptEmail.focus()
+        } else if (validation.password) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: validation.password[0],
+            icon: 'warning'
+          })
+          this.$refs.iptPassword.focus()
+        } else if (validation.verifyPassword) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: validation.verifyPassword[0],
+            icon: 'warning'
+          })
+          this.$refs.iptVerifyPassword.focus()
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: validation.name[0],
+            icon: 'warning'
+          })
+          this.$refs.iptName.focus()
+        }
+      } else {
+        this.isLoading = true
+        try {
+          let resp = await this.$apollo.mutate({
+            mutation: registerMutation,
+            variables: {
+              email: this.email,
+              password: this.password,
+              name: this.name
+            }
+          })
+          if (_.has(resp, 'data.authentication.register')) {
+            let respObj = _.get(resp, 'data.authentication.register', {})
+            if (respObj.responseResult.succeeded === true) {
+              this.$store.commit('showNotification', {
+                message: 'Account created successfully! Redirecting...',
+                style: 'success',
+                icon: 'check'
+              })
+              Cookies.set('jwt', respObj.jwt, { expires: 365 })
+              _.delay(() => {
+                window.location.replace('/')
+              }, 1000)
+            } else {
+              throw new Error(respObj.responseResult.message)
+            }
+          } else {
+            throw new Error('Registration is unavailable at this time.')
+          }
+        } catch (err) {
+          console.error(err)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: err.message,
+            icon: 'warning'
+          })
+          this.isLoading = false
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+  .register {
+    background-color: mc('indigo', '900');
+    background-image: url('../static/svg/motif-blocks.svg');
+    background-repeat: repeat;
+    background-size: 200px;
+    width: 100%;
+    height: 100%;
+    animation: loginBgReveal 20s linear infinite;
+
+    @include keyframes(loginBgReveal) {
+      0% {
+        background-position-x: 0;
+      }
+      100% {
+        background-position-x: 800px;
+      }
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      background-image: url('../static/svg/motif-overlay.svg');
+      background-attachment: fixed;
+      background-size: cover;
+      opacity: .5;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    > .container {
+      height: 100%;
+      align-items: center;
+      display: flex;
+    }
+
+    h1 {
+      font-family: 'Varela Round' !important;
+    }
+
+    .v-text-field.centered input {
+      text-align: center;
+    }
+  }
+</style>

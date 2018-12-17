@@ -37,7 +37,7 @@
               v-list-tile-content
                 v-list-tile-title Email
                 v-list-tile-sub-title {{ user.email }}
-              v-list-tile-action
+              v-list-tile-action(v-if='!user.isSystem')
                   v-btn(icon, color='grey', flat)
                     v-icon edit
             v-divider
@@ -50,7 +50,7 @@
               v-list-tile-action
                   v-btn(icon, color='grey', flat)
                     v-icon edit
-        v-card.mt-3
+        v-card.mt-3(v-if='!user.isSystem')
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 lock_outline
             span Authentication

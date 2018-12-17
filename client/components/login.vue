@@ -15,7 +15,7 @@
                 v-toolbar(color='primary', flat, dense, dark)
                   v-spacer
                   .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
-                  .subheading(v-else-if='selectedStrategy.key !== "local"') Login using {{ selectedStrategy.title }}
+                  .subheading(v-else-if='selectedStrategy.key !== "local"') {{ $t('auth:loginUsingStrategy', { strategy: selectedStrategy.title }) }}
                   .subheading(v-else) {{ $t('auth:loginRequired') }}
                   v-spacer
                 v-card-text.text-xs-center
@@ -80,12 +80,12 @@
                   v-spacer
                 v-card-actions.pb-3(v-if='selectedStrategy.key === "local"')
                   v-spacer
-                  a.caption(href='') Forgot your password?
+                  a.caption(href='') {{ $t('auth:forgotPasswordLink') }}
                   v-spacer
                 template(v-if='isSocialShown')
                   v-divider
                   v-card-text.grey.lighten-4.text-xs-center
-                    .pb-2.body-2.text-xs-center.grey--text.text--darken-2 or login using...
+                    .pb-2.body-2.text-xs-center.grey--text.text--darken-2 {{ $t('auth:orLoginUsingStrategy') }}
                     v-tooltip(top, v-for='strategy in strategies', :key='strategy.key')
                       .social-login-btn.mr-2(
                         slot='activator'
@@ -99,8 +99,11 @@
                   v-divider
                   v-card-actions.py-3(:class='isSocialShown ? "" : "grey lighten-4"')
                     v-spacer
-                    .caption Don't have an account yet? #[a.caption(href='') Create an account]
+                    i18next.caption(path='auth:switchToRegister.text', tag='div')
+                      a.caption(href='/register', place='link') {{ $t('auth:switchToRegister.link') }}
                     v-spacer
+
+    loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
     nav-footer(color='grey darken-4')
 </template>
 
@@ -128,6 +131,8 @@ export default {
       securityCode: '',
       loginToken: '',
       isLoading: false,
+      loaderColor: 'grey darken-4',
+      loaderTitle: 'Working...',
       isShown: false
     }
   },
@@ -173,18 +178,20 @@ export default {
       if (this.username.length < 2) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: 'Enter a valid email / username.',
+          message: this.$t('auth:invalidEmailUsername'),
           icon: 'warning'
         })
         this.$refs.iptEmail.focus()
       } else if (this.password.length < 2) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: 'Enter a valid password.',
+          message: this.$t('auth:invalidPassword'),
           icon: 'warning'
         })
         this.$refs.iptPassword.focus()
       } else {
+        this.loaderColor = 'grey darken-4'
+        this.loaderTitle = this.$t('auth:signingIn')
         this.isLoading = true
         try {
           let resp = await this.$apollo.mutate({
@@ -205,23 +212,20 @@ export default {
                 this.$nextTick(() => {
                   this.$refs.iptTFA.focus()
                 })
+                this.isLoading = false
               } else {
-                this.$store.commit('showNotification', {
-                  message: 'Login Successful! Redirecting...',
-                  style: 'success',
-                  icon: 'check'
-                })
+                this.loaderColor = 'green darken-1'
+                this.loaderTitle = this.$t('auth:loginSuccess')
                 Cookies.set('jwt', respObj.jwt, { expires: 365 })
                 _.delay(() => {
                   window.location.replace('/') // TEMPORARY - USE RETURNURL
                 }, 1000)
               }
-              this.isLoading = false
             } else {
               throw new Error(respObj.responseResult.message)
             }
           } else {
-            throw new Error('Authentication is unavailable.')
+            throw new Error(this.$t('auth:genericError'))
           }
         } catch (err) {
           console.error(err)
@@ -270,7 +274,7 @@ export default {
               throw new Error(respObj.responseResult.message)
             }
           } else {
-            throw new Error('Authentication is unavailable.')
+            throw new Error(this.$t('auth:genericError'))
           }
         }).catch(err => {
           console.error(err)
@@ -289,7 +293,6 @@ export default {
       query: strategiesQuery,
       update: (data) => data.authentication.strategies,
       watchLoading (isLoading) {
-        this.isLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'login-strategies-refresh')
       }
     }

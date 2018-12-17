@@ -47,7 +47,7 @@
                   avatar
                   :key='rdr.key'
                   @click='selectRenderer(rdr.key)'
-                  :class='currentRenderer.key === rdr.key ? "blue lighten-5" : ""'
+                  :class='currentRenderer.key === rdr.key ? (darkMode ? `grey darken-4-l4` : `blue lighten-5`) : ``'
                   )
                   v-list-tile-avatar
                     v-icon(:color='currentRenderer.key === rdr.key ? "primary" : "grey"') {{rdr.icon}}
@@ -120,6 +120,7 @@
 <script>
 import _ from 'lodash'
 import { DepGraph } from 'dependency-graph'
+import { get } from 'vuex-pathify'
 
 import { StatusIndicator } from 'vue-status-indicator'
 
@@ -135,6 +136,9 @@ export default {
       renderers: [],
       currentRenderer: {}
     }
+  },
+  computed: {
+    darkMode: get('site/dark'),
   },
   watch: {
     renderers(newValue, oldValue) {

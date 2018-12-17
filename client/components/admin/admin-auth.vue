@@ -151,6 +151,18 @@
                       multiple
                       chips
                       )
+                  template(v-if='strategy.key === `local`')
+                    v-divider.mt-3
+                    v-subheader.pl-0 Security
+                    .pr-3
+                      v-switch.ml-3(
+                        :disabled='true'
+                        v-model='strategy.recaptcha'
+                        label='Use reCAPTCHA by Google'
+                        color='primary'
+                        hint='Protects against spam robots and malicious registrations.'
+                        persistent-hint
+                      )
 </template>
 
 <script>

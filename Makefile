@@ -30,6 +30,7 @@ docker-dev-down: ## Shutdown dockerized dev environment
 	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down
 
 docker-dev-rebuild: ## Rebuild dockerized dev image
+	rm -rf ./node_modules
 	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . build --no-cache --force-rm
 
 docker-build: ## Run assets generation build in docker

@@ -1,0 +1,13 @@
+mutation($email: String!, $password: String!, $name: String!) {
+  authentication {
+    register(email: $email, password: $password, name: $name) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+      jwt
+    }
+  }
+}

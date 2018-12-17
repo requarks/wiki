@@ -51,7 +51,7 @@
             .subheading Sponsors
             v-spacer
             v-btn(outline, small, href='https://opencollective.com/wikijs/order/1273') Become a Sponsor
-          v-list(two-line, dense)
+          v-list(two-line)
             template(v-for='(sponsor, idx) in sponsors')
               v-list-tile(:key='sponsor.id')
                 v-list-tile-avatar
@@ -89,6 +89,58 @@
                   v-btn(icon, :href='backer.website', target='_blank')
                     v-icon(color='grey') public
               v-divider(v-if='idx < backers.length - 1')
+          v-toolbar(color='primary', dense, dark)
+            .subheading Special Thanks
+          v-list(two-line)
+            v-list-tile
+              v-list-tile-avatar
+                img(src='https://static.requarks.io/logo/algolia.svg', alt='Algolia')
+              v-list-tile-content
+                v-list-tile-title Algolia
+                v-list-tile-sub-title Algolia is a powerful search-as-a-service solution, made easy to use with API clients, UI libraries, and pre-built integrations.
+              v-list-tile-action
+                v-btn(icon, href='https://www.algolia.com/', target='_blank')
+                  v-icon(color='grey') public
+            v-divider
+            v-list-tile
+              v-list-tile-avatar
+                img(src='https://static.requarks.io/logo/browserstack.svg', alt='Browserstack')
+              v-list-tile-content
+                v-list-tile-title BrowserStack
+                v-list-tile-sub-title BrowserStack is a cloud web and mobile testing platform that enables developers to test their websites and mobile applications.
+              v-list-tile-action
+                v-btn(icon, href='https://www.browserstack.com/', target='_blank')
+                  v-icon(color='grey') public
+            v-divider
+            v-list-tile
+              v-list-tile-avatar
+                img(src='https://static.requarks.io/logo/cloudflare.svg', alt='Cloudflare')
+              v-list-tile-content
+                v-list-tile-title Cloudflare
+                v-list-tile-sub-title Providing content delivery network services, DDoS mitigation, Internet security and distributed domain name server services.
+              v-list-tile-action
+                v-btn(icon, href='https://www.cloudflare.com/', target='_blank')
+                  v-icon(color='grey') public
+            v-divider
+            v-list-tile
+              v-list-tile-avatar
+                img(src='https://static.requarks.io/logo/digitalocean.svg', alt='DigitalOcean')
+              v-list-tile-content
+                v-list-tile-title DigitalOcean
+                v-list-tile-sub-title Providing developers and businesses a reliable, easy-to-use cloud computing platform of virtual servers (Droplets), object storage (Spaces), and more.
+              v-list-tile-action
+                v-btn(icon, href='https://m.do.co/c/5f7445bfa4d0', target='_blank')
+                  v-icon(color='grey') public
+            v-divider
+            v-list-tile
+              v-list-tile-avatar
+                img(src='/svg/logo-icons8.svg', alt='Icons8')
+              v-list-tile-content
+                v-list-tile-title Icons8
+                v-list-tile-sub-title All the Icons You Need. Guaranteed.
+              v-list-tile-action
+                v-btn(icon, href='https://icons8.com', target='_blank')
+                  v-icon(color='grey') public
 
 </template>
 

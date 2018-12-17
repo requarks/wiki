@@ -292,4 +292,23 @@ module.exports = class User extends Model {
     }
     throw new WIKI.Error.AuthTFAInvalid()
   }
+
+  static async register ({ email, password, name }, context) {
+    const usr = await WIKI.models.users.query().findOne({ email, providerKey: 'local' })
+    if (!usr) {
+      await WIKI.models.users.query().insert({
+        provider: 'local',
+        email,
+        name,
+        password,
+        locale: 'en',
+        defaultEditor: 'markdown',
+        tfaIsActive: false,
+        isSystem: false
+      })
+      return true
+    } else {
+      throw new WIKI.Error.AuthAccountAlreadyExists()
+    }
+  }
 }

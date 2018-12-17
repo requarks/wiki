@@ -19,6 +19,13 @@ router.get('/logout', function (req, res) {
 })
 
 /**
+ * Register form
+ */
+router.get('/register', function (req, res, next) {
+  res.render('register')
+})
+
+/**
  * JWT Public Endpoints
  */
 router.get('/.well-known/jwk.json', function (req, res, next) {
