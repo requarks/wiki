@@ -6,6 +6,7 @@ const tfa = require('node-2fa')
 const securityHelper = require('../helpers/security')
 const jwt = require('jsonwebtoken')
 const Model = require('objection').Model
+const validate = require('validate.js')
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
@@ -294,21 +295,70 @@ module.exports = class User extends Model {
   }
 
   static async register ({ email, password, name }, context) {
-    const usr = await WIKI.models.users.query().findOne({ email, providerKey: 'local' })
-    if (!usr) {
-      await WIKI.models.users.query().insert({
-        provider: 'local',
+    const localStrg = await WIKI.models.authentication.getStrategy('local')
+    // Check if self-registration is enabled
+    if (localStrg.selfRegistration) {
+      // Input validation
+      const validation = validate({
         email,
-        name,
         password,
-        locale: 'en',
-        defaultEditor: 'markdown',
-        tfaIsActive: false,
-        isSystem: false
-      })
-      return true
+        name
+      }, {
+        email: {
+          email: true,
+          length: {
+            maximum: 255
+          }
+        },
+        password: {
+          presence: {
+            allowEmpty: false
+          },
+          length: {
+            minimum: 6
+          }
+        },
+        name: {
+          presence: {
+            allowEmpty: false
+          },
+          length: {
+            minimum: 2,
+            maximum: 255
+          }
+        },
+      }, { format: 'flat' })
+      if (validation && validation.length > 0) {
+        throw new WIKI.Error.InputInvalid(validation[0])
+      }
+
+      // Check if email domain is whitelisted
+      if (_.get(localStrg, 'domainWhitelist.v', []).length > 0) {
+        const emailDomain = _.last(email.split('@'))
+        if (!_.includes(localStrg.domainWhitelist.v, emailDomain)) {
+          throw new WIKI.Error.AuthRegistrationDomainUnauthorized()
+        }
+      }
+      // Check if email already exists
+      const usr = await WIKI.models.users.query().findOne({ email, providerKey: 'local' })
+      if (!usr) {
+        // Create the account
+        await WIKI.models.users.query().insert({
+          provider: 'local',
+          email,
+          name,
+          password,
+          locale: 'en',
+          defaultEditor: 'markdown',
+          tfaIsActive: false,
+          isSystem: false
+        })
+        return true
+      } else {
+        throw new WIKI.Error.AuthAccountAlreadyExists()
+      }
     } else {
-      throw new WIKI.Error.AuthAccountAlreadyExists()
+      throw new WIKI.Error.AuthRegistrationDisabled()
     }
   }
 }

@@ -17,6 +17,14 @@ module.exports = {
     message: 'An account already exists using this email address.',
     code: 1004
   }),
+  AuthRegistrationDisabled: CustomError('AuthRegistrationDisabled', {
+    message: 'Registration is disabled. Contact your system administrator.',
+    code: 1011
+  }),
+  AuthRegistrationDomainUnauthorized: CustomError('AuthRegistrationDomainUnauthorized', {
+    message: 'You are not authorized to register. Must use a whitelisted domain.',
+    code: 1012
+  }),
   AuthTFAFailed: CustomError('AuthTFAFailed', {
     message: 'Incorrect TFA Security Code.',
     code: 1005
@@ -32,6 +40,10 @@ module.exports = {
   BruteTooManyAttempts: CustomError('BruteTooManyAttempts', {
     message: 'Too many attempts! Try again later.',
     code: 1008
+  }),
+  InputInvalid: CustomError('InputInvalid', {
+    message: 'Input data is invalid.',
+    code: 1013
   }),
   LocaleInvalidNamespace: CustomError('LocaleInvalidNamespace', {
     message: 'Invalid locale or namespace.',

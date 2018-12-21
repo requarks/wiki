@@ -30,6 +30,10 @@ module.exports = class Authentication extends Model {
     }
   }
 
+  static async getStrategy(key) {
+    return WIKI.models.authentication.query().findOne({ key })
+  }
+
   static async getStrategies(isEnabled) {
     const strategies = await WIKI.models.authentication.query().where(_.isBoolean(isEnabled) ? { isEnabled } : {})
     return _.sortBy(strategies.map(str => ({

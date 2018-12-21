@@ -45,7 +45,7 @@
                       :placeholder='$t("auth:fields.password")'
                       @keyup.enter='login'
                     )
-                  template(v-if='screen === "tfa"')
+                  template(v-else-if='screen === "tfa"')
                     .body-2 Enter the security code generated from your trusted device:
                     v-text-field.md2.centered.mt-2(
                       solo
@@ -57,6 +57,18 @@
                       :placeholder='$t("auth:tfa.placeholder")'
                       @keyup.enter='verifySecurityCode'
                     )
+                  template(v-else-if='screen === "forgot"')
+                    .body-2 {{ $t('auth:forgotPasswordSubtitle') }}
+                    v-text-field.md2.mt-3(
+                      solo
+                      flat
+                      prepend-icon='email'
+                      background-color='grey lighten-4'
+                      hide-details
+                      ref='iptEmailForgot'
+                      v-model='username'
+                      :placeholder='$t("auth:fields.email")'
+                      )
                 v-card-actions.pb-4
                   v-spacer
                   v-btn.md2(
@@ -69,7 +81,7 @@
                     :loading='isLoading'
                     ) {{ $t('auth:actions.login') }}
                   v-btn.md2(
-                    v-if='screen === "tfa"'
+                    v-else-if='screen === "tfa"'
                     block
                     large
                     color='primary'
@@ -77,12 +89,25 @@
                     round
                     :loading='isLoading'
                     ) {{ $t('auth:tfa.verifyToken') }}
+                  v-btn.md2(
+                    v-else-if='screen === "forgot"'
+                    block
+                    large
+                    color='primary'
+                    @click='forgotPasswordSubmit'
+                    round
+                    :loading='isLoading'
+                    ) {{ $t('auth:sendResetPassword') }}
                   v-spacer
-                v-card-actions.pb-3(v-if='selectedStrategy.key === "local"')
+                v-card-actions.pb-3(v-if='screen === "login" && selectedStrategy.key === "local"')
                   v-spacer
-                  a.caption(href='') {{ $t('auth:forgotPasswordLink') }}
+                  a.caption(@click.stop.prevent='forgotPassword', href='#forgot') {{ $t('auth:forgotPasswordLink') }}
                   v-spacer
-                template(v-if='isSocialShown')
+                v-card-actions.pb-3(v-else-if='screen === "forgot"')
+                  v-spacer
+                  a.caption(@click.stop.prevent='screen = `login`', href='#cancelforgot') {{ $t('auth:forgotPasswordCancel') }}
+                  v-spacer
+                template(v-if='screen === "login" && isSocialShown')
                   v-divider
                   v-card-text.grey.lighten-4.text-xs-center
                     .pb-2.body-2.text-xs-center.grey--text.text--darken-2 {{ $t('auth:orLoginUsingStrategy') }}
@@ -95,7 +120,7 @@
                         @click='selectStrategy(strategy)'
                         )
                       span {{ strategy.title }}
-                template(v-if='selectedStrategy.selfRegistration')
+                template(v-if='screen === "login" && selectedStrategy.selfRegistration')
                   v-divider
                   v-card-actions.py-3(:class='isSocialShown ? "" : "grey lighten-4"')
                     v-spacer
@@ -286,6 +311,19 @@ export default {
           this.isLoading = false
         })
       }
+    },
+    forgotPassword() {
+      this.screen = 'forgot'
+      this.$nextTick(() => {
+        this.$refs.iptEmailForgot.focus()
+      })
+    },
+    async forgotPasswordSubmit() {
+      this.$store.commit('showNotification', {
+        style: 'pink',
+        message: 'Coming soon!',
+        icon: 'free_breakfast'
+      })
     }
   },
   apollo: {

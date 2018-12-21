@@ -21,8 +21,13 @@ router.get('/logout', function (req, res) {
 /**
  * Register form
  */
-router.get('/register', function (req, res, next) {
-  res.render('register')
+router.get('/register', async (req, res, next) => {
+  const localStrg = await WIKI.models.authentication.getStrategy('local')
+  if (localStrg.selfRegistration) {
+    res.render('register')
+  } else {
+    next(new WIKI.Error.AuthRegistrationDisabled())
+  }
 })
 
 /**

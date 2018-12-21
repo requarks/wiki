@@ -10,7 +10,7 @@
             offset-lg3, lg6
             offset-xl4, xl4
             )
-            transition(name='zoom')
+            transition(name='fadeUp')
               v-card.elevation-5.md2(v-show='isShown')
                 v-toolbar(color='indigo', flat, dense, dark)
                   v-spacer
@@ -43,6 +43,7 @@
                     :placeholder='$t("auth:fields.password")'
                     color='indigo'
                     loading
+                    counter='255'
                     )
                     password-strength(slot='progress', v-model='password')
                   v-text-field.md2.mt-2(
@@ -63,12 +64,12 @@
                     flat
                     prepend-icon='person'
                     background-color='grey lighten-4'
-                    hide-details
                     ref='iptName'
                     v-model='name'
                     :placeholder='$t("auth:fields.name")'
                     @keyup.enter='register'
                     color='indigo'
+                    counter='255'
                     )
                 v-card-actions.pb-4
                   v-spacer
@@ -116,7 +117,9 @@ export default {
       name: '',
       hidePassword: true,
       isLoading: false,
-      isShown: false
+      isShown: false,
+      loaderColor: 'grey darken-4',
+      loaderTitle: 'Working...'
     }
   },
   computed: {
@@ -211,6 +214,8 @@ export default {
           this.$refs.iptName.focus()
         }
       } else {
+        this.loaderColor = 'grey darken-4'
+        this.loaderTitle = this.$t('auth:registering')
         this.isLoading = true
         try {
           let resp = await this.$apollo.mutate({
@@ -224,11 +229,8 @@ export default {
           if (_.has(resp, 'data.authentication.register')) {
             let respObj = _.get(resp, 'data.authentication.register', {})
             if (respObj.responseResult.succeeded === true) {
-              this.$store.commit('showNotification', {
-                message: 'Account created successfully! Redirecting...',
-                style: 'success',
-                icon: 'check'
-              })
+              this.loaderColor = 'green'
+              this.loaderTitle = this.$t('auth:registerSuccess')
               Cookies.set('jwt', respObj.jwt, { expires: 365 })
               _.delay(() => {
                 window.location.replace('/')
@@ -237,7 +239,7 @@ export default {
               throw new Error(respObj.responseResult.message)
             }
           } else {
-            throw new Error('Registration is unavailable at this time.')
+            throw new Error(this.$t('auth:genericError'))
           }
         } catch (err) {
           console.error(err)
