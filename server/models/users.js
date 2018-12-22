@@ -34,6 +34,8 @@ module.exports = class User extends Model {
         location: {type: 'string'},
         pictureUrl: {type: 'string'},
         isSystem: {type: 'boolean'},
+        isActive: {type: 'boolean'},
+        isVerified: {type: 'boolean'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -351,7 +353,24 @@ module.exports = class User extends Model {
           locale: 'en',
           defaultEditor: 'markdown',
           tfaIsActive: false,
-          isSystem: false
+          isSystem: false,
+          isActive: true,
+          isVerified: false
+        })
+
+        // Send verification email
+        await WIKI.mail.send({
+          template: 'accountVerify',
+          to: email,
+          subject: 'Verify your account',
+          data: {
+            preheadertext: 'Verify your account in order to gain access to the wiki.',
+            title: 'Verify your account',
+            content: 'Click the button below in order to verify your account and gain access to the wiki.',
+            buttonLink: 'http://www.google.com',
+            buttonText: 'Verify'
+          },
+          text: `You must open the following link in your browser to verify your account and gain access to the wiki: http://www.google.com`
         })
         return true
       } else {

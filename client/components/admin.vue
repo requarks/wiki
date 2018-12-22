@@ -66,6 +66,9 @@
           v-list-tile(to='/api')
             v-list-tile-avatar: v-icon call_split
             v-list-tile-title {{ $t('admin:api.title') }}
+          v-list-tile(to='/mail')
+            v-list-tile-avatar: v-icon email
+            v-list-tile-title {{ $t('admin:mail.title') }}
           v-list-tile(to='/system')
             v-list-tile-avatar: v-icon tune
             v-list-tile-title {{ $t('admin:system.title') }}
@@ -121,6 +124,7 @@ const router = new VueRouter({
     { path: '/search', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-search.vue') },
     { path: '/storage', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-storage.vue') },
     { path: '/api', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-api.vue') },
+    { path: '/mail', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-mail.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
     { path: '/dev', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev.vue') },

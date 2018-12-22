@@ -19,7 +19,13 @@ module.exports = {
         }).then((user) => {
           if (user) {
             return user.verifyPassword(uPassword).then(() => {
-              done(null, user)
+              if (!user.isActive) {
+                done(new WIKI.Error.AuthAccountBanned(), null)
+              } else if (!user.isVerified) {
+                done(new WIKI.Error.AuthAccountNotVerified(), null)
+              } else {
+                done(null, user)
+              }
             }).catch((err) => {
               done(err, null)
             })

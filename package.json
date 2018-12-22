@@ -115,6 +115,7 @@
     "mysql2": "1.6.4",
     "node-2fa": "1.1.2",
     "node-cache": "4.2.0",
+    "nodemailer": "4.7.0",
     "oauth2orize": "1.11.0",
     "objection": "1.4.0",
     "ora": "3.0.0",

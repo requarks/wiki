@@ -1,0 +1,57 @@
+# ===============================================
+# MAIL
+# ===============================================
+
+extend type Query {
+  mail: MailQuery
+}
+
+extend type Mutation {
+  mail: MailMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type MailQuery {
+  config: MailConfig @auth(requires: ["manage:system"])
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type MailMutation {
+  updateConfig(
+    senderName: String!
+    senderEmail: String!
+    host: String!
+    port: Int!
+    secure: Boolean!
+    user: String!
+    pass: String!
+    useDKIM: Boolean!
+    dkimDomainName: String!
+    dkimKeySelector: String!
+    dkimPrivateKey: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type MailConfig {
+  senderName: String!
+  senderEmail: String!
+  host: String!
+  port: Int!
+  secure: Boolean!
+  user: String!
+  pass: String!
+  useDKIM: Boolean!
+  dkimDomainName: String!
+  dkimKeySelector: String!
+  dkimPrivateKey: String!
+}

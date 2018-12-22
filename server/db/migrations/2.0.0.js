@@ -170,6 +170,15 @@ exports.up = knex => {
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
+    // USER KEYS ---------------------------
+    .createTable('userKeys', table => {
+      table.charset('utf8mb4')
+      table.increments('id').primary()
+      table.string('kind').notNullable()
+      table.string('key').notNullable()
+      table.string('createdAt').notNullable()
+      table.string('validUntil').notNullable()
+    })
     // USERS -------------------------------
     .createTable('users', table => {
       table.charset('utf8mb4')
@@ -185,6 +194,8 @@ exports.up = knex => {
       table.string('pictureUrl')
       table.string('timezone').notNullable().defaultTo('America/New_York')
       table.boolean('isSystem').notNullable().defaultTo(false)
+      table.boolean('isActive').notNullable().defaultTo(false)
+      table.boolean('isVerified').notNullable().defaultTo(false)
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
@@ -240,6 +251,9 @@ exports.up = knex => {
       table.integer('pageId').unsigned().references('id').inTable('pages')
       table.string('localeCode', 2).references('code').inTable('locales')
     })
+    .table('userKeys', table => {
+      table.integer('userId').unsigned().references('id').inTable('users')
+    })
     .table('users', table => {
       table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')
       table.string('localeCode', 2).references('code').inTable('locales').notNullable().defaultTo('en')
@@ -267,5 +281,6 @@ exports.down = knex => {
     .dropTableIfExists('settings')
     .dropTableIfExists('storage')
     .dropTableIfExists('tags')
+    .dropTableIfExists('userKeys')
     .dropTableIfExists('users')
 }

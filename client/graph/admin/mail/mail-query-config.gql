@@ -1,0 +1,17 @@
+{
+  mail {
+    config {
+      senderName
+      senderEmail
+      host
+      port
+      secure
+      user
+      pass
+      useDKIM
+      dkimDomainName
+      dkimKeySelector
+      dkimPrivateKey
+    }
+  }
+}

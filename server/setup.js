@@ -204,7 +204,9 @@ module.exports = () => {
         name: 'Administrator',
         locale: 'en',
         defaultEditor: 'markdown',
-        tfaIsActive: false
+        tfaIsActive: false,
+        isActive: true,
+        isVerified: true
       })
       await adminUser.$relatedQuery('groups').relate(adminGroup.id)
 
@@ -222,7 +224,9 @@ module.exports = () => {
         locale: 'en',
         defaultEditor: 'markdown',
         tfaIsActive: false,
-        isSystem: true
+        isSystem: true,
+        isActive: true,
+        isVerified: true
       })
       await guestUser.$relatedQuery('groups').relate(guestGroup.id)
 

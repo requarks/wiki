@@ -1,6 +1,14 @@
 const CustomError = require('custom-error-instance')
 
 module.exports = {
+  AuthAccountBanned: CustomError('AuthAccountBanned', {
+    message: 'Your account has been disabled.',
+    code: 1016
+  }),
+  AuthAccountNotVerified: CustomError('AuthAccountNotVerified', {
+    message: 'You must verify your account before your can login.',
+    code: 1017
+  }),
   AuthGenericError: CustomError('AuthGenericError', {
     message: 'An unexpected error occured during login.',
     code: 1001
@@ -44,6 +52,14 @@ module.exports = {
   InputInvalid: CustomError('InputInvalid', {
     message: 'Input data is invalid.',
     code: 1013
+  }),
+  MailNotSetup: CustomError('MailNotSetup', {
+    message: 'Mail is not setup yet.',
+    code: 1014
+  }),
+  MailTemplateFailed: CustomError('MailTemplateFailed', {
+    message: 'Mail template failed to load.',
+    code: 1015
   }),
   LocaleInvalidNamespace: CustomError('LocaleInvalidNamespace', {
     message: 'Invalid locale or namespace.',
