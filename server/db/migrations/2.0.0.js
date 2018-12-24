@@ -175,7 +175,7 @@ exports.up = knex => {
       table.charset('utf8mb4')
       table.increments('id').primary()
       table.string('kind').notNullable()
-      table.string('key').notNullable()
+      table.string('token').notNullable()
       table.string('createdAt').notNullable()
       table.string('validUntil').notNullable()
     })

@@ -98,18 +98,54 @@ module.exports = () => {
       await fs.ensureDir(path.join(dataPath, 'uploads'))
 
       // Set config
+      _.set(WIKI.config, 'company', '')
       _.set(WIKI.config, 'defaultEditor', 'markdown')
+      _.set(WIKI.config, 'features', {
+        featurePageRatings: true,
+        featurePageComments: true,
+        featurePersonalWikis: true
+      })
       _.set(WIKI.config, 'graphEndpoint', 'https://graph.requarks.io')
-      _.set(WIKI.config, 'lang.code', 'en')
-      _.set(WIKI.config, 'lang.autoUpdate', true)
-      _.set(WIKI.config, 'lang.namespacing', false)
-      _.set(WIKI.config, 'lang.namespaces', [])
+      _.set(WIKI.config, 'host', 'http://')
+      _.set(WIKI.config, 'lang', {
+        code: 'en',
+        autoUpdate: true,
+        namespacing: false,
+        namespaces: []
+      })
+      _.set(WIKI.config, 'logo', {
+        hasLogo: false,
+        logoIsSquare: false
+      })
+      _.set(WIKI.config, 'mail', {
+        senderName: '',
+        senderEmail: '',
+        host: '',
+        port: 465,
+        secure: true,
+        user: '',
+        pass: '',
+        useDKIM: false,
+        dkimDomainName: '',
+        dkimKeySelector: '',
+        dkimPrivateKey: ''
+      })
       _.set(WIKI.config, 'public', false)
+      _.set(WIKI.config, 'seo', {
+        description: '',
+        keywords: '',
+        robots: ['index', 'follow'],
+        ga: ''
+      })
       _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
-      _.set(WIKI.config, 'telemetry.isEnabled', req.body.telemetry === 'true')
-      _.set(WIKI.config, 'telemetry.clientId', WIKI.telemetry.cid)
-      _.set(WIKI.config, 'theming.theme', 'default')
-      _.set(WIKI.config, 'theming.darkMode', false)
+      _.set(WIKI.config, 'telemetry', {
+        isEnabled: req.body.telemetry === 'true',
+        clientId: WIKI.telemetry.cid
+      })
+      _.set(WIKI.config, 'theming', {
+        theme: 'default',
+        darkMode: false
+      })
       _.set(WIKI.config, 'title', 'Wiki.js')
 
       // Generate certificates
@@ -128,22 +164,30 @@ module.exports = () => {
         }
       })
 
-      _.set(WIKI.config, 'certs.jwk', pem2jwk(certs.publicKey))
-      _.set(WIKI.config, 'certs.public', certs.publicKey)
-      _.set(WIKI.config, 'certs.private', certs.privateKey)
+      _.set(WIKI.config, 'certs', {
+        jwk: pem2jwk(certs.publicKey),
+        public: certs.publicKey,
+        private: certs.privateKey
+      })
 
       // Save config to DB
       WIKI.logger.info('Persisting config to DB...')
       await WIKI.configSvc.saveToDb([
+        'certs',
+        'company',
         'defaultEditor',
+        'features',
         'graphEndpoint',
+        'host',
         'lang',
+        'logo',
+        'mail',
         'public',
+        'seo',
         'sessionSecret',
         'telemetry',
         'theming',
-        'title',
-        'certs'
+        'title'
       ])
 
       // Create default locale

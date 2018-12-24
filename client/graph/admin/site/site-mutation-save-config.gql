@@ -1,0 +1,38 @@
+mutation (
+  $host: String!
+  $title: String!
+  $description: String!
+  $keywords: String!
+  $robots: [String]!
+  $ga: String!
+  $company: String!
+  $hasLogo: Boolean!
+  $logoIsSquare: Boolean!
+  $featurePageRatings: Boolean!
+  $featurePageComments: Boolean!
+  $featurePersonalWikis: Boolean!
+) {
+  site {
+    updateConfig(
+      host: $host,
+      title: $title,
+      description: $description,
+      keywords: $keywords,
+      robots: $robots,
+      ga: $ga,
+      company: $company,
+      hasLogo: $hasLogo,
+      logoIsSquare: $logoIsSquare,
+      featurePageRatings: $featurePageRatings,
+      featurePageComments: $featurePageComments,
+      featurePersonalWikis: $featurePersonalWikis
+    ) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

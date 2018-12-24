@@ -82,6 +82,7 @@
                     item-text='name'
                     :label='$t("admin:locale.activeNamespaces.label")'
                     persistent-hint
+                    small-chips
                     :hint='$t("admin:locale.activeNamespaces.hint")'
                     )
                     template(slot='item', slot-scope='data')

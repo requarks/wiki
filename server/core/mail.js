@@ -48,14 +48,14 @@ module.exports = {
     }
     await this.loadTemplate(opts.template)
     return this.transport.sendMail({
-      from: 'noreply@requarks.io',
+      from: `"${WIKI.config.mail.senderName}" <${WIKI.config.mail.senderEmail}>`,
       to: opts.to,
       subject: `${opts.subject} - ${WIKI.config.title}`,
       text: opts.text,
       html: _.get(this.templates, opts.template)({
         logo: '',
         siteTitle: WIKI.config.title,
-        copyright: 'Powered by Wiki.js',
+        copyright: WIKI.config.company.length > 0 ? WIKI.config.company : 'Powered by Wiki.js',
         ...opts.data
       })
     })

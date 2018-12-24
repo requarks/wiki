@@ -41,6 +41,10 @@ module.exports = {
     message: 'Invalid TFA Security Code or Login Token.',
     code: 1006
   }),
+  AuthValidationTokenInvalid: CustomError('AuthValidationTokenInvalid', {
+    message: 'Invalid validation token.',
+    code: 1018
+  }),
   BruteInstanceIsInvalid: CustomError('BruteInstanceIsInvalid', {
     message: 'Invalid Brute Force Instance.',
     code: 1007

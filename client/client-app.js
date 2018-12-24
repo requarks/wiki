@@ -80,7 +80,7 @@ const graphQLLink = ApolloLink.from([
       })
     }
   }),
-  createPersistedQueryLink(),
+  // createPersistedQueryLink(),
   new BatchHttpLink({
     includeExtensions: true,
     uri: graphQLEndpoint,

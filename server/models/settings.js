@@ -35,7 +35,7 @@ module.exports = class Setting extends Model {
     const settings = await WIKI.models.settings.query()
     if (settings.length > 0) {
       return _.reduce(settings, (res, val, key) => {
-        _.set(res, val.key, (val.value.v) ? val.value.v : val.value)
+        _.set(res, val.key, (_.has(val.value, 'v')) ? val.value.v : val.value)
         return res
       }, {})
     } else {

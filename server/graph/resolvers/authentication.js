@@ -61,13 +61,7 @@ module.exports = {
     async register(obj, args, context) {
       try {
         await WIKI.models.users.register(args, context)
-        const authResult = await WIKI.models.users.login({
-          username: args.email,
-          password: args.password,
-          strategy: 'local'
-        }, context)
         return {
-          jwt: authResult.jwt,
           responseResult: graphHelper.generateSuccess('Registration success')
         }
       } catch (err) {

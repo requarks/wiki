@@ -23,10 +23,20 @@
                   .px-3.pb-3
                     v-text-field(
                       outline
+                      label='Site URL'
+                      required
+                      :counter='255'
+                      v-model='config.host'
+                      prepend-icon='label_important'
+                      hint='Full URL to your wiki, without the trailing slash. (e.g. https://wiki.example.com)'
+                      persistent-hint
+                      )
+                    v-text-field.mt-2(
+                      outline
                       label='Site Title'
                       required
                       :counter='50'
-                      v-model='siteTitle'
+                      v-model='config.title'
                       prepend-icon='public'
                       )
                   v-divider
@@ -36,22 +46,28 @@
                       outline
                       label='Site Description'
                       :counter='255'
-                      prepend-icon='public'
+                      v-model='config.description'
+                      prepend-icon='explore'
                       )
                     v-text-field(
                       outline
                       label='Site Keywords'
                       :counter='255'
-                      prepend-icon='public'
+                      v-model='config.keywords'
+                      prepend-icon='explore'
+                      hint='Comma-separated list of keywords.'
+                      persistent-hint
                       )
-                    v-select(
+                    v-select.mt-2(
                       outline
                       label='Meta Robots'
-                      chips
-                      tags
+                      multiple
                       :items='metaRobots'
-                      v-model='metaRobotsSelection'
-                      prepend-icon='public'
+                      v-model='config.robots'
+                      prepend-icon='explore'
+                      :return-object='false'
+                      hint='Default: Index, Follow'
+                      persistent-hint
                       )
                   v-divider
                   v-subheader Analytics
@@ -60,30 +76,20 @@
                       outline
                       label='Google Analytics ID'
                       :counter='255'
+                      v-model='config.ga'
                       prepend-icon='timeline'
                       persistent-hint
-                      hint='Property tracking ID for Google Analytics.'
-                      )
-                  v-divider
-                  v-subheader Footer Copyright
-                  .px-3.pb-3
-                    v-text-field(
-                      outline
-                      label='Company / Organization Name'
-                      v-model='company'
-                      :counter='255'
-                      prepend-icon='business'
-                      persistent-hint
-                      hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
+                      hint='Property tracking ID for Google Analytics. Leave empty to disable.'
                       )
             v-flex(lg6 xs12)
               v-card.wiki-form
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:general.siteBranding') }}
+                v-subheader Logo
                 v-card-text
-                  v-layout.pa-3(row, align-center)
-                    v-avatar(size='120', color='grey lighten-3', :tile='useSquareLogo')
+                  v-layout.px-3(row, align-center)
+                    v-avatar(size='120', color='grey lighten-3', :tile='config.logoIsSquare')
                     .ml-4
                       v-layout(row, align-center)
                         v-btn(color='teal', depressed, dark)
@@ -95,19 +101,23 @@
                       .caption.grey--text An image of 120x120 pixels is recommended for best results.
                       .caption.grey--text SVG, PNG or JPG files only.
                   v-switch(
-                    v-model='useSquareLogo'
+                    v-model='config.logoIsSquare'
                     label='Use Square Logo Frame'
                     color='primary'
                     persistent-hint
                     hint='Check this option if a round logo frame doesn\'t work with your logo.'
                     )
-                  v-divider.mt-3
-                  v-switch(
-                    v-model='displayMascot'
-                    label='Display Wiki.js Mascot'
-                    color='primary'
+                v-divider
+                v-subheader Footer Copyright
+                .px-3.pb-3
+                  v-text-field(
+                    outline
+                    label='Company / Organization Name'
+                    v-model='config.company'
+                    :counter='255'
+                    prepend-icon='business'
                     persistent-hint
-                    hint='Uncheck this box if you don\'t want Henry, Wiki.js mascot, to be displayed on client-facing pages.'
+                    hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
                     )
 
               v-card.wiki-form.mt-3
@@ -116,17 +126,25 @@
                     .subheading Features
                 v-card-text
                   v-switch(
-                    v-model='featurePageRatings'
                     label='Page Ratings'
                     color='primary'
+                    v-model='config.featurePageRatings'
                     persistent-hint
                     hint='Allow users to rate pages.'
                     )
                   v-divider.mt-3
                   v-switch(
-                    v-model='featurePersonalWiki'
+                    label='Page Comments'
+                    color='primary'
+                    v-model='config.featurePageComments'
+                    persistent-hint
+                    hint='Allow users to leave comments on pages.'
+                    )
+                  v-divider.mt-3
+                  v-switch(
                     label='Personal Wikis'
                     color='primary'
+                    v-model='config.featurePersonalWikis'
                     persistent-hint
                     hint='Allow users to have their own personal wiki.'
                     )
@@ -134,18 +152,34 @@
 </template>
 
 <script>
-
+import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
+import siteConfigQuery from 'gql/admin/site/site-query-config.gql'
+import siteUpdateConfigMutation from 'gql/admin/site/site-mutation-save-config.gql'
 
 export default {
   data() {
     return {
-      metaRobotsSelection: ['Index', 'Follow'],
-      metaRobots: ['Index', 'Follow', 'No Index', 'No Follow'],
-      useSquareLogo: false,
-      displayMascot: true,
-      featurePageRatings: true,
-      featurePersonalWiki: true
+      metaRobots: [
+        { text: 'Index', value: 'index' },
+        { text: 'Follow', value: 'follow' },
+        { text: 'No Index', value: 'noindex' },
+        { text: 'No Follow', value: 'nofollow' }
+      ],
+      config: {
+        host: '',
+        title: '',
+        description: '',
+        keywords: '',
+        robots: [],
+        ga: '',
+        company: '',
+        hasLogo: false,
+        logoIsSquare: false,
+        featurePageRatings: false,
+        featurePageComments: false,
+        featurePersonalWikis: false
+      }
     }
   },
   computed: {
@@ -155,11 +189,51 @@ export default {
   },
   methods: {
     async save () {
-      this.$store.commit('showNotification', {
-        message: 'Configuration saved successfully.',
-        style: 'success',
-        icon: 'check'
-      })
+      try {
+        await this.$apollo.mutate({
+          mutation: siteUpdateConfigMutation,
+          variables: {
+            host: this.config.host || '',
+            title: this.config.title || '',
+            description: this.config.description || '',
+            keywords: this.config.keywords || '',
+            robots: this.config.robots || [],
+            ga: this.config.ga || '',
+            company: this.config.company || '',
+            hasLogo: this.config.hasLogo || false,
+            logoIsSquare: this.config.logoIsSquare || false,
+            featurePageRatings: this.config.featurePageRatings || false,
+            featurePageComments: this.config.featurePageComments || false,
+            featurePersonalWikis: this.config.featurePersonalWikis || false
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
+          }
+        })
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: 'Configuration saved successfully.',
+          icon: 'check'
+        })
+        this.siteTitle = this.config.title
+        this.company = this.config.company
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'warning'
+        })
+      }
+    }
+  },
+  apollo: {
+    config: {
+      query: siteConfigQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => _.cloneDeep(data.site.config),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-refresh')
+      }
     }
   }
 }

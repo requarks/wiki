@@ -1,0 +1,18 @@
+{
+  site {
+    config {
+      host
+      title
+      description
+      keywords
+      robots
+      ga
+      company
+      hasLogo
+      logoIsSquare
+      featurePageRatings
+      featurePageComments
+      featurePersonalWikis
+    }
+  }
+}

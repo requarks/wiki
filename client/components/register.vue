@@ -90,7 +90,7 @@
                     a.caption(href='/login', place='link') {{ $t('auth:switchToLogin.link') }}
                   v-spacer
 
-    loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
+    loader(v-model='isLoading', :mode='loaderMode', :icon='loaderIcon', :color='loaderColor', :title='loaderTitle', :subtitle='loaderSubtitle')
     nav-footer(color='grey darken-4', dark-color='grey darken-4')
 </template>
 
@@ -119,7 +119,10 @@ export default {
       isLoading: false,
       isShown: false,
       loaderColor: 'grey darken-4',
-      loaderTitle: 'Working...'
+      loaderTitle: 'Working...',
+      loaderSubtitle: 'Please wait',
+      loaderMode: 'icon',
+      loaderIcon: 'checkmark'
     }
   },
   computed: {
@@ -131,6 +134,7 @@ export default {
     this.isShown = true
     this.$nextTick(() => {
       this.$refs.iptEmail.focus()
+
     })
   },
   methods: {
@@ -216,6 +220,8 @@ export default {
       } else {
         this.loaderColor = 'grey darken-4'
         this.loaderTitle = this.$t('auth:registering')
+        this.loaderSubtitle = this.$t(`auth:pleaseWait`)
+        this.loaderMode = 'loading'
         this.isLoading = true
         try {
           let resp = await this.$apollo.mutate({
@@ -229,12 +235,11 @@ export default {
           if (_.has(resp, 'data.authentication.register')) {
             let respObj = _.get(resp, 'data.authentication.register', {})
             if (respObj.responseResult.succeeded === true) {
-              this.loaderColor = 'green'
+              this.loaderColor = 'grey darken-4'
               this.loaderTitle = this.$t('auth:registerSuccess')
-              Cookies.set('jwt', respObj.jwt, { expires: 365 })
-              _.delay(() => {
-                window.location.replace('/')
-              }, 1000)
+              this.loaderSubtitle = this.$t(`auth:registerCheckEmail`)
+              this.loaderMode = 'icon'
+              this.isShown = false
             } else {
               throw new Error(respObj.responseResult.message)
             }

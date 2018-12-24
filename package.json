@@ -113,6 +113,7 @@
     "mssql": "4.2.3",
     "multer": "1.4.1",
     "mysql2": "1.6.4",
+    "nanoid": "2.0.0",
     "node-2fa": "1.1.2",
     "node-cache": "4.2.0",
     "nodemailer": "4.7.0",

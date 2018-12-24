@@ -40,7 +40,7 @@ module.exports = class Authentication extends Model {
       ...str,
       domainWhitelist: _.get(str.domainWhitelist, 'v', []),
       autoEnrollGroups: _.get(str.autoEnrollGroups, 'v', [])
-    })), ['title'])
+    })), ['key'])
   }
 
   static async refreshStrategiesFromDisk() {

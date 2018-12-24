@@ -2,6 +2,7 @@
 
 const express = require('express')
 const router = express.Router()
+const moment = require('moment')
 
 /**
  * Login form
@@ -28,6 +29,17 @@ router.get('/register', async (req, res, next) => {
   } else {
     next(new WIKI.Error.AuthRegistrationDisabled())
   }
+})
+
+/**
+ * Verify
+ */
+router.get('/verify/:token', async (req, res, next) => {
+  const usr = await WIKI.models.userKeys.validateToken({ kind: 'verify', token: req.params.token })
+  await WIKI.models.users.query().patch({ isVerified: true }).where('id', usr.id)
+  const result = await WIKI.models.users.refreshToken(usr)
+  res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
+  res.redirect('/')
 })
 
 /**

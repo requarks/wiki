@@ -3,10 +3,12 @@
     v-card.loader-dialog.radius-7(:color='color', dark)
       v-card-text.text-xs-center.py-4
         atom-spinner.is-inline(
+          v-if='mode === `loading`'
           :animation-duration='1000'
           :size='60'
           color='#FFF'
           )
+        img(v-else-if='mode === `icon`', :src='`/svg/icon-` + icon + `.svg`', :alt='icon')
         .subheading {{ title }}
         .caption {{ subtitle }}
 </template>
@@ -34,6 +36,14 @@ export default {
     subtitle: {
       type: String,
       default: 'Please wait'
+    },
+    mode: {
+      type: String,
+      default: 'loading'
+    },
+    icon: {
+      type: String,
+      default: 'checkmark'
     }
   }
 }
@@ -46,6 +56,10 @@ export default {
     }
     .caption {
       color: rgba(255,255,255,.7);
+    }
+
+    img {
+      width: 80px;
     }
   }
 </style>

@@ -1,0 +1,59 @@
+# ===============================================
+# SITE
+# ===============================================
+
+extend type Query {
+  site: SiteQuery
+}
+
+extend type Mutation {
+  site: SiteMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type SiteQuery {
+  config: SiteConfig @auth(requires: ["manage:system"])
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type SiteMutation {
+  updateConfig(
+    host: String!
+    title: String!
+    description: String!
+    keywords: String!
+    robots: [String]!
+    ga: String!
+    company: String!
+    hasLogo: Boolean!
+    logoIsSquare: Boolean!
+    featurePageRatings: Boolean!
+    featurePageComments: Boolean!
+    featurePersonalWikis: Boolean!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type SiteConfig {
+  host: String!
+  title: String!
+  description: String!
+  keywords: String!
+  robots: [String]!
+  ga: String!
+  company: String!
+  hasLogo: Boolean!
+  logoIsSquare: Boolean!
+  featurePageRatings: Boolean!
+  featurePageComments: Boolean!
+  featurePersonalWikis: Boolean!
+}
