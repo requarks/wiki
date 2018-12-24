@@ -100,6 +100,12 @@ module.exports = async () => {
   app.locals.moment = require('moment')
   app.locals.moment.locale(WIKI.config.lang.code)
   app.locals.config = WIKI.config
+  app.locals.pageMeta = {
+    title: '',
+    description: WIKI.config.description,
+    image: '',
+    url: '/'
+  }
 
   // ----------------------------------------
   // HMR (Dev Mode Only)

@@ -2,7 +2,6 @@ mutation (
   $host: String!
   $title: String!
   $description: String!
-  $keywords: String!
   $robots: [String]!
   $ga: String!
   $company: String!
@@ -17,7 +16,6 @@ mutation (
       host: $host,
       title: $title,
       description: $description,
-      keywords: $keywords,
       robots: $robots,
       ga: $ga,
       company: $company,

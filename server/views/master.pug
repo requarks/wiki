@@ -7,7 +7,17 @@ html
     meta(name='theme-color', content='#333333')
     meta(name='msapplication-TileColor', content='#333333')
     meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
-    title= config.title
+
+    title= pageMeta.title + ' | ' + config.title
+
+    //- SEO / OpenGraph
+    meta(name='description', content=pageMeta.description)
+    meta(property='og:title', content=pageMeta.title)
+    meta(property='og:type', content='website')
+    meta(property='og:description', content=pageMeta.description)
+    meta(property='og:image', content=pageMeta.image)
+    meta(property='og:url', content=pageMeta.url)
+    meta(property='og:site_name', content=config.title)
 
     //- Favicon
     each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
@@ -17,9 +27,9 @@ html
       link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
     link(rel='manifest', href='/manifest.json')
 
-    //- Site Lang
+    //- Site Properties
     script.
-      var siteConfig = !{JSON.stringify({ title: config.title, theme: config.theming.theme, darkMode: config.theming.darkMode, lang: config.lang.code })}
+      var siteConfig = !{JSON.stringify({ title: config.title, theme: config.theming.theme, darkMode: config.theming.darkMode, lang: config.lang.code, company: config.company })}
 
     //- CSS
     link(type='text/css', rel='stylesheet', href='https://fonts.googleapis.com/icon?family=Roboto:400,500,700|Varela+Round|Source+Code+Pro:400,700|Material+Icons')

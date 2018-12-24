@@ -27,7 +27,6 @@ type SiteMutation {
     host: String!
     title: String!
     description: String!
-    keywords: String!
     robots: [String]!
     ga: String!
     company: String!
@@ -47,7 +46,6 @@ type SiteConfig {
   host: String!
   title: String!
   description: String!
-  keywords: String!
   robots: [String]!
   ga: String!
   company: String!

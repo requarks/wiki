@@ -350,10 +350,10 @@ export default {
 
     @include keyframes(loginBgReveal) {
       0% {
-        background-position-y: 0;
+        background-position-x: 0;
       }
       100% {
-        background-position-y: -800px;
+        background-position-x: 800px;
       }
     }
 

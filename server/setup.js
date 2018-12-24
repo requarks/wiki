@@ -133,7 +133,6 @@ module.exports = () => {
       _.set(WIKI.config, 'public', false)
       _.set(WIKI.config, 'seo', {
         description: '',
-        keywords: '',
         robots: ['index', 'follow'],
         ga: ''
       })

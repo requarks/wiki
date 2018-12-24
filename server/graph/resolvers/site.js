@@ -30,7 +30,6 @@ module.exports = {
         WIKI.config.company = args.company
         WIKI.config.seo = {
           description: args.description,
-          keywords: args.keywords,
           robots: args.robots,
           ga: args.ga
         }

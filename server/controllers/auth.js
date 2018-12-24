@@ -3,11 +3,13 @@
 const express = require('express')
 const router = express.Router()
 const moment = require('moment')
+const _ = require('lodash')
 
 /**
  * Login form
  */
 router.get('/login', function (req, res, next) {
+  _.set(res.locals, 'pageMeta.title', 'Login')
   res.render('login')
 })
 
@@ -23,6 +25,7 @@ router.get('/logout', function (req, res) {
  * Register form
  */
 router.get('/register', async (req, res, next) => {
+  _.set(res.locals, 'pageMeta.title', 'Register')
   const localStrg = await WIKI.models.authentication.getStrategy('local')
   if (localStrg.selfRegistration) {
     res.render('register')

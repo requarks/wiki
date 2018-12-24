@@ -49,15 +49,6 @@
                       v-model='config.description'
                       prepend-icon='explore'
                       )
-                    v-text-field(
-                      outline
-                      label='Site Keywords'
-                      :counter='255'
-                      v-model='config.keywords'
-                      prepend-icon='explore'
-                      hint='Comma-separated list of keywords.'
-                      persistent-hint
-                      )
                     v-select.mt-2(
                       outline
                       label='Meta Robots'
@@ -170,7 +161,6 @@ export default {
         host: '',
         title: '',
         description: '',
-        keywords: '',
         robots: [],
         ga: '',
         company: '',
@@ -196,7 +186,6 @@ export default {
             host: this.config.host || '',
             title: this.config.title || '',
             description: this.config.description || '',
-            keywords: this.config.keywords || '',
             robots: this.config.robots || [],
             ga: this.config.ga || '',
             company: this.config.company || '',

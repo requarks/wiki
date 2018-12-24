@@ -51,6 +51,8 @@ export default {
 
 <style lang='scss'>
   .loader-dialog {
+    transition: all .4s ease;
+
     .atom-spinner.is-inline {
       display: inline-block;
     }
