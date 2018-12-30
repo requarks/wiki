@@ -1,6 +1,6 @@
-mutation ($id: Int!, $name: String!) {
+mutation ($id: Int!, $name: String!, $permissions: [String]!, $pageRules: [PageRuleInput]!) {
   groups {
-    update(id: $id, name: $name) {
+    update(id: $id, name: $name, permissions: $permissions, pageRules: $pageRules) {
       responseResult {
         succeeded
         errorCode

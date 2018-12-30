@@ -8,38 +8,53 @@
             .headline.primary--text {{ $t('admin:dashboard.title') }}
             .subheading.grey--text {{ $t('admin:dashboard.subtitle') }}
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.primary.dashboard-card(dark)
-          v-card-text
-            v-icon.dashboard-icon insert_drive_file
-            .subheading Pages
-            animated-number.display-1(
-              :value='info.pagesTotal'
-              :duration='2000'
-              :formatValue='round'
-              easing='easeOutQuint'
-              )
+        v-hover
+          v-card.primary.dashboard-card(
+            dark
+            slot-scope='{ hover }'
+            :class='hover ? `elevation-10` : `elevation-2`'
+            )
+            v-card-text
+              v-icon.dashboard-icon insert_drive_file
+              .subheading Pages
+              animated-number.display-1(
+                :value='info.pagesTotal'
+                :duration='2000'
+                :formatValue='round'
+                easing='easeOutQuint'
+                )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.indigo.lighten-1.dashboard-card(dark)
-          v-card-text
-            v-icon.dashboard-icon person
-            .subheading Users
-            animated-number.display-1(
-              :value='info.usersTotal'
-              :duration='2000'
-              :formatValue='round'
-              easing='easeOutQuint'
-              )
+        v-hover
+          v-card.indigo.lighten-1.dashboard-card(
+            dark
+            slot-scope='{ hover }'
+            :class='hover ? `elevation-10` : `elevation-2`'
+            )
+            v-card-text
+              v-icon.dashboard-icon person
+              .subheading Users
+              animated-number.display-1(
+                :value='info.usersTotal'
+                :duration='2000'
+                :formatValue='round'
+                easing='easeOutQuint'
+                )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.indigo.lighten-2.dashboard-card(dark)
-          v-card-text
-            v-icon.dashboard-icon people
-            .subheading Groups
-            animated-number.display-1(
-              :value='info.groupsTotal'
-              :duration='2000'
-              :formatValue='round'
-              easing='easeOutQuint'
-              )
+        v-hover
+          v-card.indigo.lighten-2.dashboard-card(
+            dark
+            slot-scope='{ hover }'
+            :class='hover ? `elevation-10` : `elevation-2`'
+            )
+            v-card-text
+              v-icon.dashboard-icon people
+              .subheading Groups
+              animated-number.display-1(
+                :value='info.groupsTotal'
+                :duration='2000'
+                :formatValue='round'
+                easing='easeOutQuint'
+                )
       v-flex(xs12 md6 lg12 xl3 d-flex)
         v-card.dashboard-card(
           :class='isLatestVersion ? "teal lighten-2" : "red lighten-2"'

@@ -44,6 +44,7 @@ type SystemInfo {
   nodeVersion: String
   operatingSystem: String
   pagesTotal: Int
+  platform: String
   ramTotal: String
   redisHost: String
   redisTotalRAM: String

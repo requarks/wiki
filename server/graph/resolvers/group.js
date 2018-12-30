@@ -41,6 +41,7 @@ module.exports = {
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
+        pageRules: JSON.stringify([]),
         isSystem: false
       })
       return {
@@ -69,7 +70,11 @@ module.exports = {
       }
     },
     async update(obj, args) {
-      await WIKI.models.groups.query().patch({ name: args.name }).where('id', args.id)
+      await WIKI.models.groups.query().patch({
+        name: args.name,
+        permissions: JSON.stringify(args.permissions),
+        pageRules: JSON.stringify(args.pageRules)
+      }).where('id', args.id)
       return {
         responseResult: graphHelper.generateSuccess('Group has been updated.')
       }

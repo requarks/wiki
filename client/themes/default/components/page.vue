@@ -6,15 +6,27 @@
       dark
       app
       clipped
-      :mini-variant='$vuetify.breakpoint.md || $vuetify.breakpoint.sm'
-      mini-variant-width='80'
       mobile-break-point='600'
-      :temporary='$vuetify.breakpoint.xs'
+      :temporary='$vuetify.breakpoint.mdAndDown'
       v-model='navShown'
       )
       vue-scroll(:ops='scrollStyle')
         nav-sidebar(:color='darkMode ? `grey darken-3` : `primary`')
           slot(name='sidebar')
+
+    v-fab-transition
+      v-btn(
+        fab
+        color='primary'
+        fixed
+        bottom
+        left
+        small
+        @click='navShown = !navShown'
+        v-if='$vuetify.breakpoint.mdAndDown'
+        v-show='!navShown'
+        )
+        v-icon menu
 
     v-content
       template(v-if='path !== `home`')
@@ -167,7 +179,8 @@ export default {
   },
   data() {
     return {
-      navOpen: false,
+      navShown: false,
+      navExpanded: false,
       upBtnShown: false,
       scrollOpts: {
         duration: 1500,
@@ -203,10 +216,6 @@ export default {
   },
   computed: {
     darkMode: get('site/dark'),
-    navShown: {
-      get() { return this.navOpen || this.$vuetify.breakpoint.smAndUp },
-      set(val) { this.navOpen = val }
-    },
     rating: {
       get () {
         return 3.5
@@ -232,6 +241,7 @@ export default {
   },
   mounted () {
     Prism.highlightAllUnder(this.$refs.container)
+    this.navShown = this.$vuetify.breakpoint.smAndUp
   },
   methods: {
     toggleNavigation () {

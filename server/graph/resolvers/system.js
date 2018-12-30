@@ -77,11 +77,14 @@ module.exports = {
         const osInfo = await getos()
         osLabel = `${os.type()} - ${osInfo.dist} (${osInfo.codename || os.platform()}) ${osInfo.release || os.release()} ${os.arch()}`
       }
+      return osLabel
+    },
+    async platform () {
       const isDockerized = await fs.pathExists('/.dockerenv')
       if (isDockerized) {
-        osLabel = `${osLabel} (Docker Container)`
+        return 'docker'
       }
-      return osLabel
+      return os.platform()
     },
     hostname() {
       return os.hostname()

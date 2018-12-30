@@ -56,6 +56,7 @@ exports.up = knex => {
       table.increments('id').primary()
       table.string('name').notNullable()
       table.json('permissions').notNullable()
+      table.json('pageRules').notNullable()
       table.boolean('isSystem').notNullable().defaultTo(false)
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()

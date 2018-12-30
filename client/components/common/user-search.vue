@@ -3,7 +3,7 @@
     v-model='dialogOpen'
     max-width='650'
     )
-    v-card
+    v-card.wiki-form
       .dialog-header
         span Search User
         v-spacer
@@ -16,23 +16,25 @@
           )
       v-card-text
         v-text-field(
-          solo
-          flat
+          outline
           label='Search Users...'
           v-model='search'
-          prepend-icon='search'
-          :background-color='$vuetify.dark ? "grey darken-4" : "blue lighten-5"'
+          prepend-inner-icon='search'
           color='primary'
           ref='searchIpt'
           hide-details
           )
-        v-list(two-line)
+        v-list.grey.mt-3.py-0.radius-7(
+          :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`'
+          two-line
+          dense
+          )
           template(v-for='(usr, idx) in items')
             v-list-tile(:key='usr.id', @click='setUser(usr.id)')
               v-list-tile-avatar(size='40', color='primary')
                 span.body-1.white--text {{usr.name | initials}}
               v-list-tile-content
-                v-list-tile-title {{usr.name}}
+                v-list-tile-title.body-2 {{usr.name}}
                 v-list-tile-sub-title {{usr.email}}
               v-list-tile-action
                 v-icon(color='primary') arrow_forward

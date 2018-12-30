@@ -26,6 +26,7 @@ module.exports = () => {
   const cfgHelper = require('./helpers/config')
   const crypto = Promise.promisifyAll(require('crypto'))
   const pem2jwk = require('pem-jwk').pem2jwk
+  const semver = require('semver')
 
   // ----------------------------------------
   // Define Express App
@@ -83,6 +84,11 @@ module.exports = () => {
     WIKI.telemetry.sendEvent('setup', 'finalize')
 
     try {
+      // Basic checks
+      if (!semver.satisfies(process.version, '>=10.14')) {
+        throw new Error('Node.js 10.14.x or later required!')
+      }
+
       // Upgrade from WIKI.js 1.x?
       if (req.body.upgrade) {
         await WIKI.system.upgradeFromMongo({
@@ -205,11 +211,15 @@ module.exports = () => {
       const adminGroup = await WIKI.models.groups.query().insert({
         name: 'Administrators',
         permissions: JSON.stringify(['manage:system']),
+        pageRules: [],
         isSystem: true
       })
       const guestGroup = await WIKI.models.groups.query().insert({
         name: 'Guests',
         permissions: JSON.stringify(['read:pages']),
+        pageRules: [
+          { id: 'guest', roles: ['READ', 'AS_READ', 'CM_READ'], match: 'START', deny: false, path: '', locales: [] }
+        ],
         isSystem: true
       })
 

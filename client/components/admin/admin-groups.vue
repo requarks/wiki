@@ -14,19 +14,18 @@
             v-btn(color='primary', depressed, slot='activator', large)
               v-icon(left) add
               span New Group
-            v-card
+            v-card.wiki-form
               .dialog-header.is-short New Group
               v-card-text
                 v-text-field.md2(
-                  solo,
-                  flat,
-                  background-color='grey lighten-4'
+                  outline
+                  background-color='grey lighten-3'
                   prepend-icon='people'
                   v-model='newGroupName'
                   label='Group Name'
                   counter='255'
                   @keyup.enter='createGroup'
-                  ref='groupNameInput'
+                  ref='groupNameIpt'
                   )
               v-card-chin
                 v-spacer
@@ -44,7 +43,7 @@
             template(slot='items', slot-scope='props')
               tr.is-clickable(:active='props.selected', @click='$router.push("/groups/" + props.item.id)')
                 td.text-xs-right {{ props.item.id }}
-                td {{ props.item.name }}
+                td: strong {{ props.item.name }}
                 td {{ props.item.userCount }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
@@ -93,6 +92,15 @@ export default {
       return Math.ceil(this.pagination.totalItems / this.pagination.rowsPerPage)
     }
   },
+  watch: {
+    newGroupDialog(newValue, oldValue) {
+      if (newValue) {
+        this.$nextTick(() => {
+          this.$refs.groupNameIpt.focus()
+        })
+      }
+    }
+  },
   methods: {
     async refresh() {
       await this.$apollo.queries.groups.refetch()
@@ -103,6 +111,14 @@ export default {
       })
     },
     async createGroup() {
+      if (_.trim(this.newGroupName).length < 1) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Enter a group name.',
+          icon: 'warning'
+        })
+        return
+      }
       this.newGroupDialog = false
       try {
         await this.$apollo.mutate({
@@ -130,36 +146,6 @@ export default {
           style: 'success',
           message: `Group has been created successfully.`,
           icon: 'check'
-        })
-      } catch (err) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: err.message,
-          icon: 'warning'
-        })
-      }
-    },
-    async deleteGroupConfirm(group) {
-      this.deleteGroupDialog = true
-      this.selectedGroup = group
-    },
-    async deleteGroup() {
-      this.deleteGroupDialog = false
-      try {
-        await this.$apollo.mutate({
-          mutation: deleteGroupMutation,
-          variables: {
-            id: this.selectedGroup.id
-          },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-delete')
-          }
-        })
-        await this.$apollo.queries.groups.refetch()
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: `Group ${this.selectedGroup.name} has been deleted.`,
-          icon: 'delete'
         })
       } catch (err) {
         this.$store.commit('showNotification', {

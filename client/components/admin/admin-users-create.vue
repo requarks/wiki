@@ -1,29 +1,23 @@
 <template lang="pug">
   v-dialog(v-model='isShown', max-width='550')
-    v-card
+    v-card.wiki-form
       .dialog-header.is-short New Local User
       v-card-text
         v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
+          outline
           prepend-icon='email'
           v-model='email'
           label='Email Address'
           ref='emailInput'
           )
         v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
+          outline
           prepend-icon='person'
           v-model='name'
           label='Name'
           )
         v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
+          outline
           prepend-icon='lock'
           append-icon='casino'
           v-model='password'
@@ -31,32 +25,10 @@
           counter='255'
           @click:append='generatePwd'
           )
-        v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
-          prepend-icon='title'
-          v-model='jobTitle'
-          label='Job Title'
-          counter='255'
-          hint='Optional'
-          persistent-hint
-          )
-        v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
-          prepend-icon='public'
-          v-model='location'
-          label='Location'
-          counter='255'
-          hint='Optional'
-          persistent-hint
-          )
       v-card-chin
         v-spacer
         v-btn(flat, @click='isShown = false') Cancel
-        v-btn(color='primary', @click='createUser') Create
+        v-btn(color='primary', @click='createUser') Create User
 </template>
 
 <script>

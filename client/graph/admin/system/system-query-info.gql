@@ -9,6 +9,7 @@ query {
       latestVersion
       latestVersionReleaseDate
       operatingSystem
+      platform
       hostname
       cpuCores
       ramTotal

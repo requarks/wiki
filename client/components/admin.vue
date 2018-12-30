@@ -9,13 +9,13 @@
             v-list-tile-title {{ $t('admin:dashboard.title') }}
           v-divider.my-2
           v-subheader.pl-4 {{ $t('admin:nav.site') }}
-          v-list-tile(to='/general')
+          v-list-tile(to='/general', v-if='hasPermission(`manage:system`)')
             v-list-tile-avatar: v-icon widgets
             v-list-tile-title {{ $t('admin:general.title') }}
-          v-list-tile(to='/locale')
+          v-list-tile(to='/locale', v-if='hasPermission(`manage:system`)')
             v-list-tile-avatar: v-icon language
             v-list-tile-title {{ $t('admin:locale.title') }}
-          v-list-tile(to='/navigation')
+          v-list-tile(to='/navigation', v-if='hasPermission([`manage:system`, `manage:navigation`])')
             v-list-tile-avatar: v-icon near_me
             v-list-tile-title {{ $t('admin:navigation.title') }}
           v-list-tile(to='/pages')
@@ -24,7 +24,7 @@
             v-list-tile-action
               v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
                 .caption.grey--text {{ info.pagesTotal }}
-          v-list-tile(to='/theme')
+          v-list-tile(to='/theme', v-if='hasPermission([`manage:system`, `manage:theme`])')
             v-list-tile-avatar: v-icon palette
             v-list-tile-title {{ $t('admin:theme.title') }}
           v-divider.my-2
@@ -41,44 +41,46 @@
             v-list-tile-action
               v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
                 .caption.grey--text {{ info.usersTotal }}
-          v-divider.my-2
-          v-subheader.pl-4 {{ $t('admin:nav.modules') }}
-          v-list-tile(to='/auth')
-            v-list-tile-avatar: v-icon lock_outline
-            v-list-tile-title {{ $t('admin:auth.title') }}
-          v-list-tile(to='/editor')
-            v-list-tile-avatar: v-icon transform
-            v-list-tile-title {{ $t('admin:editor.title') }}
-          v-list-tile(to='/logging')
-            v-list-tile-avatar: v-icon graphic_eq
-            v-list-tile-title {{ $t('admin:logging.title') }}
-          v-list-tile(to='/rendering')
-            v-list-tile-avatar: v-icon system_update_alt
-            v-list-tile-title {{ $t('admin:rendering.title') }}
-          v-list-tile(to='/search')
-            v-list-tile-avatar: v-icon search
-            v-list-tile-title {{ $t('admin:search.title') }}
-          v-list-tile(to='/storage')
-            v-list-tile-avatar: v-icon storage
-            v-list-tile-title {{ $t('admin:storage.title') }}
-          v-divider.my-2
-          v-subheader.pl-4 {{ $t('admin:nav.system') }}
-          v-list-tile(to='/api')
-            v-list-tile-avatar: v-icon call_split
-            v-list-tile-title {{ $t('admin:api.title') }}
-          v-list-tile(to='/mail')
-            v-list-tile-avatar: v-icon email
-            v-list-tile-title {{ $t('admin:mail.title') }}
-          v-list-tile(to='/system')
-            v-list-tile-avatar: v-icon tune
-            v-list-tile-title {{ $t('admin:system.title') }}
-          v-list-tile(to='/utilities')
-            v-list-tile-avatar: v-icon build
-            v-list-tile-title {{ $t('admin:utilities.title') }}
-          v-list-tile(to='/dev')
-            v-list-tile-avatar: v-icon weekend
-            v-list-tile-title {{ $t('admin:dev.title') }}
-          v-divider.my-2
+          template(v-if='hasPermission(`manage:system`)')
+            v-divider.my-2
+            v-subheader.pl-4 {{ $t('admin:nav.modules') }}
+            v-list-tile(to='/auth')
+              v-list-tile-avatar: v-icon lock_outline
+              v-list-tile-title {{ $t('admin:auth.title') }}
+            v-list-tile(to='/editor')
+              v-list-tile-avatar: v-icon transform
+              v-list-tile-title {{ $t('admin:editor.title') }}
+            v-list-tile(to='/logging')
+              v-list-tile-avatar: v-icon graphic_eq
+              v-list-tile-title {{ $t('admin:logging.title') }}
+            v-list-tile(to='/rendering')
+              v-list-tile-avatar: v-icon system_update_alt
+              v-list-tile-title {{ $t('admin:rendering.title') }}
+            v-list-tile(to='/search')
+              v-list-tile-avatar: v-icon search
+              v-list-tile-title {{ $t('admin:search.title') }}
+            v-list-tile(to='/storage')
+              v-list-tile-avatar: v-icon storage
+              v-list-tile-title {{ $t('admin:storage.title') }}
+            v-divider.my-2
+          template(v-if='hasPermission([`manage:system`, `manage:api`])')
+            v-subheader.pl-4 {{ $t('admin:nav.system') }}
+            v-list-tile(to='/api', v-if='hasPermission([`manage:system`, `manage:api`])')
+              v-list-tile-avatar: v-icon call_split
+              v-list-tile-title {{ $t('admin:api.title') }}
+            v-list-tile(to='/mail', v-if='hasPermission(`manage:system`)')
+              v-list-tile-avatar: v-icon email
+              v-list-tile-title {{ $t('admin:mail.title') }}
+            v-list-tile(to='/system', v-if='hasPermission(`manage:system`)')
+              v-list-tile-avatar: v-icon tune
+              v-list-tile-title {{ $t('admin:system.title') }}
+            v-list-tile(to='/utilities', v-if='hasPermission(`manage:system`)')
+              v-list-tile-avatar: v-icon build
+              v-list-tile-title {{ $t('admin:utilities.title') }}
+            v-list-tile(to='/dev', v-if='hasPermission([`manage:system`, `manage:api`])')
+              v-list-tile-avatar: v-icon weekend
+              v-list-tile-title {{ $t('admin:dev.title') }}
+            v-divider.my-2
           v-list-tile(to='/contribute')
             v-list-tile-avatar: v-icon favorite
             v-list-tile-title {{ $t('admin:contribute.title') }}
@@ -91,6 +93,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import VueRouter from 'vue-router'
 import { get, sync } from 'vuex-pathify'
 
@@ -161,11 +164,23 @@ export default {
   },
   computed: {
     darkMode: get('site/dark'),
-    info: sync('admin/info')
+    info: sync('admin/info'),
+    permissions: get('user/permissions')
   },
   router,
   created() {
     this.$store.commit('page/SET_MODE', 'admin')
+  },
+  methods: {
+    hasPermission(prm) {
+      if (_.isArray(prm)) {
+        return _.some(prm, p => {
+          return _.includes(this.permissions, p)
+        })
+      } else {
+        return _.includes(this.permissions, prm)
+      }
+    }
   },
   apollo: {
     info: {

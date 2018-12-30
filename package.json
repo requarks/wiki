@@ -10,11 +10,7 @@
     "dev": "node wiki dev",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
-    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
-    "docker:dev:up": "docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . up -d && docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec wiki yarn dev",
-    "docker:dev:down": "docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down",
-    "docker:dev:rebuild": "rmdir node_modules /s /q && docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . build --no-cache --force-rm",
-    "docker:build": "docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . run wiki yarn build && docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down"
+    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest"
   },
   "bin": {
     "wiki": "wiki.js"
@@ -39,7 +35,7 @@
   },
   "homepage": "https://github.com/Requarks/wiki#readme",
   "engines": {
-    "node": ">=10.10"
+    "node": ">=10.12"
   },
   "dependencies": {
     "apollo-server": "2.2.2",

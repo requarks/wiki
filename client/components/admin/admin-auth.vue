@@ -130,6 +130,7 @@
                       outline
                       background-color='grey lighten-2'
                       persistent-hint
+                      small-chips
                       deletable-chips
                       clearable
                       multiple
@@ -145,6 +146,7 @@
                       v-model='strategy.autoEnrollGroups'
                       prepend-icon='people'
                       hint='Automatically assign new users to these groups.'
+                      small-chips
                       persistent-hint
                       deletable-chips
                       clearable

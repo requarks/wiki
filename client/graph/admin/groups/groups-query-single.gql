@@ -8,9 +8,10 @@ query ($id: Int!) {
       pageRules {
         id
         path
-        role
-        exact
-        allow
+        roles
+        match
+        deny
+        locales
       }
       users {
         id

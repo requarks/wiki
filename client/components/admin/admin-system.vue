@@ -33,10 +33,11 @@
                 v-subheader {{ $t('admin:system.hostInfo') }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
-                    v-icon.blue-grey.white--text bubble_chart
+                    v-avatar.blue-grey(size='40')
+                      img(:src='`/svg/icon-` + platformLogo + `-logo.svg`', alt='Platform', style='width: 24px;')
                   v-list-tile-content
                     v-list-tile-title {{ $t('admin:system.os') }}
-                    v-list-tile-sub-title {{ info.operatingSystem }}
+                    v-list-tile-sub-title {{ (info.platform === 'docker') ? 'Docker Container (Linux)' : info.operatingSystem }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
                     v-icon.blue-grey.white--text computer
@@ -127,6 +128,20 @@ export default {
   computed: {
     dbVersion() {
       return _.get(this.info, 'dbVersion', '').replace(/(?:\r\n|\r|\n)/g, '<br />')
+    },
+    platformLogo() {
+      switch (this.info.platform) {
+        case 'docker':
+          return 'docker'
+        case 'darwin':
+          return 'apple'
+        case 'linux':
+          return 'linux'
+        case 'win32':
+          return 'windows'
+        default:
+          return ''
+      }
     }
   },
   methods: {

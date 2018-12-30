@@ -37,6 +37,8 @@ type GroupMutation {
   update(
     id: Int!
     name: String!
+    permissions: [String]!
+    pageRules: [PageRuleInput]!
   ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   delete(
@@ -77,8 +79,46 @@ type Group {
   name: String!
   isSystem: Boolean!
   permissions: [String]!
-  pageRules: [Right]
+  pageRules: [PageRule]
   users: [UserMinimal]
   createdAt: Date!
   updatedAt: Date!
+}
+
+type PageRule {
+  id: String!
+  deny: Boolean!
+  match: PageRuleMatch!
+  roles: [PageRuleRole]!
+  path: String!
+  locales: [String]!
+}
+
+input PageRuleInput {
+  id: String!
+  deny: Boolean!
+  match: PageRuleMatch!
+  roles: [PageRuleRole]!
+  path: String!
+  locales: [String]!
+}
+
+enum PageRuleRole {
+  READ
+  WRITE
+  MANAGE
+  DELETE
+  AS_READ
+  AS_WRITE
+  AS_MANAGE
+  CM_READ
+  CM_WRITE
+  CM_MANAGE
+}
+
+enum PageRuleMatch {
+  START
+  EXACT
+  END
+  REGEX
 }
