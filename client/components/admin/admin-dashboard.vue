@@ -69,8 +69,8 @@
             .body-2(v-if='isLatestVersion') You are running the latest version.
             .body-2(v-else) A new version is available: {{info.latestVersion}}
       v-flex(xs12)
-        v-card
-          v-card-title.subheading Recent Pages
+        v-card.radius-7
+          v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
           v-data-table.pb-2(
             :items='recentPages'
             hide-actions
@@ -86,8 +86,8 @@
                 .caption: strong Updated {{ props.item.updatedAt | moment('from') }}
                 .caption Created {{ props.item.createdAt | moment('calendar') }}
       v-flex(xs12)
-        v-card
-          v-card-title.subheading Most Popular Pages
+        v-card.radius-7
+          v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
           v-data-table.pb-2(
             :items='popularPages'
             hide-actions
@@ -102,6 +102,16 @@
               td.grey--text.text--darken-2(width='250')
                 .caption: strong Updated {{ props.item.updatedAt | moment('from') }}
                 .caption Created {{ props.item.createdAt | moment('calendar') }}
+
+      v-flex(xs12)
+        v-card.dashboard-contribute
+          v-card-text
+            img(src='/svg/icon-heart-health.svg', alt='Contribute', style='height: 80px;')
+            .pl-3
+              .subheading Contribute
+              .body-2.pt-2 Wiki.js is a free and open source project. There are several ways you can contribute to the project.
+              .body-1 We need your help!
+              v-btn.mx-0.mt-2(:color='$vuetify.dark ? `indigo lighten-3` : `indigo`', outline, small, to='/contribute') Learn More
 
 </template>
 
@@ -135,10 +145,32 @@ export default {
 
 .dashboard-card {
   display: flex;
+  border-radius: 7px;
 
   .v-card__text {
     overflow: hidden;
     position: relative;
+  }
+}
+
+.dashboard-contribute {
+  background-color: #FFF;
+  background-image: linear-gradient(to bottom, #FFF 0%, lighten(mc('indigo', '50'), 3%) 100%);
+  border-radius: 7px;
+
+  @at-root .theme--dark & {
+    background-color: mc('grey', '800');
+    background-image: linear-gradient(to bottom, mc('grey', '800') 0%, darken(mc('grey', '800'), 6%) 100%);
+  }
+
+  .v-card__text {
+    display: flex;
+    align-items: center;
+    color: mc('indigo', '500');
+
+    @at-root .theme--dark & {
+      color: mc('grey', '300');
+    }
   }
 }
 

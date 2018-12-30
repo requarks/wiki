@@ -80,7 +80,7 @@
                 v-subheader Logo
                 v-card-text
                   v-layout.px-3(row, align-center)
-                    v-avatar(size='120', color='grey lighten-3', :tile='config.logoIsSquare')
+                    v-avatar(size='120', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
                     .ml-4
                       v-layout(row, align-center)
                         v-btn(color='teal', depressed, dark)

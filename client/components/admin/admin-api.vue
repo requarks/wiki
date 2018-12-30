@@ -58,7 +58,7 @@
                 td {{ props.item.updatedOn }}
                 td: v-btn(icon): v-icon.grey--text.text--darken-1 more_horiz
             template(slot='no-data')
-              v-alert(icon='warning', :value='true') No users to display!
+              v-alert.mt-3(icon='warning', :value='true', outline) No API have been generated yet.
           .text-xs-center.py-2
             v-pagination(v-model='pagination.page', :length='pages')
 </template>
@@ -69,11 +69,7 @@ export default {
     return {
       selected: [],
       pagination: {},
-      items: [
-        { id: 1, key: 'xxxxxxxxxxxxx' },
-        { id: 2, key: 'xxxxxxxxxxxxy' },
-        { id: 3, key: 'xxxxxxxxxxxxz' }
-      ],
+      items: [],
       headers: [
         { text: 'Name', value: 'name' },
         { text: 'Key', value: 'key' },

@@ -6,6 +6,10 @@
 
   @at-root .theme--dark & {
     color: mc('grey', '300');
+
+    a {
+      color: mc('blue', '300');
+    }
   }
 
   // ---------------------------------
@@ -39,7 +43,7 @@
     position: relative;
 
     @at-root .theme--dark & {
-      color: mc('blue', '500');
+      color: mc('grey', '400');
     }
 
     &::after {
@@ -50,6 +54,10 @@
       width: 100%;
       height: 2px;
       background: linear-gradient(to right, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
+
+      @at-root .theme--dark & {
+        background: linear-gradient(to right, mc('grey', '600'), rgba(mc('grey', '600'), 0));
+      }
     }
 
     & + h2, & + h3 {

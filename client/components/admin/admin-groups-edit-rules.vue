@@ -196,8 +196,7 @@ export default {
         { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' }
       ],
       locales: [
-        { text: 'English', value: 'en' },
-        { text: 'Français', value: 'fr' },
+        { text: 'English', value: 'en' }
       ]
     }
   },
