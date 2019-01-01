@@ -25,6 +25,7 @@
                   label='Group Name'
                   counter='255'
                   @keyup.enter='createGroup'
+                  @keyup.esc='newGroupDialog = false'
                   ref='groupNameIpt'
                   )
               v-card-chin

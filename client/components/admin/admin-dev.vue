@@ -16,7 +16,7 @@
             slider-color='white'
             show-arrows
             dark
-            @input='tabChanged'
+            @change='tabChanged'
             )
             v-tab(key='0') Graph API Playground
             v-tab(key='1') Graph API Map
@@ -67,7 +67,7 @@ let graphiQLInstance
 export default {
   data() {
     return {
-      selectedTab: '0'
+      selectedTab: 0
     }
   },
   mounted() {
@@ -76,7 +76,7 @@ export default {
   methods: {
     tabChanged (tabId) {
       switch (tabId) {
-        case '1':
+        case 1:
           this.renderVoyager()
           break
       }

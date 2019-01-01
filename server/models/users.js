@@ -296,10 +296,13 @@ module.exports = class User extends Model {
     throw new WIKI.Error.AuthTFAInvalid()
   }
 
-  static async register ({ email, password, name }, context) {
+  static async register ({ email, password, name, verify = false, bypassChecks = false }, context) {
     const localStrg = await WIKI.models.authentication.getStrategy('local')
     // Check if self-registration is enabled
-    if (localStrg.selfRegistration) {
+    if (localStrg.selfRegistration || bypassChecks) {
+      // Input sanitization
+      email = _.toLower(email)
+
       // Input validation
       const validation = validate({
         email,
@@ -335,7 +338,7 @@ module.exports = class User extends Model {
       }
 
       // Check if email domain is whitelisted
-      if (_.get(localStrg, 'domainWhitelist.v', []).length > 0) {
+      if (_.get(localStrg, 'domainWhitelist.v', []).length > 0 && !bypassChecks) {
         const emailDomain = _.last(email.split('@'))
         if (!_.includes(localStrg.domainWhitelist.v, emailDomain)) {
           throw new WIKI.Error.AuthRegistrationDomainUnauthorized()
@@ -358,26 +361,28 @@ module.exports = class User extends Model {
           isVerified: false
         })
 
-        // Create verification token
-        const verificationToken = await WIKI.models.userKeys.generateToken({
-          kind: 'verify',
-          userId: newUsr.id
-        })
+        if (verify) {
+          // Create verification token
+          const verificationToken = await WIKI.models.userKeys.generateToken({
+            kind: 'verify',
+            userId: newUsr.id
+          })
 
-        // Send verification email
-        await WIKI.mail.send({
-          template: 'accountVerify',
-          to: email,
-          subject: 'Verify your account',
-          data: {
-            preheadertext: 'Verify your account in order to gain access to the wiki.',
-            title: 'Verify your account',
-            content: 'Click the button below in order to verify your account and gain access to the wiki.',
-            buttonLink: `${WIKI.config.host}/verify/${verificationToken}`,
-            buttonText: 'Verify'
-          },
-          text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.host}/verify/${verificationToken}`
-        })
+          // Send verification email
+          await WIKI.mail.send({
+            template: 'accountVerify',
+            to: email,
+            subject: 'Verify your account',
+            data: {
+              preheadertext: 'Verify your account in order to gain access to the wiki.',
+              title: 'Verify your account',
+              content: 'Click the button below in order to verify your account and gain access to the wiki.',
+              buttonLink: `${WIKI.config.host}/verify/${verificationToken}`,
+              buttonText: 'Verify'
+            },
+            text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.host}/verify/${verificationToken}`
+          })
+        }
         return true
       } else {
         throw new WIKI.Error.AuthAccountAlreadyExists()

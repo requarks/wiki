@@ -13,9 +13,9 @@
           v-btn(color='black', dark, depressed, @click='toggleConsole', large)
             ConsoleLineIcon.mr-3
             span Live Trail
-          v-btn.mr-0(color='primary', @click='save', depressed, large)
-            v-icon(left) chevron_right
-            span Apply Configuration
+          v-btn(color='success', @click='save', depressed, large)
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
 
         v-card.mt-3
           v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)

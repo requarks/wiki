@@ -77,6 +77,8 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:general.siteBranding') }}
+                  v-spacer
+                  v-chip(label, color='white', small).primary--text coming soon
                 v-subheader Logo
                 v-card-text
                   v-layout.px-3(row, align-center)

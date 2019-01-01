@@ -47,6 +47,8 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Code Injection
+                  v-spacer
+                  v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
                   v-textarea(
                     v-model='injectCSS'
@@ -57,6 +59,7 @@
                     persistent-hint
                     hint='CSS code to inject after system default CSS'
                     auto-grow
+                    disabled
                     )
                   v-textarea.mt-2(
                     v-model='injectHeader'
@@ -67,6 +70,7 @@
                     persistent-hint
                     hint='HTML code to be injected just before the closing head tag'
                     auto-grow
+                    disabled
                     )
                   v-textarea.mt-2(
                     v-model='injectFooter'
@@ -77,12 +81,15 @@
                     persistent-hint
                     hint='HTML code to be injected just before the closing body tag'
                     auto-grow
+                    disabled
                     )
             v-flex(lg6 xs12)
               v-card
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
                     .subheading Download Themes
+                  v-spacer
+                  v-chip(label, color='white', small).teal--text coming soon
                 v-card-text.caption -- Coming soon --
 </template>
 

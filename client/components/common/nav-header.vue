@@ -52,7 +52,7 @@
                   v-list-tile-content Delete
               v-divider.my-0
               v-subheader Assets
-              v-list-tile(avatar, @click='')
+              v-list-tile(avatar, @click='assets')
                 v-list-tile-avatar: v-icon(color='blue-grey') burst_mode
                 v-list-tile-content Images &amp; Files
           v-toolbar-title(:class='{ "ml-2": $vuetify.breakpoint.mdAndUp, "ml-0": $vuetify.breakpoint.smAndDown }')
@@ -230,10 +230,25 @@ export default {
       window.location.assign(`/s/${this.path}`)
     },
     pageMove () {
-
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
     },
     pageDelete () {
-
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
+    },
+    assets () {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
     },
     logout () {
       Cookies.remove('jwt')

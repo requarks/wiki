@@ -30,7 +30,11 @@ module.exports = {
   },
   UserMutation: {
     create(obj, args) {
-      return WIKI.models.users.query().insertAndFetch(args)
+      return WIKI.models.users.register({
+        ...args,
+        verify: false,
+        bypassChecks: true
+      })
     },
     delete(obj, args) {
       return WIKI.models.users.query().deleteById(args.id)

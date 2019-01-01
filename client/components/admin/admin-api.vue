@@ -8,12 +8,12 @@
             .headline.blue--text.text--darken-2 API
             .subheading.grey--text Manage keys to access the API
           v-spacer
-          v-btn(outline, color='grey', large)
+          v-btn(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn(color='green', dark, depressed, large)
+          v-btn(color='green', dark, depressed, large, @click='globalSwitch')
             v-icon(left) power_settings_new
             | Enable API
-          v-btn(color='primary', depressed, large)
+          v-btn(color='primary', depressed, large, @click='newKey')
             v-icon(left) add
             | New API Key
         v-card.mt-3
@@ -104,6 +104,27 @@ export default {
       } else {
         this.selected = this.items.slice()
       }
+    },
+    async refresh() {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
+    },
+    async globalSwitch() {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
+    },
+    async newKey() {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
     }
   }
 }

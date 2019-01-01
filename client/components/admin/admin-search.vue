@@ -10,12 +10,12 @@
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='black', dark, large, depressed)
+          v-btn(color='black', dark, large, depressed, @click='rebuild')
             v-icon(left) cached
             span Rebuild Index
-          v-btn(color='primary', @click='save', depressed, large)
-            v-icon(left) chevron_right
-            span Apply Configuration
+          v-btn(color='success', @click='save', depressed, large)
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
 
         v-card.mt-3
           v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)
@@ -137,11 +137,18 @@ export default {
         }
       })
       this.$store.commit('showNotification', {
-        message: 'Logging configuration saved successfully.',
+        message: 'Search engine configuration saved successfully.',
         style: 'success',
         icon: 'check'
       })
       this.$store.commit(`loadingStop`, 'admin-search-saveengines')
+    },
+    async rebuild () {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
     }
   },
   apollo: {

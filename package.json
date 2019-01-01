@@ -42,6 +42,7 @@
     "apollo-server-express": "2.2.2",
     "auto-load": "3.0.4",
     "axios": "0.18.0",
+    "js-base64": "2.5.0",
     "bcryptjs-then": "1.0.1",
     "bluebird": "3.5.3",
     "body-parser": "1.18.3",

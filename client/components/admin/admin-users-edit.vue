@@ -10,7 +10,7 @@
           v-spacer
           .caption.grey--text ID #[strong {{user.id}}]
           v-divider.mx-3(vertical)
-          v-btn(color='indigo', large, outline, to='/users')
+          v-btn(color='grey', large, outline, to='/users')
             v-icon arrow_back
           v-dialog(v-model='deleteUserDialog', max-width='500', v-if='user.id !== currentUserId && !user.isSystem')
             v-btn(color='red', large, outline, slot='activator')

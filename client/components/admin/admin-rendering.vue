@@ -10,9 +10,9 @@
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='primary', @click='save', depressed, large)
-            v-icon(left) chevron_right
-            span Apply Configuration
+          v-btn(color='success', @click='save', depressed, large)
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
 
       v-flex(lg3, xs12)
         v-toolbar(
@@ -154,6 +154,20 @@ export default {
         if (_.some(rdr.children, ['key', key])) {
           this.currentRenderer = _.find(rdr.children, ['key', key])
         }
+      })
+    },
+    async refresh () {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
+    },
+    async save () {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
       })
     }
   },

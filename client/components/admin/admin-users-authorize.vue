@@ -1,62 +1,44 @@
 <template lang="pug">
   v-dialog(v-model='isShown', max-width='550')
-    v-card
-      .dialog-header.is-short Authorize Social User
+    v-card.wiki-form
+      .dialog-header.is-short
+        span Authorize Social User
+        v-spacer
+        v-chip(label, color='white', small).primary--text coming soon
       v-card-text
+        v-alert.mb-4.deep-orange.lighten-5.radius-7(
+          v-if='providers.length < 1'
+          color='deep-orange'
+          icon='warning'
+          outline
+          :value='true'
+          ) You must enable at least 1 social strategy first.
         v-select.md2(
           :items='providers'
           item-text='title'
           item-value='key'
-          solo
-          flat
-          background-color='grey lighten-4'
+          outline
           prepend-icon='business'
           v-model='provider'
           label='Provider'
           )
         v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
+          outline
           prepend-icon='email'
           v-model='email'
           label='Email Address'
           ref='emailInput'
           )
         v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
+          outline
           prepend-icon='person'
           v-model='name'
           label='Name'
           )
-        v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
-          prepend-icon='title'
-          v-model='jobTitle'
-          label='Job Title'
-          counter='255'
-          hint='Optional'
-          persistent-hint
-          )
-        v-text-field.md2(
-          solo
-          flat
-          background-color='grey lighten-4'
-          prepend-icon='public'
-          v-model='location'
-          label='Location'
-          counter='255'
-          hint='Optional'
-          persistent-hint
-          )
       v-card-chin
         v-spacer
         v-btn(flat, @click='isShown = false') Cancel
-        v-btn(color='primary', @click='authorizeUser') Authorize
+        v-btn(color='primary', @click='authorizeUser', :disabled='providers.length < 1 || true') Authorize
 </template>
 
 <script>
@@ -76,9 +58,7 @@ export default {
       providers: [],
       provider: '',
       email: '',
-      name: '',
-      jobTitle: '',
-      location: ''
+      name: ''
     }
   },
   computed: {

@@ -60,7 +60,7 @@ module.exports = {
     },
     async register(obj, args, context) {
       try {
-        await WIKI.models.users.register(args, context)
+        await WIKI.models.users.register({...args, verify: true }, context)
         return {
           responseResult: graphHelper.generateSuccess('Registration success')
         }

@@ -10,9 +10,9 @@
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='primary', @click='save', depressed, large)
-            v-icon(left) chevron_right
-            span Apply Configuration
+          v-btn(color='success', @click='save', depressed, large)
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
 
         v-card.mt-3
           v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)
@@ -26,13 +26,14 @@
                       .body-2.grey--text.text--darken-1 Select which authentication strategies to enable:
                       .caption.grey--text.pb-2 Some strategies require additional configuration in their dedicated tab (when selected).
                       v-form
+                        //- TODO - Prevent crash on unfinished strategies
                         v-checkbox.my-0(
                           v-for='strategy in strategies'
                           v-model='strategy.isEnabled'
                           :key='strategy.key'
                           :label='strategy.title'
                           color='primary'
-                          :disabled='strategy.key === `local`'
+                          :disabled='strategy.key === `local` || true'
                           hide-details
                         )
                     v-flex(xs12, md6)

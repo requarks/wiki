@@ -36,7 +36,7 @@
             .subheading Which editor do you want to use for this page?
             v-container(grid-list-lg, fluid)
               v-layout(row, wrap, justify-center)
-                v-flex(xs3)
+                v-flex(xs4)
                   v-card.radius-7.grey(
                     hover
                     light
@@ -46,7 +46,7 @@
                       img(src='/svg/icon-rest-api.svg', alt='API', style='width: 36px;')
                       .body-2.mt-2.grey--text.text--darken-2 API Docs
                       .caption.grey--text.text--darken-1 REST / GraphQL
-                v-flex(xs3)
+                v-flex(xs4)
                   v-card.radius-7(
                     hover
                     light
@@ -56,7 +56,7 @@
                       img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
                       .body-2.mt-2 Code
                       .caption.grey--text Raw HTML
-                v-flex(xs3)
+                v-flex(xs4)
                   v-card.radius-7(
                     hover
                     light
@@ -66,7 +66,17 @@
                       img(src='/svg/icon-markdown.svg', alt='Markdown', style='width: 36px;')
                       .body-2.mt-2 Markdown
                       .caption.grey--text Default
-                v-flex(xs3)
+                v-flex(xs4)
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-xs-center(@click='selectEditor("tabular")')
+                      img(src='/svg/icon-table.svg', alt='Tabular', style='width: 36px;')
+                      .body-2.grey--text.mt-2.text--darken-2 Tabular
+                      .caption.grey--text.text--darken-1 Excel-like
+                v-flex(xs4)
                   v-card.radius-7.grey(
                     hover
                     light
@@ -76,6 +86,16 @@
                       img(src='/svg/icon-open-in-browser.svg', alt='Visual Builder', style='width: 36px;')
                       .body-2.mt-2.grey--text.text--darken-2 Visual Builder
                       .caption.grey--text.text--darken-1 Drag-n-drop
+                v-flex(xs4)
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-xs-center(@click='selectEditor("wikitext")')
+                      img(src='/svg/icon-news.svg', alt='WikiText', style='width: 36px;')
+                      .body-2.grey--text.mt-2.text--darken-2 WikiText
+                      .caption.grey--text.text--darken-1 MediaWiki Format
             .caption.blue--text.text--lighten-2 This cannot be changed once the page is created.
 
     loader(v-model='dialogProgress', :title='$t(`editor:save.processing`)', :subtitle='$t(`editor:save.pleaseWait`)')
@@ -95,6 +115,7 @@
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import { AtomSpinner } from 'epic-spinners'
+import { Base64 } from 'js-base64'
 
 import createPageMutation from 'gql/editor/create.gql'
 import updatePageMutation from 'gql/editor/update.gql'
@@ -182,7 +203,7 @@ export default {
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')
-    this.$store.set('editor/content', this.initContent ? window.atob(this.initContent) : '# Header\n\nYour content here')
+    this.$store.set('editor/content', this.initContent ? Base64.decode(this.initContent) : '# Header\n\nYour content here')
     if (this.mode === 'create') {
       _.delay(() => {
         this.dialogEditorSelector = true

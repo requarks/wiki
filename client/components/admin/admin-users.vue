@@ -10,7 +10,7 @@
           v-spacer
           v-btn(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn(color='primary', large, depressed, @click='authorizeUser')
+          v-btn(color='primary', large, outline, @click='authorizeUser')
             v-icon(left) lock_outline
             span Authorize Social User
           v-btn(color='primary', large, depressed, @click='createUser')

@@ -6,13 +6,13 @@
           img(src='/svg/icon-web-design.svg', alt='Editor', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Editor
-            .subheading.grey--text Configure the content editor
+            .subheading.grey--text Configure the content editors
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='primary', @click='save', depressed, large)
-            v-icon(left) chevron_right
-            span Apply Configuration
+          v-btn(color='success', @click='save', depressed, large)
+            v-icon(left) check
+            span {{$t('common:actions.apply')}}
 
         v-card.mt-3
           v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)
@@ -24,8 +24,15 @@
                 .body-2.grey--text.text--darken-1 Select which editors to enable:
                 .caption.grey--text.pb-2 Some editors require additional configuration in their dedicated tab (when selected).
                 v-form
-                  v-radio-group(v-model='selectedEditor')
-                    v-radio(v-for='(editor, n) in editors', :key='n', :label='editor.text', :value='editor.value', color='primary')
+                  v-checkbox.my-0(
+                    v-for='editor in editors'
+                    v-model='editor.isEnabled'
+                    :key='editor.key'
+                    :label='editor.title'
+                    color='primary'
+                    disabled
+                    hide-details
+                  )
             v-tab-item(key='code', :transition='false', :reverse-transition='false')
               v-card.wiki-form.pa-3(flat, tile)
                 v-form
@@ -38,9 +45,13 @@ export default {
   data() {
     return {
       editors: [
-        { text: 'Markdown (default)', value: 'code' }
-      ],
-      selectedEditor: 'code'
+        { title: 'API Docs', key: 'api', isEnabled: false },
+        { title: 'Code', key: 'code', isEnabled: true },
+        { title: 'Markdown', key: 'markdown', isEnabled: true },
+        { title: 'Tabular', key: 'tabular', isEnabled: false },
+        { title: 'Visual Builder', key: 'visual', isEnabled: false },
+        { title: 'WikiText', key: 'wikitext', isEnabled: false }
+      ]
     }
   },
   methods: {

@@ -23,6 +23,8 @@
                       v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
                         v-toolbar-title
                           .subheading Authentication
+                        v-spacer
+                        v-chip(label, color='white', small).grey--text.text--darken-2 coming soon
                       v-subheader Flush User Sessions
                       v-card-text.pt-0.pl-4
                         .body-1 This will cause all users to be logged out. You will need to log back in after the operation.
@@ -40,6 +42,8 @@
                       v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
                         v-toolbar-title
                           .subheading Modules
+                        v-spacer
+                        v-chip(label, color='white', small).grey--text.text--darken-2 coming soon
                       v-subheader Rescan Modules
                       v-card-text.pt-0.pl-4
                         .body-1 Look for new modules on disk. Existing configurations will be merged.
@@ -60,6 +64,8 @@
                       v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
                         v-toolbar-title
                           .subheading Maintenance Mode
+                        v-spacer
+                        v-chip(label, color='white', small).grey--text.text--darken-2 coming soon
                       v-card-text
                         .body-1 Maintenance mode restrict access to the site to administrators only, regarless of current permissions.
                         v-btn.mt-3.ml-0(color='orange darken-2', depressed, dark)
@@ -69,6 +75,8 @@
                       v-toolbar(:color='$vuetify.dark ? "" : "grey darken-3"', dark, dense, flat)
                         v-toolbar-title
                           .subheading Graph Endpoint
+                        v-spacer
+                        v-chip(label, color='white', small).grey--text.text--darken-2 coming soon
                       v-card-text
                         .body-1 The Graph API Endpoint from which remote resources like locales, themes and plugins are fetched.
                         .caption.red--text Do not change unless you know what you're doing!
@@ -76,6 +84,10 @@
                         v-btn.ml-0(color='primary', depressed, dark)
                           v-icon(left) chevron_right
                           span Save
+
+            v-tab-item(key='cache', :transition='false', :reverse-transition='false')
+              v-card
+                v-card-text Coming soon
 
             v-tab-item(key='telemetry', :transition='false', :reverse-transition='false')
               v-card
@@ -115,11 +127,11 @@
                       .subheading.mt-3.grey--text.text--darken-1 Client ID
                       .body-1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
                   v-card-chin
-                    v-btn(color='primary')
+                    v-btn(color='primary', @click='updateTelemetry')
                       v-icon(left) chevron_right
                       | Save Changes
                     v-spacer
-                    v-btn(outline, color='grey')
+                    v-btn(outline, color='grey', @click='resetClientId')
                       v-icon(left) autorenew
                       span Reset Client ID
 
@@ -170,8 +182,19 @@ export default {
     }
   },
   methods: {
-    resetClientID() {
-
+    updateTelemetry() {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
+    },
+    resetClientId() {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
     }
   }
 }
