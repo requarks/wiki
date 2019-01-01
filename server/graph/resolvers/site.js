@@ -31,7 +31,8 @@ module.exports = {
         WIKI.config.seo = {
           description: args.description,
           robots: args.robots,
-          ga: args.ga
+          analyticsService: args.analyticsService,
+          analyticsId: args.analyticsId
         }
         WIKI.config.logo = {
           hasLogo: args.hasLogo,

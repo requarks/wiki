@@ -6,11 +6,11 @@
           img(src='/svg/icon-file.svg', alt='Page', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Pages
-            .subheading.grey--text Manage pages
+            .subheading.grey--text Manage pages #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
-          v-btn(color='grey', outline, @click='refresh', large)
+          v-btn(color='grey', outline, @click='refresh', large, disabled)
             v-icon.grey--text refresh
-          v-btn(color='primary', depressed, large, @click='newpage')
+          v-btn(color='primary', depressed, large, @click='newpage', disabled)
             v-icon(left) add
             span New Page
         v-card.mt-3
@@ -31,7 +31,7 @@
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
               v-alert.ma-3(icon='warning', :value='true', outline) No pages to display.
-          .text-xs-center.py-2(v-if='groups.length > 15')
+          .text-xs-center.py-2(v-if='this.pages > 0')
             v-pagination(v-model='pagination.page', :length='pages')
 
     page-selector(v-model='pageSelectorShown', mode='new')

@@ -10,12 +10,9 @@
           v-spacer
           v-btn(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn(color='primary', large, outline, @click='authorizeUser')
-            v-icon(left) lock_outline
-            span Authorize Social User
           v-btn(color='primary', large, depressed, @click='createUser')
             v-icon(left) add
-            span New Local User
+            span New User
         v-card.mt-3
           v-data-table(
             v-model='selected'
@@ -54,24 +51,21 @@
             template(slot='no-data')
               .pa-3
                 v-alert(icon='warning', :value='true', outline) No users to display!
-          v-card-chin
+          v-card-chin(v-if='this.pages > 0')
             v-spacer
             v-pagination(v-model='pagination.page', :length='pages')
             v-spacer
 
-    user-authorize(v-model='isAuthorizeDialogShown')
     user-create(v-model='isCreateDialogShown')
 </template>
 
 <script>
 import usersQuery from 'gql/admin/users/users-query-list.gql'
 
-import UserAuthorize from './admin-users-authorize.vue'
 import UserCreate from './admin-users-create.vue'
 
 export default {
   components: {
-    UserAuthorize,
     UserCreate
   },
   data() {
@@ -88,7 +82,6 @@ export default {
         { text: '', value: 'actions', sortable: false, width: 50 }
       ],
       search: '',
-      isAuthorizeDialogShown: false,
       isCreateDialogShown: false
     }
   },
@@ -102,9 +95,6 @@ export default {
     }
   },
   methods: {
-    authorizeUser() {
-      this.isAuthorizeDialogShown = true
-    },
     createUser() {
       this.isCreateDialogShown = true
     },

@@ -61,36 +61,41 @@
                       persistent-hint
                       )
                   v-divider
-                  v-subheader Analytics
+                  v-subheader Analytics #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
                   .px-3.pb-3
-                    v-text-field(
+                    v-select.mt-2(
                       outline
-                      label='Google Analytics ID'
+                      label='Analytics Service Provider'
+                      :items='analyticsServices'
+                      v-model='config.analyticsService'
+                      prepend-icon='timeline'
+                      )
+                    v-text-field.mt-2(
+                      v-if='config.analyticsService !== ``'
+                      outline
+                      label='Property Tracking ID'
                       :counter='255'
-                      v-model='config.ga'
+                      v-model='config.analyticsId'
                       prepend-icon='timeline'
                       persistent-hint
-                      hint='Property tracking ID for Google Analytics. Leave empty to disable.'
+                      hint='A unique identifier provided by your analytics service provider.'
                       )
             v-flex(lg6 xs12)
               v-card.wiki-form
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:general.siteBranding') }}
-                  v-spacer
-                  v-chip(label, color='white', small).primary--text coming soon
-                v-subheader Logo
+                v-subheader Logo #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
                 v-card-text
                   v-layout.px-3(row, align-center)
                     v-avatar(size='120', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
                     .ml-4
-                      v-layout(row, align-center)
-                        v-btn(color='teal', depressed, dark)
-                          v-icon(left) cloud_upload
-                          span Upload Logo
-                        v-btn(color='teal', depressed, disabled)
-                          v-icon(left) clear
-                          span Clear
+                      v-btn.mx-0(color='teal', depressed, disabled)
+                        v-icon(left) cloud_upload
+                        span Upload Logo
+                      v-btn(color='teal', depressed, disabled)
+                        v-icon(left) clear
+                        span Clear
                       .caption.grey--text An image of 120x120 pixels is recommended for best results.
                       .caption.grey--text SVG, PNG or JPG files only.
                   v-switch(
@@ -117,6 +122,8 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Features
+                  v-spacer
+                  v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
                   v-switch(
                     label='Page Ratings'
@@ -153,6 +160,11 @@ import siteUpdateConfigMutation from 'gql/admin/site/site-mutation-save-config.g
 export default {
   data() {
     return {
+      analyticsServices: [
+        { text: 'None', value: '' },
+        { text: 'Google Analytics', value: 'ga' },
+        { text: 'Google Tag Manager', value: 'gtm' },
+      ],
       metaRobots: [
         { text: 'Index', value: 'index' },
         { text: 'Follow', value: 'follow' },
@@ -164,7 +176,8 @@ export default {
         title: '',
         description: '',
         robots: [],
-        ga: '',
+        analyticsService: '',
+        analyticsId: '',
         company: '',
         hasLogo: false,
         logoIsSquare: false,
@@ -189,7 +202,8 @@ export default {
             title: this.config.title || '',
             description: this.config.description || '',
             robots: this.config.robots || [],
-            ga: this.config.ga || '',
+            analyticsService: this.config.analyticsService || '',
+            analyticsId: this.config.analyticsId || '',
             company: this.config.company || '',
             hasLogo: this.config.hasLogo || false,
             logoIsSquare: this.config.logoIsSquare || false,

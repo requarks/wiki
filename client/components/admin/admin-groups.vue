@@ -54,7 +54,7 @@
                     span System Group
             template(slot='no-data')
               v-alert.ma-3(icon='warning', :value='true', outline) No groups to display.
-          .text-xs-center.py-2(v-if='groups.length > 15')
+          .text-xs-center.py-2(v-if='this.pages > 0')
             v-pagination(v-model='pagination.page', :length='pages')
 </template>
 

@@ -140,7 +140,8 @@ module.exports = () => {
       _.set(WIKI.config, 'seo', {
         description: '',
         robots: ['index', 'follow'],
-        ga: ''
+        analyticsService: '',
+        analyticsId: ''
       })
       _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
       _.set(WIKI.config, 'telemetry', {

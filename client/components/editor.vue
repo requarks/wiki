@@ -19,7 +19,7 @@
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
         v-btn(
-          v-if='mode === `create`'
+          v-if='mode === `create` && path !== `home`'
           outline
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
@@ -29,74 +29,12 @@
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
     v-content
       component(:is='currentEditor')
+      v-btn(fixed, bottom, right, color='red', round, @click='exit', dark)
+        v-icon(left) close
+        span Close Editor
       editor-modal-properties(v-model='dialogProps')
-      v-dialog(v-model='dialogEditorSelector', persistent, max-width='700')
-        v-card.radius-7(color='blue darken-3', dark)
-          v-card-text.text-xs-center.py-4
-            .subheading Which editor do you want to use for this page?
-            v-container(grid-list-lg, fluid)
-              v-layout(row, wrap, justify-center)
-                v-flex(xs4)
-                  v-card.radius-7.grey(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-xs-center(@click='selectEditor("api")')
-                      img(src='/svg/icon-rest-api.svg', alt='API', style='width: 36px;')
-                      .body-2.mt-2.grey--text.text--darken-2 API Docs
-                      .caption.grey--text.text--darken-1 REST / GraphQL
-                v-flex(xs4)
-                  v-card.radius-7(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-xs-center(@click='selectEditor("code")')
-                      img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
-                      .body-2.mt-2 Code
-                      .caption.grey--text Raw HTML
-                v-flex(xs4)
-                  v-card.radius-7(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-xs-center(@click='selectEditor("markdown")')
-                      img(src='/svg/icon-markdown.svg', alt='Markdown', style='width: 36px;')
-                      .body-2.mt-2 Markdown
-                      .caption.grey--text Default
-                v-flex(xs4)
-                  v-card.radius-7.grey(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-xs-center(@click='selectEditor("tabular")')
-                      img(src='/svg/icon-table.svg', alt='Tabular', style='width: 36px;')
-                      .body-2.grey--text.mt-2.text--darken-2 Tabular
-                      .caption.grey--text.text--darken-1 Excel-like
-                v-flex(xs4)
-                  v-card.radius-7.grey(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-xs-center(@click='selectEditor("wysiwyg")')
-                      img(src='/svg/icon-open-in-browser.svg', alt='Visual Builder', style='width: 36px;')
-                      .body-2.mt-2.grey--text.text--darken-2 Visual Builder
-                      .caption.grey--text.text--darken-1 Drag-n-drop
-                v-flex(xs4)
-                  v-card.radius-7.grey(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-xs-center(@click='selectEditor("wikitext")')
-                      img(src='/svg/icon-news.svg', alt='WikiText', style='width: 36px;')
-                      .body-2.grey--text.mt-2.text--darken-2 WikiText
-                      .caption.grey--text.text--darken-1 MediaWiki Format
-            .caption.blue--text.text--lighten-2 This cannot be changed once the page is created.
+      editor-modal-editorselect(v-model='dialogEditorSelector')
+      editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
 
     loader(v-model='dialogProgress', :title='$t(`editor:save.processing`)', :subtitle='$t(`editor:save.pleaseWait`)')
     v-snackbar(
@@ -132,7 +70,9 @@ export default {
     editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
     editorMarkdown: () => import(/* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'),
     editorWysiwyg: () => import(/* webpackChunkName: "editor-wysiwyg", webpackMode: "lazy" */ './editor/editor-wysiwyg.vue'),
-    editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue')
+    editorModalEditorselect: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-editorselect.vue'),
+    editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue'),
+    editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue')
   },
   props: {
     locale: {
@@ -178,17 +118,28 @@ export default {
   },
   data() {
     return {
-      currentEditor: '',
       dialogProps: false,
       dialogProgress: false,
-      dialogEditorSelector: false
+      dialogEditorSelector: false,
+      dialogUnsaved: false,
+      initContentParsed: ''
     }
   },
   computed: {
+    currentEditor: sync('editor/editor'),
     darkMode: get('site/dark'),
     mode: get('editor/mode'),
     notification: get('notification'),
     notificationState: sync('notification@isActive')
+  },
+  watch: {
+    currentEditor(newValue, oldValue) {
+      if (newValue !== '' && this.mode === 'create') {
+        _.delay(() => {
+          this.dialogProps = true
+        }, 500)
+      }
+    }
   },
   created() {
     this.$store.commit('page/SET_ID', this.pageId)
@@ -203,25 +154,18 @@ export default {
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')
-    this.$store.set('editor/content', this.initContent ? Base64.decode(this.initContent) : '# Header\n\nYour content here')
+
+    this.initContentParsed = this.initContent ? Base64.decode(this.initContent) : '# Header\n\nYour content here'
+    this.$store.set('editor/content', this.initContentParsed)
     if (this.mode === 'create') {
       _.delay(() => {
         this.dialogEditorSelector = true
       }, 500)
     } else {
-      this.selectEditor(this.initEditor || 'markdown')
+      this.currentEditor = `editor${_.startCase(this.initEditor || 'markdown')}`
     }
   },
   methods: {
-    selectEditor(name) {
-      this.currentEditor = `editor${_.startCase(name)}`
-      this.dialogEditorSelector = false
-      if (this.mode === 'create') {
-        _.delay(() => {
-          this.dialogProps = true
-        }, 500)
-      }
-    },
     openPropsModal(name) {
       this.dialogProps = true
     },
@@ -310,8 +254,19 @@ export default {
       }
       this.hideProgressDialog()
     },
-    exit() {
-
+    async exit() {
+      if (this.initContentParsed !== this.$store.get('editor/content')) {
+        this.dialogUnsaved = true
+      } else {
+        this.exitGo()
+      }
+    },
+    exitGo() {
+      this.$store.commit(`loadingStart`, 'editor-close')
+      this.currentEditor = ''
+      _.delay(() => {
+        window.location.assign(`/${this.$store.get('page/path')}`)
+      }, 500)
     }
   }
 }

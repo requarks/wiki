@@ -3,7 +3,8 @@ mutation (
   $title: String!
   $description: String!
   $robots: [String]!
-  $ga: String!
+  $analyticsService: String!
+  $analyticsId: String!
   $company: String!
   $hasLogo: Boolean!
   $logoIsSquare: Boolean!
@@ -17,7 +18,8 @@ mutation (
       title: $title,
       description: $description,
       robots: $robots,
-      ga: $ga,
+      analyticsService: $analyticsService,
+      analyticsId: $analyticsId,
       company: $company,
       hasLogo: $hasLogo,
       logoIsSquare: $logoIsSquare,

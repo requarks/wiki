@@ -35,6 +35,7 @@
                       :value='engine.key'
                       color='primary'
                       hide-details
+                      disabled
                     )
 
             v-tab-item(v-for='(engine, n) in activeEngines', :key='engine.key', :transition='false', :reverse-transition='false')

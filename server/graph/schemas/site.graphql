@@ -28,7 +28,8 @@ type SiteMutation {
     title: String!
     description: String!
     robots: [String]!
-    ga: String!
+    analyticsService: String!
+    analyticsId: String!
     company: String!
     hasLogo: Boolean!
     logoIsSquare: Boolean!
@@ -47,7 +48,8 @@ type SiteConfig {
   title: String!
   description: String!
   robots: [String]!
-  ga: String!
+  analyticsService: String!
+    analyticsId: String!
   company: String!
   hasLogo: Boolean!
   logoIsSquare: Boolean!
