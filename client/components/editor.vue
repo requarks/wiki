@@ -19,7 +19,7 @@
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
         v-btn(
-          v-if='mode === `create` && path !== `home`'
+          v-if='path !== `home`'
           outline
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
@@ -29,9 +29,6 @@
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
     v-content
       component(:is='currentEditor')
-      v-btn(fixed, bottom, right, color='red', round, @click='exit', dark)
-        v-icon(left) close
-        span Close Editor
       editor-modal-properties(v-model='dialogProps')
       editor-modal-editorselect(v-model='dialogEditorSelector')
       editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
@@ -265,7 +262,11 @@ export default {
       this.$store.commit(`loadingStart`, 'editor-close')
       this.currentEditor = ''
       _.delay(() => {
-        window.location.assign(`/${this.$store.get('page/path')}`)
+        if (this.$store.get('editor/mode') === 'create') {
+          window.location.assign(`/`)
+        } else {
+          window.location.assign(`/${this.$store.get('page/path')}`)
+        }
       }, 500)
     }
   }
