@@ -328,7 +328,7 @@ const processMathjax = (content) => {
         replaceStack.push(
           new Promise((resolve, reject) => {
             mathjax.typeset({
-              math: (mode.format === 'MathML') ? currentMatch[0] : currentMatch[1],
+              math: (mode.format === 'MathML') ? currentMatch[0] : unescapeHtmlLiterals(currentMatch[1]),
               format: mode.format,
               speakText: false,
               svg: true,
@@ -389,6 +389,11 @@ const removeMarkdown = (content) => {
     .toLower()
     .value()
   ).replace(/\r?\n|\r/g, ' ').match(textRegex), ' ')
+}
+
+// TeX needs unescaped characters
+const unescapeHtmlLiterals = (content) => {
+  return content.replace(/&amp;/g, '&').replace(/&gt;/g, '>').replace(/&lt;/g, '<')
 }
 
 module.exports = {
