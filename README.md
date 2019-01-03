@@ -15,16 +15,30 @@
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat)](https://twitter.com/requarks)  
 [![Planning Board](https://badge.waffle.io/Requarks/wiki.svg?columns=all)](https://waffle.io/Requarks/wiki)
 
-##### A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown
+##### A modern, lightweight and powerful wiki app built on NodeJS
 
 </div>
 
-- **[Official Website](https://wiki.js.org/)**
-- **[Getting Started](https://wiki.js.org/get-started.html)**
-- **[Documentation](https://docs.requarks.io/wiki)**
+# :white_check_mark: STABLE v1.x version
+  
+**This repository will soon be used for the 2.0 BETA of Wiki.js.**  
+It is highly recommended to use the 1.x version until a stable version of 2.0 is released. An easy and quick upgrade path will be provided to migrate from 1.x to 2.0.
+
+:point_right: **[Go to version 1.x instead](https://github.com/Requarks/wiki-v1)** :point_left:
+
+**Version 2.0 should NOT be used in production! Once again, please use 1.x for now!**
+
+---
+
+# :construction: UNSTABLE v2.0 BETA version
+
+**This version is for testing and development purposes only!** It is not ready for production and is still missing critical features. You cannot migrate 1.x data at this time!
+
+- **[Official Website](https://wiki.js.org/)** *(Coming soon, pointing to 1.x for now)*
+- **[Documentation](https://docs.requarks.io/wiki/v/2.x/)**
 - [Requirements](#requirements)
 - [Demo](#demo)
-- [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
+- [Change Log](https://github.com/Requarks/wiki/blob/dev/CHANGELOG.md)
 - [Feature Requests](https://requests.requarks.io/wiki)
 - [Milestones](#milestones)
 - [Chat with us](#gitter)
@@ -36,51 +50,34 @@
 
 <h2 align="center">Requirements</h2>
 
-Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.).
+Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.) or using Docker!
 
-- Node.js **6.11.1** or later
-- MongoDB **3.2** or later
-- Git **2.7.4** or later
-- An empty Git repository (optional)
+- Node.js **10.14** or later
+- One of the following supported database engines:
+  - MySQL **5.7.8** or later
+  - PostgreSQL **9.5** or later
+  - MariaDB **10.2.7** or later
+  - Microsoft SQL Server **2012** or later
+  - SQLite **3.9** or later
+- Redis **3.2** or later
 
-> Read the full [prerequisites](https://docs.requarks.io/wiki/install/prerequisites) article for full details.
+> Read the full [prerequisites](https://docs.requarks.io/wiki/v/2.x/installation/prerequisites) article for full details.
 
-<h2 align="center">Docker / Cloud Install</h2>
+<h2 align="center">Docker</h2>
 
-A docker image is available on Docker Hub.  
-You can also use a Dockerfile ([see example](https://github.com/Requarks/wiki/blob/master/tools/Dockerfile)) or Docker Compose ([see example](https://github.com/Requarks/wiki/blob/master/tools/docker-compose.yml)) to run Wiki.js.  
-<a href="https://hub.docker.com/r/requarks/wiki/" title="Docker Image"><img src="https://wiki.js.org/assets/svg/deploy-docker.svg" alt="Docker Image" height="36" /></a>
+Docker is the recommended way to go! Simply use Docker image: `requarks/wiki:beta` *(coming soon!)*  
 
-Deploy to Heroku using this pre-built deployment template:  
-<a href="https://heroku.com/deploy?template=https://github.com/requarks/wiki-heroku" title="Deploy to Heroku"><img src="https://wiki.js.org/assets/svg/deploy-heroku.svg" alt="Deploy to Heroku" height="36" /></a>
-
-Deploy to IBM Cloud Foundry using this pre-built deployment template *(thanks to [@seafre](https://github.com/seafre))*:  
-<a href="https://console.bluemix.net/devops/setup/deploy?repository=https://github.com/Requarks/wiki-ibm-cloud-foundry" title="Deploy to IBM Cloud"><img src="https://wiki.js.org/assets/svg/deploy-ibm-cloud.svg" alt="Deploy to IBM Cloud" height="36" /></a>
+You can also use Docker Compose ([see example](https://github.com/Requarks/wiki/blob/dev/examples/docker-compose.yml)) to run Wiki.js with all dependencies.
 
 <h2 align="center">Demo</h2>
 
-The legacy Wiki.js documentation site is actually running Wiki.js! [Check it out &raquo;](https://docs-legacy.requarks.io/wiki)
-
-> <span style="font-size: .8em;">We do not provide a demo with write access because of potential security / spam issues. The best way to try it is to install it on your own server / computer. It's easy!</span>
+*Coming soon!*
 
 <h2 align="center">Milestones</h2>
 
-Current and upcoming milestones *(major features only, see the [changelog](https://docs.requarks.io/wiki/developers/changelog) for complete list of features and bug fixes)*:
-
 :bookmark_tabs: See [project board](https://waffle.io/Requarks/wiki) to keep track of current progress.
 
-### 1.0.102 - Stable
-![Progress](http://progressed.io/bar/100)
-
-**Note**: As 2.0 is under development, no new features are being developed in the 1.0 branch.
-
-- [x] Added: Open ID Connection provider (thanks to @sazulo)
-- [x] Added: Turkish locale is now available (thanks to @MrSimsek)
-- [x] Fixed: Paths in git commits are no longer escaped (thanks to @EricFromCanada)
-- [x] Fixed: Fixed potential bug when uploading certain images (thanks to @Gnurdle)
-
-### 2.0.0 - Dev
-![Progress](http://progressed.io/bar/70)
+### 2.0.0 - BETA
 
 **Goals**:
   - Decouple front-end and back-end completely.
@@ -89,7 +86,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - Full localization support, especially for non-latin languages.
   - Modular approach to auth, editors, logging, search and storage.
   
-**Release Date**: Q4 2018
+**Release Date**: January 2019
 
 **Breaking Changes**:
   - MongoDB is being phased out in favor of PostgreSQL/MySQL/MSSQL/SQLite + Redis. An upgrade tool will be provided to migrate existing data to the new system.
@@ -143,7 +140,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
     - [ ] Image + File Manager
 - [x] Modular content parsers/renderers
   - [x] Markdown
-  - [ ] HTML
+  - [x] HTML
 - [ ] Modular search engines
   - [ ] DB
 - [ ] Modular storage engines
@@ -151,7 +148,7 @@ Current and upcoming milestones *(major features only, see the [changelog](https
   - [ ] Local Disk
 - [ ] Multilingual versions of the same page (i18n)
 - [ ] History / Revert to previous version :rocket:
-- [ ] User Groups + Better permissions management
+- [x] User Groups + Better permissions management
 - [ ] Tags per document / folder
 
 :rocket: = Currently in development
@@ -201,27 +198,7 @@ Want to donate to this project but get something in return as well? Check out ou
 
 <h2 align="center">Translations</h2>
 
-We are looking for translators to make Wiki.js available in multiple languages. If your language is not listed below and would like to contribute to this project, contact us on our [gitter channel](https://gitter.im/Requarks/wiki) and we'll provide you with the necessary tool to add translations, no coding required!
-
-**Languages that are already translated:**
-
-- [x] English
-- [x] Chinese - *Thanks to [@choicky](https://github.com/choicky)*
-- [x] Czech - *Thanks to [@braniqvranik](https://github.com/braniqvranik)*
-- [x] Dutch - *Thanks to [@weirdwater](https://github.com/weirdwater)*
-- [x] Estonian - *Thanks to [@vonforum](https://github.com/vonforum)*
-- [x] French
-- [x] German - *Thanks to [@joetjengerdes](https://github.com/joetjengerdes), [@MyZeD](https://github.com/MyZeD)*
-- [x] Greek - *Thanks to [@ekchatzi](https://github.com/ekchatzi)*
-- [x] Italian - *Thanks to [@CupCakeArmy](https://github.com/CupCakeArmy)*
-- [x] Japanese - *Thanks to [@johnnyshields](https://github.com/johnnyshields), [@JO3QMA](https://github.com/JO3QMA)*
-- [x] Korean - *Thanks to [@junwonpk](https://github.com/junwonpk)*
-- [x] Persian - *Thanks to [@ashkang](https://github.com/ashkang)*
-- [x] Portuguese - *Thanks to [@felipeplets](https://github.com/felipeplets)*
-- [x] Russian - *Thanks to [@efimlosev](https://github.com/efimlosev)*
-- [x] Slovak - *Thanks to [@braniqvranik](https://github.com/braniqvranik)*
-- [x] Spanish - *Thanks to [@MatiasArriola](https://github.com/MatiasArriola)*
-- [x] Swedish - *Thanks to [@pontus-andersson](https://github.com/pontus-andersson)*
+We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, contact us on our [gitter channel](https://gitter.im/Requarks/wiki) and we'll provide you access to our translation tool, absolutely no coding required!
 
 <h2 align="center">Special Thanks</h2>
 
@@ -237,20 +214,9 @@ We are looking for translators to make Wiki.js available in multiple languages. 
 [![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)](https://m.do.co/c/5f7445bfa4d0)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
-<h2 align="center">Contributors</h2>
-
-This project exists thanks to all the people who contribute. [[Contribute]](https://github.com/Requarks/wiki/blob/master/CONTRIBUTING.md).
-<a href="https://github.com/Requarks/wiki/graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
-
-<h2 align="center">Backers</h2>
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/wikijs#backer)]
-
-<a href="https://opencollective.com/wikijs#backers" target="_blank"><img src="https://opencollective.com/wikijs/backers.svg?width=890"></a>
-
 <h2 align="center">Sponsors</h2>
 
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/wikijs#sponsor)]
+Support this project by becoming a sponsor. Your logo will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://opencollective.com/wikijs#sponsor)]
 
 <a href="https://opencollective.com/wikijs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/0/avatar.svg"></a>
 <a href="https://opencollective.com/wikijs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/1/avatar.svg"></a>
@@ -262,3 +228,14 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
 <a href="https://opencollective.com/wikijs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/7/avatar.svg"></a>
 <a href="https://opencollective.com/wikijs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/8/avatar.svg"></a>
 <a href="https://opencollective.com/wikijs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/9/avatar.svg"></a>
+
+<h2 align="center">Backers</h2>
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/wikijs#backer)]
+
+<a href="https://opencollective.com/wikijs#backers" target="_blank"><img src="https://opencollective.com/wikijs/backers.svg?width=890"></a>
+
+<h2 align="center">Contributors</h2>
+
+This project exists thanks to all the people who contribute. [[Contribute]](https://github.com/Requarks/wiki/blob/master/CONTRIBUTING.md).
+<a href="https://github.com/Requarks/wiki/graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
