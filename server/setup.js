@@ -104,8 +104,12 @@ module.exports = () => {
       await fs.ensureDir(path.join(dataPath, 'uploads'))
 
       // Set config
+      _.set(WIKI.config, 'auth', {
+        audience: 'urn:wiki.js',
+        tokenExpiration: '30m',
+        tokenRenewal: '14d'
+      })
       _.set(WIKI.config, 'company', '')
-      _.set(WIKI.config, 'defaultEditor', 'markdown')
       _.set(WIKI.config, 'features', {
         featurePageRatings: true,
         featurePageComments: true,
@@ -136,7 +140,6 @@ module.exports = () => {
         dkimKeySelector: '',
         dkimPrivateKey: ''
       })
-      _.set(WIKI.config, 'public', false)
       _.set(WIKI.config, 'seo', {
         description: '',
         robots: ['index', 'follow'],
@@ -145,7 +148,7 @@ module.exports = () => {
       })
       _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
       _.set(WIKI.config, 'telemetry', {
-        isEnabled: req.body.telemetry === 'true',
+        isEnabled: req.body.telemetry === true,
         clientId: WIKI.telemetry.cid
       })
       _.set(WIKI.config, 'theming', {
@@ -179,16 +182,15 @@ module.exports = () => {
       // Save config to DB
       WIKI.logger.info('Persisting config to DB...')
       await WIKI.configSvc.saveToDb([
+        'auth',
         'certs',
         'company',
-        'defaultEditor',
         'features',
         'graphEndpoint',
         'host',
         'lang',
         'logo',
         'mail',
-        'public',
         'seo',
         'sessionSecret',
         'telemetry',
@@ -389,8 +391,10 @@ module.exports = () => {
 
   WIKI.server.on('listening', () => {
     WIKI.logger.info('HTTP Server: [ RUNNING ]')
-    WIKI.logger.info('========================================')
-    WIKI.logger.info(`Browse to http://localhost:${WIKI.config.port}/`)
-    WIKI.logger.info('========================================')
+    WIKI.logger.info('🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻')
+    WIKI.logger.info('')
+    WIKI.logger.info(`Browse to http://localhost:${WIKI.config.port}/ to complete setup!`)
+    WIKI.logger.info('')
+    WIKI.logger.info('🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺')
   })
 }

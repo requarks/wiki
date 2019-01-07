@@ -6,7 +6,7 @@
           img(src='/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Storage
-            .subheading.grey--text Set backup and sync targets for your content
+            .subheading.grey--text Set backup and sync targets for your content #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh

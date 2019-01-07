@@ -6,14 +6,14 @@
           img(src='/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 API
-            .subheading.grey--text Manage keys to access the API
+            .subheading.grey--text Manage keys to access the API #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
-          v-btn(outline, color='grey', large, @click='refresh')
+          v-btn(outline, color='grey', large, @click='refresh', disabled)
             v-icon refresh
-          v-btn(color='green', dark, depressed, large, @click='globalSwitch')
+          v-btn(color='green', disabled, depressed, large, @click='globalSwitch')
             v-icon(left) power_settings_new
             | Enable API
-          v-btn(color='primary', depressed, large, @click='newKey')
+          v-btn(color='primary', depressed, large, @click='newKey', disabled)
             v-icon(left) add
             | New API Key
         v-card.mt-3
@@ -58,7 +58,7 @@
                 td {{ props.item.updatedOn }}
                 td: v-btn(icon): v-icon.grey--text.text--darken-1 more_horiz
             template(slot='no-data')
-              v-alert.mt-3(icon='warning', :value='true', outline) No API have been generated yet.
+              v-alert.mt-3(icon='info', :value='true', outline, color='info') No API have been generated yet.
           .text-xs-center.py-2
             v-pagination(v-model='pagination.page', :length='pages')
 </template>

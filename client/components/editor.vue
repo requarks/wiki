@@ -14,12 +14,12 @@
           outline
           color='blue'
           @click.native.stop='openPropsModal'
-          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": mode === `create`, "ml-0": mode !== `create` }'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": !welcomeMode }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
         v-btn(
-          v-if='path !== `home`'
+          v-if='!welcomeMode'
           outline
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
@@ -62,6 +62,7 @@ import editorStore from '@/store/editor'
 WIKI.$store.registerModule('editor', editorStore)
 
 export default {
+  i18nOptions: { namespaces: 'editor' },
   components: {
     AtomSpinner,
     editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
@@ -127,7 +128,8 @@ export default {
     darkMode: get('site/dark'),
     mode: get('editor/mode'),
     notification: get('notification'),
-    notificationState: sync('notification@isActive')
+    notificationState: sync('notification@isActive'),
+    welcomeMode() { return this.mode === `create` && this.path === `home` }
   },
   watch: {
     currentEditor(newValue, oldValue) {
@@ -242,6 +244,8 @@ export default {
             throw new Error(_.get(resp, 'responseResult.message'))
           }
         }
+
+        this.initContentParsed = this.$store.get('editor/content')
       } catch (err) {
         this.$store.commit('showNotification', {
           message: err.message,

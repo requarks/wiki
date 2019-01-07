@@ -60,14 +60,14 @@ export default {
             },
             {
               permission: 'write:pages',
-              hint: 'Can view and create new pages, as specified in the Page Rules',
+              hint: 'Can create new pages, as specified in the Page Rules',
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
               permission: 'manage:pages',
-              hint: 'Can view, create, edit and move existing pages as specified in the Page Rules',
+              hint: 'Can edit and move existing pages as specified in the Page Rules',
               warning: false,
               restrictedForSystem: false,
               disabled: false
@@ -95,7 +95,7 @@ export default {
             },
             {
               permission: 'manage:assets',
-              hint: 'Can edit and delete assets (such as images and files), as specified in the Page Rules',
+              hint: 'Can edit and delete existing assets (such as images and files), as specified in the Page Rules',
               warning: false,
               restrictedForSystem: false,
               disabled: false
@@ -116,7 +116,7 @@ export default {
             },
             {
               permission: 'manage:comments',
-              hint: 'Can edit and delete comments, as specified in the Page Rules',
+              hint: 'Can edit and delete existing comments, as specified in the Page Rules',
               warning: false,
               restrictedForSystem: false,
               disabled: false

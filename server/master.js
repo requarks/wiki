@@ -67,7 +67,7 @@ module.exports = async () => {
 
   app.use(cookieParser())
   app.use(WIKI.auth.passport.initialize())
-  app.use(mw.auth.jwt)
+  app.use(WIKI.auth.authenticate)
 
   // ----------------------------------------
   // SEO
@@ -138,8 +138,7 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use('/', ctrl.auth)
-
-  app.use('/', mw.auth.checkPath, ctrl.common)
+  app.use('/', ctrl.common)
 
   // ----------------------------------------
   // Error handling

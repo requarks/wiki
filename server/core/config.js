@@ -52,8 +52,6 @@ module.exports = {
       appconfig.port = process.env.PORT || 80
     }
 
-    appconfig.public = (appconfig.public === true || _.toLower(appconfig.public) === 'true')
-
     WIKI.config = appconfig
     WIKI.data = appdata
     WIKI.version = require(path.join(WIKI.ROOTPATH, 'package.json')).version

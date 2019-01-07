@@ -234,7 +234,7 @@ export default {
 
       if (!token.type) { return }
 
-      console.info(token)
+      // console.info(token)
     },
     /**
      * Update scroll sync

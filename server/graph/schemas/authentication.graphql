@@ -43,7 +43,8 @@ type AuthenticationMutation {
   ): AuthenticationRegisterResponse
 
   updateStrategies(
-    strategies: [AuthenticationStrategyInput]
+    strategies: [AuthenticationStrategyInput]!
+    config: AuthenticationConfigInput
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
@@ -87,4 +88,10 @@ input AuthenticationStrategyInput {
   selfRegistration: Boolean!
   domainWhitelist: [String]!
   autoEnrollGroups: [Int]!
+}
+
+input AuthenticationConfigInput {
+  audience: String!
+  tokenExpiration: String!
+  tokenRenewal: String!
 }

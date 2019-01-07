@@ -6,7 +6,7 @@
           img(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Search Engine
-            .subheading.grey--text Configure the search capabilities of your wiki
+            .subheading.grey--text Configure the search capabilities of your wiki #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh

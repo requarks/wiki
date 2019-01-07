@@ -38,6 +38,8 @@
                       :counter='50'
                       v-model='config.title'
                       prepend-icon='public'
+                      hint='Displayed in the top bar and appended to all pages meta title.'
+                      persistent-hint
                       )
                   v-divider
                   v-subheader SEO
@@ -48,6 +50,8 @@
                       :counter='255'
                       v-model='config.description'
                       prepend-icon='explore'
+                      hint='Default description when none is provided for a page.'
+                      persistent-hint
                       )
                     v-select.mt-2(
                       outline
@@ -57,7 +61,7 @@
                       v-model='config.robots'
                       prepend-icon='explore'
                       :return-object='false'
-                      hint='Default: Index, Follow'
+                      hint='Default: Index, Follow. Can also be set on a per-page basis.'
                       persistent-hint
                       )
                   v-divider
@@ -69,6 +73,8 @@
                       :items='analyticsServices'
                       v-model='config.analyticsService'
                       prepend-icon='timeline'
+                      persistent-hint
+                      hint='Automatically add tracking code for services like Google Analytics.'
                       )
                     v-text-field.mt-2(
                       v-if='config.analyticsService !== ``'

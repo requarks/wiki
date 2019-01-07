@@ -52,6 +52,8 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:locale.namespacing') }}
+                  v-spacer
+                  v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
                   v-switch(
                     v-model='namespacing'

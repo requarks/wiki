@@ -189,10 +189,8 @@ export default {
       },
       breadcrumbs: [
         { path: '/', name: 'Home' },
-        { path: '/universe', name: 'Universe' },
-        { path: '/universe/galaxy', name: 'Galaxy' },
-        { path: '/universe/galaxy/solar-system', name: 'Solar System' },
-        { path: '/universe/galaxy/solar-system/planet-earth', name: 'Planet Earth' }
+        { path: '/' + this.path, name: 'Breadcrumb' },
+        { path: '/' + this.path, name: 'Coming soon' }
       ],
       scrollStyle: {
         vuescroll: {},

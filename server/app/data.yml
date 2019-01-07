@@ -22,14 +22,12 @@ defaults:
       db: 0
       password: null
     # DB defaults
-    defaultEditor: 'markdown'
     graphEndpoint: 'https://graph.requarks.io'
     lang:
       code: en
       autoUpdate: true
       namespaces: []
       namespacing: false
-    public: false
     telemetry:
       clientId: ''
       isEnabled: false
@@ -47,13 +45,6 @@ defaults:
       maxAge: 600
       methods: 'GET,POST'
       origin: true
-configNamespaces:
-  - auth
-  - features
-  - logging
-  - site
-  - theme
-  - uploads
 localeNamespaces:
   - admin
   - auth

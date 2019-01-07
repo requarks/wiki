@@ -1,6 +1,6 @@
-mutation($strategies: [AuthenticationStrategyInput]) {
+mutation($strategies: [AuthenticationStrategyInput]!, $config: AuthenticationConfigInput) {
   authentication {
-    updateStrategies(strategies: $strategies) {
+    updateStrategies(strategies: $strategies, config: $config) {
       responseResult {
         succeeded
         errorCode

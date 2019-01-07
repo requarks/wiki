@@ -7,8 +7,18 @@
           .admin-header-title
             .headline.primary--text Developer Tools
             .subheading.grey--text ¯\_(ツ)_/¯
+          v-spacer
+          v-card.radius-7
+            v-card-text
+              .caption Enables extra dev options and removes many safeguards.
+              .caption.red--text Do not enable unless you know what you're doing!
+              v-switch.mt-1(
+                color='primary'
+                hide-details
+                label='Dev Mode'
+              )
 
-        v-card.mt-3
+        v-card.mt-3.white.grey--text.text--darken-3
           v-tabs(
             v-model='selectedTab'
             color='grey darken-2'
@@ -92,9 +102,8 @@ export default {
             }, 500)
             return resp
           },
-          query: '',
           response: null,
-          variables: null,
+          variables: '{}',
           operationName: null,
           websocketConnectionParams: null
         }),
@@ -103,6 +112,7 @@ export default {
       graphiQLInstance.queryEditorComponent.editor.refresh()
       graphiQLInstance.variableEditorComponent.editor.refresh()
       graphiQLInstance.state.variableEditorOpen = true
+      graphiQLInstance.state.docExplorerOpen = true
     },
     renderVoyager() {
       ReactDOM.render(
@@ -120,7 +130,7 @@ export default {
 <style lang='scss'>
 
 #graphiql {
-  height: calc(100vh - 230px);
+  height: calc(100vh - 270px);
 
   .topBar {
     background-color: mc('grey', '200');
@@ -136,16 +146,37 @@ export default {
     background-color: initial;
     box-shadow: initial;
   }
+
+  .doc-explorer-title-bar, .history-title-bar {
+    height: auto;
+  }
 }
 
 #voyager {
-  height: calc(100vh - 250px);
+  height: calc(100vh - 270px);
 
   .title-area {
     display: none;
   }
   .type-doc {
     margin-top: 5px;
+  }
+
+  .doc-navigation {
+    > span {
+      overflow-y: hidden;
+      display: block;
+    }
+    min-height: 40px;
+  }
+
+  .contents {
+    padding-bottom: 0;
+    color: #666;
+  }
+
+  .type-info-popover {
+    display: none;
   }
 }
 </style>

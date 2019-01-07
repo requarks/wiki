@@ -1,19 +1,53 @@
-version: '3'
+# -- DEV DOCKER-COMPOSE --
+# -- DO NOT USE IN PRODUCTION! --
+
+version: "3"
 services:
-  wikidb:
-    image: mongo
-    expose:
-      - '27017'
-    command: '--smallfiles --logpath=/dev/null'
-    volumes:
-      - ./data/mongo:/data/db
-  wikijs:
-    image: 'requarks/wiki:latest'
-    links:
-      - wikidb
-    ports:
-      - '80:3000'
+
+  redis:
+    image: redis:4-alpine
+    logging:
+      driver: "none"
+    networks:
+      - wikinet
+
+  db:
+    image: postgres:9-alpine
     environment:
-      WIKI_ADMIN_EMAIL: admin@example.com
+      POSTGRES_DB: wiki
+      POSTGRES_PASSWORD: wikijsrocks
+      POSTGRES_USER: wikijs
+    logging:
+      driver: "none"
     volumes:
-      - ./config.yml:/var/wiki/config.yml
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - wikinet
+
+  wiki:
+    image: requarks/wiki:beta
+    depends_on:
+      - db
+      - redis
+    environment:
+      PORT: 3000 # DO NOT CHANGE! Use ports below to specify listening port.
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: wikijsrocks
+      DB_NAME: wiki
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_PASS: ''
+    networks:
+      - wikinet
+    ports:
+      - "3000:3000" # <-- replace with "80:3000" to listen on port 80 instead
+
+networks:
+  wikinet:
+
+volumes:
+  db-data:

@@ -138,6 +138,11 @@ module.exports = class User extends Model {
     return (result && _.has(result, 'delta') && result.delta === 0)
   }
 
+  async getPermissions() {
+    const permissions = await this.$relatedQuery('groups').select('permissions').pluck('permissions')
+    this.permissions = _.uniq(_.flatten(permissions))
+  }
+
   static async processProfile(profile) {
     let primaryEmail = ''
     if (_.isArray(profile.emails)) {
@@ -262,8 +267,8 @@ module.exports = class User extends Model {
         passphrase: WIKI.config.sessionSecret
       }, {
         algorithm: 'RS256',
-        expiresIn: '30m',
-        audience: 'urn:wiki.js', // TODO: use value from admin
+        expiresIn: WIKI.config.auth.tokenExpiration,
+        audience: WIKI.config.auth.audience,
         issuer: 'urn:wiki.js'
       }),
       user
@@ -390,5 +395,11 @@ module.exports = class User extends Model {
     } else {
       throw new WIKI.Error.AuthRegistrationDisabled()
     }
+  }
+
+  static async getGuestUser () {
+    let user = await WIKI.models.users.query().findById(2)
+    user.getPermissions()
+    return user
   }
 }

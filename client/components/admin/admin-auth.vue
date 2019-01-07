@@ -207,6 +207,11 @@ export default {
       await this.$apollo.mutate({
         mutation: strategiesSaveMutation,
         variables: {
+          config: {
+            audience: this.jwtAudience,
+            tokenExpiration: this.jwtExpiration,
+            tokenRenewal: this.jwtRenewablePeriod
+          },
           strategies: this.strategies.map(str => _.pick(str, [
             'isEnabled',
             'key',

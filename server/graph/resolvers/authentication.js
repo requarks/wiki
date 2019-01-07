@@ -70,6 +70,13 @@ module.exports = {
     },
     async updateStrategies(obj, args, context) {
       try {
+        WIKI.config.auth = {
+          audience: _.get(args, 'config.audience', WIKI.config.auth.audience),
+          tokenExpiration: _.get(args, 'config.tokenExpiration', WIKI.config.auth.tokenExpiration),
+          tokenRenewal: _.get(args, 'config.tokenRenewal', WIKI.config.auth.tokenRenewal)
+        }
+        await WIKI.configSvc.saveToDb(['auth'])
+
         for (let str of args.strategies) {
           await WIKI.models.authentication.query().patch({
             isEnabled: str.isEnabled,
