@@ -15,6 +15,7 @@ module.exports = {
   guest: {
     cacheExpiration: moment.utc().subtract(1, 'd')
   },
+  groups: {},
 
   /**
    * Initialize the authentication module
@@ -22,22 +23,26 @@ module.exports = {
   init() {
     this.passport = passport
 
-    passport.serializeUser(function (user, done) {
+    passport.serializeUser((user, done) => {
       done(null, user.id)
     })
 
-    passport.deserializeUser(function (id, done) {
-      WIKI.models.users.query().findById(id).then((user) => {
+    passport.deserializeUser(async (id, done) => {
+      try {
+        const user = await WIKI.models.users.query().findById(id).modifyEager('groups', builder => {
+          builder.select('groups.id', 'permissions')
+        })
         if (user) {
           done(null, user)
         } else {
           done(new Error(WIKI.lang.t('auth:errors:usernotfound')), null)
         }
-        return true
-      }).catch((err) => {
+      } catch (err) {
         done(err, null)
-      })
+      }
     })
+
+    this.reloadGroups()
 
     return this
   },
@@ -117,13 +122,14 @@ module.exports = {
             res.cookie('jwt', newToken.token, { expires: moment().add(365, 'days').toDate() })
           }
         } catch (err) {
+          WIKI.logger.warn(err)
           return next()
         }
       }
 
       // JWT is NOT valid, set as guest
       if (!user) {
-        if (WIKI.auth.guest.cacheExpiration ) {
+        if (true || WIKI.auth.guest.cacheExpiration.isSameOrBefore(moment.utc())) {
           WIKI.auth.guest = await WIKI.models.users.getGuestUser()
           WIKI.auth.guest.cacheExpiration = moment.utc().add(1, 'm')
         }
@@ -146,18 +152,99 @@ module.exports = {
    * @param {Array<String>} permissions
    * @param {String|Boolean} path
    */
-  checkAccess(user, permissions = [], path = false) {
+  checkAccess(user, permissions = [], page = false) {
     // System Admin
     if (_.includes(user.permissions, 'manage:system')) {
       return true
     }
 
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+
     // Check Global Permissions
-    if (_.intersection(user.permissions, permissions).length < 1) {
+    if (_.intersection(userPermissions, permissions).length < 1) {
       return false
     }
 
+    console.info('---------------------')
+
     // Check Page Rules
+    if (path && user.groups) {
+      let checkState = {
+        deny: false,
+        match: false,
+        specificity: ''
+      }
+      user.groups.forEach(grp => {
+        const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
+        _.get(WIKI.auth.groups, `${grpId}.pageRules`, []).forEach(rule => {
+          console.info(page.path)
+          console.info(rule)
+          switch(rule.match) {
+            case 'START':
+              if (_.startsWith(`/${page.path}`, `/${rule.path}`)) {
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['END', 'REGEX', 'EXACT'] })
+              }
+              break
+            case 'END':
+              if (_.endsWith(page.path, rule.path)) {
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['REGEX', 'EXACT'] })
+              }
+              break
+            case 'REGEX':
+              const reg = new RegExp(rule.path)
+              if (reg.test(page.path)) {
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT'] })
+              }
+            case 'EXACT':
+              if (`/${page.path}` === `/${rule.path}`) {
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })
+              }
+              break
+          }
+        })
+      })
+
+      console.info('DAKSJDHKASJD')
+      console.info(checkState)
+
+      return (checkState.match && !checkState.deny)
+    }
+
     return false
+  },
+
+  /**
+   * Check and apply Page Rule specificity
+   *
+   * @access private
+   */
+  _applyPageRuleSpecificity ({ rule, checkState, higherPriority = [] }) {
+    if (rule.path.length === checkState.specificity.length) {
+      // Do not override higher priority rules
+      if (_.includes(higherPriority, checkState.match)) {
+        return checkState
+      }
+      // Do not override a previous DENY rule with same match
+      if (rule.match === checkState.match && checkState.deny && !rule.deny) {
+        return checkState
+      }
+    } else if (rule.path.length < checkState.specificity.length) {
+      // Do not override higher specificity rules
+      return checkState
+    }
+
+    return {
+      deny: rule.deny,
+      match: rule.match,
+      specificity: rule.path
+    }
+  },
+
+  /**
+   * Reload Groups from DB
+   */
+  async reloadGroups() {
+    const groupsArray = await WIKI.models.groups.query()
+    this.groups = _.keyBy(groupsArray, 'id')
   }
 }

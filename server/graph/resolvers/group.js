@@ -1,4 +1,5 @@
 const graphHelper = require('../../helpers/graph')
+const safeRegex = require('safe-regex')
 
 /* global WIKI */
 
@@ -44,6 +45,7 @@ module.exports = {
         pageRules: JSON.stringify([]),
         isSystem: false
       })
+      await WIKI.auth.reloadGroups()
       return {
         responseResult: graphHelper.generateSuccess('Group created successfully.'),
         group
@@ -51,6 +53,7 @@ module.exports = {
     },
     async delete(obj, args) {
       await WIKI.models.groups.query().deleteById(args.id)
+      await WIKI.auth.reloadGroups()
       return {
         responseResult: graphHelper.generateSuccess('Group has been deleted.')
       }
@@ -70,11 +73,20 @@ module.exports = {
       }
     },
     async update(obj, args) {
+      if(_.some(args.pageRules, pr => {
+        return pr.match !== 'REGEX' || safeRegex(pr.path)
+      })) {
+        throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')
+      }
+
       await WIKI.models.groups.query().patch({
         name: args.name,
         permissions: JSON.stringify(args.permissions),
         pageRules: JSON.stringify(args.pageRules)
       }).where('id', args.id)
+
+      await WIKI.auth.reloadGroups()
+
       return {
         responseResult: graphHelper.generateSuccess('Group has been updated.')
       }

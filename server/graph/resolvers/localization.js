@@ -31,6 +31,9 @@ module.exports = {
         namespacing: WIKI.config.lang.namespacing,
         namespaces: WIKI.config.lang.namespaces
       }
+    },
+    translations (obj, args, context, info) {
+      return WIKI.lang.getByNamespace(args.locale, args.namespace)
     }
   },
   LocalizationMutation: {

@@ -45,7 +45,7 @@
           :class='isLatestVersion ? "teal lighten-2" : "red lighten-2"'
           dark
           )
-          v-btn(fab, absolute, right, top, small, light, to='system')
+          v-btn(fab, absolute, right, top, small, light, to='system', v-if='hasPermission(`manage:system`)')
             v-icon(v-if='isLatestVersion', color='teal') build
             v-icon(v-else, color='red darken-4') get_app
           v-card-text
@@ -101,6 +101,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import AnimatedNumber from 'animated-number-vue'
 import { get } from 'vuex-pathify'
 
@@ -118,10 +119,20 @@ export default {
     isLatestVersion() {
       return this.info.currentVersion === this.info.latestVersion
     },
-    info: get('admin/info')
+    info: get('admin/info'),
+    permissions: get('user/permissions')
   },
   methods: {
-    round(val) { return Math.round(val) }
+    round(val) { return Math.round(val) },
+    hasPermission(prm) {
+      if (_.isArray(prm)) {
+        return _.some(prm, p => {
+          return _.includes(this.permissions, p)
+        })
+      } else {
+        return _.includes(this.permissions, prm)
+      }
+    }
   }
 }
 </script>

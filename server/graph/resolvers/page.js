@@ -16,15 +16,6 @@ module.exports = {
         offsetPage: args.offsetPage || 0,
         offsetSize: args.offsetSize || 100
       })
-    },
-    async list(obj, args, context, info) {
-      return WIKI.models.pages.query().select(
-        'pages.*',
-        WIKI.models.pages.relatedQuery('users').count().as('userCount')
-      )
-    },
-    async single(obj, args, context, info) {
-      return WIKI.models.pages.query().findById(args.id)
     }
   },
   PageMutation: {

@@ -6,7 +6,7 @@ import _ from 'lodash'
 
 /* global siteConfig, graphQL */
 
-import localeQuery from 'gql/common/common-locale-query.gql'
+import localeQuery from 'gql/common/common-localization-query-translations.gql'
 
 export default {
   VueI18Next,
@@ -28,8 +28,8 @@ export default {
               }
             }).then(resp => {
               let ns = {}
-              if (resp.data.translations.length > 0) {
-                resp.data.translations.forEach(entry => {
+              if (_.get(resp, 'data.localization.translations', []).length > 0) {
+                resp.data.localization.translations.forEach(entry => {
                   _.set(ns, entry.key, entry.value)
                 })
               }

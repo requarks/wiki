@@ -89,7 +89,7 @@ type PageRule {
   id: String!
   deny: Boolean!
   match: PageRuleMatch!
-  roles: [PageRuleRole]!
+  roles: [String]!
   path: String!
   locales: [String]!
 }
@@ -98,22 +98,9 @@ input PageRuleInput {
   id: String!
   deny: Boolean!
   match: PageRuleMatch!
-  roles: [PageRuleRole]!
+  roles: [String]!
   path: String!
   locales: [String]!
-}
-
-enum PageRuleRole {
-  READ
-  WRITE
-  MANAGE
-  DELETE
-  AS_READ
-  AS_WRITE
-  AS_MANAGE
-  CM_READ
-  CM_WRITE
-  CM_MANAGE
 }
 
 enum PageRuleMatch {

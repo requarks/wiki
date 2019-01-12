@@ -131,6 +131,7 @@ router.get('/*', async (req, res, next) => {
     if (pageArgs.path === 'home') {
       return res.redirect('/login')
     } else {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.render('unauthorized', { action: 'view'})
     }
   }
@@ -151,7 +152,11 @@ router.get('/*', async (req, res, next) => {
     res.render('welcome')
   } else {
     _.set(res.locals, 'pageMeta.title', 'Page Not Found')
-    res.status(404).render('new', { pagePath: req.path })
+    if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
+      res.status(404).render('new', { pagePath: req.path })
+    } else {
+      res.render('notfound', { action: 'view'})
+    }
   }
 })
 

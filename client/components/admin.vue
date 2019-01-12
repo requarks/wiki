@@ -7,40 +7,42 @@
           v-list-tile.pt-2(to='/dashboard')
             v-list-tile-avatar: v-icon dashboard
             v-list-tile-title {{ $t('admin:dashboard.title') }}
-          v-divider.my-2
-          v-subheader.pl-4 {{ $t('admin:nav.site') }}
-          v-list-tile(to='/general', v-if='hasPermission(`manage:system`)')
-            v-list-tile-avatar: v-icon widgets
-            v-list-tile-title {{ $t('admin:general.title') }}
-          v-list-tile(to='/locale', v-if='hasPermission(`manage:system`)')
-            v-list-tile-avatar: v-icon language
-            v-list-tile-title {{ $t('admin:locale.title') }}
-          v-list-tile(to='/navigation', v-if='hasPermission([`manage:system`, `manage:navigation`])')
-            v-list-tile-avatar: v-icon near_me
-            v-list-tile-title {{ $t('admin:navigation.title') }}
-          v-list-tile(to='/pages')
-            v-list-tile-avatar: v-icon insert_drive_file
-            v-list-tile-title {{ $t('admin:pages.title') }}
-            v-list-tile-action
-              v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
-                .caption.grey--text {{ info.pagesTotal }}
-          v-list-tile(to='/theme', v-if='hasPermission([`manage:system`, `manage:theme`])')
-            v-list-tile-avatar: v-icon palette
-            v-list-tile-title {{ $t('admin:theme.title') }}
-          v-divider.my-2
-          v-subheader.pl-4 {{ $t('admin:nav.users') }}
-          v-list-tile(to='/groups')
-            v-list-tile-avatar: v-icon people
-            v-list-tile-title {{ $t('admin:groups.title') }}
-            v-list-tile-action
-              v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
-                .caption.grey--text {{ info.groupsTotal }}
-          v-list-tile(to='/users')
-            v-list-tile-avatar: v-icon perm_identity
-            v-list-tile-title {{ $t('admin:users.title') }}
-            v-list-tile-action
-              v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
-                .caption.grey--text {{ info.usersTotal }}
+          template(v-if='hasPermission([`manage:system`, `manage:navigation`, `write:pages`, `manage:pages`, `delete:pages`])')
+            v-divider.my-2
+            v-subheader.pl-4 {{ $t('admin:nav.site') }}
+            v-list-tile(to='/general', v-if='hasPermission(`manage:system`)')
+              v-list-tile-avatar: v-icon widgets
+              v-list-tile-title {{ $t('admin:general.title') }}
+            v-list-tile(to='/locale', v-if='hasPermission(`manage:system`)')
+              v-list-tile-avatar: v-icon language
+              v-list-tile-title {{ $t('admin:locale.title') }}
+            v-list-tile(to='/navigation', v-if='hasPermission([`manage:system`, `manage:navigation`])')
+              v-list-tile-avatar: v-icon near_me
+              v-list-tile-title {{ $t('admin:navigation.title') }}
+            v-list-tile(to='/pages', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`])')
+              v-list-tile-avatar: v-icon insert_drive_file
+              v-list-tile-title {{ $t('admin:pages.title') }}
+              v-list-tile-action
+                v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                  .caption.grey--text {{ info.pagesTotal }}
+            v-list-tile(to='/theme', v-if='hasPermission([`manage:system`, `manage:theme`])')
+              v-list-tile-avatar: v-icon palette
+              v-list-tile-title {{ $t('admin:theme.title') }}
+          template(v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
+            v-divider.my-2
+            v-subheader.pl-4 {{ $t('admin:nav.users') }}
+            v-list-tile(to='/groups', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`])')
+              v-list-tile-avatar: v-icon people
+              v-list-tile-title {{ $t('admin:groups.title') }}
+              v-list-tile-action
+                v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                  .caption.grey--text {{ info.groupsTotal }}
+            v-list-tile(to='/users', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
+              v-list-tile-avatar: v-icon perm_identity
+              v-list-tile-title {{ $t('admin:users.title') }}
+              v-list-tile-action
+                v-chip(small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                  .caption.grey--text {{ info.usersTotal }}
           template(v-if='hasPermission(`manage:system`)')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.modules') }}
@@ -62,8 +64,8 @@
             v-list-tile(to='/storage')
               v-list-tile-avatar: v-icon storage
               v-list-tile-title {{ $t('admin:storage.title') }}
-            v-divider.my-2
           template(v-if='hasPermission([`manage:system`, `manage:api`])')
+            v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.system') }}
             v-list-tile(to='/api', v-if='hasPermission([`manage:system`, `manage:api`])')
               v-list-tile-avatar: v-icon call_split
@@ -74,8 +76,8 @@
             v-list-tile(to='/system', v-if='hasPermission(`manage:system`)')
               v-list-tile-avatar: v-icon tune
               v-list-tile-title {{ $t('admin:system.title') }}
-            v-list-tile(to='/utilities', v-if='hasPermission(`manage:system`)')
-              v-list-tile-avatar: v-icon build
+            v-list-tile(to='/utilities', v-if='hasPermission(`manage:system`)', disabled)
+              v-list-tile-avatar: v-icon(color='grey lighten-2') build
               v-list-tile-title {{ $t('admin:utilities.title') }}
             v-list-tile(to='/dev', v-if='hasPermission([`manage:system`, `manage:api`])')
               v-list-tile-avatar: v-icon weekend

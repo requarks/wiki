@@ -17,6 +17,7 @@ extend type Mutation {
 type LocalizationQuery {
   locales: [LocalizationLocale]
   config: LocalizationConfig
+  translations(locale: String!, namespace: String!): [Translation]
 }
 
 # -----------------------------------------------
@@ -56,4 +57,9 @@ type LocalizationConfig {
   autoUpdate: Boolean!
   namespacing: Boolean!
   namespaces: [String]!
+}
+
+type Translation {
+  key: String!
+  value: String!
 }

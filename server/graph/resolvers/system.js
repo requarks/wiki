@@ -20,13 +20,9 @@ module.exports = {
   Query: {
     async system() { return {} }
   },
-  Mutation: {
-    async system() { return {} }
-  },
   SystemQuery: {
     async info() { return {} }
   },
-  SystemMutation: { },
   SystemInfo: {
     configFile() {
       return path.join(process.cwd(), 'config.yml')

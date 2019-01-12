@@ -97,42 +97,38 @@
             v-btn.btn-animate-rotate(icon, href='/a', slot='activator')
               v-icon(color='grey') settings
             span Admin
-          v-menu(offset-y, min-width='300')
+          v-menu(v-if='isAuthenticated', offset-y, min-width='300')
             v-tooltip(bottom, slot='activator')
-              v-btn.btn-animate-grow(icon, slot='activator', outline, :color='isAuthenticated ? `blue` : `grey darken-3`')
+              v-btn.btn-animate-grow(icon, slot='activator', outline, color='blue')
                 v-icon(color='grey') account_circle
               span Account
             v-list.py-0
-              template(v-if='isAuthenticated')
-                v-list-tile.py-3.grey(avatar, :class='$vuetify.dark ? `darken-4-l5` : `lighten-5`')
-                  v-list-tile-avatar
-                    v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
-                      span.white--text.subheading {{picture.initials}}
-                    v-avatar(v-else-if='picture.kind === `image`', :size='40')
-                      v-img(:src='picture.url')
-                  v-list-tile-content
-                    v-list-tile-title {{name}}
-                    v-list-tile-sub-title {{email}}
-                v-divider.my-0
-                v-list-tile(href='/w')
-                  v-list-tile-action: v-icon(color='blue') web
-                  v-list-tile-title My Wiki
-                v-divider.my-0
-                v-list-tile(href='/p')
-                  v-list-tile-action: v-icon(color='blue') person
-                  v-list-tile-title Profile
-                v-divider.my-0
-                v-list-tile(@click='logout')
-                  v-list-tile-action: v-icon(color='red') exit_to_app
-                  v-list-tile-title Logout
-              template(v-else)
-                v-list-tile(href='/login')
-                  v-list-tile-action: v-icon(color='grey') person
-                  v-list-tile-title Login
-                v-divider.my-0
-                v-list-tile(href='/register')
-                  v-list-tile-action: v-icon(color='grey') person_add
-                  v-list-tile-title Register
+              v-list-tile.py-3.grey(avatar, :class='$vuetify.dark ? `darken-4-l5` : `lighten-5`')
+                v-list-tile-avatar
+                  v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
+                    span.white--text.subheading {{picture.initials}}
+                  v-avatar(v-else-if='picture.kind === `image`', :size='40')
+                    v-img(:src='picture.url')
+                v-list-tile-content
+                  v-list-tile-title {{name}}
+                  v-list-tile-sub-title {{email}}
+              v-divider.my-0
+              v-list-tile(href='/w')
+                v-list-tile-action: v-icon(color='blue') web
+                v-list-tile-title My Wiki
+              v-divider.my-0
+              v-list-tile(href='/p')
+                v-list-tile-action: v-icon(color='blue') person
+                v-list-tile-title Profile
+              v-divider.my-0
+              v-list-tile(@click='logout')
+                v-list-tile-action: v-icon(color='red') exit_to_app
+                v-list-tile-title Logout
+
+          v-tooltip(v-else, left)
+            v-btn(icon, slot='activator', outline, color='grey darken-3', href='/login')
+              v-icon(color='grey') account_circle
+            span Login
 
     page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate')
 </template>

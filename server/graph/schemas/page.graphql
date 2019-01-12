@@ -19,19 +19,7 @@ type PageQuery {
     id: Int!
     offsetPage: Int
     offsetSize: Int
-  ): PageHistoryResult
-
-  list(
-    filter: String
-    orderBy: String
-  ): [PageMinimal]
-
-  single(
-    id: Int
-    path: String
-    locale: String
-    isPrivate: Boolean
-  ): Page
+  ): PageHistoryResult @auth(requires: ["manage:system", "read:pages"])
 }
 
 # -----------------------------------------------
@@ -82,21 +70,8 @@ type PageResponse {
   page: Page
 }
 
-type PageMinimal {
-  id: Int!
-  name: String!
-  userCount: Int
-  createdAt: Date!
-  updatedAt: Date!
-}
-
 type Page {
   id: Int!
-  name: String!
-  rights: [Right]
-  users: [User]
-  createdAt: Date!
-  updatedAt: Date!
 }
 
 type PageHistory {

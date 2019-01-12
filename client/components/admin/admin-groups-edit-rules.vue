@@ -78,8 +78,8 @@
               dense
               )
               template(slot='selection', slot-scope='{ item, index }')
-                v-chip.white--text.ml-0(v-if='index <= 2', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value }}
-                v-chip.white--text.ml-0(v-if='index === 3', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 3 }} more
+                v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value }}
+                v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 2 }} more
               template(slot='item', slot-scope='props')
                 v-list-tile-action(style='min-width: 30px;')
                   v-checkbox(
@@ -163,6 +163,26 @@
 
             v-btn(icon, @click='removeRule(rule.id)')
               v-icon(:color='$vuetify.dark ? `grey` : `blue-grey`') clear
+
+        v-divider.mt-3
+        v-subheader.pl-0 Rules Order
+        .body-1.pl-3 Rules are applied in order of path specificity. A more precise path will always override a less defined path.
+        .body-1.pl-4 For example, #[span.teal--text /geography/countries] will override #[span.teal--text /geography].
+        .body-1.pl-3.pt-2 When 2 rules have the same specificity, the priority is given from lowest to highest as follows:
+        .body-1.pl-3.pt-1
+          ul
+            li
+              strong Path Starts With...
+              em.caption.pl-1 (lowest)
+            li
+              strong Path Ends With...
+            li
+              strong Path Matches Regex...
+            li
+              strong Path Is Exactly...
+              em.caption.pl-1 (highest)
+        .body-1.pl-3.pt-2 When 2 rules have the same path specificity AND the same match type, #[strong.red--text DENY] will always override an #[strong.green--text ALLOW] rule.
+
 </template>
 
 <script>
@@ -178,16 +198,16 @@ export default {
   data() {
     return {
       roles: [
-        { text: 'Read Pages', value: 'READ', icon: 'insert_drive_file' },
-        { text: 'Create Pages', value: 'WRITE', icon: 'insert_drive_file' },
-        { text: 'Edit + Move Pages', value: 'MANAGE', icon: 'insert_drive_file' },
-        { text: 'Delete Pages', value: 'DELETE', icon: 'insert_drive_file' },
-        { text: 'Read / Use Assets', value: 'AS_READ', icon: 'camera' },
-        { text: 'Upload Assets', value: 'AS_WRITE', icon: 'camera' },
-        { text: 'Edit + Delete Assets', value: 'AS_MANAGE', icon: 'camera' },
-        { text: 'Read Comments', value: 'CM_READ', icon: 'insert_comment' },
-        { text: 'Create Comments', value: 'CM_WRITE', icon: 'insert_comment' },
-        { text: 'Edit + Delete Comments', value: 'CM_MANAGE', icon: 'insert_comment' }
+        { text: 'Read Pages', value: 'read:pages', icon: 'insert_drive_file' },
+        { text: 'Create Pages', value: 'write:pages', icon: 'insert_drive_file' },
+        { text: 'Edit + Move Pages', value: 'manage:pages', icon: 'insert_drive_file' },
+        { text: 'Delete Pages', value: 'delete:pages', icon: 'insert_drive_file' },
+        { text: 'Read / Use Assets', value: 'read:assets', icon: 'camera' },
+        { text: 'Upload Assets', value: 'write:assets', icon: 'camera' },
+        { text: 'Edit + Delete Assets', value: 'manage:assets', icon: 'camera' },
+        { text: 'Read Comments', value: 'read:comments', icon: 'insert_comment' },
+        { text: 'Create Comments', value: 'write:comments', icon: 'insert_comment' },
+        { text: 'Edit + Delete Comments', value: 'manage:comments', icon: 'insert_comment' }
       ],
       matches: [
         { text: 'Path Starts With...', value: 'START', icon: '/...' },

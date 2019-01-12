@@ -6,50 +6,42 @@ extend type Query {
   system: SystemQuery
 }
 
-extend type Mutation {
-  system: SystemMutation
-}
-
 # -----------------------------------------------
 # QUERIES
 # -----------------------------------------------
 
 type SystemQuery {
-  info: SystemInfo @auth(requires: ["manage:system"])
+  info: SystemInfo
 }
 
 # -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
-type SystemMutation {
-  todo: String
-}
-
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
 
 type SystemInfo {
-  configFile: String
-  cpuCores: Int
-  currentVersion: String
-  dbHost: String
-  dbType: String
-  dbVersion: String
-  groupsTotal: Int
-  hostname: String
-  latestVersion: String
-  latestVersionReleaseDate: Date
-  nodeVersion: String
-  operatingSystem: String
-  pagesTotal: Int
-  platform: String
-  ramTotal: String
-  redisHost: String
-  redisTotalRAM: String
-  redisUsedRAM: String
-  redisVersion: String
-  usersTotal: Int
-  workingDirectory: String
+  configFile: String @auth(requires: ["manage:system"])
+  cpuCores: Int @auth(requires: ["manage:system"])
+  currentVersion: String @auth(requires: ["manage:system"])
+  dbHost: String @auth(requires: ["manage:system"])
+  dbType: String @auth(requires: ["manage:system"])
+  dbVersion: String @auth(requires: ["manage:system"])
+  groupsTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
+  hostname: String @auth(requires: ["manage:system"])
+  latestVersion: String @auth(requires: ["manage:system"])
+  latestVersionReleaseDate: Date @auth(requires: ["manage:system"])
+  nodeVersion: String @auth(requires: ["manage:system"])
+  operatingSystem: String @auth(requires: ["manage:system"])
+  pagesTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:pages", "delete:pages"])
+  platform: String @auth(requires: ["manage:system"])
+  ramTotal: String @auth(requires: ["manage:system"])
+  redisHost: String @auth(requires: ["manage:system"])
+  redisTotalRAM: String @auth(requires: ["manage:system"])
+  redisUsedRAM: String @auth(requires: ["manage:system"])
+  redisVersion: String @auth(requires: ["manage:system"])
+  usersTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
+  workingDirectory: String @auth(requires: ["manage:system"])
 }

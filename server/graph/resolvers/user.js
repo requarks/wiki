@@ -22,7 +22,6 @@ module.exports = {
     },
     async single(obj, args, context, info) {
       let usr = await WIKI.models.users.query().findById(args.id)
-      console.info(usr)
       usr.password = ''
       usr.tfaSecret = ''
       return usr

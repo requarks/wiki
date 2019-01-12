@@ -147,6 +147,7 @@
     "remove-markdown": "0.3.0",
     "request": "2.88.0",
     "request-promise": "4.2.2",
+    "safe-regex": "2.0.1",
     "scim-query-filter-parser": "1.1.0",
     "semver": "5.6.0",
     "serve-favicon": "2.5.0",

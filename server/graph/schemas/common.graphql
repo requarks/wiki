@@ -1,37 +1,32 @@
-
-
-# ENUMS
-
-enum FileType {
-  binary
-  image
-}
-
-enum RightRole {
-  read
-  write
-  manage
-}
+# ====================== #
+# Wiki.js GraphQL Schema #
+# ====================== #
 
 # DIRECTIVES
+# ----------
 
 directive @auth(requires: [String]) on QUERY | FIELD_DEFINITION | ARGUMENT_DEFINITION
 
 # TYPES
+# -----
 
+# Generic Key Value Pair
 type KeyValuePair {
   key: String!
   value: String!
 }
+# General Key Value Pair Input
 input KeyValuePairInput {
   key: String!
   value: String!
 }
 
+# Generic Mutation Response
 type DefaultResponse {
   responseResult: ResponseStatus
 }
 
+# Mutation Status
 type ResponseStatus {
   succeeded: Boolean!
   errorCode: Int!
@@ -39,220 +34,14 @@ type ResponseStatus {
   message: String
 }
 
-type Comment {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  content: String
-  document: Document!
-  author: User!
-}
-
-type Document {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  path: String!
-  title: String!
-  subtitle: String
-  parentPath: String
-  parentTitle: String
-  isDirectory: Boolean!
-  isEntry: Boolean!
-  searchContent: String
-  comments: [Comment]
-  tags: [Tag]
-}
-
-type File {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  category: FileType!
-  mime: String!
-  extra: String
-  filename: String!
-  basename: String!
-  filesize: Int!
-  folder: Folder
-}
-
-type Folder {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  name: String!
-  files: [File]
-}
-
-type Right {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  path: String!
-  role: RightRole!
-  exact: Boolean!
-  allow: Boolean!
-  group: Group!
-}
-
-type Setting {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  key: String!
-  config: String!
-}
-
-# Tags are attached to one or more documents
-type Tag {
-  id: Int!
-  createdAt: Date
-  updatedAt: Date
-  key: String!
-  documents: [Document]
-}
-
-type Translation {
-  key: String!
-  value: String!
-}
-
-type OperationResult {
-  succeeded: Boolean!
-  message: String
-  data: String
-}
+# ROOT
+# ----
 
 # Query (Read)
-type Query {
-  comments(id: Int): [Comment]
-  documents(id: Int, path: String): [Document]
-  files(id: Int): [File]
-  folders(id: Int, name: String): [Folder]
-  rights(id: Int): [Right]
-  settings(key: String): [Setting]
-  tags(key: String): [Tag]
-  translations(locale: String!, namespace: String!): [Translation]
-}
+type Query
 
 # Mutations (Create, Update, Delete)
-type Mutation {
-  addRightToGroup(
-    groupId: Int!
-    path: String!
-    role: RightRole!
-    exact: Boolean!
-    allow: Boolean!
-  ): Right
+type Mutation
 
-  assignTagToDocument(
-    tagId: Int!
-    documentId: Int!
-  ): OperationResult
-
-  createComment(
-    userId: Int!
-    documentId: Int!
-    content: String!
-  ): Comment
-
-  createDocument(
-    path: String!
-    title: String!
-    subtitle: String
-  ): Document
-
-  createFolder(
-    name: String!
-  ): Folder
-
-  createTag(
-    name: String!
-  ): Tag
-
-  deleteComment(
-    id: Int!
-  ): OperationResult
-
-  deleteDocument(
-    id: Int!
-  ): OperationResult
-
-  deleteFile(
-    id: Int!
-  ): OperationResult
-
-  deleteFolder(
-    id: Int!
-  ): OperationResult
-
-  deleteTag(
-    id: Int!
-  ): OperationResult
-
-  modifyComment(
-    id: Int!
-    content: String!
-  ): Document
-
-  modifyDocument(
-    id: Int!
-    title: String
-    subtitle: String
-  ): Document
-
-  modifyRight(
-    id: Int!
-    path: String
-    role: RightRole
-    exact: Boolean
-    allow: Boolean
-  ): Right
-
-  moveDocument(
-    id: Int!
-    path: String!
-  ): OperationResult
-
-  moveFile(
-    id: Int!
-    folderId: Int!
-  ): OperationResult
-
-  renameFile(
-    id: Int!
-    name: String!
-  ): OperationResult
-
-  renameFolder(
-    id: Int!
-    name: String!
-  ): OperationResult
-
-  renameTag(
-    id: Int!
-    key: String!
-  ): OperationResult
-
-  removeTagFromDocument(
-    tagId: Int!
-    documentId: Int!
-  ): OperationResult
-
-  removeRightFromGroup(
-    rightId: Int!
-  ): OperationResult
-
-  setConfigEntry(
-    key: String!
-    value: String!
-  ): OperationResult
-
-  uploadFile(
-    category: FileType!
-    filename: String!
-  ): File
-}
-
+# Subscriptions (Push, Real-time)
 type Subscription

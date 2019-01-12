@@ -101,6 +101,10 @@ module.exports = class User extends Model {
     await this.generateHash()
   }
 
+  // ------------------------------------------------
+  // Instance Methods
+  // ------------------------------------------------
+
   async generateHash() {
     if (this.password) {
       if (bcryptRegexp.test(this.password)) { return }
@@ -138,10 +142,17 @@ module.exports = class User extends Model {
     return (result && _.has(result, 'delta') && result.delta === 0)
   }
 
-  async getPermissions() {
-    const permissions = await this.$relatedQuery('groups').select('permissions').pluck('permissions')
-    this.permissions = _.uniq(_.flatten(permissions))
+  getGlobalPermissions() {
+    return _.uniq(_.flatten(_.map(this.groups, 'permissions')))
   }
+
+  getGroups() {
+    return _.uniq(_.map(this.groups, 'id'))
+  }
+
+  // ------------------------------------------------
+  // Model Methods
+  // ------------------------------------------------
 
   static async processProfile(profile) {
     let primaryEmail = ''
@@ -246,12 +257,17 @@ module.exports = class User extends Model {
 
   static async refreshToken(user) {
     if (_.isSafeInteger(user)) {
-      user = await WIKI.models.users.query().findById(user)
+      user = await WIKI.models.users.query().findById(user).eager('groups').modifyEager('groups', builder => {
+        builder.select('groups.id', 'permissions')
+      })
       if (!user) {
         WIKI.logger.warn(`Failed to refresh token for user ${user}: Not found.`)
         throw new WIKI.Error.AuthGenericError()
       }
+    } else if(_.isNil(user.groups)) {
+      await user.$relatedQuery('groups').select('groups.id', 'permissions')
     }
+
     return {
       token: jwt.sign({
         id: user.id,
@@ -261,7 +277,8 @@ module.exports = class User extends Model {
         timezone: user.timezone,
         localeCode: user.localeCode,
         defaultEditor: user.defaultEditor,
-        permissions: ['manage:system']
+        permissions: user.getGlobalPermissions(),
+        groups: user.getGroups()
       }, {
         key: WIKI.config.certs.private,
         passphrase: WIKI.config.sessionSecret
@@ -398,8 +415,13 @@ module.exports = class User extends Model {
   }
 
   static async getGuestUser () {
-    let user = await WIKI.models.users.query().findById(2)
-    user.getPermissions()
+    const user = await WIKI.models.users.query().findById(2).eager('groups').modifyEager('groups', builder => {
+      builder.select('groups.id', 'permissions')
+    })
+    if (!user) {
+      WIKI.logger.error('CRITICAL ERROR: Guest user is missing!')
+      process.exit(1)
+    }
     return user
   }
 }
