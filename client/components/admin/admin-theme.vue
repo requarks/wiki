@@ -146,11 +146,7 @@ export default {
           throw new Error(resp.message)
         }
       } catch (err) {
-        this.$store.commit('showNotification', {
-          message: `Error: ${err.message}`,
-          style: 'error',
-          icon: 'warning'
-        })
+        this.$store.commit('pushGraphError', err)
       }
       this.$store.commit(`loadingStop`, 'admin-theme-save')
       this.loading = false

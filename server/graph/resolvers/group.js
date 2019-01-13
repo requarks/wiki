@@ -1,5 +1,6 @@
 const graphHelper = require('../../helpers/graph')
 const safeRegex = require('safe-regex')
+const _ = require('lodash')
 
 /* global WIKI */
 

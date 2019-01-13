@@ -229,11 +229,7 @@ export default {
         this.siteTitle = this.config.title
         this.company = this.config.company
       } catch (err) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: err.message,
-          icon: 'warning'
-        })
+        this.$store.commit('pushGraphError', err)
       }
     }
   },

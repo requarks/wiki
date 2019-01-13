@@ -180,11 +180,7 @@ export default {
           icon: 'check'
         })
       } catch (err) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: err.message,
-          icon: 'warning'
-        })
+        this.$store.commit('pushGraphError', err)
       }
     }
   },

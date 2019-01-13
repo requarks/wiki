@@ -204,29 +204,33 @@ export default {
     },
     async save() {
       this.$store.commit(`loadingStart`, 'admin-auth-savestrategies')
-      await this.$apollo.mutate({
-        mutation: strategiesSaveMutation,
-        variables: {
-          config: {
-            audience: this.jwtAudience,
-            tokenExpiration: this.jwtExpiration,
-            tokenRenewal: this.jwtRenewablePeriod
-          },
-          strategies: this.strategies.map(str => _.pick(str, [
-            'isEnabled',
-            'key',
-            'config',
-            'selfRegistration',
-            'domainWhitelist',
-            'autoEnrollGroups'
-          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
-        }
-      })
-      this.$store.commit('showNotification', {
-        message: 'Authentication configuration saved successfully.',
-        style: 'success',
-        icon: 'check'
-      })
+      try {
+        await this.$apollo.mutate({
+          mutation: strategiesSaveMutation,
+          variables: {
+            config: {
+              audience: this.jwtAudience,
+              tokenExpiration: this.jwtExpiration,
+              tokenRenewal: this.jwtRenewablePeriod
+            },
+            strategies: this.strategies.map(str => _.pick(str, [
+              'isEnabled',
+              'key',
+              'config',
+              'selfRegistration',
+              'domainWhitelist',
+              'autoEnrollGroups'
+            ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
+          }
+        })
+        this.$store.commit('showNotification', {
+          message: 'Authentication configuration saved successfully.',
+          style: 'success',
+          icon: 'check'
+        })
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
       this.$store.commit(`loadingStop`, 'admin-auth-savestrategies')
     }
   },

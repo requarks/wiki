@@ -47,6 +47,13 @@ export default new Vuex.Store({
     },
     updateNotificationState (state, newState) {
       state.notification.isActive = newState
+    },
+    pushGraphError (state, err) {
+      WIKI.$store.commit('showNotification', {
+        style: 'red',
+        message: _.get(err, 'graphQLErrors[0].message', err.message),
+        icon: 'warning'
+      })
     }
   },
   actions: { },

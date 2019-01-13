@@ -214,11 +214,7 @@ export default {
           throw new Error(_.get(resp, 'data.navigation.updateTree.responseResult.message', 'An unexpected error occured.'))
         }
       } catch (err) {
-        this.$store.commit('showNotification', {
-          message: err.message,
-          style: 'red',
-          icon: 'warning'
-        })
+        this.$store.commit('pushGraphError', err)
       }
       this.$store.commit(`loadingStop`, 'admin-navigation-save')
     },
