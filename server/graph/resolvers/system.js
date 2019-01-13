@@ -5,6 +5,7 @@ const os = require('os')
 const filesize = require('filesize')
 const path = require('path')
 const fs = require('fs-extra')
+const moment = require('moment')
 
 /* global WIKI */
 
@@ -62,10 +63,10 @@ module.exports = {
       }
     },
     latestVersion() {
-      return '2.0.0' // TODO
+      return WIKI.system.updates.version
     },
     latestVersionReleaseDate() {
-      return new Date() // TODO
+      return moment.utc(WIKI.system.updates.releaseDate)
     },
     async operatingSystem() {
       let osLabel = `${os.type()} (${os.platform()}) ${os.release()} ${os.arch()}`

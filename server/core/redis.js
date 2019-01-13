@@ -25,12 +25,11 @@ module.exports = {
     red.on('message', (channel, msg) => {
       WIKI.events.emit(channel, msg)
     })
-    red.subscribe('localization', (err, count) => {
+    red.subscribe('localization', 'updates', (err, count) => {
       if (err) {
         WIKI.logger.error(err)
         process.exit(1)
       }
-      WIKI.logger.info('Redis Subscriber connection: [ OK ]')
     })
     return red
   }

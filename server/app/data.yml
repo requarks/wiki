@@ -66,6 +66,10 @@ jobs:
     onInit: true
     cron: '0 0 * * *'
     concurrency: 0
+  syncGraphUpdates:
+    onInit: true
+    cron: '0 0 * * *'
+    concurrency: 0
   syncStorage:
     onInit: false
     cron: false

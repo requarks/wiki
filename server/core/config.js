@@ -52,9 +52,12 @@ module.exports = {
       appconfig.port = process.env.PORT || 80
     }
 
+    const packageInfo = require(path.join(WIKI.ROOTPATH, 'package.json'))
+
     WIKI.config = appconfig
     WIKI.data = appdata
-    WIKI.version = require(path.join(WIKI.ROOTPATH, 'package.json')).version
+    WIKI.version = packageInfo.version
+    WIKI.releaseDate = packageInfo.releaseDate
   },
 
   /**

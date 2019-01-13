@@ -5,6 +5,25 @@ const Promise = require('bluebird')
 /* global WIKI */
 
 module.exports = {
+  updates: {
+    channel: 'BETA',
+    version: WIKI.version,
+    releaseDate: WIKI.releaseDate,
+    minimumVersionRequired: '2.0.0-beta.0',
+    minimumNodeRequired: '10.12.0'
+  },
+  init() {
+    // Listen for updates events
+    WIKI.events.on('updates', (infoRaw) => {
+      try {
+        this.updates = JSON.parse(infoRaw)
+      } catch (err) {
+        WIKI.logger.warn('Failed to parse updates info.')
+      }
+    })
+
+    return this
+  },
   /**
    * Upgrade from WIKI.js 1.x - MongoDB database
    *

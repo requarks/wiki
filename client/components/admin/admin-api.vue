@@ -5,7 +5,7 @@
         .admin-header
           img(src='/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2 API
+            .headline.blue--text.text--darken-2 API Access
             .subheading.grey--text Manage keys to access the API #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn(outline, color='grey', large, @click='refresh', disabled)
@@ -58,7 +58,7 @@
                 td {{ props.item.updatedOn }}
                 td: v-btn(icon): v-icon.grey--text.text--darken-1 more_horiz
             template(slot='no-data')
-              v-alert.mt-3(icon='info', :value='true', outline, color='info') No API have been generated yet.
+              v-alert.mt-3(icon='info', :value='true', outline, color='info') No API keys have been generated yet.
           .text-xs-center.py-2
             v-pagination(v-model='pagination.page', :length='pages')
 </template>

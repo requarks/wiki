@@ -182,6 +182,10 @@
               strong Path Is Exactly...
               em.caption.pl-1 (highest)
         .body-1.pl-3.pt-2 When 2 rules have the same path specificity AND the same match type, #[strong.red--text DENY] will always override an #[strong.green--text ALLOW] rule.
+        v-divider.mt-3
+        v-subheader.pl-0 Regular Expressions
+        span Expressions that are deemed unsafe or could result in exponential time processing will be rejected upon saving.
+
 
 </template>
 

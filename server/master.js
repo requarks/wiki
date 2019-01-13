@@ -20,6 +20,7 @@ module.exports = async () => {
   WIKI.auth = require('./core/auth').init()
   WIKI.lang = require('./core/localization').init()
   WIKI.mail = require('./core/mail').init()
+  WIKI.system = require('./core/system').init()
 
   // ----------------------------------------
   // Load middlewares

@@ -46,11 +46,10 @@
           dark
           )
           v-btn(fab, absolute, right, top, small, light, to='system', v-if='hasPermission(`manage:system`)')
-            v-icon(v-if='isLatestVersion', color='teal') build
-            v-icon(v-else, color='red darken-4') get_app
+            v-icon(:color='isLatestVersion ? `teal` : `red darken-4`') build
           v-card-text
             v-icon.dashboard-icon blur_on
-            .subheading Wiki.js {{info.currentVersion}} BETA
+            .subheading Wiki.js {{info.currentVersion}}
             .body-2(v-if='isLatestVersion') You are running the latest version.
             .body-2(v-else) A new version is available: {{info.latestVersion}}
       v-flex(xs12)
