@@ -21,15 +21,6 @@ module.exports = {
       fallbackLng: 'en'
     })
 
-    // Load fallback defaults
-    const enFallback = require('../locales/default.json')
-    if (_.isPlainObject(enFallback)) {
-      _.forOwn(enFallback, (data, ns) => {
-        this.namespaces.push(ns)
-        this.engine.addResourceBundle('en', ns, data)
-      })
-    }
-
     // Load current language + namespaces
     this.refreshNamespaces(true)
 

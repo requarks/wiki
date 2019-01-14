@@ -57,6 +57,7 @@
                   color='primary',
                   v-model='conf.upgrade',
                   label='Upgrade from Wiki.js 1.x',
+                  disabled
                   persistent-hint,
                   hint='Check this box if you are upgrading from Wiki.js 1.x and wish to migrate your existing data.'
                 )

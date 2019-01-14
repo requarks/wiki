@@ -39,6 +39,7 @@
     "node": ">=10.12"
   },
   "dependencies": {
+    "apollo-fetch": "0.7.0",
     "apollo-server": "2.2.2",
     "apollo-server-express": "2.2.2",
     "auto-load": "3.0.4",
@@ -181,7 +182,6 @@
     "animated-number-vue": "0.1.3",
     "apollo-cache-inmemory": "1.3.10",
     "apollo-client": "2.4.6",
-    "apollo-fetch": "0.7.0",
     "apollo-link": "1.2.3",
     "apollo-link-batch-http": "1.2.3",
     "apollo-link-error": "1.1.1",
