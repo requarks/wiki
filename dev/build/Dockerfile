@@ -36,7 +36,6 @@ RUN apk update && \
 
 WORKDIR /wiki
 
-COPY ./dev/build/supervisord.conf /etc/supervisord.conf
 COPY --from=assets /wiki/assets ./assets
 COPY --from=assets /wiki/node_modules ./node_modules
 COPY ./server ./server
