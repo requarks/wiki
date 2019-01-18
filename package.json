@@ -155,6 +155,7 @@
     "serve-favicon": "2.5.0",
     "sqlite3": "4.0.4",
     "subscriptions-transport-ws": "0.9.15",
+    "twemoji": "11.2.0",
     "uslug": "1.0.4",
     "uuid": "3.3.2",
     "validate.js": "0.12.0",

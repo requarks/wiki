@@ -69,6 +69,7 @@
     padding: 8px 0 0 0;
     color: mc('grey', '800');
     position: relative;
+    margin-top: 1rem;
 
     @at-root .theme--dark & {
       color: mc('grey', '500');
@@ -132,6 +133,11 @@
     @at-root .theme--dark & {
       background-color: mc('grey', '700');
     }
+  }
+
+  .emoji {
+    height: 1.25em;
+    margin: 0 1px -4px;
   }
 
   blockquote {
@@ -215,6 +221,30 @@
   }
 
   // ---------------------------------
+  // LISTS
+  // ---------------------------------
+
+  ol, ul {
+    padding: 1rem 24px 0 24px;
+    list-style-position: inside;
+
+    li + li {
+      margin-top: .5rem;
+    }
+  }
+
+  ul {
+    list-style: none;
+
+    > li::before {
+      content: '\25b8';
+      color: mc('grey', '600');
+      display: inline-block;
+      width: 1.35rem;
+    }
+  }
+
+  // ---------------------------------
   // CODE
   // ---------------------------------
 
@@ -229,15 +259,6 @@
 
     &::before, &::after {
       display: none;
-    }
-  }
-
-  ol, ul {
-    padding: 1rem 24px 0 24px;
-    list-style-position: inside;
-
-    li + li {
-      margin-top: .5rem;
     }
   }
 

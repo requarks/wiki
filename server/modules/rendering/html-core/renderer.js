@@ -14,6 +14,6 @@ module.exports = {
       renderer.init($, child.config)
     }
 
-    return $.html()
+    return $.html('body').replace('<body>', '').replace('</body>', '')
   }
 }
