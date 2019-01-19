@@ -131,7 +131,7 @@ db: mongodb://localhost:27017/wiki
 # ---------------------------------------------------------------------
 
 git:
-  url: https://github.com/Organization/Repo
+  url: git@github.com/Organization/Repo
   branch: master
   auth:
 
