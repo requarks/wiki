@@ -146,6 +146,10 @@
     border-radius: .5rem;
     margin: 1rem;
 
+    > p:first-child .emoji {
+      margin-right: .5rem;
+    }
+
     &.is-info {
       background-color: mc('blue', '50');
       background-image: radial-gradient(ellipse at top, mc('blue', '50'), lighten(mc('blue', '50'), 5%));
@@ -330,6 +334,31 @@
 
     .contains-task-list {
       padding: .5rem 0 0 1.5rem;
+    }
+  }
+
+  // ---------------------------------
+  // TABLES
+  // ---------------------------------
+
+  table {
+    margin: .5rem 1.75rem;
+    border-spacing: 0;
+
+    th {
+      padding: .75rem;
+      border-bottom: 2px solid mc('grey', '500');
+      color: mc('grey', '600');
+    }
+
+    td {
+      padding: .75rem;
+    }
+
+    tr {
+      td {
+        border-bottom: 1px solid mc('grey', '200');
+      }
     }
   }
 
