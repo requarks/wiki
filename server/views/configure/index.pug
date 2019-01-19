@@ -98,7 +98,7 @@ html(data-logic='configure')
                       p.control
                         label.label Port
                         input(type='text', placeholder='e.g. 80', v-model.number='conf.port', data-vv-scope='general', name='ipt-port', v-validate='{ required: true }')
-                        span.desc The port on which Wiki.js will listen to. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>$(PORT)</strong> to use PORT environment variable.
+                        span.desc The port on which Wiki.js will listen. Usually port 80 if connecting directly, or a random port (e.g. 3000) if using a web server in front of it.<br>Set <strong>$(PORT)</strong> to use PORT environment variable.
                   section
                     p.control
                       label.label Site UI Language
