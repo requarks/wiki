@@ -202,7 +202,7 @@ module.exports = () => {
       WIKI.logger.info('Installing default locale...')
       await WIKI.models.locales.query().insert({
         code: 'en',
-        strings: require('./locales/default.json'),
+        strings: JSON.stringify({}),
         isRTL: false,
         name: 'English',
         nativeName: 'English'
