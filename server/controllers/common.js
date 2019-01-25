@@ -30,6 +30,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   })
   if (page) {
     if (!WIKI.auth.checkAccess(req.user, ['manage:pages'], pageArgs)) {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.render('unauthorized', { action: 'edit'})
     }
 
@@ -40,6 +41,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     page.content = Buffer.from(page.content).toString('base64')
   } else {
     if (!WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.render('unauthorized', { action: 'create'})
     }
 
@@ -78,6 +80,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path)
 
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
     return res.render('unauthorized', { action: 'history'})
   }
 

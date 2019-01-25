@@ -26,7 +26,7 @@
           @click.native.stop='exit'
           )
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.discard') }}
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:close') }}
     v-content
       component(:is='currentEditor')
       editor-modal-properties(v-model='dialogProps')

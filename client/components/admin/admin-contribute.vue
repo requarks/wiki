@@ -7,10 +7,6 @@
           .admin-header-title
             .headline.primary--text {{ $t('admin:contribute.title') }}
             .subheading.grey--text {{ $t('admin:contribute.subtitle') }}
-          v-spacer
-          v-btn(depressed, color='primary', href='https://opencollective.com/wikijs', large)
-            v-icon(left) local_atm
-            span {{ $t('admin:contribute.makeADonation') }}
         v-card.mt-3
           v-card-text
             i18next.body-1.pl-3(path='admin:contribute.openSource', tag='div')
@@ -20,7 +16,11 @@
             .body-1.pt-3.pl-3 {{ $t('admin:contribute.needYourHelp') }}
             v-divider.mt-3
             v-subheader {{ $t('admin:contribute.fundOurWork') }}
-            .body-1.pl-3 {{ $t('admin:contribute.openCollective') }}
+            .body-1.pl-3 {{ $t('admin:contribute.patreon') }}
+            v-card-actions.ml-2
+              a(href='https://www.patreon.com/bePatron?u=16744039', :title='$t(`admin:contribute.becomeAPatron`)')
+                img(src='/img/become_a_patron_button.png', :alt='$t(`admin:contribute.becomeAPatron`)' style='width:200px;')
+            .body-1.mt-3.pl-3 {{ $t('admin:contribute.openCollective') }}
             v-card-actions.ml-2
               v-btn(outline, :color='darkMode ? `blue lighten-1` : `primary`', href='https://opencollective.com/wikijs')
                 v-icon(left) local_atm

@@ -49,8 +49,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - .:/var/wiki
-      - /var/wiki/node_modules
+      - .:/wiki
+      - /wiki/node_modules
     command: ["sh", "./dev/docker/init.sh"]
 
 networks:

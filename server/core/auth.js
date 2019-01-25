@@ -114,6 +114,7 @@ module.exports = {
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
           user = newToken.user
+          req.user = user
 
           // Try headers, otherwise cookies for response
           if (req.get('content-type') === 'application/json') {
@@ -153,19 +154,17 @@ module.exports = {
    * @param {String|Boolean} path
    */
   checkAccess(user, permissions = [], page = false) {
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+
     // System Admin
-    if (_.includes(user.permissions, 'manage:system')) {
+    if (_.includes(userPermissions, 'manage:system')) {
       return true
     }
-
-    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
     // Check Global Permissions
     if (_.intersection(userPermissions, permissions).length < 1) {
       return false
     }
-
-    console.info('---------------------')
 
     // Check Page Rules
     if (path && user.groups) {
@@ -203,9 +202,6 @@ module.exports = {
           }
         })
       })
-
-      console.info('DAKSJDHKASJD')
-      console.info(checkState)
 
       return (checkState.match && !checkState.deny)
     }
