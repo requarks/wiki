@@ -132,6 +132,10 @@ export default {
     StatusIndicator
   },
   props: {
+    pageId: {
+      type: Number,
+      default: 0
+    },
     locale: {
       type: String,
       default: 'en'
@@ -229,6 +233,7 @@ export default {
     this.$store.commit('page/SET_CREATED_AT', this.createdAt)
     this.$store.commit('page/SET_DESCRIPTION', this.description)
     this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
+    this.$store.commit('page/SET_ID', this.pageId)
     this.$store.commit('page/SET_LOCALE', this.locale)
     this.$store.commit('page/SET_PATH', this.path)
     this.$store.commit('page/SET_TAGS', this.tags)

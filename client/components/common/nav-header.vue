@@ -131,6 +131,7 @@
             span Login
 
     page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate')
+    page-delete(v-model='deletePageModal', v-if='path && path.length')
 </template>
 
 <script>
@@ -139,6 +140,9 @@ import _ from 'lodash'
 import Cookies from 'js-cookie'
 
 export default {
+  components: {
+    PageDelete: () => import('./page-delete.vue')
+  },
   props: {
     dense: {
       type: Boolean,
@@ -155,7 +159,8 @@ export default {
       searchIsLoading: false,
       searchIsShown: true,
       search: '',
-      newPageModal: false
+      newPageModal: false,
+      deletePageModal: false
     }
   },
   computed: {
@@ -233,11 +238,7 @@ export default {
       })
     },
     pageDelete () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'directions_boat'
-      })
+      this.deletePageModal = true
     },
     assets () {
       this.$store.commit('showNotification', {

@@ -5,6 +5,8 @@ const Promise = require('bluebird')
 const Knex = require('knex')
 const Objection = require('objection')
 
+const migrationSource = require('../db/migrator-source')
+
 /* global WIKI */
 
 /**
@@ -89,12 +91,14 @@ module.exports = {
 
     // Set init tasks
 
+    console.info(migrationSource)
+
     let initTasks = {
       // -> Migrate DB Schemas
       async syncSchemas() {
         return self.knex.migrate.latest({
-          directory: path.join(WIKI.SERVERPATH, 'db/migrations'),
-          tableName: 'migrations'
+          tableName: 'migrations',
+          migrationSource
         })
       }
     }

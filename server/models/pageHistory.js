@@ -99,7 +99,8 @@ module.exports = class PageHistory extends Model {
       path: opts.path,
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
-      title: opts.title
+      title: opts.title,
+      action: opts.action || 'updated'
     })
   }
 
@@ -109,6 +110,7 @@ module.exports = class PageHistory extends Model {
         'pageHistory.id',
         'pageHistory.path',
         'pageHistory.authorId',
+        'pageHistory.action',
         'pageHistory.createdAt',
         {
           authorName: 'author.name'
@@ -130,6 +132,7 @@ module.exports = class PageHistory extends Model {
           'pageHistory.id',
           'pageHistory.path',
           'pageHistory.authorId',
+          'pageHistory.action',
           'pageHistory.createdAt',
           {
             authorName: 'author.name'

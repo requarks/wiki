@@ -29,8 +29,11 @@ module.exports = {
         page
       }
     },
-    async delete(obj, args) {
-      await WIKI.models.groups.query().deleteById(args.id)
+    async delete(obj, args, context) {
+      await WIKI.models.pages.deletePage({
+        ...args,
+        authorId: context.req.user.id
+      })
       return {
         responseResult: graphHelper.generateSuccess('Page has been deleted.')
       }

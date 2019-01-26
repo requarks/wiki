@@ -20,6 +20,7 @@ block body
       :author-id=page.authorId
       :is-published=page.isPublished.toString()
       :toc=page.toc
+      :page-id=page.id
       )
       template(slot='sidebar')
         each navItem in sidebar

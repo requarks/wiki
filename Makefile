@@ -35,8 +35,11 @@ docker-dev-rebuild: ## Rebuild dockerized dev image
 
 docker-dev-clean: ## Clean DB, redis and data folders
 	rm -rf ./data
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec db psql --dbname=wiki --username=postgres --command='DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public'
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec db psql --dbname=wiki --username=wikijs --command='DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public'
 	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec redis redis-cli flushall
+
+docker-dev-bash: ## Rebuild dockerized dev image
+	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec wiki bash
 
 docker-build: ## Run assets generation build in docker
 	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . run wiki yarn build

@@ -5,7 +5,7 @@ FROM node:10-alpine
 LABEL maintainer "requarks.io"
 
 RUN apk update && \
-    apk add bash curl git python make g++ --no-cache && \
+    apk add bash curl git python make g++ nano --no-cache && \
     mkdir -p /wiki
 
 WORKDIR /wiki

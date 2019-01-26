@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const cfgHelper = require('../helpers/config')
 const Promise = require('bluebird')
+const fs = require('fs-extra')
+const path = require('path')
 
 /* global WIKI */
 
@@ -21,6 +23,9 @@ module.exports = {
         WIKI.logger.warn('Failed to parse updates info.')
       }
     })
+
+    // Clear content cache
+    fs.emptyDir(path.join(WIKI.ROOTPATH, 'data/cache'))
 
     return this
   },

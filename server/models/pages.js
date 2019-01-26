@@ -96,6 +96,7 @@ module.exports = class Page extends Model {
 
   static get cacheSchema() {
     return new JSBinType({
+      id: 'uint',
       authorId: 'uint',
       authorName: 'string',
       createdAt: 'string',
@@ -150,7 +151,10 @@ module.exports = class Page extends Model {
     if (!ogPage) {
       throw new Error('Invalid Page Id')
     }
-    await WIKI.models.pageHistory.addVersion(ogPage)
+    await WIKI.models.pageHistory.addVersion({
+      ...ogPage,
+      action: 'updated'
+    })
     await WIKI.models.pages.query().patch({
       authorId: opts.authorId,
       content: opts.content,
@@ -172,6 +176,23 @@ module.exports = class Page extends Model {
       page
     })
     return page
+  }
+
+  static async deletePage(opts) {
+    const page = await WIKI.models.pages.query().findById(opts.id)
+    if (!page) {
+      throw new Error('Invalid Page Id')
+    }
+    await WIKI.models.pageHistory.addVersion({
+      ...page,
+      action: 'deleted'
+    })
+    await WIKI.models.pages.query().delete().where('id', page.id)
+    await WIKI.models.pages.deletePageFromCache(page)
+    await WIKI.models.storage.pageEvent({
+      event: 'deleted',
+      page
+    })
   }
 
   static async renderPage(page) {
@@ -232,6 +253,7 @@ module.exports = class Page extends Model {
   static async savePageToCache(page) {
     const cachePath = path.join(process.cwd(), `data/cache/${page.hash}.bin`)
     await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
+      id: page.id,
       authorId: page.authorId,
       authorName: page.authorName,
       createdAt: page.createdAt,
@@ -269,5 +291,9 @@ module.exports = class Page extends Model {
       WIKI.logger.error(err)
       throw err
     }
+  }
+
+  static async deletePageFromCache(page) {
+    return fs.remove(path.join(process.cwd(), `data/cache/${page.hash}.bin`))
   }
 }

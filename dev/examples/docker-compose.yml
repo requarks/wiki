@@ -1,6 +1,3 @@
-# -- DEV DOCKER-COMPOSE --
-# -- DO NOT USE IN PRODUCTION! --
-
 version: "3"
 services:
 

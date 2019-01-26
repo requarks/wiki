@@ -203,7 +203,7 @@ export default {
 <style lang='scss'>
 
 .admin {
-  &.theme--light {
+  &.theme--light .application--wrap {
     background-color: lighten(mc('grey', '200'), 2%);
   }
 }

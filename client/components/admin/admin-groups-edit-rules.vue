@@ -206,6 +206,8 @@ export default {
         { text: 'Create Pages', value: 'write:pages', icon: 'insert_drive_file' },
         { text: 'Edit + Move Pages', value: 'manage:pages', icon: 'insert_drive_file' },
         { text: 'Delete Pages', value: 'delete:pages', icon: 'insert_drive_file' },
+        { text: 'View Pages Source', value: 'read:source', icon: 'code' },
+        { text: 'View Pages History', value: 'read:history', icon: 'restore' },
         { text: 'Read / Use Assets', value: 'read:assets', icon: 'camera' },
         { text: 'Upload Assets', value: 'write:assets', icon: 'camera' },
         { text: 'Edit + Delete Assets', value: 'manage:assets', icon: 'camera' },

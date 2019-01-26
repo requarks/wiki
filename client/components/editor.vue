@@ -14,7 +14,7 @@
           outline
           color='blue'
           @click.native.stop='openPropsModal'
-          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": !welcomeMode }'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
@@ -282,6 +282,10 @@ export default {
   .editor {
     background-color: mc('grey', '900') !important;
     min-height: 100vh;
+
+    .application--wrap {
+      background-color: mc('grey', '900');
+    }
   }
 
   .atom-spinner.is-inline {

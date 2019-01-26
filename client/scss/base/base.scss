@@ -1,6 +1,8 @@
 html {
   box-sizing: border-box;
   height: 100%;
+  perspective: 50vw;
+  background-color: mc('grey', '900');
 }
 *, *:before, *:after {
   box-sizing: inherit;
@@ -16,6 +18,17 @@ html {
 
   &.is-fullscreen {
     height: 100vh;
+  }
+}
+
+.application--wrap {
+  transition: all 1.2s ease;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  background-color: #FFF;
+
+  @at-root .theme--dark & {
+    background-color: mc('grey', '900');
   }
 }
 

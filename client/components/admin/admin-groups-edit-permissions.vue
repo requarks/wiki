@@ -80,6 +80,20 @@ export default {
               disabled: false
             },
             {
+              permission: 'read:source',
+              hint: 'Can view pages source, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
+              permission: 'read:history',
+              hint: 'Can view pages history, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: false,
+              disabled: false
+            },
+            {
               permission: 'read:assets',
               hint: 'Can view / use assets (such as images and files), as specified in the Page Rules',
               warning: false,
