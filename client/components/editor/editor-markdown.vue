@@ -1,6 +1,6 @@
 <template lang='pug'>
-  .editor-code
-    v-toolbar.editor-code-toolbar(dense, color='primary', dark)
+  .editor-markdown
+    v-toolbar.editor-markdown-toolbar(dense, color='primary', dark)
       v-tooltip(top)
         v-btn(icon, slot='activator').mx-0
           v-icon format_bold
@@ -50,17 +50,17 @@
           v-icon remove
         span Horizontal Bar
 
-    .editor-code-main
-      .editor-code-editor
-        .editor-code-editor-title(v-if='previewShown', @click='previewShown = false') Editor
-        .editor-code-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator
+    .editor-markdown-main
+      .editor-markdown-editor
+        .editor-markdown-editor-title(v-if='previewShown', @click='previewShown = false') Editor
+        .editor-markdown-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
-      transition(name='editor-code-preview')
-        .editor-code-preview(v-if='previewShown')
-          .editor-code-preview-title(@click='previewShown = false') Preview
-          .editor-code-preview-content.contents(ref='editorPreview', v-html='previewHTML')
+      transition(name='editor-markdown-preview')
+        .editor-markdown-preview(v-if='previewShown')
+          .editor-markdown-preview-title(@click='previewShown = false') Preview
+          .editor-markdown-preview-content.contents(ref='editorPreview', v-html='previewHTML')
 
-      v-speed-dial(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, left, bottom)
+      v-speed-dial.editor-markdown-insert(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, bottom, :right='!previewShown || $vuetify.breakpoint.smAndDown')
         v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
           v-icon add_circle
           v-icon close
@@ -262,7 +262,7 @@ export default {
 </script>
 
 <style lang='scss'>
-.editor-code {
+.editor-markdown {
   &-main {
     display: flex;
     width: 100%;
@@ -369,6 +369,13 @@ export default {
       @include until($tablet) {
         padding-left: 8px;
       }
+    }
+  }
+
+  &-insert:not(.v-speed-dial--right) {
+    @include from($tablet) {
+      left: 50%;
+      margin-left: -28px;
     }
   }
 
