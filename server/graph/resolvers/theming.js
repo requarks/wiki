@@ -1,4 +1,6 @@
 const graphHelper = require('../../helpers/graph')
+const _ = require('lodash')
+const CleanCSS = require('clean-css')
 
 /* global WIKI */
 
@@ -18,17 +20,27 @@ module.exports = {
       }]
     },
     async config(obj, args, context, info) {
-      return {
-        theme: WIKI.config.theming.theme,
-        darkMode: WIKI.config.theming.darkMode
-      }
+      return _.pick(WIKI.config.theming, ['theme', 'darkMode', 'injectCSS', 'injectHead', 'injectBody'])
     }
   },
   ThemingMutation: {
     async setConfig(obj, args, context, info) {
       try {
-        WIKI.config.theming.theme = args.theme
-        WIKI.config.theming.darkMode = args.darkMode
+        if (!_.isEmpty(args.injectCSS)) {
+          args.injectCSS = new CleanCSS({
+            inline: false
+          }).minify(args.injectCSS).styles
+        }
+
+        WIKI.config.theming = {
+          ...WIKI.config.theming,
+          theme: args.theme,
+          darkMode: args.darkMode,
+          injectCSS: args.injectCSS || '',
+          injectHead: args.injectHead || '',
+          injectBody: args.injectBody || ''
+        }
+
         await WIKI.configSvc.saveToDb(['theming'])
 
         return {

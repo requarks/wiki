@@ -27,6 +27,9 @@ type ThemingMutation {
   setConfig(
     theme: String!
     darkMode: Boolean!
+    injectCSS: String
+    injectHead: String
+    injectBody: String
   ): DefaultResponse @auth(requires: ["manage:theme", "manage:system"])
 }
 
@@ -35,8 +38,11 @@ type ThemingMutation {
 # -----------------------------------------------
 
 type ThemingConfig {
-  theme: String
-  darkMode: Boolean
+  theme: String!
+  darkMode: Boolean!
+  injectCSS: String
+  injectHead: String
+  injectBody: String
 }
 
 type ThemingTheme {

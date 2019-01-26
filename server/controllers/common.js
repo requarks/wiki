@@ -149,7 +149,12 @@ router.get('/*', async (req, res, next) => {
     _.set(res.locals, 'pageMeta.title', page.title)
     _.set(res.locals, 'pageMeta.description', page.description)
     const sidebar = await WIKI.models.navigation.getTree({ cache: true })
-    res.render('page', { page, sidebar })
+    const injectCode = {
+      css: WIKI.config.theming.injectCSS,
+      head: WIKI.config.theming.injectHead,
+      body: WIKI.config.theming.injectBody
+    }
+    res.render('page', { page, sidebar, injectCode })
   } else if (pageArgs.path === 'home') {
     _.set(res.locals, 'pageMeta.title', 'Welcome')
     res.render('welcome')

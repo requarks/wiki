@@ -24,7 +24,7 @@
                     outline
                     background-color='grey lighten-2'
                     prepend-icon='palette'
-                    v-model='selectedTheme'
+                    v-model='config.theme'
                     label='Site Theme'
                     persistent-hint
                     hint='Themes affect how content pages are displayed. Other site sections (such as the editor or admin area) are not affected.'
@@ -47,41 +47,36 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Code Injection
-                  v-spacer
-                  v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
                   v-textarea(
-                    v-model='injectCSS'
+                    v-model='config.injectCSS'
                     label='CSS Override'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
                     persistent-hint
-                    hint='CSS code to inject after system default CSS'
+                    hint='CSS code to inject after system default CSS. Consider using custom themes if you have a large amount of css code. Injecting too much CSS code will result in poor page load performance! CSS will automatically be minified.'
                     auto-grow
-                    disabled
                     )
                   v-textarea.mt-2(
-                    v-model='injectHeader'
+                    v-model='config.injectHead'
                     label='Head HTML Injection'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
                     persistent-hint
-                    hint='HTML code to be injected just before the closing head tag'
+                    hint='HTML code to be injected just before the closing head tag. Usually for script tags.'
                     auto-grow
-                    disabled
                     )
                   v-textarea.mt-2(
-                    v-model='injectFooter'
+                    v-model='config.injectBody'
                     label='Body HTML Injection'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
                     persistent-hint
-                    hint='HTML code to be injected just before the closing body tag'
+                    hint='HTML code to be injected just before the closing body tag.'
                     auto-grow
-                    disabled
                     )
             v-flex(lg6 xs12)
               v-card
@@ -97,6 +92,7 @@
 import _ from 'lodash'
 import { sync } from 'vuex-pathify'
 
+import themeConfigQuery from 'gql/admin/theme/theme-query-config.gql'
 import themeSaveMutation from 'gql/admin/theme/theme-mutation-save.gql'
 
 export default {
@@ -106,11 +102,14 @@ export default {
       themes: [
         { text: 'Default', author: 'requarks.io', value: 'default' }
       ],
-      selectedTheme: 'default',
-      darkModeInitial: false,
-      injectCSS: '',
-      injectHeader: '',
-      injectFooter: ''
+      config: {
+        theme: 'default',
+        darkMode: false,
+        injectCSS: '',
+        injectHead: '',
+        injectBody: ''
+      },
+      darkModeInitial: false
     }
   },
   computed: {
@@ -130,8 +129,11 @@ export default {
         const respRaw = await this.$apollo.mutate({
           mutation: themeSaveMutation,
           variables: {
-            theme: this.selectedTheme,
-            darkMode: this.darkMode
+            theme: this.config.theme,
+            darkMode: this.darkMode,
+            injectCSS: this.config.injectCSS,
+            injectHead: this.config.injectHead,
+            injectBody: this.config.injectBody
           }
         })
         const resp = _.get(respRaw, 'data.theming.setConfig.responseResult', {})
@@ -150,6 +152,16 @@ export default {
       }
       this.$store.commit(`loadingStop`, 'admin-theme-save')
       this.loading = false
+    }
+  },
+  apollo: {
+    config: {
+      query: themeConfigQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => data.theming.config,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-theme-refresh')
+      }
     }
   }
 }

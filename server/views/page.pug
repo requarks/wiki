@@ -1,6 +1,10 @@
 extends master.pug
 
 block head
+  if injectCode.css
+    style(type='text/css')!= injectCode.css
+  if injectCode.head
+    != injectCode.head
 
 block body
   #root
@@ -31,3 +35,5 @@ block body
           else if navItem.kind === 'header'
             v-subheader.pl-4= navItem.label
       template(slot='contents')!= page.render
+  if injectCode.body
+    != injectCode.body
