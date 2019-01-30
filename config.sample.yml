@@ -11,13 +11,6 @@
 port: 3000
 
 # ---------------------------------------------------------------------
-# IP address the server should listen to
-# ---------------------------------------------------------------------
-# Do not change unless you know what you are doing!
-
-bindIP: 0.0.0.0
-
-# ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
 # Supported Database Engines:
@@ -48,6 +41,40 @@ redis:
   port: 6379
   db: 0
   password: null
+
+#######################################################################
+# ADVANCED OPTIONS                                                    #
+#######################################################################
+# Do not change unless you know what you are doing!
+
+# ---------------------------------------------------------------------
+# SSL/TLS Settings
+# ---------------------------------------------------------------------
+# Consider using a reverse proxy (e.g. nginx) if you require more
+# advanced options than those provided below.
+
+ssl:
+  enabled: false
+
+  # Certificate format, either 'pem' or 'pfx':
+  format: pem
+  # Using PEM format:
+  key: path/to/key.pem
+  cert: path/to/cert.pem
+  # Using PFX format:
+  pfx: path/to/cert.pfx
+  # Passphrase when using encrypted PEM / PFX keys (default: null):
+  passphrase: null
+  # Diffie Hellman parameters, with key length being greater or equal
+  # to 1024 bits (default: null):
+  dhparam: null
+
+# ---------------------------------------------------------------------
+# IP address the server should listen to
+# ---------------------------------------------------------------------
+# Leave 0.0.0.0 for all interfaces
+
+bindIP: 0.0.0.0
 
 # ---------------------------------------------------------------------
 # Log Level

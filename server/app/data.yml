@@ -21,6 +21,8 @@ defaults:
       port: 6379
       db: 0
       password: null
+    ssl:
+      enabled: false
     # DB defaults
     graphEndpoint: 'https://graph.requarks.io'
     lang:

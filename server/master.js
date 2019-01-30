@@ -6,6 +6,7 @@ const cors = require('cors')
 const express = require('express')
 const favicon = require('serve-favicon')
 const http = require('http')
+const https = require('https')
 const path = require('path')
 const { ApolloServer } = require('apollo-server-express')
 // const oauth2orize = require('oauth2orize')
@@ -166,10 +167,33 @@ module.exports = async () => {
 
   let srvConnections = {}
 
-  WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
-
   app.set('port', WIKI.config.port)
-  WIKI.server = http.createServer(app)
+  if (WIKI.config.ssl.enabled) {
+    WIKI.logger.info(`HTTPS Server on port: [ ${WIKI.config.port} ]`)
+    const tlsOpts = {}
+    try {
+      if (WIKI.config.ssl.format === 'pem') {
+        tlsOpts.key = fs.readFileSync(WIKI.config.ssl.key)
+        tlsOpts.cert = fs.readFileSync(WIKI.config.ssl.cert)
+      } else {
+        tlsOpts.pfx = fs.readFileSync(WIKI.config.ssl.pfx)
+      }
+      if (!_.isEmpty(WIKI.config.ssl.passphrase)) {
+        tlsOpts.passphrase = WIKI.config.ssl.passphrase
+      }
+      if (!_.isEmpty(WIKI.config.ssl.dhparam)) {
+        tlsOpts.dhparam = WIKI.config.ssl.dhparam
+      }
+    } catch (err) {
+      WIKI.logger.error('Failed to setup HTTPS server parameters:')
+      WIKI.logger.error(err)
+      return process.exit(1)
+    }
+    WIKI.server = https.createServer(tlsOpts, app)
+  } else {
+    WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
+    WIKI.server = http.createServer(app)
+  }
   apolloServer.installSubscriptionHandlers(WIKI.server)
 
   WIKI.server.listen(WIKI.config.port, WIKI.config.bindIP)
@@ -200,7 +224,11 @@ module.exports = async () => {
   })
 
   WIKI.server.on('listening', () => {
-    WIKI.logger.info('HTTP Server: [ RUNNING ]')
+    if (WIKI.config.ssl.enabled) {
+      WIKI.logger.info('HTTPS Server: [ RUNNING ]')
+    } else {
+      WIKI.logger.info('HTTP Server: [ RUNNING ]')
+    }
   })
 
   WIKI.server.destroy = (cb) => {
