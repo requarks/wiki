@@ -49,7 +49,7 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 
 <h2 align="center">Donate</h2>
 
-Wiki.js is an open source project that has been made possible due to the generous contributions by community backers. If you are interested in supporting this project, please consider [becoming a patron](https://www.patreon.com/requarks) or donating to our [OpenCollective](https://opencollective.com/wikijs).
+Wiki.js is an open source project that has been made possible due to the generous contributions by community [backers](https://github.com/Requarks/wiki/blob/master/BACKERS.md). If you are interested in supporting this project, please consider [becoming a patron](https://www.patreon.com/requarks) or donating to our [OpenCollective](https://opencollective.com/wikijs).
 
 <a href="https://www.patreon.com/requarks">
   <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patron" />
