@@ -41,7 +41,6 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 - [Feature Requests](https://requests.requarks.io/wiki)
 - [Milestones](#milestones)
 - [Chat with us](#gitter)
-- [Donate](https://opencollective.com/wikijs)
 - [T-Shirts Shop](#t-shirts-shop)
 - [Translations](#translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
@@ -82,7 +81,7 @@ Check out our [documentation site](https://docs-beta.requarks.io), it's running 
 
 <h2 align="center">Milestones</h2>
 
-:bookmark_tabs: See [project board](https://docs-beta.requarks.io/milestones) to keep track of current progress.
+:bookmark_tabs: See [project board](https://github.com/Requarks/wiki/projects/5) to keep track of current progress.
 
 <h2 align="center">Gitter</h2>
 
