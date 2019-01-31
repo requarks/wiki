@@ -72,9 +72,9 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 <h2 align="center">Docker</h2>
 
-Docker is the recommended way to go! Simply use Docker image: `requarks/wiki:beta` *(coming soon!)*  
+Docker is the recommended way to go! Simply use Docker image: `requarks/wiki:beta` 
 
-You can also use Docker Compose ([see example](https://github.com/Requarks/wiki/blob/dev/examples/docker-compose.yml)) to run Wiki.js with all dependencies.
+You can also use Docker Compose ([see example](https://github.com/Requarks/wiki/blob/dev/dev/examples/docker-compose.yml)) to run Wiki.js with all dependencies.
 
 <h2 align="center">Demo</h2>
 
