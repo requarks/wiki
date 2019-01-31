@@ -7,7 +7,7 @@ Wiki.js is an AGPL-licensed open source project. It's an independent project wit
 
 #### What's the difference between Patreon and OpenCollective?
 
-Funds donated via Patreon go directly to support lead developer Nicolas Giard's full-time work on Wiki.js. Funds donated via OpenCollective are managed with transparent expenses and will be used for compensating work and expenses for core team members. Your name/logo will receive proper recognition and exposure by donating on either platform.
+Funds donated via Patreon go directly to support lead developer [Nicolas Giard](https://github.com/NGPixel)'s full-time work on Wiki.js. Funds donated via OpenCollective are managed with transparent expenses and will be used for compensating work and expenses for core team members. Your name/logo will receive proper recognition and exposure by donating on either platform.
 
 <br><br>
 
