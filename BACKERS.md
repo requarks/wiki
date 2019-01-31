@@ -26,9 +26,13 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 
 <h2 align="center">Backers via Patreon</h2>
 
-<!--10 start-->
+<!--5 start-->
 - Loïc CRAMPON
-<!--10 end-->
+<!--5 end-->
+
+<a href="https://www.patreon.com/requarks">
+  <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patron" />
+</a>
 
 <h2 align="center">Backers via OpenCollective</h2>
 
