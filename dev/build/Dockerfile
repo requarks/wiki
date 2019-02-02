@@ -16,10 +16,11 @@ COPY ./.babelrc ./.babelrc
 COPY ./.eslintignore ./.eslintignore
 COPY ./.eslintrc.yml ./.eslintrc.yml
 
-RUN yarn --cache-folder /codefresh/volume/yarn
+RUN yarn cache clean
+RUN yarn --frozen-lockfile --non-interactive
 RUN yarn build
 RUN rm -rf /wiki/node_modules
-RUN yarn --production
+RUN yarn --production --frozen-lockfile --non-interactive
 
 # ===============
 # --- Release ---
