@@ -65,7 +65,7 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
   - MariaDB **10.2.7** or later
   - Microsoft SQL Server **2012** or later
   - SQLite **3.9** or later
-- Redis **3.2** or later
+- Redis **3.0** or later
 
 > Read the full [prerequisites](https://docs-beta.requarks.io/install/requirements) article for full details.
 

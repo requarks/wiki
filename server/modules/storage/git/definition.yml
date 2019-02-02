@@ -4,6 +4,10 @@ description: Git is a version control system for tracking changes in computer fi
 author: requarks.io
 logo: https://static.requarks.io/logo/git-alt.svg
 website: https://git-scm.com/
+supportedModes:
+  - sync
+  - push
+  - pull
 props:
   authType:
     type: String

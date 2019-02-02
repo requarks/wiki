@@ -197,13 +197,14 @@ module.exports = class Page extends Model {
 
   static async renderPage(page) {
     const pipeline = await WIKI.models.renderers.getRenderingPipeline(page.contentType)
-    WIKI.queue.job.renderPage.add({
+    const renderJob = await WIKI.queue.job.renderPage.add({
       page,
       pipeline
     }, {
       removeOnComplete: true,
       removeOnFail: true
     })
+    return renderJob.finished()
   }
 
   static async getPage(opts) {

@@ -17,6 +17,8 @@ npm-debug.log*
 
 # Generated assets
 /assets
+server/views/master.pug
+server/views/setup.pug
 
 # Webpack
 .webpack-cache
