@@ -4,6 +4,9 @@ description: Local storage on disk or network shares.
 author: requarks.io
 logo: https://static.requarks.io/logo/local-fs.svg
 website: https://wiki.js.org
+supportedModes:
+  - sync
+  - push
 props:
   path:
     type: String
