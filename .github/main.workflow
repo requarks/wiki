@@ -5,7 +5,7 @@ workflow "Docker build" {
 
 action "Filter branch dev" {
   uses = "actions/bin/filter@c6471707d308175c57dfe91963406ef205837dbd"
-  args = "branch dev"
+  args = "branch master"
 }
 
 action "Docker Registry" {
