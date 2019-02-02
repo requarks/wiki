@@ -90,9 +90,6 @@ module.exports = {
     const models = autoload(path.join(WIKI.SERVERPATH, 'models'))
 
     // Set init tasks
-
-    console.info(migrationSource)
-
     let initTasks = {
       // -> Migrate DB Schemas
       async syncSchemas() {

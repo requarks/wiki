@@ -25,21 +25,6 @@ WIKI.configSvc.init()
 WIKI.logger = require('./core/logger').init('MASTER')
 
 // ----------------------------------------
-// Init Telemetry
-// ----------------------------------------
-
-WIKI.telemetry = require('./core/telemetry').init()
-
-process.on('unhandledRejection', (err) => {
-  WIKI.logger.warn(err)
-  WIKI.telemetry.sendError(err)
-})
-process.on('uncaughtException', (err) => {
-  WIKI.logger.warn(err)
-  WIKI.telemetry.sendError(err)
-})
-
-// ----------------------------------------
 // Start Kernel
 // ----------------------------------------
 

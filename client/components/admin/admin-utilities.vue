@@ -95,7 +95,7 @@
                   v-card-text
                     v-subheader What is telemetry?
                     .body-1.pl-3 Telemetry allows the developers of Wiki.js to improve the software by collecting basic anonymized data about its usage and the host info. #[br] This is entirely optional and #[strong absolutely no] private data (such as content or personal data) is collected.
-                    .body-1.pt-3.pl-3 For maximum privacy, a random client ID is generated every time Wiki.js is started. This ID is used to group requests together while keeping complete anonymity.
+                    .body-1.pt-3.pl-3 For maximum privacy, a random client ID is generated during setup. This ID is used to group requests together while keeping complete anonymity. You can reset and generate a new one below at any time.
                     v-divider.my-3
                     v-subheader What is collected?
                     .body-1.pl-3 When telemetry is enabled, only the following data is transmitted:
@@ -105,13 +105,13 @@
                         v-list-tile-content: v-list-tile-title.caption Version of Wiki.js installed
                       v-list-tile
                         v-list-tile-avatar: v-icon info_outline
-                        v-list-tile-content: v-list-tile-title.caption Basic OS information (version, CPU cores, RAM available)
+                        v-list-tile-content: v-list-tile-title.caption Basic OS information (platform, CPU cores count, DB type)
                       v-list-tile
                         v-list-tile-avatar: v-icon info_outline
                         v-list-tile-content: v-list-tile-title.caption Crash debug data
                       v-list-tile
                         v-list-tile-avatar: v-icon info_outline
-                        v-list-tile-content: v-list-tile-title.caption Setup analytics (step reached)
+                        v-list-tile-content: v-list-tile-title.caption Setup analytics (installation checkpoint reached)
                     .body-2.pl-3
                     v-divider.my-3
                     v-subheader Settings

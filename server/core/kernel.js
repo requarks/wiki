@@ -40,6 +40,7 @@ module.exports = {
         WIKI.logger.info('Starting setup wizard...')
         require('../setup')()
       } else {
+        await this.initTelemetry()
         await require('../master')()
         this.postBootMaster()
       }
@@ -61,5 +62,20 @@ module.exports = {
 
     await WIKI.auth.activateStrategies()
     await WIKI.queue.start()
+  },
+  /**
+   * Init Telemetry
+   */
+  async initTelemetry() {
+    require('./telemetry').init()
+
+    process.on('unhandledRejection', (err) => {
+      WIKI.logger.warn(err)
+      WIKI.telemetry.sendError(err)
+    })
+    process.on('uncaughtException', (err) => {
+      WIKI.logger.warn(err)
+      WIKI.telemetry.sendError(err)
+    })
   }
 }

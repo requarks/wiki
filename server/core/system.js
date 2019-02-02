@@ -35,8 +35,6 @@ module.exports = {
    * @param {Object} opts Options object
    */
   async upgradeFromMongo (opts) {
-    WIKI.telemetry.sendEvent('setup', 'upgradeFromMongo')
-
     WIKI.logger.info('Upgrading from MongoDB...')
 
     let mongo = require('mongodb').MongoClient

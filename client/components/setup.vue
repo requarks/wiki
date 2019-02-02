@@ -3,7 +3,7 @@
     v-toolbar(color='blue darken-2', dark, app, clipped-left, fixed, flat)
       v-spacer
       v-toolbar-title
-        span.subheading Wiki.js Setup
+        span.subheading Wiki.js {{wikiVersion}}
       v-spacer
     v-content.white
       v-progress-linear.ma-0(indeterminate, height='4', :active='loading')
@@ -193,9 +193,7 @@
               v-btn(color='success', @click='finish', v-if='loading || final.ok', :disabled='loading') Continue
 
     v-footer.pa-3(app, absolute, color='grey darken-3', height='auto')
-      .caption.grey--text Wiki.js
-      v-spacer
-      .caption.grey--text(v-if='conf.telemetry') Telemetry Client ID: {{telemetryId}}
+      .caption.grey--text Wiki.js {{wikiVersion}} Installation Wizard
 </template>
 
 <script>
