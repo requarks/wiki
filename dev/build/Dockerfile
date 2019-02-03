@@ -29,7 +29,7 @@ FROM node:10.15-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk update && \
-    apk add bash curl git openssh supervisor --no-cache && \
+    apk add bash curl git openssh gnupg supervisor --no-cache && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /wiki && \
     mkdir -p /logs

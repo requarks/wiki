@@ -41,3 +41,18 @@ props:
     type: String
     title: Password / PAT
     hint: Basic Authentication Only
+  localRepoPath:
+    type: String
+    title: Local Repository Path
+    default: './data/repo'
+    hint: 'Path where the local git repository will be created.'
+  defaultEmail:
+    type: String
+    title: Default Author Email
+    default: 'name@company.com'
+    hint: 'Used as fallback in case the author of the change is not present.'
+  defaultName:
+    type: String
+    title: Default Author Name
+    default: 'John Smith'
+    hint: 'Used as fallback in case the author of the change is not present.'

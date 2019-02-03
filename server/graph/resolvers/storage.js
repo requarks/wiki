@@ -48,6 +48,7 @@ module.exports = {
             }, {})
           }).where('key', tgt.key)
         }
+        await WIKI.models.storage.initTargets()
         return {
           responseResult: graphHelper.generateSuccess('Storage targets updated successfully')
         }

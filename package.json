@@ -293,7 +293,9 @@
     "zxcvbn": "4.4.2"
   },
   "resolutions": {
-    "terser": "3.14.1"
+    "terser": "3.14.1",
+    "apollo-server/**/core-js": "3.0.0-beta.11",
+    "apollo-server-express/**/core-js": "3.0.0-beta.11"
   },
   "browserslist": [
     "> 1%",

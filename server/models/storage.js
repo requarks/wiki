@@ -7,6 +7,8 @@ const commonHelper = require('../helpers/common')
 
 /* global WIKI */
 
+let targets = []
+
 /**
  * Storage model
  */
@@ -93,18 +95,34 @@ module.exports = class Storage extends Model {
     }
   }
 
-  static async pageEvent({ event, page }) {
-    const targets = await WIKI.models.storage.query().where('isEnabled', true)
-    if (targets && targets.length > 0) {
-      _.forEach(targets, target => {
-        WIKI.queue.job.syncStorage.add({
-          event,
-          target,
-          page
-        }, {
-          removeOnComplete: true
+  static async initTargets() {
+    targets = await WIKI.models.storage.query().where('isEnabled', true)
+    try {
+      for(let target of targets) {
+        target.fn = require(`../modules/storage/${target.key}/storage`)
+        await target.fn.init.call({
+          config: target.config,
+          mode: target.mode
         })
-      })
+      }
+    } catch (err) {
+      WIKI.logger.warn(err)
+      throw err
+    }
+  }
+
+  static async pageEvent({ event, page }) {
+    try {
+      for(let target of targets) {
+        await target.fn[event].call({
+          config: target.config,
+          mode: target.mode,
+          page
+        })
+      }
+    } catch (err) {
+      WIKI.logger.warn(err)
+      throw err
     }
   }
 }
