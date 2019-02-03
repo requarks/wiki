@@ -48,6 +48,7 @@ module.exports = class Storage extends Model {
       }
       WIKI.data.storage = diskTargets.map(target => ({
         ...target,
+        isAvailable: _.get(target, 'isAvailable', false),
         props: commonHelper.parseModuleProps(target.props)
       }))
 
@@ -58,7 +59,7 @@ module.exports = class Storage extends Model {
           newTargets.push({
             key: target.key,
             isEnabled: false,
-            mode: 'push',
+            mode: target.defaultMode || 'push',
             config: _.transform(target.props, (result, value, key) => {
               _.set(result, key, value.default)
               return result
@@ -100,10 +101,9 @@ module.exports = class Storage extends Model {
     try {
       for(let target of targets) {
         target.fn = require(`../modules/storage/${target.key}/storage`)
-        await target.fn.init.call({
-          config: target.config,
-          mode: target.mode
-        })
+        target.fn.config = target.config
+        target.fn.mode = target.mode
+        await target.fn.init()
       }
     } catch (err) {
       WIKI.logger.warn(err)
@@ -114,11 +114,7 @@ module.exports = class Storage extends Model {
   static async pageEvent({ event, page }) {
     try {
       for(let target of targets) {
-        await target.fn[event].call({
-          config: target.config,
-          mode: target.mode,
-          page
-        })
+        await target.fn[event](page)
       }
     } catch (err) {
       WIKI.logger.warn(err)

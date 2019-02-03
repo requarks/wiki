@@ -3431,15 +3431,20 @@ copy-webpack-plugin@4.6.0:
     p-limit "^1.0.0"
     serialize-javascript "^1.4.0"
 
-core-js@2.6.3:
+core-js@2.6.3, core-js@^2.4.0, core-js@^2.5.7:
   version "2.6.3"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.3.tgz#4b70938bdffdaf64931e66e2db158f0892289c49"
   integrity sha512-l00tmFFZOBHtYhN4Cz7k32VM7vTn3rE2ANjQDxdEN6zmXZ/xq1jQuutnmHvMG1ZJ7xd72+TA5YpUK8wz3rWsfQ==
 
-core-js@3.0.0-beta.11, core-js@3.0.0-beta.3, core-js@^1.0.0, core-js@^2.4.0, core-js@^2.5.7:
+core-js@3.0.0-beta.11, core-js@3.0.0-beta.3:
   version "3.0.0-beta.11"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.0.0-beta.11.tgz#dac9d000f562194cc8bc7fe142be0d70c8c910f8"
   integrity sha512-Q1gGAIqiFfR8ZqjrJw4gzjDrP2JsLacNQzUKUfqvcpg974bCQrPaT4a+HNbznQm5DabCIKw9fGQotj0dgdsMRg==
+
+core-js@^1.0.0:
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/core-js/-/core-js-1.2.7.tgz#652294c14651db28fa93bd2d5ff2983a4f08c636"
+  integrity sha1-ZSKUwUZR2yj6k70tX/KYOk8IxjY=
 
 core-util-is@1.0.2, core-util-is@~1.0.0:
   version "1.0.2"
@@ -6290,23 +6295,7 @@ invert-kv@^2.0.0:
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-2.0.0.tgz#7393f5afa59ec9ff5f67a27620d11c226e3eec02"
   integrity sha512-wPVv/y/QQ/Uiirj/vh3oP+1Ww+AWehmi1g5fFWGPF6IpCBCDVrhgHRMvrLfdYcwDh3QJbGXDW4JAuzxElLSqKA==
 
-ioredis@4.5.1:
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-4.5.1.tgz#b1c1c1657697caa3a617acb9370e3c0694edb775"
-  integrity sha512-p1BblrFZdb5Oc5EBsEb4EoycDqn7xi/NTNT4bDvo/w6B08eMNO1E7RAOOEA1GAb65+8Hbs2LgUyz3cZOTiP3xg==
-  dependencies:
-    cluster-key-slot "^1.0.6"
-    debug "^3.1.0"
-    denque "^1.1.0"
-    flexbuffer "0.0.6"
-    lodash.defaults "^4.2.0"
-    lodash.flatten "^4.4.0"
-    redis-commands "1.4.0"
-    redis-errors "^1.2.0"
-    redis-parser "^3.0.0"
-    standard-as-callback "^1.0.0"
-
-ioredis@^4.5.1:
+ioredis@4.6.2, ioredis@^4.5.1:
   version "4.6.2"
   resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-4.6.2.tgz#840847117fe0190a9309085847311a07183fc385"
   integrity sha512-zlc/LeoeriHTXm5z3rakPcfRcUV9x+xr0E+7/L7KH0D5z7sI5ngEQWR2RUxnwFcxUcCkvrXMztRIdBP3DhqMAQ==
@@ -13159,10 +13148,10 @@ vue-loader@15.6.2:
     vue-hot-reload-api "^2.3.0"
     vue-style-loader "^4.1.0"
 
-vue-material-design-icons@2.6.0:
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/vue-material-design-icons/-/vue-material-design-icons-2.6.0.tgz#44de179ea85a31424cea1b1da5415f79cfce2743"
-  integrity sha512-ueylNTZJk9jXGFSlSZ6iVIaw+r/uTMJDerG2X3ZAMz4yK7O/BAS1I/THVLA+mINyb4I7SPHmBt/msSYcdKSv0A==
+vue-material-design-icons@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/vue-material-design-icons/-/vue-material-design-icons-3.0.0.tgz#db387aa604e12523180d17db315126f6311d3e13"
+  integrity sha512-Y9dLUDuU0X3BjdeYjaHaWQ1UX4LMKT1kPIGApVhJmIs+HKY6xf57JLuba82YK+8iRlkJ/QYXbSV9oLrugn6M3w==
 
 vue-moment@4.0.0:
   version "4.0.0"

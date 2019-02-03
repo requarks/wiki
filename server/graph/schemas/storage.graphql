@@ -36,12 +36,14 @@ type StorageMutation {
 # -----------------------------------------------
 
 type StorageTarget {
+  isAvailable: Boolean!
   isEnabled: Boolean!
   key: String!
   title: String!
   description: String
   logo: String
   website: String
+  supportedModes: [String]
   mode: String
   config: [KeyValuePair]
 }

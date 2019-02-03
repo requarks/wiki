@@ -1,12 +1,14 @@
 query {
   storage {
     targets(orderBy: "title ASC") {
+      isAvailable
       isEnabled
       key
       title
       description
       logo
       website
+      supportedModes
       mode
       config {
         key

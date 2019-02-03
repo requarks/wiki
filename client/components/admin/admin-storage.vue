@@ -20,18 +20,33 @@
             v-tab(v-for='tgt in activeTargets', :key='tgt.key') {{ tgt.title }}
 
             v-tab-item(key='settings', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
-                .body-2.grey--text.text--darken-1 Select which storage targets to enable:
-                .caption.grey--text.pb-2 Some storage targets require additional configuration in their dedicated tab (when selected).
-                v-form
-                  v-checkbox.my-0(
-                    v-for='tgt in targets'
-                    v-model='tgt.isEnabled'
-                    :key='tgt.key'
-                    :label='tgt.title'
-                    color='primary'
-                    hide-details
-                  )
+              v-container.pa-3(fluid, grid-list-md)
+                v-layout(row, wrap)
+                  v-flex(xs12, md6)
+                    .body-2.grey--text.text--darken-1 Select which storage targets to enable:
+                    .caption.grey--text.pb-2 Some storage targets require additional configuration in their dedicated tab (when selected).
+                    v-form
+                      v-checkbox.my-0(
+                        :disabled='!tgt.isAvailable'
+                        v-for='tgt in targets'
+                        v-model='tgt.isEnabled'
+                        :key='tgt.key'
+                        :label='tgt.title'
+                        color='primary'
+                        hide-details
+                      )
+                  v-flex(xs12, md6)
+                    .pa-3.grey.radius-7(:class='$vuetify.dark ? "darken-4" : "lighten-5"')
+                      .body-2.grey--text.text--darken-1 Advanced Settings
+                      v-text-field.mt-3.md2(
+                        v-model='syncInterval'
+                        outline
+                        background-color='grey lighten-2'
+                        prepend-icon='schedule'
+                        label='Synchronization Interval'
+                        hint='For performance reasons, some storage targets synchronize changes on an interval-based schedule, instead of on every change. Define at which interval should the synchronization occur for all storage targets.'
+                        persistent-hint
+                      )
 
             v-tab-item(v-for='(tgt, n) in activeTargets', :key='tgt.key', :transition='false', :reverse-transition='false')
               v-card.pa-3(flat, tile)
@@ -58,7 +73,7 @@
                       persistent-hint
                       :class='cfg.value.hint ? "mb-2" : ""'
                     )
-                    v-switch(
+                    v-switch.mb-3(
                       v-else-if='cfg.value.type === "boolean"'
                       :key='cfg.key'
                       :label='cfg.value.title'
@@ -89,23 +104,26 @@
                         label='Bi-directional'
                         color='primary'
                         value='sync'
+                        :disabled='tgt.supportedModes.indexOf(`sync`) < 0'
                       )
                       v-radio(
                         label='Push to target'
                         color='primary'
                         value='push'
+                        :disabled='tgt.supportedModes.indexOf(`push`) < 0'
                       )
                       v-radio(
                         label='Pull from target'
                         color='primary'
                         value='pull'
+                        :disabled='tgt.supportedModes.indexOf(`pull`) < 0'
                       )
                   .body-1.ml-3
-                    strong Bi-directional
+                    strong Bi-directional #[em.red--text.text--lighten-2(v-if='tgt.supportedModes.indexOf(`sync`) < 0') Unsupported]
                     .pb-3 In bi-directional mode, content is first pulled from the storage target. Any newer content overwrites local content. New content since last sync is then pushed to the storage target, overwriting any content on target if present.
-                    strong Push to target
-                    .pb-3 Content is always pushed to the storage target, overwriting any existing content. This is the default and safest choice for backup scenarios.
-                    strong Pull from target
+                    strong Push to target #[em.red--text.text--lighten-2(v-if='tgt.supportedModes.indexOf(`push`) < 0') Unsupported]
+                    .pb-3 Content is always pushed to the storage target, overwriting any existing content. This is safest choice for backup scenarios.
+                    strong Pull from target #[em.red--text.text--lighten-2(v-if='tgt.supportedModes.indexOf(`pull`) < 0') Unsupported]
                     .pb-3 Content is always pulled from the storage target, overwriting any local content which already exists. This choice is usually reserved for single-use content import. Caution with this option as any local content will always be overwritten!
 </template>
 
@@ -121,6 +139,7 @@ export default {
   },
   data() {
     return {
+      syncInterval: '5m',
       targets: []
     }
   },
@@ -163,7 +182,13 @@ export default {
     targets: {
       query: targetsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.storage.targets).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))})),
+      update: (data) => _.cloneDeep(data.storage.targets).map(str => ({
+        ...str,
+        config: _.sortBy(str.config.map(cfg => ({
+          ...cfg,
+          value: JSON.parse(cfg.value)
+        })), [t => t.value.order])
+      })),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-storage-refresh')
       }

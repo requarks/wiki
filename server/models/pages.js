@@ -224,7 +224,9 @@ module.exports = class Page extends Model {
         'pages.*',
         {
           authorName: 'author.name',
-          creatorName: 'creator.name'
+          authorEmail: 'author.email',
+          creatorName: 'creator.name',
+          creatorEmail: 'creator.email'
         }
       ])
       .joinRelation('author')

@@ -4,10 +4,19 @@ description: Local storage on disk or network shares.
 author: requarks.io
 logo: https://static.requarks.io/logo/local-fs.svg
 website: https://wiki.js.org
+isAvailable: true
 supportedModes:
   - push
+defaultMode: push
 props:
   path:
     type: String
     title: Path
     hint: Absolute path without a trailing slash (e.g. /home/wiki/backup, C:\wiki\backup)
+    order: 1
+  createDailyBackups:
+    type: Boolean
+    default: false
+    title: Create Daily Backups
+    hint: A tar.gz archive containing all content will be created daily in subfolder named _daily. Archives are kept for a month.
+    order: 2

@@ -4,10 +4,12 @@ description: Git is a version control system for tracking changes in computer fi
 author: requarks.io
 logo: https://static.requarks.io/logo/git-alt.svg
 website: https://git-scm.com/
+isAvailable: true
 supportedModes:
   - sync
   - push
   - pull
+defaultMode: sync
 props:
   authType:
     type: String
@@ -17,42 +19,52 @@ props:
     enum:
       - 'basic'
       - 'ssh'
+    order: 1
   repoUrl:
     type: String
     title: Repository URI
     hint: Git-compliant URI (e.g. git@github.com:org/repo.git for ssh, https://github.com/org/repo.git for basic)
+    order: 2
   branch:
     type: String
     default: 'master'
+    order: 3
   verifySSL:
     type: Boolean
     default: true
     title: Verify SSL Certificate
     hint: Some hosts requires SSL certificate checking to be disabled. Leave enabled for proper security.
+    order: 31
   sshPrivateKeyPath:
     type: String
     title: SSH Private Key Path
     hint: SSH Authentication Only - Absolute path to the key. The key must NOT be passphrase-protected.
+    order: 10
   basicUsername:
     type: String
     title: Username
     hint: Basic Authentication Only
+    order: 11
   basicPassword:
     type: String
     title: Password / PAT
     hint: Basic Authentication Only
+    order: 12
   localRepoPath:
     type: String
     title: Local Repository Path
     default: './data/repo'
     hint: 'Path where the local git repository will be created.'
+    order: 30
   defaultEmail:
     type: String
     title: Default Author Email
     default: 'name@company.com'
     hint: 'Used as fallback in case the author of the change is not present.'
+    order: 20
   defaultName:
     type: String
     title: Default Author Name
     default: 'John Smith'
     hint: 'Used as fallback in case the author of the change is not present.'
+    order: 21

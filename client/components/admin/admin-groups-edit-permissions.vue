@@ -19,7 +19,7 @@
         ) This is a system group. Some permissions cannot be modified.
     v-container.px-3.pb-3.pt-0(fluid, grid-list-md)
       v-layout(row, wrap)
-        v-flex(xs12, md6, lg4, v-for='pmGroup in permissions')
+        v-flex(xs12, md6, lg4, v-for='pmGroup in permissions', :key='pmGroup.category')
           v-card.md2(flat, :class='$vuetify.dark ? "grey darken-3-d5" : "white"')
             v-subheader {{pmGroup.category}}
             v-card-text.pt-0

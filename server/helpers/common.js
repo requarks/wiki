@@ -30,7 +30,8 @@ module.exports = {
         type: (value.type || value).toLowerCase(),
         title: value.title || _.startCase(key),
         hint: value.hint || false,
-        enum: value.enum || false
+        enum: value.enum || false,
+        order: value.order || 100
       })
       return result
     }, {})

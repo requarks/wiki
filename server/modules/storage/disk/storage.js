@@ -46,23 +46,32 @@ module.exports = {
     // not used
   },
   async init() {
+    WIKI.logger.info('(STORAGE/DISK) Initializing...')
     await fs.ensureDir(this.config.path)
+    WIKI.logger.info('(STORAGE/DISK) Initialization completed.')
   },
-  async created() {
-    const filePath = path.join(this.config.path, `${this.page.path}.${getFileExtension(this.page.contentType)}`)
-    await fs.outputFile(filePath, injectMetadata(this.page), 'utf8')
+  async sync() {
+    // not used
   },
-  async updated() {
-    const filePath = path.join(this.config.path, `${this.page.path}.${getFileExtension(this.page.contentType)}`)
-    await fs.outputFile(filePath, injectMetadata(this.page), 'utf8')
+  async created(page) {
+    WIKI.logger.info(`(STORAGE/DISK) Creating file ${page.path}...`)
+    const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
+    await fs.outputFile(filePath, injectMetadata(page), 'utf8')
   },
-  async deleted() {
-    const filePath = path.join(this.config.path, `${this.page.path}.${getFileExtension(this.page.contentType)}`)
+  async updated(page) {
+    WIKI.logger.info(`(STORAGE/DISK) Updating file ${page.path}...`)
+    const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
+    await fs.outputFile(filePath, injectMetadata(page), 'utf8')
+  },
+  async deleted(page) {
+    WIKI.logger.info(`(STORAGE/DISK) Deleting file ${page.path}...`)
+    const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
     await fs.unlink(filePath)
   },
-  async renamed() {
-    const sourceFilePath = path.join(this.config.path, `${this.page.sourcePath}.${getFileExtension(this.page.contentType)}`)
-    const destinationFilePath = path.join(this.config.path, `${this.page.destinationPath}.${getFileExtension(this.page.contentType)}`)
+  async renamed(page) {
+    WIKI.logger.info(`(STORAGE/DISK) Renaming file ${page.sourcePath} to ${page.destinationPath}...`)
+    const sourceFilePath = path.join(this.config.path, `${page.sourcePath}.${getFileExtension(page.contentType)}`)
+    const destinationFilePath = path.join(this.config.path, `${page.destinationPath}.${getFileExtension(page.contentType)}`)
     await fs.move(sourceFilePath, destinationFilePath, { overwrite: true })
   }
 }
