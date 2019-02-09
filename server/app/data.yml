@@ -7,7 +7,6 @@ defaults:
   config:
     # File defaults
     port: 80
-    bindIP: 0.0.0.0
     db:
       type: postgres
       host: localhost
@@ -23,6 +22,8 @@ defaults:
       password: null
     ssl:
       enabled: false
+    bindIP: 0.0.0.0
+    logLevel: info
     # DB defaults
     graphEndpoint: 'https://graph.requarks.io'
     lang:
