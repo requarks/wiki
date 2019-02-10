@@ -5,15 +5,16 @@ FROM node:10-alpine
 LABEL maintainer "requarks.io"
 
 RUN apk update && \
-    apk add bash curl git python make g++ nano openssh gnupg --no-cache && \
+    apk add bash curl git python make g++ nano openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki
 
 WORKDIR /wiki
 COPY package.json .
 RUN yarn --silent
-COPY ./dev/docker/init.sh ./init.sh
+COPY ./dev/docker-sqlite/init.sh ./init.sh
 
 ENV dockerdev 1
+ENV DEVDB sqlite
 
 EXPOSE 3000
 

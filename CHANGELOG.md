@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed error page metadata title warning
 - Fixed telemetry
 - Await page render job to complete before resolving
+- Fixed JSON fields for MariaDB
 
 ### Changed
 - Moved Insert Media button in Markdown editor

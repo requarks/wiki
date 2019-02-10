@@ -22,10 +22,13 @@ module.exports = class Logger extends Model {
       properties: {
         key: {type: 'string'},
         isEnabled: {type: 'boolean'},
-        level: {type: 'string'},
-        config: {type: 'object'}
+        level: {type: 'string'}
       }
     }
+  }
+
+  static get jsonAttributes() {
+    return ['config']
   }
 
   static async getLoggers() {

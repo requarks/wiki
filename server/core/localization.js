@@ -84,7 +84,7 @@ module.exports = {
       throw new Error('No such locale in local store.')
     }
 
-    //-> Load dev locale files if present
+    // -> Load dev locale files if present
     if (WIKI.IS_DEBUG) {
       try {
         const devEntriesRaw = await fs.readFileAsync(path.join(WIKI.SERVERPATH, `locales/${locale}.yml`), 'utf8')

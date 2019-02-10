@@ -21,10 +21,13 @@ module.exports = class Editor extends Model {
 
       properties: {
         key: {type: 'string'},
-        isEnabled: {type: 'boolean'},
-        config: {type: 'object'}
+        isEnabled: {type: 'boolean'}
       }
     }
+  }
+
+  static get jsonAttributes() {
+    return ['config']
   }
 
   static async getEditors() {

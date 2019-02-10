@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+DEVDB := postgres
 
 start: ## Start Wiki.js in production mode
 	node wiki start
@@ -23,27 +24,30 @@ test: ## Run code linting tests
 	pug-lint server/views && jest
 
 docker-dev-up: ## Run dockerized dev environment
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . up -d
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec wiki yarn dev
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . up -d
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec wiki yarn dev
 
 docker-dev-down: ## Shutdown dockerized dev environment
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . down
 
 docker-dev-rebuild: ## Rebuild dockerized dev image
 	rm -rf ./node_modules
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . build --no-cache --force-rm
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . build --no-cache --force-rm
 
 docker-dev-clean: ## Clean DB, redis and data folders
 	rm -rf ./data
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec db psql --dbname=wiki --username=wikijs --command='DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public'
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec redis redis-cli flushall
+	[[ "${DEVDB}" == "postgres" ]] && docker-compose -f ./dev/docker-postgres/docker-compose.yml -p wiki --project-directory . exec db psql --dbname=wiki --username=wikijs --command='DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public' || true
+	[[ "${DEVDB}" == "mysql" || "${DEVDB}" == "mariadb" ]] && docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec db mysql -uroot -p'wikijsrocks' -e 'DROP SCHEMA IF EXISTS wiki; CREATE SCHEMA wiki;' || true
+	## [[ "${DEVDB}" = "mssql" ]] && docker-compose -f ./dev/docker-mssql/docker-compose.yml -p wiki --project-directory . exec db ls
+	[[ "${DEVDB}" == "sqlite" ]] && docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec wiki rm -rf /wiki/db.sqlite || true
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec redis redis-cli flushall
 
 docker-dev-bash: ## Rebuild dockerized dev image
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . exec wiki bash
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec wiki bash
 
 docker-build: ## Run assets generation build in docker
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . run wiki yarn build
-	docker-compose -f ./dev/docker/docker-compose.yml -p wiki --project-directory . down
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . run wiki yarn build
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . down
 
 help: ## Display help
 	@echo ''

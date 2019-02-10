@@ -3,7 +3,7 @@ const Model = require('objection').Model
 /**
  * Locales model
  */
-module.exports = class User extends Model {
+module.exports = class Locale extends Model {
   static get tableName() { return 'locales' }
   static get idColumn() { return 'code' }
 
@@ -14,7 +14,6 @@ module.exports = class User extends Model {
 
       properties: {
         code: {type: 'string'},
-        strings: {type: 'object'},
         isRTL: {type: 'boolean', default: false},
         name: {type: 'string'},
         nativeName: {type: 'string'},
@@ -22,6 +21,10 @@ module.exports = class User extends Model {
         updatedAt: {type: 'string'}
       }
     }
+  }
+
+  static get jsonAttributes() {
+    return ['strings']
   }
 
   $beforeUpdate() {

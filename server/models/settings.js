@@ -13,15 +13,18 @@ module.exports = class Setting extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['key', 'value'],
+      required: ['key'],
 
       properties: {
         key: {type: 'string'},
-        value: {type: 'object'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
     }
+  }
+
+  static get jsonAttributes() {
+    return ['value']
   }
 
   $beforeUpdate() {

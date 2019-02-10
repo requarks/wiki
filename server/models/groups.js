@@ -20,6 +20,10 @@ module.exports = class Group extends Model {
     }
   }
 
+  static get jsonAttributes() {
+    return ['permissions', 'pageRules']
+  }
+
   static get relationMappings() {
     return {
       users: {
