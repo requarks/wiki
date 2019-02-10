@@ -10,7 +10,7 @@
             offset-lg3, lg6
             offset-xl4, xl4
             )
-            transition(name='zoom')
+            transition(name='fadeUp')
               v-card.elevation-5.md2(v-show='isShown')
                 v-toolbar(color='primary', flat, dense, dark)
                   v-spacer
