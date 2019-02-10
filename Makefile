@@ -24,7 +24,7 @@ test: ## Run code linting tests
 	pug-lint server/views && jest
 
 docker-dev-up: ## Run dockerized dev environment
-	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . up -d
+	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . up -d --remove-orphans
 	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec wiki yarn dev
 
 docker-dev-down: ## Shutdown dockerized dev environment

@@ -15,29 +15,6 @@ const getFileExtension = (contentType) => {
   }
 }
 
-/**
- * Inject page metadata into contents
- */
-const injectMetadata = (page) => {
-  let meta = [
-    ['title', page.title],
-    ['description', page.description]
-  ]
-  let metaFormatted = ''
-  switch (page.contentType) {
-    case 'markdown':
-      metaFormatted = meta.map(mt => `[//]: # ${mt[0]}: ${mt[1]}`).join('\n')
-      break
-    case 'html':
-      metaFormatted = meta.map(mt => `<!-- ${mt[0]}: ${mt[1]} -->`).join('\n')
-      break
-    default:
-      metaFormatted = meta.map(mt => `#WIKI ${mt[0]}: ${mt[1]}`).join('\n')
-      break
-  }
-  return `${metaFormatted}\n\n${page.content}`
-}
-
 module.exports = {
   async activated() {
     // not used
@@ -56,12 +33,12 @@ module.exports = {
   async created(page) {
     WIKI.logger.info(`(STORAGE/DISK) Creating file ${page.path}...`)
     const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
-    await fs.outputFile(filePath, injectMetadata(page), 'utf8')
+    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
   },
   async updated(page) {
     WIKI.logger.info(`(STORAGE/DISK) Updating file ${page.path}...`)
     const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
-    await fs.outputFile(filePath, injectMetadata(page), 'utf8')
+    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
   },
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/DISK) Deleting file ${page.path}...`)

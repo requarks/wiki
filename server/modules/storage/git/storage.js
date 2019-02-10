@@ -17,29 +17,6 @@ const getFileExtension = (contentType) => {
   }
 }
 
-/**
- * Inject page metadata into contents
- */
-const injectMetadata = (page) => {
-  let meta = [
-    ['title', page.title],
-    ['description', page.description]
-  ]
-  let metaFormatted = ''
-  switch (page.contentType) {
-    case 'markdown':
-      metaFormatted = meta.map(mt => `[//]: # ${mt[0]}: ${mt[1]}`).join('\n')
-      break
-    case 'html':
-      metaFormatted = meta.map(mt => `<!-- ${mt[0]}: ${mt[1]} -->`).join('\n')
-      break
-    default:
-      metaFormatted = meta.map(mt => `#WIKI ${mt[0]}: ${mt[1]}`).join('\n')
-      break
-  }
-  return `${metaFormatted}\n\n${page.content}`
-}
-
 module.exports = {
   git: null,
   repoPath: path.join(process.cwd(), 'data/repo'),
@@ -131,7 +108,7 @@ module.exports = {
     WIKI.logger.info(`(STORAGE/GIT) Committing new file ${page.path}...`)
     const fileName = `${page.path}.${getFileExtension(page.contentType)}`
     const filePath = path.join(this.repoPath, fileName)
-    await fs.outputFile(filePath, injectMetadata(page), 'utf8')
+    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
     await this.git.add(`./${fileName}`)
     await this.git.commit(`docs: create ${page.path}`, fileName, {
@@ -142,7 +119,7 @@ module.exports = {
     WIKI.logger.info(`(STORAGE/GIT) Committing updated file ${page.path}...`)
     const fileName = `${page.path}.${getFileExtension(page.contentType)}`
     const filePath = path.join(this.repoPath, fileName)
-    await fs.outputFile(filePath, injectMetadata(page), 'utf8')
+    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
     await this.git.add(`./${fileName}`)
     await this.git.commit(`docs: update ${page.path}`, fileName, {
