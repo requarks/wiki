@@ -28,15 +28,6 @@ services:
     ports:
       - "11433:1433"
 
-  adminer:
-    image: adminer:latest
-    logging:
-      driver: "none"
-    networks:
-      - wikinet
-    ports:
-      - "3001:8080"
-
   wiki:
     build:
       context: .

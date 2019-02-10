@@ -38,8 +38,8 @@ docker-dev-clean: ## Clean DB, redis and data folders
 	rm -rf ./data
 	[[ "${DEVDB}" == "postgres" ]] && docker-compose -f ./dev/docker-postgres/docker-compose.yml -p wiki --project-directory . exec db psql --dbname=wiki --username=wikijs --command='DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public' || true
 	[[ "${DEVDB}" == "mysql" || "${DEVDB}" == "mariadb" ]] && docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec db mysql -uroot -p'wikijsrocks' -e 'DROP SCHEMA IF EXISTS wiki; CREATE SCHEMA wiki;' || true
-	## [[ "${DEVDB}" = "mssql" ]] && docker-compose -f ./dev/docker-mssql/docker-compose.yml -p wiki --project-directory . exec db ls
-	[[ "${DEVDB}" == "sqlite" ]] && docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec wiki rm -rf /wiki/db.sqlite || true
+	[[ "${DEVDB}" == "mssql" ]] && docker-compose -f ./dev/docker-mssql/docker-compose.yml -p wiki --project-directory . exec db /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'W1kiJSR0cks!' -Q 'DROP DATABASE IF EXISTS wiki; CREATE DATABASE wiki;' || true
+	[[ "${DEVDB}" == "sqlite" ]] && docker-compose -f ./dev/docker-sqlite/docker-compose.yml -p wiki --project-directory . exec wiki rm -rf /wiki/db.sqlite || true
 	docker-compose -f ./dev/docker-${DEVDB}/docker-compose.yml -p wiki --project-directory . exec redis redis-cli flushall
 
 docker-dev-bash: ## Rebuild dockerized dev image

@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Added Theme CSS Injection code minification
 - Added Page Delete functionality
 - Dev locale .yml files in `server/locales` are now loaded
+- Added SQLite dependencies in Docker image
 
 ### Fixed
 - Fixed root admin refresh token fail
@@ -16,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed telemetry
 - Await page render job to complete before resolving
 - Fixed JSON fields for MariaDB
+- Fixed MSSQL driver support
 
 ### Changed
 - Moved Insert Media button in Markdown editor
