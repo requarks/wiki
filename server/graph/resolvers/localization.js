@@ -12,9 +12,9 @@ module.exports = {
   },
   LocalizationQuery: {
     async locales(obj, args, context, info) {
-      let remoteLocales = await WIKI.redis.get('locales')
+      let remoteLocales = await WIKI.cache.get('locales')
       let localLocales = await WIKI.models.locales.query().select('code', 'isRTL', 'name', 'nativeName', 'createdAt', 'updatedAt')
-      remoteLocales = (remoteLocales) ? JSON.parse(remoteLocales) : localLocales
+      remoteLocales = (remoteLocales) ? remoteLocales : localLocales
       return _.map(remoteLocales, rl => {
         let isInstalled = _.some(localLocales, ['code', rl.code])
         return {
@@ -39,12 +39,11 @@ module.exports = {
   LocalizationMutation: {
     async downloadLocale(obj, args, context) {
       try {
-        const job = await WIKI.queue.job.fetchGraphLocale.add({
-          locale: args.locale
-        }, {
-          timeout: 30000
-        })
-        await job.finished()
+        const job = await WIKI.scheduler.registerJob({
+          name: 'fetch-graph-locale',
+          immediate: true
+        }, args.locale)
+        await job.finished
         return {
           responseResult: graphHelper.generateSuccess('Locale downloaded successfully')
         }

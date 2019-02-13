@@ -7,8 +7,4 @@ db:
   user: SA
   pass: W1kiJSR0cks!
   db: wiki
-redis:
-  host: redis
-  port: 6379
-  db: 0
 logLevel: info

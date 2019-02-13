@@ -1,13 +1,5 @@
 version: "3"
 services:
-
-  redis:
-    image: redis:4-alpine
-    logging:
-      driver: "none"
-    networks:
-      - wikinet
-
   db:
     image: postgres:9-alpine
     environment:

@@ -1,17 +1,12 @@
-require('../core/worker')
 const _ = require('lodash')
 const { createApolloFetch } = require('apollo-fetch')
 
 /* global WIKI */
 
-WIKI.redis = require('../core/redis').init()
-WIKI.models = require('../core/db').init()
-
-module.exports = async (job) => {
-  WIKI.logger.info(`Fetching locale ${job.data.locale} from Graph endpoint...`)
+module.exports = async (localeCode) => {
+  WIKI.logger.info(`Fetching locale ${localeCode} from Graph endpoint...`)
 
   try {
-    await WIKI.configSvc.loadFromDb()
     const apollo = createApolloFetch({
       uri: WIKI.config.graphEndpoint
     })
@@ -26,7 +21,7 @@ module.exports = async (job) => {
         }
       }`,
       variables: {
-        code: job.data.locale
+        code: localeCode
       }
     })
     const strings = _.get(respStrings, 'data.localization.strings', [])
@@ -36,12 +31,12 @@ module.exports = async (job) => {
       _.set(lcObj, row.key.replace(':', '.'), row.value)
     })
 
-    const locales = await WIKI.redis.get('locales')
+    const locales = await WIKI.cache.get('locales')
     if (locales) {
-      const currentLocale = _.find(JSON.parse(locales), ['code', job.data.locale]) || {}
-      await WIKI.models.locales.query().delete().where('code', job.data.locale)
+      const currentLocale = _.find(locales, ['code', localeCode]) || {}
+      await WIKI.models.locales.query().delete().where('code', localeCode)
       await WIKI.models.locales.query().insert({
-        code: job.data.locale,
+        code: localeCode,
         strings: lcObj,
         isRTL: currentLocale.isRTL,
         name: currentLocale.name,
@@ -51,11 +46,11 @@ module.exports = async (job) => {
       throw new Error('Failed to fetch cached locales list! Restart server to resolve this issue.')
     }
 
-    await WIKI.redis.publish('localization', 'reload')
+    await WIKI.lang.refreshNamespaces()
 
-    WIKI.logger.info(`Fetching locale ${job.data.locale} from Graph endpoint: [ COMPLETED ]`)
+    WIKI.logger.info(`Fetching locale ${localeCode} from Graph endpoint: [ COMPLETED ]`)
   } catch (err) {
-    WIKI.logger.error(`Fetching locale ${job.data.locale} from Graph endpoint: [ FAILED ]`)
+    WIKI.logger.error(`Fetching locale ${localeCode} from Graph endpoint: [ FAILED ]`)
     WIKI.logger.error(err.message)
   }
 }

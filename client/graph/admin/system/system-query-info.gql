@@ -15,10 +15,6 @@ query {
       ramTotal
       workingDirectory
       nodeVersion
-      redisVersion
-      redisUsedRAM
-      redisTotalRAM
-      redisHost
     }
   }
 }

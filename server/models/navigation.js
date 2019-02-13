@@ -23,15 +23,15 @@ module.exports = class Navigation extends Model {
 
   static async getTree({ cache = false } = {}) {
     if (cache) {
-      const navTreeCached = await WIKI.redis.get('nav:sidebar')
+      const navTreeCached = await WIKI.cache.get('nav:sidebar')
       if (navTreeCached) {
-        return JSON.parse(navTreeCached)
+        return navTreeCached
       }
     }
     const navTree = await WIKI.models.navigation.query().findOne('key', 'site')
     if (navTree) {
       if (cache) {
-        await WIKI.redis.set('nav:sidebar', JSON.stringify(navTree.config), 'EX', 300)
+        await WIKI.cache.set('nav:sidebar', navTree.config, 300)
       }
       return navTree.config
     } else {

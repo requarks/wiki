@@ -31,21 +31,18 @@ db:
   # SQLite only:
   storage: path/to/database.sqlite
 
-# ---------------------------------------------------------------------
-# Redis
-# ---------------------------------------------------------------------
-# Redis 3.2 or later required
-
-redis:
-  host: localhost
-  port: 6379
-  db: 0
-  password: null
-
 #######################################################################
 # ADVANCED OPTIONS                                                    #
 #######################################################################
 # Do not change unless you know what you are doing!
+
+# ---------------------------------------------------------------------
+# Use X-Forwarded-For header
+# ---------------------------------------------------------------------
+# Enable only if Wiki.js is behind a reverse-proxy (nginx, apache, etc)
+# or a cloud proxying services like Cloudflare.
+
+trustProxy: false
 
 # ---------------------------------------------------------------------
 # SSL/TLS Settings

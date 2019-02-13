@@ -38,10 +38,6 @@ type SystemInfo {
   pagesTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:pages", "delete:pages"])
   platform: String @auth(requires: ["manage:system"])
   ramTotal: String @auth(requires: ["manage:system"])
-  redisHost: String @auth(requires: ["manage:system"])
-  redisTotalRAM: String @auth(requires: ["manage:system"])
-  redisUsedRAM: String @auth(requires: ["manage:system"])
-  redisVersion: String @auth(requires: ["manage:system"])
   usersTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
   workingDirectory: String @auth(requires: ["manage:system"])
 }

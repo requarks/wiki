@@ -46,7 +46,9 @@ module.exports = async () => {
   app.use(mw.security)
   app.use(cors(WIKI.config.cors))
   app.options('*', cors(WIKI.config.cors))
-  app.enable('trust proxy')
+  if (WIKI.config.trustProxy) {
+    app.enable('trust proxy')
+  }
 
   // ----------------------------------------
   // Public Assets

@@ -3,16 +3,6 @@
 
 version: "3"
 services:
-
-  redis:
-    image: redis:4-alpine
-    ports:
-      - "16379:6379"
-    logging:
-      driver: "none"
-    networks:
-      - wikinet
-
   db:
     image: mysql:5.7
     environment:
@@ -44,7 +34,6 @@ services:
       dockerfile: dev/docker-mysql/Dockerfile
     depends_on:
       - db
-      - redis
     networks:
       - wikinet
     ports:

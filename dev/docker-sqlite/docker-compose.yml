@@ -3,22 +3,10 @@
 
 version: "3"
 services:
-
-  redis:
-    image: redis:4-alpine
-    ports:
-      - "16379:6379"
-    logging:
-      driver: "none"
-    networks:
-      - wikinet
-
   wiki:
     build:
       context: .
       dockerfile: dev/docker-sqlite/Dockerfile
-    depends_on:
-      - redis
     networks:
       - wikinet
     ports:
@@ -26,7 +14,6 @@ services:
     volumes:
       - .:/wiki
       - /wiki/node_modules
-    command: ["sh", "./dev/docker-sqlite/init.sh"]
 
 networks:
   wikinet:

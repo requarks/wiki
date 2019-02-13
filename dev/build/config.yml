@@ -13,4 +13,5 @@ redis:
   port: $(REDIS_PORT)
   db: $(REDIS_DB)
   password: $(REDIS_PASS)
+trustProxy: $(TRUST_PROXY)
 logLevel: info

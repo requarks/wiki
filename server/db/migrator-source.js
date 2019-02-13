@@ -11,7 +11,7 @@ module.exports = {
    */
   async getMigrations() {
     const absoluteDir = path.join(WIKI.SERVERPATH, 'db/migrations')
-    const migrationFiles = await fs.readdirAsync(absoluteDir)
+    const migrationFiles = await fs.readdir(absoluteDir)
     return migrationFiles.sort(semver.compare).map(m => ({
       file: m,
       directory: absoluteDir

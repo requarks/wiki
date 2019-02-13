@@ -15,15 +15,6 @@ module.exports = {
     minimumNodeRequired: '10.12.0'
   },
   init() {
-    // Listen for updates events
-    WIKI.events.on('updates', (infoRaw) => {
-      try {
-        this.updates = JSON.parse(infoRaw)
-      } catch (err) {
-        WIKI.logger.warn('Failed to parse updates info.')
-      }
-    })
-
     // Clear content cache
     fs.emptyDir(path.join(WIKI.ROOTPATH, 'data/cache'))
 

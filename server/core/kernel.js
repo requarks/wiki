@@ -10,10 +10,10 @@ module.exports = {
     WIKI.logger.info('=======================================')
 
     WIKI.models = require('./db').init()
-    WIKI.redis = require('./redis').init()
-    WIKI.queue = require('./queue').init()
 
-    await this.preBootMaster()
+    await WIKI.models.onReady
+    await WIKI.configSvc.loadFromDb()
+
     this.bootMaster()
   },
   /**
@@ -21,11 +21,10 @@ module.exports = {
    */
   async preBootMaster() {
     try {
-      await WIKI.models.onReady
-      await WIKI.configSvc.loadFromDb()
-      await WIKI.queue.clean()
+      await this.initTelemetry()
+      WIKI.cache = require('./cache').init()
+      WIKI.scheduler = require('./scheduler').init()
       WIKI.events = new EventEmitter()
-      WIKI.redisSub = require('./redis').subscribe()
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
@@ -40,7 +39,7 @@ module.exports = {
         WIKI.logger.info('Starting setup wizard...')
         require('../setup')()
       } else {
-        await this.initTelemetry()
+        await this.preBootMaster()
         await require('../master')()
         this.postBootMaster()
       }
@@ -62,7 +61,7 @@ module.exports = {
 
     await WIKI.auth.activateStrategies()
     await WIKI.models.storage.initTargets()
-    await WIKI.queue.start()
+    WIKI.scheduler.start()
   },
   /**
    * Init Telemetry

@@ -217,15 +217,12 @@ module.exports = class Page extends Model {
   }
 
   static async renderPage(page) {
-    const pipeline = await WIKI.models.renderers.getRenderingPipeline(page.contentType)
-    const renderJob = await WIKI.queue.job.renderPage.add({
-      page,
-      pipeline
-    }, {
-      removeOnComplete: true,
-      removeOnFail: true
-    })
-    return renderJob.finished()
+    const renderJob = await WIKI.scheduler.registerJob({
+      name: 'render-page',
+      immediate: true,
+      worker: true
+    }, page.id)
+    return renderJob.finished
   }
 
   static async getPage(opts) {
@@ -240,6 +237,7 @@ module.exports = class Page extends Model {
   }
 
   static async getPageFromDb(opts) {
+    const queryModeID = _.isNumber(opts)
     return WIKI.models.pages.query()
       .column([
         'pages.*',
@@ -252,11 +250,14 @@ module.exports = class Page extends Model {
       ])
       .joinRelation('author')
       .joinRelation('creator')
-      .where({
+      .where(queryModeID ? {
+        'pages.id': opts
+      } : {
         'pages.path': opts.path,
         'pages.localeCode': opts.locale
       })
       .andWhere(builder => {
+        if (queryModeID) return
         builder.where({
           'pages.isPublished': true
         }).orWhere({
@@ -265,6 +266,7 @@ module.exports = class Page extends Model {
         })
       })
       .andWhere(builder => {
+        if (queryModeID) return
         if (opts.isPrivate) {
           builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
         } else {

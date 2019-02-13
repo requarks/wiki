@@ -10,6 +10,7 @@ supportedModes:
   - push
   - pull
 defaultMode: sync
+schedule: PT5M
 props:
   authType:
     type: String

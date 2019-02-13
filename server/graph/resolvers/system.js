@@ -98,18 +98,6 @@ module.exports = {
     nodeVersion() {
       return process.version.substr(1)
     },
-    redisVersion() {
-      return WIKI.redis.serverInfo.redis_version
-    },
-    redisUsedRAM() {
-      return WIKI.redis.serverInfo.used_memory_human
-    },
-    redisTotalRAM() {
-      return _.get(WIKI.redis.serverInfo, 'total_system_memory_human', 'N/A')
-    },
-    redisHost() {
-      return WIKI.redis.options.host
-    },
     async groupsTotal() {
       const total = await WIKI.models.groups.query().count('* as total').first().pluck('total')
       return _.toSafeInteger(total)

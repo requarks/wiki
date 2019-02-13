@@ -35,22 +35,26 @@ module.exports = class Renderer extends Model {
     return WIKI.models.renderers.query()
   }
 
+  static async fetchDefinitions() {
+    const rendererDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/rendering'))
+    let diskRenderers = []
+    for (let dir of rendererDirs) {
+      const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/rendering', dir, 'definition.yml'), 'utf8')
+      diskRenderers.push(yaml.safeLoad(def))
+    }
+    WIKI.data.renderers = diskRenderers.map(renderer => ({
+      ...renderer,
+      props: commonHelper.parseModuleProps(renderer.props)
+    }))
+  }
+
   static async refreshRenderersFromDisk() {
     let trx
     try {
       const dbRenderers = await WIKI.models.renderers.query()
 
       // -> Fetch definitions from disk
-      const rendererDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/rendering'))
-      let diskRenderers = []
-      for (let dir of rendererDirs) {
-        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/rendering', dir, 'definition.yml'), 'utf8')
-        diskRenderers.push(yaml.safeLoad(def))
-      }
-      WIKI.data.renderers = diskRenderers.map(renderer => ({
-        ...renderer,
-        props: commonHelper.parseModuleProps(renderer.props)
-      }))
+      await WIKI.models.renderers.fetchDefinitions()
 
       // -> Insert new Renderers
       let newRenderers = []

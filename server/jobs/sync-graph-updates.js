@@ -1,17 +1,12 @@
-require('../core/worker')
 const _ = require('lodash')
 const { createApolloFetch } = require('apollo-fetch')
 
 /* global WIKI */
 
-WIKI.redis = require('../core/redis').init()
-WIKI.models = require('../core/db').init()
-
-module.exports = async (job) => {
+module.exports = async () => {
   WIKI.logger.info(`Fetching latest updates from Graph endpoint...`)
 
   try {
-    await WIKI.configSvc.loadFromDb()
     const apollo = createApolloFetch({
       uri: WIKI.config.graphEndpoint
     })
@@ -33,9 +28,10 @@ module.exports = async (job) => {
         version: WIKI.version
       }
     })
-    const info = _.get(resp, 'data.releases.checkForUpdates', {})
-
-    await WIKI.redis.publish('updates', JSON.stringify(info))
+    const info = _.get(resp, 'data.releases.checkForUpdates', false)
+    if (info) {
+      WIKI.system.updates = info
+    }
 
     WIKI.logger.info(`Fetching latest updates from Graph endpoint: [ COMPLETED ]`)
   } catch (err) {

@@ -1,23 +1,29 @@
-require('../core/worker')
-
 const _ = require('lodash')
 const cheerio = require('cheerio')
 
 /* global WIKI */
 
-WIKI.models = require('../core/db').init()
-
-module.exports = async (job) => {
-  WIKI.logger.info(`Rendering page ${job.data.page.path}...`)
+module.exports = async (pageId) => {
+  WIKI.logger.info(`Rendering page ID ${pageId}...`)
 
   try {
-    let output = job.data.page.content
-    for (let core of job.data.pipeline) {
+    WIKI.models = require('../core/db').init()
+
+    const page = await WIKI.models.pages.getPageFromDb(pageId)
+    if (!page) {
+      throw new Error('Invalid Page Id')
+    }
+
+    await WIKI.models.renderers.fetchDefinitions()
+    const pipeline = await WIKI.models.renderers.getRenderingPipeline(page.contentType)
+
+    let output = page.content
+    for (let core of pipeline) {
       const renderer = require(`../modules/rendering/${_.kebabCase(core.key)}/renderer.js`)
       output = await renderer.render.call({
         config: core.config,
         children: core.children,
-        page: job.data.page,
+        page: page,
         input: output
       })
     }
@@ -61,18 +67,20 @@ module.exports = async (job) => {
         render: output,
         toc: JSON.stringify(toc.root)
       })
-      .where('id', job.data.page.id)
+      .where('id', pageId)
 
     // Save to cache
     await WIKI.models.pages.savePageToCache({
-      ...job.data.page,
+      ...page,
       render: output,
       toc: JSON.stringify(toc.root)
     })
 
-    WIKI.logger.info(`Rendering page ${job.data.page.path}: [ COMPLETED ]`)
+    await WIKI.models.knex.destroy()
+
+    WIKI.logger.info(`Rendering page ID ${pageId}: [ COMPLETED ]`)
   } catch (err) {
-    WIKI.logger.error(`Rendering page ${job.data.page.path}: [ FAILED ]`)
+    WIKI.logger.error(`Rendering page ID ${pageId}: [ FAILED ]`)
     WIKI.logger.error(err.message)
   }
 }

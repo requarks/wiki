@@ -107,6 +107,11 @@ module.exports = class Storage extends Model {
         target.fn.config = target.config
         target.fn.mode = target.mode
         await target.fn.init()
+        // if (target.schedule) {
+        //   WIKI.scheduler.registerJob({
+        //     name:
+        //   }, target.fn.sync)
+        // }
       }
     } catch (err) {
       WIKI.logger.warn(err)

@@ -1,17 +1,12 @@
-require('../core/worker')
 const _ = require('lodash')
 const { createApolloFetch } = require('apollo-fetch')
 
 /* global WIKI */
 
-WIKI.redis = require('../core/redis').init()
-WIKI.models = require('../core/db').init()
-
-module.exports = async (job) => {
+module.exports = async () => {
   WIKI.logger.info('Syncing locales with Graph endpoint...')
 
   try {
-    await WIKI.configSvc.loadFromDb()
     const apollo = createApolloFetch({
       uri: WIKI.config.graphEndpoint
     })
@@ -33,7 +28,7 @@ module.exports = async (job) => {
       }`
     })
     const locales = _.sortBy(_.get(respList, 'data.localization.locales', []), 'name').map(lc => ({...lc, isInstalled: (lc.code === 'en')}))
-    WIKI.redis.set('locales', JSON.stringify(locales))
+    WIKI.cache.set('locales', locales)
     const currentLocale = _.find(locales, ['code', WIKI.config.lang.code])
 
     // -> Download locale strings
@@ -68,7 +63,7 @@ module.exports = async (job) => {
       }).where('code', WIKI.config.lang.code)
     }
 
-    await WIKI.redis.publish('localization', 'reload')
+    await WIKI.lang.refreshNamespaces()
 
     WIKI.logger.info('Syncing locales with Graph endpoint: [ COMPLETED ]')
   } catch (err) {

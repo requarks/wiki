@@ -10,9 +10,10 @@ let WIKI = {
 global.WIKI = WIKI
 
 WIKI.configSvc.init()
-
-// ----------------------------------------
-// Init Logger
-// ----------------------------------------
-
 WIKI.logger = require('./logger').init('JOB')
+const args = require('yargs').argv
+
+;(async () => {
+  await require(`../jobs/${args.job}`)(args.data)
+  process.exit(0)
+})()

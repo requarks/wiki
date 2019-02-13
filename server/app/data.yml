@@ -15,11 +15,6 @@ defaults:
       pass: wikijsrocks
       db: wiki
       storage: ./db.sqlite
-    redis:
-      host: localhost
-      port: 6379
-      db: 0
-      password: null
     ssl:
       enabled: false
     bindIP: 0.0.0.0
@@ -53,30 +48,15 @@ localeNamespaces:
   - auth
   - common
 jobs:
-  fetchGraphLocale:
-    onInit: false
-    cron: false
-    concurrency: 0
   purgeUploads:
     onInit: true
-    cron: '*/15 * * * *'
-    concurrency: 0
-  renderPage:
-    onInit: false
-    cron: false
-    concurrency: 1
+    schedule: PT15M
   syncGraphLocales:
     onInit: true
-    cron: '0 0 * * *'
-    concurrency: 0
+    schedule: P1D
   syncGraphUpdates:
     onInit: true
-    cron: '0 0 * * *'
-    concurrency: 0
-  syncStorage:
-    onInit: false
-    cron: false
-    concurrency: 1
+    schedule: P1D
 groups:
   defaultPermissions:
     - 'manage:pages'

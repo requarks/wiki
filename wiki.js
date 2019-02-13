@@ -117,13 +117,12 @@ const init = {
     }
   },
   async reload() {
+    console.warn(chalk.yellow('--- Stopping scheduled jobs...'))
+    if (global.WIKI.scheduler) {
+      global.WIKI.scheduler.stop()
+    }
     console.warn(chalk.yellow('--- Closing DB connections...'))
     await global.WIKI.models.knex.destroy()
-    console.warn(chalk.yellow('--- Closing Redis connections...'))
-    await global.WIKI.redis.quit()
-    await global.WIKI.redisSub.quit()
-    console.warn(chalk.yellow('--- Closing Queue connections...'))
-    await global.WIKI.queue.quit()
     console.warn(chalk.yellow('--- Closing Server connections...'))
     global.WIKI.server.destroy(() => {
       console.warn(chalk.yellow('--- Purging node modules cache...'))

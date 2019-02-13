@@ -3,8 +3,4 @@ bindIP: 0.0.0.0
 db:
   type: sqlite
   storage: /wiki/db.sqlite
-redis:
-  host: redis
-  port: 6379
-  db: 0
 logLevel: info
