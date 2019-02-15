@@ -68,6 +68,7 @@
     "getos": "3.1.1",
     "graphql": "14.1.1",
     "graphql-list-fields": "2.0.2",
+    "graphql-rate-limit-directive": "0.1.0",
     "graphql-subscriptions": "1.0.0",
     "graphql-tools": "4.0.4",
     "highlight.js": "9.14.2",

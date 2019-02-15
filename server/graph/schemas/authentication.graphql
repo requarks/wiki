@@ -29,12 +29,12 @@ type AuthenticationMutation {
     username: String!
     password: String!
     strategy: String!
-  ): AuthenticationLoginResponse
+  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   loginTFA(
     loginToken: String!
     securityCode: String!
-  ): DefaultResponse
+  ): DefaultResponse @rateLimit(limit: 5, duration: 60)
 
   register(
     email: String!

@@ -6,6 +6,7 @@ const autoload = require('auto-load')
 const PubSub = require('graphql-subscriptions').PubSub
 const { LEVEL, MESSAGE } = require('triple-beam')
 const Transport = require('winston-transport')
+const { createRateLimitTypeDef, createRateLimitDirective } = require('graphql-rate-limit-directive')
 
 /* global WIKI */
 
@@ -17,7 +18,7 @@ WIKI.GQLEmitter = new PubSub()
 
 // Schemas
 
-let typeDefs = []
+let typeDefs = [createRateLimitTypeDef()]
 let schemas = fs.readdirSync(path.join(WIKI.SERVERPATH, 'graph/schemas'))
 schemas.forEach(schema => {
   typeDefs.push(fs.readFileSync(path.join(WIKI.SERVERPATH, `graph/schemas/${schema}`), 'utf8'))
@@ -33,7 +34,12 @@ resolversObj.forEach(resolver => {
 
 // Directives
 
-let schemaDirectives = autoload(path.join(WIKI.SERVERPATH, 'graph/directives'))
+let schemaDirectives = {
+  ...autoload(path.join(WIKI.SERVERPATH, 'graph/directives')),
+  rateLimit: createRateLimitDirective({
+    keyGenerator: (directiveArgs, source, args, context, info) => `${context.req.ip}:${info.parentType}.${info.fieldName}`
+  })
+}
 
 // Live Trail Logger (admin)
 

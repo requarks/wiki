@@ -5582,6 +5582,16 @@ graphql-persisted-document-loader@1.0.1:
     loader-utils "^1.1.0"
     persistgraphql "^0.3.11"
 
+graphql-rate-limit-directive@0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/graphql-rate-limit-directive/-/graphql-rate-limit-directive-0.1.0.tgz#70888cd4fa84fcde731ffcb445fbc7a25fa5a790"
+  integrity sha512-mVZzuZUl6gmIHYaaMvO7YncHhW2R9B/6Tbr2Ka+kQT39KFIFTHh5+DTqUU4O/GxKcNfWO7Xm3dVF+dLcS+eF3g==
+  dependencies:
+    graphql "^14.0.2"
+    graphql-tag "^2.10.0"
+    graphql-tools "^4.0.0"
+    rate-limiter-flexible "^0.22.0"
+
 graphql-request@^1.5.0:
   version "1.8.2"
   resolved "https://registry.yarnpkg.com/graphql-request/-/graphql-request-1.8.2.tgz#398d10ae15c585676741bde3fc01d5ca948f8fbe"
@@ -5596,7 +5606,7 @@ graphql-subscriptions@1.0.0, graphql-subscriptions@^1.0.0:
   dependencies:
     iterall "^1.2.1"
 
-graphql-tag@^2.0.0, graphql-tag@^2.10.1, graphql-tag@^2.4.2, graphql-tag@^2.9.2:
+graphql-tag@^2.0.0, graphql-tag@^2.10.0, graphql-tag@^2.10.1, graphql-tag@^2.4.2, graphql-tag@^2.9.2:
   version "2.10.1"
   resolved "https://registry.yarnpkg.com/graphql-tag/-/graphql-tag-2.10.1.tgz#10aa41f1cd8fae5373eaf11f1f67260a3cad5e02"
   integrity sha512-jApXqWBzNXQ8jYa/HLkZJaVw9jgwNqZkywa2zfFn16Iv1Zb7ELNHkJaXHR7Quvd5SIGsy6Ny7SUKATgnu05uEg==
@@ -5640,7 +5650,7 @@ graphql-voyager@1.0.0-rc.26:
     svg-pan-zoom "^3.5.2"
     viz.js "2.0.0"
 
-graphql@14.1.1:
+graphql@14.1.1, graphql@^14.0.2:
   version "14.1.1"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-14.1.1.tgz#d5d77df4b19ef41538d7215d1e7a28834619fac0"
   integrity sha512-C5zDzLqvfPAgTtP8AUPIt9keDabrdRAqSWjj2OPRKrKxI9Fb65I36s1uCs1UUBFnSWTdO7hyHi7z1ZbwKMKF6Q==
@@ -10588,6 +10598,11 @@ range-parser@^1.0.3, range-parser@~1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/range-parser/-/range-parser-1.2.0.tgz#f49be6b487894ddc40dcc94a322f611092e00d5e"
   integrity sha1-9JvmtIeJTdxA3MlKMi9hEJLgDV4=
+
+rate-limiter-flexible@^0.22.0:
+  version "0.22.4"
+  resolved "https://registry.yarnpkg.com/rate-limiter-flexible/-/rate-limiter-flexible-0.22.4.tgz#bdaee6968f527b9f8577163d7cca7a3620bb0d0f"
+  integrity sha512-DKGzgcB8JDLxnojhnhr62D+eqIHjIfXCOpdeHiE77TJves/qiLGHrZpqEpWZ3f3aNDnvA6YB4FrM3/zorETrMw==
 
 raven@2.6.4:
   version "2.6.4"

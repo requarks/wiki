@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Added Page Delete functionality
 - Dev locale .yml files in `server/locales` are now loaded
 - Added SQLite dependencies in Docker image
+- Added rate limiting to login mutations
 
 ### Fixed
 - Fixed root admin refresh token fail
