@@ -17,7 +17,6 @@ services:
     image: requarks/wiki:beta
     depends_on:
       - db
-      - redis
     environment:
       PORT: 3000 # DO NOT CHANGE! Use ports below to specify listening port.
       DB_TYPE: postgres
@@ -26,10 +25,6 @@ services:
       DB_USER: wikijs
       DB_PASS: wikijsrocks
       DB_NAME: wiki
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DB: 0
-      REDIS_PASS: ''
     networks:
       - wikinet
     ports:
