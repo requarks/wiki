@@ -82,19 +82,6 @@
 
                 v-divider.mt-3
 
-                v-subheader Redis
-                v-list-tile(avatar)
-                  v-list-tile-avatar
-                    v-avatar.red(size='40')
-                      icon-cube(fillColor='#FFFFFF')
-                  v-list-tile-content
-                    v-list-tile-title {{ info.redisVersion }}
-                    v-list-tile-sub-title {{ info.redisHost }}
-                  v-list-tile-action
-                    v-list-tile-action-text {{ $t('admin:system.ramUsage', { used: info.redisUsedRAM, total: info.redisTotalRAM }) }}
-
-                v-divider.mt-3
-
                 v-subheader {{ info.dbType }}
                 v-list-tile(avatar)
                   v-list-tile-avatar
@@ -108,7 +95,6 @@
 <script>
 import _ from 'lodash'
 
-import IconCube from 'mdi/Cube'
 import IconDatabase from 'mdi/Database'
 import IconNodeJs from 'mdi/Nodejs'
 
@@ -116,7 +102,6 @@ import systemInfoQuery from 'gql/admin/system/system-query-info.gql'
 
 export default {
   components: {
-    IconCube,
     IconDatabase,
     IconNodeJs
   },

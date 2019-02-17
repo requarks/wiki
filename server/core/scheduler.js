@@ -1,5 +1,6 @@
 const Job = require('./job')
 const _ = require('lodash')
+const configHelper = require('../helpers/config')
 
 /* global WIKI */
 
@@ -10,12 +11,13 @@ module.exports = {
   },
   start() {
     _.forOwn(WIKI.data.jobs, (queueParams, queueName) => {
-      this.registerJob({
-        name: _.kebabCase(queueName),
-        immediate: queueParams.onInit,
-        schedule: queueParams.schedule,
-        repeat: true
-      })
+      const schedule = (configHelper.isValidDurationString(queueParams.schedule)) ? queueParams : _.get(WIKI.config, queueParams.schedule)
+      // this.registerJob({
+      //   name: _.kebabCase(queueName),
+      //   immediate: queueParams.onInit,
+      //   schedule: schedule,
+      //   repeat: true
+      // })
     })
   },
   registerJob(opts, data) {

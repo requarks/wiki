@@ -57,6 +57,9 @@ jobs:
   syncGraphUpdates:
     onInit: true
     schedule: P1D
+  syncStorage:
+    onInit: true
+    schedule: storage.syncInterval
 groups:
   defaultPermissions:
     - 'manage:pages'

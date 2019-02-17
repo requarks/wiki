@@ -6,7 +6,7 @@ const autoload = require('auto-load')
 const PubSub = require('graphql-subscriptions').PubSub
 const { LEVEL, MESSAGE } = require('triple-beam')
 const Transport = require('winston-transport')
-const { createRateLimitTypeDef, createRateLimitDirective } = require('graphql-rate-limit-directive')
+const { createRateLimitTypeDef } = require('graphql-rate-limit-directive')
 
 /* global WIKI */
 
@@ -35,10 +35,7 @@ resolversObj.forEach(resolver => {
 // Directives
 
 let schemaDirectives = {
-  ...autoload(path.join(WIKI.SERVERPATH, 'graph/directives')),
-  rateLimit: createRateLimitDirective({
-    keyGenerator: (directiveArgs, source, args, context, info) => `${context.req.ip}:${info.parentType}.${info.fieldName}`
-  })
+  ...autoload(path.join(WIKI.SERVERPATH, 'graph/directives'))
 }
 
 // Live Trail Logger (admin)

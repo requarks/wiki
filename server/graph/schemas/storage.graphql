@@ -19,6 +19,8 @@ type StorageQuery {
     filter: String
     orderBy: String
   ): [StorageTarget] @auth(requires: ["manage:system"])
+
+  status: [StorageStatus] @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -27,7 +29,7 @@ type StorageQuery {
 
 type StorageMutation {
   updateTargets(
-    targets: [StorageTargetInput]
+    targets: [StorageTargetInput]!
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
@@ -45,6 +47,9 @@ type StorageTarget {
   website: String
   supportedModes: [String]
   mode: String
+  hasSchedule: Boolean!
+  syncInterval: String
+  syncIntervalDefault: String
   config: [KeyValuePair]
 }
 
@@ -52,5 +57,13 @@ input StorageTargetInput {
   isEnabled: Boolean!
   key: String!
   mode: String!
+  syncInterval: String
   config: [KeyValuePairInput]
+}
+
+type StorageStatus {
+  key: String!
+  title: String!
+  status: String!
+  message: String
 }

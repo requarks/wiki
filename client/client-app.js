@@ -3,7 +3,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import VueClipboards from 'vue-clipboards'
-import VueSimpleBreakpoints from 'vue-simple-breakpoints'
 import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
 import { createPersistedQueryLink } from 'apollo-link-persisted-queries'
@@ -144,7 +143,6 @@ Vue.config.productionTip = false
 Vue.use(VueRouter)
 Vue.use(VueApollo)
 Vue.use(VueClipboards)
-Vue.use(VueSimpleBreakpoints)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
 Vue.use(VeeValidate, { events: '' })

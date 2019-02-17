@@ -29,6 +29,7 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 <!--5 start-->
 - Brandon Curtis
 - Loïc CRAMPON
+- 张白驹
 <!--5 end-->
 
 <a href="https://www.patreon.com/requarks">

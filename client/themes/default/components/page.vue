@@ -28,7 +28,7 @@
         )
         v-icon menu
 
-    v-content
+    v-content(ref='content')
       template(v-if='path !== `home`')
         v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
           v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')

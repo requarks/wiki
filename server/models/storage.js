@@ -63,10 +63,15 @@ module.exports = class Storage extends Model {
             key: target.key,
             isEnabled: false,
             mode: target.defaultMode || 'push',
+            syncInterval: target.schedule || 'P0D',
             config: _.transform(target.props, (result, value, key) => {
               _.set(result, key, value.default)
               return result
-            }, {})
+            }, {}),
+            state: {
+              status: 'pending',
+              message: ''
+            }
           })
         } else {
           const targetConfig = _.get(_.find(dbTargets, ['key', target.key]), 'config', {})
@@ -100,13 +105,28 @@ module.exports = class Storage extends Model {
   }
 
   static async initTargets() {
-    targets = await WIKI.models.storage.query().where('isEnabled', true)
+    targets = await WIKI.models.storage.query().where('isEnabled', true).orderBy('key')
     try {
       for(let target of targets) {
         target.fn = require(`../modules/storage/${target.key}/storage`)
         target.fn.config = target.config
         target.fn.mode = target.mode
-        await target.fn.init()
+        try {
+          await target.fn.init()
+          await WIKI.models.storage.query().patch({
+            state: {
+              status: 'operational',
+              message: ''
+            }
+          }).where('key', target.key)
+        } catch (err) {
+          await WIKI.models.storage.query().patch({
+            state: {
+              status: 'error',
+              message: err.message
+            }
+          }).where('key', target.key)
+        }
         // if (target.schedule) {
         //   WIKI.scheduler.registerJob({
         //     name:

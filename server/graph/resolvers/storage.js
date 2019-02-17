@@ -18,6 +18,9 @@ module.exports = {
         return {
           ...targetInfo,
           ...tgt,
+          hasSchedule: (targetInfo.schedule !== false),
+          syncInterval: targetInfo.syncInterval || targetInfo.schedule || 'P0D',
+          syncIntervalDefault: targetInfo.schedule,
           config: _.sortBy(_.transform(tgt.config, (res, value, key) => {
             const configData = _.get(targetInfo.props, key, {})
             res.push({
@@ -33,6 +36,18 @@ module.exports = {
       if (args.filter) { targets = graphHelper.filter(targets, args.filter) }
       if (args.orderBy) { targets = graphHelper.orderBy(targets, args.orderBy) }
       return targets
+    },
+    async status(obj, args, context, info) {
+      let activeTargets = await WIKI.models.storage.query().where('isEnabled', true)
+      return activeTargets.map(tgt => {
+        const targetInfo = _.find(WIKI.data.storage, ['key', tgt.key]) || {}
+        return {
+          key: tgt.key,
+          title: targetInfo.title,
+          status: _.get(tgt, 'state.status', 'pending'),
+          message: _.get(tgt, 'state.message', 'Initializing...')
+        }
+      })
     }
   },
   StorageMutation: {
@@ -42,10 +57,15 @@ module.exports = {
           await WIKI.models.storage.query().patch({
             isEnabled: tgt.isEnabled,
             mode: tgt.mode,
+            syncInterval: tgt.syncInterval,
             config: _.reduce(tgt.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result
-            }, {})
+            }, {}),
+            state: {
+              status: 'pending',
+              message: 'Initializing...'
+            }
           }).where('key', tgt.key)
         }
         await WIKI.models.storage.initTargets()

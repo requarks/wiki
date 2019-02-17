@@ -10,6 +10,9 @@ query {
       website
       supportedModes
       mode
+      hasSchedule
+      syncInterval
+      syncIntervalDefault
       config {
         key
         value

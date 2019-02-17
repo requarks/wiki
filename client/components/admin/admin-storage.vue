@@ -15,7 +15,7 @@
             span {{$t('common:actions.apply')}}
 
         v-card.mt-3
-          v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)
+          v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark, v-model='currentTab')
             v-tab(key='settings'): v-icon settings
             v-tab(v-for='tgt in activeTargets', :key='tgt.key') {{ tgt.title }}
 
@@ -37,16 +37,29 @@
                       )
                   v-flex(xs12, md6)
                     .pa-3.grey.radius-7(:class='$vuetify.dark ? "darken-4" : "lighten-5"')
-                      .body-2.grey--text.text--darken-1 Advanced Settings
-                      v-text-field.mt-3.md2(
-                        v-model='syncInterval'
-                        outline
-                        background-color='grey lighten-2'
-                        prepend-icon='schedule'
-                        label='Synchronization Interval'
-                        hint='For performance reasons, some storage targets synchronize changes on an interval-based schedule, instead of on every change. Define at which interval should the synchronization occur for all storage targets.'
-                        persistent-hint
-                      )
+                      v-layout.pa-2(row, justify-space-between)
+                        .body-2.grey--text.text--darken-1 Status
+                        looping-rhombuses-spinner.mt-1(
+                          :animation-duration='5000'
+                          :rhombus-size='10'
+                          color='#BBB'
+                        )
+                      v-divider
+                      v-toolbar.mt-2.radius-7(
+                        v-for='(tgt, n) in status'
+                        :key='tgt.key'
+                        dense
+                        :color='getStatusColor(tgt.status)'
+                        dark
+                        flat
+                        :extended='tgt.status === `error`',
+                        extension-height='100'
+                        )
+                        .pa-3.red.darken-2.radius-7(v-if='tgt.status === `error`', slot='extension') {{tgt.message}}
+                        .body-2 {{tgt.title}}
+                        v-spacer
+                        .body-1 {{tgt.status}}
+                      v-alert.mt-3.radius-7(v-if='status.length < 1', outline, :value='true', color='indigo') You don't have any active storage target.
 
             v-tab-item(v-for='(tgt, n) in activeTargets', :key='tgt.key', :transition='false', :reverse-transition='false')
               v-card.pa-3(flat, tile)
@@ -125,22 +138,40 @@
                     .pb-3 Content is always pushed to the storage target, overwriting any existing content. This is safest choice for backup scenarios.
                     strong Pull from target #[em.red--text.text--lighten-2(v-if='tgt.supportedModes.indexOf(`pull`) < 0') Unsupported]
                     .pb-3 Content is always pulled from the storage target, overwriting any local content which already exists. This choice is usually reserved for single-use content import. Caution with this option as any local content will always be overwritten!
+
+                  template(v-if='tgt.hasSchedule')
+                    v-divider.mt-3
+                    v-subheader.pl-0 Sync Schedule
+                    .body-1.ml-3 For performance reasons, this storage target synchronize changes on an interval-based schedule, instead of on every change. Define at which interval should the synchronization occur.
+                    .pa-3
+                      duration-picker(v-model='tgt.syncInterval')
+                      .caption.mt-3 The default is every #[strong 5 minutes].
+
 </template>
 
 <script>
 import _ from 'lodash'
 
+import DurationPicker from '../common/duration-picker.vue'
+import { LoopingRhombusesSpinner } from 'epic-spinners'
+
+import statusQuery from 'gql/admin/storage/storage-query-status.gql'
 import targetsQuery from 'gql/admin/storage/storage-query-targets.gql'
 import targetsSaveMutation from 'gql/admin/storage/storage-mutation-save-targets.gql'
 
 export default {
+  components: {
+    DurationPicker,
+    LoopingRhombusesSpinner
+  },
   filters: {
     startCase(val) { return _.startCase(val) }
   },
   data() {
     return {
-      syncInterval: '5m',
-      targets: []
+      currentTab: 0,
+      targets: [],
+      status: []
     }
   },
   computed: {
@@ -163,19 +194,33 @@ export default {
         mutation: targetsSaveMutation,
         variables: {
           targets: this.targets.map(tgt => _.pick(tgt, [
-            'isEnabled',
-            'key',
-            'config',
-            'mode'
-          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
+              'isEnabled',
+              'key',
+              'config',
+              'mode',
+              'syncInterval'
+            ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
         }
       })
+      this.currentTab = 0
       this.$store.commit('showNotification', {
         message: 'Storage configuration saved successfully.',
         style: 'success',
         icon: 'check'
       })
       this.$store.commit(`loadingStop`, 'admin-storage-savetargets')
+    },
+    getStatusColor(state) {
+      switch (state) {
+        case 'pending':
+          return 'purple lighten-2'
+        case 'operational':
+          return 'green'
+        case 'error':
+          return 'red'
+        default:
+          return 'grey darken-2'
+      }
     }
   },
   apollo: {
@@ -190,8 +235,17 @@ export default {
         })), [t => t.value.order])
       })),
       watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-storage-refresh')
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-storage-targets-refresh')
       }
+    },
+    status: {
+      query: statusQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => data.storage.status,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-storage-status-refresh')
+      },
+      pollInterval: 3000
     }
   }
 }
