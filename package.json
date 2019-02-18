@@ -221,6 +221,7 @@
     "ignore-loader": "0.1.2",
     "js-cookie": "2.2.0",
     "mini-css-extract-plugin": "0.5.0",
+    "moment-duration-format": "2.2.2",
     "node-sass": "4.11.0",
     "offline-plugin": "5.0.6",
     "optimize-css-assets-webpack-plugin": "5.0.1",

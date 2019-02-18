@@ -39,11 +39,13 @@
                     .pa-3.grey.radius-7(:class='$vuetify.dark ? "darken-4" : "lighten-5"')
                       v-layout.pa-2(row, justify-space-between)
                         .body-2.grey--text.text--darken-1 Status
-                        looping-rhombuses-spinner.mt-1(
-                          :animation-duration='5000'
-                          :rhombus-size='10'
-                          color='#BBB'
-                        )
+                        .d-flex
+                          looping-rhombuses-spinner.mt-1(
+                            :animation-duration='5000'
+                            :rhombus-size='10'
+                            color='#BBB'
+                          )
+                          .caption.ml-3.grey--text This panel refreshes automatically.
                       v-divider
                       v-toolbar.mt-2.radius-7(
                         v-for='(tgt, n) in status'
@@ -62,7 +64,7 @@
                       v-alert.mt-3.radius-7(v-if='status.length < 1', outline, :value='true', color='indigo') You don't have any active storage target.
 
             v-tab-item(v-for='(tgt, n) in activeTargets', :key='tgt.key', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
+              v-card.wiki-form.pa-3(flat, tile)
                 v-form
                   .targetlogo
                     img(:src='tgt.logo', :alt='tgt.title')
@@ -145,12 +147,15 @@
                     .body-1.ml-3 For performance reasons, this storage target synchronize changes on an interval-based schedule, instead of on every change. Define at which interval should the synchronization occur.
                     .pa-3
                       duration-picker(v-model='tgt.syncInterval')
-                      .caption.mt-3 The default is every #[strong 5 minutes].
+                      .caption.mt-3 Currently set to every #[strong {{getDefaultSchedule(tgt.syncInterval)}}].
+                      .caption The default is every #[strong {{getDefaultSchedule(tgt.syncIntervalDefault)}}].
 
 </template>
 
 <script>
 import _ from 'lodash'
+import moment from 'moment'
+import momentDurationFormatSetup from 'moment-duration-format'
 
 import DurationPicker from '../common/duration-picker.vue'
 import { LoopingRhombusesSpinner } from 'epic-spinners'
@@ -158,6 +163,8 @@ import { LoopingRhombusesSpinner } from 'epic-spinners'
 import statusQuery from 'gql/admin/storage/storage-query-status.gql'
 import targetsQuery from 'gql/admin/storage/storage-query-targets.gql'
 import targetsSaveMutation from 'gql/admin/storage/storage-mutation-save-targets.gql'
+
+momentDurationFormatSetup(moment)
 
 export default {
   components: {
@@ -221,6 +228,9 @@ export default {
         default:
           return 'grey darken-2'
       }
+    },
+    getDefaultSchedule(val) {
+      return moment.duration(val).format('y [years], M [months], d [days], h [hours], m [minutes]')
     }
   },
   apollo: {

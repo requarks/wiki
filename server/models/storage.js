@@ -7,8 +7,6 @@ const commonHelper = require('../helpers/common')
 
 /* global WIKI */
 
-let targets = []
-
 /**
  * Storage model
  */
@@ -104,22 +102,46 @@ module.exports = class Storage extends Model {
     }
   }
 
+  /**
+   * Initialize active storage targets
+   */
   static async initTargets() {
-    targets = await WIKI.models.storage.query().where('isEnabled', true).orderBy('key')
+    this.targets = await WIKI.models.storage.query().where('isEnabled', true).orderBy('key')
     try {
-      for(let target of targets) {
+      // -> Stop and delete existing jobs
+      const prevjobs = _.remove(WIKI.scheduler.jobs, job => job.name === `sync-storage`)
+      if (prevjobs.length > 0) {
+        prevjobs.forEach(job => job.stop())
+      }
+
+      // -> Initialize targets
+      for(let target of this.targets) {
+        const targetDef = _.find(WIKI.data.storage, ['key', target.key])
         target.fn = require(`../modules/storage/${target.key}/storage`)
         target.fn.config = target.config
         target.fn.mode = target.mode
         try {
           await target.fn.init()
+
+          // -> Save succeeded init state
           await WIKI.models.storage.query().patch({
             state: {
               status: 'operational',
               message: ''
             }
           }).where('key', target.key)
+
+          // -> Set recurring sync job
+          if (targetDef.schedule && target.syncInterval !== `P0D`) {
+            WIKI.scheduler.registerJob({
+              name: `sync-storage`,
+              immediate: false,
+              schedule: target.syncInterval,
+              repeat: true
+            }, target.key)
+          }
         } catch (err) {
+          // -> Save initialization error
           await WIKI.models.storage.query().patch({
             state: {
               status: 'error',
@@ -127,11 +149,6 @@ module.exports = class Storage extends Model {
             }
           }).where('key', target.key)
         }
-        // if (target.schedule) {
-        //   WIKI.scheduler.registerJob({
-        //     name:
-        //   }, target.fn.sync)
-        // }
       }
     } catch (err) {
       WIKI.logger.warn(err)
@@ -141,7 +158,7 @@ module.exports = class Storage extends Model {
 
   static async pageEvent({ event, page }) {
     try {
-      for(let target of targets) {
+      for(let target of this.targets) {
         await target.fn[event](page)
       }
     } catch (err) {
