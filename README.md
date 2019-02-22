@@ -37,7 +37,7 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 - **[Documentation](https://docs-beta.requarks.io/)**
 - [Requirements](#requirements)
 - [Demo](#demo)
-- [Change Log](https://github.com/Requarks/wiki/blob/dev/CHANGELOG.md)
+- [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
 - [Feature Requests](https://requests.requarks.io/wiki)
 - [Milestones](#milestones)
 - [Chat with us](#gitter)
