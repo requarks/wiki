@@ -174,6 +174,7 @@ module.exports = class Page extends Model {
     }
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
+      isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
       action: 'updated'
     })
     await WIKI.models.pages.query().patch({

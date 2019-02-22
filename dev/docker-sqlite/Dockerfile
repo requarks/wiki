@@ -11,7 +11,6 @@ RUN apk update && \
 WORKDIR /wiki
 COPY package.json .
 RUN yarn --silent
-COPY ./dev/docker-sqlite/init.sh ./init.sh
 
 ENV dockerdev 1
 ENV DEVDB sqlite

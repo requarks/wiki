@@ -2,6 +2,8 @@ const path = require('path')
 const fs = require('fs-extra')
 const semver = require('semver')
 
+const baseMigrationPath = path.join(WIKI.SERVERPATH, (WIKI.config.db.type !== 'sqlite') ? 'db/migrations' : 'db/migrations-sqlite')
+
 /* global WIKI */
 
 module.exports = {
@@ -10,11 +12,10 @@ module.exports = {
    * @returns Promise<string[]>
    */
   async getMigrations() {
-    const absoluteDir = path.join(WIKI.SERVERPATH, 'db/migrations')
-    const migrationFiles = await fs.readdir(absoluteDir)
+    const migrationFiles = await fs.readdir(baseMigrationPath)
     return migrationFiles.sort(semver.compare).map(m => ({
       file: m,
-      directory: absoluteDir
+      directory: baseMigrationPath
     }))
   },
 
@@ -23,6 +24,6 @@ module.exports = {
   },
 
   getMigration(migration) {
-    return require(path.join(WIKI.SERVERPATH, 'db/migrations', migration.file));
+    return require(path.join(baseMigrationPath, migration.file));
   }
 }

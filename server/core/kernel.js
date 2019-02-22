@@ -11,8 +11,16 @@ module.exports = {
 
     WIKI.models = require('./db').init()
 
-    await WIKI.models.onReady
-    await WIKI.configSvc.loadFromDb()
+    try {
+      await WIKI.models.onReady
+      await WIKI.configSvc.loadFromDb()
+    } catch (err) {
+      WIKI.logger.error('Database Initialization Error: ' + err.message)
+      if (WIKI.IS_DEBUG) {
+        console.error(err)
+      }
+      process.exit(1)
+    }
 
     this.bootMaster()
   },

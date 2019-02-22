@@ -12,30 +12,28 @@ module.exports = {
       new LocalStrategy({
         usernameField: 'email',
         passwordField: 'password'
-      }, (uEmail, uPassword, done) => {
-        WIKI.models.users.query().findOne({
-          email: uEmail,
-          providerKey: 'local'
-        }).then((user) => {
+      }, async (uEmail, uPassword, done) => {
+        try {
+          const user = await WIKI.models.users.query().findOne({
+            email: uEmail,
+            providerKey: 'local'
+          })
           if (user) {
-            return user.verifyPassword(uPassword).then(() => {
-              if (!user.isActive) {
-                done(new WIKI.Error.AuthAccountBanned(), null)
-              } else if (!user.isVerified) {
-                done(new WIKI.Error.AuthAccountNotVerified(), null)
-              } else {
-                done(null, user)
-              }
-            }).catch((err) => {
-              done(err, null)
-            })
+            await user.verifyPassword(uPassword)
+            if (!user.isActive) {
+              done(new WIKI.Error.AuthAccountBanned(), null)
+            } else if (!user.isVerified) {
+              done(new WIKI.Error.AuthAccountNotVerified(), null)
+            } else {
+              done(null, user)
+            }
           } else {
             done(new WIKI.Error.AuthLoginFailed(), null)
           }
-        }).catch((err) => {
+        } catch (err) {
           done(err, null)
-        })
-      }
-      ))
+        }
+      })
+    )
   }
 }

@@ -124,28 +124,29 @@ const init = {
     console.warn(chalk.yellow('--- Closing DB connections...'))
     await global.WIKI.models.knex.destroy()
     console.warn(chalk.yellow('--- Closing Server connections...'))
-    global.WIKI.server.destroy(() => {
-      console.warn(chalk.yellow('--- Purging node modules cache...'))
+    if (global.WIKI.server) {
+      await new Promise((resolve, reject) => global.WIKI.server.destroy(resolve))
+    }
+    console.warn(chalk.yellow('--- Purging node modules cache...'))
 
-      global.WIKI = {}
-      Object.keys(require.cache).forEach(id => {
-        if (/[/\\]server[/\\]/.test(id)) {
-          delete require.cache[id]
-        }
-      })
-      Object.keys(module.constructor._pathCache).forEach(cacheKey => {
-        if (/[/\\]server[/\\]/.test(cacheKey)) {
-          delete module.constructor._pathCache[cacheKey]
-        }
-      })
-
-      console.warn(chalk.yellow('--- Unregistering process listeners...'))
-
-      process.removeAllListeners('unhandledRejection')
-      process.removeAllListeners('uncaughtException')
-
-      require('./server')
+    global.WIKI = {}
+    Object.keys(require.cache).forEach(id => {
+      if (/[/\\]server[/\\]/.test(id)) {
+        delete require.cache[id]
+      }
     })
+    Object.keys(module.constructor._pathCache).forEach(cacheKey => {
+      if (/[/\\]server[/\\]/.test(cacheKey)) {
+        delete module.constructor._pathCache[cacheKey]
+      }
+    })
+
+    console.warn(chalk.yellow('--- Unregistering process listeners...'))
+
+    process.removeAllListeners('unhandledRejection')
+    process.removeAllListeners('uncaughtException')
+
+    require('./server')
   }
 }
 
