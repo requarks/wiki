@@ -133,13 +133,23 @@
                   v-icon(color='grey') public
             v-divider
             v-list-tile
-              v-list-tile-avatar
+              v-list-tile-avatar(tile)
                 img(src='/svg/logo-icons8.svg', alt='Icons8')
               v-list-tile-content
                 v-list-tile-title Icons8
                 v-list-tile-sub-title All the Icons You Need. Guaranteed.
               v-list-tile-action
                 v-btn(icon, href='https://icons8.com', target='_blank')
+                  v-icon(color='grey') public
+            v-divider
+            v-list-tile
+              v-list-tile-avatar(tile)
+                img(src='https://static.requarks.io/logo/lokalise.png', alt='Lokalise')
+              v-list-tile-content
+                v-list-tile-title Lokalise
+                v-list-tile-sub-title Lokalise is a translation management system built for agile teams who want to automate their localization process.
+              v-list-tile-action
+                v-btn(icon, href='https://lokalise.co', target='_blank')
                   v-icon(color='grey') public
 
 </template>

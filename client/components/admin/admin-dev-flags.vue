@@ -38,6 +38,9 @@
 <script>
 import _ from 'lodash'
 
+import flagsQuery from 'gql/admin/dev/dev-query-flags.gql'
+import flagsMutation from 'gql/admin/dev/dev-mutation-save-flags.gql'
+
 export default {
   data() {
     return {
@@ -47,8 +50,39 @@ export default {
     }
   },
   methods: {
-    save() {
-
+    async save() {
+      try {
+        await this.$apollo.mutate({
+          mutation: flagsMutation,
+          variables: {
+            flags: _.transform(this.flags, (result, value, key) => {
+              result.push({ key, value })
+            }, [])
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dev-flags-update')
+          }
+        })
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: 'Flags applied successfully.',
+          icon: 'check'
+        })
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+    }
+  },
+  apollo: {
+    flags: {
+      query: flagsQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => _.transform(data.system.flags, (result, row) => {
+        _.set(result, row.key, row.value)
+      }, {}),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dev-flags-refresh')
+      }
     }
   }
 }

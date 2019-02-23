@@ -80,13 +80,12 @@
               v-list-tile-avatar: v-icon(color='grey lighten-2') build
               v-list-tile-title {{ $t('admin:utilities.title') }}
             v-list-group(
-              prepend-icon='weekend'
-              value='true'
               to='/dev'
               no-action
               v-if='hasPermission([`manage:system`, `manage:api`])'
               )
               v-list-tile(slot='activator')
+                v-list-tile-avatar: v-icon weekend
                 v-list-tile-title {{ $t('admin:dev.title') }}
 
               v-list-tile(to='/dev-flags')

@@ -6,6 +6,7 @@ const filesize = require('filesize')
 const path = require('path')
 const fs = require('fs-extra')
 const moment = require('moment')
+const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
 
@@ -21,8 +22,28 @@ module.exports = {
   Query: {
     async system() { return {} }
   },
+  Mutation: {
+    async system() { return {} }
+  },
   SystemQuery: {
+    flags() {
+      return _.transform(WIKI.config.flags, (result, value, key) => {
+        result.push({ key, value })
+      }, [])
+    },
     async info() { return {} }
+  },
+  SystemMutation: {
+    async updateFlags(obj, args, context) {
+      WIKI.config.flags = _.transform(args.flags, (result, row) => {
+        _.set(result, row.key, row.value)
+      }, {})
+      await WIKI.configSvc.applyFlags()
+      await WIKI.configSvc.saveToDb(['flags'])
+      return {
+        responseResult: graphHelper.generateSuccess('System Flags applied successfully')
+      }
+    }
   },
   SystemInfo: {
     configFile() {

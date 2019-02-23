@@ -14,6 +14,7 @@ module.exports = {
     try {
       await WIKI.models.onReady
       await WIKI.configSvc.loadFromDb()
+      await WIKI.configSvc.applyFlags()
     } catch (err) {
       WIKI.logger.error('Database Initialization Error: ' + err.message)
       if (WIKI.IS_DEBUG) {

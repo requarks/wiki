@@ -6,11 +6,16 @@ extend type Query {
   system: SystemQuery
 }
 
+extend type Mutation {
+  system: SystemMutation
+}
+
 # -----------------------------------------------
 # QUERIES
 # -----------------------------------------------
 
 type SystemQuery {
+  flags: [SystemFlag] @auth(requires: ["manage:system"])
   info: SystemInfo
 }
 
@@ -18,9 +23,25 @@ type SystemQuery {
 # MUTATIONS
 # -----------------------------------------------
 
+type SystemMutation {
+  updateFlags(
+    flags: [SystemFlagInput]!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+}
+
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
+
+type SystemFlag {
+  key: String!
+  value: Boolean!
+}
+
+input SystemFlagInput {
+  key: String!
+  value: Boolean!
+}
 
 type SystemInfo {
   configFile: String @auth(requires: ["manage:system"])

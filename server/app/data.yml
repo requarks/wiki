@@ -33,6 +33,8 @@ defaults:
     theming:
       theme: 'default'
       darkMode: false
+    flags:
+      sqllog: false
     # System defaults
     setup: false
     paths:

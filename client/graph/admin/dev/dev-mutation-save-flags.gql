@@ -1,0 +1,16 @@
+mutation (
+  $flags: [SystemFlagInput]!
+) {
+  system {
+    updateFlags(
+      flags: $flags
+    ) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

@@ -96,5 +96,11 @@ module.exports = {
     }
 
     return true
+  },
+  /**
+   * Apply Dev Flags
+   */
+  async applyFlags() {
+    WIKI.models.knex.client.config.debug = WIKI.config.flags.sqllog
   }
 }

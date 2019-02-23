@@ -1,4 +1,4 @@
-port: $(PORT)
+port: 3000
 bindIP: 0.0.0.0
 db:
   type: $(DB_TYPE)
