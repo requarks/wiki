@@ -28,7 +28,7 @@ module.exports = class Storage extends Model {
   }
 
   static get jsonAttributes() {
-    return ['config']
+    return ['config', 'state']
   }
 
   static async getTargets() {

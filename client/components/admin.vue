@@ -79,9 +79,22 @@
             v-list-tile(to='/utilities', v-if='hasPermission(`manage:system`)', disabled)
               v-list-tile-avatar: v-icon(color='grey lighten-2') build
               v-list-tile-title {{ $t('admin:utilities.title') }}
-            v-list-tile(to='/dev', v-if='hasPermission([`manage:system`, `manage:api`])')
-              v-list-tile-avatar: v-icon weekend
-              v-list-tile-title {{ $t('admin:dev.title') }}
+            v-list-group(
+              prepend-icon='weekend'
+              value='true'
+              to='/dev'
+              no-action
+              v-if='hasPermission([`manage:system`, `manage:api`])'
+              )
+              v-list-tile(slot='activator')
+                v-list-tile-title {{ $t('admin:dev.title') }}
+
+              v-list-tile(to='/dev-flags')
+                v-list-tile-title {{ $t('admin:dev.flags.title') }}
+              v-list-tile(to='/dev-graphiql')
+                v-list-tile-title {{ $t('admin:dev.graphiql.title') }}
+              v-list-tile(to='/dev-voyager')
+                v-list-tile-title {{ $t('admin:dev.voyager.title') }}
             v-divider.my-2
           v-list-tile(to='/contribute')
             v-list-tile-avatar: v-icon favorite
@@ -132,7 +145,9 @@ const router = new VueRouter({
     { path: '/mail', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-mail.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
-    { path: '/dev', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev.vue') },
+    { path: '/dev-flags', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-flags.vue') },
+    { path: '/dev-graphiql', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-graphiql.vue') },
+    { path: '/dev-voyager', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-voyager.vue') },
     { path: '/contribute', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-contribute.vue') }
   ]
 })
