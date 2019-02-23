@@ -111,7 +111,7 @@ We are looking for translators to make Wiki.js UI available in as many languages
 ![Cloudflare](https://wiki.js.org/assets/images/logo_cloudflare.png)  
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
-[![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)](https://m.do.co/c/5f7445bfa4d0)  
+![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
 <h2 align="center">Sponsors</h2>
