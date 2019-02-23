@@ -27,6 +27,7 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 <h2 align="center">Backers via Patreon</h2>
 
 <!--5 start-->
+- Alex Balabanov
 - Brandon Curtis
 - Loïc CRAMPON
 - 张白驹
