@@ -66,6 +66,10 @@ ssl:
   # to 1024 bits (default: null):
   dhparam: null
 
+  # Listen on this HTTP port and redirect all requests to HTTPS.
+  # Set to false to disable (default: 80):
+  redirectNonSSLPort: 80
+
 # ---------------------------------------------------------------------
 # IP address the server should listen to
 # ---------------------------------------------------------------------

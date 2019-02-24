@@ -165,7 +165,7 @@ module.exports = async () => {
   })
 
   // ----------------------------------------
-  // HTTP server
+  // HTTP/S server
   // ----------------------------------------
 
   let srvConnections = {}
@@ -193,6 +193,14 @@ module.exports = async () => {
       return process.exit(1)
     }
     WIKI.server = https.createServer(tlsOpts, app)
+
+    // HTTP Redirect Server
+    if (WIKI.config.ssl.redirectNonSSLPort) {
+      WIKI.serverAlt = http.createServer((req, res) => {
+        res.writeHead(301, { 'Location': 'https://' + req.headers['host'] + req.url })
+        res.end()
+      })
+    }
   } else {
     WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
     WIKI.server = http.createServer(app)
@@ -229,6 +237,32 @@ module.exports = async () => {
   WIKI.server.on('listening', () => {
     if (WIKI.config.ssl.enabled) {
       WIKI.logger.info('HTTPS Server: [ RUNNING ]')
+
+      // Start HTTP Redirect Server
+      if (WIKI.config.ssl.redirectNonSSLPort) {
+        WIKI.serverAlt.listen(WIKI.config.ssl.redirectNonSSLPort, WIKI.config.bindIP)
+
+        WIKI.serverAlt.on('error', (error) => {
+          if (error.syscall !== 'listen') {
+            throw error
+          }
+
+          switch (error.code) {
+            case 'EACCES':
+              WIKI.logger.error('(HTTP Redirect) Listening on port ' + WIKI.config.port + ' requires elevated privileges!')
+              return process.exit(1)
+            case 'EADDRINUSE':
+              WIKI.logger.error('(HTTP Redirect) Port ' + WIKI.config.port + ' is already in use!')
+              return process.exit(1)
+            default:
+              throw error
+          }
+        })
+
+        WIKI.serverAlt.on('listening', () => {
+          WIKI.logger.info('HTTP Server: [ RUNNING in redirect mode ]')
+        })
+      }
     } else {
       WIKI.logger.info('HTTP Server: [ RUNNING ]')
     }
@@ -238,6 +272,10 @@ module.exports = async () => {
     WIKI.server.close(cb)
     for (let key in srvConnections) {
       srvConnections[key].destroy()
+    }
+
+    if (WIKI.config.ssl.enabled && WIKI.config.ssl.redirectNonSSLPort) {
+      WIKI.serverAlt.close(cb)
     }
   }
 
