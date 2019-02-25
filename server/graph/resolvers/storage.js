@@ -45,7 +45,8 @@ module.exports = {
           key: tgt.key,
           title: targetInfo.title,
           status: _.get(tgt, 'state.status', 'pending'),
-          message: _.get(tgt, 'state.message', 'Initializing...')
+          message: _.get(tgt, 'state.message', 'Initializing...'),
+          lastAttempt: _.get(tgt, 'state.lastAttempt', null)
         }
       })
     }
@@ -64,7 +65,8 @@ module.exports = {
             }, {}),
             state: {
               status: 'pending',
-              message: 'Initializing...'
+              message: 'Initializing...',
+              lastAttempt: null
             }
           }).where('key', tgt.key)
         }

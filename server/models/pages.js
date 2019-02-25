@@ -4,8 +4,15 @@ const JSBinType = require('js-binary').Type
 const pageHelper = require('../helpers/page')
 const path = require('path')
 const fs = require('fs-extra')
+const yaml = require('js-yaml')
 
 /* global WIKI */
+
+const frontmatterRegex = {
+  html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,
+  legacy: /^(<!-- TITLE: ?([\w\W]+?) -{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) -{2}>)?(?:\n|\r)*([\w\W]*)*/i,
+  markdown: /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?(?:\n|\r)*([\w\W]*)*/
+}
 
 /**
  * Pages model
@@ -135,6 +142,49 @@ module.exports = class Page extends Model {
     }
   }
 
+  /**
+   * Parse injected page metadata from raw content
+   *
+   * @param {String} raw Raw file contents
+   * @param {String} contentType Content Type
+   */
+  static parseMetadata (raw, contentType) {
+    let result
+    switch (contentType) {
+      case 'markdown':
+        result = frontmatterRegex.markdown.exec(raw)
+        if (result[2]) {
+          return {
+            ...yaml.safeLoad(result[2]),
+            content: result[3]
+          }
+        } else {
+          // Attempt legacy v1 format
+          result = frontmatterRegex.legacy.exec(raw)
+          if (result[2]) {
+            return {
+              title: result[2],
+              description: result[4],
+              content: result[5]
+            }
+          }
+        }
+        break
+      case 'html':
+        result = frontmatterRegex.html.exec(raw)
+        if (result[2]) {
+          return {
+            ...yaml.safeLoad(result[2]),
+            content: result[3]
+          }
+        }
+        break
+    }
+    return {
+      content: raw
+    }
+  }
+
   static async createPage(opts) {
     await WIKI.models.pages.query().insert({
       authorId: opts.authorId,
@@ -160,10 +210,12 @@ module.exports = class Page extends Model {
       isPrivate: opts.isPrivate
     })
     await WIKI.models.pages.renderPage(page)
-    await WIKI.models.storage.pageEvent({
-      event: 'created',
-      page
-    })
+    if (!opts.skipStorage) {
+      await WIKI.models.storage.pageEvent({
+        event: 'created',
+        page
+      })
+    }
     return page
   }
 
@@ -181,7 +233,7 @@ module.exports = class Page extends Model {
       authorId: opts.authorId,
       content: opts.content,
       description: opts.description,
-      isPublished: opts.isPublished,
+      isPublished: opts.isPublished === true || opts.isPublished === 1,
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title
@@ -193,15 +245,25 @@ module.exports = class Page extends Model {
       isPrivate: ogPage.isPrivate
     })
     await WIKI.models.pages.renderPage(page)
-    await WIKI.models.storage.pageEvent({
-      event: 'updated',
-      page
-    })
+    if (!opts.skipStorage) {
+      await WIKI.models.storage.pageEvent({
+        event: 'updated',
+        page
+      })
+    }
     return page
   }
 
   static async deletePage(opts) {
-    const page = await WIKI.models.pages.query().findById(opts.id)
+    let page
+    if (_.has(opts, 'id')) {
+      page = await WIKI.models.pages.query().findById(opts.id)
+    } else {
+      page = await await WIKI.models.pages.query().findOne({
+        path: opts.path,
+        localeCode: opts.locale
+      })
+    }
     if (!page) {
       throw new Error('Invalid Page Id')
     }
@@ -211,10 +273,12 @@ module.exports = class Page extends Model {
     })
     await WIKI.models.pages.query().delete().where('id', page.id)
     await WIKI.models.pages.deletePageFromCache(page)
-    await WIKI.models.storage.pageEvent({
-      event: 'deleted',
-      page
-    })
+    if (!opts.skipStorage) {
+      await WIKI.models.storage.pageEvent({
+        event: 'deleted',
+        page
+      })
+    }
   }
 
   static async renderPage(page) {

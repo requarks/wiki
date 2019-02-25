@@ -68,7 +68,8 @@ module.exports = class Storage extends Model {
             }, {}),
             state: {
               status: 'pending',
-              message: ''
+              message: '',
+              lastAttempt: null
             }
           })
         } else {
@@ -127,7 +128,8 @@ module.exports = class Storage extends Model {
           await WIKI.models.storage.query().patch({
             state: {
               status: 'operational',
-              message: ''
+              message: '',
+              lastAttempt: new Date().toISOString()
             }
           }).where('key', target.key)
 
@@ -145,7 +147,8 @@ module.exports = class Storage extends Model {
           await WIKI.models.storage.query().patch({
             state: {
               status: 'error',
-              message: err.message
+              message: err.message,
+              lastAttempt: new Date().toISOString()
             }
           }).where('key', target.key)
         }

@@ -16,11 +16,12 @@ exports.up = knex => {
       table.string('createdAt').notNullable()
       table.string('action').defaultTo('updated')
 
+      table.integer('pageId').unsigned()
       table.string('editorKey').references('key').inTable('editors')
       table.string('localeCode', 2).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
-    .raw(`INSERT INTO pageHistory SELECT id,path,hash,title,description,isPrivate,isPublished,publishStartDate,publishEndDate,content,contentType,createdAt,'updated' AS action,editorKey,localeCode,authorId FROM pageHistory_old;`)
+    .raw(`INSERT INTO pageHistory SELECT id,path,hash,title,description,isPrivate,isPublished,publishStartDate,publishEndDate,content,contentType,createdAt,'updated' AS action,pageId,editorKey,localeCode,authorId FROM pageHistory_old;`)
     .dropTable('pageHistory_old')
 }
 

@@ -3,6 +3,8 @@ const sgit = require('simple-git/promise')
 const fs = require('fs-extra')
 const _ = require('lodash')
 
+const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
+
 /**
  * Get file extension based on content type
  */
@@ -17,6 +19,33 @@ const getFileExtension = (contentType) => {
   }
 }
 
+const getContenType = (filePath) => {
+  const ext = _.last(filePath.split('.'))
+  switch (ext) {
+    case 'md':
+      return 'markdown'
+    case 'html':
+      return 'html'
+    default:
+      return false
+  }
+}
+
+const getPagePath = (filePath) => {
+  let meta = {
+    locale: 'en',
+    path: _.initial(filePath.split('.')).join('')
+  }
+  const result = localeFolderRegex.exec(meta.path)
+  if (result[1]) {
+    meta = {
+      locale: result[1],
+      path: result[2]
+    }
+  }
+  return meta
+}
+
 module.exports = {
   git: null,
   repoPath: path.join(process.cwd(), 'data/repo'),
@@ -26,6 +55,9 @@ module.exports = {
   async deactivated() {
     // not used
   },
+  /**
+   * INIT
+   */
   async init() {
     WIKI.logger.info('(STORAGE/GIT) Initializing...')
     this.repoPath = path.resolve(WIKI.ROOTPATH, this.config.localRepoPath)
@@ -87,7 +119,12 @@ module.exports = {
 
     WIKI.logger.info('(STORAGE/GIT) Initialization completed.')
   },
+  /**
+   * SYNC
+   */
   async sync() {
+    const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
+
     // Pull rebase
     if (_.includes(['sync', 'pull'], this.mode)) {
       WIKI.logger.info(`(STORAGE/GIT) Performing pull rebase from origin on branch ${this.config.branch}...`)
@@ -103,7 +140,83 @@ module.exports = {
       }
       await this.git.push('origin', this.config.branch, pushOpts)
     }
+
+    // Process Changes
+    if (_.includes(['sync', 'pull'], this.mode)) {
+      const latestCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
+
+      const diff = await this.git.diffSummary([currentCommitLog.hash, latestCommitLog.hash])
+      if (_.get(diff, 'files', []).length > 0) {
+        for(const item of diff.files) {
+          const contentType = getContenType(item.file)
+          if (!contentType) {
+            continue
+          }
+          const contentPath = getPagePath(item.file)
+
+          let itemContents = ''
+          try {
+            itemContents = await fs.readFile(path.join(this.repoPath, item.file), 'utf8')
+            const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
+            const currentPage = await WIKI.models.pages.query().findOne({
+              path: contentPath.path,
+              localeCode: contentPath.locale
+            })
+            if (currentPage) {
+              // Already in the DB, can mark as modified
+              WIKI.logger.info(`(STORAGE/GIT) Page marked as modified: ${item.file}`)
+              await WIKI.models.pages.updatePage({
+                id: currentPage.id,
+                title: _.get(pageData, 'title', currentPage.title),
+                description: _.get(pageData, 'description', currentPage.description),
+                isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
+                isPrivate: false,
+                content: pageData.content,
+                authorId: 1,
+                skipStorage: true
+              })
+            } else {
+              // Not in the DB, can mark as new
+              WIKI.logger.info(`(STORAGE/GIT) Page marked as new: ${item.file}`)
+              const pageEditor = await WIKI.models.editors.getDefaultEditor(contentType)
+              await WIKI.models.pages.createPage({
+                path: contentPath.path,
+                locale: contentPath.locale,
+                title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
+                description: _.get(pageData, 'description', ''),
+                isPublished: _.get(pageData, 'isPublished', true),
+                isPrivate: false,
+                content: pageData.content,
+                authorId: 1,
+                editor: pageEditor,
+                skipStorage: true
+              })
+            }
+          } catch (err) {
+            if (err.code === 'ENOENT' && item.deletions > 0 && item.insertions === 0) {
+              // File was deleted by git, can safely mark as deleted in DB
+              WIKI.logger.info(`(STORAGE/GIT) Page marked as deleted: ${item.file}`)
+
+              await WIKI.models.pages.deletePage({
+                path: contentPath.path,
+                locale: contentPath.locale,
+                skipStorage: true
+              })
+
+            } else {
+              WIKI.logger.warn(`(STORAGE/GIT) Failed to open ${item.file}`)
+              WIKI.logger.warn(err)
+            }
+          }
+        }
+      }
+    }
   },
+  /**
+   * CREATE
+   *
+   * @param {Object} page Page to create
+   */
   async created(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing new file ${page.path}...`)
     const fileName = `${page.path}.${getFileExtension(page.contentType)}`
@@ -115,6 +228,11 @@ module.exports = {
       '--author': `"${page.authorName} <${page.authorEmail}>"`
     })
   },
+  /**
+   * UPDATE
+   *
+   * @param {Object} page Page to update
+   */
   async updated(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing updated file ${page.path}...`)
     const fileName = `${page.path}.${getFileExtension(page.contentType)}`
@@ -126,6 +244,11 @@ module.exports = {
       '--author': `"${page.authorName} <${page.authorEmail}>"`
     })
   },
+  /**
+   * DELETE
+   *
+   * @param {Object} page Page to delete
+   */
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing removed file ${page.path}...`)
     const fileName = `${page.path}.${getFileExtension(page.contentType)}`
@@ -135,6 +258,11 @@ module.exports = {
       '--author': `"${page.authorName} <${page.authorEmail}>"`
     })
   },
+  /**
+   * RENAME
+   *
+   * @param {Object} page Page to rename
+   */
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${page.sourcePath} to ${page.destinationPath}...`)
     const sourceFilePath = `${page.sourcePath}.${getFileExtension(page.contentType)}`

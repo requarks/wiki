@@ -54,10 +54,18 @@
                         :color='getStatusColor(tgt.status)'
                         dark
                         flat
-                        :extended='tgt.status === `error`',
-                        extension-height='100'
+                        :extended='tgt.status !== `pending`',
+                        :extension-height='tgt.status === `error` ? 100 : 70'
                         )
                         .pa-3.red.darken-2.radius-7(v-if='tgt.status === `error`', slot='extension') {{tgt.message}}
+                        v-toolbar.radius-7(
+                          color='green darken-2'
+                          v-else-if='tgt.status !== `pending`'
+                          slot='extension'
+                          flat
+                          dense
+                          )
+                          span Last synchronization {{tgt.lastAttempt | moment('from') }}
                         .body-2 {{tgt.title}}
                         v-spacer
                         .body-1 {{tgt.status}}

@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.0-beta.XX] - 2018-XX-XX
+### Added
+- Added Git changes processing (add/modify/delete)
+- Added Storage last sync date in status panel
+- Added Dev Flags
+- Added HTTP to HTTPS redirect server option
+
+### Fixed
+- Fixed SQLite migrations
+
+### Changed
+- Split admin dev section into separate pages
+
 ## [2.0.0-beta.42] - 2018-02-17
 ### Added
 - Added Patreon link in Contribute admin page

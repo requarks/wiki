@@ -5,6 +5,7 @@ query {
       title
       status
       message
+      lastAttempt
     }
   }
 }

@@ -90,4 +90,14 @@ module.exports = class Editor extends Model {
       WIKI.logger.error(err)
     }
   }
+
+  static async getDefaultEditor(contentType) {
+    // TODO - hardcoded for now
+    switch (contentType) {
+      case 'markdown':
+        return 'markdown'
+      default:
+        return 'code'
+    }
+  }
 }

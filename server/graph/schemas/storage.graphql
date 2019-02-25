@@ -65,5 +65,6 @@ type StorageStatus {
   key: String!
   title: String!
   status: String!
-  message: String
+  message: String!
+  lastAttempt: String!
 }
