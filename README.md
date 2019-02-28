@@ -114,7 +114,7 @@ We are looking for translators to make Wiki.js UI available in as many languages
 ![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
-![Netlify](https://static.requarks.io/logo/netlify.svg | width=64)  
+<img src="https://static.requarks.io/logo/netlify.svg" width="64" alt="Netlify">  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
 
 <h2 align="center">Sponsors</h2>
