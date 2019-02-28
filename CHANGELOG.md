@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [2.0.0-beta.XX] - 2018-XX-XX
+## [2.0.0-beta.XX] - 2019-XX-XX
 ### Added
 - Added Git changes processing (add/modify/delete)
 - Added Storage last sync date in status panel
@@ -15,7 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Split admin dev section into separate pages
 
-## [2.0.0-beta.42] - 2018-02-17
+## [2.0.0-beta.42] - 2019-02-17
 ### Added
 - Added Patreon link in Contribute admin page
 - Added Theme Code Injection functionality
@@ -37,7 +37,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Moved Insert Media button in Markdown editor
 - Use semver for DB migrations ordering
 
-## [2.0.0-beta.11] - 2018-01-20
+## [2.0.0-beta.11] - 2019-01-20
 - First beta release
 
 [2.0.0-beta.42]: https://github.com/Requarks/wiki/releases/tag/2.0.0-beta.42
