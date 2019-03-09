@@ -168,6 +168,7 @@ Vue.component('page-selector', () => import(/* webpackPrefetch: true, webpackChu
 Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
 Vue.component('register', () => import(/* webpackChunkName: "register" */ './components/register.vue'))
 Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
+Vue.component('search-results', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/search-results.vue'))
 
 Vue.component('nav-footer', () => import(/* webpackChunkName: "theme-page"  */ './themes/' + process.env.CURRENT_THEME + '/components/nav-footer.vue'))
 Vue.component('nav-sidebar', () => import(/* webpackChunkName: "theme-page" */ './themes/' + process.env.CURRENT_THEME + '/components/nav-sidebar.vue'))

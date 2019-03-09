@@ -64,7 +64,6 @@
               ref='searchField',
               v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
               v-model='search',
-              clearable,
               color='white',
               label='Search...',
               single-line,
@@ -74,6 +73,7 @@
               prepend-inner-icon='search',
               :loading='searchIsLoading',
               @keyup.enter='searchEnter'
+              @keyup.esc='search = ``'
             )
               v-progress-linear(
                 indeterminate,
@@ -81,6 +81,33 @@
                 height='2',
                 color='blue'
               )
+          v-menu(
+            v-model='searchAdvMenuShown'
+            left
+            offset-y
+            min-width='350'
+            :close-on-content-click='false'
+            )
+            v-btn.nav-header-search-adv(icon, outline, color='grey darken-2', slot='activator')
+              v-icon(color='white') expand_more
+            v-card
+              v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-4`', dense)
+                v-subheader.pl-0 Advanced Search
+              v-card-text
+                v-checkbox.mt-0(
+                  label='Restrict to Current Language'
+                  color='primary'
+                  v-model='searchRestrictLocale'
+                  hide-details
+                )
+                v-checkbox(
+                  label='Restrict to Below Current Path'
+                  color='primary'
+                  v-model='searchRestrictPath'
+                  hide-details
+                )
+              v-card-actions
+                v-btn(outline, small, color='grey') Save as defaults
       v-flex(xs6, :md4='searchIsShown', :md6='!searchIsShown')
         v-toolbar.nav-header-inner(color='black', dark, flat)
           v-spacer
@@ -97,7 +124,7 @@
             v-btn.btn-animate-rotate(icon, href='/a', slot='activator')
               v-icon(color='grey') settings
             span Admin
-          v-menu(v-if='isAuthenticated', offset-y, min-width='300')
+          v-menu(v-if='isAuthenticated', offset-y, min-width='300', left)
             v-tooltip(bottom, slot='activator')
               v-btn.btn-animate-grow(icon, slot='activator', outline, color='blue')
                 v-icon(color='grey') account_circle
@@ -135,7 +162,7 @@
 </template>
 
 <script>
-import { get } from 'vuex-pathify'
+import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import Cookies from 'js-cookie'
 
@@ -156,14 +183,17 @@ export default {
   data() {
     return {
       menuIsShown: true,
-      searchIsLoading: false,
       searchIsShown: true,
-      search: '',
+      searchAdvMenuShown: false,
       newPageModal: false,
       deletePageModal: false
     }
   },
   computed: {
+    search: sync('site/search'),
+    searchIsLoading: sync('site/searchIsLoading'),
+    searchRestrictLocale: sync('site/searchRestrictLocale'),
+    searchRestrictPath: sync('site/searchRestrictPath'),
     isLoading: get('isLoading'),
     title: get('site/title'),
     path: get('page/path'),
@@ -273,6 +303,25 @@ export default {
   &-inner {
     .v-toolbar__content {
       padding: 0;
+    }
+  }
+
+  &-search-adv {
+    position: absolute;
+    top: 7px;
+    right: 12px;
+    border-radius: 4px !important;
+
+    &::before {
+      border-radius: 4px !important;
+    }
+
+    &:hover, &:focus {
+      position: absolute !important;
+
+      &::before {
+        border-radius: 4px;
+      }
     }
   }
 }

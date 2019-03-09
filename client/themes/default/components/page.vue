@@ -117,6 +117,7 @@
               span Print Format
             v-spacer
     nav-footer
+    search-results
     v-fab-transition
       v-btn(v-if='upBtnShown', fab, fixed, bottom, right, small, @click='$vuetify.goTo(0, scrollOpts)', color='primary')
         v-icon arrow_upward

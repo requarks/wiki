@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 192 192" width="64px" height="64px">
+  <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal">
+    <path fill="#ffffff" d="M150.3,156.6h-108.6c-5.55,0 -10.65,-2.85 -13.35,-7.8c-2.7,-4.8 -2.7,-10.65 0.15,-15.45l54.3,-90.45c2.85,-4.65 7.65,-7.5 13.2,-7.5c5.55,0 10.35,2.85 13.2,7.5l54.15,90.45c2.85,4.8 3,10.65 0.15,15.45c-2.7,4.8 -7.65,7.8 -13.2,7.8zM96,44.4c-2.25,0 -4.2,1.05 -5.4,3.15l-54.3,90.45c-1.2,1.95 -1.2,4.35 -0.15,6.45c1.05,2.1 3.15,3.15 5.55,3.15h108.45c2.25,0 4.35,-1.2 5.55,-3.15c1.2,-1.95 1.05,-4.35 -0.15,-6.45l-54.15,-90.45c-1.2,-1.95 -3.15,-3.15 -5.4,-3.15z"/>
+    <path fill="#ffffff" d="M91.5,109.95c0,2.55 1.95,4.5 4.5,4.5v0c2.55,0 4.5,-1.95 4.5,-4.5v-31.5c0,-2.55 -1.95,-4.5 -4.5,-4.5v0c-2.55,0 -4.5,1.95 -4.5,4.5"/>
+    <circle fill="#ffffff" cx="64" cy="83.5" transform="scale(1.5,1.5)" r="3"/>
+  </g>
+</svg>

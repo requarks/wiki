@@ -151,6 +151,16 @@
               v-list-tile-action
                 v-btn(icon, href='https://lokalise.co', target='_blank')
                   v-icon(color='grey') public
+            v-divider
+            v-list-tile
+              v-list-tile-avatar(tile)
+                img(src='https://static.requarks.io/logo/netlify.svg', alt='Netlify')
+              v-list-tile-content
+                v-list-tile-title Netlify
+                v-list-tile-sub-title Deploy modern static websites with Netlify. Get CDN, Continuous deployment, 1-click HTTPS, and all the services you need.
+              v-list-tile-action
+                v-btn(icon, href='https://wwwnetlify.com', target='_blank')
+                  v-icon(color='grey') public
 
 </template>
 

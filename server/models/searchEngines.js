@@ -95,6 +95,19 @@ module.exports = class SearchEngine extends Model {
     }
   }
 
+  static async initEngine() {
+    const searchEngine = await WIKI.models.searchEngines.query().findOne('isEnabled', true)
+    if (searchEngine) {
+      WIKI.data.searchEngine = require(`../modules/search/${searchEngine.key}/engine`)
+      WIKI.data.searchEngine.config = searchEngine.config
+      try {
+        await WIKI.data.searchEngine.init()
+      } catch (err) {
+        WIKI.logger.warn(err)
+      }
+    }
+  }
+
   static async pageEvent({ event, page }) {
     const searchEngines = await WIKI.models.storage.query().where('isEnabled', true)
     if (searchEngines && searchEngines.length > 0) {

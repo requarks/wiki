@@ -6,7 +6,7 @@
           img(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Search Engine
-            .subheading.grey--text Configure the search capabilities of your wiki #[v-chip(label, color='primary', small).white--text coming soon]
+            .subheading.grey--text Configure the search capabilities of your wiki
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh
@@ -17,74 +17,69 @@
             v-icon(left) check
             span {{$t('common:actions.apply')}}
 
-        v-card.mt-3
-          v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)
-            v-tab(key='settings'): v-icon settings
-            v-tab(v-for='engine in activeEngines', :key='engine.key') {{ engine.title }}
+      v-flex(lg3, xs12)
+        v-card
+          v-toolbar(flat, color='primary', dark, dense)
+            .subheading Search Engine
+          v-card-text
+            v-radio-group.my-0(v-model='selectedEngine')
+              v-radio.my-1(
+                v-for='(engine, n) in engines'
+                :key='engine.key'
+                :label='engine.title'
+                :value='engine.key'
+                color='primary'
+                hide-details
+              )
 
-            v-tab-item(key='settings', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
-                .body-2.grey--text.text--darken-1 Select which search engine to enable:
-                .caption.grey--text.pb-2 Some search engines require additional configuration in their dedicated tab (when selected).
-                v-form
-                  v-radio-group(v-model='selectedEngine')
-                    v-radio.my-1(
-                      v-for='(engine, n) in engines'
-                      :key='engine.key'
-                      :label='engine.title'
-                      :value='engine.key'
-                      color='primary'
-                      hide-details
-                      disabled
-                    )
-
-            v-tab-item(v-for='(engine, n) in activeEngines', :key='engine.key', :transition='false', :reverse-transition='false')
-              v-card.pa-3(flat, tile)
-                v-form
-                  .enginelogo
-                    img(:src='engine.logo', :alt='engine.title')
-                  v-subheader.pl-0 {{engine.title}}
-                  .caption {{engine.description}}
-                  .caption: a(:href='engine.website') {{engine.website}}
-                  v-divider.mt-3
-                  v-subheader.pl-0 Engine Configuration
-                  .body-1.ml-3(v-if='!engine.config || engine.config.length < 1') This engine has no configuration options you can modify.
-                  template(v-else, v-for='cfg in logger.config')
-                    v-select(
-                      v-if='cfg.value.type === "string" && cfg.value.enum'
-                      outline
-                      background-color='grey lighten-2'
-                      :items='cfg.value.enum'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      :class='cfg.value.hint ? "mb-2" : ""'
-                    )
-                    v-switch(
-                      v-else-if='cfg.value.type === "boolean"'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      color='primary'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      )
-                    v-text-field(
-                      v-else
-                      outline
-                      background-color='grey lighten-2'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      :class='cfg.value.hint ? "mb-2" : ""'
-                      )
+      v-flex(lg9, xs12)
+        v-card.wiki-form
+          v-toolbar(color='primary', dense, flat, dark)
+            .subheading {{engine.title}}
+          v-card-text
+            .enginelogo
+              img(:src='engine.logo', :alt='engine.title')
+            .caption.pt-3 {{engine.description}}
+            .caption.pb-3: a(:href='engine.website') {{engine.website}}
+            v-divider.mt-3
+            v-subheader.pl-0 Engine Configuration
+            .body-1.ml-3(v-if='!engine.config || engine.config.length < 1') This engine has no configuration options you can modify.
+            template(v-else, v-for='cfg in engine.config')
+              v-select(
+                v-if='cfg.value.type === "string" && cfg.value.enum'
+                outline
+                background-color='grey lighten-2'
+                :items='cfg.value.enum'
+                :key='cfg.key'
+                :label='cfg.value.title'
+                v-model='cfg.value.value'
+                prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
+              )
+              v-switch.mb-3(
+                v-else-if='cfg.value.type === "boolean"'
+                :key='cfg.key'
+                :label='cfg.value.title'
+                v-model='cfg.value.value'
+                color='primary'
+                prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                )
+              v-text-field(
+                v-else
+                outline
+                background-color='grey lighten-2'
+                :key='cfg.key'
+                :label='cfg.value.title'
+                v-model='cfg.value.value'
+                prepend-icon='settings_applications'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
+                )
 </template>
 
 <script>
@@ -97,23 +92,16 @@ export default {
   data() {
     return {
       engines: [],
-      selectedEngine: 'db'
-    }
-  },
-  computed: {
-    activeEngines() {
-      return _.filter(this.engines, 'isEnabled')
+      selectedEngine: '',
+      engine: {}
     }
   },
   watch: {
     selectedEngine(newValue, oldValue) {
-      this.engines.forEach(engine => {
-        if (engine.key === newValue) {
-          engine.isEnabled = true
-        } else {
-          engine.isEnabled = false
-        }
-      })
+      this.engine = _.find(this.engines, ['key', newValue]) || {}
+    },
+    engines(newValue, oldValue) {
+      this.selectedEngine = 'db'
     }
   },
   methods: {
@@ -156,7 +144,13 @@ export default {
     engines: {
       query: enginesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.search.searchEngines).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))})),
+      update: (data) => _.cloneDeep(data.search.searchEngines).map(str => ({
+        ...str,
+        config: _.sortBy(str.config.map(cfg => ({
+          ...cfg,
+          value: JSON.parse(cfg.value)
+        })), [t => t.value.order])
+      })),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-search-refresh')
       }

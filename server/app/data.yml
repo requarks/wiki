@@ -45,6 +45,8 @@ defaults:
       maxAge: 600
       methods: 'GET,POST'
       origin: true
+    search:
+      maxHits: 100
 localeNamespaces:
   - admin
   - auth

@@ -16,7 +16,18 @@ module.exports = {
         offsetPage: args.offsetPage || 0,
         offsetSize: args.offsetSize || 100
       })
-    }
+    },
+    async search (obj, args, context) {
+      if (WIKI.data.searchEngine) {
+        return WIKI.data.searchEngine.query(args.query, args)
+      } else {
+        return {
+          results: [],
+          suggestions: [],
+          totalHits: 0
+        }
+      }
+    },
   },
   PageMutation: {
     async create(obj, args, context) {

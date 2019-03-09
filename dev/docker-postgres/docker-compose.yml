@@ -27,12 +27,28 @@ services:
     ports:
       - "3001:8080"
 
+  solr:
+    image: solr:7-alpine
+    logging:
+      driver: "none"
+    networks:
+      - wikinet
+    ports:
+      - "8983:8983"
+    volumes:
+      - solr-data:/opt/solr/server/solr/mycores
+    entrypoint:
+      - docker-entrypoint.sh
+      - solr-precreate
+      - wiki
+
   wiki:
     build:
       context: .
       dockerfile: dev/docker-postgres/Dockerfile
     depends_on:
       - db
+      - solr
     networks:
       - wikinet
     ports:
@@ -47,3 +63,4 @@ networks:
 
 volumes:
   db-data:
+  solr-data:

@@ -6,7 +6,11 @@ const state = {
   company: '',
   dark: siteConfig.darkMode,
   mascot: true,
-  title: siteConfig.title
+  title: siteConfig.title,
+  search: '',
+  searchIsLoading: false,
+  searchRestrictLocale: false,
+  searchRestrictPath: false
 }
 
 export default {

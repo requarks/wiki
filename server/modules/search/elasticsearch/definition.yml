@@ -4,4 +4,41 @@ description: Elasticsearch is a distributed, RESTful search and analytics engine
 author: requarks.io
 logo: https://static.requarks.io/logo/elasticsearch.svg
 website: https://www.elastic.co/products/elasticsearch
-props: {}
+props:
+  apiVersion:
+    type: String
+    title: API Version
+    hint: Should match the version of the Elasticsearch nodes you are connecting to
+    order: 1
+    enum:
+      - '6.6'
+      - '6.5'
+      - '6.4'
+      - '6.3'
+    default: '6.6'
+  host:
+    type: String
+    title: Host(s)
+    hint: Comma-separated list of Elasticsearch hosts to connect to
+    order: 2
+  user:
+    type: String
+    title: Username
+    order: 3
+  pass:
+    type: String
+    title: Password
+    order: 4
+  sniff:
+    type: Boolean
+    title: Sniff on start
+    hint: 'Should Wiki.js attempt to detect the rest of the cluster on first connect? (Default: off)'
+    default: false
+    order: 5
+  sniffInterval:
+    type: Number
+    title: Sniff Interval
+    hint: '0 = disabled, Interval in seconds to check for updated list of nodes in cluster. (Default: 0)'
+    order: 6
+    default: 0
+

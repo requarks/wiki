@@ -20,6 +20,12 @@ type PageQuery {
     offsetPage: Int
     offsetSize: Int
   ): PageHistoryResult @auth(requires: ["manage:system", "read:pages"])
+
+  search(
+    query: String!
+    path: String
+    locale: String
+  ): PageSearchResponse! @auth(requires: ["manage:system", "read:pages"])
 }
 
 # -----------------------------------------------
@@ -87,4 +93,18 @@ type PageHistory {
 type PageHistoryResult {
   trail: [PageHistory]
   total: Int!
+}
+
+type PageSearchResponse {
+  results: [PageSearchResult]!
+  suggestions: [String]!
+  totalHits: Int!
+}
+
+type PageSearchResult {
+  id: Int!
+  title: String!
+  description: String!
+  path: String!
+  locale: String!
 }

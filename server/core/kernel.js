@@ -69,6 +69,7 @@ module.exports = {
     await WIKI.models.storage.refreshTargetsFromDisk()
 
     await WIKI.auth.activateStrategies()
+    await WIKI.models.searchEngines.initEngine()
     await WIKI.models.storage.initTargets()
     WIKI.scheduler.start()
   },
