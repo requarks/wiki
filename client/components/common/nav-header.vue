@@ -2,18 +2,18 @@
   v-toolbar.nav-header(color='black', dark, app, clipped-left, fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
     v-toolbar(color='deep-purple', flat, slot='extension', v-if='searchIsShown && $vuetify.breakpoint.smAndDown')
       v-text-field(
-        ref='searchFieldMobile',
-        v-model='search',
-        clearable,
+        ref='searchFieldMobile'
+        v-model='search'
+        clearable
         background-color='deep-purple'
-        color='white',
-        label='Search...',
-        single-line,
+        color='white'
+        label='Search...'
+        single-line
         solo
         flat
-        hide-details,
-        prepend-inner-icon='search',
-        :loading='searchIsLoading',
+        hide-details
+        prepend-inner-icon='search'
+        :loading='searchIsLoading'
         @keyup.enter='searchEnter'
       )
     v-layout(row)
@@ -73,7 +73,9 @@
               prepend-inner-icon='search',
               :loading='searchIsLoading',
               @keyup.enter='searchEnter'
-              @keyup.esc='search = ``'
+              @keyup.esc='searchClose'
+              @focus='searchFocus'
+              @blur='searchBlur'
             )
               v-progress-linear(
                 indeterminate,
@@ -191,6 +193,7 @@ export default {
   },
   computed: {
     search: sync('site/search'),
+    searchIsFocused: sync('site/searchIsFocused'),
     searchIsLoading: sync('site/searchIsLoading'),
     searchRestrictLocale: sync('site/searchRestrictLocale'),
     searchRestrictPath: sync('site/searchRestrictPath'),
@@ -231,6 +234,16 @@ export default {
     }
   },
   methods: {
+    searchFocus() {
+      this.searchIsFocused = true
+    },
+    searchBlur() {
+      this.searchIsFocused = false
+    },
+    searchClose() {
+      this.search = ''
+      this.searchBlur()
+    },
     searchToggle() {
       this.searchIsShown = !this.searchIsShown
       if (this.searchIsShown) {

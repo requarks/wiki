@@ -8,6 +8,7 @@ const state = {
   mascot: true,
   title: siteConfig.title,
   search: '',
+  searchIsFocused: false,
   searchIsLoading: false,
   searchRestrictLocale: false,
   searchRestrictPath: false

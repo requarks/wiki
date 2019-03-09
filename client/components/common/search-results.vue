@@ -1,14 +1,17 @@
 <template lang="pug">
-  .search-results(v-if='search.length > 1')
+  .search-results(v-if='searchIsFocused || search.length > 1')
     .search-results-container
-      .search-results-loader(v-if='searchIsLoading && results.length < 1')
+      .search-results-help(v-if='search.length < 2')
+        img(src='/svg/icon-search-alt.svg')
+        .mt-4 Type at least 2 characters to start searching...
+      .search-results-loader(v-else-if='searchIsLoading && results.length < 1')
         orbit-spinner(
           :animation-duration='1000'
           :size='100'
           color='#FFF'
         )
         .headline.mt-5 Searching...
-      .search-results-none(v-if='!searchIsLoading && results.length < 1')
+      .search-results-none(v-else-if='!searchIsLoading && results.length < 1')
         img(src='/svg/icon-no-results.svg', alt='No Results')
         .subheading No pages matching your query.
       template(v-if='results.length > 0')
@@ -41,7 +44,7 @@
               v-list-tile-content
                 v-list-tile-title(v-html='term')
             v-divider(v-if='idx < suggestions.length - 1')
-      .text-xs-center.pt-4
+      .text-xs-center.pt-5(v-if='search.length > 1')
         v-btn(outline, color='orange', @click='search = ``', v-if='results.length > 0')
           v-icon(left) save
           span Copy Search Link
@@ -73,6 +76,7 @@ export default {
   },
   computed: {
     search: sync('site/search'),
+    searchIsFocused: sync('site/searchIsFocused'),
     searchIsLoading: sync('site/searchIsLoading'),
     searchRestrictLocale: sync('site/searchRestrictLocale'),
     searchRestrictPath: sync('site/searchRestrictPath'),
@@ -89,6 +93,13 @@ export default {
       return this.response.totalHits > 0 ? 0 : Math.ceil(this.response.totalHits / 10)
     }
   },
+  watch: {
+    search(newValue, oldValue) {
+      if (newValue.length < 2) {
+        this.response.results = []
+      }
+    }
+  },
   methods: {
     setSearchTerm(term) {
       this.search = term
@@ -102,7 +113,8 @@ export default {
           query: this.search
         }
       },
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: 'network-only',
+      debounce: 300,
       throttle: 1000,
       skip() {
         return !this.search || this.search.length < 2
@@ -136,6 +148,18 @@ export default {
     margin: 12px auto;
     width: 90vw;
     max-width: 1024px;
+  }
+
+  &-help {
+    text-align: center;
+    padding: 32px 0;
+    font-size: 18px;
+    font-weight: 300;
+    color: #FFF;
+
+    img {
+      width: 104px;
+    }
   }
 
   &-loader {

@@ -14,28 +14,6 @@ module.exports = {
     // not used
   },
   /**
-   * SUGGEST
-   *
-   * @param {String} q Query
-   * @param {Object} opts Additional options
-   */
-  async suggest(q, opts) {
-    const results = await WIKI.models.pages.query()
-      .column('title')
-      .where(builder => {
-        builder.where('isPublished', true)
-        if (opts.locale) {
-          builder.andWhere('locale', opts.locale)
-        }
-        if (opts.path) {
-          builder.andWhere('path', 'like', `${opts.path}%`)
-        }
-        builder.andWhere('title', 'like', `%${q}%`)
-      })
-      .limit(10)
-    return _.uniq(_.filter(_.flatten(results.map(r => r.title.split(' '))), w => w.indexOf(q) >= 0))
-  },
-  /**
    * QUERY
    *
    * @param {String} q Query
