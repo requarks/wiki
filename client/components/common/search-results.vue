@@ -16,9 +16,9 @@
         .subheading No pages matching your query.
       template(v-if='results.length > 0')
         v-subheader.white--text Found {{response.totalHits}} results
-        v-list.radius-7(two-line)
+        v-list.search-results-items.radius-7(two-line)
           template(v-for='(item, idx) of results')
-            v-list-tile(@click='', :key='item.id')
+            v-list-tile(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
               v-list-tile-avatar(tile)
                 img(src='/svg/icon-selective-highlighting.svg')
               v-list-tile-content
@@ -36,9 +36,9 @@
         )
       template(v-if='suggestions.length > 0')
         v-subheader.white--text.mt-3 Did you mean...
-        v-list.radius-7(dense, dark)
+        v-list.search-results-suggestions.radius-7(dense, dark)
           template(v-for='(term, idx) of suggestions')
-            v-list-tile(:key='term', @click='setSearchTerm(term)')
+            v-list-tile(:key='term', @click='setSearchTerm(term)', :class='idx + results.length === cursor ? `highlighted` : ``')
               v-list-tile-avatar
                 v-icon search
               v-list-tile-content
@@ -66,6 +66,7 @@ export default {
   },
   data() {
     return {
+      cursor: 0,
       pagination: 1,
       response: {
         results: [],
@@ -95,15 +96,39 @@ export default {
   },
   watch: {
     search(newValue, oldValue) {
+      this.cursor = 0
       if (newValue.length < 2) {
         this.response.results = []
+        this.response.suggestions = []
+      } else {
+        this.searchIsLoading = true
       }
     }
   },
   methods: {
     setSearchTerm(term) {
       this.search = term
+    },
+    goToPage(item) {
+      window.location.assign(`/${item.locale}/${item.path}`)
     }
+  },
+  mounted() {
+    this.$root.$on('searchMove', (dir) => {
+      this.cursor += (dir === 'up' ? -1 : 1)
+      if (this.cursor < -1) {
+        this.cursor = -1
+      } else if (this.cursor > this.results.length + this.suggestions.length - 1) {
+        this.cursor = this.results.length + this.suggestions.length - 1
+      }
+    })
+    this.$root.$on('searchEnter', () => {
+      if (this.cursor >= 0 && this.cursor < this.results.length) {
+        this.goToPage(_.nth(this.results, this.cursor))
+      } else if (this.cursor >= 0) {
+        this.setSearchTerm(_.nth(this.suggestions, this.cursor - this.results.length))
+      }
+    })
   },
   apollo: {
     response: {
@@ -176,6 +201,18 @@ export default {
 
     img {
       width: 200px;
+    }
+  }
+
+  &-items {
+    .highlighted {
+      background-color: mc('blue', '50');
+    }
+  }
+
+  &-suggestions {
+    .highlighted {
+      background-color: mc('blue', '500');
     }
   }
 }

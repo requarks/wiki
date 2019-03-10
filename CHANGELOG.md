@@ -4,6 +4,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [2.0.0-beta.XX] - 2019-XX-XX
 ### Added
+- Added Search Results overlay
+- Added Search Engine - PostgreSQL
+- Added Search Engine - DB Basic
 - Added Git changes processing (add/modify/delete)
 - Added Storage last sync date in status panel
 - Added Dev Flags

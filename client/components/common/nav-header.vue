@@ -76,6 +76,8 @@
               @keyup.esc='searchClose'
               @focus='searchFocus'
               @blur='searchBlur'
+              @keyup.down='searchMove(`down`)'
+              @keyup.up='searchMove(`up`)'
             )
               v-progress-linear(
                 indeterminate,
@@ -253,7 +255,10 @@ export default {
       }
     },
     searchEnter() {
-      this.searchIsLoading = true
+      this.$root.$emit('searchEnter', true)
+    },
+    searchMove(dir) {
+      this.$root.$emit('searchMove', dir)
     },
     pageNew () {
       this.newPageModal = true
