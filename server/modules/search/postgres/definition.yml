@@ -4,6 +4,7 @@ description: Advanced PostgreSQL-based search engine.
 author: requarks.io
 logo: https://static.requarks.io/logo/postgresql.svg
 website: https://www.requarks.io/
+isAvailable: true
 props:
   dictLanguage:
     type: String

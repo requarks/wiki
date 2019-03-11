@@ -23,6 +23,7 @@
         router-view
 
     nav-footer
+    search-results
 </template>
 
 <script>

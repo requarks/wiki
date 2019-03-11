@@ -38,7 +38,7 @@ module.exports = {
   SearchMutation: {
     async updateSearchEngines(obj, args, context) {
       try {
-        for (let searchEngine of args.searchEngines) {
+        for (let searchEngine of args.engines) {
           await WIKI.models.searchEngines.query().patch({
             isEnabled: searchEngine.isEnabled,
             config: _.reduce(searchEngine.config, (result, value, key) => {
@@ -47,8 +47,19 @@ module.exports = {
             }, {})
           }).where('key', searchEngine.key)
         }
+        await WIKI.models.searchEngines.initEngine({ activate: true })
         return {
           responseResult: graphHelper.generateSuccess('Search Engines updated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async rebuildIndex (obj, args, context) {
+      try {
+        await WIKI.data.searchEngine.rebuild()
+        return {
+          responseResult: graphHelper.generateSuccess('Index rebuilt successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)

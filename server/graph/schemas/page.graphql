@@ -102,7 +102,7 @@ type PageSearchResponse {
 }
 
 type PageSearchResult {
-  id: Int!
+  id: String!
   title: String!
   description: String!
   path: String!

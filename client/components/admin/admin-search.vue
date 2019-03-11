@@ -28,6 +28,7 @@
                 :key='engine.key'
                 :label='engine.title'
                 :value='engine.key'
+                :disabled='!engine.isAvailable'
                 color='primary'
                 hide-details
               )
@@ -87,6 +88,7 @@ import _ from 'lodash'
 
 import enginesQuery from 'gql/admin/search/search-query-engines.gql'
 import enginesSaveMutation from 'gql/admin/search/search-mutation-save-engines.gql'
+import enginesRebuildMutation from 'gql/admin/search/search-mutation-rebuild-index.gql'
 
 export default {
   data() {
@@ -101,7 +103,7 @@ export default {
       this.engine = _.find(this.engines, ['key', newValue]) || {}
     },
     engines(newValue, oldValue) {
-      this.selectedEngine = 'db'
+      this.selectedEngine = _.get(_.find(this.engines, 'isEnabled'), 'key', 'db')
     }
   },
   methods: {
@@ -115,29 +117,50 @@ export default {
     },
     async save() {
       this.$store.commit(`loadingStart`, 'admin-search-saveengines')
-      await this.$apollo.mutate({
-        mutation: enginesSaveMutation,
-        variables: {
-          engines: this.engines.map(tgt => _.pick(tgt, [
-            'isEnabled',
-            'key',
-            'config'
-          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: enginesSaveMutation,
+          variables: {
+            engines: this.engines.map(tgt => ({
+              isEnabled: tgt.key === this.selectedEngine,
+              key: tgt.key,
+              config: tgt.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))
+            }))
+          }
+        })
+        if (_.get(resp, 'data.search.updateSearchEngines.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            message: 'Search engine configuration saved successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+        } else {
+          throw new Error(_.get(resp, 'data.search.updateSearchEngines.responseResult.message', 'An unexpected error occured'))
         }
-      })
-      this.$store.commit('showNotification', {
-        message: 'Search engine configuration saved successfully.',
-        style: 'success',
-        icon: 'check'
-      })
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
       this.$store.commit(`loadingStop`, 'admin-search-saveengines')
     },
     async rebuild () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'directions_boat'
-      })
+      this.$store.commit(`loadingStart`, 'admin-search-rebuildindex')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: enginesRebuildMutation
+        })
+        if (_.get(resp, 'data.search.rebuildIndex.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            message: 'Index rebuilt successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+        } else {
+          throw new Error(_.get(resp, 'data.search.rebuildIndex.responseResult.message', 'An unexpected error occured'))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.$store.commit(`loadingStop`, 'admin-search-rebuildindex')
     }
   },
   apollo: {

@@ -27,8 +27,10 @@ type SearchQuery {
 
 type SearchMutation {
   updateSearchEngines(
-    searchEngines: [SearchEngineInput]
+    engines: [SearchEngineInput]
   ): DefaultResponse @auth(requires: ["manage:system"])
+
+  rebuildIndex: DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -42,6 +44,7 @@ type SearchEngine {
   description: String
   logo: String
   website: String
+  isAvailable: Boolean
   config: [KeyValuePair]
 }
 

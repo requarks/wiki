@@ -95,31 +95,30 @@ module.exports = class SearchEngine extends Model {
     }
   }
 
-  static async initEngine() {
+  static async initEngine({ activate = false } = {}) {
     const searchEngine = await WIKI.models.searchEngines.query().findOne('isEnabled', true)
     if (searchEngine) {
       WIKI.data.searchEngine = require(`../modules/search/${searchEngine.key}/engine`)
       WIKI.data.searchEngine.config = searchEngine.config
+      if (activate) {
+        try {
+          await WIKI.data.searchEngine.activate()
+        } catch (err) {
+          // -> Revert to basic engine
+          if (err instanceof WIKI.Error.SearchActivationFailed) {
+            await WIKI.models.searchEngines.query().patch({ isEnabled: false }).where('key', searchEngine.key)
+            await WIKI.models.searchEngines.query().patch({ isEnabled: true }).where('key', 'db')
+            await WIKI.models.searchEngines.initEngine()
+          }
+          throw err
+        }
+      }
+
       try {
         await WIKI.data.searchEngine.init()
       } catch (err) {
         WIKI.logger.warn(err)
       }
-    }
-  }
-
-  static async pageEvent({ event, page }) {
-    const searchEngines = await WIKI.models.storage.query().where('isEnabled', true)
-    if (searchEngines && searchEngines.length > 0) {
-      _.forEach(searchEngines, logger => {
-        WIKI.queue.job.syncStorage.add({
-          event,
-          logger,
-          page
-        }, {
-          removeOnComplete: true
-        })
-      })
     }
   }
 }

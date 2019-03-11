@@ -4,4 +4,5 @@ description: Amazon CloudSearch is a managed service in the AWS Cloud that makes
 author: requarks.io
 logo: https://static.requarks.io/logo/aws-cloudsearch.svg
 website: https://aws.amazon.com/cloudsearch/
+isAvailable: false
 props: {}

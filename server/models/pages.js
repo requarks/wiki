@@ -210,6 +210,7 @@ module.exports = class Page extends Model {
       isPrivate: opts.isPrivate
     })
     await WIKI.models.pages.renderPage(page)
+    await WIKI.data.searchEngine.created(page)
     if (!opts.skipStorage) {
       await WIKI.models.storage.pageEvent({
         event: 'created',
@@ -245,6 +246,7 @@ module.exports = class Page extends Model {
       isPrivate: ogPage.isPrivate
     })
     await WIKI.models.pages.renderPage(page)
+    await WIKI.data.searchEngine.updated(page)
     if (!opts.skipStorage) {
       await WIKI.models.storage.pageEvent({
         event: 'updated',
@@ -273,6 +275,7 @@ module.exports = class Page extends Model {
     })
     await WIKI.models.pages.query().delete().where('id', page.id)
     await WIKI.models.pages.deletePageFromCache(page)
+    await WIKI.data.searchEngine.deleted(page)
     if (!opts.skipStorage) {
       await WIKI.models.storage.pageEvent({
         event: 'deleted',

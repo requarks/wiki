@@ -69,6 +69,10 @@ module.exports = {
     message: 'Invalid locale or namespace.',
     code: 1009
   }),
+  SearchActivationFailed: CustomError('SearchActivationFailed', {
+    message: 'Search Engine activation failed.',
+    code: 1019
+  }),
   UserCreationFailed: CustomError('UserCreationFailed', {
     message: 'An unexpected error occured during user creation.',
     code: 1010

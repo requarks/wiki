@@ -4,6 +4,7 @@ description: Solr is the popular, blazing-fast, open source enterprise search pl
 author: requarks.io
 logo: https://static.requarks.io/logo/solr.svg
 website: http://lucene.apache.org/solr/
+isAvailable: false
 props:
   host:
     type: String

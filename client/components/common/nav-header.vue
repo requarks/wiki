@@ -89,29 +89,38 @@
             v-model='searchAdvMenuShown'
             left
             offset-y
-            min-width='350'
+            min-width='450'
             :close-on-content-click='false'
+            nudge-bottom='7'
+            nudge-right='5'
             )
             v-btn.nav-header-search-adv(icon, outline, color='grey darken-2', slot='activator')
               v-icon(color='white') expand_more
-            v-card
-              v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-4`', dense)
+            v-card.radius-0(dark)
+              v-toolbar(flat, color='grey darken-4', dense)
+                v-icon.mr-2 search
                 v-subheader.pl-0 Advanced Search
-              v-card-text
+              v-card-text.pa-4
                 v-checkbox.mt-0(
                   label='Restrict to Current Language'
-                  color='primary'
+                  color='white'
                   v-model='searchRestrictLocale'
                   hide-details
                 )
                 v-checkbox(
                   label='Restrict to Below Current Path'
-                  color='primary'
+                  color='white'
                   v-model='searchRestrictPath'
                   hide-details
                 )
-              v-card-actions
-                v-btn(outline, small, color='grey') Save as defaults
+              v-divider
+              v-card-actions.grey.darken-3-d4
+                v-btn(depressed, color='grey darken-3', block)
+                  v-icon(left) chevron_right
+                  span Save as defaults
+                v-btn(depressed, color='grey darken-3', block)
+                  v-icon(left) cached
+                  span Reset
       v-flex(xs6, :md4='searchIsShown', :md6='!searchIsShown')
         v-toolbar.nav-header-inner(color='black', dark, flat)
           v-spacer

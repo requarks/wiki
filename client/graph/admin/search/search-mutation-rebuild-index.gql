@@ -1,6 +1,6 @@
-mutation($engines: [SearchEngineInput]) {
+mutation {
   search {
-    updateSearchEngines(engines: $engines) {
+    rebuildIndex {
       responseResult {
         succeeded
         errorCode

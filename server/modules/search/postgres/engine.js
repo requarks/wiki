@@ -3,7 +3,9 @@ const tsquery = require('pg-tsquery')()
 
 module.exports = {
   async activate() {
-    // not used
+    if (WIKI.config.db.type !== 'postgres') {
+      throw new WIKI.Error.SearchActivationFailed('Must use PostgreSQL database to activate this engine!')
+    }
   },
   async deactivate() {
     // not used
@@ -75,7 +77,7 @@ module.exports = {
       INSERT INTO "pagesVector" (path, locale, title, description, tokens) VALUES (
         '?', '?', '?', '?', (setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'C'))
       )
-    `, [page.path, page.locale, page.title, page.description, page.title, page.description, page.content])
+    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.content])
   },
   /**
    * UPDATE
@@ -85,13 +87,13 @@ module.exports = {
   async updated(page) {
     await WIKI.models.knex.raw(`
       UPDATE "pagesVector" SET
-        title = '?',
-        description = '?',
-        tokens = (setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'A') ||
-        setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'B') ||
-        setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'C'))
-      WHERE path = '?' AND locale = '?' LIMIT 1
-    `, [page.title, page.description, page.title, page.description, page.content, page.path, page.locale])
+        title = ?,
+        description = ?,
+        tokens = (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') ||
+        setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') ||
+        setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
+      WHERE path = ? AND locale = ?
+    `, [page.title, page.description, page.title, page.description, page.content, page.path, page.localeCode])
   },
   /**
    * DELETE
@@ -100,7 +102,7 @@ module.exports = {
    */
   async deleted(page) {
     await WIKI.models.knex('pagesVector').where({
-      locale: page.locale,
+      locale: page.localeCode,
       path: page.path
     }).del().limit(1)
   },
@@ -111,12 +113,12 @@ module.exports = {
    */
   async renamed(page) {
     await WIKI.models.knex('pagesVector').where({
-      locale: page.locale,
+      locale: page.localeCode,
       path: page.sourcePath
     }).update({
-      locale: page.locale,
+      locale: page.localeCode,
       path: page.destinationPath
-    }).limit(1)
+    })
   },
   /**
    * REBUILD INDEX

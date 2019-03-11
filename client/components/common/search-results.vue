@@ -206,13 +206,13 @@ export default {
 
   &-items {
     .highlighted {
-      background-color: mc('blue', '50');
+      background: #FFF linear-gradient(to bottom, #FFF, mc('orange', '100'));
     }
   }
 
   &-suggestions {
     .highlighted {
-      background-color: mc('blue', '500');
+      background: transparent linear-gradient(to bottom, mc('blue', '500'), mc('blue', '700'));
     }
   }
 }

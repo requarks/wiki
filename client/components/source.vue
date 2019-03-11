@@ -16,6 +16,7 @@
                   slot
 
     nav-footer
+    search-results
 </template>
 
 <script>
