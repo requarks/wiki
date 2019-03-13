@@ -14,11 +14,13 @@ module.exports = {
    * INIT
    */
   async init() {
+    WIKI.logger.info(`(SEARCH/AZURE) Initializing...`)
     this.client = new SearchService(this.config.serviceName, this.config.adminKey)
 
     // -> Create Search Index
     const indexes = await this.client.indexes.list()
     if (!_.find(_.get(indexes, 'result.value', []), ['name', this.config.indexName])) {
+      WIKI.logger.info(`(SEARCH/AWS) Creating index...`)
       await this.client.indexes.create({
         name: this.config.indexName,
         fields: [
@@ -75,6 +77,7 @@ module.exports = {
         ],
       })
     }
+    WIKI.logger.info(`(SEARCH/AZURE) Initialization completed.`)
   },
   /**
    * QUERY
@@ -202,6 +205,7 @@ module.exports = {
    * REBUILD INDEX
    */
   async rebuild() {
+    WIKI.logger.info(`(SEARCH/AZURE) Rebuilding Index...`)
     await pipeline(
       WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'content').select().from('pages').where({
         isPublished: true,
@@ -209,5 +213,6 @@ module.exports = {
       }).stream(),
       this.client.indexes.use(this.config.indexName).createIndexingStream()
     )
+    WIKI.logger.info(`(SEARCH/AZURE) Index rebuilt successfully.`)
   }
 }

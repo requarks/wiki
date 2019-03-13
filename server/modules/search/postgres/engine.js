@@ -14,9 +14,12 @@ module.exports = {
    * INIT
    */
   async init() {
+    WIKI.logger.info(`(SEARCH/POSTGRES) Initializing...`)
+
     // -> Create Search Index
     const indexExists = await WIKI.models.knex.schema.hasTable('pagesVector')
     if (!indexExists) {
+      WIKI.logger.info(`(SEARCH/POSTGRES) Creating Pages Vector table...`)
       await WIKI.models.knex.schema.createTable('pagesVector', table => {
         table.increments()
         table.string('path')
@@ -29,6 +32,7 @@ module.exports = {
     // -> Create Words Index
     const wordsExists = await WIKI.models.knex.schema.hasTable('pagesWords')
     if (!wordsExists) {
+      WIKI.logger.info(`(SEARCH/POSTGRES) Creating Words Suggestion Index...`)
       await WIKI.models.knex.raw(`
         CREATE TABLE "pagesWords" AS SELECT word FROM ts_stat(
           'SELECT to_tsvector(''simple'', pages."title") || to_tsvector(''simple'', pages."description") || to_tsvector(''simple'', pages."content") FROM pages WHERE pages."isPublished" AND NOT pages."isPrivate"'
@@ -36,6 +40,8 @@ module.exports = {
       await WIKI.models.knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm')
       await WIKI.models.knex.raw(`CREATE INDEX "pageWords_idx" ON "pagesWords" USING GIN (word gin_trgm_ops)`)
     }
+
+    WIKI.logger.info(`(SEARCH/POSTGRES) Initialization completed.`)
   },
   /**
    * QUERY
@@ -124,6 +130,7 @@ module.exports = {
    * REBUILD INDEX
    */
   async rebuild() {
+    WIKI.logger.info(`(SEARCH/POSTGRES) Rebuilding Index...`)
     await WIKI.models.knex('pagesVector').truncate()
     await WIKI.models.knex.raw(`
       INSERT INTO "pagesVector" (path, locale, title, description, "tokens")
@@ -133,5 +140,6 @@ module.exports = {
           setweight(to_tsvector('${this.config.dictLanguage}', content), 'C')) AS tokens
         FROM "pages"
         WHERE pages."isPublished" AND NOT pages."isPrivate"`)
+    WIKI.logger.info(`(SEARCH/POSTGRES) Index rebuilt successfully.`)
   }
 }
