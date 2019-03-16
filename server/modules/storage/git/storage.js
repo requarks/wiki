@@ -145,7 +145,7 @@ module.exports = {
     if (_.includes(['sync', 'pull'], this.mode)) {
       const latestCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
 
-      const diff = await this.git.diffSummary([currentCommitLog.hash, latestCommitLog.hash])
+      const diff = await this.git.diffSummary(['-M', currentCommitLog.hash, latestCommitLog.hash])
       if (_.get(diff, 'files', []).length > 0) {
         for(const item of diff.files) {
           const contentType = getContenType(item.file)

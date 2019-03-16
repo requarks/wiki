@@ -167,8 +167,8 @@ module.exports = {
           id: r.id,
           path: _.head(r.fields.path),
           locale: _.head(r.fields.locale),
-          title: _.head(r.fields.title),
-          description: _.head(r.fields.description)
+          title: _.head(r.fields.title) || '',
+          description: _.head(r.fields.description) || ''
         })),
         suggestions: suggestions,
         totalHits: results.hits.found
