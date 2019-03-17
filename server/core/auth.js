@@ -130,7 +130,7 @@ module.exports = {
 
       // JWT is NOT valid, set as guest
       if (!user) {
-        if (true || WIKI.auth.guest.cacheExpiration.isSameOrBefore(moment.utc())) {
+        if (WIKI.auth.guest.cacheExpiration.isSameOrBefore(moment.utc())) {
           WIKI.auth.guest = await WIKI.models.users.getGuestUser()
           WIKI.auth.guest.cacheExpiration = moment.utc().add(1, 'm')
         }
@@ -176,9 +176,7 @@ module.exports = {
       user.groups.forEach(grp => {
         const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
         _.get(WIKI.auth.groups, `${grpId}.pageRules`, []).forEach(rule => {
-          console.info(page.path)
-          console.info(rule)
-          switch(rule.match) {
+          switch (rule.match) {
             case 'START':
               if (_.startsWith(`/${page.path}`, `/${rule.path}`)) {
                 checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['END', 'REGEX', 'EXACT'] })
@@ -194,6 +192,7 @@ module.exports = {
               if (reg.test(page.path)) {
                 checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT'] })
               }
+              break
             case 'EXACT':
               if (`/${page.path}` === `/${rule.path}`) {
                 checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })

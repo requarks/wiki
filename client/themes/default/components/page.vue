@@ -83,18 +83,18 @@
                     v-list-tile-title.pl-3.caption {{tocSubItem.title}}
                   v-divider(inset, v-if='tocIdx < toc.length - 1')
             v-divider
-          v-list.grey(dense, :class='darkMode ? `darken-3` : `lighten-4`')
-            v-subheader.pl-4.yellow--text.text--darken-4 Rating
-            .text-xs-center
-              v-rating(
-                v-model='rating'
-                color='yellow darken-3'
-                background-color='grey lighten-1'
-                half-increments
-                hover
-              )
-              .pb-2.caption.grey--text 5 votes
-          v-divider
+          //- v-list.grey(dense, :class='darkMode ? `darken-3` : `lighten-4`')
+          //-   v-subheader.pl-4.yellow--text.text--darken-4 Rating
+          //-   .text-xs-center
+          //-     v-rating(
+          //-       v-model='rating'
+          //-       color='yellow darken-3'
+          //-       background-color='grey lighten-1'
+          //-       half-increments
+          //-       hover
+          //-     )
+          //-     .pb-2.caption.grey--text 5 votes
+          //- v-divider
           template(v-if='tags.length')
             v-list.grey(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
               v-subheader.pl-4.teal--text Tags

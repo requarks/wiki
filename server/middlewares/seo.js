@@ -1,6 +1,6 @@
-'use strict'
-
 const _ = require('lodash')
+
+/* global WIKI */
 
 /**
  * SEO Middleware

@@ -171,8 +171,8 @@
             v-card.text-xs-center(flat)
               template(v-if='loading')
                 .mt-3(style='width: 64px; display:inline-block;')
-                  atom-spinner(
-                    :animation-duration='800'
+                  breeding-rhombus-spinner(
+                    :animation-duration='2000'
                     :size='64'
                     color='#1976d2'
                     )
@@ -199,11 +199,11 @@
 <script>
 import axios from 'axios'
 import _ from 'lodash'
-import { AtomSpinner } from 'epic-spinners'
+import { BreedingRhombusSpinner } from 'epic-spinners'
 
 export default {
   components: {
-    AtomSpinner
+    BreedingRhombusSpinner
   },
   props: {
     telemetryId: {

@@ -1,5 +1,18 @@
 const path = require('path')
 const uuid = require('uuid/v4')
+const bodyParser = require('body-parser')
+const compression = require('compression')
+const express = require('express')
+const favicon = require('serve-favicon')
+const http = require('http')
+const https = require('https')
+const Promise = require('bluebird')
+const fs = require('fs-extra')
+const _ = require('lodash')
+const cfgHelper = require('./helpers/config')
+const crypto = Promise.promisifyAll(require('crypto'))
+const pem2jwk = require('pem-jwk').pem2jwk
+const semver = require('semver')
 
 /* global WIKI */
 
@@ -10,23 +23,6 @@ module.exports = () => {
   }
 
   WIKI.system = require('./core/system')
-
-  // ----------------------------------------
-  // Load modules
-  // ----------------------------------------
-
-  const bodyParser = require('body-parser')
-  const compression = require('compression')
-  const express = require('express')
-  const favicon = require('serve-favicon')
-  const http = require('http')
-  const Promise = require('bluebird')
-  const fs = require('fs-extra')
-  const _ = require('lodash')
-  const cfgHelper = require('./helpers/config')
-  const crypto = Promise.promisifyAll(require('crypto'))
-  const pem2jwk = require('pem-jwk').pem2jwk
-  const semver = require('semver')
 
   // ----------------------------------------
   // Define Express App
@@ -138,8 +134,8 @@ module.exports = () => {
       WIKI.telemetry.sendEvent('setup', 'install-start')
 
       // Basic checks
-      if (!semver.satisfies(process.version, '>=10.14')) {
-        throw new Error('Node.js 10.14.x or later required!')
+      if (!semver.satisfies(process.version, '>=10.12')) {
+        throw new Error('Node.js 10.12.x or later required!')
       }
 
       // Upgrade from WIKI.js 1.x?
@@ -356,7 +352,33 @@ module.exports = () => {
   WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
 
   app.set('port', WIKI.config.port)
-  WIKI.server = http.createServer(app)
+
+  if (WIKI.config.ssl.enabled) {
+    WIKI.logger.info(`HTTPS Server on port: [ ${WIKI.config.port} ]`)
+    const tlsOpts = {}
+    try {
+      if (WIKI.config.ssl.format === 'pem') {
+        tlsOpts.key = fs.readFileSync(WIKI.config.ssl.key)
+        tlsOpts.cert = fs.readFileSync(WIKI.config.ssl.cert)
+      } else {
+        tlsOpts.pfx = fs.readFileSync(WIKI.config.ssl.pfx)
+      }
+      if (!_.isEmpty(WIKI.config.ssl.passphrase)) {
+        tlsOpts.passphrase = WIKI.config.ssl.passphrase
+      }
+      if (!_.isEmpty(WIKI.config.ssl.dhparam)) {
+        tlsOpts.dhparam = WIKI.config.ssl.dhparam
+      }
+    } catch (err) {
+      WIKI.logger.error('Failed to setup HTTPS server parameters:')
+      WIKI.logger.error(err)
+      return process.exit(1)
+    }
+    WIKI.server = https.createServer(tlsOpts, app)
+  } else {
+    WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
+    WIKI.server = http.createServer(app)
+  }
   WIKI.server.listen(WIKI.config.port, WIKI.config.bindIP)
 
   var openConnections = []
