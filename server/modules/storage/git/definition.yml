@@ -69,6 +69,11 @@ props:
     default: 'John Smith'
     hint: 'Used as fallback in case the author of the change is not present.'
     order: 21
+  gitBinaryPath:
+    type: String
+    title: Git Binary Path
+    default: ''
+    hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
 actions:
   - handler: syncUntracked
     label: Add Untracked Changes

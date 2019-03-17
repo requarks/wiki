@@ -5,6 +5,8 @@ const _ = require('lodash')
 
 const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
 
+/* global WIKI */
+
 /**
  * Get file extension based on content type
  */
@@ -64,6 +66,11 @@ module.exports = {
     await fs.ensureDir(this.repoPath)
     this.git = sgit(this.repoPath)
 
+    // Set custom binary path
+    if (!_.isEmpty(this.config.gitBinaryPath)) {
+      this.git.customBinary(this.config.gitBinaryPath)
+    }
+
     // Initialize repo (if needed)
     WIKI.logger.info('(STORAGE/GIT) Checking repository state...')
     const isRepo = await this.git.checkIsRepo()
@@ -81,7 +88,7 @@ module.exports = {
     const remotes = await this.git.getRemotes()
     if (remotes.length > 0) {
       WIKI.logger.info('(STORAGE/GIT) Purging existing remotes...')
-      for(let remote of remotes) {
+      for (let remote of remotes) {
         await this.git.removeRemote(remote.name)
       }
     }
@@ -147,7 +154,7 @@ module.exports = {
 
       const diff = await this.git.diffSummary(['-M', currentCommitLog.hash, latestCommitLog.hash])
       if (_.get(diff, 'files', []).length > 0) {
-        for(const item of diff.files) {
+        for (const item of diff.files) {
           const contentType = getContenType(item.file)
           if (!contentType) {
             continue
@@ -202,7 +209,6 @@ module.exports = {
                 locale: contentPath.locale,
                 skipStorage: true
               })
-
             } else {
               WIKI.logger.warn(`(STORAGE/GIT) Failed to open ${item.file}`)
               WIKI.logger.warn(err)
