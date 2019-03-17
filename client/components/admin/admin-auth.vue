@@ -6,7 +6,7 @@
           img(src='/svg/icon-unlock.svg', alt='Authentication', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Authentication
-            .subheading.grey--text Configure the authentication settings of your wiki
+            .subheading.grey--text Configure the authentication settings of your wiki #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh

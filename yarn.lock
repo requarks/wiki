@@ -1514,6 +1514,11 @@ amp@0.3.1, amp@~0.3.1:
   resolved "https://registry.yarnpkg.com/amp/-/amp-0.3.1.tgz#6adf8d58a74f361e82c1fa8d389c079e139fc47d"
   integrity sha1-at+NWKdPNh6CwfqNOJwHnhOfxH0=
 
+animate-sass@0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/animate-sass/-/animate-sass-0.8.2.tgz#fbfa76e049177d217a50b0f99c8ee77af490b7d9"
+  integrity sha512-6sZ34dusqb1HdZLNpJUNaZc0CuuLgFI8SqlyaxbSSKE9zqfoNtOeO3IpVUCqvaSm/oMNH1VlEAsJlppjg+idKQ==
+
 animated-number-vue@0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/animated-number-vue/-/animated-number-vue-0.1.4.tgz#d60447582e5375ac006137f41c40fdddac76171e"

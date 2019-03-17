@@ -6,7 +6,7 @@
           img(src='/svg/icon-web-design.svg', alt='Editor', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Editor
-            .subheading.grey--text Configure the content editors
+            .subheading.grey--text Configure the content editors #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh

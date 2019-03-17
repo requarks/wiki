@@ -100,15 +100,17 @@
               v-toolbar(flat, color='grey darken-4', dense)
                 v-icon.mr-2 search
                 v-subheader.pl-0 Advanced Search
+                v-spacer
+                v-chip(label, small, color='primary') Coming soon
               v-card-text.pa-4
                 v-checkbox.mt-0(
-                  label='Restrict to Current Language'
+                  label='Restrict to current language'
                   color='white'
                   v-model='searchRestrictLocale'
                   hide-details
                 )
                 v-checkbox(
-                  label='Restrict to Below Current Path'
+                  label='Search below current path only'
                   color='white'
                   v-model='searchRestrictPath'
                   hide-details

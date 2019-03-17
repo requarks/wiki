@@ -3,12 +3,12 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-browse-page.svg', alt='Dashboard', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-browse-page.svg', alt='Dashboard', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text {{ $t('admin:dashboard.title') }}
-            .subheading.grey--text {{ $t('admin:dashboard.subtitle') }}
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:dashboard.title') }}
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin:dashboard.subtitle') }}
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.primary.dashboard-card(dark)
+        v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
             v-icon.dashboard-icon insert_drive_file
             .subheading Pages
@@ -19,7 +19,7 @@
               easing='easeOutQuint'
               )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.indigo.lighten-1.dashboard-card(dark)
+        v-card.indigo.lighten-1.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
             v-icon.dashboard-icon person
             .subheading Users
@@ -30,7 +30,7 @@
               easing='easeOutQuint'
               )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.indigo.lighten-2.dashboard-card(dark)
+        v-card.indigo.lighten-2.dashboard-card.animated.fadeInUp.wait-p4s(dark)
           v-card-text
             v-icon.dashboard-icon people
             .subheading Groups
@@ -41,7 +41,7 @@
               easing='easeOutQuint'
               )
       v-flex(xs12 md6 lg12 xl3 d-flex)
-        v-card.dashboard-card(
+        v-card.dashboard-card.animated.fadeInUp.wait-p6s(
           :class='isLatestVersion ? "teal lighten-2" : "red lighten-2"'
           dark
           )

@@ -1,0 +1,12 @@
+$use-fade: true;
+$use-zoom: true;
+$use-bounce: true;
+
+@import "~animate-sass/animate";
+
+
+@for $i from 1 to 9 {
+  .wait-p#{$i}s {
+    animation-delay: $i * .1s !important;
+  }
+}

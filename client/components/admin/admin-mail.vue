@@ -127,7 +127,7 @@
 
 <script>
 import _ from 'lodash'
-import { get, sync } from 'vuex-pathify'
+import { get } from 'vuex-pathify'
 import mailConfigQuery from 'gql/admin/mail/mail-query-config.gql'
 import mailUpdateConfigMutation from 'gql/admin/mail/mail-mutation-save-config.gql'
 

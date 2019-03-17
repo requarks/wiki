@@ -3,18 +3,18 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-paint-palette.svg', alt='Theme', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-paint-palette.svg', alt='Theme', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text Theme
-            .subheading.grey--text Modify the look &amp; feel of your wiki
+            .headline.primary--text.animated.fadeInLeft Theme
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s Modify the look &amp; feel of your wiki
           v-spacer
-          v-btn(color='success', depressed, @click='save', large, :loading='loading')
+          v-btn.animated.fadeInRight(color='success', depressed, @click='save', large, :loading='loading')
             v-icon(left) check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
-              v-card.wiki-form
+              v-card.wiki-form.animated.fadeInUp
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Theme
@@ -43,7 +43,7 @@
                     persistent-hint
                     hint='Not recommended for accessibility. May not be supported by all themes.'
                     )
-              v-card.wiki-form.mt-3
+              v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Code Injection
@@ -79,7 +79,7 @@
                     auto-grow
                     )
             v-flex(lg6 xs12)
-              v-card
+              v-card.animated.fadeInUp.wait-p2s
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
                     .subheading Download Themes

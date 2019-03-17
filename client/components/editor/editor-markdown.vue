@@ -60,15 +60,15 @@
           .editor-markdown-preview-title(@click='previewShown = false') Preview
           .editor-markdown-preview-content.contents(ref='editorPreview', v-html='previewHTML')
 
-      v-speed-dial.editor-markdown-insert(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, bottom, :right='!previewShown || $vuetify.breakpoint.smAndDown')
-        v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
-          v-icon add_circle
-          v-icon close
-        v-btn(color='teal', fab, dark): v-icon image
-        v-btn(color='pink', fab, dark): v-icon insert_drive_file
-        v-btn(color='red', fab, dark): v-icon play_circle_outline
-        v-btn(color='purple', fab, dark): v-icon multiline_chart
-        v-btn(color='indigo', fab, dark): v-icon functions
+      //- v-speed-dial.editor-markdown-insert(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, bottom, :right='!previewShown || $vuetify.breakpoint.smAndDown')
+      //-   v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
+      //-     v-icon add_circle
+      //-     v-icon close
+      //-   v-btn(color='teal', fab, dark): v-icon image
+      //-   v-btn(color='pink', fab, dark): v-icon insert_drive_file
+      //-   v-btn(color='red', fab, dark): v-icon play_circle_outline
+      //-   v-btn(color='purple', fab, dark): v-icon multiline_chart
+      //-   v-btn(color='indigo', fab, dark): v-icon functions
 </template>
 
 <script>
@@ -229,10 +229,10 @@ export default {
      * Update toolbar state
      */
     toolbarSync(cm) {
-      const pos = cm.getCursor('start')
-      const token = cm.getTokenAt(pos)
+      // const pos = cm.getCursor('start')
+      // const token = cm.getTokenAt(pos)
 
-      if (!token.type) { return }
+      // if (!token.type) { return }
 
       // console.info(token)
     },

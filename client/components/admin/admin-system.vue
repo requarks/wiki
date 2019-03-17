@@ -3,14 +3,14 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-tune.svg', alt='System Info', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-tune.svg', alt='System Info', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text {{ $t('admin:system.title') }}
-            .subheading.grey--text {{ $t('admin:system.subtitle') }}
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:system.title') }}
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin:system.subtitle') }}
         v-layout.mt-3(row wrap)
           v-flex(lg6 xs12)
-            v-card
-              v-btn(fab, absolute, right, top, small, light, @click='refresh'): v-icon refresh
+            v-card.animated.fadeInUp
+              v-btn.animated.fadeInLeft.wait-p2s(fab, absolute, right, top, small, light, @click='refresh'): v-icon refresh
               v-list(two-line, dense)
                 v-subheader Wiki.js
                 v-list-tile(avatar)
@@ -70,7 +70,7 @@
                     v-list-tile-sub-title {{ info.configFile }}
 
           v-flex(lg6 xs12)
-            v-card.pb-3
+            v-card.pb-3.animated.fadeInUp.wait-p4s
               v-list(dense)
                 v-subheader Node.js
                 v-list-tile(avatar)

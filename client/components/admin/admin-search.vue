@@ -3,22 +3,22 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text Search Engine
-            .subheading.grey--text Configure the search capabilities of your wiki
+            .headline.primary--text.animated.fadeInLeft Search Engine
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s Configure the search capabilities of your wiki
           v-spacer
-          v-btn(outline, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='black', dark, large, depressed, @click='rebuild')
+          v-btn.animated.fadeInDown.wait-p1s(color='black', dark, large, depressed, @click='rebuild')
             v-icon(left) cached
             span Rebuild Index
-          v-btn(color='success', @click='save', depressed, large)
+          v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
 
       v-flex(lg3, xs12)
-        v-card
+        v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
             .subheading Search Engine
           v-card-text
@@ -34,7 +34,7 @@
               )
 
       v-flex(lg9, xs12)
-        v-card.wiki-form
+        v-card.wiki-form.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subheading {{engine.title}}
           v-card-text
