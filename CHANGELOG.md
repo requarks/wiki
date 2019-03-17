@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [2.0.0-beta.XX] - 2019-XX-XX
+## [2.0.0-beta.68] - 2019-03-17
 ### Added
 - Added Search Results overlay
 - Added Search Engine - DB Basic
