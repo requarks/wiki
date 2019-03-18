@@ -2,6 +2,8 @@ const _ = require('lodash')
 const AWS = require('aws-sdk')
 const { pipeline, Transform } = require('stream')
 
+/* global WIKI */
+
 module.exports = {
   async activate() {
     // not used
@@ -110,12 +112,12 @@ module.exports = {
       rebuildIndex = true
     }
 
-    //-> Define suggester
+    // -> Define suggester
     const suggesters = await this.client.describeSuggesters({
       DomainName: this.config.domain,
       SuggesterNames: ['default_suggester']
     }).promise()
-    if(_.get(suggesters, 'Suggesters', []).length < 1) {
+    if (_.get(suggesters, 'Suggesters', []).length < 1) {
       WIKI.logger.info(`(SEARCH/AWS) Defining Suggester...`)
       await this.client.defineSuggester({
         DomainName: this.config.domain,
@@ -323,7 +325,7 @@ module.exports = {
     const flushBuffer = async () => {
       WIKI.logger.info(`(SEARCH/AWS) Sending batch of ${chunks.length}...`)
       try {
-        const resp = await this.clientDomain.uploadDocuments({
+        await this.clientDomain.uploadDocuments({
           contentType: 'application/json',
           documents: JSON.stringify(_.map(chunks, doc => ({
             type: 'add',
@@ -351,8 +353,8 @@ module.exports = {
       }).stream(),
       new Transform({
         objectMode: true,
-        transform: async (chunk, enc, cb) => await processDocument(cb, chunk),
-        flush: async (cb) => await processDocument(cb)
+        transform: async (chunk, enc, cb) => processDocument(cb, chunk),
+        flush: async (cb) => processDocument(cb)
       })
     )
 
@@ -364,4 +366,3 @@ module.exports = {
     WIKI.logger.info(`(SEARCH/AWS) Index rebuilt successfully.`)
   }
 }
-

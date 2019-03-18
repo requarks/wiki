@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@bugsnag/js": "5.2.0",
+    "algoliasearch": "3.32.1",
     "apollo-fetch": "0.7.0",
     "apollo-server": "2.3.3",
     "apollo-server-express": "2.3.3",

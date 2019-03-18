@@ -3,6 +3,8 @@ const { SearchService, QueryType } = require('azure-search-client')
 const request = require('request-promise')
 const { pipeline } = require('stream')
 
+/* global WIKI */
+
 module.exports = {
   async activate() {
     // not used
@@ -20,7 +22,7 @@ module.exports = {
     // -> Create Search Index
     const indexes = await this.client.indexes.list()
     if (!_.find(_.get(indexes, 'result.value', []), ['name', this.config.indexName])) {
-      WIKI.logger.info(`(SEARCH/AWS) Creating index...`)
+      WIKI.logger.info(`(SEARCH/AZURE) Creating index...`)
       await this.client.indexes.create({
         name: this.config.indexName,
         fields: [
@@ -74,7 +76,7 @@ module.exports = {
             searchMode: 'analyzingInfixMatching',
             sourceFields: ['title', 'description', 'content']
           }
-        ],
+        ]
       })
     }
     WIKI.logger.info(`(SEARCH/AZURE) Initialization completed.`)
