@@ -11,7 +11,7 @@ const _ = require('lodash')
 router.get('/robots.txt', (req, res, next) => {
   res.type('text/plain')
   if (_.includes(WIKI.config.seo.robots, 'noindex')) {
-    res.send("User-agent: *\nDisallow: /")
+    res.send('User-agent: *\nDisallow: /')
   } else {
     res.status(200).end()
   }
@@ -31,7 +31,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   if (page) {
     if (!WIKI.auth.checkAccess(req.user, ['manage:pages'], pageArgs)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'edit'})
+      return res.render('unauthorized', { action: 'edit' })
     }
 
     _.set(res.locals, 'pageMeta.title', `Edit ${page.title}`)
@@ -42,7 +42,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   } else {
     if (!WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'create'})
+      return res.render('unauthorized', { action: 'create' })
     }
 
     _.set(res.locals, 'pageMeta.title', `New Page`)
@@ -81,7 +81,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
 
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-    return res.render('unauthorized', { action: 'history'})
+    return res.render('unauthorized', { action: 'history' })
   }
 
   const page = await WIKI.models.pages.getPageFromDb({
@@ -106,7 +106,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path)
 
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
-    return res.render('unauthorized', { action: 'source'})
+    return res.render('unauthorized', { action: 'source' })
   }
 
   const page = await WIKI.models.pages.getPageFromDb({
@@ -135,7 +135,7 @@ router.get('/*', async (req, res, next) => {
       return res.redirect('/login')
     } else {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'view'})
+      return res.render('unauthorized', { action: 'view' })
     }
   }
 
@@ -163,7 +163,7 @@ router.get('/*', async (req, res, next) => {
     if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
       res.status(404).render('new', { pagePath: req.path })
     } else {
-      res.render('notfound', { action: 'view'})
+      res.render('notfound', { action: 'view' })
     }
   }
 })

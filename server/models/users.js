@@ -264,7 +264,7 @@ module.exports = class User extends Model {
         WIKI.logger.warn(`Failed to refresh token for user ${user}: Not found.`)
         throw new WIKI.Error.AuthGenericError()
       }
-    } else if(_.isNil(user.groups)) {
+    } else if (_.isNil(user.groups)) {
       await user.$relatedQuery('groups').select('groups.id', 'permissions')
     }
 
@@ -353,7 +353,7 @@ module.exports = class User extends Model {
             minimum: 2,
             maximum: 255
           }
-        },
+        }
       }, { format: 'flat' })
       if (validation && validation.length > 0) {
         throw new WIKI.Error.InputInvalid(validation[0])
@@ -422,6 +422,7 @@ module.exports = class User extends Model {
       WIKI.logger.error('CRITICAL ERROR: Guest user is missing!')
       process.exit(1)
     }
+    user.permissions = user.getGlobalPermissions()
     return user
   }
 }
