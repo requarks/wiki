@@ -1,7 +1,5 @@
 /* global WIKI */
 
-const _ = require('lodash')
-const securityHelper = require('../helpers/security')
 const Model = require('objection').Model
 const moment = require('moment')
 const nanoid = require('nanoid')
@@ -68,7 +66,5 @@ module.exports = class UserKey extends Model {
     } else {
       throw new WIKI.Error.AuthValidationTokenInvalid()
     }
-
-    return token
   }
 }

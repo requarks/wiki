@@ -14,6 +14,7 @@ npm/node_modules
 .npm
 .node_repl_history
 npm-debug.log*
+.yarn
 
 # Generated assets
 /assets
@@ -41,6 +42,7 @@ server/views/setup.pug
 
 # Test results
 test-results/
+.scannerwork
 
 # Localization Resources
 /server/locales/**/*.yml

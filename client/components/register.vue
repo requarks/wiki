@@ -98,7 +98,6 @@
 /* global siteConfig */
 
 import _ from 'lodash'
-import Cookies from 'js-cookie'
 import validate from 'validate.js'
 import PasswordStrength from './common/password-strength.vue'
 
@@ -134,7 +133,6 @@ export default {
     this.isShown = true
     this.$nextTick(() => {
       this.$refs.iptEmail.focus()
-
     })
   },
   methods: {
@@ -184,11 +182,11 @@ export default {
             tooShort: this.$t('auth:nameTooShort'),
             tooLong: this.$t('auth:nameTooLong')
           }
-        },
+        }
       }, { fullMessages: false })
 
       if (validation) {
-        if(validation.email) {
+        if (validation.email) {
           this.$store.commit('showNotification', {
             style: 'red',
             message: validation.email[0],

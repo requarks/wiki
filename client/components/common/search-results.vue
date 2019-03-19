@@ -55,7 +55,7 @@
 
 <script>
 import _ from 'lodash'
-import { get, sync } from 'vuex-pathify'
+import { sync } from 'vuex-pathify'
 import { OrbitSpinner } from 'epic-spinners'
 
 import searchPagesQuery from 'gql/common/common-pages-query-search.gql'
@@ -105,14 +105,6 @@ export default {
       }
     }
   },
-  methods: {
-    setSearchTerm(term) {
-      this.search = term
-    },
-    goToPage(item) {
-      window.location.assign(`/${item.locale}/${item.path}`)
-    }
-  },
   mounted() {
     this.$root.$on('searchMove', (dir) => {
       this.cursor += (dir === 'up' ? -1 : 1)
@@ -129,6 +121,14 @@ export default {
         this.setSearchTerm(_.nth(this.suggestions, this.cursor - this.results.length))
       }
     })
+  },
+  methods: {
+    setSearchTerm(term) {
+      this.search = term
+    },
+    goToPage(item) {
+      window.location.assign(`/${item.locale}/${item.path}`)
+    }
   },
   apollo: {
     response: {

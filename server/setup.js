@@ -387,7 +387,7 @@ module.exports = () => {
     let key = conn.remoteAddress + ':' + conn.remotePort
     openConnections[key] = conn
     conn.on('close', () => {
-      delete openConnections[key]
+      openConnections.splice(key, 1)
     })
   })
 
