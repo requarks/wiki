@@ -3,7 +3,8 @@ import { make } from 'vuex-pathify'
 const state = {
   editor: '',
   content: '',
-  mode: 'create'
+  mode: 'create',
+  activeModal: ''
 }
 
 export default {

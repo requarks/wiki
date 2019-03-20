@@ -1,6 +1,10 @@
 <template lang="pug">
   v-app.editor(:dark='darkMode')
     nav-header(dense)
+      template(slot='mid')
+        v-spacer
+        .subheading {{currentPageTitle}}
+        v-spacer
       template(slot='actions')
         v-btn(
           outline
@@ -32,6 +36,7 @@
       editor-modal-properties(v-model='dialogProps')
       editor-modal-editorselect(v-model='dialogEditorSelector')
       editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
+      component(:is='activeModal')
 
     loader(v-model='dialogProgress', :title='$t(`editor:save.processing`)', :subtitle='$t(`editor:save.pleaseWait`)')
     v-snackbar(
@@ -70,7 +75,8 @@ export default {
     editorWysiwyg: () => import(/* webpackChunkName: "editor-wysiwyg", webpackMode: "lazy" */ './editor/editor-wysiwyg.vue'),
     editorModalEditorselect: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-editorselect.vue'),
     editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue'),
-    editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue')
+    editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue'),
+    editorModalMedia: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-media.vue')
   },
   props: {
     locale: {
@@ -126,10 +132,12 @@ export default {
   computed: {
     currentEditor: sync('editor/editor'),
     darkMode: get('site/dark'),
+    activeModal: sync('editor/activeModal'),
     mode: get('editor/mode'),
     notification: get('notification'),
     notificationState: sync('notification@isActive'),
-    welcomeMode() { return this.mode === `create` && this.path === `home` }
+    welcomeMode() { return this.mode === `create` && this.path === `home` },
+    currentPageTitle: get('page/title')
   },
   watch: {
     currentEditor(newValue, oldValue) {

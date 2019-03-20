@@ -1,6 +1,6 @@
 <template lang='pug'>
   .editor-markdown
-    v-toolbar.editor-markdown-toolbar(dense, color='primary', dark)
+    v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat)
       v-tooltip(top)
         v-btn(icon, slot='activator').mx-0
           v-icon format_bold
@@ -49,8 +49,33 @@
         v-btn(icon, slot='activator').mx-0
           v-icon remove
         span Horizontal Bar
-
     .editor-markdown-main
+      .editor-markdown-sidebar
+        v-tooltip(right)
+          v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+            v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
+          span Insert Media
+        v-tooltip(right)
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon insert_drive_file
+          span Insert File
+        v-tooltip(right)
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon play_circle_outline
+          span Insert Video
+        v-tooltip(right)
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon multiline_chart
+          span Insert Diagram
+        v-tooltip(right)
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon functions
+          span Insert Math Expression
+        v-spacer
+        v-tooltip(right)
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon border_outer
+          span Table Helper
       .editor-markdown-editor
         .editor-markdown-editor-title(v-if='previewShown', @click='previewShown = false') Editor
         .editor-markdown-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator
@@ -60,19 +85,16 @@
           .editor-markdown-preview-title(@click='previewShown = false') Preview
           .editor-markdown-preview-content.contents(ref='editorPreview', v-html='previewHTML')
 
-      //- v-speed-dial.editor-markdown-insert(v-model='fabInsertMenu', :open-on-hover='true', direction='top', transition='slide-y-reverse-transition', fixed, bottom, :right='!previewShown || $vuetify.breakpoint.smAndDown')
-      //-   v-btn(color='blue', fab, dark, v-model='fabInsertMenu', slot='activator')
-      //-     v-icon add_circle
-      //-     v-icon close
-      //-   v-btn(color='teal', fab, dark): v-icon image
-      //-   v-btn(color='pink', fab, dark): v-icon insert_drive_file
-      //-   v-btn(color='red', fab, dark): v-icon play_circle_outline
-      //-   v-btn(color='purple', fab, dark): v-icon multiline_chart
-      //-   v-btn(color='indigo', fab, dark): v-icon functions
+    v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
+      .caption.editor-markdown-sysbar-locale {{locale.toUpperCase()}}
+      .caption.px-3 /{{path}}
+      v-spacer
+      .caption Markdown
 </template>
 
 <script>
 import _ from 'lodash'
+import { get, sync } from 'vuex-pathify'
 
 // ========================================
 // IMPORTS
@@ -191,9 +213,15 @@ export default {
     },
     isMobile() {
       return this.$vuetify.breakpoint.smAndDown
-    }
+    },
+    locale: get('page/locale'),
+    path: get('page/path'),
+    activeModal: sync('editor/activeModal')
   },
   methods: {
+    toggleModal(key) {
+      this.activeModal = (this.activeModal === key) ? '' : key
+    },
     onCmReady(cm) {
       let self = this
       const keyBindings = {
@@ -208,7 +236,7 @@ export default {
         self.$parent.save()
       })
 
-      cm.setSize(null, 'calc(100vh - 112px)')
+      cm.setSize(null, 'calc(100vh - 112px - 24px)')
       cm.setOption('extraKeys', keyBindings)
       cm.on('cursorActivity', cm => {
         this.toolbarSync(cm)
@@ -262,6 +290,9 @@ export default {
 </script>
 
 <style lang='scss'>
+
+$editor-height: calc(100vh - 112px - 24px);
+
 .editor-markdown {
   &-main {
     display: flex;
@@ -272,7 +303,7 @@ export default {
     background-color: darken(mc('grey', '900'), 4.5%);
     flex: 1 1 50%;
     display: block;
-    height: calc(100vh - 112px);
+    height: $editor-height;
     position: relative;
 
     &-title {
@@ -302,7 +333,7 @@ export default {
     flex: 1 1 50%;
     background-color: mc('grey', '100');
     position: relative;
-    height: calc(100vh - 112px);
+    height: $editor-height;
     overflow: hidden;
 
     @at-root .theme--dark & {
@@ -327,7 +358,7 @@ export default {
     }
 
     &-content {
-      height: calc(100vh - 112px);
+      height: $editor-height;
       overflow-y: scroll;
       padding: 1rem 1rem 1rem 0;
       width: calc(100% + 1rem + 17px)
@@ -364,7 +395,7 @@ export default {
     color: #FFF;
 
     .v-toolbar__content {
-      padding-left: 16px;
+      padding-left: 78px;
 
       @include until($tablet) {
         padding-left: 8px;
@@ -376,6 +407,30 @@ export default {
     @include from($tablet) {
       left: 50%;
       margin-left: -28px;
+    }
+  }
+
+  &-sidebar {
+    background-color: mc('grey', '900');
+    width: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 24px 0;
+  }
+
+  &-sysbar {
+    padding-left: 0;
+
+    &-locale {
+      background-color: rgba(255,255,255,.25);
+      display:inline-flex;
+      padding: 0 12px;
+      height: 24px;
+      width: 63px;
+      justify-content: center;
+      align-items: center;
     }
   }
 

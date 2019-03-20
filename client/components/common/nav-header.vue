@@ -57,72 +57,74 @@
                 v-list-tile-content Images &amp; Files
           v-toolbar-title(:class='{ "ml-2": $vuetify.breakpoint.mdAndUp, "ml-0": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
-      v-flex(md4, v-if='searchIsShown && $vuetify.breakpoint.mdAndUp')
+      v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
-          transition(name='navHeaderSearch')
-            v-text-field(
-              ref='searchField',
-              v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
-              v-model='search',
-              color='white',
-              label='Search...',
-              single-line,
-              solo
-              flat
-              hide-details,
-              prepend-inner-icon='search',
-              :loading='searchIsLoading',
-              @keyup.enter='searchEnter'
-              @keyup.esc='searchClose'
-              @focus='searchFocus'
-              @blur='searchBlur'
-              @keyup.down='searchMove(`down`)'
-              @keyup.up='searchMove(`up`)'
-            )
-              v-progress-linear(
-                indeterminate,
-                slot='progress',
-                height='2',
-                color='blue'
+          slot(name='mid')
+            transition(name='navHeaderSearch', v-if='searchIsShown')
+              v-text-field(
+                ref='searchField',
+                v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
+                v-model='search',
+                color='white',
+                label='Search...',
+                single-line,
+                solo
+                flat
+                hide-details,
+                prepend-inner-icon='search',
+                :loading='searchIsLoading',
+                @keyup.enter='searchEnter'
+                @keyup.esc='searchClose'
+                @focus='searchFocus'
+                @blur='searchBlur'
+                @keyup.down='searchMove(`down`)'
+                @keyup.up='searchMove(`up`)'
               )
-          v-menu(
-            v-model='searchAdvMenuShown'
-            left
-            offset-y
-            min-width='450'
-            :close-on-content-click='false'
-            nudge-bottom='7'
-            nudge-right='5'
-            )
-            v-btn.nav-header-search-adv(icon, outline, color='grey darken-2', slot='activator')
-              v-icon(color='white') expand_more
-            v-card.radius-0(dark)
-              v-toolbar(flat, color='grey darken-4', dense)
-                v-icon.mr-2 search
-                v-subheader.pl-0 Advanced Search
-                v-spacer
-                v-chip(label, small, color='primary') Coming soon
-              v-card-text.pa-4
-                v-checkbox.mt-0(
-                  label='Restrict to current language'
-                  color='white'
-                  v-model='searchRestrictLocale'
-                  hide-details
+                v-progress-linear(
+                  indeterminate,
+                  slot='progress',
+                  height='2',
+                  color='blue'
                 )
-                v-checkbox(
-                  label='Search below current path only'
-                  color='white'
-                  v-model='searchRestrictPath'
-                  hide-details
-                )
-              v-divider
-              v-card-actions.grey.darken-3-d4
-                v-btn(depressed, color='grey darken-3', block)
-                  v-icon(left) chevron_right
-                  span Save as defaults
-                v-btn(depressed, color='grey darken-3', block)
-                  v-icon(left) cached
-                  span Reset
+            v-menu(
+              v-model='searchAdvMenuShown'
+              left
+              offset-y
+              min-width='450'
+              :close-on-content-click='false'
+              nudge-bottom='7'
+              nudge-right='5'
+              v-if='searchIsShown'
+              )
+              v-btn.nav-header-search-adv(icon, outline, color='grey darken-2', slot='activator')
+                v-icon(color='white') expand_more
+              v-card.radius-0(dark)
+                v-toolbar(flat, color='grey darken-4', dense)
+                  v-icon.mr-2 search
+                  v-subheader.pl-0 Advanced Search
+                  v-spacer
+                  v-chip(label, small, color='primary') Coming soon
+                v-card-text.pa-4
+                  v-checkbox.mt-0(
+                    label='Restrict to current language'
+                    color='white'
+                    v-model='searchRestrictLocale'
+                    hide-details
+                  )
+                  v-checkbox(
+                    label='Search below current path only'
+                    color='white'
+                    v-model='searchRestrictPath'
+                    hide-details
+                  )
+                v-divider
+                v-card-actions.grey.darken-3-d4
+                  v-btn(depressed, color='grey darken-3', block)
+                    v-icon(left) chevron_right
+                    span Save as defaults
+                  v-btn(depressed, color='grey darken-3', block)
+                    v-icon(left) cached
+                    span Reset
       v-flex(xs6, :md4='searchIsShown', :md6='!searchIsShown')
         v-toolbar.nav-header-inner(color='black', dark, flat)
           v-spacer
