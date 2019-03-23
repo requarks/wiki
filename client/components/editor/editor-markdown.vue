@@ -51,31 +51,43 @@
         span Horizontal Bar
     .editor-markdown-main
       .editor-markdown-sidebar
-        v-tooltip(right)
-          v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
-            v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
+        //- v-tooltip(right)
+        //-   v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+        //-     v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
+        //-   span Insert Media
+        v-tooltip(right, color='primary')
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon image
           span Insert Media
-        v-tooltip(right)
+        v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
             v-icon insert_drive_file
           span Insert File
-        v-tooltip(right)
+        v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
             v-icon play_circle_outline
-          span Insert Video
-        v-tooltip(right)
+          span Insert Video / Audio
+        v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
             v-icon multiline_chart
           span Insert Diagram
-        v-tooltip(right)
+        v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
             v-icon functions
           span Insert Math Expression
+        v-tooltip(right, color='primary')
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon link
+          span Insert Link
         v-spacer
-        v-tooltip(right)
+        v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
             v-icon border_outer
           span Table Helper
+        v-tooltip(right, color='primary')
+          v-btn(icon, slot='activator', dark).mx-0
+            v-icon help
+          span Markdown Formatting Help
       .editor-markdown-editor
         .editor-markdown-editor-title(v-if='previewShown', @click='previewShown = false') Editor
         .editor-markdown-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator

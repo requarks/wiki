@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
@@ -21,7 +20,7 @@ module.exports = {
         await WIKI.models.navigation.query().patch({
           config: args.tree
         }).where('key', 'site')
-        await WIKI.redis.set('nav:sidebar', JSON.stringify(args.tree), 'EX', 300)
+        await WIKI.cache.set('nav:sidebar', args.tree, 300)
 
         return {
           responseResult: graphHelper.generateSuccess('Navigation updated successfully')
