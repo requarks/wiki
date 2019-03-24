@@ -43,7 +43,7 @@ module.exports = {
       WIKI.logger.info(`(SEARCH/POSTGRES) Creating Words Suggestion Index...`)
       await WIKI.models.knex.raw(`
         CREATE TABLE "pagesWords" AS SELECT word FROM ts_stat(
-          'SELECT to_tsvector(''simple'', pages."title") || to_tsvector(''simple'', pages."description") || to_tsvector(''simple'', pages."content") FROM pages WHERE pages."isPublished" AND NOT pages."isPrivate"'
+          'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content") FROM "pagesVector"'
         )`)
       await WIKI.models.knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm')
       await WIKI.models.knex.raw(`CREATE INDEX "pageWords_idx" ON "pagesWords" USING GIN (word gin_trgm_ops)`)
