@@ -99,6 +99,7 @@ module.exports = class SearchEngine extends Model {
     const searchEngine = await WIKI.models.searchEngines.query().findOne('isEnabled', true)
     if (searchEngine) {
       WIKI.data.searchEngine = require(`../modules/search/${searchEngine.key}/engine`)
+      WIKI.data.searchEngine.key = searchEngine.key
       WIKI.data.searchEngine.config = searchEngine.config
       if (activate) {
         try {

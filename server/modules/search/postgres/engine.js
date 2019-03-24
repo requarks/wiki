@@ -1,5 +1,9 @@
-const _ = require('lodash')
 const tsquery = require('pg-tsquery')()
+const stream = require('stream')
+const Promise = require('bluebird')
+const pipeline = Promise.promisify(stream.pipeline)
+
+/* global WIKI */
 
 module.exports = {
   async activate() {
@@ -8,7 +12,10 @@ module.exports = {
     }
   },
   async deactivate() {
-    // not used
+    WIKI.logger.info(`(SEARCH/POSTGRES) Dropping index tables...`)
+    await WIKI.models.knex.schema.dropTable('pagesWords')
+    await WIKI.models.knex.schema.dropTable('pagesVector')
+    WIKI.logger.info(`(SEARCH/POSTGRES) Index tables have been dropped.`)
   },
   /**
    * INIT
@@ -27,6 +34,7 @@ module.exports = {
         table.string('title')
         table.string('description')
         table.specificType('tokens', 'TSVECTOR')
+        table.text('content')
       })
     }
     // -> Create Words Index
@@ -71,7 +79,6 @@ module.exports = {
       WIKI.logger.warn('Search Engine Error:')
       WIKI.logger.warn(err)
     }
-
   },
   /**
    * CREATE
@@ -80,10 +87,10 @@ module.exports = {
    */
   async created(page) {
     await WIKI.models.knex.raw(`
-      INSERT INTO "pagesVector" (path, locale, title, description, tokens) VALUES (
-        '?', '?', '?', '?', (setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', '?'), 'C'))
+      INSERT INTO "pagesVector" (path, locale, title, description, "tokens") VALUES (
+        ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
       )
-    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.content])
+    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.safeContent])
   },
   /**
    * UPDATE
@@ -99,7 +106,7 @@ module.exports = {
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') ||
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
       WHERE path = ? AND locale = ?
-    `, [page.title, page.description, page.title, page.description, page.content, page.path, page.localeCode])
+    `, [page.title, page.description, page.title, page.description, page.safeContent, page.path, page.localeCode])
   },
   /**
    * DELETE
@@ -132,14 +139,34 @@ module.exports = {
   async rebuild() {
     WIKI.logger.info(`(SEARCH/POSTGRES) Rebuilding Index...`)
     await WIKI.models.knex('pagesVector').truncate()
+    await WIKI.models.knex('pagesWords').truncate()
+
+    await pipeline(
+      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'render').select().from('pages').where({
+        isPublished: true,
+        isPrivate: false
+      }).stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (page, enc, cb) => {
+          const content = WIKI.models.pages.cleanHTML(page.render)
+          await WIKI.models.knex.raw(`
+            INSERT INTO "pagesVector" (path, locale, title, description, "tokens", content) VALUES (
+              ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?
+            )
+          `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, content, content])
+          cb()
+        }
+      })
+    )
+
     await WIKI.models.knex.raw(`
-      INSERT INTO "pagesVector" (path, locale, title, description, "tokens")
-        SELECT path, "localeCode" AS locale, title, description,
-          (setweight(to_tsvector('${this.config.dictLanguage}', title), 'A') ||
-          setweight(to_tsvector('${this.config.dictLanguage}', description), 'B') ||
-          setweight(to_tsvector('${this.config.dictLanguage}', content), 'C')) AS tokens
-        FROM "pages"
-        WHERE pages."isPublished" AND NOT pages."isPrivate"`)
+      INSERT INTO "pagesWords" (word)
+        SELECT word FROM ts_stat(
+          'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content") FROM "pagesVector"'
+        )
+      `)
+
     WIKI.logger.info(`(SEARCH/POSTGRES) Index rebuilt successfully.`)
   }
 }

@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const elasticsearch = require('elasticsearch')
-const { pipeline, Transform } = require('stream')
+const stream = require('stream')
+const Promise = require('bluebird')
+const pipeline = Promise.promisify(stream.pipeline)
 
 /* global WIKI */
 
@@ -116,7 +118,7 @@ module.exports = {
         input: s,
         weight: 3
       })),
-      page.content.split(' ').map(s => ({
+      page.safeContent.split(' ').map(s => ({
         input: s,
         weight: 1
       }))
@@ -138,7 +140,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.content
+        content: page.safeContent
       },
       refresh: true
     })
@@ -159,7 +161,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.content
+        content: page.safeContent
       },
       refresh: true
     })
@@ -199,7 +201,7 @@ module.exports = {
         path: page.destinationPath,
         title: page.title,
         description: page.description,
-        content: page.content
+        content: page.safeContent
       },
       refresh: true
     })
@@ -262,13 +264,14 @@ module.exports = {
                 _id: doc.id
               }
             })
+            doc.safeContent = WIKI.models.pages.cleanHTML(doc.render)
             result.push({
               suggest: this.buildSuggest(doc),
               locale: doc.locale,
               path: doc.path,
               title: doc.title,
               description: doc.description,
-              content: doc.content
+              content: doc.safeContent
             })
             return result
           }, []),
@@ -282,11 +285,11 @@ module.exports = {
     }
 
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'content').select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render').select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
-      new Transform({
+      new stream.Transform({
         objectMode: true,
         transform: async (chunk, enc, cb) => processDocument(cb, chunk),
         flush: async (cb) => processDocument(cb)

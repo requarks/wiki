@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const AWS = require('aws-sdk')
-const { pipeline, Transform } = require('stream')
+const stream = require('stream')
+const Promise = require('bluebird')
+const pipeline = Promise.promisify(stream.pipeline)
 
 /* global WIKI */
 
@@ -197,7 +199,7 @@ module.exports = {
             path: page.path,
             title: page.title,
             description: page.description,
-            content: page.content
+            content: page.safeContent
           }
         }
       ])
@@ -220,7 +222,7 @@ module.exports = {
             path: page.path,
             title: page.title,
             description: page.description,
-            content: page.content
+            content: page.safeContent
           }
         }
       ])
@@ -268,7 +270,7 @@ module.exports = {
             path: page.destinationPath,
             title: page.title,
             description: page.description,
-            content: page.content
+            content: page.safeContent
           }
         }
       ])
@@ -335,7 +337,7 @@ module.exports = {
               path: doc.path,
               title: doc.title,
               description: doc.description,
-              content: doc.content
+              content: WIKI.models.pages.cleanHTML(doc.render)
             }
           })))
         }).promise()
@@ -347,11 +349,11 @@ module.exports = {
     }
 
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'content').select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render').select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
-      new Transform({
+      new stream.Transform({
         objectMode: true,
         transform: async (chunk, enc, cb) => processDocument(cb, chunk),
         flush: async (cb) => processDocument(cb)

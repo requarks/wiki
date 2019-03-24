@@ -5,6 +5,8 @@ const pageHelper = require('../helpers/page')
 const path = require('path')
 const fs = require('fs-extra')
 const yaml = require('js-yaml')
+const striptags = require('striptags')
+const emojiRegex = require('emoji-regex')
 
 /* global WIKI */
 
@@ -13,6 +15,9 @@ const frontmatterRegex = {
   legacy: /^(<!-- TITLE: ?([\w\W]+?) -{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) -{2}>)?(?:\n|\r)*([\w\W]*)*/i,
   markdown: /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?(?:\n|\r)*([\w\W]*)*/
 }
+
+const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
+const htmlEntitiesRegex = /(&#[0-9]{3};)|(&#x[a-zA-Z0-9]{2};)/ig
 
 /**
  * Pages model
@@ -209,14 +214,23 @@ module.exports = class Page extends Model {
       userId: opts.authorId,
       isPrivate: opts.isPrivate
     })
+
+    // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
+
+    // -> Add to Search Index
+    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.created(page)
+
+    // -> Add to Storage
     if (!opts.skipStorage) {
       await WIKI.models.storage.pageEvent({
         event: 'created',
         page
       })
     }
+
     return page
   }
 
@@ -245,8 +259,16 @@ module.exports = class Page extends Model {
       userId: ogPage.authorId,
       isPrivate: ogPage.isPrivate
     })
+
+    // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
+
+    // -> Update Search Index
+    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.updated(page)
+
+    // -> Update on Storage
     if (!opts.skipStorage) {
       await WIKI.models.storage.pageEvent({
         event: 'updated',
@@ -275,7 +297,11 @@ module.exports = class Page extends Model {
     })
     await WIKI.models.pages.query().delete().where('id', page.id)
     await WIKI.models.pages.deletePageFromCache(page)
+
+    // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
+
+    // -> Delete from Storage
     if (!opts.skipStorage) {
       await WIKI.models.storage.pageEvent({
         event: 'deleted',
@@ -389,5 +415,15 @@ module.exports = class Page extends Model {
 
   static async deletePageFromCache(page) {
     return fs.remove(path.join(process.cwd(), `data/cache/${page.hash}.bin`))
+  }
+
+  static cleanHTML(rawHTML = '') {
+    return striptags(rawHTML || '')
+      .replace(emojiRegex(), '')
+      .replace(htmlEntitiesRegex, '')
+      .replace(punctuationRegex, ' ')
+      .replace(/(\r\n|\n|\r)/gm, ' ')
+      .replace(/\s\s+/g, ' ')
+      .split(' ').filter(w => w.length > 1).join(' ').toLowerCase()
   }
 }

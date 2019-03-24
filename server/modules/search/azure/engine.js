@@ -1,7 +1,9 @@
 const _ = require('lodash')
 const { SearchService, QueryType } = require('azure-search-client')
 const request = require('request-promise')
-const { pipeline } = require('stream')
+const stream = require('stream')
+const Promise = require('bluebird')
+const pipeline = Promise.promisify(stream.pipeline)
 
 /* global WIKI */
 
@@ -146,7 +148,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.content
+        content: page.safeContent
       }
     ])
   },
@@ -163,7 +165,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.content
+        content: page.safeContent
       }
     ])
   },
@@ -199,7 +201,7 @@ module.exports = {
         path: page.destinationPath,
         title: page.title,
         description: page.description,
-        content: page.content
+        content: page.safeContent
       }
     ])
   },
@@ -209,10 +211,23 @@ module.exports = {
   async rebuild() {
     WIKI.logger.info(`(SEARCH/AZURE) Rebuilding Index...`)
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'content').select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render').select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: (chunk, enc, cb) => {
+          cb(null, {
+            id: chunk.id,
+            path: chunk.path,
+            locale: chunk.locale,
+            title: chunk.title,
+            description: chunk.description,
+            content: WIKI.models.pages.cleanHTML(chunk.render)
+          })
+        }
+      }),
       this.client.indexes.use(this.config.indexName).createIndexingStream()
     )
     WIKI.logger.info(`(SEARCH/AZURE) Index rebuilt successfully.`)

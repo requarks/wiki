@@ -38,7 +38,11 @@ module.exports = {
   SearchMutation: {
     async updateSearchEngines(obj, args, context) {
       try {
+        let newActiveEngine = ''
         for (let searchEngine of args.engines) {
+          if (searchEngine.isEnabled) {
+            newActiveEngine = searchEngine.key
+          }
           await WIKI.models.searchEngines.query().patch({
             isEnabled: searchEngine.isEnabled,
             config: _.reduce(searchEngine.config, (result, value, key) => {
@@ -46,6 +50,13 @@ module.exports = {
               return result
             }, {})
           }).where('key', searchEngine.key)
+        }
+        if (newActiveEngine !== WIKI.data.searchEngine.key) {
+          try {
+            await WIKI.data.searchEngine.deactivate()
+          } catch (err) {
+            WIKI.logger.warn('Failed to deactivate previous search engine:', err)
+          }
         }
         await WIKI.models.searchEngines.initEngine({ activate: true })
         return {

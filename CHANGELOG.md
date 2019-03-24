@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.0-beta.XX] - 2019-XX-XX
+### Added
+- Added Search Engine - Algolia
+- Added Search Engine - Elasticsearch
+
+### Fixed
+- Fixed error when saving navigation in admin area
+- Fixed guest search failing because of missing global permissions
+- Fixed PostgreSQL search engine indexing issues
+
+### Changed
+- Improved search suggestions from sanitized content
+- Search engine deactivate handler is now being called on engine switch
+- Markdown editor UI improvements for insert actions (wip)
+
 ## [2.0.0-beta.68] - 2019-03-17
 ### Added
 - Added Search Results overlay

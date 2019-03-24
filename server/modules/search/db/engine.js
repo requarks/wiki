@@ -1,4 +1,4 @@
-const _ = require('lodash')
+/* global WIKI */
 
 module.exports = {
   activate() {
@@ -32,7 +32,7 @@ module.exports = {
         }
         // TODO: Add user permissions filtering
         builder.andWhere(builder => {
-          switch(WIKI.config.db.type) {
+          switch (WIKI.config.db.type) {
             case 'postgres':
               builder.where('title', 'ILIKE', `%${q}%`)
               builder.orWhere('description', 'ILIKE', `%${q}%`)
