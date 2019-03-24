@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [2.0.0-beta.XX] - 2019-XX-XX
+## [2.0.0-beta.84] - 2019-03-24
 ### Added
 - Added Search Engine - Algolia
 - Added Search Engine - Elasticsearch
@@ -61,5 +61,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [2.0.0-beta.11] - 2019-01-20
 - First beta release
 
+[2.0.0-beta.84]: https://github.com/Requarks/wiki/releases/tag/2.0.0-beta.84
+[2.0.0-beta.68]: https://github.com/Requarks/wiki/releases/tag/2.0.0-beta.68
 [2.0.0-beta.42]: https://github.com/Requarks/wiki/releases/tag/2.0.0-beta.42
 [2.0.0-beta.11]: https://github.com/Requarks/wiki/releases/tag/2.0.0-beta.11
