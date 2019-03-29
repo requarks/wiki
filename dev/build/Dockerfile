@@ -28,18 +28,21 @@ LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \
-    mkdir -p /logs
+    mkdir -p /logs && \
+    chown -R node:node /wiki /logs
 
 WORKDIR /wiki
 
-COPY --from=assets /wiki/assets ./assets
-COPY --from=assets /wiki/node_modules ./node_modules
-COPY ./server ./server
-COPY --from=assets /wiki/server/views ./server/views
-COPY ./dev/build/config.yml ./config.yml
-COPY ./dev/docker-common/wait.sh ./wait.sh
-COPY ./package.json ./package.json
-COPY ./LICENSE ./LICENSE
+COPY --chown=node:node --from=assets /wiki/assets ./assets
+COPY --chown=node:node --from=assets /wiki/node_modules ./node_modules
+COPY --chown=node:node ./server ./server
+COPY --chown=node:node --from=assets /wiki/server/views ./server/views
+COPY --chown=node:node ./dev/build/config.yml ./config.yml
+COPY --chown=node:node ./dev/docker-common/wait.sh ./wait.sh
+COPY --chown=node:node ./package.json ./package.json
+COPY --chown=node:node ./LICENSE ./LICENSE
+
+USER node
 
 EXPOSE 3000
 
