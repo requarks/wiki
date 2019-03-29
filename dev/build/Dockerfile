@@ -3,9 +3,7 @@
 # ====================
 FROM node:10.15-alpine AS assets
 
-RUN apk update && \
-    apk add yarn g++ make python --no-cache && \
-    rm -rf /var/cache/apk/*
+RUN apk add yarn g++ make python --no-cache
 
 WORKDIR /wiki
 
@@ -28,9 +26,7 @@ RUN yarn --production --frozen-lockfile --non-interactive
 FROM node:10.15-alpine
 LABEL maintainer="requarks.io"
 
-RUN apk update && \
-    apk add bash curl git openssh gnupg sqlite --no-cache && \
-    rm -rf /var/cache/apk/* && \
+RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \
     mkdir -p /logs
 
