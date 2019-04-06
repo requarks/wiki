@@ -36,5 +36,25 @@ module.exports = {
    */
   generateHash(opts) {
     return crypto.createHash('sha1').update(`${opts.locale}|${opts.path}|${opts.privateNS}`).digest('hex')
+  },
+  /**
+   * Inject Page Metadata
+   */
+  injectPageMetadata(page) {
+    let meta = [
+      ['title', page.title],
+      ['description', page.description],
+      ['published', page.isPublished.toString()],
+      ['date', page.updatedAt],
+      ['tags', '']
+    ]
+    switch (page.contentType) {
+      case 'markdown':
+        return '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content
+      case 'html':
+        return '<!--\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n-->\n\n' + page.content
+      default:
+        return page.content
+    }
   }
 }

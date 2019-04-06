@@ -77,6 +77,16 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    async executeAction(obj, args, context) {
+      try {
+        await WIKI.models.storage.executeAction(args.targetKey, args.handler)
+        return {
+          responseResult: graphHelper.generateSuccess('Action completed.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   }
 }

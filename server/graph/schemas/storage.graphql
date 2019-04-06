@@ -31,6 +31,11 @@ type StorageMutation {
   updateTargets(
     targets: [StorageTargetInput]!
   ): DefaultResponse @auth(requires: ["manage:system"])
+
+  executeAction(
+    targetKey: String!
+    handler: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -51,6 +56,7 @@ type StorageTarget {
   syncInterval: String
   syncIntervalDefault: String
   config: [KeyValuePair]
+  actions: [StorageTargetAction]
 }
 
 input StorageTargetInput {
@@ -67,4 +73,10 @@ type StorageStatus {
   status: String!
   message: String!
   lastAttempt: String!
+}
+
+type StorageTargetAction {
+  handler: String!
+  label: String!
+  hint: String!
 }

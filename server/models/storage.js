@@ -60,7 +60,7 @@ module.exports = class Storage extends Model {
           newTargets.push({
             key: target.key,
             isEnabled: false,
-            mode: target.defaultMode || 'push',
+            mode: target.defaultMode || 'push',
             syncInterval: target.schedule || 'P0D',
             config: _.transform(target.props, (result, value, key) => {
               _.set(result, key, value.default)
@@ -116,7 +116,7 @@ module.exports = class Storage extends Model {
       }
 
       // -> Initialize targets
-      for(let target of this.targets) {
+      for (let target of this.targets) {
         const targetDef = _.find(WIKI.data.storage, ['key', target.key])
         target.fn = require(`../modules/storage/${target.key}/storage`)
         target.fn.config = target.config
@@ -161,8 +161,26 @@ module.exports = class Storage extends Model {
 
   static async pageEvent({ event, page }) {
     try {
-      for(let target of this.targets) {
+      for (let target of this.targets) {
         await target.fn[event](page)
+      }
+    } catch (err) {
+      WIKI.logger.warn(err)
+      throw err
+    }
+  }
+
+  static async executeAction(targetKey, handler) {
+    try {
+      const target = _.find(this.targets, ['key', targetKey])
+      if (target) {
+        if (_.has(target.fn, handler)) {
+          await target.fn[handler]()
+        } else {
+          throw new Error('Invalid Handler for Storage Target')
+        }
+      } else {
+        throw new Error('Invalid or Inactive Storage Target')
       }
     } catch (err) {
       WIKI.logger.warn(err)

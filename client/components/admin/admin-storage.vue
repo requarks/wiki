@@ -158,6 +158,24 @@
                       .caption.mt-3 Currently set to every #[strong {{getDefaultSchedule(tgt.syncInterval)}}].
                       .caption The default is every #[strong {{getDefaultSchedule(tgt.syncIntervalDefault)}}].
 
+                  template(v-if='tgt.actions && tgt.actions.length > 0')
+                    v-divider.mt-3
+                    v-subheader.pl-0 Actions
+                    v-container.pt-0(grid-list-xl, fluid)
+                      v-layout(row, wrap, fill-height)
+                        v-flex(xs12, lg6, xl4, v-for='act of tgt.actions')
+                          v-card.radius-7.grey(flat, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`', height='100%')
+                            v-card-text
+                              .subheading(v-html='act.label')
+                              .body-1.mt-2(v-html='act.hint')
+                              v-btn.mx-0.mt-3(
+                                @click='executeAction(tgt.key, act.handler)'
+                                outline
+                                :color='$vuetify.dark ? `blue` : `primary`'
+                                :disabled='runningAction'
+                                :loading='runningActionHandler === act.handler'
+                                ) Run
+
 </template>
 
 <script>
@@ -170,6 +188,7 @@ import { LoopingRhombusesSpinner } from 'epic-spinners'
 
 import statusQuery from 'gql/admin/storage/storage-query-status.gql'
 import targetsQuery from 'gql/admin/storage/storage-query-targets.gql'
+import targetExecuteActionMutation from 'gql/admin/storage/storage-mutation-executeaction.gql'
 import targetsSaveMutation from 'gql/admin/storage/storage-mutation-save-targets.gql'
 
 momentDurationFormatSetup(moment)
@@ -184,6 +203,8 @@ export default {
   },
   data() {
     return {
+      runningAction: false,
+      runningActionHandler: '',
       currentTab: 0,
       targets: [],
       status: []
@@ -209,12 +230,12 @@ export default {
         mutation: targetsSaveMutation,
         variables: {
           targets: this.targets.map(tgt => _.pick(tgt, [
-              'isEnabled',
-              'key',
-              'config',
-              'mode',
-              'syncInterval'
-            ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
+            'isEnabled',
+            'key',
+            'config',
+            'mode',
+            'syncInterval'
+          ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
         }
       })
       this.currentTab = 0
@@ -239,6 +260,30 @@ export default {
     },
     getDefaultSchedule(val) {
       return moment.duration(val).format('y [years], M [months], d [days], h [hours], m [minutes]')
+    },
+    async executeAction(targetKey, handler) {
+      this.$store.commit(`loadingStart`, 'admin-storage-executeaction')
+      this.runningAction = true
+      this.runningActionHandler = handler
+      try {
+        await this.$apollo.mutate({
+          mutation: targetExecuteActionMutation,
+          variables: {
+            targetKey,
+            handler
+          }
+        })
+        this.$store.commit('showNotification', {
+          message: 'Action completed.',
+          style: 'success',
+          icon: 'check'
+        })
+      } catch (err) {
+        console.warn(err)
+      }
+      this.runningAction = false
+      this.runningActionHandler = ''
+      this.$store.commit(`loadingStop`, 'admin-storage-executeaction')
     }
   },
   apollo: {

@@ -130,21 +130,7 @@ module.exports = class Page extends Model {
    * Inject page metadata into contents
    */
   injectMetadata () {
-    let meta = [
-      ['title', this.title],
-      ['description', this.description],
-      ['published', this.isPublished.toString()],
-      ['date', this.updatedAt],
-      ['tags', '']
-    ]
-    switch (this.contentType) {
-      case 'markdown':
-        return '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + this.content
-      case 'html':
-        return '<!--\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n-->\n\n' + this.content
-      default:
-        return this.content
-    }
+    return pageHelper.injectPageMetadata(this)
   }
 
   /**

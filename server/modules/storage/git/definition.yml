@@ -77,4 +77,10 @@ props:
 actions:
   - handler: syncUntracked
     label: Add Untracked Changes
-    hint: Output all content from the DB to the Git repo to ensure all untracked content is saved. If you enabled Git after content was created or you temporarily disabled Git, you'll want to execute this action to add the missing untracked changes.
+    hint: Output all content from the DB to the local Git repository to ensure all untracked content is saved. If you enabled Git after content was created or you temporarily disabled Git, you'll want to execute this action to add the missing untracked changes.
+  - handler: sync
+    label: Force Sync
+    hint: Will trigger an immediate sync operation, regardless of the current sync schedule. The sync direction is respected.
+  - handler: importAll
+    label: Import Everything
+    hint: Will import all content currently in the local Git repository, regardless of the latest commit state. Useful for importing content from the remote repository created before git was enabled.
