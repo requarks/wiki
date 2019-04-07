@@ -9,6 +9,7 @@ supportedModes:
   - push
 defaultMode: push
 schedule: false
+internalSchedule: P1D
 props:
   path:
     type: String
@@ -21,3 +22,10 @@ props:
     title: Create Daily Backups
     hint: A tar.gz archive containing all content will be created daily in subfolder named _daily. Archives are kept for a month.
     order: 2
+actions:
+  - handler: dump
+    label: Dump all content to disk
+    hint: Output all content from the DB to the local disk. If you enabled this module after content was created or you temporarily disabled this module, you'll want to execute this action to add the missing files.
+  - handler: backup
+    label: Create Backup
+    hint: Will create a manual backup archive at this point in time, in a subfolder named _manual, from the contents currently on disk.

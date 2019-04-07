@@ -142,6 +142,16 @@ module.exports = class Storage extends Model {
               repeat: true
             }, target.key)
           }
+
+          // -> Set internal recurring sync job
+          if (targetDef.intervalSchedule && targetDef.intervalSchedule !== `P0D`) {
+            WIKI.scheduler.registerJob({
+              name: `sync-storage`,
+              immediate: false,
+              schedule: target.intervalSchedule,
+              repeat: true
+            }, target.key)
+          }
         } catch (err) {
           // -> Save initialization error
           await WIKI.models.storage.query().patch({

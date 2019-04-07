@@ -1,5 +1,15 @@
 const fs = require('fs-extra')
+const _ = require('lodash')
 const path = require('path')
+const tar = require('tar-fs')
+const zlib = require('zlib')
+const stream = require('stream')
+const Promise = require('bluebird')
+const pipeline = Promise.promisify(stream.pipeline)
+const pageHelper = require('../../../helpers/page.js')
+const moment = require('moment')
+
+/* global WIKI */
 
 /**
  * Get file extension based on content type
@@ -27,8 +37,25 @@ module.exports = {
     await fs.ensureDir(this.config.path)
     WIKI.logger.info('(STORAGE/DISK) Initialization completed.')
   },
-  async sync() {
-    // not used
+  async sync({ manual } = { manual: false }) {
+    if (this.config.createDailyBackups || manual) {
+      const dirPath = path.join(this.config.path, manual ? '_manual' : '_daily')
+      await fs.ensureDir(dirPath)
+
+      const dateFilename = moment().format(manual ? 'YYYYMMDD-HHmmss' : 'DD')
+
+      WIKI.logger.info(`(STORAGE/DISK) Creating backup archive...`)
+      await pipeline(
+        tar.pack(this.config.path, {
+          ignore: (filePath) => {
+            return filePath.indexOf('_daily') >= 0 || filePath.indexOf('_manual') >= 0
+          }
+        }),
+        zlib.createGzip(),
+        fs.createWriteStream(path.join(dirPath, `wiki-${dateFilename}.tar.gz`))
+      )
+      WIKI.logger.info('(STORAGE/DISK) Backup archive created successfully.')
+    }
   },
   async created(page) {
     WIKI.logger.info(`(STORAGE/DISK) Creating file ${page.path}...`)
@@ -50,5 +77,31 @@ module.exports = {
     const sourceFilePath = path.join(this.config.path, `${page.sourcePath}.${getFileExtension(page.contentType)}`)
     const destinationFilePath = path.join(this.config.path, `${page.destinationPath}.${getFileExtension(page.contentType)}`)
     await fs.move(sourceFilePath, destinationFilePath, { overwrite: true })
+  },
+
+  /**
+   * HANDLERS
+   */
+  async dump() {
+    WIKI.logger.info(`(STORAGE/DISK) Dumping all content to disk...`)
+    await pipeline(
+      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt').select().from('pages').where({
+        isPrivate: false
+      }).stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (page, enc, cb) => {
+          const fileName = `${page.path}.${getFileExtension(page.contentType)}`
+          WIKI.logger.info(`(STORAGE/DISK) Dumping ${fileName}...`)
+          const filePath = path.join(this.config.path, fileName)
+          await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
+          cb()
+        }
+      })
+    )
+    WIKI.logger.info('(STORAGE/DISK) All content was dumped to disk successfully.')
+  },
+  async backup() {
+    return this.sync({ manual: true })
   }
 }

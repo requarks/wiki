@@ -157,6 +157,7 @@
     "sqlite3": "4.0.6",
     "striptags": "3.1.1",
     "subscriptions-transport-ws": "0.9.15",
+    "tar-fs": "2.0.0",
     "twemoji": "11.3.0",
     "uslug": "1.0.4",
     "uuid": "3.3.2",
