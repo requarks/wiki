@@ -297,10 +297,6 @@ export default {
       display: flex;
     }
 
-    h1 {
-      font-family: 'Varela Round' !important;
-    }
-
     .v-text-field.centered input {
       text-align: center;
     }

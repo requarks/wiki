@@ -76,8 +76,10 @@
                     :label='$t("navigation.icon")'
                     prepend-icon='casino'
                     v-model='current.icon'
+                    hide-details
                   )
-                  v-select(
+                  .caption.pt-2.pl-5 Refer to the #[a(href='https://material.io/tools/icons/?style=baseline', target='_blank') Material Design Icons Reference] for the list of all possible values.
+                  v-select.mt-4(
                     outline
                     :label='$t("navigation.targetType")'
                     prepend-icon='near_me'

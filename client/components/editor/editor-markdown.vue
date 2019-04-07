@@ -51,14 +51,14 @@
         span Horizontal Bar
     .editor-markdown-main
       .editor-markdown-sidebar
-        //- v-tooltip(right)
-        //-   v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
-        //-     v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
-        //-   span Insert Media
         v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
-            v-icon image
-          span Insert Media
+            v-icon link
+          span Insert Link
+        v-tooltip(right)
+          v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+            v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
+          span Insert Image
         v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
             v-icon insert_drive_file
@@ -77,13 +77,13 @@
           span Insert Math Expression
         v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
-            v-icon link
-          span Insert Link
-        v-spacer
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
             v-icon border_outer
           span Table Helper
+        v-spacer
+        v-tooltip(right, color='primary')
+          v-btn(icon, slot='activator', dark, @click='toggleFullscreen').mx-0
+            v-icon crop_free
+          span Fullscreen Editor
         v-tooltip(right, color='primary')
           v-btn(icon, slot='activator', dark).mx-0
             v-icon help
@@ -124,10 +124,7 @@ import 'codemirror/addon/selection/active-line.js'
 import 'codemirror/addon/display/fullscreen.js'
 import 'codemirror/addon/display/fullscreen.css'
 import 'codemirror/addon/selection/mark-selection.js'
-import 'codemirror/addon/scroll/annotatescrollbar.js'
-import 'codemirror/addon/search/matchesonscrollbar.js'
 import 'codemirror/addon/search/searchcursor.js'
-import 'codemirror/addon/search/match-highlighter.js'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
@@ -296,6 +293,9 @@ export default {
     }, 500),
     toggleAround (before, after) {
 
+    },
+    toggleFullscreen () {
+      this.cm.setOption('fullScreen', true)
     }
   }
 }

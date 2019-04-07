@@ -376,10 +376,6 @@ export default {
       display: flex;
     }
 
-    h1 {
-      font-family: 'Varela Round' !important;
-    }
-
     .social-login-btn {
       display: inline-flex;
       justify-content: center;
