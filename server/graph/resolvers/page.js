@@ -28,6 +28,21 @@ module.exports = {
         }
       }
     },
+    async list (obj, args, context, info) {
+      return WIKI.models.pages.query().column([
+        'id',
+        'path',
+        { locale: 'localeCode' },
+        'title',
+        'description',
+        'isPublished',
+        'isPrivate',
+        'privateNS',
+        'contentType',
+        'createdAt',
+        'updatedAt'
+      ])
+    }
   },
   PageMutation: {
     async create(obj, args, context) {

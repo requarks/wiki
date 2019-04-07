@@ -1,0 +1,17 @@
+query {
+  pages {
+    list {
+      id
+      locale
+      path
+      title
+      description
+      contentType
+      isPublished
+      isPrivate
+      privateNS
+      createdAt
+      updatedAt
+    }
+  }
+}

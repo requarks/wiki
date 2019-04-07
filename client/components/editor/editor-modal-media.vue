@@ -5,13 +5,13 @@
         v-flex(xs9)
           v-card.radius-7.animated.fadeInLeft.wait-p1s(light)
             v-card-text
-              v-toolbar.radius-7(color='teal lighten-5', dense, flat)
-                .body-2.teal--text Images
-                v-spacer
-                v-btn(outline, small, color='teal')
+              .d-flex
+                v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
+                  .body-2.teal--text Images
+                v-btn.ml-3.my-0.radius-7(outline, large, color='teal', disabled)
                   v-icon(left) keyboard_backspace
                   span Parent Folder
-                v-btn(outline, small, color='teal')
+                v-btn.my-0.radius-7(outline, large, color='teal')
                   v-icon(left) add
                   span New Folder
               v-list.mt-3(dense, two-line)
@@ -26,14 +26,14 @@
                     v-list-tile-action
                       .caption.pr-3 2019-04-07
                     v-list-tile-action
-                      v-chip(label, small) JPG
+                      v-chip.teal--text(label, small, color='teal lighten-5') JPG
                   v-divider(v-if='idx < 10 - 1')
               .d-flex.mt-3
-                v-toolbar.radius-7(flat, color='grey lighten-4', dense)
+                v-toolbar.radius-7(flat, color='grey lighten-4', dense, height='44')
                   .body-2 / universe
                   v-spacer
                   .body-1.grey--text.text--darken-1 10 files
-                v-btn.ml-3(color='teal', dark, @click='insert')
+                v-btn.ml-3.my-0.radius-7(color='teal', large, @click='insert', disabled)
                   v-icon(left) save_alt
                   span Insert
 

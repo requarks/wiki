@@ -26,6 +26,8 @@ type PageQuery {
     path: String
     locale: String
   ): PageSearchResponse! @auth(requires: ["manage:system", "read:pages"])
+
+  list: [PageListItem!]! @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -107,4 +109,18 @@ type PageSearchResult {
   description: String!
   path: String!
   locale: String!
+}
+
+type PageListItem {
+  id: Int!
+  path: String!
+  locale: String!
+  title: String
+  description: String
+  contentType: String!
+  isPublished: Boolean!
+  isPrivate: Boolean!
+  privateNS: String
+  createdAt: Date!
+  updatedAt: Date!
 }
