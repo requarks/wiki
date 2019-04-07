@@ -3,19 +3,19 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-categorize.svg', alt='General', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-categorize.svg', alt='General', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text {{ $t('admin:general.title') }}
-            .subheading.grey--text {{ $t('admin:general.subtitle') }}
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:general.title') }}
+            .subheading.grey--text.animated.fadeInLeft {{ $t('admin:general.subtitle') }}
           v-spacer
-          v-btn(color='success', depressed, @click='save', large)
+          v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-form
-                v-card.wiki-form
+                v-card.wiki-form.animated.fadeInUp
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title
                       .subheading {{ $t('admin:general.siteInfo') }}
@@ -87,7 +87,7 @@
                       hint='A unique identifier provided by your analytics service provider.'
                       )
             v-flex(lg6 xs12)
-              v-card.wiki-form
+              v-card.wiki-form.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:general.siteBranding') }}
@@ -124,7 +124,7 @@
                     hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
                     )
 
-              v-card.wiki-form.mt-3
+              v-card.wiki-form.mt-3.animated.fadeInUp.wait-p4s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Features
@@ -169,7 +169,7 @@ export default {
       analyticsServices: [
         { text: 'None', value: '' },
         { text: 'Google Analytics', value: 'ga' },
-        { text: 'Google Tag Manager', value: 'gtm' },
+        { text: 'Google Tag Manager', value: 'gtm' }
       ],
       metaRobots: [
         { text: 'Index', value: 'index' },

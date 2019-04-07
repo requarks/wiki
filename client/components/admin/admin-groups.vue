@@ -3,15 +3,15 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-people.svg', alt='Groups', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-people.svg', alt='Groups', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2 Groups
-            .subheading.grey--text Manage groups and their permissions
+            .headline.blue--text.text--darken-2.animated.fadeInLeft Groups
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
           v-spacer
-          v-btn(color='grey', outline, @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p2s(color='grey', outline, @click='refresh', large)
             v-icon refresh
           v-dialog(v-model='newGroupDialog', max-width='500')
-            v-btn(color='primary', depressed, slot='activator', large)
+            v-btn.animated.fadeInDown(color='primary', depressed, slot='activator', large)
               v-icon(left) add
               span New Group
             v-card.wiki-form
@@ -32,7 +32,7 @@
                 v-spacer
                 v-btn(flat, @click='newGroupDialog = false') Cancel
                 v-btn(color='primary', @click='createGroup') Create
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp
           v-data-table(
             :items='groups'
             :headers='headers'
@@ -63,7 +63,6 @@ import _ from 'lodash'
 
 import groupsQuery from 'gql/admin/groups/groups-query-list.gql'
 import createGroupMutation from 'gql/admin/groups/groups-mutation-create.gql'
-import deleteGroupMutation from 'gql/admin/groups/groups-mutation-delete.gql'
 
 export default {
   data() {

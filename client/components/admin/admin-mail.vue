@@ -1,21 +1,21 @@
 <template lang='pug'>
   v-container(fluid, grid-list-lg)
-    v-layout(row wrap)
+    v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-new-post.svg', alt='Mail', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-new-post.svg', alt='Mail', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text {{ $t('admin:mail.title') }}
-            .subheading.grey--text {{ $t('admin:mail.subtitle') }}
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:mail.title') }}
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:mail.subtitle') }}
           v-spacer
-          v-btn(color='success', depressed, @click='save', large)
+          v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-form
-                v-card.wiki-form
+                v-card.wiki-form.animated.fadeInUp
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title
                       .subheading {{ $t('admin:mail.configuration') }}
@@ -84,7 +84,7 @@
                       )
 
             v-flex(lg6 xs12)
-              v-card.wiki-form
+              v-card.wiki-form.animated.fadeInUp.wait-p2s
                 v-form
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title

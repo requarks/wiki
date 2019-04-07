@@ -3,20 +3,20 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-triangle-arrow.svg', alt='Navigation', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-triangle-arrow.svg', alt='Navigation', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text {{$t('navigation.title')}}
-            .subheading.grey--text {{$t('navigation.subtitle')}}
+            .headline.primary--text.animated.fadeInLeft {{$t('navigation.title')}}
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{$t('navigation.subtitle')}}
           v-spacer
-          v-btn(outline, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='success', depressed, @click='save', large)
+          v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
         v-container.pa-0.mt-3(fluid, grid-list-lg)
           v-layout(row)
             v-flex(style='flex: 0 0 350px;')
-              v-card
+              v-card.animated.fadeInUp
                 v-list.py-2(dense, dark, :class='navTree.length < 1 ? "grey lighten-4" : "primary"')
                   v-list-tile(v-if='navTree.length < 1')
                     v-list-tile-avatar: v-icon(color='grey') explore_off
@@ -60,7 +60,7 @@
                       v-list-tile(@click='addItem("divider")')
                         v-list-tile-avatar: v-icon power_input
                         v-list-tile-title {{$t('navigation.divider')}}
-            v-flex
+            v-flex.animated.fadeInUp.wait-p2s
               v-card.wiki-form(v-if='current.kind === "link"')
                 v-toolbar(dense, color='blue', flat, dark)
                   .subheading {{$t('navigation.edit', { kind: $t('navigation.link') })}}

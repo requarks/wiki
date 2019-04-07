@@ -3,11 +3,11 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-heart-health.svg', alt='Contribute', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-heart-health.svg', alt='Contribute', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text {{ $t('admin:contribute.title') }}
-            .subheading.grey--text {{ $t('admin:contribute.subtitle') }}
-        v-card.mt-3
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:contribute.title') }}
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:contribute.subtitle') }}
+        v-card.mt-3.animated.fadeInUp
           v-card-text
             i18next.body-1.pl-3(path='admin:contribute.openSource', tag='div')
               v-icon(color='red') favorite

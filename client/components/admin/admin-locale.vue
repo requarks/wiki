@@ -3,18 +3,18 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-globe-earth.svg', alt='Locale', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-globe-earth.svg', alt='Locale', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text {{ $t('admin:locale.title') }}
-            .subheading.grey--text {{ $t('admin:locale.subtitle') }}
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:locale.title') }}
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:locale.subtitle') }}
           v-spacer
-          v-btn(color='success', depressed, @click='save', large, :loading='loading')
+          v-btn.animated.fadeInDown(color='success', depressed, @click='save', large, :loading='loading')
             v-icon(left) check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
-              v-card.wiki-form
+              v-card.wiki-form.animated.fadeInUp
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:locale.settings') }}
@@ -48,7 +48,7 @@
                     :hint='namespacing ? $t("admin:locale.autoUpdate.hintWithNS") : $t("admin:locale.autoUpdate.hint")'
                   )
 
-              v-card.wiki-form.mt-3
+              v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:locale.namespacing') }}
@@ -99,7 +99,7 @@
                         v-list-tile-action
                           v-checkbox(:input-value='data.tile.props.value', color='primary', value)
             v-flex(lg6 xs12)
-              v-card
+              v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:locale.download') }}

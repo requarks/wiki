@@ -3,18 +3,18 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text Rendering
-            .subheading.grey--text Configure how content is rendered
+            .headline.primary--text.animated.fadeInLeft Rendering
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s Configure how content is rendered
           v-spacer
-          v-btn(outline, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='success', @click='save', depressed, large)
+          v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
 
-      v-flex(lg3, xs12)
+      v-flex.animated.fadeInUp(lg3, xs12)
         v-toolbar(
           color='primary'
           dense
@@ -60,7 +60,7 @@
                 v-divider.my-0(v-if='n < core.children.length - 1')
 
       v-flex(lg9, xs12)
-        v-card.wiki-form
+        v-card.wiki-form.animated.fadeInUp
           v-toolbar(
             color='grey darken-1'
             dark
@@ -138,7 +138,7 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
+    darkMode: get('site/dark')
   },
   watch: {
     renderers(newValue, oldValue) {

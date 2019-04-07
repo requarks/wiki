@@ -3,17 +3,17 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-customer.svg', alt='Users', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-customer.svg', alt='Users', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2 Users
-            .subheading.grey--text Manage users
+            .headline.blue--text.text--darken-2.animated.fadeInLeft Users
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s Manage users
           v-spacer
-          v-btn(outline, color='grey', large, @click='refresh')
+          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn(color='primary', large, depressed, @click='createUser')
+          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser')
             v-icon(left) add
             span New User
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp
           v-data-table(
             v-model='selected'
             :items='users',

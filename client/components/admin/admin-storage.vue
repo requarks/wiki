@@ -3,18 +3,18 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text Storage
-            .subheading.grey--text Set backup and sync targets for your content
+            .headline.primary--text.animated.fadeInLeft Storage
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s Set backup and sync targets for your content
           v-spacer
-          v-btn(outline, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
-          v-btn(color='success', @click='save', depressed, large)
+          v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
 
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp
           v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark, v-model='currentTab')
             v-tab(key='settings'): v-icon settings
             v-tab(v-for='tgt in activeTargets', :key='tgt.key') {{ tgt.title }}
