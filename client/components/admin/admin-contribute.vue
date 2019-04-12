@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-container(fluid, grid-list-lg)
+  v-container.admin-contribute(fluid, grid-list-lg)
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
@@ -16,20 +16,58 @@
             .body-1.pt-3.pl-3 {{ $t('admin:contribute.needYourHelp') }}
             v-divider.mt-3
             v-subheader {{ $t('admin:contribute.fundOurWork') }}
-            .body-1.pl-3 {{ $t('admin:contribute.patreon') }}
-            v-card-actions.ml-2
-              a(href='https://www.patreon.com/bePatron?u=16744039', :title='$t(`admin:contribute.becomeAPatron`)')
-                img(src='/img/become_a_patron_button.png', :alt='$t(`admin:contribute.becomeAPatron`)' style='width:200px;')
-            .body-1.mt-3.pl-3 {{ $t('admin:contribute.openCollective') }}
-            v-card-actions.ml-2
-              v-btn(outline, :color='darkMode ? `blue lighten-1` : `primary`', href='https://opencollective.com/wikijs')
-                v-icon(left) local_atm
-                span {{ $t('admin:contribute.makeADonation') }}
-            .body-1.mt-3.pl-3 {{ $t('admin:contribute.tshirts') }}
-            v-card-actions.ml-2
-              v-btn(outline, :color='darkMode ? `blue lighten-1` : `primary`', href='https://wikijs.threadless.com')
-                v-icon(left) shopping_cart
-                span {{ $t('admin:contribute.shop') }}
+            v-tabs.mx-3.radius-7.admin-contribute-tabs(
+              centered
+              fixed-tabs
+              color='primary'
+              dark
+              slider-color='#FFF'
+              icons-and-text
+              )
+              v-tab
+                span Patreon
+                img(src='/svg/icon-patreon.svg')
+              v-tab
+                span OpenCollective
+                img(src='/svg/icon-opencollective.svg')
+              v-tab
+                span PayPal
+                img(src='/svg/icon-paypal.svg')
+              v-tab
+                span Ethereum
+                img(src='/svg/icon-ethereum.svg')
+              v-tab
+                span T-Shirts
+                img(src='/svg/icon-t-shirt.svg')
+              v-tab-item(:transition='false', :reverse-transition='false')
+                .body-1.pa-3 {{ $t('admin:contribute.patreon') }}
+                a.ml-3(href='https://www.patreon.com/bePatron?u=16744039', :title='$t(`admin:contribute.becomeAPatron`)')
+                  img(src='/img/become_a_patron_button.png', :alt='$t(`admin:contribute.becomeAPatron`)' style='width:200px;')
+              v-tab-item(:transition='false', :reverse-transition='false')
+                .body-1.pa-3 {{ $t('admin:contribute.openCollective') }}
+                a.ml-3(href='https://opencollective.com/wikijs/donate', :title='$t(`admin:contribute.makeADonation`)')
+                  img(src='https://opencollective.com/webpack/donate/button@2x.png?color=blue', :alt='$t(`admin:contribute.makeADonation`)' style='width:300px;')
+              v-tab-item(:transition='false', :reverse-transition='false')
+                .body-1.pa-3 {{ $t('admin:contribute.paypal') }}
+                .ml-3
+                  form(action='https://www.paypal.com/cgi-bin/webscr', method='post', target='_top')
+                    input(type='hidden', name='cmd', value='_s-xclick')
+                    input(type='hidden', name='hosted_button_id', value='FLV5X255Z9CJU')
+                    input(type='image', src='/img/paypal_button.png', border='0', name='submit', title='PayPal - The safer, easier way to pay online!', alt='Donate with PayPal button')
+                    img(alt='', border='0', src='https://www.paypal.com/en_CA/i/scr/pixel.gif', width='1', height='1')
+              v-tab-item(:transition='false', :reverse-transition='false')
+                .body-1.pa-3 {{ $t('admin:contribute.ethereum') }}
+                .ml-3
+                  .admin-contribute-ethaddress
+                    strong Ethereum Address
+                    span 0xE1d55C19aE86f6Bcbfb17e7f06aCe96BdBb22Cb5
+                  div: img(src='/img/eth_donate_qr.png')
+              v-tab-item(:transition='false', :reverse-transition='false')
+                .body-1.pa-3 {{ $t('admin:contribute.tshirts') }}
+                v-card-actions.ml-2
+                  v-btn(outline, :color='darkMode ? `blue lighten-1` : `primary`', href='https://wikijs.threadless.com', large)
+                    v-icon(left) shopping_cart
+                    span {{ $t('admin:contribute.shop') }}
             v-divider.mt-3
             v-subheader {{ $t('admin:contribute.contribute') }}
             .body-1.pl-3
@@ -203,9 +241,31 @@ export default {
 }
 </script>
 
-<style lang='scss' scoped>
-ul {
-  margin-left: 1rem;
-  list-style-type: square;
+<style lang='scss'>
+.admin-contribute {
+
+  &-tabs {
+    .v-tabs__item img {
+      height: 24px;
+      margin-bottom: 5px;
+    }
+  }
+
+  &-ethaddress {
+    display: inline-block;
+    margin-bottom: 12px;
+    border-radius: 7px;
+    background-color: mc('grey', '100');
+    padding: 12px;
+
+    strong {
+      display: block;
+    }
+  }
+
+  ul {
+    margin-left: 1rem;
+    list-style-type: square;
+  }
 }
 </style>
