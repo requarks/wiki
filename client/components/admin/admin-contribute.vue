@@ -42,18 +42,18 @@
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-1.pa-3 {{ $t('admin:contribute.patreon') }}
                 a.ml-3(href='https://www.patreon.com/bePatron?u=16744039', :title='$t(`admin:contribute.becomeAPatron`)')
-                  img(src='/img/become_a_patron_button.png', :alt='$t(`admin:contribute.becomeAPatron`)' style='width:200px;')
+                  img(src='/img/donate_patreon.png', :alt='$t(`admin:contribute.becomeAPatron`)' style='width:200px;')
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-1.pa-3 {{ $t('admin:contribute.openCollective') }}
                 a.ml-3(href='https://opencollective.com/wikijs/donate', :title='$t(`admin:contribute.makeADonation`)')
-                  img(src='https://opencollective.com/webpack/donate/button@2x.png?color=blue', :alt='$t(`admin:contribute.makeADonation`)' style='width:300px;')
+                  img(src='/img/donate_opencollective.png', :alt='$t(`admin:contribute.makeADonation`)' style='width:300px;')
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-1.pa-3 {{ $t('admin:contribute.paypal') }}
                 .ml-3
                   form(action='https://www.paypal.com/cgi-bin/webscr', method='post', target='_top')
                     input(type='hidden', name='cmd', value='_s-xclick')
                     input(type='hidden', name='hosted_button_id', value='FLV5X255Z9CJU')
-                    input(type='image', src='/img/paypal_button.png', border='0', name='submit', title='PayPal - The safer, easier way to pay online!', alt='Donate with PayPal button')
+                    input(type='image', src='/img/donate_paypal.png', border='0', name='submit', title='PayPal - The safer, easier way to pay online!', alt='Donate with PayPal button')
                     img(alt='', border='0', src='https://www.paypal.com/en_CA/i/scr/pixel.gif', width='1', height='1')
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-1.pa-3 {{ $t('admin:contribute.ethereum') }}
@@ -61,7 +61,7 @@
                   .admin-contribute-ethaddress
                     strong Ethereum Address
                     span 0xE1d55C19aE86f6Bcbfb17e7f06aCe96BdBb22Cb5
-                  div: img(src='/img/eth_donate_qr.png')
+                  div: img(src='/img/donate_eth_qr.png')
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-1.pa-3 {{ $t('admin:contribute.tshirts') }}
                 v-card-actions.ml-2
