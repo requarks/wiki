@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://beta.requarks.io/svg/logo.svg" alt="Wiki.js" width="375" />
+<img src="https://wiki.js.org/img/logo.fc80554c.svg" alt="Wiki.js" width="375" />
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat)](https://github.com/requarks/wiki/blob/master/LICENSE)
