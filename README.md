@@ -105,19 +105,19 @@ We are looking for translators to make Wiki.js UI available in as many languages
 
 <h2 align="center">Special Thanks</h2>
 
-![Algolia](https://wiki.js.org/assets/images/logo_algolia.png)  
+![Algolia](https://wiki.js.org/legacy/logo_algolia.png)  
 [Algolia](https://www.algolia.com/) for providing access to their incredible search engine.
 
-![Browserstack](https://wiki.js.org/assets/images/logo_browserstack.png)  
+![Browserstack](https://wiki.js.org/legacy/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-![Cloudflare](https://wiki.js.org/assets/images/logo_cloudflare.png)  
+![Cloudflare](https://wiki.js.org/legacy/logo_cloudflare.png)  
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
-![DigitalOcean](https://wiki.js.org/assets/images/logo_digitalocean.png)  
+![DigitalOcean](https://wiki.js.org/legacy/logo_digitalocean.png)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
-![Netlify](https://wiki.js.org/assets/images/logo_netlify.png)  
+![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
 
 <h2 align="center">Sponsors</h2>
