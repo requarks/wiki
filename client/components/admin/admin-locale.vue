@@ -112,7 +112,7 @@
                         v-list-tile-title(v-html='lc.name')
                         v-list-tile-sub-title(v-html='lc.nativeName')
                       v-list-tile-action(v-if='lc.isRTL')
-                        v-chip(label, small).caption.grey--text.text--darken-2 RTL
+                        v-chip(label, small, :class='$vuetify.dark ? `text--lighten-5` : `text--darken-2`').caption.grey--text RTL
                       v-list-tile-action(v-if='lc.isInstalled && lc.installDate < lc.updatedAt', @click='download(lc.code)')
                         v-icon.blue--text cached
                       v-list-tile-action(v-else-if='lc.isInstalled')

@@ -2,6 +2,9 @@ const qs = require('querystring')
 const _ = require('lodash')
 const crypto = require('crypto')
 
+const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/gi
+const systemSegmentRegex = /^[A-Z]\//gi
+
 module.exports = {
   /**
    * Parse raw url path and make it safe
@@ -24,7 +27,7 @@ module.exports = {
     if (pathParts[0].length === 1) {
       pathParts.shift()
     }
-    if (pathParts[0].length === 2) {
+    if (localeSegmentRegex.test(pathParts[0])) {
       pathObj.locale = pathParts[0]
       pathParts.shift()
     }
@@ -61,6 +64,6 @@ module.exports = {
    * Check if path is a reserved path
    */
   isReservedPath(rawPath)  {
-    return _.some(WIKI.data.reservedPaths, p => _.startsWith(rawPath, p))
+    return _.some(WIKI.data.reservedPaths, p => _.startsWith(rawPath, p)) || systemSegmentRegex.test(rawPath)
   }
 }
