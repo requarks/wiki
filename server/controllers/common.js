@@ -22,6 +22,11 @@ router.get('/robots.txt', (req, res, next) => {
  */
 router.get(['/e', '/e/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path)
+
+  if (pageHelper.isReservedPath(pageArgs.path)) {
+    return next(new Error('Cannot create this page because it starts with a system reserved path.'))
+  }
+
   let page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,

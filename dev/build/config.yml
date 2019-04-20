@@ -8,10 +8,5 @@ db:
   pass: $(DB_PASS)
   db: $(DB_NAME)
   storage: $(DB_FILEPATH)
-redis:
-  host: $(REDIS_HOST)
-  port: $(REDIS_PORT)
-  db: $(REDIS_DB)
-  password: $(REDIS_PASS)
 trustProxy: $(TRUST_PROXY)
 logLevel: info

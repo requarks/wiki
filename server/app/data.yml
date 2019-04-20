@@ -72,4 +72,14 @@ telemetry:
   BUGSNAG_REMOTE: 'https://notify.bugsnag.com'
   GA_ID: 'UA-9094100-7'
   GA_REMOTE: 'https://www.google-analytics.com/batch'
+reservedPaths:
+  - login
+  - logout
+  - register
+  - verify
+  - favicons
+  - fonts
+  - img
+  - js
+  - svg
 # ---------------------------------

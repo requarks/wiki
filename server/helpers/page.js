@@ -56,5 +56,11 @@ module.exports = {
       default:
         return page.content
     }
+  },
+  /**
+   * Check if path is a reserved path
+   */
+  isReservedPath(rawPath)  {
+    return _.some(WIKI.data.reservedPaths, p => _.startsWith(rawPath, p))
   }
 }
