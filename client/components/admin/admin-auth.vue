@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-unlock.svg', alt='Authentication', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft Authentication
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s Configure the authentication settings of your wiki #[v-chip(label, color='primary', small).white--text coming soon]
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s Configure the authentication settings of your wiki
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
@@ -14,158 +14,186 @@
             v-icon(left) check
             span {{$t('common:actions.apply')}}
 
-        v-card.mt-3.animated.fadeInUp
-          v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)
-            v-tab(key='settings'): v-icon settings
-            v-tab(v-for='strategy in activeStrategies', :key='strategy.key') {{ strategy.title }}
+      v-flex(lg3, xs12)
+        v-card.animated.fadeInUp
+          v-toolbar(flat, color='primary', dark, dense)
+            .subheading Strategies
+          v-list(two-line, dense).py-0
+            template(v-for='(str, idx) in strategies')
+              v-list-tile(:key='str.key', @click='selectedStrategy = str.key', :disabled='!str.isAvailable')
+                v-list-tile-avatar
+                  v-icon(color='grey', v-if='!str.isAvailable') indeterminate_check_box
+                  v-icon(color='primary', v-else-if='str.isEnabled', v-ripple, @click='str.key !== `local` && (str.isEnabled = false)') check_box
+                  v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') check_box_outline_blank
+                v-list-tile-content
+                  v-list-tile-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedStrategy === str.key ? `primary--text` : ``)') {{ str.title }}
+                  v-list-tile-sub-title.caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedStrategy === str.key ? `blue--text ` : ``)') {{ str.description }}
+                v-list-tile-avatar(v-if='selectedStrategy === str.key')
+                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+              v-divider(v-if='idx < strategies.length - 1')
 
-            v-tab-item(key='settings', :transition='false', :reverse-transition='false')
-                v-container.pa-3(fluid, grid-list-md)
-                  v-layout(row, wrap)
-                    v-flex(xs12, md6)
-                      .body-2.grey--text.text--darken-1 Select which authentication strategies to enable:
-                      .caption.grey--text.pb-2 Some strategies require additional configuration in their dedicated tab (when selected).
-                      v-form
-                        //- TODO - Prevent crash on unfinished strategies
-                        v-checkbox.my-0(
-                          v-for='strategy in strategies'
-                          v-model='strategy.isEnabled'
-                          :key='strategy.key'
-                          :label='strategy.title'
-                          color='primary'
-                          :disabled='strategy.key === `local` || true'
-                          hide-details
-                        )
-                    v-flex(xs12, md6)
-                      .pa-3.grey.radius-7(:class='$vuetify.dark ? "darken-4" : "lighten-5"')
-                        .body-2.grey--text.text--darken-1 Advanced Settings
-                        v-text-field.mt-3.md2(
-                          v-model='jwtAudience'
-                          outline
-                          background-color='grey lighten-2'
-                          prepend-icon='account_balance'
-                          label='JWT Audience'
-                          hint='Audience URN used in JWT issued upon login. Usually your domain name. (e.g. urn:your.domain.com)'
-                          persistent-hint
-                        )
-                        v-text-field.mt-3.md2(
-                          v-model='jwtExpiration'
-                          outline
-                          background-color='grey lighten-2'
-                          prepend-icon='schedule'
-                          label='Token Expiration'
-                          hint='The expiration period of a token until it must be renewed. (default: 30m)'
-                          persistent-hint
-                        )
-                        v-text-field.mt-3.md2(
-                          v-model='jwtRenewablePeriod'
-                          outline
-                          background-color='grey lighten-2'
-                          prepend-icon='update'
-                          label='Token Renewal Period'
-                          hint='The maximum period a token can be renewed when expired. (default: 14d)'
-                          persistent-hint
-                        )
+        v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
+          v-toolbar(flat, color='primary', dark, dense)
+            .subheading Global Advanced settings
+          v-card-text
+            v-text-field.md2(
+              v-model='jwtAudience'
+              outline
+              prepend-icon='account_balance'
+              label='JWT Audience'
+              hint='Audience URN used in JWT issued upon login. Usually your domain name. (e.g. urn:your.domain.com)'
+              persistent-hint
+            )
+            v-text-field.mt-3.md2(
+              v-model='jwtExpiration'
+              outline
+              prepend-icon='schedule'
+              label='Token Expiration'
+              hint='The expiration period of a token until it must be renewed. (default: 30m)'
+              persistent-hint
+            )
+            v-text-field.mt-3.md2(
+              v-model='jwtRenewablePeriod'
+              outline
+              prepend-icon='update'
+              label='Token Renewal Period'
+              hint='The maximum period a token can be renewed when expired. (default: 14d)'
+              persistent-hint
+            )
 
-            v-tab-item(v-for='(strategy, n) in activeStrategies', :key='strategy.key', :transition='false', :reverse-transition='false')
-              v-card.wiki-form.pa-3(flat, tile)
-                v-form
-                  .authlogo
-                    img(:src='strategy.logo', :alt='strategy.title')
-                  v-subheader.pl-0 {{strategy.title}}
-                  .caption {{strategy.description}}
-                  .caption: a(:href='strategy.website') {{strategy.website}}
-                  v-divider.mt-3
-                  v-subheader.pl-0 Strategy Configuration
-                  .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1') This strategy has no configuration options you can modify.
-                  template(v-else, v-for='cfg in strategy.config')
-                    v-select(
-                      v-if='cfg.value.type === "string" && cfg.value.enum'
-                      outline
-                      background-color='grey lighten-2'
-                      :items='cfg.value.enum'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      :class='cfg.value.hint ? "mb-2" : ""'
-                    )
-                    v-switch.mb-3(
-                      v-else-if='cfg.value.type === "boolean"'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      color='primary'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      )
-                    v-text-field(
-                      v-else
-                      outline
-                      background-color='grey lighten-2'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      :class='cfg.value.hint ? "mb-2" : ""'
-                      )
-                  v-divider.mt-3
-                  v-subheader.pl-0 Registration
-                  .pr-3
-                    v-switch.ml-3(
-                      v-model='strategy.selfRegistration'
-                      label='Allow self-registration'
-                      color='primary'
-                      hint='Allow any user successfully authorized by the strategy to access the wiki.'
-                      persistent-hint
-                    )
-                    v-combobox.ml-3.mt-3(
-                      label='Limit to specific email domains'
-                      v-model='strategy.domainWhitelist'
-                      prepend-icon='mail_outline'
-                      outline
-                      background-color='grey lighten-2'
-                      persistent-hint
-                      small-chips
-                      deletable-chips
-                      clearable
-                      multiple
-                      chips
-                      )
-                    v-autocomplete.ml-3(
-                      outline
-                      background-color='grey lighten-2'
-                      :items='groups'
-                      item-text='name'
-                      item-value='id'
-                      label='Assign to group'
-                      v-model='strategy.autoEnrollGroups'
-                      prepend-icon='people'
-                      hint='Automatically assign new users to these groups.'
-                      small-chips
-                      persistent-hint
-                      deletable-chips
-                      clearable
-                      multiple
-                      chips
-                      )
-                  template(v-if='strategy.key === `local`')
-                    v-divider.mt-3
-                    v-subheader.pl-0 Security
-                    .pr-3
-                      v-switch.ml-3(
-                        :disabled='true'
-                        v-model='strategy.recaptcha'
-                        label='Use reCAPTCHA by Google'
-                        color='primary'
-                        hint='Protects against spam robots and malicious registrations.'
-                        persistent-hint
-                      )
+      v-flex(xs12, lg9)
+
+        v-card.wiki-form.animated.fadeInUp.wait-p2s
+          v-toolbar(color='primary', dense, flat, dark)
+            .subheading {{strategy.title}}
+          v-card-text
+            v-form
+              .authlogo
+                img(:src='strategy.logo', :alt='strategy.title')
+              .caption.pt-3 {{strategy.description}}
+              .caption.pb-3: a(:href='strategy.website') {{strategy.website}}
+              v-divider.mt-3
+              v-subheader.pl-0 Strategy Configuration
+              .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em This strategy has no configuration options you can modify.
+              template(v-else, v-for='cfg in strategy.config')
+                v-select(
+                  v-if='cfg.value.type === "string" && cfg.value.enum'
+                  outline
+                  background-color='grey lighten-2'
+                  :items='cfg.value.enum'
+                  :key='cfg.key'
+                  :label='cfg.value.title'
+                  v-model='cfg.value.value'
+                  prepend-icon='settings_applications'
+                  :hint='cfg.value.hint ? cfg.value.hint : ""'
+                  persistent-hint
+                  :class='cfg.value.hint ? "mb-2" : ""'
+                )
+                v-switch.mb-3(
+                  v-else-if='cfg.value.type === "boolean"'
+                  :key='cfg.key'
+                  :label='cfg.value.title'
+                  v-model='cfg.value.value'
+                  color='primary'
+                  prepend-icon='settings_applications'
+                  :hint='cfg.value.hint ? cfg.value.hint : ""'
+                  persistent-hint
+                  )
+                v-text-field(
+                  v-else
+                  outline
+                  background-color='grey lighten-2'
+                  :key='cfg.key'
+                  :label='cfg.value.title'
+                  v-model='cfg.value.value'
+                  prepend-icon='settings_applications'
+                  :hint='cfg.value.hint ? cfg.value.hint : ""'
+                  persistent-hint
+                  :class='cfg.value.hint ? "mb-2" : ""'
+                  )
+              v-divider.mt-3
+              v-subheader.pl-0 Registration
+              .pr-3
+                v-switch.ml-3(
+                  v-model='strategy.selfRegistration'
+                  label='Allow self-registration'
+                  color='primary'
+                  hint='Allow any user successfully authorized by the strategy to access the wiki.'
+                  persistent-hint
+                )
+                v-switch.ml-3(
+                  v-if='strategy.useForm'
+                  :disabled='!strategy.selfRegistration || true'
+                  v-model='strategy.recaptcha'
+                  label='Use reCAPTCHA by Google'
+                  color='primary'
+                  hint='Protects against spam robots and malicious registrations.'
+                  persistent-hint
+                )
+                v-combobox.ml-3.mt-3(
+                  label='Limit to specific email domains'
+                  v-model='strategy.domainWhitelist'
+                  prepend-icon='mail_outline'
+                  outline
+                  :disabled='!strategy.selfRegistration'
+                  hint='A list of domains authorized to register. The user email address domain must match one of these to gain access.'
+                  persistent-hint
+                  small-chips
+                  deletable-chips
+                  clearable
+                  multiple
+                  chips
+                  )
+                v-autocomplete.mt-3.ml-3(
+                  outline
+                  :disabled='!strategy.selfRegistration'
+                  :items='groups'
+                  item-text='name'
+                  item-value='id'
+                  label='Assign to group'
+                  v-model='strategy.autoEnrollGroups'
+                  prepend-icon='people'
+                  hint='Automatically assign new users to these groups.'
+                  small-chips
+                  persistent-hint
+                  deletable-chips
+                  clearable
+                  multiple
+                  chips
+                  )
+              template(v-if='strategy.useForm')
+                v-divider.mt-3
+                v-subheader.pl-0 Security
+                v-switch.ml-3(
+                  v-model='strategy.recaptcha'
+                  :disabled='true'
+                  label='Force all users to use Two-Factor Authentication (2FA)'
+                  color='primary'
+                  hint='Users will be required to setup 2FA the first time they login and cannot be disabled by the user.'
+                  persistent-hint
+                )
+
+        v-card.mt-3.wiki-form.animated.fadeInUp.wait-p4s
+          v-toolbar(color='primary', dense, flat, dark)
+            .subheading Configuration Reference
+          v-card-text
+            .body-1 Some strategies may require some configuration values to be set on your provider.
+            v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outline, :value='true', icon='warning') You must set a valid #[strong Site URL] first! Click on #[strong General] in the left sidebar.
+            .pa-3.mt-3.radius-7.grey(v-else, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`')
+              .body-2 Allowed Web Origins
+              .body-1 {{host}}
+              v-divider.my-3
+              .body-2 Callback URL
+              .body-1 {{host}}/login/callback/{{strategy.key}}
+              v-divider.my-3
+              .body-2 Login URL
+              .body-1 {{host}}/login
+              v-divider.my-3
+              .body-2 Logout URL
+              .body-1 {{host}}
+              v-divider.my-3
+              .body-2 Token Endpoint Authentication Method
+              .body-1 HTTP-POST
 </template>
 
 <script>
@@ -174,6 +202,7 @@ import _ from 'lodash'
 import groupsQuery from 'gql/admin/auth/auth-query-groups.gql'
 import strategiesQuery from 'gql/admin/auth/auth-query-strategies.gql'
 import strategiesSaveMutation from 'gql/admin/auth/auth-mutation-save-strategies.gql'
+import hostQuery from 'gql/admin/auth/auth-query-host.gql'
 
 export default {
   filters: {
@@ -183,6 +212,9 @@ export default {
     return {
       groups: [],
       strategies: [],
+      selectedStrategy: '',
+      host: '',
+      strategy: {},
       jwtAudience: 'urn:wiki.js',
       jwtExpiration: '30m',
       jwtRenewablePeriod: '14d'
@@ -191,6 +223,14 @@ export default {
   computed: {
     activeStrategies() {
       return _.filter(this.strategies, 'isEnabled')
+    }
+  },
+  watch: {
+    selectedStrategy(newValue, oldValue) {
+      this.strategy = _.find(this.strategies, ['key', newValue]) || {}
+    },
+    strategies(newValue, oldValue) {
+      this.selectedStrategy = 'local'
     }
   },
   methods: {
@@ -238,7 +278,13 @@ export default {
     strategies: {
       query: strategiesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.authentication.strategies).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))})),
+      update: (data) => _.cloneDeep(data.authentication.strategies).map(str => ({
+        ...str,
+        config: _.sortBy(str.config.map(cfg => ({
+          ...cfg,
+          value: JSON.parse(cfg.value)
+        })), [t => t.value.order])
+      })),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-refresh')
       }
@@ -249,6 +295,14 @@ export default {
       update: (data) => data.groups.list,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-groups-refresh')
+      }
+    },
+    host: {
+      query: hostQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => _.cloneDeep(data.site.config.host),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-host-refresh')
       }
     }
   }

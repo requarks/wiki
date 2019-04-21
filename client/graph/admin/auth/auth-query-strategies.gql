@@ -5,6 +5,7 @@ query {
       key
       title
       description
+      isAvailable
       useForm
       logo
       website

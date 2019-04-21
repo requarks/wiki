@@ -49,7 +49,7 @@
             v-list-tile(to='/auth')
               v-list-tile-avatar: v-icon lock_outline
               v-list-tile-title {{ $t('admin:auth.title') }}
-            v-list-tile(to='/editor')
+            v-list-tile(to='/editor', disabled)
               v-list-tile-avatar: v-icon transform
               v-list-tile-title {{ $t('admin:editor.title') }}
             v-list-tile(to='/logging')

@@ -5,8 +5,21 @@ author: requarks.io
 logo: https://static.requarks.io/logo/auth0.svg
 color: deep-orange
 website: https://auth0.com/
+isAvailable: true
 useForm: false
 props:
-  domain: String
-  clientId: String
-  clientSecret: String
+  domain:
+    type: String
+    title: Domain
+    hint: Your Auth0 domain (e.g. something.auth0.com)
+    order: 1
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 2
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 3

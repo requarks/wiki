@@ -1,0 +1,45 @@
+# ===============================================
+# ASSETS
+# ===============================================
+
+extend type Query {
+  assets: AssetQuery
+}
+
+extend type Mutation {
+  assets: AssetMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type AssetQuery {
+  list(
+    root: String
+    kind: [AssetKind]
+  ): [AssetItem]
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type AssetMutation {
+  upload(
+    data: Upload!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type AssetItem {
+  id: Int!
+}
+
+enum AssetKind {
+  IMAGE
+  BINARY
+}

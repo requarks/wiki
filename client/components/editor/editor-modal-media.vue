@@ -9,7 +9,7 @@
                 v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
                   .body-2.teal--text Images
                 v-btn.ml-3.my-0.radius-7(outline, large, color='teal', disabled)
-                  v-icon(left) keyboard_backspace
+                  v-icon(left) keyboard_arrow_up
                   span Parent Folder
                 v-btn.my-0.radius-7(outline, large, color='teal')
                   v-icon(left) add
@@ -48,14 +48,15 @@
                 ref='pond'
                 label-idle='Browse or Drop files here...'
                 allow-multiple='true'
-                accepted-file-types='image/jpeg, image/png'
+                accepted-file-types='image/jpeg, image/png, image/gif, image/svg'
                 :files='files'
+                max-files='10'
               )
             v-divider
             v-card-actions.pa-3
-              .caption.grey--text.text-darken-2 Max 20 files, 5 MB each
+              .caption.grey--text.text-darken-2 Max 10 files, 5 MB each
               v-spacer
-              v-btn(color='teal', dark) Upload
+              v-btn(color='teal', dark, @click='upload') Upload
 
           v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(light)
             v-card-text.pb-0
@@ -96,11 +97,11 @@ import { sync } from 'vuex-pathify'
 import vueFilePond from 'vue-filepond'
 import 'filepond/dist/filepond.min.css'
 
-import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
-import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 
-const FilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview)
+import uploadFileMutation from 'gql/editor/upload.gql'
+
+const FilePond = vueFilePond(FilePondPluginFileValidateType)
 
 export default {
   components: {
@@ -135,6 +136,21 @@ export default {
   methods: {
     insert () {
       this.activeModal = ''
+    },
+    async upload () {
+      const files = this.$refs.pond.getFiles()
+      for (let fl of files) {
+        const resp = await this.$apollo.mutate({
+          mutation: uploadFileMutation,
+          variables: {
+            data: fl.file
+          },
+          context: {
+            hasUpload: true
+          }
+        })
+        console.info(resp)
+      }
     }
   }
 }

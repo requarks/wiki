@@ -11,7 +11,6 @@ const https = require('https')
 const path = require('path')
 const _ = require('lodash')
 const { ApolloServer } = require('apollo-server-express')
-// const oauth2orize = require('oauth2orize')
 
 /* global WIKI */
 
@@ -60,12 +59,6 @@ module.exports = async () => {
     index: false,
     maxAge: '7d'
   }))
-
-  // ----------------------------------------
-  // OAuth2 Server
-  // ----------------------------------------
-
-  // const OAuth2Server = oauth2orize.createServer()
 
   // ----------------------------------------
   // Passport Authentication
@@ -137,6 +130,7 @@ module.exports = async () => {
       path: '/graphql-subscriptions'
     }
   })
+  app.use('/graphql', mw.upload)
   apolloServer.applyMiddleware({ app })
 
   // ----------------------------------------

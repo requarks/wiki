@@ -58,6 +58,7 @@ type AuthenticationStrategy {
   props: [String]
   title: String!
   description: String
+  isAvailable: Boolean
   useForm: Boolean!
   logo: String
   color: String

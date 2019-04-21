@@ -21,17 +21,19 @@
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
             .subheading Search Engine
-          v-card-text
-            v-radio-group.my-0(v-model='selectedEngine')
-              v-radio.my-1(
-                v-for='(engine, n) in engines'
-                :key='engine.key'
-                :label='engine.title'
-                :value='engine.key'
-                :disabled='!engine.isAvailable'
-                color='primary'
-                hide-details
-              )
+          v-list.py-0(two-line, dense)
+            template(v-for='(eng, idx) in engines')
+              v-list-tile(:key='eng.key', @click='selectedEngine = eng.key', :disabled='!eng.isAvailable')
+                v-list-tile-avatar
+                  v-icon(color='grey', v-if='!eng.isAvailable') cancel
+                  v-icon(color='primary', v-else-if='eng.key === selectedEngine') radio_button_checked
+                  v-icon(color='grey', v-else) radio_button_unchecked
+                v-list-tile-content
+                  v-list-tile-title.body-2(:class='!eng.isAvailable ? `grey--text` : (selectedEngine === eng.key ? `primary--text` : ``)') {{ eng.title }}
+                  v-list-tile-sub-title.caption(:class='!eng.isAvailable ? `grey--text text--lighten-1` : (selectedEngine === eng.key ? `blue--text ` : ``)') {{ eng.description }}
+                v-list-tile-avatar(v-if='selectedEngine === eng.key')
+                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+              v-divider(v-if='idx < engines.length - 1')
 
       v-flex(lg9, xs12)
         v-card.wiki-form.animated.fadeInUp.wait-p2s

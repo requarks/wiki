@@ -14,167 +14,175 @@
             v-icon(left) check
             span {{$t('common:actions.apply')}}
 
-        v-card.mt-3.animated.fadeInUp
-          v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark, v-model='currentTab')
-            v-tab(key='settings'): v-icon settings
-            v-tab(v-for='tgt in activeTargets', :key='tgt.key') {{ tgt.title }}
+      v-flex(lg3, xs12)
+        v-card.animated.fadeInUp
+          v-toolbar(flat, color='primary', dark, dense)
+            .subheading Targets
+          v-list(two-line, dense).py-0
+            template(v-for='(tgt, idx) in targets')
+              v-list-tile(:key='tgt.key', @click='selectedTarget = tgt.key', :disabled='!tgt.isAvailable')
+                v-list-tile-avatar
+                  v-icon(color='grey', v-if='!tgt.isAvailable') indeterminate_check_box
+                  v-icon(color='primary', v-else-if='tgt.isEnabled', v-ripple, @click='tgt.key !== `local` && (tgt.isEnabled = false)') check_box
+                  v-icon(color='grey', v-else, v-ripple, @click='tgt.isEnabled = true') check_box_outline_blank
+                v-list-tile-content
+                  v-list-tile-title.body-2(:class='!tgt.isAvailable ? `grey--text` : (selectedTarget === tgt.key ? `primary--text` : ``)') {{ tgt.title }}
+                  v-list-tile-sub-title.caption(:class='!tgt.isAvailable ? `grey--text text--lighten-1` : (selectedTarget === tgt.key ? `blue--text ` : ``)') {{ tgt.description }}
+                v-list-tile-avatar(v-if='selectedTarget === tgt.key')
+                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+              v-divider(v-if='idx < targets.length - 1')
 
-            v-tab-item(key='settings', :transition='false', :reverse-transition='false')
-              v-container.pa-3(fluid, grid-list-md)
-                v-layout(row, wrap)
-                  v-flex(xs12, md6)
-                    .body-2.grey--text.text--darken-1 Select which storage targets to enable:
-                    .caption.grey--text.pb-2 Some storage targets require additional configuration in their dedicated tab (when selected).
-                    v-form
-                      v-checkbox.my-0(
-                        :disabled='!tgt.isAvailable'
-                        v-for='tgt in targets'
-                        v-model='tgt.isEnabled'
-                        :key='tgt.key'
-                        :label='tgt.title'
-                        color='primary'
-                        hide-details
-                      )
-                  v-flex(xs12, md6)
-                    .pa-3.grey.radius-7(:class='$vuetify.dark ? "darken-4" : "lighten-5"')
-                      v-layout.pa-2(row, justify-space-between)
-                        .body-2.grey--text.text--darken-1 Status
-                        .d-flex
-                          looping-rhombuses-spinner.mt-1(
-                            :animation-duration='5000'
-                            :rhombus-size='10'
-                            color='#BBB'
-                          )
-                          .caption.ml-3.grey--text This panel refreshes automatically.
-                      v-divider
-                      v-toolbar.mt-2.radius-7(
-                        v-for='(tgt, n) in status'
-                        :key='tgt.key'
-                        dense
-                        :color='getStatusColor(tgt.status)'
-                        dark
-                        flat
-                        :extended='tgt.status !== `pending`',
-                        :extension-height='tgt.status === `error` ? 100 : 70'
-                        )
-                        .pa-3.red.darken-2.radius-7(v-if='tgt.status === `error`', slot='extension') {{tgt.message}}
-                        v-toolbar.radius-7(
-                          color='green darken-2'
-                          v-else-if='tgt.status !== `pending`'
-                          slot='extension'
-                          flat
-                          dense
-                          )
-                          span Last synchronization {{tgt.lastAttempt | moment('from') }}
-                        .body-2 {{tgt.title}}
-                        v-spacer
-                        .body-1 {{tgt.status}}
-                      v-alert.mt-3.radius-7(v-if='status.length < 1', outline, :value='true', color='indigo') You don't have any active storage target.
+        v-card.mt-3.animated.fadeInUp.wait-p2s
+          v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-l5` : `grey darken-3`', dark, dense)
+            .subheading Status
+            v-spacer
+            looping-rhombuses-spinner(
+              :animation-duration='5000'
+              :rhombus-size='10'
+              color='#FFF'
+            )
+          v-list.py-0(two-line, dense)
+            template(v-for='(tgt, n) in status')
+              v-list-tile(:key='tgt.key')
+                template(v-if='tgt.status === `pending`')
+                  v-list-tile-avatar(color='purple')
+                    v-icon(color='white') schedule
+                  v-list-tile-content
+                    v-list-tile-title.body-2 {{tgt.title}}
+                    v-list-tile-sub-title.purple--text.caption {{tgt.status}}
+                  v-list-tile-action
+                    v-progress-circular(indeterminate, :size='20', :width='2', color='purple')
+                template(v-else-if='tgt.status === `operational`')
+                  v-list-tile-avatar(color='green')
+                    v-icon(color='white') check_circle
+                  v-list-tile-content
+                    v-list-tile-title.body-2 {{tgt.title}}
+                    v-list-tile-sub-title.green--text.caption Last synchronization {{tgt.lastAttempt | moment('from') }}
+                template(v-else)
+                  v-list-tile-avatar(color='red')
+                    v-icon(color='white') highlight_off
+                  v-list-tile-content
+                    v-list-tile-title.body-2 {{tgt.title}}
+                    v-list-tile-sub-title.red--text.caption Last attempt was {{tgt.lastAttempt | moment('from') }}
+                  v-list-tile-action
+                    v-menu
+                      v-btn(slot='activator', icon)
+                        v-icon(color='red') info
+                      v-card(width='450')
+                        v-toolbar(flat, color='red', dark, dense) Error Message
+                        v-card-text {{tgt.message}}
 
-            v-tab-item(v-for='(tgt, n) in activeTargets', :key='tgt.key', :transition='false', :reverse-transition='false')
-              v-card.wiki-form.pa-3(flat, tile)
-                v-form
-                  .targetlogo
-                    img(:src='tgt.logo', :alt='tgt.title')
-                  v-subheader.pl-0 {{tgt.title}}
-                  .caption {{tgt.description}}
-                  .caption: a(:href='tgt.website') {{tgt.website}}
-                  v-divider.mt-3
-                  v-subheader.pl-0 Target Configuration
-                  .body-1.ml-3(v-if='!tgt.config || tgt.config.length < 1') This storage target has no configuration options you can modify.
-                  template(v-else, v-for='cfg in tgt.config')
-                    v-select(
-                      v-if='cfg.value.type === "string" && cfg.value.enum'
-                      outline
-                      background-color='grey lighten-2'
-                      :items='cfg.value.enum'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      :class='cfg.value.hint ? "mb-2" : ""'
-                    )
-                    v-switch.mb-3(
-                      v-else-if='cfg.value.type === "boolean"'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      color='primary'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      )
-                    v-text-field(
-                      v-else
-                      outline
-                      background-color='grey lighten-2'
-                      :key='cfg.key'
-                      :label='cfg.value.title'
-                      v-model='cfg.value.value'
-                      prepend-icon='settings_applications'
-                      :hint='cfg.value.hint ? cfg.value.hint : ""'
-                      persistent-hint
-                      :class='cfg.value.hint ? "mb-2" : ""'
-                      )
-                  v-divider.mt-3
-                  v-subheader.pl-0 Sync Direction
-                  .body-1.ml-3 Choose how content synchronization is handled for this storage target.
-                  .pr-3.pt-3
-                    v-radio-group.ml-3.py-0(v-model='tgt.mode')
-                      v-radio(
-                        label='Bi-directional'
-                        color='primary'
-                        value='sync'
-                        :disabled='tgt.supportedModes.indexOf(`sync`) < 0'
-                      )
-                      v-radio(
-                        label='Push to target'
-                        color='primary'
-                        value='push'
-                        :disabled='tgt.supportedModes.indexOf(`push`) < 0'
-                      )
-                      v-radio(
-                        label='Pull from target'
-                        color='primary'
-                        value='pull'
-                        :disabled='tgt.supportedModes.indexOf(`pull`) < 0'
-                      )
-                  .body-1.ml-3
-                    strong Bi-directional #[em.red--text.text--lighten-2(v-if='tgt.supportedModes.indexOf(`sync`) < 0') Unsupported]
-                    .pb-3 In bi-directional mode, content is first pulled from the storage target. Any newer content overwrites local content. New content since last sync is then pushed to the storage target, overwriting any content on target if present.
-                    strong Push to target #[em.red--text.text--lighten-2(v-if='tgt.supportedModes.indexOf(`push`) < 0') Unsupported]
-                    .pb-3 Content is always pushed to the storage target, overwriting any existing content. This is safest choice for backup scenarios.
-                    strong Pull from target #[em.red--text.text--lighten-2(v-if='tgt.supportedModes.indexOf(`pull`) < 0') Unsupported]
-                    .pb-3 Content is always pulled from the storage target, overwriting any local content which already exists. This choice is usually reserved for single-use content import. Caution with this option as any local content will always be overwritten!
+              v-divider(v-if='n < status.length - 1')
+            v-list-tile(v-if='status.length < 1')
+              em You don't have any active storage target.
 
-                  template(v-if='tgt.hasSchedule')
-                    v-divider.mt-3
-                    v-subheader.pl-0 Sync Schedule
-                    .body-1.ml-3 For performance reasons, this storage target synchronize changes on an interval-based schedule, instead of on every change. Define at which interval should the synchronization occur.
-                    .pa-3
-                      duration-picker(v-model='tgt.syncInterval')
-                      .caption.mt-3 Currently set to every #[strong {{getDefaultSchedule(tgt.syncInterval)}}].
-                      .caption The default is every #[strong {{getDefaultSchedule(tgt.syncIntervalDefault)}}].
+      v-flex(xs12, lg9)
+        v-card.wiki-form.animated.fadeInUp.wait-p2s
+          v-toolbar(color='primary', dense, flat, dark)
+            .subheading {{target.title}}
+          v-card-text
+            v-form
+              .targetlogo
+                img(:src='target.logo', :alt='target.title')
+              v-subheader.pl-0 {{target.title}}
+              .caption {{target.description}}
+              .caption: a(:href='target.website') {{target.website}}
+              v-divider.mt-3
+              v-subheader.pl-0 Target Configuration
+              .body-1.ml-3(v-if='!target.config || target.config.length < 1') This storage target has no configuration options you can modify.
+              template(v-else, v-for='cfg in target.config')
+                v-select(
+                  v-if='cfg.value.type === "string" && cfg.value.enum'
+                  outline
+                  background-color='grey lighten-2'
+                  :items='cfg.value.enum'
+                  :key='cfg.key'
+                  :label='cfg.value.title'
+                  v-model='cfg.value.value'
+                  prepend-icon='settings_applications'
+                  :hint='cfg.value.hint ? cfg.value.hint : ""'
+                  persistent-hint
+                  :class='cfg.value.hint ? "mb-2" : ""'
+                )
+                v-switch.mb-3(
+                  v-else-if='cfg.value.type === "boolean"'
+                  :key='cfg.key'
+                  :label='cfg.value.title'
+                  v-model='cfg.value.value'
+                  color='primary'
+                  prepend-icon='settings_applications'
+                  :hint='cfg.value.hint ? cfg.value.hint : ""'
+                  persistent-hint
+                  )
+                v-text-field(
+                  v-else
+                  outline
+                  background-color='grey lighten-2'
+                  :key='cfg.key'
+                  :label='cfg.value.title'
+                  v-model='cfg.value.value'
+                  prepend-icon='settings_applications'
+                  :hint='cfg.value.hint ? cfg.value.hint : ""'
+                  persistent-hint
+                  :class='cfg.value.hint ? "mb-2" : ""'
+                  )
+              v-divider.mt-3
+              v-subheader.pl-0 Sync Direction
+              .body-1.ml-3 Choose how content synchronization is handled for this storage target.
+              .pr-3.pt-3
+                v-radio-group.ml-3.py-0(v-model='target.mode')
+                  v-radio(
+                    label='Bi-directional'
+                    color='primary'
+                    value='sync'
+                    :disabled='target.supportedModes.indexOf(`sync`) < 0'
+                  )
+                  v-radio(
+                    label='Push to target'
+                    color='primary'
+                    value='push'
+                    :disabled='target.supportedModes.indexOf(`push`) < 0'
+                  )
+                  v-radio(
+                    label='Pull from target'
+                    color='primary'
+                    value='pull'
+                    :disabled='target.supportedModes.indexOf(`pull`) < 0'
+                  )
+              .body-1.ml-3
+                strong Bi-directional #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`sync`) < 0') Unsupported]
+                .pb-3 In bi-directional mode, content is first pulled from the storage target. Any newer content overwrites local content. New content since last sync is then pushed to the storage target, overwriting any content on target if present.
+                strong Push to target #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`push`) < 0') Unsupported]
+                .pb-3 Content is always pushed to the storage target, overwriting any existing content. This is safest choice for backup scenarios.
+                strong Pull from target #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`pull`) < 0') Unsupported]
+                .pb-3 Content is always pulled from the storage target, overwriting any local content which already exists. This choice is usually reserved for single-use content import. Caution with this option as any local content will always be overwritten!
 
-                  template(v-if='tgt.actions && tgt.actions.length > 0')
-                    v-divider.mt-3
-                    v-subheader.pl-0 Actions
-                    v-container.pt-0(grid-list-xl, fluid)
-                      v-layout(row, wrap, fill-height)
-                        v-flex(xs12, lg6, xl4, v-for='act of tgt.actions')
-                          v-card.radius-7.grey(flat, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`', height='100%')
-                            v-card-text
-                              .subheading(v-html='act.label')
-                              .body-1.mt-2(v-html='act.hint')
-                              v-btn.mx-0.mt-3(
-                                @click='executeAction(tgt.key, act.handler)'
-                                outline
-                                :color='$vuetify.dark ? `blue` : `primary`'
-                                :disabled='runningAction'
-                                :loading='runningActionHandler === act.handler'
-                                ) Run
+              template(v-if='target.hasSchedule')
+                v-divider.mt-3
+                v-subheader.pl-0 Sync Schedule
+                .body-1.ml-3 For performance reasons, this storage target synchronize changes on an interval-based schedule, instead of on every change. Define at which interval should the synchronization occur.
+                .pa-3
+                  duration-picker(v-model='target.syncInterval')
+                  .caption.mt-3 Currently set to every #[strong {{getDefaultSchedule(target.syncInterval)}}].
+                  .caption The default is every #[strong {{getDefaultSchedule(target.syncIntervalDefault)}}].
+
+              template(v-if='target.actions && target.actions.length > 0')
+                v-divider.mt-3
+                v-subheader.pl-0 Actions
+                v-container.pt-0(grid-list-xl, fluid)
+                  v-layout(row, wrap, fill-height)
+                    v-flex(xs12, lg6, xl4, v-for='act of target.actions', :key='act.handler')
+                      v-card.radius-7.grey(flat, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`', height='100%')
+                        v-card-text
+                          .subheading(v-html='act.label')
+                          .body-1.mt-2(v-html='act.hint')
+                          v-btn.mx-0.mt-3(
+                            @click='executeAction(target.key, act.handler)'
+                            outline
+                            :color='$vuetify.dark ? `blue` : `primary`'
+                            :disabled='runningAction'
+                            :loading='runningActionHandler === act.handler'
+                            ) Run
 
 </template>
 
@@ -205,7 +213,8 @@ export default {
     return {
       runningAction: false,
       runningActionHandler: '',
-      currentTab: 0,
+      selectedTarget: '',
+      target: {},
       targets: [],
       status: []
     }
@@ -213,6 +222,14 @@ export default {
   computed: {
     activeTargets() {
       return _.filter(this.targets, 'isEnabled')
+    }
+  },
+  watch: {
+    selectedTarget(newValue, oldValue) {
+      this.target = _.find(this.targets, ['key', newValue]) || {}
+    },
+    targets(newValue, oldValue) {
+      this.selectedTarget = _.get(_.find(this.targets, ['isEnabled', true]), 'key', 'disk')
     }
   },
   methods: {
@@ -238,7 +255,6 @@ export default {
           ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
         }
       })
-      this.currentTab = 0
       this.$store.commit('showNotification', {
         message: 'Storage configuration saved successfully.',
         style: 'success',

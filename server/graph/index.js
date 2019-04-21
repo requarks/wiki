@@ -7,6 +7,7 @@ const PubSub = require('graphql-subscriptions').PubSub
 const { LEVEL, MESSAGE } = require('triple-beam')
 const Transport = require('winston-transport')
 const { createRateLimitTypeDef } = require('graphql-rate-limit-directive')
+const { GraphQLUpload } = require('graphql-upload')
 
 /* global WIKI */
 
@@ -26,7 +27,9 @@ schemas.forEach(schema => {
 
 // Resolvers
 
-let resolvers = {}
+let resolvers = {
+  Upload: GraphQLUpload
+}
 const resolversObj = _.values(autoload(path.join(WIKI.SERVERPATH, 'graph/resolvers')))
 resolversObj.forEach(resolver => {
   _.merge(resolvers, resolver)

@@ -1,0 +1,10 @@
+mutation ($file: Upload!) {
+  assets {
+    upload(data:$file) {
+      responseResult {
+        succeeded
+        message
+      }
+    }
+  }
+}
