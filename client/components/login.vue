@@ -189,7 +189,7 @@ export default {
       this.screen = 'login'
       if (!strategy.useForm) {
         this.isLoading = true
-        window.location.assign(this.$helpers.resolvePath('login/' + strategy.key))
+        window.location.assign('/login/' + strategy.key)
       } else {
         this.$nextTick(() => {
           this.$refs.iptEmail.focus()

@@ -7,6 +7,10 @@ color: deep-orange
 website: https://auth0.com/
 isAvailable: true
 useForm: false
+scopes:
+  - openid
+  - profile
+  - email
 props:
   domain:
     type: String

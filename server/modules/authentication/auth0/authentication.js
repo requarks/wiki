@@ -14,12 +14,14 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
-      }, function (accessToken, refreshToken, profile, cb) {
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+      }, async (accessToken, refreshToken, extraParams, profile, cb) => {
+        console.info(accessToken, refreshToken, extraParams, profile)
+        try {
+          const user = WIKI.models.users.processProfile({ profile, provider: 'auth0' })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       }
       ))
   }

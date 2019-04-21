@@ -4,6 +4,7 @@ const compression = require('compression')
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
 const express = require('express')
+const session = require('express-session')
 const favicon = require('serve-favicon')
 const fs = require('fs-extra')
 const http = require('http')
@@ -65,6 +66,11 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(cookieParser())
+  app.use(session({
+    secret: WIKI.config.sessionSecret,
+    resave: false,
+    saveUninitialized: false
+  }))
   app.use(WIKI.auth.passport.initialize())
   app.use(WIKI.auth.authenticate)
 

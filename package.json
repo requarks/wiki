@@ -67,6 +67,7 @@
     "emoji-regex": "8.0.0",
     "express": "4.16.4",
     "express-brute": "1.0.1",
+    "express-session": "1.16.1",
     "file-type": "10.7.1",
     "filesize": "4.0.0",
     "fs-extra": "7.0.1",

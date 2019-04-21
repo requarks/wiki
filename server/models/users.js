@@ -154,10 +154,11 @@ module.exports = class User extends Model {
   // Model Methods
   // ------------------------------------------------
 
-  static async processProfile(profile) {
+  static async processProfile({ profile, provider }) {
+    // -> Parse email
     let primaryEmail = ''
     if (_.isArray(profile.emails)) {
-      let e = _.find(profile.emails, ['primary', true])
+      const e = _.find(profile.emails, ['primary', true])
       primaryEmail = (e) ? e.value : _.first(profile.emails).value
     } else if (_.isString(profile.email) && profile.email.length > 5) {
       primaryEmail = profile.email
@@ -166,30 +167,29 @@ module.exports = class User extends Model {
     } else if (profile.user && profile.user.email && profile.user.email.length > 5) {
       primaryEmail = profile.user.email
     } else {
-      return Promise.reject(new Error(WIKI.lang.t('auth:errors.invaliduseremail')))
+      return Promise.reject(new Error('Missing or invalid email address from profile.'))
     }
-
-    profile.provider = _.lowerCase(profile.provider)
     primaryEmail = _.toLower(primaryEmail)
 
+    // -> Find user
     let user = await WIKI.models.users.query().findOne({
       email: primaryEmail,
-      provider: profile.provider
+      providerKey: provider
     })
     if (user) {
       user.$query().patchAdnFetch({
         email: primaryEmail,
-        provider: profile.provider,
+        providerKey: provider,
         providerId: profile.id,
-        name: profile.displayName || _.split(primaryEmail, '@')[0]
+        name: _.get(profile, 'displayName', primaryEmail.split('@')[0])
       })
     } else {
-      user = await WIKI.models.users.query().insertAndFetch({
-        email: primaryEmail,
-        provider: profile.provider,
-        providerId: profile.id,
-        name: profile.displayName || _.split(primaryEmail, '@')[0]
-      })
+      // user = await WIKI.models.users.query().insertAndFetch({
+      //   email: primaryEmail,
+      //   providerKey: provider,
+      //   providerId: profile.id,
+      //   name: profile.displayName || _.split(primaryEmail, '@')[0]
+      // })
     }
 
     // Handle unregistered accounts
@@ -215,12 +215,20 @@ module.exports = class User extends Model {
 
   static async login (opts, context) {
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
-      _.set(context.req, 'body.email', opts.username)
-      _.set(context.req, 'body.password', opts.password)
+      const strInfo = _.find(WIKI.data.authentication, ['key', opts.strategy])
+
+      // Inject form user/pass
+      if (strInfo.useForm) {
+        _.set(context.req, 'body.email', opts.username)
+        _.set(context.req, 'body.password', opts.password)
+      }
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate(opts.strategy, { session: false }, async (err, user, info) => {
+        WIKI.auth.passport.authenticate(opts.strategy, {
+          session: !strInfo.useForm,
+          scope: strInfo.scopes ? strInfo.scopes.join(' ') : null
+        }, async (err, user, info) => {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
@@ -239,7 +247,7 @@ module.exports = class User extends Model {
             }
           } else {
             // No 2FA, log in user
-            return context.req.logIn(user, { session: false }, async err => {
+            return context.req.logIn(user, { session: !strInfo.useForm }, async err => {
               if (err) { return reject(err) }
               const jwtToken = await WIKI.models.users.refreshToken(user)
               resolve({

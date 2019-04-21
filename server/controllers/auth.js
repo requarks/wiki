@@ -8,9 +8,29 @@ const _ = require('lodash')
 /**
  * Login form
  */
-router.get('/login', function (req, res, next) {
+router.get('/login', (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Login')
   res.render('login')
+})
+router.get('/login/:strategy', async (req, res, next) => {
+  try {
+    const authResult = await WIKI.models.users.login({
+      strategy: req.params.strategy
+    }, { req, res })
+    console.info(authResult)
+  } catch (err) {
+    next(err)
+  }
+})
+router.get('/login/:strategy/callback', async (req, res, next) => {
+  try {
+    const authResult = await WIKI.models.users.login({
+      strategy: req.params.strategy
+    }, { req, res })
+    console.info(authResult)
+  } catch (err) {
+    next(err)
+  }
 })
 
 /**
