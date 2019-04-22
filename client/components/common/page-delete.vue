@@ -92,17 +92,25 @@ export default {
 
 <style lang='scss'>
   body.page-deleted-pending {
+    perspective: 50vw;
+    height: 100vh;
+    overflow: hidden;
+
     .application {
       background-color: mc('grey', '900');
     }
     .application--wrap {
+      transform-style: preserve-3d;
       transform: translateZ(-5vw) rotateX(2deg);
       border-radius: 7px;
       overflow: hidden;
     }
   }
   body.page-deleted {
+    perspective: 50vw;
+
     .application--wrap {
+      transform-style: preserve-3d;
       transform: translateZ(-1000vw) rotateX(60deg);
       opacity: 0;
     }

@@ -207,6 +207,7 @@ Vue.component('page-source', () => import(/* webpackChunkName: "source" */ './co
 Vue.component('loader', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/loader.vue'))
 Vue.component('login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
 Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
+Vue.component('notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
 Vue.component('page-selector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
 Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
 Vue.component('register', () => import(/* webpackChunkName: "register" */ './components/register.vue'))

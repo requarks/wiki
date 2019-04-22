@@ -92,6 +92,7 @@
 
     loader(v-model='isLoading', :mode='loaderMode', :icon='loaderIcon', :color='loaderColor', :title='loaderTitle', :subtitle='loaderSubtitle')
     nav-footer(color='grey darken-4', dark-color='grey darken-4')
+    notify
 </template>
 
 <script>

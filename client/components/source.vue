@@ -16,6 +16,7 @@
                   slot
 
     nav-footer
+    notify
     search-results
 </template>
 

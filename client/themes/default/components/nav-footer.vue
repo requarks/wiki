@@ -3,17 +3,6 @@
     .caption.grey--text.text--darken-1
       span(v-if='company && company.length > 0') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
       span {{ $t('common:footer.poweredBy') }} #[a(href='https://wiki.js.org', ref='nofollow') Wiki.js]
-
-    v-snackbar(
-      :color='notification.style'
-      bottom
-      right
-      multi-line
-      v-model='notificationState'
-    )
-      .text-xs-left
-        v-icon.mr-3(dark) {{ notification.icon }}
-        span {{ notification.message }}
 </template>
 
 <script>
@@ -37,9 +26,7 @@ export default {
   },
   computed: {
     company: get('site/company'),
-    notification: get('notification'),
     darkMode: get('site/dark'),
-    notificationState: sync('notification@isActive'),
     bgColor() {
       if (!this.darkMode) {
         return this.color

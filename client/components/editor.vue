@@ -39,16 +39,7 @@
       component(:is='activeModal')
 
     loader(v-model='dialogProgress', :title='$t(`editor:save.processing`)', :subtitle='$t(`editor:save.pleaseWait`)')
-    v-snackbar(
-      :color='notification.style'
-      bottom,
-      right,
-      multi-line,
-      v-model='notificationState'
-    )
-      .text-xs-left
-        v-icon.mr-3(dark) {{ notification.icon }}
-        span {{ notification.message }}
+    notify
 </template>
 
 <script>
@@ -134,8 +125,6 @@ export default {
     darkMode: get('site/dark'),
     activeModal: sync('editor/activeModal'),
     mode: get('editor/mode'),
-    notification: get('notification'),
-    notificationState: sync('notification@isActive'),
     welcomeMode() { return this.mode === `create` && this.path === `home` },
     currentPageTitle: get('page/title')
   },

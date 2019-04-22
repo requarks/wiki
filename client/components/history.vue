@@ -103,6 +103,7 @@
                 v-card.mt-3(light, v-html='diffHTML')
 
     nav-footer
+    notify
     search-results
 </template>
 

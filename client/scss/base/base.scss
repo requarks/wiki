@@ -1,7 +1,6 @@
 html {
   box-sizing: border-box;
   height: 100%;
-  perspective: 50vw;
   background-color: mc('grey', '900');
 }
 *, *:before, *:after {
@@ -23,7 +22,6 @@ html {
 
 .application--wrap {
   transition: all 1.2s ease;
-  transform-style: preserve-3d;
   transform-origin: 50% 50%;
   background-color: #FFF;
 

@@ -23,6 +23,7 @@
         router-view
 
     nav-footer
+    notify
     search-results
 </template>
 
