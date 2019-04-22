@@ -5,7 +5,16 @@ author: requarks.io
 logo: https://static.requarks.io/logo/dropbox.svg
 color: blue darken-2
 website: https://dropbox.com
+isAvailable: true
 useForm: false
 props:
-  clientId: String
-  clientSecret: String
+  clientId:
+    type: String
+    title: App Key
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: App Secret
+    hint: Application Client Secret
+    order: 2

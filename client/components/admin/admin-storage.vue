@@ -262,18 +262,6 @@ export default {
       })
       this.$store.commit(`loadingStop`, 'admin-storage-savetargets')
     },
-    getStatusColor(state) {
-      switch (state) {
-        case 'pending':
-          return 'purple lighten-2'
-        case 'operational':
-          return 'green'
-        case 'error':
-          return 'red'
-        default:
-          return 'grey darken-2'
-      }
-    },
     getDefaultSchedule(val) {
       return moment.duration(val).format('y [years], M [months], d [days], h [hours], m [minutes]')
     },
