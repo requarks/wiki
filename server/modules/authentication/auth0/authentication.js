@@ -15,9 +15,8 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
       }, async (accessToken, refreshToken, extraParams, profile, cb) => {
-        console.info(accessToken, refreshToken, extraParams, profile)
         try {
-          const user = WIKI.models.users.processProfile({ profile, provider: 'auth0' })
+          const user = await WIKI.models.users.processProfile({ profile, providerKey: 'auth0' })
           cb(null, user)
         } catch (err) {
           cb(err, null)

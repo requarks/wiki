@@ -183,8 +183,8 @@
               .body-2 Allowed Web Origins
               .body-1 {{host}}
               v-divider.my-3
-              .body-2 Callback URL
-              .body-1 {{host}}/login/callback/{{strategy.key}}
+              .body-2 Callback URL / Redirect URI
+              .body-1 {{host}}/login/{{strategy.key}}/callback
               v-divider.my-3
               .body-2 Login URL
               .body-1 {{host}}/login

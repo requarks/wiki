@@ -5,7 +5,25 @@ author: requarks.io
 logo: https://static.requarks.io/logo/slack.svg
 color: green
 website: https://api.slack.com/docs/oauth
+isAvailable: true
 useForm: false
+scope:
+  - identity.basic
+  - identity.email
+  - identity.avatar
 props:
-  clientId: String
-  clientSecret: String
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
+  team:
+    type: String
+    title: Team / Workspace ID
+    hint: Optional - Your unique team (workspace) identifier
+    order: 3

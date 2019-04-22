@@ -143,8 +143,10 @@
             span Admin
           v-menu(v-if='isAuthenticated', offset-y, min-width='300', left)
             v-tooltip(bottom, slot='activator')
-              v-btn.btn-animate-grow(icon, slot='activator', outline, color='blue')
-                v-icon(color='grey') account_circle
+              v-btn(icon, slot='activator', outline, color='blue')
+                v-icon(v-if='picture.kind === `initials`', color='grey') account_circle
+                v-avatar(v-else-if='picture.kind === `image`', :size='29')
+                  v-img(:src='picture.url')
               span Account
             v-list.py-0
               v-list-tile.py-3.grey(avatar, :class='$vuetify.dark ? `darken-4-l5` : `lighten-5`')

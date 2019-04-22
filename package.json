@@ -39,6 +39,7 @@
     "node": ">=10.12"
   },
   "dependencies": {
+    "@aoberoi/passport-slack": "1.0.5",
     "@bugsnag/js": "5.2.0",
     "algoliasearch": "3.32.1",
     "apollo-fetch": "0.7.0",
@@ -135,7 +136,6 @@
     "passport-okta-oauth": "0.0.1",
     "passport-openidconnect": "0.0.2",
     "passport-saml": "1.0.0",
-    "passport-slack": "0.0.7",
     "passport-twitch": "1.0.3",
     "passport-windowslive": "1.0.2",
     "pem-jwk": "2.0.0",

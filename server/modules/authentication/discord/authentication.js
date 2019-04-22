@@ -5,6 +5,7 @@
 // ------------------------------------
 
 const DiscordStrategy = require('passport-discord').Strategy
+const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
@@ -14,12 +15,20 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
         scope: 'identify email'
-      }, function (accessToken, refreshToken, profile, cb) {
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+      }, async (accessToken, refreshToken, profile, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              ...profile,
+              displayName: profile.username,
+              picture: `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+            },
+            providerKey: 'discord'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       }
       ))
   }

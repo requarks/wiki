@@ -78,17 +78,12 @@ module.exports = {
 
         stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
         strategy.init(passport, stg.config)
+        strategy.config = stg.config
 
-        try {
-          strategy.icon = await fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${strategy.key}.svg`), 'utf8')
-        } catch (err) {
-          if (err.code === 'ENOENT') {
-            strategy.icon = '[missing icon]'
-          } else {
-            WIKI.logger.warn(err)
-          }
+        WIKI.auth.strategies[stg.key] = {
+          ...strategy,
+          ...stg
         }
-        WIKI.auth.strategies[stg.key] = strategy
         WIKI.logger.info(`Authentication Strategy ${stg.key}: [ OK ]`)
       }
     } catch (err) {

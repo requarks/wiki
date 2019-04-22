@@ -27,7 +27,8 @@ router.get('/login/:strategy/callback', async (req, res, next) => {
     const authResult = await WIKI.models.users.login({
       strategy: req.params.strategy
     }, { req, res })
-    console.info(authResult)
+    res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
+    res.redirect('/')
   } catch (err) {
     next(err)
   }

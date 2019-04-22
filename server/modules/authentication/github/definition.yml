@@ -5,7 +5,17 @@ author: requarks.io
 logo: https://static.requarks.io/logo/github.svg
 color: grey darken-3
 website: https://github.com
+isAvailable: true
 useForm: false
 props:
-  clientId: String
-  clientSecret: String
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
+

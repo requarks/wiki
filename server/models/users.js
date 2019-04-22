@@ -19,13 +19,13 @@ module.exports = class User extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['email', 'name', 'provider'],
+      required: ['email'],
 
       properties: {
         id: {type: 'integer'},
         email: {type: 'string', format: 'email'},
         name: {type: 'string', minLength: 1, maxLength: 255},
-        providerId: {type: 'number'},
+        providerId: {type: 'string'},
         password: {type: 'string'},
         role: {type: 'string', enum: ['admin', 'guest', 'user']},
         tfaIsActive: {type: 'boolean', default: false},
@@ -154,8 +154,17 @@ module.exports = class User extends Model {
   // Model Methods
   // ------------------------------------------------
 
-  static async processProfile({ profile, provider }) {
-    // -> Parse email
+  static async processProfile({ profile, providerKey }) {
+    const provider = _.get(WIKI.auth.strategies, providerKey, {})
+    provider.info = _.find(WIKI.data.authentication, ['key', providerKey])
+
+    // Find existing user
+    let user = await WIKI.models.users.query().findOne({
+      providerId: profile.id,
+      providerKey
+    })
+
+    // Parse email
     let primaryEmail = ''
     if (_.isArray(profile.emails)) {
       const e = _.find(profile.emails, ['primary', true])
@@ -167,50 +176,75 @@ module.exports = class User extends Model {
     } else if (profile.user && profile.user.email && profile.user.email.length > 5) {
       primaryEmail = profile.user.email
     } else {
-      return Promise.reject(new Error('Missing or invalid email address from profile.'))
+      throw new Error('Missing or invalid email address from profile.')
     }
     primaryEmail = _.toLower(primaryEmail)
 
-    // -> Find user
-    let user = await WIKI.models.users.query().findOne({
-      email: primaryEmail,
-      providerKey: provider
-    })
-    if (user) {
-      user.$query().patchAdnFetch({
-        email: primaryEmail,
-        providerKey: provider,
-        providerId: profile.id,
-        name: _.get(profile, 'displayName', primaryEmail.split('@')[0])
-      })
+    // Parse display name
+    let displayName = ''
+    if (_.isString(profile.displayName) && profile.displayName.length > 0) {
+      displayName = profile.displayName
+    } else if (_.isString(profile.name) && profile.name.length > 0) {
+      displayName = profile.name
     } else {
-      // user = await WIKI.models.users.query().insertAndFetch({
-      //   email: primaryEmail,
-      //   providerKey: provider,
-      //   providerId: profile.id,
-      //   name: profile.displayName || _.split(primaryEmail, '@')[0]
-      // })
+      displayName = primaryEmail.split('@')[0]
     }
 
-    // Handle unregistered accounts
-    // if (!user && profile.provider !== 'local' && (WIKI.config.auth.defaultReadAccess || profile.provider === 'ldap' || profile.provider === 'azure')) {
-    //   let nUsr = {
-    //     email: primaryEmail,
-    //     provider: profile.provider,
-    //     providerId: profile.id,
-    //     password: '',
-    //     name: profile.displayName || profile.name || profile.cn,
-    //     rights: [{
-    //       role: 'read',
-    //       path: '/',
-    //       exact: false,
-    //       deny: false
-    //     }]
-    //   }
-    //   return WIKI.models.users.query().insert(nUsr)
-    // }
+    // Parse picture URL
+    let pictureUrl = _.get(profile, 'picture', _.get(user, 'pictureUrl', null))
 
-    return user
+    // Update existing user
+    if (user) {
+      if (!user.isActive) {
+        throw new WIKI.Error.AuthAccountBanned()
+      }
+      if (user.isSystem) {
+        throw new Error('This is a system reserved account and cannot be used.')
+      }
+
+      user = await user.$query().patchAndFetch({
+        email: primaryEmail,
+        name: displayName,
+        pictureUrl: pictureUrl
+      })
+
+      return user
+    }
+
+    // Self-registration
+    if (provider.selfRegistration) {
+      // Check if email domain is whitelisted
+      if (_.get(provider, 'domainWhitelist', []).length > 0) {
+        const emailDomain = _.last(primaryEmail.split('@'))
+        if (!_.includes(provider.domainWhitelist, emailDomain)) {
+          throw new WIKI.Error.AuthRegistrationDomainUnauthorized()
+        }
+      }
+
+      // Create account
+      user = await WIKI.models.users.query().insertAndFetch({
+        providerKey: providerKey,
+        providerId: profile.id,
+        email: primaryEmail,
+        name: displayName,
+        pictureUrl: pictureUrl,
+        localeCode: WIKI.config.lang.code,
+        defaultEditor: 'markdown',
+        tfaIsActive: false,
+        isSystem: false,
+        isActive: true,
+        isVerified: true
+      })
+
+      // Assign to group(s)
+      if (provider.autoEnrollGroups.length > 0) {
+        await user.$relatedQuery('groups').relate(provider.autoEnrollGroups)
+      }
+
+      return user
+    }
+
+    throw new Error('You are not authorized to login.')
   }
 
   static async login (opts, context) {
@@ -227,7 +261,7 @@ module.exports = class User extends Model {
       return new Promise((resolve, reject) => {
         WIKI.auth.passport.authenticate(opts.strategy, {
           session: !strInfo.useForm,
-          scope: strInfo.scopes ? strInfo.scopes.join(' ') : null
+          scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }

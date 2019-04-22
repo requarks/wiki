@@ -4,7 +4,8 @@
 // Slack Account
 // ------------------------------------
 
-const SlackStrategy = require('passport-slack').Strategy
+const SlackStrategy = require('@aoberoi/passport-slack').default.Strategy
+const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
@@ -12,13 +13,21 @@ module.exports = {
       new SlackStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL
-      }, (accessToken, refreshToken, profile, cb) => {
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+        callbackURL: conf.callbackURL,
+        team: conf.team
+      }, async (accessToken, scopes, team, extra, { user: userProfile }, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              ...userProfile,
+              picture: _.get(userProfile, 'image_48', '')
+            },
+            providerKey: 'slack'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       }
       ))
   }

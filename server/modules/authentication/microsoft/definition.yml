@@ -5,7 +5,20 @@ author: requarks.io
 logo: https://static.requarks.io/logo/microsoft.svg
 color: blue
 website: https://apps.dev.microsoft.com/
+isAvailable: false
 useForm: false
+scopes:
+  - openid
+  - profile
+  - email
 props:
-  clientId: String
-  clientSecret: String
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
