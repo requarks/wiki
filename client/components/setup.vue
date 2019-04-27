@@ -86,7 +86,7 @@
                       data-vv-name='adminEmail',
                       data-vv-as='Administrator Email',
                       data-vv-scope='admin',
-                      :error-messages='errors.collect(`adminEmail`)'
+                      :error-messages='errors.collect(`admin.adminEmail`)'
                       ref='adminEmailInput'
                     )
                   v-flex.pr-3(xs6)
@@ -106,7 +106,7 @@
                       data-vv-name='adminPassword',
                       data-vv-as='Password',
                       data-vv-scope='admin',
-                      :error-messages='errors.collect(`adminPassword`)'
+                      :error-messages='errors.collect(`admin.adminPassword`)'
                     )
                   v-flex(xs6)
                     v-text-field(
@@ -125,7 +125,7 @@
                       data-vv-name='adminPasswordConfirm',
                       data-vv-as='Confirm Password',
                       data-vv-scope='admin',
-                      :error-messages='errors.collect(`adminPasswordConfirm`)'
+                      :error-messages='errors.collect(`admin.adminPasswordConfirm`)'
                       @keyup.enter='proceedToUpgrade'
                     )
               .pt-3.text-xs-center
@@ -157,7 +157,7 @@
                       data-vv-name='upgMongo',
                       data-vv-as='MongoDB Connection String',
                       data-vv-scope='upgrade',
-                      :error-messages='errors.collect(`upgMongo`)'
+                      :error-messages='errors.collect(`upgrade.upgMongo`)'
                     )
             .pt-3.text-xs-center
               v-btn(@click='proceedToAdmin', :disabled='loading') Back
