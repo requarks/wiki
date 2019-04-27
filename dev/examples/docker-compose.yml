@@ -18,7 +18,6 @@ services:
     depends_on:
       - db
     environment:
-      PORT: 3000 # DO NOT CHANGE! Use ports below to specify listening port.
       DB_TYPE: postgres
       DB_HOST: db
       DB_PORT: 5432
