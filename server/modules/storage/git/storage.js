@@ -109,8 +109,14 @@ module.exports = {
         await this.git.addRemote('origin', this.config.repoUrl)
         break
       default:
-        WIKI.logger.info('(STORAGE/GIT) Adding origin remote via HTTPS...')
-        await this.git.addRemote('origin', `https://${this.config.basicUsername}:${this.config.basicPassword}@${this.config.repoUrl}`)
+        WIKI.logger.info('(STORAGE/GIT) Adding origin remote via HTTP/S...')
+        let originUrl = ''
+        if (_.startsWith(this.config.repoUrl, 'http')) {
+          originUrl = originUrl.replace('://', `://${this.config.basicUsername}:${this.config.basicPassword}@`)
+        } else {
+          originUrl = `https://${this.config.basicUsername}:${this.config.basicPassword}@${this.config.repoUrl}`
+        }
+        await this.git.addRemote('origin', )
         break
     }
 
