@@ -15,7 +15,7 @@
                 v-toolbar(color='primary', flat, dense, dark)
                   v-spacer
                   .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
-                  .subheading(v-else-if='selectedStrategy.key !== "local"') {{ $t('auth:loginUsingStrategy', { strategy: selectedStrategy.title }) }}
+                  .subheading(v-else-if='selectedStrategy.key !== "local"') {{ $t('auth:loginUsingStrategy', { strategy: selectedStrategy.title, interpolation: { escapeValue: false } }) }}
                   .subheading(v-else) {{ $t('auth:loginRequired') }}
                   v-spacer
                 v-card-text.text-xs-center

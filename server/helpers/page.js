@@ -5,6 +5,8 @@ const crypto = require('crypto')
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/gi
 const systemSegmentRegex = /^[A-Z]\//gi
 
+/* global WIKI */
+
 module.exports = {
   /**
    * Parse raw url path and make it safe
@@ -63,7 +65,10 @@ module.exports = {
   /**
    * Check if path is a reserved path
    */
-  isReservedPath(rawPath)  {
-    return _.some(WIKI.data.reservedPaths, p => _.startsWith(rawPath, p)) || systemSegmentRegex.test(rawPath)
+  isReservedPath(rawPath) {
+    const firstSection = _.head(rawPath.split('/'))
+    return _.some(WIKI.data.reservedPaths, p => {
+      return p === firstSection || systemSegmentRegex.test(rawPath)
+    })
   }
 }

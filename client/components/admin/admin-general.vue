@@ -168,6 +168,7 @@ export default {
     return {
       analyticsServices: [
         { text: 'None', value: '' },
+        { text: 'Elasticsearch APM', value: 'elk' },
         { text: 'Google Analytics', value: 'ga' },
         { text: 'Google Tag Manager', value: 'gtm' }
       ],

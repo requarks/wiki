@@ -4,7 +4,8 @@
 // Microsoft Account
 // ------------------------------------
 
-const WindowsLiveStrategy = require('passport-windowslive').Strategy
+const WindowsLiveStrategy = require('passport-microsoft').Strategy
+const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
@@ -12,7 +13,8 @@ module.exports = {
       new WindowsLiveStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL
+        callbackURL: conf.callbackURL,
+        scope: ['User.Read', 'email', 'openid', 'profile']
       }, async (accessToken, refreshToken, profile, cb) => {
         console.info(profile)
         try {

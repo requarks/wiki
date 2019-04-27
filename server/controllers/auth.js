@@ -17,7 +17,6 @@ router.get('/login/:strategy', async (req, res, next) => {
     const authResult = await WIKI.models.users.login({
       strategy: req.params.strategy
     }, { req, res })
-    console.info(authResult)
   } catch (err) {
     next(err)
   }

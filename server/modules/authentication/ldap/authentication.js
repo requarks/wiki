@@ -6,10 +6,11 @@
 
 const LdapStrategy = require('passport-ldapauth').Strategy
 const fs = require('fs')
+const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('ldapauth',
+    passport.use('ldap',
       new LdapStrategy({
         server: {
           url: conf.url,
@@ -17,7 +18,6 @@ module.exports = {
           bindCredentials: conf.bindCredentials,
           searchBase: conf.searchBase,
           searchFilter: conf.searchFilter,
-          searchAttributes: ['displayName', 'name', 'cn', 'mail'],
           tlsOptions: (conf.tlsEnabled) ? {
             ca: [
               fs.readFileSync(conf.tlsCertPath)
@@ -25,15 +25,28 @@ module.exports = {
           } : {}
         },
         usernameField: 'email',
+        passwordField: 'password',
         passReqToCallback: false
-      }, (profile, cb) => {
-        profile.provider = 'ldap'
-        profile.id = profile.dn
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+      }, async (profile, cb) => {
+        try {
+          const userId = _.get(profile, conf.mappingUID, null)
+          if (!userId) {
+            throw new Error('Invalid Unique ID field mapping!')
+          }
+
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              id: userId,
+              email: _.get(profile, conf.mappingEmail, ''),
+              displayName: _.get(profile, conf.mappingDisplayName, '???'),
+              picture: _.get(profile, conf.mappingPicture, '')
+            },
+            providerKey: 'ldap'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       }
       ))
   }

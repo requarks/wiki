@@ -5,33 +5,69 @@ author: requarks.io
 logo: https://static.requarks.io/logo/active-directory.svg
 color: blue darken-3
 website: https://www.microsoft.com/windowsserver
+isAvailable: true
 useForm: true
 props:
   url:
-    title: URL
+    title: LDAP URL
     type: String
     default: 'ldap://serverhost:389'
-    hint: (e.g. ldap://serverhost:389)
+    hint: (e.g. ldap://serverhost:389 or ldaps://serverhost:636)
+    order: 1
   bindDn:
-    title: Bind DN
+    title: Admin Bind DN
     type: String
     default: cn='root'
     hint: The dstinguished name (dn) of the account used for binding.
+    order: 2
   bindCredentials:
+    title: Admin Bind Credentials
     type: String
-    hint: The password of the account used for binding.
+    hint: The password of the account used above for binding.
+    order: 3
   searchBase:
+    title: Search Base
     type: String
     default: 'o=users,o=example.com'
+    hint: The base DN from which to search for users.
+    order: 4
   searchFilter:
+    title: Search Filter
     type: String
     default: '(uid={{username}})'
-    hint: The query to use to match username. {{username}} must be present.
+    hint: The query to use to match username. {{username}} must be present and will be interpolated with the user provided username when performing the LDAP search.
+    order: 5
   tlsEnabled:
     title: Use TLS
     type: Boolean
     default: false
+    order: 6
   tlsCertPath:
     title: TLS Certificate Path
     type: String
     hint: Absolute path to the TLS certificate on the server.
+    order: 7
+  mappingUID:
+    title: Unique ID Field Mapping
+    type: String
+    default: 'uid'
+    hint: The field storing the user unique identifier. Usually "uid" or "sAMAccountName".
+    order: 8
+  mappingEmail:
+    title: Email Field Mapping
+    type: String
+    default: 'mail'
+    hint: The field storing the user email. Usually "mail".
+    order: 9
+  mappingDisplayName:
+    title: Display Name Field Mapping
+    type: String
+    default: 'displayName'
+    hint: The field storing the user display name. Usually "displayName" or "cn".
+    order: 10
+  mappingPicture:
+    title: Avatar Picture Field Mapping
+    type: String
+    default: 'jpegPhoto'
+    hint: The field storing the user avatar picture. Usually "jpegPhoto" or "thumbnailPhoto".
+    order: 11
