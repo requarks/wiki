@@ -225,15 +225,7 @@ module.exports = {
     new SimpleProgressWebpackPlugin({
       format: 'expanded'
     }),
-    new CleanWebpackPlugin([
-      'assets/js/*.*',
-      'assets/css/*.*',
-      'assets/*.js',
-      'assets/*.json'
-    ], {
-      root: process.cwd(),
-      verbose: false
-    }),
+    new CleanWebpackPlugin(),
     new OptimizeCssAssetsPlugin({
       cssProcessorOptions: { discardComments: { removeAll: true } },
       canPrint: true
