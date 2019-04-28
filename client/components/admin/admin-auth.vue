@@ -72,6 +72,8 @@
                 img(:src='strategy.logo', :alt='strategy.title')
               .caption.pt-3 {{strategy.description}}
               .caption.pb-3: a(:href='strategy.website') {{strategy.website}}
+              .body-2(v-if='strategy.isEnabled') This strategy is #[span.green--text active].
+              .body-2(v-else) This strategy is #[span.red--text not active].
               v-divider.mt-3
               v-subheader.pl-0 Strategy Configuration
               .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em This strategy has no configuration options you can modify.
