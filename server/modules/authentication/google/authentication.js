@@ -5,6 +5,7 @@
 // ------------------------------------
 
 const GoogleStrategy = require('passport-google-oauth20').Strategy
+const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
@@ -13,12 +14,19 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
-      }, (accessToken, refreshToken, profile, cb) => {
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+      }, async (accessToken, refreshToken, profile, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              ...profile,
+              picture: _.get(profile, 'photos[0].value', '')
+            },
+            providerKey: 'google'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       })
     )
   }

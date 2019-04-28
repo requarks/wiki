@@ -7,7 +7,7 @@ color: green
 website: https://api.slack.com/docs/oauth
 isAvailable: true
 useForm: false
-scope:
+scopes:
   - identity.basic
   - identity.email
   - identity.avatar

@@ -5,8 +5,12 @@ author: requarks.io
 logo: https://static.requarks.io/logo/google.svg
 color: red darken-1
 website: https://console.developers.google.com/
-isAvailable: false
+isAvailable: true
 useForm: false
+scopes:
+  - profile
+  - email
+  - openid
 props:
   clientId:
     type: String
