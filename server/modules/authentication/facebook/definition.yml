@@ -5,16 +5,18 @@ author: requarks.io
 logo: https://static.requarks.io/logo/facebook.svg
 color: indigo
 website: https://facebook.com/
-isAvailable: false
+isAvailable: true
 useForm: false
+scopes:
+  - email
 props:
   clientId:
     type: String
-    title: Client ID
-    hint: Application Client ID
+    title: App ID
+    hint: Application ID
     order: 1
   clientSecret:
     type: String
-    title: Client Secret
-    hint: Application Client Secret
+    title: App Secret
+    hint: Application Secret
     order: 2

@@ -23,7 +23,8 @@
               v-list-tile(:key='str.key', @click='selectedStrategy = str.key', :disabled='!str.isAvailable')
                 v-list-tile-avatar
                   v-icon(color='grey', v-if='!str.isAvailable') indeterminate_check_box
-                  v-icon(color='primary', v-else-if='str.isEnabled', v-ripple, @click='str.key !== `local` && (str.isEnabled = false)') check_box
+                  v-icon(color='primary', v-else-if='str.isEnabled && str.key !== `local`', v-ripple, @click='str.isEnabled = false') check_box
+                  v-icon(color='primary', v-else-if='str.isEnabled && str.key === `local`') check_box
                   v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') check_box_outline_blank
                 v-list-tile-content
                   v-list-tile-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedStrategy === str.key ? `primary--text` : ``)') {{ str.title }}
@@ -72,8 +73,13 @@
                 img(:src='strategy.logo', :alt='strategy.title')
               .caption.pt-3 {{strategy.description}}
               .caption.pb-3: a(:href='strategy.website') {{strategy.website}}
-              .body-2(v-if='strategy.isEnabled') This strategy is #[v-chip(color='green', small, dark, label) active]
-              .body-2(v-else) This strategy is #[v-chip(color='red', small, dark, label) not active]
+              .body-2(v-if='strategy.isEnabled')
+                span This strategy is
+                v-chip(color='green', small, dark, label) active
+                span(v-if='selectedStrategy === `local`') and cannot be disabled.
+              .body-2(v-else)
+                span This strategy is
+                v-chip(color='red', small, dark, label) not active
               v-divider.mt-3
               v-subheader.pl-0 Strategy Configuration
               .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em This strategy has no configuration options you can modify.
