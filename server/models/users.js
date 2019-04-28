@@ -160,7 +160,7 @@ module.exports = class User extends Model {
 
     // Find existing user
     let user = await WIKI.models.users.query().findOne({
-      providerId: profile.id,
+      providerId: _.toString(profile.id),
       providerKey
     })
 
@@ -224,7 +224,7 @@ module.exports = class User extends Model {
       // Create account
       user = await WIKI.models.users.query().insertAndFetch({
         providerKey: providerKey,
-        providerId: profile.id,
+        providerId: _.toString(profile.id),
         email: primaryEmail,
         name: displayName,
         pictureUrl: pictureUrl,

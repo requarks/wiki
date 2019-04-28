@@ -5,8 +5,10 @@ author: requarks.io
 logo: https://static.requarks.io/logo/twitch.svg
 color: indigo darken-2
 website: https://dev.twitch.tv/docs/authentication/
-isAvailable: false
+isAvailable: true
 useForm: false
+scopes:
+  - user_read
 props:
   clientId:
     type: String

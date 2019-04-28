@@ -5,6 +5,7 @@
 // ------------------------------------
 
 const TwitchStrategy = require('passport-twitch').Strategy
+const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
@@ -12,14 +13,20 @@ module.exports = {
       new TwitchStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL,
-        scope: 'user_read'
-      }, function (accessToken, refreshToken, profile, cb) {
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+        callbackURL: conf.callbackURL
+      }, async (accessToken, refreshToken, profile, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              ...profile,
+              picture: _.get(profile, '_json.logo', '')
+            },
+            providerKey: 'twitch'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       }
       ))
   }
