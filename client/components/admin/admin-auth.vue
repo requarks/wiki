@@ -72,8 +72,8 @@
                 img(:src='strategy.logo', :alt='strategy.title')
               .caption.pt-3 {{strategy.description}}
               .caption.pb-3: a(:href='strategy.website') {{strategy.website}}
-              .body-2(v-if='strategy.isEnabled') This strategy is #[span.green--text active].
-              .body-2(v-else) This strategy is #[span.red--text not active].
+              .body-2(v-if='strategy.isEnabled') This strategy is #[v-chip(color='green', small, dark, label) active]
+              .body-2(v-else) This strategy is #[v-chip(color='red', small, dark, label) not active]
               v-divider.mt-3
               v-subheader.pl-0 Strategy Configuration
               .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em This strategy has no configuration options you can modify.
@@ -179,7 +179,7 @@
           v-toolbar(color='primary', dense, flat, dark)
             .subheading Configuration Reference
           v-card-text
-            .body-1 Some strategies may require some configuration values to be set on your provider.
+            .body-1 Some strategies may require some configuration values to be set on your provider. These are provided for reference only and may not be needed by the current strategy.
             v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outline, :value='true', icon='warning') You must set a valid #[strong Site URL] first! Click on #[strong General] in the left sidebar.
             .pa-3.mt-3.radius-7.grey(v-else, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`')
               .body-2 Allowed Web Origins
