@@ -5,36 +5,44 @@ author: requarks.io
 logo: https://static.requarks.io/logo/saml.svg
 color: red darken-3
 website: https://wiki.oasis-open.org/security/FrontPage
+isAvailable: true
 useForm: false
 props:
   entryPoint:
     type: String
     title: Entry Point
     hint: Identity provider entrypoint (URL)
+    order: 1
   issuer:
     type: String
     title: Issuer
     hint: Issuer string to supply to Identity Provider
+    order: 2
   audience:
     type: String
     title: Audience
-    hint: Expected SAML response Audience (if not provided, Audience won't be verified)
+    hint: (Optional) - Expected SAML response Audience (if not provided, Audience won't be verified)
+    order: 3
   cert:
     type: String
     title: Certificate
-    hint: Public PEM-encoded X.509 signing certificate contents in base64 (e.g. 'MIICizCCAfQCCQCY8tKaMc0BMjANBgkqh ... W=='). If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
+    hint: (Optional) - Public PEM-encoded X.509 signing certificate. If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
+    order: 4
   privateCert:
     type: String
     title: Private Certificate
-    hint: PEM formatted key used to sign the certificate.
+    hint: (Optional) - PEM formatted key used to sign the certificate.
+    order: 5
   decryptionPvk:
     type: String
     title: Decryption Private Key
-    hint: (optional) Private key that will be used to attempt to decrypt any encrypted assertions that are received.
+    hint: (Optional) - Private key that will be used to attempt to decrypt any encrypted assertions that are received.
+    order: 6
   signatureAlgorithm:
     type: String
     title: Signature Algorithm
     hint: Signature algorithm used for signing requests
+    order: 7
     default: sha1
     enum:
       - sha1
@@ -44,41 +52,73 @@ props:
     type: String
     title: Name Identifier format
     default: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'
+    order: 8
   acceptedClockSkewMs:
     type: Number
     title: Accepted Clock Skew Milleseconds
     hint: Time in milliseconds of skew that is acceptable between client and server when checking OnBefore and NotOnOrAfter assertion condition validity timestamps. Setting to -1 will disable checking these conditions entirely.
-    default: 0
+    default: -1
+    order: 9
   disableRequestedAuthnContext:
     type: Boolean
     title: Disable Requested Auth Context
     hint: If enabled, do not request a specific authentication context. This is known to help when authenticating against Active Directory (AD FS) servers.
     default: false
+    order: 10
   authnContext:
     type: String
     title: Auth Context
     hint: Name identifier format to request auth context.
     default: urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport
+    order: 11
   forceAuthn:
     type: Boolean
     title: Force Initial Re-authentication
     hint: If enabled, the initial SAML request from the service provider specifies that the IdP should force re-authentication of the user, even if they possess a valid session.
     default: false
+    order: 12
   providerName:
     type: String
     title: Provider Name
     hint: Optional human-readable name of the requester for use by the presenter's user agent or the identity provider.
     default: wiki.js
+    order: 13
   skipRequestCompression:
     type: Boolean
     title: Skip Request Compression
     hint: If enabled, the SAML request from the service provider won't be compressed.
     default: false
+    order: 14
   authnRequestBinding:
     type: String
     title: Request Binding
     hint: Binding used for request authentication from IDP.
-    default: 'HTTP-Redirect'
+    order: 15
+    default: 'HTTP-POST'
     enum:
       - HTTP-Redirect
       - HTTP-POST
+  mappingUID:
+    title: Unique ID Field Mapping
+    type: String
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+    hint: The field storing the user unique identifier. Can be a variable name or a URI-formatted string.
+    order: 16
+  mappingEmail:
+    title: Email Field Mapping
+    type: String
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+    hint: The field storing the user email. Can be a variable name or a URI-formatted string.
+    order: 17
+  mappingDisplayName:
+    title: Display Name Field Mapping
+    type: String
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+    hint: The field storing the user display name. Can be a variable name or a URI-formatted string.
+    order: 18
+  mappingPicture:
+    title: Avatar Picture Field Mapping
+    type: String
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/picture'
+    hint: The field storing the user avatar picture. Can be a variable name or a URI-formatted string.
+    order: 19

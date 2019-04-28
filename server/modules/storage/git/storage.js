@@ -116,7 +116,7 @@ module.exports = {
         } else {
           originUrl = `https://${this.config.basicUsername}:${this.config.basicPassword}@${this.config.repoUrl}`
         }
-        await this.git.addRemote('origin', )
+        await this.git.addRemote('origin', originUrl)
         break
     }
 

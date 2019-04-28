@@ -14,14 +14,16 @@ router.get('/login', (req, res, next) => {
 })
 router.get('/login/:strategy', async (req, res, next) => {
   try {
-    const authResult = await WIKI.models.users.login({
+    await WIKI.models.users.login({
       strategy: req.params.strategy
     }, { req, res })
   } catch (err) {
     next(err)
   }
 })
-router.get('/login/:strategy/callback', async (req, res, next) => {
+router.all('/login/:strategy/callback', async (req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'POST') { return next() }
+
   try {
     const authResult = await WIKI.models.users.login({
       strategy: req.params.strategy
