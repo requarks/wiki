@@ -5,6 +5,7 @@
 // ------------------------------------
 
 const OktaStrategy = require('passport-okta-oauth').Strategy
+const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
@@ -15,14 +16,20 @@ module.exports = {
         clientSecret: conf.clientSecret,
         idp: conf.idp,
         callbackURL: conf.callbackURL,
-        response_type: 'code',
-        scope: ['openid', 'email', 'profile']
-      }, (accessToken, refreshToken, profile, cb) => {
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+        response_type: 'code'
+      }, async (accessToken, refreshToken, profile, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              ...profile,
+              picture: _.get(profile, '_json.profile', '')
+            },
+            providerKey: 'okta'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       })
     )
   }
