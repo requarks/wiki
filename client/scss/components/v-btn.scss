@@ -32,6 +32,16 @@
   }
 }
 
+.btn-animate-wrench {
+  i {
+    transition: all .7s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform: rotate(0deg);
+  }
+  &:hover i {
+    transform: rotate(45deg);
+  }
+}
+
 .btn-animate-app {
   i {
     transition: all .6s ease;

@@ -3,17 +3,17 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-male-user.svg', alt='Edit User', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-male-user.svg', alt='Edit User', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2 Edit User
-            .subheading.grey--text {{user.name}}
+            .headline.blue--text.text--darken-2.animated.fadeInLeft Edit User
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{user.name}}
           v-spacer
-          .caption.grey--text ID #[strong {{user.id}}]
-          v-divider.mx-3(vertical)
-          v-btn(color='grey', large, outline, to='/users')
+          .caption.grey--text.animated.fadeInRight.wait-p5s ID #[strong {{user.id}}]
+          v-divider.animated.fadeInRight.wait-p3s.mx-3(vertical)
+          v-btn.animated.fadeInDown.wait-p2s(color='grey', large, outline, to='/users')
             v-icon arrow_back
           v-dialog(v-model='deleteUserDialog', max-width='500', v-if='user.id !== currentUserId && !user.isSystem')
-            v-btn(color='red', large, outline, slot='activator')
+            v-btn.animated.fadeInDown.wait-p1s(color='red', large, outline, slot='activator')
               v-icon(color='red') delete
             v-card
               .dialog-header.is-red Delete User?
@@ -22,11 +22,11 @@
                 v-spacer
                 v-btn(flat, @click='deleteUserDialog = false') Cancel
                 v-btn(color='red', dark, @click='deleteUser') Delete
-          v-btn(color='primary', large, depressed, @click='updateUser')
+          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='updateUser')
             v-icon(left) check
             span Update User
       v-flex(xs5)
-        v-card
+        v-card.animated.fadeInUp
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 directions_run
             span Basic Info
@@ -50,7 +50,7 @@
               v-list-tile-action
                   v-btn(icon, color='grey', flat)
                     v-icon edit
-        v-card.mt-3(v-if='!user.isSystem')
+        v-card.mt-3.animated.fadeInUp.wait-p2s(v-if='!user.isSystem')
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 lock_outline
             span Authentication
@@ -95,7 +95,7 @@
                   v-list-tile-content
                     v-list-tile-title Provider Id
                     v-list-tile-sub-title {{ user.providerId }}
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 people
             span User Groups
@@ -116,7 +116,7 @@
               v-icon(left) how_to_reg
               span Assign to group
       v-flex(xs7)
-        v-card
+        v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 directions_walk
             span Extended Metadata
@@ -150,7 +150,7 @@
               v-list-tile-action
                   v-btn(icon, color='grey', flat)
                     v-icon edit
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 insert_drive_file
             span Content

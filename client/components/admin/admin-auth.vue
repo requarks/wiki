@@ -130,7 +130,7 @@
                   persistent-hint
                 )
                 v-switch.ml-3(
-                  v-if='strategy.useForm'
+                  v-if='strategy.key === `local`'
                   :disabled='!strategy.selfRegistration || true'
                   v-model='strategy.recaptcha'
                   label='Use reCAPTCHA by Google'

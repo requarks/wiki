@@ -1,6 +1,10 @@
 <template lang='pug'>
   v-app(:dark='darkMode').admin
-    nav-header
+    nav-header(hide-search)
+      template(slot='mid')
+        v-spacer
+        .subheading.grey--text Administration Area
+        v-spacer
     v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, left, permanent)
       vue-scroll(:ops='scrollStyle')
         v-list(dense)

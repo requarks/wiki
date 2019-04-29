@@ -5,6 +5,7 @@ author: requarks.io
 logo: https://static.requarks.io/logo/azure.svg
 color: blue darken-3
 website: https://azure.microsoft.com/services/active-directory/
+isAvailable: false
 useForm: false
 props:
   clientId: String

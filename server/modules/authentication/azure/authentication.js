@@ -17,14 +17,15 @@ module.exports = {
         resource: conf.resource,
         tenant: conf.tenant
       }, (accessToken, refreshToken, params, profile, cb) => {
+        console.info(params, profile)
         let waadProfile = jwt.decode(params.id_token)
         waadProfile.id = waadProfile.oid
         waadProfile.provider = 'azure'
-        WIKI.models.users.processProfile(waadProfile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+        // WIKI.models.users.processProfile(waadProfile).then((user) => {
+        //   return cb(null, user) || true
+        // }).catch((err) => {
+        //   return cb(err, null) || true
+        // })
       }
       ))
   }

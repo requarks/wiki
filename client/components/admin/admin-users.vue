@@ -6,21 +6,42 @@
           img.animated.fadeInUp(src='/svg/icon-customer.svg', alt='Users', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Users
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s Manage users
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s Manage users
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser')
+          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser', disabled)
             v-icon(left) add
             span New User
-        v-card.mt-3.animated.fadeInUp
+        v-card.wiki-form.mt-3.animated.fadeInUp
+          v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
+            v-spacer
+            v-text-field(
+              outline
+              v-model='search'
+              prepend-inner-icon='search'
+              label='Search Users...'
+              hide-details
+              )
+            v-select.ml-2(
+              outline
+              hide-details
+              label='Identity Provider'
+              :items='strategies'
+              v-model='filterStrategy'
+              item-text='title'
+              item-value='key'
+            )
+            v-spacer
+          v-divider
           v-data-table(
             v-model='selected'
-            :items='users',
+            :items='usersFiltered',
             :headers='headers',
             :search='search',
             :pagination.sync='pagination',
             :rows-per-page-items='[15]'
+            :loading='loading'
             hide-actions,
             disable-initial-sort
           )
@@ -51,7 +72,7 @@
             template(slot='no-data')
               .pa-3
                 v-alert(icon='warning', :value='true', outline) No users to display!
-          v-card-chin(v-if='this.pages > 0')
+          v-card-chin(v-if='this.pages > 1')
             v-spacer
             v-pagination(v-model='pagination.page', :length='pages')
             v-spacer
@@ -60,7 +81,10 @@
 </template>
 
 <script>
+import _ from 'lodash'
+
 import usersQuery from 'gql/admin/users/users-query-list.gql'
+import providersQuery from 'gql/admin/users/users-query-strategies.gql'
 
 import UserCreate from './admin-users-create.vue'
 
@@ -81,17 +105,24 @@ export default {
         { text: 'Created', value: 'createdAt', sortable: true },
         { text: '', value: 'actions', sortable: false, width: 50 }
       ],
+      strategies: [],
+      filterStrategy: 'all',
       search: '',
+      loading: false,
       isCreateDialogShown: false
     }
   },
   computed: {
+    usersFiltered () {
+      const all = this.filterStrategy === 'all' || this.filterStrategy === ''
+      return _.filter(this.users, u => all || u.providerKey === this.filterStrategy)
+    },
     pages () {
-      if (this.pagination.rowsPerPage == null || this.pagination.totalItems == null) {
+      if (this.pagination.rowsPerPage == null || this.usersFiltered.length < 1) {
         return 0
       }
 
-      return Math.ceil(this.pagination.totalItems / this.pagination.rowsPerPage)
+      return Math.ceil(this.usersFiltered.length / this.pagination.rowsPerPage)
     }
   },
   methods: {
@@ -128,7 +159,21 @@ export default {
       fetchPolicy: 'network-only',
       update: (data) => data.users.list,
       watchLoading (isLoading) {
+        this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
+      }
+    },
+    strategies: {
+      query: providersQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => {
+        return _.concat({
+          key: 'all',
+          title: 'All'
+        }, data.authentication.strategies)
+      },
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-strategies-refresh')
       }
     }
   }

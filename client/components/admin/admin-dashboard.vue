@@ -45,7 +45,7 @@
           :class='isLatestVersion ? "teal lighten-2" : "red lighten-2"'
           dark
           )
-          v-btn(fab, absolute, right, top, small, light, to='system', v-if='hasPermission(`manage:system`)')
+          v-btn.btn-animate-wrench(fab, absolute, right, top, small, light, to='system', v-if='hasPermission(`manage:system`)')
             v-icon(:color='isLatestVersion ? `teal` : `red darken-4`') build
           v-card-text
             v-icon.dashboard-icon blur_on
