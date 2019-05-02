@@ -136,10 +136,8 @@ router.get('/*', async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path)
 
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
-    if (pageArgs.path === 'home') {
-      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'view' })
-    }
+    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+    return res.render('unauthorized', { action: 'view' })
   }
 
   const page = await WIKI.models.pages.getPage({
