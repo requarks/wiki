@@ -1,0 +1,21 @@
+apiVersion: v1
+name: Wiki.js
+version: 2.0.0
+appVersion: 2.0.0
+description: The most powerful and extensible open source Wiki software.
+keywords:
+  - wiki
+  - documentation
+  - knowledge base
+  - docs
+  - reference
+  - editor
+home: https://wiki.js.org
+icon: https://github.com/Requarks/wiki/raw/master/client/static/favicons/android-icon-192x192.png
+sources:
+  - https://github.com/Requarks/wiki
+maintainers:
+  - name: Nicolas Giard
+    email: github@ngpixel.com
+    url: https://github.com/NGPixel
+engine: gotpl

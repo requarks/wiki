@@ -1,0 +1,41 @@
+##
+## Configuration values for the postgresql dependency.
+## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
+postgresql:
+  ##
+  ## Use the PostgreSQL chart dependency.
+  ## Set to false if bringing your own PostgreSQL.
+  enabled: true
+  ##
+  ## If you are bringing your own PostgreSQL, you should set postgresHost and
+  ## also probably service.port, postgresUser, postgresPassword, and postgresDatabase
+  ## postgresHost:
+  ##
+  ## PostgreSQL port
+  service:
+    port: 5432
+  ## PostgreSQL User to create.
+  postgresUser: wiki
+  ##
+  ## PostgreSQL Password for the new user.
+  ## If not set, a random 10 characters password will be used.
+  postgresPassword: wikijsrocks
+  ##
+  ## PostgreSQL Database to create.
+  postgresDatabase: wiki
+  ##
+  ## Persistent Volume Storage configuration.
+  ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
+  persistence:
+    ##
+    ## Enable PostgreSQL persistence using Persistent Volume Claims.
+    enabled: true
+    ##
+    ## Persistant class
+    # storageClass: classname
+    ##
+    ## Access mode:
+    accessMode: ReadWriteOnce
+    ##
+    ## Requested size:
+    size: 10Gi

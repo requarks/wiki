@@ -1,0 +1,39 @@
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts  }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "wiki.fullname" $ }}
+  labels:
+    app: {{ template "wiki.name" $ }}
+    chart: {{ template "wiki.chart" $ }}
+    release: {{ $.Release.Name | quote }}
+    heritage: {{ $.Release.Service | quote }}
+  annotations:
+    {{- if .tls }}
+    ingress.kubernetes.io/secure-backends: "true"
+    {{- end }}
+    {{- if .certManager }}
+    kubernetes.io/tls-acme: "true"
+    {{- end }}
+    {{- range $key, $value := .annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  rules:
+  - host: {{ .name }}
+    http:
+      paths:
+        - path: {{ default "/" .path }}
+          backend:
+            serviceName: {{ template "wiki.fullname" $ }}
+            servicePort: 80
+{{- if .tls }}
+  tls:
+  - hosts:
+    - {{ .name }}
+    secretName: {{ .tlsSecret }}
+{{- end }}
+---
+{{- end }}
+{{- end }}

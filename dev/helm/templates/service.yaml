@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "wiki.fullname" . }}
+  labels:
+    app: {{ template "wiki.name" . }}
+    chart: {{ template "wiki.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- end }}
+  {{- if (or (eq .Values.service.type "LoadBalancer") (eq .Values.service.type "NodePort")) }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  ports:
+  - name: http
+    port: {{ .Values.service.port }}
+    targetPort: http
+    {{- if (and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePorts.http)))}}
+    nodePort: {{ .Values.service.nodePorts.http }}
+    {{- end }}
+  - name: https
+    port: {{ .Values.service.httpsPort }}
+    targetPort: https
+    {{- if (and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePorts.https)))}}
+    nodePort: {{ .Values.service.nodePorts.https }}
+    {{- end }}
+  selector:
+    app: {{ template "wiki.name" . }}
