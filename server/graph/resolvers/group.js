@@ -43,7 +43,7 @@ module.exports = {
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-        pageRules: JSON.stringify([]),
+        pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules),
         isSystem: false
       })
       await WIKI.auth.reloadGroups()

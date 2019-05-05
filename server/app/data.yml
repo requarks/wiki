@@ -63,10 +63,21 @@ jobs:
     schedule: P1D
 groups:
   defaultPermissions:
-    - 'manage:pages'
-    - 'write:assets'
+    - 'read:pages'
+    - 'read:assets'
     - 'read:comments'
     - 'write:comments'
+  defaultPageRules:
+    - id: default
+      deny: false
+      match: START
+      roles:
+        - 'read:pages'
+        - 'read:assets'
+        - 'read:comments'
+        - 'write:comments'
+      path: ''
+      locales: []
 telemetry:
   BUGSNAG_ID: 'bb4b324d0675bcbba10025617fd2cec8'
   BUGSNAG_REMOTE: 'https://notify.bugsnag.com'

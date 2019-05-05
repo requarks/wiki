@@ -1,91 +1,130 @@
 <template lang='pug'>
   .editor-markdown
     v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat)
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `**` })').mx-0
           v-icon format_bold
         span Bold
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `*` })').mx-0
           v-icon format_italic
         span Italic
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `~~` })').mx-0
           v-icon format_strikethrough
         span Strikethrough
       v-menu(offset-y, open-on-hover)
         v-btn(icon, slot='activator').mx-0
-          v-icon font_download
-        v-list
-          v-list-tile(v-for='(n, idx) in 6', @click='', :key='idx')
-            v-list-tile-action
-              v-icon font_download
-            v-list-tile-title Heading {{n}}
-      v-tooltip(top)
+          v-icon text_fields
+        v-list.py-0
+          template(v-for='(n, idx) in 6')
+            v-list-tile(@click='setHeaderLine(n)', :key='idx')
+              v-list-tile-action
+                v-icon(:size='24 - (idx - 1) * 2') title
+              v-list-tile-title Heading {{n}}
+            v-divider(v-if='idx < 5')
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `~` })').mx-0
+          v-icon vertical_align_bottom
+        span Subscript
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `^` })').mx-0
+          v-icon vertical_align_top
+        span Superscript
+      v-menu(offset-y, open-on-hover)
         v-btn(icon, slot='activator').mx-0
           v-icon format_quote
-        span Blockquote
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
+        v-list.py-0
+          v-list-tile(@click='insertBeforeEachLine({ content: `> `})')
+            v-list-tile-action
+              v-icon format_quote
+            v-list-tile-title Blockquote
+          v-divider
+          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
+            v-list-tile-action
+              v-icon(color='blue') format_quote
+            v-list-tile-title Info Blockquote
+          v-divider
+          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
+            v-list-tile-action
+              v-icon(color='success') format_quote
+            v-list-tile-title Success Blockquote
+          v-divider
+          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
+            v-list-tile-action
+              v-icon(color='warning') format_quote
+            v-list-tile-title Warning Blockquote
+          v-divider
+          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-error}`})')
+            v-list-tile-action
+              v-icon(color='error') format_quote
+            v-list-tile-title Error Blockquote
+          v-divider
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='insertBeforeEachLine({ content: `- `})').mx-0
           v-icon format_list_bulleted
         span Unordered List
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='insertBeforeEachLine({ content: `1. `})').mx-0
           v-icon format_list_numbered
         span Ordered List
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon insert_link
-        span Link
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='toggleMarkup({ start: "`" })').mx-0
           v-icon space_bar
         span Inline Code
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
-          v-icon code
-        span Code Block
-      v-tooltip(top)
-        v-btn(icon, slot='activator').mx-0
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })').mx-0
+          v-icon font_download
+        span Keyboard Key
+      v-tooltip(bottom, color='primary')
+        v-btn(icon, slot='activator', @click='insertAfter({ content: `---`, newLine: true })').mx-0
           v-icon remove
         span Horizontal Bar
     .editor-markdown-main
       .editor-markdown-sidebar
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
             v-icon link
           span Insert Link
-        v-tooltip(right)
+        v-tooltip(right, color='teal')
           v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
             v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
           span Insert Image
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
+            v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') dashboard
+          span Insert Block
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
             v-icon insert_drive_file
           span Insert File
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
+            v-icon code
+          span Insert Code Block
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
             v-icon play_circle_outline
           span Insert Video / Audio
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
             v-icon multiline_chart
           span Insert Diagram
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
             v-icon functions
           span Insert Math Expression
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
             v-icon border_outer
           span Table Helper
         v-spacer
-        v-tooltip(right, color='primary')
+        v-tooltip(right, color='teal')
           v-btn(icon, slot='activator', dark, @click='toggleFullscreen').mx-0
             v-icon crop_free
-          span Fullscreen Editor
-        v-tooltip(right, color='primary')
-          v-btn(icon, slot='activator', dark).mx-0
+          span Distraction Free Mode
+        v-tooltip(right, color='teal')
+          v-btn(icon, slot='activator', dark, disabled).mx-0
             v-icon help
           span Markdown Formatting Help
       .editor-markdown-editor
@@ -272,6 +311,57 @@ export default {
       // if (!token.type) { return }
 
       // console.info(token)
+    },
+    toggleMarkup({ start, end }) {
+      if (!end) { end = start }
+      if (!this.cm.doc.somethingSelected()) {
+        return this.$store.commit('showNotification', {
+          message: 'You must select something first!',
+          style: 'warning',
+          icon: 'warning'
+        })
+      }
+      this.cm.doc.replaceSelections(this.cm.doc.getSelections().map(s => start + s + end))
+    },
+    setHeaderLine(lvl) {
+      const curLine = this.cm.doc.getCursor('head').line
+      let lineContent = this.cm.doc.getLine(curLine)
+      const lineLength = lineContent.length
+      if (_.startsWith(lineContent, '#')) {
+        lineContent = lineContent.replace(/^(#+ )/, '')
+      }
+      lineContent = _.times(lvl, n => '#').join('') + ` ` + lineContent
+      this.cm.doc.replaceRange(lineContent, { line: curLine, ch: 0 }, { line: curLine, ch: lineLength })
+    },
+    insertAfter({ content, newLine }) {
+      const curLine = this.cm.doc.getCursor('to').line
+      const lineLength = this.cm.doc.getLine(curLine).length
+      this.cm.doc.replaceRange(newLine ? `\n${content}\n` : content, { line: curLine, ch: lineLength + 1 })
+    },
+    insertBeforeEachLine({ content, after }) {
+      let lines = []
+      if (!this.cm.doc.somethingSelected()) {
+        lines.push(this.cm.doc.getCursor('head').line)
+      } else {
+        lines = _.flatten(this.cm.doc.listSelections().map(sl => {
+          const range = Math.abs(sl.anchor.line - sl.head.line) + 1
+          const lowestLine = (sl.anchor.line > sl.head.line) ? sl.head.line : sl.anchor.line
+          return _.times(range, l => l + lowestLine)
+        }))
+      }
+      lines.forEach(ln => {
+        let lineContent = this.cm.doc.getLine(ln)
+        const lineLength = lineContent.length
+        if (_.startsWith(lineContent, content)) {
+          lineContent = lineContent.substring(content.length)
+        }
+
+        this.cm.doc.replaceRange(content + lineContent, { line: ln, ch: 0 }, { line: ln, ch: lineLength })
+      })
+      if (after) {
+        const lastLine = _.last(lines)
+        this.cm.doc.replaceRange(`\n${after}\n`, { line: lastLine, ch: this.cm.doc.getLine(lastLine).length + 1 })
+      }
     },
     /**
      * Update scroll sync
