@@ -284,7 +284,6 @@ export default {
       this.activeModal = (this.activeModal === key) ? '' : key
     },
     onCmReady(cm) {
-      let self = this
       const keyBindings = {
         'F11' (cm) {
           cm.setOption('fullScreen', !cm.getOption('fullScreen'))
