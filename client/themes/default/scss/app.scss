@@ -256,7 +256,7 @@
     background-color: mc('indigo', '50');
     padding: 0 5px;
     color: mc('indigo', '800');
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Roboto Mono', monospace;
     font-weight: normal;
     font-size: 1rem;
     box-shadow: none;
@@ -281,7 +281,7 @@
       box-shadow: initial;
       display: block;
       font-size: .85rem;
-      font-family: 'Source Code Pro', monospace;
+      font-family: 'Roboto Mono', monospace;
 
       &:after, &:before {
         content: initial;

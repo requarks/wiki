@@ -23,14 +23,6 @@
 }
 
 @font-face {
-  font-family: 'Source Sans Pro';
-  src: url('/fonts/SourceSansPro-Bold.woff2') format('woff2'),
-      url('/fonts/SourceSansPro-Bold.woff') format('woff');
-  font-weight: bold;
-  font-style: normal;
-}
-
-@font-face {
   font-family: 'Roboto';
   src: url('/fonts/Roboto-Regular.woff2') format('woff2'),
       url('/fonts/Roboto-Regular.woff') format('woff');
@@ -47,22 +39,6 @@
 }
 
 @font-face {
-  font-family: 'Source Sans Pro';
-  src: url('/fonts/SourceSansPro-BoldItalic.woff2') format('woff2'),
-      url('/fonts/SourceSansPro-BoldItalic.woff') format('woff');
-  font-weight: bold;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Source Sans Pro';
-  src: url('/fonts/SourceSansPro-Regular.woff2') format('woff2'),
-      url('/fonts/SourceSansPro-Regular.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
   font-family: 'Roboto';
   src: url('/fonts/Roboto-Medium.woff2') format('woff2'),
       url('/fonts/Roboto-Medium.woff') format('woff');
@@ -71,9 +47,9 @@
 }
 
 @font-face {
-  font-family: 'Source Sans Pro';
-  src: url('/fonts/SourceSansPro-Italic.woff2') format('woff2'),
-      url('/fonts/SourceSansPro-Italic.woff') format('woff');
+  font-family: 'Roboto Mono';
+  src: url('/fonts/RobotoMono-Regular.woff2') format('woff2'),
+      url('/fonts/RobotoMono-Regular.woff') format('woff');
   font-weight: normal;
-  font-style: italic;
+  font-style: normal;
 }

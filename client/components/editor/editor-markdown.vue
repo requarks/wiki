@@ -124,8 +124,8 @@
             v-icon crop_free
           span Distraction Free Mode
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
-            v-icon help
+          v-btn(icon, slot='activator', dark, @click='toggleHelp').mx-0
+            v-icon(:color='helpShown ? `teal` : ``') help
           span Markdown Formatting Help
       .editor-markdown-editor
         .editor-markdown-editor-title(v-if='previewShown', @click='previewShown = false') Editor
@@ -141,11 +141,16 @@
       .caption.px-3 /{{path}}
       v-spacer
       .caption Markdown
+      v-spacer
+      .caption Ln {{cursorPos.line + 1}}, Col {{cursorPos.ch + 1}}
+
+    markdown-help(v-if='helpShown')
 </template>
 
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
+import markdownHelp from './markdown/help.vue'
 
 // ========================================
 // IMPORTS
@@ -232,7 +237,13 @@ md.renderer.rules.heading_open = injectLineNumbers
 
 export default {
   components: {
-    codemirror
+    codemirror,
+    markdownHelp
+  },
+  props: {
+    save: {
+      type: Function
+    }
   },
   data() {
     return {
@@ -251,8 +262,10 @@ export default {
         },
         viewportMargin: 50
       },
+      cursorPos: { ch: 0, line: 1 },
       previewShown: true,
-      previewHTML: ''
+      previewHTML: '',
+      helpShown: true
     }
   },
   computed: {
@@ -281,13 +294,34 @@ export default {
         }
       }
       _.set(keyBindings, `${CtrlKey}-S`, cm => {
-        self.$parent.save()
+        this.save()
+        return false
+      })
+      _.set(keyBindings, `${CtrlKey}-B`, cm => {
+        this.toggleMarkup({ start: `**` })
+        return false
+      })
+      _.set(keyBindings, `${CtrlKey}-I`, cm => {
+        this.toggleMarkup({ start: `*` })
+        return false
+      })
+      _.set(keyBindings, `${CtrlKey}-Alt-Right`, cm => {
+        let lvl = this.getHeaderLevel(cm)
+        if (lvl >= 6) { lvl = 5 }
+        this.setHeaderLine(lvl + 1)
+        return false
+      })
+      _.set(keyBindings, `${CtrlKey}-Alt-Left`, cm => {
+        let lvl = this.getHeaderLevel(cm)
+        if (lvl <= 1) { lvl = 2 }
+        this.setHeaderLine(lvl - 1)
+        return false
       })
 
       cm.setSize(null, 'calc(100vh - 112px - 24px)')
       cm.setOption('extraKeys', keyBindings)
       cm.on('cursorActivity', cm => {
-        this.toolbarSync(cm)
+        this.positionSync(cm)
         this.scrollSync(cm)
       })
       this.onCmInput(this.code)
@@ -298,20 +332,19 @@ export default {
       this.previewHTML = md.render(newContent)
       this.$nextTick(() => {
         Prism.highlightAllUnder(this.$refs.editorPreview)
+        Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).map(pre => pre.classList.add('prismjs'))
         this.scrollSync(this.cm)
       })
     }, 500),
     /**
-     * Update toolbar state
+     * Update cursor state
      */
-    toolbarSync(cm) {
-      // const pos = cm.getCursor('start')
-      // const token = cm.getTokenAt(pos)
-
-      // if (!token.type) { return }
-
-      // console.info(token)
+    positionSync(cm) {
+      this.cursorPos = cm.getCursor('head')
     },
+    /**
+     * Wrap selection with start / end tags
+     */
     toggleMarkup({ start, end }) {
       if (!end) { end = start }
       if (!this.cm.doc.somethingSelected()) {
@@ -323,6 +356,9 @@ export default {
       }
       this.cm.doc.replaceSelections(this.cm.doc.getSelections().map(s => start + s + end))
     },
+    /**
+     * Set current line as header
+     */
     setHeaderLine(lvl) {
       const curLine = this.cm.doc.getCursor('head').line
       let lineContent = this.cm.doc.getLine(curLine)
@@ -333,11 +369,31 @@ export default {
       lineContent = _.times(lvl, n => '#').join('') + ` ` + lineContent
       this.cm.doc.replaceRange(lineContent, { line: curLine, ch: 0 }, { line: curLine, ch: lineLength })
     },
+    /**
+     * Get the header lever of the current line
+     */
+    getHeaderLevel(cm) {
+      const curLine = this.cm.doc.getCursor('head').line
+      let lineContent = this.cm.doc.getLine(curLine)
+      let lvl = 0
+
+      const result = lineContent.match(/^(#+) /)
+      if (result) {
+        lvl = _.get(result, '[1]', '').length
+      }
+      return lvl
+    },
+    /**
+     * Insert content after current line
+     */
     insertAfter({ content, newLine }) {
       const curLine = this.cm.doc.getCursor('to').line
       const lineLength = this.cm.doc.getLine(curLine).length
       this.cm.doc.replaceRange(newLine ? `\n${content}\n` : content, { line: curLine, ch: lineLength + 1 })
     },
+    /**
+     * Insert content before current line
+     */
     insertBeforeEachLine({ content, after }) {
       let lines = []
       if (!this.cm.doc.somethingSelected()) {
@@ -381,8 +437,8 @@ export default {
         }
       }
     }, 500),
-    toggleAround (before, after) {
-
+    toggleHelp () {
+      this.helpShown = !this.helpShown
     },
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)

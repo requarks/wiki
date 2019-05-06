@@ -3,7 +3,7 @@
     nav-header(dense)
       template(slot='mid')
         v-spacer
-        .subheading {{currentPageTitle}}
+        .subheading.grey--text {{currentPageTitle}}
         v-spacer
       template(slot='actions')
         v-btn(
@@ -32,7 +32,7 @@
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:close') }}
     v-content
-      component(:is='currentEditor')
+      component(:is='currentEditor', :save='save')
       editor-modal-properties(v-model='dialogProps')
       editor-modal-editorselect(v-model='dialogEditorSelector')
       editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
@@ -199,7 +199,7 @@ export default {
           resp = _.get(resp, 'data.pages.create', {})
           if (_.get(resp, 'responseResult.succeeded')) {
             this.$store.commit('showNotification', {
-              message: this.$t('editor:save.success'),
+              message: this.$t('editor:save.createSuccess'),
               style: 'success',
               icon: 'check'
             })
@@ -234,7 +234,7 @@ export default {
           resp = _.get(resp, 'data.pages.update', {})
           if (_.get(resp, 'responseResult.succeeded')) {
             this.$store.commit('showNotification', {
-              message: this.$t('editor:save.success'),
+              message: this.$t('editor:save.updateSuccess'),
               style: 'success',
               icon: 'check'
             })

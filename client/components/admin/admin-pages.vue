@@ -126,6 +126,6 @@ export default {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: 'Roboto Mono', monospace;
 }
 </style>
