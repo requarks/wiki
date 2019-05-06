@@ -265,7 +265,7 @@ export default {
       cursorPos: { ch: 0, line: 1 },
       previewShown: true,
       previewHTML: '',
-      helpShown: true
+      helpShown: false
     }
   },
   computed: {
@@ -332,7 +332,7 @@ export default {
       this.previewHTML = md.render(newContent)
       this.$nextTick(() => {
         Prism.highlightAllUnder(this.$refs.editorPreview)
-        Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).map(pre => pre.classList.add('prismjs'))
+        Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         this.scrollSync(this.cm)
       })
     }, 500),
