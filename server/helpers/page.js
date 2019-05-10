@@ -2,8 +2,8 @@ const qs = require('querystring')
 const _ = require('lodash')
 const crypto = require('crypto')
 
-const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/gi
-const systemSegmentRegex = /^[A-Z]\//gi
+const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
+const systemSegmentRegex = /^[A-Z]\//i
 
 /* global WIKI */
 
