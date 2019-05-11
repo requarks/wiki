@@ -5,7 +5,7 @@ $use-bounce: true;
 @import "~animate-sass/animate";
 
 
-@for $i from 1 to 9 {
+@for $i from 1 to 12 {
   .wait-p#{$i}s {
     animation-delay: $i * .1s !important;
   }

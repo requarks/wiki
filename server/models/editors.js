@@ -88,6 +88,9 @@ module.exports = class Editor extends Model {
     } catch (err) {
       WIKI.logger.error(`Failed to scan or load new editors: [ FAILED ]`)
       WIKI.logger.error(err)
+      if (trx) {
+        trx.rollback()
+      }
     }
   }
 

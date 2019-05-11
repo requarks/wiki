@@ -6,25 +6,25 @@
         .subheading.grey--text {{currentPageTitle}}
         v-spacer
       template(slot='actions')
-        v-btn(
-          outline
+        v-btn.animated.fadeInDown(
+          flat
           color='green'
           @click.native.stop='save'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') check
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
-        v-btn(
-          outline
+        v-btn.animated.fadeInDown.wait-p1s(
+          flat
           color='blue'
           @click.native.stop='openPropsModal'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
-        v-btn(
+        v-btn.animated.fadeInDown.wait-p2s(
           v-if='!welcomeMode'
-          outline
+          flat
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           @click.native.stop='exit'

@@ -1,130 +1,134 @@
 <template lang='pug'>
   .editor-markdown
     v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat)
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `**` })').mx-0
-          v-icon format_bold
-        span Bold
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `*` })').mx-0
-          v-icon format_italic
-        span Italic
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `~~` })').mx-0
-          v-icon format_strikethrough
-        span Strikethrough
-      v-menu(offset-y, open-on-hover)
-        v-btn(icon, slot='activator').mx-0
-          v-icon text_fields
-        v-list.py-0
-          template(v-for='(n, idx) in 6')
-            v-list-tile(@click='setHeaderLine(n)', :key='idx')
+      v-btn.animated.fadeInLeft(v-if='isModalShown', flat, @click='closeAllModal')
+        v-icon(left) chevron_left
+        span Back
+      template(v-else)
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn(icon, slot='activator', @click='toggleMarkup({ start: `**` })').mx-0
+            v-icon format_bold
+          span Bold
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p1s(icon, slot='activator', @click='toggleMarkup({ start: `*` })').mx-0
+            v-icon format_italic
+          span Italic
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p2s(icon, slot='activator', @click='toggleMarkup({ start: `~~` })').mx-0
+            v-icon format_strikethrough
+          span Strikethrough
+        v-menu(offset-y, open-on-hover)
+          v-btn.animated.fadeIn.wait-p3s(icon, slot='activator').mx-0
+            v-icon text_fields
+          v-list.py-0
+            template(v-for='(n, idx) in 6')
+              v-list-tile(@click='setHeaderLine(n)', :key='idx')
+                v-list-tile-action
+                  v-icon(:size='24 - (idx - 1) * 2') title
+                v-list-tile-title Heading {{n}}
+              v-divider(v-if='idx < 5')
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p4s(icon, slot='activator', @click='toggleMarkup({ start: `~` })').mx-0
+            v-icon vertical_align_bottom
+          span Subscript
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p5s(icon, slot='activator', @click='toggleMarkup({ start: `^` })').mx-0
+            v-icon vertical_align_top
+          span Superscript
+        v-menu(offset-y, open-on-hover)
+          v-btn.animated.fadeIn.wait-p6s(icon, slot='activator').mx-0
+            v-icon format_quote
+          v-list.py-0
+            v-list-tile(@click='insertBeforeEachLine({ content: `> `})')
               v-list-tile-action
-                v-icon(:size='24 - (idx - 1) * 2') title
-              v-list-tile-title Heading {{n}}
-            v-divider(v-if='idx < 5')
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `~` })').mx-0
-          v-icon vertical_align_bottom
-        span Subscript
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `^` })').mx-0
-          v-icon vertical_align_top
-        span Superscript
-      v-menu(offset-y, open-on-hover)
-        v-btn(icon, slot='activator').mx-0
-          v-icon format_quote
-        v-list.py-0
-          v-list-tile(@click='insertBeforeEachLine({ content: `> `})')
-            v-list-tile-action
-              v-icon format_quote
-            v-list-tile-title Blockquote
-          v-divider
-          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
-            v-list-tile-action
-              v-icon(color='blue') format_quote
-            v-list-tile-title Info Blockquote
-          v-divider
-          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
-            v-list-tile-action
-              v-icon(color='success') format_quote
-            v-list-tile-title Success Blockquote
-          v-divider
-          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
-            v-list-tile-action
-              v-icon(color='warning') format_quote
-            v-list-tile-title Warning Blockquote
-          v-divider
-          v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-error}`})')
-            v-list-tile-action
-              v-icon(color='error') format_quote
-            v-list-tile-title Error Blockquote
-          v-divider
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='insertBeforeEachLine({ content: `- `})').mx-0
-          v-icon format_list_bulleted
-        span Unordered List
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='insertBeforeEachLine({ content: `1. `})').mx-0
-          v-icon format_list_numbered
-        span Ordered List
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='toggleMarkup({ start: "`" })').mx-0
-          v-icon space_bar
-        span Inline Code
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })').mx-0
-          v-icon font_download
-        span Keyboard Key
-      v-tooltip(bottom, color='primary')
-        v-btn(icon, slot='activator', @click='insertAfter({ content: `---`, newLine: true })').mx-0
-          v-icon remove
-        span Horizontal Bar
+                v-icon format_quote
+              v-list-tile-title Blockquote
+            v-divider
+            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
+              v-list-tile-action
+                v-icon(color='blue') format_quote
+              v-list-tile-title Info Blockquote
+            v-divider
+            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
+              v-list-tile-action
+                v-icon(color='success') format_quote
+              v-list-tile-title Success Blockquote
+            v-divider
+            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
+              v-list-tile-action
+                v-icon(color='warning') format_quote
+              v-list-tile-title Warning Blockquote
+            v-divider
+            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-error}`})')
+              v-list-tile-action
+                v-icon(color='error') format_quote
+              v-list-tile-title Error Blockquote
+            v-divider
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p7s(icon, slot='activator', @click='insertBeforeEachLine({ content: `- `})').mx-0
+            v-icon format_list_bulleted
+          span Unordered List
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p8s(icon, slot='activator', @click='insertBeforeEachLine({ content: `1. `})').mx-0
+            v-icon format_list_numbered
+          span Ordered List
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p9s(icon, slot='activator', @click='toggleMarkup({ start: "`" })').mx-0
+            v-icon space_bar
+          span Inline Code
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p10s(icon, slot='activator', @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })').mx-0
+            v-icon font_download
+          span Keyboard Key
+        v-tooltip(bottom, color='primary')
+          v-btn.animated.fadeIn.wait-p11s(icon, slot='activator', @click='insertAfter({ content: `---`, newLine: true })').mx-0
+            v-icon remove
+          span Horizontal Bar
     .editor-markdown-main
       .editor-markdown-sidebar
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft(icon, slot='activator', dark, disabled).mx-0
             v-icon link
           span Insert Link
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+          v-btn.animated.fadeInLeft.wait-p1s(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
             v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
           span Insert Image
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
+          v-btn.animated.fadeInLeft.wait-p2s(icon, slot='activator', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
             v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') dashboard
           span Insert Block
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p3s(icon, slot='activator', dark, disabled).mx-0
             v-icon insert_drive_file
           span Insert File
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p4s(icon, slot='activator', dark, disabled).mx-0
             v-icon code
           span Insert Code Block
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p5s(icon, slot='activator', dark, disabled).mx-0
             v-icon play_circle_outline
           span Insert Video / Audio
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p6s(icon, slot='activator', dark, disabled).mx-0
             v-icon multiline_chart
           span Insert Diagram
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p7s(icon, slot='activator', dark, disabled).mx-0
             v-icon functions
           span Insert Math Expression
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p8s(icon, slot='activator', dark, disabled).mx-0
             v-icon border_outer
           span Table Helper
         v-spacer
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, @click='toggleFullscreen').mx-0
+          v-btn.animated.fadeInLeft.wait-p9s(icon, slot='activator', dark, @click='toggleFullscreen').mx-0
             v-icon crop_free
           span Distraction Free Mode
         v-tooltip(right, color='teal')
-          v-btn(icon, slot='activator', dark, @click='toggleHelp').mx-0
+          v-btn.animated.fadeInLeft.wait-p10s(icon, slot='activator', dark, @click='toggleHelp').mx-0
             v-icon(:color='helpShown ? `teal` : ``') help
           span Markdown Formatting Help
       .editor-markdown-editor
@@ -275,6 +279,9 @@ export default {
     isMobile() {
       return this.$vuetify.breakpoint.smAndDown
     },
+    isModalShown() {
+      return this.helpShown || this.activeModal !== ''
+    },
     locale: get('page/locale'),
     path: get('page/path'),
     activeModal: sync('editor/activeModal')
@@ -282,6 +289,11 @@ export default {
   methods: {
     toggleModal(key) {
       this.activeModal = (this.activeModal === key) ? '' : key
+      this.helpShown = false
+    },
+    closeAllModal() {
+      this.activeModal = ''
+      this.helpShown = false
     },
     onCmReady(cm) {
       const keyBindings = {
@@ -438,6 +450,7 @@ export default {
     }, 500),
     toggleHelp () {
       this.helpShown = !this.helpShown
+      this.activeModal = ''
     },
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)

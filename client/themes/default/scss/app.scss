@@ -274,6 +274,10 @@
     padding: 1rem 1rem 1rem 3rem;
     margin: 1rem 24px;
 
+    @at-root .theme--dark & {
+      background-color: darken(mc('grey', '900'), 5%);
+    }
+
     > code {
       background-color: transparent;
       padding: 0;
