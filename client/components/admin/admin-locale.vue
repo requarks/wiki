@@ -123,6 +123,15 @@
                         v-btn(icon, @click='download(lc)')
                           v-icon.grey--text cloud_download
                     v-divider.my-0(inset, v-if='idx < locales.length - 1')
+              v-card.wiki-form.mt-3.animated.fadeInUp.wait-p5s
+                v-toolbar(color='teal', dark, dense, flat)
+                  v-toolbar-title
+                    .subheading {{ $t('admin:locale.sideload') }}
+                  v-spacer
+                  v-chip(label, color='white', small).teal--text coming soon
+                v-card-text
+                  div {{ $t('admin:locale.sideloadHelp') }}
+                  v-btn.ml-0.mt-3(color='teal', disabled) {{ $t('common:actions.browse') }}
 </template>
 
 <script>
