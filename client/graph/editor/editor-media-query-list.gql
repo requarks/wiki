@@ -1,0 +1,14 @@
+query ($root: String, $kind: AssetKind!) {
+  assets {
+    list(root:$root, kind: $kind) {
+      id
+      filename
+      ext
+      kind
+      mime
+      fileSize
+      createdAt
+      updatedAt
+    }
+  }
+}

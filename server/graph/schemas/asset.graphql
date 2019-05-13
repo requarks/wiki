@@ -17,8 +17,8 @@ extend type Mutation {
 type AssetQuery {
   list(
     root: String
-    kind: [AssetKind]
-  ): [AssetItem]
+    kind: AssetKind
+  ): [AssetItem] @auth(requires: ["manage:system", "read:assets"])
 }
 
 # -----------------------------------------------
@@ -36,6 +36,20 @@ type AssetMutation {
 # -----------------------------------------------
 
 type AssetItem {
+  id: Int!
+  filename: String!
+  ext: String!
+  kind: AssetKind!
+  mime: String!
+  fileSize: Int!
+  metadata: String
+  createdAt: Date!
+  updatedAt: Date!
+  folder: AssetFolder
+  author: User
+}
+
+type AssetFolder {
   id: Int!
 }
 

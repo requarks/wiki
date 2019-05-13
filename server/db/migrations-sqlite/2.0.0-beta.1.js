@@ -1,15 +1,10 @@
 exports.up = knex => {
-  const dbCompat = {
-    charset: (WIKI.config.db.type === `mysql` || WIKI.config.db.type === `mariadb`),
-    noForeign: WIKI.config.db.type === 'sqlite'
-  }
   return knex.schema
     // =====================================
     // MODEL TABLES
     // =====================================
     // ASSETS ------------------------------
     .createTable('assets', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('filename').notNullable()
       table.string('basename').notNullable()
@@ -26,7 +21,6 @@ exports.up = knex => {
     })
     // ASSET FOLDERS -----------------------
     .createTable('assetFolders', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('name').notNullable()
       table.string('slug').notNullable()
@@ -34,7 +28,6 @@ exports.up = knex => {
     })
     // AUTHENTICATION ----------------------
     .createTable('authentication', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config').notNullable()
@@ -44,7 +37,6 @@ exports.up = knex => {
     })
     // COMMENTS ----------------------------
     .createTable('comments', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.text('content').notNullable()
       table.string('createdAt').notNullable()
@@ -55,14 +47,12 @@ exports.up = knex => {
     })
     // EDITORS -----------------------------
     .createTable('editors', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config').notNullable()
     })
     // GROUPS ------------------------------
     .createTable('groups', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('name').notNullable()
       table.json('permissions').notNullable()
@@ -73,7 +63,6 @@ exports.up = knex => {
     })
     // LOCALES -----------------------------
     .createTable('locales', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('code', 2).notNullable().primary()
       table.json('strings')
       table.boolean('isRTL').notNullable().defaultTo(false)
@@ -84,7 +73,6 @@ exports.up = knex => {
     })
     // LOGGING ----------------------------
     .createTable('loggers', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.string('level').notNullable().defaultTo('warn')
@@ -92,13 +80,11 @@ exports.up = knex => {
     })
     // NAVIGATION ----------------------------
     .createTable('navigation', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.json('config')
     })
     // PAGE HISTORY ------------------------
     .createTable('pageHistory', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('path').notNullable()
       table.string('hash').notNullable()
@@ -119,7 +105,6 @@ exports.up = knex => {
     })
     // PAGES -------------------------------
     .createTable('pages', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('path').notNullable()
       table.string('hash').notNullable()
@@ -144,7 +129,6 @@ exports.up = knex => {
     })
     // PAGE TREE ---------------------------
     .createTable('pageTree', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('path').notNullable()
       table.integer('depth').unsigned().notNullable()
@@ -159,28 +143,24 @@ exports.up = knex => {
     })
     // RENDERERS ---------------------------
     .createTable('renderers', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config')
     })
     // SEARCH ------------------------------
     .createTable('searchEngines', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config')
     })
     // SETTINGS ----------------------------
     .createTable('settings', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.json('value')
       table.string('updatedAt').notNullable()
     })
     // STORAGE -----------------------------
     .createTable('storage', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.string('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
@@ -188,7 +168,6 @@ exports.up = knex => {
     })
     // TAGS --------------------------------
     .createTable('tags', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('tag').notNullable().unique()
       table.string('title')
@@ -197,7 +176,6 @@ exports.up = knex => {
     })
     // USER KEYS ---------------------------
     .createTable('userKeys', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('kind').notNullable()
       table.string('token').notNullable()
@@ -208,7 +186,6 @@ exports.up = knex => {
     })
     // USERS -------------------------------
     .createTable('users', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('email').notNullable()
       table.string('name').notNullable()
@@ -235,21 +212,18 @@ exports.up = knex => {
     // =====================================
     // PAGE HISTORY TAGS ---------------------------
     .createTable('pageHistoryTags', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.integer('pageId').unsigned().references('id').inTable('pageHistory').onDelete('CASCADE')
       table.integer('tagId').unsigned().references('id').inTable('tags').onDelete('CASCADE')
     })
     // PAGE TAGS ---------------------------
     .createTable('pageTags', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.integer('pageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
       table.integer('tagId').unsigned().references('id').inTable('tags').onDelete('CASCADE')
     })
     // USER GROUPS -------------------------
     .createTable('userGroups', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.integer('userId').unsigned().references('id').inTable('users').onDelete('CASCADE')
       table.integer('groupId').unsigned().references('id').inTable('groups').onDelete('CASCADE')
@@ -257,39 +231,7 @@ exports.up = knex => {
     // =====================================
     // REFERENCES
     // =====================================
-    // .table('assets', table => {
-    //   dbCompat.noForeign ? table.integer('folderId').unsigned() : table.integer('folderId').unsigned().references('id').inTable('assetFolders')
-    //   dbCompat.noForeign ? table.integer('authorId').unsigned() : table.integer('authorId').unsigned().references('id').inTable('users')
-    // })
-    // .table('comments', table => {
-    //   dbCompat.noForeign ? table.integer('pageId').unsigned() : table.integer('pageId').unsigned().references('id').inTable('pages')
-    //   dbCompat.noForeign ? table.integer('authorId').unsigned() : table.integer('authorId').unsigned().references('id').inTable('users')
-    // })
-    // .table('pageHistory', table => {
-    //   dbCompat.noForeign ? table.integer('pageId').unsigned() : table.integer('pageId').unsigned().references('id').inTable('pages')
-    //   dbCompat.noForeign ? table.string('editorKey') : table.string('editorKey').references('key').inTable('editors')
-    //   dbCompat.noForeign ? table.string('localeCode', 2) : table.string('localeCode', 2).references('code').inTable('locales')
-    //   dbCompat.noForeign ? table.integer('authorId').unsigned() : table.integer('authorId').unsigned().references('id').inTable('users')
-    // })
-    // .table('pages', table => {
-    //   dbCompat.noForeign ? table.string('editorKey') : table.string('editorKey').references('key').inTable('editors')
-    //   dbCompat.noForeign ? table.string('localeCode', 2) : table.string('localeCode', 2).references('code').inTable('locales')
-    //   dbCompat.noForeign ? table.integer('authorId').unsigned() : table.integer('authorId').unsigned().references('id').inTable('users')
-    //   dbCompat.noForeign ? table.integer('creatorId').unsigned() : table.integer('creatorId').unsigned().references('id').inTable('users')
-    // })
-    // .table('pageTree', table => {
-    //   dbCompat.noForeign ? table.integer('parent').unsigned() : table.integer('parent').unsigned().references('id').inTable('pageTree')
-    //   dbCompat.noForeign ? table.integer('pageId').unsigned() : table.integer('pageId').unsigned().references('id').inTable('pages')
-    //   dbCompat.noForeign ? table.string('localeCode', 2) : table.string('localeCode', 2).references('code').inTable('locales')
-    // })
-    // .table('userKeys', table => {
-    //   dbCompat.noForeign ? table.integer('userId').unsigned() : table.integer('userId').unsigned().references('id').inTable('users')
-    // })
     .table('users', table => {
-      // dbCompat.noForeign ? table.string('providerKey') : table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')
-      // dbCompat.noForeign ? table.string('localeCode', 2) : table.string('localeCode', 2).references('code').inTable('locales').notNullable().defaultTo('en')
-      // dbCompat.noForeign ? table.string('defaultEditor') : table.string('defaultEditor').references('key').inTable('editors').notNullable().defaultTo('markdown')
-
       table.unique(['providerKey', 'email'])
     })
 }

@@ -3,7 +3,6 @@ const _ = require('lodash')
 const crypto = require('crypto')
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
-const systemSegmentRegex = /^[A-Z]\//i
 
 /* global WIKI */
 
@@ -67,8 +66,17 @@ module.exports = {
    */
   isReservedPath(rawPath) {
     const firstSection = _.head(rawPath.split('/'))
-    return _.some(WIKI.data.reservedPaths, p => {
-      return p === firstSection || systemSegmentRegex.test(rawPath)
-    })
+    if (firstSection.length === 1) {
+      return true
+    } else if (localeSegmentRegex.test(firstSection)) {
+      return true
+    } else if (
+      _.some(WIKI.data.reservedPaths, p => {
+        return p === firstSection
+      })) {
+      return true
+    } else {
+      return false
+    }
   }
 }

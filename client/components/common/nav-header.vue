@@ -304,11 +304,7 @@ export default {
       this.deletePageModal = true
     },
     assets () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'directions_boat'
-      })
+      window.location.assign(`/f`)
     },
     logout () {
       Cookies.remove('jwt')

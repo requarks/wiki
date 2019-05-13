@@ -140,7 +140,6 @@ module.exports = async () => {
       path: '/graphql-subscriptions'
     }
   })
-  app.use('/graphql', mw.upload)
   apolloServer.applyMiddleware({ app })
 
   // ----------------------------------------
@@ -148,6 +147,7 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use('/', ctrl.auth)
+  app.use('/', ctrl.upload)
   app.use('/', ctrl.common)
 
   // ----------------------------------------

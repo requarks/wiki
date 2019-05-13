@@ -71,6 +71,15 @@ ssl:
   redirectNonSSLPort: 80
 
 # ---------------------------------------------------------------------
+# Database Pool Options
+# ---------------------------------------------------------------------
+# Refer to https://github.com/vincit/tarn.js for all possible options
+
+pool:
+  # min: 2
+  # max: 10
+
+# ---------------------------------------------------------------------
 # IP address the server should listen to
 # ---------------------------------------------------------------------
 # Leave 0.0.0.0 for all interfaces
@@ -83,3 +92,15 @@ bindIP: 0.0.0.0
 # Possible values: error, warn, info (default), verbose, debug, silly
 
 logLevel: info
+
+# ---------------------------------------------------------------------
+# Upload Limits
+# ---------------------------------------------------------------------
+# If you're using a reverse-proxy in front of Wiki.ks, you must also
+# change your proxy upload limits!
+
+uploads:
+  # Maximum upload size in bytes per file (default: 5242880 (5 MB))
+  maxFileSize: 5242880
+  # Maximum file uploads per request (default: 20)
+  maxFiles: 10

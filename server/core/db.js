@@ -67,6 +67,7 @@ module.exports = {
       asyncStackTraces: WIKI.IS_DEBUG,
       connection: dbConfig,
       pool: {
+        ...WIKI.config.pool,
         async afterCreate(conn, done) {
           // -> Set Connection App Name
           switch (WIKI.config.db.type) {

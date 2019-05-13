@@ -17,8 +17,12 @@ defaults:
       storage: ./db.sqlite
     ssl:
       enabled: false
+    pool: {}
     bindIP: 0.0.0.0
     logLevel: info
+    uploads:
+      maxFileSize: 5242880
+      maxFiles: 10
     # DB defaults
     graphEndpoint: 'https://graph.requarks.io'
     lang:
