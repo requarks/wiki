@@ -1,6 +1,7 @@
 const qs = require('querystring')
 const _ = require('lodash')
 const crypto = require('crypto')
+const path = require('path')
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
@@ -10,7 +11,7 @@ module.exports = {
   /**
    * Parse raw url path and make it safe
    */
-  parsePath (rawPath) {
+  parsePath (rawPath, opts = {}) {
     let pathObj = {
       locale: 'en',
       path: 'home',
@@ -32,6 +33,17 @@ module.exports = {
       pathObj.locale = pathParts[0]
       pathParts.shift()
     }
+
+    // Strip extension
+    if (opts.stripExt) {
+      const lastPart = _.last(pathParts)
+      if (lastPart.indexOf('.') > 0) {
+        pathParts.pop()
+        const lastPartMeta = path.parse(lastPart)
+        pathParts.push(lastPartMeta.name)
+      }
+    }
+
     pathObj.path = _.join(pathParts, '/')
     return pathObj
   },

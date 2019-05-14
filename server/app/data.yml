@@ -97,4 +97,8 @@ reservedPaths:
   - img
   - js
   - svg
+pageExtensions:
+  - md
+  - html
+  - txt
 # ---------------------------------

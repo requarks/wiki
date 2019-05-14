@@ -213,7 +213,7 @@ export default {
       }
       for (let file of files) {
         file.setMetadata({
-          path: '/universe'
+          path: 'test'
         })
       }
       await this.$refs.pond.processFiles()

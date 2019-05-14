@@ -32,7 +32,7 @@ router.get('/healthz', (req, res, next) => {
  * Create/Edit document
  */
 router.get(['/e', '/e/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path)
+  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (pageHelper.isReservedPath(pageArgs.path)) {
     return next(new Error('Cannot create this page because it starts with a system reserved path.'))
@@ -93,7 +93,7 @@ router.get(['/p', '/p/*'], (req, res, next) => {
  * History
  */
 router.get(['/h', '/h/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path)
+  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
@@ -119,7 +119,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
  * Source
  */
 router.get(['/s', '/s/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path)
+  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
     return res.render('unauthorized', { action: 'source' })
@@ -141,42 +141,52 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 })
 
 /**
- * View document
+ * View document / asset
  */
 router.get('/*', async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path)
+  const stripExt = _.some(WIKI.data.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
+  const pageArgs = pageHelper.parsePath(req.path, { stripExt })
+  const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
 
-  if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
-    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-    return res.render('unauthorized', { action: 'view' })
-  }
-
-  const page = await WIKI.models.pages.getPage({
-    path: pageArgs.path,
-    locale: pageArgs.locale,
-    userId: req.user.id,
-    isPrivate: false
-  })
-  if (page) {
-    _.set(res.locals, 'pageMeta.title', page.title)
-    _.set(res.locals, 'pageMeta.description', page.description)
-    const sidebar = await WIKI.models.navigation.getTree({ cache: true })
-    const injectCode = {
-      css: WIKI.config.theming.injectCSS,
-      head: WIKI.config.theming.injectHead,
-      body: WIKI.config.theming.injectBody
+  if (isPage) {
+    if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+      return res.status(403).render('unauthorized', { action: 'view' })
     }
-    res.render('page', { page, sidebar, injectCode })
-  } else if (pageArgs.path === 'home') {
-    _.set(res.locals, 'pageMeta.title', 'Welcome')
-    res.render('welcome')
-  } else {
-    _.set(res.locals, 'pageMeta.title', 'Page Not Found')
-    if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
-      res.status(404).render('new', { pagePath: req.path })
+
+    const page = await WIKI.models.pages.getPage({
+      path: pageArgs.path,
+      locale: pageArgs.locale,
+      userId: req.user.id,
+      isPrivate: false
+    })
+    if (page) {
+      _.set(res.locals, 'pageMeta.title', page.title)
+      _.set(res.locals, 'pageMeta.description', page.description)
+      const sidebar = await WIKI.models.navigation.getTree({ cache: true })
+      const injectCode = {
+        css: WIKI.config.theming.injectCSS,
+        head: WIKI.config.theming.injectHead,
+        body: WIKI.config.theming.injectBody
+      }
+      res.render('page', { page, sidebar, injectCode })
+    } else if (pageArgs.path === 'home') {
+      _.set(res.locals, 'pageMeta.title', 'Welcome')
+      res.render('welcome')
     } else {
-      res.render('notfound', { action: 'view' })
+      _.set(res.locals, 'pageMeta.title', 'Page Not Found')
+      if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
+        res.status(404).render('new', { pagePath: req.path })
+      } else {
+        res.status(404).render('notfound', { action: 'view' })
+      }
     }
+  } else {
+    if (!WIKI.auth.checkAccess(req.user, ['read:assets'], pageArgs)) {
+      return res.sendStatus(403)
+    }
+
+    await WIKI.models.assets.getAsset(pageArgs.path, res)
   }
 })
 

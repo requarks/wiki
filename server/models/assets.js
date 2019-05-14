@@ -94,4 +94,30 @@ module.exports = class Asset extends Model {
     // Move temp upload to cache
     await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`))
   }
+
+  static async getAsset(assetPath, res) {
+    let asset = await WIKI.models.assets.getAssetFromCache(assetPath, res)
+    if (!asset) {
+      // asset = await WIKI.models.assets.getAssetFromDb(assetPath, res)
+      // if (asset) {
+      //   await WIKI.models.assets.saveAssetToCache(asset)
+      // }
+      res.sendStatus(404)
+    }
+  }
+
+  static async getAssetFromCache(assetPath, res) {
+    const fileHash = assetHelper.generateHash(assetPath)
+    const cachePath = path.join(process.cwd(), `data/cache/${fileHash}.dat`)
+
+    return new Promise((resolve, reject) => {
+      res.sendFile(cachePath, { dotfiles: 'deny' }, err => {
+        if (err) {
+          resolve(false)
+        } else {
+          resolve(true)
+        }
+      })
+    })
+  }
 }
