@@ -111,6 +111,7 @@ module.exports = class Asset extends Model {
     const cachePath = path.join(process.cwd(), `data/cache/${fileHash}.dat`)
 
     return new Promise((resolve, reject) => {
+      res.type(path.extname(assetPath))
       res.sendFile(cachePath, { dotfiles: 'deny' }, err => {
         if (err) {
           resolve(false)
