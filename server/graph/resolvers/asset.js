@@ -12,10 +12,13 @@ module.exports = {
   },
   AssetQuery: {
     async list(obj, args, context) {
-      const result = await WIKI.models.assets.query().where({
-        folderId: null,
-        kind: args.kind.toLowerCase()
-      })
+      let cond = {
+        folderId: null
+      }
+      if (args.kind !== 'ALL') {
+        cond.kind = args.kind.toLowerCase()
+      }
+      const result = await WIKI.models.assets.query().where(cond)
       return result.map(a => ({
         ...a,
         kind: a.kind.toUpperCase()

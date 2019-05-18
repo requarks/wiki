@@ -27,3 +27,9 @@
                       radial-gradient(ellipse at bottom, mc('grey', '800'), mc('grey', '900'));
   }
 }
+
+.v-dialog--fullscreen {
+  @include until($tablet) {
+    padding-top: 56px;
+  }
+}

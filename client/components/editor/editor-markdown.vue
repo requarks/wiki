@@ -1,9 +1,9 @@
 <template lang='pug'>
   .editor-markdown
-    v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat)
+    v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat, style='overflow-x: hidden;')
       v-btn.animated.fadeInLeft(v-if='isModalShown', flat, @click='closeAllModal')
-        v-icon(left) chevron_left
-        span Back
+        v-icon(left) close
+        span Back to Editor
       template(v-else)
         v-tooltip(bottom, color='primary')
           v-btn.animated.fadeIn(icon, slot='activator', @click='toggleMarkup({ start: `**` })').mx-0
@@ -92,45 +92,42 @@
           span Insert Link
         v-tooltip(right, color='teal')
           v-btn.animated.fadeInLeft.wait-p1s(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
-            v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') image
-          span Insert Image
+            v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') burst_mode
+          span Insert Assets
         v-tooltip(right, color='teal')
           v-btn.animated.fadeInLeft.wait-p2s(icon, slot='activator', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
             v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') dashboard
           span Insert Block
         v-tooltip(right, color='teal')
           v-btn.animated.fadeInLeft.wait-p3s(icon, slot='activator', dark, disabled).mx-0
-            v-icon insert_drive_file
-          span Insert File
-        v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p4s(icon, slot='activator', dark, disabled).mx-0
             v-icon code
           span Insert Code Block
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p5s(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p4s(icon, slot='activator', dark, disabled).mx-0
             v-icon play_circle_outline
           span Insert Video / Audio
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p6s(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p5s(icon, slot='activator', dark, disabled).mx-0
             v-icon multiline_chart
           span Insert Diagram
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p7s(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p6s(icon, slot='activator', dark, disabled).mx-0
             v-icon functions
           span Insert Math Expression
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p8s(icon, slot='activator', dark, disabled).mx-0
+          v-btn.animated.fadeInLeft.wait-p7s(icon, slot='activator', dark, disabled).mx-0
             v-icon border_outer
           span Table Helper
-        v-spacer
-        v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p9s(icon, slot='activator', dark, @click='toggleFullscreen').mx-0
-            v-icon crop_free
-          span Distraction Free Mode
-        v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p10s(icon, slot='activator', dark, @click='toggleHelp').mx-0
-            v-icon(:color='helpShown ? `teal` : ``') help
-          span Markdown Formatting Help
+        template(v-if='$vuetify.breakpoint.mdAndUp')
+          v-spacer
+          v-tooltip(right, color='teal')
+            v-btn.animated.fadeInLeft.wait-p8s(icon, slot='activator', dark, @click='toggleFullscreen').mx-0
+              v-icon crop_free
+            span Distraction Free Mode
+          v-tooltip(right, color='teal')
+            v-btn.animated.fadeInLeft.wait-p9s(icon, slot='activator', dark, @click='toggleHelp').mx-0
+              v-icon(:color='helpShown ? `teal` : ``') help
+            span Markdown Formatting Help
       .editor-markdown-editor
         .editor-markdown-editor-title(v-if='previewShown', @click='previewShown = false') Editor
         .editor-markdown-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator
@@ -143,10 +140,11 @@
     v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
       .caption.editor-markdown-sysbar-locale {{locale.toUpperCase()}}
       .caption.px-3 /{{path}}
-      v-spacer
-      .caption Markdown
-      v-spacer
-      .caption Ln {{cursorPos.line + 1}}, Col {{cursorPos.ch + 1}}
+      template(v-if='$vuetify.breakpoint.mdAndUp')
+        v-spacer
+        .caption Markdown
+        v-spacer
+        .caption Ln {{cursorPos.line + 1}}, Col {{cursorPos.ch + 1}}
 
     markdown-help(v-if='helpShown')
 </template>
@@ -329,7 +327,11 @@ export default {
         return false
       })
 
-      cm.setSize(null, 'calc(100vh - 112px - 24px)')
+      if (this.$vuetify.breakpoint.mdAndUp) {
+        cm.setSize(null, 'calc(100vh - 112px - 24px)')
+      } else {
+        cm.setSize(null, 'calc(100vh - 112px - 16px)')
+      }
       cm.setOption('extraKeys', keyBindings)
       cm.on('cursorActivity', cm => {
         this.positionSync(cm)
@@ -462,6 +464,7 @@ export default {
 <style lang='scss'>
 
 $editor-height: calc(100vh - 112px - 24px);
+$editor-height-mobile: calc(100vh - 112px - 16px);
 
 .editor-markdown {
   &-main {
@@ -475,6 +478,10 @@ $editor-height: calc(100vh - 112px - 24px);
     display: block;
     height: $editor-height;
     position: relative;
+
+    @include until($tablet) {
+      height: $editor-height-mobile;
+    }
 
     &-title {
       background-color: mc('grey', '800');
@@ -531,13 +538,17 @@ $editor-height: calc(100vh - 112px - 24px);
       height: $editor-height;
       overflow-y: scroll;
       padding: 1rem 1rem 1rem 0;
-      width: calc(100% + 1rem + 17px)
+      width: calc(100% + 1rem + 17px);
       // -ms-overflow-style: none;
 
       // &::-webkit-scrollbar {
       //   width: 0px;
       //   background: transparent;
       // }
+
+      @include until($tablet) {
+        height: $editor-height-mobile;
+      }
     }
 
     &-title {
@@ -588,6 +599,11 @@ $editor-height: calc(100vh - 112px - 24px);
     justify-content: flex-start;
     align-items: center;
     padding: 24px 0;
+
+    @include until($tablet) {
+      padding: 12px 0;
+      width: 40px;
+    }
   }
 
   &-sysbar {

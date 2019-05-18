@@ -4,6 +4,7 @@
     persistent
     lazy
     width='1100'
+    :fullscreen='$vuetify.breakpoint.smAndDown'
     )
     .dialog-header
       v-icon(color='white') sort_by_alpha

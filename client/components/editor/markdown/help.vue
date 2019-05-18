@@ -2,7 +2,7 @@
   v-card.editor-markdown-help.animated.fadeInLeft(flat, tile)
     v-container.pa-3(grid-list-lg, fluid)
       v-layout(row, wrap)
-        v-flex(xs4)
+        v-flex(xs12, lg6, xl4)
           v-card.radius-7.animated.fadeInUp(light)
             v-card-text
               .d-flex
@@ -98,7 +98,7 @@
                         li Unordered List Item 2
                         li Unordered List Item 3
 
-        v-flex(xs4)
+        v-flex(xs12, lg6, xl4)
           v-card.radius-7.animated.fadeInUp.wait-p1s(light)
             v-card-text
               .d-flex
@@ -196,7 +196,7 @@
                     v-card-text
                       blockquote(style='border: 1px solid #263238; border-radius: .5rem; padding: 1rem 24px;') Lorem ipsum#[br]dolor sit amet#[br]consectetur adipiscing elit
 
-        v-flex(xs4)
+        v-flex(xs12, xl4)
           v-card.radius-7.animated.fadeInUp.wait-p2s(light)
             v-card-text
               v-toolbar.radius-7(color='teal lighten-5', dense, flat)

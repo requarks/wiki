@@ -56,4 +56,5 @@ type AssetFolder {
 enum AssetKind {
   IMAGE
   BINARY
+  ALL
 }

@@ -96,13 +96,9 @@ module.exports = class Asset extends Model {
   }
 
   static async getAsset(assetPath, res) {
-    let asset = await WIKI.models.assets.getAssetFromCache(assetPath, res)
-    if (!asset) {
-      // asset = await WIKI.models.assets.getAssetFromDb(assetPath, res)
-      // if (asset) {
-      //   await WIKI.models.assets.saveAssetToCache(asset)
-      // }
-      res.sendStatus(404)
+    let assetExists = await WIKI.models.assets.getAssetFromCache(assetPath, res)
+    if (!assetExists) {
+      await WIKI.models.assets.getAssetFromDb(assetPath, res)
     }
   }
 
@@ -120,5 +116,20 @@ module.exports = class Asset extends Model {
         }
       })
     })
+  }
+
+  static async getAssetFromDb(assetPath, res) {
+    const fileHash = assetHelper.generateHash(assetPath)
+    const cachePath = path.join(process.cwd(), `data/cache/${fileHash}.dat`)
+
+    const asset = await WIKI.models.assets.query().where('hash', fileHash).first()
+    if (asset) {
+      const assetData = await WIKI.models.knex('assetData').where('id', asset.id).first()
+      res.type(asset.ext)
+      res.send(assetData.data)
+      await fs.outputFile(cachePath, assetData.data)
+    } else {
+      res.sendStatus(404)
+    }
   }
 }

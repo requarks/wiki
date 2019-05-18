@@ -2,36 +2,43 @@
   v-card.editor-modal-media.animated.fadeInLeft(flat, tile)
     v-container.pa-3(grid-list-lg, fluid)
       v-layout(row, wrap)
-        v-flex(xs9)
+        v-flex(xs12, xl9)
           v-card.radius-7.animated.fadeInLeft.wait-p1s(light)
             v-card-text
               .d-flex
                 v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
-                  .body-2.teal--text Images
-                v-btn.ml-3.my-0.radius-7(outline, large, color='teal', disabled)
-                  v-icon(left) keyboard_arrow_up
-                  span Parent Folder
-                v-btn.my-0.mr-0.radius-7(outline, large, color='teal')
-                  v-icon(left) add
-                  span New Folder
-              v-list.mt-3(dense, two-line)
-                template(v-for='(asset, idx) of assets')
-                  v-list-tile(@click='')
-                    v-list-tile-avatar
-                      v-avatar.radius-7(color='teal')
-                        v-icon(dark) image
-                    v-list-tile-content
-                      v-list-tile-title {{asset.filename}}
-                      v-list-tile-sub-title 1024x768
-                    v-list-tile-action
-                      .caption {{asset.updatedAt | moment('from')}}
-                    v-divider.mx-3(vertical)
-                    v-list-tile-action(style='flex-basis: 80px;')
-                      .caption {{asset.fileSize | prettyBytes}}
-                    v-divider.mx-3(vertical)
-                    v-list-tile-action(style='flex-basis: 60px;')
-                      v-chip.teal--text(label, small, color='teal lighten-5') {{asset.ext.toUpperCase().substring(1)}}
-                    v-list-tile-action
+                  .body-2.teal--text Assets
+                v-btn.ml-3.my-0.radius-7(outline, large, color='teal', disabled, :icon='$vuetify.breakpoint.xsOnly')
+                  v-icon(:left='$vuetify.breakpoint.mdAndUp') keyboard_arrow_up
+                  span.hidden-sm-and-down Parent Folder
+                v-btn.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly')
+                  v-icon(:left='$vuetify.breakpoint.mdAndUp') add
+                  span.hidden-sm-and-down New Folder
+              v-data-table(
+                :items='assets'
+                :headers='headers'
+                :pagination.sync='pagination'
+                :rows-per-page-items='[15]'
+                :loading='loading'
+                must-sort,
+                hide-actions
+              )
+                template(slot='items', slot-scope='props')
+                  tr.is-clickable(
+                    @click.left='currentFileId = props.item.id'
+                    @click.right=''
+                    :class='currentFileId === props.item.id ? `teal lighten-5` : ``'
+                    )
+                    td.text-xs-right(v-if='$vuetify.breakpoint.smAndUp') {{ props.item.id }}
+                    td
+                      .body-2(:class='currentFileId === props.item.id ? `teal--text` : ``') {{ props.item.filename }}
+                      .caption {{ props.item.description }}
+                    td.text-xs-center(v-if='$vuetify.breakpoint.lgAndUp')
+                      v-chip(small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`')
+                        .caption {{props.item.ext.toUpperCase().substring(1)}}
+                    td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.fileSize | prettyBytes }}
+                    td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.updatedAt | moment('from') }}
+                    td(v-if='$vuetify.breakpoint.smAndUp')
                       v-menu(offset-x)
                         v-btn(icon, slot='activator')
                           v-icon(color='grey darken-2') more_horiz
@@ -41,11 +48,12 @@
                               v-icon(color='teal') short_text
                             v-list-tile-content Properties
                           v-divider
-                          v-list-tile
-                            v-list-tile-avatar
-                              v-icon(color='indigo') crop_rotate
-                            v-list-tile-content Edit
-                          v-divider
+                          template(v-if='props.item.kind === `IMAGE`')
+                            v-list-tile
+                              v-list-tile-avatar
+                                v-icon(color='indigo') crop_rotate
+                              v-list-tile-content Edit
+                            v-divider
                           v-list-tile
                             v-list-tile-avatar
                               v-icon(color='blue') keyboard
@@ -55,24 +63,28 @@
                             v-list-tile-avatar
                               v-icon(color='red') delete
                             v-list-tile-content Delete
-                  v-divider(v-if='idx < assets.length - 1')
+                template(slot='no-data')
+                  v-alert.ma-3(icon='warning', :value='true', outline) No assets to display.
+              .text-xs-center.py-2(v-if='this.pageTotal > 1')
+                v-pagination(v-model='pagination.page', :length='pageTotal')
               .d-flex.mt-3
                 v-toolbar.radius-7(flat, color='grey lighten-4', dense, height='44')
                   .body-2 / #[em root]
-                  v-spacer
-                  .body-1.grey--text.text--darken-1 10 files
-                v-btn.ml-3.mr-0.my-0.radius-7(color='teal', large, @click='insert', disabled)
+                  template(v-if='$vuetify.breakpoint.smAndUp')
+                    v-spacer
+                    .body-1.grey--text.text--darken-1 {{assets.length}} files
+                v-btn.ml-3.mr-0.my-0.radius-7(color='teal', large, @click='insert', :disabled='!currentFileId', :dark='currentFileId !== null')
                   v-icon(left) save_alt
                   span Insert
 
-        v-flex(xs3)
+        v-flex(xs12, xl3)
           v-card.radius-7.animated.fadeInRight.wait-p3s(light)
             v-card-text
               .d-flex
                 v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
                   v-icon.mr-3(color='teal') cloud_upload
-                  .body-2.teal--text Upload Images
-                v-btn.my-0.ml-3.mr-0.radius-7(outline, large, color='teal', @click='browse')
+                  .body-2.teal--text Upload Assets
+                v-btn.my-0.ml-3.mr-0.radius-7(outline, large, color='teal', @click='browse', v-if='$vuetify.breakpoint.mdAndUp')
                   v-icon(left) touch_app
                   span Browse
               file-pond.mt-3(
@@ -80,7 +92,6 @@
                 ref='pond'
                 label-idle='Browse or Drop files here...'
                 allow-multiple='true'
-                :accepted-file-types='[`image/jpeg`, `image/png`, `image/gif`, `image/svg`]'
                 :files='files'
                 max-files='10'
                 server='/u'
@@ -116,7 +127,7 @@
             v-card-text.pb-0
               v-toolbar.radius-7(color='teal lighten-5', dense, flat)
                 v-icon.mr-3(color='teal') format_align_left
-                .body-2.teal--text Alignment
+                .body-2.teal--text Image Alignment
               v-select.mt-3(
                 v-model='imageAlignment'
                 :items='imageAlignments'
@@ -133,11 +144,9 @@ import { sync } from 'vuex-pathify'
 import vueFilePond from 'vue-filepond'
 import 'filepond/dist/filepond.min.css'
 
-import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
-
 import listAssetQuery from 'gql/editor/editor-media-query-list.gql'
 
-const FilePond = vueFilePond(FilePondPluginFileValidateType)
+const FilePond = vueFilePond()
 
 export default {
   components: {
@@ -152,6 +161,8 @@ export default {
   data() {
     return {
       files: [],
+      assets: [],
+      pagination: {},
       remoteImageUrl: '',
       imageAlignments: [
         { text: 'None', value: '' },
@@ -159,7 +170,9 @@ export default {
         { text: 'Right', value: 'right' },
         { text: 'Absolute Top Right', value: 'abstopright' }
       ],
-      imageAlignment: ''
+      imageAlignment: '',
+      currentFileId: null,
+      loading: false
     }
   },
   computed: {
@@ -167,7 +180,24 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    pageTotal () {
+      if (this.pagination.rowsPerPage == null || this.pagination.totalItems == null) {
+        return 0
+      }
+
+      return Math.ceil(this.assets.length / this.pagination.rowsPerPage)
+    },
+    headers() {
+      return _.compact([
+        this.$vuetify.breakpoint.smAndUp && { text: 'ID', value: 'id', width: 50, align: 'right' },
+        { text: 'Title', value: 'title' },
+        this.$vuetify.breakpoint.lgAndUp && { text: 'Type', value: 'path', width: 50 },
+        this.$vuetify.breakpoint.mdAndUp && { text: 'File Size', value: 'createdAt', width: 150 },
+        this.$vuetify.breakpoint.mdAndUp && { text: 'Last Updated', value: 'updatedAt', width: 150 },
+        this.$vuetify.breakpoint.smAndUp && { text: '', value: '', width: 50, sortable: false }
+      ])
+    }
   },
   filters: {
     prettyBytes(num) {
@@ -198,6 +228,7 @@ export default {
   methods: {
     insert () {
       this.activeModal = ''
+
     },
     browse () {
       this.$refs.pond.browse()
@@ -237,12 +268,13 @@ export default {
     assets: {
       query: listAssetQuery,
       variables: {
-        kind: 'IMAGE'
+        kind: 'ALL'
       },
       throttle: 1000,
       fetchPolicy: 'network-only',
       update: (data) => data.assets.list,
       watchLoading (isLoading) {
+        this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-list-refresh')
       }
     }
@@ -261,6 +293,12 @@ export default {
   background-color: rgba(darken(mc('grey', '900'), 3%), .9) !important;
   overflow: auto;
 
+  @include until($tablet) {
+    left: 40px;
+    width: calc(100vw - 40px);
+    height: calc(100vh - 112px - 24px);
+  }
+
   .filepond--root {
     margin-bottom: 0;
   }
@@ -271,6 +309,10 @@ export default {
     > label {
       cursor: pointer;
     }
+  }
+
+  .v-btn--icon {
+    padding: 0 20px;
   }
 }
 </style>
