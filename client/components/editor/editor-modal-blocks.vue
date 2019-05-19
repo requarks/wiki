@@ -2,7 +2,7 @@
   v-card.editor-modal-blocks.animated.fadeInLeft(flat, tile)
     v-container.pa-3(grid-list-lg, fluid)
       v-layout(row, wrap)
-        v-flex(xs3)
+        v-flex(xs12, lg4, xl3)
           v-card.radius-7(light)
             v-card-text
               .d-flex
@@ -82,5 +82,10 @@ export default {
     width: calc(100vw - 64px - 17px);
     height: calc(100vh - 112px - 24px);
     background-color: rgba(darken(mc('grey', '900'), 3%), .9) !important;
+
+    @include until($tablet) {
+      left: 40px;
+      width: calc(100vw - 40px);
+    }
 }
 </style>

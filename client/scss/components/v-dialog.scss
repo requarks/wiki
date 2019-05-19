@@ -26,6 +26,12 @@
     background-image: radial-gradient(ellipse at top, mc('grey', '800'), mc('grey', '900')),
                       radial-gradient(ellipse at bottom, mc('grey', '800'), mc('grey', '900'));
   }
+
+  &.is-teal {
+    background-color: mc('teal', '700');
+    background-image: radial-gradient(ellipse at top, mc('teal', '500'), mc('teal', '700')),
+                      radial-gradient(ellipse at bottom, mc('teal', '800'), mc('teal', '700'));
+  }
 }
 
 .v-dialog--fullscreen {

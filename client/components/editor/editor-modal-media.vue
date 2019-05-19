@@ -11,9 +11,30 @@
                 v-btn.ml-3.my-0.radius-7(outline, large, color='teal', disabled, :icon='$vuetify.breakpoint.xsOnly')
                   v-icon(:left='$vuetify.breakpoint.mdAndUp') keyboard_arrow_up
                   span.hidden-sm-and-down Parent Folder
-                v-btn.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly')
-                  v-icon(:left='$vuetify.breakpoint.mdAndUp') add
-                  span.hidden-sm-and-down New Folder
+                v-dialog(v-model='newFolderDialog', max-width='550')
+                  v-btn.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly', slot='activator')
+                    v-icon(:left='$vuetify.breakpoint.mdAndUp') add
+                    span.hidden-sm-and-down New Folder
+                  v-card.wiki-form
+                    .dialog-header.is-short New Folder
+                    v-card-text
+                      v-text-field.md2(
+                        outline
+                        background-color='grey lighten-3'
+                        prepend-icon='folder'
+                        v-model='newFolderName'
+                        label='Folder Name'
+                        counter='255'
+                        @keyup.enter='createFolder'
+                        @keyup.esc='newFolderDialog = false'
+                        ref='folderNameIpt'
+                        hint='Lowercase. No spaces allowed.'
+                        persistent-hint
+                        )
+                    v-card-chin
+                      v-spacer
+                      v-btn(flat, @click='newFolderDialog = false') Cancel
+                      v-btn(color='primary', @click='createFolder', :disabled='!isFolderNameValid') Create
               v-data-table(
                 :items='assets'
                 :headers='headers'
@@ -26,40 +47,40 @@
                 template(slot='items', slot-scope='props')
                   tr.is-clickable(
                     @click.left='currentFileId = props.item.id'
-                    @click.right=''
+                    @click.right.prevent=''
                     :class='currentFileId === props.item.id ? `teal lighten-5` : ``'
                     )
                     td.text-xs-right(v-if='$vuetify.breakpoint.smAndUp') {{ props.item.id }}
                     td
                       .body-2(:class='currentFileId === props.item.id ? `teal--text` : ``') {{ props.item.filename }}
-                      .caption {{ props.item.description }}
+                      .caption.grey--text {{ props.item.description }}
                     td.text-xs-center(v-if='$vuetify.breakpoint.lgAndUp')
-                      v-chip(small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`')
+                      v-chip.ma-0(small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`')
                         .caption {{props.item.ext.toUpperCase().substring(1)}}
                     td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.fileSize | prettyBytes }}
-                    td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.updatedAt | moment('from') }}
+                    td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.createdAt | moment('from') }}
                     td(v-if='$vuetify.breakpoint.smAndUp')
                       v-menu(offset-x)
-                        v-btn(icon, slot='activator')
+                        v-btn.ma-0(icon, slot='activator')
                           v-icon(color='grey darken-2') more_horiz
                         v-list.py-0
-                          v-list-tile
+                          v-list-tile(@click='')
                             v-list-tile-avatar
                               v-icon(color='teal') short_text
                             v-list-tile-content Properties
                           v-divider
                           template(v-if='props.item.kind === `IMAGE`')
-                            v-list-tile
+                            v-list-tile(@click='')
                               v-list-tile-avatar
                                 v-icon(color='indigo') crop_rotate
                               v-list-tile-content Edit
                             v-divider
-                          v-list-tile
+                          v-list-tile(@click='')
                             v-list-tile-avatar
                               v-icon(color='blue') keyboard
                             v-list-tile-content Rename / Move
                           v-divider
-                          v-list-tile
+                          v-list-tile(@click='')
                             v-list-tile-avatar
                               v-icon(color='red') delete
                             v-list-tile-content Delete
@@ -147,6 +168,8 @@ import 'filepond/dist/filepond.min.css'
 import listAssetQuery from 'gql/editor/editor-media-query-list.gql'
 
 const FilePond = vueFilePond()
+const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
+const disallowedFolderChars = /[A-Z()=.!@#$%?&*+`~<>,;:\\/[\]¬{| ]/
 
 export default {
   components: {
@@ -172,7 +195,9 @@ export default {
       ],
       imageAlignment: '',
       currentFileId: null,
-      loading: false
+      loading: false,
+      newFolderDialog: false,
+      newFolderName: ''
     }
   },
   computed: {
@@ -191,12 +216,24 @@ export default {
     headers() {
       return _.compact([
         this.$vuetify.breakpoint.smAndUp && { text: 'ID', value: 'id', width: 50, align: 'right' },
-        { text: 'Title', value: 'title' },
-        this.$vuetify.breakpoint.lgAndUp && { text: 'Type', value: 'path', width: 50 },
-        this.$vuetify.breakpoint.mdAndUp && { text: 'File Size', value: 'createdAt', width: 150 },
-        this.$vuetify.breakpoint.mdAndUp && { text: 'Last Updated', value: 'updatedAt', width: 150 },
-        this.$vuetify.breakpoint.smAndUp && { text: '', value: '', width: 50, sortable: false }
+        { text: 'Filename', value: 'filename' },
+        this.$vuetify.breakpoint.lgAndUp && { text: 'Type', value: 'ext', width: 50 },
+        this.$vuetify.breakpoint.mdAndUp && { text: 'File Size', value: 'fileSize', width: 110 },
+        this.$vuetify.breakpoint.mdAndUp && { text: 'Added', value: 'createdAt', width: 150 },
+        this.$vuetify.breakpoint.smAndUp && { text: 'Actions', value: '', width: 40, sortable: false, align:'right' }
       ])
+    },
+    isFolderNameValid() {
+      return this.newFolderName.length > 1 && !localeSegmentRegex.test(this.newFolderName) && !disallowedFolderChars.test(this.newFolderName)
+    }
+  },
+  watch: {
+    newFolderDialog(newValue, oldValue) {
+      if (newValue) {
+        this.$nextTick(() => {
+          this.$refs.folderNameIpt.focus()
+        })
+      }
     }
   },
   filters: {
@@ -227,8 +264,13 @@ export default {
   },
   methods: {
     insert () {
+      const asset = _.find(this.assets, ['id', this.currentFileId])
+      this.$root.$emit('editorInsert', {
+        kind: asset.kind,
+        path: `/${asset.filename}`,
+        text: asset.filename
+      })
       this.activeModal = ''
-
     },
     browse () {
       this.$refs.pond.browse()
@@ -262,6 +304,9 @@ export default {
       }, 5000)
 
       await this.$apollo.queries.assets.refetch()
+    },
+    async createFolder() {
+
     }
   },
   apollo: {

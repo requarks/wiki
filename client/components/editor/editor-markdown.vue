@@ -397,6 +397,13 @@ export default {
       return lvl
     },
     /**
+     * Insert content at cursor
+     */
+    insertAtCursor({ content }) {
+      const cursor = this.cm.doc.getCursor('head')
+      this.cm.doc.replaceRange(content, cursor)
+    },
+    /**
      * Insert content after current line
      */
     insertAfter({ content, newLine }) {
@@ -457,6 +464,25 @@ export default {
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)
     }
+  },
+  mounted() {
+    this.$root.$on('editorInsert', opts => {
+      switch (opts.kind) {
+        case 'IMAGE':
+          this.insertAtCursor({
+            content: `![${opts.text}](${opts.path})`
+          })
+          break
+        case 'BINARY':
+          this.insertAtCursor({
+            content: `[${opts.text}](${opts.path})`
+          })
+          break
+      }
+    })
+  },
+  beforeDestroy() {
+    this.$root.$off('editorInsert')
   }
 }
 </script>

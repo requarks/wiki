@@ -77,6 +77,7 @@ module.exports = class Asset extends Model {
       kind: _.startsWith(opts.mimetype, 'image/') ? 'image' : 'binary',
       mime: opts.mimetype,
       fileSize: opts.size,
+      folderId: null,
       authorId: opts.userId
     })
 
