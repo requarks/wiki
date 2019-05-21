@@ -97,7 +97,17 @@
                         li Unordered List Item 1
                         li Unordered List Item 2
                         li Unordered List Item 3
-
+              .body-2.mt-3 Images
+              v-layout(row)
+                v-flex(xs6)
+                  v-card.editor-markdown-help-source(flat)
+                    v-card-text
+                      div ![Caption Text](/path/to/image.jpg)
+                v-icon chevron_right
+                v-flex(xs6)
+                  v-card.editor-markdown-help-result(flat)
+                    v-card-text
+                      img(src='https://via.placeholder.com/150x50.png')
         v-flex(xs12, lg6, xl4)
           v-card.radius-7.animated.fadeInUp.wait-p1s(light)
             v-card-text
@@ -105,6 +115,17 @@
                 v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
                   v-icon.mr-3(color='teal') info
                   .body-2.teal--text Markdown Reference (continued)
+              .body-2.mt-3 Links
+              v-layout(row)
+                v-flex(xs6)
+                  v-card.editor-markdown-help-source(flat)
+                    v-card-text
+                      div [Link Text](https://wiki.js.org)
+                v-icon chevron_right
+                v-flex(xs6)
+                  v-card.editor-markdown-help-result(flat)
+                    v-card-text
+                      .caption: a(href='https://wiki.js.org', target='_blank') Link Text
               .body-2.mt-3 Superscript
               v-layout(row)
                 v-flex(xs6)

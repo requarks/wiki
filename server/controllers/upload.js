@@ -41,11 +41,17 @@ router.post('/u', multer({
     })
   }
 
-  let folderPath = ''
+  // Get folder Id
+  let folderId = null
   try {
     const folderRaw = _.get(req, 'body.mediaUpload', false)
     if (folderRaw) {
-      folderPath = _.get(JSON.parse(folderRaw), 'path', false)
+      folderId = _.get(JSON.parse(folderRaw), 'folderId', null)
+      if (folderId === 0) {
+        folderId = null
+      }
+    } else {
+      throw new Error('Missing File Metadata')
     }
   } catch (err) {
     return res.status(400).json({
@@ -54,17 +60,34 @@ router.post('/u', multer({
     })
   }
 
-  if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: `${folderPath}/${fileMeta.originalname}`})) {
+  // Build folder hierarchy
+  let hierarchy = []
+  if (folderId) {
+    try {
+      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId)
+    } catch (err) {
+      return res.status(400).json({
+        succeeded: false,
+        message: 'Failed to fetch folder hierarchy.'
+      })
+    }
+  }
+
+  // Check if user can upload at path
+  const assetPath = (folderId) ? opts.hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
+  if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
     return res.status(403).json({
       succeeded: false,
       message: 'You are not authorized to upload files to this folder.'
     })
   }
 
+  // Process upload file
   await WIKI.models.assets.upload({
     ...fileMeta,
     originalname: sanitize(fileMeta.originalname).toLowerCase(),
-    folder: folderPath,
+    folderId: folderId,
+    hierarchy,
     userId: req.user.id
   })
   res.send('ok')

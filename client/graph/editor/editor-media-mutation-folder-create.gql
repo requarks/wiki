@@ -1,0 +1,12 @@
+mutation ($parentFolderId: Int!, $slug: String!) {
+  assets {
+    createFolder(parentFolderId:$parentFolderId, slug: $slug) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

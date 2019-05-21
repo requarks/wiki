@@ -3,6 +3,7 @@
 .contents {
   color: mc('grey', '800');
   padding-bottom: 50px;
+  position: relative;
 
   @at-root .theme--dark & {
     color: mc('grey', '300');
@@ -309,7 +310,8 @@
         }
 
         &::before {
-          color: mc('grey', '400');
+          content: '';
+          display: none;
         }
 
         @at-root .theme--dark & {
@@ -454,6 +456,31 @@
       td {
         border-bottom: 1px solid mc('grey', '200');
       }
+    }
+  }
+
+  // ---------------------------------
+  // IMAGES
+  // ---------------------------------
+
+  img {
+    &.align-left {
+      float: left;
+      margin: 0 1rem 1rem 0;
+    }
+    &.align-right {
+      float: right;
+      margin: 0 0 1rem 1rem;
+    }
+    &.align-center {
+      display: block;
+      max-width: 100%;
+      margin: auto;
+    }
+    &.align-abstopright {
+      position: absolute;
+      top: -90px;
+      right: 1rem;
     }
   }
 

@@ -1,9 +1,11 @@
 <template lang='pug'>
   .editor-markdown
     v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat, style='overflow-x: hidden;')
-      v-btn.animated.fadeInLeft(v-if='isModalShown', flat, @click='closeAllModal')
-        v-icon(left) close
-        span Back to Editor
+      template(v-if='isModalShown')
+        v-spacer
+        v-btn.animated.fadeInRight(flat, @click='closeAllModal')
+          v-icon(left) remove_circle_outline
+          span Back to Editor
       template(v-else)
         v-tooltip(bottom, color='primary')
           v-btn.animated.fadeIn(icon, slot='activator', @click='toggleMarkup({ start: `**` })').mx-0
@@ -469,8 +471,12 @@ export default {
     this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
         case 'IMAGE':
+          let img = `![${opts.text}](${opts.path})`
+          if (opts.align && opts.align !== '') {
+            img += `{.align-${opts.align}}`
+          }
           this.insertAtCursor({
-            content: `![${opts.text}](${opts.path})`
+            content: img
           })
           break
         case 'BINARY':

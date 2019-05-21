@@ -32,4 +32,12 @@ module.exports = class AssetFolder extends Model {
       }
     }
   }
+
+  static async getHierarchy(folderId) {
+    return WIKI.models.knex.withRecursive('ancestors', qb => {
+      qb.select('id', 'name', 'slug', 'parentId').from('assetFolders').where('id', folderId).union(sqb => {
+        sqb.select('a.id', 'a.name', 'a.slug', 'a.parentId').from('assetFolders AS a').join('ancestors', 'ancestors.parentId', 'a.id')
+      })
+    }).select('*').from('ancestors')
+  }
 }

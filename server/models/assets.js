@@ -67,7 +67,8 @@ module.exports = class Asset extends Model {
 
   static async upload(opts) {
     const fileInfo = path.parse(opts.originalname)
-    const fileHash = assetHelper.generateHash(`${opts.folder}/${opts.originalname}`)
+    const folderPath = opts.hierarchy.map(h => h.slug).join('/')
+    const fileHash = opts.folderId ? assetHelper.generateHash(`${folderPath}/${opts.originalname}`) : assetHelper.generateHash(opts.originalname)
 
     // Create asset entry
     const asset = await WIKI.models.assets.query().insert({
@@ -77,7 +78,7 @@ module.exports = class Asset extends Model {
       kind: _.startsWith(opts.mimetype, 'image/') ? 'image' : 'binary',
       mime: opts.mimetype,
       fileSize: opts.size,
-      folderId: null,
+      folderId: opts.folderId,
       authorId: opts.userId
     })
 

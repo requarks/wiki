@@ -1,7 +1,7 @@
+const sanitize = require('sanitize-filename')
+const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
-
-const gql = require('graphql')
 
 module.exports = {
   Query: {
@@ -13,7 +13,7 @@ module.exports = {
   AssetQuery: {
     async list(obj, args, context) {
       let cond = {
-        folderId: null
+        folderId: args.folderId === 0 ? null : args.folderId
       }
       if (args.kind !== 'ALL') {
         cond.kind = args.kind.toLowerCase()
@@ -23,9 +23,40 @@ module.exports = {
         ...a,
         kind: a.kind.toUpperCase()
       }))
+    },
+    async folders(obj, args, context) {
+      const result = await WIKI.models.assetFolders.query().where({
+        parentId: args.parentFolderId === 0 ? null : args.parentFolderId
+      })
+      // TODO: Filter by page rules
+      return result
     }
   },
   AssetMutation: {
+    async createFolder(obj, args, context) {
+      try {
+        const folderSlug = sanitize(args.slug).toLowerCase()
+        const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId
+        const result =  await WIKI.models.assetFolders.query().where({
+          parentId: parentFolderId,
+          slug: folderSlug
+        }).first()
+        if (!result) {
+          await WIKI.models.assetFolders.query().insert({
+            slug: folderSlug,
+            name: folderSlug,
+            parentId: parentFolderId
+          })
+          return {
+            responseResult: graphHelper.generateSuccess('Asset Folder has been created successfully.')
+          }
+        } else {
+          throw new WIKI.Error.AssetFolderExists()
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    }
     // deleteFile(obj, args) {
     //   return WIKI.models.File.destroy({
     //     where: {

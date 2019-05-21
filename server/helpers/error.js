@@ -1,6 +1,10 @@
 const CustomError = require('custom-error-instance')
 
 module.exports = {
+  AssetFolderExists: CustomError('AssetFolderExists', {
+    message: 'An asset folder with the same name already exists.',
+    code: 2001
+  }),
   AuthAccountBanned: CustomError('AuthAccountBanned', {
     message: 'Your account has been disabled.',
     code: 1016
