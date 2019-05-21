@@ -74,7 +74,7 @@ router.post('/u', multer({
   }
 
   // Check if user can upload at path
-  const assetPath = (folderId) ? opts.hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
+  const assetPath = (folderId) ? hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
   if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
     return res.status(403).json({
       succeeded: false,
