@@ -482,6 +482,12 @@
       top: -80px;
       right: 1rem;
     }
+    &.decor-shadow {
+      box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
+    }
+    &.decor-outline {
+      border: 1px solid mc('grey', '400');
+    }
   }
 
 }
