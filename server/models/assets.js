@@ -67,8 +67,7 @@ module.exports = class Asset extends Model {
 
   static async upload(opts) {
     const fileInfo = path.parse(opts.originalname)
-    const folderPath = opts.hierarchy.map(h => h.slug).join('/')
-    const fileHash = opts.folderId ? assetHelper.generateHash(`${folderPath}/${opts.originalname}`) : assetHelper.generateHash(opts.originalname)
+    const fileHash = assetHelper.generateHash(opts.assetPath)
 
     // Create asset entry
     const asset = await WIKI.models.assets.query().insert({

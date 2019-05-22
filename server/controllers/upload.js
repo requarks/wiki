@@ -87,7 +87,7 @@ router.post('/u', multer({
     ...fileMeta,
     originalname: sanitize(fileMeta.originalname).toLowerCase(),
     folderId: folderId,
-    hierarchy,
+    assetPath,
     userId: req.user.id
   })
   res.send('ok')
