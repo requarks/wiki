@@ -4,9 +4,10 @@
     v-content
       v-toolbar(color='primary', dark)
         .subheading Viewing source of page #[strong /{{path}}]
-        v-spacer
-        .caption.blue--text.text--lighten-3 ID {{pageId}}
-        v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Normal View
+        template(v-if='$vuetify.breakpoint.mdAndUp')
+          v-spacer
+          .caption.blue--text.text--lighten-3 ID {{pageId}}
+          v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Normal View
       v-card(tile)
         v-card-text
           v-card.grey.radius-7(flat, :class='darkMode ? `darken-4` : `lighten-4`')

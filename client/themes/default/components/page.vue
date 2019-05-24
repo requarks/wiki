@@ -30,17 +30,16 @@
 
     v-content(ref='content')
       template(v-if='path !== `home`')
-        v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
-          v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
-            v-icon(color='grey darken-2', left) menu
-            span Navigation
+        v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
+          //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
+          //-   v-icon(color='grey darken-2', left) menu
+          //-   span Navigation
           v-breadcrumbs.breadcrumbs-nav.pl-0(
-            v-else
             :items='breadcrumbs'
             divider='/'
             )
             template(slot='item', slot-scope='props')
-              v-icon(v-if='props.item.path === "/"', small) home
+              v-icon(v-if='props.item.path === "/"', small, @click='goHome') home
               v-btn.ma-0(v-else, :href='props.item.path', small, flat) {{props.item.name}}
           template(v-if='!isPublished')
             v-spacer
@@ -128,6 +127,7 @@
 import { StatusIndicator } from 'vue-status-indicator'
 import Prism from '@/libs/prism/prism.js'
 import { get } from 'vuex-pathify'
+import _ from 'lodash'
 
 export default {
   components: {
@@ -193,11 +193,6 @@ export default {
         offset: -75,
         easing: 'easeInOutCubic'
       },
-      breadcrumbs: [
-        { path: '/', name: 'Home' },
-        { path: '/' + this.path, name: 'Breadcrumb' },
-        { path: '/' + this.path, name: 'Coming soon' }
-      ],
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -227,6 +222,15 @@ export default {
       set (val) {
 
       }
+    },
+    breadcrumbs() {
+      return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
+        result.push({
+          path: _.map(result, 'path').join('/') + `/${value}`,
+          name: value
+        })
+        return result
+      }, []))
     }
   },
   created() {
@@ -249,6 +253,9 @@ export default {
     this.navShown = this.$vuetify.breakpoint.smAndUp
   },
   methods: {
+    goHome () {
+      window.location.assign('/')
+    },
     toggleNavigation () {
       this.navOpen = !this.navOpen
     },
