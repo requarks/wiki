@@ -158,6 +158,8 @@
               v-toolbar.radius-7(color='teal lighten-5', dense, flat)
                 v-icon.mr-3(color='teal') cloud_download
                 .body-2.teal--text Fetch Remote Image
+                v-spacer
+                v-chip(label, color='white', small).teal--text coming soon
               v-text-field.mt-3(
                 v-model='remoteImageUrl'
                 outline
@@ -169,7 +171,7 @@
             v-card-actions.pa-3
               .caption.grey--text.text-darken-2 Max 5 MB
               v-spacer
-              v-btn(color='teal', dark) Fetch
+              v-btn(color='teal', disabled) Fetch
 
           v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(light)
             v-card-text.pb-0
