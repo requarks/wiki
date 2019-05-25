@@ -27,8 +27,13 @@ export default {
 
 <style lang='scss'>
 .nav-notify {
-  top: 60px;
+  // top: 60px;
   z-index: 999;
+
+  .v-snack__wrapper {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
 
   .v-snack__content {
     position: relative;

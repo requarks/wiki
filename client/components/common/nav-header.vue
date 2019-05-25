@@ -317,7 +317,7 @@ export default {
 <style lang='scss'>
 
 .nav-header {
-  z-index: 1000;
+  //z-index: 1000;
 
   .v-toolbar__extension {
     padding: 0;
