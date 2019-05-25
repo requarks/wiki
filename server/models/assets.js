@@ -69,8 +69,14 @@ module.exports = class Asset extends Model {
     const fileInfo = path.parse(opts.originalname)
     const fileHash = assetHelper.generateHash(opts.assetPath)
 
-    // Create asset entry
-    const asset = await WIKI.models.assets.query().insert({
+    // Check for existing asset
+    let asset = await WIKI.models.assets.query().where({
+      hash: fileHash,
+      folderId: opts.folderId
+    }).first()
+
+    // Build Object
+    let assetRow = {
       filename: opts.originalname,
       hash: fileHash,
       ext: fileInfo.ext,
@@ -79,21 +85,34 @@ module.exports = class Asset extends Model {
       fileSize: opts.size,
       folderId: opts.folderId,
       authorId: opts.userId
-    })
+    }
 
     // Save asset data
     try {
       const fileBuffer = await fs.readFile(opts.path)
-      await WIKI.models.knex('assetData').insert({
-        id: asset.id,
-        data: fileBuffer
-      })
+
+      if (asset) {
+        // Patch existing asset
+        await WIKI.models.assets.query().patch(assetRow).findById(asset.id)
+        await WIKI.models.knex('assetData').where({
+          id: asset.id
+        }).update({
+          data: fileBuffer
+        })
+      } else {
+        // Create asset entry
+        asset = await WIKI.models.assets.query().insert(assetRow)
+        await WIKI.models.knex('assetData').insert({
+          id: asset.id,
+          data: fileBuffer
+        })
+      }
     } catch (err) {
       WIKI.logger.warn(err)
     }
 
     // Move temp upload to cache
-    await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`))
+    await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
   }
 
   static async getAsset(assetPath, res) {
