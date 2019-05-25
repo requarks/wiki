@@ -35,6 +35,7 @@ block body
             v-divider.my-2
           else if navItem.kind === 'header'
             v-subheader.pl-4= navItem.label
-      template(slot='contents')!= page.render
+      template(slot='contents')
+        div(v-pre)!= page.render
   if injectCode.body
     != injectCode.body
