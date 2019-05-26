@@ -54,10 +54,10 @@
               v-list-tile-avatar: v-icon lock_outline
               v-list-tile-title {{ $t('admin:auth.title') }}
             v-list-tile(to='/editor', disabled)
-              v-list-tile-avatar: v-icon transform
+              v-list-tile-avatar: v-icon(color='grey lighten-2') transform
               v-list-tile-title {{ $t('admin:editor.title') }}
-            v-list-tile(to='/logging')
-              v-list-tile-avatar: v-icon graphic_eq
+            v-list-tile(to='/logging', disabled)
+              v-list-tile-avatar: v-icon(color='grey lighten-2') graphic_eq
               v-list-tile-title {{ $t('admin:logging.title') }}
             v-list-tile(to='/rendering')
               v-list-tile-avatar: v-icon system_update_alt
@@ -71,8 +71,8 @@
           template(v-if='hasPermission([`manage:system`, `manage:api`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.system') }}
-            v-list-tile(to='/api', v-if='hasPermission([`manage:system`, `manage:api`])')
-              v-list-tile-avatar: v-icon call_split
+            v-list-tile(to='/api', v-if='hasPermission([`manage:system`, `manage:api`])', disabled)
+              v-list-tile-avatar: v-icon(color='grey lighten-2') call_split
               v-list-tile-title {{ $t('admin:api.title') }}
             v-list-tile(to='/mail', v-if='hasPermission(`manage:system`)')
               v-list-tile-avatar: v-icon email
@@ -83,6 +83,9 @@
             v-list-tile(to='/utilities', v-if='hasPermission(`manage:system`)', disabled)
               v-list-tile-avatar: v-icon(color='grey lighten-2') build
               v-list-tile-title {{ $t('admin:utilities.title') }}
+            v-list-tile(to='/webhooks', v-if='hasPermission(`manage:system`)', disabled)
+              v-list-tile-avatar: v-icon(color='grey lighten-2') ac_unit
+              v-list-tile-title {{ $t('admin:webhooks.title') }}
             v-list-group(
               to='/dev'
               no-action
@@ -150,6 +153,7 @@ const router = new VueRouter({
     { path: '/mail', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-mail.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
+    { path: '/webhooks', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-webhooks.vue') },
     { path: '/dev-flags', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-flags.vue') },
     { path: '/dev-graphiql', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-graphiql.vue') },
     { path: '/dev-voyager', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-voyager.vue') },

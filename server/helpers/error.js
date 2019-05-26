@@ -1,9 +1,41 @@
 const CustomError = require('custom-error-instance')
 
 module.exports = {
+  AssetDeleteForbidden: CustomError('AssetDeleteForbidden', {
+    message: 'You are not authorized to delete this asset.',
+    code: 2003
+  }),
   AssetFolderExists: CustomError('AssetFolderExists', {
     message: 'An asset folder with the same name already exists.',
+    code: 2002
+  }),
+  AssetGenericError: CustomError('AssetGenericError', {
+    message: 'An unexpected error occured during asset change.',
     code: 2001
+  }),
+  AssetInvalid: CustomError('AssetInvalid', {
+    message: 'This asset does not exist or is invalid.',
+    code: 2004
+  }),
+  AssetRenameCollision: CustomError('AssetRenameCollision', {
+    message: 'An asset with the same filename in the same folder already exists.',
+    code: 2005
+  }),
+  AssetRenameForbidden: CustomError('AssetRenameForbidden', {
+    message: 'You are not authorized to rename this asset.',
+    code: 2006
+  }),
+  AssetRenameInvalid: CustomError('AssetRenameInvalid', {
+    message: 'The new asset filename is invalid.',
+    code: 2007
+  }),
+  AssetRenameInvalidExt: CustomError('AssetRenameInvalidExt', {
+    message: 'The file extension cannot be changed on an existing asset.',
+    code: 2008
+  }),
+  AssetRenameTargetForbidden: CustomError('AssetRenameTargetForbidden', {
+    message: 'You are not authorized to rename this asset to the requested name.',
+    code: 2009
   }),
   AuthAccountBanned: CustomError('AuthAccountBanned', {
     message: 'Your account has been disabled.',

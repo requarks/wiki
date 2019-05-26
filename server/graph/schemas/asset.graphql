@@ -35,6 +35,15 @@ type AssetMutation {
     slug: String!
     name: String
   ): DefaultResponse @auth(requires: ["manage:system", "write:assets"])
+
+  renameAsset(
+    id: Int!
+    filename: String!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+
+  deleteAsset(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
 }
 
 # -----------------------------------------------

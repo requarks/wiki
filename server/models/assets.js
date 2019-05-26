@@ -65,6 +65,18 @@ module.exports = class Asset extends Model {
     this.updatedAt = moment.utc().toISOString()
   }
 
+  async getAssetPath() {
+    let hierarchy = []
+    if (this.folderId) {
+      hierarchy = await WIKI.models.assetFolders.getHierarchy(this.folderId)
+    }
+    return (this.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${this.filename}` : this.filename
+  }
+
+  async deleteAssetCache() {
+    await fs.remove(path.join(process.cwd(), `data/cache/${this.hash}.dat`))
+  }
+
   static async upload(opts) {
     const fileInfo = path.parse(opts.originalname)
     const fileHash = assetHelper.generateHash(opts.assetPath)

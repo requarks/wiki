@@ -45,16 +45,16 @@
                   v-list-tile-avatar: v-icon(color='indigo') code
                   v-list-tile-content View Source
                 v-list-tile(avatar, @click='pageMove')
-                  v-list-tile-avatar: v-icon(color='indigo') forward
-                  v-list-tile-content Move / Rename
+                  v-list-tile-avatar: v-icon(color='grey lighten-2') forward
+                  v-list-tile-content.grey--text.text--ligten-2 Move / Rename
                 v-list-tile(avatar, @click='pageDelete')
                   v-list-tile-avatar: v-icon(color='red darken-2') delete
                   v-list-tile-content Delete
               v-divider.my-0
               v-subheader Assets
               v-list-tile(avatar, @click='assets')
-                v-list-tile-avatar: v-icon(color='blue-grey') burst_mode
-                v-list-tile-content Images &amp; Files
+                v-list-tile-avatar: v-icon(color='grey lighten-2') burst_mode
+                v-list-tile-content.grey--text.text--ligten-2 Images &amp; Files
           v-toolbar-title(:class='{ "ml-2": $vuetify.breakpoint.mdAndUp, "ml-0": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')

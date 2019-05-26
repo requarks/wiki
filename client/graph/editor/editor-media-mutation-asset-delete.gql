@@ -1,0 +1,12 @@
+mutation ($id: Int!) {
+  assets {
+    deleteAsset(id: $id) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

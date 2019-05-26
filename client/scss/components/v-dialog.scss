@@ -15,6 +15,12 @@
                       radial-gradient(ellipse at bottom, mc('red', '800'), mc('red', '700'));
   }
 
+  &.is-orange {
+    background-color: mc('orange', '700');
+    background-image: radial-gradient(ellipse at top, mc('orange', '600'), mc('orange', '800')),
+                      radial-gradient(ellipse at bottom, mc('orange', '900'), mc('orange', '800'));
+  }
+
   &.is-indigo {
     background-color: mc('indigo', '700');
     background-image: radial-gradient(ellipse at top, mc('indigo', '500'), mc('indigo', '700')),

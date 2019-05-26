@@ -42,6 +42,32 @@
                       persistent-hint
                       )
                   v-divider
+                  v-subheader Logo #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
+                  v-card-text.pb-4.pl-5
+                    v-layout.px-3(row, align-center)
+                      v-avatar(size='100', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
+                      .ml-4
+                        v-btn.mx-0(color='teal', depressed, disabled)
+                          v-icon(left) cloud_upload
+                          span Upload Logo
+                        v-btn(color='teal', depressed, disabled)
+                          v-icon(left) clear
+                          span Clear
+                        .caption.grey--text An image of 120x120 pixels is recommended for best results.
+                        .caption.grey--text SVG, PNG or JPG files only.
+                  v-divider
+                  v-subheader Footer Copyright
+                  .px-3.pb-3
+                    v-text-field(
+                      outline
+                      label='Company / Organization Name'
+                      v-model='config.company'
+                      :counter='255'
+                      prepend-icon='business'
+                      persistent-hint
+                      hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
+                      )
+                  v-divider
                   v-subheader SEO
                   .px-3.pb-3
                     v-text-field(
@@ -64,67 +90,9 @@
                       hint='Default: Index, Follow. Can also be set on a per-page basis.'
                       persistent-hint
                       )
-                  v-divider
-                  v-subheader Analytics #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
-                  .px-3.pb-3
-                    v-select.mt-2(
-                      outline
-                      label='Analytics Service Provider'
-                      :items='analyticsServices'
-                      v-model='config.analyticsService'
-                      prepend-icon='timeline'
-                      persistent-hint
-                      hint='Automatically add tracking code for services like Google Analytics.'
-                      )
-                    v-text-field.mt-2(
-                      v-if='config.analyticsService !== ``'
-                      outline
-                      label='Property Tracking ID'
-                      :counter='255'
-                      v-model='config.analyticsId'
-                      prepend-icon='timeline'
-                      persistent-hint
-                      hint='A unique identifier provided by your analytics service provider.'
-                      )
-            v-flex(lg6 xs12)
-              v-card.wiki-form.animated.fadeInUp.wait-p2s
-                v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading {{ $t('admin:general.siteBranding') }}
-                v-subheader Logo #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
-                v-card-text
-                  v-layout.px-3(row, align-center)
-                    v-avatar(size='120', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
-                    .ml-4
-                      v-btn.mx-0(color='teal', depressed, disabled)
-                        v-icon(left) cloud_upload
-                        span Upload Logo
-                      v-btn(color='teal', depressed, disabled)
-                        v-icon(left) clear
-                        span Clear
-                      .caption.grey--text An image of 120x120 pixels is recommended for best results.
-                      .caption.grey--text SVG, PNG or JPG files only.
-                  v-switch(
-                    v-model='config.logoIsSquare'
-                    label='Use Square Logo Frame'
-                    color='primary'
-                    persistent-hint
-                    hint='Check this option if a round logo frame doesn\'t work with your logo.'
-                    )
-                v-divider
-                v-subheader Footer Copyright
-                .px-3.pb-3
-                  v-text-field(
-                    outline
-                    label='Company / Organization Name'
-                    v-model='config.company'
-                    :counter='255'
-                    prepend-icon='business'
-                    persistent-hint
-                    hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
-                    )
 
-              v-card.wiki-form.mt-3.animated.fadeInUp.wait-p4s
+            v-flex(lg6 xs12)
+              v-card.wiki-form.animated.fadeInUp.wait-p4s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading Features
@@ -132,12 +100,63 @@
                   v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
                   v-switch(
+                    label='Analytics'
+                    color='primary'
+                    v-model='config.featureAnalytics'
+                    persistent-hint
+                    hint='Enable site analytics using service provider.'
+                    disabled
+                    )
+                  v-select.mt-3(
+                    outline
+                    label='Analytics Service Provider'
+                    :items='analyticsServices'
+                    v-model='config.analyticsService'
+                    prepend-icon='subdirectory_arrow_right'
+                    persistent-hint
+                    hint='Automatically add tracking code for services like Google Analytics.'
+                    disabled
+                    )
+                  v-text-field.mt-2(
+                    v-if='config.analyticsService !== ``'
+                    outline
+                    label='Property Tracking ID'
+                    :counter='255'
+                    v-model='config.analyticsId'
+                    prepend-icon='timeline'
+                    persistent-hint
+                    hint='A unique identifier provided by your analytics service provider.'
+                    )
+
+                  v-divider.mt-3
+                  v-switch(
+                    label='Asset Image Optimization'
+                    color='primary'
+                    v-model='config.featureTinyPNG'
+                    persistent-hint
+                    hint='Image optimization tool to reduce filesize and bandwidth costs.'
+                    disabled
+                    )
+                  v-text-field.mt-3(
+                    outline
+                    label='TinyPNG API Key'
+                    :counter='255'
+                    v-model='config.description'
+                    prepend-icon='subdirectory_arrow_right'
+                    hint='Get your API key at https://tinypng.com/developers'
+                    persistent-hint
+                    disabled
+                    )
+
+                  v-divider.mt-3
+                  v-switch(
                     label='Page Ratings'
                     color='primary'
                     v-model='config.featurePageRatings'
                     persistent-hint
                     hint='Allow users to rate pages.'
                     )
+
                   v-divider.mt-3
                   v-switch(
                     label='Page Comments'
@@ -146,6 +165,7 @@
                     persistent-hint
                     hint='Allow users to leave comments on pages.'
                     )
+
                   v-divider.mt-3
                   v-switch(
                     label='Personal Wikis'
@@ -188,9 +208,11 @@ export default {
         company: '',
         hasLogo: false,
         logoIsSquare: false,
+        featureAnalytics: false,
         featurePageRatings: false,
         featurePageComments: false,
-        featurePersonalWikis: false
+        featurePersonalWikis: false,
+        featureTinyPNG: false
       }
     }
   },

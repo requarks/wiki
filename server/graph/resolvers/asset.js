@@ -1,5 +1,7 @@
+const _ = require('lodash')
 const sanitize = require('sanitize-filename')
 const graphHelper = require('../../helpers/graph')
+const assetHelper = require('../../helpers/asset')
 
 /* global WIKI */
 
@@ -33,6 +35,9 @@ module.exports = {
     }
   },
   AssetMutation: {
+    /**
+     * Create New Asset Folder
+     */
     async createFolder(obj, args, context) {
       try {
         const folderSlug = sanitize(args.slug).toLowerCase()
@@ -56,35 +61,100 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * Rename an Asset
+     */
+    async renameAsset(obj, args, context) {
+      try {
+        const filename = sanitize(args.filename).toLowerCase()
+
+        const asset = await WIKI.models.assets.query().findById(args.id)
+        if (asset) {
+          // Check for extension mismatch
+          if (!_.endsWith(filename, asset.ext)) {
+            throw new WIKI.Error.AssetRenameInvalidExt()
+          }
+
+          // Check for non-dot files changing to dotfile
+          if (asset.ext.length > 0 && filename.length - asset.ext.length < 1) {
+            throw new WIKI.Error.AssetRenameInvalid()
+          }
+
+          // Check for collision
+          const assetCollision = await WIKI.models.assets.query().where({
+            filename,
+            folderId: asset.folderId
+          }).first()
+          if (assetCollision) {
+            throw new WIKI.Error.AssetRenameCollision()
+          }
+
+          // Get asset folder path
+          let hierarchy = []
+          if (asset.folderId) {
+            hierarchy = await WIKI.models.assetFolders.getHierarchy(asset.folderId)
+          }
+
+          // Check source asset permissions
+          const assetSourcePath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${filename}` : filename
+          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetSourcePath })) {
+            throw new WIKI.Error.AssetRenameForbidden()
+          }
+
+          // Check target asset permissions
+          const assetTargetPath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${filename}` : filename
+          if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: assetTargetPath })) {
+            throw new WIKI.Error.AssetRenameTargetForbidden()
+          }
+
+          // Update filename + hash
+          const fileHash = assetHelper.generateHash(assetTargetPath)
+          await WIKI.models.assets.query().patch({
+            filename: filename,
+            hash: fileHash
+          }).findById(args.id)
+
+          // Delete old asset cache
+          await asset.deleteAssetCache()
+
+          return {
+            responseResult: graphHelper.generateSuccess('Asset has been renamed successfully.')
+          }
+        } else {
+          throw new WIKI.Error.AssetInvalid()
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Delete an Asset
+     */
+    async deleteAsset(obj, args, context) {
+      try {
+        const asset = await WIKI.models.assets.query().findById(args.id)
+        if (asset) {
+          // Check permissions
+          const assetPath = asset.getAssetPath()
+          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath })) {
+            throw new WIKI.Error.AssetDeleteForbidden()
+          }
+
+          await WIKI.models.knex('assetData').where('id', args.id).del()
+          await WIKI.models.assets.query().deleteById(args.id)
+          await asset.deleteAssetCache()
+
+          return {
+            responseResult: graphHelper.generateSuccess('Asset has been deleted successfully.')
+          }
+        } else {
+          throw new WIKI.Error.AssetInvalid()
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
-    // deleteFile(obj, args) {
-    //   return WIKI.models.File.destroy({
-    //     where: {
-    //       id: args.id
-    //     },
-    //     limit: 1
-    //   })
-    // },
-    // renameFile(obj, args) {
-    //   return WIKI.models.File.update({
-    //     filename: args.filename
-    //   }, {
-    //     where: { id: args.id }
-    //   })
-    // },
-    // moveFile(obj, args) {
-    //   return WIKI.models.File.findById(args.fileId).then(fl => {
-    //     if (!fl) {
-    //       throw new gql.GraphQLError('Invalid File ID')
-    //     }
-    //     return WIKI.models.Folder.findById(args.folderId).then(fld => {
-    //       if (!fld) {
-    //         throw new gql.GraphQLError('Invalid Folder ID')
-    //       }
-    //       return fl.setFolder(fld)
-    //     })
-    //   })
-    // }
   }
   // File: {
   //   folder(fl) {

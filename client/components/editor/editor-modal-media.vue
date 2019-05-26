@@ -70,38 +70,38 @@
                         v-btn.ma-0(icon, slot='activator')
                           v-icon(color='grey darken-2') more_horiz
                         v-list.py-0(style='border-top: 5px solid #444;')
-                          v-list-tile(@click='')
+                          v-list-tile(@click='', disabled)
                             v-list-tile-avatar
                               v-icon(color='teal') short_text
                             v-list-tile-content Properties
                           v-divider
                           template(v-if='props.item.kind === `IMAGE`')
-                            v-list-tile(@click='')
+                            v-list-tile(@click='previewDialog = true', disabled)
                               v-list-tile-avatar
                                 v-icon(color='green') image_search
                               v-list-tile-content Preview
                             v-divider
-                            v-list-tile(@click='')
+                            v-list-tile(@click='', disabled)
                               v-list-tile-avatar
                                 v-icon(color='indigo') crop_rotate
                               v-list-tile-content Edit
                             v-divider
-                            v-list-tile(@click='')
+                            v-list-tile(@click='', disabled)
                               v-list-tile-avatar
                                 v-icon(color='purple') offline_bolt
                               v-list-tile-content Optimize
                             v-divider
-                          v-list-tile(@click='')
+                          v-list-tile(@click='openRenameDialog')
                             v-list-tile-avatar
                               v-icon(color='orange') keyboard
                             v-list-tile-content Rename
                           v-divider
-                          v-list-tile(@click='')
+                          v-list-tile(@click='', disabled)
                             v-list-tile-avatar
                               v-icon(color='blue') forward
                             v-list-tile-content Move
                           v-divider
-                          v-list-tile(@click='')
+                          v-list-tile(@click='deleteDialog = true')
                             v-list-tile-avatar
                               v-icon(color='red') delete
                             v-list-tile-content Delete
@@ -186,6 +186,44 @@
                 background-color='grey lighten-2'
                 placeholder='None'
               )
+
+    //- RENAME DIALOG
+
+    v-dialog(v-model='renameDialog', max-width='550', persistent)
+      v-card.wiki-form
+        .dialog-header.is-short.is-orange
+          v-icon.mr-2(color='white') keyboard
+          span Rename Asset
+        v-card-text
+          .body-2 Enter the new name for this asset:
+          v-text-field(
+            outline
+            single-line
+            :counter='255'
+            v-model='renameAssetName'
+            @keyup.enter='renameAsset'
+            :disabled='renameAssetLoading'
+          )
+        v-card-chin
+          v-spacer
+          v-btn(flat, @click='renameDialog = false', :disabled='renameAssetLoading') Cancel
+          v-btn(color='orange darken-3', @click='renameAsset', :loading='renameAssetLoading').white--text Rename
+
+    //- DELETE DIALOG
+
+    v-dialog(v-model='deleteDialog', max-width='550', persistent)
+      v-card.wiki-form
+        .dialog-header.is-short.is-red
+          v-icon.mr-2(color='white') highlight_off
+          span Delete Asset
+        v-card-text
+          .body-2 Are you sure you want to delete asset
+          .body-2.red--text.text--darken-2 {{currentAsset.filename}}?
+          .caption.mt-3 This action cannot be undone!
+        v-card-chin
+          v-spacer
+          v-btn(flat, @click='deleteDialog = false', :disabled='deleteAssetLoading') Cancel
+          v-btn(color='red darken-2', @click='deleteAsset', :loading='deleteAssetLoading').white--text Delete
 </template>
 
 <script>
@@ -197,6 +235,8 @@ import 'filepond/dist/filepond.min.css'
 import listAssetQuery from 'gql/editor/editor-media-query-list.gql'
 import listFolderAssetQuery from 'gql/editor/editor-media-query-folder-list.gql'
 import createAssetFolderMutation from 'gql/editor/editor-media-mutation-folder-create.gql'
+import renameAssetMutation from 'gql/editor/editor-media-mutation-asset-rename.gql'
+import deleteAssetMutation from 'gql/editor/editor-media-mutation-asset-delete.gql'
 
 const FilePond = vueFilePond()
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
@@ -234,7 +274,13 @@ export default {
       loading: false,
       newFolderDialog: false,
       newFolderName: '',
-      newFolderLoading: false
+      newFolderLoading: false,
+      previewDialog: false,
+      renameDialog: false,
+      renameAssetName: '',
+      renameAssetLoading: false,
+      deleteDialog: false,
+      deleteAssetLoading: false
     }
   },
   computed: {
@@ -262,6 +308,9 @@ export default {
     },
     isFolderNameValid() {
       return this.newFolderName.length > 1 && !localeSegmentRegex.test(this.newFolderName) && !disallowedFolderChars.test(this.newFolderName)
+    },
+    currentAsset () {
+      return _.find(this.assets, ['id', this.currentFileId]) || {}
     }
   },
   watch: {
@@ -389,6 +438,67 @@ export default {
       }
       this.newFolderLoading = false
       this.$store.commit(`loadingStop`, 'editor-media-createfolder')
+    },
+    openRenameDialog() {
+      this.renameAssetName = this.currentAsset.filename
+      this.renameDialog = true
+    },
+    async renameAsset() {
+      this.$store.commit(`loadingStart`, 'editor-media-renameasset')
+      this.renameAssetLoading = true
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: renameAssetMutation,
+          variables: {
+            id: this.currentFileId,
+            filename: this.renameAssetName
+          }
+        })
+        if (_.get(resp, 'data.assets.renameAsset.responseResult.succeeded', false)) {
+          await this.$apollo.queries.assets.refetch()
+          this.$store.commit('showNotification', {
+            message: 'Asset renamed successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+          this.renameDialog = false
+          this.renameAssetName = ''
+        } else {
+          this.$store.commit('pushGraphError', new Error(_.get(resp, 'data.assets.renameAsset.responseResult.message')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.renameAssetLoading = false
+      this.$store.commit(`loadingStop`, 'editor-media-renameasset')
+    },
+    async deleteAsset() {
+      this.$store.commit(`loadingStart`, 'editor-media-deleteasset')
+      this.deleteAssetLoading = true
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: deleteAssetMutation,
+          variables: {
+            id: this.currentFileId
+          }
+        })
+        if (_.get(resp, 'data.assets.deleteAsset.responseResult.succeeded', false)) {
+          this.currentFileId = null
+          await this.$apollo.queries.assets.refetch()
+          this.$store.commit('showNotification', {
+            message: 'Asset deleted successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+          this.deleteDialog = false
+        } else {
+          this.$store.commit('pushGraphError', new Error(_.get(resp, 'data.assets.deleteAsset.responseResult.message')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.deleteAssetLoading = false
+      this.$store.commit(`loadingStop`, 'editor-media-deleteasset')
     }
   },
   apollo: {
