@@ -90,6 +90,8 @@
                   v-list-tile-content
                     v-list-tile-title(v-html='dbVersion')
                     v-list-tile-sub-title {{ info.dbHost }}
+
+                v-alert.mt-3(:value='isDbLimited', color='deep-orange', icon='warning') Your database version is not fully supported. Some functionality may be limited or not work as expected.
 </template>
 
 <script>
@@ -127,6 +129,9 @@ export default {
         default:
           return ''
       }
+    },
+    isDbLimited() {
+      return this.info.dbType === 'MySQL' && this.dbVersion.indexOf('5.') === 0
     }
   },
   methods: {

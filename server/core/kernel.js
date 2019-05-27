@@ -8,6 +8,7 @@ module.exports = {
     WIKI.logger.info('=======================================')
     WIKI.logger.info(`= Wiki.js ${_.padEnd(WIKI.version + ' ', 29, '=')}`)
     WIKI.logger.info('=======================================')
+    WIKI.logger.info('Initializing...')
 
     WIKI.models = require('./db').init()
 

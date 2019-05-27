@@ -15,7 +15,7 @@ port: 3000
 # ---------------------------------------------------------------------
 # Supported Database Engines:
 # - postgres = PostgreSQL 9.5 or later
-# - mysql = MySQL 5.7.8
+# - mysql = MySQL 8.0 or later (5.7.8 partially supported, refer to docs)
 # - mariadb = MariaDB 10.2.7 or later
 # - mssql = MS SQL Server 2012 or later
 # - sqlite = SQLite 3.9 or later
