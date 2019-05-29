@@ -96,7 +96,7 @@ logLevel: info
 # ---------------------------------------------------------------------
 # Upload Limits
 # ---------------------------------------------------------------------
-# If you're using a reverse-proxy in front of Wiki.ks, you must also
+# If you're using a reverse-proxy in front of Wiki.js, you must also
 # change your proxy upload limits!
 
 uploads:
