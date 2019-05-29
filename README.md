@@ -63,7 +63,7 @@ Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linu
 
 - Node.js **10.12** or later
 - One of the following supported database engines:
-  - MySQL **5.7.8** or later
+  - MySQL **8.0** or later
   - PostgreSQL **9.5** or later
   - MariaDB **10.2.7** or later
   - Microsoft SQL Server **2012** or later
