@@ -35,7 +35,7 @@ module.exports = {
     }
 
     // Strip extension
-    if (opts.stripExt) {
+    if (opts.stripExt && pathParts.length > 0) {
       const lastPart = _.last(pathParts)
       if (lastPart.indexOf('.') > 0) {
         pathParts.pop()
@@ -78,7 +78,7 @@ module.exports = {
    */
   isReservedPath(rawPath) {
     const firstSection = _.head(rawPath.split('/'))
-    if (firstSection.length === 1) {
+    if (firstSection.length <= 1) {
       return true
     } else if (localeSegmentRegex.test(firstSection)) {
       return true
