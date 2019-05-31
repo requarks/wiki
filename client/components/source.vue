@@ -66,7 +66,7 @@ export default {
   pre > code {
     box-shadow: none;
     color: mc('grey', '800');
-    font-family: 'Source Code Pro', sans-serif;
+    font-family: 'Roboto Mono', sans-serif;
     font-weight: 400;
     font-size: 1rem;
 
