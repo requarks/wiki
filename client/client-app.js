@@ -8,7 +8,6 @@ import { ApolloClient } from 'apollo-client'
 import { BatchHttpLink } from 'apollo-link-batch-http'
 import { ApolloLink, split } from 'apollo-link'
 import { WebSocketLink } from 'apollo-link-ws'
-import { createUploadLink } from 'apollo-upload-client'
 import { ErrorLink } from 'apollo-link-error'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import { getMainDefinition } from 'apollo-utilities'
@@ -54,33 +53,6 @@ store.commit('user/REFRESH_AUTH')
 
 const graphQLEndpoint = window.location.protocol + '//' + window.location.host + '/graphql'
 const graphQLWSEndpoint = ((window.location.protocol === 'https:') ? 'wss:' : 'ws:') + '//' + window.location.host + '/graphql-subscriptions'
-
-const graphQLFetch = async (uri, options) => {
-  // Strip __typename fields from variables
-  let body = JSON.parse(options.body)
-  body = body.map(bd => {
-    return ({
-      ...bd,
-      variables: JSON.parse(JSON.stringify(bd.variables), (key, value) => { return key === '__typename' ? undefined : value })
-    })
-  })
-  options.body = JSON.stringify(body)
-
-  // Inject authentication token
-  const jwtToken = Cookies.get('jwt')
-  if (jwtToken) {
-    options.headers.Authorization = `Bearer ${jwtToken}`
-  }
-
-  const resp = await fetch(uri, options)
-
-  // Handle renewed JWT
-  const newJWT = resp.headers.get('new-jwt')
-  if (newJWT) {
-    Cookies.set('jwt', newJWT, { expires: 365 })
-  }
-  return resp
-}
 
 const graphQLLink = ApolloLink.from([
   new ErrorLink(({ graphQLErrors, networkError }) => {
@@ -138,28 +110,6 @@ const graphQLLink = ApolloLink.from([
   })
 ])
 
-const graphQLUploadLink = createUploadLink({
-  includeExtensions: true,
-  uri: graphQLEndpoint,
-  credentials: 'include',
-  fetch: async (uri, options) => {
-    // Inject authentication token
-    const jwtToken = Cookies.get('jwt')
-    if (jwtToken) {
-      options.headers.Authorization = `Bearer ${jwtToken}`
-    }
-
-    const resp = await fetch(uri, options)
-
-    // Handle renewed JWT
-    const newJWT = resp.headers.get('new-jwt')
-    if (newJWT) {
-      Cookies.set('jwt', newJWT, { expires: 365 })
-    }
-    return resp
-  }
-})
-
 const graphQLWSLink = new WebSocketLink({
   uri: graphQLWSEndpoint,
   options: {
@@ -172,7 +122,7 @@ window.graphQL = new ApolloClient({
   link: split(({ query }) => {
     const { kind, operation } = getMainDefinition(query)
     return kind === 'OperationDefinition' && operation === 'subscription'
-  }, graphQLWSLink, split(operation => operation.getContext().hasUpload, graphQLUploadLink, graphQLLink)),
+  }, graphQLWSLink, graphQLLink),
   cache: new InMemoryCache(),
   connectToDevTools: (process.env.node_env === 'development')
 })

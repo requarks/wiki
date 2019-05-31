@@ -194,7 +194,7 @@ module.exports = {
       filename: '../server/views/master.pug',
       hash: false,
       inject: false,
-      excludeChunks	: ['setup']
+      excludeChunks: ['setup']
     }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/setup.pug',
