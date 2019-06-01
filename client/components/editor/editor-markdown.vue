@@ -61,7 +61,7 @@
                 v-icon(color='warning') format_quote
               v-list-tile-title Warning Blockquote
             v-divider
-            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-error}`})')
+            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})')
               v-list-tile-action
                 v-icon(color='error') format_quote
               v-list-tile-title Error Blockquote
