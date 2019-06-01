@@ -224,7 +224,7 @@ export default {
   },
   watch: {
     value(newValue, oldValue) {
-      if(newValue) {
+      if (newValue) {
         _.delay(() => {
           this.$refs.iptTitle.focus()
           // this.$tours['editorPropertiesTour'].start()

@@ -3,17 +3,18 @@
     v-container.pa-3(grid-list-lg, fluid)
       v-layout(row, wrap)
         v-flex(xs12, xl9)
-          v-card.radius-7.animated.fadeInLeft.wait-p1s(light)
+          v-card.radius-7.animated.fadeInLeft.wait-p1s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text
               .d-flex
-                v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
-                  .body-2.teal--text Assets
-                v-btn.ml-3.my-0.radius-7(outline, large, color='teal', icon, @click='refresh')
-                  v-icon cached
+                v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat, height='44')
+                  .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Assets
+                  v-spacer
+                  v-btn(flat, icon, @click='refresh')
+                    v-icon cached
                 v-dialog(v-model='newFolderDialog', max-width='550')
                   v-btn.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly', slot='activator')
                     v-icon(:left='$vuetify.breakpoint.mdAndUp') add
-                    span.hidden-sm-and-down New Folder
+                    span.hidden-sm-and-down(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') New Folder
                   v-card.wiki-form
                     .dialog-header.is-short New Folder
                     v-card-text
@@ -33,13 +34,20 @@
                       v-spacer
                       v-btn(flat, @click='newFolderDialog = false') Cancel
                       v-btn(color='primary', @click='createFolder', :disabled='!isFolderNameValid', :loading='newFolderLoading') Create
+              v-toolbar(flat, dense, :color='$vuetify.dark ? `grey darken-3` : `white`')
+                template(v-if='folderTree.length > 0')
+                  .body-2
+                    span.mr-1 /
+                    template(v-for='folder of folderTree')
+                      span(:key='folder.id') {{folder.name}}
+                      span.mx-1 /
+                .body-2(v-else) / #[em root]
               template(v-if='folders.length > 0 || currentFolderId > 0')
-                .pt-2
-                  v-btn.is-icon.mx-1(color='grey darken-2', outline, :dark='currentFolderId > 0', @click='upFolder()', :disabled='currentFolderId === 0')
-                    v-icon keyboard_arrow_up
-                  v-btn.btn-normalcase.mx-1(v-for='folder of folders', :key='folder.id', depressed,  color='grey darken-2', dark, @click='downFolder(folder)')
-                    v-icon(left) folder
-                    span {{ folder.name }}
+                v-btn.is-icon.mx-1(:color='$vuetify.dark ? `grey lighten-1` : `grey darken-2`', outline, :dark='currentFolderId > 0', @click='upFolder()', :disabled='currentFolderId === 0')
+                  v-icon keyboard_arrow_up
+                v-btn.btn-normalcase.mx-1(v-for='folder of folders', :key='folder.id', depressed,  color='grey darken-2', dark, @click='downFolder(folder)')
+                  v-icon(left) folder
+                  span {{ folder.name }}
                 v-divider.mt-2
               v-data-table(
                 :items='assets'
@@ -54,7 +62,7 @@
                   tr.is-clickable(
                     @click.left='currentFileId = props.item.id'
                     @click.right.prevent=''
-                    :class='currentFileId === props.item.id ? `teal lighten-5` : ``'
+                    :class='currentFileId === props.item.id ? ($vuetify.dark ? `grey darken-3-d5` : `teal lighten-5`) : ``'
                     )
                     td.text-xs-right(v-if='$vuetify.breakpoint.smAndUp') {{ props.item.id }}
                     td
@@ -110,31 +118,22 @@
               .text-xs-center.py-2(v-if='this.pageTotal > 1')
                 v-pagination(v-model='pagination.page', :length='pageTotal')
               .d-flex.mt-3
-                v-toolbar.radius-7(flat, color='grey lighten-4', dense, height='44')
-                  template(v-if='folderTree.length > 0')
-                    .body-2
-                      span.mr-1 /
-                      template(v-for='folder of folderTree')
-                        span(:key='folder.id') {{folder.name}}
-                        span.mx-1 /
-                  .body-2(v-else) / #[em root]
-                  template(v-if='$vuetify.breakpoint.smAndUp')
-                    v-spacer
-                    .body-1.grey--text.text--darken-1 {{assets.length}} files
+                v-toolbar.radius-7(flat, :color='$vuetify.dark ? `grey darken-2` : `grey lighten-4`', dense, height='44')
+                  .body-1(:class='$vuetify.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{assets.length}} files
                 v-btn.ml-3.mr-0.my-0.radius-7(color='teal', large, @click='insert', :disabled='!currentFileId', :dark='currentFileId !== null')
                   v-icon(left) save_alt
                   span Insert
 
         v-flex(xs12, xl3)
-          v-card.radius-7.animated.fadeInRight.wait-p3s(light)
+          v-card.radius-7.animated.fadeInRight.wait-p3s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text
               .d-flex
-                v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
-                  v-icon.mr-3(color='teal') cloud_upload
-                  .body-2.teal--text Upload Assets
+                v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat, height='44')
+                  v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') cloud_upload
+                  .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Upload Assets
                 v-btn.my-0.ml-3.mr-0.radius-7(outline, large, color='teal', @click='browse', v-if='$vuetify.breakpoint.mdAndUp')
                   v-icon(left) touch_app
-                  span Browse
+                  span(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') Browse
               file-pond.mt-3(
                 name='mediaUpload'
                 ref='pond'
@@ -153,11 +152,11 @@
               v-spacer
               v-btn(color='teal', dark, @click='upload') Upload
 
-          v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(light)
+          v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text.pb-0
-              v-toolbar.radius-7(color='teal lighten-5', dense, flat)
-                v-icon.mr-3(color='teal') cloud_download
-                .body-2.teal--text Fetch Remote Image
+              v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat)
+                v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') cloud_download
+                .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Fetch Remote Image
                 v-spacer
                 v-chip(label, color='white', small).teal--text coming soon
               v-text-field.mt-3(
@@ -173,11 +172,11 @@
               v-spacer
               v-btn(color='teal', disabled) Fetch
 
-          v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(light)
+          v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text.pb-0
-              v-toolbar.radius-7(color='teal lighten-5', dense, flat)
-                v-icon.mr-3(color='teal') format_align_left
-                .body-2.teal--text Image Alignment
+              v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat)
+                v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') format_align_left
+                .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Image Alignment
               v-select.mt-3(
                 v-model='imageAlignment'
                 :items='imageAlignments'
@@ -303,7 +302,7 @@ export default {
         this.$vuetify.breakpoint.lgAndUp && { text: 'Type', value: 'ext', width: 50 },
         this.$vuetify.breakpoint.mdAndUp && { text: 'File Size', value: 'fileSize', width: 110 },
         this.$vuetify.breakpoint.mdAndUp && { text: 'Added', value: 'createdAt', width: 175 },
-        this.$vuetify.breakpoint.smAndUp && { text: 'Actions', value: '', width: 40, sortable: false, align:'right' }
+        this.$vuetify.breakpoint.smAndUp && { text: 'Actions', value: '', width: 40, sortable: false, align: 'right' }
       ])
     },
     isFolderNameValid() {
@@ -350,10 +349,10 @@ export default {
     async refresh() {
       await this.$apollo.queries.assets.refetch()
       this.$store.commit('showNotification', {
-          message: 'List of assets refreshed successfully.',
-          style: 'success',
-          icon: 'check'
-        })
+        message: 'List of assets refreshed successfully.',
+        style: 'success',
+        icon: 'check'
+      })
     },
     insert () {
       const asset = _.find(this.assets, ['id', this.currentFileId])
