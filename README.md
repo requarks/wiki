@@ -51,11 +51,13 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 
 Wiki.js is an open source project that has been made possible due to the generous contributions by community [backers](https://github.com/Requarks/wiki/blob/master/BACKERS.md). If you are interested in supporting this project, please consider [becoming a patron](https://www.patreon.com/requarks) or donating to our [OpenCollective](https://opencollective.com/wikijs).
 
-<a href="https://www.patreon.com/requarks">
-  <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patron" />
-</a> <a href="https://opencollective.com/wikijs">
-  <img src="https://github.com/Requarks/wiki/blob/master/client/static/img/donate_opencollective.png?raw=true" width="330" />
-</a>
+<div align="center">
+  <a href="https://www.patreon.com/requarks">
+    <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patron" />
+  </a> <a href="https://opencollective.com/wikijs">
+    <img src="https://github.com/Requarks/wiki/blob/master/client/static/img/donate_opencollective.png?raw=true" width="330" />
+  </a>
+</div>
 
 <h2 align="center">Docker</h2>
 
