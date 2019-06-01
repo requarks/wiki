@@ -95,7 +95,7 @@ Want to donate to this project but get something in return as well? Check out ou
 
 <h2 align="center">Translations</h2>
 
-We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, contact us on our [gitter channel](https://gitter.im/Requarks/wiki) and we'll provide you access to our translation tool, absolutely no coding required!
+We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, contact us on our [Slack channel](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU) and we'll provide you access to our translation tool, absolutely no coding required!
 
 <h2 align="center">Special Thanks</h2>
 
