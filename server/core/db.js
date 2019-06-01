@@ -29,7 +29,8 @@ module.exports = {
       user: WIKI.config.db.user,
       password: WIKI.config.db.pass,
       database: WIKI.config.db.db,
-      port: WIKI.config.db.port
+      port: WIKI.config.db.port,
+      ssl: !_.isNil(WIKI.config.db.ssl) && WIKI.config.db.ssl !== false
     }
 
     switch (WIKI.config.db.type) {

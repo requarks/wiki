@@ -28,6 +28,7 @@ db:
   user: wikijs
   pass: wikijsrocks
   db: wiki
+  ssl: false
   # SQLite only:
   storage: path/to/database.sqlite
 

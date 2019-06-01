@@ -8,5 +8,6 @@ db:
   pass: $(DB_PASS)
   db: $(DB_NAME)
   storage: $(DB_FILEPATH)
+  ssl: $(DB_SSL)
 trustProxy: $(TRUST_PROXY)
 logLevel: info
