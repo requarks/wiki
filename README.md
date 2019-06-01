@@ -41,7 +41,7 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 - [Demo](#demo)
 - [Change Log](https://docs-beta.requarks.io/releases)
 - [Feature Requests](https://requests.requarks.io/wiki)
-- [Chat with us](#gitter)
+- [Chat with us on Slack](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU)
 - [T-Shirts Shop](#t-shirts-shop)
 - [Translations](#translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
@@ -72,8 +72,8 @@ Check out our [documentation site](https://docs-beta.requarks.io), it's running 
 
 <h2 align="center">Gitter</h2>
 
-Want to discuss features, ideas or issues? Join our [gitter channel](https://gitter.im/Requarks/wiki). We are very active and friendly!  
-[![Chat on Gitter](https://img.shields.io/badge/chat-on_gitter-CC2B5E.svg?style=flat-square&logo=image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAOCAMAAADUg/YpAAAABlBMVEUAAAD///%2Bl2Z/dAAAAAXRSTlMAQObYZgAAABVJREFUeAFjwAUYYTQByAAh0WicAAAFnwAYeB5bLwAAAABJRU5ErkJggg==)](https://gitter.im/Requarks/wiki)
+Want to discuss features, ideas or issues? Join our [Slack channel](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU). We are very active and friendly!  
+[![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU)
 
 <h2 align="center">Twitter</h2>
 
