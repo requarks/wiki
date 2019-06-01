@@ -38,11 +38,10 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 
 - **[Official Website](https://wiki.js.org/)**
 - **[Documentation](https://docs-beta.requarks.io/)**
-- [Requirements](#requirements)
+- [Requirements](https://docs-beta.requarks.io/install/requirements)
 - [Demo](#demo)
-- [Change Log](https://github.com/Requarks/wiki/blob/master/CHANGELOG.md)
+- [Change Log](https://docs-beta.requarks.io/releases)
 - [Feature Requests](https://requests.requarks.io/wiki)
-- [Milestones](#milestones)
 - [Chat with us](#gitter)
 - [T-Shirts Shop](#t-shirts-shop)
 - [Translations](#translations) *(We need your help!)*
@@ -55,21 +54,9 @@ Wiki.js is an open source project that has been made possible due to the generou
 
 <a href="https://www.patreon.com/requarks">
   <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patron" />
+</a> <a href="https://opencollective.com/wikijs">
+  <img src="https://github.com/Requarks/wiki/blob/master/client/static/img/donate_opencollective.png?raw=true" width="330" />
 </a>
-
-<h2 align="center">Requirements</h2>
-
-Wiki.js can run on virtually all platforms where Node.js can (Windows, Mac, Linux, etc.) or using Docker!
-
-- Node.js **10.12** or later
-- One of the following supported database engines:
-  - MySQL **8.0** or later
-  - PostgreSQL **9.5** or later
-  - MariaDB **10.2.7** or later
-  - Microsoft SQL Server **2012** or later
-  - SQLite **3.9** or later
-
-> Read the full [prerequisites](https://docs-beta.requarks.io/install/requirements) article for full details.
 
 <h2 align="center">Docker</h2>
 
@@ -80,10 +67,6 @@ You can also use Docker Compose ([see example](https://github.com/Requarks/wiki/
 <h2 align="center">Demo</h2>
 
 Check out our [documentation site](https://docs-beta.requarks.io), it's running Wiki.js!
-
-<h2 align="center">Milestones</h2>
-
-:bookmark_tabs: See [project board](https://github.com/Requarks/wiki/projects/5) to keep track of current progress.
 
 <h2 align="center">Gitter</h2>
 
