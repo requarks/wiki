@@ -4,7 +4,7 @@ const fs = require('fs-extra')
 const yargs = require('yargs').argv
 const _ = require('lodash')
 
-const CleanWebpackPlugin = require('clean-webpack-plugin')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
@@ -204,7 +204,7 @@ module.exports = {
       filename: '../server/views/master.pug',
       hash: false,
       inject: false,
-      excludeChunks	: ['setup']
+      excludeChunks: ['setup']
     }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/setup.pug',
