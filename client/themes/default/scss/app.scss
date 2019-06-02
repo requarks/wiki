@@ -151,6 +151,11 @@
       margin-right: .5rem;
     }
 
+    &.valign-center > p {
+      display: flex;
+      align-items: center;
+    }
+
     &.is-info {
       background-color: mc('blue', '50');
       background-image: radial-gradient(ellipse at top, mc('blue', '50'), lighten(mc('blue', '50'), 5%));
@@ -265,6 +270,28 @@
           text-decoration: none;
           margin: -1rem;
           padding: 1rem;
+
+          > em {
+            font-weight: 400;
+            font-style: normal;
+            color: mc('grey', '700');
+            display: inline-block;
+            padding-left: .5rem;
+            border-left: 1px solid mc('grey', '300');
+            margin-left: .5rem;
+
+            &.is-block {
+              display: block;
+              padding-left: 0;
+              margin-left: 0;
+              border-left: none;
+            }
+          }
+        }
+
+        > em {
+          font-weight: 400;
+          font-style: normal;
         }
 
         @at-root .theme--dark & {
@@ -481,8 +508,10 @@
     }
     &.align-abstopright {
       position: absolute;
-      top: -80px;
+      top: -90px;
       right: 1rem;
+      height: calc(90px - 2rem);
+      width: auto;
     }
     &.decor-shadow {
       box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);

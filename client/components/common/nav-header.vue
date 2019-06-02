@@ -19,7 +19,7 @@
     v-layout(row)
       v-flex(xs6, :md4='searchIsShown', :md6='!searchIsShown')
         v-toolbar.nav-header-inner(color='black', dark, flat)
-          v-menu(open-on-hover, offset-y, bottom, left, min-width='250')
+          v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
             v-toolbar-side-icon.btn-animate-app(slot='activator')
               v-icon view_module
             v-list(dense, :light='!$vuetify.dark', :dark='$vuetify.dark', :class='$vuetify.dark ? `grey darken-4` : ``').py-0
@@ -137,11 +137,22 @@
             icon
             )
             v-icon(color='grey') search
+          //- v-menu(offset-y, left, transition='slide-y-transition')
+          //-   v-tooltip(bottom, slot='activator')
+          //-     v-btn(icon, slot='activator')
+          //-       v-icon(color='grey') language
+          //-     span Language
+          //-   v-list.py-0
+          //-     template(v-for='(lc, idx) of locales')
+          //-       v-list-tile(@click='changeLocale(lc)')
+          //-         v-list-tile-action: v-chip(:color='lc.code === $i18n.i18next.language ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
+          //-         v-list-tile-title {{lc.name}}
+          //-       v-divider.my-0(v-if='idx < locales.length - 1')
           v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
             v-btn.btn-animate-rotate(icon, href='/a', slot='activator')
               v-icon(color='grey') settings
             span Admin
-          v-menu(v-if='isAuthenticated', offset-y, min-width='300', left)
+          v-menu(v-if='isAuthenticated', offset-y, min-width='300', left, transition='slide-y-transition')
             v-tooltip(bottom, slot='activator')
               v-btn(icon, slot='activator', outline, color='blue')
                 v-icon(v-if='picture.kind === `initials`', color='grey') account_circle
@@ -159,11 +170,11 @@
                   v-list-tile-title {{name}}
                   v-list-tile-sub-title {{email}}
               v-divider.my-0
-              v-list-tile(href='/w')
+              v-list-tile(href='/w', disabled)
                 v-list-tile-action: v-icon(color='blue') web
                 v-list-tile-title My Wiki
               v-divider.my-0
-              v-list-tile(href='/p')
+              v-list-tile(href='/p', disabled)
                 v-list-tile-action: v-icon(color='blue') person
                 v-list-tile-title Profile
               v-divider.my-0
@@ -205,7 +216,12 @@ export default {
       searchIsShown: true,
       searchAdvMenuShown: false,
       newPageModal: false,
-      deletePageModal: false
+      deletePageModal: false,
+      locales: [
+        { code: 'en', name: 'English' },
+        { code: 'fr', name: 'Français' },
+        { code: 'es', name: 'Español' }
+      ]
     }
   },
   computed: {
@@ -304,7 +320,21 @@ export default {
       this.deletePageModal = true
     },
     assets () {
-      window.location.assign(`/f`)
+      // window.location.assign(`/f`)
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
+    },
+    async changeLocale(locale) {
+      await this.$i18n.i18next.changeLanguage(locale.code)
+      switch (this.mode) {
+        case 'view':
+        case 'history':
+          window.location.assign(`/${locale.code}/${this.path}`)
+          break
+      }
     },
     logout () {
       Cookies.remove('jwt')
