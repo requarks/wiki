@@ -12,7 +12,7 @@
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=wiki&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=wiki)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=wiki&metric=security_rating)](https://sonarcloud.io/dashboard?id=wiki)
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  
-[![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU)
+[![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat&logo=twitter)](https://twitter.com/requarks)
 [![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp)](https://wiki.js.org/newsletter)
 
@@ -76,7 +76,7 @@ Check out our [documentation site](https://docs-beta.requarks.io), it's running 
 
 Want to discuss features, ideas or issues? Join our [Slack channel](https://wiki.requarks.io/slack). We are very active and friendly!  
 
-[![Chat on Slack](https://wiki.requarks.io/slack)
+[![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
 
 </div>
 
@@ -91,7 +91,7 @@ Follow our Twitter feed to learn about upcoming updates and new releases!
 
 <h2 align="center">Translations</h2>
 
-We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, contact us on our [Slack channel](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU) and we'll provide you access to our translation tool, absolutely no coding required!
+We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, contact us on our [Slack channel](https://wiki.requarks.io/slack) and we'll provide you access to our translation tool, absolutely no coding required!
 
 <h2 align="center">Special Thanks</h2>
 
