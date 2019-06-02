@@ -74,9 +74,9 @@ Check out our [documentation site](https://docs-beta.requarks.io), it's running 
 
 <div align="center">
 
-Want to discuss features, ideas or issues? Join our [Slack channel](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU). We are very active and friendly!  
+Want to discuss features, ideas or issues? Join our [Slack channel](https://wiki.requarks.io/slack). We are very active and friendly!  
 
-[![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://join.slack.com/t/requarks/shared_invite/enQtNjQ2MjQ1NTY2Mjg5LTBjOTc3YzBjM2M2ODc3ZDM2ZjdlNjBkZTdmZjM4M2QwM2VjZTk0ZjZkY2M0YjdkYTYwZDUwNzBkODcxMjQxOWU)
+[![Chat on Slack](https://wiki.requarks.io/slack)
 
 </div>
 
