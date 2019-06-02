@@ -6,13 +6,10 @@
   "main": "wiki.js",
   "scripts": {
     "start": "node server",
-    "dev": "node wiki dev",
+    "dev": "node dev",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest"
-  },
-  "bin": {
-    "wiki": "wiki.js"
   },
   "repository": {
     "type": "git",

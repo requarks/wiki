@@ -24,7 +24,7 @@ module.exports = {
     let self = this
 
     let dbClient = null
-    let dbConfig = (!_.isEmpty(process.env.WIKI_DB_CONNSTR)) ? process.env.WIKI_DB_CONNSTR : {
+    let dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
       host: WIKI.config.db.host,
       user: WIKI.config.db.user,
       password: WIKI.config.db.pass,

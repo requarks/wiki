@@ -48,7 +48,7 @@ module.exports = {
 
     appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
 
-    if (appconfig.port < 1) {
+    if (appconfig.port < 1 || process.env.HEROKU) {
       appconfig.port = process.env.PORT || 80
     }
 

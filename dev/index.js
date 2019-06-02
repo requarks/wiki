@@ -15,7 +15,7 @@ const init = {
     const chokidar = require('chokidar')
 
     global.DEV = true
-    global.WP_CONFIG = require('./dev/webpack/webpack.dev.js')
+    global.WP_CONFIG = require('./webpack/webpack.dev.js')
     global.WP = webpack(global.WP_CONFIG)
     global.WP_DEV = {
       devMiddleware: require('webpack-dev-middleware')(global.WP, {
@@ -25,7 +25,7 @@ const init = {
     }
     global.WP_DEV.devMiddleware.waitUntilValid(() => {
       console.info(chalk.yellow.bold('>>> Starting Wiki.js in DEVELOPER mode...'))
-      require('./server')
+      require('../server')
 
       process.stdin.setEncoding('utf8')
       process.stdin.on('data', data => {
@@ -84,22 +84,8 @@ const init = {
     process.removeAllListeners('unhandledRejection')
     process.removeAllListeners('uncaughtException')
 
-    require('./server')
+    require('../server')
   }
 }
 
-require('yargs') // eslint-disable-line no-unused-expressions
-  .usage('Usage: node $0 <cmd> [args]')
-  .command({
-    command: 'dev',
-    desc: 'Start in Developer Mode',
-    handler: argv => {
-      init.dev()
-    }
-  })
-  .recommendCommands()
-  .demandCommand(1, 'You must provide one of the accepted commands above.')
-  .help()
-  .version()
-  .epilogue('Read the docs at https://docs-beta.requarks.io/dev')
-  .argv
+init.dev()
