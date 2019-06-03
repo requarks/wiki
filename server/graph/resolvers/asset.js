@@ -42,7 +42,7 @@ module.exports = {
       try {
         const folderSlug = sanitize(args.slug).toLowerCase()
         const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId
-        const result =  await WIKI.models.assetFolders.query().where({
+        const result = await WIKI.models.assetFolders.query().where({
           parentId: parentFolderId,
           slug: folderSlug
         }).first()

@@ -10,9 +10,9 @@
                   .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Assets
                   v-spacer
                   v-btn(flat, icon, @click='refresh')
-                    v-icon cached
+                    v-icon(:color='$vuetify.dark ? `white` : `teal`') refresh
                 v-dialog(v-model='newFolderDialog', max-width='550')
-                  v-btn.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly', slot='activator')
+                  v-btn.ml-3.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly', slot='activator')
                     v-icon(:left='$vuetify.breakpoint.mdAndUp') add
                     span.hidden-sm-and-down(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') New Folder
                   v-card.wiki-form

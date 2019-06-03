@@ -73,6 +73,9 @@ router.post('/u', multer({
     }
   }
 
+  // Sanitize filename
+  fileMeta.originalname = sanitize(fileMeta.originalname.toLowerCase().replace(/[\s,;]+/g, '_'))
+
   // Check if user can upload at path
   const assetPath = (folderId) ? hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
   if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
@@ -85,7 +88,6 @@ router.post('/u', multer({
   // Process upload file
   await WIKI.models.assets.upload({
     ...fileMeta,
-    originalname: sanitize(fileMeta.originalname).toLowerCase(),
     folderId: folderId,
     assetPath,
     userId: req.user.id
