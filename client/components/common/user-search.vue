@@ -112,6 +112,7 @@ export default {
           query: this.search
         }
       },
+      fetchPolicy: 'cache-and-network',
       skip() {
         return !this.search || this.search.length < 2
       },
