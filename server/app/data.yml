@@ -14,6 +14,7 @@ defaults:
       user: wikijs
       pass: wikijsrocks
       db: wiki
+      ssl: false
       storage: ./db.sqlite
     ssl:
       enabled: false

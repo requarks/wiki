@@ -29,17 +29,26 @@ module.exports = {
       user: WIKI.config.db.user,
       password: WIKI.config.db.pass,
       database: WIKI.config.db.db,
-      port: WIKI.config.db.port,
-      ssl: !_.isNil(WIKI.config.db.ssl) && WIKI.config.db.ssl !== false
+      port: WIKI.config.db.port
     }
+
+    const dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
 
     switch (WIKI.config.db.type) {
       case 'postgres':
         dbClient = 'pg'
+
+        if (dbUseSSL && _.isPlainObject(dbConfig)) {
+          dbConfig.ssl = true
+        }
         break
       case 'mariadb':
       case 'mysql':
         dbClient = 'mysql2'
+
+        if (dbUseSSL && _.isPlainObject(dbConfig)) {
+          dbConfig.ssl = true
+        }
 
         // Fix mysql boolean handling...
         dbConfig.typeCast = (field, next) => {
@@ -52,6 +61,13 @@ module.exports = {
         break
       case 'mssql':
         dbClient = 'mssql'
+
+        if (_.isPlainObject(dbConfig)) {
+          dbConfig.appName = 'Wiki.js'
+          if (dbUseSSL) {
+            dbConfig.encrypt = true
+          }
+        }
         break
       case 'sqlite':
         dbClient = 'sqlite3'
