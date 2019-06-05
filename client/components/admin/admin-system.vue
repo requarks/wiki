@@ -91,7 +91,7 @@
                     v-list-tile-title(v-html='dbVersion')
                     v-list-tile-sub-title {{ info.dbHost }}
 
-                v-alert.mt-3(:value='isDbLimited', color='deep-orange', icon='warning') Your database version is not fully supported. Some functionality may be limited or not work as expected.
+                v-alert.mt-3(:value='isDbLimited', color='deep-orange', icon='warning') {{ $t('admin.system.dbPartialSupport') }}
 </template>
 
 <script>
@@ -138,7 +138,7 @@ export default {
     async refresh() {
       await this.$apollo.queries.info.refetch()
       this.$store.commit('showNotification', {
-        message: 'System Info has been refreshed.',
+        message: this.$t('admin.system.refreshSuccess'),
         style: 'success',
         icon: 'cached'
       })

@@ -16,15 +16,15 @@
                   .body-2.mt-2.grey--text.text--darken-2 API Docs
                   .caption.grey--text.text--darken-1 REST / GraphQL
             v-flex(xs4)
-              v-card.radius-7(
+              v-card.radius-7.grey(
                 hover
                 light
                 ripple
                 )
                 v-card-text.text-xs-center(@click='selectEditor("code")')
                   img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
-                  .body-2.mt-2 Code
-                  .caption.grey--text Raw HTML
+                  .body-2.mt-2.grey--text.text--darken-2 Code
+                  .caption.grey--text.text--darken-1 Raw HTML
             v-flex(xs4)
               v-card.radius-7(
                 hover
@@ -87,7 +87,7 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    currentEditor: sync('editor/editor'),
+    currentEditor: sync('editor/editor')
   },
   methods: {
     selectEditor(name) {

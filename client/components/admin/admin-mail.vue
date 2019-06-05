@@ -19,12 +19,12 @@
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title
                       .subheading {{ $t('admin:mail.configuration') }}
-                  v-subheader Sender
+                  v-subheader {{ $t('admin:mail.sender') }}
                   .px-3.pb-3
                     v-text-field(
                       outline
                       v-model='config.senderName'
-                      label='Sender Name'
+                      :label='$t(`admin:mail.senderName`)'
                       required
                       :counter='255'
                       prepend-icon='person'
@@ -32,18 +32,18 @@
                     v-text-field(
                       outline
                       v-model='config.senderEmail'
-                      label='Sender Email'
+                      :label='$t(`admin:mail.senderEmail`)'
                       required
                       :counter='255'
                       prepend-icon='email'
                       )
                   v-divider
-                  v-subheader SMTP Settings
+                  v-subheader {{ $t('admin:mail.smtp') }}
                   .px-3.pb-3
                     v-text-field(
                       outline
                       v-model='config.host'
-                      label='Host'
+                      :label='$t(`admin:mail.smtpHost`)'
                       required
                       :counter='255'
                       prepend-icon='memory'
@@ -51,25 +51,25 @@
                     v-text-field(
                       outline
                       v-model='config.port'
-                      label='Port'
+                      :label='$t(`admin:mail.smtpPort`)'
                       required
                       prepend-icon='router'
                       persistent-hint
-                      hint='Usually 465 (recommended), 587 or 25.'
+                      :hint='$t(`admin:mail.smtpPortHint`)'
                       style='max-width: 300px;'
                       )
                     v-switch(
                       v-model='config.secure'
-                      label='Secure (TLS)'
+                      :label='$t(`admin:mail.smtpTLS`)'
                       color='primary'
                       persistent-hint
-                      hint='Should be enabled when using port 465, otherwise turned off (587 or 25).'
+                      :hint='$t(`admin:mail.smtpTLSHint`)'
                       prepend-icon='vpn_lock'
                       )
                     v-text-field.mt-3(
                       outline
                       v-model='config.user'
-                      label='Username'
+                      :label='$t(`admin:mail.smtpUser`)'
                       required
                       :counter='255'
                       prepend-icon='lock_outline'
@@ -77,7 +77,7 @@
                     v-text-field(
                       outline
                       v-model='config.pass'
-                      label='Password'
+                      :label='$t(`admin:mail.smtpPwd`)'
                       required
                       prepend-icon='lock'
                       type='password'
@@ -90,17 +90,17 @@
                     v-toolbar-title
                       .subheading {{ $t('admin:mail.dkim') }}
                   .pa-3
-                    .body-2.grey--text.text--darken-2 DKIM (DomainKeys Identified Mail) provides a layer of security on all emails sent from Wiki.js by providing the means for recipients to validate the domain name and ensure the message authenticity.
+                    .body-2.grey--text.text--darken-2 {{ $t('admin:mail.dkimHint') }}
                     v-switch(
                       v-model='config.useDKIM'
-                      label='Use DKIM'
+                      :label='$t(`admin:mail.dkimUse`)'
                       color='primary'
                       prepend-icon='vpn_key'
                       )
                     v-text-field(
                       outline
                       v-model='config.dkimDomainName'
-                      label='Domain Name'
+                      :label='$t(`admin:mail.dkimDomainName`)'
                       :counter='255'
                       prepend-icon='vpn_key'
                       :disabled='!config.useDKIM'
@@ -108,7 +108,7 @@
                     v-text-field(
                       outline
                       v-model='config.dkimKeySelector'
-                      label='Key Selector'
+                      :label='$t(`admin:mail.dkimKeySelector`)'
                       :counter='255'
                       prepend-icon='vpn_key'
                       :disabled='!config.useDKIM'
@@ -116,12 +116,31 @@
                     v-text-field(
                       outline
                       v-model='config.dkimPrivateKey'
-                      label='Private Key'
+                      :label='$t(`admin:mail.dkimPrivateKey`)'
                       prepend-icon='vpn_key'
                       persistent-hint
-                      hint='Private key for the selector in PEM format'
+                      :hint='$t(`admin:mail.dkimPrivateKeyHint`)'
                       :disabled='!config.useDKIM'
                       )
+
+              v-card.mt-3.wiki-form.animated.fadeInUp.wait-p3s
+                v-form
+                  v-toolbar(color='teal', dark, dense, flat)
+                    v-toolbar-title
+                      .subheading {{ $t('admin:mail.test') }}
+                  .pa-3
+                    .body-2.grey--text.text--darken-2 {{ $t('admin:mail.testHint') }}
+                    v-text-field.mt-3(
+                      outline
+                      v-model='testEmail'
+                      :label='$t(`admin:mail.testRecipient`)'
+                      :counter='255'
+                      prepend-icon='mail'
+                      disabled
+                      )
+                  v-card-chin
+                    v-spacer
+                    v-btn(color='teal', :dark='false', disabled) {{ $t('admin:mail.testSend') }}
 
 </template>
 
@@ -146,7 +165,8 @@ export default {
         dkimDomainName: '',
         dkimKeySelector: '',
         dkimPrivateKey: ''
-      }
+      },
+      testEmail: ''
     }
   },
   computed: {
@@ -176,7 +196,7 @@ export default {
         })
         this.$store.commit('showNotification', {
           style: 'success',
-          message: 'Configuration saved successfully.',
+          message: this.$t('admin:mail.saveSuccess'),
           icon: 'check'
         })
       } catch (err) {
