@@ -44,6 +44,11 @@ module.exports = {
           responseResult: graphHelper.generateSuccess('Login success')
         }
       } catch (err) {
+        // LDAP Debug Flag
+        if (args.strategy === 'ldap' && WIKI.config.flags.ldapdebug) {
+          WIKI.logger.warn('LDAP LOGIN ERROR (c1): ', err)
+        }
+
         return graphHelper.generateError(err)
       }
     },

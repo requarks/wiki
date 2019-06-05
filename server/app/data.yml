@@ -39,6 +39,7 @@ defaults:
       theme: 'default'
       darkMode: false
     flags:
+      ldapdebug: false
       sqllog: false
     # System defaults
     setup: false

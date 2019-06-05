@@ -45,6 +45,9 @@ module.exports = {
           })
           cb(null, user)
         } catch (err) {
+          if (WIKI.config.flags.ldapdebug) {
+            WIKI.logger.warn('LDAP LOGIN ERROR (c2): ', err)
+          }
           cb(err, null)
         }
       }

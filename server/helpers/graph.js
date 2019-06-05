@@ -13,7 +13,7 @@ module.exports = {
   generateError (err, complete = true) {
     const error = {
       succeeded: false,
-      errorCode: err.code || 1,
+      errorCode: _.isFinite(err.code) ? err.code : 1,
       slug: err.name,
       message: err.message || 'An unexpected error occured.'
     }

@@ -18,21 +18,20 @@
             .caption Doing so may result in data loss or broken installation!
           v-card-text
             v-switch.mt-3(
+              color='primary'
+              hint='Log detailed debug info on LDAP/AD login attempts.'
+              persistent-hint
+              label='LDAP Debug'
+              v-model='flags.ldapdebug'
+            )
+            v-divider.mt-3
+            v-switch.mt-3(
               color='red'
               hint='Log all queries made to the database to console.'
               persistent-hint
               label='SQL Query Logging'
               v-model='flags.sqllog'
             )
-            //- v-divider.mt-3
-            //- v-switch.mt-3(
-            //-   color='primary'
-            //-   hint='Log all queries made to the database to console.'
-            //-   persistent-hint
-            //-   label='SQL Query Log'
-            //-   v-model='flags.sqllog'
-            //- )
-
 </template>
 
 <script>

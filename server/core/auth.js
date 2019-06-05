@@ -1,6 +1,5 @@
 const passport = require('passport')
 const passportJWT = require('passport-jwt')
-const fs = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 const jwt = require('jsonwebtoken')
