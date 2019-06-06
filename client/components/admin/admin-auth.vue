@@ -5,8 +5,8 @@
         .admin-header
           img.animated.fadeInUp(src='/svg/icon-unlock.svg', alt='Authentication', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text.animated.fadeInLeft Authentication
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s Configure the authentication settings of your wiki
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:auth.title') }}
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:auth.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
@@ -17,7 +17,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading Strategies
+            .subheading {{$t('admin:auth.strategies')}}
           v-list(two-line, dense).py-0
             template(v-for='(str, idx) in strategies')
               v-list-tile(:key='str.key', @click='selectedStrategy = str.key', :disabled='!str.isAvailable')
@@ -35,30 +35,30 @@
 
         v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading Global Advanced settings
+            .subheading {{$t('admin:auth.globalAdvSettings')}}
           v-card-text
             v-text-field.md2(
               v-model='jwtAudience'
               outline
               prepend-icon='account_balance'
-              label='JWT Audience'
-              hint='Audience URN used in JWT issued upon login. Usually your domain name. (e.g. urn:your.domain.com)'
+              :label='$t(`admin:auth.jwtAudience`)'
+              :hint='$t(`admin:auth.jwtAudienceHint`)'
               persistent-hint
             )
             v-text-field.mt-3.md2(
               v-model='jwtExpiration'
               outline
               prepend-icon='schedule'
-              label='Token Expiration'
-              hint='The expiration period of a token until it must be renewed. (default: 30m)'
+              :label='$t(`admin:auth.tokenExpiration`)'
+              :hint='$t(`admin:auth.tokenExpirationHint`)'
               persistent-hint
             )
             v-text-field.mt-3.md2(
               v-model='jwtRenewablePeriod'
               outline
               prepend-icon='update'
-              label='Token Renewal Period'
-              hint='The maximum period a token can be renewed when expired. (default: 14d)'
+              :label='$t(`admin:auth.tokenRenewalPeriod`)'
+              :hint='$t(`admin:auth.tokenRenewalPeriodHint`)'
               persistent-hint
             )
 
@@ -73,13 +73,12 @@
                 img(:src='strategy.logo', :alt='strategy.title')
               .caption.pt-3 {{strategy.description}}
               .caption.pb-3: a(:href='strategy.website') {{strategy.website}}
-              .body-2(v-if='strategy.isEnabled')
-                span This strategy is
-                v-chip(color='green', small, dark, label) active
-                span(v-if='selectedStrategy === `local`') and cannot be disabled.
-              .body-2(v-else)
-                span This strategy is
-                v-chip(color='red', small, dark, label) not active
+              i18next.body-2(path='admin:auth.strategyState', tag='div', v-if='strategy.isEnabled')
+                v-chip(color='green', small, dark, label, place='state') {{$t('admin:auth.strategyStateActive')}}
+                span(v-if='selectedStrategy === `local`', place='locked') {{$t('admin:auth.strategyStateLocked')}}
+                span(v-else, place='locked', v-text='')
+              i18next.body-2(path='admin:auth.strategyState', tag='div', v-else)
+                v-chip(color='red', small, dark, label, place='state') {{$t('admin:auth.strategyStateInactive')}}
               v-divider.mt-3
               v-subheader.pl-0 Strategy Configuration
               .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em This strategy has no configuration options you can modify.
