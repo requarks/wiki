@@ -40,7 +40,7 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 - [Requirements](https://docs-beta.requarks.io/install/requirements)
 - [Demo](#demo)
 - [Change Log](https://docs-beta.requarks.io/releases)
-- [Feature Requests](https://requests.requarks.io/wiki)
+- [Feature Requests](https://wiki.js.org/feedback)
 - [Chat with us on Slack](#slack)
 - [Translations](#translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
