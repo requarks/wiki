@@ -10,4 +10,4 @@ assignees: ''
 !! IMPORTANT !!
 Do not submit feature requests here. Use our feature request board instead:
 
-https://requests.requarks.io/wiki
+https://wiki.js.org/feedback
