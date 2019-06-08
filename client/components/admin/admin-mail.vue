@@ -136,11 +136,11 @@
                       :label='$t(`admin:mail.testRecipient`)'
                       :counter='255'
                       prepend-icon='mail'
-                      disabled
+                      :disabled='testLoading'
                       )
                   v-card-chin
                     v-spacer
-                    v-btn(color='teal', :dark='false', disabled) {{ $t('admin:mail.testSend') }}
+                    v-btn(color='teal', dark, @click='sendTest', :loading='testLoading') {{ $t('admin:mail.testSend') }}
 
 </template>
 
@@ -149,6 +149,7 @@ import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import mailConfigQuery from 'gql/admin/mail/mail-query-config.gql'
 import mailUpdateConfigMutation from 'gql/admin/mail/mail-mutation-save-config.gql'
+import mailTestMutation from 'gql/admin/mail/mail-mutation-sendtest.gql'
 
 export default {
   data() {
@@ -166,7 +167,8 @@ export default {
         dkimKeySelector: '',
         dkimPrivateKey: ''
       },
-      testEmail: ''
+      testEmail: '',
+      testLoading: false
     }
   },
   computed: {
@@ -197,6 +199,31 @@ export default {
         this.$store.commit('showNotification', {
           style: 'success',
           message: this.$t('admin:mail.saveSuccess'),
+          icon: 'check'
+        })
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+    },
+    async sendTest () {
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: mailTestMutation,
+          variables: {
+            recipientEmail: this.testEmail
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-mail-test')
+          }
+        })
+        if (!_.get(resp, 'data.mail.sendTest.responseResult.succeeded', false)) {
+          throw new Error(_.get(resp, 'data.mail.sendTest.responseResult.message', 'An unexpected error occured.'))
+        }
+
+        this.testEmail = ''
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:mail.sendTestSuccess'),
           icon: 'check'
         })
       } catch (err) {

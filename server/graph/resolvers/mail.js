@@ -16,6 +16,29 @@ module.exports = {
     }
   },
   MailMutation: {
+    async sendTest(obj, args, context) {
+      try {
+        if (_.isEmpty(args.recipientEmail) || args.recipientEmail.length < 6) {
+          throw new WIKI.Error.MailInvalidRecipient()
+        }
+
+        await WIKI.mail.send({
+          template: 'test',
+          to: args.recipientEmail,
+          subject: 'A test email from your wiki',
+          text: 'This is a test email sent from your wiki.',
+          data: {
+            preheadertext: 'This is a test email sent from your wiki.'
+          }
+        })
+
+        return {
+          responseResult: graphHelper.generateSuccess('Test email sent successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
     async updateConfig(obj, args, context) {
       try {
         WIKI.config.mail = {
@@ -29,14 +52,14 @@ module.exports = {
           useDKIM: args.useDKIM,
           dkimDomainName: args.dkimDomainName,
           dkimKeySelector: args.dkimKeySelector,
-          dkimPrivateKey: args.dkimPrivateKey,
+          dkimPrivateKey: args.dkimPrivateKey
         }
         await WIKI.configSvc.saveToDb(['mail'])
 
         WIKI.mail.init()
 
         return {
-          responseResult: graphHelper.generateSuccess('Mail configuration updated successfully')
+          responseResult: graphHelper.generateSuccess('Mail configuration updated successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

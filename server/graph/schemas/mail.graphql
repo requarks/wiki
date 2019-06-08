@@ -23,6 +23,10 @@ type MailQuery {
 # -----------------------------------------------
 
 type MailMutation {
+  sendTest(
+    recipientEmail: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
   updateConfig(
     senderName: String!
     senderEmail: String!

@@ -1,0 +1,12 @@
+mutation ($recipientEmail: String!) {
+  mail {
+    sendTest(recipientEmail: $recipientEmail) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

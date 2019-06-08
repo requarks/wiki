@@ -14,7 +14,7 @@
             v-icon(left) add
             span New Page
         v-card.wiki-form.mt-3
-          v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `white`', height='80')
+          v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
             v-spacer
             v-text-field(
               outline

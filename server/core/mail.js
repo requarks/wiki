@@ -44,7 +44,7 @@ module.exports = {
   async send(opts) {
     if (!this.transport) {
       WIKI.logger.warn('Cannot send email because mail is not setup in the administration area!')
-      throw new WIKI.Error.MailNotSetup()
+      throw new WIKI.Error.MailNotConfigured()
     }
     await this.loadTemplate(opts.template)
     return this.transport.sendMail({

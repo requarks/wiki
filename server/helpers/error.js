@@ -10,7 +10,7 @@ module.exports = {
     code: 2002
   }),
   AssetGenericError: CustomError('AssetGenericError', {
-    message: 'An unexpected error occured during asset change.',
+    message: 'An unexpected error occured during asset operation.',
     code: 2001
   }),
   AssetInvalid: CustomError('AssetInvalid', {
@@ -39,11 +39,15 @@ module.exports = {
   }),
   AuthAccountBanned: CustomError('AuthAccountBanned', {
     message: 'Your account has been disabled.',
-    code: 1016
+    code: 1013
+  }),
+  AuthAccountAlreadyExists: CustomError('AuthAccountAlreadyExists', {
+    message: 'An account already exists using this email address.',
+    code: 1004
   }),
   AuthAccountNotVerified: CustomError('AuthAccountNotVerified', {
     message: 'You must verify your account before your can login.',
-    code: 1017
+    code: 1014
   }),
   AuthGenericError: CustomError('AuthGenericError', {
     message: 'An unexpected error occured during login.',
@@ -57,17 +61,13 @@ module.exports = {
     message: 'Invalid authentication provider.',
     code: 1003
   }),
-  AuthAccountAlreadyExists: CustomError('AuthAccountAlreadyExists', {
-    message: 'An account already exists using this email address.',
-    code: 1004
-  }),
   AuthRegistrationDisabled: CustomError('AuthRegistrationDisabled', {
     message: 'Registration is disabled. Contact your system administrator.',
-    code: 1011
+    code: 1010
   }),
   AuthRegistrationDomainUnauthorized: CustomError('AuthRegistrationDomainUnauthorized', {
-    message: 'You are not authorized to register. Must use a whitelisted domain.',
-    code: 1012
+    message: 'You are not authorized to register. Your domain is not whitelisted.',
+    code: 1011
   }),
   AuthTFAFailed: CustomError('AuthTFAFailed', {
     message: 'Incorrect TFA Security Code.',
@@ -79,7 +79,7 @@ module.exports = {
   }),
   AuthValidationTokenInvalid: CustomError('AuthValidationTokenInvalid', {
     message: 'Invalid validation token.',
-    code: 1018
+    code: 1015
   }),
   BruteInstanceIsInvalid: CustomError('BruteInstanceIsInvalid', {
     message: 'Invalid Brute Force Instance.',
@@ -91,26 +91,42 @@ module.exports = {
   }),
   InputInvalid: CustomError('InputInvalid', {
     message: 'Input data is invalid.',
-    code: 1013
+    code: 1012
   }),
-  MailNotSetup: CustomError('MailNotSetup', {
-    message: 'Mail is not setup yet.',
-    code: 1014
-  }),
-  MailTemplateFailed: CustomError('MailTemplateFailed', {
-    message: 'Mail template failed to load.',
-    code: 1015
+  LocaleGenericError: CustomError('LocaleGenericError', {
+    message: 'An unexpected error occured during locale operation.',
+    code: 5001
   }),
   LocaleInvalidNamespace: CustomError('LocaleInvalidNamespace', {
     message: 'Invalid locale or namespace.',
-    code: 1009
+    code: 5002
+  }),
+  MailGenericError: CustomError('MailGenericError', {
+    message: 'An unexpected error occured during mail operation.',
+    code: 3001
+  }),
+  MailInvalidRecipient: CustomError('MailInvalidRecipient', {
+    message: 'The recipient email address is invalid.',
+    code: 3004
+  }),
+  MailNotConfigured: CustomError('MailNotConfigured', {
+    message: 'The mail configuration is incomplete or invalid.',
+    code: 3002
+  }),
+  MailTemplateFailed: CustomError('MailTemplateFailed', {
+    message: 'Mail template failed to load.',
+    code: 3003
   }),
   SearchActivationFailed: CustomError('SearchActivationFailed', {
     message: 'Search Engine activation failed.',
-    code: 1019
+    code: 4002
+  }),
+  SearchGenericError: CustomError('SearchGenericError', {
+    message: 'An unexpected error occured during search operation.',
+    code: 4001
   }),
   UserCreationFailed: CustomError('UserCreationFailed', {
     message: 'An unexpected error occured during user creation.',
-    code: 1010
+    code: 1009
   })
 }

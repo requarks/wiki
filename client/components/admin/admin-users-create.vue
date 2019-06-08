@@ -64,8 +64,8 @@
       v-card-chin
         v-spacer
         v-btn(flat, @click='isShown = false') Cancel
-        v-btn(color='primary', @click='newUser') Create
-        v-btn(color='primary', @click='newUser') Create and Close
+        v-btn(color='primary', @click='newUser(true)') Create
+        v-btn(color='primary', @click='newUser(false)') Create and Close
 </template>
 
 <script>
@@ -111,7 +111,7 @@ export default {
   },
   methods: {
     async newUser() {
-
+      this.isShown = false
     },
     generatePwd() {
       this.password = uuidv4().slice(-12)
