@@ -29,7 +29,7 @@ html
 
     //- Site Properties
     script.
-      var siteConfig = !{JSON.stringify({ title: config.title, theme: config.theming.theme, darkMode: config.theming.darkMode, lang: config.lang.code, company: config.company })}
+      var siteConfig = !{JSON.stringify({ title: config.title, theme: config.theming.theme, darkMode: config.theming.darkMode, lang: config.lang.code, rtl: config.lang.rtl, company: config.company })}
 
     //- CSS
     <% for (var index in htmlWebpackPlugin.files.css) { %>

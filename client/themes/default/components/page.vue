@@ -2,16 +2,17 @@
   v-app(v-scroll='upBtnScroll', :dark='darkMode')
     nav-header
     v-navigation-drawer(
-      :class='darkMode ? `grey darken-3` : `primary`'
+      :class='darkMode ? `grey darken-5` : `primary`'
       dark
       app
       clipped
       mobile-break-point='600'
       :temporary='$vuetify.breakpoint.mdAndDown'
       v-model='navShown'
+      :right='$vuetify.rtl'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='darkMode ? `grey darken-3` : `primary`')
+        nav-sidebar(:color='darkMode ? `grey darken-5` : `primary`')
           slot(name='sidebar')
 
     v-fab-transition
@@ -20,7 +21,8 @@
         color='primary'
         fixed
         bottom
-        left
+        :right='$vuetify.rtl'
+        :left='!$vuetify.rtl'
         small
         @click='navShown = !navShown'
         v-if='$vuetify.breakpoint.mdAndDown'
@@ -48,16 +50,16 @@
         v-divider
       v-layout(row)
         v-flex(xs12, lg9, xl10)
-          v-toolbar(:color='darkMode ? `grey darken-4` : `grey lighten-4`', flat, :height='90')
+          v-toolbar(:color='darkMode ? `grey darken-4-l3` : `grey lighten-4`', flat, :height='90')
             div
-              .headline.grey--text(:class='darkMode ? `text-lighten-2` : `text--darken-3`') {{title}}
+              .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
               .caption.grey--text.text--darken-1 {{description}}
           v-divider
           .contents(ref='container')
             slot(name='contents')
 
         v-flex(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
-          v-toolbar(:color='darkMode ? `grey darken-4` : `grey lighten-4`', flat, :height='90')
+          v-toolbar(:color='darkMode ? `grey darken-4-l3` : `grey lighten-4`', flat, :height='90')
             div
               .caption.grey--text.text--lighten-1 Last edited by
               .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
@@ -70,7 +72,7 @@
           v-divider
           template(v-if='toc.length')
             v-list.grey.pb-3(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
-              v-subheader.pl-4(:class='darkMode ? `blue--text text--lighten-1` : `primary--text`') Table of contents
+              v-subheader.pl-4(:class='darkMode ? `indigo--text text--lighten-3` : `primary--text`') Table of Contents
               template(v-for='(tocItem, tocIdx) in toc')
                 v-list-tile(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
                   v-icon(color='grey') arrow_right
@@ -119,7 +121,17 @@
     notify
     search-results
     v-fab-transition
-      v-btn(v-if='upBtnShown', fab, fixed, bottom, right, small, @click='$vuetify.goTo(0, scrollOpts)', color='primary')
+      v-btn(
+        v-if='upBtnShown'
+        fab
+        fixed
+        bottom
+        :right='!$vuetify.rtl'
+        :left='$vuetify.rtl'
+        small
+        @click='$vuetify.goTo(0, scrollOpts)'
+        color='primary'
+        )
         v-icon arrow_upward
 </template>
 

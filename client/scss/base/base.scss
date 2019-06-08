@@ -63,3 +63,16 @@ html {
     border-color: lighten(mc('grey', '900'), percentage($i/100)) !important;
   }
 }
+.grey.darken-5 {
+  background-color: #0C0C0C !important;
+  border-color: #0C0C0C !important;
+}
+
+.blue.darken-5 {
+  background-color: darken(mc('blue', '900'), 20%) !important;
+  border-color: darken(mc('blue', '900'), 20%) !important;
+}
+.indigo.darken-5 {
+  background-color: darken(mc('indigo', '900'), 10%) !important;
+  border-color: darken(mc('indigo', '900'), 10%) !important;
+}

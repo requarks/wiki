@@ -5,7 +5,7 @@
         v-spacer
         .subheading.grey--text Administration Area
         v-spacer
-    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, left, permanent)
+    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent)
       vue-scroll(:ops='scrollStyle')
         v-list(dense)
           v-list-tile.pt-2(to='/dashboard')

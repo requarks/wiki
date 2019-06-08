@@ -139,7 +139,9 @@ Vue.use(VueClipboards)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
 Vue.use(VeeValidate, { events: '' })
-Vue.use(Vuetify)
+Vue.use(Vuetify, {
+  rtl: siteConfig.rtl
+})
 Vue.use(VueMoment, { moment })
 Vue.use(Vuescroll)
 Vue.use(VueTour)

@@ -2,14 +2,19 @@
 
 .contents {
   color: mc('grey', '800');
-  padding-bottom: 50px;
+  padding: 24px 0 50px;
   position: relative;
 
+  > div > *:first-child {
+    margin-top: 0;
+  }
+
   @at-root .theme--dark & {
+    background-color: darken(mc('grey', '900'), 4%);
     color: mc('grey', '300');
 
     a {
-      color: mc('blue', '300');
+      color: mc('indigo', '200');
     }
   }
 
@@ -19,6 +24,10 @@
 
   h1, h2, h3, h4, h5, h6 {
     position: relative;
+
+    &:first-child {
+      padding-top: 0;
+    }
 
     &:hover {
       .toc-anchor {
@@ -35,16 +44,20 @@
       text-decoration: none;
       color: mc('grey', '500');
     }
+
+    & + h2, & + h3, & + h4, & + h5, & + h6 {
+      margin-top: 8px;
+    }
   }
 
   h1 {
-    padding-left: 24px;
+    padding: 0 24px;
     color: mc('blue', '800');
     margin-top: 2rem;
     position: relative;
 
     @at-root .theme--dark & {
-      color: mc('grey', '400');
+      color: mc('teal', '100');
     }
 
     &::after {
@@ -57,23 +70,25 @@
       background: linear-gradient(to right, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
 
       @at-root .theme--dark & {
-        background: linear-gradient(to right, mc('grey', '600'), rgba(mc('grey', '600'), 0));
+        background: linear-gradient(to right, mc('teal', '300') 0%, mc('teal', '500') 10%, rgba(mc('teal', '900'), 0) 100%);
       }
-    }
 
-    & + h2, & + h3 {
-      margin-top: 8px;
+      @at-root .application--is-rtl & {
+        background: linear-gradient(to left, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
+      }
+      @at-root .theme--dark.application--is-rtl & {
+        background: linear-gradient(to left, mc('grey', '600'), rgba(mc('grey', '600'), 0));
+      }
     }
   }
   h2 {
-    margin-left: 24px;
+    margin: 1rem 24px 0 24px;
     padding: 8px 0 0 0;
     color: mc('grey', '800');
     position: relative;
-    margin-top: 1rem;
 
     @at-root .theme--dark & {
-      color: mc('grey', '500');
+      color: mc('grey', '400');
     }
 
     &::after {
@@ -88,14 +103,17 @@
       @at-root .theme--dark & {
         background: linear-gradient(to right, mc('grey', '300'), rgba(mc('grey', '700'), 0));
       }
-    }
 
-    & + h3 {
-      margin-top: 8px;
+      @at-root .application--is-rtl & {
+        background: linear-gradient(to left, mc('grey', '700'), rgba(mc('grey', '700'), 0));
+      }
+      @at-root .theme--dark.application--is-rtl & {
+        background: linear-gradient(to left, mc('grey', '300'), rgba(mc('grey', '700'), 0));
+      }
     }
   }
   h3 {
-    margin-left: 24px;
+    margin: 0 24px;
     padding: 8px 0 0 0;
     color: mc('grey', '700');
     position: relative;
@@ -111,7 +129,38 @@
       left: 0;
       width: 100%;
       height: 1px;
-      background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0));
+      background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 90%);
+    }
+  }
+  h4, h5, h6 {
+    font-size: 1rem;
+    margin: 0 24px;
+    padding: 8px 0 0 0;
+    color: mc('grey', '700');
+    position: relative;
+
+    @at-root .theme--dark & {
+      color: mc('grey', '600');
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 70%);
+    }
+  }
+  h5 {
+    &::after {
+      background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 50%);
+    }
+  }
+  h6 {
+    &::after {
+      background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 30%);
     }
   }
 
@@ -123,6 +172,10 @@
     padding: 1rem 24px 0 24px;
     margin: 0;
     text-align: justify;
+
+    @at-root .contents > div > p:first-child {
+      padding-top: 0;
+    }
   }
 
   hr {
@@ -143,9 +196,9 @@
 
   blockquote {
     padding: 0 0 1rem 0;
-    border: 1px solid mc('blue', '500');
+    border-left: 5px solid mc('blue', '500');
     border-radius: .5rem;
-    margin: 1rem;
+    margin: 1rem 2rem;
 
     > p:first-child .emoji {
       margin-right: .5rem;
@@ -168,8 +221,8 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('blue', '900');
-        background-image: radial-gradient(ellipse at top, mc('blue', '900'), darken(mc('blue', '900'), 5%));
+        background-color: mc('grey', '900');
+        background-image: radial-gradient(ellipse at top, mc('blue', '900'), rgba(darken(mc('blue', '900'), 5%), .2));
         border-color: mc('blue', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
@@ -186,8 +239,8 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('orange', '900');
-        background-image: radial-gradient(ellipse at top, mc('orange', '900'), darken(mc('orange', '900'), 5%));
+        background-color: mc('grey', '900');
+        background-image: radial-gradient(ellipse at top, mc('orange', '900'), rgba(darken(mc('orange', '900'), 5%), .2));
         border-color: mc('orange', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
@@ -204,8 +257,8 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('red', '900');
-        background-image: radial-gradient(ellipse at top, mc('red', '900'), darken(mc('red', '900'), 5%));
+        background-color: mc('grey', '900');
+        background-image: radial-gradient(ellipse at top, mc('red', '900'), rgba(darken(mc('red', '900'), 5%), .2));
         border-color: mc('red', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
@@ -222,8 +275,8 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('green', '900');
-        background-image: radial-gradient(ellipse at top, mc('green', '900'), darken(mc('green', '900'), 5%));
+        background-color: mc('grey', '900');
+        background-image: radial-gradient(ellipse at top, mc('green', '900'), rgba(darken(mc('green', '900'), 5%), .2));
         border-color: mc('green', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
@@ -304,7 +357,7 @@
 
           &:hover {
             background-image: linear-gradient(to bottom, lighten(mc('grey', '900'), 2%), darken(mc('grey', '900'), 3%));
-            border-left-color: mc('blue', '500');
+            border-left-color: mc('indigo', '300');
             cursor: pointer;
           }
         }
@@ -508,7 +561,7 @@
     }
     &.align-abstopright {
       position: absolute;
-      top: -90px;
+      top: calc(-90px + 1rem);
       right: 1rem;
       height: calc(90px - 2rem);
       width: auto;

@@ -199,8 +199,14 @@ export default {
       })
       const resp = _.get(respRaw, 'data.localization.updateLocale.responseResult', {})
       if (resp.succeeded) {
+        // Change UI language
         WIKI.$i18n.i18next.changeLanguage(this.selectedLocale)
         WIKI.$moment.locale(this.selectedLocale)
+
+        // Check for RTL
+        const curLocale = _.find(this.locales, ['code', this.selectedLocale])
+        this.$vuetify.rtl = curLocale && curLocale.isRTL
+
         this.$store.commit('showNotification', {
           message: 'Locale settings updated successfully.',
           style: 'success',

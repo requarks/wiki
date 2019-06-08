@@ -373,6 +373,11 @@ export default {
     right: 12px;
     border-radius: 4px !important;
 
+    @at-root .application--is-rtl & {
+      right: initial;
+      left: 12px;
+    }
+
     &::before {
       border-radius: 4px !important;
     }

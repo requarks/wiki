@@ -3,7 +3,7 @@ import { make } from 'vuex-pathify'
 /* global siteConfig */
 
 const state = {
-  company: '',
+  company: siteConfig.company,
   dark: siteConfig.darkMode,
   mascot: true,
   title: siteConfig.title,

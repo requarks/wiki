@@ -31,6 +31,7 @@ defaults:
       autoUpdate: true
       namespaces: []
       namespacing: false
+      rtl: false
     telemetry:
       clientId: ''
       isEnabled: false
