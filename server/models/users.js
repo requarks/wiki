@@ -425,6 +425,11 @@ module.exports = class User extends Model {
           isVerified: false
         })
 
+        // Assign to group(s)
+        if (_.get(localStrg, 'autoEnrollGroups.v', []).length > 0) {
+          await newUsr.$relatedQuery('groups').relate(localStrg.autoEnrollGroups.v)
+        }
+
         if (verify) {
           // Create verification token
           const verificationToken = await WIKI.models.userKeys.generateToken({
