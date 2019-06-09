@@ -43,6 +43,7 @@ defaults:
       ldapdebug: false
       sqllog: false
     # System defaults
+    channel: BETA
     setup: false
     paths:
       content: ./content

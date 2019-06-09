@@ -45,7 +45,7 @@
               v-btn.ma-0(v-else, :href='props.item.path', small, flat) {{props.item.name}}
           template(v-if='!isPublished')
             v-spacer
-            .caption.red--text Unpublished
+            .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
         v-divider
       v-layout(row)
@@ -61,18 +61,18 @@
         v-flex(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
           v-toolbar(:color='darkMode ? `grey darken-4-l3` : `grey lighten-4`', flat, :height='90')
             div
-              .caption.grey--text.text--lighten-1 Last edited by
+              .caption.grey--text.text--lighten-1 {{$t('common:page.lastEditedBy')}}
               .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
               .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
             v-spacer
             v-tooltip(left)
               v-btn.btn-animate-edit(icon, slot='activator', :href='"/e/" + path')
                 v-icon(color='grey') edit
-              span Edit Page
+              span {{$t('common:page.editPage')}}
           v-divider
           template(v-if='toc.length')
             v-list.grey.pb-3(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
-              v-subheader.pl-4(:class='darkMode ? `indigo--text text--lighten-3` : `primary--text`') Table of Contents
+              v-subheader.pl-4(:class='darkMode ? `indigo--text text--lighten-3` : `primary--text`') {{$t('common:page.toc')}}
               template(v-for='(tocItem, tocIdx) in toc')
                 v-list-tile(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
                   v-icon(color='grey') arrow_right
@@ -109,13 +109,13 @@
             v-spacer
             v-tooltip(bottom)
               v-btn(icon, slot='activator'): v-icon(color='grey') bookmark
-              span Bookmark
+              span {{$t('common:page.bookmark')}}
             v-tooltip(bottom)
               v-btn(icon, slot='activator'): v-icon(color='grey') share
-              span Share
+              span {{$t('common:page.share')}}
             v-tooltip(bottom)
               v-btn(icon, slot='activator'): v-icon(color='grey') print
-              span Print Format
+              span {{$t('common:page.printFormat')}}
             v-spacer
     nav-footer
     notify

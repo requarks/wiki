@@ -3,7 +3,7 @@
     nav-header(hide-search)
       template(slot='mid')
         v-spacer
-        .subheading.grey--text Administration Area
+        .subheading.grey--text {{$t('admin:adminArea')}}
         v-spacer
     v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent)
       vue-scroll(:ops='scrollStyle')

@@ -51,6 +51,7 @@ module.exports = async () => {
       let lcObj = {}
       _.forEach(strings, row => {
         if (_.includes(row.key, '::')) { return }
+        if (_.isEmpty(row.value)) { row.value = row.key }
         _.set(lcObj, row.key.replace(':', '.'), row.value)
       })
 

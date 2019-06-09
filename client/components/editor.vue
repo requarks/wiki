@@ -21,7 +21,7 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:page') }}
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.page') }}
         v-btn.animated.fadeInDown.wait-p2s(
           v-if='!welcomeMode'
           flat
@@ -30,7 +30,7 @@
           @click.native.stop='exit'
           )
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('editor:close') }}
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
     v-content
       component(:is='currentEditor', :save='save')
       editor-modal-properties(v-model='dialogProps')

@@ -24,7 +24,7 @@ module.exports = async () => {
         }
       }`,
       variables: {
-        channel: 'BETA', // TODO
+        channel: WIKI.config.channel,
         version: WIKI.version
       }
     })

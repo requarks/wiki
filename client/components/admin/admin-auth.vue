@@ -80,8 +80,8 @@
               i18next.body-2(path='admin:auth.strategyState', tag='div', v-else)
                 v-chip(color='red', small, dark, label, place='state') {{$t('admin:auth.strategyStateInactive')}}
               v-divider.mt-3
-              v-subheader.pl-0 Strategy Configuration
-              .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em This strategy has no configuration options you can modify.
+              v-subheader.pl-0 {{$t('admin:auth.strategyConfiguration')}}
+              .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em {{$t('admin:auth.strategyNoConfiguration')}}
               template(v-else, v-for='cfg in strategy.config')
                 v-select(
                   v-if='cfg.value.type === "string" && cfg.value.enum'
@@ -119,13 +119,13 @@
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
               v-divider.mt-3
-              v-subheader.pl-0 Registration
+              v-subheader.pl-0 {{$t('admin:auth.registration')}}
               .pr-3
                 v-switch.ml-3(
                   v-model='strategy.selfRegistration'
-                  label='Allow self-registration'
+                  :label='$t(`admin:auth.selfRegistration`)'
                   color='primary'
-                  hint='Allow any user successfully authorized by the strategy to access the wiki.'
+                  :hint='$t(`admin:auth.selfRegistrationHint`)'
                   persistent-hint
                 )
                 v-switch.ml-3(
@@ -138,12 +138,12 @@
                   persistent-hint
                 )
                 v-combobox.ml-3.mt-3(
-                  label='Limit to specific email domains'
+                  :label='$t(`admin:auth.domainsWhitelist`)'
                   v-model='strategy.domainWhitelist'
                   prepend-icon='mail_outline'
                   outline
                   :disabled='!strategy.selfRegistration'
-                  hint='A list of domains authorized to register. The user email address domain must match one of these to gain access.'
+                  :hint='$t(`admin:auth.domainsWhitelistHint`)'
                   persistent-hint
                   small-chips
                   deletable-chips
@@ -157,10 +157,10 @@
                   :items='groups'
                   item-text='name'
                   item-value='id'
-                  label='Assign to group'
+                  :label='$t(`admin:auth.autoEnrollGroups`)'
                   v-model='strategy.autoEnrollGroups'
                   prepend-icon='people'
-                  hint='Automatically assign new users to these groups.'
+                  :hint='$t(`admin:auth.autoEnrollGroupsHint`)'
                   small-chips
                   persistent-hint
                   deletable-chips
@@ -170,36 +170,39 @@
                   )
               template(v-if='strategy.useForm')
                 v-divider.mt-3
-                v-subheader.pl-0 Security
+                v-subheader.pl-0 {{$t('admin:auth.security')}}
                 v-switch.ml-3(
                   v-model='strategy.recaptcha'
                   :disabled='true'
-                  label='Force all users to use Two-Factor Authentication (2FA)'
+                  :label='$t(`admin:auth.force2fa`)'
                   color='primary'
-                  hint='Users will be required to setup 2FA the first time they login and cannot be disabled by the user.'
+                  :hint='$t(`admin:auth.force2faHint`)'
                   persistent-hint
                 )
 
         v-card.mt-3.wiki-form.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, flat, dark)
-            .subheading Configuration Reference
+            .subheading {{$t('admin:auth.configReference')}}
           v-card-text
-            .body-1 Some strategies may require some configuration values to be set on your provider. These are provided for reference only and may not be needed by the current strategy.
-            v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outline, :value='true', icon='warning') You must set a valid #[strong Site URL] first! Click on #[strong General] in the left sidebar.
+            .body-1 {{$t('admin:auth.configReferenceSubtitle')}}
+            v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outline, :value='true', icon='warning')
+              i18next(path='admin:auth.siteUrlNotSetup', tag='span')
+                strong(place='siteUrl') {{$t('admin:general.siteUrl')}}
+                strong(place='general') {{$t('admin:general.title')}}
             .pa-3.mt-3.radius-7.grey(v-else, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`')
-              .body-2 Allowed Web Origins
+              .body-2 {{$t('admin:auth.allowedWebOrigins')}}
               .body-1 {{host}}
               v-divider.my-3
-              .body-2 Callback URL / Redirect URI
+              .body-2 {{$t('admin:auth.callbackUrl')}}
               .body-1 {{host}}/login/{{strategy.key}}/callback
               v-divider.my-3
-              .body-2 Login URL
+              .body-2 {{$t('admin:auth.loginUrl')}}
               .body-1 {{host}}/login
               v-divider.my-3
-              .body-2 Logout URL
+              .body-2 {{$t('admin:auth.logoutUrl')}}
               .body-1 {{host}}
               v-divider.my-3
-              .body-2 Token Endpoint Authentication Method
+              .body-2 {{$t('admin:auth.tokenEndpointAuthMethod')}}
               .body-1 HTTP-POST
 </template>
 

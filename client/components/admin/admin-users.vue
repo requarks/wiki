@@ -10,7 +10,7 @@
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser', disabled)
+          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser')
             v-icon(left) add
             span New User
         v-card.wiki-form.mt-3.animated.fadeInUp

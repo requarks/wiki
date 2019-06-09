@@ -5,8 +5,8 @@
         .admin-header
           img.animated.fadeInUp(src='/svg/icon-paint-palette.svg', alt='Theme', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text.animated.fadeInLeft Theme
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s Modify the look &amp; feel of your wiki
+            .headline.primary--text.animated.fadeInLeft {{$t('admin:theme.title')}}
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:theme.subtitle')}}
           v-spacer
           v-btn.animated.fadeInRight(color='success', depressed, @click='save', large, :loading='loading')
             v-icon(left) check
@@ -17,7 +17,7 @@
               v-card.wiki-form.animated.fadeInUp
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Theme
+                    .subheading {{$t('admin:theme.title')}}
                 v-card-text
                   v-select(
                     :items='themes'
@@ -25,9 +25,9 @@
                     background-color='grey lighten-2'
                     prepend-icon='palette'
                     v-model='config.theme'
-                    label='Site Theme'
+                    :label='$t(`admin:theme.siteTheme`)'
                     persistent-hint
-                    hint='Themes affect how content pages are displayed. Other site sections (such as the editor or admin area) are not affected.'
+                    :hint='$t(`admin:theme.siteThemeHint`)'
                     )
                     template(slot='item', slot-scope='data')
                       v-list-tile-avatar
@@ -38,51 +38,51 @@
                   v-divider.mt-3
                   v-switch(
                     v-model='darkMode'
-                    label='Dark Mode'
+                    :label='$t(`admin:theme.darkMode`)'
                     color='primary'
                     persistent-hint
-                    hint='Not recommended for accessibility. May not be supported by all themes.'
+                    :hint='$t(`admin:theme.darkModeHint`)'
                     )
               v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Code Injection
+                    .subheading {{$t(`admin:theme.codeInjection`)}}
                 v-card-text
                   v-textarea(
                     v-model='config.injectCSS'
-                    label='CSS Override'
+                    :label='$t(`admin:theme.cssOverride`)'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
                     persistent-hint
-                    hint='CSS code to inject after system default CSS. Consider using custom themes if you have a large amount of css code. Injecting too much CSS code will result in poor page load performance! CSS will automatically be minified.'
+                    :hint='$t(`admin:theme.cssOverrideHint`)'
                     auto-grow
                     )
                   v-textarea.mt-2(
                     v-model='config.injectHead'
-                    label='Head HTML Injection'
+                    :label='$t(`admin:theme.headHtmlInjection`)'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
                     persistent-hint
-                    hint='HTML code to be injected just before the closing head tag. Usually for script tags.'
+                    :hint='$t(`admin:theme.headHtmlInjectionHint`)'
                     auto-grow
                     )
                   v-textarea.mt-2(
                     v-model='config.injectBody'
-                    label='Body HTML Injection'
+                    :label='$t(`admin:theme.bodyHtmlInjection`)'
                     outline
                     background-color='grey lighten-1'
                     color='primary'
                     persistent-hint
-                    hint='HTML code to be injected just before the closing body tag.'
+                    :hint='$t(`admin:theme.bodyHtmlInjectionHint`)'
                     auto-grow
                     )
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p2s
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
-                    .subheading Download Themes
+                    .subheading {{$t('admin:theme.downloadThemes')}}
                   v-spacer
                   v-chip(label, color='white', small).teal--text coming soon
                 v-card-text.caption -- Coming soon --
