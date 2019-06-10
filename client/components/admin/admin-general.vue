@@ -19,75 +19,75 @@
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title
                       .subheading {{ $t('admin:general.siteInfo') }}
-                  v-subheader General
+                  v-subheader {{$t('admin:general.general')}}
                   .px-3.pb-3
                     v-text-field(
                       outline
-                      label='Site URL'
+                      :label='$t(`admin:general.siteUrl`)'
                       required
                       :counter='255'
                       v-model='config.host'
                       prepend-icon='label_important'
-                      hint='Full URL to your wiki, without the trailing slash. (e.g. https://wiki.example.com)'
+                      :hint='$t(`admin:general.siteUrlHint`)'
                       persistent-hint
                       )
                     v-text-field.mt-2(
                       outline
-                      label='Site Title'
+                      :label='$t(`admin:general.siteTitle`)'
                       required
                       :counter='50'
                       v-model='config.title'
                       prepend-icon='public'
-                      hint='Displayed in the top bar and appended to all pages meta title.'
+                      :hint='$t(`admin:general.siteTitleHint`)'
                       persistent-hint
                       )
                   v-divider
-                  v-subheader Logo #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
+                  v-subheader {{$t('admin:general.logo')}} #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
                   v-card-text.pb-4.pl-5
                     v-layout.px-3(row, align-center)
                       v-avatar(size='100', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
                       .ml-4
                         v-btn.mx-0(color='teal', depressed, disabled)
                           v-icon(left) cloud_upload
-                          span Upload Logo
+                          span {{$t('admin:general.uploadLogo')}}
                         v-btn(color='teal', depressed, disabled)
                           v-icon(left) clear
-                          span Clear
-                        .caption.grey--text An image of 120x120 pixels is recommended for best results.
-                        .caption.grey--text SVG, PNG or JPG files only.
+                          span {{$t('admin:general.uploadClear')}}
+                        .caption.grey--text {{$t('admin:general.uploadSizeHint', { size: '120x120' })}}
+                        .caption.grey--text {{$t('admin:general.uploadTypesHint', { typeList: 'SVG, PNG', lastType: 'JPG' })}}.
                   v-divider
-                  v-subheader Footer Copyright
+                  v-subheader {{$t('admin:general.footerCopyright')}}
                   .px-3.pb-3
                     v-text-field(
                       outline
-                      label='Company / Organization Name'
+                      :label='$t(`admin:general.companyName`)'
                       v-model='config.company'
                       :counter='255'
                       prepend-icon='business'
                       persistent-hint
-                      hint='Name to use when displaying copyright notice in the footer. Leave empty to hide.'
+                      :hint='$t(`admin:general.companyNameHint`)'
                       )
                   v-divider
                   v-subheader SEO
                   .px-3.pb-3
                     v-text-field(
                       outline
-                      label='Site Description'
+                      :label='$t(`admin:general.siteDescription`)'
                       :counter='255'
                       v-model='config.description'
                       prepend-icon='explore'
-                      hint='Default description when none is provided for a page.'
+                      :hint='$t(`admin:general.siteDescriptionHint`)'
                       persistent-hint
                       )
                     v-select.mt-2(
                       outline
-                      label='Meta Robots'
+                      :label='$t(`admin:general.metaRobots`)'
                       multiple
                       :items='metaRobots'
                       v-model='config.robots'
                       prepend-icon='explore'
                       :return-object='false'
-                      hint='Default: Index, Follow. Can also be set on a per-page basis.'
+                      :hint='$t(`admin:general.metaRobotsHint`)'
                       persistent-hint
                       )
 
@@ -155,6 +155,7 @@
                     v-model='config.featurePageRatings'
                     persistent-hint
                     hint='Allow users to rate pages.'
+                    disabled
                     )
 
                   v-divider.mt-3
@@ -164,6 +165,7 @@
                     v-model='config.featurePageComments'
                     persistent-hint
                     hint='Allow users to leave comments on pages.'
+                    disabled
                     )
 
                   v-divider.mt-3
@@ -173,6 +175,7 @@
                     v-model='config.featurePersonalWikis'
                     persistent-hint
                     hint='Allow users to have their own personal wiki.'
+                    disabled
                     )
 
 </template>

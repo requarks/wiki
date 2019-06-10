@@ -247,7 +247,7 @@ export default {
     async refresh() {
       await this.$apollo.queries.strategies.refetch()
       this.$store.commit('showNotification', {
-        message: 'List of strategies has been refreshed.',
+        message: this.$t('admin:auth.refreshSuccess'),
         style: 'success',
         icon: 'cached'
       })
@@ -274,7 +274,7 @@ export default {
           }
         })
         this.$store.commit('showNotification', {
-          message: 'Authentication configuration saved successfully.',
+          message: this.$t('admin:auth.saveSuccess'),
           style: 'success',
           icon: 'check'
         })

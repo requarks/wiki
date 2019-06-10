@@ -5,8 +5,8 @@
         .admin-header
           img.animated.fadeInUp(src='/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text.animated.fadeInLeft Storage
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s Set backup and sync targets for your content
+            .headline.primary--text.animated.fadeInLeft {{$t('admin:storage.title')}}
+            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{$t('admin:storage.subtitle')}}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
@@ -17,7 +17,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading Targets
+            .subheading {{$t('admin:storage.targets')}}
           v-list(two-line, dense).py-0
             template(v-for='(tgt, idx) in targets')
               v-list-tile(:key='tgt.key', @click='selectedTarget = tgt.key', :disabled='!tgt.isAvailable')
@@ -34,7 +34,7 @@
 
         v-card.mt-3.animated.fadeInUp.wait-p2s
           v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-l5` : `grey darken-3`', dark, dense)
-            .subheading Status
+            .subheading {{$t('admin:storage.status')}}
             v-spacer
             looping-rhombuses-spinner(
               :animation-duration='5000'
@@ -57,24 +57,24 @@
                     v-icon(color='white') check_circle
                   v-list-tile-content
                     v-list-tile-title.body-2 {{tgt.title}}
-                    v-list-tile-sub-title.green--text.caption Last synchronization {{tgt.lastAttempt | moment('from') }}
+                    v-list-tile-sub-title.green--text.caption {{$t('admin:storage.lastSync', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                 template(v-else)
                   v-list-tile-avatar(color='red')
                     v-icon(color='white') highlight_off
                   v-list-tile-content
                     v-list-tile-title.body-2 {{tgt.title}}
-                    v-list-tile-sub-title.red--text.caption Last attempt was {{tgt.lastAttempt | moment('from') }}
+                    v-list-tile-sub-title.red--text.caption {{$t('admin:storage.lastSyncAttempt', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                   v-list-tile-action
                     v-menu
                       v-btn(slot='activator', icon)
                         v-icon(color='red') info
                       v-card(width='450')
-                        v-toolbar(flat, color='red', dark, dense) Error Message
+                        v-toolbar(flat, color='red', dark, dense) {{$t('admin:storage.errorMsg')}}
                         v-card-text {{tgt.message}}
 
               v-divider(v-if='n < status.length - 1')
             v-list-tile(v-if='status.length < 1')
-              em You don't have any active storage target.
+              em {{$t('admin:storage.noTarget')}}
 
       v-flex(xs12, lg9)
         v-card.wiki-form.animated.fadeInUp.wait-p2s
@@ -88,8 +88,8 @@
               .caption {{target.description}}
               .caption: a(:href='target.website') {{target.website}}
               v-divider.mt-3
-              v-subheader.pl-0 Target Configuration
-              .body-1.ml-3(v-if='!target.config || target.config.length < 1') This storage target has no configuration options you can modify.
+              v-subheader.pl-0 {{$t('admin:storage.targetConfig')}}
+              .body-1.ml-3(v-if='!target.config || target.config.length < 1') {{$t('admin:storage.noConfigOption')}}
               template(v-else, v-for='cfg in target.config')
                 v-select(
                   v-if='cfg.value.type === "string" && cfg.value.enum'
@@ -127,48 +127,50 @@
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
               v-divider.mt-3
-              v-subheader.pl-0 Sync Direction
-              .body-1.ml-3 Choose how content synchronization is handled for this storage target.
+              v-subheader.pl-0 {{$t('admin:storage.syncDirection')}}
+              .body-1.ml-3 {{$t('admin:storage.syncDirectionSubtitle')}}
               .pr-3.pt-3
                 v-radio-group.ml-3.py-0(v-model='target.mode')
                   v-radio(
-                    label='Bi-directional'
+                    :label='$t(`admin:storage.syncDirBi`)'
                     color='primary'
                     value='sync'
                     :disabled='target.supportedModes.indexOf(`sync`) < 0'
                   )
                   v-radio(
-                    label='Push to target'
+                    :label='$t(`admin:storage.syncDirPush`)'
                     color='primary'
                     value='push'
                     :disabled='target.supportedModes.indexOf(`push`) < 0'
                   )
                   v-radio(
-                    label='Pull from target'
+                    :label='$t(`admin:storage.syncDirPull`)'
                     color='primary'
                     value='pull'
                     :disabled='target.supportedModes.indexOf(`pull`) < 0'
                   )
               .body-1.ml-3
-                strong Bi-directional #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`sync`) < 0') Unsupported]
-                .pb-3 In bi-directional mode, content is first pulled from the storage target. Any newer content overwrites local content. New content since last sync is then pushed to the storage target, overwriting any content on target if present.
-                strong Push to target #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`push`) < 0') Unsupported]
-                .pb-3 Content is always pushed to the storage target, overwriting any existing content. This is safest choice for backup scenarios.
-                strong Pull from target #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`pull`) < 0') Unsupported]
-                .pb-3 Content is always pulled from the storage target, overwriting any local content which already exists. This choice is usually reserved for single-use content import. Caution with this option as any local content will always be overwritten!
+                strong {{$t('admin:storage.syncDirBi')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`sync`) < 0') {{$t('admin:storage.unsupported')}}]
+                .pb-3 {{$t('admin:storage.syncDirBiHint')}}
+                strong {{$t('admin:storage.syncDirPush')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`push`) < 0') {{$t('admin:storage.unsupported')}}]
+                .pb-3 {{$t('admin:storage.syncDirPushHint')}}
+                strong {{$t('admin:storage.syncDirPull')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`pull`) < 0') {{$t('admin:storage.unsupported')}}]
+                .pb-3 {{$t('admin:storage.syncDirPullHint')}}
 
               template(v-if='target.hasSchedule')
                 v-divider.mt-3
-                v-subheader.pl-0 Sync Schedule
-                .body-1.ml-3 For performance reasons, this storage target synchronize changes on an interval-based schedule, instead of on every change. Define at which interval should the synchronization occur.
+                v-subheader.pl-0 {{$t('admin:storage.syncSchedule')}}
+                .body-1.ml-3 {{$t('admin:storage.syncScheduleHint')}}
                 .pa-3
                   duration-picker(v-model='target.syncInterval')
-                  .caption.mt-3 Currently set to every #[strong {{getDefaultSchedule(target.syncInterval)}}].
-                  .caption The default is every #[strong {{getDefaultSchedule(target.syncIntervalDefault)}}].
+                  i18next.caption.mt-3(path='admin:storage.syncScheduleCurrent', tag='div')
+                    strong(place='schedule') {{getDefaultSchedule(target.syncInterval)}}
+                  i18next.caption(path='admin:storage.syncScheduleDefault', tag='div')
+                    strong {{getDefaultSchedule(target.syncIntervalDefault)}}
 
               template(v-if='target.actions && target.actions.length > 0')
                 v-divider.mt-3
-                v-subheader.pl-0 Actions
+                v-subheader.pl-0 {{$t('admin:storage.actions')}}
                 v-container.pt-0(grid-list-xl, fluid)
                   v-layout(row, wrap, fill-height)
                     v-flex(xs12, lg6, xl4, v-for='act of target.actions', :key='act.handler')
@@ -182,7 +184,7 @@
                             :color='$vuetify.dark ? `blue` : `primary`'
                             :disabled='runningAction'
                             :loading='runningActionHandler === act.handler'
-                            ) Run
+                            ) {{$t('admin:storage.actionRun')}}
 
 </template>
 

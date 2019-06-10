@@ -11,7 +11,7 @@
         v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
             v-icon.dashboard-icon insert_drive_file
-            .subheading Pages
+            .subheading {{$t('admin:dashboard.pages')}}
             animated-number.display-1(
               :value='info.pagesTotal'
               :duration='2000'
@@ -22,7 +22,7 @@
         v-card.indigo.lighten-1.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
             v-icon.dashboard-icon person
-            .subheading Users
+            .subheading {{$t('admin:dashboard.users')}}
             animated-number.display-1(
               :value='info.usersTotal'
               :duration='2000'
@@ -33,7 +33,7 @@
         v-card.indigo.lighten-2.dashboard-card.animated.fadeInUp.wait-p4s(dark)
           v-card-text
             v-icon.dashboard-icon people
-            .subheading Groups
+            .subheading {{$t('admin:dashboard.groups')}}
             animated-number.display-1(
               :value='info.groupsTotal'
               :duration='2000'
@@ -50,8 +50,8 @@
           v-card-text
             v-icon.dashboard-icon blur_on
             .subheading Wiki.js {{info.currentVersion}}
-            .body-2(v-if='isLatestVersion') You are running the latest version.
-            .body-2(v-else) A new version is available: {{info.latestVersion}}
+            .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
+            .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12)
         v-card.radius-7
           v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
@@ -92,10 +92,10 @@
           v-card-text
             img(src='/svg/icon-heart-health.svg', alt='Contribute', style='height: 80px;')
             .pl-3
-              .subheading Contribute
-              .body-2.pt-2 Wiki.js is a free and open source project. There are several ways you can contribute to the project.
-              .body-1 We need your help!
-              v-btn.mx-0.mt-2(:color='$vuetify.dark ? `indigo lighten-3` : `indigo`', outline, small, to='/contribute') Learn More
+              .subheading {{$t('admin:contribute.title')}}
+              .body-2.pt-2 {{$t('admin:dashboard.contributeSubtitle')}}
+              .body-1 {{$t('admin:dashboard.contributeHelp')}}
+              v-btn.mx-0.mt-2(:color='$vuetify.dark ? `indigo lighten-3` : `indigo`', outline, small, to='/contribute') {{$t('admin:dashboard.contributeLearnMore')}}
 
 </template>
 

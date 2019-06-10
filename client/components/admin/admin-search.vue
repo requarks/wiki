@@ -5,14 +5,14 @@
         .admin-header
           img.animated.fadeInUp(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text.animated.fadeInLeft Search Engine
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s Configure the search capabilities of your wiki
+            .headline.primary--text.animated.fadeInLeft {{$t('admin:search.title')}}
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:search.subtitle')}}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
           v-btn.animated.fadeInDown.wait-p1s(color='black', dark, large, depressed, @click='rebuild')
             v-icon(left) cached
-            span Rebuild Index
+            span {{$t('admin:search.rebuildIndex')}}
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) check
             span {{$t('common:actions.apply')}}
@@ -20,7 +20,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading Search Engine
+            .subheading {{$t('admin:search.searchEngine')}}
           v-list.py-0(two-line, dense)
             template(v-for='(eng, idx) in engines')
               v-list-tile(:key='eng.key', @click='selectedEngine = eng.key', :disabled='!eng.isAvailable')
@@ -45,8 +45,8 @@
             .caption.pt-3 {{engine.description}}
             .caption.pb-3: a(:href='engine.website') {{engine.website}}
             v-divider.mt-3
-            v-subheader.pl-0 Engine Configuration
-            .body-1.ml-3(v-if='!engine.config || engine.config.length < 1') This engine has no configuration options you can modify.
+            v-subheader.pl-0 {{$t('admin:search.engineConfig')}}
+            .body-1.ml-3(v-if='!engine.config || engine.config.length < 1') {{$t('admin:search.engineNoConfig')}}
             template(v-else, v-for='cfg in engine.config')
               v-select(
                 v-if='cfg.value.type === "string" && cfg.value.enum'
@@ -112,7 +112,7 @@ export default {
     async refresh() {
       await this.$apollo.queries.engines.refetch()
       this.$store.commit('showNotification', {
-        message: 'List of search engines has been refreshed.',
+        message: this.$t('admin:search.listRefreshSuccess'),
         style: 'success',
         icon: 'cached'
       })
@@ -132,12 +132,12 @@ export default {
         })
         if (_.get(resp, 'data.search.updateSearchEngines.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
-            message: 'Search engine configuration saved successfully.',
+            message: this.$t('admin:search.configSaveSuccess'),
             style: 'success',
             icon: 'check'
           })
         } else {
-          throw new Error(_.get(resp, 'data.search.updateSearchEngines.responseResult.message', 'An unexpected error occured'))
+          throw new Error(_.get(resp, 'data.search.updateSearchEngines.responseResult.message', this.$t('common:error.unexpected')))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -152,12 +152,12 @@ export default {
         })
         if (_.get(resp, 'data.search.rebuildIndex.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
-            message: 'Index rebuilt successfully.',
+            message: this.$t('admin:search.indexRebuildSuccess'),
             style: 'success',
             icon: 'check'
           })
         } else {
-          throw new Error(_.get(resp, 'data.search.rebuildIndex.responseResult.message', 'An unexpected error occured'))
+          throw new Error(_.get(resp, 'data.search.rebuildIndex.responseResult.message', this.$t('common:error.unexpected')))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)

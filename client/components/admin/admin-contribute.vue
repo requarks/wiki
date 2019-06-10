@@ -73,11 +73,11 @@
             .body-1.pl-3
               ul
                 i18next(path='admin:contribute.submitAnIdea', tag='li')
-                  a(href='https://requests.requarks.io/wiki', target='_blank') {{ $t('admin:contribute.submitAnIdeaLink') }}
+                  a(href='https://wiki.js.org/feedback', target='_blank') {{ $t('admin:contribute.submitAnIdeaLink') }}
                 i18next(path='admin:contribute.foundABug', tag='li')
                   a(href='https://github.com/Requarks/wiki/issues', target='_blank') Github
                 i18next(path='admin:contribute.helpTranslate', tag='li')
-                  a(href='https://gitter.im/Requarks/wiki', target='_blank') Gitter
+                  a(href='https://wiki.requarks.io/slack', target='_blank') Slack
             v-divider.mt-3
             v-subheader {{ $t('admin:contribute.spreadTheWord') }}
             .body-1.pl-3
