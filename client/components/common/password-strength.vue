@@ -44,22 +44,22 @@ export default {
         return
       }
       const strength = zxcvbn(pwd)
-      this.passwordStrength = _.round((strength.score + 1 ) / 5 * 100)
+      this.passwordStrength = _.round((strength.score + 1) / 5 * 100)
       if (this.passwordStrength <= 20) {
         this.passwordStrengthColor = 'red'
-        this.passwordStrengthText = 'Very Weak'
+        this.passwordStrengthText = this.$t('common:password.veryWeak')
       } else if (this.passwordStrength <= 40) {
         this.passwordStrengthColor = 'orange'
-        this.passwordStrengthText = 'Weak'
+        this.passwordStrengthText = this.$t('common:password.weak')
       } else if (this.passwordStrength <= 60) {
         this.passwordStrengthColor = 'teal'
-        this.passwordStrengthText = 'Average'
+        this.passwordStrengthText = this.$t('common:password.average')
       } else if (this.passwordStrength <= 80) {
         this.passwordStrengthColor = 'green'
-        this.passwordStrengthText = 'Strong'
+        this.passwordStrengthText = this.$t('common:password.strong')
       } else {
         this.passwordStrengthColor = 'green'
-        this.passwordStrengthText = 'Very Strong'
+        this.passwordStrengthText = this.$t('common:password.veryStrong')
       }
     }, 100)
   }

@@ -3,18 +3,19 @@
     v-card.wiki-form
       .dialog-header.is-short.is-red
         v-icon.mr-2(color='white') highlight_off
-        span Delete Page
+        span {{$t('common:page.delete')}}
       v-card-text
-        .body-2 Are you sure you want to delete page #[span.red--text.text--darken-2 {{pageTitle}}]?
-        .caption The page can be restored from the administration area.
+        i18next.body-2(path='common:page.deleteTitle', tag='div')
+          span.red--text.text--darken-2(place='title') {{pageTitle}}
+        .caption {{$t('common:page.deleteSubtitle')}}
         v-chip.mt-3.ml-0.mr-1(label, color='red lighten-4', disabled, small)
           .caption.red--text.text--darken-2 {{pageLocale.toUpperCase()}}
         v-chip.mt-3.mx-0(label, color='red lighten-5', disabled, small)
           span.red--text.text--darken-2 /{{pagePath}}
       v-card-chin
         v-spacer
-        v-btn(flat, @click='discard', :disabled='loading') Cancel
-        v-btn(color='red darken-2', @click='deletePage', :loading='loading').white--text Delete
+        v-btn(flat, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
+        v-btn(color='red darken-2', @click='deletePage', :loading='loading').white--text {{$t('common:actions.delete')}}
 </template>
 
 <script>
@@ -77,7 +78,7 @@ export default {
               }, 1200)
             }, 400)
           } else {
-            throw new Error(_.get(resp, 'data.pages.delete.responseResult.message', 'An unexpected error occured.'))
+            throw new Error(_.get(resp, 'data.pages.delete.responseResult.message', this.$t('common:error.unexpected')))
           }
         } catch (err) {
           this.$store.commit('pushGraphError', err)

@@ -3,19 +3,19 @@
     .search-results-container
       .search-results-help(v-if='search.length < 2')
         img(src='/svg/icon-search-alt.svg')
-        .mt-4 Type at least 2 characters to start searching...
+        .mt-4 {{$t('common:header.searchHint')}}
       .search-results-loader(v-else-if='searchIsLoading && results.length < 1')
         orbit-spinner(
           :animation-duration='1000'
           :size='100'
           color='#FFF'
         )
-        .headline.mt-5 Searching...
+        .headline.mt-5 {{$t('common:header.searchLoading')}}
       .search-results-none(v-else-if='!searchIsLoading && results.length < 1')
         img(src='/svg/icon-no-results.svg', alt='No Results')
-        .subheading No pages matching your query.
+        .subheading {{$t('common:header.searchNoResult')}}
       template(v-if='results.length > 0')
-        v-subheader.white--text Found {{response.totalHits}} results
+        v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
         v-list.search-results-items.radius-7(two-line)
           template(v-for='(item, idx) of results')
             v-list-tile(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
@@ -35,7 +35,7 @@
           :length='paginationLength'
         )
       template(v-if='suggestions.length > 0')
-        v-subheader.white--text.mt-3 Did you mean...
+        v-subheader.white--text.mt-3 {{$t('common:header.searchDidYouMean')}}
         v-list.search-results-suggestions.radius-7(dense, dark)
           template(v-for='(term, idx) of suggestions')
             v-list-tile(:key='term', @click='setSearchTerm(term)', :class='idx + results.length === cursor ? `highlighted` : ``')
@@ -47,10 +47,10 @@
       .text-xs-center.pt-5(v-if='search.length > 1')
         v-btn(outline, color='orange', @click='search = ``', v-if='results.length > 0')
           v-icon(left) save
-          span Copy Search Link
+          span {{$t('common:header.searchCopyLink')}}
         v-btn(outline, color='pink', @click='search = ``')
           v-icon(left) clear
-          span Close
+          span {{$t('common:header.searchClose')}}
 </template>
 
 <script>
