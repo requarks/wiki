@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-toolbar.radius-7(flat, :color='$vuetify.dark ? "grey darken-4-l3" : "grey lighten-3"')
-    .body-2.mr-3 Every
+    .body-2.mr-3 {{$t('common:duration.every')}}
     v-text-field(
       solo
       hide-details
@@ -8,7 +8,7 @@
       reverse
       v-model='minutes'
     )
-    .body-2.mx-3 Minute(s)
+    .body-2.mx-3 {{$t('common:duration.minutes')}}
     v-divider.mr-3()
     v-text-field(
       solo
@@ -17,7 +17,7 @@
       reverse
       v-model='hours'
     )
-    .body-2.mx-3 Hour(s)
+    .body-2.mx-3 {{$t('common:duration.hours')}}
     v-divider.mr-3()
     v-text-field(
       solo
@@ -26,7 +26,7 @@
       reverse
       v-model='days'
     )
-    .body-2.mx-3 Day(s)
+    .body-2.mx-3 {{$t('common:duration.days')}}
     v-divider.mr-3()
     v-text-field(
       solo
@@ -35,7 +35,7 @@
       reverse
       v-model='months'
     )
-    .body-2.mx-3 Month(s)
+    .body-2.mx-3 {{$t('common:duration.months')}}
     v-divider.mr-3()
     v-text-field(
       solo
@@ -44,7 +44,7 @@
       reverse
       v-model='years'
     )
-    .body-2.mx-3 Year(s)
+    .body-2.mx-3 {{$t('common:duration.years')}}
 </template>
 
 <script>

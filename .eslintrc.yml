@@ -1,6 +1,6 @@
 extends:
   - requarks
-  - plugin:vue/recommended
+  - plugin:vue/strongly-recommended
 env:
   node: true
   jest: true

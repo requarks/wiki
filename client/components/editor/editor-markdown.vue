@@ -86,6 +86,12 @@
           v-btn.animated.fadeIn.wait-p11s(icon, slot='activator', @click='insertAfter({ content: `---`, newLine: true })').mx-0
             v-icon remove
           span Horizontal Bar
+        template(v-if='$vuetify.breakpoint.mdAndUp')
+          v-spacer
+          v-tooltip(bottom, color='primary')
+            v-btn.animated.fadeIn.wait-p11s(icon, slot='activator', @click='previewShown = !previewShown').mx-0
+              v-icon flip
+            span Hide / Show Preview Pane
     .editor-markdown-main
       .editor-markdown-sidebar
         v-tooltip(right, color='teal')
@@ -131,12 +137,9 @@
               v-icon(:color='helpShown ? `teal` : ``') help
             span Markdown Formatting Help
       .editor-markdown-editor
-        .editor-markdown-editor-title(v-if='previewShown', @click='previewShown = false') Editor
-        .editor-markdown-editor-title(v-else='previewShown', @click='previewShown = true'): v-icon(dark) drag_indicator
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
       transition(name='editor-markdown-preview')
         .editor-markdown-preview(v-if='previewShown')
-          .editor-markdown-preview-title(@click='previewShown = false') Preview
           .editor-markdown-preview-content.contents(ref='editorPreview', v-html='previewHTML')
 
     v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
@@ -264,7 +267,9 @@ export default {
         highlightSelectionMatches: {
           annotateScrollbar: true
         },
-        viewportMargin: 50
+        viewportMargin: 50,
+        inputStyle: 'contenteditable',
+        allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif']
       },
       cursorPos: { ch: 0, line: 1 },
       previewShown: true,
@@ -339,6 +344,7 @@ export default {
         this.positionSync(cm)
         this.scrollSync(cm)
       })
+      cm.on('paste', this.onCmPaste)
       this.onCmInput(this.code)
     },
     onCmInput: _.debounce(function (newContent) {
@@ -351,6 +357,23 @@ export default {
         this.scrollSync(this.cm)
       })
     }, 500),
+    onCmPaste (cm, ev) {
+      const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
+      for (const clipItem of clipItems) {
+        if (_.startsWith(clipItem.type, 'image/')) {
+          const file = clipItem.getAsFile()
+          const reader = new FileReader()
+          reader.onload = evt => {
+            this.$store.commit(`loadingStart`, 'editor-paste-image')
+            this.insertAfter({
+              content: `![${file.name}](${evt.target.result})`,
+              newLine: true
+            })
+          }
+          reader.readAsDataURL(file)
+        }
+      }
+    },
     /**
      * Update cursor state
      */
@@ -514,28 +537,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     @include until($tablet) {
       height: $editor-height-mobile;
     }
-
-    &-title {
-      background-color: mc('grey', '800');
-      border-bottom-left-radius: 5px;
-      display: inline-flex;
-      height: 30px;
-      justify-content: center;
-      align-items: center;
-      padding: 0 1rem;
-      color: mc('grey', '500');
-      position: absolute;
-      top: 0;
-      right: 0;
-      z-index: 7;
-      text-transform: uppercase;
-      font-size: .7rem;
-      cursor: pointer;
-
-      @include until($tablet) {
-        display: none;
-      }
-    }
   }
 
   &-preview {
@@ -581,24 +582,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       @include until($tablet) {
         height: $editor-height-mobile;
       }
-    }
-
-    &-title {
-      background-color: rgba(mc('blue', '100'), .75);
-      border-bottom-right-radius: 5px;
-      display: inline-flex;
-      height: 30px;
-      justify-content: center;
-      align-items: center;
-      padding: 0 1rem;
-      color: mc('blue', '800');
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 2;
-      text-transform: uppercase;
-      font-size: .7rem;
-      cursor: pointer;
     }
   }
 

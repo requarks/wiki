@@ -7,33 +7,34 @@
             v-card-text
               .d-flex
                 v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat, height='44')
-                  .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Assets
+                  .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.title')}}
                   v-spacer
                   v-btn(flat, icon, @click='refresh')
                     v-icon(:color='$vuetify.dark ? `white` : `teal`') refresh
                 v-dialog(v-model='newFolderDialog', max-width='550')
                   v-btn.ml-3.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly', slot='activator')
                     v-icon(:left='$vuetify.breakpoint.mdAndUp') add
-                    span.hidden-sm-and-down(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') New Folder
+                    span.hidden-sm-and-down(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') {{$t('editor:assets.newFolder')}}
                   v-card.wiki-form
-                    .dialog-header.is-short New Folder
+                    .dialog-header.is-short {{$t('editor:assets.newFolder')}}
                     v-card-text
                       v-text-field.md2(
                         outline
                         background-color='grey lighten-3'
                         prepend-icon='folder'
                         v-model='newFolderName'
-                        label='Folder Name'
+                        :label='$t(`editor:assets.folderName`)'
                         counter='255'
                         @keyup.enter='createFolder'
                         @keyup.esc='newFolderDialog = false'
                         ref='folderNameIpt'
                         )
-                      .caption.grey--text.text--darken-1.pl-5 Must follow the asset folder #[a(href='https://docs-beta.requarks.io/guide/assets#naming-restrictions', target='_blank') naming rules].
+                      i18next.caption.grey--text.text--darken-1.pl-5(path='editor:assets.folderNameNamingRules', tag='div')
+                        a(place='namingRules', href='https://docs-beta.requarks.io/guide/assets#naming-restrictions', target='_blank') {{$t('editor:assets.folderNameNamingRulesLink')}}
                     v-card-chin
                       v-spacer
-                      v-btn(flat, @click='newFolderDialog = false') Cancel
-                      v-btn(color='primary', @click='createFolder', :disabled='!isFolderNameValid', :loading='newFolderLoading') Create
+                      v-btn(flat, @click='newFolderDialog = false') {{$t('common:actions.cancel')}}
+                      v-btn(color='primary', @click='createFolder', :disabled='!isFolderNameValid', :loading='newFolderLoading') {{$t('common:actions.create')}}
               v-toolbar(flat, dense, :color='$vuetify.dark ? `grey darken-3` : `white`')
                 template(v-if='folderTree.length > 0')
                   .body-2
@@ -81,48 +82,48 @@
                           v-list-tile(@click='', disabled)
                             v-list-tile-avatar
                               v-icon(color='teal') short_text
-                            v-list-tile-content Properties
+                            v-list-tile-content {{$t('common:actions.properties')}}
                           v-divider
                           template(v-if='props.item.kind === `IMAGE`')
                             v-list-tile(@click='previewDialog = true', disabled)
                               v-list-tile-avatar
                                 v-icon(color='green') image_search
-                              v-list-tile-content Preview
+                              v-list-tile-content {{$t('common:actions.preview')}}
                             v-divider
                             v-list-tile(@click='', disabled)
                               v-list-tile-avatar
                                 v-icon(color='indigo') crop_rotate
-                              v-list-tile-content Edit
+                              v-list-tile-content {{$t('common:actions.edit')}}
                             v-divider
                             v-list-tile(@click='', disabled)
                               v-list-tile-avatar
                                 v-icon(color='purple') offline_bolt
-                              v-list-tile-content Optimize
+                              v-list-tile-content {{$t('common:actions.optimize')}}
                             v-divider
                           v-list-tile(@click='openRenameDialog')
                             v-list-tile-avatar
                               v-icon(color='orange') keyboard
-                            v-list-tile-content Rename
+                            v-list-tile-content {{$t('common:actions.rename')}}
                           v-divider
                           v-list-tile(@click='', disabled)
                             v-list-tile-avatar
                               v-icon(color='blue') forward
-                            v-list-tile-content Move
+                            v-list-tile-content {{$t('common:actions.move')}}
                           v-divider
                           v-list-tile(@click='deleteDialog = true')
                             v-list-tile-avatar
                               v-icon(color='red') delete
-                            v-list-tile-content Delete
+                            v-list-tile-content {{$t('common:actions.delete')}}
                 template(slot='no-data')
-                  v-alert.mt-3.radius-7(icon='folder_open', :value='true', outline, color='teal') This asset folder is empty.
+                  v-alert.mt-3.radius-7(icon='folder_open', :value='true', outline, color='teal') {{$t('editor:assets.folderEmpty')}}
               .text-xs-center.py-2(v-if='this.pageTotal > 1')
                 v-pagination(v-model='pagination.page', :length='pageTotal')
               .d-flex.mt-3
                 v-toolbar.radius-7(flat, :color='$vuetify.dark ? `grey darken-2` : `grey lighten-4`', dense, height='44')
-                  .body-1(:class='$vuetify.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{assets.length}} files
+                  .body-1(:class='$vuetify.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{$t('editor:assets.fileCount', { count: assets.length })}}
                 v-btn.ml-3.mr-0.my-0.radius-7(color='teal', large, @click='insert', :disabled='!currentFileId', :dark='currentFileId !== null')
                   v-icon(left) save_alt
-                  span Insert
+                  span {{$t('common:actions.insert')}}
 
         v-flex(xs12, xl3)
           v-card.radius-7.animated.fadeInRight.wait-p3s(:light='!$vuetify.dark', :dark='$vuetify.dark')
@@ -130,14 +131,14 @@
               .d-flex
                 v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat, height='44')
                   v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') cloud_upload
-                  .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Upload Assets
+                  .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.uploadAssets')}}
                 v-btn.my-0.ml-3.mr-0.radius-7(outline, large, color='teal', @click='browse', v-if='$vuetify.breakpoint.mdAndUp')
                   v-icon(left) touch_app
-                  span(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') Browse
+                  span(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') {{$t('common:actions.browse')}}
               file-pond.mt-3(
                 name='mediaUpload'
                 ref='pond'
-                label-idle='Browse or Drop files here...'
+                :label-idle='$t(`editor:assets.uploadAssetsDropZone`)'
                 allow-multiple='true'
                 :files='files'
                 max-files='10'
@@ -150,13 +151,13 @@
             v-card-actions.pa-3
               .caption.grey--text.text-darken-2 Max 10 files, 5 MB each
               v-spacer
-              v-btn(color='teal', dark, @click='upload') Upload
+              v-btn(color='teal', dark, @click='upload') {{$t('common:actions.upload')}}
 
           v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text.pb-0
               v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat)
                 v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') cloud_download
-                .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Fetch Remote Image
+                .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.fetchImage')}}
                 v-spacer
                 v-chip(label, color='white', small).teal--text coming soon
               v-text-field.mt-3(
@@ -170,13 +171,13 @@
             v-card-actions.pa-3
               .caption.grey--text.text-darken-2 Max 5 MB
               v-spacer
-              v-btn(color='teal', disabled) Fetch
+              v-btn(color='teal', disabled) {{$t('common:actions.fetch')}}
 
           v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text.pb-0
               v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat)
                 v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') format_align_left
-                .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') Image Alignment
+                .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.imageAlign')}}
               v-select.mt-3(
                 v-model='imageAlignment'
                 :items='imageAlignments'
@@ -192,9 +193,9 @@
       v-card.wiki-form
         .dialog-header.is-short.is-orange
           v-icon.mr-2(color='white') keyboard
-          span Rename Asset
+          span {{$t('editor:assets.renameAsset')}}
         v-card-text
-          .body-2 Enter the new name for this asset:
+          .body-2 {{$t('editor:assets.renameAssetSubtitle')}}
           v-text-field(
             outline
             single-line
@@ -205,8 +206,8 @@
           )
         v-card-chin
           v-spacer
-          v-btn(flat, @click='renameDialog = false', :disabled='renameAssetLoading') Cancel
-          v-btn(color='orange darken-3', @click='renameAsset', :loading='renameAssetLoading').white--text Rename
+          v-btn(flat, @click='renameDialog = false', :disabled='renameAssetLoading') {{$t('common:actions.cancel')}}
+          v-btn(color='orange darken-3', @click='renameAsset', :loading='renameAssetLoading').white--text {{$t('common:actions.rename')}}
 
     //- DELETE DIALOG
 
@@ -214,15 +215,15 @@
       v-card.wiki-form
         .dialog-header.is-short.is-red
           v-icon.mr-2(color='white') highlight_off
-          span Delete Asset
+          span {{$t('editor:assets.deleteAsset')}}
         v-card-text
-          .body-2 Are you sure you want to delete asset
+          .body-2 {{$t('editor:assets.deleteAssetConfirm')}}
           .body-2.red--text.text--darken-2 {{currentAsset.filename}}?
-          .caption.mt-3 This action cannot be undone!
+          .caption.mt-3 {{$t('editor:assets.deleteAssetWarn')}}
         v-card-chin
           v-spacer
-          v-btn(flat, @click='deleteDialog = false', :disabled='deleteAssetLoading') Cancel
-          v-btn(color='red darken-2', @click='deleteAsset', :loading='deleteAssetLoading').white--text Delete
+          v-btn(flat, @click='deleteDialog = false', :disabled='deleteAssetLoading') {{$t('common:actions.cancel')}}
+          v-btn(color='red darken-2', @click='deleteAsset', :loading='deleteAssetLoading').white--text {{$t('common:actions.delete')}}
 </template>
 
 <script>
@@ -297,12 +298,12 @@ export default {
     },
     headers() {
       return _.compact([
-        this.$vuetify.breakpoint.smAndUp && { text: 'ID', value: 'id', width: 50, align: 'right' },
-        { text: 'Filename', value: 'filename' },
-        this.$vuetify.breakpoint.lgAndUp && { text: 'Type', value: 'ext', width: 50 },
-        this.$vuetify.breakpoint.mdAndUp && { text: 'File Size', value: 'fileSize', width: 110 },
-        this.$vuetify.breakpoint.mdAndUp && { text: 'Added', value: 'createdAt', width: 175 },
-        this.$vuetify.breakpoint.smAndUp && { text: 'Actions', value: '', width: 40, sortable: false, align: 'right' }
+        this.$vuetify.breakpoint.smAndUp && { text: this.$t('editor:assets.headerId'), value: 'id', width: 50, align: 'right' },
+        { text: this.$t('editor:assets.headerFilename'), value: 'filename' },
+        this.$vuetify.breakpoint.lgAndUp && { text: this.$t('editor:assets.headerType'), value: 'ext', width: 50 },
+        this.$vuetify.breakpoint.mdAndUp && { text: this.$t('editor:assets.headerFileSize'), value: 'fileSize', width: 110 },
+        this.$vuetify.breakpoint.mdAndUp && { text: this.$t('editor:assets.headerAdded'), value: 'createdAt', width: 175 },
+        this.$vuetify.breakpoint.smAndUp && { text: this.$t('editor:assets.headerActions'), value: '', width: 40, sortable: false, align: 'right' }
       ])
     },
     isFolderNameValid() {
@@ -349,7 +350,7 @@ export default {
     async refresh() {
       await this.$apollo.queries.assets.refetch()
       this.$store.commit('showNotification', {
-        message: 'List of assets refreshed successfully.',
+        message: this.$t('editor:assets.refreshSuccess'),
         style: 'success',
         icon: 'check'
       })
@@ -372,7 +373,7 @@ export default {
       const files = this.$refs.pond.getFiles()
       if (files.length < 1) {
         return this.$store.commit('showNotification', {
-          message: 'You must choose a file to upload first!',
+          message: this.$t('editor:assets.noUploadError'),
           style: 'warning',
           icon: 'warning'
         })
@@ -387,7 +388,7 @@ export default {
     async onFileProcessed (err, file) {
       if (err) {
         return this.$store.commit('showNotification', {
-          message: 'File upload failed.',
+          message: this.$t('editor:assets.uploadFailed'),
           style: 'error',
           icon: 'error'
         })
@@ -423,7 +424,7 @@ export default {
         if (_.get(resp, 'data.assets.createFolder.responseResult.succeeded', false)) {
           await this.$apollo.queries.folders.refetch()
           this.$store.commit('showNotification', {
-            message: 'Asset folder created successfully.',
+            message: this.$t('editor:assets.folderCreateSuccess'),
             style: 'success',
             icon: 'check'
           })
@@ -456,7 +457,7 @@ export default {
         if (_.get(resp, 'data.assets.renameAsset.responseResult.succeeded', false)) {
           await this.$apollo.queries.assets.refetch()
           this.$store.commit('showNotification', {
-            message: 'Asset renamed successfully.',
+            message: this.$t('editor:assets.renameSuccess'),
             style: 'success',
             icon: 'check'
           })
@@ -485,7 +486,7 @@ export default {
           this.currentFileId = null
           await this.$apollo.queries.assets.refetch()
           this.$store.commit('showNotification', {
-            message: 'Asset deleted successfully.',
+            message: this.$t('editor:assets.deleteSuccess'),
             style: 'success',
             icon: 'check'
           })

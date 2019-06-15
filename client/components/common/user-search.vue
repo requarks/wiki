@@ -5,7 +5,7 @@
     )
     v-card.wiki-form
       .dialog-header
-        span Search User
+        span {{$t('common:user.search')}}
         v-spacer
         v-progress-circular(
           indeterminate
@@ -17,7 +17,7 @@
       v-card-text
         v-text-field(
           outline
-          label='Search Users...'
+          :label='$t(`common:user.searchPlaceholder`)'
           v-model='search'
           prepend-inner-icon='search'
           color='primary'
@@ -45,7 +45,7 @@
           flat
           @click='close'
           :disabled='loading'
-          ) Cancel
+          ) {{$t('common:actions.cancel')}}
 </template>
 
 <script>

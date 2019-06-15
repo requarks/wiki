@@ -2,7 +2,7 @@
   v-dialog(v-model='isShown', persistent, max-width='700')
     v-card.radius-7(color='blue darken-3', dark)
       v-card-text.text-xs-center.py-4
-        .subheading Which editor do you want to use for this page?
+        .subheading {{$t('editor:select.title')}}
         v-container(grid-list-lg, fluid)
           v-layout(row, wrap, justify-center)
             v-flex(xs4)
@@ -65,7 +65,7 @@
                   img(src='/svg/icon-news.svg', alt='WikiText', style='width: 36px;')
                   .body-2.grey--text.mt-2.text--darken-2 WikiText
                   .caption.grey--text.text--darken-1 MediaWiki Format
-        .caption.blue--text.text--lighten-2 This cannot be changed once the page is created.
+        .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}
 </template>
 
 <script>

@@ -3,13 +3,13 @@
     v-card.wiki-form
       .dialog-header.is-short.is-red
         v-icon.mr-2(color='white') warning
-        span Discard Unsaved Changes?
+        span {{$t('editor:unsaved.title')}}
       v-card-text
-        .body-2 You have unsaved changes. Are you sure you want to leave the editor and discard any modifications you made since the last save?
+        .body-2 {{$t('editor:unsaved.body')}}
       v-card-chin
         v-spacer
-        v-btn(flat, @click='isShown = false') Cancel
-        v-btn(color='red', @click='discard', dark) Discard Changes
+        v-btn(flat, @click='isShown = false') {{$t('common:actions.cancel')}}
+        v-btn(color='red', @click='discard', dark) {{$t('common:actions.discardChanges')}}
 </template>
 
 <script>
