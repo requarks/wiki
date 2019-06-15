@@ -35,7 +35,6 @@ module.exports = {
     pathinfo: true,
     crossOriginLoading: 'use-credentials'
   },
-  devtool: 'cheap-module-eval-source-map',
   module: {
     rules: [
       {
