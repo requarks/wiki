@@ -3,11 +3,12 @@
     nav-header
     v-content
       v-toolbar(color='primary', dark)
-        .subheading Viewing source of page #[strong /{{path}}]
+        i18next.subheading(path='common:page.viewingSource', tag='div')
+          strong(place='path') /{{path}}]
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
-          .caption.blue--text.text--lighten-3 ID {{pageId}}
-          v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Normal View
+          .caption.blue--text.text--lighten-3 {{$t('common:page.id', { id: pageId })}}
+          v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') {{$t('common:page.returnNormalView')}}
       v-card(tile)
         v-card-text
           v-card.grey.radius-7(flat, :class='darkMode ? `darken-4` : `lighten-4`')
