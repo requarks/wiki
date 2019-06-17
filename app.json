@@ -1,0 +1,64 @@
+{
+  "addons": [
+    "mongolab"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "description": "wiki",
+  "env": {
+    "MONGODB_URI": {
+      "required": true
+    },
+    "WIKI_ADMIN_EMAIL": {
+      "required": true
+    },
+    "WIKI_GIT_BRANCH": {
+      "required": true
+    },
+    "WIKI_GIT_PASSWORD": {
+      "required": true
+    },
+    "WIKI_GIT_URL": {
+      "required": true
+    },
+    "WIKI_GIT_USERNAME": {
+      "required": true
+    },
+    "WIKI_HOST": {
+      "required": true
+    },
+    "WIKI_IS_PUBLIC": {
+      "required": true
+    },
+    "WIKI_JS_HEROKU": {
+      "required": true
+    },
+    "WIKI_LANG": {
+      "required": true
+    },
+    "WIKI_SERVER_EMAIL": {
+      "required": true
+    },
+    "WIKI_SESSION_KEY": {
+      "required": true
+    },
+    "WIKI_SHOW_USER_EMAIL": {
+      "required": true
+    },
+    "WIKI_TITLE": {
+      "required": true
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "name": "wiki",
+  "scripts": {
+  },
+  "stack": "heroku-18"
+}
