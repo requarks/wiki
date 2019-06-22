@@ -2,7 +2,7 @@
   v-card.editor-modal-media.animated.fadeInLeft(flat, tile)
     v-container.pa-3(grid-list-lg, fluid)
       v-layout(row, wrap)
-        v-flex(xs12, xl9)
+        v-flex(xs12, lg9)
           v-card.radius-7.animated.fadeInLeft.wait-p1s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text
               .d-flex
@@ -125,7 +125,7 @@
                   v-icon(left) save_alt
                   span {{$t('common:actions.insert')}}
 
-        v-flex(xs12, xl3)
+        v-flex(xs12, lg3)
           v-card.radius-7.animated.fadeInRight.wait-p3s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text
               .d-flex

@@ -74,12 +74,13 @@
           multiple
           v-model='tags'
           single-line
-          :hint='$t(`editor:props.tagsHint`)'
+          :hint='`COMING SOON - ` + $t(`editor:props.tagsHint`)'
           persistent-hint
+          disabled
           )
       v-divider
       v-card-text.pb-5.grey(:class='darkMode ? `darken-3-d5` : `lighten-4`')
-        v-subheader.pl-0 {{$t('editor:props.publishState')}}
+        v-subheader.pl-0 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outline).white--text coming soon]
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
             v-flex(xs12, md4)
@@ -89,6 +90,7 @@
                 color='primary'
                 :hint='$t(`editor:props.publishToggleHint`)'
                 persistent-hint
+                disabled
                 )
             v-flex(xs12, md4)
               v-dialog(
@@ -99,7 +101,7 @@
                 :return-value.sync='publishStartDate'
                 full-width
                 width='460px'
-                :disabled='!isPublished'
+                :disabled='!isPublished || true'
                 )
                 v-text-field(
                   slot='activator'
@@ -112,7 +114,7 @@
                   clearable
                   :hint='$t(`editor:props.publishStartHint`)'
                   persistent-hint
-                  :disabled='!isPublished'
+                  :disabled='!isPublished || true'
                   )
                 v-date-picker(
                   v-model='publishStartDate'
@@ -142,7 +144,7 @@
                 :return-value.sync='publishEndDate'
                 full-width
                 width='460px'
-                :disabled='!isPublished'
+                :disabled='!isPublished || true'
                 )
                 v-text-field(
                   slot='activator'
@@ -155,7 +157,7 @@
                   clearable
                   :hint='$t(`editor:props.publishEndHint`)'
                   persistent-hint
-                  :disabled='!isPublished'
+                  :disabled='!isPublished || true'
                   )
                 v-date-picker(
                   v-model='publishEndDate'

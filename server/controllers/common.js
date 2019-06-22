@@ -34,6 +34,8 @@ router.get('/healthz', (req, res, next) => {
 router.get(['/e', '/e/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
+  _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+
   if (pageHelper.isReservedPath(pageArgs.path)) {
     return next(new Error('Cannot create this page because it starts with a system reserved path.'))
   }
@@ -95,6 +97,8 @@ router.get(['/p', '/p/*'], (req, res, next) => {
 router.get(['/h', '/h/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
+  _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
     return res.render('unauthorized', { action: 'history' })
@@ -120,6 +124,8 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
  */
 router.get(['/s', '/s/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+
+  _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
     return res.render('unauthorized', { action: 'source' })
@@ -160,6 +166,9 @@ router.get('/*', async (req, res, next) => {
       userId: req.user.id,
       isPrivate: false
     })
+
+    _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+
     if (page) {
       _.set(res.locals, 'pageMeta.title', page.title)
       _.set(res.locals, 'pageMeta.description', page.description)
