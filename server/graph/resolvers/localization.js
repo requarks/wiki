@@ -56,7 +56,7 @@ module.exports = {
         WIKI.config.lang.code = args.locale
         WIKI.config.lang.autoUpdate = args.autoUpdate
         WIKI.config.lang.namespacing = args.namespacing
-        WIKI.config.lang.namespaces = args.namespaces
+        WIKI.config.lang.namespaces = _.union(args.namespaces, [args.locale])
 
         const newLocale = await WIKI.models.locales.query().select('isRTL').where('code', args.locale).first()
         WIKI.config.lang.rtl = newLocale.isRTL

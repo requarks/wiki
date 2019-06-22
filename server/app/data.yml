@@ -18,7 +18,8 @@ defaults:
       storage: ./db.sqlite
     ssl:
       enabled: false
-    pool: {}
+    pool:
+      min: 0
     bindIP: 0.0.0.0
     logLevel: info
     uploads:

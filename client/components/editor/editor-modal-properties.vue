@@ -185,6 +185,8 @@
 import _ from 'lodash'
 import { sync, get } from 'vuex-pathify'
 
+/* global siteLangs, siteConfig */
+
 export default {
   props: {
     value: {
@@ -197,7 +199,7 @@ export default {
       isPublishStartShown: false,
       isPublishEndShown: false,
       pageSelectorShown: false,
-      namespaces: ['en'],
+      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang],
       tourSteps: [
         {
           target: '.dialog-header',

@@ -145,7 +145,7 @@
             v-list.py-0
               template(v-for='(lc, idx) of locales')
                 v-list-tile(@click='changeLocale(lc)')
-                  v-list-tile-action: v-chip(:color='lc.code === $i18n.i18next.language ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
+                  v-list-tile-action: v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
                   v-list-tile-title {{lc.name}}
                 v-divider.my-0(v-if='idx < locales.length - 1')
           v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
@@ -231,6 +231,7 @@ export default {
     isLoading: get('isLoading'),
     title: get('site/title'),
     path: get('page/path'),
+    locale: get('page/locale'),
     mode: get('page/mode'),
     name: get('user/name'),
     email: get('user/email'),
@@ -293,19 +294,19 @@ export default {
       this.newPageModal = true
     },
     pageNewCreate ({ path, locale }) {
-      window.location.assign(`/e/${path}`)
+      window.location.assign(`/e/${locale}/${path}`)
     },
     pageView () {
-      window.location.assign(`/${this.path}`)
+      window.location.assign(`/${this.locale}/${this.path}`)
     },
     pageEdit () {
-      window.location.assign(`/e/${this.path}`)
+      window.location.assign(`/e/${this.locale}/${this.path}`)
     },
     pageHistory () {
-      window.location.assign(`/h/${this.path}`)
+      window.location.assign(`/h/${this.locale}/${this.path}`)
     },
     pageSource () {
-      window.location.assign(`/s/${this.path}`)
+      window.location.assign(`/s/${this.locale}/${this.path}`)
     },
     pageMove () {
       this.$store.commit('showNotification', {
