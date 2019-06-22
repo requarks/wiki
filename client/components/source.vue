@@ -4,7 +4,7 @@
     v-content
       v-toolbar(color='primary', dark)
         i18next.subheading(path='common:page.viewingSource', tag='div')
-          strong(place='path') /{{path}}]
+          strong(place='path') /{{path}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           .caption.blue--text.text--lighten-3 {{$t('common:page.id', { id: pageId })}}
