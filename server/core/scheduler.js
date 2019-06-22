@@ -87,7 +87,6 @@ class Job {
   }
 }
 
-
 module.exports = {
   jobs: [],
   init() {
@@ -95,6 +94,11 @@ module.exports = {
   },
   start() {
     _.forOwn(WIKI.data.jobs, (queueParams, queueName) => {
+      if (WIKI.config.offline && queueParams.offlineSkip) {
+        WIKI.logger.warn(`Skipping job ${queueName} because offline mode is enabled. [SKIPPED]`)
+        return
+      }
+
       const schedule = (configHelper.isValidDurationString(queueParams.schedule)) ? queueParams.schedule : _.get(WIKI.config, queueParams.schedule)
       this.registerJob({
         name: _.kebabCase(queueName),

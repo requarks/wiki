@@ -28,7 +28,7 @@ module.exports = {
     })
     WIKI.telemetry = this
 
-    if (_.get(WIKI.config, 'telemetry.isEnabled', false) === true) {
+    if (_.get(WIKI.config, 'telemetry.isEnabled', false) === true && WIKI.config.offline !== true) {
       this.enabled = true
       this.sendOSInfo()
     }

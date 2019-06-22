@@ -105,9 +105,6 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.locals.basedir = WIKI.ROOTPATH
-  app.locals._ = require('lodash')
-  app.locals.moment = require('moment')
-  app.locals.moment.locale(WIKI.config.lang.code)
   app.locals.config = WIKI.config
   app.locals.pageMeta = {
     title: '',
@@ -145,6 +142,19 @@ module.exports = async () => {
   // ----------------------------------------
   // Routing
   // ----------------------------------------
+
+  app.use(async (req, res, next) => {
+    res.locals.siteConfig = {
+      title: WIKI.config.title,
+      theme: WIKI.config.theming.theme,
+      darkMode: WIKI.config.theming.darkMode,
+      lang: WIKI.config.lang.code,
+      rtl: WIKI.config.lang.rtl,
+      company: WIKI.config.company
+    }
+    res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
+    next()
+  })
 
   app.use('/', ctrl.auth)
   app.use('/', ctrl.upload)

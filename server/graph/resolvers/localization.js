@@ -66,6 +66,8 @@ module.exports = {
         await WIKI.lang.setCurrentLocale(args.locale)
         await WIKI.lang.refreshNamespaces()
 
+        await WIKI.cache.del('nav:locales')
+
         return {
           responseResult: graphHelper.generateSuccess('Locale config updated')
         }

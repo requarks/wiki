@@ -1,5 +1,7 @@
 const Model = require('objection').Model
 
+/* global WIKI */
+
 /**
  * Locales model
  */
@@ -33,5 +35,28 @@ module.exports = class Locale extends Model {
   $beforeInsert() {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
+  }
+
+  static async getNavLocales({ cache = false } = {}) {
+    if (!WIKI.config.lang.namespacing) {
+      return []
+    }
+
+    if (cache) {
+      const navLocalesCached = await WIKI.cache.get('nav:locales')
+      if (navLocalesCached) {
+        return navLocalesCached
+      }
+    }
+    const navLocales = await WIKI.models.locales.query().select('code', 'nativeName AS name').whereIn('code', WIKI.config.lang.namespaces).orderBy('code')
+    if (navLocales) {
+      if (cache) {
+        await WIKI.cache.set('nav:locales', navLocales, 300)
+      }
+      return navLocales
+    } else {
+      WIKI.logger.warn('Site Locales for navigation are missing or corrupted.')
+      return []
+    }
   }
 }

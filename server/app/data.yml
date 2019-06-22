@@ -24,6 +24,7 @@ defaults:
     uploads:
       maxFileSize: 5242880
       maxFiles: 10
+    offline: false
     # DB defaults
     graphEndpoint: 'https://graph.requarks.io'
     lang:
@@ -63,12 +64,15 @@ jobs:
   purgeUploads:
     onInit: true
     schedule: PT15M
+    offlineSkip: false
   syncGraphLocales:
     onInit: true
     schedule: P1D
+    offlineSkip: true
   syncGraphUpdates:
     onInit: true
     schedule: P1D
+    offlineSkip: true
 groups:
   defaultPermissions:
     - 'read:pages'

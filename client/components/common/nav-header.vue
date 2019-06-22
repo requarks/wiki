@@ -137,17 +137,17 @@
             icon
             )
             v-icon(color='grey') search
-          //- v-menu(offset-y, left, transition='slide-y-transition')
-          //-   v-tooltip(bottom, slot='activator')
-          //-     v-btn(icon, slot='activator')
-          //-       v-icon(color='grey') language
-          //-     span Language
-          //-   v-list.py-0
-          //-     template(v-for='(lc, idx) of locales')
-          //-       v-list-tile(@click='changeLocale(lc)')
-          //-         v-list-tile-action: v-chip(:color='lc.code === $i18n.i18next.language ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
-          //-         v-list-tile-title {{lc.name}}
-          //-       v-divider.my-0(v-if='idx < locales.length - 1')
+          v-menu(offset-y, left, transition='slide-y-transition', v-if='mode === `view` && locales.length > 0')
+            v-tooltip(bottom, slot='activator')
+              v-btn(icon, slot='activator')
+                v-icon(color='grey') language
+              span Language
+            v-list.py-0
+              template(v-for='(lc, idx) of locales')
+                v-list-tile(@click='changeLocale(lc)')
+                  v-list-tile-action: v-chip(:color='lc.code === $i18n.i18next.language ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
+                  v-list-tile-title {{lc.name}}
+                v-divider.my-0(v-if='idx < locales.length - 1')
           v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
             v-btn.btn-animate-rotate(icon, href='/a', slot='activator')
               v-icon(color='grey') settings
@@ -196,6 +196,8 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import Cookies from 'js-cookie'
 
+/* global siteLangs */
+
 export default {
   components: {
     PageDelete: () => import('./page-delete.vue')
@@ -217,11 +219,7 @@ export default {
       searchAdvMenuShown: false,
       newPageModal: false,
       deletePageModal: false,
-      locales: [
-        { code: 'en', name: 'English' },
-        { code: 'fr', name: 'Français' },
-        { code: 'es', name: 'Español' }
-      ]
+      locales: siteLangs
     }
   },
   computed: {
