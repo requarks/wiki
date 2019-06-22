@@ -141,7 +141,7 @@
             v-tooltip(bottom, slot='activator')
               v-btn(icon, slot='activator')
                 v-icon(color='grey') language
-              span Language
+              span {{$t('common:header.language')}}
             v-list.py-0
               template(v-for='(lc, idx) of locales')
                 v-list-tile(@click='changeLocale(lc)')

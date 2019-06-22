@@ -6,11 +6,11 @@
           img.animated.fadeInUp(src='/svg/icon-customer.svg', alt='Users', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Users
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s Manage users
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s Manage users #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', large, @click='refresh')
             v-icon refresh
-          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser')
+          v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser', disabled)
             v-icon(left) add
             span New User
         v-card.wiki-form.mt-3.animated.fadeInUp

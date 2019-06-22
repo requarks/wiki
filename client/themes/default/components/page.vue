@@ -141,6 +141,8 @@ import Prism from '@/libs/prism/prism.js'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
 
+/* global siteLangs */
+
 export default {
   components: {
     StatusIndicator
@@ -259,6 +261,10 @@ export default {
     this.$store.commit('page/SET_UPDATED_AT', this.updatedAt)
 
     this.$store.commit('page/SET_MODE', 'view')
+
+    if (siteLangs.length > 0) {
+      this.$i18n.i18next.changeLanguage(this.locale)
+    }
   },
   mounted () {
     Prism.highlightAllUnder(this.$refs.container)
