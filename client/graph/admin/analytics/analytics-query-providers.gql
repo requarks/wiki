@@ -1,0 +1,17 @@
+query {
+  analytics {
+    providers {
+      isEnabled
+      key
+      title
+      description
+      isAvailable
+      logo
+      website
+      config {
+        key
+        value
+      }
+    }
+  }
+}

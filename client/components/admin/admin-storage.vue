@@ -166,7 +166,7 @@
                   i18next.caption.mt-3(path='admin:storage.syncScheduleCurrent', tag='div')
                     strong(place='schedule') {{getDefaultSchedule(target.syncInterval)}}
                   i18next.caption(path='admin:storage.syncScheduleDefault', tag='div')
-                    strong {{getDefaultSchedule(target.syncIntervalDefault)}}
+                    strong(place='schedule') {{getDefaultSchedule(target.syncIntervalDefault)}}
 
               template(v-if='target.actions && target.actions.length > 0')
                 v-divider.mt-3
@@ -216,7 +216,9 @@ export default {
       runningAction: false,
       runningActionHandler: '',
       selectedTarget: '',
-      target: {},
+      target: {
+        supportedModes: []
+      },
       targets: [],
       status: []
     }
@@ -265,6 +267,7 @@ export default {
       this.$store.commit(`loadingStop`, 'admin-storage-savetargets')
     },
     getDefaultSchedule(val) {
+      if (!val) { return 'N/A' }
       return moment.duration(val).format('y [years], M [months], d [days], h [hours], m [minutes]')
     },
     async executeAction(targetKey, handler) {

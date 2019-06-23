@@ -226,7 +226,7 @@
     "graphql-voyager": "1.0.0-rc.27",
     "hammerjs": "2.0.8",
     "html-webpack-plugin": "3.2.0",
-    "html-webpack-pug-plugin": "0.3.0",
+    "html-webpack-pug-plugin": "2.0.0",
     "i18next-xhr-backend": "3.0.0",
     "ignore-loader": "0.1.2",
     "js-cookie": "2.2.0",

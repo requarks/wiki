@@ -50,6 +50,9 @@
           template(v-if='hasPermission(`manage:system`)')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.modules') }}
+            v-list-tile(to='/analytics')
+              v-list-tile-avatar: v-icon timeline
+              v-list-tile-title {{ $t('admin:analytics.title') }}
             v-list-tile(to='/auth')
               v-list-tile-avatar: v-icon lock_outline
               v-list-tile-title {{ $t('admin:auth.title') }}
@@ -143,6 +146,7 @@ const router = new VueRouter({
     { path: '/groups/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups-edit.vue') },
     { path: '/users', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-users.vue') },
     { path: '/users/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-users-edit.vue') },
+    { path: '/analytics', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-analytics.vue') },
     { path: '/auth', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-auth.vue') },
     { path: '/rendering', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-rendering.vue') },
     { path: '/editor', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-editor.vue') },

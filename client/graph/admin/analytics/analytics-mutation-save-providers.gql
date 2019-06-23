@@ -1,0 +1,12 @@
+mutation($providers: [AnalyticsProviderInput]!) {
+  analytics {
+    updateProviders(providers: $providers) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

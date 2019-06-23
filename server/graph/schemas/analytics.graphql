@@ -1,0 +1,53 @@
+# ===============================================
+# ANALYTICS
+# ===============================================
+
+extend type Query {
+  analytics: AnalyticsQuery
+}
+
+extend type Mutation {
+  analytics: AnalyticsMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type AnalyticsQuery {
+  providers(
+    isEnabled: Boolean
+  ): [AnalyticsProvider]
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type AnalyticsMutation {
+  updateProviders(
+    providers: [AnalyticsProviderInput]!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type AnalyticsProvider {
+  isEnabled: Boolean!
+  key: String!
+  props: [String]
+  title: String!
+  description: String
+  isAvailable: Boolean
+  logo: String
+  website: String
+  icon: String
+  config: [KeyValuePair] @auth(requires: ["manage:system"])
+}
+input AnalyticsProviderInput {
+  isEnabled: Boolean!
+  key: String!
+  config: [KeyValuePairInput]
+}

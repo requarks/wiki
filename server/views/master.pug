@@ -7,9 +7,9 @@ html
     meta(name='theme-color', content='#333333')
     meta(name='msapplication-TileColor', content='#333333')
     meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
-    
+
     title= pageMeta.title + ' | ' + config.title
-    
+
     //- SEO / OpenGraph
     meta(name='description', content=pageMeta.description)
     meta(property='og:title', content=pageMeta.title)
@@ -18,7 +18,7 @@ html
     meta(property='og:image', content=pageMeta.image)
     meta(property='og:url', content=pageMeta.url)
     meta(property='og:site_name', content=config.title)
-    
+
     //- Favicon
     each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
       link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href='/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
@@ -26,32 +26,32 @@ html
     each favsize in [32, 96, 16]
       link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
     link(rel='manifest', href='/manifest.json')
-    
+
     //- Site Properties
     script.
       var siteConfig = !{JSON.stringify(siteConfig)}; var siteLangs = !{JSON.stringify(langs)}
-    
+
     //- CSS
-
     
+
     //- JS
-
-
+    
+      
     script(
       type='text/javascript'
       src='/js/runtime.js'
       )
-
-
-
+      
+    
+      
     script(
       type='text/javascript'
       src='/js/app.js'
       )
-
-
+      
     
+
     block head
-    
+
   body
     block body

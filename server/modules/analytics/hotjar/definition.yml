@@ -1,0 +1,25 @@
+key: hotjar
+title: Hotjar
+description: Hotjar is the fast & visual way to understand your users, providing everything your team needs to uncover insights and make the right changes to your site.
+author: requarks.io
+logo: https://static.requarks.io/logo/hotjar.svg
+website: https://www.hotjar.com
+isAvailable: true
+props:
+  siteId:
+    type: String
+    title: Site ID
+    hint: A numeric identifier of your site
+    order: 1
+codeHead: |
+  <!-- Hotjar Tracking Code -->
+  <script>
+    (function(h,o,t,j,a,r){
+      h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+      h._hjSettings={hjid:{{siteId}},hjsv:6};
+      a=o.getElementsByTagName('head')[0];
+      r=o.createElement('script');r.async=1;
+      r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+      a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+  </script>

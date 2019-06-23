@@ -1,0 +1,34 @@
+key: fathom
+title: Fathom
+description: Fathom Analytics provides simple, useful website stats without tracking or storing personal data of your users.
+author: requarks.io
+logo: https://static.requarks.io/logo/fathom.svg
+website: https://usefathom.com/
+isAvailable: true
+props:
+  host:
+    type: String
+    title: Fathom Server Host
+    hint: The hostname / ip adress where Fathom is installed, without the trailing slash. e.g. https://fathom.example.com
+    order: 1
+  siteId:
+    type: String
+    title: Site ID
+    hint: The alphanumeric identifier of your site
+    order: 2
+codeHead: |
+  <!-- Fathom - simple website analytics - https://github.com/usefathom/fathom -->
+  <script>
+  (function(f, a, t, h, o, m){
+    a[h]=a[h]||function(){
+      (a[h].q=a[h].q||[]).push(arguments)
+    };
+    o=f.createElement('script'),
+    m=f.getElementsByTagName('script')[0];
+    o.async=1; o.src=t; o.id='fathom-script';
+    m.parentNode.insertBefore(o,m)
+  })(document, window, '{{host}}/tracker.js', 'fathom');
+  fathom('set', 'siteId', '{{siteId}}');
+  fathom('trackPageview');
+  </script>
+  <!-- / Fathom -->

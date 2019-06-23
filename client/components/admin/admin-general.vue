@@ -100,36 +100,6 @@
                   v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
                   v-switch(
-                    label='Analytics'
-                    color='primary'
-                    v-model='config.featureAnalytics'
-                    persistent-hint
-                    hint='Enable site analytics using service provider.'
-                    disabled
-                    )
-                  v-select.mt-3(
-                    outline
-                    label='Analytics Service Provider'
-                    :items='analyticsServices'
-                    v-model='config.analyticsService'
-                    prepend-icon='subdirectory_arrow_right'
-                    persistent-hint
-                    hint='Automatically add tracking code for services like Google Analytics.'
-                    disabled
-                    )
-                  v-text-field.mt-2(
-                    v-if='config.analyticsService !== ``'
-                    outline
-                    label='Property Tracking ID'
-                    :counter='255'
-                    v-model='config.analyticsId'
-                    prepend-icon='timeline'
-                    persistent-hint
-                    hint='A unique identifier provided by your analytics service provider.'
-                    )
-
-                  v-divider.mt-3
-                  v-switch(
                     label='Asset Image Optimization'
                     color='primary'
                     v-model='config.featureTinyPNG'
@@ -191,7 +161,7 @@ export default {
     return {
       analyticsServices: [
         { text: 'None', value: '' },
-        { text: 'Elasticsearch APM', value: 'elk' },
+        { text: 'Elasticsearch APM RUM', value: 'elk' },
         { text: 'Google Analytics', value: 'ga' },
         { text: 'Google Tag Manager', value: 'gtm' }
       ],
