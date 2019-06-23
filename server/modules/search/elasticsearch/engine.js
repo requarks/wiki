@@ -1,5 +1,4 @@
 const _ = require('lodash')
-const elasticsearch = require('elasticsearch')
 const stream = require('stream')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
@@ -18,13 +17,28 @@ module.exports = {
    */
   async init() {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
-    this.client = new elasticsearch.Client({
-      apiVersion: this.config.apiVersion,
-      hosts: this.config.hosts.split(',').map(_.trim),
-      httpAuth: (this.config.user.length > 0) ? `${this.config.user}:${this.config.pass}` : null,
-      sniffOnStart: this.config.sniffOnStart,
-      sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false
-    })
+    switch (this.config.apiVersion) {
+      case '7.x':
+        const { Client: Client7 } = require('elasticsearch7')
+        this.client = new Client7({
+          nodes: this.config.hosts.split(',').map(_.trim),
+          sniffOnStart: this.config.sniffOnStart,
+          sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          name: 'wiki-js'
+        })
+        break
+      case '6.x':
+        const { Client: Client6 } = require('elasticsearch6')
+        this.client = new Client6({
+          nodes: this.config.hosts.split(',').map(_.trim),
+          sniffOnStart: this.config.sniffOnStart,
+          sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          name: 'wiki-js'
+        })
+        break
+      default:
+        throw new Error('Unsupported version of elasticsearch! Update your settings in the Administration Area.')
+    }
 
     // -> Create Search Index
     await this.createIndex()
@@ -35,26 +49,35 @@ module.exports = {
    * Create Index
    */
   async createIndex() {
-    const indexExists = await this.client.indices.exists({ index: this.config.indexName })
-    if (!indexExists) {
-      WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
-      await this.client.indices.create({
-        index: this.config.indexName,
-        body: {
-          mappings: {
-            _doc: {
-              properties: {
-                suggest: { type: 'completion' },
-                title: { type: 'text', boost: 4.0 },
-                description: { type: 'text', boost: 3.0 },
-                content: { type: 'text', boost: 1.0 },
-                locale: { type: 'keyword' },
-                path: { type: 'text' }
-              }
+    try {
+      const indexExists = await this.client.indices.exists({ index: this.config.indexName })
+      if (!indexExists.body) {
+        WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
+        try {
+          const idxBody = {
+            properties: {
+              suggest: { type: 'completion' },
+              title: { type: 'text', boost: 4.0 },
+              description: { type: 'text', boost: 3.0 },
+              content: { type: 'text', boost: 1.0 },
+              locale: { type: 'keyword' },
+              path: { type: 'text' }
             }
           }
+          await this.client.indices.create({
+            index: this.config.indexName,
+            body: {
+              mappings: (this.config.apiVersion === '6.x') ? {
+                _doc: idxBody
+              } : idxBody
+            }
+          })
+        } catch (err) {
+          WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Create Index Error: `, _.get(err, 'meta.body.error', err))
         }
-      })
+      }
+    } catch (err) {
+      WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Index Check Error: `, _.get(err, 'meta.body.error', err))
     }
   },
   /**
@@ -90,7 +113,7 @@ module.exports = {
         }
       })
       return {
-        results: _.get(results, 'hits.hits', []).map(r => ({
+        results: _.get(results, 'body.hits.hits', []).map(r => ({
           id: r._id,
           locale: r._source.locale,
           path: r._source.path,
@@ -98,11 +121,10 @@ module.exports = {
           description: r._source.description
         })),
         suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
-        totalHits: results.hits.total
+        totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
       }
     } catch (err) {
-      WIKI.logger.warn('Search Engine Error:')
-      WIKI.logger.warn(err)
+      WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
     }
   },
   /**

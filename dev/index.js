@@ -41,6 +41,7 @@ const init = {
         './server',
         '!./server/views/master.pug'
       ], {
+        cwd: process.cwd(),
         ignoreInitial: true,
         atomic: 400
       })

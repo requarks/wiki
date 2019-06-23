@@ -8,46 +8,34 @@ isAvailable: true
 props:
   apiVersion:
     type: String
-    title: API Version
+    title: Elasticsearch Version
     hint: Should match the version of the Elasticsearch nodes you are connecting to
     order: 1
     enum:
-      - '6.6'
-      - '6.5'
-      - '6.4'
-      - '6.3'
-    default: '6.6'
+      - '7.x'
+      - '6.x'
+    default: '6.x'
   hosts:
     type: String
     title: Host(s)
-    hint: Comma-separated list of Elasticsearch hosts to connect to. (including the port)
+    hint: Comma-separated list of Elasticsearch hosts to connect to, including the port, username and password if necessary. (e.g. http://localhost:9200, https://user:pass@es1.example.com:9200)
     order: 2
-  user:
-    type: String
-    title: Username
-    hint: (Optional) Username to use if using the security feature from X-Pack
-    order: 3
-  pass:
-    type: String
-    title: Password
-    hint: (Optional) Password to use if using the security feature from X-Pack
-    order: 4
   indexName:
     type: String
     title: Index Name
     hint: The index name to use during creation
     default: wiki
-    order: 5
+    order: 3
   sniffOnStart:
     type: Boolean
     title: Sniff on start
     hint: 'Should Wiki.js attempt to detect the rest of the cluster on first connect? (Default: off)'
     default: false
-    order: 6
+    order: 4
   sniffInterval:
     type: Number
     title: Sniff Interval
     hint: '0 = disabled, Interval in seconds to check for updated list of nodes in cluster. (Default: 0)'
     default: 0
-    order: 7
+    order: 5
 

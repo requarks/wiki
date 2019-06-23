@@ -19,14 +19,16 @@ module.exports = {
           ...searchEngineInfo,
           ...searchEngine,
           config: _.sortBy(_.transform(searchEngine.config, (res, value, key) => {
-            const configData = _.get(searchEngineInfo.props, key, {})
-            res.push({
-              key,
-              value: JSON.stringify({
-                ...configData,
-                value
+            const configData = _.get(searchEngineInfo.props, key, false)
+            if (configData) {
+              res.push({
+                key,
+                value: JSON.stringify({
+                  ...configData,
+                  value
+                })
               })
-            })
+            }
           }, []), 'key')
         }
       })
