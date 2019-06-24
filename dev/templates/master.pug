@@ -67,7 +67,11 @@ html
       <% } %>
     <% } %>
 
+    != analyticsCode.head
+
     block head
 
   body
+    != analyticsCode.bodyStart
     block body
+    != analyticsCode.bodyEnd

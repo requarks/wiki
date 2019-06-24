@@ -1,6 +1,6 @@
 key: google
 title: Google Analytics
-description: Google specializes in Internet-related services and products, which include online advertising technologies, search engine, cloud computing, software, and hardware.
+description: Google Analytics is a web analytics service offered by Google that tracks and reports website traffic.
 author: requarks.io
 logo: https://static.requarks.io/logo/google-analytics.svg
 website: https://analytics.google.com/
@@ -11,13 +11,3 @@ props:
     title: Property Tracking ID
     hint: UA-XXXXXXX-X
     order: 1
-codeHead: |
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id={{propertyTrackingId}}"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', '{{propertyTrackingId}}');
-  </script>

@@ -24,13 +24,3 @@ props:
     hint: e.g. production/development/test
     default: ''
     order: 3
-codeHead: |
-  <!-- Elastic APM RUM -->
-  <script async src="https://unpkg.com/@elastic/apm-rum/dist/bundles/elastic-apm-rum.umd.min.js"></script>
-  <script>
-    elasticApm.init({
-      serviceName: '{{serviceName}}',
-      serverUrl: '{{serverUrl}}',
-      environment: '{{environment}}'
-    })
-  </script>

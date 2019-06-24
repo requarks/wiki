@@ -153,6 +153,7 @@ module.exports = async () => {
       company: WIKI.config.company
     }
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
+    res.locals.analyticsCode = await WIKI.models.analytics.getCode({ cache: true })
     next()
   })
 

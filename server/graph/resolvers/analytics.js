@@ -44,6 +44,7 @@ module.exports = {
               return result
             }, {})
           }).where('key', str.key)
+          await WIKI.cache.del('analytics')
         }
         return {
           responseResult: graphHelper.generateSuccess('Providers updated successfully')
