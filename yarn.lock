@@ -3888,7 +3888,7 @@ consolidate@^0.15.1:
   dependencies:
     bluebird "^3.1.1"
 
-constantinople@^3.0.1, constantinople@^3.1.2:
+constantinople@^3.0.1, constantinople@^3.0.2, constantinople@^3.1.2:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/constantinople/-/constantinople-3.1.2.tgz#d45ed724f57d3d10500017a7d3a889c1381ae647"
   integrity sha512-yePcBqEFhLOqSBtwYOGGS1exHo/s1xjekXiinh4itpNQGCu4KA1euPh1fg07N2wMITZXQkBz75Ntdt1ctGZouw==
@@ -6690,10 +6690,15 @@ html-webpack-plugin@3.2.0:
     toposort "^1.0.0"
     util.promisify "1.0.0"
 
-html-webpack-pug-plugin@0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/html-webpack-pug-plugin/-/html-webpack-pug-plugin-0.3.0.tgz#83e96e05c2b48b498d411a6a26f482508b52c885"
-  integrity sha512-84A4BCrgMdIaOwkhXbBqZOMwRnU937xI+cVE2GykQXi4CNg6AUp6AMet5ruhTfXJs7+xJ/b7jOSpc1/kF4ukMA==
+html-webpack-pug-plugin@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/html-webpack-pug-plugin/-/html-webpack-pug-plugin-2.0.0.tgz#875773ded14f7857b60e81f6a393588ce3deb367"
+  integrity sha512-4RZIZGIuIJBb44jFpeNuXyQQ7degfyl70rIzgOyOhYAh6hWfvYHQCLXUL/u5V9HUtp8Ai4P4CGQp8VZdYQBXmg==
+  dependencies:
+    pug-lexer "^4.0.0"
+    pug-parser "^5.0.0"
+    pug-source-gen "0.0.2"
+    pug-walk "^1.1.7"
 
 htmlparser2@^3.9.1:
   version "3.10.0"
@@ -9721,6 +9726,13 @@ passport-github2@0.1.11:
   dependencies:
     passport-oauth2 "1.x.x"
 
+passport-gitlab2@5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/passport-gitlab2/-/passport-gitlab2-5.0.0.tgz#ea37e5285321c026a02671e87469cac28cce9b69"
+  integrity sha512-cXQMgM6JQx9wHVh7JLH30D8fplfwjsDwRz+zS0pqC8JS+4bNmc1J04NGp5g2M4yfwylH9kQRrMN98GxMw7q7cg==
+  dependencies:
+    passport-oauth2 "^1.4.0"
+
 passport-google-oauth20@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/passport-google-oauth20/-/passport-google-oauth20-2.0.0.tgz#0d241b2d21ebd3dc7f2b60669ec4d587e3a674ef"
@@ -9779,7 +9791,7 @@ passport-oauth2@1.2.0:
     passport-strategy "1.x.x"
     uid2 "0.0.x"
 
-passport-oauth2@1.5.0, passport-oauth2@^1.3.0:
+passport-oauth2@1.5.0, passport-oauth2@^1.3.0, passport-oauth2@^1.4.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/passport-oauth2/-/passport-oauth2-1.5.0.tgz#64babbb54ac46a4dcab35e7f266ed5294e3c4108"
   integrity sha512-kqBt6vR/5VlCK8iCx1/KpY42kQ+NEHZwsSyt4Y6STiNjU+wWICG1i8ucc1FapXDGO15C5O5VZz7+7vRzrDPXXQ==
@@ -11496,7 +11508,7 @@ pug-lexer@^2.0.1:
     is-expression "^3.0.0"
     pug-error "^1.3.2"
 
-pug-lexer@^4.1.0:
+pug-lexer@^4.0.0, pug-lexer@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/pug-lexer/-/pug-lexer-4.1.0.tgz#531cde48c7c0b1fcbbc2b85485c8665e31489cfd"
   integrity sha512-i55yzEBtjm0mlplW4LoANq7k3S8gDdfC6+LThGEvsK4FuobcKfDAwt6V4jKPH9RtiE3a2Akfg5UpafZ1OksaPA==
@@ -11549,7 +11561,7 @@ pug-loader@2.4.0:
     pug-walk "^1.0.0"
     resolve "^1.1.7"
 
-pug-parser@^5.0.1:
+pug-parser@^5.0.0, pug-parser@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/pug-parser/-/pug-parser-5.0.1.tgz#03e7ada48b6840bd3822f867d7d90f842d0ffdc9"
   integrity sha512-nGHqK+w07p5/PsPIyzkTQfzlYfuqoiGjaoqHv1LjOv2ZLXmGX1O+4Vcvps+P4LhxZ3drYSljjq4b+Naid126wA==
@@ -11574,6 +11586,16 @@ pug-runtime@^2.0.5:
   resolved "https://registry.yarnpkg.com/pug-runtime/-/pug-runtime-2.0.5.tgz#6da7976c36bf22f68e733c359240d8ae7a32953a"
   integrity sha512-P+rXKn9un4fQY77wtpcuFyvFaBww7/91f3jHa154qU26qFAnOe6SW1CbIDcxiG5lLK9HazYrMCCuDvNgDQNptw==
 
+pug-source-gen@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/pug-source-gen/-/pug-source-gen-0.0.2.tgz#76d7753d89693c6846578c80da1628b8c6fc6fdb"
+  integrity sha1-dtd1PYlpPGhGV4yA2hYouMb8b9s=
+  dependencies:
+    constantinople "^3.0.2"
+    object-assign "^4.0.1"
+    pug-walk "0.0.3"
+    repeat-string "^1.5.2"
+
 pug-strip-comments@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/pug-strip-comments/-/pug-strip-comments-1.0.4.tgz#cc1b6de1f6e8f5931cf02ec66cdffd3f50eaf8a8"
@@ -11581,12 +11603,17 @@ pug-strip-comments@^1.0.4:
   dependencies:
     pug-error "^1.3.3"
 
+pug-walk@0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/pug-walk/-/pug-walk-0.0.3.tgz#c28be7bcc540f24b83d274472410827c84e31ac6"
+  integrity sha1-wovnvMVA8kuD0nRHJBCCfITjGsY=
+
 pug-walk@^1.0.0:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/pug-walk/-/pug-walk-1.1.7.tgz#c00d5c5128bac5806bec15d2b7e7cdabe42531f3"
   integrity sha1-wA1cUSi6xYBr7BXSt+fNq+QlMfM=
 
-pug-walk@^1.1.8:
+pug-walk@^1.1.7, pug-walk@^1.1.8:
   version "1.1.8"
   resolved "https://registry.yarnpkg.com/pug-walk/-/pug-walk-1.1.8.tgz#b408f67f27912f8c21da2f45b7230c4bd2a5ea7a"
   integrity sha512-GMu3M5nUL3fju4/egXwZO0XLi6fW/K3T3VTgFQ14GxNi8btlxgT5qZL//JwZFm/2Fa64J/PNS8AZeys3wiMkVA==

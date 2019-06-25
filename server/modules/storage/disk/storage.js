@@ -59,24 +59,41 @@ module.exports = {
   },
   async created(page) {
     WIKI.logger.info(`(STORAGE/DISK) Creating file ${page.path}...`)
-    const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
+    let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+      fileName = `${page.localeCode}/${fileName}`
+    }
+    const filePath = path.join(this.config.path, fileName)
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
   },
   async updated(page) {
     WIKI.logger.info(`(STORAGE/DISK) Updating file ${page.path}...`)
-    const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
+    let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+      fileName = `${page.localeCode}/${fileName}`
+    }
+    const filePath = path.join(this.config.path, fileName)
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
   },
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/DISK) Deleting file ${page.path}...`)
-    const filePath = path.join(this.config.path, `${page.path}.${getFileExtension(page.contentType)}`)
+    let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+      fileName = `${page.localeCode}/${fileName}`
+    }
+    const filePath = path.join(this.config.path, fileName)
     await fs.unlink(filePath)
   },
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/DISK) Renaming file ${page.sourcePath} to ${page.destinationPath}...`)
-    const sourceFilePath = path.join(this.config.path, `${page.sourcePath}.${getFileExtension(page.contentType)}`)
-    const destinationFilePath = path.join(this.config.path, `${page.destinationPath}.${getFileExtension(page.contentType)}`)
-    await fs.move(sourceFilePath, destinationFilePath, { overwrite: true })
+    let sourceFilePath = `${page.sourcePath}.${getFileExtension(page.contentType)}`
+    let destinationFilePath = `${page.destinationPath}.${getFileExtension(page.contentType)}`
+
+    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+      sourceFilePath = `${page.localeCode}/${sourceFilePath}`
+      destinationFilePath = `${page.localeCode}/${destinationFilePath}`
+    }
+    await fs.move(path.join(this.config.path, sourceFilePath), path.join(this.config.path, destinationFilePath), { overwrite: true })
   },
 
   /**
@@ -91,7 +108,10 @@ module.exports = {
       new stream.Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {
-          const fileName = `${page.path}.${getFileExtension(page.contentType)}`
+          let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+          if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+            fileName = `${page.localeCode}/${fileName}`
+          }
           WIKI.logger.info(`(STORAGE/DISK) Dumping ${fileName}...`)
           const filePath = path.join(this.config.path, fileName)
           await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')

@@ -267,7 +267,7 @@ export default {
         if (this.$store.get('editor/mode') === 'create') {
           window.location.assign(`/`)
         } else {
-          window.location.assign(`/${this.$store.get('page/path')}`)
+          window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
         }
       }, 500)
     }

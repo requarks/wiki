@@ -22,14 +22,16 @@ module.exports = {
           syncInterval: targetInfo.syncInterval || targetInfo.schedule || 'P0D',
           syncIntervalDefault: targetInfo.schedule,
           config: _.sortBy(_.transform(tgt.config, (res, value, key) => {
-            const configData = _.get(targetInfo.props, key, {})
-            res.push({
-              key,
-              value: JSON.stringify({
-                ...configData,
-                value
+            const configData = _.get(targetInfo.props, key, false)
+            if (configData) {
+              res.push({
+                key,
+                value: JSON.stringify({
+                  ...configData,
+                  value
+                })
               })
-            })
+            }
           }, []), 'key')
         }
       })

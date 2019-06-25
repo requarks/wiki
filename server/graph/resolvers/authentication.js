@@ -21,14 +21,16 @@ module.exports = {
           ...strategyInfo,
           ...stg,
           config: _.sortBy(_.transform(stg.config, (res, value, key) => {
-            const configData = _.get(strategyInfo.props, key, {})
-            res.push({
-              key,
-              value: JSON.stringify({
-                ...configData,
-                value
+            const configData = _.get(strategyInfo.props, key, false)
+            if (configData) {
+              res.push({
+                key,
+                value: JSON.stringify({
+                  ...configData,
+                  value
+                })
               })
-            })
+            }
           }, []), 'key')
         }
       })

@@ -1,0 +1,26 @@
+key: gitlab
+title: GitLab
+description: GitLab is a web-based DevOps lifecycle tool that provides a Git-repository manager providing wiki, issue-tracking and CI/CD pipeline features.
+author: requarks.io
+logo: https://static.requarks.io/logo/gitlab.svg
+color: deep-orange
+website: https://gitlab.com
+isAvailable: true
+useForm: false
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
+  baseUrl:
+    type: String
+    title: Base URL
+    hint: For self-managed GitLab instances, define the base URL (e.g. https://gitlab.example.com). Leave default for GitLab.com SaaS (https://gitlab.com).
+    default: https://gitlab.com
+    order: 3
