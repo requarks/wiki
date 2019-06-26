@@ -160,35 +160,39 @@ router.get('/*', async (req, res, next) => {
       return res.status(403).render('unauthorized', { action: 'view' })
     }
 
-    const page = await WIKI.models.pages.getPage({
-      path: pageArgs.path,
-      locale: pageArgs.locale,
-      userId: req.user.id,
-      isPrivate: false
-    })
+    try {
+      const page = await WIKI.models.pages.getPage({
+        path: pageArgs.path,
+        locale: pageArgs.locale,
+        userId: req.user.id,
+        isPrivate: false
+      })
 
-    _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+      _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 
-    if (page) {
-      _.set(res.locals, 'pageMeta.title', page.title)
-      _.set(res.locals, 'pageMeta.description', page.description)
-      const sidebar = await WIKI.models.navigation.getTree({ cache: true })
-      const injectCode = {
-        css: WIKI.config.theming.injectCSS,
-        head: WIKI.config.theming.injectHead,
-        body: WIKI.config.theming.injectBody
-      }
-      res.render('page', { page, sidebar, injectCode })
-    } else if (pageArgs.path === 'home') {
-      _.set(res.locals, 'pageMeta.title', 'Welcome')
-      res.render('welcome')
-    } else {
-      _.set(res.locals, 'pageMeta.title', 'Page Not Found')
-      if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
-        res.status(404).render('new', { pagePath: req.path })
+      if (page) {
+        _.set(res.locals, 'pageMeta.title', page.title)
+        _.set(res.locals, 'pageMeta.description', page.description)
+        const sidebar = await WIKI.models.navigation.getTree({ cache: true })
+        const injectCode = {
+          css: WIKI.config.theming.injectCSS,
+          head: WIKI.config.theming.injectHead,
+          body: WIKI.config.theming.injectBody
+        }
+        res.render('page', { page, sidebar, injectCode })
+      } else if (pageArgs.path === 'home') {
+        _.set(res.locals, 'pageMeta.title', 'Welcome')
+        res.render('welcome')
       } else {
-        res.status(404).render('notfound', { action: 'view' })
+        _.set(res.locals, 'pageMeta.title', 'Page Not Found')
+        if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
+          res.status(404).render('new', { pagePath: req.path })
+        } else {
+          res.status(404).render('notfound', { action: 'view' })
+        }
       }
+    } catch (err) {
+      next(err)
     }
   } else {
     if (!WIKI.auth.checkAccess(req.user, ['read:assets'], pageArgs)) {

@@ -18,6 +18,12 @@ module.exports = async (pageId) => {
     const pipeline = await WIKI.models.renderers.getRenderingPipeline(page.contentType)
 
     let output = page.content
+
+    if (_.isEmpty(page.content)) {
+      await WIKI.models.knex.destroy()
+      WIKI.logger.warn(`Failed to render page ID ${pageId} because content was empty: [ FAILED ]`)
+    }
+
     for (let core of pipeline) {
       const renderer = require(`../modules/rendering/${_.kebabCase(core.key)}/renderer.js`)
       output = await renderer.render.call({

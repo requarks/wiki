@@ -306,11 +306,20 @@ module.exports = class Page extends Model {
   }
 
   static async getPage(opts) {
+    // -> Get from cache first
     let page = await WIKI.models.pages.getPageFromCache(opts)
     if (!page) {
+      // -> Get from DB
       page = await WIKI.models.pages.getPageFromDb(opts)
       if (page) {
-        await WIKI.models.pages.savePageToCache(page)
+        if (page.render) {
+          // -> Save render to cache
+          await WIKI.models.pages.savePageToCache(page)
+        } else {
+          // -> No render? Possible duplicate issue
+          /* TODO: Detect duplicate and delete */
+          throw new Error('Error while fetching page. Duplicate entry detected. Reload the page to try again.')
+        }
       }
     }
     return page
