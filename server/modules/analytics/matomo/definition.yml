@@ -1,0 +1,26 @@
+key: matomo
+title: Matomo
+description: Take back control with Matomo Analytics – a powerful web analytics platform that gives you and your business 100% data ownership and user privacy protection.
+author: requarks.io
+logo: https://static.requarks.io/logo/matomo.svg
+website: https://matomo.org/
+isAvailable: true
+props:
+  siteId:
+    type: String
+    title: Site ID
+    hint: The number index representing your site ID
+    default: 1
+    order: 1
+  serverHost:
+    type: String
+    title: Server Host
+    hint: Including https:// and optionally the port. Without trailing slash. (e.g. https://example.matomo.cloud)
+    default: https://example.matomo.cloud
+    order: 2
+  scriptUrl:
+    type: String
+    title: Tracking Script URL
+    hint: The full URL of the Matomo tracking script.
+    default: //cdn.matomo.cloud/EXAMPLE.matomo.cloud/matomo.js
+    order: 3

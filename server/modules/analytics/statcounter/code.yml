@@ -1,0 +1,12 @@
+head: |
+  <!-- Statcounter Code -->
+  <script type="text/javascript">
+  var sc_project={{projectId}};
+  var sc_invisible=1;
+  var sc_security="{{securityToken}}";
+  var sc_https=1;
+  var sc_remove_link=1;
+  </script>
+  <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js" async></script>
+  <noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/{{projectId}}/0/{{securityToken}}/1/" alt="Web Analytics Made Easy - StatCounter"></div></noscript>
+  <!-- End of Statcounter Code -->

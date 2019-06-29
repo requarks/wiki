@@ -1,0 +1,18 @@
+key: newrelic
+title: New Relic Browser
+description: New Relic Browser provides deep visibility and insight into how your users are interacting with your application or website.
+author: requarks.io
+logo: https://static.requarks.io/logo/newrelic.svg
+website: https://newrelic.com/products/browser-monitoring
+isAvailable: true
+props:
+  licenseKey:
+    type: String
+    title: License Key
+    hint: Found at the very end of the code snippet provided by New Relic Browser
+    order: 1
+  appId:
+    type: String
+    title: Application ID
+    hint: Found at the very end of the code snippet provided by New Relic Browser
+    order: 2

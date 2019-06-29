@@ -177,6 +177,11 @@ module.exports = class Page extends Model {
   }
 
   static async createPage(opts) {
+    const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
+    if (dupCheck) {
+      throw new WIKI.Error.PageDuplicateCreate()
+    }
+
     await WIKI.models.pages.query().insert({
       authorId: opts.authorId,
       content: opts.content,
