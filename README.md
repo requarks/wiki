@@ -36,10 +36,10 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 **This version is for testing and development purposes only!** It is not ready for production and is still missing critical features. You cannot migrate 1.x data at this time!
 
 - **[Official Website](https://wiki.js.org/)**
-- **[Documentation](https://docs-beta.requarks.io/)**
-- [Requirements](https://docs-beta.requarks.io/install/requirements)
+- **[Documentation](https://docs.requarks.io/)**
+- [Requirements](https://docs.requarks.io/install/requirements)
 - [Demo](#demo)
-- [Change Log](https://docs-beta.requarks.io/releases)
+- [Change Log](https://docs.requarks.io/releases)
 - [Feature Requests](https://wiki.js.org/feedback)
 - [Chat with us on Slack](#slack)
 - [Translations](#translations) *(We need your help!)*
@@ -68,7 +68,7 @@ You can also use Docker Compose ([see example](https://github.com/Requarks/wiki/
 
 <h2 align="center">Demo</h2>
 
-Check out our [documentation site](https://docs-beta.requarks.io), it's running Wiki.js!
+Check out our [documentation site](https://docs.requarks.io), it's running Wiki.js!
 
 <h2 align="center">Slack</h2>
 
