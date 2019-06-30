@@ -4,6 +4,9 @@ const _ = require('lodash')
 const path = require('path')
 const jwt = require('jsonwebtoken')
 const moment = require('moment')
+const Promise = require('bluebird')
+const crypto = Promise.promisifyAll(require('crypto'))
+const pem2jwk = require('pem-jwk').pem2jwk
 
 const securityHelper = require('../helpers/security')
 
@@ -236,5 +239,72 @@ module.exports = {
   async reloadGroups() {
     const groupsArray = await WIKI.models.groups.query()
     this.groups = _.keyBy(groupsArray, 'id')
+  },
+
+  /**
+   * Generate New Authentication Public / Private Key Certificates
+   */
+  async regenerateCertificates() {
+    WIKI.logger.info('Regenerating certificates...')
+
+    _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+    const certs = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: {
+        type: 'pkcs1',
+        format: 'pem'
+      },
+      privateKeyEncoding: {
+        type: 'pkcs1',
+        format: 'pem',
+        cipher: 'aes-256-cbc',
+        passphrase: WIKI.config.sessionSecret
+      }
+    })
+
+    _.set(WIKI.config, 'certs', {
+      jwk: pem2jwk(certs.publicKey),
+      public: certs.publicKey,
+      private: certs.privateKey
+    })
+
+    await WIKI.configSvc.saveToDb([
+      'certs',
+      'sessionSecret'
+    ])
+
+    await WIKI.auth.activateStrategies()
+
+    WIKI.logger.info('Regenerated certificates: [ COMPLETED ]')
+  },
+
+  /**
+   * Reset Guest User
+   */
+  async resetGuestUser() {
+    WIKI.logger.info('Resetting guest account...')
+    const guestGroup = await WIKI.models.groups.query().where('id', 2).first()
+
+    await WIKI.models.users.query().delete().where({
+      providerKey: 'local',
+      email: 'guest@example.com'
+    }).orWhere('id', 2)
+
+    const guestUser = await WIKI.models.users.query().insert({
+      id: 2,
+      provider: 'local',
+      email: 'guest@example.com',
+      name: 'Guest',
+      password: '',
+      locale: 'en',
+      defaultEditor: 'markdown',
+      tfaIsActive: false,
+      isSystem: true,
+      isActive: true,
+      isVerified: true
+    })
+    await guestUser.$relatedQuery('groups').relate(guestGroup.id)
+
+    WIKI.logger.info('Guest user has been reset: [ COMPLETED ]')
   }
 }

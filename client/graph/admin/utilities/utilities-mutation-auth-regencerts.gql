@@ -1,0 +1,12 @@
+mutation {
+  authentication {
+    regenerateCertificates {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

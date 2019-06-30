@@ -46,12 +46,12 @@ const init = {
         atomic: 400
       })
       devWatcher.on('ready', () => {
-        devWatcher.on('all', () => {
+        devWatcher.on('all', _.debounce(() => {
           console.warn(chalk.yellow.bold('--- >>>>>>>>>>>>>>>>>>>>>>>>>>>> ---'))
           console.warn(chalk.yellow.bold('--- Changes detected: Restarting ---'))
           console.warn(chalk.yellow.bold('--- <<<<<<<<<<<<<<<<<<<<<<<<<<<< ---'))
           this.reload()
-        })
+        }, 500))
       })
     })
   },

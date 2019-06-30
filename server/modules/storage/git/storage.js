@@ -351,7 +351,7 @@ module.exports = {
       new stream.Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {
-          const fileName = `${page.path}.${getFileExtension(page.contentType)}`
+          let fileName = `${page.path}.${getFileExtension(page.contentType)}`
           if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
             fileName = `${page.localeCode}/${fileName}`
           }

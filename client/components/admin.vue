@@ -83,8 +83,8 @@
             v-list-tile(to='/system', v-if='hasPermission(`manage:system`)')
               v-list-tile-avatar: v-icon tune
               v-list-tile-title {{ $t('admin:system.title') }}
-            v-list-tile(to='/utilities', v-if='hasPermission(`manage:system`)', disabled)
-              v-list-tile-avatar: v-icon(color='grey lighten-2') build
+            v-list-tile(to='/utilities', v-if='hasPermission(`manage:system`)')
+              v-list-tile-avatar: v-icon build
               v-list-tile-title {{ $t('admin:utilities.title') }}
             v-list-tile(to='/webhooks', v-if='hasPermission(`manage:system`)', disabled)
               v-list-tile-avatar: v-icon(color='grey lighten-2') ac_unit

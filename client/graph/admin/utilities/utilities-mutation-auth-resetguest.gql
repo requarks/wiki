@@ -1,0 +1,12 @@
+mutation {
+  authentication {
+    resetGuestUser {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

@@ -46,6 +46,9 @@ type AuthenticationMutation {
     strategies: [AuthenticationStrategyInput]!
     config: AuthenticationConfigInput
   ): DefaultResponse @auth(requires: ["manage:system"])
+
+  regenerateCertificates: DefaultResponse @auth(requires: ["manage:system"])
+  resetGuestUser: DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

@@ -336,7 +336,7 @@ module.exports = class User extends Model {
 
   static async loginTFA(opts, context) {
     if (opts.securityCode.length === 6 && opts.loginToken.length === 64) {
-      let result = null // await WIKI.redis.get(`tfa:${opts.loginToken}`)
+      let result = await WIKI.redis.get(`tfa:${opts.loginToken}`)
       if (result) {
         let userId = _.toSafeInteger(result)
         if (userId && userId > 0) {

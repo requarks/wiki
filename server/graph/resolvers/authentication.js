@@ -13,6 +13,9 @@ module.exports = {
     async authentication() { return {} }
   },
   AuthenticationQuery: {
+    /**
+     * Fetch active authentication strategies
+     */
     async strategies(obj, args, context, info) {
       let strategies = await WIKI.models.authentication.getStrategies(args.isEnabled)
       strategies = strategies.map(stg => {
@@ -38,6 +41,9 @@ module.exports = {
     }
   },
   AuthenticationMutation: {
+    /**
+     * Perform Login
+     */
     async login(obj, args, context) {
       try {
         const authResult = await WIKI.models.users.login(args, context)
@@ -54,6 +60,9 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
+    /**
+     * Perform 2FA Login
+     */
     async loginTFA(obj, args, context) {
       try {
         const authResult = await WIKI.models.users.loginTFA(args, context)
@@ -65,6 +74,9 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
+    /**
+     * Register a new account
+     */
     async register(obj, args, context) {
       try {
         await WIKI.models.users.register({ ...args, verify: true }, context)
@@ -75,6 +87,9 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
+    /**
+     * Update Authentication Strategies
+     */
     async updateStrategies(obj, args, context) {
       try {
         WIKI.config.auth = {
@@ -99,6 +114,32 @@ module.exports = {
         await WIKI.auth.activateStrategies()
         return {
           responseResult: graphHelper.generateSuccess('Strategies updated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Generate New Authentication Public / Private Key Certificates
+     */
+    async regenerateCertificates(obj, args, context) {
+      try {
+        await WIKI.auth.regenerateCertificates()
+        return {
+          responseResult: graphHelper.generateSuccess('Certificates have been regenerated successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Reset Guest User
+     */
+    async resetGuestUser(obj, args, context) {
+      try {
+        await WIKI.auth.resetGuestUser()
+        return {
+          responseResult: graphHelper.generateSuccess('Guest user has been reset successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)
