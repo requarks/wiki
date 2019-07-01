@@ -31,7 +31,7 @@
             v-list-tile-content
               v-list-tile-title.body-1 Setup analytics
               v-list-tile-subtitle.caption: em Installation checkpoint reached
-        .body-1.pl-3 Note that any data collected is stored for a maximum of 180 days, after which it is permanently deleted.
+        .body-1.pl-3 Note that crash debug data is stored for a maximum of 30 days while analytics are stored for a maximum of 16 months, after which it is permanently deleted.
         v-divider.my-3
         v-subheader What is it used for?
         .body-1.pl-3 Telemetry is used by developers to improve Wiki.js, mostly for the following reasons:

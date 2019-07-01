@@ -349,7 +349,7 @@ module.exports = () => {
   // Start HTTP server
   // ----------------------------------------
 
-  WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
+  WIKI.logger.info(`Starting HTTP server on port ${WIKI.config.port}...`)
 
   app.set('port', WIKI.config.port)
 
