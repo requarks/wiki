@@ -28,6 +28,10 @@ type PageQuery {
   ): PageSearchResponse! @auth(requires: ["manage:system", "read:pages"])
 
   list: [PageListItem!]! @auth(requires: ["manage:system"])
+
+  single(
+    id: Int!
+  ): Page @auth(requires: ["manage:pages", "delete:pages", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -80,6 +84,29 @@ type PageResponse {
 
 type Page {
   id: Int!
+  path: String!
+  hash: String!
+  title: String!
+  description: String!
+  isPrivate: Boolean!
+  isPublished: Boolean!
+  privateNS: String
+  publishStartDate: Date!
+  publishEndDate: String!
+  content: String!
+  render: String
+  toc: String
+  contentType: String!
+  createdAt: Date!
+  updatedAt: Date!
+  editor: String!
+  locale: String!
+  authorId: Int!
+  authorName: String!
+  authorEmail: String!
+  creatorId: Int!
+  creatorName: String!
+  creatorEmail: String!
 }
 
 type PageHistory {

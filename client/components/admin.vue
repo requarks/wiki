@@ -56,6 +56,9 @@
             v-list-tile(to='/auth')
               v-list-tile-avatar: v-icon lock_outline
               v-list-tile-title {{ $t('admin:auth.title') }}
+            v-list-tile(to='/comments', disabled)
+              v-list-tile-avatar: v-icon(color='grey lighten-2') comment
+              v-list-tile-title {{ $t('admin:comments.title') }}
             v-list-tile(to='/editor', disabled)
               v-list-tile-avatar: v-icon(color='grey lighten-2') transform
               v-list-tile-title {{ $t('admin:editor.title') }}
@@ -141,6 +144,7 @@ const router = new VueRouter({
     { path: '/locale', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-locale.vue') },
     { path: '/navigation', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-navigation.vue') },
     { path: '/pages', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages.vue') },
+    { path: '/pages/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages-edit.vue') },
     { path: '/theme', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-theme.vue') },
     { path: '/groups', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups.vue') },
     { path: '/groups/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups-edit.vue') },

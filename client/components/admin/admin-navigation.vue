@@ -97,6 +97,7 @@
                     v-else-if='current.targetType === "page"'
                     color='indigo'
                     dark
+                    @click='selectPage'
                     )
                     v-icon(left) search
                     span Select Page...
@@ -162,8 +163,8 @@ export default {
       return [
         { text: this.$t('navigation.navType.external'), value: 'external' },
         { text: this.$t('navigation.navType.home'), value: 'home' },
-        { text: this.$t('navigation.navType.page'), value: 'page' },
-        { text: this.$t('navigation.navType.searchQuery'), value: 'search' }
+        { text: this.$t('navigation.navType.page'), value: 'page' }
+        // { text: this.$t('navigation.navType.searchQuery'), value: 'search' }
       ]
     }
   },
@@ -196,6 +197,9 @@ export default {
     },
     selectItem(item) {
       this.current = item
+    },
+    selectPage() {
+      window.alert(`Coming soon. Use External Link for now (you can still specify internal links).`)
     },
     async save() {
       this.$store.commit(`loadingStart`, 'admin-navigation-save')

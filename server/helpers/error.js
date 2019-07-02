@@ -125,6 +125,10 @@ module.exports = {
     message: 'Cannot create this page because an entry already exists at the same path.',
     code: 6002
   }),
+  PageNotFound: CustomError('PageNotFound', {
+    message: 'This page does not exist.',
+    code: 6003
+  }),
   SearchActivationFailed: CustomError('SearchActivationFailed', {
     message: 'Search Engine activation failed.',
     code: 4002

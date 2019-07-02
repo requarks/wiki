@@ -16,7 +16,8 @@ module.exports = {
       locale: WIKI.config.lang.code,
       path: 'home',
       private: false,
-      privateNS: ''
+      privateNS: '',
+      explicitLocale: false
     }
 
     // Clean Path
@@ -31,6 +32,7 @@ module.exports = {
     }
     if (localeSegmentRegex.test(pathParts[0])) {
       pathObj.locale = pathParts[0]
+      pathObj.explicitLocale = true
       pathParts.shift()
     }
 

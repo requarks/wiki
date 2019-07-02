@@ -42,6 +42,18 @@ module.exports = {
         'createdAt',
         'updatedAt'
       ])
+    },
+    async single (obj, args, context, info) {
+      let page = await WIKI.models.pages.getPageFromDb(args.id)
+      if (page) {
+        return {
+          ...page,
+          locale: page.localeCode,
+          editor: page.editorKey
+        }
+      } else {
+        throw new WIKI.Error.PageNotFound()
+      }
     }
   },
   PageMutation: {

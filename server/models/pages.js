@@ -350,23 +350,23 @@ module.exports = class Page extends Model {
         'pages.path': opts.path,
         'pages.localeCode': opts.locale
       })
-      .andWhere(builder => {
-        if (queryModeID) return
-        builder.where({
-          'pages.isPublished': true
-        }).orWhere({
-          'pages.isPublished': false,
-          'pages.authorId': opts.userId
-        })
-      })
-      .andWhere(builder => {
-        if (queryModeID) return
-        if (opts.isPrivate) {
-          builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
-        } else {
-          builder.where({ 'pages.isPrivate': false })
-        }
-      })
+      // .andWhere(builder => {
+      //   if (queryModeID) return
+      //   builder.where({
+      //     'pages.isPublished': true
+      //   }).orWhere({
+      //     'pages.isPublished': false,
+      //     'pages.authorId': opts.userId
+      //   })
+      // })
+      // .andWhere(builder => {
+      //   if (queryModeID) return
+      //   if (opts.isPrivate) {
+      //     builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
+      //   } else {
+      //     builder.where({ 'pages.isPrivate': false })
+      //   }
+      // })
       .first()
   }
 

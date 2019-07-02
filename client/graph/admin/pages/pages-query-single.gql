@@ -1,0 +1,27 @@
+query($id: Int!) {
+  pages {
+    single(id:$id) {
+      id
+      path
+      hash
+      title
+      description
+      isPrivate
+      isPublished
+      privateNS
+      publishStartDate
+      publishEndDate
+      contentType
+      createdAt
+      updatedAt
+      editor
+      locale
+      authorId
+      authorName
+      authorEmail
+      creatorId
+      creatorName
+      creatorEmail
+    }
+  }
+}

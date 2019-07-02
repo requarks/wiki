@@ -3,17 +3,17 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-file.svg', alt='Page', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-file.svg', alt='Page', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2 Pages
-            .subheading.grey--text Manage pages #[v-chip(label, color='primary', small).white--text coming soon]
+            .headline.blue--text.text--darken-2.animated.fadeInLeft Pages
+            .subheading.grey--text.animated.fadeInLeft.wait-p2s Manage pages
           v-spacer
-          v-btn(color='grey', outline, @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p1s(color='grey', outline, @click='refresh', large)
             v-icon.grey--text refresh
-          v-btn(color='primary', depressed, large, @click='newpage', disabled)
+          v-btn.animated.fadeInDown(color='primary', depressed, large, @click='newpage', disabled)
             v-icon(left) add
             span New Page
-        v-card.wiki-form.mt-3
+        v-card.wiki-form.mt-3.animated.fadeInUp
           v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
             v-spacer
             v-text-field(
@@ -29,17 +29,21 @@
               hide-details
               single-line
               label='Locale'
+              :items='langs'
+              v-model='selectedLang'
             )
             v-select.ml-2(
               outline
               hide-details
               single-line
               label='Publish State'
+              :items='states'
+              v-model='selectedState'
             )
             v-spacer
           v-divider
           v-data-table(
-            :items='pages'
+            :items='filteredPages'
             :headers='headers'
             :search='search'
             :pagination.sync='pagination'
@@ -61,11 +65,12 @@
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
               v-alert.ma-3(icon='warning', :value='true', outline) No pages to display.
-          .text-xs-center.py-2(v-if='this.pageTotal > 1')
+          .text-xs-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
             v-pagination(v-model='pagination.page', :length='pageTotal')
 </template>
 
 <script>
+import _ from 'lodash'
 import pagesQuery from 'gql/admin/pages/pages-query-list.gql'
 
 export default {
@@ -82,6 +87,13 @@ export default {
         { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
       search: '',
+      selectedLang: null,
+      selectedState: null,
+      states: [
+        { text: 'All Publishing States', value: null },
+        { text: 'Published', value: true },
+        { text: 'Not Published', value: false }
+      ],
       loading: false
     }
   },
@@ -91,7 +103,27 @@ export default {
         return 0
       }
 
-      return Math.ceil(this.pages.length / this.pagination.rowsPerPage)
+      return Math.ceil(this.filteredPages.length / this.pagination.rowsPerPage)
+    },
+    filteredPages () {
+      return _.filter(this.pages, pg => {
+        if (this.selectedLang !== null && this.selectedLang !== pg.locale) {
+          return false
+        }
+        if (this.selectedState !== null && this.selectedState !== pg.isPublished) {
+          return false
+        }
+        return true
+      })
+    },
+    langs () {
+      return _.concat({
+        text: 'All Locales',
+        value: null
+      }, _.uniqBy(this.pages, 'locale').map(pg => ({
+        text: pg.locale,
+        value: pg.locale
+      })))
     }
   },
   methods: {
