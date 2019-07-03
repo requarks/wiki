@@ -125,7 +125,16 @@ module.exports = {
           return next()
         }
       }
-
+      // JWT is valid but user is NOT active
+      if (user) {
+        const dbUser = await WIKI.models.users.query().findOne({
+          email: user.email,
+          providerKey: 'local'
+        })
+        if (dbUser && !dbUser.isActive) {
+          user = undefined // user will become a guest
+        }
+      }
       // JWT is NOT valid, set as guest
       if (!user) {
         if (WIKI.auth.guest.cacheExpiration.isSameOrBefore(moment.utc())) {
