@@ -1,0 +1,8 @@
+query {
+  system {
+    info {
+      telemetry
+      telemetryClientId
+    }
+  }
+}

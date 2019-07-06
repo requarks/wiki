@@ -1,0 +1,12 @@
+mutation {
+  system {
+    resetTelemetryClientId {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

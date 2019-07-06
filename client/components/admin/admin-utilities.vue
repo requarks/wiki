@@ -65,7 +65,7 @@ export default {
           key: 'UtilityImportv1',
           icon: 'present_to_all',
           i18nKey: 'importv1',
-          isAvailable: true
+          isAvailable: false
         },
         {
           key: 'UtilityTelemetry',

@@ -43,11 +43,37 @@ module.exports = {
       return {
         responseResult: graphHelper.generateSuccess('System Flags applied successfully')
       }
+    },
+    async resetTelemetryClientId(obj, args, context) {
+      try {
+        WIKI.telemetry.generateClientId()
+        await WIKI.configSvc.saveToDb(['telemetry'])
+        return {
+          responseResult: graphHelper.generateSuccess('Telemetry state updated successfully')
+        }
+      } catch(err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async setTelemetry(obj, args, context) {
+      try {
+        _.set(WIKI.config, 'telemetry.isEnabled', args.enabled)
+        WIKI.telemetry.enabled = args.enabled
+        await WIKI.configSvc.saveToDb(['telemetry'])
+        return {
+          responseResult: graphHelper.generateSuccess('Telemetry Client ID has been reset successfully')
+        }
+      } catch(err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   SystemInfo: {
     configFile() {
       return path.join(process.cwd(), 'config.yml')
+    },
+    cpuCores() {
+      return os.cpus().length
     },
     currentVersion() {
       return WIKI.version
@@ -83,11 +109,17 @@ module.exports = {
         return WIKI.config.db.host
       }
     },
+    hostname() {
+      return os.hostname()
+    },
     latestVersion() {
       return WIKI.system.updates.version
     },
     latestVersionReleaseDate() {
       return moment.utc(WIKI.system.updates.releaseDate)
+    },
+    nodeVersion() {
+      return process.version.substr(1)
     },
     async operatingSystem() {
       let osLabel = `${os.type()} (${os.platform()}) ${os.release()} ${os.arch()}`
@@ -104,20 +136,17 @@ module.exports = {
       }
       return os.platform()
     },
-    hostname() {
-      return os.hostname()
-    },
-    cpuCores() {
-      return os.cpus().length
-    },
     ramTotal() {
       return filesize(os.totalmem())
     },
+    telemetry() {
+      return WIKI.telemetry.enabled
+    },
+    telemetryClientId() {
+      return WIKI.config.telemetry.clientId
+    },
     workingDirectory() {
       return process.cwd()
-    },
-    nodeVersion() {
-      return process.version.substr(1)
     },
     async groupsTotal() {
       const total = await WIKI.models.groups.query().count('* as total').first().pluck('total')
