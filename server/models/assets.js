@@ -164,4 +164,8 @@ module.exports = class Asset extends Model {
       res.sendStatus(404)
     }
   }
+
+  static async flushTempUploads() {
+    return fs.emptyDir(path.join(process.cwd(), `data/uploads`))
+  }
 }

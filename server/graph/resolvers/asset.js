@@ -154,6 +154,19 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * Flush Temporary Uploads
+     */
+    async flushTempUploads(obj, args, context) {
+      try {
+        await WIKI.models.assets.flushTempUploads()
+        return {
+          responseResult: graphHelper.generateSuccess('Temporary Uploads have been flushed successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   }
   // File: {

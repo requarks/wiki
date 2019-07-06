@@ -71,6 +71,8 @@ type PageMutation {
   delete(
     id: Int!
   ): DefaultResponse @auth(requires: ["delete:pages", "manage:system"])
+
+  flushCache: DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

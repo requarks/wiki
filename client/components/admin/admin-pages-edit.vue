@@ -149,7 +149,7 @@
                 v-flex.text-xs-right(xs5).caption.grey--text.text-darken-2 {{ page.updatedAt | moment('calendar') }}
             v-timeline-item(hide-dot, small)
               .body-1 ...
-              v-btn.mx-0(outline, color='grey') View Full History
+              v-btn.mx-0(outline, color='grey', :href='`/h/` + page.locale + `/` + page.path') View Full History
               .body-1 ...
             v-timeline-item(color='pink', small)
               v-layout(justify-space-between)

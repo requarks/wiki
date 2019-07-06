@@ -44,6 +44,8 @@ type AssetMutation {
   deleteAsset(
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+
+  flushTempUploads: DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

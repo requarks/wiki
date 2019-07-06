@@ -417,6 +417,10 @@ module.exports = class Page extends Model {
     return fs.remove(path.join(process.cwd(), `data/cache/${page.hash}.bin`))
   }
 
+  static async flushCache() {
+    return fs.emptyDir(path.join(process.cwd(), `data/cache`))
+  }
+
   static cleanHTML(rawHTML = '') {
     return striptags(rawHTML || '')
       .replace(emojiRegex(), '')

@@ -85,6 +85,16 @@ module.exports = {
         responseResult: graphHelper.generateSuccess('Page has been updated.'),
         page
       }
+    },
+    async flushCache(obj, args, context) {
+      try {
+        await WIKI.models.pages.flushCache()
+        return {
+          responseResult: graphHelper.generateSuccess('Pages Cache has been flushed successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   Page: {
