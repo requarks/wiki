@@ -129,7 +129,7 @@ module.exports = {
       if (user) {
         const dbUser = await WIKI.models.users.query().findOne({
           email: user.email,
-          providerKey: 'local'
+          providerKey: user.providerKey
         })
         if (dbUser && !dbUser.isActive) {
           user = undefined // user will become a guest
