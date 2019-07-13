@@ -42,18 +42,26 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    background-color: mc('red', '700');
+    background-color: mc('grey', '800');
     text-align: center;
-    color: mc('red', '50');
+    color: mc('grey', '50');
     height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
 
     a {
-      color: #FFF;
+      color: mc('red', '200');
       margin-left: 5px;
     }
+  }
+
+  &-error {
+    background-color: mc('red', '500');
+    color: #FFF;
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 2rem;
   }
 
   &-dialog {
@@ -171,6 +179,13 @@ body {
       text-decoration: none;
       color: #FFF;
       transition: color .3s ease;
+      border-radius: 50%;
+      background-color: mc('grey', '900');
+      display: flex;
+      width: 40px;
+      height: 40px;
+      justify-content: center;
+      align-items: center;
 
       &:hover {
         color: mc('blue', '500');

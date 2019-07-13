@@ -12,8 +12,12 @@ block body
       span.header-title= siteConfig.title
       span.header-deprecated Your browser is outdated. Upgrade to a #[a(href='https://bestvpn.org/outdatedbrowser/en', rel='nofollow') modern browser].
       span.header-login
-        a(href='/login')
-          i.material-icons account_circle
+        if !isAuthenticated
+          a(href='/login', title='Login')
+            i.material-icons account_circle
+        else
+          a(href='/logout', title='Logout')
+            i.material-icons logout
     .main
       .sidebar
         each navItem in sidebar
@@ -30,10 +34,10 @@ block body
           .page-header-left
             h1= page.title
             h2= page.description
-          .page-header-right
-            .page-header-right-title Last edited by
-            .page-header-right-author= page.authorName
-            .page-header-right-updated= page.updatedAt
+          //- .page-header-right
+          //-   .page-header-right-title Last edited by
+          //-   .page-header-right-author= page.authorName
+          //-   .page-header-right-updated= page.updatedAt
         .page-contents
           .contents
             div!= page.render

@@ -5,6 +5,8 @@ block body
     .login-deprecated Your browser is outdated. Upgrade to a #[a(href='https://bestvpn.org/outdatedbrowser/en', rel='nofollow') modern browser].
     .login
       .login-dialog
+        if err
+          .login-error= err.message
         form(method='post', action='/login')
           h1= config.title
           select(name='strategy')

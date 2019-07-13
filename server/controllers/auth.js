@@ -6,8 +6,6 @@ const BruteKnex = require('brute-knex')
 const router = express.Router()
 const moment = require('moment')
 const _ = require('lodash')
-const fs = require('fs-extra')
-const path = require('path')
 
 const bruteforce = new ExpressBrute(new BruteKnex({
   createTable: true,
@@ -28,32 +26,9 @@ router.get('/login', async (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Login')
 
   if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
-    const strategies = await WIKI.models.authentication.query().select('key', 'selfRegistration').where({ isEnabled: true })
-    let formStrategies = []
-    let socialStrategies = []
-
-    // TODO: Let's refactor that at some point...
-    for (let stg of strategies) {
-      const stgInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
-      if (stgInfo.useForm) {
-        formStrategies.push({
-          key: stg.key,
-          title: stgInfo.title
-        })
-      } else {
-        socialStrategies.push({
-          ...stgInfo,
-          ...stg,
-          icon: await fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${stg.key}.svg`), 'utf8').catch(err => {
-            if (err.code === 'ENOENT') {
-              return null
-            }
-            throw err
-          })
-        })
-      }
-    }
+    const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
     res.render('legacy/login', {
+      err: false,
       formStrategies,
       socialStrategies
     })
@@ -109,7 +84,12 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
       res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
       res.redirect('/')
     } catch (err) {
-      res.render('legacy/login')
+      const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
+      res.render('legacy/login', {
+        err,
+        formStrategies,
+        socialStrategies
+      })
     }
   } else {
     res.redirect('/login')
@@ -121,6 +101,7 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
  */
 router.get('/logout', function (req, res) {
   req.logout()
+  res.clearCookie('jwt')
   res.redirect('/')
 })
 

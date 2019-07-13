@@ -200,7 +200,7 @@ router.get('/*', async (req, res, next) => {
           if (_.isString(page.toc)) {
             page.toc = JSON.parse(page.toc)
           }
-          res.render('legacy/page', { page, sidebar, injectCode })
+          res.render('legacy/page', { page, sidebar, injectCode, isAuthenticated: req.user && req.user.id !== 2 })
         } else {
           res.render('page', { page, sidebar, injectCode })
         }

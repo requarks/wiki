@@ -44,6 +44,38 @@ module.exports = class Authentication extends Model {
     })), ['key'])
   }
 
+  static async getStrategiesForLegacyClient() {
+    const strategies = await WIKI.models.authentication.query().select('key', 'selfRegistration').where({ isEnabled: true })
+    let formStrategies = []
+    let socialStrategies = []
+
+    for (let stg of strategies) {
+      const stgInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
+      if (stgInfo.useForm) {
+        formStrategies.push({
+          key: stg.key,
+          title: stgInfo.title
+        })
+      } else {
+        socialStrategies.push({
+          ...stgInfo,
+          ...stg,
+          icon: await fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${stg.key}.svg`), 'utf8').catch(err => {
+            if (err.code === 'ENOENT') {
+              return null
+            }
+            throw err
+          })
+        })
+      }
+    }
+
+    return {
+      formStrategies,
+      socialStrategies
+    }
+  }
+
   static async refreshStrategiesFromDisk() {
     let trx
     try {
