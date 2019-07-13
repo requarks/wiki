@@ -209,7 +209,7 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/legacy.pug',
-      filename: '../server/views/legacy.pug',
+      filename: '../server/views/legacy/master.pug',
       hash: false,
       inject: false,
       excludeChunks: ['setup', 'app']

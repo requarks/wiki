@@ -28,6 +28,120 @@ body {
   min-height: 100vh;
 }
 
+// LOGIN
+
+.login {
+  background-color: mc('grey', '900');
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &-deprecated {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: mc('red', '700');
+    text-align: center;
+    color: mc('red', '50');
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    a {
+      color: #FFF;
+      margin-left: 5px;
+    }
+  }
+
+  &-dialog {
+    width: 650px;
+    background-color: mc('grey', '100');
+    border-radius: 5px;
+    text-align: center;
+    padding: 2rem;
+    color: mc('grey', '800');
+
+    h1 {
+      margin-bottom: 2rem;
+    }
+
+    input, select {
+      display: block;
+      background-color: #FFF;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      height: 40px;
+      padding: 0 1rem;
+      margin: 5px 0;
+    }
+
+    button {
+      height: 40px;
+      display: block;
+      width: 200px;
+      border: none;
+      border-radius: 5px;
+      margin: 0 auto;
+      background-color: mc('blue', '700');
+      color: #FFF;
+      cursor: pointer;
+      margin-top: 1rem;
+      font-weight: 600;
+
+      &:hover {
+        background-color: mc('blue', '800');
+      }
+    }
+  }
+
+  &-social {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid mc('grey', '400');
+
+    h2 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    &-icon {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 5px;
+      width: 54px;
+      height: 54px;
+      cursor: pointer;
+      transition: opacity .2s ease;
+      margin: .5rem .25rem;
+      &:hover {
+        opacity: .8;
+      }
+      svg {
+        width: 24px;
+        height: 24px;
+        bottom: 0;
+        path {
+          fill: #FFF;
+        }
+      }
+
+      @each $colorName, $color in $material-colors {
+        &.#{$colorName} {
+          background-color: map-get($color, '500');
+        }
+      }
+    }
+  }
+}
+
+// PAGE
+
 .header {
   background-color: #000;
   color: #FFF;
@@ -145,7 +259,7 @@ body {
   }
 
   &-right {
-    flex: 0 0 324px;
+    flex: 0 0 308px;
     padding-left: 16px;
 
     &-title {

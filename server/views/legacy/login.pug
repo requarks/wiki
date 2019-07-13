@@ -1,0 +1,21 @@
+extends master.pug
+
+block body
+  #root
+    .login-deprecated Your browser is outdated. Upgrade to a #[a(href='https://bestvpn.org/outdatedbrowser/en', rel='nofollow') modern browser].
+    .login
+      .login-dialog
+        form(method='post', action='/login')
+          h1= config.title
+          select(name='strategy')
+            each str in formStrategies
+              option(value=str.key, selected)= str.title
+          input(type='text', name='user', placeholder='Username / Email')
+          input(type='password', name='pass', placeholder='Password')
+          button(type='submit') Login
+        if socialStrategies.length
+          .login-social
+            h2 or login using...
+            each str in socialStrategies
+              a.login-social-icon(href='/login/' + str.key, class=str.color)
+                != str.icon
