@@ -14,6 +14,7 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
+        baseUrl: conf.baseUrl,
         scope: ['read_user']
       }, async (accessToken, refreshToken, profile, cb) => {
         try {
