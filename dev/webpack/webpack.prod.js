@@ -27,6 +27,7 @@ module.exports = {
   mode: 'production',
   entry: {
     app: './client/index-app.js',
+    legacy: './client/index-legacy.js',
     setup: './client/index-setup.js'
   },
   output: {
@@ -204,14 +205,21 @@ module.exports = {
       filename: '../server/views/master.pug',
       hash: false,
       inject: false,
-      excludeChunks: ['setup']
+      excludeChunks: ['setup', 'legacy']
+    }),
+    new HtmlWebpackPlugin({
+      template: 'dev/templates/legacy.pug',
+      filename: '../server/views/legacy.pug',
+      hash: false,
+      inject: false,
+      excludeChunks: ['setup', 'app']
     }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/setup.pug',
       filename: '../server/views/setup.pug',
       hash: false,
       inject: false,
-      excludeChunks: ['app']
+      excludeChunks: ['app', 'legacy']
     }),
     new HtmlWebpackPugPlugin(),
     new ScriptExtHtmlWebpackPlugin({

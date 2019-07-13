@@ -1,0 +1,127 @@
+doctype html
+html
+  head
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(charset='UTF-8')
+    meta(name='viewport', content='user-scalable=yes, width=device-width, initial-scale=1, maximum-scale=5')
+    meta(name='theme-color', content='#333333')
+    meta(name='msapplication-TileColor', content='#333333')
+    meta(name='msapplication-TileImage', content='/favicons/ms-icon-144x144.png')
+
+    title= pageMeta.title + ' | ' + config.title
+
+    //- SEO / OpenGraph
+    meta(name='description', content=pageMeta.description)
+    meta(property='og:title', content=pageMeta.title)
+    meta(property='og:type', content='website')
+    meta(property='og:description', content=pageMeta.description)
+    meta(property='og:image', content=pageMeta.image)
+    meta(property='og:url', content=pageMeta.url)
+    meta(property='og:site_name', content=config.title)
+
+    //- Favicon
+    each favsize in [57, 60, 72, 76, 114, 120, 144, 152, 180]
+      link(rel='apple-touch-icon', sizes=favsize + 'x' + favsize, href='/favicons/apple-icon-' + favsize + 'x' + favsize + '.png')
+    link(rel='icon', type='image/png', sizes='192x192', href='/favicons/android-icon-192x192.png')
+    each favsize in [32, 96, 16]
+      link(rel='icon', type='image/png', sizes=favsize + 'x' + favsize, href='/favicons/favicon-' + favsize + 'x' + favsize + '.png')
+    link(rel='manifest', href='/manifest.json')
+
+    //- CSS
+    <% for (var index in htmlWebpackPlugin.files.css) { %>
+      <% if (htmlWebpackPlugin.files.cssIntegrity) { %>
+    link(
+      type='text/css'
+      rel='stylesheet'
+      href='<%= htmlWebpackPlugin.files.css[index] %>'
+      integrity='<%= htmlWebpackPlugin.files.cssIntegrity[index] %>'
+      crossorigin='<%= webpackConfig.output.crossOriginLoading %>'
+    )
+      <% } else { %>
+    link(
+      type='text/css'
+      rel='stylesheet'
+      href='<%= htmlWebpackPlugin.files.css[index] %>'
+    )
+      <% } %>
+    <% } %>
+
+    script(
+      crossorigin='anonymous'
+      src='https://polyfill.io/v3/polyfill.min.js?features=EventSource'
+    )
+
+    //- JS
+    <% for (var index in htmlWebpackPlugin.files.js) { %>
+      <% if (htmlWebpackPlugin.files.cssIntegrity) { %>
+    script(
+      type='text/javascript'
+      src='<%= htmlWebpackPlugin.files.js[index] %>'
+      integrity='<%= htmlWebpackPlugin.files.jsIntegrity[index] %>'
+      crossorigin='<%= webpackConfig.output.crossOriginLoading %>'
+      )
+      <% } else { %>
+    script(
+      type='text/javascript'
+      src='<%= htmlWebpackPlugin.files.js[index] %>'
+      )
+      <% } %>
+    <% } %>
+
+    != analyticsCode.head
+
+    if injectCode.css
+      style(type='text/css')!= injectCode.css
+    if injectCode.head
+      != injectCode.head
+
+  body
+    != analyticsCode.bodyStart
+    #root
+      .header
+        span.header-title= siteConfig.title
+        span.header-deprecated Your browser is outdated. Upgrade to a #[a(href='https://bestvpn.org/outdatedbrowser/en', rel='nofollow') modern browser].
+        span.header-login
+          a(href='/login')
+            i.material-icons account_circle
+      .main
+        .sidebar
+          each navItem in sidebar
+            if navItem.kind === 'link'
+              a.sidebar-link(href=navItem.target)
+                i.material-icons= navItem.icon
+                span= navItem.label
+            else if navItem.kind === 'divider'
+              .sidebar-divider
+            else if navItem.kind === 'header'
+              .sidebar-title= navItem.label
+        .main-container
+          .page-header
+            .page-header-left
+              h1= page.title
+              h2= page.description
+            .page-header-right
+              .page-header-right-title Last edited by
+              .page-header-right-author= page.authorName
+              .page-header-right-updated= page.updatedAt
+          .page-contents
+            .contents
+              div!= page.render
+            if page.toc.length
+              .toc
+                .toc-title Table of Contents
+                each tocItem, tocIdx in page.toc
+                  a.toc-tile(href='#' + tocItem.anchor)
+                    i.material-icons arrow_right
+                    span= tocItem.title
+                  if tocIdx < page.toc.length - 1 || tocItem.children.length
+                    .toc-divider
+                  each tocSubItem in tocItem.children
+                    a.toc-tile.inset(href='#' + tocSubItem.anchor)
+                      i.material-icons arrow_right
+                      span= tocSubItem.title
+                    if tocIdx < page.toc.length - 1
+                      .toc-divider.inset
+    if injectCode.body
+      != injectCode.body
+    != analyticsCode.bodyEnd

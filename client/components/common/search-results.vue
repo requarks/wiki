@@ -91,7 +91,7 @@ export default {
       return this.response.suggestions ? this.response.suggestions : []
     },
     paginationLength() {
-      return this.response.totalHits > 0 ? 0 : Math.ceil(this.response.totalHits / 10)
+      return (this.response.totalHits > 0) ? 0 : Math.ceil(this.response.totalHits / 10)
     }
   },
   watch: {
@@ -107,7 +107,7 @@ export default {
   },
   mounted() {
     this.$root.$on('searchMove', (dir) => {
-      this.cursor += (dir === 'up' ? -1 : 1)
+      this.cursor += ((dir === 'up') ? -1 : 1)
       if (this.cursor < -1) {
         this.cursor = -1
       } else if (this.cursor > this.results.length + this.suggestions.length - 1) {

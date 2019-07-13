@@ -52,8 +52,6 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title
                     .subheading {{ $t('admin:locale.namespacing') }}
-                  v-spacer
-                  v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
                   v-switch(
                     v-model='namespacing'
@@ -102,28 +100,35 @@
               v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
-                    .subheading {{ $t('admin:locale.download') }}
-                v-list(two-line, dense)
-                  template(v-for='(lc, idx) in locales')
-                    v-list-tile(:key='lc.code')
-                      v-list-tile-avatar
-                        v-avatar.teal.white--text(size='40') {{lc.code.toUpperCase()}}
-                      v-list-tile-content
-                        v-list-tile-title(v-html='lc.name')
-                        v-list-tile-sub-title(v-html='lc.nativeName')
-                      v-list-tile-action(v-if='lc.isRTL')
-                        v-chip(label, small, :class='$vuetify.dark ? `text--lighten-5` : `text--darken-2`').caption.grey--text RTL
-                      v-list-tile-action(v-if='lc.isInstalled && lc.installDate < lc.updatedAt')
-                        v-btn(icon, @click='download(lc)')
-                          v-icon.blue--text cached
-                      v-list-tile-action(v-else-if='lc.isInstalled')
+                    .subheading {{ $t('admin:locale.downloadTitle') }}
+                v-data-table(
+                  :headers='headers',
+                  :items='locales',
+                  hide-actions,
+                  item-key='code',
+                  :rows-per-page-items='[-1]'
+                )
+                  template(v-slot:items='lc')
+                    td
+                      v-chip.white--text(label, color='teal', small) {{lc.item.code}}
+                    td
+                      strong {{lc.item.name}}
+                    td
+                      span {{ lc.item.nativeName }}
+                    td.text-xs-center
+                      v-icon(v-if='lc.item.isRTL') check
+                    td
+                      .d-flex.align-center.pl-4
+                        .caption.mr-2(:class='lc.item.availability <= 33 ? `red--text` : (lc.item.availability <= 66) ? `orange--text` : `green--text`') {{lc.item.availability}}%
+                        v-progress-circular(:value='lc.item.availability', width='2', size='20', :color='lc.item.availability <= 33 ? `red` : (lc.item.availability <= 66) ? `orange` : `green`')
+                    td.text-xs-center
+                      v-progress-circular(v-if='lc.item.isDownloading', indeterminate, color='blue', size='20', :width='2')
+                      v-btn(v-else-if='lc.item.isInstalled && lc.item.installDate < lc.item.updatedAt', icon, @click='download(lc.item)')
+                        v-icon.blue--text cached
+                      v-btn(v-else-if='lc.item.isInstalled', icon, @click='download(lc.item)')
                         v-icon.green--text check
-                      v-list-tile-action(v-else-if='lc.isDownloading')
-                        v-progress-circular(indeterminate, color='blue', size='20', :width='3')
-                      v-list-tile-action(v-else)
-                        v-btn(icon, @click='download(lc)')
-                          v-icon.grey--text cloud_download
-                    v-divider.my-0(inset, v-if='idx < locales.length - 1')
+                      v-btn(v-else, icon, @click='download(lc.item)')
+                        v-icon.grey--text cloud_download
               v-card.wiki-form.mt-3.animated.fadeInUp.wait-p5s
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title
@@ -158,6 +163,46 @@ export default {
   computed: {
     installedLocales() {
       return _.filter(this.locales, ['isInstalled', true])
+    },
+    headers() {
+      return [
+        {
+          text: this.$t('admin:locale.code'),
+          align: 'left',
+          value: 'code',
+          width: 10
+        },
+        {
+          text: this.$t('admin:locale.name'),
+          align: 'left',
+          value: 'name'
+        },
+        {
+          text: this.$t('admin:locale.nativeName'),
+          align: 'left',
+          value: 'nativeName'
+        },
+        {
+          text: this.$t('admin:locale.rtl'),
+          align: 'center',
+          value: 'isRTL',
+          sortable: false,
+          width: 10
+        },
+        {
+          text: this.$t('admin:locale.availability'),
+          align: 'center',
+          value: 'availability',
+          width: 100
+        },
+        {
+          text: this.$t('admin:locale.download'),
+          align: 'center',
+          value: 'code',
+          sortable: false,
+          width: 100
+        }
+      ]
     }
   },
   methods: {
@@ -173,6 +218,8 @@ export default {
       if (resp.succeeded) {
         lc.isDownloading = false
         lc.isInstalled = true
+        lc.updatedAt = new Date().toISOString()
+        lc.installDate = lc.updatedAt
         this.$store.commit('showNotification', {
           message: `Locale ${lc.name} has been installed successfully.`,
           style: 'success',

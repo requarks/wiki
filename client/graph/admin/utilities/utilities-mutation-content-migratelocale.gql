@@ -1,0 +1,12 @@
+mutation {
+  pages {
+    migrateToLocale {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

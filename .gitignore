@@ -19,6 +19,7 @@ npm-debug.log*
 # Generated assets
 /assets
 server/views/master.pug
+server/views/legacy.pug
 server/views/setup.pug
 
 # Webpack

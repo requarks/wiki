@@ -1,6 +1,7 @@
 {
   localization {
     locales {
+      availability
       code
       createdAt
       isInstalled

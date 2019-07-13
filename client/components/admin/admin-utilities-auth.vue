@@ -3,14 +3,14 @@
     v-toolbar(flat, color='primary', dark, dense)
       .subheading {{ $t('admin:utilities.authTitle') }}
     v-card-text
-      v-subheader.pl-0 Generate New Authentication Public / Private Key Certificates
+      v-subheader.pl-0.primary--text Generate New Authentication Public / Private Key Certificates
       .body-1 This will invalidate all current session tokens and cause all users to be logged out.
       .body-1.red--text You will need to log back in after the operation.
       v-btn(outline, color='primary', @click='regenCerts', :disabled='loading').ml-0.mt-3
         v-icon(left) build
         span Proceed
       v-divider.my-3
-      v-subheader.pl-0 Reset Guest User
+      v-subheader.pl-0.primary--text Reset Guest User
       .body-1 This will reset the guest user to its default parameters and permissions.
       v-btn(outline, color='primary', @click='resetGuest', :disabled='loading').ml-0.mt-3
         v-icon(left) build

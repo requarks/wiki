@@ -16,13 +16,66 @@
     "@babel/plugin-proposal-function-sent",
     "@babel/plugin-proposal-export-namespace-from",
     "@babel/plugin-proposal-numeric-separator",
-    "@babel/plugin-proposal-throw-expressions"
+    "@babel/plugin-proposal-throw-expressions",
+    [
+      "prismjs", {
+        "languages": [
+          "markup",
+          "css",
+          "clike",
+          "javascript",
+          "c",
+          "bash",
+          "basic",
+          "cpp",
+          "csharp",
+          "arduino",
+          "ruby",
+          "elixir",
+          "fsharp",
+          "go",
+          "graphql",
+          "handlebars",
+          "haskell",
+          "ini",
+          "java",
+          "json",
+          "kotlin",
+          "latex",
+          "less",
+          "makefile",
+          "markdown",
+          "matlab",
+          "nginx",
+          "objectivec",
+          "perl",
+          "php",
+          "powershell",
+          "pug",
+          "python",
+          "typescript",
+          "rust",
+          "scss",
+          "scala",
+          "smalltalk",
+          "sql",
+          "stylus",
+          "swift",
+          "vbnet",
+          "yaml"
+        ],
+        "plugins": ["line-numbers"],
+        "theme": "dark",
+        "css": true
+      }
+    ]
   ],
   "presets": [
     [
       "@babel/preset-env", {
         "useBuiltIns": "entry",
-        "corejs": 3
+        "corejs": 3,
+        "debug": true
       }
     ]
   ]

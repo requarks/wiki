@@ -137,7 +137,7 @@
 
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
-import Prism from '@/libs/prism/prism.js'
+import Prism from 'prismjs'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
 

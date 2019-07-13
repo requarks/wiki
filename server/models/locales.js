@@ -20,7 +20,8 @@ module.exports = class Locale extends Model {
         name: {type: 'string'},
         nativeName: {type: 'string'},
         createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        updatedAt: {type: 'string'},
+        availability: {type: 'integer'}
       }
     }
   }

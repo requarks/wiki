@@ -35,6 +35,7 @@
 export default {
   components: {
     UtilityAuth: () => import(/* webpackChunkName: "admin" */ './admin-utilities-auth.vue'),
+    UtilityContent: () => import(/* webpackChunkName: "admin" */ './admin-utilities-content.vue'),
     UtilityCache: () => import(/* webpackChunkName: "admin" */ './admin-utilities-cache.vue'),
     UtilityImportv1: () => import(/* webpackChunkName: "admin" */ './admin-utilities-importv1.vue'),
     UtilityTelemetry: () => import(/* webpackChunkName: "admin" */ './admin-utilities-telemetry.vue')
@@ -47,6 +48,12 @@ export default {
           key: 'UtilityAuth',
           icon: 'lock_outline',
           i18nKey: 'auth',
+          isAvailable: true
+        },
+        {
+          key: 'UtilityContent',
+          icon: 'insert_drive_file',
+          i18nKey: 'content',
           isAvailable: true
         },
         {

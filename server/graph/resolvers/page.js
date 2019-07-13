@@ -95,6 +95,16 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    async migrateToLocale(obj, args, context) {
+      try {
+
+        return {
+          responseResult: graphHelper.generateSuccess('Migrated all content to target locale successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   Page: {

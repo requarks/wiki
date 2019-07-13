@@ -195,7 +195,15 @@ router.get('/*', async (req, res, next) => {
           head: WIKI.config.theming.injectHead,
           body: WIKI.config.theming.injectBody
         }
-        res.render('page', { page, sidebar, injectCode })
+
+        if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
+          if (_.isString(page.toc)) {
+            page.toc = JSON.parse(page.toc)
+          }
+          res.render('legacy', { page, sidebar, injectCode })
+        } else {
+          res.render('page', { page, sidebar, injectCode })
+        }
       } else if (pageArgs.path === 'home') {
         _.set(res.locals, 'pageMeta.title', 'Welcome')
         res.render('welcome')

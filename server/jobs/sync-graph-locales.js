@@ -17,6 +17,7 @@ module.exports = async () => {
       query: `{
         localization {
           locales {
+            availability
             code
             name
             nativeName
@@ -54,7 +55,9 @@ module.exports = async () => {
         let lcObj = {}
         _.forEach(strings, row => {
           if (_.includes(row.key, '::')) { return }
-          if (_.isEmpty(row.value)) { row.value = row.key }
+          if (_.isEmpty(row.value)) {
+            row.value = row.key
+          }
           _.set(lcObj, row.key.replace(':', '.'), row.value)
         })
 
@@ -63,7 +66,8 @@ module.exports = async () => {
           strings: lcObj,
           isRTL: localeInfo.isRTL,
           name: localeInfo.name,
-          nativeName: localeInfo.nativeName
+          nativeName: localeInfo.nativeName,
+          availability: localeInfo.availability
         }).where('code', currentLocale)
 
         WIKI.logger.info(`Pulled latest locale updates for ${localeInfo.name} from Graph endpoint: [ COMPLETED ]`)

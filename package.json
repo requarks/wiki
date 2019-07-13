@@ -180,6 +180,7 @@
     "@babel/polyfill": "^7.4.4",
     "@babel/preset-env": "^7.4.5",
     "@panter/vue-i18next": "0.15.1",
+    "@vue/babel-preset-app": "3.9.2",
     "animate-sass": "0.8.2",
     "animated-number-vue": "0.1.5",
     "apollo-cache-inmemory": "1.6.2",
@@ -197,6 +198,7 @@
     "babel-loader": "^8.0.6",
     "babel-plugin-graphql-tag": "2.4.0",
     "babel-plugin-lodash": "3.3.4",
+    "babel-plugin-prismjs": "1.0.2",
     "babel-plugin-transform-imports": "1.5.1",
     "brace": "0.11.1",
     "cache-loader": "4.0.0",
@@ -243,6 +245,7 @@
     "postcss-loader": "3.0.0",
     "postcss-preset-env": "6.6.0",
     "postcss-selector-parser": "6.0.2",
+    "prismjs": "1.16.0",
     "pug-lint": "2.5.0",
     "pug-loader": "2.4.0",
     "pug-plain-loader": "1.0.0",
@@ -299,9 +302,12 @@
   },
   "browserslist": [
     "> 1%",
-    "last 2 versions",
+    "last 2 major versions",
     "Firefox ESR",
-    "not ie < 11"
+    "not ie > 0",
+    "not ie_mob > 0",
+    "not android > 0",
+    "not dead"
   ],
   "postcss": {
     "plugins": {

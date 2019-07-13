@@ -24,6 +24,7 @@ module.exports = {
   mode: 'development',
   entry: {
     app: ['./client/index-app.js', 'webpack-hot-middleware/client'],
+    legacy: ['./client/index-legacy.js', 'webpack-hot-middleware/client'],
     setup: ['./client/index-setup.js', 'webpack-hot-middleware/client']
   },
   output: {
@@ -194,14 +195,21 @@ module.exports = {
       filename: '../server/views/master.pug',
       hash: false,
       inject: false,
-      excludeChunks: ['setup']
+      excludeChunks: ['setup', 'legacy']
+    }),
+    new HtmlWebpackPlugin({
+      template: 'dev/templates/legacy.pug',
+      filename: '../server/views/legacy.pug',
+      hash: false,
+      inject: false,
+      excludeChunks: ['setup', 'app']
     }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/setup.pug',
       filename: '../server/views/setup.pug',
       hash: false,
       inject: false,
-      excludeChunks: ['app']
+      excludeChunks: ['app', 'legacy']
     }),
     new HtmlWebpackPugPlugin(),
     new SriWebpackPlugin({

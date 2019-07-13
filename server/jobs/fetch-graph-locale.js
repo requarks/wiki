@@ -28,21 +28,30 @@ module.exports = async (localeCode) => {
     let lcObj = {}
     _.forEach(strings, row => {
       if (_.includes(row.key, '::')) { return }
-      if (_.isEmpty(row.value)) { row.value = row.key }
+      if (_.isEmpty(row.value)) {
+        row.value = row.key
+      }
       _.set(lcObj, row.key.replace(':', '.'), row.value)
     })
 
     const locales = await WIKI.cache.get('locales')
     if (locales) {
       const currentLocale = _.find(locales, ['code', localeCode]) || {}
-      await WIKI.models.locales.query().delete().where('code', localeCode)
-      await WIKI.models.locales.query().insert({
-        code: localeCode,
-        strings: lcObj,
-        isRTL: currentLocale.isRTL,
-        name: currentLocale.name,
-        nativeName: currentLocale.nativeName
-      })
+      const existingLocale = await WIKI.models.locales.query().where('code', localeCode)
+      if (existingLocale) {
+        await WIKI.models.locales.query().patch({
+          strings: lcObj
+        }).where('code', localeCode)
+      } else {
+        await WIKI.models.locales.query().insert({
+          code: localeCode,
+          strings: lcObj,
+          isRTL: currentLocale.isRTL,
+          name: currentLocale.name,
+          nativeName: currentLocale.nativeName,
+          availability: currentLocale.availability
+        })
+      }
     } else {
       throw new Error('Failed to fetch cached locales list! Restart server to resolve this issue.')
     }

@@ -3,13 +3,13 @@
     v-toolbar(flat, color='primary', dark, dense)
       .subheading {{ $t('admin:utilities.cacheTitle') }}
     v-card-text
-      v-subheader.pl-0 Flush Pages and Assets Cache
+      v-subheader.pl-0.primary--text Flush Pages and Assets Cache
       .body-1 Pages and Assets are cached to disk for better performance. You can flush the cache to force all content to be fetched from the DB again.
       v-btn(outline, color='primary', @click='flushCache', :disabled='loading').ml-0.mt-3
         v-icon(left) build
         span Proceed
       v-divider.my-3
-      v-subheader.pl-0 Flush Temporary Uploads
+      v-subheader.pl-0.primary--text Flush Temporary Uploads
       .body-1 New uploads are temporarily saved to disk while they are being processed. They are automatically deleted after processing, but you can force an immediate cleanup using this tool.
       .body-1.red--text Note that performing this action while an upload is in progress can result in a failed upload.
       v-btn(outline, color='primary', @click='flushUploads', :disabled='loading').ml-0.mt-3
