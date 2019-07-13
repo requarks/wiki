@@ -40,6 +40,7 @@ defaults:
     title: Wiki.js
     theming:
       theme: 'default'
+      iconset: 'md'
       darkMode: false
     flags:
       ldapdebug: false

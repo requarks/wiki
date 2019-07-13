@@ -78,7 +78,15 @@
                     v-model='current.icon'
                     hide-details
                   )
-                  .caption.pt-2.pl-5 Refer to the #[a(href='https://material.io/tools/icons/?style=baseline', target='_blank') Material Design Icons Reference] for the list of all possible values.
+                  .caption.pt-3.pl-5 The default icon set is #[strong Material Icons]. In order to use another icon set, you must first select it in the Theme administration section.
+                  .caption.pt-3.pl-5 #[strong Material Icons] #[em (default)]
+                  .caption.pl-5 Refer to the #[a(href='https://material.io/tools/icons/?style=baseline', target='_blank') Material Icons Reference] for the list of all possible values.
+                  .caption.pt-3.pl-5: strong Material Design Icons
+                  .caption.pl-5 Refer to the #[a(href='https://cdn.materialdesignicons.com/3.7.95/', target='_blank') Material Design Icons Reference] for the list of all possible values. You must prefix all values with #[code mdi-], e.g. #[code mdi-home]
+                  .caption.pt-3.pl-5: strong Font Awesome 5
+                  .caption.pl-5 Refer to the #[a(href='https://fontawesome.com/icons?d=gallery&m=free', target='_blank') Font Awesome 5 Reference] for the list of all possible values. You must prefix all values with #[code fas fa-], e.g. #[code fas fa-home]
+                  .caption.pt-3.pl-5: strong Font Awesome 4
+                  .caption.pl-5 Refer to the #[a(href='https://fontawesome.com/v4.7.0/icons/', target='_blank') Font Awesome 4 Reference] for the list of all possible values. You must prefix all values with #[code fa fa-], e.g. #[code fa fa-home]
                   v-select.mt-4(
                     outline
                     :label='$t("navigation.targetType")'
@@ -96,7 +104,8 @@
                   v-btn(
                     v-else-if='current.targetType === "page"'
                     color='indigo'
-                    dark
+                    :dark='false'
+                    disabled
                     @click='selectPage'
                     )
                     v-icon(left) search
@@ -161,9 +170,10 @@ export default {
   computed: {
     navTypes() {
       return [
-        { text: this.$t('navigation.navType.external'), value: 'external' },
+        // { text: this.$t('navigation.navType.external'), value: 'external' },
         { text: this.$t('navigation.navType.home'), value: 'home' },
-        { text: this.$t('navigation.navType.page'), value: 'page' }
+        { text: 'Internal Path / External Link', value: 'external' },
+        // { text: this.$t('navigation.navType.page'), value: 'page' }
         // { text: this.$t('navigation.navType.searchQuery'), value: 'search' }
       ]
     }

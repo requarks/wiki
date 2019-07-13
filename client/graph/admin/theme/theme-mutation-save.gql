@@ -1,6 +1,6 @@
-mutation($theme: String!, $darkMode: Boolean!, $injectCSS: String, $injectHead: String, $injectBody: String) {
+mutation($theme: String!, $iconset: String!, $darkMode: Boolean!, $injectCSS: String, $injectHead: String, $injectBody: String) {
   theming {
-    setConfig(theme: $theme, darkMode: $darkMode, injectCSS: $injectCSS, injectHead: $injectHead, injectBody: $injectBody) {
+    setConfig(theme: $theme, iconset: $iconset, darkMode: $darkMode, injectCSS: $injectCSS, injectHead: $injectHead, injectBody: $injectBody) {
       responseResult {
         succeeded
         errorCode

@@ -20,7 +20,7 @@ module.exports = {
       }]
     },
     async config(obj, args, context, info) {
-      return _.pick(WIKI.config.theming, ['theme', 'darkMode', 'injectCSS', 'injectHead', 'injectBody'])
+      return _.pick(WIKI.config.theming, ['theme', 'iconset', 'darkMode', 'injectCSS', 'injectHead', 'injectBody'])
     }
   },
   ThemingMutation: {
@@ -35,6 +35,7 @@ module.exports = {
         WIKI.config.theming = {
           ...WIKI.config.theming,
           theme: args.theme,
+          iconset: args.iconset,
           darkMode: args.darkMode,
           injectCSS: args.injectCSS || '',
           injectHead: args.injectHead || '',

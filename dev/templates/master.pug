@@ -31,6 +31,26 @@ html
     script.
       var siteConfig = !{JSON.stringify(siteConfig)}; var siteLangs = !{JSON.stringify(langs)}
 
+    //- Icon Set
+    if config.theming.iconset === 'mdi'
+      link(
+        type='text/css'
+        rel='stylesheet'
+        href='https://cdn.materialdesignicons.com/3.7.95/css/materialdesignicons.min.css'
+        )
+    else if config.theming.iconset === 'fa'
+      link(
+        type='text/css'
+        rel='stylesheet'
+        href='https://use.fontawesome.com/releases/v5.0.13/css/all.css'
+        )
+    else if config.theming.iconset === 'fa4'
+      link(
+        type='text/css'
+        rel='stylesheet'
+        href='https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css'
+        )
+
     //- CSS
     <% for (var index in htmlWebpackPlugin.files.css) { %>
       <% if (htmlWebpackPlugin.files.cssIntegrity) { %>

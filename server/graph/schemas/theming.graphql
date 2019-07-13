@@ -26,6 +26,7 @@ type ThemingQuery {
 type ThemingMutation {
   setConfig(
     theme: String!
+    iconset: String!
     darkMode: Boolean!
     injectCSS: String
     injectHead: String
@@ -39,6 +40,7 @@ type ThemingMutation {
 
 type ThemingConfig {
   theme: String!
+  iconset: String!
   darkMode: Boolean!
   injectCSS: String
   injectHead: String
