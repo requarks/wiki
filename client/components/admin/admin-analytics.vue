@@ -70,6 +70,18 @@
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   )
+                v-textarea(
+                  v-else-if='cfg.value.type === "string" && cfg.value.multiline'
+                  outline
+                  background-color='grey lighten-2'
+                  :key='cfg.key'
+                  :label='cfg.value.title'
+                  v-model='cfg.value.value'
+                  prepend-icon='settings_applications'
+                  :hint='cfg.value.hint ? cfg.value.hint : ""'
+                  persistent-hint
+                  :class='cfg.value.hint ? "mb-2" : ""'
+                  )
                 v-text-field(
                   v-else
                   outline

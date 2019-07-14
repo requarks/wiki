@@ -31,6 +31,7 @@ module.exports = {
         title: value.title || _.startCase(key),
         hint: value.hint || false,
         enum: value.enum || false,
+        multiline: value.multiline || false,
         order: value.order || 100
       })
       return result

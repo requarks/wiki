@@ -29,51 +29,68 @@ props:
   branch:
     type: String
     default: 'master'
+    hint: The branch to use during pull / push
     order: 3
+  sshPrivateKeyMode:
+    type: String
+    title: SSH Private Key Mode
+    hint: SSH Authentication Only - The mode to use to load the private key. Fill in the corresponding field below.
+    order: 11
+    default: 'path'
+    enum:
+        - 'path'
+        - 'contents'
+  sshPrivateKeyPath:
+    type: String
+    title: A - SSH Private Key Path
+    hint: SSH Authentication Only - Absolute path to the key. The key must NOT be passphrase-protected. Mode must be set to path to use this option.
+    order: 12
+  sshPrivateKeyContent:
+    type: String
+    title: B - SSH Private Key Contents
+    hint: SSH Authentication Only - Paste the contents of the private key. The key must NOT be passphrase-protected. Mode must be set to contents to use this option.
+    multiline: true
+    order: 13
   verifySSL:
     type: Boolean
     default: true
     title: Verify SSL Certificate
     hint: Some hosts requires SSL certificate checking to be disabled. Leave enabled for proper security.
-    order: 31
-  sshPrivateKeyPath:
-    type: String
-    title: SSH Private Key Path
-    hint: SSH Authentication Only - Absolute path to the key. The key must NOT be passphrase-protected.
-    order: 10
+    order: 14
   basicUsername:
     type: String
     title: Username
     hint: Basic Authentication Only
-    order: 11
+    order: 20
   basicPassword:
     type: String
     title: Password / PAT
     hint: Basic Authentication Only
-    order: 12
+    order: 21
+  defaultEmail:
+    type: String
+    title: Default Author Email
+    default: 'name@company.com'
+    hint: 'Used as fallback in case the author of the change is not present.'
+    order: 22
+  defaultName:
+    type: String
+    title: Default Author Name
+    default: 'John Smith'
+    hint: 'Used as fallback in case the author of the change is not present.'
+    order: 23
   localRepoPath:
     type: String
     title: Local Repository Path
     default: './data/repo'
     hint: 'Path where the local git repository will be created.'
     order: 30
-  defaultEmail:
-    type: String
-    title: Default Author Email
-    default: 'name@company.com'
-    hint: 'Used as fallback in case the author of the change is not present.'
-    order: 20
-  defaultName:
-    type: String
-    title: Default Author Name
-    default: 'John Smith'
-    hint: 'Used as fallback in case the author of the change is not present.'
-    order: 21
   gitBinaryPath:
     type: String
     title: Git Binary Path
     default: ''
     hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
+    order: 50
 actions:
   - handler: syncUntracked
     label: Add Untracked Changes

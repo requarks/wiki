@@ -27,16 +27,19 @@ props:
     type: String
     title: Certificate
     hint: (Optional) - Public PEM-encoded X.509 signing certificate. If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
+    multiline: true
     order: 4
   privateCert:
     type: String
     title: Private Certificate
     hint: (Optional) - PEM formatted key used to sign the certificate.
+    multiline: true
     order: 5
   decryptionPvk:
     type: String
     title: Decryption Private Key
     hint: (Optional) - Private key that will be used to attempt to decrypt any encrypted assertions that are received.
+    multiline: true
     order: 6
   signatureAlgorithm:
     type: String

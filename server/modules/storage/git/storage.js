@@ -104,6 +104,18 @@ module.exports = {
     switch (this.config.authType) {
       case 'ssh':
         WIKI.logger.info('(STORAGE/GIT) Setting SSH Command config...')
+        if (this.config.sshPrivateKeyMode === 'contents') {
+          try {
+            this.config.sshPrivateKeyPath = path.join(WIKI.ROOTPATH, 'data/secure/git-ssh.pem')
+            await fs.outputFile(this.config.sshPrivateKeyPath, this.config.sshPrivateKeyContent, {
+              encoding: 'utf8',
+              mode: 0o600
+            })
+          } catch (err) {
+            console.error(err)
+            throw err
+          }
+        }
         await this.git.addConfig('core.sshCommand', `ssh -i "${this.config.sshPrivateKeyPath}" -o StrictHostKeyChecking=no`)
         WIKI.logger.info('(STORAGE/GIT) Adding origin remote via SSH...')
         await this.git.addRemote('origin', this.config.repoUrl)
