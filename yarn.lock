@@ -7056,6 +7056,13 @@ hyphenate-style-name@^1.0.2:
   resolved "https://registry.yarnpkg.com/hyphenate-style-name/-/hyphenate-style-name-1.0.3.tgz#097bb7fa0b8f1a9cf0bd5c734cf95899981a9b48"
   integrity sha512-EcuixamT82oplpoJ2XU4pDtKGWQ7b00CD9f1ug9IaQ3p1bkHMiKCZ9ut9QDI6qsa6cpUuB+A/I+zLtdNK4n2DQ==
 
+i18next-chained-backend@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/i18next-chained-backend/-/i18next-chained-backend-2.0.0.tgz#faf2e8b5f081a01e74fbec1fe580c184bc64e25b"
+  integrity sha512-NAwfxzNUojtYc3nTCFIyNUYsxT+RFpfWc75dHbv7BsYxfbpKV1NISiFGU77D4u0wtq5IqM87YSINX/2miH9qvg==
+  dependencies:
+    "@babel/runtime" "^7.4.5"
+
 i18next-express-middleware@1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/i18next-express-middleware/-/i18next-express-middleware-1.8.0.tgz#8ef73a56036b404b162d81d4aec23cfa0ab2a609"
@@ -7063,10 +7070,12 @@ i18next-express-middleware@1.8.0:
   dependencies:
     cookies "0.7.1"
 
-i18next-localstorage-cache@1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/i18next-localstorage-cache/-/i18next-localstorage-cache-1.1.1.tgz#575256cc35e8cb2d88148f754766fdd2d24bb1b7"
-  integrity sha1-V1JWzDXoyy2IFI91R2b90tJLsbc=
+i18next-localstorage-backend@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/i18next-localstorage-backend/-/i18next-localstorage-backend-3.0.0.tgz#19b4e836e9a79e564631b88b8ba1c738375e636f"
+  integrity sha512-jOvnvVYP7VlA87aO0wgNeXRoj/vQHqO56UB/R6DlglWn/Ipz4rNGZUyzejJVLFaypZTZ6rpqNsB/pjSVtZm4YQ==
+  dependencies:
+    "@babel/runtime" "^7.4.5"
 
 i18next-node-fs-backend@2.1.3:
   version "2.1.3"

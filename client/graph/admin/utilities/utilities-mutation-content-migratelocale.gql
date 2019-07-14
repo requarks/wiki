@@ -1,6 +1,6 @@
-mutation {
+mutation($sourceLocale: String!, $targetLocale: String!) {
   pages {
-    migrateToLocale {
+    migrateToLocale(sourceLocale: $sourceLocale, targetLocale: $targetLocale) {
       responseResult {
         succeeded
         errorCode

@@ -74,7 +74,10 @@ type PageMutation {
 
   flushCache: DefaultResponse @auth(requires: ["manage:system"])
 
-  migrateToLocale: DefaultResponse @auth(requires: ["manage:system"])
+  migrateToLocale(
+    sourceLocale: String!
+    targetLocale: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
