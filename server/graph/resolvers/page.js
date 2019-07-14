@@ -98,9 +98,10 @@ module.exports = {
     },
     async migrateToLocale(obj, args, context) {
       try {
-
+        const count = await WIKI.models.pages.migrateToLocale(args)
         return {
-          responseResult: graphHelper.generateSuccess('Migrated all content to target locale successfully.')
+          responseResult: graphHelper.generateSuccess('Migrated content to target locale successfully.'),
+          count
         }
       } catch (err) {
         return graphHelper.generateError(err)

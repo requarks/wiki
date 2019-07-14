@@ -58,6 +58,13 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     userId: req.user.id,
     isPrivate: false
   })
+
+  const injectCode = {
+    css: WIKI.config.theming.injectCSS,
+    head: WIKI.config.theming.injectHead,
+    body: WIKI.config.theming.injectBody
+  }
+
   if (page) {
     if (!WIKI.auth.checkAccess(req.user, ['manage:pages'], pageArgs)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
@@ -84,7 +91,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
       content: null
     }
   }
-  res.render('editor', { page })
+  res.render('editor', { page, injectCode })
 })
 
 /**

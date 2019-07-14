@@ -421,6 +421,19 @@ module.exports = class Page extends Model {
     return fs.emptyDir(path.join(process.cwd(), `data/cache`))
   }
 
+  static async migrateToLocale({ sourceLocale, targetLocale }) {
+    return WIKI.models.pages.query()
+      .patch({
+        localeCode: targetLocale
+      })
+      .where({
+        localeCode: sourceLocale
+      })
+      .whereNotExists(function() {
+        this.select('id').from('pages AS pagesm').where('pagesm.localeCode', targetLocale).andWhereRaw('pagesm.path = pages.path')
+      })
+  }
+
   static cleanHTML(rawHTML = '') {
     return striptags(rawHTML || '')
       .replace(emojiRegex(), '')

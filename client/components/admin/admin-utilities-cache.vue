@@ -15,6 +15,13 @@
       v-btn(outline, color='primary', @click='flushUploads', :disabled='loading').ml-0.mt-3
         v-icon(left) build
         span Proceed
+      v-divider.my-3
+      v-subheader.pl-0.primary--text Flush Client-Side Locale Cache
+      .body-1 Locale strings are cached in the browser local storage for 24h. You can delete your current cache in order to fetch the latest data during the next page load.
+      .body-1 Note that this affects only #[strong your own browser] and not everyone.
+      v-btn(outline, color='primary', @click='flushClientLocaleCache', :disabled='loading').ml-0.mt-3
+        v-icon(left) build
+        span Proceed
 </template>
 
 <script>
@@ -78,6 +85,19 @@ export default {
 
       this.$store.commit(`loadingStop`, 'admin-utilities-cache-flushUploads')
       this.loading = false
+    },
+    async flushClientLocaleCache () {
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const lsKey = window.localStorage.key(i)
+        if (_.startsWith(lsKey, 'i18next_res')) {
+          window.localStorage.removeItem(lsKey)
+        }
+      }
+      this.$store.commit('showNotification', {
+        message: 'Locale Client-Side Cache flushed successfully.',
+        style: 'success',
+        icon: 'check'
+      })
     }
   }
 }

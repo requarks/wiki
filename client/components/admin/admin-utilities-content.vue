@@ -70,7 +70,7 @@ export default {
         const resp = _.get(respRaw, 'data.pages.migrateToLocale.responseResult', {})
         if (resp.succeeded) {
           this.$store.commit('showNotification', {
-            message: 'Migrated all content to target locale successfully.',
+            message: `Migrated ${_.get(respRaw, 'data.pages.migrateToLocale.count', 0)} page(s) to target locale successfully.`,
             style: 'success',
             icon: 'check'
           })

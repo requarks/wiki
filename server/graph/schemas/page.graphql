@@ -77,7 +77,7 @@ type PageMutation {
   migrateToLocale(
     sourceLocale: String!
     targetLocale: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): PageMigrationResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -87,6 +87,11 @@ type PageMutation {
 type PageResponse {
   responseResult: ResponseStatus!
   page: Page
+}
+
+type PageMigrationResponse {
+  responseResult: ResponseStatus!
+  count: Int
 }
 
 type Page {

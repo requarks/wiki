@@ -7,6 +7,7 @@ mutation($sourceLocale: String!, $targetLocale: String!) {
         slug
         message
       }
+      count
     }
   }
 }
