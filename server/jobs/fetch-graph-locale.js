@@ -37,7 +37,7 @@ module.exports = async (localeCode) => {
     const locales = await WIKI.cache.get('locales')
     if (locales) {
       const currentLocale = _.find(locales, ['code', localeCode]) || {}
-      const existingLocale = await WIKI.models.locales.query().where('code', localeCode)
+      const existingLocale = await WIKI.models.locales.query().where('code', localeCode).first()
       if (existingLocale) {
         await WIKI.models.locales.query().patch({
           strings: lcObj

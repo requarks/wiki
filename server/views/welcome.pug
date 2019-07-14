@@ -8,6 +8,6 @@ block body
           img.animated.fadeIn(src='/svg/logo-wikijs.svg', alt='Wiki.js')
           .headline= t('welcome.title')
           .subheading.mt-3= t('welcome.subtitle')
-          v-btn.mt-5(color='primary', href='/e/home', large)
+          v-btn.mt-5(color='primary', href='/e/' + locale + '/home', large)
             v-icon(left) add
             span= t('welcome.createhome')

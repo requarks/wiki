@@ -171,6 +171,8 @@ router.get('/*', async (req, res, next) => {
       return res.redirect(`/${pageArgs.locale}/${pageArgs.path}`)
     }
 
+    req.i18n.changeLanguage(pageArgs.locale)
+
     if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.status(403).render('unauthorized', { action: 'view' })
@@ -206,7 +208,7 @@ router.get('/*', async (req, res, next) => {
         }
       } else if (pageArgs.path === 'home') {
         _.set(res.locals, 'pageMeta.title', 'Welcome')
-        res.render('welcome')
+        res.render('welcome', { locale: pageArgs.locale })
       } else {
         _.set(res.locals, 'pageMeta.title', 'Page Not Found')
         if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {

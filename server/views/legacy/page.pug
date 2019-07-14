@@ -10,7 +10,7 @@ block body
   #root
     .header
       span.header-title= siteConfig.title
-      span.header-deprecated Your browser is outdated. Upgrade to a #[a(href='https://bestvpn.org/outdatedbrowser/en', rel='nofollow') modern browser].
+      span.header-deprecated!= t('outdatedBrowserWarning', { modernBrowser: '<a href="https://bestvpn.org/outdatedbrowser/en" rel="nofollow">' + t('modernBrowser') + '</a>', interpolation: { escapeValue: false } })
       span.header-login
         if !isAuthenticated
           a(href='/login', title='Login')
@@ -43,7 +43,7 @@ block body
             div!= page.render
           if page.toc.length
             .toc
-              .toc-title Table of Contents
+              .toc-title= t('page.toc')
               each tocItem, tocIdx in page.toc
                 a.toc-tile(href='#' + tocItem.anchor)
                   i.material-icons arrow_right

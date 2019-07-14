@@ -14,18 +14,32 @@ extend type Mutation {
 # QUERIES
 # -----------------------------------------------
 
+"""
+Queries for Analytics
+"""
 type AnalyticsQuery {
+  """
+  Fetch list of Analytics providers and their configuration
+  """
   providers(
+    "Return only active providers"
     isEnabled: Boolean
-  ): [AnalyticsProvider]
+  ): [AnalyticsProvider] @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
+"""
+Mutations for Analytics
+"""
 type AnalyticsMutation {
+  """
+  Update a list of Analytics providers and their configuration
+  """
   updateProviders(
+    "List of providers"
     providers: [AnalyticsProviderInput]!
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -34,20 +48,48 @@ type AnalyticsMutation {
 # TYPES
 # -----------------------------------------------
 
+"""
+Analytics Provider
+"""
 type AnalyticsProvider {
+  "Is the provider active"
   isEnabled: Boolean!
+
+  "Unique identifier for this provider"
   key: String!
+
+  "List of configuration properties, formatted as stringified JSON objects"
   props: [String]
+
+  "Name of the provider"
   title: String!
+
+  "Short description of the provider"
   description: String
+
+  "Is the provider available for use"
   isAvailable: Boolean
+
+  "Path to the provider logo"
   logo: String
+
+  "Website of the provider"
   website: String
-  icon: String
-  config: [KeyValuePair] @auth(requires: ["manage:system"])
+
+  "Configuration values for this provider"
+  config: [KeyValuePair]
 }
+
+"""
+Analytics Configuration Input
+"""
 input AnalyticsProviderInput {
+  "Is the provider active"
   isEnabled: Boolean!
+
+  "Unique identifier of the provider"
   key: String!
+
+  "Configuration values for this provider"
   config: [KeyValuePairInput]
 }
