@@ -18,4 +18,22 @@ props:
     title: Client Secret
     hint: Application Client Secret
     order: 2
+  useEnterprise:
+    type: Boolean
+    title: Use GitHub Enterprise
+    hint: Enable if you're using the self-hosted GitHub Enterprise version
+    default: false
+    order: 3
+  enterpriseDomain:
+    type: String
+    title: GitHub Enterprise Domain
+    hint: GitHub Enterprise Only - Domain of your installation (e.g. github.company.com). Leave blank otherwise.
+    default: ''
+    order: 4
+  enterpriseUserEndpoint:
+    type: String
+    title: GitHub Enterprise User Endpoint
+    hint: GitHub Enterprise Only - Endpoint to fetch user details (e.g. https://api.github.com/user). Leave blank otherwise.
+    default: 'https://api.github.com/user'
+    order: 5
 
