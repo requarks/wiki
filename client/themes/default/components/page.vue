@@ -64,11 +64,12 @@
               .caption.grey--text.text--lighten-1 {{$t('common:page.lastEditedBy')}}
               .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
               .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
-            v-spacer
-            v-tooltip(left)
-              v-btn.btn-animate-edit(icon, slot='activator', :href='"/e/" + locale + "/" + path')
-                v-icon(color='grey') edit
-              span {{$t('common:page.editPage')}}
+            template(v-if='isAuthenticated')
+              v-spacer
+              v-tooltip(left)
+                v-btn.btn-animate-edit(icon, slot='activator', :href='"/e/" + locale + "/" + path')
+                  v-icon(color='grey') edit
+                span {{$t('common:page.editPage')}}
           v-divider
           template(v-if='toc.length')
             v-list.grey.pb-3(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
@@ -227,6 +228,7 @@ export default {
   },
   computed: {
     darkMode: get('site/dark'),
+    isAuthenticated: get('user/authenticated'),
     rating: {
       get () {
         return 3.5

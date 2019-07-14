@@ -26,7 +26,7 @@
               v-list-tile(avatar, href='/')
                 v-list-tile-avatar: v-icon(color='blue') home
                 v-list-tile-content {{$t('common:header.home')}}
-              v-list-tile(avatar, @click='pageNew')
+              v-list-tile(avatar, @click='pageNew', v-if='isAuthenticated')
                 v-list-tile-avatar: v-icon(color='green') add_box
                 v-list-tile-content {{$t('common:header.newPage')}}
               template(v-if='path && path.length')
@@ -35,7 +35,7 @@
                 v-list-tile(avatar, @click='pageView', v-if='mode !== `view`')
                   v-list-tile-avatar: v-icon(color='indigo') subject
                   v-list-tile-content {{$t('common:header.view')}}
-                v-list-tile(avatar, @click='pageEdit', v-if='mode !== `edit`')
+                v-list-tile(avatar, @click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
                   v-list-tile-avatar: v-icon(color='indigo') edit
                   v-list-tile-content {{$t('common:header.edit')}}
                 v-list-tile(avatar, @click='pageHistory', v-if='mode !== `history`')
@@ -44,10 +44,10 @@
                 v-list-tile(avatar, @click='pageSource', v-if='mode !== `source`')
                   v-list-tile-avatar: v-icon(color='indigo') code
                   v-list-tile-content {{$t('common:header.viewSource')}}
-                v-list-tile(avatar, @click='pageMove')
+                v-list-tile(avatar, @click='pageMove', v-if='isAuthenticated')
                   v-list-tile-avatar: v-icon(color='grey lighten-2') forward
                   v-list-tile-content.grey--text.text--ligten-2 {{$t('common:header.move')}}
-                v-list-tile(avatar, @click='pageDelete')
+                v-list-tile(avatar, @click='pageDelete', v-if='isAuthenticated')
                   v-list-tile-avatar: v-icon(color='red darken-2') delete
                   v-list-tile-content {{$t('common:header.delete')}}
               v-divider.my-0
