@@ -228,7 +228,7 @@
 
 <script>
 import _ from 'lodash'
-import { sync } from 'vuex-pathify'
+import { get, sync } from 'vuex-pathify'
 import vueFilePond from 'vue-filepond'
 import 'filepond/dist/filepond.min.css'
 
@@ -255,7 +255,6 @@ export default {
   data() {
     return {
       folders: [],
-      folderTree: [],
       files: [],
       assets: [],
       pagination: {},
@@ -268,9 +267,6 @@ export default {
         { text: 'Absolute Top Right', value: 'abstopright' }
       ],
       imageAlignment: '',
-      currentFolderId: 0,
-      currentFileId: null,
-      previousFolderId: 0,
       loading: false,
       newFolderDialog: false,
       newFolderName: '',
@@ -289,6 +285,9 @@ export default {
       set(val) { this.$emit('input', val) }
     },
     activeModal: sync('editor/activeModal'),
+    folderTree: get('editor/media@folderTree'),
+    currentFolderId: sync('editor/media@currentFolderId'),
+    currentFileId: sync('editor/media@currentFileId'),
     pageTotal () {
       if (this.pagination.rowsPerPage == null || this.pagination.totalItems == null) {
         return 0
@@ -400,12 +399,12 @@ export default {
       await this.$apollo.queries.assets.refetch()
     },
     downFolder(folder) {
-      this.folderTree.push(folder)
+      this.$store.commit('editor/pushMediaFolderTree', folder)
       this.currentFolderId = folder.id
       this.currentFileId = null
     },
     upFolder() {
-      this.folderTree.pop()
+      this.$store.commit('editor/popMediaFolderTree')
       const parentFolder = _.last(this.folderTree)
       this.currentFolderId = parentFolder ? parentFolder.id : 0
       this.currentFileId = null
