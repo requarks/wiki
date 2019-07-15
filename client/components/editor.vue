@@ -118,6 +118,7 @@ export default {
       dialogProgress: false,
       dialogEditorSelector: false,
       dialogUnsaved: false,
+      exitConfirmed: false,
       initContentParsed: ''
     }
   },
@@ -160,6 +161,14 @@ export default {
       }, 500)
     } else {
       this.currentEditor = `editor${_.startCase(this.initEditor || 'markdown')}`
+    }
+
+    window.onbeforeunload = () => {
+      if (!this.exitConfirmed && this.initContentParsed !== this.$store.get('editor/content')) {
+        return 'You have unsaved edits. Are you sure you want to leave the editor?'
+      } else {
+        return undefined
+      }
     }
   },
   methods: {
@@ -263,6 +272,7 @@ export default {
     exitGo() {
       this.$store.commit(`loadingStart`, 'editor-close')
       this.currentEditor = ''
+      this.exitConfirmed = true
       _.delay(() => {
         if (this.$store.get('editor/mode') === 'create') {
           window.location.assign(`/`)
