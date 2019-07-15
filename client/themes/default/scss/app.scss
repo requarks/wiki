@@ -574,4 +574,48 @@
     }
   }
 
+  // ---------------------------------
+  // DETAILS
+  // ---------------------------------
+
+  details {
+    background-color: mc('grey', '50');
+    margin: 1rem 2rem;
+    border: 1px solid mc('grey', '300');
+    border-radius: 7px;
+
+    > p {
+      padding-left: 0;
+    }
+
+    summary {
+      border-radius: 7px;
+      background-color: mc('grey', '50');
+      cursor: pointer;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      transition: background-color .4s ease;
+
+      &:focus {
+        outline: none;
+        background-color: mc('grey', '100');
+      }
+    }
+
+    &[open] {
+      padding: 1rem;
+
+      summary {
+        background-color: mc('grey', '100');
+        border-bottom: 1px solid mc('grey', '300');
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        margin: -1rem -1rem 1rem -1rem;
+      }
+    }
+
+  }
+
 }
