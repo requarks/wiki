@@ -1,3 +1,5 @@
+/* global WIKI */
+
 exports.up = knex => {
   const dbCompat = {
     charset: (WIKI.config.db.type === `mysql` || WIKI.config.db.type === `mariadb`)
@@ -67,7 +69,7 @@ exports.up = knex => {
     // LOCALES -----------------------------
     .createTable('locales', table => {
       if (dbCompat.charset) { table.charset('utf8mb4') }
-      table.string('code', 2).notNullable().primary()
+      table.string('code', 5).notNullable().primary()
       table.json('strings')
       table.boolean('isRTL').notNullable().defaultTo(false)
       table.string('name').notNullable()
@@ -241,26 +243,26 @@ exports.up = knex => {
     .table('pageHistory', table => {
       table.integer('pageId').unsigned().references('id').inTable('pages')
       table.string('editorKey').references('key').inTable('editors')
-      table.string('localeCode', 2).references('code').inTable('locales')
+      table.string('localeCode', 5).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
     .table('pages', table => {
       table.string('editorKey').references('key').inTable('editors')
-      table.string('localeCode', 2).references('code').inTable('locales')
+      table.string('localeCode', 5).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
       table.integer('creatorId').unsigned().references('id').inTable('users')
     })
     .table('pageTree', table => {
       table.integer('parent').unsigned().references('id').inTable('pageTree')
       table.integer('pageId').unsigned().references('id').inTable('pages')
-      table.string('localeCode', 2).references('code').inTable('locales')
+      table.string('localeCode', 5).references('code').inTable('locales')
     })
     .table('userKeys', table => {
       table.integer('userId').unsigned().references('id').inTable('users')
     })
     .table('users', table => {
       table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')
-      table.string('localeCode', 2).references('code').inTable('locales').notNullable().defaultTo('en')
+      table.string('localeCode', 5).references('code').inTable('locales').notNullable().defaultTo('en')
       table.string('defaultEditor').references('key').inTable('editors').notNullable().defaultTo('markdown')
 
       table.unique(['providerKey', 'email'])
