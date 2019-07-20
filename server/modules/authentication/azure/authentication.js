@@ -1,3 +1,5 @@
+const _ = require('lodash')
+
 /* global WIKI */
 
 // ------------------------------------
@@ -17,14 +19,22 @@ module.exports = {
         responseMode: 'form_post',
         scope: ['profile', 'email', 'openid'],
         allowHttpForRedirectUrl: WIKI.IS_DEBUG
-      }, (iss, sub, profile, cb) => {
-        console.info(iss, sub, profile)
-        // WIKI.models.users.processProfile(waadProfile).then((user) => {
-        //   return cb(null, user) || true
-        // }).catch((err) => {
-        //   return cb(err, null) || true
-        // })
-      }
-      ))
+      }, async (iss, sub, profile, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              id: profile.oid,
+              displayName: profile.displayName,
+              email: _.get(profile, '_json.email', ''),
+              picture: ''
+            },
+            providerKey: 'azure'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
+      })
+    )
   }
 }
