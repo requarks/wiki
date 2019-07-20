@@ -5,14 +5,21 @@ author: requarks.io
 logo: https://static.requarks.io/logo/azure.svg
 color: blue darken-3
 website: https://azure.microsoft.com/services/active-directory/
-isAvailable: false
+isAvailable: true
 useForm: false
+scopes:
+  - profile
+  - email
+  - openid
 props:
-  clientId: String
-  clientSecret: String
-  resource:
-    type: String,
-    default: '00000002-0000-0000-c000-000000000000'
-  tenant:
-    type: String,
-    default: YOUR_TENANT.onmicrosoft.com
+  entryPoint:
+    type: String
+    title: Identity Metadata Endpoint
+    hint: The metadata endpoint provided by the Microsoft Identity Portal that provides the keys and other important information at runtime.
+    order: 1
+  clientId:
+    type: String
+    title: Client ID
+    hint: The client ID of your application in AAD (Azure Active Directory)
+    order: 2
+

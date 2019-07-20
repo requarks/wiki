@@ -52,7 +52,7 @@
             .subheading Wiki.js {{info.currentVersion}}
             .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
-      v-flex(xs12)
+      v-flex(xs12, xl6)
         v-card.radius-7
           v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
           v-data-table.pb-2(
@@ -69,7 +69,7 @@
               td.grey--text.text--darken-2(width='250')
                 .caption: strong Updated {{ props.item.updatedAt | moment('from') }}
                 .caption Created {{ props.item.createdAt | moment('calendar') }}
-      v-flex(xs12)
+      v-flex(xs12, xl6)
         v-card.radius-7
           v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
           v-data-table.pb-2(
