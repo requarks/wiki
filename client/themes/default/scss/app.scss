@@ -616,6 +616,20 @@
       }
     }
 
+    @at-root .theme--dark & {
+      background-color: mc('grey', '900');
+      border-color: mc('grey', '700');
+
+      summary {
+        background-color: mc('grey', '900');
+        border-color: mc('grey', '700');
+      }
+
+      &[open] summary {
+        background-color: lighten(mc('grey', '900'), 5%);
+      }
+    }
+
   }
 
 }

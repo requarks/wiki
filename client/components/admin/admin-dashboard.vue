@@ -53,7 +53,7 @@
             .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12, xl6)
-        v-card.radius-7
+        v-card.radius-7.animated.fadeInUp.wait-p2s
           v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
           v-data-table.pb-2(
             :items='recentPages'
@@ -70,7 +70,7 @@
                 .caption: strong Updated {{ props.item.updatedAt | moment('from') }}
                 .caption Created {{ props.item.createdAt | moment('calendar') }}
       v-flex(xs12, xl6)
-        v-card.radius-7
+        v-card.radius-7.animated.fadeInUp.wait-p4s
           v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
           v-data-table.pb-2(
             :items='popularPages'
@@ -88,7 +88,7 @@
                 .caption Created {{ props.item.createdAt | moment('calendar') }}
 
       v-flex(xs12)
-        v-card.dashboard-contribute
+        v-card.dashboard-contribute.animated.fadeInUp.wait-p4s
           v-card-text
             img(src='/svg/icon-heart-health.svg', alt='Contribute', style='height: 80px;')
             .pl-3
