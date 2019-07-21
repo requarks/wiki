@@ -10,6 +10,9 @@
           v-spacer
           v-btn.animated.fadeInDown.wait-p1s(color='grey', outline, @click='refresh', large)
             v-icon.grey--text refresh
+          v-btn.animated.fadeInDown(color='primary', outline, large, @click='recyclebin', disabled)
+            v-icon(left) delete_outline
+            span Recycle Bin
           v-btn.animated.fadeInDown(color='primary', depressed, large, @click='newpage', disabled)
             v-icon(left) add
             span New Page
@@ -137,7 +140,8 @@ export default {
     },
     newpage() {
       this.pageSelectorShown = true
-    }
+    },
+    recyclebin () { }
   },
   apollo: {
     pages: {
