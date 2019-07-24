@@ -633,3 +633,39 @@
   }
 
 }
+
+// ---------------
+// PRINT OVERRIDES
+// ---------------
+
+@media print {
+  .nav-header,
+  .v-navigation-drawer,
+  .v-footer,
+  .v-btn--floating,
+  .page-col-sd
+  {
+    display: none;
+  }
+
+  .page-col-content {
+    flex-basis: 100% !important;
+    flex-grow: 1 !important;
+    max-width: 100% !important;
+
+    > .v-toolbar {
+      border: 1px solid mc('grey', '300') !important;
+      border-radius: 7px !important;
+
+      & + .v-divider {
+        display: none !important;
+      }
+    }
+  }
+
+  .v-content {
+    padding: 0 !important;
+  }
+
+
+}
