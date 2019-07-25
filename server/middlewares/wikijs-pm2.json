@@ -1,0 +1,9 @@
+{
+    "apps": [
+        {
+            "name": "wikijs",
+            "script": "node",
+            "args" : "server"
+        }
+    ]
+}
