@@ -198,7 +198,19 @@ router.get('/*', async (req, res, next) => {
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)
         _.set(res.locals, 'pageMeta.description', page.description)
-        const sidebar = await WIKI.models.navigation.getTree({ cache: true })
+        let sidebar = await WIKI.models.navigation.getTree({ cache: true })
+
+        sidebar = sidebar.filter(sidebarMenu => {
+          // apply permissions to menu items that have a target, since the target should match the patch
+          if (sidebarMenu.target && sidebarMenu.label !== 'Home') {
+            let tempPageArg = {locale: 'en', path: sidebarMenu.target.substring(1), private: false, privateNS: ''}
+            if (WIKI.auth.checkAccess(req.user, ['read:pages'], tempPageArg)) {
+              return true
+            }
+            return false
+          }
+          return true
+        })
         const injectCode = {
           css: WIKI.config.theming.injectCSS,
           head: WIKI.config.theming.injectHead,

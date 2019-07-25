@@ -19,7 +19,7 @@ module.exports = {
     },
     async search (obj, args, context) {
       if (WIKI.data.searchEngine) {
-        return WIKI.data.searchEngine.query(args.query, args)
+        return WIKI.data.searchEngine.query(args.query, args, context.req.user)
       } else {
         return {
           results: [],
