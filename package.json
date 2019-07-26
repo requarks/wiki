@@ -9,7 +9,7 @@
     "dev": "node dev",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
-    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest"
+    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
   },
   "repository": {
     "type": "git",
@@ -236,6 +236,7 @@
     "i18next-localstorage-backend": "3.0.0",
     "i18next-xhr-backend": "3.0.1",
     "ignore-loader": "0.1.2",
+    "jest": "24.8.0",
     "js-cookie": "2.2.0",
     "mini-css-extract-plugin": "0.8.0",
     "moment-duration-format": "2.3.2",

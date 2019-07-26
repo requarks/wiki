@@ -20,7 +20,7 @@ module.exports = {
       githubConfig.authorizationURL = `https://${conf.enterpriseDomain}/login/oauth/authorize`
       githubConfig.tokenURL = `https://${conf.enterpriseDomain}/login/oauth/access_token`
       githubConfig.userProfileURL = conf.enterpriseUserEndpoint
-      githubConfig.userEmailURL  = `${conf.enterpriseUserEndpoint}/emails`
+      githubConfig.userEmailURL = `${conf.enterpriseUserEndpoint}/emails`
     }
 
     passport.use('github',
