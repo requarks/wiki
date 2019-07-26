@@ -15,6 +15,8 @@ describe('injectPageMetadata tests', () => {
   })
   test('injectPageMetadata: markdown', () => {
     page.contentType = 'markdown'
+    // I am sorry for the formatting on the expected strings here, I don't know how
+    // else to format them to appease what is supposed to be coming back from the function
     const expected = 
 `---
 title: ${page.title}
