@@ -29,11 +29,14 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 <!--5 start-->
 - Alex Balabanov
 - Brandon Curtis
+- Douglas Lassance
+- Edward
 - Ernie Reid
 - Günter Pavlas
 - Kyle Thomas
 - Loïc CRAMPON
 - Richeir
+- Wasim Adetunji
 - 张白驹
 <!--5 end-->
 
