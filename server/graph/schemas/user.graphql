@@ -36,10 +36,12 @@ type UserQuery {
 type UserMutation {
   create(
     email: String!
-    name: String
+    name: String!
     passwordRaw: String
     providerKey: String!
-    providerId: String
+    groups: [Int]!
+    mustChangePassword: Boolean
+    sendWelcomeEmail: Boolean
   ): UserResponse @auth(requires: ["write:users", "manage:users", "manage:system"])
 
   update(

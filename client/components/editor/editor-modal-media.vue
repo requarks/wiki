@@ -79,41 +79,41 @@
                         v-btn.ma-0(icon, slot='activator')
                           v-icon(color='grey darken-2') more_horiz
                         v-list.py-0(style='border-top: 5px solid #444;')
-                          v-list-tile(@click='', disabled)
-                            v-list-tile-avatar
+                          v-list-item(@click='', disabled)
+                            v-list-item-avatar
                               v-icon(color='teal') short_text
-                            v-list-tile-content {{$t('common:actions.properties')}}
+                            v-list-item-content {{$t('common:actions.properties')}}
                           v-divider
                           template(v-if='props.item.kind === `IMAGE`')
-                            v-list-tile(@click='previewDialog = true', disabled)
-                              v-list-tile-avatar
+                            v-list-item(@click='previewDialog = true', disabled)
+                              v-list-item-avatar
                                 v-icon(color='green') image_search
-                              v-list-tile-content {{$t('common:actions.preview')}}
+                              v-list-item-content {{$t('common:actions.preview')}}
                             v-divider
-                            v-list-tile(@click='', disabled)
-                              v-list-tile-avatar
+                            v-list-item(@click='', disabled)
+                              v-list-item-avatar
                                 v-icon(color='indigo') crop_rotate
-                              v-list-tile-content {{$t('common:actions.edit')}}
+                              v-list-item-content {{$t('common:actions.edit')}}
                             v-divider
-                            v-list-tile(@click='', disabled)
-                              v-list-tile-avatar
+                            v-list-item(@click='', disabled)
+                              v-list-item-avatar
                                 v-icon(color='purple') offline_bolt
-                              v-list-tile-content {{$t('common:actions.optimize')}}
+                              v-list-item-content {{$t('common:actions.optimize')}}
                             v-divider
-                          v-list-tile(@click='openRenameDialog')
-                            v-list-tile-avatar
+                          v-list-item(@click='openRenameDialog')
+                            v-list-item-avatar
                               v-icon(color='orange') keyboard
-                            v-list-tile-content {{$t('common:actions.rename')}}
+                            v-list-item-content {{$t('common:actions.rename')}}
                           v-divider
-                          v-list-tile(@click='', disabled)
-                            v-list-tile-avatar
+                          v-list-item(@click='', disabled)
+                            v-list-item-avatar
                               v-icon(color='blue') forward
-                            v-list-tile-content {{$t('common:actions.move')}}
+                            v-list-item-content {{$t('common:actions.move')}}
                           v-divider
-                          v-list-tile(@click='deleteDialog = true')
-                            v-list-tile-avatar
+                          v-list-item(@click='deleteDialog = true')
+                            v-list-item-avatar
                               v-icon(color='red') delete
-                            v-list-tile-content {{$t('common:actions.delete')}}
+                            v-list-item-content {{$t('common:actions.delete')}}
                 template(slot='no-data')
                   v-alert.mt-3.radius-7(icon='folder_open', :value='true', outline, color='teal') {{$t('editor:assets.folderEmpty')}}
               .text-xs-center.py-2(v-if='this.pageTotal > 1')

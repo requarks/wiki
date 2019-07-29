@@ -8,19 +8,19 @@
             .headline.blue--text.text--darken-2.animated.fadeInLeft Groups
             .subheading.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s(color='grey', outline, @click='refresh', large)
-            v-icon refresh
+          v-btn.animated.fadeInDown.wait-p2s.mr-3(color='grey', outlined, @click='refresh', large)
+            v-icon mdi-refresh
           v-dialog(v-model='newGroupDialog', max-width='500')
-            v-btn.animated.fadeInDown(color='primary', depressed, slot='activator', large)
-              v-icon(left) add
-              span New Group
-            v-card.wiki-form
+            template(v-slot:activator='{ on }')
+              v-btn.animated.fadeInDown(color='primary', depressed, v-on='on', large)
+                v-icon(left) mdi-plus
+                span New Group
+            v-card
               .dialog-header.is-short New Group
               v-card-text
                 v-text-field.md2(
-                  outline
-                  background-color='grey lighten-3'
-                  prepend-icon='people'
+                  outlined
+                  prepend-icon='mdi-account-group'
                   v-model='newGroupName'
                   label='Group Name'
                   counter='255'
@@ -30,7 +30,7 @@
                   )
               v-card-chin
                 v-spacer
-                v-btn(flat, @click='newGroupDialog = false') Cancel
+                v-btn(text, @click='newGroupDialog = false') Cancel
                 v-btn(color='primary', @click='createGroup') Create
         v-card.mt-3.animated.fadeInUp
           v-data-table(

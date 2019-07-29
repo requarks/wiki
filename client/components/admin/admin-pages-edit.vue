@@ -54,41 +54,41 @@
             v-icon.mr-2 subject
             span Properties
           v-list.py-0(two-line, dense)
-            v-list-tile
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Title
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.title }}
+            v-list-item
+              v-list-item-content
+                v-list-item-title.caption.grey--text Title
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.title }}
             v-divider
-            v-list-tile
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Description
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.description || '-' }}
+            v-list-item
+              v-list-item-content
+                v-list-item-title.caption.grey--text Description
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.description || '-' }}
             v-divider
-            v-list-tile
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Locale
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.locale }}
-              v-list-tile-action
+            v-list-item
+              v-list-item-content
+                v-list-item-title.caption.grey--text Locale
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.locale }}
+              v-list-item-action
                 v-btn(icon)
                   v-icon(color='grey') edit
             v-divider
-            v-list-tile
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Path
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.path }}
-              v-list-tile-action
+            v-list-item
+              v-list-item-content
+                v-list-item-title.caption.grey--text Path
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.path }}
+              v-list-item-action
                 v-btn(icon)
                   v-icon(color='grey') edit
             v-divider
-            v-list-tile
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Editor
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.editor || '?' }}
+            v-list-item
+              v-list-item-content
+                v-list-item-title.caption.grey--text Editor
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.editor || '?' }}
             v-divider
-            v-list-tile
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Content Type
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.contentType || '?' }}
+            v-list-item
+              v-list-item-content
+                v-list-item-title.caption.grey--text Content Type
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.contentType || '?' }}
 
         v-toolbar.elevation-2.mt-3.animated.fadeInUp.wait-p4s(color='white', dense)
           v-spacer
@@ -117,25 +117,25 @@
             v-icon.mr-2 people
             span Users
           v-list.py-0(two-line, dense)
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-btn(icon, :to='`/users/` + page.creatorId')
                   v-icon(color='grey') person
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Creator
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.creatorName }} #[em.caption ({{ page.creatorEmail }})]
-              v-list-tile-action
-                v-list-tile-action-text {{ page.createdAt | moment('calendar') }}
+              v-list-item-content
+                v-list-item-title.caption.grey--text Creator
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.creatorName }} #[em.caption ({{ page.creatorEmail }})]
+              v-list-item-action
+                v-list-item-action-text {{ page.createdAt | moment('calendar') }}
             v-divider
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-btn(icon, :to='`/users/` + page.authorId')
                   v-icon(color='grey') person
-              v-list-tile-content
-                v-list-tile-title.caption.grey--text Last Editor
-                v-list-tile-sub-title.body-2.grey--text.text--darken-3 {{ page.authorName }} #[em.caption ({{ page.authorEmail }})]
-              v-list-tile-action
-                v-list-tile-action-text {{ page.updatedAt | moment('calendar') }}
+              v-list-item-content
+                v-list-item-title.caption.grey--text Last Editor
+                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.authorName }} #[em.caption ({{ page.authorEmail }})]
+              v-list-item-action
+                v-list-item-action-text {{ page.updatedAt | moment('calendar') }}
         v-card.mt-3.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 history

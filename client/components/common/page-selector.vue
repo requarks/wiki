@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-dialog(v-model='isShown', lazy, max-width='850px')
+  v-dialog(v-model='isShown', max-width='850px')
     v-card.page-selector
       .dialog-header.is-dark
         v-icon.mr-2(color='white') find_in_page
@@ -35,21 +35,21 @@
       //-       v-btn(icon): v-icon forward
       //-       v-btn(icon): v-icon delete
       //-     v-list(dense)
-      //-       v-list-tile
-      //-         v-list-tile-avatar: v-icon insert_drive_file
-      //-         v-list-tile-title File A
+      //-       v-list-item
+      //-         v-list-item-avatar: v-icon insert_drive_file
+      //-         v-list-item-title File A
       //-       v-divider
-      //-       v-list-tile
-      //-         v-list-tile-avatar: v-icon insert_drive_file
-      //-         v-list-tile-title File B
+      //-       v-list-item
+      //-         v-list-item-avatar: v-icon insert_drive_file
+      //-         v-list-item-title File B
       //-       v-divider
-      //-       v-list-tile
-      //-         v-list-tile-avatar: v-icon insert_drive_file
-      //-         v-list-tile-title File C
+      //-       v-list-item
+      //-         v-list-item-avatar: v-icon insert_drive_file
+      //-         v-list-item-title File C
       //-       v-divider
-      //-       v-list-tile
-      //-         v-list-tile-avatar: v-icon insert_drive_file
-      //-         v-list-tile-title File D
+      //-       v-list-item
+      //-         v-list-item-avatar: v-icon insert_drive_file
+      //-         v-list-item-title File D
       v-card-actions.grey.pa-2(:class='darkMode ? `darken-3-d5` : `lighten-1`')
         v-select(
           solo

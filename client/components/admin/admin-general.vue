@@ -9,61 +9,60 @@
             .subheading.grey--text.animated.fadeInLeft {{ $t('admin:general.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-form
-                v-card.wiki-form.animated.fadeInUp
+                v-card.animated.fadeInUp
                   v-toolbar(color='primary', dark, dense, flat)
-                    v-toolbar-title
-                      .subheading {{ $t('admin:general.siteInfo') }}
+                    v-toolbar-title.subtitle-1 {{ $t('admin:general.siteInfo') }}
                   v-subheader {{$t('admin:general.general')}}
                   .px-3.pb-3
                     v-text-field(
-                      outline
+                      outlined
                       :label='$t(`admin:general.siteUrl`)'
                       required
                       :counter='255'
                       v-model='config.host'
-                      prepend-icon='label_important'
+                      prepend-icon='mdi-label-variant-outline'
                       :hint='$t(`admin:general.siteUrlHint`)'
                       persistent-hint
                       )
-                    v-text-field.mt-2(
-                      outline
+                    v-text-field.mt-3(
+                      outlined
                       :label='$t(`admin:general.siteTitle`)'
                       required
                       :counter='50'
                       v-model='config.title'
-                      prepend-icon='public'
+                      prepend-icon='mdi-earth'
                       :hint='$t(`admin:general.siteTitleHint`)'
                       persistent-hint
                       )
                   v-divider
-                  v-subheader {{$t('admin:general.logo')}} #[v-chip.ml-2(label, color='grey', small, outline) coming soon]
+                  v-subheader {{$t('admin:general.logo')}} #[v-chip.ml-2(label, color='grey', small, outlined) coming soon]
                   v-card-text.pb-4.pl-5
                     v-layout.px-3(row, align-center)
                       v-avatar(size='100', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
                       .ml-4
-                        v-btn.mx-0(color='teal', depressed, disabled)
-                          v-icon(left) cloud_upload
+                        v-btn.mr-3(color='teal', depressed, disabled)
+                          v-icon(left) mdi-cloud-upload
                           span {{$t('admin:general.uploadLogo')}}
                         v-btn(color='teal', depressed, disabled)
-                          v-icon(left) clear
+                          v-icon(left) mdi-close
                           span {{$t('admin:general.uploadClear')}}
-                        .caption.grey--text {{$t('admin:general.uploadSizeHint', { size: '120x120' })}}
+                        .caption.mt-3.grey--text {{$t('admin:general.uploadSizeHint', { size: '120x120' })}}
                         .caption.grey--text {{$t('admin:general.uploadTypesHint', { typeList: 'SVG, PNG', lastType: 'JPG' })}}.
                   v-divider
                   v-subheader {{$t('admin:general.footerCopyright')}}
                   .px-3.pb-3
                     v-text-field(
-                      outline
+                      outlined
                       :label='$t(`admin:general.companyName`)'
                       v-model='config.company'
                       :counter='255'
-                      prepend-icon='business'
+                      prepend-icon='mdi-domain'
                       persistent-hint
                       :hint='$t(`admin:general.companyNameHint`)'
                       )
@@ -71,31 +70,30 @@
                   v-subheader SEO
                   .px-3.pb-3
                     v-text-field(
-                      outline
+                      outlined
                       :label='$t(`admin:general.siteDescription`)'
                       :counter='255'
                       v-model='config.description'
-                      prepend-icon='explore'
+                      prepend-icon='mdi-compass'
                       :hint='$t(`admin:general.siteDescriptionHint`)'
                       persistent-hint
                       )
-                    v-select.mt-2(
-                      outline
+                    v-select.mt-3(
+                      outlined
                       :label='$t(`admin:general.metaRobots`)'
                       multiple
                       :items='metaRobots'
                       v-model='config.robots'
-                      prepend-icon='explore'
+                      prepend-icon='mdi-compass'
                       :return-object='false'
                       :hint='$t(`admin:general.metaRobotsHint`)'
                       persistent-hint
                       )
 
             v-flex(lg6 xs12)
-              v-card.wiki-form.animated.fadeInUp.wait-p4s
+              v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading Features
+                  v-toolbar-title.subtitle-1 Features
                   v-spacer
                   v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
@@ -108,11 +106,11 @@
                     disabled
                     )
                   v-text-field.mt-3(
-                    outline
+                    outlined
                     label='TinyPNG API Key'
                     :counter='255'
                     v-model='config.description'
-                    prepend-icon='subdirectory_arrow_right'
+                    prepend-icon='mdi-subdirectory-arrow-right'
                     hint='Get your API key at https://tinypng.com/developers'
                     persistent-hint
                     disabled

@@ -16,17 +16,17 @@
         .subheading {{$t('common:header.searchNoResult')}}
       template(v-if='results.length > 0')
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
-        v-list.search-results-items.radius-7(two-line)
+        v-list.search-results-items.radius-7.py-0(two-line)
           template(v-for='(item, idx) of results')
-            v-list-tile(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
-              v-list-tile-avatar(tile)
+            v-list-item(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
+              v-list-item-avatar(tile)
                 img(src='/svg/icon-selective-highlighting.svg')
-              v-list-tile-content
-                v-list-tile-title(v-html='item.title')
-                v-list-tile-sub-title(v-html='item.description')
-                .caption.grey--text.mt-1(v-html='item.path')
-              v-list-tile-action
-                v-chip(label) {{item.locale.toUpperCase()}}
+              v-list-item-content
+                v-list-item-title(v-html='item.title')
+                v-list-item-subtitle(v-html='item.description')
+                .caption.grey--text(v-html='item.path')
+              v-list-item-action
+                v-chip(label, outlined) {{item.locale.toUpperCase()}}
             v-divider(v-if='idx < results.length - 1')
         v-pagination.mt-3(
           v-if='paginationLength > 1'
@@ -38,18 +38,18 @@
         v-subheader.white--text.mt-3 {{$t('common:header.searchDidYouMean')}}
         v-list.search-results-suggestions.radius-7(dense, dark)
           template(v-for='(term, idx) of suggestions')
-            v-list-tile(:key='term', @click='setSearchTerm(term)', :class='idx + results.length === cursor ? `highlighted` : ``')
-              v-list-tile-avatar
-                v-icon search
-              v-list-tile-content
-                v-list-tile-title(v-html='term')
+            v-list-item(:key='term', @click='setSearchTerm(term)', :class='idx + results.length === cursor ? `highlighted` : ``')
+              v-list-item-avatar
+                v-icon mdi-magnify
+              v-list-item-content
+                v-list-item-title(v-html='term')
             v-divider(v-if='idx < suggestions.length - 1')
       .text-xs-center.pt-5(v-if='search.length > 1')
-        v-btn(outline, color='orange', @click='search = ``', v-if='results.length > 0')
-          v-icon(left) save
+        v-btn.mx-2(outlined, color='orange', @click='search = ``', v-if='results.length > 0')
+          v-icon(left) mdi-content-save
           span {{$t('common:header.searchCopyLink')}}
-        v-btn(outline, color='pink', @click='search = ``')
-          v-icon(left) clear
+        v-btn.mx-2(outlined, color='pink', @click='search = ``')
+          v-icon(left) mdi-close
           span {{$t('common:header.searchClose')}}
 </template>
 
@@ -205,6 +205,8 @@ export default {
   }
 
   &-items {
+    text-align: left;
+
     .highlighted {
       background: #FFF linear-gradient(to bottom, #FFF, mc('orange', '100'));
     }

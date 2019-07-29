@@ -8,30 +8,30 @@
             .headline.primary--text.animated.fadeInLeft {{$t('navigation.title')}}
             .subheading.grey--text.animated.fadeInLeft.wait-p4s {{$t('navigation.subtitle')}}
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
-            v-icon refresh
+          v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', @click='refresh', large)
+            v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
         v-container.pa-0.mt-3(fluid, grid-list-lg)
           v-layout(row)
             v-flex(style='flex: 0 0 350px;')
               v-card.animated.fadeInUp
-                v-list.py-2(dense, dark, :class='navTree.length < 1 ? "grey lighten-4" : "primary"')
-                  v-list-tile(v-if='navTree.length < 1')
-                    v-list-tile-avatar: v-icon(color='grey') explore_off
-                    v-list-tile-content
+                v-list.py-2(dense, nav, dark, :class='navTree.length < 1 ? "grey lighten-4" : "primary"')
+                  v-list-item(v-if='navTree.length < 1')
+                    v-list-item-avatar(size='24'): v-icon(color='grey') explore_off
+                    v-list-item-content
                       .caption.grey--text {{$t('navigation.emptyList')}}
                   draggable(v-model='navTree')
                     template(v-for='navItem in navTree')
-                      v-list-tile(
+                      v-list-item(
                         v-if='navItem.kind === "link"'
                         :key='navItem.id'
                         :class='(navItem === current) ? "blue" : ""'
                         @click='selectItem(navItem)'
                         )
-                        v-list-tile-avatar: v-icon {{navItem.icon}}
-                        v-list-tile-title {{navItem.label}}
+                        v-list-item-avatar(size='24'): v-icon {{navItem.icon}}
+                        v-list-item-title {{navItem.label}}
                       .py-2.clickable(
                         v-else-if='navItem.kind === "divider"'
                         :key='navItem.id'
@@ -47,58 +47,56 @@
                         ) {{navItem.label}}
                 v-card-chin
                   v-menu(offset-y, bottom, min-width='200px', style='flex: 1 1;')
-                    v-btn(slot='activator', color='primary', depressed, block)
-                      v-icon(left) add
-                      span {{$t('common:actions.add')}}
+                    template(v-slot:activator='{ on }')
+                      v-btn(v-on='on', color='primary', depressed, block)
+                        v-icon(left) mdi-plus
+                        span {{$t('common:actions.add')}}
                     v-list
-                      v-list-tile(@click='addItem("link")')
-                        v-list-tile-avatar: v-icon link
-                        v-list-tile-title {{$t('navigation.link')}}
-                      v-list-tile(@click='addItem("header")')
-                        v-list-tile-avatar: v-icon title
-                        v-list-tile-title {{$t('navigation.header')}}
-                      v-list-tile(@click='addItem("divider")')
-                        v-list-tile-avatar: v-icon power_input
-                        v-list-tile-title {{$t('navigation.divider')}}
+                      v-list-item(@click='addItem("link")')
+                        v-list-item-avatar(size='24'): v-icon mdi-link
+                        v-list-item-title {{$t('navigation.link')}}
+                      v-list-item(@click='addItem("header")')
+                        v-list-item-avatar(size='24'): v-icon mdi-format-title
+                        v-list-item-title {{$t('navigation.header')}}
+                      v-list-item(@click='addItem("divider")')
+                        v-list-item-avatar(size='24'): v-icon mdi-minus
+                        v-list-item-title {{$t('navigation.divider')}}
             v-flex.animated.fadeInUp.wait-p2s
               v-card.wiki-form(v-if='current.kind === "link"')
-                v-toolbar(dense, color='blue', flat, dark)
-                  .subheading {{$t('navigation.edit', { kind: $t('navigation.link') })}}
+                v-toolbar(dense, color='blue', flat, dark).subtitle-1 {{$t('navigation.edit', { kind: $t('navigation.link') })}}
                 v-card-text
                   v-text-field(
-                    outline
+                    outlined
                     :label='$t("navigation.label")'
-                    prepend-icon='title'
+                    prepend-icon='mdi-format-title'
                     v-model='current.label'
                   )
                   v-text-field(
-                    outline
+                    outlined
                     :label='$t("navigation.icon")'
-                    prepend-icon='casino'
+                    prepend-icon='mdi-dice-5'
                     v-model='current.icon'
                     hide-details
                   )
-                  .caption.pt-3.pl-5 The default icon set is #[strong Material Icons]. In order to use another icon set, you must first select it in the Theme administration section.
-                  .caption.pt-3.pl-5 #[strong Material Icons] #[em (default)]
-                  .caption.pl-5 Refer to the #[a(href='https://material.io/tools/icons/?style=baseline', target='_blank') Material Icons Reference] for the list of all possible values.
+                  .caption.pt-3.pl-5 The default icon set is #[strong Material Design Icons]. In order to use another icon set, you must first select it in the Theme administration section.
                   .caption.pt-3.pl-5: strong Material Design Icons
-                  .caption.pl-5 Refer to the #[a(href='https://cdn.materialdesignicons.com/3.7.95/', target='_blank') Material Design Icons Reference] for the list of all possible values. You must prefix all values with #[code mdi-], e.g. #[code mdi-home]
+                  .caption.pl-5 Refer to the #[a(href='https://materialdesignicons.com/', target='_blank') Material Design Icons Reference] for the list of all possible values. You must prefix all values with #[code mdi-], e.g. #[code mdi-home]
                   .caption.pt-3.pl-5: strong Font Awesome 5
                   .caption.pl-5 Refer to the #[a(href='https://fontawesome.com/icons?d=gallery&m=free', target='_blank') Font Awesome 5 Reference] for the list of all possible values. You must prefix all values with #[code fas fa-], e.g. #[code fas fa-home]
                   .caption.pt-3.pl-5: strong Font Awesome 4
                   .caption.pl-5 Refer to the #[a(href='https://fontawesome.com/v4.7.0/icons/', target='_blank') Font Awesome 4 Reference] for the list of all possible values. You must prefix all values with #[code fa fa-], e.g. #[code fa fa-home]
                   v-select.mt-4(
-                    outline
+                    outlined
                     :label='$t("navigation.targetType")'
-                    prepend-icon='near_me'
+                    prepend-icon='mdi-near-me'
                     :items='navTypes'
                     v-model='current.targetType'
                   )
                   v-text-field(
                     v-if='current.targetType === `external`'
-                    outline
+                    outlined
                     :label='$t("navigation.target")'
-                    prepend-icon='near_me'
+                    prepend-icon='mdi-near-me'
                     v-model='current.target'
                   )
                   v-btn(
@@ -108,11 +106,11 @@
                     disabled
                     @click='selectPage'
                     )
-                    v-icon(left) search
+                    v-icon(left) mdi-search
                     span Select Page...
                   v-text-field(
                     v-else-if='current.targetType === `search`'
-                    outline
+                    outlined
                     :label='$t("navigation.navType.searchQuery")'
                     prepend-icon='search'
                     v-model='current.target'
@@ -120,28 +118,27 @@
 
                 v-card-chin
                   v-spacer
-                  v-btn(color='red', outline, @click='deleteItem(current)')
-                    v-icon(left) delete
+                  v-btn.px-5(color='red', outlined, @click='deleteItem(current)')
+                    v-icon(left) mdi-delete
                     span {{$t('navigation.delete', { kind: $t('navigation.link') })}}
               v-card(v-else-if='current.kind === "header"')
                 v-toolbar(dense, color='blue', flat, dark)
                   .subheading {{$t('navigation.edit', { kind: $t('navigation.header') })}}
                 v-card-text
                   v-text-field(
-                    outline
-                    background-color='grey lighten-2'
+                    outlined
                     :label='$t("navigation.label")'
-                    prepend-icon='title'
+                    prepend-icon='mdi-format-title'
                     v-model='current.label'
                   )
                 v-card-chin
                   v-spacer
-                  v-btn(color='red', outline, @click='deleteItem(current)')
-                    v-icon(left) delete
+                  v-btn.px-5(color='red', outlined, @click='deleteItem(current)')
+                    v-icon(left) mdi-delete
                     span {{$t('navigation.delete', { kind: $t('navigation.header') })}}
               div(v-else-if='current.kind === "divider"')
-                v-btn.mt-0(color='red', outline, @click='deleteItem(current)')
-                  v-icon(left) delete
+                v-btn.mt-0.px-5(color='red', outlined, @click='deleteItem(current)')
+                  v-icon(left) mdi-delete
                   span {{$t('navigation.delete', { kind: $t('navigation.divider') })}}
               v-card(v-else)
                 v-card-text.grey--text(v-if='navTree.length > 0') {{$t('navigation.noSelectionText')}}
@@ -172,7 +169,7 @@ export default {
       return [
         // { text: this.$t('navigation.navType.external'), value: 'external' },
         { text: this.$t('navigation.navType.home'), value: 'home' },
-        { text: 'Internal Path / External Link', value: 'external' },
+        { text: 'Internal Path / External Link', value: 'external' }
         // { text: this.$t('navigation.navType.page'), value: 'page' }
         // { text: this.$t('navigation.navType.searchQuery'), value: 'search' }
       ]
@@ -189,7 +186,7 @@ export default {
           newItem = {
             ...newItem,
             label: this.$t('navigation.untitled', { kind: this.$t(`navigation.link`) }),
-            icon: 'chevron_right',
+            icon: 'mdi-chevron-right',
             targetType: 'home',
             target: '/'
           }

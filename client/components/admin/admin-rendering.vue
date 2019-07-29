@@ -43,18 +43,18 @@
               v-spacer
             v-list.py-0(two-line, dense)
               template(v-for='(rdr, n) in core.children')
-                v-list-tile(
+                v-list-item(
                   avatar
                   :key='rdr.key'
                   @click='selectRenderer(rdr.key)'
                   :class='currentRenderer.key === rdr.key ? (darkMode ? `grey darken-4-l4` : `blue lighten-5`) : ``'
                   )
-                  v-list-tile-avatar
+                  v-list-item-avatar
                     v-icon(:color='currentRenderer.key === rdr.key ? "primary" : "grey"') {{rdr.icon}}
-                  v-list-tile-content
-                    v-list-tile-title {{rdr.title}}
-                    v-list-tile-sub-title {{rdr.description}}
-                  v-list-tile-avatar
+                  v-list-item-content
+                    v-list-item-title {{rdr.title}}
+                    v-list-item-sub-title {{rdr.description}}
+                  v-list-item-avatar
                     status-indicator(v-if='rdr.isEnabled', positive, pulse)
                     status-indicator(v-else, negative, pulse)
                 v-divider.my-0(v-if='n < core.children.length - 1')

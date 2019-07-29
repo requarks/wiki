@@ -2,7 +2,7 @@
 
 .contents {
   color: mc('grey', '800');
-  padding: 24px 0 50px;
+  padding: .5rem 0 50px;
   position: relative;
 
   > div > *:first-child {
@@ -51,7 +51,7 @@
   }
 
   h1 {
-    padding: 0 24px;
+    padding: 0;
     color: mc('blue', '800');
     margin-top: 2rem;
     position: relative;
@@ -68,6 +68,7 @@
       width: 100%;
       height: 2px;
       background: linear-gradient(to right, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
+      border-radius: 3px;
 
       @at-root .theme--dark & {
         background: linear-gradient(to right, mc('teal', '300') 0%, mc('teal', '500') 10%, rgba(mc('teal', '900'), 0) 100%);
@@ -82,7 +83,7 @@
     }
   }
   h2 {
-    margin: 1rem 24px 0 24px;
+    margin: 1rem 0 0 0;
     padding: 8px 0 0 0;
     color: mc('grey', '800');
     position: relative;
@@ -113,7 +114,7 @@
     }
   }
   h3 {
-    margin: 0 24px;
+    margin: 0;
     padding: 8px 0 0 0;
     color: mc('grey', '700');
     position: relative;
@@ -134,7 +135,7 @@
   }
   h4, h5, h6 {
     font-size: 1rem;
-    margin: 0 24px;
+    margin: 0;
     padding: 8px 0 0 0;
     color: mc('grey', '700');
     position: relative;
@@ -176,10 +177,14 @@
     @at-root .contents > div > p:first-child {
       padding-top: 0;
     }
+
+    @at-root .v-application & {
+      margin-bottom: 0;
+    }
   }
 
   hr {
-    margin: 1rem;
+    margin: 1rem 0;
     height: 1px;
     border: none;
     background-color: mc('grey', '400');
@@ -198,7 +203,7 @@
     padding: 0 0 1rem 0;
     border-left: 5px solid mc('blue', '500');
     border-radius: .5rem;
-    margin: 1rem 2rem;
+    margin: 1rem 0;
 
     > p:first-child .emoji {
       margin-right: .5rem;

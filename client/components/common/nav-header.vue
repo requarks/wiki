@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-toolbar.nav-header(color='black', dark, app, clipped-left, fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
+  v-app-bar.nav-header(color='black', dark, app, clipped-left, fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
     v-toolbar(color='deep-purple', flat, slot='extension', v-if='searchIsShown && $vuetify.breakpoint.smAndDown')
       v-text-field(
         ref='searchFieldMobile'
@@ -12,49 +12,50 @@
         solo
         flat
         hide-details
-        prepend-inner-icon='search'
+        prepend-inner-icon='mdi-search'
         :loading='searchIsLoading'
         @keyup.enter='searchEnter'
       )
     v-layout(row)
-      v-flex(xs6, :md4='searchIsShown', :md6='!searchIsShown')
-        v-toolbar.nav-header-inner(color='black', dark, flat)
+      v-flex(xs6, md4)
+        v-toolbar.nav-header-inner.pl-3(color='black', dark, flat)
           v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
-            v-toolbar-side-icon.btn-animate-app(slot='activator')
-              v-icon view_module
-            v-list(dense, :light='!$vuetify.dark', :dark='$vuetify.dark', :class='$vuetify.dark ? `grey darken-4` : ``').py-0
-              v-list-tile(avatar, href='/')
-                v-list-tile-avatar: v-icon(color='blue') home
-                v-list-tile-content {{$t('common:header.home')}}
-              v-list-tile(avatar, @click='pageNew', v-if='isAuthenticated')
-                v-list-tile-avatar: v-icon(color='green') add_box
-                v-list-tile-content {{$t('common:header.newPage')}}
+            template(v-slot:activator='{ on }')
+              v-app-bar-nav-icon.btn-animate-app(v-on='on')
+                v-icon mdi-menu-open
+            v-list(nav, :light='!$vuetify.dark', :dark='$vuetify.dark', :class='$vuetify.dark ? `grey darken-4` : ``')
+              v-list-item.pl-4(href='/')
+                v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
+                v-list-item-title.body-2 {{$t('common:header.home')}}
+              v-list-item.pl-4(@click='pageNew', v-if='isAuthenticated')
+                v-list-item-avatar(size='24'): v-icon(color='green') mdi-file-document-box-plus-outline
+                v-list-item-title.body-2 {{$t('common:header.newPage')}}
               template(v-if='path && path.length')
                 v-divider.my-0
                 v-subheader {{$t('common:header.currentPage')}}
-                v-list-tile(avatar, @click='pageView', v-if='mode !== `view`')
-                  v-list-tile-avatar: v-icon(color='indigo') subject
-                  v-list-tile-content {{$t('common:header.view')}}
-                v-list-tile(avatar, @click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
-                  v-list-tile-avatar: v-icon(color='indigo') edit
-                  v-list-tile-content {{$t('common:header.edit')}}
-                v-list-tile(avatar, @click='pageHistory', v-if='mode !== `history`')
-                  v-list-tile-avatar: v-icon(color='indigo') history
-                  v-list-tile-content {{$t('common:header.history')}}
-                v-list-tile(avatar, @click='pageSource', v-if='mode !== `source`')
-                  v-list-tile-avatar: v-icon(color='indigo') code
-                  v-list-tile-content {{$t('common:header.viewSource')}}
-                v-list-tile(avatar, @click='pageMove', v-if='isAuthenticated')
-                  v-list-tile-avatar: v-icon(color='grey lighten-2') forward
-                  v-list-tile-content.grey--text.text--ligten-2 {{$t('common:header.move')}}
-                v-list-tile(avatar, @click='pageDelete', v-if='isAuthenticated')
-                  v-list-tile-avatar: v-icon(color='red darken-2') delete
-                  v-list-tile-content {{$t('common:header.delete')}}
+                v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') subject
+                  v-list-item-title.body-2 {{$t('common:header.view')}}
+                v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
+                  v-list-item-title.body-2 {{$t('common:header.edit')}}
+                v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-history
+                  v-list-item-title.body-2 {{$t('common:header.history')}}
+                v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-braces
+                  v-list-item-title.body-2 {{$t('common:header.viewSource')}}
+                v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
+                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-content-save-move-outline
+                  v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.move')}}
+                v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
+                  v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
+                  v-list-item-title.body-2 {{$t('common:header.delete')}}
               v-divider.my-0
               v-subheader {{$t('common:header.assets')}}
-              v-list-tile(avatar, @click='assets')
-                v-list-tile-avatar: v-icon(color='grey lighten-2') burst_mode
-                v-list-tile-content.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
+              v-list-item.pl-4(@click='assets')
+                v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
+                v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
           v-toolbar-title(:class='{ "ml-2": $vuetify.breakpoint.mdAndUp, "ml-0": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
@@ -71,7 +72,7 @@
                 solo
                 flat
                 hide-details,
-                prepend-inner-icon='search',
+                prepend-inner-icon='mdi-magnify',
                 :loading='searchIsLoading',
                 @keyup.enter='searchEnter'
                 @keyup.esc='searchClose'
@@ -80,12 +81,6 @@
                 @keyup.down='searchMove(`down`)'
                 @keyup.up='searchMove(`up`)'
               )
-                v-progress-linear(
-                  indeterminate,
-                  slot='progress',
-                  height='2',
-                  color='blue'
-                )
             v-menu(
               v-model='searchAdvMenuShown'
               left
@@ -96,11 +91,12 @@
               nudge-right='5'
               v-if='searchIsShown'
               )
-              v-btn.nav-header-search-adv(icon, outline, color='grey darken-2', slot='activator')
-                v-icon(color='white') expand_more
+              template(v-slot:activator='{ on }')
+                v-btn.nav-header-search-adv(icon, color='grey darken-2', v-on='on')
+                  v-icon(color='white') mdi-chevron-down
               v-card.radius-0(dark)
                 v-toolbar(flat, color='grey darken-4', dense)
-                  v-icon.mr-2 search
+                  v-icon.mr-2 mdi-feature-search-outline
                   v-subheader.pl-0 Advanced Search
                   v-spacer
                   v-chip(label, small, color='primary') Coming soon
@@ -119,14 +115,18 @@
                   )
                 v-divider
                 v-card-actions.grey.darken-3-d4
-                  v-btn(depressed, color='grey darken-3', block)
-                    v-icon(left) chevron_right
-                    span Save as defaults
-                  v-btn(depressed, color='grey darken-3', block)
-                    v-icon(left) cached
-                    span Reset
-      v-flex(xs6, :md4='searchIsShown', :md6='!searchIsShown')
-        v-toolbar.nav-header-inner(color='black', dark, flat)
+                  v-container.pa-0(grid-list-md)
+                    v-layout(row)
+                      v-flex(xs6)
+                        v-btn(depressed, color='grey darken-3', block)
+                          v-icon(left) mdi-chevron-right
+                          span Save as defaults
+                      v-flex(xs6)
+                        v-btn(depressed, color='grey darken-3', block)
+                          v-icon(left) mdi-cached
+                          span Reset
+      v-flex(xs6, md4)
+        v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -138,53 +138,59 @@
             )
             v-icon(color='grey') search
           v-menu(offset-y, left, transition='slide-y-transition', v-if='mode === `view` && locales.length > 0')
-            v-tooltip(bottom, slot='activator')
-              v-btn(icon, slot='activator')
-                v-icon(color='grey') language
-              span {{$t('common:header.language')}}
+            template(v-slot:activator='{ on: menu }')
+              v-tooltip(bottom)
+                template(v-slot:activator='{ on: tooltip }')
+                  v-btn(icon, v-on='{ ...menu, ...tooltip }')
+                    v-icon(color='grey') mdi-web
+                span {{$t('common:header.language')}}
             v-list.py-0
               template(v-for='(lc, idx) of locales')
-                v-list-tile(@click='changeLocale(lc)')
-                  v-list-tile-action: v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
-                  v-list-tile-title {{lc.name}}
+                v-list-item(@click='changeLocale(lc)')
+                  v-list-item-action: v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
+                  v-list-item-title {{lc.name}}
                 v-divider.my-0(v-if='idx < locales.length - 1')
           v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
-            v-btn.btn-animate-rotate(icon, href='/a', slot='activator')
-              v-icon(color='grey') settings
+            template(v-slot:activator='{ on }')
+              v-btn.btn-animate-rotate(icon, href='/a', v-on='on')
+                v-icon(color='grey') mdi-settings
             span {{$t('common:header.admin')}}
           v-menu(v-if='isAuthenticated', offset-y, min-width='300', left, transition='slide-y-transition')
-            v-tooltip(bottom, slot='activator')
-              v-btn(icon, slot='activator', outline, color='blue')
-                v-icon(v-if='picture.kind === `initials`', color='grey') account_circle
-                v-avatar(v-else-if='picture.kind === `image`', :size='29')
-                  v-img(:src='picture.url')
-              span {{$t('common:header.account')}}
+            template(v-slot:activator='{ on: menu }')
+              v-tooltip(bottom)
+                template(v-slot:activator='{ on: tooltip }')
+                  v-btn(icon, v-on='{ ...menu, ...tooltip }', outlined, color='blue')
+                    v-icon(v-if='picture.kind === `initials`', color='grey') mdi-account-circle
+                    v-avatar(v-else-if='picture.kind === `image`', :size='29')
+                      v-img(:src='picture.url')
+                span {{$t('common:header.account')}}
             v-list.py-0
-              v-list-tile.py-3.grey(avatar, :class='$vuetify.dark ? `darken-4-l5` : `lighten-5`')
-                v-list-tile-avatar
+              v-list-item.py-3.grey(avatar, :class='$vuetify.dark ? `darken-4-l5` : `lighten-5`')
+                v-list-item-avatar
                   v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
                     span.white--text.subheading {{picture.initials}}
                   v-avatar(v-else-if='picture.kind === `image`', :size='40')
                     v-img(:src='picture.url')
-                v-list-tile-content
-                  v-list-tile-title {{name}}
-                  v-list-tile-sub-title {{email}}
+                v-list-item-content
+                  v-list-item-title {{name}}
+                  v-list-item-sub-title {{email}}
               v-divider.my-0
-              v-list-tile(href='/w', disabled)
-                v-list-tile-action: v-icon(color='blue') web
-                v-list-tile-title {{$t('common:header.myWiki')}}
+              v-list-item(href='/w', disabled)
+                v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
+                v-list-item-title {{$t('common:header.myWiki')}}
               v-divider.my-0
-              v-list-tile(href='/p', disabled)
-                v-list-tile-action: v-icon(color='blue') person
-                v-list-tile-title {{$t('common:header.profile')}}
+              v-list-item(href='/p', disabled)
+                v-list-item-action: v-icon(color='blue') mdi-face-profile
+                v-list-item-title {{$t('common:header.profile')}}
               v-divider.my-0
-              v-list-tile(@click='logout')
-                v-list-tile-action: v-icon(color='red') exit_to_app
-                v-list-tile-title {{$t('common:header.logout')}}
+              v-list-item(@click='logout')
+                v-list-item-action: v-icon(color='red') mdi-logout
+                v-list-item-title {{$t('common:header.logout')}}
 
           v-tooltip(v-else, left)
-            v-btn(icon, slot='activator', outline, color='grey darken-3', href='/login')
-              v-icon(color='grey') account_circle
+            template(v-slot:activator='{ on }')
+              v-btn(icon, v-on='on', outline, color='grey darken-3', href='/login')
+                v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
     page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate')

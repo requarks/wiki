@@ -30,13 +30,13 @@
           dense
           )
           template(v-for='(usr, idx) in items')
-            v-list-tile(:key='usr.id', @click='setUser(usr.id)')
-              v-list-tile-avatar(size='40', color='primary')
+            v-list-item(:key='usr.id', @click='setUser(usr.id)')
+              v-list-item-avatar(size='40', color='primary')
                 span.body-1.white--text {{usr.name | initials}}
-              v-list-tile-content
-                v-list-tile-title.body-2 {{usr.name}}
-                v-list-tile-sub-title {{usr.email}}
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title.body-2 {{usr.name}}
+                v-list-item-sub-title {{usr.email}}
+              v-list-item-action
                 v-icon(color='primary') arrow_forward
             v-divider.my-0(v-if='idx < items.length - 1')
       v-card-chin

@@ -10,8 +10,8 @@
       v-flex(xs12 md6 lg4 xl3 d-flex)
         v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
-            v-icon.dashboard-icon insert_drive_file
-            .subheading {{$t('admin:dashboard.pages')}}
+            v-icon.dashboard-icon mdi-file-document-outline
+            .overline {{$t('admin:dashboard.pages')}}
             animated-number.display-1(
               :value='info.pagesTotal'
               :duration='2000'
@@ -21,8 +21,8 @@
       v-flex(xs12 md6 lg4 xl3 d-flex)
         v-card.indigo.lighten-1.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
-            v-icon.dashboard-icon person
-            .subheading {{$t('admin:dashboard.users')}}
+            v-icon.dashboard-icon mdi-account
+            .overline {{$t('admin:dashboard.users')}}
             animated-number.display-1(
               :value='info.usersTotal'
               :duration='2000'
@@ -32,8 +32,8 @@
       v-flex(xs12 md6 lg4 xl3 d-flex)
         v-card.indigo.lighten-2.dashboard-card.animated.fadeInUp.wait-p4s(dark)
           v-card-text
-            v-icon.dashboard-icon people
-            .subheading {{$t('admin:dashboard.groups')}}
+            v-icon.dashboard-icon mdi-account-group
+            .overline {{$t('admin:dashboard.groups')}}
             animated-number.display-1(
               :value='info.groupsTotal'
               :duration='2000'
@@ -46,19 +46,19 @@
           dark
           )
           v-btn.btn-animate-wrench(fab, absolute, right, top, small, light, to='system', v-if='hasPermission(`manage:system`)')
-            v-icon(:color='isLatestVersion ? `teal` : `red darken-4`') build
+            v-icon(:color='isLatestVersion ? `teal` : `red darken-4`', small) mdi-wrench
           v-card-text
-            v-icon.dashboard-icon blur_on
+            v-icon.dashboard-icon mdi-blur
             .subheading Wiki.js {{info.currentVersion}}
             .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p2s
-          v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
+          v-card-title.subtitle-1(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
           v-data-table.pb-2(
             :items='recentPages'
-            hide-actions
-            hide-headers
+            hide-default-footer
+            hide-default-header
             )
             template(slot='items' slot-scope='props')
               td(width='20', style='padding-right: 0;'): v-icon insert_drive_file
@@ -71,11 +71,11 @@
                 .caption Created {{ props.item.createdAt | moment('calendar') }}
       v-flex(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p4s
-          v-card-title.subheading(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
+          v-card-title.subtitle-1(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
           v-data-table.pb-2(
             :items='popularPages'
-            hide-actions
-            hide-headers
+            hide-default-footer
+            hide-default-header
             )
             template(slot='items' slot-scope='props')
               td(width='20', style='padding-right: 0;'): v-icon insert_drive_file
@@ -91,11 +91,12 @@
         v-card.dashboard-contribute.animated.fadeInUp.wait-p4s
           v-card-text
             img(src='/svg/icon-heart-health.svg', alt='Contribute', style='height: 80px;')
-            .pl-3
-              .subheading {{$t('admin:contribute.title')}}
-              .body-2.pt-2 {{$t('admin:dashboard.contributeSubtitle')}}
-              .body-1 {{$t('admin:dashboard.contributeHelp')}}
-              v-btn.mx-0.mt-2(:color='$vuetify.dark ? `indigo lighten-3` : `indigo`', outline, small, to='/contribute') {{$t('admin:dashboard.contributeLearnMore')}}
+            .pl-5
+              .subtitle-1 {{$t('admin:contribute.title')}}
+              .body-2.mt-3: strong {{$t('admin:dashboard.contributeSubtitle')}}
+              .body-2 {{$t('admin:dashboard.contributeHelp')}}
+              v-btn.mx-0.mt-4(:color='$vuetify.dark ? `indigo lighten-3` : `indigo`', outlined, small, to='/contribute')
+                .caption: strong {{$t('admin:dashboard.contributeLearnMore')}}
 
 </template>
 
@@ -140,6 +141,7 @@ export default {
 
 .dashboard-card {
   display: flex;
+  width: 100%;
   border-radius: 7px;
 
   .v-card__text {
@@ -161,10 +163,10 @@ export default {
   .v-card__text {
     display: flex;
     align-items: center;
-    color: mc('indigo', '500');
+    color: mc('indigo', '500') !important;
 
     @at-root .theme--dark & {
-      color: mc('grey', '300');
+      color: mc('grey', '300') !important;
     }
   }
 }
@@ -173,7 +175,7 @@ export default {
   position: absolute;
   right: 0;
   top: 12px;
-  font-size: 120px;
+  font-size: 120px !important;
   opacity: .25;
 }
 

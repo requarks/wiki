@@ -24,10 +24,10 @@
             v-icon text_fields
           v-list.py-0
             template(v-for='(n, idx) in 6')
-              v-list-tile(@click='setHeaderLine(n)', :key='idx')
-                v-list-tile-action
+              v-list-item(@click='setHeaderLine(n)', :key='idx')
+                v-list-item-action
                   v-icon(:size='24 - (idx - 1) * 2') title
-                v-list-tile-title {{$t('editor:markup.heading', { level: n })}}
+                v-list-item-title {{$t('editor:markup.heading', { level: n })}}
               v-divider(v-if='idx < 5')
         v-tooltip(bottom, color='primary')
           v-btn.animated.fadeIn.wait-p4s(icon, slot='activator', @click='toggleMarkup({ start: `~` })').mx-0
@@ -41,30 +41,30 @@
           v-btn.animated.fadeIn.wait-p6s(icon, slot='activator').mx-0
             v-icon format_quote
           v-list.py-0
-            v-list-tile(@click='insertBeforeEachLine({ content: `> `})')
-              v-list-tile-action
+            v-list-item(@click='insertBeforeEachLine({ content: `> `})')
+              v-list-item-action
                 v-icon format_quote
-              v-list-tile-title {{$t('editor:markup.blockquote')}}
+              v-list-item-title {{$t('editor:markup.blockquote')}}
             v-divider
-            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
-              v-list-tile-action
+            v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
+              v-list-item-action
                 v-icon(color='blue') format_quote
-              v-list-tile-title {{$t('editor:markup.blockquoteInfo')}}
+              v-list-item-title {{$t('editor:markup.blockquoteInfo')}}
             v-divider
-            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
-              v-list-tile-action
+            v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
+              v-list-item-action
                 v-icon(color='success') format_quote
-              v-list-tile-title {{$t('editor:markup.blockquoteSuccess')}}
+              v-list-item-title {{$t('editor:markup.blockquoteSuccess')}}
             v-divider
-            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
-              v-list-tile-action
+            v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
+              v-list-item-action
                 v-icon(color='warning') format_quote
-              v-list-tile-title {{$t('editor:markup.blockquoteWarning')}}
+              v-list-item-title {{$t('editor:markup.blockquoteWarning')}}
             v-divider
-            v-list-tile(@click='insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})')
-              v-list-tile-action
+            v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})')
+              v-list-item-action
                 v-icon(color='error') format_quote
-              v-list-tile-title {{$t('editor:markup.blockquoteError')}}
+              v-list-item-title {{$t('editor:markup.blockquoteError')}}
             v-divider
         v-tooltip(bottom, color='primary')
           v-btn.animated.fadeIn.wait-p7s(icon, slot='activator', @click='insertBeforeEachLine({ content: `- `})').mx-0

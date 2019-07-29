@@ -11,40 +11,40 @@
         v-subheader What is collected?
         .body-1.pl-3 When telemetry is enabled, only the following data is transmitted:
         v-list
-          v-list-tile
-            v-list-tile-avatar: v-icon info_outline
-            v-list-tile-content
-              v-list-tile-title.body-1 Version of Wiki.js installed
-              v-list-tile-sub-title.caption: em e.g. v2.0.123
-          v-list-tile
-            v-list-tile-avatar: v-icon info_outline
-            v-list-tile-content
-              v-list-tile-title.body-1 Basic OS information
-              v-list-tile-sub-title.caption: em Platform (Linux, macOS or Windows), Total CPU cores and DB type (PostgreSQL, MySQL, MariaDB, SQLite or SQL Server)
-          v-list-tile
-            v-list-tile-avatar: v-icon info_outline
-            v-list-tile-content
-              v-list-tile-title.body-1 Crash debug data
-              v-list-tile-sub-title.caption: em Stack trace of the error
-          v-list-tile
-            v-list-tile-avatar: v-icon info_outline
-            v-list-tile-content
-              v-list-tile-title.body-1 Setup analytics
-              v-list-tile-sub-title.caption: em Installation checkpoint reached
+          v-list-item
+            v-list-item-avatar: v-icon info_outline
+            v-list-item-content
+              v-list-item-title.body-1 Version of Wiki.js installed
+              v-list-item-sub-title.caption: em e.g. v2.0.123
+          v-list-item
+            v-list-item-avatar: v-icon info_outline
+            v-list-item-content
+              v-list-item-title.body-1 Basic OS information
+              v-list-item-sub-title.caption: em Platform (Linux, macOS or Windows), Total CPU cores and DB type (PostgreSQL, MySQL, MariaDB, SQLite or SQL Server)
+          v-list-item
+            v-list-item-avatar: v-icon info_outline
+            v-list-item-content
+              v-list-item-title.body-1 Crash debug data
+              v-list-item-sub-title.caption: em Stack trace of the error
+          v-list-item
+            v-list-item-avatar: v-icon info_outline
+            v-list-item-content
+              v-list-item-title.body-1 Setup analytics
+              v-list-item-sub-title.caption: em Installation checkpoint reached
         .body-1.pl-3 Note that crash debug data is stored for a maximum of 30 days while analytics are stored for a maximum of 16 months, after which it is permanently deleted.
         v-divider.my-3
         v-subheader What is it used for?
         .body-1.pl-3 Telemetry is used by developers to improve Wiki.js, mostly for the following reasons:
         v-list(dense)
-          v-list-tile
-            v-list-tile-avatar: v-icon chevron_right
-            v-list-tile-content: v-list-tile-title.body-1 Identify critical bugs more easily and fix them in a timely manner.
-          v-list-tile
-            v-list-tile-avatar: v-icon chevron_right
-            v-list-tile-content: v-list-tile-title.body-1 Understand the upgrade rate of current installations.
-          v-list-tile
-            v-list-tile-avatar: v-icon chevron_right
-            v-list-tile-content: v-list-tile-title.body-1  Optimize performance and testing scenarios based on most popular environments.
+          v-list-item
+            v-list-item-avatar: v-icon chevron_right
+            v-list-item-content: v-list-item-title.body-1 Identify critical bugs more easily and fix them in a timely manner.
+          v-list-item
+            v-list-item-avatar: v-icon chevron_right
+            v-list-item-content: v-list-item-title.body-1 Understand the upgrade rate of current installations.
+          v-list-item
+            v-list-item-avatar: v-icon chevron_right
+            v-list-item-content: v-list-item-title.body-1  Optimize performance and testing scenarios based on most popular environments.
         .body-1.pl-3 Only authorized developers have access to the data. It is not shared to any 3rd party nor is it used for any other application than improving Wiki.js.
         v-divider.my-3
         v-subheader Settings

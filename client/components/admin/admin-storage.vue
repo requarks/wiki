@@ -20,15 +20,15 @@
             .subheading {{$t('admin:storage.targets')}}
           v-list(two-line, dense).py-0
             template(v-for='(tgt, idx) in targets')
-              v-list-tile(:key='tgt.key', @click='selectedTarget = tgt.key', :disabled='!tgt.isAvailable')
-                v-list-tile-avatar
+              v-list-item(:key='tgt.key', @click='selectedTarget = tgt.key', :disabled='!tgt.isAvailable')
+                v-list-item-avatar
                   v-icon(color='grey', v-if='!tgt.isAvailable') indeterminate_check_box
                   v-icon(color='primary', v-else-if='tgt.isEnabled', v-ripple, @click='tgt.key !== `local` && (tgt.isEnabled = false)') check_box
                   v-icon(color='grey', v-else, v-ripple, @click='tgt.isEnabled = true') check_box_outline_blank
-                v-list-tile-content
-                  v-list-tile-title.body-2(:class='!tgt.isAvailable ? `grey--text` : (selectedTarget === tgt.key ? `primary--text` : ``)') {{ tgt.title }}
-                  v-list-tile-sub-title.caption(:class='!tgt.isAvailable ? `grey--text text--lighten-1` : (selectedTarget === tgt.key ? `blue--text ` : ``)') {{ tgt.description }}
-                v-list-tile-avatar(v-if='selectedTarget === tgt.key')
+                v-list-item-content
+                  v-list-item-title.body-2(:class='!tgt.isAvailable ? `grey--text` : (selectedTarget === tgt.key ? `primary--text` : ``)') {{ tgt.title }}
+                  v-list-item-sub-title.caption(:class='!tgt.isAvailable ? `grey--text text--lighten-1` : (selectedTarget === tgt.key ? `blue--text ` : ``)') {{ tgt.description }}
+                v-list-item-avatar(v-if='selectedTarget === tgt.key')
                   v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
               v-divider(v-if='idx < targets.length - 1')
 
@@ -43,28 +43,28 @@
             )
           v-list.py-0(two-line, dense)
             template(v-for='(tgt, n) in status')
-              v-list-tile(:key='tgt.key')
+              v-list-item(:key='tgt.key')
                 template(v-if='tgt.status === `pending`')
-                  v-list-tile-avatar(color='purple')
+                  v-list-item-avatar(color='purple')
                     v-icon(color='white') schedule
-                  v-list-tile-content
-                    v-list-tile-title.body-2 {{tgt.title}}
-                    v-list-tile-sub-title.purple--text.caption {{tgt.status}}
-                  v-list-tile-action
+                  v-list-item-content
+                    v-list-item-title.body-2 {{tgt.title}}
+                    v-list-item-sub-title.purple--text.caption {{tgt.status}}
+                  v-list-item-action
                     v-progress-circular(indeterminate, :size='20', :width='2', color='purple')
                 template(v-else-if='tgt.status === `operational`')
-                  v-list-tile-avatar(color='green')
+                  v-list-item-avatar(color='green')
                     v-icon(color='white') check_circle
-                  v-list-tile-content
-                    v-list-tile-title.body-2 {{tgt.title}}
-                    v-list-tile-sub-title.green--text.caption {{$t('admin:storage.lastSync', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
+                  v-list-item-content
+                    v-list-item-title.body-2 {{tgt.title}}
+                    v-list-item-sub-title.green--text.caption {{$t('admin:storage.lastSync', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                 template(v-else)
-                  v-list-tile-avatar(color='red')
+                  v-list-item-avatar(color='red')
                     v-icon(color='white') highlight_off
-                  v-list-tile-content
-                    v-list-tile-title.body-2 {{tgt.title}}
-                    v-list-tile-sub-title.red--text.caption {{$t('admin:storage.lastSyncAttempt', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
-                  v-list-tile-action
+                  v-list-item-content
+                    v-list-item-title.body-2 {{tgt.title}}
+                    v-list-item-sub-title.red--text.caption {{$t('admin:storage.lastSyncAttempt', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
+                  v-list-item-action
                     v-menu
                       v-btn(slot='activator', icon)
                         v-icon(color='red') info
@@ -73,7 +73,7 @@
                         v-card-text {{tgt.message}}
 
               v-divider(v-if='n < status.length - 1')
-            v-list-tile(v-if='status.length < 1')
+            v-list-item(v-if='status.length < 1')
               em {{$t('admin:storage.noTarget')}}
 
       v-flex(xs12, lg9)

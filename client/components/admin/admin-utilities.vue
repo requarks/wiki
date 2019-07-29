@@ -14,13 +14,13 @@
             .subheading {{$t('admin:utilities.tools')}}
           v-list(two-line, dense).py-0
             template(v-for='(tool, idx) in tools')
-              v-list-tile(:key='tool.key', @click='selectedTool = tool.key', :disabled='!tool.isAvailable')
-                v-list-tile-avatar
+              v-list-item(:key='tool.key', @click='selectedTool = tool.key', :disabled='!tool.isAvailable')
+                v-list-item-avatar
                   v-icon(:color='!tool.isAvailable ? `grey lighten-1` : (selectedTool === tool.key ? `blue ` : `grey darken-1`)') {{ tool.icon }}
-                v-list-tile-content
-                  v-list-tile-title.body-2(:class='!tool.isAvailable ? `grey--text` : (selectedTool === tool.key ? `primary--text` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Title') }}
-                  v-list-tile-sub-title.caption(:class='!tool.isAvailable ? `grey--text text--lighten-1` : (selectedTool === tool.key ? `blue--text ` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Subtitle') }}
-                v-list-tile-avatar(v-if='selectedTool === tool.key')
+                v-list-item-content
+                  v-list-item-title.body-2(:class='!tool.isAvailable ? `grey--text` : (selectedTool === tool.key ? `primary--text` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Title') }}
+                  v-list-item-sub-title.caption(:class='!tool.isAvailable ? `grey--text text--lighten-1` : (selectedTool === tool.key ? `blue--text ` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Subtitle') }}
+                v-list-item-avatar(v-if='selectedTool === tool.key')
                   v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
               v-divider(v-if='idx < tools.length - 1')
 

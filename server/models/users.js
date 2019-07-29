@@ -360,6 +360,88 @@ module.exports = class User extends Model {
     throw new WIKI.Error.AuthTFAInvalid()
   }
 
+  static async createNewUser ({ providerKey, email, passwordRaw, name, groups, mustChangePassword, sendWelcomeEmail }) {
+    // Input sanitization
+    email = _.toLower(email)
+
+    // Input validation
+    const validation = validate({
+      email,
+      passwordRaw,
+      name
+    }, {
+      email: {
+        email: true,
+        length: {
+          maximum: 255
+        }
+      },
+      passwordRaw: {
+        presence: {
+          allowEmpty: false
+        },
+        length: {
+          minimum: 6
+        }
+      },
+      name: {
+        presence: {
+          allowEmpty: false
+        },
+        length: {
+          minimum: 2,
+          maximum: 255
+        }
+      }
+    }, { format: 'flat' })
+    if (validation && validation.length > 0) {
+      throw new WIKI.Error.InputInvalid(validation[0])
+    }
+
+    // Check if email already exists
+    const usr = await WIKI.models.users.query().findOne({ email, providerKey })
+    if (!usr) {
+      // Create the account
+      const newUsr = await WIKI.models.users.query().insert({
+        provider: providerKey,
+        email,
+        name,
+        password: passwordRaw,
+        locale: 'en',
+        defaultEditor: 'markdown',
+        tfaIsActive: false,
+        isSystem: false,
+        isActive: true,
+        isVerified: true,
+        mustChangePwd: (mustChangePassword === true)
+      })
+
+      // Assign to group(s)
+      if (groups.length > 0) {
+        await newUsr.$relatedQuery('groups').relate(groups)
+      }
+
+      if (sendWelcomeEmail) {
+        // Send welcome email
+        await WIKI.mail.send({
+          template: 'accountWelcome',
+          to: email,
+          subject: `Welcome to the wiki ${WIKI.config.title}`,
+          data: {
+            preheadertext: `You've been invited to the wiki ${WIKI.config.title}`,
+            title: `You've been invited to the wiki ${WIKI.config.title}`,
+            content: `Click the button below to access the wiki.`,
+            buttonLink: `${WIKI.config.host}/login`,
+            buttonText: 'Login'
+          },
+          text: `You've been invited to the wiki ${WIKI.config.title}: ${WIKI.config.host}/login`
+        })
+      }
+    } else {
+      throw new WIKI.Error.AuthAccountAlreadyExists()
+    }
+  }
+
   static async register ({ email, password, name, verify = false, bypassChecks = false }, context) {
     const localStrg = await WIKI.models.authentication.getStrategy('local')
     // Check if self-registration is enabled

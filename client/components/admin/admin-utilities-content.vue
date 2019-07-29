@@ -9,7 +9,7 @@
       v-toolbar.radius-7.mt-3.wiki-form(flat, color='grey lighten-4', height='80')
         v-select(
           label='Source Locale'
-          outline
+          outlined
           hide-details
           :items='locales'
           item-text='name'
@@ -19,7 +19,7 @@
         v-icon.mx-3(large) arrow_forward
         v-select(
           label='Target Locale'
-          outline
+          outlined
           hide-details
           :items='locales'
           item-text='name'

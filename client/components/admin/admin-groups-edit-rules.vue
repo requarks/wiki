@@ -29,25 +29,25 @@
           v-btn.is-icon(slot='activator', flat, outline, color='primary')
             v-icon more_horiz
           v-list(dense)
-            v-list-tile(@click='comingSoon')
-              v-list-tile-avatar
+            v-list-item(@click='comingSoon')
+              v-list-item-avatar
                 v-icon keyboard_capslock
-              v-list-tile-title Load Preset
+              v-list-item-title Load Preset
             v-divider
-            v-list-tile(@click='comingSoon')
-              v-list-tile-avatar
+            v-list-item(@click='comingSoon')
+              v-list-item-avatar
                 v-icon publish
-              v-list-tile-title Save As Preset
+              v-list-item-title Save As Preset
             v-divider
-            v-list-tile(@click='comingSoon')
-              v-list-tile-avatar
+            v-list-item(@click='comingSoon')
+              v-list-item-avatar
                 v-icon cloud_upload
-              v-list-tile-title Import Rules
+              v-list-item-title Import Rules
             v-divider
-            v-list-tile(@click='comingSoon')
-              v-list-tile-avatar
+            v-list-item(@click='comingSoon')
+              v-list-item-avatar
                 v-icon cloud_download
-              v-list-tile-title Export Rules
+              v-list-item-title Export Rules
       v-card-text(:class='$vuetify.dark ? `grey darken-4-l5` : `white`')
         .rules
           .caption(v-if='group.pageRules.length === 0')
@@ -81,15 +81,15 @@
                 v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value }}
                 v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 2 }} more
               template(slot='item', slot-scope='props')
-                v-list-tile-action(style='min-width: 30px;')
+                v-list-item-action(style='min-width: 30px;')
                   v-checkbox(
                     v-model='props.tile.props.value'
                     hide-details
                     color='primary'
                   )
                 v-icon.mr-2(:color='rule.deny ? `red` : `green`') {{props.item.icon}}
-                v-list-tile-content
-                  v-list-tile-title.body-2 {{props.item.text}}
+                v-list-item-content
+                  v-list-item-title.body-2 {{props.item.text}}
                 v-chip.mr-2.grey--text(label, small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value}}
 
             //- Match
@@ -105,10 +105,10 @@
               template(slot='selection', slot-scope='{ item, index }')
                 .body-1 {{item.text}}
               template(slot='item', slot-scope='data')
-                v-list-tile-avatar
+                v-list-item-avatar
                   v-avatar.white--text.radius-4(color='blue', size='30', tile) {{ data.item.icon }}
-                v-list-tile-content
-                  v-list-tile-title(v-html='data.item.text')
+                v-list-item-content
+                  v-list-item-title(v-html='data.item.text')
             //- Locales
             v-select.mr-1(
               :background-color='$vuetify.dark ? `grey darken-3-d5` : `blue-grey lighten-5`'
@@ -125,8 +125,8 @@
               template(slot='selection', slot-scope='{ item, index }')
                 v-chip.white--text.ml-0(v-if='rule.locales.length === 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value.toUpperCase() }}
                 v-chip.white--text.ml-0(v-else-if='index === 0', small, label, :color='rule.deny ? `red` : `green`').caption {{ rule.locales.length }} locales
-              v-list-tile(slot='prepend-item', @click='rule.locales = []')
-                v-list-tile-action(style='min-width: 30px;')
+              v-list-item(slot='prepend-item', @click='rule.locales = []')
+                v-list-item-action(style='min-width: 30px;')
                   v-checkbox(
                     :input-value='rule.locales.length === 0'
                     hide-details
@@ -134,19 +134,19 @@
                     readonly
                   )
                 v-icon.mr-2(:color='rule.deny ? `red` : `green`') public
-                v-list-tile-content
-                  v-list-tile-title.body-2 Any Locale
+                v-list-item-content
+                  v-list-item-title.body-2 Any Locale
               v-divider(slot='prepend-item')
               template(slot='item', slot-scope='props')
-                v-list-tile-action(style='min-width: 30px;')
+                v-list-item-action(style='min-width: 30px;')
                   v-checkbox(
                     v-model='props.tile.props.value'
                     hide-details
                     color='primary'
                   )
                 v-icon.mr-2(:color='rule.deny ? `red` : `green`') language
-                v-list-tile-content
-                  v-list-tile-title.body-2 {{props.item.text}}
+                v-list-item-content
+                  v-list-item-title.body-2 {{props.item.text}}
                 v-chip.mr-2.grey--text(label, small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value.toUpperCase()}}
 
             //- Path

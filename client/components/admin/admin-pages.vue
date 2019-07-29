@@ -8,37 +8,34 @@
             .headline.blue--text.text--darken-2.animated.fadeInLeft Pages
             .subheading.grey--text.animated.fadeInLeft.wait-p2s Manage pages
           v-spacer
-          v-btn.animated.fadeInDown.wait-p1s(color='grey', outline, @click='refresh', large)
-            v-icon.grey--text refresh
-          v-btn.animated.fadeInDown(color='primary', outline, large, @click='recyclebin', disabled)
-            v-icon(left) delete_outline
+          v-btn.animated.fadeInDown.wait-p1s(color='grey', outlined, @click='refresh', large)
+            v-icon.grey--text mdi-refresh
+          v-btn.animated.fadeInDown.mx-3(color='primary', outlined, large, @click='recyclebin', disabled)
+            v-icon(left) mdi-delete-outline
             span Recycle Bin
           v-btn.animated.fadeInDown(color='primary', depressed, large, @click='newpage', disabled)
-            v-icon(left) add
+            v-icon(left) mdi-plus
             span New Page
         v-card.wiki-form.mt-3.animated.fadeInUp
           v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
             v-spacer
             v-text-field(
-              outline
+              outlined
               v-model='search'
-              append-icon='search'
+              prepend-inner-icon='mdi-file-search-outline'
               label='Search Pages...'
-              single-line
               hide-details
               )
             v-select.ml-2(
-              outline
+              outlined
               hide-details
-              single-line
               label='Locale'
               :items='langs'
               v-model='selectedLang'
             )
             v-select.ml-2(
-              outline
+              outlined
               hide-details
-              single-line
               label='Publish State'
               :items='states'
               v-model='selectedState'

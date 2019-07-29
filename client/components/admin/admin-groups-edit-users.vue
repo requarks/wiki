@@ -30,16 +30,16 @@
             v-menu(bottom, right, min-width='200')
               v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
               v-list
-                v-list-tile(:to='`/users/` + props.item.id')
-                  v-list-tile-action: v-icon(color='primary') person
-                  v-list-tile-content
-                    v-list-tile-title View User Profile
+                v-list-item(:to='`/users/` + props.item.id')
+                  v-list-item-action: v-icon(color='primary') person
+                  v-list-item-content
+                    v-list-item-title View User Profile
                 template(v-if='props.item.id !== 2')
                   v-divider
-                  v-list-tile(@click='unassignUser(props.item.id)')
-                    v-list-tile-action: v-icon(color='orange') highlight_off
-                    v-list-tile-content
-                      v-list-tile-title Unassign
+                  v-list-item(@click='unassignUser(props.item.id)')
+                    v-list-item-action: v-icon(color='orange') highlight_off
+                    v-list-item-content
+                      v-list-item-title Unassign
       template(slot='no-data')
         v-alert.ma-3(icon='warning', :value='true', outline) No users to display.
     .text-xs-center.py-2(v-if='group.users.length > 15')

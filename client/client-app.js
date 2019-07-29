@@ -12,7 +12,7 @@ import { ErrorLink } from 'apollo-link-error'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import { getMainDefinition } from 'apollo-utilities'
 import VueApollo from 'vue-apollo'
-import Vuetify from 'vuetify'
+import Vuetify from 'vuetify/lib'
 import Velocity from 'velocity-animate'
 import Vuescroll from 'vuescroll/dist/vuescroll-native'
 import Hammer from 'hammerjs'
@@ -138,10 +138,8 @@ Vue.use(VueApollo)
 Vue.use(VueClipboards)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
-Vue.use(VeeValidate, { events: '' })
-Vue.use(Vuetify, {
-  rtl: siteConfig.rtl
-})
+Vue.use(VeeValidate, { mode: 'eager' })
+Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
 Vue.use(Vuescroll)
 Vue.use(VueTour)
@@ -194,7 +192,10 @@ let bootstrap = () => {
     mixins: [helpers],
     apolloProvider,
     store,
-    i18n
+    i18n,
+    vuetify: new Vuetify({
+      rtl: siteConfig.rtl
+    })
   })
 
   // ----------------------------------
@@ -208,14 +209,6 @@ let bootstrap = () => {
   // ====================================
 
   import(/* webpackChunkName: "theme-page"  */ './themes/' + process.env.CURRENT_THEME + '/js/app.js')
-
-  // ====================================
-  // Load Icons
-  // ====================================
-
-  // import(/* webpackChunkName: "icons" */ './svg/icons.svg').then(icons => {
-  //   document.body.insertAdjacentHTML('beforeend', icons.default)
-  // })
 }
 
 window.boot.onDOMReady(bootstrap)

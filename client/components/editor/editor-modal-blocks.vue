@@ -10,14 +10,14 @@
                   .body-2.teal--text Blocks
               v-list(two-line)
                 template(v-for='(item, idx) of blocks')
-                  v-list-tile(@click='selectBlock(item)')
-                    v-list-tile-avatar
+                  v-list-item(@click='selectBlock(item)')
+                    v-list-item-avatar
                       v-avatar.radius-7(color='teal')
                         v-icon(dark) dashboard
-                    v-list-tile-content
-                      v-list-tile-title.body-2 {{item.title}}
-                      v-list-tile-sub-title {{item.description}}
-                    v-list-tile-avatar(v-if='block.key === item.key')
+                    v-list-item-content
+                      v-list-item-title.body-2 {{item.title}}
+                      v-list-item-sub-title {{item.description}}
+                    v-list-item-avatar(v-if='block.key === item.key')
                       v-icon.animated.fadeInLeft(color='teal') arrow_forward_ios
                   v-divider(v-if='idx < blocks.length - 1')
 

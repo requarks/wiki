@@ -8,7 +8,7 @@
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:auth.title') }}
             .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:auth.subtitle') }}
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', @click='refresh', large)
             v-icon refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) check
@@ -20,16 +20,16 @@
             .subheading {{$t('admin:auth.strategies')}}
           v-list(two-line, dense).py-0
             template(v-for='(str, idx) in strategies')
-              v-list-tile(:key='str.key', @click='selectedStrategy = str.key', :disabled='!str.isAvailable')
-                v-list-tile-avatar
+              v-list-item(:key='str.key', @click='selectedStrategy = str.key', :disabled='!str.isAvailable')
+                v-list-item-avatar
                   v-icon(color='grey', v-if='!str.isAvailable') indeterminate_check_box
                   v-icon(color='primary', v-else-if='str.isEnabled && str.key !== `local`', v-ripple, @click='str.isEnabled = false') check_box
                   v-icon(color='primary', v-else-if='str.isEnabled && str.key === `local`') check_box
                   v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') check_box_outline_blank
-                v-list-tile-content
-                  v-list-tile-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedStrategy === str.key ? `primary--text` : ``)') {{ str.title }}
-                  v-list-tile-sub-title.caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedStrategy === str.key ? `blue--text ` : ``)') {{ str.description }}
-                v-list-tile-avatar(v-if='selectedStrategy === str.key')
+                v-list-item-content
+                  v-list-item-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedStrategy === str.key ? `primary--text` : ``)') {{ str.title }}
+                  v-list-item-sub-title.caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedStrategy === str.key ? `blue--text ` : ``)') {{ str.description }}
+                v-list-item-avatar(v-if='selectedStrategy === str.key')
                   v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
               v-divider(v-if='idx < strategies.length - 1')
 
@@ -39,7 +39,7 @@
           v-card-text
             v-text-field.md2(
               v-model='jwtAudience'
-              outline
+              outlined
               prepend-icon='account_balance'
               :label='$t(`admin:auth.jwtAudience`)'
               :hint='$t(`admin:auth.jwtAudienceHint`)'
@@ -47,7 +47,7 @@
             )
             v-text-field.mt-3.md2(
               v-model='jwtExpiration'
-              outline
+              outlined
               prepend-icon='schedule'
               :label='$t(`admin:auth.tokenExpiration`)'
               :hint='$t(`admin:auth.tokenExpirationHint`)'
@@ -55,7 +55,7 @@
             )
             v-text-field.mt-3.md2(
               v-model='jwtRenewablePeriod'
-              outline
+              outlined
               prepend-icon='update'
               :label='$t(`admin:auth.tokenRenewalPeriod`)'
               :hint='$t(`admin:auth.tokenRenewalPeriodHint`)'
@@ -85,8 +85,7 @@
               template(v-else, v-for='cfg in strategy.config')
                 v-select(
                   v-if='cfg.value.type === "string" && cfg.value.enum'
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :items='cfg.value.enum'
                   :key='cfg.key'
                   :label='cfg.value.title'
@@ -108,8 +107,7 @@
                   )
                 v-textarea(
                   v-else-if='cfg.value.type === "string" && cfg.value.multiline'
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
@@ -120,8 +118,7 @@
                   )
                 v-text-field(
                   v-else
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
@@ -153,7 +150,7 @@
                   :label='$t(`admin:auth.domainsWhitelist`)'
                   v-model='strategy.domainWhitelist'
                   prepend-icon='mail_outline'
-                  outline
+                  outlined
                   :disabled='!strategy.selfRegistration'
                   :hint='$t(`admin:auth.domainsWhitelistHint`)'
                   persistent-hint
@@ -164,7 +161,7 @@
                   chips
                   )
                 v-autocomplete.mt-3.ml-3(
-                  outline
+                  outlined
                   :disabled='!strategy.selfRegistration'
                   :items='groups'
                   item-text='name'

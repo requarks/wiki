@@ -224,39 +224,39 @@
                 v-icon.mr-3(color='teal') keyboard
                 .body-2.teal--text Keyboard Shortcuts
               v-list.editor-markdown-help-kbd(two-line, dense)
-                v-list-tile
-                  v-list-tile-content.body-2 Bold
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd B]
+                v-list-item
+                  v-list-item-content.body-2 Bold
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd B]
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Italic
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd I]
+                v-list-item
+                  v-list-item-content.body-2 Italic
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd I]
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Increase Header Level
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd {{altKey}}] + #[kbd Right]
+                v-list-item
+                  v-list-item-content.body-2 Increase Header Level
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd {{altKey}}] + #[kbd Right]
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Decrease Header Level
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd {{altKey}}] + #[kbd Left]
+                v-list-item
+                  v-list-item-content.body-2 Decrease Header Level
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd {{altKey}}] + #[kbd Left]
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Save
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd S]
+                v-list-item
+                  v-list-item-content.body-2 Save
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd S]
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Undo
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd Z]
+                v-list-item
+                  v-list-item-content.body-2 Undo
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd Z]
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Redo
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd Y]
+                v-list-item
+                  v-list-item-content.body-2 Redo
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd Y]
                 v-divider
-                v-list-tile
-                  v-list-tile-content
-                    v-list-tile-title.body-2 Distraction Free Mode
-                    v-list-tile-sub-title Press <kbd>Esc</kbd> to exit.
-                  v-list-tile-action #[kbd F11]
+                v-list-item
+                  v-list-item-content
+                    v-list-item-title.body-2 Distraction Free Mode
+                    v-list-item-sub-title Press <kbd>Esc</kbd> to exit.
+                  v-list-item-action #[kbd F11]
 
           v-card.radius-7.animated.fadeInUp.wait-p3s.mt-3(light)
             v-card-text
@@ -264,17 +264,17 @@
                 v-icon.mr-3(color='teal') mouse
                 .body-2.teal--text Multi-Selection
               v-list.editor-markdown-help-kbd(two-line, dense)
-                v-list-tile
-                  v-list-tile-content.body-2 Multiple Cursors
-                  v-list-tile-action #[kbd {{ctrlKey}}] + Left Click
+                v-list-item
+                  v-list-item-content.body-2 Multiple Cursors
+                  v-list-item-action #[kbd {{ctrlKey}}] + Left Click
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Select Region
-                  v-list-tile-action #[kbd {{ctrlKey}}] + #[kbd {{altKey}}] + Left Click
+                v-list-item
+                  v-list-item-content.body-2 Select Region
+                  v-list-item-action #[kbd {{ctrlKey}}] + #[kbd {{altKey}}] + Left Click
                 v-divider
-                v-list-tile
-                  v-list-tile-content.body-2 Deselect
-                  v-list-tile-action #[kbd Esc]
+                v-list-item
+                  v-list-item-content.body-2 Deselect
+                  v-list-item-action #[kbd Esc]
 </template>
 
 <script>

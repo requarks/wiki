@@ -91,18 +91,18 @@
             v-btn(outline, small, href='https://opencollective.com/wikijs/order/1273') Become a Sponsor
           v-list(two-line)
             template(v-for='(sponsor, idx) in sponsors')
-              v-list-tile(:key='sponsor.id')
-                v-list-tile-avatar
+              v-list-item(:key='sponsor.id')
+                v-list-item-avatar
                   img(v-if='sponsor.image', :src='sponsor.image')
                   v-avatar(v-else, color='teal', size='40')
                     span.white--text.subheading {{sponsor.name[0].toUpperCase()}}
-                v-list-tile-content
-                  v-list-tile-title {{sponsor.name}}
-                  v-list-tile-sub-title {{sponsor.description}}
-                v-list-tile-action(v-if='sponsor.twitter')
+                v-list-item-content
+                  v-list-item-title {{sponsor.name}}
+                  v-list-item-sub-title {{sponsor.description}}
+                v-list-item-action(v-if='sponsor.twitter')
                   v-btn(icon, :href='sponsor.twitter', target='_blank')
                     icon-twitter(fillColor='#9e9e9e')
-                v-list-tile-action(v-if='sponsor.website')
+                v-list-item-action(v-if='sponsor.website')
                   v-btn(icon, :href='sponsor.website', target='_blank')
                     v-icon(color='grey') public
               v-divider(v-if='idx < sponsors.length - 1')
@@ -112,91 +112,91 @@
             v-btn(outline, small, href='https://opencollective.com/wikijs/order/1272') Become a Backer
           v-list(two-line, dense)
             template(v-for='(backer, idx) in backers')
-              v-list-tile(:key='backer.id')
-                v-list-tile-avatar
+              v-list-item(:key='backer.id')
+                v-list-item-avatar
                   img(v-if='backer.image', :src='backer.image')
                   v-avatar(v-else, color='blue-grey', size='40')
                     span.white--text.subheading {{backer.name[0].toUpperCase()}}
-                v-list-tile-content
-                  v-list-tile-title {{backer.name}}
-                  v-list-tile-sub-title {{backer.description}}
-                v-list-tile-action(v-if='backer.twitter')
+                v-list-item-content
+                  v-list-item-title {{backer.name}}
+                  v-list-item-sub-title {{backer.description}}
+                v-list-item-action(v-if='backer.twitter')
                   v-btn(icon, :href='backer.twitter', target='_blank')
                     icon-twitter(fillColor='#9e9e9e')
-                v-list-tile-action(v-if='backer.website')
+                v-list-item-action(v-if='backer.website')
                   v-btn(icon, :href='backer.website', target='_blank')
                     v-icon(color='grey') public
               v-divider(v-if='idx < backers.length - 1')
           v-toolbar(color='primary', dense, dark)
             .subheading Special Thanks
           v-list(two-line)
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 img(src='https://static.requarks.io/logo/algolia.svg', alt='Algolia')
-              v-list-tile-content
-                v-list-tile-title Algolia
-                v-list-tile-sub-title Algolia is a powerful search-as-a-service solution, made easy to use with API clients, UI libraries, and pre-built integrations.
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Algolia
+                v-list-item-sub-title Algolia is a powerful search-as-a-service solution, made easy to use with API clients, UI libraries, and pre-built integrations.
+              v-list-item-action
                 v-btn(icon, href='https://www.algolia.com/', target='_blank')
                   v-icon(color='grey') public
             v-divider
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 img(src='https://static.requarks.io/logo/browserstack.svg', alt='Browserstack')
-              v-list-tile-content
-                v-list-tile-title BrowserStack
-                v-list-tile-sub-title BrowserStack is a cloud web and mobile testing platform that enables developers to test their websites and mobile applications.
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title BrowserStack
+                v-list-item-sub-title BrowserStack is a cloud web and mobile testing platform that enables developers to test their websites and mobile applications.
+              v-list-item-action
                 v-btn(icon, href='https://www.browserstack.com/', target='_blank')
                   v-icon(color='grey') public
             v-divider
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 img(src='https://static.requarks.io/logo/cloudflare.svg', alt='Cloudflare')
-              v-list-tile-content
-                v-list-tile-title Cloudflare
-                v-list-tile-sub-title Providing content delivery network services, DDoS mitigation, Internet security and distributed domain name server services.
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Cloudflare
+                v-list-item-sub-title Providing content delivery network services, DDoS mitigation, Internet security and distributed domain name server services.
+              v-list-item-action
                 v-btn(icon, href='https://www.cloudflare.com/', target='_blank')
                   v-icon(color='grey') public
             v-divider
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 img(src='https://static.requarks.io/logo/digitalocean.svg', alt='DigitalOcean')
-              v-list-tile-content
-                v-list-tile-title DigitalOcean
-                v-list-tile-sub-title Providing developers and businesses a reliable, easy-to-use cloud computing platform of virtual servers (Droplets), object storage (Spaces), and more.
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title DigitalOcean
+                v-list-item-sub-title Providing developers and businesses a reliable, easy-to-use cloud computing platform of virtual servers (Droplets), object storage (Spaces), and more.
+              v-list-item-action
                 v-btn(icon, href='https://m.do.co/c/5f7445bfa4d0', target='_blank')
                   v-icon(color='grey') public
             v-divider
-            v-list-tile
-              v-list-tile-avatar(tile)
+            v-list-item
+              v-list-item-avatar(tile)
                 img(src='/svg/logo-icons8.svg', alt='Icons8')
-              v-list-tile-content
-                v-list-tile-title Icons8
-                v-list-tile-sub-title All the Icons You Need. Guaranteed.
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Icons8
+                v-list-item-sub-title All the Icons You Need. Guaranteed.
+              v-list-item-action
                 v-btn(icon, href='https://icons8.com', target='_blank')
                   v-icon(color='grey') public
             v-divider
-            v-list-tile
-              v-list-tile-avatar(tile)
+            v-list-item
+              v-list-item-avatar(tile)
                 img(src='https://static.requarks.io/logo/lokalise.png', alt='Lokalise')
-              v-list-tile-content
-                v-list-tile-title Lokalise
-                v-list-tile-sub-title Lokalise is a translation management system built for agile teams who want to automate their localization process.
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Lokalise
+                v-list-item-sub-title Lokalise is a translation management system built for agile teams who want to automate their localization process.
+              v-list-item-action
                 v-btn(icon, href='https://lokalise.co', target='_blank')
                   v-icon(color='grey') public
             v-divider
-            v-list-tile
-              v-list-tile-avatar(tile)
+            v-list-item
+              v-list-item-avatar(tile)
                 img(src='https://static.requarks.io/logo/netlify.svg', alt='Netlify')
-              v-list-tile-content
-                v-list-tile-title Netlify
-                v-list-tile-sub-title Deploy modern static websites with Netlify. Get CDN, Continuous deployment, 1-click HTTPS, and all the services you need.
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Netlify
+                v-list-item-sub-title Deploy modern static websites with Netlify. Get CDN, Continuous deployment, 1-click HTTPS, and all the services you need.
+              v-list-item-action
                 v-btn(icon, href='https://wwwnetlify.com', target='_blank')
                   v-icon(color='grey') public
 

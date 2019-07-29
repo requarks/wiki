@@ -148,7 +148,7 @@ export default {
         try {
           const resp = await axios.post('/finalize', this.conf)
           if (resp.data.ok === true) {
-              this.success = true
+            this.success = true
             _.delay(() => {
               window.location.assign('/login')
             }, 3000)
@@ -157,7 +157,7 @@ export default {
             this.errorMessage = resp.data.error
             this.loading = false
           }
-        } catch(err) {
+        } catch (err) {
           window.alert(err.message)
         }
       }, 1000)

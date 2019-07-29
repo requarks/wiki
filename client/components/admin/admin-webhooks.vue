@@ -22,14 +22,14 @@
               span New
           v-list(two-line, dense).py-0
             template(v-for='(str, idx) in hooks')
-              v-list-tile(:key='str.key', @click='selectedHook = str.key')
-                v-list-tile-avatar
+              v-list-item(:key='str.key', @click='selectedHook = str.key')
+                v-list-item-avatar
                   v-icon(color='primary', v-if='str.isEnabled', v-ripple, @click='str.isEnabled = false') check_box
                   v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') check_box_outline_blank
-                v-list-tile-content
-                  v-list-tile-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedHook === str.key ? `primary--text` : ``)') {{ str.title }}
-                  v-list-tile-sub-title.caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedHook === str.key ? `blue--text ` : ``)') {{ str.description }}
-                v-list-tile-avatar(v-if='selectedHook === str.key')
+                v-list-item-content
+                  v-list-item-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedHook === str.key ? `primary--text` : ``)') {{ str.title }}
+                  v-list-item-sub-title.caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedHook === str.key ? `blue--text ` : ``)') {{ str.description }}
+                v-list-item-avatar(v-if='selectedHook === str.key')
                   v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
               v-divider(v-if='idx < hooks.length - 1')
 

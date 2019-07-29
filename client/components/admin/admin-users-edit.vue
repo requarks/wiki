@@ -31,23 +31,23 @@
             v-icon.mr-2 directions_run
             span Basic Info
           v-list.py-0(two-line, dense)
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-icon alternate_email
-              v-list-tile-content
-                v-list-tile-title Email
-                v-list-tile-sub-title {{ user.email }}
-              v-list-tile-action(v-if='!user.isSystem')
+              v-list-item-content
+                v-list-item-title Email
+                v-list-item-sub-title {{ user.email }}
+              v-list-item-action(v-if='!user.isSystem')
                   v-btn(icon, color='grey', flat)
                     v-icon edit
             v-divider
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-icon person
-              v-list-tile-content
-                v-list-tile-title Display Name
-                v-list-tile-sub-title {{ user.name }}
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Display Name
+                v-list-item-sub-title {{ user.name }}
+              v-list-item-action
                   v-btn(icon, color='grey', flat)
                     v-icon edit
         v-card.mt-3.animated.fadeInUp.wait-p2s(v-if='!user.isSystem')
@@ -55,58 +55,58 @@
             v-icon.mr-2 lock_outline
             span Authentication
           v-list.py-0(two-line, dense)
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-icon business
-              v-list-tile-content
-                v-list-tile-title Provider
-                v-list-tile-sub-title {{ user.providerKey }}
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Provider
+                v-list-item-sub-title {{ user.providerKey }}
+              v-list-item-action
                 v-img(src='https://static.requarks.io/logo/wikijs.svg', alt='')
             template(v-if='user.providerKey === `local`')
               v-divider
-              v-list-tile
-                v-list-tile-avatar
+              v-list-item
+                v-list-item-avatar
                   v-icon security
-                v-list-tile-content
-                  v-list-tile-title Password
-                  v-list-tile-sub-title ********
-                v-list-tile-action
+                v-list-item-content
+                  v-list-item-title Password
+                  v-list-item-sub-title ********
+                v-list-item-action
                     v-btn(icon, color='grey', flat)
                       v-icon cached
-                v-list-tile-action
+                v-list-item-action
                     v-btn(icon, color='grey', flat)
                       v-icon email
               v-divider
-              v-list-tile
-                v-list-tile-avatar
+              v-list-item
+                v-list-item-avatar
                   v-icon screen_lock_portrait
-                v-list-tile-content
-                  v-list-tile-title Two Factor Authentication (2FA)
-                  v-list-tile-sub-title.red--text Inactive
-                v-list-tile-action
+                v-list-item-content
+                  v-list-item-title Two Factor Authentication (2FA)
+                  v-list-item-sub-title.red--text Inactive
+                v-list-item-action
                     v-btn(icon, color='grey', flat)
                       v-icon power_settings_new
               template(v-if='user.providerId')
                 v-divider
-                v-list-tile
-                  v-list-tile-avatar
+                v-list-item
+                  v-list-item-avatar
                     v-icon person
-                  v-list-tile-content
-                    v-list-tile-title Provider Id
-                    v-list-tile-sub-title {{ user.providerId }}
+                  v-list-item-content
+                    v-list-item-title Provider Id
+                    v-list-item-sub-title {{ user.providerId }}
         v-card.mt-3.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 people
             span User Groups
           v-list(dense)
             template(v-for='(group, idx) in user.groups')
-              v-list-tile
-                v-list-tile-avatar
+              v-list-item
+                v-list-item-avatar
                   v-icon people_outline
-                v-list-tile-content
-                  v-list-tile-title {{group.name}}
-                v-list-tile-action
+                v-list-item-content
+                  v-list-item-title {{group.name}}
+                v-list-item-action
                   v-btn(icon, color='red', flat)
                     v-icon clear
               v-divider(v-if='idx < user.groups.length - 1')
@@ -121,33 +121,33 @@
             v-icon.mr-2 directions_walk
             span Extended Metadata
           v-list.py-0(two-line, dense)
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-icon public
-              v-list-tile-content
-                v-list-tile-title Location
-                v-list-tile-sub-title {{ user.location }}
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Location
+                v-list-item-sub-title {{ user.location }}
+              v-list-item-action
                   v-btn(icon, color='grey', flat)
                     v-icon edit
             v-divider
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-icon local_library
-              v-list-tile-content
-                v-list-tile-title Job Title
-                v-list-tile-sub-title {{ user.jobTitle }}
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Job Title
+                v-list-item-sub-title {{ user.jobTitle }}
+              v-list-item-action
                   v-btn(icon, color='grey', flat)
                     v-icon edit
             v-divider
-            v-list-tile
-              v-list-tile-avatar
+            v-list-item
+              v-list-item-avatar
                 v-icon map
-              v-list-tile-content
-                v-list-tile-title Timezone
-                v-list-tile-sub-title {{ user.timezone }}
-              v-list-tile-action
+              v-list-item-content
+                v-list-item-title Timezone
+                v-list-item-sub-title {{ user.timezone }}
+              v-list-item-action
                   v-btn(icon, color='grey', flat)
                     v-icon edit
         v-card.mt-3.animated.fadeInUp.wait-p4s

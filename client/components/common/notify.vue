@@ -3,11 +3,10 @@
     :color='notification.style'
     top
     multi-line
-    auto-height
     v-model='notificationState'
     )
-    .text-xs-left
-      v-icon.mr-3(dark) {{ notification.icon }}
+    .text-left
+      v-icon.mr-3(dark) mdi-{{ notification.icon }}
       span {{ notification.message }}
 </template>
 

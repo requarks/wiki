@@ -8,10 +8,10 @@
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:analytics.title') }}
             .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:analytics.subtitle') }}
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
-            v-icon refresh
+          v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', @click='refresh', large)
+            v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
       v-flex(lg3, xs12)
@@ -20,21 +20,21 @@
             .subheading {{$t('admin:analytics.providers')}}
           v-list(two-line, dense).py-0
             template(v-for='(str, idx) in providers')
-              v-list-tile(:key='str.key', @click='selectedProvider = str.key', :disabled='!str.isAvailable')
-                v-list-tile-avatar
-                  v-icon(color='grey', v-if='!str.isAvailable') indeterminate_check_box
-                  v-icon(color='primary', v-else-if='str.isEnabled', v-ripple, @click='str.isEnabled = false') check_box
-                  v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') check_box_outline_blank
-                v-list-tile-content
-                  v-list-tile-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedProvider === str.key ? `primary--text` : ``)') {{ str.title }}
-                  v-list-tile-sub-title.caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedProvider === str.key ? `blue--text ` : ``)') {{ str.description }}
-                v-list-tile-avatar(v-if='selectedProvider === str.key')
-                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+              v-list-item(:key='str.key', @click='selectedProvider = str.key', :disabled='!str.isAvailable')
+                v-list-item-avatar(size='24')
+                  v-icon(color='grey', v-if='!str.isAvailable') mdi-minus-box-outline
+                  v-icon(color='primary', v-else-if='str.isEnabled', v-ripple, @click='str.isEnabled = false') mdi-checkbox-marked-outline
+                  v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') mdi-checkbox-blank-outline
+                v-list-item-content
+                  v-list-item-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedProvider === str.key ? `primary--text` : ``)') {{ str.title }}
+                  v-list-item-subtitle: .caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedProvider === str.key ? `blue--text ` : ``)') {{ str.description }}
+                v-list-item-avatar(v-if='selectedProvider === str.key', size='24')
+                  v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
               v-divider(v-if='idx < providers.length - 1')
 
       v-flex(xs12, lg9)
 
-        v-card.wiki-form.animated.fadeInUp.wait-p2s
+        v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subheading {{provider.title}}
           v-card-text
@@ -44,18 +44,17 @@
               .caption.pt-3 {{provider.description}}
               .caption.pb-3: a(:href='provider.website') {{provider.website}}
               v-divider.mt-3
-              v-subheader.pl-0 {{$t('admin:analytics.providerConfiguration')}}
+              .overline.py-4 {{$t('admin:analytics.providerConfiguration')}}
               .body-1.ml-3(v-if='!provider.config || provider.config.length < 1'): em {{$t('admin:analytics.providerNoConfiguration')}}
               template(v-else, v-for='cfg in provider.config')
                 v-select(
                   v-if='cfg.value.type === "string" && cfg.value.enum'
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :items='cfg.value.enum'
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -66,30 +65,28 @@
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
                   color='primary'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   )
                 v-textarea(
                   v-else-if='cfg.value.type === "string" && cfg.value.multiline'
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
                 v-text-field(
                   v-else
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'

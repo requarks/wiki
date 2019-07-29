@@ -28,13 +28,7 @@ html
     link(rel='manifest', href='/manifest.json')
 
     //- Icon Set
-    if config.theming.iconset === 'mdi'
-      link(
-        type='text/css'
-        rel='stylesheet'
-        href='https://cdn.materialdesignicons.com/3.7.95/css/materialdesignicons.min.css'
-        )
-    else if config.theming.iconset === 'fa'
+    if config.theming.iconset === 'fa'
       link(
         type='text/css'
         rel='stylesheet'

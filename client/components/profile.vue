@@ -3,20 +3,20 @@
     nav-header
     v-navigation-drawer.pb-0(v-model='profileDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense)
-        v-list-tile.pt-2(to='/profile')
-          v-list-tile-action: v-icon account_circle
-          v-list-tile-title Profile
-        v-list-tile(to='/preferences')
-          v-list-tile-action: v-icon settings
-          v-list-tile-title Preferences
+        v-list-item.pt-2(to='/profile')
+          v-list-item-action: v-icon account_circle
+          v-list-item-title Profile
+        v-list-item(to='/preferences')
+          v-list-item-action: v-icon settings
+          v-list-item-title Preferences
         v-divider.my-2
         v-subheader My Content
-        v-list-tile(to='/pages')
-          v-list-tile-action: v-icon pages
-          v-list-tile-title Pages
-        v-list-tile(to='/comments')
-          v-list-tile-action: v-icon question_answer
-          v-list-tile-title Comments
+        v-list-item(to='/pages')
+          v-list-item-action: v-icon pages
+          v-list-item-title Pages
+        v-list-item(to='/comments')
+          v-list-item-action: v-icon question_answer
+          v-list-item-title Comments
 
     v-content
       transition(name='profile-router')

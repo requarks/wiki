@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const yargs = require('yargs').argv
 const _ = require('lodash')
+const Fiber = require('fibers')
 
 const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
@@ -10,6 +11,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
 const SriWebpackPlugin = require('webpack-subresource-integrity')
+const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
@@ -66,6 +68,28 @@ module.exports = {
         ]
       },
       {
+        test: /\.sass$/,
+        use: [
+          {
+            loader: 'cache-loader',
+            options: {
+              cacheDirectory: cacheDir
+            }
+          },
+          'style-loader',
+          'css-loader',
+          'postcss-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              implementation: require('sass'),
+              fiber: Fiber,
+              sourceMap: false
+            }
+          }
+        ]
+      },
+      {
         test: /\.scss$/,
         use: [
           {
@@ -80,6 +104,8 @@ module.exports = {
           {
             loader: 'sass-loader',
             options: {
+              implementation: require('sass'),
+              fiber: Fiber,
               sourceMap: false
             }
           },
@@ -89,15 +115,6 @@ module.exports = {
               resources: path.join(process.cwd(), '/client/scss/global.scss')
             }
           }
-        ]
-      },
-      {
-        test: /\.styl$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          'postcss-loader',
-          'stylus-loader'
         ]
       },
       {
@@ -186,8 +203,10 @@ module.exports = {
   },
   plugins: [
     new VueLoaderPlugin(),
+    new VuetifyLoaderPlugin(),
     new CopyWebpackPlugin([
       { from: 'client/static' },
+      { from: './node_modules/prismjs/components', to: 'js/prism' },
       { from: './node_modules/graphql-voyager/dist/voyager.worker.js', to: 'js/' }
     ], {}),
     new HtmlWebpackPlugin({

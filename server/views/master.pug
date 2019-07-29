@@ -32,13 +32,7 @@ html
       var siteConfig = !{JSON.stringify(siteConfig)}; var siteLangs = !{JSON.stringify(langs)}
 
     //- Icon Set
-    if config.theming.iconset === 'mdi'
-      link(
-        type='text/css'
-        rel='stylesheet'
-        href='https://cdn.materialdesignicons.com/3.7.95/css/materialdesignicons.min.css'
-        )
-    else if config.theming.iconset === 'fa'
+    if config.theming.iconset === 'fa'
       link(
         type='text/css'
         rel='stylesheet'

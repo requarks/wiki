@@ -9,20 +9,19 @@
             .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:locale.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large, :loading='loading')
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-card.wiki-form.animated.fadeInUp
                 v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading {{ $t('admin:locale.settings') }}
+                  v-toolbar-title.subtitle-1 {{ $t('admin:locale.settings') }}
                 v-card-text
                   v-select(
-                    outline
+                    outlined
                     :items='installedLocales'
-                    prepend-icon='language'
+                    prepend-icon='mdi-web'
                     v-model='selectedLocale'
                     item-value='code'
                     item-text='nativeName'
@@ -32,13 +31,13 @@
                   )
                     template(slot='item', slot-scope='data')
                       template(v-if='typeof data.item !== "object"')
-                        v-list-tile-content(v-text='data.item')
+                        v-list-item-content(v-text='data.item')
                       template(v-else)
-                        v-list-tile-avatar
+                        v-list-item-avatar
                           v-avatar.blue.white--text(tile, size='40', v-html='data.item.code.toUpperCase()')
-                        v-list-tile-content
-                          v-list-tile-title(v-html='data.item.name')
-                          v-list-tile-sub-title(v-html='data.item.nativeName')
+                        v-list-item-content
+                          v-list-item-title(v-html='data.item.name')
+                          v-list-item-sub-title(v-html='data.item.nativeName')
                   v-divider.mt-3
                   v-switch(
                     v-model='autoUpdate'
@@ -50,8 +49,7 @@
 
               v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading {{ $t('admin:locale.namespacing') }}
+                  v-toolbar-title.subtitle-1 {{ $t('admin:locale.namespacing') }}
                 v-card-text
                   v-switch(
                     v-model='namespacing'
@@ -61,19 +59,19 @@
                     :hint='$t("admin:locale.namespaces.hint")'
                     )
                   v-alert.mt-3(
-                    outline
+                    outlined
                     color='orange'
                     :value='true'
-                    icon='warning'
+                    icon='mdi-alert'
                     )
                     span {{ $t('admin:locale.namespacingPrefixWarning.title', { langCode: selectedLocale }) }}
                     .caption.grey--text {{ $t('admin:locale.namespacingPrefixWarning.subtitle') }}
                   v-divider.mt-3.mb-4
                   v-select(
-                    outline
+                    outlined
                     :disabled='!namespacing'
                     :items='installedLocales'
-                    prepend-icon='language'
+                    prepend-icon='mdi-web'
                     multiple
                     chips
                     deletable-chips
@@ -87,52 +85,47 @@
                     )
                     template(slot='item', slot-scope='data')
                       template(v-if='typeof data.item !== "object"')
-                        v-list-tile-content(v-text='data.item')
+                        v-list-item-content(v-text='data.item')
                       template(v-else)
-                        v-list-tile-avatar
+                        v-list-item-avatar
                           v-avatar.blue.white--text(tile, size='40', v-html='data.item.code.toUpperCase()')
-                        v-list-tile-content
-                          v-list-tile-title(v-html='data.item.name')
-                          v-list-tile-sub-title(v-html='data.item.nativeName')
-                        v-list-tile-action
+                        v-list-item-content
+                          v-list-item-title(v-html='data.item.name')
+                          v-list-item-sub-title(v-html='data.item.nativeName')
+                        v-list-item-action
                           v-checkbox(:input-value='data.tile.props.value', color='primary', value)
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='teal', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading {{ $t('admin:locale.downloadTitle') }}
+                  v-toolbar-title.subtitle-1 {{ $t('admin:locale.downloadTitle') }}
                 v-data-table(
                   :headers='headers',
                   :items='locales',
-                  hide-actions,
+                  hide-default-footer,
                   item-key='code',
-                  :rows-per-page-items='[-1]'
-                )
-                  template(v-slot:items='lc')
-                    td
-                      v-chip.white--text(label, color='teal', small) {{lc.item.code}}
-                    td
-                      strong {{lc.item.name}}
-                    td
-                      span {{ lc.item.nativeName }}
-                    td.text-xs-center
-                      v-icon(v-if='lc.item.isRTL') check
-                    td
-                      .d-flex.align-center.pl-4
-                        .caption.mr-2(:class='lc.item.availability <= 33 ? `red--text` : (lc.item.availability <= 66) ? `orange--text` : `green--text`') {{lc.item.availability}}%
-                        v-progress-circular(:value='lc.item.availability', width='2', size='20', :color='lc.item.availability <= 33 ? `red` : (lc.item.availability <= 66) ? `orange` : `green`')
-                    td.text-xs-center
-                      v-progress-circular(v-if='lc.item.isDownloading', indeterminate, color='blue', size='20', :width='2')
-                      v-btn(v-else-if='lc.item.isInstalled && lc.item.installDate < lc.item.updatedAt', icon, @click='download(lc.item)')
-                        v-icon.blue--text cached
-                      v-btn(v-else-if='lc.item.isInstalled', icon, @click='download(lc.item)')
-                        v-icon.green--text check
-                      v-btn(v-else, icon, @click='download(lc.item)')
-                        v-icon.grey--text cloud_download
+                  :items-per-page='1000'
+                  )
+                  template(v-slot:item.code='{ item }')
+                    v-chip.white--text(label, color='teal', small) {{item.code}}
+                  template(v-slot:item.name='{ item }')
+                    strong {{item.name}}
+                  template(v-slot:item.isRTL='{ item }')
+                    v-icon(v-if='item.isRTL') mdi-check
+                  template(v-slot:item.availability='{ item }')
+                    .d-flex.align-center.pl-4
+                      v-progress-circular(:value='item.availability', width='2', size='20', :color='item.availability <= 33 ? `red` : (item.availability <= 66) ? `orange` : `green`')
+                      .caption.ml-2(:class='item.availability <= 33 ? `red--text` : (item.availability <= 66) ? `orange--text` : `green--text`') {{item.availability}}%
+                  template(v-slot:item.isInstalled='{ item }')
+                    v-progress-circular(v-if='item.isDownloading', indeterminate, color='blue', size='20', :width='2')
+                    v-btn(v-else-if='item.isInstalled && item.installDate < item.updatedAt', icon, @click='download(item)')
+                      v-icon.blue--text mdi-cached
+                    v-btn(v-else-if='item.isInstalled', icon, @click='download(item)')
+                      v-icon.green--text mdi-check
+                    v-btn(v-else, icon, small, @click='download(item)')
+                      v-icon.grey--text mdi-cloud-download
               v-card.wiki-form.mt-3.animated.fadeInUp.wait-p5s
                 v-toolbar(color='teal', dark, dense, flat)
-                  v-toolbar-title
-                    .subheading {{ $t('admin:locale.sideload') }}
+                  v-toolbar-title.subtitle-1 {{ $t('admin:locale.sideload') }}
                   v-spacer
                   v-chip(label, color='white', small).teal--text coming soon
                 v-card-text
@@ -170,7 +163,7 @@ export default {
           text: this.$t('admin:locale.code'),
           align: 'left',
           value: 'code',
-          width: 10
+          width: 90
         },
         {
           text: this.$t('admin:locale.name'),
@@ -193,12 +186,13 @@ export default {
           text: this.$t('admin:locale.availability'),
           align: 'center',
           value: 'availability',
+          sortable: false,
           width: 100
         },
         {
           text: this.$t('admin:locale.download'),
           align: 'center',
-          value: 'code',
+          value: 'isInstalled',
           sortable: false,
           width: 100
         }

@@ -22,7 +22,7 @@
                   v-subheader {{ $t('admin:mail.sender') }}
                   .px-3.pb-3
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.senderName'
                       :label='$t(`admin:mail.senderName`)'
                       required
@@ -30,7 +30,7 @@
                       prepend-icon='person'
                       )
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.senderEmail'
                       :label='$t(`admin:mail.senderEmail`)'
                       required
@@ -41,7 +41,7 @@
                   v-subheader {{ $t('admin:mail.smtp') }}
                   .px-3.pb-3
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.host'
                       :label='$t(`admin:mail.smtpHost`)'
                       required
@@ -49,7 +49,7 @@
                       prepend-icon='memory'
                       )
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.port'
                       :label='$t(`admin:mail.smtpPort`)'
                       required
@@ -67,7 +67,7 @@
                       prepend-icon='vpn_lock'
                       )
                     v-text-field.mt-3(
-                      outline
+                      outlined
                       v-model='config.user'
                       :label='$t(`admin:mail.smtpUser`)'
                       required
@@ -75,7 +75,7 @@
                       prepend-icon='lock_outline'
                       )
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.pass'
                       :label='$t(`admin:mail.smtpPwd`)'
                       required
@@ -98,7 +98,7 @@
                       prepend-icon='vpn_key'
                       )
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.dkimDomainName'
                       :label='$t(`admin:mail.dkimDomainName`)'
                       :counter='255'
@@ -106,7 +106,7 @@
                       :disabled='!config.useDKIM'
                       )
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.dkimKeySelector'
                       :label='$t(`admin:mail.dkimKeySelector`)'
                       :counter='255'
@@ -114,7 +114,7 @@
                       :disabled='!config.useDKIM'
                       )
                     v-text-field(
-                      outline
+                      outlined
                       v-model='config.dkimPrivateKey'
                       :label='$t(`admin:mail.dkimPrivateKey`)'
                       prepend-icon='vpn_key'
@@ -131,7 +131,7 @@
                   .pa-3
                     .body-2.grey--text.text--darken-2 {{ $t('admin:mail.testHint') }}
                     v-text-field.mt-3(
-                      outline
+                      outlined
                       v-model='testEmail'
                       :label='$t(`admin:mail.testRecipient`)'
                       :counter='255'

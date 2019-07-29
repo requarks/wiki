@@ -41,83 +41,93 @@
             divider='/'
             )
             template(slot='item', slot-scope='props')
-              v-icon(v-if='props.item.path === "/"', small, @click='goHome') home
-              v-btn.ma-0(v-else, :href='props.item.path', small, flat) {{props.item.name}}
+              v-icon(v-if='props.item.path === "/"', small, @click='goHome') mdi-home
+              v-btn.ma-0(v-else, :href='props.item.path', small, text) {{props.item.name}}
           template(v-if='!isPublished')
             v-spacer
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
         v-divider
-      v-layout(row)
-        v-flex(xs12, lg9, xl10)
-          v-toolbar(:color='darkMode ? `grey darken-4-l3` : `grey lighten-4`', flat, :height='90')
-            div
-              .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
-              .caption.grey--text.text--darken-1 {{description}}
-          v-divider
-          .contents(ref='container')
-            slot(name='contents')
+      v-toolbar.px-2(:color='darkMode ? `grey darken-4-l3` : `grey lighten-4`', flat, :height='90')
+        div
+          .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
+          .caption.grey--text.text--darken-1 {{description}}
+        v-spacer
+      v-divider
+      v-container.pl-5.pt-2(fill-height, fluid, grid-list-xl)
+        v-layout(row)
+          v-flex.page-col-sd(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
+            v-card(v-if='toc.length')
+              .overline.pa-5.pb-0(:class='darkMode ? `indigo--text text--lighten-3` : `primary--text`') {{$t('common:page.toc')}}
+              v-list.pb-3(dense, nav, :class='darkMode ? `darken-3-d3` : ``')
+                template(v-for='(tocItem, tocIdx) in toc')
+                  v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
+                    v-icon(color='grey', small) mdi-chevron-right
+                    v-list-item-title.pl-3 {{tocItem.title}}
+                  // v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
+                  template(v-for='tocSubItem in tocItem.children')
+                    v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
+                      v-icon.pl-3(color='grey lighten-1', small) mdi-chevron-right
+                      v-list-item-title.pl-3.caption.grey--text.text--darken-1 {{tocSubItem.title}}
+                    // v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-        v-flex(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp')
-          v-toolbar(:color='darkMode ? `grey darken-4-l3` : `grey lighten-4`', flat, :height='90')
-            div
-              .caption.grey--text.text--lighten-1 {{$t('common:page.lastEditedBy')}}
-              .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
-              .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
-            template(v-if='isAuthenticated')
-              v-spacer
-              v-tooltip(left)
-                v-btn.btn-animate-edit(icon, slot='activator', :href='"/e/" + locale + "/" + path')
-                  v-icon(color='grey') edit
-                span {{$t('common:page.editPage')}}
-          v-divider
-          template(v-if='toc.length')
-            v-list.grey.pb-3(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
-              v-subheader.pl-4(:class='darkMode ? `indigo--text text--lighten-3` : `primary--text`') {{$t('common:page.toc')}}
-              template(v-for='(tocItem, tocIdx) in toc')
-                v-list-tile(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
-                  v-icon(color='grey') arrow_right
-                  v-list-tile-title.pl-3 {{tocItem.title}}
-                v-divider.ml-4(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
-                template(v-for='tocSubItem in tocItem.children')
-                  v-list-tile(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
-                    v-icon.pl-3(color='grey lighten-1') arrow_right
-                    v-list-tile-title.pl-3.caption {{tocSubItem.title}}
-                  v-divider(inset, v-if='tocIdx < toc.length - 1')
-            v-divider
-          //- v-list.grey(dense, :class='darkMode ? `darken-3` : `lighten-4`')
-          //-   v-subheader.pl-4.yellow--text.text--darken-4 Rating
-          //-   .text-xs-center
-          //-     v-rating(
-          //-       v-model='rating'
-          //-       color='yellow darken-3'
-          //-       background-color='grey lighten-1'
-          //-       half-increments
-          //-       hover
-          //-     )
-          //-     .pb-2.caption.grey--text 5 votes
-          //- v-divider
-          template(v-if='tags.length')
-            v-list.grey(dense, :class='darkMode ? `darken-3-d3` : `lighten-3`')
-              v-subheader.pl-4.teal--text Tags
-              template(v-for='(tag, idx) in tags')
-                v-list-tile(:href='`/t/` + tag.slug')
-                  v-list-tile-avatar: v-icon(color='teal') label
-                  v-list-tile-title {{tag.title}}
-                v-divider(inset, v-if='idx < tags.length - 1')
-            v-divider
-          v-toolbar(:color='darkMode ? `grey darken-3` : `grey lighten-4`', flat, dense)
-            v-spacer
-            v-tooltip(bottom)
-              v-btn(icon, slot='activator'): v-icon(color='grey') bookmark
-              span {{$t('common:page.bookmark')}}
-            v-tooltip(bottom)
-              v-btn(icon, slot='activator'): v-icon(color='grey') share
-              span {{$t('common:page.share')}}
-            v-tooltip(bottom)
-              v-btn(icon, slot='activator'): v-icon(color='grey') print
-              span {{$t('common:page.printFormat')}}
-            v-spacer
+            v-card.mt-5
+              .pa-5.pt-3
+                .overline.indigo--text.d-flex.align-center
+                  span {{$t('common:page.lastEditedBy')}}
+                  v-spacer
+                  v-tooltip(left, v-if='isAuthenticated')
+                    template(v-slot:activator='{ on }')
+                      v-btn.btn-animate-edit(icon, :href='"/e/" + locale + "/" + path', v-on='on', x-small)
+                        v-icon(color='grey', dense) mdi-pencil
+                    span {{$t('common:page.editPage')}}
+                .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
+                .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
+
+            v-card.mt-5
+              .pa-5
+                .overline.teal--text.pb-2 Tags
+                v-chip.mr-1(
+                  label
+                  color='teal lighten-5'
+                  v-for='(tag, idx) in tags'
+                  :href='`/t/` + tag.slug'
+                  :key='tag.slug'
+                  )
+                  v-icon(color='teal', left, small) mdi-label
+                  span.teal--text.text--darken-2 {{tag.text}}
+              v-divider
+              .pa-5
+                .overline.pb-2.yellow--text.text--darken-4 Rating
+                .text-center
+                  v-rating(
+                    v-model='rating'
+                    color='yellow darken-3'
+                    background-color='grey lighten-1'
+                    half-increments
+                    hover
+                  )
+                  .caption.grey--text 5 votes
+              v-divider
+              v-toolbar(:color='darkMode ? `grey darken-3` : `grey lighten-4`', flat, dense)
+                v-spacer
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, small, v-on='on'): v-icon(color='grey') mdi-bookmark
+                  span {{$t('common:page.bookmark')}}
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, small, v-on='on'): v-icon(color='grey') mdi-share-variant
+                  span {{$t('common:page.share')}}
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, small, v-on='on'): v-icon(color='grey') mdi-printer
+                  span {{$t('common:page.printFormat')}}
+                v-spacer
+
+          v-flex.page-col-content(xs12, lg9, xl10)
+            .contents(ref='container')
+              slot(name='contents')
     nav-footer
     notify
     search-results
@@ -133,7 +143,7 @@
         @click='$vuetify.goTo(0, scrollOpts)'
         color='primary'
         )
-        v-icon arrow_upward
+        v-icon mdi-arrow-up
 </template>
 
 <script>
@@ -141,6 +151,17 @@ import { StatusIndicator } from 'vue-status-indicator'
 import Prism from 'prismjs'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
+
+Prism.plugins.autoloader.languages_path = '/js/prism/'
+Prism.plugins.NormalizeWhitespace.setDefaults({
+  'remove-trailing': true,
+  'remove-indent': true,
+  'left-trim': true,
+  'right-trim': true,
+  'break-lines': 160,
+  'remove-initial-line-feed': true,
+  'tabs-to-spaces': 2
+})
 
 export default {
   components: {

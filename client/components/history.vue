@@ -53,29 +53,29 @@
                     v-menu(offset-x, left)
                       v-btn(icon, slot='activator'): v-icon more_horiz
                       v-list(dense).history-promptmenu
-                        v-list-tile(@click='setDiffTarget(ph.versionId)')
-                          v-list-tile-avatar: v-icon call_made
-                          v-list-tile-title Set as Differencing Target
+                        v-list-item(@click='setDiffTarget(ph.versionId)')
+                          v-list-item-avatar: v-icon call_made
+                          v-list-item-title Set as Differencing Target
                         v-divider
-                        v-list-tile(@click='setDiffSource(ph.versionId)')
-                          v-list-tile-avatar: v-icon call_received
-                          v-list-tile-title Set as Differencing Source
+                        v-list-item(@click='setDiffSource(ph.versionId)')
+                          v-list-item-avatar: v-icon call_received
+                          v-list-item-title Set as Differencing Source
                         v-divider
-                        v-list-tile
-                          v-list-tile-avatar: v-icon code
-                          v-list-tile-title View Source
+                        v-list-item
+                          v-list-item-avatar: v-icon code
+                          v-list-item-title View Source
                         v-divider
-                        v-list-tile
-                          v-list-tile-avatar: v-icon cloud_download
-                          v-list-tile-title Download Version
+                        v-list-item
+                          v-list-item-avatar: v-icon cloud_download
+                          v-list-item-title Download Version
                         v-divider
-                        v-list-tile
-                          v-list-tile-avatar: v-icon restore
-                          v-list-tile-title Restore
+                        v-list-item
+                          v-list-item-avatar: v-icon restore
+                          v-list-item-title Restore
                         v-divider
-                        v-list-tile
-                          v-list-tile-avatar: v-icon call_split
-                          v-list-tile-title Branch off from here
+                        v-list-item
+                          v-list-item-avatar: v-icon call_split
+                          v-list-item-title Branch off from here
 
             v-btn.ma-0.radius-7(
               v-if='total > trail.length'
