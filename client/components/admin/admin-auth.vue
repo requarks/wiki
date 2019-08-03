@@ -6,41 +6,41 @@
           img.animated.fadeInUp(src='/svg/icon-unlock.svg', alt='Authentication', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:auth.title') }}
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:auth.subtitle') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:auth.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', @click='refresh', large)
-            v-icon refresh
+            v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading {{$t('admin:auth.strategies')}}
+            .subtitle-1 {{$t('admin:auth.strategies')}}
           v-list(two-line, dense).py-0
             template(v-for='(str, idx) in strategies')
               v-list-item(:key='str.key', @click='selectedStrategy = str.key', :disabled='!str.isAvailable')
-                v-list-item-avatar
-                  v-icon(color='grey', v-if='!str.isAvailable') indeterminate_check_box
-                  v-icon(color='primary', v-else-if='str.isEnabled && str.key !== `local`', v-ripple, @click='str.isEnabled = false') check_box
-                  v-icon(color='primary', v-else-if='str.isEnabled && str.key === `local`') check_box
-                  v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') check_box_outline_blank
+                v-list-item-avatar(size='24')
+                  v-icon(color='grey', v-if='!str.isAvailable') mdi-minus-box-outline
+                  v-icon(color='primary', v-else-if='str.isEnabled && str.key !== `local`', v-ripple, @click='str.isEnabled = false') mdi-checkbox-marked-outline
+                  v-icon(color='primary', v-else-if='str.isEnabled && str.key === `local`') mdi-checkbox-marked-outline
+                  v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') mdi-checkbox-blank-outline
                 v-list-item-content
                   v-list-item-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedStrategy === str.key ? `primary--text` : ``)') {{ str.title }}
-                  v-list-item-sub-title.caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedStrategy === str.key ? `blue--text ` : ``)') {{ str.description }}
+                  v-list-item-subtitle: .caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedStrategy === str.key ? `blue--text ` : ``)') {{ str.description }}
                 v-list-item-avatar(v-if='selectedStrategy === str.key')
-                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+                  v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
               v-divider(v-if='idx < strategies.length - 1')
 
         v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading {{$t('admin:auth.globalAdvSettings')}}
+            .subtitle-1 {{$t('admin:auth.globalAdvSettings')}}
           v-card-text
             v-text-field.md2(
               v-model='jwtAudience'
               outlined
-              prepend-icon='account_balance'
+              prepend-icon='mdi-account-group-outline'
               :label='$t(`admin:auth.jwtAudience`)'
               :hint='$t(`admin:auth.jwtAudienceHint`)'
               persistent-hint
@@ -48,7 +48,7 @@
             v-text-field.mt-3.md2(
               v-model='jwtExpiration'
               outlined
-              prepend-icon='schedule'
+              prepend-icon='mdi-clock-outline'
               :label='$t(`admin:auth.tokenExpiration`)'
               :hint='$t(`admin:auth.tokenExpirationHint`)'
               persistent-hint
@@ -56,7 +56,7 @@
             v-text-field.mt-3.md2(
               v-model='jwtRenewablePeriod'
               outlined
-              prepend-icon='update'
+              prepend-icon='mdi-update'
               :label='$t(`admin:auth.tokenRenewalPeriod`)'
               :hint='$t(`admin:auth.tokenRenewalPeriodHint`)'
               persistent-hint
@@ -66,13 +66,13 @@
 
         v-card.wiki-form.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
-            .subheading {{strategy.title}}
+            .subtitle-1 {{strategy.title}}
           v-card-text
             v-form
               .authlogo
                 img(:src='strategy.logo', :alt='strategy.title')
-              .caption.pt-3 {{strategy.description}}
-              .caption.pb-3: a(:href='strategy.website') {{strategy.website}}
+              .body-2.pt-3 {{strategy.description}}
+              .body-2.pt-3.pb-5: a(:href='strategy.website') {{strategy.website}}
               i18next.body-2(path='admin:auth.strategyState', tag='div', v-if='strategy.isEnabled')
                 v-chip(color='green', small, dark, label, place='state') {{$t('admin:auth.strategyStateActive')}}
                 span(v-if='selectedStrategy === `local`', place='locked') {{$t('admin:auth.strategyStateLocked')}}
@@ -80,8 +80,8 @@
               i18next.body-2(path='admin:auth.strategyState', tag='div', v-else)
                 v-chip(color='red', small, dark, label, place='state') {{$t('admin:auth.strategyStateInactive')}}
               v-divider.mt-3
-              v-subheader.pl-0 {{$t('admin:auth.strategyConfiguration')}}
-              .body-1.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em {{$t('admin:auth.strategyNoConfiguration')}}
+              .overline.my-5 {{$t('admin:auth.strategyConfiguration')}}
+              .body-2.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em {{$t('admin:auth.strategyNoConfiguration')}}
               template(v-else, v-for='cfg in strategy.config')
                 v-select(
                   v-if='cfg.value.type === "string" && cfg.value.enum'
@@ -90,7 +90,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -101,7 +101,7 @@
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
                   color='primary'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   )
@@ -111,7 +111,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -122,13 +122,13 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
               v-divider.mt-3
-              v-subheader.pl-0 {{$t('admin:auth.registration')}}
+              .overline.my-5 {{$t('admin:auth.registration')}}
               .pr-3
                 v-switch.ml-3(
                   v-model='strategy.selfRegistration'
@@ -149,7 +149,7 @@
                 v-combobox.ml-3.mt-3(
                   :label='$t(`admin:auth.domainsWhitelist`)'
                   v-model='strategy.domainWhitelist'
-                  prepend-icon='mail_outline'
+                  prepend-icon='mdi-email-check-outline'
                   outlined
                   :disabled='!strategy.selfRegistration'
                   :hint='$t(`admin:auth.domainsWhitelistHint`)'
@@ -168,7 +168,7 @@
                   item-value='id'
                   :label='$t(`admin:auth.autoEnrollGroups`)'
                   v-model='strategy.autoEnrollGroups'
-                  prepend-icon='people'
+                  prepend-icon='mdi-account-group'
                   :hint='$t(`admin:auth.autoEnrollGroupsHint`)'
                   small-chips
                   persistent-hint
@@ -179,7 +179,7 @@
                   )
               template(v-if='strategy.useForm')
                 v-divider.mt-3
-                v-subheader.pl-0 {{$t('admin:auth.security')}}
+                .overline.my-5 {{$t('admin:auth.security')}}
                 v-switch.ml-3(
                   v-model='strategy.recaptcha'
                   :disabled='true'
@@ -189,30 +189,30 @@
                   persistent-hint
                 )
 
-        v-card.mt-3.wiki-form.animated.fadeInUp.wait-p4s
+        v-card.mt-4.wiki-form.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, flat, dark)
-            .subheading {{$t('admin:auth.configReference')}}
+            .subtitle-1 {{$t('admin:auth.configReference')}}
           v-card-text
-            .body-1 {{$t('admin:auth.configReferenceSubtitle')}}
+            .body-2 {{$t('admin:auth.configReferenceSubtitle')}}
             v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outline, :value='true', icon='warning')
               i18next(path='admin:auth.siteUrlNotSetup', tag='span')
                 strong(place='siteUrl') {{$t('admin:general.siteUrl')}}
                 strong(place='general') {{$t('admin:general.title')}}
             .pa-3.mt-3.radius-7.grey(v-else, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`')
-              .body-2 {{$t('admin:auth.allowedWebOrigins')}}
-              .body-1 {{host}}
+              .body-2: strong {{$t('admin:auth.allowedWebOrigins')}}
+              .body-2 {{host}}
               v-divider.my-3
-              .body-2 {{$t('admin:auth.callbackUrl')}}
-              .body-1 {{host}}/login/{{strategy.key}}/callback
+              .body-2: strong {{$t('admin:auth.callbackUrl')}}
+              .body-2 {{host}}/login/{{strategy.key}}/callback
               v-divider.my-3
-              .body-2 {{$t('admin:auth.loginUrl')}}
-              .body-1 {{host}}/login
+              .body-2: strong {{$t('admin:auth.loginUrl')}}
+              .body-2 {{host}}/login
               v-divider.my-3
-              .body-2 {{$t('admin:auth.logoutUrl')}}
-              .body-1 {{host}}
+              .body-2: strong {{$t('admin:auth.logoutUrl')}}
+              .body-2 {{host}}
               v-divider.my-3
-              .body-2 {{$t('admin:auth.tokenEndpointAuthMethod')}}
-              .body-1 HTTP-POST
+              .body-2: strong {{$t('admin:auth.tokenEndpointAuthMethod')}}
+              .body-2 HTTP-POST
 </template>
 
 <script>
@@ -337,6 +337,7 @@ export default {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  margin-left: 16px;
 
   img {
     max-width: 100%;

@@ -6,7 +6,7 @@
           img(src='/svg/icon-console.svg', alt='Developer Tools', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Developer Tools
-            .subheading.grey--text Voyager
+            .subtitle-1.grey--text Voyager
 
         v-card.mt-3.white.grey--text.text--darken-3
           #voyager

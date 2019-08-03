@@ -6,12 +6,12 @@
           img(src='/svg/icon-registry-editor.svg', alt='Logging', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Logging
-            .subheading.grey--text Configure the system logger(s) #[v-chip(label, color='primary', small).white--text coming soon]
+            .subtitle-1.grey--text Configure the system logger(s) #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn(outline, color='grey', @click='refresh', large)
             v-icon refresh
           v-btn(color='black', disabled, depressed, @click='toggleConsole', large)
-            ConsoleLineIcon.mr-3
+            v-icon check
             span Live Trail
           v-btn(color='success', @click='save', depressed, large)
             v-icon(left) check
@@ -113,12 +113,9 @@ import LoggingConsole from './admin-logging-console.vue'
 import loggersQuery from 'gql/admin/logging/logging-query-loggers.gql'
 import loggersSaveMutation from 'gql/admin/logging/logging-mutation-save-loggers.gql'
 
-import ConsoleLineIcon from 'mdi/ConsoleLine'
-
 export default {
   components: {
-    LoggingConsole,
-    ConsoleLineIcon
+    LoggingConsole
   },
   data() {
     return {

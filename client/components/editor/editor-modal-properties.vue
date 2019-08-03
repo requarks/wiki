@@ -7,30 +7,28 @@
     :fullscreen='$vuetify.breakpoint.smAndDown'
     )
     .dialog-header
-      v-icon(color='white') sort_by_alpha
-      .subheading.white--text.ml-2 {{$t('editor:props.pageProperties')}}
+      v-icon(color='white') mdi-tag-text-outline
+      .subheading.white--text.ml-3 {{$t('editor:props.pageProperties')}}
       v-spacer
       v-btn.mx-0(
-        outline
+        outlined
         dark
         @click.native='close'
         )
-        v-icon(left) check
+        v-icon(left) mdi-check
         span {{ $t('common:actions.ok') }}
     v-card.wiki-form(tile)
       v-card-text
-        v-subheader.pl-0 {{$t('editor:props.pageInfo')}}
+        .overline.pb-5 {{$t('editor:props.pageInfo')}}
         v-text-field(
           ref='iptTitle'
-          outline
-          background-color='grey lighten-2'
+          outlined
           :label='$t(`editor:props.title`)'
           counter='255'
           v-model='title'
           )
         v-text-field(
-          outline
-          background-color='grey lighten-2'
+          outlined
           :label='$t(`editor:props.shortDescription`)'
           counter='255'
           v-model='description'
@@ -39,13 +37,12 @@
           )
       v-divider
       v-card-text.grey(:class='darkMode ? `darken-3-d3` : `lighten-5`')
-        v-subheader.pl-0 {{$t('editor:props.pathCategorization')}}
+        .overline.pb-5 {{$t('editor:props.pathCategorization')}}
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
             v-flex(xs12, md2)
               v-select(
-                outline
-                background-color='grey lighten-2'
+                outlined
                 :label='$t(`editor:props.locale`)'
                 suffix='/'
                 :items='namespaces'
@@ -55,10 +52,9 @@
               )
             v-flex(xs12, md10)
               v-text-field(
-                outline
-                background-color='grey lighten-2'
+                outlined
                 :label='$t(`editor:props.path`)'
-                append-icon='folder'
+                append-icon='mdi-folder-search'
                 v-model='path'
                 :hint='$t(`editor:props.pathHint`)'
                 persistent-hint
@@ -66,11 +62,10 @@
                 :disabled='mode !== "create"'
                 )
         v-combobox(
-          background-color='grey lighten-2'
           chips
           deletable-chips
           :label='$t(`editor:props.tags`)'
-          outline
+          outlined
           multiple
           v-model='tags'
           single-line
@@ -80,7 +75,7 @@
           )
       v-divider
       v-card-text.pb-5.grey(:class='darkMode ? `darken-3-d5` : `lighten-4`')
-        v-subheader.pl-0 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outline).white--text coming soon]
+        .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outline).white--text coming soon]
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
             v-flex(xs12, md4)
@@ -107,10 +102,9 @@
                   slot='activator'
                   :label='$t(`editor:props.publishStart`)'
                   v-model='publishStartDate'
-                  prepend-icon='event'
+                  prepend-icon='mdi-calendar-check'
                   readonly
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   clearable
                   :hint='$t(`editor:props.publishStartHint`)'
                   persistent-hint
@@ -150,10 +144,9 @@
                   slot='activator'
                   :label='$t(`editor:props.publishEnd`)'
                   v-model='publishEndDate'
-                  prepend-icon='event'
+                  prepend-icon='mdi-calendar-remove'
                   readonly
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   clearable
                   :hint='$t(`editor:props.publishEndHint`)'
                   persistent-hint

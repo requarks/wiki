@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-paint-palette.svg', alt='Theme', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('admin:theme.title')}}
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:theme.subtitle')}}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:theme.subtitle')}}
           v-spacer
           v-btn.animated.fadeInRight(color='success', depressed, @click='save', large, :loading='loading')
             v-icon(left) mdi-check

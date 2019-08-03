@@ -76,7 +76,12 @@
                 .overline.indigo--text.d-flex.align-center
                   span {{$t('common:page.lastEditedBy')}}
                   v-spacer
-                  v-tooltip(left, v-if='isAuthenticated')
+                  v-tooltip(top, v-if='isAuthenticated')
+                    template(v-slot:activator='{ on }')
+                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
+                        v-icon(color='grey', dense) mdi-history
+                    span History
+                  v-tooltip(top, v-if='isAuthenticated')
                     template(v-slot:activator='{ on }')
                       v-btn.btn-animate-edit(icon, :href='"/e/" + locale + "/" + path', v-on='on', x-small)
                         v-icon(color='grey', dense) mdi-pencil
@@ -84,7 +89,7 @@
                 .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
-            v-card.mt-5
+            v-card.mt-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2 Tags
                 v-chip.mr-1(
@@ -96,7 +101,8 @@
                   )
                   v-icon(color='teal', left, small) mdi-label
                   span.teal--text.text--darken-2 {{tag.text}}
-              v-divider
+
+            v-card.mt-5
               .pa-5
                 .overline.pb-2.yellow--text.text--darken-4 Rating
                 .text-center

@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-browse-page.svg', alt='Dashboard', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:dashboard.title') }}
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin:dashboard.subtitle') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin:dashboard.subtitle') }}
       v-flex(xs12 md6 lg4 xl3 d-flex)
         v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
@@ -49,7 +49,7 @@
             v-icon(:color='isLatestVersion ? `teal` : `red darken-4`', small) mdi-wrench
           v-card-text
             v-icon.dashboard-icon mdi-blur
-            .subheading Wiki.js {{info.currentVersion}}
+            .subtitle-1 Wiki.js {{info.currentVersion}}
             .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12, xl6)

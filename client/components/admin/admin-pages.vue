@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-file.svg', alt='Page', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Pages
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s Manage pages
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage pages
           v-spacer
           v-btn.animated.fadeInDown.wait-p1s(color='grey', outlined, @click='refresh', large)
             v-icon.grey--text mdi-refresh

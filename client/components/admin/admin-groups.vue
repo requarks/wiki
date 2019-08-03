@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-people.svg', alt='Groups', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Groups
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s.mr-3(color='grey', outlined, @click='refresh', large)
             v-icon mdi-refresh

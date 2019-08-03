@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-male-user.svg', alt='Edit User', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Edit User
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{user.name}}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{user.name}}
           v-spacer
           .caption.grey--text.animated.fadeInRight.wait-p5s ID #[strong {{user.id}}]
           v-divider.animated.fadeInRight.wait-p3s.mx-3(vertical)

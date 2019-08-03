@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-categorize.svg', alt='General', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:general.title') }}
-            .subheading.grey--text.animated.fadeInLeft {{ $t('admin:general.subtitle') }}
+            .subtitle-1.grey--text.animated.fadeInLeft {{ $t('admin:general.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
             v-icon(left) mdi-check
@@ -18,7 +18,7 @@
                 v-card.animated.fadeInUp
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title.subtitle-1 {{ $t('admin:general.siteInfo') }}
-                  v-subheader {{$t('admin:general.general')}}
+                  .overline.grey--text.pa-4 {{$t('admin:general.general')}}
                   .px-3.pb-3
                     v-text-field(
                       outlined
@@ -41,7 +41,7 @@
                       persistent-hint
                       )
                   v-divider
-                  v-subheader {{$t('admin:general.logo')}} #[v-chip.ml-2(label, color='grey', small, outlined) coming soon]
+                  .overline.grey--text.pa-4 {{$t('admin:general.logo')}} #[v-chip.ml-2(label, color='grey', small, outlined) coming soon]
                   v-card-text.pb-4.pl-5
                     v-layout.px-3(row, align-center)
                       v-avatar(size='100', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
@@ -55,7 +55,7 @@
                         .caption.mt-3.grey--text {{$t('admin:general.uploadSizeHint', { size: '120x120' })}}
                         .caption.grey--text {{$t('admin:general.uploadTypesHint', { typeList: 'SVG, PNG', lastType: 'JPG' })}}.
                   v-divider
-                  v-subheader {{$t('admin:general.footerCopyright')}}
+                  .overline.grey--text.pa-4 {{$t('admin:general.footerCopyright')}}
                   .px-3.pb-3
                     v-text-field(
                       outlined
@@ -67,7 +67,7 @@
                       :hint='$t(`admin:general.companyNameHint`)'
                       )
                   v-divider
-                  v-subheader SEO
+                  .overline.grey--text.pa-4 SEO
                   .px-3.pb-3
                     v-text-field(
                       outlined

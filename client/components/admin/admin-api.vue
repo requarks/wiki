@@ -6,7 +6,7 @@
           img(src='/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 API Access
-            .subheading.grey--text Manage keys to access the API #[v-chip(label, color='primary', small).white--text coming soon]
+            .subtitle-1.grey--text Manage keys to access the API #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn(outline, color='grey', large, @click='refresh', disabled)
             v-icon refresh

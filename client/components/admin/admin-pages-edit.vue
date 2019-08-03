@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-view-details.svg', alt='Edit Page', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Page Details
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s
               v-chip.ml-0.mr-2(label, small).caption ID {{page.id}}
               span /{{page.locale}}/{{page.path}}
           v-spacer

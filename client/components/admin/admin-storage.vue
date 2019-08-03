@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('admin:storage.title')}}
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{$t('admin:storage.subtitle')}}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('admin:storage.subtitle')}}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
@@ -17,7 +17,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading {{$t('admin:storage.targets')}}
+            .subtitle-1 {{$t('admin:storage.targets')}}
           v-list(two-line, dense).py-0
             template(v-for='(tgt, idx) in targets')
               v-list-item(:key='tgt.key', @click='selectedTarget = tgt.key', :disabled='!tgt.isAvailable')
@@ -34,7 +34,7 @@
 
         v-card.mt-3.animated.fadeInUp.wait-p2s
           v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-l5` : `grey darken-3`', dark, dense)
-            .subheading {{$t('admin:storage.status')}}
+            .subtitle-1 {{$t('admin:storage.status')}}
             v-spacer
             looping-rhombuses-spinner(
               :animation-duration='5000'
@@ -79,7 +79,7 @@
       v-flex(xs12, lg9)
         v-card.wiki-form.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
-            .subheading {{target.title}}
+            .subtitle-1 {{target.title}}
           v-card-text
             v-form
               .targetlogo
@@ -188,7 +188,7 @@
                     v-flex(xs12, lg6, xl4, v-for='act of target.actions', :key='act.handler')
                       v-card.radius-7.grey(flat, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`', height='100%')
                         v-card-text
-                          .subheading(v-html='act.label')
+                          .subtitle-1(v-html='act.label')
                           .body-1.mt-2(v-html='act.hint')
                           v-btn.mx-0.mt-3(
                             @click='executeAction(target.key, act.handler)'

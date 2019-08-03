@@ -1,7 +1,7 @@
 <template lang='pug'>
   v-card.wiki-form
     v-toolbar(flat, color='primary', dark, dense)
-      .subheading {{ $t('admin:utilities.importv1Title') }}
+      .subtitle-1 {{ $t('admin:utilities.importv1Title') }}
     v-card-text
       .text-xs-center
         img.animated.fadeInUp.wait-p1s(src='/svg/icon-software.svg')

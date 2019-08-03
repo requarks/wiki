@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const yargs = require('yargs').argv
 const _ = require('lodash')
+const Fiber = require('fibers')
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
@@ -69,6 +70,28 @@ module.exports = {
         ]
       },
       {
+        test: /\.sass$/,
+        use: [
+          {
+            loader: 'cache-loader',
+            options: {
+              cacheDirectory: cacheDir
+            }
+          },
+          'style-loader',
+          'css-loader',
+          'postcss-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              implementation: require('sass'),
+              fiber: Fiber,
+              sourceMap: false
+            }
+          }
+        ]
+      },
+      {
         test: /\.scss$/,
         use: [
           {
@@ -84,6 +107,8 @@ module.exports = {
           {
             loader: 'sass-loader',
             options: {
+              implementation: require('sass'),
+              fiber: Fiber,
               sourceMap: false
             }
           },
@@ -93,16 +118,6 @@ module.exports = {
               resources: path.join(process.cwd(), '/client/scss/global.scss')
             }
           }
-        ]
-      },
-      {
-        test: /\.styl$/,
-        use: [
-          'style-loader',
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          'postcss-loader',
-          'stylus-loader'
         ]
       },
       {
@@ -194,6 +209,7 @@ module.exports = {
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
     new CopyWebpackPlugin([
       { from: 'client/static' },
+      { from: './node_modules/prismjs/components', to: 'js/prism' },
       { from: './node_modules/graphql-voyager/dist/voyager.worker.js', to: 'js/' }
     ], {}),
     new MiniCssExtractPlugin({
@@ -260,7 +276,6 @@ module.exports = {
       '@': path.join(process.cwd(), 'client'),
       'vue$': 'vue/dist/vue.esm.js',
       'gql': path.join(process.cwd(), 'client/graph'),
-      'mdi': path.resolve(process.cwd(), 'node_modules/vue-material-design-icons'),
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
       'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),
