@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-triangle-arrow.svg', alt='Navigation', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('navigation.title')}}
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{$t('navigation.subtitle')}}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('navigation.subtitle')}}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', @click='refresh', large)
             v-icon mdi-refresh
@@ -123,7 +123,7 @@
                     span {{$t('navigation.delete', { kind: $t('navigation.link') })}}
               v-card(v-else-if='current.kind === "header"')
                 v-toolbar(dense, color='blue', flat, dark)
-                  .subheading {{$t('navigation.edit', { kind: $t('navigation.header') })}}
+                  .subtitle-1 {{$t('navigation.edit', { kind: $t('navigation.header') })}}
                 v-card-text
                   v-text-field(
                     outlined

@@ -1,12 +1,12 @@
 <template lang='pug'>
   v-card
     v-toolbar(flat, color='primary', dark, dense)
-      .subheading {{ $t('admin:utilities.contentTitle') }}
+      .subtitle-1 {{ $t('admin:utilities.contentTitle') }}
     v-card-text
-      v-subheader.pl-0.primary--text Migrate all pages to target locale
-      .body-1 If you created content before selecting a different locale and activating the namespacing capabilities, you may want to transfer all content to the base locale.
-      .body-1.red--text: strong This operation is destructive and cannot be reversed! Make sure you have proper backups!
-      v-toolbar.radius-7.mt-3.wiki-form(flat, color='grey lighten-4', height='80')
+      .subtitle-1.pb-3.pl-0.primary--text Migrate all pages to target locale
+      .body-2 If you created content before selecting a different locale and activating the namespacing capabilities, you may want to transfer all content to the base locale.
+      .body-2.red--text: strong This operation is destructive and cannot be reversed! Make sure you have proper backups!
+      v-toolbar.mt-5(flat, color='grey lighten-4', height='80')
         v-select(
           label='Source Locale'
           outlined
@@ -16,7 +16,7 @@
           item-value='code'
           v-model='sourceLocale'
         )
-        v-icon.mx-3(large) arrow_forward
+        v-icon.mx-3(large) mdi-chevron-right-box-outline
         v-select(
           label='Target Locale'
           outlined
@@ -26,9 +26,9 @@
           item-value='code'
           v-model='targetLocale'
         )
-      .body-1.mt-3 Pages that are already in the target locale will not be touched. If a page already exists at the target, the source page will not be modified as it would create a conflict. If you want to overwrite the target page, you must first delete it.
-      v-btn(outline, color='primary', @click='migrateToLocale', :disabled='loading').ml-0.mt-3
-        v-icon(left) build
+      .body-2.mt-5 Pages that are already in the target locale will not be touched. If a page already exists at the target, the source page will not be modified as it would create a conflict. If you want to overwrite the target page, you must first delete it.
+      v-btn(outlined, color='primary', @click='migrateToLocale', :disabled='loading').ml-0.mt-3
+        v-icon(left) mdi-gesture-double-tap
         span Proceed
 </template>
 

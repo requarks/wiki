@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-globe-earth.svg', alt='Locale', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:locale.title') }}
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:locale.subtitle') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:locale.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large, :loading='loading')
             v-icon(left) mdi-check

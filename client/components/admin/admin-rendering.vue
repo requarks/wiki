@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft Rendering
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s Configure how content is rendered #[v-chip(label, color='primary', small).white--text coming soon]
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Configure how content is rendered #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
@@ -22,7 +22,7 @@
           dark
           )
           v-icon.mr-2 line_weight
-          .subheading Pipeline
+          .subtitle-1 Pipeline
         v-expansion-panel.adm-rendering-pipeline(v-model='selectedCore')
           v-expansion-panel-content(
             hide-actions
@@ -68,7 +68,7 @@
             dense
             )
             v-icon.mr-2 {{currentRenderer.icon}}
-            .subheading {{currentRenderer.title}}
+            .subtitle-1 {{currentRenderer.title}}
             v-spacer
             .pt-3.mt-1
               v-switch(

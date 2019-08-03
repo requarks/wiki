@@ -32,7 +32,7 @@
                 v-list-item-title.body-2 {{$t('common:header.newPage')}}
               template(v-if='path && path.length')
                 v-divider.my-0
-                v-subheader {{$t('common:header.currentPage')}}
+                .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
                   v-list-item-avatar(size='24'): v-icon(color='indigo') subject
                   v-list-item-title.body-2 {{$t('common:header.view')}}
@@ -52,7 +52,7 @@
                   v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
               v-divider.my-0
-              v-subheader {{$t('common:header.assets')}}
+              .overline.pa-4.grey--text {{$t('common:header.assets')}}
               v-list-item.pl-4(@click='assets')
                 v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
                 v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
@@ -318,7 +318,7 @@ export default {
       this.$store.commit('showNotification', {
         style: 'indigo',
         message: `Coming soon...`,
-        icon: 'directions_boat'
+        icon: 'ferry'
       })
     },
     pageDelete () {
@@ -329,7 +329,7 @@ export default {
       this.$store.commit('showNotification', {
         style: 'indigo',
         message: `Coming soon...`,
-        icon: 'directions_boat'
+        icon: 'ferry'
       })
     },
     async changeLocale(locale) {

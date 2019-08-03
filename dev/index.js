@@ -14,6 +14,10 @@ const init = {
     const webpack = require('webpack')
     const chokidar = require('chokidar')
 
+    console.info(chalk.yellow.bold('--- ====================== ---'))
+    console.info(chalk.yellow.bold('--- Wiki.js DEVELOPER MODE ---'))
+    console.info(chalk.yellow.bold('--- ====================== ---'))
+
     global.DEV = true
     global.WP_CONFIG = require('./webpack/webpack.dev.js')
     global.WP = webpack(global.WP_CONFIG)

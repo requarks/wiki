@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('admin:search.title')}}
-            .subheading.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:search.subtitle')}}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:search.subtitle')}}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
             v-icon refresh
@@ -20,7 +20,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading {{$t('admin:search.searchEngine')}}
+            .subtitle-1 {{$t('admin:search.searchEngine')}}
           v-list.py-0(two-line, dense)
             template(v-for='(eng, idx) in engines')
               v-list-item(:key='eng.key', @click='selectedEngine = eng.key', :disabled='!eng.isAvailable')
@@ -38,7 +38,7 @@
       v-flex(lg9, xs12)
         v-card.wiki-form.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
-            .subheading {{engine.title}}
+            .subtitle-1 {{engine.title}}
           v-card-text
             .enginelogo
               img(:src='engine.logo', :alt='engine.title')

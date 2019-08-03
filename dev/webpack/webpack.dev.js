@@ -9,10 +9,10 @@ const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
-const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
 const SriWebpackPlugin = require('webpack-subresource-integrity')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
+const WebpackBarPlugin = require('webpackbar')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
@@ -235,8 +235,8 @@ module.exports = {
       hashFuncNames: ['sha256', 'sha512'],
       enabled: false
     }),
-    new SimpleProgressWebpackPlugin({
-      format: 'compact'
+    new WebpackBarPlugin({
+      name: 'Client Assets'
     }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('development'),
@@ -275,7 +275,6 @@ module.exports = {
       '@': path.join(process.cwd(), 'client'),
       'vue$': 'vue/dist/vue.esm.js',
       'gql': path.join(process.cwd(), 'client/graph'),
-      'mdi': path.join(process.cwd(), 'node_modules/vue-material-design-icons'),
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
       'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),

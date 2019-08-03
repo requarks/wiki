@@ -2,7 +2,7 @@
   v-dialog(v-model='isShown', max-width='850px')
     v-card.page-selector
       .dialog-header.is-dark
-        v-icon.mr-2(color='white') find_in_page
+        v-icon.mr-3(color='white') mdi-page-next-outline
         span Select Page Location
         v-spacer
         v-progress-circular(
@@ -71,9 +71,9 @@
         )
       v-card-chin
         v-spacer
-        v-btn(outline, @click='close') Cancel
-        v-btn(color='primary', @click='open')
-          v-icon(left) check
+        v-btn(text, @click='close') Cancel
+        v-btn.px-4(color='primary', @click='open')
+          v-icon(left) mdi-check
           span Select
 </template>
 

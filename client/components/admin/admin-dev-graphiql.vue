@@ -6,7 +6,7 @@
           img(src='/svg/icon-console.svg', alt='Developer Tools', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Developer Tools
-            .subheading.grey--text GraphiQL
+            .subtitle-1.grey--text GraphiQL
 
         v-card.mt-3.white.grey--text.text--darken-3
           #graphiql

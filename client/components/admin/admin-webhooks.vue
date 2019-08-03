@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-winter.svg', alt='Mail', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:webhooks.title') }}
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:webhooks.subtitle') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:webhooks.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large, disabled)
             v-icon(left) check
@@ -15,7 +15,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading Webhooks
+            .subtitle-1 Webhooks
             v-spacer
             v-btn(outline, small)
               v-icon.mr-2 add
@@ -36,7 +36,7 @@
       v-flex(xs12, lg9)
         v-card.wiki-form.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
-            .subheading {{hook.title}}
+            .subtitle-1 {{hook.title}}
           v-card-text
             v-form
               .authlogo
@@ -50,7 +50,7 @@
 
 <script>
 import _ from 'lodash'
-import { get } from 'vuex-pathify'
+// import { get } from 'vuex-pathify'
 import mailConfigQuery from 'gql/admin/mail/mail-query-config.gql'
 import mailUpdateConfigMutation from 'gql/admin/mail/mail-mutation-save-config.gql'
 

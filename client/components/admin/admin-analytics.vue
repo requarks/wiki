@@ -6,7 +6,7 @@
           img.animated.fadeInUp(src='/svg/icon-line-chart.svg', alt='Analytics', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:analytics.title') }}
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:analytics.subtitle') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:analytics.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', @click='refresh', large)
             v-icon mdi-refresh
@@ -17,7 +17,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading {{$t('admin:analytics.providers')}}
+            .subtitle-1 {{$t('admin:analytics.providers')}}
           v-list(two-line, dense).py-0
             template(v-for='(str, idx) in providers')
               v-list-item(:key='str.key', @click='selectedProvider = str.key', :disabled='!str.isAvailable')
@@ -36,15 +36,15 @@
 
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
-            .subheading {{provider.title}}
+            .subtitle-1 {{provider.title}}
           v-card-text
             v-form
               .analytic-provider-logo
                 img(:src='provider.logo', :alt='provider.title')
-              .caption.pt-3 {{provider.description}}
-              .caption.pb-3: a(:href='provider.website') {{provider.website}}
-              v-divider.mt-3
-              .overline.py-4 {{$t('admin:analytics.providerConfiguration')}}
+              .body-2.pt-3 {{provider.description}}
+              .body-2.pt-3: a(:href='provider.website') {{provider.website}}
+              v-divider.mt-5
+              .overline.py-5 {{$t('admin:analytics.providerConfiguration')}}
               .body-1.ml-3(v-if='!provider.config || provider.config.length < 1'): em {{$t('admin:analytics.providerNoConfiguration')}}
               template(v-else, v-for='cfg in provider.config')
                 v-select(

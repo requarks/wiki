@@ -6,28 +6,27 @@
           img.animated.fadeInUp(src='/svg/icon-new-post.svg', alt='Mail', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:mail.title') }}
-            .subheading.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:mail.subtitle') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:mail.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
               v-form
-                v-card.wiki-form.animated.fadeInUp
+                v-card.animated.fadeInUp
                   v-toolbar(color='primary', dark, dense, flat)
-                    v-toolbar-title
-                      .subheading {{ $t('admin:mail.configuration') }}
-                  v-subheader {{ $t('admin:mail.sender') }}
-                  .px-3.pb-3
+                    v-toolbar-title.subtitle-1 {{ $t('admin:mail.configuration') }}
+                  .overline.pa-4.grey--text {{ $t('admin:mail.sender') }}
+                  .px-4
                     v-text-field(
                       outlined
                       v-model='config.senderName'
                       :label='$t(`admin:mail.senderName`)'
                       required
                       :counter='255'
-                      prepend-icon='person'
+                      prepend-icon='mdi-contact-mail'
                       )
                     v-text-field(
                       outlined
@@ -35,25 +34,25 @@
                       :label='$t(`admin:mail.senderEmail`)'
                       required
                       :counter='255'
-                      prepend-icon='email'
+                      prepend-icon='mdi-at'
                       )
                   v-divider
-                  v-subheader {{ $t('admin:mail.smtp') }}
-                  .px-3.pb-3
+                  .overline.pa-4.grey--text {{ $t('admin:mail.smtp') }}
+                  .px-4
                     v-text-field(
                       outlined
                       v-model='config.host'
                       :label='$t(`admin:mail.smtpHost`)'
                       required
                       :counter='255'
-                      prepend-icon='memory'
+                      prepend-icon='mdi-memory'
                       )
                     v-text-field(
                       outlined
                       v-model='config.port'
                       :label='$t(`admin:mail.smtpPort`)'
                       required
-                      prepend-icon='router'
+                      prepend-icon='mdi-serial-port'
                       persistent-hint
                       :hint='$t(`admin:mail.smtpPortHint`)'
                       style='max-width: 300px;'
@@ -64,7 +63,7 @@
                       color='primary'
                       persistent-hint
                       :hint='$t(`admin:mail.smtpTLSHint`)'
-                      prepend-icon='vpn_lock'
+                      prepend-icon='mdi-security-network'
                       )
                     v-text-field.mt-3(
                       outlined
@@ -72,37 +71,36 @@
                       :label='$t(`admin:mail.smtpUser`)'
                       required
                       :counter='255'
-                      prepend-icon='lock_outline'
+                      prepend-icon='mdi-shield-account-outline'
                       )
                     v-text-field(
                       outlined
                       v-model='config.pass'
                       :label='$t(`admin:mail.smtpPwd`)'
                       required
-                      prepend-icon='lock'
+                      prepend-icon='mdi-textbox-password'
                       type='password'
                       )
 
             v-flex(lg6 xs12)
-              v-card.wiki-form.animated.fadeInUp.wait-p2s
+              v-card.animated.fadeInUp.wait-p2s
                 v-form
                   v-toolbar(color='primary', dark, dense, flat)
-                    v-toolbar-title
-                      .subheading {{ $t('admin:mail.dkim') }}
-                  .pa-3
+                    v-toolbar-title.subtitle-1 {{ $t('admin:mail.dkim') }}
+                  .pa-4
                     .body-2.grey--text.text--darken-2 {{ $t('admin:mail.dkimHint') }}
                     v-switch(
                       v-model='config.useDKIM'
                       :label='$t(`admin:mail.dkimUse`)'
                       color='primary'
-                      prepend-icon='vpn_key'
+                      prepend-icon='mdi-key'
                       )
                     v-text-field(
                       outlined
                       v-model='config.dkimDomainName'
                       :label='$t(`admin:mail.dkimDomainName`)'
                       :counter='255'
-                      prepend-icon='vpn_key'
+                      prepend-icon='mdi-key'
                       :disabled='!config.useDKIM'
                       )
                     v-text-field(
@@ -110,37 +108,38 @@
                       v-model='config.dkimKeySelector'
                       :label='$t(`admin:mail.dkimKeySelector`)'
                       :counter='255'
-                      prepend-icon='vpn_key'
+                      prepend-icon='mdi-key'
                       :disabled='!config.useDKIM'
                       )
-                    v-text-field(
+                    v-textarea(
                       outlined
                       v-model='config.dkimPrivateKey'
                       :label='$t(`admin:mail.dkimPrivateKey`)'
-                      prepend-icon='vpn_key'
+                      prepend-icon='mdi-key'
                       persistent-hint
                       :hint='$t(`admin:mail.dkimPrivateKeyHint`)'
                       :disabled='!config.useDKIM'
                       )
 
-              v-card.mt-3.wiki-form.animated.fadeInUp.wait-p3s
+              v-card.mt-3.animated.fadeInUp.wait-p3s
                 v-form
                   v-toolbar(color='teal', dark, dense, flat)
-                    v-toolbar-title
-                      .subheading {{ $t('admin:mail.test') }}
-                  .pa-3
+                    v-toolbar-title.subtitle-1 {{ $t('admin:mail.test') }}
+                  .pa-4
                     .body-2.grey--text.text--darken-2 {{ $t('admin:mail.testHint') }}
                     v-text-field.mt-3(
                       outlined
                       v-model='testEmail'
                       :label='$t(`admin:mail.testRecipient`)'
                       :counter='255'
-                      prepend-icon='mail'
+                      prepend-icon='mdi-email-outline'
                       :disabled='testLoading'
                       )
                   v-card-chin
                     v-spacer
-                    v-btn(color='teal', dark, @click='sendTest', :loading='testLoading') {{ $t('admin:mail.testSend') }}
+                    v-btn.px-4(color='teal', dark, @click='sendTest', :loading='testLoading')
+                      v-icon(left) mdi-send
+                      span {{ $t('admin:mail.testSend') }}
 
 </template>
 

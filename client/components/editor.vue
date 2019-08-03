@@ -7,29 +7,29 @@
         v-spacer
       template(slot='actions')
         v-btn.animated.fadeInDown(
-          flat
+          text
           color='green'
           @click.native.stop='save'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
-          v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') check
+          v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
         v-btn.animated.fadeInDown.wait-p1s(
-          flat
+          text
           color='blue'
           @click.native.stop='openPropsModal'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
-          v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') sort_by_alpha
+          v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.page') }}
         v-btn.animated.fadeInDown.wait-p2s(
           v-if='!welcomeMode'
-          flat
+          text
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           @click.native.stop='exit'
           )
-          v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') close
+          v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
     v-content
       component(:is='currentEditor', :save='save')

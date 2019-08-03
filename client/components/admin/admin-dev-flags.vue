@@ -6,14 +6,14 @@
           img(src='/svg/icon-console.svg', alt='Developer Tools', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Developer Tools
-            .subheading.grey--text Flags
+            .subtitle-1.grey--text Flags
           v-spacer
           v-btn(color='success', depressed, @click='save', large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
         v-card.mt-3.white.grey--text.text--darken-3
-          v-alert(color='red', value='true', icon='warning')
+          v-alert(color='red', value='true', icon='mdi-alert', dark, prominent)
             span Do NOT enable these flags unless you know what you're doing!
             .caption Doing so may result in data loss or broken installation!
           v-card-text

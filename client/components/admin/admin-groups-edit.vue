@@ -6,7 +6,7 @@
           img(src='/svg/icon-social-group.svg', alt='Edit Group', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Edit Group
-            .subheading.grey--text {{group.name}}
+            .subtitle-1.grey--text {{group.name}}
           v-spacer
           .caption.grey--text ID #[strong {{group.id}}]
           v-divider.mx-3(vertical)

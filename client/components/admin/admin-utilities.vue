@@ -6,12 +6,12 @@
           img(src='/svg/icon-maintenance.svg', alt='Utilities', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{$t('admin:utilities.title')}}
-            .subheading.grey--text {{$t('admin:utilities.subtitle')}}
+            .subtitle-1.grey--text {{$t('admin:utilities.subtitle')}}
 
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subheading {{$t('admin:utilities.tools')}}
+            .subtitle-1 {{$t('admin:utilities.tools')}}
           v-list(two-line, dense).py-0
             template(v-for='(tool, idx) in tools')
               v-list-item(:key='tool.key', @click='selectedTool = tool.key', :disabled='!tool.isAvailable')
@@ -19,9 +19,9 @@
                   v-icon(:color='!tool.isAvailable ? `grey lighten-1` : (selectedTool === tool.key ? `blue ` : `grey darken-1`)') {{ tool.icon }}
                 v-list-item-content
                   v-list-item-title.body-2(:class='!tool.isAvailable ? `grey--text` : (selectedTool === tool.key ? `primary--text` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Title') }}
-                  v-list-item-sub-title.caption(:class='!tool.isAvailable ? `grey--text text--lighten-1` : (selectedTool === tool.key ? `blue--text ` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Subtitle') }}
+                  v-list-item-subtitle: .caption(:class='!tool.isAvailable ? `grey--text text--lighten-1` : (selectedTool === tool.key ? `blue--text ` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Subtitle') }}
                 v-list-item-avatar(v-if='selectedTool === tool.key')
-                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+                  v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
               v-divider(v-if='idx < tools.length - 1')
 
       v-flex.animated.fadeInUp.wait-p2s(xs12, lg9)
@@ -46,37 +46,37 @@ export default {
       tools: [
         {
           key: 'UtilityAuth',
-          icon: 'lock_outline',
+          icon: 'mdi-lock-open-outline',
           i18nKey: 'auth',
           isAvailable: true
         },
         {
           key: 'UtilityContent',
-          icon: 'insert_drive_file',
+          icon: 'mdi-content-duplicate',
           i18nKey: 'content',
           isAvailable: true
         },
         {
           key: 'UtilityCache',
-          icon: 'invert_colors',
+          icon: 'mdi-database-refresh',
           i18nKey: 'cache',
           isAvailable: true
         },
         {
           key: 'UtilityGraphEndpoint',
-          icon: 'settings_ethernet',
+          icon: 'mdi-graphql',
           i18nKey: 'graphEndpoint',
           isAvailable: false
         },
         {
           key: 'UtilityImportv1',
-          icon: 'present_to_all',
+          icon: 'mdi-database-import',
           i18nKey: 'importv1',
           isAvailable: false
         },
         {
           key: 'UtilityTelemetry',
-          icon: 'wifi_tethering',
+          icon: 'mdi-math-compass',
           i18nKey: 'telemetry',
           isAvailable: true
         }
