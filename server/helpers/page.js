@@ -70,7 +70,7 @@ module.exports = {
       'markdown': '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content,
       'html': '<!--\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n-->\n\n' + page.content
     }
-    return inject[page.contentType] || page.content
+    return _.get(inject, page.contentType, page.content)
   },
   /**
    * Check if path is a reserved path
