@@ -145,7 +145,6 @@ module.exports = {
       {
         test: /\.svg$/,
         exclude: [
-          path.join(process.cwd(), 'client/svg'),
           path.join(process.cwd(), 'node_modules/grapesjs')
         ],
         use: [
@@ -155,17 +154,6 @@ module.exports = {
               name: '[name].[ext]',
               outputPath: 'svg/'
             }
-          }
-        ]
-      },
-      {
-        test: /\.svg$/,
-        include: [
-          path.join(process.cwd(), 'client/svg')
-        ],
-        use: [
-          {
-            loader: 'raw-loader'
           }
         ]
       },
