@@ -12,8 +12,7 @@
       :right='$vuetify.rtl'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='darkMode ? `grey darken-5` : `primary`')
-          slot(name='sidebar')
+        nav-sidebar(:color='darkMode ? `grey darken-5` : `primary`', :items='sidebar')
 
     v-fab-transition
       v-btn(
@@ -28,7 +27,7 @@
         v-if='$vuetify.breakpoint.mdAndDown'
         v-show='!navShown'
         )
-        v-icon menu
+        v-icon mdi-menu
 
     v-content(ref='content')
       template(v-if='path !== `home`')
@@ -64,12 +63,12 @@
                   v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
                     v-icon(color='grey', small) mdi-chevron-right
                     v-list-item-title.pl-3 {{tocItem.title}}
-                  // v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
+                  //- v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
                   template(v-for='tocSubItem in tocItem.children')
                     v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
                       v-icon.pl-3(color='grey lighten-1', small) mdi-chevron-right
                       v-list-item-title.pl-3.caption.grey--text.text--darken-1 {{tocSubItem.title}}
-                    // v-divider(inset, v-if='tocIdx < toc.length - 1')
+                    //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
             v-card.mt-5
               .pa-5.pt-3
@@ -81,15 +80,10 @@
                       v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
                         v-icon(color='grey', dense) mdi-history
                     span History
-                  v-tooltip(top, v-if='isAuthenticated')
-                    template(v-slot:activator='{ on }')
-                      v-btn.btn-animate-edit(icon, :href='"/e/" + locale + "/" + path', v-on='on', x-small)
-                        v-icon(color='grey', dense) mdi-pencil
-                    span {{$t('common:page.editPage')}}
                 .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
-            v-card.mt-5(v-if='tags.length > 0')
+            v-card.mt-5(v-if='tags.length > 0 || true')
               .pa-5
                 .overline.teal--text.pb-2 Tags
                 v-chip.mr-1(
@@ -119,19 +113,24 @@
                 v-spacer
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, small, v-on='on'): v-icon(color='grey') mdi-bookmark
+                    v-btn(icon, tile, small, v-on='on'): v-icon(color='grey') mdi-bookmark
                   span {{$t('common:page.bookmark')}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, small, v-on='on'): v-icon(color='grey') mdi-share-variant
+                    v-btn(icon, tile, small, v-on='on'): v-icon(color='grey') mdi-share-variant
                   span {{$t('common:page.share')}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, small, v-on='on'): v-icon(color='grey') mdi-printer
+                    v-btn(icon, tile, small, v-on='on'): v-icon(color='grey') mdi-printer
                   span {{$t('common:page.printFormat')}}
                 v-spacer
 
           v-flex.page-col-content(xs12, lg9, xl10)
+            v-tooltip(left, v-if='isAuthenticated')
+              template(v-slot:activator='{ on }')
+                v-btn.btn-animate-edit(fab, bottom, right, color='primary', fixed, dark, :href='"/e/" + locale + "/" + path', v-on='on')
+                  v-icon mdi-pencil
+              span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
     nav-footer
@@ -143,11 +142,14 @@
         fab
         fixed
         bottom
-        :right='!$vuetify.rtl'
-        :left='$vuetify.rtl'
+        :right='$vuetify.rtl'
+        :left='!$vuetify.rtl'
         small
+        depressed
         @click='$vuetify.goTo(0, scrollOpts)'
         color='primary'
+        dark
+        :style='$vuetify.rtl ? `right: 235px;` : `left: 235px;`'
         )
         v-icon mdi-arrow-up
 </template>
@@ -219,6 +221,10 @@ export default {
       default: false
     },
     toc: {
+      type: Array,
+      default: () => []
+    },
+    sidebar: {
       type: Array,
       default: () => []
     }

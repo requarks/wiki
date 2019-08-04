@@ -175,7 +175,7 @@ export default {
   position: absolute;
   right: 0;
   top: 12px;
-  font-size: 120px !important;
+  font-size: 100px !important;
   opacity: .25;
 }
 

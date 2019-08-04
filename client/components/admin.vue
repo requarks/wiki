@@ -181,7 +181,8 @@ export default {
           initialScrollX: 0,
           scrollingX: false,
           easing: 'easeOutQuad',
-          speed: 1000
+          speed: 1000,
+          verticalNativeBarPos: this.$vuetify.rtl ? `left` : `right`
         },
         rail: {
           gutterOfEnds: '2px'

@@ -117,9 +117,9 @@
                       .caption.ml-2(:class='item.availability <= 33 ? `red--text` : (item.availability <= 66) ? `orange--text` : `green--text`') {{item.availability}}%
                   template(v-slot:item.isInstalled='{ item }')
                     v-progress-circular(v-if='item.isDownloading', indeterminate, color='blue', size='20', :width='2')
-                    v-btn(v-else-if='item.isInstalled && item.installDate < item.updatedAt', icon, @click='download(item)')
+                    v-btn(v-else-if='item.isInstalled && item.installDate < item.updatedAt', icon, small, @click='download(item)')
                       v-icon.blue--text mdi-cached
-                    v-btn(v-else-if='item.isInstalled', icon, @click='download(item)')
+                    v-btn(v-else-if='item.isInstalled', icon, small, @click='download(item)')
                       v-icon.green--text mdi-check
                     v-btn(v-else, icon, small, @click='download(item)')
                       v-icon.grey--text mdi-cloud-download

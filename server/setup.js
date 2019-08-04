@@ -293,7 +293,7 @@ module.exports = () => {
         config: [
           {
             id: uuid(),
-            icon: 'home',
+            icon: 'mdi-home',
             kind: 'link',
             label: 'Home',
             target: '/',

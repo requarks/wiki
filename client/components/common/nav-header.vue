@@ -56,7 +56,7 @@
               v-list-item.pl-4(@click='assets')
                 v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
                 v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
-          v-toolbar-title(:class='{ "ml-2": $vuetify.breakpoint.mdAndUp, "ml-0": $vuetify.breakpoint.smAndDown }')
+          v-toolbar-title(:class='{ "mx-2": $vuetify.breakpoint.mdAndUp, "mx-0": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
@@ -159,7 +159,7 @@
             template(v-slot:activator='{ on: menu }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn(icon, v-on='{ ...menu, ...tooltip }', outlined, color='blue')
+                  v-btn(icon, v-on='{ ...menu, ...tooltip }')
                     v-icon(v-if='picture.kind === `initials`', color='grey') mdi-account-circle
                     v-avatar(v-else-if='picture.kind === `image`', :size='29')
                       v-img(:src='picture.url')
@@ -173,7 +173,7 @@
                     v-img(:src='picture.url')
                 v-list-item-content
                   v-list-item-title {{name}}
-                  v-list-item-sub-title {{email}}
+                  v-list-item-subtitle {{email}}
               v-divider.my-0
               v-list-item(href='/w', disabled)
                 v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
