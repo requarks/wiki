@@ -22,7 +22,7 @@ export default {
           ],
           backendOptions: [
             {
-              expirationTime: 1000*60*60*24 // 24h
+              expirationTime: 1000 * 60 * 60 * 24 // 24h
             },
             {
               loadPath: '{{lng}}/{{ns}}',

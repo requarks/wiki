@@ -9,7 +9,7 @@
     "dev": "node dev",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
-    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
+    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest"
   },
   "repository": {
     "type": "git",
@@ -344,9 +344,15 @@
     "requireSpaceAfterCodeOperator": true,
     "requireStrictEqualityOperators": true,
     "validateAttributeQuoteMarks": "'",
-    "validateAttributeSeparator": ", ",
+    "validateAttributeSeparator": { "separator": ", ", "multiLineSeparator": "\n  " },
     "validateDivTags": true,
-    "validateIndentation": 2
+    "validateIndentation": 2,
+    "excludeFiles": [
+      "node_modules/**",
+      "server/views/master.pug",
+      "server/views/setup.pug",
+      "server/views/legacy/master.pug"
+    ]
   },
   "collective": {
     "type": "opencollective",

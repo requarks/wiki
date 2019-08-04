@@ -15,35 +15,29 @@ describe('injectPageMetadata tests', () => {
   })
   test('injectPageMetadata: markdown', () => {
     page.contentType = 'markdown'
-    // I am sorry for the formatting on the expected strings here, I don't know how
-    // else to format them to appease what is supposed to be coming back from the function
-    const expected = 
-`---
+    const expected = `---
 title: ${page.title}
 description: ${page.description}
 published: ${page.isPublished.toString()}
 date: ${page.updatedAt}
-tags: 
----
+tags: \n---
 
 TEST CONTENT`
     const result = injectPageMetadata(page)
     expect(result).toEqual(expected)
-  });
+  })
 
   test('injectPageMetadata: hmtl', () => {
     page.contentType = 'html'
-    const expected = 
-`<!--
+    const expected = `<!--
 title: ${page.title}
 description: ${page.description}
 published: ${page.isPublished.toString()}
 date: ${page.updatedAt}
-tags: 
--->
+tags: \n-->
 
 TEST CONTENT`
     const result = injectPageMetadata(page)
     expect(result).toEqual(expected)
-  });
+  })
 })

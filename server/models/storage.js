@@ -1,6 +1,7 @@
 const Model = require('objection').Model
 const path = require('path')
 const fs = require('fs-extra')
+const _ = require('lodash')
 const yaml = require('js-yaml')
 const commonHelper = require('../helpers/common')
 

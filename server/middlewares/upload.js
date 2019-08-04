@@ -1,7 +1,5 @@
 const { graphqlUploadExpress } = require('graphql-upload')
 
-/* global WIKI */
-
 /**
  * GraphQL File Upload Middleware
  */

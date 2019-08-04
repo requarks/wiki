@@ -8,6 +8,8 @@ import page from './page'
 import site from './site'
 import user from './user'
 
+/* global WIKI */
+
 Vue.use(Vuex)
 
 const state = {

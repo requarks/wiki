@@ -1,8 +1,3 @@
-
-/* global WIKI */
-
-const gql = require('graphql')
-
 module.exports = {
   // Query: {
   //   tags(obj, args, context, info) {

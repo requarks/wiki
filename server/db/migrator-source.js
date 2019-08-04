@@ -20,10 +20,10 @@ module.exports = {
   },
 
   getMigrationName(migration) {
-    return migration.file;
+    return migration.file
   },
 
   getMigration(migration) {
-    return require(path.join(baseMigrationPath, migration.file));
+    return require(path.join(baseMigrationPath, migration.file))
   }
 }

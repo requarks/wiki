@@ -186,7 +186,6 @@
         v-subheader.pl-0 Regular Expressions
         span Expressions that are deemed unsafe or could result in exponential time processing will be rejected upon saving.
 
-
 </template>
 
 <script>
@@ -196,7 +195,8 @@ import nanoid from 'nanoid/non-secure/generate'
 export default {
   props: {
     value: {
-      type: Object
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
