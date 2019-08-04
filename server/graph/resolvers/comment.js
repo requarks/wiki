@@ -1,6 +1,3 @@
-
-/* global WIKI */
-
 module.exports = {
   // Query: {
   //   comments(obj, args, context, info) {

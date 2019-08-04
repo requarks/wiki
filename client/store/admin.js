@@ -1,7 +1,5 @@
 import { make } from 'vuex-pathify'
 
-/* global siteConfig */
-
 const state = {
   info: {
     currentVersion: 'n/a',

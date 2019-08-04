@@ -57,7 +57,8 @@ import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
 export default {
   props: {
     value: {
-      type: Object
+      type: Object,
+      default: () => ({})
     }
   },
   components: {

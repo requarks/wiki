@@ -5,7 +5,6 @@
 // ------------------------------------
 
 const DiscordStrategy = require('passport-discord').Strategy
-const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {

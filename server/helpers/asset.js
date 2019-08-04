@@ -1,7 +1,5 @@
 const crypto = require('crypto')
 
-/* global WIKI */
-
 module.exports = {
   /**
    * Generate unique hash from page

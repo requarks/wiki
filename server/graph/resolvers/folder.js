@@ -1,6 +1,3 @@
-
-/* global WIKI */
-
 module.exports = {
   // Query: {
   //   folders(obj, args, context, info) {

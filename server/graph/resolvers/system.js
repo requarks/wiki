@@ -51,7 +51,7 @@ module.exports = {
         return {
           responseResult: graphHelper.generateSuccess('Telemetry state updated successfully')
         }
-      } catch(err) {
+      } catch (err) {
         return graphHelper.generateError(err)
       }
     },
@@ -63,7 +63,7 @@ module.exports = {
         return {
           responseResult: graphHelper.generateSuccess('Telemetry Client ID has been reset successfully')
         }
-      } catch(err) {
+      } catch (err) {
         return graphHelper.generateError(err)
       }
     }

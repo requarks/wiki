@@ -1,3 +1,5 @@
+/* global WIKI */
+
 exports.up = knex => {
   const dbCompat = {
     charset: (WIKI.config.db.type === `mysql` || WIKI.config.db.type === `mariadb`)

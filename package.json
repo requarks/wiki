@@ -236,6 +236,7 @@
     "i18next-localstorage-backend": "3.0.0",
     "i18next-xhr-backend": "3.0.1",
     "ignore-loader": "0.1.2",
+    "jest": "24.8.0",
     "js-cookie": "2.2.0",
     "mini-css-extract-plugin": "0.8.0",
     "moment-duration-format": "2.3.2",
@@ -343,9 +344,15 @@
     "requireSpaceAfterCodeOperator": true,
     "requireStrictEqualityOperators": true,
     "validateAttributeQuoteMarks": "'",
-    "validateAttributeSeparator": ", ",
+    "validateAttributeSeparator": { "separator": ", ", "multiLineSeparator": "\n  " },
     "validateDivTags": true,
-    "validateIndentation": 2
+    "validateIndentation": 2,
+    "excludeFiles": [
+      "node_modules/**",
+      "server/views/master.pug",
+      "server/views/setup.pug",
+      "server/views/legacy/master.pug"
+    ]
   },
   "collective": {
     "type": "opencollective",

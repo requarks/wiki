@@ -138,6 +138,5 @@ module.exports = class Analytics extends Model {
         bodyEnd: ''
       }
     }
-
   }
 }

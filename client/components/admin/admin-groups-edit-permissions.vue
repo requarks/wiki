@@ -42,7 +42,8 @@
 export default {
   props: {
     value: {
-      type: Object
+      type: Object,
+      default: () => ({})
     }
   },
   data() {

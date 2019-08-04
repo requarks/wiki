@@ -74,7 +74,7 @@ module.exports = {
       }
     },
     async update(obj, args) {
-      if(_.some(args.pageRules, pr => {
+      if (_.some(args.pageRules, pr => {
         return pr.match === 'REGEX' && !safeRegex(pr.path)
       })) {
         throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')

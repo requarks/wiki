@@ -12,8 +12,8 @@ const bruteforce = new ExpressBrute(new BruteKnex({
   knex: WIKI.models.knex
 }), {
   freeRetries: 5,
-  minWait: 5*60*1000, // 5 minutes
-  maxWait: 60*60*1000, // 1 hour
+  minWait: 5 * 60 * 1000, // 5 minutes
+  maxWait: 60 * 60 * 1000, // 1 hour
   failCallback: (req, res, next) => {
     res.status(401).send('Too many failed attempts. Try again later.')
   }

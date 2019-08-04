@@ -8,7 +8,7 @@
 import 'grapesjs/dist/css/grapes.min.css'
 import grapesjs from 'grapesjs'
 
-let editor
+let editor // eslint-disable-line no-unused-vars
 
 export default {
   mounted() {
@@ -31,7 +31,7 @@ export default {
           }, {
             id: 'text',
             label: 'Text',
-            content: '<div data-gjs-type="text">Insert your text here</div>',
+            content: '<div data-gjs-type="text">Insert your text here</div>'
           }, {
             id: 'image',
             label: 'Image',
