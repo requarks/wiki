@@ -5,20 +5,21 @@
         v-layout
           v-flex(xs12, lg6, offset-lg3)
             v-card.radius-7
-              .text-xs-center
+              .text-center
                 img.setup-logo(src='/svg/logo-wikijs.svg', alt='Wiki.js Logo')
-              v-alert(color='indigo lighten-5', icon='open_in_browser', :value='true')
+              v-alert(tile, color='indigo lighten-5', :value='true')
+                v-icon.mr-3(color='indigo') mdi-package-variant
                 span.indigo--text You are about to install Wiki.js #[strong {{wikiVersion}}].
               v-card-text
-                .body-2.pl-3 Create Administrator Account
+                .overline.pl-3 Create Administrator Account
                 v-container.pa-3(grid-list-xl)
                   v-layout(row, wrap)
                     v-flex(xs12)
                       v-text-field(
-                        outline
+                        outlined
                         v-model='conf.adminEmail',
                         label='Administrator Email',
-                        hint='The email address of the administrator account',
+                        hint='The email address of the administrator account.',
                         persistent-hint
                         v-validate='{ required: true, email: true }',
                         data-vv-name='adminEmail',
@@ -29,12 +30,12 @@
                       )
                     v-flex(xs6)
                       v-text-field(
-                        outline
+                        outlined
                         ref='adminPassword',
                         counter='255'
                         v-model='conf.adminPassword',
                         label='Password',
-                        :append-icon="pwdMode ? 'visibility' : 'visibility_off'"
+                        :append-icon="pwdMode ? 'mdi-eye-off' : 'mdi-eye'"
                         @click:append="() => (pwdMode = !pwdMode)"
                         :type="pwdMode ? 'password' : 'text'"
                         hint='At least 8 characters long.',
@@ -47,12 +48,12 @@
                       )
                     v-flex(xs6)
                       v-text-field(
-                        outline
+                        outlined
                         ref='adminPasswordConfirm',
                         counter='255'
                         v-model='conf.adminPasswordConfirm',
                         label='Confirm Password',
-                        :append-icon="pwdConfirmMode ? 'visibility' : 'visibility_off'"
+                        :append-icon="pwdConfirmMode ? 'mdi-eye-off' : 'mdi-eye'"
                         @click:append="() => (pwdConfirmMode = !pwdConfirmMode)"
                         :type="pwdConfirmMode ? 'password' : 'text'"
                         hint='Verify your password again.',
@@ -75,13 +76,13 @@
               v-alert(:value='error', type='error', icon='warning') {{ errorMessage }}
               v-divider.mt-3(v-if='!error')
               v-card-actions
-                v-btn(color='primary', @click='install', :disabled='loading', large, flat, block)
+                v-btn(color='primary', @click='install', :disabled='loading', x-large, flat, block)
+                  v-icon(left) mdi-check
                   span Install
-                  v-icon(right) arrow_forward
 
     v-dialog(v-model='loading', width='450', persistent)
       v-card(color='primary', dark).radius-7
-        v-card-text.text-xs-center.py-5
+        v-card-text.text-center.py-5
           .py-3(style='width: 64px; display:inline-block;')
             breeding-rhombus-spinner(
               :animation-duration='2000'
@@ -89,10 +90,10 @@
               color='#FFF'
               )
           template(v-if='!success')
-            .subheading Finalizing your installation...
+            .subtitle-1.white--text Finalizing your installation...
             .caption Just a moment
           template(v-else)
-            .subheading Installation complete!
+            .subtitle-1.white--text Installation complete!
             .caption Redirecting...
 </template>
 
@@ -169,9 +170,9 @@ export default {
 
 <style lang='scss'>
 .setup {
-  .application--wrap {
+  .v-application--wrap {
     padding-top: 10vh;
-    background-color: mc('grey', '900');
+    background-color: darken(mc('grey', '900'), 5%);
     background-image: url(/svg/motif-circuit.svg) !important;
     background-repeat: repeat;
   }

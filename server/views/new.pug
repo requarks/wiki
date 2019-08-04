@@ -2,15 +2,4 @@ extends master.pug
 
 block body
   #root.is-fullscreen
-    v-app
-      .newpage
-        .newpage-content
-          img.animated.fadeIn(src='/svg/icon-delete-file.svg', alt='Not Found')
-          .headline= t('newpage.title')
-          .subheading.mt-3= t('newpage.subtitle')
-          v-btn.mt-5(href='/e' + pagePath, large)
-            v-icon(left) add
-            span= t('newpage.create')
-          v-btn.mt-2(color='purple lighten-3', href='javascript:window.history.go(-1);', large, outline)
-            v-icon(left) arrow_back
-            span= t('newpage.goback')
+    new-page(locale=locale, path=path)

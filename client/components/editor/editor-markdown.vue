@@ -3,25 +3,28 @@
     v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat, style='overflow-x: hidden;')
       template(v-if='isModalShown')
         v-spacer
-        v-btn.animated.fadeInRight(flat, @click='closeAllModal')
-          v-icon(left) remove_circle_outline
+        v-btn.animated.fadeInRight(text, @click='closeAllModal')
+          v-icon(left) mdi-arrow-left-circle
           span {{$t('editor:backToEditor')}}
       template(v-else)
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn(icon, slot='activator', @click='toggleMarkup({ start: `**` })').mx-0
-            v-icon mdi-format-bold
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn(icon, tile, v-on='on', @click='toggleMarkup({ start: `**` })').mx-0
+              v-icon mdi-format-bold
           span {{$t('editor:markup.bold')}}
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p1s(icon, slot='activator', @click='toggleMarkup({ start: `*` })').mx-0
-            v-icon mdi-format-italic
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p1s(icon, tile, v-on='on', @click='toggleMarkup({ start: `*` })').mx-0
+              v-icon mdi-format-italic
           span {{$t('editor:markup.italic')}}
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p2s(icon, slot='activator', @click='toggleMarkup({ start: `~~` })').mx-0
-            v-icon mdi-format-strikethrough
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p2s(icon, tile, v-on='on', @click='toggleMarkup({ start: `~~` })').mx-0
+              v-icon mdi-format-strikethrough
           span {{$t('editor:markup.strikethrough')}}
         v-menu(offset-y, open-on-hover)
           template(v-slot:activator='{ on }')
-            v-btn.animated.fadeIn.wait-p3s(icon, v-on='on').mx-0
+            v-btn.animated.fadeIn.wait-p3s(icon, tile, v-on='on').mx-0
               v-icon mdi-format-header-pound
           v-list.py-0
             template(v-for='(n, idx) in 6')
@@ -31,117 +34,137 @@
                 v-list-item-title {{$t('editor:markup.heading', { level: n })}}
               v-divider(v-if='idx < 5')
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p4s(icon, slot='activator', @click='toggleMarkup({ start: `~` })').mx-0
-            v-icon mdi-format-subscript
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p4s(icon, tile, v-on='on', @click='toggleMarkup({ start: `~` })').mx-0
+              v-icon mdi-format-subscript
           span {{$t('editor:markup.subscript')}}
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p5s(icon, slot='activator', @click='toggleMarkup({ start: `^` })').mx-0
-            v-icon mdi-format-superscript
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p5s(icon, tile, v-on='on', @click='toggleMarkup({ start: `^` })').mx-0
+              v-icon mdi-format-superscript
           span {{$t('editor:markup.superscript')}}
         v-menu(offset-y, open-on-hover)
-          v-btn.animated.fadeIn.wait-p6s(icon, slot='activator').mx-0
-            v-icon mdi-alpha-t-box-outline
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p6s(icon, tile, v-on='on').mx-0
+              v-icon mdi-alpha-t-box-outline
           v-list.py-0
             v-list-item(@click='insertBeforeEachLine({ content: `> `})')
               v-list-item-action
-                v-icon format_quote
+                v-icon mdi-alpha-t-box-outline
               v-list-item-title {{$t('editor:markup.blockquote')}}
             v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
               v-list-item-action
-                v-icon(color='blue') format_quote
+                v-icon(color='blue') mdi-alpha-i-box-outline
               v-list-item-title {{$t('editor:markup.blockquoteInfo')}}
             v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
               v-list-item-action
-                v-icon(color='success') format_quote
+                v-icon(color='success') mdi-alpha-s-box-outline
               v-list-item-title {{$t('editor:markup.blockquoteSuccess')}}
             v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
               v-list-item-action
-                v-icon(color='warning') format_quote
+                v-icon(color='warning') mdi-alpha-w-box-outline
               v-list-item-title {{$t('editor:markup.blockquoteWarning')}}
             v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})')
               v-list-item-action
-                v-icon(color='error') format_quote
+                v-icon(color='error') mdi-alpha-e-box-outline
               v-list-item-title {{$t('editor:markup.blockquoteError')}}
             v-divider
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p7s(icon, slot='activator', @click='insertBeforeEachLine({ content: `- `})').mx-0
-            v-icon mdi-format-list-bulleted
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p7s(icon, tile, v-on='on', @click='insertBeforeEachLine({ content: `- `})').mx-0
+              v-icon mdi-format-list-bulleted
           span {{$t('editor:markup.unorderedList')}}
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p8s(icon, slot='activator', @click='insertBeforeEachLine({ content: `1. `})').mx-0
-            v-icon mdi-format-list-numbered
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p8s(icon, tile, v-on='on', @click='insertBeforeEachLine({ content: `1. `})').mx-0
+              v-icon mdi-format-list-numbered
           span {{$t('editor:markup.orderedList')}}
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p9s(icon, slot='activator', @click='toggleMarkup({ start: "`" })').mx-0
-            v-icon mdi-code-tags
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p9s(icon, tile, v-on='on', @click='toggleMarkup({ start: "`" })').mx-0
+              v-icon mdi-code-tags
           span {{$t('editor:markup.inlineCode')}}
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p10s(icon, slot='activator', @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })').mx-0
-            v-icon mdi-keyboard-variant
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p10s(icon, tile, v-on='on', @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })').mx-0
+              v-icon mdi-keyboard-variant
           span {{$t('editor:markup.keyboardKey')}}
         v-tooltip(bottom, color='primary')
-          v-btn.animated.fadeIn.wait-p11s(icon, slot='activator', @click='insertAfter({ content: `---`, newLine: true })').mx-0
-            v-icon mdi-minus
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='insertAfter({ content: `---`, newLine: true })').mx-0
+              v-icon mdi-minus
           span {{$t('editor:markup.horizontalBar')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(bottom, color='primary')
-            v-btn.animated.fadeIn.wait-p11s(icon, slot='activator', @click='previewShown = !previewShown').mx-0
-              v-icon mdi-book-open-outline
+            template(v-slot:activator='{ on }')
+              v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
+                v-icon mdi-book-open-outline
             span {{$t('editor:markup.togglePreviewPane')}}
     .editor-markdown-main
       .editor-markdown-sidebar
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft(icon, slot='activator', dark, disabled).mx-0
-            v-icon mdi-link-plus
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-link-plus
           span {{$t('editor:markup.insertLink')}}
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p1s(icon, slot='activator', dark, @click='toggleModal(`editorModalMedia`)').mx-0
-            v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') mdi-folder-multiple-image
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+              v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') mdi-folder-multiple-image
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p2s(icon, slot='activator', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
-            v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-post
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
+              v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
           span {{$t('editor:markup.insertBlock')}}
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p3s(icon, slot='activator', dark, disabled).mx-0
-            v-icon mdi-code-braces
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-code-braces
           span {{$t('editor:markup.insertCodeBlock')}}
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p4s(icon, slot='activator', dark, disabled).mx-0
-            v-icon mdi-library-video
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-library-video
           span {{$t('editor:markup.insertVideoAudio')}}
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p5s(icon, slot='activator', dark, disabled).mx-0
-            v-icon mdi-chart-multiline
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft.wait-p5s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p6s(icon, slot='activator', dark, disabled).mx-0
-            v-icon mdi-function-variant
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft.wait-p6s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-function-variant
           span {{$t('editor:markup.insertMathExpression')}}
         v-tooltip(right, color='teal')
-          v-btn.animated.fadeInLeft.wait-p7s(icon, slot='activator', dark, disabled).mx-0
-            v-icon mdi-table-plus
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft.wait-p7s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-table-plus
           span {{$t('editor:markup.tableHelper')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(right, color='teal')
-            v-btn.animated.fadeInLeft.wait-p8s(icon, slot='activator', dark, @click='toggleFullscreen').mx-0
-              v-icon mdi-overscan
+            template(v-slot:activator='{ on }')
+              v-btn.animated.fadeInLeft.wait-p8s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
+                v-icon mdi-arrow-expand-all
             span {{$t('editor:markup.distractionFreeMode')}}
           v-tooltip(right, color='teal')
-            v-btn.animated.fadeInLeft.wait-p9s(icon, slot='activator', dark, @click='toggleHelp').mx-0
-              v-icon(:color='helpShown ? `teal` : ``') mdi-help-circle
+            template(v-slot:activator='{ on }')
+              v-btn.animated.fadeInLeft.wait-p9s(icon, tile, v-on='on', dark, @click='toggleHelp').mx-0
+                v-icon(:color='helpShown ? `teal` : ``') mdi-help-circle
             span {{$t('editor:markup.markdownFormattingHelp')}}
       .editor-markdown-editor
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
       transition(name='editor-markdown-preview')
         .editor-markdown-preview(v-if='previewShown')
-          .editor-markdown-preview-content.contents(ref='editorPreview', v-html='previewHTML')
+          .editor-markdown-preview-content.contents
+            div(ref='editorPreview', v-html='previewHTML')
 
     v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
       .caption.editor-markdown-sysbar-locale {{locale.toUpperCase()}}
@@ -572,7 +595,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     &-content {
       height: $editor-height;
       overflow-y: scroll;
-      padding: 1rem 1rem 1rem 0;
+      padding: 1rem 1rem 1rem 1rem;
       width: calc(100% + 1rem + 17px);
       // -ms-overflow-style: none;
 
@@ -593,7 +616,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     color: #FFF;
 
     .v-toolbar__content {
-      padding-left: 78px;
+      padding-left: 64px;
 
       @include until($tablet) {
         padding-left: 8px;

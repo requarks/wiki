@@ -566,9 +566,9 @@
     }
     &.align-abstopright {
       position: absolute;
-      top: calc(-90px + 1rem);
+      top: -90px;
       right: 1rem;
-      height: calc(90px - 2rem);
+      height: calc(90px - 32px);
       width: auto;
     }
     &.decor-shadow {

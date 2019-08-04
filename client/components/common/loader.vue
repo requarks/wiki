@@ -1,7 +1,7 @@
 <template lang='pug'>
   v-dialog(v-model='value', persistent, max-width='350')
     v-card.loader-dialog.radius-7(:color='color', dark)
-      v-card-text.text-xs-center.py-4
+      v-card-text.text-center.py-4
         atom-spinner.is-inline(
           v-if='mode === `loading`'
           :animation-duration='1000'
@@ -9,7 +9,7 @@
           color='#FFF'
           )
         img(v-else-if='mode === `icon`', :src='`/svg/icon-` + icon + `.svg`', :alt='icon')
-        .subheading {{ title }}
+        .subtitle-1.white--text {{ title }}
         .caption {{ subtitle }}
 </template>
 

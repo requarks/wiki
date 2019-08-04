@@ -2,13 +2,12 @@
   v-dialog(
     v-model='isShown'
     persistent
-    lazy
     width='1100'
     :fullscreen='$vuetify.breakpoint.smAndDown'
     )
     .dialog-header
       v-icon(color='white') mdi-tag-text-outline
-      .subheading.white--text.ml-3 {{$t('editor:props.pageProperties')}}
+      .subtitle-1.white--text.ml-3 {{$t('editor:props.pageProperties')}}
       v-spacer
       v-btn.mx-0(
         outlined
@@ -75,7 +74,7 @@
           )
       v-divider
       v-card-text.pb-5.grey(:class='darkMode ? `darken-3-d5` : `lighten-4`')
-        .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outline).white--text coming soon]
+        .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outlined).white--text coming soon]
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
             v-flex(xs12, md4)
@@ -90,7 +89,6 @@
             v-flex(xs12, md4)
               v-dialog(
                 ref='menuPublishStart'
-                lazy
                 :close-on-content-click='false'
                 v-model='isPublishStartShown'
                 :return-value.sync='publishStartDate'
@@ -98,18 +96,19 @@
                 width='460px'
                 :disabled='!isPublished || true'
                 )
-                v-text-field(
-                  slot='activator'
-                  :label='$t(`editor:props.publishStart`)'
-                  v-model='publishStartDate'
-                  prepend-icon='mdi-calendar-check'
-                  readonly
-                  outlined
-                  clearable
-                  :hint='$t(`editor:props.publishStartHint`)'
-                  persistent-hint
-                  :disabled='!isPublished || true'
-                  )
+                template(v-slot:activator='{ on }')
+                  v-text-field(
+                    v-on='on'
+                    :label='$t(`editor:props.publishStart`)'
+                    v-model='publishStartDate'
+                    prepend-icon='mdi-calendar-check'
+                    readonly
+                    outlined
+                    clearable
+                    :hint='$t(`editor:props.publishStartHint`)'
+                    persistent-hint
+                    :disabled='!isPublished || true'
+                    )
                 v-date-picker(
                   v-model='publishStartDate'
                   :min='(new Date()).toISOString().substring(0, 10)'
@@ -132,7 +131,6 @@
             v-flex(xs12, md4)
               v-dialog(
                 ref='menuPublishEnd'
-                lazy
                 :close-on-content-click='false'
                 v-model='isPublishEndShown'
                 :return-value.sync='publishEndDate'
@@ -140,18 +138,19 @@
                 width='460px'
                 :disabled='!isPublished || true'
                 )
-                v-text-field(
-                  slot='activator'
-                  :label='$t(`editor:props.publishEnd`)'
-                  v-model='publishEndDate'
-                  prepend-icon='mdi-calendar-remove'
-                  readonly
-                  outlined
-                  clearable
-                  :hint='$t(`editor:props.publishEndHint`)'
-                  persistent-hint
-                  :disabled='!isPublished || true'
-                  )
+                template(v-slot:activator='{ on }')
+                  v-text-field(
+                    v-on='on'
+                    :label='$t(`editor:props.publishEnd`)'
+                    v-model='publishEndDate'
+                    prepend-icon='mdi-calendar-remove'
+                    readonly
+                    outlined
+                    clearable
+                    :hint='$t(`editor:props.publishEndHint`)'
+                    persistent-hint
+                    :disabled='!isPublished || true'
+                    )
                 v-date-picker(
                   v-model='publishEndDate'
                   :min='(new Date()).toISOString().substring(0, 10)'

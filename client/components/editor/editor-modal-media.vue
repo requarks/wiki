@@ -9,19 +9,19 @@
                 v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat, height='44')
                   .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.title')}}
                   v-spacer
-                  v-btn(flat, icon, @click='refresh')
-                    v-icon(:color='$vuetify.dark ? `white` : `teal`') refresh
+                  v-btn(flat, icon, @click='refresh', tile, small)
+                    v-icon(:color='$vuetify.dark ? `white` : `teal`') mdi-refresh
                 v-dialog(v-model='newFolderDialog', max-width='550')
-                  v-btn.ml-3.my-0.mr-0.radius-7(outline, large, color='teal', :icon='$vuetify.breakpoint.xsOnly', slot='activator')
-                    v-icon(:left='$vuetify.breakpoint.mdAndUp') add
-                    span.hidden-sm-and-down(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') {{$t('editor:assets.newFolder')}}
-                  v-card.wiki-form
-                    .dialog-header.is-short {{$t('editor:assets.newFolder')}}
+                  template(v-slot:activator='{ on }')
+                    v-btn.ml-3.my-0.mr-0.radius-7(outlined, large, color='teal', :icon='$vuetify.breakpoint.xsOnly', v-on='on')
+                      v-icon(:left='$vuetify.breakpoint.mdAndUp') mdi-plus
+                      span.hidden-sm-and-down(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') {{$t('editor:assets.newFolder')}}
+                  v-card
+                    .dialog-header.is-short.subtitle-1 {{$t('editor:assets.newFolder')}}
                     v-card-text
                       v-text-field.md2(
-                        outline
-                        background-color='grey lighten-3'
-                        prepend-icon='folder'
+                        outlined
+                        prepend-icon='mdi-folder-outline'
                         v-model='newFolderName'
                         :label='$t(`editor:assets.folderName`)'
                         counter='255'
@@ -33,8 +33,8 @@
                         a(place='namingRules', href='https://docs-beta.requarks.io/guide/assets#naming-restrictions', target='_blank') {{$t('editor:assets.folderNameNamingRulesLink')}}
                     v-card-chin
                       v-spacer
-                      v-btn(flat, @click='newFolderDialog = false') {{$t('common:actions.cancel')}}
-                      v-btn(color='primary', @click='createFolder', :disabled='!isFolderNameValid', :loading='newFolderLoading') {{$t('common:actions.create')}}
+                      v-btn(text, @click='newFolderDialog = false') {{$t('common:actions.cancel')}}
+                      v-btn.px-3(color='primary', @click='createFolder', :disabled='!isFolderNameValid', :loading='newFolderLoading') {{$t('common:actions.create')}}
               v-toolbar(flat, dense, :color='$vuetify.dark ? `grey darken-3` : `white`')
                 template(v-if='folderTree.length > 0')
                   .body-2
@@ -44,22 +44,23 @@
                       span.mx-1 /
                 .body-2(v-else) / #[em root]
               template(v-if='folders.length > 0 || currentFolderId > 0')
-                v-btn.is-icon.mx-1(:color='$vuetify.dark ? `grey lighten-1` : `grey darken-2`', outline, :dark='currentFolderId > 0', @click='upFolder()', :disabled='currentFolderId === 0')
-                  v-icon keyboard_arrow_up
+                v-btn.is-icon.mx-1(:color='$vuetify.dark ? `grey lighten-1` : `grey darken-2`', outlined, :dark='currentFolderId > 0', @click='upFolder()', :disabled='currentFolderId === 0')
+                  v-icon mdi-folder-upload
                 v-btn.btn-normalcase.mx-1(v-for='folder of folders', :key='folder.id', depressed,  color='grey darken-2', dark, @click='downFolder(folder)')
-                  v-icon(left) folder
-                  span {{ folder.name }}
+                  v-icon(left) mdi-folder
+                  span.caption {{ folder.name }}
                 v-divider.mt-2
               v-data-table(
                 :items='assets'
                 :headers='headers'
-                :pagination.sync='pagination'
-                :rows-per-page-items='[15]'
+                :page.sync='pagination'
+                :items-per-page='15'
                 :loading='loading'
                 must-sort,
-                hide-actions
+                hide-default-footer,
+                dense
               )
-                template(slot='items', slot-scope='props')
+                template(slot='item', slot-scope='props')
                   tr.is-clickable(
                     @click.left='currentFileId = props.item.id'
                     @click.right.prevent=''
@@ -75,54 +76,49 @@
                     td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.fileSize | prettyBytes }}
                     td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.createdAt | moment('from') }}
                     td(v-if='$vuetify.breakpoint.smAndUp')
-                      v-menu(offset-x)
-                        v-btn.ma-0(icon, slot='activator')
-                          v-icon(color='grey darken-2') more_horiz
-                        v-list.py-0(style='border-top: 5px solid #444;')
+                      v-menu(offset-x, min-width='200')
+                        template(v-slot:activator='{ on }')
+                          v-btn(icon, v-on='on', tile, small)
+                            v-icon(color='grey darken-2') mdi-dots-horizontal
+                        v-list(nav, style='border-top: 5px solid #444;')
                           v-list-item(@click='', disabled)
-                            v-list-item-avatar
-                              v-icon(color='teal') short_text
+                            v-list-item-avatar(size='24')
+                              v-icon(color='teal') mdi-text-short
                             v-list-item-content {{$t('common:actions.properties')}}
-                          v-divider
                           template(v-if='props.item.kind === `IMAGE`')
                             v-list-item(@click='previewDialog = true', disabled)
-                              v-list-item-avatar
-                                v-icon(color='green') image_search
+                              v-list-item-avatar(size='24')
+                                v-icon(color='green') mdi-image-search-outline
                               v-list-item-content {{$t('common:actions.preview')}}
-                            v-divider
                             v-list-item(@click='', disabled)
-                              v-list-item-avatar
-                                v-icon(color='indigo') crop_rotate
+                              v-list-item-avatar(size='24')
+                                v-icon(color='indigo') mdi-crop-rotate
                               v-list-item-content {{$t('common:actions.edit')}}
-                            v-divider
                             v-list-item(@click='', disabled)
-                              v-list-item-avatar
-                                v-icon(color='purple') offline_bolt
+                              v-list-item-avatar(size='24')
+                                v-icon(color='purple') mdi-flash-circle
                               v-list-item-content {{$t('common:actions.optimize')}}
-                            v-divider
                           v-list-item(@click='openRenameDialog')
-                            v-list-item-avatar
-                              v-icon(color='orange') keyboard
+                            v-list-item-avatar(size='24')
+                              v-icon(color='orange') mdi-keyboard-outline
                             v-list-item-content {{$t('common:actions.rename')}}
-                          v-divider
                           v-list-item(@click='', disabled)
-                            v-list-item-avatar
-                              v-icon(color='blue') forward
+                            v-list-item-avatar(size='24')
+                              v-icon(color='blue') mdi-file-move
                             v-list-item-content {{$t('common:actions.move')}}
-                          v-divider
                           v-list-item(@click='deleteDialog = true')
-                            v-list-item-avatar
-                              v-icon(color='red') delete
+                            v-list-item-avatar(size='24')
+                              v-icon(color='red') mdi-file-hidden
                             v-list-item-content {{$t('common:actions.delete')}}
                 template(slot='no-data')
-                  v-alert.mt-3.radius-7(icon='folder_open', :value='true', outline, color='teal') {{$t('editor:assets.folderEmpty')}}
+                  v-alert.mt-3.radius-7(icon='mdi-folder-open-outline', :value='true', outlined, color='teal') {{$t('editor:assets.folderEmpty')}}
               .text-xs-center.py-2(v-if='this.pageTotal > 1')
-                v-pagination(v-model='pagination.page', :length='pageTotal')
+                v-pagination(v-model='pagination', :length='pageTotal', color='teal')
               .d-flex.mt-3
                 v-toolbar.radius-7(flat, :color='$vuetify.dark ? `grey darken-2` : `grey lighten-4`', dense, height='44')
-                  .body-1(:class='$vuetify.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{$t('editor:assets.fileCount', { count: assets.length })}}
+                  .body-2(:class='$vuetify.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{$t('editor:assets.fileCount', { count: assets.length })}}
                 v-btn.ml-3.mr-0.my-0.radius-7(color='teal', large, @click='insert', :disabled='!currentFileId', :dark='currentFileId !== null')
-                  v-icon(left) save_alt
+                  v-icon(left) mdi-playlist-plus
                   span {{$t('common:actions.insert')}}
 
         v-flex(xs12, lg3)
@@ -130,10 +126,10 @@
             v-card-text
               .d-flex
                 v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat, height='44')
-                  v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') cloud_upload
+                  v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') mdi-cloud-upload
                   .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.uploadAssets')}}
-                v-btn.my-0.ml-3.mr-0.radius-7(outline, large, color='teal', @click='browse', v-if='$vuetify.breakpoint.mdAndUp')
-                  v-icon(left) touch_app
+                v-btn.my-0.ml-3.mr-0.radius-7(outlined, large, color='teal', @click='browse', v-if='$vuetify.breakpoint.mdAndUp')
+                  v-icon(left) mdi-library-plus
                   span(:class='$vuetify.dark ? `teal--text text--lighten-3` : ``') {{$t('common:actions.browse')}}
               file-pond.mt-3(
                 name='mediaUpload'
@@ -151,39 +147,39 @@
             v-card-actions.pa-3
               .caption.grey--text.text-darken-2 Max 10 files, 5 MB each
               v-spacer
-              v-btn(color='teal', dark, @click='upload') {{$t('common:actions.upload')}}
+              v-btn.px-4(color='teal', dark, @click='upload') {{$t('common:actions.upload')}}
 
           v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text.pb-0
               v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat)
-                v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') cloud_download
+                v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') mdi-cloud-download
                 .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.fetchImage')}}
                 v-spacer
                 v-chip(label, color='white', small).teal--text coming soon
               v-text-field.mt-3(
                 v-model='remoteImageUrl'
-                outline
+                outlined
+                color='teal'
                 single-line
-                background-color='grey lighten-2'
                 placeholder='https://example.com/image.jpg'
               )
             v-divider
             v-card-actions.pa-3
               .caption.grey--text.text-darken-2 Max 5 MB
               v-spacer
-              v-btn(color='teal', disabled) {{$t('common:actions.fetch')}}
+              v-btn.px-4(color='teal', disabled) {{$t('common:actions.fetch')}}
 
           v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.dark', :dark='$vuetify.dark')
             v-card-text.pb-0
               v-toolbar.radius-7(:color='$vuetify.dark ? `teal` : `teal lighten-5`', dense, flat)
-                v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') format_align_left
+                v-icon.mr-3(:color='$vuetify.dark ? `white` : `teal`') mdi-format-align-top
                 .body-2(:class='$vuetify.dark ? `white--text` : `teal--text`') {{$t('editor:assets.imageAlign')}}
               v-select.mt-3(
                 v-model='imageAlignment'
                 :items='imageAlignments'
-                outline
+                outlined
                 single-line
-                background-color='grey lighten-2'
+                color='teal'
                 placeholder='None'
               )
 
@@ -257,7 +253,7 @@ export default {
       folders: [],
       files: [],
       assets: [],
-      pagination: {},
+      pagination: 1,
       remoteImageUrl: '',
       imageAlignments: [
         { text: 'None', value: '' },
@@ -289,11 +285,11 @@ export default {
     currentFolderId: sync('editor/media@currentFolderId'),
     currentFileId: sync('editor/media@currentFileId'),
     pageTotal () {
-      if (this.pagination.rowsPerPage == null || this.pagination.totalItems == null) {
+      if (!this.assets) {
         return 0
       }
 
-      return Math.ceil(this.assets.length / this.pagination.rowsPerPage)
+      return Math.ceil(this.assets.length / 15)
     },
     headers() {
       return _.compact([

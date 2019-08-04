@@ -12,7 +12,7 @@
         solo
         flat
         hide-details
-        prepend-inner-icon='mdi-search'
+        prepend-inner-icon='mdi-magnify'
         :loading='searchIsLoading'
         @keyup.enter='searchEnter'
       )
@@ -34,7 +34,7 @@
                 v-divider.my-0
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') subject
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-box-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
                 v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
@@ -136,7 +136,7 @@
             @click='searchToggle'
             icon
             )
-            v-icon(color='grey') search
+            v-icon(color='grey') mdi-magnify
           v-menu(offset-y, left, transition='slide-y-transition', v-if='mode === `view` && locales.length > 0')
             template(v-slot:activator='{ on: menu }')
               v-tooltip(bottom)

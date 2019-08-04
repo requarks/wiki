@@ -219,7 +219,7 @@ router.get('/*', async (req, res, next) => {
       } else {
         _.set(res.locals, 'pageMeta.title', 'Page Not Found')
         if (WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs)) {
-          res.status(404).render('new', { pagePath: req.path })
+          res.status(404).render('new', { path: pageArgs.path, locale: pageArgs.locale })
         } else {
           res.status(404).render('notfound', { action: 'view' })
         }

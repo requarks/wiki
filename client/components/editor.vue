@@ -3,7 +3,7 @@
     nav-header(dense)
       template(slot='mid')
         v-spacer
-        .subheading.grey--text {{currentPageTitle}}
+        .subtitle-1.grey--text {{currentPageTitle}}
         v-spacer
       template(slot='actions')
         v-btn.animated.fadeInDown(

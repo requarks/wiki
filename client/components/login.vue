@@ -18,13 +18,13 @@
                   .subheading(v-else-if='selectedStrategy.key !== "local"') {{ $t('auth:loginUsingStrategy', { strategy: selectedStrategy.title, interpolation: { escapeValue: false } }) }}
                   .subheading(v-else) {{ $t('auth:loginRequired') }}
                   v-spacer
-                v-card-text.text-xs-center
+                v-card-text.text-center
                   h1.display-1.primary--text.py-2 {{ siteTitle }}
                   template(v-if='screen === "login"')
                     v-text-field.md2.mt-3(
                       solo
                       flat
-                      prepend-icon='email'
+                      prepend-icon='mdi-clipboard-account'
                       background-color='grey lighten-4'
                       hide-details
                       ref='iptEmail'
@@ -34,12 +34,12 @@
                     v-text-field.md2.mt-2(
                       solo
                       flat
-                      prepend-icon='vpn_key'
+                      prepend-icon='mdi-textbox-password'
                       background-color='grey lighten-4'
                       hide-details
                       ref='iptPassword'
                       v-model='password'
-                      :append-icon='hidePassword ? "visibility" : "visibility_off"'
+                      :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
                       @click:append='() => (hidePassword = !hidePassword)'
                       :type='hidePassword ? "password" : "text"'
                       :placeholder='$t("auth:fields.password")'

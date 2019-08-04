@@ -1,8 +1,8 @@
 <template lang='pug'>
   v-dialog(v-model='isShown', persistent, max-width='700')
     v-card.radius-7(color='blue darken-3', dark)
-      v-card-text.text-xs-center.py-4
-        .subheading {{$t('editor:select.title')}}
+      v-card-text.text-center.py-4
+        .subtitle-1.white--text {{$t('editor:select.title')}}
         v-container(grid-list-lg, fluid)
           v-layout(row, wrap, justify-center)
             v-flex(xs4)
@@ -10,8 +10,9 @@
                 hover
                 light
                 ripple
+                disabled
                 )
-                v-card-text.text-xs-center(@click='selectEditor("api")')
+                v-card-text.text-center(@click='selectEditor("api")')
                   img(src='/svg/icon-rest-api.svg', alt='API', style='width: 36px;')
                   .body-2.mt-2.grey--text.text--darken-2 API Docs
                   .caption.grey--text.text--darken-1 REST / GraphQL
@@ -20,8 +21,9 @@
                 hover
                 light
                 ripple
+                disabled
                 )
-                v-card-text.text-xs-center(@click='selectEditor("code")')
+                v-card-text.text-center(@click='selectEditor("code")')
                   img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
                   .body-2.mt-2.grey--text.text--darken-2 Code
                   .caption.grey--text.text--darken-1 Raw HTML
@@ -31,17 +33,18 @@
                 light
                 ripple
                 )
-                v-card-text.text-xs-center(@click='selectEditor("markdown")')
+                v-card-text.text-center(@click='selectEditor("markdown")')
                   img(src='/svg/icon-markdown.svg', alt='Markdown', style='width: 36px;')
-                  .body-2.mt-2 Markdown
+                  .primary--text.body-2.mt-2 Markdown
                   .caption.grey--text Default
             v-flex(xs4)
               v-card.radius-7.grey(
                 hover
                 light
                 ripple
+                disabled
                 )
-                v-card-text.text-xs-center(@click='selectEditor("tabular")')
+                v-card-text.text-center(@click='selectEditor("tabular")')
                   img(src='/svg/icon-table.svg', alt='Tabular', style='width: 36px;')
                   .body-2.grey--text.mt-2.text--darken-2 Tabular
                   .caption.grey--text.text--darken-1 Excel-like
@@ -50,8 +53,9 @@
                 hover
                 light
                 ripple
+                disabled
                 )
-                v-card-text.text-xs-center(@click='selectEditor("wysiwyg")')
+                v-card-text.text-center(@click='selectEditor("wysiwyg")')
                   img(src='/svg/icon-open-in-browser.svg', alt='Visual Builder', style='width: 36px;')
                   .body-2.mt-2.grey--text.text--darken-2 Visual Builder
                   .caption.grey--text.text--darken-1 Drag-n-drop
@@ -60,8 +64,9 @@
                 hover
                 light
                 ripple
+                disabled
                 )
-                v-card-text.text-xs-center(@click='selectEditor("wikitext")')
+                v-card-text.text-center(@click='selectEditor("wikitext")')
                   img(src='/svg/icon-news.svg', alt='WikiText', style='width: 36px;')
                   .body-2.grey--text.mt-2.text--darken-2 WikiText
                   .caption.grey--text.text--darken-1 MediaWiki Format
