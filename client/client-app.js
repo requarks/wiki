@@ -196,7 +196,10 @@ let bootstrap = () => {
     store,
     i18n,
     vuetify: new Vuetify({
-      rtl: siteConfig.rtl
+      rtl: siteConfig.rtl,
+      theme: {
+        dark: siteConfig.darkMode
+      }
     })
   })
 

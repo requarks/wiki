@@ -4,7 +4,7 @@ description: Basic Markdown Parser
 author: requarks.io
 input: markdown
 output: html
-icon: crop_free
+icon: mdi-markdown
 props:
   allowHTML:
     type: Boolean

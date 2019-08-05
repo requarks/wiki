@@ -2,7 +2,7 @@ key: markdownSupsub
 title: Subscript/Superscript
 description: Parse subscript and superscript tags
 author: requarks.io
-icon: format_size
+icon: mdi-format-superscript
 enabledDefault: true
 dependsOn: markdownCore
 props:

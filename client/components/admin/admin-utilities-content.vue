@@ -6,7 +6,7 @@
       .subtitle-1.pb-3.pl-0.primary--text Migrate all pages to target locale
       .body-2 If you created content before selecting a different locale and activating the namespacing capabilities, you may want to transfer all content to the base locale.
       .body-2.red--text: strong This operation is destructive and cannot be reversed! Make sure you have proper backups!
-      v-toolbar.mt-5(flat, color='grey lighten-4', height='80')
+      v-toolbar.radius-7.mt-5(flat, :color='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-4`', height='80')
         v-select(
           label='Source Locale'
           outlined

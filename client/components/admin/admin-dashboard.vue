@@ -54,7 +54,7 @@
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p2s
-          v-card-title.subtitle-1(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
+          v-card-title.subtitle-1(:class='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
           v-data-table.pb-2(
             :items='recentPages'
             hide-default-footer
@@ -71,7 +71,7 @@
                 .caption Created {{ props.item.createdAt | moment('calendar') }}
       v-flex(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p4s
-          v-card-title.subtitle-1(:class='$vuetify.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
+          v-card-title.subtitle-1(:class='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
           v-data-table.pb-2(
             :items='popularPages'
             hide-default-footer

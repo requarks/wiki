@@ -167,11 +167,17 @@ export default {
       ]
     }
   },
+  watch: {
+    'darkMode' (newValue, oldValue) {
+      this.$vuetify.theme.dark = newValue
+    }
+  },
   mounted() {
     this.darkModeInitial = this.darkMode
   },
   beforeDestroy() {
     this.darkMode = this.darkModeInitial
+    this.$vuetify.theme.dark = this.darkModeInitial
   },
   methods: {
     async save () {

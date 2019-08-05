@@ -2,7 +2,7 @@
   v-app(v-scroll='upBtnScroll', :dark='darkMode')
     nav-header
     v-navigation-drawer(
-      :class='darkMode ? `grey darken-5` : `primary`'
+      :class='darkMode ? `grey darken-4-d4` : `primary`'
       dark
       app
       clipped
@@ -12,7 +12,7 @@
       :right='$vuetify.rtl'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='darkMode ? `grey darken-5` : `primary`', :items='sidebar')
+        nav-sidebar(:color='darkMode ? `grey darken-4-d4` : `primary`', :items='sidebar')
 
     v-fab-transition
       v-btn(
@@ -57,7 +57,7 @@
         v-layout(row)
           v-flex.page-col-sd(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp', style='margin-top: -90px;')
             v-card(v-if='toc.length')
-              .overline.pa-5.pb-0(:class='darkMode ? `indigo--text text--lighten-3` : `primary--text`') {{$t('common:page.toc')}}
+              .overline.pa-5.pb-0(:class='darkMode ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='darkMode ? `darken-3-d3` : ``')
                 template(v-for='(tocItem, tocIdx) in toc')
                   v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
@@ -67,12 +67,12 @@
                   template(v-for='tocSubItem in tocItem.children')
                     v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
                       v-icon.pl-3(color='grey lighten-1', small) mdi-chevron-right
-                      v-list-item-title.pl-3.caption.grey--text.text--darken-1 {{tocSubItem.title}}
+                      v-list-item-title.pl-3.caption.grey--text(:class='darkMode ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
             v-card.mt-5
               .pa-5.pt-3
-                .overline.indigo--text.d-flex.align-center
+                .overline.indigo--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
                   v-spacer
                   v-tooltip(top, v-if='isAuthenticated')
@@ -85,7 +85,7 @@
 
             v-card.mt-5(v-if='tags.length > 0 || true')
               .pa-5
-                .overline.teal--text.pb-2 Tags
+                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') Tags
                 v-chip.mr-1(
                   label
                   color='teal lighten-5'
@@ -98,7 +98,7 @@
 
             v-card.mt-5
               .pa-5
-                .overline.pb-2.yellow--text.text--darken-4 Rating
+                .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
                 .text-center
                   v-rating(
                     v-model='rating'

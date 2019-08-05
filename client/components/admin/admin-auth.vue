@@ -29,11 +29,11 @@
                 v-list-item-content
                   v-list-item-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedStrategy === str.key ? `primary--text` : ``)') {{ str.title }}
                   v-list-item-subtitle: .caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedStrategy === str.key ? `blue--text ` : ``)') {{ str.description }}
-                v-list-item-avatar(v-if='selectedStrategy === str.key')
+                v-list-item-avatar(v-if='selectedStrategy === str.key', size='24')
                   v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
               v-divider(v-if='idx < strategies.length - 1')
 
-        v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
+        v-card.mt-3.animated.fadeInUp.wait-p2s
           v-toolbar(flat, color='primary', dark, dense)
             .subtitle-1 {{$t('admin:auth.globalAdvSettings')}}
           v-card-text
@@ -64,7 +64,7 @@
 
       v-flex(xs12, lg9)
 
-        v-card.wiki-form.animated.fadeInUp.wait-p2s
+        v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{strategy.title}}
           v-card-text
@@ -194,7 +194,7 @@
             .subtitle-1 {{$t('admin:auth.configReference')}}
           v-card-text
             .body-2 {{$t('admin:auth.configReferenceSubtitle')}}
-            v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outline, :value='true', icon='warning')
+            v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outlined, :value='true', icon='mdi-alert')
               i18next(path='admin:auth.siteUrlNotSetup', tag='span')
                 strong(place='siteUrl') {{$t('admin:general.siteUrl')}}
                 strong(place='general') {{$t('admin:general.title')}}

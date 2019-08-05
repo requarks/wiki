@@ -8,10 +8,10 @@
             .headline.primary--text.animated.fadeInLeft {{$t('admin:storage.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('admin:storage.subtitle')}}
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
-            v-icon refresh
+          v-btn.mx-3.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
+            v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
       v-flex(lg3, xs12)
@@ -21,15 +21,15 @@
           v-list(two-line, dense).py-0
             template(v-for='(tgt, idx) in targets')
               v-list-item(:key='tgt.key', @click='selectedTarget = tgt.key', :disabled='!tgt.isAvailable')
-                v-list-item-avatar
-                  v-icon(color='grey', v-if='!tgt.isAvailable') indeterminate_check_box
-                  v-icon(color='primary', v-else-if='tgt.isEnabled', v-ripple, @click='tgt.key !== `local` && (tgt.isEnabled = false)') check_box
-                  v-icon(color='grey', v-else, v-ripple, @click='tgt.isEnabled = true') check_box_outline_blank
+                v-list-item-avatar(size='24')
+                  v-icon(color='grey', v-if='!tgt.isAvailable') mdi-minus-box-outline
+                  v-icon(color='primary', v-else-if='tgt.isEnabled', v-ripple, @click='tgt.key !== `local` && (tgt.isEnabled = false)') mdi-checkbox-marked-outline
+                  v-icon(color='grey', v-else, v-ripple, @click='tgt.isEnabled = true') mdi-checkbox-blank-outline
                 v-list-item-content
                   v-list-item-title.body-2(:class='!tgt.isAvailable ? `grey--text` : (selectedTarget === tgt.key ? `primary--text` : ``)') {{ tgt.title }}
-                  v-list-item-sub-title.caption(:class='!tgt.isAvailable ? `grey--text text--lighten-1` : (selectedTarget === tgt.key ? `blue--text ` : ``)') {{ tgt.description }}
-                v-list-item-avatar(v-if='selectedTarget === tgt.key')
-                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+                  v-list-item-subtitle: .caption(:class='!tgt.isAvailable ? `grey--text text--lighten-1` : (selectedTarget === tgt.key ? `blue--text ` : ``)') {{ tgt.description }}
+                v-list-item-avatar(v-if='selectedTarget === tgt.key', size='24')
+                  v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
               v-divider(v-if='idx < targets.length - 1')
 
         v-card.mt-3.animated.fadeInUp.wait-p2s
@@ -84,22 +84,20 @@
             v-form
               .targetlogo
                 img(:src='target.logo', :alt='target.title')
-              v-subheader.pl-0 {{target.title}}
-              .caption {{target.description}}
-              .caption: a(:href='target.website') {{target.website}}
+              .body-2.pt-3 {{target.description}}
+              .body-2.pt-3.pb-5: a(:href='target.website') {{target.website}}
               v-divider.mt-3
-              v-subheader.pl-0 {{$t('admin:storage.targetConfig')}}
-              .body-1.ml-3(v-if='!target.config || target.config.length < 1') {{$t('admin:storage.noConfigOption')}}
+              .overline.my-5 {{$t('admin:storage.targetConfig')}}
+              .body-2.ml-3(v-if='!target.config || target.config.length < 1'): em {{$t('admin:storage.noConfigOption')}}
               template(v-else, v-for='cfg in target.config')
                 v-select(
                   v-if='cfg.value.type === "string" && cfg.value.enum'
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :items='cfg.value.enum'
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -110,37 +108,35 @@
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
                   color='primary'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   )
                 v-textarea(
                   v-else-if='cfg.value.type === "string" && cfg.value.multiline'
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
                 v-text-field(
                   v-else
-                  outline
-                  background-color='grey lighten-2'
+                  outlined
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='settings_applications'
+                  prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
               v-divider.mt-3
-              v-subheader.pl-0 {{$t('admin:storage.syncDirection')}}
-              .body-1.ml-3 {{$t('admin:storage.syncDirectionSubtitle')}}
+              .overline.my-5 {{$t('admin:storage.syncDirection')}}
+              .body-2.ml-3 {{$t('admin:storage.syncDirectionSubtitle')}}
               .pr-3.pt-3
                 v-radio-group.ml-3.py-0(v-model='target.mode')
                   v-radio(
@@ -161,7 +157,7 @@
                     value='pull'
                     :disabled='target.supportedModes.indexOf(`pull`) < 0'
                   )
-              .body-1.ml-3
+              .body-2.ml-3
                 strong {{$t('admin:storage.syncDirBi')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`sync`) < 0') {{$t('admin:storage.unsupported')}}]
                 .pb-3 {{$t('admin:storage.syncDirBiHint')}}
                 strong {{$t('admin:storage.syncDirPush')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`push`) < 0') {{$t('admin:storage.unsupported')}}]
@@ -171,8 +167,8 @@
 
               template(v-if='target.hasSchedule')
                 v-divider.mt-3
-                v-subheader.pl-0 {{$t('admin:storage.syncSchedule')}}
-                .body-1.ml-3 {{$t('admin:storage.syncScheduleHint')}}
+                .overline.my-5 {{$t('admin:storage.syncSchedule')}}
+                .body-2.ml-3 {{$t('admin:storage.syncScheduleHint')}}
                 .pa-3
                   duration-picker(v-model='target.syncInterval')
                   i18next.caption.mt-3(path='admin:storage.syncScheduleCurrent', tag='div')
@@ -182,17 +178,17 @@
 
               template(v-if='target.actions && target.actions.length > 0')
                 v-divider.mt-3
-                v-subheader.pl-0 {{$t('admin:storage.actions')}}
+                .overline.my-5 {{$t('admin:storage.actions')}}
                 v-container.pt-0(grid-list-xl, fluid)
                   v-layout(row, wrap, fill-height)
                     v-flex(xs12, lg6, xl4, v-for='act of target.actions', :key='act.handler')
                       v-card.radius-7.grey(flat, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`', height='100%')
                         v-card-text
                           .subtitle-1(v-html='act.label')
-                          .body-1.mt-2(v-html='act.hint')
-                          v-btn.mx-0.mt-3(
+                          .body-2.mt-4(v-html='act.hint')
+                          v-btn.mx-0.mt-5(
                             @click='executeAction(target.key, act.handler)'
-                            outline
+                            outlined
                             :color='$vuetify.dark ? `blue` : `primary`'
                             :disabled='runningAction'
                             :loading='runningActionHandler === act.handler'

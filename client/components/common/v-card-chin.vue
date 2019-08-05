@@ -8,7 +8,7 @@
 <script>
 export default {
   computed: {
-    dark() { return this.$vuetify.dark }
+    dark() { return this.$vuetify.theme.dark }
   }
 }
 </script>

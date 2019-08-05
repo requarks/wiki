@@ -4,5 +4,5 @@ description: Basic HTML Parser
 author: requarks.io
 input: html
 output: html
-icon: crop_free
+icon: mdi-language-html5
 props: {}

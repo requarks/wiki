@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app(:dark='darkMode').admin
+  v-app.admin
     nav-header(hide-search)
       template(slot='mid')
         v-spacer

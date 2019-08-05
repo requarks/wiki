@@ -125,7 +125,11 @@ module.exports = () => {
       })
       _.set(WIKI.config, 'theming', {
         theme: 'default',
-        darkMode: false
+        darkMode: false,
+        iconset: 'mdi',
+        injectCSS: '',
+        injectHead: '',
+        injectBody: ''
       })
       _.set(WIKI.config, 'title', 'Wiki.js')
 

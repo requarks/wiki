@@ -8,13 +8,13 @@
             .headline.primary--text.animated.fadeInLeft {{$t('admin:search.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:search.subtitle')}}
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
-            v-icon refresh
-          v-btn.animated.fadeInDown.wait-p1s(color='black', dark, large, depressed, @click='rebuild')
-            v-icon(left) cached
+          v-btn.mx-1.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
+            v-icon mdi-refresh
+          v-btn.mx-2.animated.fadeInDown.wait-p1s(color='black', dark, large, depressed, @click='rebuild')
+            v-icon(left) mdi-cached
             span {{$t('admin:search.rebuildIndex')}}
-          v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
-            v-icon(left) check
+          v-btn.ml-1.animated.fadeInDown(color='success', @click='save', depressed, large)
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
       v-flex(lg3, xs12)
@@ -24,19 +24,19 @@
           v-list.py-0(two-line, dense)
             template(v-for='(eng, idx) in engines')
               v-list-item(:key='eng.key', @click='selectedEngine = eng.key', :disabled='!eng.isAvailable')
-                v-list-item-avatar
-                  v-icon(color='grey', v-if='!eng.isAvailable') cancel
-                  v-icon(color='primary', v-else-if='eng.key === selectedEngine') radio_button_checked
-                  v-icon(color='grey', v-else) radio_button_unchecked
+                v-list-item-avatar(size='24')
+                  v-icon(color='grey', v-if='!eng.isAvailable') mdi-minus-box-outline
+                  v-icon(color='primary', v-else-if='eng.key === selectedEngine') mdi-checkbox-marked-outline
+                  v-icon(color='grey', v-else) mdi-checkbox-blank-outline
                 v-list-item-content
                   v-list-item-title.body-2(:class='!eng.isAvailable ? `grey--text` : (selectedEngine === eng.key ? `primary--text` : ``)') {{ eng.title }}
-                  v-list-item-sub-title.caption(:class='!eng.isAvailable ? `grey--text text--lighten-1` : (selectedEngine === eng.key ? `blue--text ` : ``)') {{ eng.description }}
-                v-list-item-avatar(v-if='selectedEngine === eng.key')
-                  v-icon.animated.fadeInLeft(color='primary') arrow_forward_ios
+                  v-list-item-subtitle: .caption(:class='!eng.isAvailable ? `grey--text text--lighten-1` : (selectedEngine === eng.key ? `blue--text ` : ``)') {{ eng.description }}
+                v-list-item-avatar(v-if='selectedEngine === eng.key', size='24')
+                  v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
               v-divider(v-if='idx < engines.length - 1')
 
       v-flex(lg9, xs12)
-        v-card.wiki-form.animated.fadeInUp.wait-p2s
+        v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{engine.title}}
           v-card-text
@@ -45,18 +45,17 @@
             .caption.pt-3 {{engine.description}}
             .caption.pb-3: a(:href='engine.website') {{engine.website}}
             v-divider.mt-3
-            v-subheader.pl-0 {{$t('admin:search.engineConfig')}}
-            .body-1.ml-3(v-if='!engine.config || engine.config.length < 1') {{$t('admin:search.engineNoConfig')}}
+            .overline.my-5 {{$t('admin:search.engineConfig')}}
+            .body-2.ml-3(v-if='!engine.config || engine.config.length < 1'): em {{$t('admin:search.engineNoConfig')}}
             template(v-else, v-for='cfg in engine.config')
               v-select(
                 v-if='cfg.value.type === "string" && cfg.value.enum'
-                outline
-                background-color='grey lighten-2'
+                outlined
                 :items='cfg.value.enum'
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='settings_applications'
+                prepend-icon='mdi-settings-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
@@ -67,30 +66,28 @@
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
                 color='primary'
-                prepend-icon='settings_applications'
+                prepend-icon='mdi-settings-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 )
               v-textarea(
                 v-else-if='cfg.value.type === "string" && cfg.value.multiline'
-                outline
-                background-color='grey lighten-2'
+                outlined
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='settings_applications'
+                prepend-icon='mdi-settings-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
                 )
               v-text-field(
                 v-else
-                outline
-                background-color='grey lighten-2'
+                outlined
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='settings_applications'
+                prepend-icon='mdi-settings-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'

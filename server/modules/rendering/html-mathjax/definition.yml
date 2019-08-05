@@ -2,7 +2,7 @@ key: htmlMathjax
 title: Mathjax Processor
 description: TeX/MathML Math Equations Parser
 author: requarks.io
-icon: functions
+icon: mdi-function-variant
 enabledDefault: false
 dependsOn: htmlCore
 props: {}

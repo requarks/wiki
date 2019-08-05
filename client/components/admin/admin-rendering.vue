@@ -8,10 +8,10 @@
             .headline.primary--text.animated.fadeInLeft Rendering
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Configure how content is rendered #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s(outline, color='grey', @click='refresh', large)
-            v-icon refresh
+          v-btn.mx-3.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
+            v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
-            v-icon(left) check
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
       v-flex.animated.fadeInUp(lg3, xs12)
@@ -21,43 +21,49 @@
           flat
           dark
           )
-          v-icon.mr-2 line_weight
+          v-icon.mr-2 mdi-creation
           .subtitle-1 Pipeline
-        v-expansion-panel.adm-rendering-pipeline(v-model='selectedCore')
-          v-expansion-panel-content(
-            hide-actions
+        v-expansion-panels.adm-rendering-pipeline(
+          v-model='selectedCore'
+          accordion
+          mandatory
+          )
+          v-expansion-panel(
             v-for='core in renderers'
             :key='core.key'
             )
-            v-toolbar(
-              slot='header'
-              color='blue'
-              dense
-              dark
-              flat
-              )
-              v-spacer
-              .body-2 {{core.input}}
-              v-icon.mx-2 arrow_forward
-              .caption {{core.output}}
-              v-spacer
-            v-list.py-0(two-line, dense)
-              template(v-for='(rdr, n) in core.children')
-                v-list-item(
-                  avatar
-                  :key='rdr.key'
-                  @click='selectRenderer(rdr.key)'
-                  :class='currentRenderer.key === rdr.key ? (darkMode ? `grey darken-4-l4` : `blue lighten-5`) : ``'
-                  )
-                  v-list-item-avatar
-                    v-icon(:color='currentRenderer.key === rdr.key ? "primary" : "grey"') {{rdr.icon}}
-                  v-list-item-content
-                    v-list-item-title {{rdr.title}}
-                    v-list-item-sub-title {{rdr.description}}
-                  v-list-item-avatar
-                    status-indicator(v-if='rdr.isEnabled', positive, pulse)
-                    status-indicator(v-else, negative, pulse)
-                v-divider.my-0(v-if='n < core.children.length - 1')
+            v-expansion-panel-header(
+              hide-actions
+              ripple
+            )
+              v-toolbar(
+                color='blue'
+                dense
+                dark
+                flat
+                )
+                v-spacer
+                .body-2 {{core.input}}
+                v-icon.mx-2 mdi-arrow-right-bold-hexagon-outline
+                .caption {{core.output}}
+                v-spacer
+            v-expansion-panel-content
+              v-list.py-0(two-line, dense)
+                template(v-for='(rdr, n) in core.children')
+                  v-list-item(
+                    :key='rdr.key'
+                    @click='selectRenderer(rdr.key)'
+                    :class='currentRenderer.key === rdr.key ? (darkMode ? `grey darken-4-l4` : `blue lighten-5`) : ``'
+                    )
+                    v-list-item-avatar(size='24')
+                      v-icon(:color='currentRenderer.key === rdr.key ? "primary" : "grey"') {{rdr.icon}}
+                    v-list-item-content
+                      v-list-item-title {{rdr.title}}
+                      v-list-item-subtitle: .caption {{rdr.description}}
+                    v-list-item-avatar(size='24')
+                      status-indicator(v-if='rdr.isEnabled', positive, pulse)
+                      status-indicator(v-else, negative, pulse)
+                  v-divider.my-0(v-if='n < core.children.length - 1')
 
       v-flex(lg9, xs12)
         v-card.wiki-form.animated.fadeInUp
@@ -70,20 +76,20 @@
             v-icon.mr-2 {{currentRenderer.icon}}
             .subtitle-1 {{currentRenderer.title}}
             v-spacer
-            .pt-3.mt-1
-              v-switch(
-                dark
-                color='white'
-                label='Enabled'
-                v-model='currentRenderer.isEnabled'
-                )
+            v-switch(
+              dark
+              color='white'
+              label='Enabled'
+              v-model='currentRenderer.isEnabled'
+              hide-details
+              )
           v-card-text.pb-4.pt-2.pl-4
-            v-subheader.pl-0 Rendering Module Configuration
-            .body-1.ml-3(v-if='!currentRenderer.config || currentRenderer.config.length < 1') This rendering module has no configuration options you can modify.
+            .overline.my-5 Rendering Module Configuration
+            .body-2.ml-3(v-if='!currentRenderer.config || currentRenderer.config.length < 1'): em This rendering module has no configuration options you can modify.
             template(v-else, v-for='(cfg, idx) in currentRenderer.config')
               v-select(
                 v-if='cfg.value.type === "string" && cfg.value.enum'
-                outline
+                outlined
                 :items='cfg.value.enum'
                 :key='cfg.key'
                 :label='cfg.value.title'
@@ -103,7 +109,7 @@
                 )
               v-text-field(
                 v-else
-                outline
+                outlined
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
@@ -111,7 +117,7 @@
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
                 )
-              v-divider.my-3(v-if='idx < currentRenderer.config.length - 1')
+              v-divider.my-5(v-if='idx < currentRenderer.config.length - 1')
           v-card-chin
             v-spacer
             .caption.pr-3.grey--text Module: {{ currentRenderer.key }}
@@ -211,10 +217,17 @@ export default {
 
 <style lang='scss'>
 .adm-rendering-pipeline {
-  border-top: 1px solid #FFF;
+  .v-expansion-panel--active .v-expansion-panel-header {
+    min-height: 0;
+  }
 
-  .v-expansion-panel__header {
-    padding: 0 0;
+  .v-expansion-panel-header {
+    padding: 0;
+    margin-top: 1px;
+  }
+
+  .v-expansion-panel-content__wrap {
+    padding: 0;
   }
 }
 </style>

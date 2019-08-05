@@ -10,11 +10,11 @@
   }
 
   @at-root .theme--dark & {
-    background-color: darken(mc('grey', '900'), 4%);
+    // background-color: darken(mc('grey', '900'), 4%);
     color: mc('grey', '300');
 
     a {
-      color: mc('indigo', '200');
+      color: mc('blue', '100');
     }
   }
 
@@ -57,7 +57,7 @@
     position: relative;
 
     @at-root .theme--dark & {
-      color: mc('teal', '100');
+      color: mc('grey', '300');
     }
 
     &::after {
@@ -71,7 +71,7 @@
       border-radius: 3px;
 
       @at-root .theme--dark & {
-        background: linear-gradient(to right, mc('teal', '300') 0%, mc('teal', '500') 10%, rgba(mc('teal', '900'), 0) 100%);
+        background: linear-gradient(to right, mc('blue', '300') 0%, mc('blue', '500') 10%, rgba(mc('blue', '900'), 0) 100%);
       }
 
       @at-root .application--is-rtl & {
@@ -227,7 +227,7 @@
 
       @at-root .theme--dark & {
         background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, mc('blue', '900'), rgba(darken(mc('blue', '900'), 5%), .2));
+        background-image: radial-gradient(ellipse at top, rgba(mc('blue', '900'), .25), rgba(darken(mc('blue', '900'), 5%), .2));
         border-color: mc('blue', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
@@ -245,7 +245,7 @@
 
       @at-root .theme--dark & {
         background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, mc('orange', '900'), rgba(darken(mc('orange', '900'), 5%), .2));
+        background-image: radial-gradient(ellipse at top, rgba(mc('orange', '900'), .25), rgba(darken(mc('orange', '900'), 5%), .2));
         border-color: mc('orange', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
@@ -263,7 +263,7 @@
 
       @at-root .theme--dark & {
         background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, mc('red', '900'), rgba(darken(mc('red', '900'), 5%), .2));
+        background-image: radial-gradient(ellipse at top, rgba(mc('red', '900'), .1), rgba(darken(mc('red', '900'), 5%), .2));
         border-color: mc('red', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
@@ -281,7 +281,7 @@
 
       @at-root .theme--dark & {
         background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, mc('green', '900'), rgba(darken(mc('green', '900'), 5%), .2));
+        background-image: radial-gradient(ellipse at top, rgba(mc('green', '900'), .4), rgba(darken(mc('green', '900'), 5%), .2));
         border-color: mc('green', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }

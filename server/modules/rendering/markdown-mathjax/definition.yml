@@ -2,7 +2,7 @@ key: markdownMathjax
 title: Mathjax Preprocessor
 description: Prepare TeX blocks for Mathjax
 author: requarks.io
-icon: functions
+icon: mdi-function-variant
 enabledDefault: false
 dependsOn: markdownCore
 props: {}
