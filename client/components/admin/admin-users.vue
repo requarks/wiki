@@ -14,7 +14,7 @@
             v-icon(left) mdi-plus
             span New User
         v-card.wiki-form.mt-3.animated.fadeInUp
-          v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
+          v-toolbar(flat, :color='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
             v-spacer
             v-text-field(
               outlined

@@ -37,7 +37,7 @@
                           v-avatar.blue.white--text(tile, size='40', v-html='data.item.code.toUpperCase()')
                         v-list-item-content
                           v-list-item-title(v-html='data.item.name')
-                          v-list-item-sub-title(v-html='data.item.nativeName')
+                          v-list-item-subtitle(v-html='data.item.nativeName')
                   v-divider.mt-3
                   v-switch(
                     v-model='autoUpdate'
@@ -254,6 +254,10 @@ export default {
           style: 'success',
           icon: 'check'
         })
+
+        _.delay(() => {
+          window.location.reload(true)
+        }, 1500)
       } else {
         this.$store.commit('showNotification', {
           message: `Error: ${resp.message}`,

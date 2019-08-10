@@ -1,6 +1,6 @@
 <template lang="pug">
   v-card.wiki-form
-    v-card-title(:class='$vuetify.dark ? `grey darken-3-d3` : `grey lighten-5`')
+    v-card-title(:class='$vuetify.theme.dark ? `grey darken-3-d3` : `grey lighten-5`')
       v-text-field(
         outline
         flat

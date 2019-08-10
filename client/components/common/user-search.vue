@@ -25,7 +25,7 @@
           hide-details
           )
         v-list.grey.mt-3.py-0.radius-7(
-          :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`'
+          :class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-3`'
           two-line
           dense
           )

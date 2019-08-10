@@ -23,15 +23,16 @@
             status-indicator.mr-3.ml-4(active, pulse)
             .caption.blue--text {{$t('common:page.global')}}
           v-spacer
-          v-btn.animated.fadeInRight.wait-p4s(color='grey', large, outline, to='/pages')
-            v-icon arrow_back
-          v-divider.animated.fadeInRight.wait-p3s.mx-3(vertical)
+          v-btn.mx-1.animated.fadeInRight.wait-p4s(color='grey', large, outlined, to='/pages')
+            v-icon mdi-arrow-left
+          v-divider.mx-1.animated.fadeInRight.wait-p3s.mx-1(vertical)
           v-dialog(v-model='deletePageDialog', max-width='500')
-            v-btn.animated.fadeInDown.wait-p1s(color='red', large, outline, slot='activator')
-              v-icon(color='red') delete
+            template(v-slot:activator='{ on }')
+              v-btn.mx-1.animated.fadeInDown.wait-p1s(color='red', large, outlined, v-on='on')
+                v-icon(color='red') mdi-trash-can-outline
             v-card.wiki-form
               .dialog-header.is-short.is-red
-                v-icon.mr-2(color='white') highlight_off
+                v-icon.mr-2(color='white') mdi-file-document-box-remove-outline
                 span {{$t('common:page.delete')}}
               v-card-text
                 i18next.body-2(path='common:page.deleteTitle', tag='div')
@@ -45,67 +46,67 @@
                 v-spacer
                 v-btn(flat, @click='deletePageDialog = false', :disabled='loading') {{$t('common:actions.cancel')}}
                 v-btn(color='red darken-2', @click='deletePage', :loading='loading').white--text {{$t('common:actions.delete')}}
-          v-btn.animated.fadeInDown(color='teal', large, outline, @click='rerenderPage')
-            v-icon(left) system_update_alt
+          v-btn.ml-1.animated.fadeInDown(color='teal', large, outlined, @click='rerenderPage')
+            v-icon(left) mdi-cube-scan
             span Re-render
       v-flex(xs12, lg6)
         v-card.animated.fadeInUp
           v-toolbar(color='primary', dense, dark, flat)
-            v-icon.mr-2 subject
+            v-icon.mr-2 mdi-text-subject
             span Properties
           v-list.py-0(two-line, dense)
             v-list-item
               v-list-item-content
-                v-list-item-title.caption.grey--text Title
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.title }}
+                v-list-item-title: .overline.grey--text Title
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.title }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title.caption.grey--text Description
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.description || '-' }}
+                v-list-item-title: .overline.grey--text Description
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.description || '-' }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title.caption.grey--text Locale
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.locale }}
+                v-list-item-title: .overline.grey--text Locale
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.locale }}
               v-list-item-action
-                v-btn(icon)
-                  v-icon(color='grey') edit
+                v-btn(icon, x-small)
+                  v-icon(color='grey') mdi-pencil
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title.caption.grey--text Path
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.path }}
+                v-list-item-title: .overline.grey--text Path
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.path }}
               v-list-item-action
-                v-btn(icon)
-                  v-icon(color='grey') edit
+                v-btn(icon, x-small)
+                  v-icon(color='grey') mdi-pencil
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title.caption.grey--text Editor
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.editor || '?' }}
+                v-list-item-title: .overline.grey--text Editor
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.editor || '?' }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title.caption.grey--text Content Type
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.contentType || '?' }}
+                v-list-item-title: .overline.grey--text Content Type
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.contentType || '?' }}
 
         v-toolbar.elevation-2.mt-3.animated.fadeInUp.wait-p4s(color='white', dense)
           v-spacer
-          v-btn(color='primary', flat, :href='`/` + page.locale + `/` + page.path')
-            v-icon(left) subject
+          v-btn(color='primary', text, :href='`/` + page.locale + `/` + page.path')
+            v-icon(left) mdi-text-subject
             span View
-          v-divider(vertical)
-          v-btn(color='primary', flat, :href='`/e/` + page.locale + `/` + page.path')
-            v-icon(left) edit
+          v-divider.mx-2(vertical)
+          v-btn(color='primary', text, :href='`/e/` + page.locale + `/` + page.path')
+            v-icon(left) mdi-pencil
             span Edit
-          v-divider(vertical)
-          v-btn(color='primary', flat, :href='`/s/` + page.locale + `/` + page.path')
-            v-icon(left) code
+          v-divider.mx-2(vertical)
+          v-btn(color='primary', text, :href='`/s/` + page.locale + `/` + page.path')
+            v-icon(left) mdi-code-tags
             span Source
-          v-divider(vertical)
-          v-btn(color='primary', flat, :href='`/h/` + page.locale + `/` + page.path')
-            v-icon(left) history
+          v-divider.mx-2(vertical)
+          v-btn(color='primary', text, :href='`/h/` + page.locale + `/` + page.path')
+            v-icon(left) mdi-history
             span History
           v-spacer
 
@@ -114,47 +115,47 @@
       v-flex(xs12, lg6)
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, dark, flat)
-            v-icon.mr-2 people
+            v-icon.mr-2 mdi-account-multiple
             span Users
           v-list.py-0(two-line, dense)
             v-list-item
-              v-list-item-avatar
+              v-list-item-avatar(size='24')
                 v-btn(icon, :to='`/users/` + page.creatorId')
-                  v-icon(color='grey') person
+                  v-icon(color='grey') mdi-account
               v-list-item-content
-                v-list-item-title.caption.grey--text Creator
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.creatorName }} #[em.caption ({{ page.creatorEmail }})]
+                v-list-item-title: .overline.grey--text Creator
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.creatorName }} #[em.caption ({{ page.creatorEmail }})]
               v-list-item-action
                 v-list-item-action-text {{ page.createdAt | moment('calendar') }}
             v-divider
             v-list-item
-              v-list-item-avatar
+              v-list-item-avatar(size='24')
                 v-btn(icon, :to='`/users/` + page.authorId')
-                  v-icon(color='grey') person
+                  v-icon(color='grey') mdi-account
               v-list-item-content
-                v-list-item-title.caption.grey--text Last Editor
-                v-list-item-sub-title.body-2.grey--text.text--darken-3 {{ page.authorName }} #[em.caption ({{ page.authorEmail }})]
+                v-list-item-title: .overline.grey--text Last Editor
+                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.authorName }} #[em.caption ({{ page.authorEmail }})]
               v-list-item-action
                 v-list-item-action-text {{ page.updatedAt | moment('calendar') }}
         v-card.mt-3.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, dark, flat)
-            v-icon.mr-2 history
+            v-icon.mr-2 mdi-history
             span Recent History
             v-spacer
             v-chip(label, color='white', small).primary--text coming soon
           v-timeline.mx-3(dense, clipped)
             v-timeline-item(color='teal', small, v-if='page.createdAt !== page.updatedAt')
               v-layout(justify-space-between)
-                v-flex(xs7) Page Modified by #[strong {{ page.authorName }}] #[em.caption ({{ page.authorEmail }})]
-                v-flex.text-xs-right(xs5).caption.grey--text.text-darken-2 {{ page.updatedAt | moment('calendar') }}
+                v-flex(xs7).body-2 Page Modified by #[strong {{ page.authorName }}] #[em.caption ({{ page.authorEmail }})]
+                v-flex.text-right(xs5).caption.grey--text.text-darken-2 {{ page.updatedAt | moment('calendar') }}
             v-timeline-item(hide-dot, small)
-              .body-1 ...
-              v-btn.mx-0(outline, color='grey', :href='`/h/` + page.locale + `/` + page.path') View Full History
-              .body-1 ...
+              .body-2 ...
+              v-btn.mx-0.mt-1(outlined, color='grey', :href='`/h/` + page.locale + `/` + page.path') View Full History
+              .body-2 ...
             v-timeline-item(color='pink', small)
               v-layout(justify-space-between)
-                v-flex(xs7) Page created by #[strong {{ page.creatorName }}] #[em.caption ({{ page.creatorEmail }})]
-                v-flex.text-xs-right(xs5).caption.grey--text.text-darken-2 {{ page.createdAt | moment('calendar') }}
+                v-flex(xs7).body-2 Page created by #[strong {{ page.creatorName }}] #[em.caption ({{ page.creatorEmail }})]
+                v-flex.text-right(xs5).caption.grey--text.text-darken-2 {{ page.createdAt | moment('calendar') }}
 
     v-layout(row, align-center, v-else)
       v-progress-circular(indeterminate, width='2', color='grey')

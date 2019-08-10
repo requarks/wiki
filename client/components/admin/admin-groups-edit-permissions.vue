@@ -12,7 +12,7 @@
       v-alert.radius-7(
         v-if='group.isSystem'
         color='orange darken-2'
-        :class='$vuetify.dark ? "grey darken-4" : "orange lighten-5"'
+        :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
         outline
         :value='true'
         icon='lock_outline'
@@ -20,7 +20,7 @@
     v-container.px-3.pb-3.pt-0(fluid, grid-list-md)
       v-layout(row, wrap)
         v-flex(xs12, md6, lg4, v-for='pmGroup in permissions', :key='pmGroup.category')
-          v-card.md2(flat, :class='$vuetify.dark ? "grey darken-3-d5" : "white"')
+          v-card.md2(flat, :class='$vuetify.theme.dark ? "grey darken-3-d5" : "white"')
             v-subheader {{pmGroup.category}}
             v-card-text.pt-0
               template(v-for='(pm, idx) in pmGroup.items')

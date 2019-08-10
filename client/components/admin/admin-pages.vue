@@ -17,7 +17,7 @@
             v-icon(left) mdi-plus
             span New Page
         v-card.wiki-form.mt-3.animated.fadeInUp
-          v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
+          v-toolbar(flat, :color='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
             v-spacer
             v-text-field(
               outlined
@@ -46,27 +46,27 @@
             :items='filteredPages'
             :headers='headers'
             :search='search'
-            :pagination.sync='pagination'
-            :rows-per-page-items='[15]'
+            :page.sync='pagination'
+            :items-per-page='15'
             :loading='loading'
             must-sort,
-            hide-actions
+            hide-default-footer
           )
-            template(slot='items', slot-scope='props')
+            template(slot='item', slot-scope='props')
               tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
                 td.text-xs-right {{ props.item.id }}
                 td
                   .body-2 {{ props.item.title }}
                   .caption {{ props.item.description }}
                 td.admin-pages-path
-                  v-chip(label, small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
-                  span.ml-2.grey--text(:class='$vuetify.dark ? `text--lighten-1` : `text--darken-2`') {{ props.item.path }}
+                  v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
+                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') {{ props.item.path }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
               v-alert.ma-3(icon='warning', :value='true', outline) No pages to display.
           .text-xs-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
-            v-pagination(v-model='pagination.page', :length='pageTotal')
+            v-pagination(v-model='pagination', :length='pageTotal')
 </template>
 
 <script>
@@ -77,7 +77,7 @@ export default {
   data() {
     return {
       selectedPage: {},
-      pagination: {},
+      pagination: 1,
       pages: [],
       headers: [
         { text: 'ID', value: 'id', width: 50, align: 'right' },
@@ -99,11 +99,7 @@ export default {
   },
   computed: {
     pageTotal () {
-      if (this.pagination.rowsPerPage == null || this.pagination.totalItems == null) {
-        return 0
-      }
-
-      return Math.ceil(this.filteredPages.length / this.pagination.rowsPerPage)
+      return Math.ceil(this.filteredPages.length / 15)
     },
     filteredPages () {
       return _.filter(this.pages, pg => {

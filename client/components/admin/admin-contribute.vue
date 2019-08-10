@@ -252,6 +252,7 @@ export default {
     margin-bottom: 12px;
     border-radius: 7px;
     background-color: mc('grey', '100');
+    color: mc('grey', '700');
     padding: 12px;
 
     strong {

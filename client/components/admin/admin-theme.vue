@@ -29,7 +29,7 @@
                     )
                     template(slot='item', slot-scope='data')
                       v-list-item-avatar
-                        v-icon.blue--text(dark) filter_frames
+                        v-icon.blue--text(dark) mdi-image-filter-frames
                       v-list-item-content
                         v-list-item-title(v-html='data.item.text')
                         v-list-item-sub-title(v-html='data.item.author')

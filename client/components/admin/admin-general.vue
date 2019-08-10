@@ -44,7 +44,7 @@
                   .overline.grey--text.pa-4 {{$t('admin:general.logo')}} #[v-chip.ml-2(label, color='grey', small, outlined) coming soon]
                   v-card-text.pb-4.pl-5
                     v-layout.px-3(row, align-center)
-                      v-avatar(size='100', :color='$vuetify.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
+                      v-avatar(size='100', :color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
                       .ml-4
                         v-btn.mr-3(color='teal', depressed, disabled)
                           v-icon(left) mdi-cloud-upload

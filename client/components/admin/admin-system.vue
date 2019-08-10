@@ -10,7 +10,7 @@
         v-layout.mt-3(row wrap)
           v-flex(lg6 xs12)
             v-card.animated.fadeInUp
-              v-btn.animated.fadeInLeft.wait-p2s.btn-animate-rotate(fab, absolute, right, top, small, light, @click='refresh'): v-icon(color='grey') mdi-refresh
+              v-btn.animated.fadeInLeft.wait-p2s.btn-animate-rotate(fab, absolute, :right='!$vuetify.rtl', :left='$vuetify.rtl', top, small, light, @click='refresh'): v-icon(color='grey') mdi-refresh
               v-subheader Wiki.js
               v-list(two-line, dense)
                 v-list-item(avatar)

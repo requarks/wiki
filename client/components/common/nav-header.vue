@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app-bar.nav-header(color='black', dark, app, clipped-left, fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
+  v-app-bar.nav-header(color='black', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
     v-toolbar(color='deep-purple', flat, slot='extension', v-if='searchIsShown && $vuetify.breakpoint.smAndDown')
       v-text-field(
         ref='searchFieldMobile'
@@ -21,9 +21,9 @@
         v-toolbar.nav-header-inner.pl-3(color='black', dark, flat)
           v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
             template(v-slot:activator='{ on }')
-              v-app-bar-nav-icon.btn-animate-app(v-on='on')
+              v-app-bar-nav-icon.btn-animate-app(v-on='on', :class='$vuetify.rtl ? `mx-0` : ``')
                 v-icon mdi-menu-open
-            v-list(nav, :light='!$vuetify.dark', :dark='$vuetify.dark', :class='$vuetify.dark ? `grey darken-4` : ``')
+            v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
               v-list-item.pl-4(href='/')
                 v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
                 v-list-item-title.body-2 {{$t('common:header.home')}}
@@ -43,7 +43,7 @@
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-history
                   v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-braces
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
                   v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-content-save-move-outline
@@ -141,7 +141,7 @@
             template(v-slot:activator='{ on: menu }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn(icon, v-on='{ ...menu, ...tooltip }')
+                  v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-3` : ``')
                     v-icon(color='grey') mdi-web
                 span {{$t('common:header.language')}}
             v-list.py-0
@@ -152,20 +152,20 @@
                 v-divider.my-0(v-if='idx < locales.length - 1')
           v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
             template(v-slot:activator='{ on }')
-              v-btn.btn-animate-rotate(icon, href='/a', v-on='on')
+              v-btn.btn-animate-rotate(icon, href='/a', v-on='on', :class='$vuetify.rtl ? `ml-3` : ``')
                 v-icon(color='grey') mdi-settings
             span {{$t('common:header.admin')}}
           v-menu(v-if='isAuthenticated', offset-y, min-width='300', left, transition='slide-y-transition')
             template(v-slot:activator='{ on: menu }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn(icon, v-on='{ ...menu, ...tooltip }')
+                  v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-0` : ``')
                     v-icon(v-if='picture.kind === `initials`', color='grey') mdi-account-circle
                     v-avatar(v-else-if='picture.kind === `image`', :size='29')
                       v-img(:src='picture.url')
                 span {{$t('common:header.account')}}
             v-list.py-0
-              v-list-item.py-3.grey(avatar, :class='$vuetify.dark ? `darken-4-l5` : `lighten-5`')
+              v-list-item.py-3.grey(avatar, :class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-5`')
                 v-list-item-avatar
                   v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
                     span.white--text.subheading {{picture.initials}}
@@ -189,7 +189,7 @@
 
           v-tooltip(v-else, left)
             template(v-slot:activator='{ on }')
-              v-btn(icon, v-on='on', outline, color='grey darken-3', href='/login')
+              v-btn(icon, v-on='on', outlined, color='grey darken-3', href='/login')
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 

@@ -2,16 +2,16 @@
   v-card.wiki-form
     v-card-text(v-if='group.id === 1')
       v-alert.radius-7(
-        :class='$vuetify.dark ? "grey darken-4" : "orange lighten-5"'
+        :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
         color='orange darken-2'
         outline
         :value='true'
         icon='lock_outline'
         ) This group has access to everything.
     template(v-else)
-      v-card-title(:class='$vuetify.dark ? `grey darken-3-d5` : `grey lighten-5`')
+      v-card-title(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-5`')
         v-alert.radius-7(
-          :class='$vuetify.dark ? `grey darken-3-d3` : `white`'
+          :class='$vuetify.theme.dark ? `grey darken-3-d3` : `white`'
           :value='true'
           color='grey'
           outline
@@ -48,10 +48,10 @@
               v-list-item-avatar
                 v-icon cloud_download
               v-list-item-title Export Rules
-      v-card-text(:class='$vuetify.dark ? `grey darken-4-l5` : `white`')
+      v-card-text(:class='$vuetify.theme.dark ? `grey darken-4-l5` : `white`')
         .rules
           .caption(v-if='group.pageRules.length === 0')
-            em(:class='$vuetify.dark ? `grey--text` : `blue-grey--text`') This group has no page rules yet.
+            em(:class='$vuetify.theme.dark ? `grey--text` : `blue-grey--text`') This group has no page rules yet.
           .rule(v-for='rule of group.pageRules', :key='rule.id')
             v-btn.ma-0.rule-deny-btn(
               solo
@@ -90,7 +90,7 @@
                 v-icon.mr-2(:color='rule.deny ? `red` : `green`') {{props.item.icon}}
                 v-list-item-content
                   v-list-item-title.body-2 {{props.item.text}}
-                v-chip.mr-2.grey--text(label, small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value}}
+                v-chip.mr-2.grey--text(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value}}
 
             //- Match
             v-select.ml-1.mr-1(
@@ -111,7 +111,7 @@
                   v-list-item-title(v-html='data.item.text')
             //- Locales
             v-select.mr-1(
-              :background-color='$vuetify.dark ? `grey darken-3-d5` : `blue-grey lighten-5`'
+              :background-color='$vuetify.theme.dark ? `grey darken-3-d5` : `blue-grey lighten-5`'
               solo
               :items='locales'
               v-model='rule.locales'
@@ -147,7 +147,7 @@
                 v-icon.mr-2(:color='rule.deny ? `red` : `green`') language
                 v-list-item-content
                   v-list-item-title.body-2 {{props.item.text}}
-                v-chip.mr-2.grey--text(label, small, :color='$vuetify.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value.toUpperCase()}}
+                v-chip.mr-2.grey--text(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value.toUpperCase()}}
 
             //- Path
             v-text-field(
@@ -158,11 +158,11 @@
               :placeholder='rule.match === `REGEX` ? `Regular Expression` : `Path`'
               :suffix='rule.match === `REGEX` ? `/` : null'
               hide-details
-              :color='$vuetify.dark ? `grey` : `blue-grey`'
+              :color='$vuetify.theme.dark ? `grey` : `blue-grey`'
               )
 
             v-btn(icon, @click='removeRule(rule.id)')
-              v-icon(:color='$vuetify.dark ? `grey` : `blue-grey`') clear
+              v-icon(:color='$vuetify.theme.dark ? `grey` : `blue-grey`') clear
 
         v-divider.mt-3
         v-subheader.pl-0 Rules Order

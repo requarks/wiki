@@ -45,7 +45,7 @@
           :class='isLatestVersion ? "teal lighten-2" : "red lighten-2"'
           dark
           )
-          v-btn.btn-animate-wrench(fab, absolute, right, top, small, light, to='system', v-if='hasPermission(`manage:system`)')
+          v-btn.btn-animate-wrench(fab, absolute, :right='!$vuetify.rtl', :left='$vuetify.rtl', top, small, light, to='system', v-if='hasPermission(`manage:system`)')
             v-icon(:color='isLatestVersion ? `teal` : `red darken-4`', small) mdi-wrench
           v-card-text
             v-icon.dashboard-icon mdi-blur
@@ -95,7 +95,7 @@
               .subtitle-1 {{$t('admin:contribute.title')}}
               .body-2.mt-3: strong {{$t('admin:dashboard.contributeSubtitle')}}
               .body-2 {{$t('admin:dashboard.contributeHelp')}}
-              v-btn.mx-0.mt-4(:color='$vuetify.dark ? `indigo lighten-3` : `indigo`', outlined, small, to='/contribute')
+              v-btn.mx-0.mt-4(:color='$vuetify.theme.dark ? `indigo lighten-3` : `indigo`', outlined, small, to='/contribute')
                 .caption: strong {{$t('admin:dashboard.contributeLearnMore')}}
 
 </template>

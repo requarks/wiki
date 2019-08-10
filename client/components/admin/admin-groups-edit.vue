@@ -26,7 +26,7 @@
             v-icon(left) check
             span Update Group
         v-card.mt-3
-          v-tabs(v-model='tab', :color='$vuetify.dark ? "primary" : "grey darken-2"', fixed-tabs, slider-color='white', show-arrows, dark)
+          v-tabs(v-model='tab', :color='$vuetify.theme.dark ? "primary" : "grey darken-2"', fixed-tabs, slider-color='white', show-arrows, dark)
             v-tab(key='permissions') Permissions
             v-tab(key='rules') Page Rules
             v-tab(key='users') Users

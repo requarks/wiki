@@ -33,7 +33,7 @@
               v-divider(v-if='idx < targets.length - 1')
 
         v-card.mt-3.animated.fadeInUp.wait-p2s
-          v-toolbar(flat, :color='$vuetify.dark ? `grey darken-3-l5` : `grey darken-3`', dark, dense)
+          v-toolbar(flat, :color='$vuetify.theme.dark ? `grey darken-3-l5` : `grey darken-3`', dark, dense)
             .subtitle-1 {{$t('admin:storage.status')}}
             v-spacer
             looping-rhombuses-spinner(
@@ -182,14 +182,14 @@
                 v-container.pt-0(grid-list-xl, fluid)
                   v-layout(row, wrap, fill-height)
                     v-flex(xs12, lg6, xl4, v-for='act of target.actions', :key='act.handler')
-                      v-card.radius-7.grey(flat, :class='$vuetify.dark ? `darken-3-d5` : `lighten-3`', height='100%')
+                      v-card.radius-7.grey(flat, :class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-3`', height='100%')
                         v-card-text
                           .subtitle-1(v-html='act.label')
                           .body-2.mt-4(v-html='act.hint')
                           v-btn.mx-0.mt-5(
                             @click='executeAction(target.key, act.handler)'
                             outlined
-                            :color='$vuetify.dark ? `blue` : `primary`'
+                            :color='$vuetify.theme.dark ? `blue` : `primary`'
                             :disabled='runningAction'
                             :loading='runningActionHandler === act.handler'
                             ) {{$t('admin:storage.actionRun')}}
