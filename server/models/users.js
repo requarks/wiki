@@ -180,6 +180,20 @@ module.exports = class User extends Model {
     }
     primaryEmail = _.toLower(primaryEmail)
 
+    // Find pending social user
+    if (!user) {
+      user = await WIKI.models.users.query().findOne({
+        email: primaryEmail,
+        providerId: null,
+        providerKey
+      })
+      if (user) {
+        user = await user.$query().patchAndFetch({
+          providerId: _.toString(profile.id)
+        })
+      }
+    }
+
     // Parse display name
     let displayName = ''
     if (_.isString(profile.displayName) && profile.displayName.length > 0) {
@@ -365,35 +379,60 @@ module.exports = class User extends Model {
     email = _.toLower(email)
 
     // Input validation
-    const validation = validate({
-      email,
-      passwordRaw,
-      name
-    }, {
-      email: {
-        email: true,
-        length: {
-          maximum: 255
-        }
-      },
-      passwordRaw: {
-        presence: {
-          allowEmpty: false
+    let validation = null
+    if (providerKey === 'local') {
+      validation = validate({
+        email,
+        passwordRaw,
+        name
+      }, {
+        email: {
+          email: true,
+          length: {
+            maximum: 255
+          }
         },
-        length: {
-          minimum: 6
-        }
-      },
-      name: {
-        presence: {
-          allowEmpty: false
+        passwordRaw: {
+          presence: {
+            allowEmpty: false
+          },
+          length: {
+            minimum: 6
+          }
         },
-        length: {
-          minimum: 2,
-          maximum: 255
+        name: {
+          presence: {
+            allowEmpty: false
+          },
+          length: {
+            minimum: 2,
+            maximum: 255
+          }
         }
-      }
-    }, { format: 'flat' })
+      }, { format: 'flat' })
+    } else {
+      validation = validate({
+        email,
+        name
+      }, {
+        email: {
+          email: true,
+          length: {
+            maximum: 255
+          }
+        },
+        name: {
+          presence: {
+            allowEmpty: false
+          },
+          length: {
+            minimum: 2,
+            maximum: 255
+          }
+        }
+      }, { format: 'flat' })
+    }
+
     if (validation && validation.length > 0) {
       throw new WIKI.Error.InputInvalid(validation[0])
     }
@@ -402,19 +441,25 @@ module.exports = class User extends Model {
     const usr = await WIKI.models.users.query().findOne({ email, providerKey })
     if (!usr) {
       // Create the account
-      const newUsr = await WIKI.models.users.query().insert({
-        provider: providerKey,
+      let newUsrData = {
+        providerKey,
         email,
         name,
-        password: passwordRaw,
         locale: 'en',
         defaultEditor: 'markdown',
         tfaIsActive: false,
         isSystem: false,
         isActive: true,
         isVerified: true,
-        mustChangePwd: (mustChangePassword === true)
-      })
+        mustChangePwd: false
+      }
+
+      if (providerKey === `local`) {
+        newUsrData.password = passwordRaw
+        newUsrData.mustChangePwd = (mustChangePassword === true)
+      }
+
+      const newUsr = await WIKI.models.users.query().insert(newUsrData)
 
       // Assign to group(s)
       if (groups.length > 0) {

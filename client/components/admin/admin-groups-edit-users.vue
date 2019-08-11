@@ -1,49 +1,52 @@
 <template lang="pug">
-  v-card.wiki-form
-    v-card-title(:class='$vuetify.theme.dark ? `grey darken-3-d3` : `grey lighten-5`')
+  v-card
+    v-card-title.pb-4(:class='$vuetify.theme.dark ? `grey darken-3-d3` : `grey lighten-5`')
       v-text-field(
-        outline
+        outlined
         flat
-        prepend-inner-icon='search'
+        prepend-inner-icon='mdi-magnify'
         v-model='search'
         label='Search Group Users...'
         hide-details
       )
       v-spacer
       v-btn(color='primary', depressed, @click='searchUserDialog = true', :disabled='group.id === 2')
-        v-icon(left) assignment_ind
+        v-icon(left) mdi-clipboard-account
         | Assign User
     v-data-table(
       :items='group.users',
       :headers='headers',
       :search='search'
-      :pagination.sync='pagination',
-      :rows-per-page-items='[15]'
-      hide-actions
+      :page.sync='pagination'
+      :items-per-page='15'
+      @page-count='pageCount = $event'
+      must-sort,
+      hide-default-footer
     )
-      template(slot='items', slot-scope='props')
+      template(slot='item', slot-scope='props')
         tr(:active='props.selected')
           td.text-xs-right {{ props.item.id }}
           td {{ props.item.name }}
           td {{ props.item.email }}
           td
             v-menu(bottom, right, min-width='200')
-              v-btn(icon, slot='activator'): v-icon.grey--text.text--darken-1 more_horiz
-              v-list
+              template(v-slot:activator='{ on }')
+                v-btn(icon, v-on='on', small)
+                  v-icon.grey--text.text--darken-1 mdi-dots-horizontal
+              v-list(dense, nav)
                 v-list-item(:to='`/users/` + props.item.id')
-                  v-list-item-action: v-icon(color='primary') person
+                  v-list-item-action: v-icon(color='primary') mdi-account-outline
                   v-list-item-content
                     v-list-item-title View User Profile
                 template(v-if='props.item.id !== 2')
-                  v-divider
                   v-list-item(@click='unassignUser(props.item.id)')
-                    v-list-item-action: v-icon(color='orange') highlight_off
+                    v-list-item-action: v-icon(color='orange') mdi-account-remove-outline
                     v-list-item-content
                       v-list-item-title Unassign
       template(slot='no-data')
-        v-alert.ma-3(icon='warning', :value='true', outline) No users to display.
-    .text-xs-center.py-2(v-if='group.users.length > 15')
-      v-pagination(v-model='pagination.page', :length='pages')
+        v-alert.ma-3(icon='warning', outlined) No users to display.
+    .text-center.py-2(v-if='group.users.length > 15')
+      v-pagination(v-model='pagination', :length='pageCount')
 
     user-search(v-model='searchUserDialog', @select='assignUser')
 </template>
@@ -73,7 +76,8 @@ export default {
         { text: '', value: 'actions', sortable: false, width: 50 }
       ],
       searchUserDialog: false,
-      pagination: {},
+      pagination: 1,
+      pageCount: 0,
       search: ''
     }
   },

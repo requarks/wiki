@@ -10,11 +10,12 @@
           v-spacer
           .caption.grey--text ID #[strong {{group.id}}]
           v-divider.mx-3(vertical)
-          v-btn(color='grey', large, outline, to='/groups')
-            v-icon arrow_back
+          v-btn(color='grey', large, outlined, to='/groups')
+            v-icon mdi-arrow-left
           v-dialog(v-model='deleteGroupDialog', max-width='500', v-if='!group.isSystem')
-            v-btn(color='red', large, outline, slot='activator')
-              v-icon(color='red') delete
+            template(v-slot:activator='{ on }')
+              v-btn(color='red', large, outlined, v-on='{ on }')
+                v-icon(color='red') mdi-trash-can-outline
             v-card
               .dialog-header.is-red Delete Group?
               v-card-text Are you sure you want to delete group #[strong {{ group.name }}]? All users will be unassigned from this group.
@@ -22,11 +23,11 @@
                 v-spacer
                 v-btn(flat, @click='deleteGroupDialog = false') Cancel
                 v-btn(color='red', dark, @click='deleteGroup') Delete
-          v-btn(color='success', large, depressed, @click='updateGroup')
-            v-icon(left) check
+          v-btn.ml-2(color='success', large, depressed, @click='updateGroup')
+            v-icon(left) mdi-check
             span Update Group
         v-card.mt-3
-          v-tabs(v-model='tab', :color='$vuetify.theme.dark ? "primary" : "grey darken-2"', fixed-tabs, slider-color='white', show-arrows, dark)
+          v-tabs(v-model='tab', :background-color='$vuetify.theme.dark ? "primary" : "grey darken-2"', fixed-tabs, slider-color='white', show-arrows, dark)
             v-tab(key='permissions') Permissions
             v-tab(key='rules') Page Rules
             v-tab(key='users') Users
@@ -69,7 +70,7 @@ export default {
         users: []
       },
       deleteGroupDialog: false,
-      tab: '1'
+      tab: null
     }
   },
   methods: {

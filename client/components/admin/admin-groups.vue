@@ -37,25 +37,29 @@
             :items='groups'
             :headers='headers'
             :search='search'
-            :pagination.sync='pagination'
-            :rows-per-page-items='[15]'
-            hide-actions
+            :page.sync='pagination'
+            :items-per-page='15'
+            :loading='loading'
+            @page-count='pageCount = $event'
+            must-sort,
+            hide-default-footer
           )
-            template(slot='items', slot-scope='props')
+            template(slot='item', slot-scope='props')
               tr.is-clickable(:active='props.selected', @click='$router.push("/groups/" + props.item.id)')
-                td.text-xs-right {{ props.item.id }}
+                td {{ props.item.id }}
                 td: strong {{ props.item.name }}
                 td {{ props.item.userCount }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
                 td
                   v-tooltip(left, v-if='props.item.isSystem')
-                    v-icon(slot='activator') lock_outline
+                    template(v-slot:activator='{ on }')
+                      v-icon(v-on='on') mdi-lock-outline
                     span System Group
             template(slot='no-data')
               v-alert.ma-3(icon='warning', :value='true', outline) No groups to display.
-          .text-xs-center.py-2(v-if='this.pages > 0')
-            v-pagination(v-model='pagination.page', :length='pages')
+          .text-xs-center.py-2(v-if='pageCount > 1')
+            v-pagination(v-model='pagination', :length='pageCount')
 </template>
 
 <script>
@@ -70,7 +74,8 @@ export default {
       newGroupDialog: false,
       newGroupName: '',
       selectedGroup: {},
-      pagination: {},
+      pagination: 1,
+      pageCount: 0,
       groups: [],
       headers: [
         { text: 'ID', value: 'id', width: 50, align: 'right' },
@@ -80,16 +85,8 @@ export default {
         { text: 'Last Updated', value: 'updatedAt', width: 250 },
         { text: '', value: 'isSystem', width: 20, sortable: false }
       ],
-      search: ''
-    }
-  },
-  computed: {
-    pages () {
-      if (this.pagination.rowsPerPage == null || this.pagination.totalItems == null) {
-        return 0
-      }
-
-      return Math.ceil(this.pagination.totalItems / this.pagination.rowsPerPage)
+      search: '',
+      loading: false
     }
   },
   watch: {
@@ -158,6 +155,7 @@ export default {
       fetchPolicy: 'network-only',
       update: (data) => data.groups.list,
       watchLoading (isLoading) {
+        this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')
       }
     }

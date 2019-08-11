@@ -109,7 +109,7 @@
                   v-spacer
                 template(v-if='screen === "login" && isSocialShown')
                   v-divider
-                  v-card-text.grey.lighten-4.text-xs-center
+                  v-card-text.grey.lighten-4.text-center
                     .pb-2.body-2.text-xs-center.grey--text.text--darken-2 {{ $t('auth:orLoginUsingStrategy') }}
                     v-tooltip(top, v-for='strategy in strategies', :key='strategy.key')
                       .social-login-btn.mr-2(

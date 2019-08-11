@@ -46,7 +46,7 @@
               v-list-item(:key='tgt.key')
                 template(v-if='tgt.status === `pending`')
                   v-list-item-avatar(color='purple')
-                    v-icon(color='white') schedule
+                    v-icon(color='white') mdi-clock-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{tgt.title}}
                     v-list-item-sub-title.purple--text.caption {{tgt.status}}
@@ -54,20 +54,20 @@
                     v-progress-circular(indeterminate, :size='20', :width='2', color='purple')
                 template(v-else-if='tgt.status === `operational`')
                   v-list-item-avatar(color='green')
-                    v-icon(color='white') check_circle
+                    v-icon(color='white') mdi-check-circle
                   v-list-item-content
                     v-list-item-title.body-2 {{tgt.title}}
                     v-list-item-sub-title.green--text.caption {{$t('admin:storage.lastSync', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                 template(v-else)
                   v-list-item-avatar(color='red')
-                    v-icon(color='white') highlight_off
+                    v-icon(color='white') mdi-close-circle-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{tgt.title}}
                     v-list-item-sub-title.red--text.caption {{$t('admin:storage.lastSyncAttempt', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                   v-list-item-action
                     v-menu
                       v-btn(slot='activator', icon)
-                        v-icon(color='red') info
+                        v-icon(color='red') mdi-information
                       v-card(width='450')
                         v-toolbar(flat, color='red', dark, dense) {{$t('admin:storage.errorMsg')}}
                         v-card-text {{tgt.message}}

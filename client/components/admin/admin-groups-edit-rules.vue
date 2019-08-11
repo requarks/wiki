@@ -1,66 +1,66 @@
 <template lang="pug">
-  v-card.wiki-form
+  v-card
     v-card-text(v-if='group.id === 1')
       v-alert.radius-7(
         :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
         color='orange darken-2'
-        outline
-        :value='true'
-        icon='lock_outline'
+        outlined
+        icon='mdi-lock-outline'
         ) This group has access to everything.
     template(v-else)
-      v-card-title(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-5`')
-        v-alert.radius-7(
-          :class='$vuetify.theme.dark ? `grey darken-3-d3` : `white`'
-          :value='true'
+      v-card-title(:class='$vuetify.theme.dark ? `grey darken-3-d5` : ``')
+        v-alert.radius-7.caption(
+          :class='$vuetify.theme.dark ? `grey darken-3-d3` : `grey lighten-4`'
           color='grey'
-          outline
-          icon='info'
+          outlined
+          icon='mdi-information'
           ) You must enable global content permissions (under Permissions tab) for page rules to have any effect.
         v-spacer
-        v-btn(depressed, color='primary', @click='addRule')
-          v-icon(left) add
+        v-btn.mx-2(depressed, color='primary', @click='addRule')
+          v-icon(left) mdi-plus
           | Add Rule
         v-menu(
           right
           offset-y
           nudge-left='115'
           )
-          v-btn.is-icon(slot='activator', flat, outline, color='primary')
-            v-icon more_horiz
+          template(v-slot:activator='{ on }')
+            v-btn.is-icon(v-on='on', outlined, color='primary')
+              v-icon mdi-dots-horizontal
           v-list(dense)
             v-list-item(@click='comingSoon')
               v-list-item-avatar
-                v-icon keyboard_capslock
+                v-icon mdi-application-import
               v-list-item-title Load Preset
             v-divider
             v-list-item(@click='comingSoon')
               v-list-item-avatar
-                v-icon publish
+                v-icon mdi-application-export
               v-list-item-title Save As Preset
             v-divider
             v-list-item(@click='comingSoon')
               v-list-item-avatar
-                v-icon cloud_upload
+                v-icon mdi-cloud-upload
               v-list-item-title Import Rules
             v-divider
             v-list-item(@click='comingSoon')
               v-list-item-avatar
-                v-icon cloud_download
+                v-icon mdi-cloud-download
               v-list-item-title Export Rules
       v-card-text(:class='$vuetify.theme.dark ? `grey darken-4-l5` : `white`')
         .rules
           .caption(v-if='group.pageRules.length === 0')
             em(:class='$vuetify.theme.dark ? `grey--text` : `blue-grey--text`') This group has no page rules yet.
           .rule(v-for='rule of group.pageRules', :key='rule.id')
-            v-btn.ma-0.rule-deny-btn(
+            v-btn.ma-0.radius-4.rule-deny-btn(
               solo
               :color='rule.deny ? "red" : "green"'
               dark
               @click='rule.deny = !rule.deny'
+              height='48'
               )
-              v-icon(v-if='rule.deny') block
-              v-icon(v-else) check_circle
+              v-icon(v-if='rule.deny') mdi-cancel
+              v-icon(v-else) mdi-check-circle
             //- Roles
             v-select.ml-1(
               solo
@@ -83,7 +83,7 @@
               template(slot='item', slot-scope='props')
                 v-list-item-action(style='min-width: 30px;')
                   v-checkbox(
-                    v-model='props.tile.props.value'
+                    v-model='props.attrs.inputValue'
                     hide-details
                     color='primary'
                   )
@@ -103,7 +103,7 @@
               dense
               )
               template(slot='selection', slot-scope='{ item, index }')
-                .body-1 {{item.text}}
+                .body-2 {{item.text}}
               template(slot='item', slot-scope='data')
                 v-list-item-avatar
                   v-avatar.white--text.radius-4(color='blue', size='30', tile) {{ data.item.icon }}
@@ -133,18 +133,18 @@
                     color='primary'
                     readonly
                   )
-                v-icon.mr-2(:color='rule.deny ? `red` : `green`') public
+                v-icon.mr-2(:color='rule.deny ? `red` : `green`') mdi-earth
                 v-list-item-content
                   v-list-item-title.body-2 Any Locale
               v-divider(slot='prepend-item')
               template(slot='item', slot-scope='props')
                 v-list-item-action(style='min-width: 30px;')
                   v-checkbox(
-                    v-model='props.tile.props.value'
+                    v-model='props.attrs.inputValue'
                     hide-details
                     color='primary'
                   )
-                v-icon.mr-2(:color='rule.deny ? `red` : `green`') language
+                v-icon.mr-2(:color='rule.deny ? `red` : `green`') mdi-web
                 v-list-item-content
                   v-list-item-title.body-2 {{props.item.text}}
                 v-chip.mr-2.grey--text(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value.toUpperCase()}}
@@ -161,15 +161,15 @@
               :color='$vuetify.theme.dark ? `grey` : `blue-grey`'
               )
 
-            v-btn(icon, @click='removeRule(rule.id)')
-              v-icon(:color='$vuetify.theme.dark ? `grey` : `blue-grey`') clear
+            v-btn.ml-2.mt-1(icon, @click='removeRule(rule.id)', small)
+              v-icon(:color='$vuetify.theme.dark ? `grey` : `blue-grey`') mdi-close
 
         v-divider.mt-3
-        v-subheader.pl-0 Rules Order
-        .body-1.pl-3 Rules are applied in order of path specificity. A more precise path will always override a less defined path.
-        .body-1.pl-4 For example, #[span.teal--text /geography/countries] will override #[span.teal--text /geography].
-        .body-1.pl-3.pt-2 When 2 rules have the same specificity, the priority is given from lowest to highest as follows:
-        .body-1.pl-3.pt-1
+        .overline.py-3 Rules Order
+        .body-2.pl-3 Rules are applied in order of path specificity. A more precise path will always override a less defined path.
+        .body-2.pl-5 For example, #[span.teal--text /geography/countries] will override #[span.teal--text /geography].
+        .body-2.pl-3.pt-2 When 2 rules have the same specificity, the priority is given from lowest to highest as follows:
+        .body-2.pl-3.pt-1
           ul
             li
               strong Path Starts With...
@@ -181,9 +181,9 @@
             li
               strong Path Is Exactly...
               em.caption.pl-1 (highest)
-        .body-1.pl-3.pt-2 When 2 rules have the same path specificity AND the same match type, #[strong.red--text DENY] will always override an #[strong.green--text ALLOW] rule.
+        .body-2.pl-3.pt-2 When 2 rules have the same path specificity AND the same match type, #[strong.red--text DENY] will always override an #[strong.green--text ALLOW] rule.
         v-divider.mt-3
-        v-subheader.pl-0 Regular Expressions
+        .overline.py-3 Regular Expressions
         span Expressions that are deemed unsafe or could result in exponential time processing will be rejected upon saving.
 
 </template>
@@ -202,18 +202,18 @@ export default {
   data() {
     return {
       roles: [
-        { text: 'Read Pages', value: 'read:pages', icon: 'insert_drive_file' },
-        { text: 'Create Pages', value: 'write:pages', icon: 'insert_drive_file' },
-        { text: 'Edit + Move Pages', value: 'manage:pages', icon: 'insert_drive_file' },
-        { text: 'Delete Pages', value: 'delete:pages', icon: 'insert_drive_file' },
-        { text: 'View Pages Source', value: 'read:source', icon: 'code' },
-        { text: 'View Pages History', value: 'read:history', icon: 'restore' },
-        { text: 'Read / Use Assets', value: 'read:assets', icon: 'camera' },
-        { text: 'Upload Assets', value: 'write:assets', icon: 'camera' },
-        { text: 'Edit + Delete Assets', value: 'manage:assets', icon: 'camera' },
-        { text: 'Read Comments', value: 'read:comments', icon: 'insert_comment' },
-        { text: 'Create Comments', value: 'write:comments', icon: 'insert_comment' },
-        { text: 'Edit + Delete Comments', value: 'manage:comments', icon: 'insert_comment' }
+        { text: 'Read Pages', value: 'read:pages', icon: 'mdi-file-document-box-search-outline' },
+        { text: 'Create Pages', value: 'write:pages', icon: 'mdi-file-document-box-plus-outline' },
+        { text: 'Edit + Move Pages', value: 'manage:pages', icon: 'mdi-file-document-edit-outline' },
+        { text: 'Delete Pages', value: 'delete:pages', icon: 'mdi-file-document-box-remove-outline' },
+        { text: 'View Pages Source', value: 'read:source', icon: 'mdi-code-tags' },
+        { text: 'View Pages History', value: 'read:history', icon: 'mdi-history' },
+        { text: 'Read / Use Assets', value: 'read:assets', icon: 'mdi-image-search-outline' },
+        { text: 'Upload Assets', value: 'write:assets', icon: 'mdi-image-plus' },
+        { text: 'Edit + Delete Assets', value: 'manage:assets', icon: 'mdi-image-size-select-large' },
+        { text: 'Read Comments', value: 'read:comments', icon: 'mdi-comment-search-outline' },
+        { text: 'Create Comments', value: 'write:comments', icon: 'mdi-comment-plus-outline' },
+        { text: 'Edit + Delete Comments', value: 'manage:comments', icon: 'mdi-comment-remove-outline' }
       ],
       matches: [
         { text: 'Path Starts With...', value: 'START', icon: '/...' },
@@ -252,6 +252,9 @@ export default {
         message: `Coming soon...`,
         icon: 'directions_boat'
       })
+    },
+    dude (stuff) {
+      console.info(stuff)
     }
   }
 }
@@ -264,7 +267,7 @@ export default {
   padding: 1rem;
   position: relative;
 
-  @at-root .theme--dark & {
+  @at-root .v-application.theme--dark & {
     background-color: mc('grey', '800');
   }
 }
@@ -282,7 +285,7 @@ export default {
     opacity: 0;
   }
 
-  @at-root .theme--dark & {
+  @at-root .v-application.theme--dark & {
     background-color: mc('grey', '700');
   }
 
@@ -306,7 +309,7 @@ export default {
       left: -2rem;
       top: -1.3rem;
 
-      @at-root .theme--dark & {
+      @at-root .v-application.theme--dark & {
         background-color: mc('grey', '800');
         color: mc('grey', '600');
       }
@@ -316,12 +319,5 @@ export default {
   .input-group + * {
     margin-left: .5rem;
   }
-
-  &-deny-btn {
-    height: 48px;
-    border-radius: 2px 0 0 2px;
-    min-width: 0;
-  }
-
 }
 </style>

@@ -39,45 +39,36 @@
             :items='usersFiltered',
             :headers='headers',
             :search='search',
-            :pagination.sync='pagination',
-            :rows-per-page-items='[15]'
+            :page.sync='pagination'
+            :items-per-page='15'
             :loading='loading'
-            hide-actions,
-            disable-initial-sort
-          )
-            template(slot='headers', slot-scope='props')
-              tr
-                th.text-xs-left(
-                  v-for='header in props.headers'
-                  :key='header.text'
-                  :width='header.width'
-                  :class='[`column`, header.sortable ? `sortable` : ``, pagination.descending ? `desc` : `asc`, header.value === pagination.sortBy ? `active` : ``]'
-                  @click='changeSort(header.value)'
-                )
-                  | {{ header.text }}
-                  v-icon(small, v-if='header.sortable') arrow_upward
-            template(slot='items', slot-scope='props')
+            @page-count='pageCount = $event'
+            hide-default-footer
+            )
+            template(slot='item', slot-scope='props')
               tr.is-clickable(:active='props.selected', @click='$router.push("/users/" + props.item.id)')
                 //- td
                   v-checkbox(hide-details, :input-value='props.selected', color='blue darken-2', @click='props.selected = !props.selected')
-                td.text-xs-right {{ props.item.id }}
+                td {{ props.item.id }}
                 td: strong {{ props.item.name }}
                 td {{ props.item.email }}
                 td {{ props.item.providerKey }}
                 td {{ props.item.createdAt | moment('from') }}
                 td
                   v-tooltip(left, v-if='props.item.isSystem')
-                    v-icon(slot='activator') lock_outline
+                    template(v-slot:activator='{ on }')
+                      v-icon(v-on='{ on }') mdi-lock-outline
                     span System User
             template(slot='no-data')
               .pa-3
-                v-alert(icon='warning', :value='true', outline) No users to display!
-          v-card-chin(v-if='this.pages > 1')
+                v-alert.text-left(icon='mdi-alert', outlined, color='grey')
+                  em.body-2 No users to display!
+          v-card-chin(v-if='pageCount > 1')
             v-spacer
-            v-pagination(v-model='pagination.page', :length='pages')
+            v-pagination(v-model='pagination', :length='pageCount')
             v-spacer
 
-    user-create(v-model='isCreateDialogShown')
+    user-create(v-model='isCreateDialogShown', @refresh='refresh(false)')
 </template>
 
 <script>
@@ -95,7 +86,8 @@ export default {
   data() {
     return {
       selected: [],
-      pagination: {},
+      pagination: 1,
+      pageCount: 0,
       users: [],
       headers: [
         { text: 'ID', value: 'id', width: 80, sortable: true },
@@ -116,40 +108,20 @@ export default {
     usersFiltered () {
       const all = this.filterStrategy === 'all' || this.filterStrategy === ''
       return _.filter(this.users, u => all || u.providerKey === this.filterStrategy)
-    },
-    pages () {
-      if (this.pagination.rowsPerPage == null || this.usersFiltered.length < 1) {
-        return 0
-      }
-
-      return Math.ceil(this.usersFiltered.length / this.pagination.rowsPerPage)
     }
   },
   methods: {
     createUser() {
       this.isCreateDialogShown = true
     },
-    async refresh() {
+    async refresh(notify = true) {
       await this.$apollo.queries.users.refetch()
-      this.$store.commit('showNotification', {
-        message: 'Users list has been refreshed.',
-        style: 'success',
-        icon: 'cached'
-      })
-    },
-    changeSort (column) {
-      if (this.pagination.sortBy === column) {
-        this.pagination.descending = !this.pagination.descending
-      } else {
-        this.pagination.sortBy = column
-        this.pagination.descending = false
-      }
-    },
-    toggleAll () {
-      if (this.selected.length) {
-        this.selected = []
-      } else {
-        this.selected = this.items.slice()
+      if (notify) {
+        this.$store.commit('showNotification', {
+          message: 'Users list has been refreshed.',
+          style: 'success',
+          icon: 'cached'
+        })
       }
     }
   },

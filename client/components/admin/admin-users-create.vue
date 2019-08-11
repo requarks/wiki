@@ -1,6 +1,6 @@
 <template lang="pug">
   v-dialog(v-model='isShown', max-width='650', persistent)
-    v-card.wiki-form
+    v-card
       .dialog-header.is-short
         v-icon.mr-3(color='white') mdi-plus
         span New User
@@ -59,13 +59,14 @@
           data-vv-as='Name',
           data-vv-scope='newUser',
           :error-messages='errors.collect(`newUser.name`)'
+          :hint='provider === `local` ? `Can be changed by the user.` : `May be overwritten by the provider during login.`'
           key='newUserName'
           persistent-hint
           )
-        v-select(
+        v-select.mt-2(
           :items='groups'
           item-text='name'
-          item-value='key'
+          item-value='id'
           outlined
           prepend-icon='mdi-account-group'
           v-model='group'
@@ -90,8 +91,12 @@
       v-card-chin
         v-spacer
         v-btn(text, @click='isShown = false') Cancel
-        v-btn(depressed, color='primary', @click='newUser(false)', :disabled='errors.any(`newUser`)') Create
-        v-btn(depressed, color='primary', @click='newUser(true)', :disabled='errors.any(`newUser`)') Create and Close
+        v-btn.px-3(depressed, color='primary', @click='newUser(false)', :disabled='errors.any(`newUser`)')
+          v-icon(left) mdi-chevron-right
+          span Create
+        v-btn.px-3(depressed, color='primary', @click='newUser(true)', :disabled='errors.any(`newUser`)')
+          v-icon(left) mdi-chevron-double-right
+          span Create and Close
 </template>
 
 <script>
@@ -116,7 +121,7 @@ export default {
       password: '',
       name: '',
       groups: [],
-      group: '',
+      group: [],
       mustChangePwd: false,
       sendWelcomeEmail: false
     }
@@ -155,7 +160,7 @@ export default {
             email: this.email,
             passwordRaw: this.password,
             name: this.name,
-            groups: this.groups,
+            groups: this.group,
             mustChangePassword: this.mustChangePwd,
             sendWelcomeEmail: this.sendWelcomeEmail
           },
@@ -176,6 +181,7 @@ export default {
 
           if (close) {
             this.isShown = false
+            this.$emit('refresh')
           } else {
             this.$refs.emailInput.focus()
           }

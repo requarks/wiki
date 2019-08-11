@@ -1,3 +1,4 @@
+const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
 
@@ -28,8 +29,16 @@ module.exports = {
     }
   },
   UserMutation: {
-    create(obj, args) {
-      return WIKI.models.users.createNewUser(args)
+    async create(obj, args) {
+      try {
+        await WIKI.models.users.createNewUser(args)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User created successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     },
     delete(obj, args) {
       return WIKI.models.users.query().deleteById(args.id)

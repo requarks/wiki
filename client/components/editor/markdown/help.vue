@@ -7,7 +7,7 @@
             v-card-text
               .d-flex
                 v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
-                  v-icon.mr-3(color='teal') info
+                  v-icon.mr-3(color='teal') mdi-information-variant
                   .body-2.teal--text Markdown Reference
               .body-2.mt-3 Bold
               v-layout(row)
@@ -15,8 +15,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div **Lorem ipsum**
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption: strong Lorem ipsum
@@ -26,8 +26,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div *Lorem ipsum*
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption: em Lorem ipsum
@@ -37,8 +37,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div ~~Lorem ipsum~~
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption(style='text-decoration: line-through;') Lorem ipsum
@@ -53,8 +53,8 @@
                       div #### Header 4
                       div ##### Header 5
                       div ###### Header 6
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       div(style='font-weight: 700; font-size: 24px;') Header 1
@@ -72,8 +72,8 @@
                       div - Unordered List Item 1
                       div - Unordered List Item 2
                       div - Unordered List Item 3
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       ul
@@ -89,8 +89,8 @@
                       div 1. Ordered List Item 1
                       div 1. Ordered List Item 2
                       div 1. Ordered List Item 3
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       ol
@@ -103,8 +103,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div ![Caption Text](/path/to/image.jpg)
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       img(src='https://via.placeholder.com/150x50.png')
@@ -113,7 +113,7 @@
             v-card-text
               .d-flex
                 v-toolbar.radius-7(color='teal lighten-5', dense, flat, height='44')
-                  v-icon.mr-3(color='teal') info
+                  v-icon.mr-3(color='teal') mdi-information-variant
                   .body-2.teal--text Markdown Reference (continued)
               .body-2.mt-3 Links
               v-layout(row)
@@ -121,8 +121,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div [Link Text](https://wiki.js.org)
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption: a(href='https://wiki.js.org', target='_blank') Link Text
@@ -132,8 +132,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div Lorem ^ipsum^
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption Lorem #[sup ipsum]
@@ -143,8 +143,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div Lorem ~ipsum~
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption: em Lorem #[sub ipsum]
@@ -156,8 +156,8 @@
                       div Lorem ipsum
                       div ---
                       div Dolor sit amet
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption Lorem ipsum
@@ -169,8 +169,8 @@
                   v-card.editor-markdown-help-source(flat)
                     v-card-text
                       div Lorem `ipsum dolor sit` amet
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption Lorem #[code ipsum dolor sit] amet
@@ -185,8 +185,8 @@
                       div.pl-3 echo 'Lorem ipsum'
                       div }
                       div ```
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text.contents
                       pre.prismjs.line-numbers.language-js
@@ -211,8 +211,8 @@
                       div &gt; Lorem ipsum
                       div &gt; dolor sit amet
                       div &gt; consectetur adipiscing elit
-                v-icon chevron_right
-                v-flex(xs6)
+                v-icon mdi-chevron-right
+                v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       blockquote(style='border: 1px solid #263238; border-radius: .5rem; padding: 1rem 24px;') Lorem ipsum#[br]dolor sit amet#[br]consectetur adipiscing elit
@@ -221,7 +221,7 @@
           v-card.radius-7.animated.fadeInUp.wait-p2s(light)
             v-card-text
               v-toolbar.radius-7(color='teal lighten-5', dense, flat)
-                v-icon.mr-3(color='teal') keyboard
+                v-icon.mr-3(color='teal') mdi-keyboard
                 .body-2.teal--text Keyboard Shortcuts
               v-list.editor-markdown-help-kbd(two-line, dense)
                 v-list-item
@@ -255,13 +255,13 @@
                 v-list-item
                   v-list-item-content
                     v-list-item-title.body-2 Distraction Free Mode
-                    v-list-item-sub-title Press <kbd>Esc</kbd> to exit.
+                    v-list-item-subtitle Press <kbd>Esc</kbd> to exit.
                   v-list-item-action #[kbd F11]
 
           v-card.radius-7.animated.fadeInUp.wait-p3s.mt-3(light)
             v-card-text
               v-toolbar.radius-7(color='teal lighten-5', dense, flat)
-                v-icon.mr-3(color='teal') mouse
+                v-icon.mr-3(color='teal') mdi-mouse
                 .body-2.teal--text Multi-Selection
               v-list.editor-markdown-help-kbd(two-line, dense)
                 v-list-item
@@ -303,6 +303,10 @@ export default {
     font-family: 'Roboto Mono', monospace;
     font-size: 14px;
     color: #FFF !important;
+
+    .v-card__text {
+      color: #FFF !important;
+    }
   }
 
   &-result {
@@ -327,7 +331,7 @@ export default {
   }
 
   &-kbd {
-    .v-list__tile__action {
+    .v-list-item__action {
       flex-direction: row;
       align-items: center;
 
@@ -343,13 +347,6 @@ export default {
         color: mc('grey', '700');
         font-size: 12px;
       }
-    }
-  }
-
-  &-ref {
-    .v-list__tile__action {
-      flex-direction: row;
-      align-items: center;
     }
   }
 }

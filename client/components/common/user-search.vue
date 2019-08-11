@@ -16,10 +16,10 @@
           )
       v-card-text
         v-text-field(
-          outline
+          outlined
           :label='$t(`common:user.searchPlaceholder`)'
           v-model='search'
-          prepend-inner-icon='search'
+          prepend-inner-icon='mdi-account-search-outline'
           color='primary'
           ref='searchIpt'
           hide-details
@@ -35,14 +35,14 @@
                 span.body-1.white--text {{usr.name | initials}}
               v-list-item-content
                 v-list-item-title.body-2 {{usr.name}}
-                v-list-item-sub-title {{usr.email}}
+                v-list-item-subtitle {{usr.email}}
               v-list-item-action
-                v-icon(color='primary') arrow_forward
+                v-icon(color='primary') mdi-arrow-right
             v-divider.my-0(v-if='idx < items.length - 1')
       v-card-chin
         v-spacer
         v-btn(
-          flat
+          text
           @click='close'
           :disabled='loading'
           ) {{$t('common:actions.cancel')}}

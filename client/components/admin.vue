@@ -26,8 +26,8 @@
             v-list-item(to='/pages', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`])')
               v-list-item-avatar(size='24'): v-icon mdi-file-document-outline
               v-list-item-title {{ $t('admin:pages.title') }}
-              v-list-item-action
-                v-chip(x-small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+              v-list-item-action.pr-3
+                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.pagesTotal }}
             v-list-item(to='/theme', v-if='hasPermission([`manage:system`, `manage:theme`])')
               v-list-item-avatar(size='24'): v-icon mdi-palette-outline
@@ -38,14 +38,14 @@
             v-list-item(to='/groups', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`])')
               v-list-item-avatar(size='24'): v-icon mdi-account-group
               v-list-item-title {{ $t('admin:groups.title') }}
-              v-list-item-action
-                v-chip(x-small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+              v-list-item-action.pr-3
+                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.groupsTotal }}
             v-list-item(to='/users', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
               v-list-item-avatar(size='24'): v-icon mdi-account-box
               v-list-item-title {{ $t('admin:users.title') }}
-              v-list-item-action
-                v-chip(x-small, disabled, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+              v-list-item-action.pr-3
+                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.usersTotal }}
           template(v-if='hasPermission(`manage:system`)')
             v-divider.my-2

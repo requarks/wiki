@@ -64,7 +64,7 @@ const graphQLLink = ApolloLink.from([
       )
       store.commit('showNotification', {
         style: 'red',
-        message: `An expected error occured.`,
+        message: `An unexpected error occured.`,
         icon: 'warning'
       })
     }
