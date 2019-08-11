@@ -161,11 +161,11 @@
                 template(v-slot:activator='{ on: tooltip }')
                   v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-0` : ``')
                     v-icon(v-if='picture.kind === `initials`', color='grey') mdi-account-circle
-                    v-avatar(v-else-if='picture.kind === `image`', :size='29')
+                    v-avatar(v-else-if='picture.kind === `image`', :size='34')
                       v-img(:src='picture.url')
                 span {{$t('common:header.account')}}
             v-list.py-0
-              v-list-item.py-3.grey(avatar, :class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-5`')
+              v-list-item.py-3.grey(:class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-5`')
                 v-list-item-avatar
                   v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
                     span.white--text.subheading {{picture.initials}}
@@ -189,7 +189,7 @@
 
           v-tooltip(v-else, left)
             template(v-slot:activator='{ on }')
-              v-btn(icon, v-on='on', outlined, color='grey darken-3', href='/login')
+              v-btn(icon, v-on='on', color='grey darken-3', href='/login')
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
@@ -378,7 +378,7 @@ export default {
     right: 12px;
     border-radius: 4px !important;
 
-    @at-root .application--is-rtl & {
+    @at-root .v-application--is-rtl & {
       right: initial;
       left: 12px;
     }

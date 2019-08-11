@@ -114,7 +114,7 @@
                   template(v-slot:item.availability='{ item }')
                     .d-flex.align-center.pl-4
                       v-progress-circular(:value='item.availability', width='2', size='20', :color='item.availability <= 33 ? `red` : (item.availability <= 66) ? `orange` : `green`')
-                      .caption.ml-2(:class='item.availability <= 33 ? `red--text` : (item.availability <= 66) ? `orange--text` : `green--text`') {{item.availability}}%
+                      .caption.mx-2(:class='item.availability <= 33 ? `red--text` : (item.availability <= 66) ? `orange--text` : `green--text`') {{item.availability}}%
                   template(v-slot:item.isInstalled='{ item }')
                     v-progress-circular(v-if='item.isDownloading', indeterminate, color='blue', size='20', :width='2')
                     v-btn(v-else-if='item.isInstalled && item.installDate < item.updatedAt', icon, small, @click='download(item)')
@@ -257,7 +257,7 @@ export default {
 
         _.delay(() => {
           window.location.reload(true)
-        }, 1500)
+        }, 1000)
       } else {
         this.$store.commit('showNotification', {
           message: `Error: ${resp.message}`,

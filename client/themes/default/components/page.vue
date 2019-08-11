@@ -61,13 +61,13 @@
               v-list.pb-3(dense, nav, :class='darkMode ? `darken-3-d3` : ``')
                 template(v-for='(tocItem, tocIdx) in toc')
                   v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
-                    v-icon(color='grey', small) mdi-chevron-right
-                    v-list-item-title.pl-3 {{tocItem.title}}
+                    v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+                    v-list-item-title.px-3 {{tocItem.title}}
                   //- v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
                   template(v-for='tocSubItem in tocItem.children')
                     v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
-                      v-icon.pl-3(color='grey lighten-1', small) mdi-chevron-right
-                      v-list-item-title.pl-3.caption.grey--text(:class='darkMode ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
+                      v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+                      v-list-item-title.px-3.caption.grey--text(:class='darkMode ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
             v-card.mt-5
@@ -126,9 +126,19 @@
                 v-spacer
 
           v-flex.page-col-content(xs12, lg9, xl10)
-            v-tooltip(left, v-if='isAuthenticated')
+            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='isAuthenticated')
               template(v-slot:activator='{ on }')
-                v-btn.btn-animate-edit(fab, bottom, right, color='primary', fixed, dark, :href='"/e/" + locale + "/" + path', v-on='on')
+                v-btn.btn-animate-edit(
+                  fab
+                  bottom
+                  :right='!$vuetify.rtl'
+                  :left='$vuetify.rtl'
+                  color='primary'
+                  fixed
+                  dark
+                  :href='"/e/" + locale + "/" + path'
+                  v-on='on'
+                  )
                   v-icon mdi-pencil
               span {{$t('common:page.editPage')}}
             .contents(ref='container')

@@ -177,6 +177,11 @@ export default {
   top: 12px;
   font-size: 100px !important;
   opacity: .25;
+
+  @at-root .v-application--is-rtl & {
+    left: 0;
+    right: initial;
+  }
 }
 
 </style>
