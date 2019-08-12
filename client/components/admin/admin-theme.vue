@@ -14,7 +14,7 @@
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
-              v-card.wiki-form.animated.fadeInUp
+              v-card.animated.fadeInUp
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t('admin:theme.title')}}
                 v-card-text
@@ -51,7 +51,23 @@
                     :hint='$t(`admin:theme.darkModeHint`)'
                     )
 
-              v-card.wiki-form.mt-3.animated.fadeInUp.wait-p2s
+              //- v-card.mt-3.animated.fadeInUp.wait-p1s
+              //-   v-toolbar(color='primary', dark, dense, flat)
+              //-     v-toolbar-title.subtitle-1 {{$t(`admin:theme.options`)}}
+              //-     v-spacer
+              //-     v-chip(label, color='white', small).primary--text coming soon
+              //-   v-card-text
+              //-     v-select(
+              //-       :items='iconsets'
+              //-       outlined
+              //-       prepend-icon='mdi-border-vertical'
+              //-       v-model='config.iconset'
+              //-       label='Table of Contents Position'
+              //-       persistent-hint
+              //-       hint='Select whether the table of contents is shown on the left, right or not at all.'
+              //-       )
+
+              v-card.mt-3.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t(`admin:theme.codeInjection`)}}
                 v-card-text
