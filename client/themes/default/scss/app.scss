@@ -165,6 +165,19 @@
     }
   }
 
+  // scroll offset fix
+
+  h1:before, h2:before, h3:before, h4:before, h5:before, h6:before {
+    display: block;
+    content: " ";
+    width: 1px;
+    height: 1px;
+    margin-top: -75px;
+    height: 75px;
+    visibility: hidden;
+    z-index: -1;
+  }
+
   // ---------------------------------
   // PARAGRAPHS
   // ---------------------------------
