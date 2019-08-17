@@ -120,7 +120,7 @@
                     v-btn(v-else-if='item.isInstalled && item.installDate < item.updatedAt', icon, small, @click='download(item)')
                       v-icon.blue--text mdi-cached
                     v-btn(v-else-if='item.isInstalled', icon, small, @click='download(item)')
-                      v-icon.green--text mdi-check
+                      v-icon.green--text mdi-check-bold
                     v-btn(v-else, icon, small, @click='download(item)')
                       v-icon.grey--text mdi-cloud-download
               v-card.wiki-form.mt-3.animated.fadeInUp.wait-p5s

@@ -43,18 +43,18 @@ module.exports = {
     delete(obj, args) {
       return WIKI.models.users.query().deleteById(args.id)
     },
-    update(obj, args) {
-      return WIKI.models.users.query().patch({
-        email: args.email,
-        name: args.name,
-        provider: args.provider,
-        providerId: args.providerId
-      }).where('id', args.id)
+    async update(obj, args) {
+      try {
+        await WIKI.models.users.updateUser(args)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User created successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     },
     resetPassword(obj, args) {
-      return false
-    },
-    setPassword(obj, args) {
       return false
     }
   },

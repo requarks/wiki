@@ -1,0 +1,9 @@
+query {
+  groups {
+    list {
+      id
+      name
+      isSystem
+    }
+  }
+}

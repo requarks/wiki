@@ -140,5 +140,9 @@ module.exports = {
   UserCreationFailed: CustomError('UserCreationFailed', {
     message: 'An unexpected error occured during user creation.',
     code: 1009
+  }),
+  UserNotFound: CustomError('UserNotFound', {
+    message: 'This user does not exist.',
+    code: 1016
   })
 }

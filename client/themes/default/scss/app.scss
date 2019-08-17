@@ -25,6 +25,16 @@
   h1, h2, h3, h4, h5, h6 {
     position: relative;
 
+    &:before {
+      display: block;
+      content: " ";
+      width: 1px;
+      margin-top: -75px;
+      height: 75px;
+      visibility: hidden;
+      z-index: -1;
+    }
+
     &:first-child {
       padding-top: 0;
     }
@@ -84,7 +94,6 @@
   }
   h2 {
     margin: 1rem 0 0 0;
-    padding: 8px 0 0 0;
     color: mc('grey', '800');
     position: relative;
 
@@ -114,8 +123,7 @@
     }
   }
   h3 {
-    margin: 0;
-    padding: 8px 0 0 0;
+    margin: 8px 0 0 0;
     color: mc('grey', '700');
     position: relative;
 
@@ -135,8 +143,7 @@
   }
   h4, h5, h6 {
     font-size: 1rem;
-    margin: 0;
-    padding: 8px 0 0 0;
+    margin: 8px 0 0 0;
     color: mc('grey', '700');
     position: relative;
 
@@ -163,19 +170,6 @@
     &::after {
       background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 30%);
     }
-  }
-
-  // scroll offset fix
-
-  h1:before, h2:before, h3:before, h4:before, h5:before, h6:before {
-    display: block;
-    content: " ";
-    width: 1px;
-    height: 1px;
-    margin-top: -75px;
-    height: 75px;
-    visibility: hidden;
-    z-index: -1;
   }
 
   // ---------------------------------

@@ -374,6 +374,11 @@ module.exports = class User extends Model {
     throw new WIKI.Error.AuthTFAInvalid()
   }
 
+  /**
+   * Create a new user
+   *
+   * @param {Object} param0 User Fields
+   */
   static async createNewUser ({ providerKey, email, passwordRaw, name, groups, mustChangePassword, sendWelcomeEmail }) {
     // Input sanitization
     email = _.toLower(email)
@@ -487,6 +492,69 @@ module.exports = class User extends Model {
     }
   }
 
+  /**
+   * Update an existing user
+   *
+   * @param {Object} param0 User ID and fields to update
+   */
+  static async updateUser ({ id, email, name, newPassword, groups, location, jobTitle, timezone }) {
+    const usr = await WIKI.models.users.query().findById(id)
+    if (usr) {
+      let usrData = {}
+      if (!_.isEmpty(email) && email !== usr.email) {
+        const dupUsr = await WIKI.models.users.query().select('id').where({
+          email,
+          providerKey: usr.providerKey
+        })
+        if (dupUsr) {
+          throw new WIKI.Error.AuthAccountAlreadyExists()
+        }
+        usrData.email = email
+      }
+      if (!_.isEmpty(name) && name !== usr.name) {
+        usrData.name = _.trim(name)
+      }
+      if (!_.isEmpty(newPassword)) {
+        if (newPassword.length < 6) {
+          throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
+        }
+        usrData.password = newPassword
+      }
+      if (!_.isEmpty(groups)) {
+        const usrGroupsRaw = await usr.$relatedQuery('groups')
+        const usrGroups = _.map(usrGroupsRaw, 'id')
+        // Relate added groups
+        const addUsrGroups = _.difference(groups, usrGroups)
+        for (const grp of addUsrGroups) {
+          await usr.$relatedQuery('groups').relate(grp)
+        }
+        // Unrelate removed groups
+        const remUsrGroups = _.difference(usrGroups, groups)
+        for (const grp of remUsrGroups) {
+          await usr.$relatedQuery('groups').unrelate().where('groupId', grp)
+        }
+      }
+      if (!_.isEmpty(location) && location !== usr.location) {
+        usrData.location = _.trim(location)
+      }
+      if (!_.isEmpty(jobTitle) && jobTitle !== usr.jobTitle) {
+        usrData.jobTitle = _.trim(jobTitle)
+      }
+      if (!_.isEmpty(timezone) && timezone !== usr.timezone) {
+        usrData.timezone = timezone
+      }
+      await WIKI.models.users.query().patch(usrData).findById(id)
+    } else {
+      throw new WIKI.Error.UserNotFound()
+    }
+  }
+
+  /**
+   * Register a new user (client-side registration)
+   *
+   * @param {Object} param0 User fields
+   * @param {Object} context GraphQL Context
+   */
   static async register ({ email, password, name, verify = false, bypassChecks = false }, context) {
     const localStrg = await WIKI.models.authentication.getStrategy('local')
     // Check if self-registration is enabled

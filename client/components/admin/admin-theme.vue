@@ -114,7 +114,7 @@
                   item-key='value',
                   :items-per-page='1000'
                 )
-                  template(v-slot:items='thm')
+                  template(v-slot:item='thm')
                     td
                       strong {{thm.item.text}}
                     td
@@ -124,7 +124,7 @@
                       v-btn(v-else-if='thm.item.isInstalled && thm.item.installDate < thm.item.updatedAt', icon)
                         v-icon.blue--text mdi-cached
                       v-btn(v-else-if='thm.item.isInstalled', icon)
-                        v-icon.green--text mdi-check
+                        v-icon.green--text mdi-check-bold
                       v-btn(v-else, icon)
                         v-icon.grey--text mdi-cloud-download
 </template>

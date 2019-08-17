@@ -14,7 +14,7 @@
             v-icon mdi-arrow-left
           v-dialog(v-model='deleteUserDialog', max-width='500', v-if='user.id !== currentUserId && !user.isSystem')
             template(v-slot:activator='{ on }')
-              v-btn.ml-3.animated.fadeInDown.wait-p1s(color='red', large, outlined, v-on='on')
+              v-btn.ml-3.animated.fadeInDown.wait-p1s(color='red', large, outlined, v-on='on', disabled)
                 v-icon(color='red') mdi-trash-can-outline
             v-card
               .dialog-header.is-red Delete User?
@@ -113,15 +113,35 @@
                   v-list-item-title Password
                   v-list-item-subtitle &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
                 v-list-item-action
-                  v-tooltip(top)
-                    template(v-slot:activator='{ on }')
-                      v-btn(icon, color='grey', x-small, v-on='on')
-                        v-icon mdi-cached
-                    span Change Password
+                  v-menu(
+                    v-model='editPop.newPassword'
+                    :close-on-content-click='false'
+                    min-width='350'
+                    left
+                    )
+                    template(v-slot:activator='{ on: menu }')
+                      v-tooltip(top)
+                        template(v-slot:activator='{ on: tooltip }')
+                          v-btn(icon, color='grey', x-small, v-on='{ ...menu, ...tooltip }', @click='focusField(`iptNewPassword`)')
+                            v-icon mdi-cached
+                        span Change Password
+                    v-card
+                      v-text-field(
+                        ref='iptNewPassword'
+                        v-model='newPassword'
+                        label='New Password'
+                        solo
+                        hide-details
+                        append-icon='mdi-check'
+                        type='password'
+                        @click:append='editPop.newPassword = false'
+                        @keydown.enter='editPop.newPassword = false'
+                        @keydown.esc='editPop.newPassword = false'
+                      )
                 v-list-item-action
                   v-tooltip(top)
                     template(v-slot:activator='{ on }')
-                      v-btn(icon, color='grey', x-small, v-on='on')
+                      v-btn(icon, color='grey', x-small, v-on='on', disabled)
                         v-icon mdi-email
                     span Send Password Reset Email
               v-divider
@@ -151,22 +171,37 @@
             span User Groups
           v-list(dense)
             template(v-for='(group, idx) in user.groups')
-              v-list-item
+              v-list-item(:key='`group-` + group.id')
                 v-list-item-avatar(size='32')
                   v-icon mdi-account-group-outline
                 v-list-item-content
                   v-list-item-title {{group.name}}
                 v-list-item-action(v-if='!user.isSystem')
-                  v-btn(icon, color='red', x-small)
+                  v-btn(icon, color='red', x-small, @click='unassignGroup(group.id)')
                     v-icon mdi-close
               v-divider(v-if='idx < user.groups.length - 1')
           v-alert.mx-3(v-if='user.groups.length < 1', outlined, color='grey darken-1', icon='mdi-alert')
             .caption This user is not assigned to any group yet. You must assign at least 1 group to a user.
           v-card-chin(v-if='!user.isSystem')
             v-spacer
-            v-btn(color='primary', text)
-              v-icon(left) mdi-clipboard-account
-              span Assign to group
+            v-select(
+              ref='iptAssignGroup'
+              :items='groups'
+              v-model='newGroup'
+              label='Select Group...'
+              item-value='id'
+              item-text='name'
+              item-disabled='isSystem'
+              solo
+              flat
+              dense
+              hide-details
+              @keydown.esc='editPop.assignGroup = false'
+              style='max-width: 300px;'
+            )
+            v-btn.ml-2.px-4(depressed, color='primary', height='48', @click='assignGroup', :disabled='newGroup === 0')
+              v-icon(left) mdi-clipboard-account-outline
+              span Assign
       v-flex(xs6)
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, dark, flat)
@@ -274,6 +309,8 @@ import _ from 'lodash'
 import { get } from 'vuex-pathify'
 
 import userQuery from 'gql/admin/users/users-query-single.gql'
+import groupsQuery from 'gql/admin/users/users-query-groups.gql'
+import updateUserMutation from 'gql/admin/users/users-mutation-update.gql'
 
 export default {
   data() {
@@ -285,10 +322,18 @@ export default {
         pwd: false,
         location: false,
         jobTitle: false,
-        timezone: false
+        timezone: false,
+        newPassword: false,
+        assignGroup: false
       },
+      newGroup: 0,
+      newPassword: '',
       user: {
+        email: '',
         name: '',
+        location: '',
+        jobTitle: '',
+        timezone: '',
         groups: []
       },
       timezones: [
@@ -550,13 +595,58 @@ export default {
   },
   methods: {
     deleteUser() {},
-    updateUser() {},
+    async updateUser() {
+      this.$store.commit(`loadingStart`, 'admin-users-update')
+      const resp = await this.$apollo.mutate({
+        mutation: updateUserMutation,
+        variables: {
+          id: this.user.id,
+          email: this.user.email,
+          name: this.user.name,
+          newPassword: this.newPassword,
+          groups: _.map(this.user.groups, 'id'),
+          location: this.user.location,
+          jobTitle: this.user.jobTitle,
+          timezone: this.user.timezone
+        }
+      })
+      if (_.get(resp, 'data.users.update.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: 'User updated successfully.',
+          icon: 'check'
+        })
+        this.$router.push('/users')
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.update.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-update')
+    },
     focusField (ipt) {
       this.$nextTick(() => {
         _.delay(() => {
           this.$refs[ipt].focus()
         }, 200)
       })
+    },
+    assignGroup() {
+      if (_.some(this.user.groups, ['id', this.newGroup])) {
+        this.$store.commit('showNotification', {
+          message: 'User is already assigned to this group!',
+          style: 'error',
+          icon: 'alert'
+        })
+      } else {
+        this.user.groups.push(_.find(this.groups, ['id', this.newGroup]))
+        this.newGroup = 0
+      }
+    },
+    unassignGroup(gid) {
+      this.user.groups = _.reject(this.user.groups, ['id', gid])
     }
   },
   apollo: {
@@ -571,6 +661,14 @@ export default {
       update: (data) => data.users.single,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
+      }
+    },
+    groups: {
+      query: groupsQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => data.groups.list,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')
       }
     }
   }

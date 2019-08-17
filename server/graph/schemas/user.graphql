@@ -48,9 +48,12 @@ type UserMutation {
     id: Int!
     email: String
     name: String
-    providerKey: String
-    providerId: String
-  ): UserResponse @auth(requires: ["manage:users", "manage:system"])
+    newPassword: String
+    groups: [Int]
+    location: String
+    jobTitle: String
+    timezone: String
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
   delete(
     id: Int!
@@ -58,11 +61,6 @@ type UserMutation {
 
   resetPassword(
     id: Int!
-  ): DefaultResponse
-
-  setPassword(
-    id: Int!
-    passwordRaw: String!
   ): DefaultResponse
 }
 

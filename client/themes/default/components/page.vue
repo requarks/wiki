@@ -47,15 +47,15 @@
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
         v-divider
-      v-toolbar.px-2(:color='darkMode ? `grey darken-4-l3` : `grey lighten-4`', flat, :height='90')
-        div(style='padding-left: 376px;')
-          .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
-          .caption.grey--text.text--darken-1 {{description}}
-        v-spacer
+      v-container.grey.pa-0(fluid, :class='darkMode ? `darken-4-l3` : `lighten-4`')
+        v-row(no-gutters, align-content='center', style='height: 90px;')
+          v-col.pl-4(offset-xl='2', offset-lg='3')
+            .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
+            .caption.grey--text.text--darken-1 {{description}}
       v-divider
-      v-container.pl-5.pt-2(fill-height, fluid, grid-list-xl)
+      v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
-          v-flex.page-col-sd(lg3, xl2, fill-height, v-if='$vuetify.breakpoint.lgAndUp', style='margin-top: -90px;')
+          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', style='margin-top: -90px;')
             v-card(v-if='toc.length')
               .overline.pa-5.pb-0(:class='darkMode ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='darkMode ? `darken-3-d3` : ``')

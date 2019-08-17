@@ -67,10 +67,12 @@
           :items='groups'
           item-text='name'
           item-value='id'
+          item-disabled='isSystem'
           outlined
           prepend-icon='mdi-account-group'
           v-model='group'
           label='Assign to Group(s)...'
+          dense
           clearable
           multiple
           )
@@ -104,7 +106,7 @@ import _ from 'lodash'
 
 import createUserMutation from 'gql/admin/users/users-mutation-create.gql'
 import providersQuery from 'gql/admin/users/users-query-strategies.gql'
-import groupsQuery from 'gql/admin/auth/auth-query-groups.gql'
+import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 export default {
   props: {
