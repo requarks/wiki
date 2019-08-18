@@ -1,0 +1,18 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+
+  build:
+ 
+    runs-on: ubuntu-latest
+    
+    timeout-minutes: 30
+ 
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: docker build . --file dev/build/Dockerfile -t requarks/wiki:dev
