@@ -2,7 +2,8 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
 
@@ -16,3 +17,12 @@ jobs:
     - uses: actions/checkout@v1
     - name: Build the Docker image
       run: docker build . --file dev/build/Dockerfile -t requarks/wiki:dev
+      
+    - name: Login to Docker Hub
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      
+    - name: Push to Docker Hub
+      run: docker push requarks/wiki:dev
+      
+    - name: Logout from Docker Hub
+      run: docker logout
