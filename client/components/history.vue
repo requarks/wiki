@@ -36,12 +36,14 @@
                       v-if='diffSource === ph.versionId'
                       small
                       color='pink'
+                      label
                       )
                       .caption.white--text Source
                     v-chip.ml-0.mr-3(
                       v-if='diffTarget === ph.versionId'
                       small
                       color='pink'
+                      label
                       )
                       .caption.white--text Target
                     .caption(v-if='ph.actionType === `edit`') Edited by #[strong {{ ph.authorName }}]
@@ -49,32 +51,28 @@
                     .caption(v-else-if='ph.actionType === `initial`') Created by #[strong {{ ph.authorName }}]
                     .caption(v-else) Unknown Action by #[strong {{ ph.authorName }}]
                     v-spacer
-                    .caption {{ ph.createdAt | moment('calendar') }}
+                    .caption.mr-3 {{ ph.createdAt | moment('calendar') }}
                     v-menu(offset-x, left)
-                      v-btn(icon, slot='activator'): v-icon more_horiz
-                      v-list(dense).history-promptmenu
+                      template(v-slot:activator='{ on }')
+                        v-btn.mr-0(icon, v-on='on', small, tile): v-icon mdi-dots-horizontal
+                      v-list(dense, nav).history-promptmenu
                         v-list-item(@click='setDiffTarget(ph.versionId)')
-                          v-list-item-avatar: v-icon call_made
+                          v-list-item-avatar(size='24'): v-icon mdi-call-received
                           v-list-item-title Set as Differencing Target
-                        v-divider
                         v-list-item(@click='setDiffSource(ph.versionId)')
-                          v-list-item-avatar: v-icon call_received
+                          v-list-item-avatar(size='24'): v-icon mdi-call-made
                           v-list-item-title Set as Differencing Source
-                        v-divider
                         v-list-item
-                          v-list-item-avatar: v-icon code
+                          v-list-item-avatar(size='24'): v-icon mdi-code-tags
                           v-list-item-title View Source
-                        v-divider
                         v-list-item
-                          v-list-item-avatar: v-icon cloud_download
+                          v-list-item-avatar(size='24'): v-icon mdi-cloud-download-outline
                           v-list-item-title Download Version
-                        v-divider
                         v-list-item
-                          v-list-item-avatar: v-icon restore
+                          v-list-item-avatar(size='24'): v-icon mdi-history
                           v-list-item-title Restore
-                        v-divider
                         v-list-item
-                          v-list-item-avatar: v-icon call_split
+                          v-list-item-avatar(size='24'): v-icon mdi-source-branch
                           v-list-item-title Branch off from here
 
             v-btn.ma-0.radius-7(
@@ -223,11 +221,11 @@ export default {
     trailIcon(actionType) {
       switch (actionType) {
         case 'edit':
-          return 'edit'
+          return 'mdi-pencil'
         case 'move':
           return 'forward'
         case 'initial':
-          return 'add'
+          return 'mdi-plus'
         default:
           return 'warning'
       }

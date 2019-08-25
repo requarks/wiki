@@ -81,50 +81,50 @@
                 @keyup.down='searchMove(`down`)'
                 @keyup.up='searchMove(`up`)'
               )
-            v-menu(
-              v-model='searchAdvMenuShown'
-              left
-              offset-y
-              min-width='450'
-              :close-on-content-click='false'
-              nudge-bottom='7'
-              nudge-right='5'
-              v-if='searchIsShown'
-              )
-              template(v-slot:activator='{ on }')
-                v-btn.nav-header-search-adv(icon, color='grey darken-2', v-on='on')
-                  v-icon(color='white') mdi-chevron-down
-              v-card.radius-0(dark)
-                v-toolbar(flat, color='grey darken-4', dense)
-                  v-icon.mr-2 mdi-feature-search-outline
-                  v-subheader.pl-0 Advanced Search
-                  v-spacer
-                  v-chip(label, small, color='primary') Coming soon
-                v-card-text.pa-4
-                  v-checkbox.mt-0(
-                    label='Restrict to current language'
-                    color='white'
-                    v-model='searchRestrictLocale'
-                    hide-details
-                  )
-                  v-checkbox(
-                    label='Search below current path only'
-                    color='white'
-                    v-model='searchRestrictPath'
-                    hide-details
-                  )
-                v-divider
-                v-card-actions.grey.darken-3-d4
-                  v-container.pa-0(grid-list-md)
-                    v-layout(row)
-                      v-flex(xs6)
-                        v-btn(depressed, color='grey darken-3', block)
-                          v-icon(left) mdi-chevron-right
-                          span Save as defaults
-                      v-flex(xs6)
-                        v-btn(depressed, color='grey darken-3', block)
-                          v-icon(left) mdi-cached
-                          span Reset
+            //- v-menu(
+            //-   v-model='searchAdvMenuShown'
+            //-   left
+            //-   offset-y
+            //-   min-width='450'
+            //-   :close-on-content-click='false'
+            //-   nudge-bottom='7'
+            //-   nudge-right='5'
+            //-   v-if='searchIsShown'
+            //-   )
+            //-   template(v-slot:activator='{ on }')
+            //-     v-btn.nav-header-search-adv(icon, color='grey darken-2', v-on='on')
+            //-       v-icon(color='white') mdi-chevron-down
+            //-   v-card.radius-0(dark)
+            //-     v-toolbar(flat, color='grey darken-4', dense)
+            //-       v-icon.mr-2 mdi-feature-search-outline
+            //-       v-subheader.pl-0 Advanced Search
+            //-       v-spacer
+            //-       v-chip(label, small, color='primary') Coming soon
+            //-     v-card-text.pa-4
+            //-       v-checkbox.mt-0(
+            //-         label='Restrict to current language'
+            //-         color='white'
+            //-         v-model='searchRestrictLocale'
+            //-         hide-details
+            //-       )
+            //-       v-checkbox(
+            //-         label='Search below current path only'
+            //-         color='white'
+            //-         v-model='searchRestrictPath'
+            //-         hide-details
+            //-       )
+            //-     v-divider
+            //-     v-card-actions.grey.darken-3-d4
+            //-       v-container.pa-0(grid-list-md)
+            //-         v-layout(row)
+            //-           v-flex(xs6)
+            //-             v-btn(depressed, color='grey darken-3', block)
+            //-               v-icon(left) mdi-chevron-right
+            //-               span Save as defaults
+            //-           v-flex(xs6)
+            //-             v-btn(depressed, color='grey darken-3', block)
+            //-               v-icon(left) mdi-cached
+            //-               span Reset
       v-flex(xs6, md4)
         v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
           v-spacer

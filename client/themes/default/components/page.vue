@@ -49,14 +49,14 @@
         v-divider
       v-container.grey.pa-0(fluid, :class='darkMode ? `darken-4-l3` : `lighten-4`')
         v-row(no-gutters, align-content='center', style='height: 90px;')
-          v-col.pl-4(offset-xl='2', offset-lg='3')
+          v-col.pl-4.page-col-content(offset-xl='2', offset-lg='3')
             .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
             .caption.grey--text.text--darken-1 {{description}}
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
           v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', style='margin-top: -90px;')
-            v-card(v-if='toc.length')
+            v-card.mb-5(v-if='toc.length')
               .overline.pa-5.pb-0(:class='darkMode ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='darkMode ? `darken-3-d3` : ``')
                 template(v-for='(tocItem, tocIdx) in toc')
@@ -70,7 +70,7 @@
                       v-list-item-title.px-3.caption.grey--text(:class='darkMode ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-            v-card.mt-5(v-if='tags.length > 0')
+            v-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') Tags
                 v-chip.mr-1(
@@ -83,7 +83,7 @@
                   v-icon(color='teal', left, small) mdi-label
                   span.teal--text.text--darken-2 {{tag.text}}
 
-            v-card.mt-5
+            v-card.mb-5
               .pa-5
                 .overline.indigo--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
@@ -96,7 +96,7 @@
                 .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
-            v-card.mt-5
+            v-card.mb-5
               .pa-5
                 .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
                 .text-center
@@ -109,8 +109,8 @@
                   )
                   .caption.grey--text 5 votes
 
-            v-card.mt-5(flat)
-              v-toolbar(:color='darkMode ? `grey darken-3` : `grey lighten-3`', flat, dense)
+            v-card(flat)
+              v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
                 v-spacer
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
@@ -122,7 +122,7 @@
                   span {{$t('common:page.share')}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-printer
+                    v-btn(icon, tile, v-on='on', @click='print'): v-icon(color='grey') mdi-printer
                   span {{$t('common:page.printFormat')}}
                 v-spacer
 
@@ -320,6 +320,9 @@ export default {
     upBtnScroll () {
       const scrollOffset = window.pageYOffset || document.documentElement.scrollTop
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
+    },
+    print () {
+      window.print()
     }
   }
 }

@@ -16,8 +16,8 @@
         )
         v-icon(left) mdi-check
         span {{ $t('common:actions.ok') }}
-    v-card.wiki-form(tile)
-      v-card-text
+    v-card(tile)
+      v-card-text.pt-5
         .overline.pb-5 {{$t('editor:props.pageInfo')}}
         v-text-field(
           ref='iptTitle'
@@ -35,7 +35,7 @@
           :hint='$t(`editor:props.shortDescriptionHint`)'
           )
       v-divider
-      v-card-text.grey(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+      v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
         .overline.pb-5 {{$t('editor:props.pathCategorization')}}
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)
@@ -73,7 +73,7 @@
           disabled
           )
       v-divider
-      v-card-text.pb-5.grey(:class='darkMode ? `darken-3-d5` : `lighten-4`')
+      v-card-text.py-5.grey(:class='darkMode ? `darken-3-d5` : `lighten-4`')
         .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outlined).white--text coming soon]
         v-container.pa-0(fluid, grid-list-lg)
           v-layout(row, wrap)

@@ -9,7 +9,7 @@
                 v-toolbar.radius-7(:color='$vuetify.theme.dark ? `teal` : `teal lighten-5`', dense, flat, height='44')
                   .body-2(:class='$vuetify.theme.dark ? `white--text` : `teal--text`') {{$t('editor:assets.title')}}
                   v-spacer
-                  v-btn(flat, icon, @click='refresh', tile, small)
+                  v-btn(text, icon, @click='refresh')
                     v-icon(:color='$vuetify.theme.dark ? `white` : `teal`') mdi-refresh
                 v-dialog(v-model='newFolderDialog', max-width='550')
                   template(v-slot:activator='{ on }')
@@ -18,7 +18,7 @@
                       span.hidden-sm-and-down(:class='$vuetify.theme.dark ? `teal--text text--lighten-3` : ``') {{$t('editor:assets.newFolder')}}
                   v-card
                     .dialog-header.is-short.subtitle-1 {{$t('editor:assets.newFolder')}}
-                    v-card-text
+                    v-card-text.pt-5
                       v-text-field.md2(
                         outlined
                         prepend-icon='mdi-folder-outline'
@@ -48,7 +48,7 @@
                   v-icon mdi-folder-upload
                 v-btn.btn-normalcase.mx-1(v-for='folder of folders', :key='folder.id', depressed,  color='grey darken-2', dark, @click='downFolder(folder)')
                   v-icon(left) mdi-folder
-                  span.caption {{ folder.name }}
+                  span.caption(style='text-transform: none;') {{ folder.name }}
                 v-divider.mt-2
               v-data-table(
                 :items='assets'
@@ -186,14 +186,14 @@
     //- RENAME DIALOG
 
     v-dialog(v-model='renameDialog', max-width='550', persistent)
-      v-card.wiki-form
+      v-card
         .dialog-header.is-short.is-orange
-          v-icon.mr-2(color='white') keyboard
+          v-icon.mr-2(color='white') mdi-keyboard
           span {{$t('editor:assets.renameAsset')}}
-        v-card-text
+        v-card-text.pt-5
           .body-2 {{$t('editor:assets.renameAssetSubtitle')}}
           v-text-field(
-            outline
+            outlined
             single-line
             :counter='255'
             v-model='renameAssetName'
@@ -202,24 +202,24 @@
           )
         v-card-chin
           v-spacer
-          v-btn(flat, @click='renameDialog = false', :disabled='renameAssetLoading') {{$t('common:actions.cancel')}}
-          v-btn(color='orange darken-3', @click='renameAsset', :loading='renameAssetLoading').white--text {{$t('common:actions.rename')}}
+          v-btn(text, @click='renameDialog = false', :disabled='renameAssetLoading') {{$t('common:actions.cancel')}}
+          v-btn.px-3(color='orange darken-3', @click='renameAsset', :loading='renameAssetLoading').white--text {{$t('common:actions.rename')}}
 
     //- DELETE DIALOG
 
     v-dialog(v-model='deleteDialog', max-width='550', persistent)
-      v-card.wiki-form
+      v-card
         .dialog-header.is-short.is-red
-          v-icon.mr-2(color='white') highlight_off
+          v-icon.mr-2(color='white') mdi-trash-can-outline
           span {{$t('editor:assets.deleteAsset')}}
-        v-card-text
+        v-card-text.pt-5
           .body-2 {{$t('editor:assets.deleteAssetConfirm')}}
           .body-2.red--text.text--darken-2 {{currentAsset.filename}}?
           .caption.mt-3 {{$t('editor:assets.deleteAssetWarn')}}
         v-card-chin
           v-spacer
-          v-btn(flat, @click='deleteDialog = false', :disabled='deleteAssetLoading') {{$t('common:actions.cancel')}}
-          v-btn(color='red darken-2', @click='deleteAsset', :loading='deleteAssetLoading').white--text {{$t('common:actions.delete')}}
+          v-btn(text, @click='deleteDialog = false', :disabled='deleteAssetLoading') {{$t('common:actions.cancel')}}
+          v-btn.px-3(color='red darken-2', @click='deleteAsset', :loading='deleteAssetLoading').white--text {{$t('common:actions.delete')}}
 </template>
 
 <script>

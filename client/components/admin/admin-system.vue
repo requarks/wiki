@@ -28,7 +28,7 @@
                   v-list-item-action
                     v-list-item-action-text {{ $t('admin:system.published') }} {{ info.latestVersionReleaseDate | moment('from') }}
 
-              v-divider.mt-3
+            v-card.mt-4.animated.fadeInUp.wait-p2s
               v-subheader {{ $t('admin:system.hostInfo') }}
               v-list(two-line, dense)
                 v-list-item

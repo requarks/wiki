@@ -45,9 +45,9 @@
                 v-list-item-title(v-html='term')
             v-divider(v-if='idx < suggestions.length - 1')
       .text-xs-center.pt-5(v-if='search.length > 1')
-        v-btn.mx-2(outlined, color='orange', @click='search = ``', v-if='results.length > 0')
-          v-icon(left) mdi-content-save
-          span {{$t('common:header.searchCopyLink')}}
+        //- v-btn.mx-2(outlined, color='orange', @click='search = ``', v-if='results.length > 0')
+        //-   v-icon(left) mdi-content-save
+        //-   span {{$t('common:header.searchCopyLink')}}
         v-btn.mx-2(outlined, color='pink', @click='search = ``')
           v-icon(left) mdi-close
           span {{$t('common:header.searchClose')}}

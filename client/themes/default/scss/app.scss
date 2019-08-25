@@ -654,16 +654,17 @@
   .nav-header,
   .v-navigation-drawer,
   .v-footer,
-  .v-btn--floating,
+  .v-btn--fab,
   .page-col-sd
   {
-    display: none;
+    display: none !important;
   }
 
   .page-col-content {
     flex-basis: 100% !important;
     flex-grow: 1 !important;
     max-width: 100% !important;
+    margin-left: 0 !important;
 
     > .v-toolbar {
       border: 1px solid mc('grey', '300') !important;
@@ -677,6 +678,7 @@
 
   .v-content {
     padding: 0 !important;
+    font-size: 14px;
   }
 
 
