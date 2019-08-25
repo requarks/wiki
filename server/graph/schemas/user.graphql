@@ -89,6 +89,8 @@ type User {
   providerKey: String!
   providerId: String
   isSystem: Boolean!
+  isActive: Boolean!
+  isVerified: Boolean!
   location: String!
   jobTitle: String!
   timezone: String!

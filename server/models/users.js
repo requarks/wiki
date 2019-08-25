@@ -3,7 +3,6 @@
 const bcrypt = require('bcryptjs-then')
 const _ = require('lodash')
 const tfa = require('node-2fa')
-const securityHelper = require('../helpers/security')
 const jwt = require('jsonwebtoken')
 const Model = require('objection').Model
 const validate = require('validate.js')
@@ -280,30 +279,46 @@ module.exports = class User extends Model {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
-          // Is 2FA required?
-          if (user.tfaIsActive) {
+          // Must Change Password?
+          if (user.mustChangePwd) {
             try {
-              let loginToken = await securityHelper.generateToken(32)
-              await WIKI.redis.set(`tfa:${loginToken}`, user.id, 'EX', 600)
+              const pwdChangeToken = await WIKI.models.userKeys.generateToken({
+                kind: 'changePwd',
+                userId: user.id
+              })
+
               return resolve({
-                tfaRequired: true,
-                tfaLoginToken: loginToken
+                mustChangePwd: true,
+                continuationToken: pwdChangeToken
               })
             } catch (err) {
               WIKI.logger.warn(err)
               return reject(new WIKI.Error.AuthGenericError())
             }
-          } else {
-            // No 2FA, log in user
-            return context.req.logIn(user, { session: !strInfo.useForm }, async err => {
-              if (err) { return reject(err) }
-              const jwtToken = await WIKI.models.users.refreshToken(user)
-              resolve({
-                jwt: jwtToken.token,
-                tfaRequired: false
-              })
-            })
           }
+
+          // Is 2FA required?
+          if (user.tfaIsActive) {
+            try {
+              const tfaToken = await WIKI.models.userKeys.generateToken({
+                kind: 'tfa',
+                userId: user.id
+              })
+              return resolve({
+                tfaRequired: true,
+                continuationToken: tfaToken
+              })
+            } catch (err) {
+              WIKI.logger.warn(err)
+              return reject(new WIKI.Error.AuthGenericError())
+            }
+          }
+
+          context.req.logIn(user, { session: !strInfo.useForm }, async err => {
+            if (err) { return reject(err) }
+            const jwtToken = await WIKI.models.users.refreshToken(user)
+            resolve({ jwt: jwtToken.token })
+          })
         })(context.req, context.res, () => {})
       })
     } else {
@@ -348,7 +363,7 @@ module.exports = class User extends Model {
     }
   }
 
-  static async loginTFA(opts, context) {
+  static async loginTFA (opts, context) {
     if (opts.securityCode.length === 6 && opts.loginToken.length === 64) {
       let result = await WIKI.redis.get(`tfa:${opts.loginToken}`)
       if (result) {
@@ -372,6 +387,36 @@ module.exports = class User extends Model {
       }
     }
     throw new WIKI.Error.AuthTFAInvalid()
+  }
+
+  /**
+   * Change Password from a Mandatory Password Change after Login
+   */
+  static async loginChangePassword ({ continuationToken, newPassword }, context) {
+    if (!newPassword || newPassword.length < 6) {
+      throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
+    }
+    const usr = await WIKI.models.userKeys.validateToken({
+      kind: 'changePwd',
+      token: continuationToken
+    })
+
+    if (usr) {
+      await WIKI.models.users.query().patch({
+        password: newPassword,
+        mustChangePwd: false
+      }).findById(usr.id)
+
+      return new Promise((resolve, reject) => {
+        context.req.logIn(usr, { session: false }, async err => {
+          if (err) { return reject(err) }
+          const jwtToken = await WIKI.models.users.refreshToken(usr)
+          resolve({ jwt: jwtToken.token })
+        })
+      })
+    } else {
+      throw new WIKI.Error.UserNotFound()
+    }
   }
 
   /**
@@ -520,7 +565,7 @@ module.exports = class User extends Model {
         }
         usrData.password = newPassword
       }
-      if (!_.isEmpty(groups)) {
+      if (_.isArray(groups)) {
         const usrGroupsRaw = await usr.$relatedQuery('groups')
         const usrGroups = _.map(usrGroupsRaw, 'id')
         // Relate added groups

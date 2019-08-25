@@ -64,7 +64,7 @@
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
-              v-alert.ma-3(icon='warning', :value='true', outline) No pages to display.
+              v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
           .text-xs-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
             v-pagination(v-model='pagination', :length='pageTotal')
 </template>

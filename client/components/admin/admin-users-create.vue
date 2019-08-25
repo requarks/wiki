@@ -8,7 +8,7 @@
         v-btn.mx-0(color='white', outlined, disabled, dark)
           v-icon(left) mdi-database-import
           span Bulk Import
-      v-card-text
+      v-card-text.pt-5
         v-select(
           :items='providers'
           item-text='title'
@@ -89,6 +89,7 @@
           label='Send a welcome email'
           hide-details
           v-model='sendWelcomeEmail'
+          disabled
         )
       v-card-chin
         v-spacer

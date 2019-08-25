@@ -17,7 +17,8 @@ module.exports = {
         company: WIKI.config.company,
         ...WIKI.config.seo,
         ...WIKI.config.logo,
-        ...WIKI.config.features
+        ...WIKI.config.features,
+        ...WIKI.config.security
       }
     }
   },
@@ -42,7 +43,15 @@ module.exports = {
           featurePageComments: args.featurePageComments,
           featurePersonalWikis: args.featurePersonalWikis
         }
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'seo', 'logo', 'features'])
+        WIKI.config.security = {
+          securityIframe: args.securityIframe,
+          securityReferrerPolicy: args.securityReferrerPolicy,
+          securityHSTS: args.securityHSTS,
+          securityHSTSDuration: args.securityHSTSDuration,
+          securityCSP: args.securityCSP,
+          securityCSPDirectives: args.securityCSPDirectives
+        }
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'seo', 'logo', 'features', 'security'])
 
         return {
           responseResult: graphHelper.generateSuccess('Site configuration updated successfully')

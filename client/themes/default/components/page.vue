@@ -70,20 +70,7 @@
                       v-list-item-title.px-3.caption.grey--text(:class='darkMode ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-            v-card.mt-5
-              .pa-5.pt-3
-                .overline.indigo--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
-                  span {{$t('common:page.lastEditedBy')}}
-                  v-spacer
-                  v-tooltip(top, v-if='isAuthenticated')
-                    template(v-slot:activator='{ on }')
-                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
-                        v-icon(color='grey', dense) mdi-history
-                    span History
-                .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
-                .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
-
-            v-card.mt-5(v-if='tags.length > 0 || true')
+            v-card.mt-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') Tags
                 v-chip.mr-1(
@@ -98,6 +85,19 @@
 
             v-card.mt-5
               .pa-5
+                .overline.indigo--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                  span {{$t('common:page.lastEditedBy')}}
+                  v-spacer
+                  v-tooltip(top, v-if='isAuthenticated')
+                    template(v-slot:activator='{ on }')
+                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
+                        v-icon(color='grey', dense) mdi-history
+                    span History
+                .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
+                .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
+
+            v-card.mt-5
+              .pa-5
                 .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
                 .text-center
                   v-rating(
@@ -108,20 +108,21 @@
                     hover
                   )
                   .caption.grey--text 5 votes
-              v-divider
-              v-toolbar(:color='darkMode ? `grey darken-3` : `grey lighten-4`', flat, dense)
+
+            v-card.mt-5(flat)
+              v-toolbar(:color='darkMode ? `grey darken-3` : `grey lighten-3`', flat, dense)
                 v-spacer
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, small, v-on='on'): v-icon(color='grey') mdi-bookmark
+                    v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-bookmark
                   span {{$t('common:page.bookmark')}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, small, v-on='on'): v-icon(color='grey') mdi-share-variant
+                    v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-share-variant
                   span {{$t('common:page.share')}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, small, v-on='on'): v-icon(color='grey') mdi-printer
+                    v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-printer
                   span {{$t('common:page.printFormat')}}
                 v-spacer
 

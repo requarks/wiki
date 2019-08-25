@@ -3,7 +3,7 @@ title: Local
 description: Built-in authentication for Wiki.js
 author: requarks.io
 logo: https://static.requarks.io/logo/wikijs.svg
-color: yellow darken-3
+color: primary
 website: https://wiki.js.org
 isAvailable: true
 useForm: true

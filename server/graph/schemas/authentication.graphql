@@ -32,9 +32,14 @@ type AuthenticationMutation {
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   loginTFA(
-    loginToken: String!
+    continuationToken: String!
     securityCode: String!
-  ): DefaultResponse @rateLimit(limit: 5, duration: 60)
+  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+
+  loginChangePassword(
+    continuationToken: String!
+    newPassword: String!
+  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   register(
     email: String!
@@ -76,8 +81,9 @@ type AuthenticationStrategy {
 type AuthenticationLoginResponse {
   responseResult: ResponseStatus
   jwt: String
-  tfaRequired: Boolean
-  tfaLoginToken: String
+  mustChangePwd: Boolean
+  mustProvideTFA: Boolean
+  continuationToken: String
 }
 
 type AuthenticationRegisterResponse {

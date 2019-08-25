@@ -3,7 +3,7 @@
     v-model='dialogOpen'
     max-width='650'
     )
-    v-card.wiki-form
+    v-card
       .dialog-header
         span {{$t('common:user.search')}}
         v-spacer
@@ -14,7 +14,7 @@
           :width='2'
           v-show='searchLoading'
           )
-      v-card-text
+      v-card-text.pt-5
         v-text-field(
           outlined
           :label='$t(`common:user.searchPlaceholder`)'
@@ -56,7 +56,7 @@ import searchUsersQuery from 'gql/common/common-users-query-search.gql'
 export default {
   filters: {
     initials(val) {
-      return val.split(' ').map(v => v.substring(0, 1)).join()
+      return val.split(' ').map(v => v.substring(0, 1)).join('')
     }
   },
   props: {

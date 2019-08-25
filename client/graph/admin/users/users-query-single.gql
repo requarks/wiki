@@ -10,6 +10,8 @@ query ($id: Int!) {
       jobTitle
       timezone
       isSystem
+      isActive
+      isVerified
       createdAt
       updatedAt
       groups {

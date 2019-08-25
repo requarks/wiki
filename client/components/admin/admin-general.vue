@@ -92,14 +92,14 @@
 
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p4s
-                v-toolbar(color='primary', dark, dense, flat)
+                v-toolbar(color='indigo', dark, dense, flat)
                   v-toolbar-title.subtitle-1 Features
                   v-spacer
-                  v-chip(label, color='white', small).primary--text coming soon
+                  v-chip(label, color='white', small).indigo--text coming soon
                 v-card-text
                   v-switch(
                     label='Asset Image Optimization'
-                    color='primary'
+                    color='indigo'
                     v-model='config.featureTinyPNG'
                     persistent-hint
                     hint='Image optimization tool to reduce filesize and bandwidth costs.'
@@ -119,7 +119,7 @@
                   v-divider.mt-3
                   v-switch(
                     label='Page Ratings'
-                    color='primary'
+                    color='indigo'
                     v-model='config.featurePageRatings'
                     persistent-hint
                     hint='Allow users to rate pages.'
@@ -129,7 +129,7 @@
                   v-divider.mt-3
                   v-switch(
                     label='Page Comments'
-                    color='primary'
+                    color='indigo'
                     v-model='config.featurePageComments'
                     persistent-hint
                     hint='Allow users to leave comments on pages.'
@@ -139,12 +139,74 @@
                   v-divider.mt-3
                   v-switch(
                     label='Personal Wikis'
-                    color='primary'
+                    color='indigo'
                     v-model='config.featurePersonalWikis'
                     persistent-hint
                     hint='Allow users to have their own personal wiki.'
                     disabled
                     )
+
+              v-card.mt-5.animated.fadeInUp.wait-p5s
+                v-toolbar(color='red darken-2', dark, dense, flat)
+                  v-toolbar-title.subtitle-1 Security
+                v-card-text
+                  v-alert(outlined, color='red darken-2', icon='mdi-information-outline').body-2 Make sure to understand the implications before turning on / off a security feature.
+                  v-switch.mt-3(
+                    label='Block IFrame Embedding'
+                    color='red darken-2'
+                    v-model='config.securityIframe'
+                    persistent-hint
+                    hint='Prevents other websites from embedding your wiki in an iframe. This provides clickjacking protection.'
+                    )
+                  v-divider.mt-3
+                  v-switch(
+                    label='Same Origin Referrer Policy'
+                    color='red darken-2'
+                    v-model='config.securityReferrerPolicy'
+                    persistent-hint
+                    hint='Limits the referrer header to same origin.'
+                    )
+
+                  v-divider.mt-3
+                  v-switch(
+                    label='Enforce HSTS'
+                    color='red darken-2'
+                    v-model='config.securityHSTS'
+                    persistent-hint
+                    hint='This ensures the connection cannot be established through an insecure HTTP connection.'
+                    )
+                  v-select.mt-5(
+                    outlined
+                    label='HSTS Max Age'
+                    :items='hstsDurations'
+                    v-model='config.securityHSTSDuration'
+                    prepend-icon='mdi-subdirectory-arrow-right'
+                    :disabled='!config.securityHSTS'
+                    hide-details
+                    style='max-width: 450px;'
+                    )
+                  .pl-11.mt-3
+                    .caption Defines the duration for which the server should only deliver content through HTTPS.
+                    .caption It's a good idea to start with small values and make sure that nothing breaks on your wiki before moving to longer values.
+
+                  v-divider.mt-3
+                  v-switch(
+                    label='Enforce CSP'
+                    color='red darken-2'
+                    v-model='config.securityCSP'
+                    persistent-hint
+                    hint='Restricts scripts to pre-approved content sources.'
+                    disabled
+                    )
+                  v-textarea.mt-5(
+                    label='CSP Directives'
+                    outlined
+                    v-model='config.securityCSPDirectives'
+                    prepend-icon='mdi-subdirectory-arrow-right'
+                    persistent-hint
+                    hint='One directive per line.'
+                    disabled
+                  )
 
 </template>
 
@@ -163,12 +225,6 @@ export default {
         { text: 'Google Analytics', value: 'ga' },
         { text: 'Google Tag Manager', value: 'gtm' }
       ],
-      metaRobots: [
-        { text: 'Index', value: 'index' },
-        { text: 'Follow', value: 'follow' },
-        { text: 'No Index', value: 'noindex' },
-        { text: 'No Follow', value: 'nofollow' }
-      ],
       config: {
         host: '',
         title: '',
@@ -183,8 +239,28 @@ export default {
         featurePageRatings: false,
         featurePageComments: false,
         featurePersonalWikis: false,
-        featureTinyPNG: false
-      }
+        featureTinyPNG: false,
+        securityIframe: true,
+        securityReferrerPolicy: true,
+        securityHSTS: false,
+        securityHSTSDuration: 0,
+        securityCSP: false,
+        securityCSPDirectives: ''
+      },
+      hstsDurations: [
+        { value: 300, text: '5 minutes' },
+        { value: 86400, text: '1 day' },
+        { value: 604800, text: '1 week' },
+        { value: 2592000, text: '1 month' },
+        { value: 31536000, text: '1 year' },
+        { value: 63072000, text: '2 years' }
+      ],
+      metaRobots: [
+        { text: 'Index', value: 'index' },
+        { text: 'Follow', value: 'follow' },
+        { text: 'No Index', value: 'noindex' },
+        { text: 'No Follow', value: 'nofollow' }
+      ]
     }
   },
   computed: {
@@ -198,18 +274,24 @@ export default {
         await this.$apollo.mutate({
           mutation: siteUpdateConfigMutation,
           variables: {
-            host: this.config.host || '',
-            title: this.config.title || '',
-            description: this.config.description || '',
-            robots: this.config.robots || [],
-            analyticsService: this.config.analyticsService || '',
-            analyticsId: this.config.analyticsId || '',
-            company: this.config.company || '',
-            hasLogo: this.config.hasLogo || false,
-            logoIsSquare: this.config.logoIsSquare || false,
-            featurePageRatings: this.config.featurePageRatings || false,
-            featurePageComments: this.config.featurePageComments || false,
-            featurePersonalWikis: this.config.featurePersonalWikis || false
+            host: _.get(this.config, 'host', ''),
+            title: _.get(this.config, 'title', ''),
+            description: _.get(this.config, 'description', ''),
+            robots: _.get(this.config, 'robots', []),
+            analyticsService: _.get(this.config, 'analyticsService', ''),
+            analyticsId: _.get(this.config, 'analyticsId', ''),
+            company: _.get(this.config, 'company', ''),
+            hasLogo: _.get(this.config, 'hasLogo', false),
+            logoIsSquare: _.get(this.config, 'logoIsSquare', false),
+            featurePageRatings: _.get(this.config, 'featurePageRatings', false),
+            featurePageComments: _.get(this.config, 'featurePageComments', false),
+            featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false),
+            securityIframe: _.get(this.config, 'securityIframe', false),
+            securityReferrerPolicy: _.get(this.config, 'securityReferrerPolicy', false),
+            securityHSTS: _.get(this.config, 'securityHSTS', false),
+            securityHSTSDuration: _.get(this.config, 'securityHSTSDuration', 0),
+            securityCSP: _.get(this.config, 'securityCSP', false),
+            securityCSPDirectives: _.get(this.config, 'securityCSPDirectives', '')
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')

@@ -30,11 +30,11 @@
             template(v-slot:activator='{ on }')
               v-btn.mx-1.animated.fadeInDown.wait-p1s(color='red', large, outlined, v-on='on')
                 v-icon(color='red') mdi-trash-can-outline
-            v-card.wiki-form
+            v-card
               .dialog-header.is-short.is-red
                 v-icon.mr-2(color='white') mdi-file-document-box-remove-outline
                 span {{$t('common:page.delete')}}
-              v-card-text
+              v-card-text.pt-5
                 i18next.body-2(path='common:page.deleteTitle', tag='div')
                   span.red--text.text--darken-2(place='title') {{page.title}}
                 .caption {{$t('common:page.deleteSubtitle')}}
@@ -44,7 +44,7 @@
                   span.red--text.text--darken-2 /{{page.path}}
               v-card-chin
                 v-spacer
-                v-btn(flat, @click='deletePageDialog = false', :disabled='loading') {{$t('common:actions.cancel')}}
+                v-btn(text, @click='deletePageDialog = false', :disabled='loading') {{$t('common:actions.cancel')}}
                 v-btn(color='red darken-2', @click='deletePage', :loading='loading').white--text {{$t('common:actions.delete')}}
           v-btn.ml-1.animated.fadeInDown(color='teal', large, outlined, @click='rerenderPage')
             v-icon(left) mdi-cube-scan

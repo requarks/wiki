@@ -4,7 +4,7 @@
       .dialog-header.is-short.is-red
         v-icon.mr-2(color='white') mdi-file-document-box-remove-outline
         span {{$t('common:page.delete')}}
-      v-card-text
+      v-card-text.pt-5
         i18next.body-1(path='common:page.deleteTitle', tag='div')
           span.red--text.text--darken-2(place='title') {{pageTitle}}
         .caption {{$t('common:page.deleteSubtitle')}}

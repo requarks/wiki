@@ -66,7 +66,7 @@
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-1.pa-3 {{ $t('admin:contribute.tshirts') }}
                 v-card-actions.ml-2
-                  v-btn(outline, :color='darkMode ? `blue lighten-1` : `primary`', href='https://wikijs.threadless.com', large)
+                  v-btn(outlined, :color='darkMode ? `blue lighten-1` : `primary`', href='https://wikijs.threadless.com', large)
                     v-icon(left) mdi-tshirt-crew
                     span {{ $t('admin:contribute.shop') }}
             v-divider.mt-3

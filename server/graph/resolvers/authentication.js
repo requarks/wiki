@@ -7,16 +7,16 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async authentication() { return {} }
+    async authentication () { return {} }
   },
   Mutation: {
-    async authentication() { return {} }
+    async authentication () { return {} }
   },
   AuthenticationQuery: {
     /**
      * Fetch active authentication strategies
      */
-    async strategies(obj, args, context, info) {
+    async strategies (obj, args, context, info) {
       let strategies = await WIKI.models.authentication.getStrategies(args.isEnabled)
       strategies = strategies.map(stg => {
         const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
@@ -44,7 +44,7 @@ module.exports = {
     /**
      * Perform Login
      */
-    async login(obj, args, context) {
+    async login (obj, args, context) {
       try {
         const authResult = await WIKI.models.users.login(args, context)
         return {
@@ -63,7 +63,7 @@ module.exports = {
     /**
      * Perform 2FA Login
      */
-    async loginTFA(obj, args, context) {
+    async loginTFA (obj, args, context) {
       try {
         const authResult = await WIKI.models.users.loginTFA(args, context)
         return {
@@ -75,9 +75,23 @@ module.exports = {
       }
     },
     /**
+     * Perform Mandatory Password Change after Login
+     */
+    async loginChangePassword (obj, args, context) {
+      try {
+        const authResult = await WIKI.models.users.loginChangePassword(args, context)
+        return {
+          ...authResult,
+          responseResult: graphHelper.generateSuccess('Password changed successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
      * Register a new account
      */
-    async register(obj, args, context) {
+    async register (obj, args, context) {
       try {
         await WIKI.models.users.register({ ...args, verify: true }, context)
         return {
@@ -90,7 +104,7 @@ module.exports = {
     /**
      * Update Authentication Strategies
      */
-    async updateStrategies(obj, args, context) {
+    async updateStrategies (obj, args, context) {
       try {
         WIKI.config.auth = {
           audience: _.get(args, 'config.audience', WIKI.config.auth.audience),
@@ -122,7 +136,7 @@ module.exports = {
     /**
      * Generate New Authentication Public / Private Key Certificates
      */
-    async regenerateCertificates(obj, args, context) {
+    async regenerateCertificates (obj, args, context) {
       try {
         await WIKI.auth.regenerateCertificates()
         return {
@@ -135,7 +149,7 @@ module.exports = {
     /**
      * Reset Guest User
      */
-    async resetGuestUser(obj, args, context) {
+    async resetGuestUser (obj, args, context) {
       try {
         await WIKI.auth.resetGuestUser()
         return {

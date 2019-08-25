@@ -49,7 +49,7 @@
                     v-icon(color='white') mdi-clock-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{tgt.title}}
-                    v-list-item-sub-title.purple--text.caption {{tgt.status}}
+                    v-list-item-subtitle.purple--text.caption {{tgt.status}}
                   v-list-item-action
                     v-progress-circular(indeterminate, :size='20', :width='2', color='purple')
                 template(v-else-if='tgt.status === `operational`')
@@ -57,13 +57,13 @@
                     v-icon(color='white') mdi-check-circle
                   v-list-item-content
                     v-list-item-title.body-2 {{tgt.title}}
-                    v-list-item-sub-title.green--text.caption {{$t('admin:storage.lastSync', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
+                    v-list-item-subtitle.green--text.caption {{$t('admin:storage.lastSync', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                 template(v-else)
                   v-list-item-avatar(color='red')
                     v-icon(color='white') mdi-close-circle-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{tgt.title}}
-                    v-list-item-sub-title.red--text.caption {{$t('admin:storage.lastSyncAttempt', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
+                    v-list-item-subtitle.red--text.caption {{$t('admin:storage.lastSyncAttempt', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                   v-list-item-action
                     v-menu
                       v-btn(slot='activator', icon)
@@ -86,6 +86,10 @@
                 img(:src='target.logo', :alt='target.title')
               .body-2.pt-3 {{target.description}}
               .body-2.pt-3.pb-5: a(:href='target.website') {{target.website}}
+              i18next.body-2(path='admin:storage.targetState', tag='div', v-if='target.isEnabled')
+                v-chip(color='green', small, dark, label, place='state') {{$t('admin:storage.targetStateActive')}}
+              i18next.body-2(path='admin:storage.targetState', tag='div', v-else)
+                v-chip(color='red', small, dark, label, place='state') {{$t('admin:storage.targetStateInactive')}}
               v-divider.mt-3
               .overline.my-5 {{$t('admin:storage.targetConfig')}}
               .body-2.ml-3(v-if='!target.config || target.config.length < 1'): em {{$t('admin:storage.noConfigOption')}}
@@ -179,6 +183,8 @@
               template(v-if='target.actions && target.actions.length > 0')
                 v-divider.mt-3
                 .overline.my-5 {{$t('admin:storage.actions')}}
+                v-alert(outlined, :value='!target.isEnabled', color='red', icon='mdi-alert')
+                  .body-2 {{$t('admin:storage.actionsInactiveWarn')}}
                 v-container.pt-0(grid-list-xl, fluid)
                   v-layout(row, wrap, fill-height)
                     v-flex(xs12, lg6, xl4, v-for='act of target.actions', :key='act.handler')
@@ -190,7 +196,7 @@
                             @click='executeAction(target.key, act.handler)'
                             outlined
                             :color='$vuetify.theme.dark ? `blue` : `primary`'
-                            :disabled='runningAction'
+                            :disabled='runningAction || !target.isEnabled'
                             :loading='runningActionHandler === act.handler'
                             ) {{$t('admin:storage.actionRun')}}
 

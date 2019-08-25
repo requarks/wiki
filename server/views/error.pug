@@ -2,25 +2,11 @@ extends master.pug
 
 block body
   #root.is-fullscreen
-    v-app(dark)
-      .app-error
-        v-container
-          .pt-5
-            v-layout(row)
-              v-flex(xs10)
-                a(href='/'): img(src='/svg/logo-wikijs.svg')
-              v-flex.text-right(xs2)
-                v-btn(href='/', depressed, color='red darken-3')
-                  v-icon(left) home
-                  span Home
-            v-alert(color='grey', outline, :value='true', icon='error')
-              strong.red--text.text--lighten-3 Oops, something went wrong...
-              .body-1.red--text.text--lighten-2= message
+    .app-error
+      a(href='/')
+        img(src='/svg/logo-wikijs.svg')
+      strong Oops, something went wrong...
+      span= message
             
-            if error.stack
-              v-expansion-panel.mt-5
-                v-expansion-panel-content.red.darken-3(:value='true')
-                  div(slot='header') View Debug Trace
-                  v-card(color='grey darken-4')
-                    v-card-text
-                      pre: code #{error.stack}
+      if error.stack
+        pre: code #{error.stack}

@@ -11,17 +11,18 @@
             offset-xl4, xl4
             )
             transition(name='fadeUp')
-              v-card.elevation-5.md2(v-show='isShown')
+              v-card.elevation-5(v-show='isShown')
                 v-toolbar(color='primary', flat, dense, dark)
                   v-spacer
                   .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
+                  .subheading(v-if='screen === "changePwd"') {{ $t('auth:changePwd.subtitle') }}
                   .subheading(v-else-if='selectedStrategy.key !== "local"') {{ $t('auth:loginUsingStrategy', { strategy: selectedStrategy.title, interpolation: { escapeValue: false } }) }}
                   .subheading(v-else) {{ $t('auth:loginRequired') }}
                   v-spacer
                 v-card-text.text-center
                   h1.display-1.primary--text.py-2 {{ siteTitle }}
                   template(v-if='screen === "login"')
-                    v-text-field.md2.mt-3(
+                    v-text-field.mt-3(
                       solo
                       flat
                       prepend-icon='mdi-clipboard-account'
@@ -31,7 +32,7 @@
                       v-model='username'
                       :placeholder='$t("auth:fields.emailUser")'
                       )
-                    v-text-field.md2.mt-2(
+                    v-text-field.mt-2(
                       solo
                       flat
                       prepend-icon='mdi-textbox-password'
@@ -47,7 +48,7 @@
                     )
                   template(v-else-if='screen === "tfa"')
                     .body-2 Enter the security code generated from your trusted device:
-                    v-text-field.md2.centered.mt-2(
+                    v-text-field.centered.mt-2(
                       solo
                       flat
                       background-color='grey lighten-4'
@@ -57,12 +58,34 @@
                       :placeholder='$t("auth:tfa.placeholder")'
                       @keyup.enter='verifySecurityCode'
                     )
-                  template(v-else-if='screen === "forgot"')
-                    .body-2 {{ $t('auth:forgotPasswordSubtitle') }}
-                    v-text-field.md2.mt-3(
+                  template(v-else-if='screen === "changePwd"')
+                    .body-2 {{$t('auth:changePwd.instructions')}}
+                    v-text-field.mt-2(
+                      type='password'
                       solo
                       flat
-                      prepend-icon='email'
+                      background-color='grey lighten-4'
+                      hide-details
+                      ref='iptNewPassword'
+                      v-model='newPassword'
+                      :placeholder='$t(`auth:changePwd.newPasswordPlaceholder`)'
+                    )
+                    v-text-field.mt-2(
+                      type='password'
+                      solo
+                      flat
+                      background-color='grey lighten-4'
+                      hide-details
+                      v-model='newPasswordVerify'
+                      :placeholder='$t(`auth:changePwd.newPasswordVerifyPlaceholder`)'
+                      @keyup.enter='changePassword'
+                    )
+                  template(v-else-if='screen === "forgot"')
+                    .body-2 {{ $t('auth:forgotPasswordSubtitle') }}
+                    v-text-field.mt-3(
+                      solo
+                      flat
+                      prepend-icon='mdi-email'
                       background-color='grey lighten-4'
                       hide-details
                       ref='iptEmailForgot'
@@ -71,31 +94,48 @@
                       )
                 v-card-actions.pb-4
                   v-spacer
-                  v-btn.md2(
+                  v-btn(
+                    width='100%'
+                    max-width='250px'
                     v-if='screen === "login"'
-                    block
                     large
-                    color='primary'
+                    color='teal'
+                    dark
                     @click='login'
-                    round
+                    rounded
                     :loading='isLoading'
                     ) {{ $t('auth:actions.login') }}
-                  v-btn.md2(
+                  v-btn(
+                    width='100%'
+                    max-width='250px'
                     v-else-if='screen === "tfa"'
-                    block
                     large
-                    color='primary'
+                    color='teal'
+                    dark
                     @click='verifySecurityCode'
-                    round
+                    rounded
                     :loading='isLoading'
                     ) {{ $t('auth:tfa.verifyToken') }}
-                  v-btn.md2(
-                    v-else-if='screen === "forgot"'
-                    block
+                  v-btn(
+                    width='100%'
+                    max-width='250px'
+                    v-else-if='screen === "changePwd"'
                     large
-                    color='primary'
+                    color='teal'
+                    dark
+                    @click='changePassword'
+                    rounded
+                    :loading='isLoading'
+                    ) {{ $t('auth:changePwd.proceed') }}
+                  v-btn(
+                    width='100%'
+                    max-width='250px'
+                    v-else-if='screen === "forgot"'
+                    large
+                    color='teal'
+                    dark
                     @click='forgotPasswordSubmit'
-                    round
+                    rounded
                     :loading='isLoading'
                     ) {{ $t('auth:sendResetPassword') }}
                   v-spacer
@@ -111,15 +151,16 @@
                   v-divider
                   v-card-text.grey.lighten-4.text-center
                     .pb-2.body-2.text-xs-center.grey--text.text--darken-2 {{ $t('auth:orLoginUsingStrategy') }}
-                    v-tooltip(top, v-for='strategy in strategies', :key='strategy.key')
-                      .social-login-btn.mr-2(
-                        slot='activator'
-                        v-ripple
-                        v-html='strategy.icon'
-                        :class='strategy.color + " elevation-" + (strategy.key === selectedStrategy.key ? "0" : "4")'
-                        @click='selectStrategy(strategy)'
-                        )
-                      span {{ strategy.title }}
+                    v-btn.mx-1.social-login-btn(
+                      v-for='strategy in strategies', :key='strategy.key'
+                      large
+                      @click='selectStrategy(strategy)'
+                      dark
+                      :color='strategy.color'
+                      :depressed='strategy.key === selectedStrategy.key'
+                      )
+                      v-avatar.mr-3(tile, :class='strategy.color', size='24', v-html='strategy.icon')
+                      span(style='text-transform: none;') {{ strategy.title }}
                 template(v-if='screen === "login" && selectedStrategy.selfRegistration')
                   v-divider
                   v-card-actions.py-3(:class='isSocialShown ? "" : "grey lighten-4"')
@@ -142,6 +183,7 @@ import Cookies from 'js-cookie'
 import strategiesQuery from 'gql/login/login-query-strategies.gql'
 import loginMutation from 'gql/login/login-mutation-login.gql'
 import tfaMutation from 'gql/login/login-mutation-tfa.gql'
+import changePasswordMutation from 'gql/login/login-mutation-changepassword.gql'
 
 export default {
   i18nOptions: { namespaces: 'auth' },
@@ -155,11 +197,13 @@ export default {
       password: '',
       hidePassword: true,
       securityCode: '',
-      loginToken: '',
+      continuationToken: '',
       isLoading: false,
       loaderColor: 'grey darken-4',
       loaderTitle: 'Working...',
-      isShown: false
+      isShown: false,
+      newPassword: '',
+      newPasswordVerify: ''
     }
   },
   computed: {
@@ -205,14 +249,14 @@ export default {
         this.$store.commit('showNotification', {
           style: 'red',
           message: this.$t('auth:invalidEmailUsername'),
-          icon: 'warning'
+          icon: 'alert'
         })
         this.$refs.iptEmail.focus()
       } else if (this.password.length < 2) {
         this.$store.commit('showNotification', {
           style: 'red',
           message: this.$t('auth:invalidPassword'),
-          icon: 'warning'
+          icon: 'alert'
         })
         this.$refs.iptPassword.focus()
       } else {
@@ -231,10 +275,16 @@ export default {
           if (_.has(resp, 'data.authentication.login')) {
             let respObj = _.get(resp, 'data.authentication.login', {})
             if (respObj.responseResult.succeeded === true) {
-              if (respObj.tfaRequired === true) {
+              this.continuationToken = respObj.continuationToken
+              if (respObj.mustChangePwd === true) {
+                this.screen = 'changePwd'
+                this.$nextTick(() => {
+                  this.$refs.iptNewPassword.focus()
+                })
+                this.isLoading = false
+              } else if (respObj.mustProvideTFA === true) {
                 this.screen = 'tfa'
                 this.securityCode = ''
-                this.loginToken = respObj.tfaLoginToken
                 this.$nextTick(() => {
                   this.$refs.iptTFA.focus()
                 })
@@ -258,7 +308,7 @@ export default {
           this.$store.commit('showNotification', {
             style: 'red',
             message: err.message,
-            icon: 'warning'
+            icon: 'alert'
           })
           this.isLoading = false
         }
@@ -280,7 +330,7 @@ export default {
         this.$apollo.mutate({
           mutation: tfaMutation,
           variables: {
-            loginToken: this.loginToken,
+            continuationToken: this.continuationToken,
             securityCode: this.securityCode
           }
         }).then(resp => {
@@ -307,23 +357,59 @@ export default {
           this.$store.commit('showNotification', {
             style: 'red',
             message: err.message,
-            icon: 'warning'
+            icon: 'alert'
           })
           this.isLoading = false
         })
       }
     },
-    forgotPassword() {
+    /**
+     * CHANGE PASSWORD
+     */
+    async changePassword () {
+      this.loaderColor = 'grey darken-4'
+      this.loaderTitle = this.$t('auth:changePwd.loading')
+      this.isLoading = true
+      const resp = await this.$apollo.mutate({
+        mutation: changePasswordMutation,
+        variables: {
+          continuationToken: this.continuationToken,
+          newPassword: this.newPassword
+        }
+      })
+      if (_.get(resp, 'data.authentication.loginChangePassword.responseResult.succeeded', false) === true) {
+        this.loaderColor = 'green darken-1'
+        this.loaderTitle = this.$t('auth:loginSuccess')
+        Cookies.set('jwt', _.get(resp, 'data.authentication.loginChangePassword.jwt', ''), { expires: 365 })
+        _.delay(() => {
+          window.location.replace('/') // TEMPORARY - USE RETURNURL
+        }, 1000)
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.authentication.loginChangePassword.responseResult.message', false),
+          icon: 'alert'
+        })
+        this.isLoading = false
+      }
+    },
+    /**
+     * SWITCH TO FORGOT PASSWORD SCREEN
+     */
+    forgotPassword () {
       this.screen = 'forgot'
       this.$nextTick(() => {
         this.$refs.iptEmailForgot.focus()
       })
     },
-    async forgotPasswordSubmit() {
+    /**
+     * FORGOT PASSWORD SUBMIT
+     */
+    async forgotPasswordSubmit () {
       this.$store.commit('showNotification', {
         style: 'pink',
         message: 'Coming soon!',
-        icon: 'free_breakfast'
+        icon: 'ferry'
       })
     }
   },
@@ -378,18 +464,12 @@ export default {
     }
 
     .social-login-btn {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 50%;
-      width: 54px;
-      height: 54px;
       cursor: pointer;
       transition: opacity .2s ease;
       &:hover {
         opacity: .8;
       }
-      margin: .5rem 0;
+      margin: .25rem 0;
       svg {
         width: 24px;
         height: 24px;

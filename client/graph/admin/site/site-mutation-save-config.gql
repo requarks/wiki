@@ -11,6 +11,12 @@ mutation (
   $featurePageRatings: Boolean!
   $featurePageComments: Boolean!
   $featurePersonalWikis: Boolean!
+  $securityIframe: Boolean!
+  $securityReferrerPolicy: Boolean!
+  $securityHSTS: Boolean!
+  $securityHSTSDuration: Int!
+  $securityCSP: Boolean!
+  $securityCSPDirectives: String!
 ) {
   site {
     updateConfig(
@@ -25,7 +31,13 @@ mutation (
       logoIsSquare: $logoIsSquare,
       featurePageRatings: $featurePageRatings,
       featurePageComments: $featurePageComments,
-      featurePersonalWikis: $featurePersonalWikis
+      featurePersonalWikis: $featurePersonalWikis,
+      securityIframe: $securityIframe,
+      securityReferrerPolicy: $securityReferrerPolicy,
+      securityHSTS: $securityHSTS,
+      securityHSTSDuration: $securityHSTSDuration,
+      securityCSP: $securityCSP,
+      securityCSPDirectives: $securityCSPDirectives
     ) {
       responseResult {
         succeeded

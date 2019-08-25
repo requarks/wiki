@@ -8,8 +8,9 @@ mutation($username: String!, $password: String!, $strategy: String!) {
         message
       }
       jwt
-      tfaRequired
-      tfaLoginToken
+      mustChangePwd
+      mustProvideTFA
+      continuationToken
     }
   }
 }

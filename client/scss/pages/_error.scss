@@ -6,6 +6,7 @@
   justify-content: center;
   align-items: center;
   color: mc('grey', '50');
+  font-family: Roboto, Arial, sans-serif;
 
   img {
     width: 250px;
@@ -57,8 +58,20 @@
     }
   }
 
-  code {
-    color: mc('grey', '500');
-    font-size: .8rem;
+  > strong {
+    font-size: 1.5rem;
+  }
+
+  > span {
+    margin-top: 1rem;
+  }
+
+  > pre {
+    margin-top: 2rem;
+
+    code {
+      color: mc('grey', '500');
+      font-size: .8rem;
+    }
   }
 }

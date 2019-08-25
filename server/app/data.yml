@@ -42,6 +42,13 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+    security:
+      securityIframe: true
+      securityReferrerPolicy: true
+      securityHSTS: false
+      securityHSTSDuration: 300
+      securityCSP: false
+      securityCSPDirectives: ''
     flags:
       ldapdebug: false
       sqllog: false

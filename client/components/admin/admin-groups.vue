@@ -17,7 +17,7 @@
                 span New Group
             v-card
               .dialog-header.is-short New Group
-              v-card-text
+              v-card-text.pt-5
                 v-text-field.md2(
                   outlined
                   prepend-icon='mdi-account-group'

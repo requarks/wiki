@@ -45,7 +45,7 @@ module.exports = class UserKey extends Model {
   }
 
   static async generateToken ({ userId, kind }, context) {
-    const token = await nanoid()
+    const token = nanoid()
     await WIKI.models.userKeys.query().insert({
       kind,
       token,

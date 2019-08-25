@@ -13,13 +13,13 @@
               v-btn.animated.fadeInLeft.wait-p2s.btn-animate-rotate(fab, absolute, :right='!$vuetify.rtl', :left='$vuetify.rtl', top, small, light, @click='refresh'): v-icon(color='grey') mdi-refresh
               v-subheader Wiki.js
               v-list(two-line, dense)
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-icon.blue.white--text mdi-application-export
                   v-list-item-content
                     v-list-item-title {{ $t('admin:system.currentVersion') }}
                     v-list-item-subtitle {{ info.currentVersion }}
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-icon.blue.white--text mdi-inbox-arrow-up
                   v-list-item-content
@@ -31,38 +31,38 @@
               v-divider.mt-3
               v-subheader {{ $t('admin:system.hostInfo') }}
               v-list(two-line, dense)
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-avatar.blue-grey(size='40')
                       v-icon(color='white') {{platformLogo}}
                   v-list-item-content
                     v-list-item-title {{ $t('admin:system.os') }}
                     v-list-item-subtitle {{ (info.platform === 'docker') ? 'Docker Container (Linux)' : info.operatingSystem }}
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-icon.blue-grey.white--text mdi-desktop-classic
                   v-list-item-content
                     v-list-item-title {{ $t('admin:system.hostname') }}
                     v-list-item-subtitle {{ info.hostname }}
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-icon.blue-grey.white--text mdi-cpu-64-bit
                   v-list-item-content
                     v-list-item-title {{ $t('admin:system.cpuCores') }}
                     v-list-item-subtitle {{ info.cpuCores }}
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-icon.blue-grey.white--text mdi-memory
                   v-list-item-content
                     v-list-item-title {{ $t('admin:system.totalRAM') }}
                     v-list-item-subtitle {{ info.ramTotal }}
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-icon.blue-grey.white--text mdi-iframe-outline
                   v-list-item-content
                     v-list-item-title {{ $t('admin:system.workingDirectory') }}
                     v-list-item-subtitle {{ info.workingDirectory }}
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-icon.blue-grey.white--text mdi-card-bulleted-settings-outline
                   v-list-item-content
@@ -73,7 +73,7 @@
             v-card.pb-3.animated.fadeInUp.wait-p4s
               v-subheader Node.js
               v-list(dense)
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-avatar.light-green(size='40')
                       v-icon(color='white') mdi-nodejs
@@ -83,7 +83,7 @@
               v-divider.mt-3
               v-subheader {{ info.dbType }}
               v-list(dense)
-                v-list-item(avatar)
+                v-list-item
                   v-list-item-avatar
                     v-avatar.indigo.darken-1(size='40')
                       v-icon(color='white') mdi-database

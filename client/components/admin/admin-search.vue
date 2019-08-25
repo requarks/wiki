@@ -26,8 +26,8 @@
               v-list-item(:key='eng.key', @click='selectedEngine = eng.key', :disabled='!eng.isAvailable')
                 v-list-item-avatar(size='24')
                   v-icon(color='grey', v-if='!eng.isAvailable') mdi-minus-box-outline
-                  v-icon(color='primary', v-else-if='eng.key === selectedEngine') mdi-checkbox-marked-outline
-                  v-icon(color='grey', v-else) mdi-checkbox-blank-outline
+                  v-icon(color='primary', v-else-if='eng.key === selectedEngine') mdi-checkbox-marked-circle-outline
+                  v-icon(color='grey', v-else) mdi-checkbox-blank-circle-outline
                 v-list-item-content
                   v-list-item-title.body-2(:class='!eng.isAvailable ? `grey--text` : (selectedEngine === eng.key ? `primary--text` : ``)') {{ eng.title }}
                   v-list-item-subtitle: .caption(:class='!eng.isAvailable ? `grey--text text--lighten-1` : (selectedEngine === eng.key ? `blue--text ` : ``)') {{ eng.description }}

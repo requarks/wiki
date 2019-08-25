@@ -36,6 +36,12 @@ type SiteMutation {
     featurePageRatings: Boolean!
     featurePageComments: Boolean!
     featurePersonalWikis: Boolean!
+    securityIframe: Boolean!
+    securityReferrerPolicy: Boolean!
+    securityHSTS: Boolean!
+    securityHSTSDuration: Int!
+    securityCSP: Boolean!
+    securityCSPDirectives: String!
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
@@ -56,4 +62,10 @@ type SiteConfig {
   featurePageRatings: Boolean!
   featurePageComments: Boolean!
   featurePersonalWikis: Boolean!
+  securityIframe: Boolean!
+  securityReferrerPolicy: Boolean!
+  securityHSTS: Boolean!
+  securityHSTSDuration: Int!
+  securityCSP: Boolean!
+  securityCSPDirectives: String!
 }

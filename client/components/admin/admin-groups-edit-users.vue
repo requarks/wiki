@@ -23,26 +23,21 @@
       must-sort,
       hide-default-footer
     )
-      template(slot='item', slot-scope='props')
-        tr(:active='props.selected')
-          td.text-xs-right {{ props.item.id }}
-          td {{ props.item.name }}
-          td {{ props.item.email }}
-          td
-            v-menu(bottom, right, min-width='200')
-              template(v-slot:activator='{ on }')
-                v-btn(icon, v-on='on', small)
-                  v-icon.grey--text.text--darken-1 mdi-dots-horizontal
-              v-list(dense, nav)
-                v-list-item(:to='`/users/` + props.item.id')
-                  v-list-item-action: v-icon(color='primary') mdi-account-outline
-                  v-list-item-content
-                    v-list-item-title View User Profile
-                template(v-if='props.item.id !== 2')
-                  v-list-item(@click='unassignUser(props.item.id)')
-                    v-list-item-action: v-icon(color='orange') mdi-account-remove-outline
-                    v-list-item-content
-                      v-list-item-title Unassign
+      template(v-slot:item.actions='{ item }')
+        v-menu(bottom, right, min-width='200')
+          template(v-slot:activator='{ on }')
+            v-btn(icon, v-on='on', small)
+              v-icon.grey--text.text--darken-1 mdi-dots-horizontal
+          v-list(dense, nav)
+            v-list-item(:to='`/users/` + item.id')
+              v-list-item-action: v-icon(color='primary') mdi-account-outline
+              v-list-item-content
+                v-list-item-title View User Profile
+            template(v-if='item.id !== 2')
+              v-list-item(@click='unassignUser(item.id)')
+                v-list-item-action: v-icon(color='orange') mdi-account-remove-outline
+                v-list-item-content
+                  v-list-item-title Unassign
       template(slot='no-data')
         v-alert.ma-3(icon='warning', outlined) No users to display.
     .text-center.py-2(v-if='group.users.length > 15')
@@ -70,10 +65,10 @@ export default {
   data() {
     return {
       headers: [
-        { text: 'ID', value: 'id', width: 50, align: 'right' },
+        { text: 'ID', value: 'id', width: 50 },
         { text: 'Name', value: 'name' },
         { text: 'Email', value: 'email' },
-        { text: '', value: 'actions', sortable: false, width: 50 }
+        { text: 'Actions', value: 'actions', sortable: false, width: 50 }
       ],
       searchUserDialog: false,
       pagination: 1,

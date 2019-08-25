@@ -13,7 +13,7 @@
             span {{$t('common:actions.apply')}}
 
         v-card.mt-3.white.grey--text.text--darken-3
-          v-alert(color='red', value='true', icon='mdi-alert', dark, prominent)
+          v-alert(color='red', :value='true', icon='mdi-alert', dark, prominent)
             span Do NOT enable these flags unless you know what you're doing!
             .caption Doing so may result in data loss or broken installation!
           v-card-text

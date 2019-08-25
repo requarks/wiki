@@ -3,12 +3,26 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-male-user.svg', alt='Edit User', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-male-user.svg', :alt='$t(`admin:users.edit`)', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Edit User
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{$t('admin:users.edit')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{user.name}}
           v-spacer
-          .caption.grey--text.animated.fadeInRight.wait-p5s ID #[strong {{user.id}}]
+          template(v-if='user.isActive')
+            status-indicator.mr-3(positive, pulse)
+            .caption.green--text {{$t('admin:users.active')}}
+          template(v-else)
+            status-indicator.mr-3(negative, pulse)
+            .caption.red--text {{$t('admin:users.inactive')}}
+          template(v-if='user.isVerified')
+            status-indicator.mr-3.ml-4(active, pulse)
+            .caption.blue--text {{$t('admin:users.verified')}}
+          template(v-else)
+            status-indicator.mr-3.ml-4(intermediary, pulse)
+            .caption.deep-orange--text {{$t('admin:users.unverified')}}
+          v-spacer
+          i18next.caption.grey--text.animated.fadeInRight.wait-p5s(path='admin:users.id', tag='div')
+            strong(place='id') {{user.id}}
           v-divider.animated.fadeInRight.wait-p3s.ml-3(vertical)
           v-btn.ml-3.animated.fadeInDown.wait-p2s(color='grey', large, outlined, to='/users')
             v-icon mdi-arrow-left
@@ -30,15 +44,15 @@
         v-card.animated.fadeInUp
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 mdi-information-variant
-            span Basic Info
+            span {{$t('admin:users.basicInfo')}}
           v-list.py-0(two-line, dense)
             v-list-item
               v-list-item-avatar(size='32')
                 v-icon mdi-email-variant
               v-list-item-content
-                v-list-item-title Email
+                v-list-item-title {{$t('admin:users.email')}}
                 v-list-item-subtitle {{ user.email }}
-              v-list-item-action(v-if='!user.isSystem')
+              v-list-item-action(v-if='!user.isSystem && user.providerKey === `local`')
                 v-menu(
                   v-model='editPop.email'
                   :close-on-content-click='false'
@@ -52,7 +66,7 @@
                     v-text-field(
                       ref='iptEmail'
                       v-model='user.email'
-                      label='Email'
+                      :label='$t(`admin:users.email`)'
                       solo
                       hide-details
                       append-icon='mdi-check'
@@ -66,7 +80,7 @@
               v-list-item-avatar(size='32')
                 v-icon mdi-account
               v-list-item-content
-                v-list-item-title Display Name
+                v-list-item-title {{$t('admin:users.displayName')}}
                 v-list-item-subtitle {{ user.name }}
               v-list-item-action
                 v-menu(
@@ -82,7 +96,7 @@
                     v-text-field(
                       ref='iptDisplayName'
                       v-model='user.name'
-                      label='Display Name'
+                      :label='$t(`admin:users.displayName`)'
                       solo
                       hide-details
                       append-icon='mdi-check'
@@ -94,13 +108,13 @@
         v-card.mt-3.animated.fadeInUp.wait-p2s(v-if='!user.isSystem')
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 mdi-lock-outline
-            span Authentication
+            span {{$t('admin:users.authentication')}}
           v-list.py-0(two-line, dense)
             v-list-item
               v-list-item-avatar(size='32')
                 v-icon mdi-domain
               v-list-item-content
-                v-list-item-title Provider
+                v-list-item-title {{$t('admin:users.authProvider')}}
                 v-list-item-subtitle {{ user.providerKey }}
               //- v-list-item-action
               //-   v-img(src='https://static.requarks.io/logo/wikijs.svg', alt='', contain, max-height='32', position='center right')
@@ -110,7 +124,7 @@
                 v-list-item-avatar(size='32')
                   v-icon mdi-textbox-password
                 v-list-item-content
-                  v-list-item-title Password
+                  v-list-item-title {{$t('admin:users.password')}}
                   v-list-item-subtitle &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
                 v-list-item-action
                   v-menu(
@@ -124,12 +138,12 @@
                         template(v-slot:activator='{ on: tooltip }')
                           v-btn(icon, color='grey', x-small, v-on='{ ...menu, ...tooltip }', @click='focusField(`iptNewPassword`)')
                             v-icon mdi-cached
-                        span Change Password
+                        span {{$t('admin:users.changePassword')}}
                     v-card
                       v-text-field(
                         ref='iptNewPassword'
                         v-model='newPassword'
-                        label='New Password'
+                        :label='$t(`admin:users.newPassword`)'
                         solo
                         hide-details
                         append-icon='mdi-check'
@@ -149,26 +163,26 @@
                 v-list-item-avatar(size='32')
                   v-icon mdi-two-factor-authentication
                 v-list-item-content
-                  v-list-item-title Two Factor Authentication (2FA)
+                  v-list-item-title {{$t('admin:users.tfa')}}
                   v-list-item-subtitle.red--text Inactive
                 v-list-item-action
                   v-tooltip(top)
                     template(v-slot:activator='{ on }')
                       v-btn(icon, color='grey', x-small, v-on='on', disabled)
                         v-icon mdi-power
-                    span Toggle 2FA
-              template(v-if='user.providerId')
-                v-divider
-                v-list-item
-                  v-list-item-avatar(size='32')
-                    v-icon mdi-account
-                  v-list-item-content
-                    v-list-item-title Provider Id
-                    v-list-item-subtitle {{ user.providerId }}
+                    span {{$t('admin:users.toggle2FA')}}
+            template(v-if='user.providerId')
+              v-divider
+              v-list-item
+                v-list-item-avatar(size='32')
+                  v-icon mdi-music-accidental-sharp
+                v-list-item-content
+                  v-list-item-title {{$t('admin:users.authProviderId')}}
+                  v-list-item-subtitle {{ user.providerId }}
         v-card.mt-3.animated.fadeInUp.wait-p4s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 mdi-account-group
-            span User Groups
+            span {{$t('admin:users.groups')}}
           v-list(dense)
             template(v-for='(group, idx) in user.groups')
               v-list-item(:key='`group-` + group.id')
@@ -181,14 +195,14 @@
                     v-icon mdi-close
               v-divider(v-if='idx < user.groups.length - 1')
           v-alert.mx-3(v-if='user.groups.length < 1', outlined, color='grey darken-1', icon='mdi-alert')
-            .caption This user is not assigned to any group yet. You must assign at least 1 group to a user.
+            .caption {{$t('admin:users.noGroupAssigned')}}
           v-card-chin(v-if='!user.isSystem')
             v-spacer
             v-select(
               ref='iptAssignGroup'
               :items='groups'
               v-model='newGroup'
-              label='Select Group...'
+              :label='$t(`admin:users.selectGroup`)'
               item-value='id'
               item-text='name'
               item-disabled='isSystem'
@@ -201,18 +215,18 @@
             )
             v-btn.ml-2.px-4(depressed, color='primary', height='48', @click='assignGroup', :disabled='newGroup === 0')
               v-icon(left) mdi-clipboard-account-outline
-              span Assign
+              span {{$t('admin:users.groupAssign')}}
       v-flex(xs6)
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 mdi-account-badge-outline
-            span Extended Metadata
+            span {{$t('admin:users.extendedMetadata')}}
           v-list.py-0(two-line, dense)
             v-list-item
               v-list-item-avatar(size='32')
                 v-icon mdi-map-marker
               v-list-item-content
-                v-list-item-title Location
+                v-list-item-title {{$t('admin:users.location')}}
                 v-list-item-subtitle {{ user.location }}
               v-list-item-action
                 v-menu(
@@ -228,7 +242,7 @@
                     v-text-field(
                       ref='iptLocation'
                       v-model='user.location'
-                      label='Location'
+                      :label='$t(`admin:users.location`)'
                       solo
                       hide-details
                       append-icon='mdi-check'
@@ -241,7 +255,7 @@
               v-list-item-avatar(size='32')
                 v-icon mdi-account-badge-horizontal-outline
               v-list-item-content
-                v-list-item-title Job Title
+                v-list-item-title {{$t('admin:users.jobTitle')}}
                 v-list-item-subtitle {{ user.jobTitle }}
               v-list-item-action
                 v-menu(
@@ -257,7 +271,7 @@
                     v-text-field(
                       ref='iptJobTitle'
                       v-model='user.jobTitle'
-                      label='Job Title'
+                      :label='$t(`admin:users.jobTitle`)'
                       solo
                       hide-details
                       append-icon='mdi-check'
@@ -270,7 +284,7 @@
               v-list-item-avatar(size='32')
                 v-icon mdi-map-clock-outline
               v-list-item-content
-                v-list-item-title Timezone
+                v-list-item-title {{$t('admin:users.timezone')}}
                 v-list-item-subtitle {{ user.timezone }}
               v-list-item-action
                 v-menu(
@@ -287,7 +301,7 @@
                       ref='iptTimezone'
                       :items='timezones'
                       v-model='user.timezone'
-                      label='Timezone'
+                      :label='$t(`admin:users.timezone`)'
                       solo
                       dense
                       hide-details
@@ -308,11 +322,16 @@
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 
+import { StatusIndicator } from 'vue-status-indicator'
+
 import userQuery from 'gql/admin/users/users-query-single.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 import updateUserMutation from 'gql/admin/users/users-mutation-update.gql'
 
 export default {
+  components: {
+    StatusIndicator
+  },
   data() {
     return {
       deleteUserDialog: false,
@@ -334,7 +353,9 @@ export default {
         location: '',
         jobTitle: '',
         timezone: '',
-        groups: []
+        groups: [],
+        isActive: false,
+        isVerified: false
       },
       timezones: [
         { text: '(GMT-11:00) Niue', value: 'Pacific/Niue' },
@@ -613,7 +634,7 @@ export default {
       if (_.get(resp, 'data.users.update.responseResult.succeeded', false)) {
         this.$store.commit('showNotification', {
           style: 'success',
-          message: 'User updated successfully.',
+          message: this.$t('admin:users.userUpdateSuccess'),
           icon: 'check'
         })
         this.$router.push('/users')
@@ -636,7 +657,7 @@ export default {
     assignGroup() {
       if (_.some(this.user.groups, ['id', this.newGroup])) {
         this.$store.commit('showNotification', {
-          message: 'User is already assigned to this group!',
+          message: this.$t('admin:users.userAlreadyAssignedToGroup'),
           style: 'error',
           icon: 'alert'
         })
