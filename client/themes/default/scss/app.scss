@@ -25,16 +25,6 @@
   h1, h2, h3, h4, h5, h6 {
     position: relative;
 
-    &:before {
-      display: block;
-      content: " ";
-      width: 1px;
-      margin-top: -75px;
-      height: 75px;
-      visibility: hidden;
-      z-index: -1;
-    }
-
     &:first-child {
       padding-top: 0;
     }

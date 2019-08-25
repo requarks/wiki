@@ -247,7 +247,7 @@ export default {
       upBtnShown: false,
       scrollOpts: {
         duration: 1500,
-        offset: -75,
+        offset: 0,
         easing: 'easeInOutCubic'
       },
       scrollStyle: {
@@ -309,6 +309,12 @@ export default {
   mounted () {
     Prism.highlightAllUnder(this.$refs.container)
     this.navShown = this.$vuetify.breakpoint.smAndUp
+
+    this.$nextTick(() => {
+      if (window.location.hash && window.location.hash.length > 1) {
+        this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+      }
+    })
   },
   methods: {
     goHome () {
