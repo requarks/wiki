@@ -5,6 +5,7 @@ const yargs = require('yargs').argv
 const _ = require('lodash')
 const Fiber = require('fibers')
 
+const { VueLoaderPlugin } = require('vue-loader')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -12,9 +13,9 @@ const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
-const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin')
+const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
+const WebpackBarPlugin = require('webpackbar')
 const SriWebpackPlugin = require('webpack-subresource-integrity')
-const { VueLoaderPlugin } = require('vue-loader')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
@@ -194,6 +195,7 @@ module.exports = {
   },
   plugins: [
     new VueLoaderPlugin(),
+    new VuetifyLoaderPlugin(),
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
     new CopyWebpackPlugin([
       { from: 'client/static' },
@@ -234,8 +236,8 @@ module.exports = {
       hashFuncNames: ['sha256', 'sha512'],
       enabled: true
     }),
-    new SimpleProgressWebpackPlugin({
-      format: 'expanded'
+    new WebpackBarPlugin({
+      name: 'Client Assets'
     }),
     new CleanWebpackPlugin(),
     new OptimizeCssAssetsPlugin({
