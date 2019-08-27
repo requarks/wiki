@@ -2,16 +2,4 @@ extends master.pug
 
 block body
   #root.is-fullscreen
-    v-app
-      .unauthorized
-        .unauthorized-content
-          img.animated.fadeIn(src='/svg/icon-delete-shield.svg', alt='Unauthorized')
-          .headline= t('unauthorized.title')
-          .subheading.mt-3= t('unauthorized.action.' + action)
-          .mt-5
-            v-btn(color='red lighten-4', href='javascript:window.history.go(-1);', large, outline)
-              v-icon(left) arrow_back
-              span= t('unauthorized.goback')
-            v-btn(color='red lighten-4', href='/login', large, outline)
-              v-icon(left) person_outline
-              span= t('unauthorized.login')
+    unauthorized(action=action)
