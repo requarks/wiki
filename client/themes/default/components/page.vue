@@ -96,18 +96,18 @@
                 .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
-            v-card.mb-5
-              .pa-5
-                .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
-                .text-center
-                  v-rating(
-                    v-model='rating'
-                    color='yellow darken-3'
-                    background-color='grey lighten-1'
-                    half-increments
-                    hover
-                  )
-                  .caption.grey--text 5 votes
+            //- v-card.mb-5
+            //-   .pa-5
+            //-     .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
+            //-     .text-center
+            //-       v-rating(
+            //-         v-model='rating'
+            //-         color='yellow darken-3'
+            //-         background-color='grey lighten-1'
+            //-         half-increments
+            //-         hover
+            //-       )
+            //-       .caption.grey--text 5 votes
 
             v-card(flat)
               v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
