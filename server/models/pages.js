@@ -182,6 +182,10 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageDuplicateCreate()
     }
 
+    if (!opts.content || _.trim(opts.content).length < 1) {
+      throw new WIKI.Error.PageEmptyContent()
+    }
+
     await WIKI.models.pages.query().insert({
       authorId: opts.authorId,
       content: opts.content,
@@ -230,6 +234,11 @@ module.exports = class Page extends Model {
     if (!ogPage) {
       throw new Error('Invalid Page Id')
     }
+
+    if (!opts.content || _.trim(opts.content).length < 1) {
+      throw new WIKI.Error.PageEmptyContent()
+    }
+
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
       isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
