@@ -11,7 +11,7 @@
             offset-xl4, xl4
             )
             transition(name='fadeUp')
-              v-card.elevation-5(v-show='isShown')
+              v-card.elevation-5(v-show='isShown', light)
                 v-toolbar(color='primary', flat, dense, dark)
                   v-spacer
                   .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
