@@ -181,6 +181,9 @@ router.get('/*', async (req, res, next) => {
     req.i18n.changeLanguage(pageArgs.locale)
 
     if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+      if (pageArgs.path === 'home') {
+        return res.redirect('/login')
+      }
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.status(403).render('unauthorized', { action: 'view' })
     }
