@@ -285,4 +285,12 @@ export default {
   }
 }
 
+.v-application.admin {
+  code {
+    box-shadow: none;
+    font-family: 'Roboto Mono', monospace;
+    color: mc('pink', '500');
+  }
+}
+
 </style>
