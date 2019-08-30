@@ -20,7 +20,7 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
-      }, async (accessToken, refreshToken, profile, done) => {
+      }, async (accessToken, refreshToken, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
             profile: {
