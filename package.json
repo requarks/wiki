@@ -36,6 +36,7 @@
   "dependencies": {
     "@aoberoi/passport-slack": "1.0.5",
     "@bugsnag/js": "6.4.0",
+    "@exlinc/keycloak-passport": "1.0.2",
     "algoliasearch": "3.33.0",
     "apollo-fetch": "0.7.0",
     "apollo-server": "2.9.0",

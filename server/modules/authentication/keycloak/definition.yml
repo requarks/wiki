@@ -1,0 +1,17 @@
+key: keycloak
+title: Keycloak
+description: Custom keycloak openid implementation based on @exlinc/keycloak-passport.
+author: D4uS1
+logo: https://static.requarks.io/logo/oidc.svg
+color: blue-grey darken-2
+website: https://github.com/D4uS1/wiki/
+useForm: false
+isAvailable: true
+props:
+  host: String
+  realm: String
+  clientId: String
+  clientSecret: String
+  authorizationURL: String
+  userInfoURL: String
+  tokenURL: String
