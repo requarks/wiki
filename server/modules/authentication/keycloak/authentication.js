@@ -20,17 +20,21 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
-      }, (accessToken, refreshToken, profile, done) => {
-        WIKI.models.users.processProfile({profile: {
-          id: profile.keycloakId,
-          email: profile.email,
-          name: profile.username,
-	        picture: ""
-        }, providerKey: 'keycloak'}).then((user) => {
-          return done(null, user) || true
-        }).catch((err) => {
-          return done(err, null) || true
-        })
+      }, async (accessToken, refreshToken, profile, done) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            profile: {
+              id: profile.keycloakId,
+              email: profile.email,
+              name: profile.username,
+              picture: ''
+            },
+            providerKey: 'keycloak'
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       })
     )
   }
