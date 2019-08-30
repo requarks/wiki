@@ -1,10 +1,10 @@
 key: keycloak
 title: Keycloak
-description: Custom keycloak openid implementation based on @exlinc/keycloak-passport.
+description: Keycloak is an open source software product to allow single sign-on with Identity Management and Access Management aimed at modern applications and services.
 author: D4uS1
 logo: https://static.requarks.io/logo/oidc.svg
 color: blue-grey darken-2
-website: https://github.com/D4uS1/wiki/
+website: https://www.keycloak.org/
 useForm: false
 isAvailable: true
 props:
