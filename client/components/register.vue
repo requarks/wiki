@@ -16,13 +16,13 @@
                   v-spacer
                   .subheading {{ $t('auth:registerTitle') }}
                   v-spacer
-                v-card-text.text-xs-center
+                v-card-text.text-center
                   h1.display-1.indigo--text.py-2 {{ siteTitle }}
                   .body-2 {{ $t('auth:registerSubTitle') }}
                   v-text-field.md2.mt-3(
                     solo
                     flat
-                    prepend-icon='email'
+                    prepend-icon='mdi-email'
                     background-color='grey lighten-4'
                     hide-details
                     ref='iptEmail'
@@ -33,11 +33,11 @@
                   v-text-field.md2.mt-2(
                     solo
                     flat
-                    prepend-icon='vpn_key'
+                    prepend-icon='mdi-textbox-password'
                     background-color='grey lighten-4'
                     ref='iptPassword'
                     v-model='password'
-                    :append-icon='hidePassword ? "visibility" : "visibility_off"'
+                    :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
                     @click:append='() => (hidePassword = !hidePassword)'
                     :type='hidePassword ? "password" : "text"'
                     :placeholder='$t("auth:fields.password")'
@@ -49,7 +49,7 @@
                   v-text-field.md2.mt-2(
                     solo
                     flat
-                    prepend-icon='vpn_key'
+                    prepend-icon='mdi-textbox-password'
                     background-color='grey lighten-4'
                     hide-details
                     ref='iptVerifyPassword'
@@ -62,7 +62,7 @@
                   v-text-field.md2.mt-2(
                     solo
                     flat
-                    prepend-icon='person'
+                    prepend-icon='mdi-account'
                     background-color='grey lighten-4'
                     ref='iptName'
                     v-model='name'
@@ -74,12 +74,13 @@
                 v-card-actions.pb-4
                   v-spacer
                   v-btn.md2(
-                    block
+                    width='100%'
+                    max-width='250px'
                     large
                     dark
                     color='indigo'
                     @click='register'
-                    round
+                    rounded
                     :loading='isLoading'
                     ) {{ $t('auth:actions.register') }}
                   v-spacer

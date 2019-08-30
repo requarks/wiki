@@ -12,7 +12,7 @@
             )
             transition(name='fadeUp')
               v-card.elevation-5(v-show='isShown', light)
-                v-toolbar(color='primary', flat, dense, dark)
+                v-toolbar(color='indigo', flat, dense, dark)
                   v-spacer
                   .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
                   .subheading(v-if='screen === "changePwd"') {{ $t('auth:changePwd.subtitle') }}
@@ -20,7 +20,7 @@
                   .subheading(v-else) {{ $t('auth:loginRequired') }}
                   v-spacer
                 v-card-text.text-center
-                  h1.display-1.primary--text.py-2 {{ siteTitle }}
+                  h1.display-1.indigo--text.py-2 {{ siteTitle }}
                   template(v-if='screen === "login"')
                     v-text-field.mt-3(
                       solo
@@ -99,7 +99,7 @@
                     max-width='250px'
                     v-if='screen === "login"'
                     large
-                    color='teal'
+                    color='primary'
                     dark
                     @click='login'
                     rounded
@@ -110,7 +110,7 @@
                     max-width='250px'
                     v-else-if='screen === "tfa"'
                     large
-                    color='teal'
+                    color='primary'
                     dark
                     @click='verifySecurityCode'
                     rounded
@@ -121,7 +121,7 @@
                     max-width='250px'
                     v-else-if='screen === "changePwd"'
                     large
-                    color='teal'
+                    color='primary'
                     dark
                     @click='changePassword'
                     rounded
@@ -132,7 +132,7 @@
                     max-width='250px'
                     v-else-if='screen === "forgot"'
                     large
-                    color='teal'
+                    color='primary'
                     dark
                     @click='forgotPasswordSubmit'
                     rounded
@@ -170,7 +170,7 @@
                     v-spacer
 
     loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
-    nav-footer(color='grey darken-4')
+    nav-footer(color='grey darken-5')
     notify
 </template>
 
@@ -427,7 +427,7 @@ export default {
 
 <style lang="scss">
   .login {
-    background-color: mc('grey', '900');
+    background-color: mc('indigo', '900');
     background-image: url('../static/svg/motif-blocks.svg');
     background-repeat: repeat;
     background-size: 200px;
@@ -437,10 +437,10 @@ export default {
 
     @include keyframes(loginBgReveal) {
       0% {
-        background-position-x: 0;
+        background-position-y: 0;
       }
       100% {
-        background-position-x: 800px;
+        background-position-y: 800px;
       }
     }
 
