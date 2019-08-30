@@ -42,7 +42,9 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: (modulePath) => {
+          return modulePath.includes('node_modules') && !modulePath.includes('vuetify')
+        },
         use: [
           {
             loader: 'cache-loader',
