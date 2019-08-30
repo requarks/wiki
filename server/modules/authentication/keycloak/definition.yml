@@ -1,0 +1,17 @@
+key: keycloak
+title: Keycloak
+description: Keycloak is an open source software product to allow single sign-on with Identity Management and Access Management aimed at modern applications and services.
+author: D4uS1
+logo: https://static.requarks.io/logo/keycloak.svg
+color: blue-grey darken-2
+website: https://www.keycloak.org/
+useForm: false
+isAvailable: true
+props:
+  host: String
+  realm: String
+  clientId: String
+  clientSecret: String
+  authorizationURL: String
+  userInfoURL: String
+  tokenURL: String
