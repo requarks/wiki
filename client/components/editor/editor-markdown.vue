@@ -163,7 +163,7 @@
         codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
       transition(name='editor-markdown-preview')
         .editor-markdown-preview(v-if='previewShown')
-          .editor-markdown-preview-content.contents
+          .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
             div(ref='editorPreview', v-html='previewHTML')
 
     v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
@@ -503,7 +503,7 @@ export default {
         let destElm = this.$refs.editorPreview.querySelector(`[data-line='${closestLine}']`)
         if (destElm) {
           this.Velocity(this.$refs.editorPreview, 'stop', true)
-          this.Velocity(destElm, 'scroll', { offset: '-100', duration: 1000, container: this.$refs.editorPreview })
+          this.Velocity(destElm, 'scroll', { offset: '-100', duration: 1000, container: this.$refs.editorPreviewContainer })
         }
       }
     }, 500),
