@@ -532,7 +532,7 @@ export default {
 
 <style lang='scss'>
 .editor-modal-media {
-  position: fixed;
+  position: fixed !important;
   top: 112px;
   left: 64px;
   z-index: 10;
