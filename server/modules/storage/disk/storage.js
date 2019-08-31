@@ -59,7 +59,7 @@ module.exports = {
   async created(page) {
     WIKI.logger.info(`(STORAGE/DISK) Creating file ${page.path}...`)
     let fileName = `${page.path}.${getFileExtension(page.contentType)}`
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+    if (WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.config.path, fileName)
@@ -68,7 +68,7 @@ module.exports = {
   async updated(page) {
     WIKI.logger.info(`(STORAGE/DISK) Updating file ${page.path}...`)
     let fileName = `${page.path}.${getFileExtension(page.contentType)}`
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+    if (WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.config.path, fileName)
@@ -77,7 +77,7 @@ module.exports = {
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/DISK) Deleting file ${page.path}...`)
     let fileName = `${page.path}.${getFileExtension(page.contentType)}`
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+    if (WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.config.path, fileName)
@@ -88,7 +88,7 @@ module.exports = {
     let sourceFilePath = `${page.sourcePath}.${getFileExtension(page.contentType)}`
     let destinationFilePath = `${page.destinationPath}.${getFileExtension(page.contentType)}`
 
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+    if (WIKI.config.lang.code !== page.localeCode) {
       sourceFilePath = `${page.localeCode}/${sourceFilePath}`
       destinationFilePath = `${page.localeCode}/${destinationFilePath}`
     }
@@ -108,7 +108,7 @@ module.exports = {
         objectMode: true,
         transform: async (page, enc, cb) => {
           let fileName = `${page.path}.${getFileExtension(page.contentType)}`
-          if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+          if (WIKI.config.lang.code !== page.localeCode) {
             fileName = `${page.localeCode}/${fileName}`
           }
           WIKI.logger.info(`(STORAGE/DISK) Dumping ${fileName}...`)
