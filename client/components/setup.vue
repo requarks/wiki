@@ -73,7 +73,7 @@
                   persistent-hint,
                   hint='Help Wiki.js developers improve this app with anonymized telemetry.'
                 )
-              v-alert(:value='error', type='error', icon='warning') {{ errorMessage }}
+              v-alert(:value='error', type='error', icon='mdi-alert') {{ errorMessage }}
               v-divider.mt-3(v-if='!error')
               v-card-actions
                 v-btn(color='primary', @click='install', :disabled='loading', x-large, flat, block)
