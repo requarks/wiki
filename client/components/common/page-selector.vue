@@ -108,7 +108,7 @@ export default {
   data() {
     return {
       searchLoading: false,
-      currentLocale: 'en',
+      currentLocale: siteConfig.lang,
       currentPath: 'new-page',
       tree: [],
       treeChildren: [],

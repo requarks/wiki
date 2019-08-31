@@ -193,7 +193,7 @@
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
-    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate')
+    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
     page-delete(v-model='deletePageModal', v-if='path && path.length')
 </template>
 
