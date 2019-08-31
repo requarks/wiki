@@ -56,11 +56,11 @@
               tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
                 td.text-xs-right {{ props.item.id }}
                 td
-                  .body-2 {{ props.item.title }}
+                  .body-2: strong {{ props.item.title }}
                   .caption {{ props.item.description }}
                 td.admin-pages-path
                   v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
-                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') {{ props.item.path }}
+                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
@@ -80,7 +80,7 @@ export default {
       pagination: 1,
       pages: [],
       headers: [
-        { text: 'ID', value: 'id', width: 50, align: 'right' },
+        { text: 'ID', value: 'id', width: 80, sortable: true },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
         { text: 'Created', value: 'createdAt', width: 250 },

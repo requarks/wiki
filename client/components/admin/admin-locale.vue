@@ -187,7 +187,7 @@ export default {
           align: 'center',
           value: 'availability',
           sortable: false,
-          width: 100
+          width: 120
         },
         {
           text: this.$t('admin:locale.download'),

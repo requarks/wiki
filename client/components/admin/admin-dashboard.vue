@@ -54,24 +54,31 @@
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p2s
-          v-card-title.subtitle-1(:class='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`') Recent Pages
+          v-toolbar(:color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`', dense, flat)
+            v-spacer
+            .overline Recent Pages
+            v-spacer
           v-data-table.pb-2(
             :items='recentPages'
+            :headers='headers'
+            :loading='recentPagesLoading'
             hide-default-footer
             hide-default-header
             )
-            template(slot='items' slot-scope='props')
-              td(width='20', style='padding-right: 0;'): v-icon insert_drive_file
-              td
-                .body-2.primary--text {{ props.item.title }}
-                .caption.grey--text.text--darken-2 {{ props.item.description }}
-              td.caption /{{ props.item.path }}
-              td.grey--text.text--darken-2(width='250')
-                .caption: strong Updated {{ props.item.updatedAt | moment('from') }}
-                .caption Created {{ props.item.createdAt | moment('calendar') }}
+            template(slot='item', slot-scope='props')
+              tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
+                td
+                  .body-2: strong {{ props.item.title }}
+                td.admin-pages-path
+                  v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
+                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
+                td.text-right(width='250') {{ props.item.updatedAt | moment('calendar') }}
       v-flex(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p4s
-          v-card-title.subtitle-1(:class='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`') Most Popular Pages
+          v-toolbar(:color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`', dense, flat)
+            v-spacer
+            .overline Most Popular Pages
+            v-spacer
           v-data-table.pb-2(
             :items='popularPages'
             hide-default-footer
@@ -105,6 +112,8 @@ import _ from 'lodash'
 import AnimatedNumber from 'animated-number-vue'
 import { get } from 'vuex-pathify'
 
+import recentPagesQuery from 'gql/admin/dashboard/dashboard-query-recentpages.gql'
+
 export default {
   components: {
     AnimatedNumber
@@ -112,7 +121,14 @@ export default {
   data() {
     return {
       recentPages: [],
-      popularPages: []
+      recentPagesLoading: false,
+      popularPages: [],
+      headers: [
+        { text: 'ID', value: 'id', width: 80 },
+        { text: 'Title', value: 'title' },
+        { text: 'Path', value: 'path' },
+        { text: 'Last Updated', value: 'updatedAt', width: 250 }
+      ]
     }
   },
   computed: {
@@ -131,6 +147,16 @@ export default {
         })
       } else {
         return _.includes(this.permissions, prm)
+      }
+    }
+  },
+  apollo: {
+    recentPages: {
+      query: recentPagesQuery,
+      update: (data) => data.pages.list,
+      watchLoading (isLoading) {
+        this.recentPagesLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-recentpages')
       }
     }
   }

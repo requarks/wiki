@@ -78,7 +78,7 @@ export default {
       pageCount: 0,
       groups: [],
       headers: [
-        { text: 'ID', value: 'id', width: 50, align: 'right' },
+        { text: 'ID', value: 'id', width: 80, sortable: true },
         { text: 'Name', value: 'name' },
         { text: 'Users', value: 'userCount', width: 200 },
         { text: 'Created', value: 'createdAt', width: 250 },

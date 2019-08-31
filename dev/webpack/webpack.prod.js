@@ -3,7 +3,6 @@ const path = require('path')
 const fs = require('fs-extra')
 const yargs = require('yargs').argv
 const _ = require('lodash')
-const Fiber = require('fibers')
 
 const { VueLoaderPlugin } = require('vue-loader')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
@@ -88,7 +87,6 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               implementation: require('sass'),
-              fiber: Fiber,
               sourceMap: false
             }
           }
@@ -111,7 +109,6 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               implementation: require('sass'),
-              fiber: Fiber,
               sourceMap: false
             }
           },

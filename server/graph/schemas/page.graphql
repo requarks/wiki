@@ -27,7 +27,11 @@ type PageQuery {
     locale: String
   ): PageSearchResponse! @auth(requires: ["manage:system", "read:pages"])
 
-  list: [PageListItem!]! @auth(requires: ["manage:system"])
+  list(
+    limit: Int
+    orderBy: PageOrderBy
+    orderByDirection: PageOrderByDirection
+  ): [PageListItem!]! @auth(requires: ["manage:system"])
 
   single(
     id: Int!
@@ -162,4 +166,17 @@ type PageListItem {
   privateNS: String
   createdAt: Date!
   updatedAt: Date!
+}
+
+enum PageOrderBy {
+  CREATED
+  ID
+  PATH
+  TITLE
+  UPDATED
+}
+
+enum PageOrderByDirection {
+  ASC
+  DESC
 }
