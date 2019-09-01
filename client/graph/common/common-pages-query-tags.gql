@@ -1,0 +1,8 @@
+query {
+  pages {
+    tags {
+      tag
+      title
+    }
+  }
+}

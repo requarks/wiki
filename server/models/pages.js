@@ -210,6 +210,11 @@ module.exports = class Page extends Model {
       isPrivate: opts.isPrivate
     })
 
+    // -> Save Tags
+    if (opts.tags.length > 0) {
+      await WIKI.models.tags.associateTags({ tags: opts.tags, page })
+    }
+
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
 
@@ -259,6 +264,9 @@ module.exports = class Page extends Model {
       userId: ogPage.authorId,
       isPrivate: ogPage.isPrivate
     })
+
+    // -> Save Tags
+    await WIKI.models.tags.associateTags({ tags: opts.tags, page })
 
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)

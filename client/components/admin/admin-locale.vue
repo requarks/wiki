@@ -40,6 +40,7 @@
                           v-list-item-subtitle(v-html='data.item.nativeName')
                   v-divider.mt-3
                   v-switch(
+                    inset
                     v-model='autoUpdate'
                     :label='$t("admin:locale.autoUpdate.label")'
                     color='primary'
@@ -52,6 +53,7 @@
                   v-toolbar-title.subtitle-1 {{ $t('admin:locale.namespacing') }}
                 v-card-text
                   v-switch(
+                    inset
                     v-model='namespacing'
                     :label='$t("admin:locale.namespaces.label")'
                     color='primary'

@@ -80,6 +80,15 @@
         v-card.wiki-form.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{target.title}}
+            v-spacer
+            v-switch(
+              dark
+              color='blue lighten-5'
+              label='Active'
+              v-model='target.isEnabled'
+              hide-details
+              inset
+              )
           v-card-text
             v-form
               .targetlogo
@@ -115,6 +124,7 @@
                   prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
+                  inset
                   )
                 v-textarea(
                   v-else-if='cfg.value.type === "string" && cfg.value.multiline'

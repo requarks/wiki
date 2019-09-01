@@ -98,6 +98,7 @@
                   v-chip(label, color='white', small).indigo--text coming soon
                 v-card-text
                   v-switch(
+                    inset
                     label='Asset Image Optimization'
                     color='indigo'
                     v-model='config.featureTinyPNG'
@@ -118,6 +119,7 @@
 
                   v-divider.mt-3
                   v-switch(
+                    inset
                     label='Page Ratings'
                     color='indigo'
                     v-model='config.featurePageRatings'
@@ -128,6 +130,7 @@
 
                   v-divider.mt-3
                   v-switch(
+                    inset
                     label='Page Comments'
                     color='indigo'
                     v-model='config.featurePageComments'
@@ -138,6 +141,7 @@
 
                   v-divider.mt-3
                   v-switch(
+                    inset
                     label='Personal Wikis'
                     color='indigo'
                     v-model='config.featurePersonalWikis'
@@ -152,6 +156,7 @@
                 v-card-text
                   v-alert(outlined, color='red darken-2', icon='mdi-information-outline').body-2 Make sure to understand the implications before turning on / off a security feature.
                   v-switch.mt-3(
+                    inset
                     label='Block IFrame Embedding'
                     color='red darken-2'
                     v-model='config.securityIframe'
@@ -160,6 +165,7 @@
                     )
                   v-divider.mt-3
                   v-switch(
+                    inset
                     label='Same Origin Referrer Policy'
                     color='red darken-2'
                     v-model='config.securityReferrerPolicy'
@@ -169,6 +175,7 @@
 
                   v-divider.mt-3
                   v-switch(
+                    inset
                     label='Enforce HSTS'
                     color='red darken-2'
                     v-model='config.securityHSTS'
@@ -191,6 +198,7 @@
 
                   v-divider.mt-3
                   v-switch(
+                    inset
                     label='Enforce CSP'
                     color='red darken-2'
                     v-model='config.securityCSP'

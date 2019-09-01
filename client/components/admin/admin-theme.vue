@@ -44,6 +44,7 @@
                     )
                   v-divider.mt-3
                   v-switch(
+                    inset
                     v-model='darkMode'
                     :label='$t(`admin:theme.darkMode`)'
                     color='primary'

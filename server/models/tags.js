@@ -1,4 +1,7 @@
 const Model = require('objection').Model
+const _ = require('lodash')
+
+/* global WIKI */
 
 /**
  * Tags model
@@ -45,5 +48,52 @@ module.exports = class Tag extends Model {
   $beforeInsert() {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
+  }
+
+  static async associateTags ({ tags, page }) {
+    let existingTags = await WIKI.models.tags.query().column('id', 'tag')
+
+    // Create missing tags
+
+    const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({
+      tag: t,
+      title: t
+    }))
+    if (newTags.length > 0) {
+      if (WIKI.config.db.type === 'postgres') {
+        const createdTags = await WIKI.models.tags.query().insert(newTags)
+        existingTags = _.concat(existingTags, createdTags)
+      } else {
+        for (const newTag of newTags) {
+          const createdTag = await WIKI.models.tags.query().insert(newTag)
+          existingTags.push(createdTag)
+        }
+      }
+    }
+
+    // Fetch current page tags
+
+    const targetTags = _.filter(existingTags, t => _.includes(tags, t.tag))
+    const currentTags = await page.$relatedQuery('tags')
+
+    // Tags to relate
+
+    const tagsToRelate = _.differenceBy(targetTags, currentTags, 'id')
+    if (tagsToRelate.length > 0) {
+      if (WIKI.config.db.type === 'postgres') {
+        await page.$relatedQuery('tags').relate(tagsToRelate)
+      } else {
+        for (const tag of tagsToRelate) {
+          await page.$relatedQuery('tags').relate(tag)
+        }
+      }
+    }
+
+    // Tags to unrelate
+
+    const tagsToUnrelate = _.differenceBy(currentTags, targetTags, 'id')
+    if (tagsToUnrelate.length > 0) {
+      await page.$relatedQuery('tags').unrelate().whereIn('tags.id', _.map(tagsToUnrelate, 'id'))
+    }
   }
 }

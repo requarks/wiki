@@ -125,6 +125,11 @@
             //-             v-btn(depressed, color='grey darken-3', block)
             //-               v-icon(left) mdi-cached
             //-               span Reset
+            v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
+              template(v-slot:activator='{ on }')
+                v-btn.ml-2.mr-0(icon, v-on='on', href='/t')
+                  v-icon(color='grey') mdi-tag-multiple
+              span Browse Tags
       v-flex(xs6, md4)
         v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
           v-spacer

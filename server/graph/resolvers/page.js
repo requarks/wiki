@@ -76,6 +76,9 @@ module.exports = {
       } else {
         throw new WIKI.Error.PageNotFound()
       }
+    },
+    async tags (obj, args, context, info) {
+      return WIKI.models.tags.query().orderBy('tag', 'asc')
     }
   },
   PageMutation: {

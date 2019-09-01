@@ -166,6 +166,14 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 })
 
 /**
+ * Tags
+ */
+router.get(['/t', '/t/*'], (req, res, next) => {
+  _.set(res.locals, 'pageMeta.title', 'Tags')
+  res.render('tags')
+})
+
+/**
  * View document / asset
  */
 router.get('/*', async (req, res, next) => {

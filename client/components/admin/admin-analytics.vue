@@ -37,6 +37,15 @@
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{provider.title}}
+            v-spacer
+            v-switch(
+              dark
+              color='blue lighten-5'
+              label='Active'
+              v-model='provider.isEnabled'
+              hide-details
+              inset
+              )
           v-card-text
             v-form
               .analytic-provider-logo
@@ -68,6 +77,7 @@
                   prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
+                  inset
                   )
                 v-textarea(
                   v-else-if='cfg.value.type === "string" && cfg.value.multiline'

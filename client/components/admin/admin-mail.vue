@@ -64,6 +64,7 @@
                       persistent-hint
                       :hint='$t(`admin:mail.smtpTLSHint`)'
                       prepend-icon='mdi-security-network'
+                      inset
                       )
                     v-text-field.mt-3(
                       outlined
@@ -94,6 +95,7 @@
                       :label='$t(`admin:mail.dkimUse`)'
                       color='primary'
                       prepend-icon='mdi-key'
+                      inset
                       )
                     v-text-field(
                       outlined

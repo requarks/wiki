@@ -63,10 +63,19 @@
             )
 
       v-flex(xs12, lg9)
-
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{strategy.title}}
+            v-spacer
+            v-switch(
+              dark
+              color='blue lighten-5'
+              label='Active'
+              v-model='strategy.isEnabled'
+              hide-details
+              inset
+              :disabled='strategy.key === `local`'
+              )
           v-card-text
             v-form
               .authlogo
@@ -104,6 +113,7 @@
                   prepend-icon='mdi-settings-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
+                  inset
                   )
                 v-textarea(
                   v-else-if='cfg.value.type === "string" && cfg.value.multiline'
@@ -136,6 +146,7 @@
                   color='primary'
                   :hint='$t(`admin:auth.selfRegistrationHint`)'
                   persistent-hint
+                  inset
                 )
                 v-switch.ml-3(
                   v-if='strategy.key === `local`'
@@ -145,6 +156,7 @@
                   color='primary'
                   hint='Protects against spam robots and malicious registrations.'
                   persistent-hint
+                  inset
                 )
                 v-combobox.ml-3.mt-3(
                   :label='$t(`admin:auth.domainsWhitelist`)'
@@ -187,6 +199,7 @@
                   color='primary'
                   :hint='$t(`admin:auth.force2faHint`)'
                   persistent-hint
+                  inset
                 )
 
         v-card.mt-4.wiki-form.animated.fadeInUp.wait-p4s

@@ -23,6 +23,7 @@
               persistent-hint
               label='LDAP Debug'
               v-model='flags.ldapdebug'
+              inset
             )
             v-divider.mt-3
             v-switch.mt-3(
@@ -31,6 +32,7 @@
               persistent-hint
               label='SQL Query Logging'
               v-model='flags.sqllog'
+              inset
             )
 </template>
 

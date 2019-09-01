@@ -90,6 +90,7 @@
               :hint='$t(`editor:props.publishToggleHint`)'
               persistent-hint
               disabled
+              inset
               )
           v-divider
           v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
@@ -190,6 +191,7 @@
               :hint='$t(`editor:props.allowCommentsHint`)'
               persistent-hint
               disabled
+              inset
               )
             v-switch(
               :label='$t(`editor:props.allowRatings`)'
@@ -198,6 +200,7 @@
               :hint='$t(`editor:props.allowRatingsHint`)'
               persistent-hint
               disabled
+              inset
               )
             v-switch(
               :label='$t(`editor:props.displayAuthor`)'
@@ -206,6 +209,7 @@
               :hint='$t(`editor:props.displayAuthorHint`)'
               persistent-hint
               disabled
+              inset
               )
             v-switch(
               :label='$t(`editor:props.displaySharingBar`)'
@@ -214,6 +218,7 @@
               :hint='$t(`editor:props.displaySharingBarHint`)'
               persistent-hint
               disabled
+              inset
               )
 
     page-selector(mode='create', v-model='pageSelectorShown', :path='path', :locale='locale', :open-handler='setPath')

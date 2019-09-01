@@ -69,6 +69,7 @@
                 prepend-icon='mdi-settings-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
+                inset
                 )
               v-textarea(
                 v-else-if='cfg.value.type === "string" && cfg.value.multiline'

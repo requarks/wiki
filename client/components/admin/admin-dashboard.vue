@@ -19,7 +19,7 @@
               easing='easeOutQuint'
               )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.indigo.lighten-1.dashboard-card.animated.fadeInUp.wait-p2s(dark)
+        v-card.green.lighten-1.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
             v-icon.dashboard-icon mdi-account
             .overline {{$t('admin:dashboard.users')}}
@@ -30,7 +30,7 @@
               easing='easeOutQuint'
               )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.indigo.lighten-2.dashboard-card.animated.fadeInUp.wait-p4s(dark)
+        v-card.indigo.lighten-1.dashboard-card.animated.fadeInUp.wait-p4s(dark)
           v-card-text
             v-icon.dashboard-icon mdi-account-group
             .overline {{$t('admin:dashboard.groups')}}

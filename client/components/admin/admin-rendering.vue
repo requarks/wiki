@@ -82,6 +82,7 @@
               label='Enabled'
               v-model='currentRenderer.isEnabled'
               hide-details
+              inset
               )
           v-card-text.pb-4.pt-2.pl-4
             .overline.my-5 Rendering Module Configuration
@@ -106,6 +107,7 @@
                 color='primary'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
+                inset
                 )
               v-text-field(
                 v-else
