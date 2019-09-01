@@ -314,6 +314,14 @@ export default {
       if (window.location.hash && window.location.hash.length > 1) {
         this.$vuetify.goTo(window.location.hash, this.scrollOpts)
       }
+
+      this.$refs.container.querySelectorAll(`a[href^="#"], a[href^="${window.location.href.replace(window.location.hash, '')}#"]`).forEach(el => {
+        el.onclick = ev => {
+          ev.preventDefault()
+          ev.stopPropagation()
+          this.$vuetify.goTo(ev.target.hash, this.scrollOpts)
+        }
+      })
     })
   },
   methods: {
