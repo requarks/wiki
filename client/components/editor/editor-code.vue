@@ -13,7 +13,7 @@ import _ from 'lodash'
 // ========================================
 
 // Code Mirror
-import { codemirror } from 'vue-codemirror'
+import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 
 // Language
@@ -41,9 +41,6 @@ const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 // ========================================
 
 export default {
-  components: {
-    codemirror
-  },
   data() {
     return {
       code: '<h1>Title</h1>\n\n<p>Some text here</p>',

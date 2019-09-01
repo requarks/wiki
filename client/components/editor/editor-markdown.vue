@@ -160,7 +160,7 @@
                 v-icon(:color='helpShown ? `teal` : ``') mdi-help-circle
             span {{$t('editor:markup.markdownFormattingHelp')}}
       .editor-markdown-editor
-        codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
+        textarea(ref='cm')
       transition(name='editor-markdown-preview')
         .editor-markdown-preview(v-if='previewShown')
           .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
@@ -188,7 +188,7 @@ import markdownHelp from './markdown/help.vue'
 // ========================================
 
 // Code Mirror
-import { codemirror } from 'vue-codemirror'
+import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 
 // Language
@@ -261,6 +261,7 @@ function injectLineNumbers (tokens, idx, options, env, slf) {
 }
 md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
+md.renderer.rules.blockquote_open = injectLineNumbers
 
 // ========================================
 // Vue Component
@@ -268,7 +269,6 @@ md.renderer.rules.heading_open = injectLineNumbers
 
 export default {
   components: {
-    codemirror,
     markdownHelp
   },
   props: {
@@ -280,22 +280,7 @@ export default {
   data() {
     return {
       fabInsertMenu: false,
-      code: this.$store.get('editor/content'),
-      cmOptions: {
-        tabSize: 2,
-        mode: 'text/markdown',
-        theme: 'wikijs-dark',
-        lineNumbers: true,
-        lineWrapping: true,
-        line: true,
-        styleActiveLine: true,
-        highlightSelectionMatches: {
-          annotateScrollbar: true
-        },
-        viewportMargin: 50,
-        inputStyle: 'contenteditable',
-        allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif']
-      },
+      cm: null,
       cursorPos: { ch: 0, line: 1 },
       previewShown: true,
       previewHTML: '',
@@ -303,9 +288,6 @@ export default {
     }
   },
   computed: {
-    cm() {
-      return this.$refs.cm.codemirror
-    },
     isMobile() {
       return this.$vuetify.breakpoint.smAndDown
     },
@@ -324,53 +306,6 @@ export default {
     closeAllModal() {
       this.activeModal = ''
       this.helpShown = false
-    },
-    onCmReady(cm) {
-      const keyBindings = {
-        'F11' (cm) {
-          cm.setOption('fullScreen', !cm.getOption('fullScreen'))
-        },
-        'Esc' (cm) {
-          if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false)
-        }
-      }
-      _.set(keyBindings, `${CtrlKey}-S`, cm => {
-        this.save()
-        return false
-      })
-      _.set(keyBindings, `${CtrlKey}-B`, cm => {
-        this.toggleMarkup({ start: `**` })
-        return false
-      })
-      _.set(keyBindings, `${CtrlKey}-I`, cm => {
-        this.toggleMarkup({ start: `*` })
-        return false
-      })
-      _.set(keyBindings, `${CtrlKey}-Alt-Right`, cm => {
-        let lvl = this.getHeaderLevel(cm)
-        if (lvl >= 6) { lvl = 5 }
-        this.setHeaderLine(lvl + 1)
-        return false
-      })
-      _.set(keyBindings, `${CtrlKey}-Alt-Left`, cm => {
-        let lvl = this.getHeaderLevel(cm)
-        if (lvl <= 1) { lvl = 2 }
-        this.setHeaderLine(lvl - 1)
-        return false
-      })
-
-      if (this.$vuetify.breakpoint.mdAndUp) {
-        cm.setSize(null, 'calc(100vh - 112px - 24px)')
-      } else {
-        cm.setSize(null, 'calc(100vh - 112px - 16px)')
-      }
-      cm.setOption('extraKeys', keyBindings)
-      cm.on('cursorActivity', cm => {
-        this.positionSync(cm)
-        this.scrollSync(cm)
-      })
-      cm.on('paste', this.onCmPaste)
-      this.onCmInput(this.code)
     },
     onCmInput: _.debounce(function (newContent) {
       linesMap = []
@@ -497,7 +432,7 @@ export default {
       let currentLine = cm.getCursor().line
       if (currentLine < 3) {
         this.Velocity(this.$refs.editorPreview, 'stop', true)
-        this.Velocity(this.$refs.editorPreview.firstChild, 'scroll', { offset: '-50', duration: 1000, container: this.$refs.editorPreview })
+        this.Velocity(this.$refs.editorPreview.firstChild, 'scroll', { offset: '-50', duration: 1000, container: this.$refs.editorPreviewContainer })
       } else {
         let closestLine = _.findLast(linesMap, n => n <= currentLine)
         let destElm = this.$refs.editorPreview.querySelector(`[data-line='${closestLine}']`)
@@ -513,9 +448,94 @@ export default {
     },
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)
+    },
+    refresh() {
+      this.$nextTick(() => {
+        this.cm.refresh()
+      })
     }
   },
   mounted() {
+    // Initialize CodeMirror
+
+    this.cm = CodeMirror.fromTextArea(this.$refs.cm, {
+      tabSize: 2,
+      mode: 'text/markdown',
+      theme: 'wikijs-dark',
+      lineNumbers: true,
+      lineWrapping: true,
+      line: true,
+      styleActiveLine: true,
+      highlightSelectionMatches: {
+        annotateScrollbar: true
+      },
+      viewportMargin: 50,
+      inputStyle: 'contenteditable',
+      allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif']
+    })
+    this.cm.setValue(this.$store.get('editor/content'))
+    this.cm.on('change', c => {
+      this.$store.set('editor/content', c.getValue())
+      this.onCmInput(this.$store.get('editor/content'))
+    })
+    if (this.$vuetify.breakpoint.mdAndUp) {
+      this.cm.setSize(null, 'calc(100vh - 112px - 24px)')
+    } else {
+      this.cm.setSize(null, 'calc(100vh - 112px - 16px)')
+    }
+
+    // Set Keybindings
+
+    const keyBindings = {
+      'F11' (c) {
+        c.setOption('fullScreen', !c.getOption('fullScreen'))
+      },
+      'Esc' (c) {
+        if (c.getOption('fullScreen')) c.setOption('fullScreen', false)
+      }
+    }
+    _.set(keyBindings, `${CtrlKey}-S`, c => {
+      this.save()
+      return false
+    })
+    _.set(keyBindings, `${CtrlKey}-B`, c => {
+      this.toggleMarkup({ start: `**` })
+      return false
+    })
+    _.set(keyBindings, `${CtrlKey}-I`, c => {
+      this.toggleMarkup({ start: `*` })
+      return false
+    })
+    _.set(keyBindings, `${CtrlKey}-Alt-Right`, c => {
+      let lvl = this.getHeaderLevel(c)
+      if (lvl >= 6) { lvl = 5 }
+      this.setHeaderLine(lvl + 1)
+      return false
+    })
+    _.set(keyBindings, `${CtrlKey}-Alt-Left`, c => {
+      let lvl = this.getHeaderLevel(c)
+      if (lvl <= 1) { lvl = 2 }
+      this.setHeaderLine(lvl - 1)
+      return false
+    })
+    this.cm.setOption('extraKeys', keyBindings)
+
+    // Handle cursor movement
+
+    this.cm.on('cursorActivity', c => {
+      this.positionSync(c)
+      this.scrollSync(c)
+    })
+
+    // Handle special paste
+
+    this.cm.on('paste', this.onCmPaste)
+
+    // Render initial preview
+
+    this.onCmInput(this.$store.get('editor/content'))
+    this.refresh()
+
     this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
         case 'IMAGE':
@@ -718,10 +738,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     background: mc('blue','800');
   }
   .cm-s-wikijs-dark .CodeMirror-line::selection, .cm-s-wikijs-dark .CodeMirror-line > span::selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::selection {
-    background: mc('red', '500');
+    background: mc('amber', '500');
   }
   .cm-s-wikijs-dark .CodeMirror-line::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::-moz-selection {
-    background: mc('red', '500');
+    background: mc('amber', '500');
   }
   .cm-s-wikijs-dark .CodeMirror-gutters {
     background: darken(mc('grey','900'), 6%);

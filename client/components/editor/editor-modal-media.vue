@@ -66,15 +66,15 @@
                     @click.right.prevent=''
                     :class='currentFileId === props.item.id ? ($vuetify.theme.dark ? `grey darken-3-d5` : `teal lighten-5`) : ``'
                     )
-                    td.text-xs-right(v-if='$vuetify.breakpoint.smAndUp') {{ props.item.id }}
+                    td.caption(v-if='$vuetify.breakpoint.smAndUp') {{ props.item.id }}
                     td
-                      .body-2(:class='currentFileId === props.item.id ? `teal--text` : ``') {{ props.item.filename }}
+                      .body-2: strong(:class='currentFileId === props.item.id ? `teal--text` : ``') {{ props.item.filename }}
                       .caption.grey--text {{ props.item.description }}
                     td.text-xs-center(v-if='$vuetify.breakpoint.lgAndUp')
-                      v-chip.ma-0(small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`')
-                        .caption {{props.item.ext.toUpperCase().substring(1)}}
-                    td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.fileSize | prettyBytes }}
-                    td(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.createdAt | moment('from') }}
+                      v-chip.ma-0(x-small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`')
+                        .overline {{props.item.ext.toUpperCase().substring(1)}}
+                    td.caption(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.fileSize | prettyBytes }}
+                    td.caption(v-if='$vuetify.breakpoint.mdAndUp') {{ props.item.createdAt | moment('from') }}
                     td(v-if='$vuetify.breakpoint.smAndUp')
                       v-menu(offset-x, min-width='200')
                         template(v-slot:activator='{ on }')
@@ -293,12 +293,12 @@ export default {
     },
     headers() {
       return _.compact([
-        this.$vuetify.breakpoint.smAndUp && { text: this.$t('editor:assets.headerId'), value: 'id', width: 50, align: 'right' },
+        this.$vuetify.breakpoint.smAndUp && { text: this.$t('editor:assets.headerId'), value: 'id', width: 80 },
         { text: this.$t('editor:assets.headerFilename'), value: 'filename' },
-        this.$vuetify.breakpoint.lgAndUp && { text: this.$t('editor:assets.headerType'), value: 'ext', width: 50 },
+        this.$vuetify.breakpoint.lgAndUp && { text: this.$t('editor:assets.headerType'), value: 'ext', width: 90 },
         this.$vuetify.breakpoint.mdAndUp && { text: this.$t('editor:assets.headerFileSize'), value: 'fileSize', width: 110 },
         this.$vuetify.breakpoint.mdAndUp && { text: this.$t('editor:assets.headerAdded'), value: 'createdAt', width: 175 },
-        this.$vuetify.breakpoint.smAndUp && { text: this.$t('editor:assets.headerActions'), value: '', width: 40, sortable: false, align: 'right' }
+        this.$vuetify.breakpoint.smAndUp && { text: this.$t('editor:assets.headerActions'), value: '', width: 80, sortable: false, align: 'right' }
       ])
     },
     isFolderNameValid() {
