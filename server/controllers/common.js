@@ -71,6 +71,9 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
       return res.render('unauthorized', { action: 'edit' })
     }
 
+    await page.$relatedQuery('tags')
+    page.tags = _.map(page.tags, 'tag')
+
     _.set(res.locals, 'pageMeta.title', `Edit ${page.title}`)
     _.set(res.locals, 'pageMeta.description', page.description)
     page.mode = 'update'
