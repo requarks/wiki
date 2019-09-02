@@ -63,6 +63,18 @@ module.exports = class Page extends Model {
           to: 'tags.id'
         }
       },
+      links: {
+        relation: Model.ManyToManyRelation,
+        modelClass: Page,
+        join: {
+          from: 'pages.id',
+          through: {
+            from: 'pageLinks.sourcePageId',
+            to: 'pageLinks.targetPageId'
+          },
+          to: 'pages.id'
+        }
+      },
       author: {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./users'),
@@ -120,6 +132,12 @@ module.exports = class Page extends Model {
       publishEndDate: 'string',
       publishStartDate: 'string',
       render: 'string',
+      tags: [
+        {
+          tag: 'string',
+          title: 'string'
+        }
+      ],
       title: 'string',
       toc: 'string',
       updatedAt: 'string'
@@ -349,42 +367,53 @@ module.exports = class Page extends Model {
 
   static async getPageFromDb(opts) {
     const queryModeID = _.isNumber(opts)
-    return WIKI.models.pages.query()
-      .column([
-        'pages.*',
-        {
-          authorName: 'author.name',
-          authorEmail: 'author.email',
-          creatorName: 'creator.name',
-          creatorEmail: 'creator.email'
-        }
-      ])
-      .joinRelation('author')
-      .joinRelation('creator')
-      .where(queryModeID ? {
-        'pages.id': opts
-      } : {
-        'pages.path': opts.path,
-        'pages.localeCode': opts.locale
-      })
-      // .andWhere(builder => {
-      //   if (queryModeID) return
-      //   builder.where({
-      //     'pages.isPublished': true
-      //   }).orWhere({
-      //     'pages.isPublished': false,
-      //     'pages.authorId': opts.userId
-      //   })
-      // })
-      // .andWhere(builder => {
-      //   if (queryModeID) return
-      //   if (opts.isPrivate) {
-      //     builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
-      //   } else {
-      //     builder.where({ 'pages.isPrivate': false })
-      //   }
-      // })
-      .first()
+    try {
+      return WIKI.models.pages.query()
+        .column([
+          'pages.*',
+          {
+            authorName: 'author.name',
+            authorEmail: 'author.email',
+            creatorName: 'creator.name',
+            creatorEmail: 'creator.email'
+          }
+        ])
+        .joinRelation('author')
+        .joinRelation('creator')
+        .eagerAlgorithm(Model.JoinEagerAlgorithm)
+        .eager('tags(selectTags)', {
+          selectTags: builder => {
+            builder.select('tag', 'title')
+          }
+        })
+        .where(queryModeID ? {
+          'pages.id': opts
+        } : {
+          'pages.path': opts.path,
+          'pages.localeCode': opts.locale
+        })
+        // .andWhere(builder => {
+        //   if (queryModeID) return
+        //   builder.where({
+        //     'pages.isPublished': true
+        //   }).orWhere({
+        //     'pages.isPublished': false,
+        //     'pages.authorId': opts.userId
+        //   })
+        // })
+        // .andWhere(builder => {
+        //   if (queryModeID) return
+        //   if (opts.isPrivate) {
+        //     builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
+        //   } else {
+        //     builder.where({ 'pages.isPrivate': false })
+        //   }
+        // })
+        .first()
+    } catch (err) {
+      WIKI.logger.warn(err)
+      throw err
+    }
   }
 
   static async savePageToCache(page) {
@@ -402,6 +431,7 @@ module.exports = class Page extends Model {
       publishEndDate: page.publishEndDate,
       publishStartDate: page.publishStartDate,
       render: page.render,
+      tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
       updatedAt: page.updatedAt

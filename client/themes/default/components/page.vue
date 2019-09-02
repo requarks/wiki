@@ -77,11 +77,11 @@
                   label
                   color='teal lighten-5'
                   v-for='(tag, idx) in tags'
-                  :href='`/t/` + tag.slug'
-                  :key='tag.slug'
+                  :href='`/t/` + tag.tag'
+                  :key='tag.tag'
                   )
                   v-icon(color='teal', left, small) mdi-label
-                  span.teal--text.text--darken-2 {{tag.text}}
+                  span.teal--text.text--darken-2 {{tag.title}}
 
             v-card.mb-5
               .pa-5
