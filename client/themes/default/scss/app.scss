@@ -10,11 +10,40 @@
   }
 
   @at-root .theme--dark & {
-    // background-color: darken(mc('grey', '900'), 4%);
     color: mc('grey', '300');
+  }
 
-    a {
-      color: mc('blue', '100');
+  // ---------------------------------
+  // LINKS
+  // ---------------------------------
+
+  a {
+    color: mc('blue', '700');
+
+    &.is-internal-link.is-invalid-page {
+      color: mc('red', '700');
+
+      @at-root .theme--dark & {
+        color: mc('red', '200');
+      }
+    }
+
+    &.is-external-link {
+      padding-right: 3px;
+
+      &::after {
+        font-family: 'Material Design Icons';
+        font-size: 24px/1;
+        padding-left: 3px;
+        display: inline-block;
+        content: '\F3CC';
+        color: mc('grey', '500');
+        text-decoration: none;
+      }
+    }
+
+    @at-root .theme--dark & {
+      color: mc('blue', '200');
     }
   }
 

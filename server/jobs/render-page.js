@@ -8,6 +8,8 @@ module.exports = async (pageId) => {
 
   try {
     WIKI.models = require('../core/db').init()
+    await WIKI.configSvc.loadFromDb()
+    await WIKI.configSvc.applyFlags()
 
     const page = await WIKI.models.pages.getPageFromDb(pageId)
     if (!page) {

@@ -71,6 +71,7 @@
                 single-line,
                 solo
                 flat
+                rounded
                 hide-details,
                 prepend-inner-icon='mdi-magnify',
                 :loading='searchIsLoading',

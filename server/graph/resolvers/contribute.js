@@ -22,7 +22,7 @@ module.exports = {
         name: _.get(c, 'name', 'Anonymous') || '',
         profile: _.get(c, 'profile', ''),
         tier: _.toLower(_.get(c, 'tier', 'backers')),
-        totalDonated: _.get(c, 'totalAmountDonated', 0),
+        totalDonated: Math.ceil(_.get(c, 'totalAmountDonated', 0)),
         twitter: _.get(c, 'twitter', '') || '',
         website: _.get(c, 'website', '') || ''
       }))
