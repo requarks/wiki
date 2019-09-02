@@ -101,6 +101,9 @@ We are looking for translators to make Wiki.js UI available in as many languages
 ![Browserstack](https://wiki.js.org/legacy/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
+<img src="https://static.requarks.io/logo/bugsnag.svg" alt="Bugsnag" width="160" />
+<span><a href="https://www.bugsnag.com/" title="Bugsnag">Bugsnag</a> for providing error monitoring solutions.</span>
+
 ![Cloudflare](https://wiki.js.org/legacy/logo_cloudflare.png)  
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
