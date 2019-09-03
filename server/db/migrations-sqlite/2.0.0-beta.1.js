@@ -63,7 +63,7 @@ exports.up = knex => {
     })
     // LOCALES -----------------------------
     .createTable('locales', table => {
-      table.string('code', 2).notNullable().primary()
+      table.string('code', 5).notNullable().primary()
       table.json('strings')
       table.boolean('isRTL').notNullable().defaultTo(false)
       table.string('name').notNullable()
@@ -100,7 +100,7 @@ exports.up = knex => {
 
       table.integer('pageId').unsigned().references('id').inTable('pages')
       table.string('editorKey').references('key').inTable('editors')
-      table.string('localeCode', 2).references('code').inTable('locales')
+      table.string('localeCode', 5).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
     })
     // PAGES -------------------------------
@@ -123,7 +123,7 @@ exports.up = knex => {
       table.string('updatedAt').notNullable()
 
       table.string('editorKey').references('key').inTable('editors')
-      table.string('localeCode', 2).references('code').inTable('locales')
+      table.string('localeCode', 5).references('code').inTable('locales')
       table.integer('authorId').unsigned().references('id').inTable('users')
       table.integer('creatorId').unsigned().references('id').inTable('users')
     })
@@ -139,7 +139,7 @@ exports.up = knex => {
 
       table.integer('parent').unsigned().references('id').inTable('pageTree')
       table.integer('pageId').unsigned().references('id').inTable('pages')
-      table.string('localeCode', 2).references('code').inTable('locales')
+      table.string('localeCode', 5).references('code').inTable('locales')
     })
     // RENDERERS ---------------------------
     .createTable('renderers', table => {
@@ -204,7 +204,7 @@ exports.up = knex => {
       table.string('updatedAt').notNullable()
 
       table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')
-      table.string('localeCode', 2).references('code').inTable('locales').notNullable().defaultTo('en')
+      table.string('localeCode', 5).references('code').inTable('locales').notNullable().defaultTo('en')
       table.string('defaultEditor').references('key').inTable('editors').notNullable().defaultTo('markdown')
     })
     // =====================================

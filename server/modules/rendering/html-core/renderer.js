@@ -31,8 +31,8 @@ module.exports = {
     $('a').each((i, elm) => {
       let href = $(elm).attr('href')
 
-      // -> Ignore empty links
-      if (!href || href.length < 1) {
+      // -> Ignore empty / anchor links
+      if (!href || href.length < 1 || href.indexOf('#') === 0) {
         return
       }
 
@@ -79,9 +79,11 @@ module.exports = {
     // Detect internal link states
     // --------------------------------
 
+    const pastLinks = await this.page.$relatedQuery('links')
+
     if (internalRefs.length > 0) {
       // -> Find matching pages
-      const results = await WIKI.models.pages.query().column('path', 'localeCode').where(builder => {
+      const results = await WIKI.models.pages.query().column('id', 'path', 'localeCode').where(builder => {
         internalRefs.forEach((ref, idx) => {
           if (idx < 1) {
             builder.where(ref)
@@ -106,6 +108,38 @@ module.exports = {
           $(elm).addClass(`is-invalid-page`)
         }
       })
+
+      // -> Add missing links
+      const missingLinks = _.differenceWith(internalRefs, pastLinks, (nLink, pLink) => {
+        return nLink.localeCode === pLink.localeCode && nLink.path === pLink.path
+      })
+      if (missingLinks.length > 0) {
+        if (WIKI.config.db.type === 'postgres') {
+          await WIKI.models.pageLinks.query().insert(missingLinks.map(lnk => ({
+            pageId: this.page.id,
+            path: lnk.path,
+            localeCode: lnk.localeCode
+          })))
+        } else {
+          for (const lnk of missingLinks) {
+            await WIKI.models.pageLinks.query().insert({
+              pageId: this.page.id,
+              path: lnk.path,
+              localeCode: lnk.localeCode
+            })
+          }
+        }
+      }
+    }
+
+    // -> Remove outdated links
+    if (pastLinks) {
+      const outdatedLinks = _.differenceWith(pastLinks, internalRefs, (nLink, pLink) => {
+        return nLink.localeCode === pLink.localeCode && nLink.path === pLink.path
+      })
+      if (outdatedLinks.length > 0) {
+        await WIKI.models.pageLinks.query().delete().whereIn('id', _.map(outdatedLinks, 'id'))
+      }
     }
 
     return $.html('body').replace('<body>', '').replace('</body>', '')

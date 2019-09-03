@@ -64,15 +64,11 @@ module.exports = class Page extends Model {
         }
       },
       links: {
-        relation: Model.ManyToManyRelation,
-        modelClass: Page,
+        relation: Model.HasManyRelation,
+        modelClass: require('./pageLinks'),
         join: {
           from: 'pages.id',
-          through: {
-            from: 'pageLinks.sourcePageId',
-            to: 'pageLinks.targetPageId'
-          },
-          to: 'pages.id'
+          to: 'pageLinks.pageId'
         }
       },
       author: {

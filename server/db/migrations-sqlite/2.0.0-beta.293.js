@@ -2,8 +2,12 @@ exports.up = knex => {
   return knex.schema
     .createTable('pageLinks', table => {
       table.increments('id').primary()
-      table.integer('sourcePageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
-      table.integer('targetPageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
+      table.integer('pageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
+      table.string('path').notNullable()
+      table.string('localeCode', 5).notNullable()
+    })
+    .table('pageLinks', table => {
+      table.index(['path', 'localeCode'])
     })
 }
 
