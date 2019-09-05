@@ -108,6 +108,7 @@ module.exports = {
     const models = autoload(path.join(WIKI.SERVERPATH, 'models'))
 
     // Set init tasks
+    let conAttempts = 0
     let initTasks = {
       // -> Migrate DB Schemas
       async syncSchemas() {
@@ -115,10 +116,28 @@ module.exports = {
           tableName: 'migrations',
           migrationSource
         })
+      },
+      // -> Attempt initial connection
+      async connect() {
+        try {
+          WIKI.logger.info('Connecting to database...')
+          await self.knex.raw('SELECT 1 + 1;')
+          WIKI.logger.info('Database Connection Successful [ OK ]')
+        } catch (err) {
+          if (conAttempts < 10) {
+            WIKI.logger.error(`Database Connection Error: ${err.code} ${err.address}:${err.port}`)
+            WIKI.logger.warn(`Will retry in 3 seconds... [Attempt ${++conAttempts} of 10]`)
+            await new Promise(resolve => setTimeout(resolve, 3000))
+            await initTasks.connect()
+          } else {
+            throw err
+          }
+        }
       }
     }
 
     let initTasksQueue = (WIKI.IS_MASTER) ? [
+      initTasks.connect,
       initTasks.syncSchemas
     ] : [
       () => { return Promise.resolve() }
