@@ -4,7 +4,7 @@ description: DigitalOcean provides developers and businesses a reliable, easy-to
 author: requarks.io
 logo: https://static.requarks.io/logo/digitalocean.svg
 website: https://www.digitalocean.com/products/spaces/
-isAvailable: false
+isAvailable: true
 supportedModes:
   - push
 defaultMode: push
@@ -16,7 +16,6 @@ props:
     hint: The DigitalOcean datacenter region where the Space will be created.
     default: nyc3
     enum:
-      - ams3
       - fra1
       - nyc3
       - sfo2
