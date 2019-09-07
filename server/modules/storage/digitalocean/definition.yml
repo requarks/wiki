@@ -1,28 +1,28 @@
 key: digitalocean
 title: DigitalOcean Spaces
 description: DigitalOcean provides developers and businesses a reliable, easy-to-use cloud computing platform of virtual servers (Droplets), object storage (Spaces) and more.
-author: requarks.io
+author: andrewsim
 logo: https://static.requarks.io/logo/digitalocean.svg
 website: https://www.digitalocean.com/products/spaces/
-isAvailable: false
+isAvailable: true
 supportedModes:
   - push
 defaultMode: push
 schedule: false
 props:
-  region:
+  endpoint:
     type: String
-    title: Region
-    hint: The DigitalOcean datacenter region where the Space will be created.
-    default: nyc3
+    title: Endpoint
+    hint: The DigitalOcean spaces endpoint that has the form ${REGION}.digitaloceanspaces.com
+    default: nyc3.digitaloceanspaces.com
     enum:
-      - ams3
-      - fra1
-      - nyc3
-      - sfo2
-      - sgp1
+      - ams3.digitaloceanspaces.com
+      - fra1.digitaloceanspaces.com
+      - nyc3.digitaloceanspaces.com
+      - sfo2.digitaloceanspaces.com
+      - sgp1.digitaloceanspaces.com
     order: 1
-  spaceId:
+  bucket:
     type: String
     title: Space Unique Name
     hint: The unique space name to create (e.g. wiki-johndoe)

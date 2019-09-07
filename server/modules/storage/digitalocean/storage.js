@@ -1,23 +1,3 @@
-module.exports = {
-  async activated() {
+const S3CompatibleStorage = require('../s3/common')
 
-  },
-  async deactivated() {
-
-  },
-  async init() {
-
-  },
-  async created() {
-
-  },
-  async updated() {
-
-  },
-  async deleted() {
-
-  },
-  async renamed() {
-
-  }
-}
+module.exports = new S3CompatibleStorage('Digitalocean')

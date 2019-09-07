@@ -8,7 +8,7 @@ isAvailable: true
 supportedModes:
   - push
 defaultMode: push
-schedule: PT5M
+schedule: false
 props:
   region:
     type: String
