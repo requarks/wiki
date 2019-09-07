@@ -25,8 +25,8 @@ props:
     title: Access Key ID
     hint: The Access Key.
     order: 3
-  accessSecret:
+  secretAccessKey:
     type: String
-    title: Access Key Secret
-    hint: The Access Key Secret for the Access Key ID you created above.
+    title: Secret Access Key
+    hint: The Secret Access Key for the Access Key ID you created above.
     order: 4
