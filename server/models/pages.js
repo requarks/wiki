@@ -148,6 +148,20 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Get the page's file extension based on content type
+   */
+  getFileExtension() {
+    switch (this.contentType) {
+      case 'markdown':
+        return 'md'
+      case 'html':
+        return 'html'
+      default:
+        return 'txt'
+    }
+  }
+
+  /**
    * Parse injected page metadata from raw content
    *
    * @param {String} raw Raw file contents

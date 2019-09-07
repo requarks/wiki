@@ -3,24 +3,10 @@ const S3 = require('aws-sdk/clients/s3')
 /* global WIKI */
 
 /**
- * Get file extension based on content type
- */
-const getFileExtension = contentType => {
-  switch (contentType) {
-    case 'markdown':
-      return 'md'
-    case 'html':
-      return 'html'
-    default:
-      return 'txt'
-  }
-}
-
-/**
  * Deduce the file path given the `page` object and the object's key to the page's path.
  */
 const getFilePath = async (page, pathKey) => {
-  const fileName = `${page[pathKey]}.${getFileExtension(page.contentType)}`
+  const fileName = `${page[pathKey]}.${page.getFileExtension(page.contentType)}`
   const withLocaleCode = WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode
   return withLocaleCode ? `${page.localeCode}/${fileName}` : fileName
 }
