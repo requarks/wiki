@@ -41,13 +41,17 @@
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
                   v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-history
-                  v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.history')}}
+                  v-list-item-content
+                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.history')}}
+                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
                   v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-content-save-move-outline
-                  v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.move')}}
+                  v-list-item-content
+                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.move')}}
+                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
                 v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
                   v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
@@ -55,7 +59,9 @@
               .overline.pa-4.grey--text {{$t('common:header.assets')}}
               v-list-item.pl-4(@click='assets')
                 v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
-                v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
+                v-list-item-content
+                  v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
+                  v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
           v-toolbar-title(:class='{ "mx-2": $vuetify.breakpoint.mdAndUp, "mx-0": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
@@ -150,12 +156,11 @@
                   v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-3` : ``')
                     v-icon(color='grey') mdi-web
                 span {{$t('common:header.language')}}
-            v-list.py-0
+            v-list(nav)
               template(v-for='(lc, idx) of locales')
                 v-list-item(@click='changeLocale(lc)')
                   v-list-item-action: v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
                   v-list-item-title {{lc.name}}
-                v-divider.my-0(v-if='idx < locales.length - 1')
           v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
             template(v-slot:activator='{ on }')
               v-btn.btn-animate-rotate(icon, href='/a', v-on='on', :class='$vuetify.rtl ? `ml-3` : ``')
@@ -170,7 +175,7 @@
                     v-avatar(v-else-if='picture.kind === `image`', :size='34')
                       v-img(:src='picture.url')
                 span {{$t('common:header.account')}}
-            v-list.py-0
+            v-list(nav)
               v-list-item.py-3.grey(:class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-5`')
                 v-list-item-avatar
                   v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
@@ -180,18 +185,19 @@
                 v-list-item-content
                   v-list-item-title {{name}}
                   v-list-item-subtitle {{email}}
-              v-divider.my-0
               v-list-item(href='/w', disabled)
                 v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
-                v-list-item-title {{$t('common:header.myWiki')}}
-              v-divider.my-0
+                v-list-item-content
+                  v-list-item-title {{$t('common:header.myWiki')}}
+                  v-list-item-subtitle.overline Coming soon
               v-list-item(href='/p', disabled)
                 v-list-item-action: v-icon(color='blue') mdi-face-profile
-                v-list-item-title {{$t('common:header.profile')}}
-              v-divider.my-0
+                v-list-item-content
+                  v-list-item-title {{$t('common:header.profile')}}
+                  v-list-item-subtitle.overline Coming soon
               v-list-item(@click='logout')
                 v-list-item-action: v-icon(color='red') mdi-logout
-                v-list-item-title {{$t('common:header.logout')}}
+                v-list-item-title.red--text {{$t('common:header.logout')}}
 
           v-tooltip(v-else, left)
             template(v-slot:activator='{ on }')

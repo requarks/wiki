@@ -78,21 +78,27 @@
                   color='teal lighten-5'
                   v-for='(tag, idx) in tags'
                   :href='`/t/` + tag.tag'
-                  :key='tag.tag'
+                  :key='`tag-` + tag.tag'
                   )
-                  v-icon(color='teal', left, small) mdi-label
+                  v-icon(color='teal', left, small) mdi-tag
                   span.teal--text.text--darken-2 {{tag.title}}
+                v-chip.mr-1(
+                  label
+                  color='teal lighten-5'
+                  :href='`/t/` + tags.map(t => t.tag).join(`/`)'
+                  )
+                  v-icon(color='teal', size='20') mdi-tag-multiple
 
             v-card.mb-5
               .pa-5
                 .overline.indigo--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
-                  v-spacer
-                  v-tooltip(top, v-if='isAuthenticated')
-                    template(v-slot:activator='{ on }')
-                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
-                        v-icon(color='grey', dense) mdi-history
-                    span History
+                  //- v-spacer
+                  //- v-tooltip(top, v-if='isAuthenticated')
+                  //-   template(v-slot:activator='{ on }')
+                  //-     v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
+                  //-       v-icon(color='grey', dense) mdi-history
+                  //-   span History
                 .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 

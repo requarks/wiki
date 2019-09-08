@@ -20,21 +20,21 @@ export default {
   state,
   mutations: {
     ...make.mutations(state),
-    REFRESH_AUTH(state) {
+    REFRESH_AUTH(st) {
       const jwtCookie = Cookies.get('jwt')
       if (jwtCookie) {
         try {
           const jwtData = jwt.decode(jwtCookie)
-          state.id = jwtData.id
-          state.email = jwtData.email
-          state.name = jwtData.name
-          state.pictureUrl = jwtData.pictureUrl
-          state.localeCode = jwtData.localeCode
-          state.defaultEditor = jwtData.defaultEditor
-          state.permissions = jwtData.permissions
-          state.iat = jwtData.iat
-          state.exp = jwtData.exp
-          state.authenticated = true
+          st.id = jwtData.id
+          st.email = jwtData.email
+          st.name = jwtData.name
+          st.pictureUrl = jwtData.pictureUrl
+          st.localeCode = jwtData.localeCode
+          st.defaultEditor = jwtData.defaultEditor
+          st.permissions = jwtData.permissions
+          st.iat = jwtData.iat
+          st.exp = jwtData.exp
+          st.authenticated = true
         } catch (err) {
           console.debug('Invalid JWT. Silent authentication skipped.')
         }

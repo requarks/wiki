@@ -319,21 +319,21 @@ export default {
       })
     }, 500),
     onCmPaste (cm, ev) {
-      const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
-      for (let clipItem of clipItems) {
-        if (_.startsWith(clipItem.type, 'image/')) {
-          const file = clipItem.getAsFile()
-          const reader = new FileReader()
-          reader.onload = evt => {
-            this.$store.commit(`loadingStart`, 'editor-paste-image')
-            this.insertAfter({
-              content: `![${file.name}](${evt.target.result})`,
-              newLine: true
-            })
-          }
-          reader.readAsDataURL(file)
-        }
-      }
+      // const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
+      // for (let clipItem of clipItems) {
+      //   if (_.startsWith(clipItem.type, 'image/')) {
+      //     const file = clipItem.getAsFile()
+      //     const reader = new FileReader()
+      //     reader.onload = evt => {
+      //       this.$store.commit(`loadingStart`, 'editor-paste-image')
+      //       this.insertAfter({
+      //         content: `![${file.name}](${evt.target.result})`,
+      //         newLine: true
+      //       })
+      //     }
+      //     reader.readAsDataURL(file)
+      //   }
+      // }
     },
     /**
      * Update cursor state

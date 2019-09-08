@@ -291,8 +291,8 @@ module.exports = class User extends Model {
                 mustChangePwd: true,
                 continuationToken: pwdChangeToken
               })
-            } catch (err) {
-              WIKI.logger.warn(err)
+            } catch (errc) {
+              WIKI.logger.warn(errc)
               return reject(new WIKI.Error.AuthGenericError())
             }
           }
@@ -308,14 +308,14 @@ module.exports = class User extends Model {
                 tfaRequired: true,
                 continuationToken: tfaToken
               })
-            } catch (err) {
-              WIKI.logger.warn(err)
+            } catch (errc) {
+              WIKI.logger.warn(errc)
               return reject(new WIKI.Error.AuthGenericError())
             }
           }
 
-          context.req.logIn(user, { session: !strInfo.useForm }, async err => {
-            if (err) { return reject(err) }
+          context.req.logIn(user, { session: !strInfo.useForm }, async errc => {
+            if (errc) { return reject(errc) }
             const jwtToken = await WIKI.models.users.refreshToken(user)
             resolve({ jwt: jwtToken.token })
           })

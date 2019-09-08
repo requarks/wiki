@@ -31,22 +31,22 @@ module.exports = {
           builder.andWhere('path', 'like', `${opts.path}%`)
         }
         // TODO: Add user permissions filtering
-        builder.andWhere(builder => {
+        builder.andWhere(builderSub => {
           switch (WIKI.config.db.type) {
             case 'postgres':
-              builder.where('title', 'ILIKE', `%${q}%`)
-              builder.orWhere('description', 'ILIKE', `%${q}%`)
+              builderSub.where('title', 'ILIKE', `%${q}%`)
+              builderSub.orWhere('description', 'ILIKE', `%${q}%`)
               break
             case 'mysql':
             case 'mariadb':
-              builder.whereRaw(`title LIKE '%?%' COLLATE utf8_general_ci`, [q])
-              builder.orWhereRaw(`description LIKE '%?%' COLLATE utf8_general_ci`, [q])
+              builderSub.whereRaw(`title LIKE '%?%' COLLATE utf8_general_ci`, [q])
+              builderSub.orWhereRaw(`description LIKE '%?%' COLLATE utf8_general_ci`, [q])
               break
 
             // TODO: MSSQL handling
             default:
-              builder.where('title', 'LIKE', `%${q}%`)
-              builder.orWhere('description', 'LIKE', `%${q}%`)
+              builderSub.where('title', 'LIKE', `%${q}%`)
+              builderSub.orWhere('description', 'LIKE', `%${q}%`)
               break
           }
         })

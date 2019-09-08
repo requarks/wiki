@@ -33,24 +33,24 @@ export default new Vuex.Store({
   },
   mutations: {
     ...make.mutations(state),
-    loadingStart (state, stackName) {
-      state.loadingStack = _.union(state.loadingStack, [stackName])
+    loadingStart (st, stackName) {
+      st.loadingStack = _.union(st.loadingStack, [stackName])
     },
-    loadingStop (state, stackName) {
-      state.loadingStack = _.without(state.loadingStack, stackName)
+    loadingStop (st, stackName) {
+      st.loadingStack = _.without(st.loadingStack, stackName)
     },
-    showNotification (state, opts) {
-      state.notification = _.defaults(opts, {
+    showNotification (st, opts) {
+      st.notification = _.defaults(opts, {
         message: '',
         style: 'primary',
         icon: 'cached',
         isActive: true
       })
     },
-    updateNotificationState (state, newState) {
-      state.notification.isActive = newState
+    updateNotificationState (st, newState) {
+      st.notification.isActive = newState
     },
-    pushGraphError (state, err) {
+    pushGraphError (st, err) {
       WIKI.$store.commit('showNotification', {
         style: 'red',
         message: _.get(err, 'graphQLErrors[0].message', err.message),

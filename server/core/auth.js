@@ -120,8 +120,8 @@ module.exports = {
           } else {
             res.cookie('jwt', newToken.token, { expires: moment().add(365, 'days').toDate() })
           }
-        } catch (err) {
-          WIKI.logger.warn(err)
+        } catch (errc) {
+          WIKI.logger.warn(errc)
           return next()
         }
       }
@@ -137,8 +137,8 @@ module.exports = {
       }
 
       // JWT is valid
-      req.logIn(user, { session: false }, (err) => {
-        if (err) { return next(err) }
+      req.logIn(user, { session: false }, (errc) => {
+        if (errc) { return next(errc) }
         next()
       })
     })(req, res, next)

@@ -45,8 +45,8 @@ module.exports = {
                 _.set(lcObj, key.replace(':', '.'), value)
               })
 
-              const localeExists = await WIKI.models.locales.query().select('code').where('code', locale.code).first()
-              if (localeExists) {
+              const localeDbExists = await WIKI.models.locales.query().select('code').where('code', locale.code).first()
+              if (localeDbExists) {
                 await WIKI.models.locales.query().update({
                   code: locale.code,
                   strings: lcObj,

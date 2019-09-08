@@ -71,8 +71,8 @@ module.exports = {
           }))
 
           resolve(true)
-        } catch (err) {
-          reject(err)
+        } catch (errc) {
+          reject(errc)
         }
         db.close()
       })
