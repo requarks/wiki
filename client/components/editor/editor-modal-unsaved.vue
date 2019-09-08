@@ -2,14 +2,14 @@
   v-dialog(v-model='isShown', max-width='550')
     v-card.wiki-form
       .dialog-header.is-short.is-red
-        v-icon.mr-2(color='white') warning
+        v-icon.mr-2(color='white') mdi-alert
         span {{$t('editor:unsaved.title')}}
-      v-card-text
+      v-card-text.pt-4
         .body-2 {{$t('editor:unsaved.body')}}
       v-card-chin
         v-spacer
-        v-btn(flat, @click='isShown = false') {{$t('common:actions.cancel')}}
-        v-btn(color='red', @click='discard', dark) {{$t('common:actions.discardChanges')}}
+        v-btn(text, @click='isShown = false') {{$t('common:actions.cancel')}}
+        v-btn.px-4(color='red', @click='discard', dark) {{$t('common:actions.discardChanges')}}
 </template>
 
 <script>

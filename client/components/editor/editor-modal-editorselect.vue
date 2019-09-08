@@ -48,17 +48,27 @@
                   img(src='/svg/icon-table.svg', alt='Tabular', style='width: 36px;')
                   .body-2.grey--text.mt-2.text--darken-2 Tabular
                   .caption.grey--text.text--darken-1 Excel-like
+            //- v-flex(xs4)
+            //-   v-card.radius-7.grey(
+            //-     hover
+            //-     light
+            //-     ripple
+            //-     disabled
+            //-     )
+            //-     v-card-text.text-center(@click='selectEditor("wysiwyg")')
+            //-       img(src='/svg/icon-open-in-browser.svg', alt='Visual Builder', style='width: 36px;')
+            //-       .body-2.mt-2.grey--text.text--darken-2 Visual Builder
+            //-       .caption.grey--text.text--darken-1 Drag-n-drop
             v-flex(xs4)
-              v-card.radius-7.grey(
+              v-card.radius-7(
                 hover
                 light
                 ripple
-                disabled
                 )
-                v-card-text.text-center(@click='selectEditor("wysiwyg")')
-                  img(src='/svg/icon-open-in-browser.svg', alt='Visual Builder', style='width: 36px;')
-                  .body-2.mt-2.grey--text.text--darken-2 Visual Builder
-                  .caption.grey--text.text--darken-1 Drag-n-drop
+                v-card-text.text-center(@click='selectEditor("ckeditor")')
+                  img(src='/svg/icon-open-in-browser.svg', alt='Visual Editor', style='width: 36px;')
+                  .body-2.mt-2.primary--text Visual Editor
+                  .caption.grey--text Rich-text WYSIWYG
             v-flex(xs4)
               v-card.radius-7.grey(
                 hover

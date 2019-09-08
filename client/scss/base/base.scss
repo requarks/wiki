@@ -1,6 +1,7 @@
 html {
   box-sizing: border-box;
   height: 100%;
+  overflow-y: auto !important;
 }
 *, *:before, *:after {
   box-sizing: inherit;

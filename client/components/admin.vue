@@ -128,7 +128,7 @@ import { get, sync } from 'vuex-pathify'
 
 import statsQuery from 'gql/admin/dashboard/dashboard-query-stats.gql'
 
-import adminStore from '@/store/admin'
+import adminStore from '../store/admin'
 
 /* global WIKI */
 

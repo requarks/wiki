@@ -51,7 +51,7 @@ import { Base64 } from 'js-base64'
 import createPageMutation from 'gql/editor/create.gql'
 import updatePageMutation from 'gql/editor/update.gql'
 
-import editorStore from '@/store/editor'
+import editorStore from '../store/editor'
 
 /* global WIKI */
 
@@ -62,6 +62,7 @@ export default {
   components: {
     AtomSpinner,
     editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
+    editorCkeditor: () => import(/* webpackChunkName: "editor-ckeditor", webpackMode: "lazy" */ './editor/editor-ckeditor.vue'),
     editorMarkdown: () => import(/* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'),
     editorWysiwyg: () => import(/* webpackChunkName: "editor-wysiwyg", webpackMode: "lazy" */ './editor/editor-wysiwyg.vue'),
     editorModalEditorselect: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-editorselect.vue'),
@@ -153,7 +154,7 @@ export default {
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')
 
-    this.initContentParsed = this.initContent ? Base64.decode(this.initContent) : '# Header\n\nYour content here'
+    this.initContentParsed = this.initContent ? Base64.decode(this.initContent) : ''
     this.$store.set('editor/content', this.initContentParsed)
     if (this.mode === 'create') {
       _.delay(() => {
@@ -194,7 +195,7 @@ export default {
             variables: {
               content: this.$store.get('editor/content'),
               description: this.$store.get('page/description'),
-              editor: 'markdown',
+              editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
               isPrivate: false,
               isPublished: this.$store.get('page/isPublished'),
@@ -230,7 +231,7 @@ export default {
               id: this.$store.get('page/id'),
               content: this.$store.get('editor/content'),
               description: this.$store.get('page/description'),
-              editor: 'markdown',
+              editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
               isPrivate: false,
               isPublished: this.$store.get('page/isPublished'),

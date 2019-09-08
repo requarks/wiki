@@ -2,6 +2,7 @@ import { make } from 'vuex-pathify'
 
 const state = {
   editor: '',
+  editorKey: '',
   content: '',
   mode: 'create',
   activeModal: '',

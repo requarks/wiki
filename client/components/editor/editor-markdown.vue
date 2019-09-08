@@ -296,6 +296,7 @@ export default {
     },
     locale: get('page/locale'),
     path: get('page/path'),
+    mode: get('editor/mode'),
     activeModal: sync('editor/activeModal')
   },
   methods: {
@@ -456,6 +457,12 @@ export default {
     }
   },
   mounted() {
+    this.$store.set('editor/editorKey', 'markdown')
+
+    if (this.mode === 'create') {
+      this.$store.set('editor/content', '# Header\nYour content here')
+    }
+
     // Initialize CodeMirror
 
     this.cm = CodeMirror.fromTextArea(this.$refs.cm, {

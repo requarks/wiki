@@ -144,7 +144,6 @@
                     :close-on-content-click='false'
                     v-model='isPublishEndShown'
                     :return-value.sync='publishEndDate'
-                    full-width
                     width='460px'
                     :disabled='!isPublished || true'
                     )

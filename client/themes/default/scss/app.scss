@@ -32,7 +32,7 @@
       padding-right: 3px;
 
       &::after {
-        font-family: 'Material Design Icons';
+        font-family: 'Material Design Icons', sans-serif;
         font-size: 24px/1;
         padding-left: 3px;
         display: inline-block;
@@ -602,6 +602,26 @@
     }
     &.decor-outline {
       border: 1px solid mc('grey', '400');
+    }
+  }
+
+  figure.image {
+    margin: 1rem 24px 0 24px;
+
+    img {
+      margin: 0 auto;
+    }
+    figcaption {
+      padding: 4px 1rem;
+      text-align: center;
+      font-size: 12px;
+      color: mc('grey', '700');
+      background-color: mc('grey', '100');
+
+      @at-root .theme--dark & {
+        color: mc('grey', '400');
+        background-color: mc('grey', '800');
+      }
     }
   }
 
