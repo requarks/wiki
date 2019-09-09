@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
@@ -19,7 +20,16 @@ module.exports = {
     },
     async search (obj, args, context) {
       if (WIKI.data.searchEngine) {
-        return WIKI.data.searchEngine.query(args.query, args)
+        const resp = await WIKI.data.searchEngine.query(args.query, args)
+        return {
+          ...resp,
+          results: _.filter(resp.results, r => {
+            return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+              path: r.path,
+              locale: r.locale
+            })
+          })
+        }
       } else {
         return {
           results: [],
@@ -29,8 +39,8 @@ module.exports = {
       }
     },
     async list (obj, args, context, info) {
-      return WIKI.models.pages.query().column([
-        'id',
+      let results = await WIKI.models.pages.query().column([
+        'pages.id',
         'path',
         { locale: 'localeCode' },
         'title',
@@ -41,29 +51,55 @@ module.exports = {
         'contentType',
         'createdAt',
         'updatedAt'
-      ]).modify(queryBuilder => {
-        if (args.limit) {
-          queryBuilder.limit(args.limit)
-        }
-        const orderDir = args.orderByDirection === 'DESC' ? 'desc' : 'asc'
-        switch (args.orderBy) {
-          case 'CREATED':
-            queryBuilder.orderBy('createdAt', orderDir)
-            break
-          case 'PATH':
-            queryBuilder.orderBy('path', orderDir)
-            break
-          case 'TITLE':
-            queryBuilder.orderBy('title', orderDir)
-            break
-          case 'UPDATED':
-            queryBuilder.orderBy('updatedAt', orderDir)
-            break
-          default:
-            queryBuilder.orderBy('id', orderDir)
-            break
-        }
-      })
+      ])
+        .eagerAlgorithm(WIKI.models.Objection.Model.JoinEagerAlgorithm)
+        .eager('tags(selectTags)', {
+          selectTags: builder => {
+            builder.select('tag')
+          }
+        })
+        .modify(queryBuilder => {
+          if (args.limit) {
+            queryBuilder.limit(args.limit)
+          }
+          if (args.locale) {
+            queryBuilder.where('localeCode', args.locale)
+          }
+          if (args.tags && args.tags.length > 0) {
+            queryBuilder.whereIn('tags.tag', args.tags)
+          }
+          const orderDir = args.orderByDirection === 'DESC' ? 'desc' : 'asc'
+          switch (args.orderBy) {
+            case 'CREATED':
+              queryBuilder.orderBy('createdAt', orderDir)
+              break
+            case 'PATH':
+              queryBuilder.orderBy('path', orderDir)
+              break
+            case 'TITLE':
+              queryBuilder.orderBy('title', orderDir)
+              break
+            case 'UPDATED':
+              queryBuilder.orderBy('updatedAt', orderDir)
+              break
+            default:
+              queryBuilder.orderBy('pages.id', orderDir)
+              break
+          }
+        })
+      results = _.filter(results, r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: r.path,
+          locale: r.locale
+        })
+      }).map(r => ({
+        ...r,
+        tags: _.map(r.tags, 'tag')
+      }))
+      if (args.tags && args.tags.length > 0) {
+        results = _.filter(results, r => _.every(args.tags, t => _.includes(r.tags, t)))
+      }
+      return results
     },
     async single (obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)

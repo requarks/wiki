@@ -31,7 +31,9 @@ type PageQuery {
     limit: Int
     orderBy: PageOrderBy
     orderByDirection: PageOrderByDirection
-  ): [PageListItem!]! @auth(requires: ["manage:system"])
+    tags: [String!]
+    locale: String
+  ): [PageListItem!]! @auth(requires: ["manage:system", "read:pages"])
 
   single(
     id: Int!
@@ -177,6 +179,7 @@ type PageListItem {
   privateNS: String
   createdAt: Date!
   updatedAt: Date!
+  tags: [String]
 }
 
 enum PageOrderBy {

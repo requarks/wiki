@@ -15,7 +15,7 @@
                 v-icon(v-if='isSelected(tag.tag)', color='primary') mdi-checkbox-intermediate
                 v-icon(v-else) mdi-checkbox-blank-outline
               v-list-item-title {{tag.title}}
-    v-content
+    v-content.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
       v-toolbar(color='primary', dark, flat, height='58')
         template(v-if='selection.length > 0')
           .overline.mr-3.animated.fadeInLeft Current Selection
@@ -41,6 +41,7 @@
           .overline.animated.fadeInRight Select one or more tags
       v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-l5` : `grey lighten-4`', flat, height='58')
         v-text-field.tags-search(
+          v-model='innerSearch'
           label='Search within results...'
           solo
           hide-details
@@ -50,6 +51,7 @@
           height='40'
           prepend-icon='mdi-file-document-box-search-outline'
           append-icon='mdi-arrow-right'
+          clearable
         )
         template(v-if='locales.length > 1')
           v-divider.mx-3(vertical)
@@ -86,9 +88,62 @@
           v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-up
           v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-down
       v-divider
-      .text-center.pt-10
+      .text-center.pt-10(v-if='selection.length < 1')
         img(src='/svg/icon-price-tag.svg')
         .subtitle-2.grey--text Select one or more tags on the left.
+      .px-5.py-2(v-else)
+        v-data-iterator(
+          :items='pages'
+          :items-per-page='4'
+          :search='innerSearch'
+          :loading='isLoading'
+          :options.sync='pagination'
+          hide-default-footer
+          ref='dude'
+          )
+          template(v-slot:loading)
+            .text-center.pt-10
+              v-progress-circular(
+                indeterminate
+                color='primary'
+                size='96'
+                width='2'
+                )
+              .subtitle-2.grey--text.mt-5 Retrieving page results...
+          template(v-slot:no-data)
+            .text-center.pt-10
+              img(src='/svg/icon-info.svg')
+              .subtitle-2.grey--text Couldn't find any page with the selected tags.
+          template(v-slot:no-results)
+            .text-center.pt-10
+              img(src='/svg/icon-info.svg')
+              .subtitle-2.grey--text Couldn't find any page matching the current filtering options.
+          template(v-slot:default='props')
+            v-row(align='stretch')
+              v-col(
+                v-for='item of props.items'
+                :key='`page-` + item.id'
+                cols='12'
+                lg='6'
+                )
+                v-card.radius-7(
+                  @click='goTo(item)'
+                  style='height:100%;'
+                  :class='$vuetify.theme.dark ? `grey darken-4` : ``'
+                  )
+                  v-card-text
+                    .d-flex.flex-row.align-center
+                      .body-1: strong.primary--text {{item.title}}
+                      v-spacer
+                      .caption Last updated {{item.updatedAt | moment('from')}}
+                    .body-2.grey--text {{item.description || '---'}}
+                    v-divider.my-2
+                    .d-flex.flex-row.align-center
+                      v-chip(small, label, :color='$vuetify.theme.dark ? `grey darken-3-l5` : `grey lighten-4`').overline {{item.locale}}
+                      .caption.ml-1 / {{item.path}}
+        .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
+          v-pagination(v-model='pagination.page', :length='pageTotal')
+
     nav-footer
     notify
     search-results
@@ -100,6 +155,7 @@ import VueRouter from 'vue-router'
 import _ from 'lodash'
 
 import tagsQuery from 'gql/common/common-pages-query-tags.gql'
+import pagesQuery from 'gql/common/common-pages-query-list.gql'
 
 /* global siteLangs */
 
@@ -113,17 +169,27 @@ export default {
     return {
       tags: [],
       selection: [],
+      innerSearch: '',
       locale: 'any',
       locales: [],
-      orderBy: 'TITLE',
+      orderBy: 'title',
       orderByItems: [
-        { text: 'Creation Date', value: 'CREATED' },
-        { text: 'ID', value: 'ID' },
-        { text: 'Last Modified', value: 'UPDATED' },
-        { text: 'Path', value: 'PATH' },
-        { text: 'Title', value: 'TITLE' }
+        { text: 'Creation Date', value: 'createdAt' },
+        { text: 'ID', value: 'id' },
+        { text: 'Last Modified', value: 'updatedAt' },
+        { text: 'Path', value: 'path' },
+        { text: 'Title', value: 'title' }
       ],
       orderByDirection: 0,
+      pagination: {
+        page: 1,
+        itemsPerPage: 12,
+        mustSort: true,
+        sortBy: ['title'],
+        sortDesc: [false]
+      },
+      pages: [],
+      isLoading: true,
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -154,6 +220,9 @@ export default {
     },
     tagsSelected () {
       return _.filter(this.tags, t => _.includes(this.selection, t.tag))
+    },
+    pageTotal () {
+      return Math.ceil(this.pages.length / this.pagination.itemsPerPage)
     }
   },
   watch: {
@@ -162,9 +231,11 @@ export default {
     },
     orderBy (newValue, oldValue) {
       this.rebuildURL()
+      this.pagination.sortBy = [newValue]
     },
     orderByDirection (newValue, oldValue) {
       this.rebuildURL()
+      this.pagination.sortDesc = [newValue === 1]
     }
   },
   router,
@@ -186,6 +257,7 @@ export default {
         this.selection.push(tag)
       }
       this.rebuildURL()
+      console.info(this.$refs.dude)
     },
     isSelected (tag) {
       return _.includes(this.selection, tag)
@@ -204,6 +276,9 @@ export default {
         _.set(urlObj, 'query.dir', this.orderByDirection === 0 ? `asc` : `desc`)
       }
       this.$router.push(urlObj)
+    },
+    goTo (page) {
+      window.location.assign(`/${page.locale}/${page.path}`)
     }
   },
   apollo: {
@@ -213,6 +288,24 @@ export default {
       update: (data) => _.cloneDeep(data.pages.tags),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'tags-refresh')
+      }
+    },
+    pages: {
+      query: pagesQuery,
+      fetchPolicy: 'cache-and-network',
+      update: (data) => _.cloneDeep(data.pages.list),
+      watchLoading (isLoading) {
+        this.isLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'pages-refresh')
+      },
+      variables () {
+        return {
+          locale: this.locale === 'any' ? null : this.locale,
+          tags: this.selection
+        }
+      },
+      skip () {
+        return this.selection.length < 1
       }
     }
   }
