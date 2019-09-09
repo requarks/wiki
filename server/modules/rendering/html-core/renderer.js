@@ -37,8 +37,8 @@ module.exports = {
       }
 
       // -> Strip host from local links
-      if (isHostSet && href.indexOf(WIKI.config.site.host) === 0) {
-        href = href.replace(WIKI.config.site.host, '')
+      if (isHostSet && href.indexOf(WIKI.config.host) === 0) {
+        href = href.replace(WIKI.config.host, '')
       }
 
       // -> Assign local / external tag
