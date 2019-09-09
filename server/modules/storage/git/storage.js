@@ -12,20 +12,6 @@ const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
 
 /* global WIKI */
 
-/**
- * Get file extension based on content type
- */
-const getFileExtension = (contentType) => {
-  switch (contentType) {
-    case 'markdown':
-      return 'md'
-    case 'html':
-      return 'html'
-    default:
-      return 'txt'
-  }
-}
-
 const getContenType = (filePath) => {
   const ext = _.last(filePath.split('.'))
   switch (ext) {
@@ -256,7 +242,7 @@ module.exports = {
    */
   async created(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing new file ${page.path}...`)
-    let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+    let fileName = `${page.path}.${page.getFileExtension()}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
@@ -275,7 +261,7 @@ module.exports = {
    */
   async updated(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing updated file ${page.path}...`)
-    let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+    let fileName = `${page.path}.${page.getFileExtension()}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
@@ -294,7 +280,7 @@ module.exports = {
    */
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing removed file ${page.path}...`)
-    let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+    let fileName = `${page.path}.${page.getFileExtension()}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
@@ -311,8 +297,8 @@ module.exports = {
    */
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${page.sourcePath} to ${page.destinationPath}...`)
-    let sourceFilePath = `${page.sourcePath}.${getFileExtension(page.contentType)}`
-    let destinationFilePath = `${page.destinationPath}.${getFileExtension(page.contentType)}`
+    let sourceFilePath = `${page.sourcePath}.${page.getFileExtension()}`
+    let destinationFilePath = `${page.destinationPath}.${page.getFileExtension()}`
 
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       sourceFilePath = `${page.localeCode}/${sourceFilePath}`
@@ -363,7 +349,7 @@ module.exports = {
       new stream.Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {
-          let fileName = `${page.path}.${getFileExtension(page.contentType)}`
+          let fileName = `${page.path}.${page.getFileExtension()}`
           if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
             fileName = `${page.localeCode}/${fileName}`
           }
