@@ -6,27 +6,45 @@
         v-container(grid-list-lg, fluid)
           v-layout(row, wrap, justify-center)
             v-flex(xs4)
-              v-card.radius-7.grey(
-                hover
-                light
-                ripple
-                disabled
-                )
-                v-card-text.text-center(@click='selectEditor("api")')
-                  img(src='/svg/icon-rest-api.svg', alt='API', style='width: 36px;')
-                  .body-2.mt-2.grey--text.text--darken-2 API Docs
-                  .caption.grey--text.text--darken-1 REST / GraphQL
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/icon-rest-api.svg', alt='API', style='width: 36px;')
+                      .body-2.mt-2.grey--text.text--darken-2 API Docs
+                      .caption.grey--text.text--darken-1 REST / GraphQL
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='primary'
+                        opacity='.8'
+                        )
+                        .body-2 Coming Soon
             v-flex(xs4)
-              v-card.radius-7.grey(
-                hover
-                light
-                ripple
-                disabled
-                )
-                v-card-text.text-center(@click='selectEditor("code")')
-                  img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
-                  .body-2.mt-2.grey--text.text--darken-2 Code
-                  .caption.grey--text.text--darken-1 Raw HTML
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
+                      .body-2.mt-2.grey--text.text--darken-2 Code
+                      .caption.grey--text.text--darken-1 Raw HTML
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='primary'
+                        opacity='.8'
+                        )
+                        .body-2 Coming Soon
             v-flex(xs4)
               v-card.radius-7(
                 hover
@@ -38,16 +56,25 @@
                   .primary--text.body-2.mt-2 Markdown
                   .caption.grey--text Default
             v-flex(xs4)
-              v-card.radius-7.grey(
-                hover
-                light
-                ripple
-                disabled
-                )
-                v-card-text.text-center(@click='selectEditor("tabular")')
-                  img(src='/svg/icon-table.svg', alt='Tabular', style='width: 36px;')
-                  .body-2.grey--text.mt-2.text--darken-2 Tabular
-                  .caption.grey--text.text--darken-1 Excel-like
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/icon-table.svg', alt='Tabular', style='width: 36px;')
+                      .body-2.grey--text.mt-2.text--darken-2 Tabular
+                      .caption.grey--text.text--darken-1 Excel-like
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='primary'
+                        opacity='.8'
+                        )
+                        .body-2 Coming Soon
             //- v-flex(xs4)
             //-   v-card.radius-7.grey(
             //-     hover
@@ -70,17 +97,92 @@
                   .body-2.mt-2.primary--text Visual Editor
                   .caption.grey--text Rich-text WYSIWYG
             v-flex(xs4)
-              v-card.radius-7.grey(
-                hover
-                light
-                ripple
-                disabled
-                )
-                v-card-text.text-center(@click='selectEditor("wikitext")')
-                  img(src='/svg/icon-news.svg', alt='WikiText', style='width: 36px;')
-                  .body-2.grey--text.mt-2.text--darken-2 WikiText
-                  .caption.grey--text.text--darken-1 MediaWiki Format
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/icon-news.svg', alt='WikiText', style='width: 36px;')
+                      .body-2.grey--text.mt-2.text--darken-2 WikiText
+                      .caption.grey--text.text--darken-1 MediaWiki Format
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='primary'
+                        opacity='.8'
+                        )
+                        .body-2 Coming Soon
         .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}
+
+    v-card.radius-7.mt-3(color='teal darken-3', dark)
+      v-card-text.text-center.py-4
+        .subtitle-1.white--text {{$t('editor:select.customView')}}
+        v-container(grid-list-lg, fluid)
+          v-layout(row, wrap, justify-center)
+            v-flex(xs4)
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/icon-cube.svg', alt='From Template', style='width: 42px;')
+                      .body-2.mt-1.grey--text.text--darken-2 From Template
+                      .caption.grey--text.text--darken-1 Use an existing page / tree
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='teal'
+                        opacity='.8'
+                        )
+                        .body-2 Coming Soon
+            v-flex(xs4)
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/icon-hierarchy.svg', alt='Code', style='width: 42px;')
+                      .body-2.mt-1.grey--text.text--darken-2 Tree View
+                      .caption.grey--text.text--darken-1 List children pages
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='teal'
+                        opacity='.8'
+                        )
+                        .body-2 Coming Soon
+            v-flex(xs4)
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/icon-sewing-patch.svg', alt='Code', style='width: 42px;')
+                      .body-2.mt-1.grey--text.text--darken-2 Embed
+                      .caption.grey--text.text--darken-1 Include external pages
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='teal'
+                        opacity='.8'
+                        )
+                        .body-2 Coming Soon
 </template>
 
 <script>
