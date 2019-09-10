@@ -161,7 +161,7 @@
                       )
                       v-avatar.mr-3(tile, :class='strategy.color', size='24', v-html='strategy.icon')
                       span(style='text-transform: none;') {{ strategy.title }}
-                template(v-if='screen === "login" && selectedStrategy.selfRegistration')
+                template(v-if='screen === "login" && selectedStrategy.key === `local` && selectedStrategy.selfRegistration')
                   v-divider
                   v-card-actions.py-3(:class='isSocialShown ? "" : "grey lighten-4"')
                     v-spacer
