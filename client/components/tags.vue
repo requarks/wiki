@@ -18,7 +18,7 @@
     v-content.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
       v-toolbar(color='primary', dark, flat, height='58')
         template(v-if='selection.length > 0')
-          .overline.mr-3.animated.fadeInLeft Current Selection
+          .overline.mr-3.animated.fadeInLeft {{$t('tags:currentSelection')}}
           v-chip.mr-3.primary--text(
             v-for='tag of tagsSelected'
             :key='`tagSelected-` + tag.tag'
@@ -35,14 +35,14 @@
             @click='selection = []'
             )
             v-icon(left) mdi-close
-            span Clear Selection
+            span {{$t('tags:clearSelection')}}
         template(v-else)
           v-icon.mr-3.animated.fadeInRight mdi-arrow-left
-          .overline.animated.fadeInRight Select one or more tags
+          .overline.animated.fadeInRight {{$t('tags:selectOneMoreTags')}}
       v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-l5` : `grey lighten-4`', flat, height='58')
         v-text-field.tags-search(
           v-model='innerSearch'
-          label='Search within results...'
+          :label='$t(`tags:searchWithinResultsPlaceholder`)'
           solo
           hide-details
           flat
@@ -55,13 +55,13 @@
         )
         template(v-if='locales.length > 1')
           v-divider.mx-3(vertical)
-          .overline Locale
+          .overline {{$t('tags:locale')}}
           v-select.ml-2(
             :items='locales'
             v-model='locale'
             :background-color='$vuetify.theme.dark ? `grey darken-3` : `white`'
             hide-details
-            label='Locale'
+            :label='$t(`tags:locale`)'
             item-text='name'
             item-value='code'
             rounded
@@ -71,13 +71,13 @@
             style='max-width: 170px;'
           )
         v-divider.mx-3(vertical)
-        .overline Order By
+        .overline {{$t('tags:orderBy')}}
         v-select.ml-2(
           :items='orderByItems'
           v-model='orderBy'
           :background-color='$vuetify.theme.dark ? `grey darken-3` : `white`'
           hide-details
-          label='Order By'
+          :label='$t(`tags:orderBy`)'
           rounded
           single-line
           dense
@@ -90,7 +90,7 @@
       v-divider
       .text-center.pt-10(v-if='selection.length < 1')
         img(src='/svg/icon-price-tag.svg')
-        .subtitle-2.grey--text Select one or more tags on the left.
+        .subtitle-2.grey--text {{$t('tags:selectOneMoreTagsHint')}}
       .px-5.py-2(v-else)
         v-data-iterator(
           :items='pages'
@@ -109,15 +109,15 @@
                 size='96'
                 width='2'
                 )
-              .subtitle-2.grey--text.mt-5 Retrieving page results...
+              .subtitle-2.grey--text.mt-5 {{$t('tags:retrievingResultsLoading')}}
           template(v-slot:no-data)
             .text-center.pt-10
               img(src='/svg/icon-info.svg')
-              .subtitle-2.grey--text Couldn't find any page with the selected tags.
+              .subtitle-2.grey--text {{$t('tags:noResults')}}
           template(v-slot:no-results)
             .text-center.pt-10
               img(src='/svg/icon-info.svg')
-              .subtitle-2.grey--text Couldn't find any page matching the current filtering options.
+              .subtitle-2.grey--text {{$t('tags:noResultsWithFilter')}}
           template(v-slot:default='props')
             v-row(align='stretch')
               v-col(
@@ -135,7 +135,8 @@
                     .d-flex.flex-row.align-center
                       .body-1: strong.primary--text {{item.title}}
                       v-spacer
-                      .caption Last updated {{item.updatedAt | moment('from')}}
+                      i18next.caption(tag='div', path='tags:pageLastUpdated')
+                        span(place='date') {{item.updatedAt | moment('from')}}
                     .body-2.grey--text {{item.description || '---'}}
                     v-divider.my-2
                     .d-flex.flex-row.align-center
@@ -165,6 +166,7 @@ const router = new VueRouter({
 })
 
 export default {
+  i18nOptions: { namespaces: 'tags' },
   data() {
     return {
       tags: [],
@@ -173,13 +175,6 @@ export default {
       locale: 'any',
       locales: [],
       orderBy: 'title',
-      orderByItems: [
-        { text: 'Creation Date', value: 'createdAt' },
-        { text: 'ID', value: 'id' },
-        { text: 'Last Modified', value: 'updatedAt' },
-        { text: 'Path', value: 'path' },
-        { text: 'Title', value: 'title' }
-      ],
       orderByDirection: 0,
       pagination: {
         page: 1,
@@ -223,6 +218,15 @@ export default {
     },
     pageTotal () {
       return Math.ceil(this.pages.length / this.pagination.itemsPerPage)
+    },
+    orderByItems () {
+      return [
+        { text: this.$t('tags:orderByField.creationDate'), value: 'createdAt' },
+        { text: this.$t('tags:orderByField.ID'), value: 'id' },
+        { text: this.$t('tags:orderByField.lastModified'), value: 'updatedAt' },
+        { text: this.$t('tags:orderByField.path'), value: 'path' },
+        { text: this.$t('tags:orderByField.title'), value: 'title' }
+      ]
     }
   },
   watch: {
@@ -243,7 +247,7 @@ export default {
     this.$store.commit('page/SET_MODE', 'tags')
 
     this.locales = _.concat(
-      [{name: 'Any', code: 'any'}],
+      [{name: this.$t('tags:localeAny'), code: 'any'}],
       (siteLangs.length > 0 ? siteLangs : [])
     )
 
@@ -257,7 +261,6 @@ export default {
         this.selection.push(tag)
       }
       this.rebuildURL()
-      console.info(this.$refs.dude)
     },
     isSelected (tag) {
       return _.includes(this.selection, tag)

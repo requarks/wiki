@@ -7,7 +7,7 @@
         clearable
         background-color='deep-purple'
         color='white'
-        label='Search...'
+        :label='$t(`common:header.search`)'
         single-line
         solo
         flat
@@ -22,41 +22,19 @@
           v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
             template(v-slot:activator='{ on }')
               v-app-bar-nav-icon.btn-animate-app(v-on='on', :class='$vuetify.rtl ? `mx-0` : ``')
-                v-icon mdi-menu-open
+                v-icon mdi-menu
             v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
               v-list-item.pl-4(href='/')
                 v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
                 v-list-item-title.body-2 {{$t('common:header.home')}}
-              v-list-item.pl-4(@click='pageNew', v-if='isAuthenticated')
-                v-list-item-avatar(size='24'): v-icon(color='green') mdi-file-document-box-plus-outline
-                v-list-item-title.body-2 {{$t('common:header.newPage')}}
-              template(v-if='path && path.length')
-                v-divider.my-0
-                .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
-                v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-box-outline
-                  v-list-item-title.body-2 {{$t('common:header.view')}}
-                v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
-                  v-list-item-title.body-2 {{$t('common:header.edit')}}
-                v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
-                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-history
-                  v-list-item-content
-                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.history')}}
-                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-                v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
-                  v-list-item-title.body-2 {{$t('common:header.viewSource')}}
-                v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-content-save-move-outline
-                  v-list-item-content
-                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.move')}}
-                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-                v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
-                  v-list-item-title.body-2 {{$t('common:header.delete')}}
-              v-divider.my-0
-              .overline.pa-4.grey--text {{$t('common:header.assets')}}
+              v-list-item.pl-4(@click='')
+                v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-file-tree
+                v-list-item-content
+                  v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.siteMap')}}
+                  v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+              v-list-item.pl-4(href='/t')
+                v-list-item-avatar(size='24'): v-icon(color='teal') mdi-tag-multiple
+                v-list-item-title.body-2 {{$t('common:header.browseTags')}}
               v-list-item.pl-4(@click='assets')
                 v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
                 v-list-item-content
@@ -88,89 +66,98 @@
                 @keyup.down='searchMove(`down`)'
                 @keyup.up='searchMove(`up`)'
               )
-            //- v-menu(
-            //-   v-model='searchAdvMenuShown'
-            //-   left
-            //-   offset-y
-            //-   min-width='450'
-            //-   :close-on-content-click='false'
-            //-   nudge-bottom='7'
-            //-   nudge-right='5'
-            //-   v-if='searchIsShown'
-            //-   )
-            //-   template(v-slot:activator='{ on }')
-            //-     v-btn.nav-header-search-adv(icon, color='grey darken-2', v-on='on')
-            //-       v-icon(color='white') mdi-chevron-down
-            //-   v-card.radius-0(dark)
-            //-     v-toolbar(flat, color='grey darken-4', dense)
-            //-       v-icon.mr-2 mdi-feature-search-outline
-            //-       v-subheader.pl-0 Advanced Search
-            //-       v-spacer
-            //-       v-chip(label, small, color='primary') Coming soon
-            //-     v-card-text.pa-4
-            //-       v-checkbox.mt-0(
-            //-         label='Restrict to current language'
-            //-         color='white'
-            //-         v-model='searchRestrictLocale'
-            //-         hide-details
-            //-       )
-            //-       v-checkbox(
-            //-         label='Search below current path only'
-            //-         color='white'
-            //-         v-model='searchRestrictPath'
-            //-         hide-details
-            //-       )
-            //-     v-divider
-            //-     v-card-actions.grey.darken-3-d4
-            //-       v-container.pa-0(grid-list-md)
-            //-         v-layout(row)
-            //-           v-flex(xs6)
-            //-             v-btn(depressed, color='grey darken-3', block)
-            //-               v-icon(left) mdi-chevron-right
-            //-               span Save as defaults
-            //-           v-flex(xs6)
-            //-             v-btn(depressed, color='grey darken-3', block)
-            //-               v-icon(left) mdi-cached
-            //-               span Reset
-            v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
+            v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn.ml-2.mr-0(icon, v-on='on', href='/t')
                   v-icon(color='grey') mdi-tag-multiple
-              span Browse Tags
+              span {{$t('common:header.browseTags')}}
       v-flex(xs6, md4)
         v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
+
           slot(name='actions')
+
+          //- (mobile) SEARCH TOGGLE
+
           v-btn(
             v-if='!hideSearch && $vuetify.breakpoint.smAndDown'
             @click='searchToggle'
             icon
             )
             v-icon(color='grey') mdi-magnify
-          v-menu(offset-y, left, transition='slide-y-transition', v-if='mode === `view` && locales.length > 0')
+
+          //- LANGUAGES
+
+          template(v-if='mode === `view` && locales.length > 0')
+            v-menu(offset-y, bottom, nudge-bottom='30', transition='slide-y-transition')
+              template(v-slot:activator='{ on: menu }')
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on: tooltip }')
+                    v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-3` : ``', tile, height='64')
+                      v-icon(color='grey') mdi-web
+                  span {{$t('common:header.language')}}
+              v-list(nav)
+                template(v-for='(lc, idx) of locales')
+                  v-list-item(@click='changeLocale(lc)')
+                    v-list-item-action: v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
+                    v-list-item-title {{lc.name}}
+            v-divider(vertical)
+
+          //- PAGE ACTIONS
+
+          template(v-if='isAuthenticated && path')
+            v-menu(offset-y, bottom, nudge-bottom='30', transition='slide-y-transition')
+              template(v-slot:activator='{ on: menu }')
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on: tooltip }')
+                    v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-3` : ``', tile, height='64')
+                      v-icon(color='grey') mdi-file-document-edit-outline
+                  span {{$t('common:header.pageActions')}}
+              v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
+                .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
+                v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-box-outline
+                  v-list-item-title.body-2 {{$t('common:header.view')}}
+                v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
+                  v-list-item-title.body-2 {{$t('common:header.edit')}}
+                v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
+                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-history
+                  v-list-item-content
+                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.history')}}
+                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+                v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
+                  v-list-item-title.body-2 {{$t('common:header.viewSource')}}
+                v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
+                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-content-save-move-outline
+                  v-list-item-content
+                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.move')}}
+                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+                v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
+                  v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
+                  v-list-item-title.body-2 {{$t('common:header.delete')}}
+            v-divider(vertical)
+
+          //- NEW PAGE
+
+          template(v-if='isAuthenticated')
+            v-tooltip(bottom)
+              template(v-slot:activator='{ on }')
+                v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
+                  v-icon(color='grey') mdi-file-document-box-plus-outline
+              span {{$t('common:header.newPage')}}
+            v-divider(vertical)
+
+          //- ACCOUNT
+
+          v-menu(v-if='isAuthenticated', offset-y, bottom, nudge-bottom='30', min-width='300', transition='slide-y-transition')
             template(v-slot:activator='{ on: menu }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-3` : ``')
-                    v-icon(color='grey') mdi-web
-                span {{$t('common:header.language')}}
-            v-list(nav)
-              template(v-for='(lc, idx) of locales')
-                v-list-item(@click='changeLocale(lc)')
-                  v-list-item-action: v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
-                  v-list-item-title {{lc.name}}
-          v-tooltip(bottom, v-if='isAuthenticated && isAdmin')
-            template(v-slot:activator='{ on }')
-              v-btn.btn-animate-rotate(icon, href='/a', v-on='on', :class='$vuetify.rtl ? `ml-3` : ``')
-                v-icon(color='grey') mdi-settings
-            span {{$t('common:header.admin')}}
-          v-menu(v-if='isAuthenticated', offset-y, min-width='300', left, transition='slide-y-transition')
-            template(v-slot:activator='{ on: menu }')
-              v-tooltip(bottom)
-                template(v-slot:activator='{ on: tooltip }')
-                  v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-0` : ``')
+                  v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-0` : ``', tile, height='64')
                     v-icon(v-if='picture.kind === `initials`', color='grey') mdi-account-circle
                     v-avatar(v-else-if='picture.kind === `image`', :size='34')
                       v-img(:src='picture.url')
@@ -195,6 +182,9 @@
                 v-list-item-content
                   v-list-item-title {{$t('common:header.profile')}}
                   v-list-item-subtitle.overline Coming soon
+              v-list-item(href='/a', v-if='isAuthenticated && isAdmin')
+                v-list-item-action.btn-animate-rotate: v-icon(color='blue-grey') mdi-settings
+                v-list-item-title.blue-grey--text {{$t('common:header.admin')}}
               v-list-item(@click='logout')
                 v-list-item-action: v-icon(color='red') mdi-logout
                 v-list-item-title.red--text {{$t('common:header.logout')}}
