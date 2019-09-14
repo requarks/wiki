@@ -8,13 +8,13 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey(
+                  v-card.radius-7.grey.animated.fadeInUp(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-rest-api.svg', alt='API', style='width: 36px;')
+                      img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px;')
                       .body-2.mt-2.grey--text.text--darken-2 API Docs
                       .caption.grey--text.text--darken-1 REST / GraphQL
                     v-fade-transition
@@ -24,17 +24,17 @@
                         color='primary'
                         opacity='.8'
                         )
-                        .body-2 Coming Soon
+                        .body-2.mt-7 Coming Soon
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey(
+                  v-card.radius-7.grey.animated.fadeInUp.wait-p1s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-source-code.svg', alt='Code', style='width: 36px;')
+                      img(src='/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
                       .body-2.mt-2.grey--text.text--darken-2 Code
                       .caption.grey--text.text--darken-1 Raw HTML
                     v-fade-transition
@@ -44,27 +44,27 @@
                         color='primary'
                         opacity='.8'
                         )
-                        .body-2 Coming Soon
+                        .body-2.mt-7 Coming Soon
             v-flex(xs4)
-              v-card.radius-7(
+              v-card.radius-7.animated.fadeInUp.wait-p2s(
                 hover
                 light
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("markdown")')
-                  img(src='/svg/icon-markdown.svg', alt='Markdown', style='width: 36px;')
-                  .primary--text.body-2.mt-2 Markdown
-                  .caption.grey--text Default
+                  img(src='/svg/editor-icon-markdown.svg', alt='Markdown', style='width: 36px;')
+                  .body-2.primary--text.mt-2 Markdown
+                  .caption.grey--text Plain Text Formatting
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey(
+                  v-card.radius-7.grey.animated.fadeInUp.wait-p3s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-table.svg', alt='Tabular', style='width: 36px;')
+                      img(src='/svg/editor-icon-tabular.svg', alt='Tabular', style='width: 36px;')
                       .body-2.grey--text.mt-2.text--darken-2 Tabular
                       .caption.grey--text.text--darken-1 Excel-like
                     v-fade-transition
@@ -74,7 +74,7 @@
                         color='primary'
                         opacity='.8'
                         )
-                        .body-2 Coming Soon
+                        .body-2.mt-7 Coming Soon
             //- v-flex(xs4)
             //-   v-card.radius-7.grey(
             //-     hover
@@ -87,25 +87,25 @@
             //-       .body-2.mt-2.grey--text.text--darken-2 Visual Builder
             //-       .caption.grey--text.text--darken-1 Drag-n-drop
             v-flex(xs4)
-              v-card.radius-7(
+              v-card.radius-7.animated.fadeInUp.wait-p4s(
                 hover
                 light
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("ckeditor")')
-                  img(src='/svg/icon-open-in-browser.svg', alt='Visual Editor', style='width: 36px;')
+                  img(src='/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
                   .body-2.mt-2.primary--text Visual Editor
                   .caption.grey--text Rich-text WYSIWYG
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey(
+                  v-card.radius-7.grey.animated.fadeInUp.wait-p5s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-news.svg', alt='WikiText', style='width: 36px;')
+                      img(src='/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px;')
                       .body-2.grey--text.mt-2.text--darken-2 WikiText
                       .caption.grey--text.text--darken-1 MediaWiki Format
                     v-fade-transition
@@ -115,7 +115,7 @@
                         color='primary'
                         opacity='.8'
                         )
-                        .body-2 Coming Soon
+                        .body-2.mt-7 Coming Soon
         .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}
 
     v-card.radius-7.mt-3(color='teal darken-3', dark)
@@ -126,7 +126,7 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey(
+                  v-card.radius-7.grey.animated.fadeInUp(
                     hover
                     light
                     ripple
@@ -142,17 +142,17 @@
                         color='teal'
                         opacity='.8'
                         )
-                        .body-2 Coming Soon
+                        .body-2.mt-7 Coming Soon
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey(
+                  v-card.radius-7.grey.animated.fadeInUp.wait-p1s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-hierarchy.svg', alt='Code', style='width: 42px;')
+                      img(src='/svg/icon-tree-structure.svg', alt='Tree View', style='width: 42px;')
                       .body-2.mt-1.grey--text.text--darken-2 Tree View
                       .caption.grey--text.text--darken-1 List children pages
                     v-fade-transition
@@ -162,11 +162,11 @@
                         color='teal'
                         opacity='.8'
                         )
-                        .body-2 Coming Soon
+                        .body-2.mt-7 Coming Soon
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey(
+                  v-card.radius-7.grey.animated.fadeInUp.wait-p2s(
                     hover
                     light
                     ripple
@@ -182,7 +182,14 @@
                         color='teal'
                         opacity='.8'
                         )
-                        .body-2 Coming Soon
+                        .body-2.mt-7 Coming Soon
+    v-card.radius-7.mt-3(color='grey darken-3', dark)
+      v-toolbar(dense, flat)
+        v-spacer
+        v-btn(text, @click='goBack')
+          v-icon(left) mdi-undo-variant
+          span Cancel
+        v-spacer
 </template>
 
 <script>
@@ -210,6 +217,9 @@ export default {
     selectEditor(name) {
       this.currentEditor = `editor${_.startCase(name)}`
       this.isShown = false
+    },
+    goBack() {
+      window.history.go(-2)
     }
   }
 }

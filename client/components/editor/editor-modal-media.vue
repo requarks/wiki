@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-card.editor-modal-media.animated.fadeInLeft(flat, tile)
+  v-card.editor-modal-media.animated.fadeInLeft(flat, tile, :class='`is-editor-` + editorKey')
     v-container.pa-3(grid-list-lg, fluid)
       v-layout(row, wrap)
         v-flex(xs12, lg9)
@@ -117,6 +117,9 @@
               .d-flex.mt-3
                 v-toolbar.radius-7(flat, :color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-4`', dense, height='44')
                   .body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{$t('editor:assets.fileCount', { count: assets.length })}}
+                v-btn.ml-3.mr-0.my-0.radius-7(color='red darken-2', large, @click='cancel', dark)
+                  v-icon(left) mdi-close
+                  span {{$t('common:actions.cancel')}}
                 v-btn.ml-3.mr-0.my-0.radius-7(color='teal', large, @click='insert', :disabled='!currentFileId', :dark='currentFileId !== null')
                   v-icon(left) mdi-playlist-plus
                   span {{$t('common:actions.insert')}}
@@ -280,6 +283,7 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
+    editorKey: get('editor/editorKey'),
     activeModal: sync('editor/activeModal'),
     folderTree: get('editor/media@folderTree'),
     currentFolderId: sync('editor/media@currentFolderId'),
@@ -494,6 +498,9 @@ export default {
       }
       this.deleteAssetLoading = false
       this.$store.commit(`loadingStop`, 'editor-media-deleteasset')
+    },
+    cancel () {
+      this.activeModal = ''
     }
   },
   apollo: {
@@ -545,6 +552,20 @@ export default {
     left: 40px;
     width: calc(100vw - 40px);
     height: calc(100vh - 112px - 24px);
+  }
+
+  &.is-editor-ckeditor {
+    top: 64px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 64px - 26px);
+
+    @include until($tablet) {
+      top: 56px;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 56px - 24px);
+    }
   }
 
   .filepond--root {

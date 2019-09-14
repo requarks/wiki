@@ -183,8 +183,8 @@
                   v-list-item-title {{$t('common:header.profile')}}
                   v-list-item-subtitle.overline Coming soon
               v-list-item(href='/a', v-if='isAuthenticated && isAdmin')
-                v-list-item-action.btn-animate-rotate: v-icon(color='blue-grey') mdi-settings
-                v-list-item-title.blue-grey--text {{$t('common:header.admin')}}
+                v-list-item-action.btn-animate-rotate: v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-3` : `blue-grey`') mdi-settings
+                v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.admin')}}
               v-list-item(@click='logout')
                 v-list-item-action: v-icon(color='red') mdi-logout
                 v-list-item-title.red--text {{$t('common:header.logout')}}

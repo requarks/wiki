@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="80pt" height="80pt" viewBox="0 0 80 80" version="1.1">
+<g id="surface1">
+<path style=" stroke:none;fill-rule:nonzero;fill:#FFFFFF;fill-opacity:1;" d="M 5 7 L 75 7 L 75 73 L 5 73 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#4788C7;fill-opacity:1;" d="M 74 8 L 74 72 L 6 72 L 6 8 L 74 8 M 76 6 L 4 6 L 4 74 L 76 74 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#98CCFD;fill-opacity:1;" d="M 6 8 L 74 8 L 74 24 L 6 24 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#FFFFFF;fill-opacity:1;" d="M 12 14 L 16 14 L 16 18 L 12 18 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#FFFFFF;fill-opacity:1;" d="M 20 14 L 24 14 L 24 18 L 20 18 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#FFFFFF;fill-opacity:1;" d="M 28 14 L 32 14 L 32 18 L 28 18 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#98CCFD;fill-opacity:1;" d="M 12 32 L 38 32 L 38 66 L 12 66 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#4788C7;fill-opacity:1;" d="M 67 34 L 45 34 C 44.449219 34 44 33.550781 44 33 C 44 32.449219 44.449219 32 45 32 L 67 32 C 67.550781 32 68 32.449219 68 33 C 68 33.550781 67.550781 34 67 34 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#4788C7;fill-opacity:1;" d="M 67 42 L 45 42 C 44.449219 42 44 41.550781 44 41 C 44 40.449219 44.449219 40 45 40 L 67 40 C 67.550781 40 68 40.449219 68 41 C 68 41.550781 67.550781 42 67 42 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#4788C7;fill-opacity:1;" d="M 67 50 L 45 50 C 44.449219 50 44 49.550781 44 49 C 44 48.449219 44.449219 48 45 48 L 67 48 C 67.550781 48 68 48.449219 68 49 C 68 49.550781 67.550781 50 67 50 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#4788C7;fill-opacity:1;" d="M 67 58 L 45 58 C 44.449219 58 44 57.550781 44 57 C 44 56.449219 44.449219 56 45 56 L 67 56 C 67.550781 56 68 56.449219 68 57 C 68 57.550781 67.550781 58 67 58 Z "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:#4788C7;fill-opacity:1;" d="M 67 66 L 45 66 C 44.449219 66 44 65.550781 44 65 C 44 64.449219 44.449219 64 45 64 L 67 64 C 67.550781 64 68 64.449219 68 65 C 68 65.550781 67.550781 66 67 66 Z "/>
+</g>
+</svg>
