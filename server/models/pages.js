@@ -114,6 +114,9 @@ module.exports = class Page extends Model {
     this.updatedAt = new Date().toISOString()
   }
 
+  /**
+   * Cache Schema
+   */
   static get cacheSchema() {
     return new JSBinType({
       id: 'uint',
@@ -142,6 +145,8 @@ module.exports = class Page extends Model {
 
   /**
    * Inject page metadata into contents
+   *
+   * @returns {string} Page Contents with Injected Metadata
    */
   injectMetadata () {
     return pageHelper.injectPageMetadata(this)
@@ -149,6 +154,8 @@ module.exports = class Page extends Model {
 
   /**
    * Get the page's file extension based on content type
+   *
+   * @returns {string} File Extension
    */
   getFileExtension() {
     switch (this.contentType) {
@@ -166,6 +173,7 @@ module.exports = class Page extends Model {
    *
    * @param {String} raw Raw file contents
    * @param {String} contentType Content Type
+   * @returns {Object} Parsed Page Metadata with Raw Content
    */
   static parseMetadata (raw, contentType) {
     let result
@@ -204,6 +212,12 @@ module.exports = class Page extends Model {
     }
   }
 
+  /**
+   * Create a New Page
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
   static async createPage(opts) {
     const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
     if (dupCheck) {
@@ -259,9 +273,22 @@ module.exports = class Page extends Model {
       })
     }
 
+    // -> Reconnect Links
+    await WIKI.models.pages.reconnectLinks({
+      locale: page.localeCode,
+      path: page.path,
+      mode: 'create'
+    })
+
     return page
   }
 
+  /**
+   * Update an Existing Page
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
   static async updatePage(opts) {
     const ogPage = await WIKI.models.pages.query().findById(opts.id)
     if (!ogPage) {
@@ -314,6 +341,12 @@ module.exports = class Page extends Model {
     return page
   }
 
+  /**
+   * Delete an Existing Page
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise with no value
+   */
   static async deletePage(opts) {
     let page
     if (_.has(opts, 'id')) {
@@ -344,8 +377,98 @@ module.exports = class Page extends Model {
         page
       })
     }
+
+    // -> Reconnect Links
+    await WIKI.models.pages.reconnectLinks({
+      locale: page.localeCode,
+      path: page.path,
+      mode: 'delete'
+    })
   }
 
+  /**
+   * Reconnect links to new/updated/deleted page
+   *
+   * @param {Object} opts - Page parameters
+   * @param {string} opts.path - Page Path
+   * @param {string} opts.locale - Page Locale Code
+   * @param {string} [opts.sourcePath] - Previous Page Path (move only)
+   * @param {string} [opts.sourceLocale] - Previous Page Locale Code (move only)
+   * @param {string} opts.mode - Page Update mode (new, move, delete)
+   * @returns {Promise} Promise with no value
+   */
+  static async reconnectLinks (opts) {
+    const pageHref = `/${opts.locale}/${opts.path}`
+    let replaceArgs = {
+      from: '',
+      to: ''
+    }
+    switch (opts.mode) {
+      case 'create':
+        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        break
+      case 'move':
+        const prevPageHref = `/${opts.sourceLocale}/${opts.sourcePath}`
+        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        break
+      case 'delete':
+        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        break
+      default:
+        return false
+    }
+
+    let affectedHashes = []
+    // -> Perform replace and return affected page hashes (POSTGRES, MSSQL only)
+    if (WIKI.config.db.type === 'postgres' || WIKI.config.db.type === 'mssql') {
+      affectedHashes = await WIKI.models.pages.query()
+        .returning('hash')
+        .patch({
+          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
+        })
+        .whereIn('pages.id', function () {
+          this.select('pageLinks.pageId').from('pageLinks').where({
+            'pageLinks.path': opts.path,
+            'pageLinks.localeCode': opts.locale
+          })
+        })
+        .pluck('hash')
+    } else {
+      // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, SQLITE only)
+      await WIKI.models.pages.query()
+        .patch({
+          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
+        })
+        .whereIn('pages.id', function () {
+          this.select('pageLinks.pageId').from('pageLinks').where({
+            'pageLinks.path': opts.path,
+            'pageLinks.localeCode': opts.locale
+          })
+        })
+      affectedHashes = await WIKI.models.pages.query()
+        .column('hash')
+        .whereIn('pages.id', function () {
+          this.select('pageLinks.pageId').from('pageLinks').where({
+            'pageLinks.path': opts.path,
+            'pageLinks.localeCode': opts.locale
+          })
+        })
+        .pluck('hash')
+    }
+    for (const hash of affectedHashes) {
+      await WIKI.models.pages.deletePageFromCache({ hash })
+    }
+  }
+
+  /**
+   * Trigger the rendering of a page
+   *
+   * @param {Object} page Page Model Instance
+   * @returns {Promise} Promise with no value
+   */
   static async renderPage(page) {
     const renderJob = await WIKI.scheduler.registerJob({
       name: 'render-page',
@@ -355,6 +478,12 @@ module.exports = class Page extends Model {
     return renderJob.finished
   }
 
+  /**
+   * Fetch an Existing Page from Cache if possible, from DB otherwise and save render to Cache
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
   static async getPage(opts) {
     // -> Get from cache first
     let page = await WIKI.models.pages.getPageFromCache(opts)
@@ -375,6 +504,12 @@ module.exports = class Page extends Model {
     return page
   }
 
+  /**
+   * Fetch an Existing Page from the Database
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
   static async getPageFromDb(opts) {
     const queryModeID = _.isNumber(opts)
     try {
@@ -426,6 +561,12 @@ module.exports = class Page extends Model {
     }
   }
 
+  /**
+   * Save a Page Model Instance to Cache
+   *
+   * @param {Object} page Page Model Instance
+   * @returns {Promise} Promise with no value
+   */
   static async savePageToCache(page) {
     const cachePath = path.join(process.cwd(), `data/cache/${page.hash}.bin`)
     await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
@@ -448,6 +589,12 @@ module.exports = class Page extends Model {
     }))
   }
 
+  /**
+   * Fetch an Existing Page from Cache
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
   static async getPageFromCache(opts) {
     const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' })
     const cachePath = path.join(process.cwd(), `data/cache/${pageHash}.bin`)
@@ -470,14 +617,32 @@ module.exports = class Page extends Model {
     }
   }
 
+  /**
+   * Delete an Existing Page from Cache
+   *
+   * @param {Object} page Page Model Instance
+   * @param {string} page.hash Hash of the Page
+   * @returns {Promise} Promise with no value
+   */
   static async deletePageFromCache(page) {
     return fs.remove(path.join(process.cwd(), `data/cache/${page.hash}.bin`))
   }
 
+  /**
+   * Flush the contents of the Cache
+   */
   static async flushCache() {
     return fs.emptyDir(path.join(process.cwd(), `data/cache`))
   }
 
+  /**
+   * Migrate all pages from a source locale to the target locale
+   *
+   * @param {Object} opts Migration properties
+   * @param {string} opts.sourceLocale Source Locale Code
+   * @param {string} opts.targetLocale Target Locale Code
+   * @returns {Promise} Promise with no value
+   */
   static async migrateToLocale({ sourceLocale, targetLocale }) {
     return WIKI.models.pages.query()
       .patch({
@@ -491,6 +656,12 @@ module.exports = class Page extends Model {
       })
   }
 
+  /**
+   * Clean raw HTML from content for use in search engines
+   *
+   * @param {string} rawHTML Raw HTML
+   * @returns {string} Cleaned Content Text
+   */
   static cleanHTML(rawHTML = '') {
     return striptags(rawHTML || '')
       .replace(emojiRegex(), '')

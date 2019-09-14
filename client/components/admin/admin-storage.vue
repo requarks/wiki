@@ -66,8 +66,9 @@
                     v-list-item-subtitle.red--text.caption {{$t('admin:storage.lastSyncAttempt', { time: $options.filters.moment(tgt.lastAttempt, 'from') })}}
                   v-list-item-action
                     v-menu
-                      v-btn(slot='activator', icon)
-                        v-icon(color='red') mdi-information
+                      template(v-slot:activator='{ on }')
+                        v-btn(icon, v-on='on')
+                          v-icon(color='red') mdi-information
                       v-card(width='450')
                         v-toolbar(flat, color='red', dark, dense) {{$t('admin:storage.errorMsg')}}
                         v-card-text {{tgt.message}}

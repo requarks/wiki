@@ -107,7 +107,7 @@
 
           //- PAGE ACTIONS
 
-          template(v-if='isAuthenticated && path')
+          template(v-if='isAuthenticated && path && mode !== `edit`')
             v-menu(offset-y, bottom, nudge-bottom='30', transition='slide-y-transition')
               template(v-slot:activator='{ on: menu }')
                 v-tooltip(bottom)
