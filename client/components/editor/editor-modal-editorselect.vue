@@ -26,7 +26,27 @@
                         )
                         .body-2.mt-7 Coming Soon
             v-flex(xs4)
-              v-card.radius-7.animated.fadeInUp.wait-p1s(
+              v-hover
+                template(v-slot:default='{ hover }')
+                  v-card.radius-7.grey.animated.fadeInUp.wait-p1s(
+                    hover
+                    light
+                    ripple
+                    )
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px;')
+                      .body-2.grey--text.mt-2.text--darken-2 Blog
+                      .caption.grey--text.text--darken-1 Timeline of Posts
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='primary'
+                        opacity='.8'
+                        )
+                        .body-2.mt-7 Coming Soon
+            v-flex(xs4)
+              v-card.radius-7.animated.fadeInUp.wait-p2s(
                 hover
                 light
                 ripple
@@ -36,7 +56,7 @@
                   .body-2.primary--text.mt-2 Code
                   .caption.grey--text Raw HTML
             v-flex(xs4)
-              v-card.radius-7.animated.fadeInUp.wait-p2s(
+              v-card.radius-7.animated.fadeInUp.wait-p1s(
                 hover
                 light
                 ripple
@@ -48,7 +68,7 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp.wait-p3s(
+                  v-card.radius-7.grey.animated.fadeInUp.wait-p2s(
                     hover
                     light
                     ripple
@@ -66,7 +86,7 @@
                         )
                         .body-2.mt-7 Coming Soon
             v-flex(xs4)
-              v-card.radius-7.animated.fadeInUp.wait-p4s(
+              v-card.radius-7.animated.fadeInUp.wait-p3s(
                 hover
                 light
                 ripple
@@ -75,29 +95,21 @@
                   img(src='/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
                   .body-2.mt-2.primary--text Visual Editor
                   .caption.grey--text Rich-text WYSIWYG
-            v-flex(xs4)
-              v-hover
-                template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp.wait-p5s(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px;')
-                      .body-2.grey--text.mt-2.text--darken-2 WikiText
-                      .caption.grey--text.text--darken-1 MediaWiki Format
-                    v-fade-transition
-                      v-overlay(
-                        v-if='hover'
-                        absolute
-                        color='primary'
-                        opacity='.8'
-                        )
-                        .body-2.mt-7 Coming Soon
         .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}
 
-    v-card.radius-7.mt-3(color='teal darken-3', dark)
+    v-card.radius-7.mt-2(color='indigo darken-3', dark)
+      v-toolbar(dense, flat, color='light-green darken-3')
+        v-spacer
+        .caption.mr-1 Or convert from
+        v-btn.mx-1(depressed, color='light-green darken-2', @click='')
+          v-icon(left) mdi-alpha-a-box
+          .body-2.text-none AsciiDoc
+        v-btn.mx-1(depressed, color='light-green darken-2', @click='')
+          v-icon(left) mdi-alpha-w-circle
+          .body-2.text-none WikiText
+        v-spacer
+
+    v-card.radius-7.mt-2(color='teal darken-3', dark)
       v-card-text.text-center.py-4
         .subtitle-1.white--text {{$t('editor:select.customView')}}
         v-container(grid-list-lg, fluid)
@@ -162,7 +174,7 @@
                         opacity='.8'
                         )
                         .body-2.mt-7 Coming Soon
-    v-card.radius-7.mt-3(color='grey darken-3', dark)
+    v-card.radius-7.mt-2(color='grey darken-3', dark)
       v-toolbar(dense, flat)
         v-spacer
         v-btn(text, @click='goBack')
