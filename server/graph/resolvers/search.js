@@ -32,8 +32,8 @@ module.exports = {
           }, []), 'key')
         }
       })
-      if (args.filter) { searchEngines = graphHelper.filter(searchEngines, args.filter) }
-      if (args.orderBy) { searchEngines = graphHelper.orderBy(searchEngines, args.orderBy) }
+      // if (args.filter) { searchEngines = graphHelper.filter(searchEngines, args.filter) }
+      if (args.orderBy) { searchEngines = _.sortBy(searchEngines, [args.orderBy]) }
       return searchEngines
     }
   },

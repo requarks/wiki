@@ -173,18 +173,6 @@ module.exports = {
             outputPath: 'fonts/'
           }
         }]
-      },
-      {
-        test: /.jsx$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/,
-        options: {
-          presets: ['es2015', 'react']
-        }
-      },
-      {
-        test: /\.flow$/,
-        loader: 'ignore-loader'
       }
     ]
   },
@@ -193,8 +181,7 @@ module.exports = {
     new VuetifyLoaderPlugin(),
     new CopyWebpackPlugin([
       { from: 'client/static' },
-      { from: './node_modules/prismjs/components', to: 'js/prism' },
-      { from: './node_modules/graphql-voyager/dist/voyager.worker.js', to: 'js/' }
+      { from: './node_modules/prismjs/components', to: 'js/prism' }
     ], {}),
     new HtmlWebpackPlugin({
       template: 'dev/templates/master.pug',
@@ -227,8 +214,7 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('development'),
-      'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default')),
-      '__REACT_DEVTOOLS_GLOBAL_HOOK__': '({ isDisabled: true })'
+      'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default'))
     }),
     new WriteFilePlugin(),
     new webpack.HotModuleReplacementPlugin(),
@@ -270,7 +256,6 @@ module.exports = {
     extensions: [
       '.js',
       '.json',
-      '.jsx',
       '.vue'
     ],
     modules: [

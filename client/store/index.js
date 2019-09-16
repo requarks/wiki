@@ -54,7 +54,7 @@ export default new Vuex.Store({
       WIKI.$store.commit('showNotification', {
         style: 'red',
         message: _.get(err, 'graphQLErrors[0].message', err.message),
-        icon: 'warning'
+        icon: 'alert'
       })
     }
   },

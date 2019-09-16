@@ -177,18 +177,6 @@ module.exports = {
             outputPath: 'fonts/'
           }
         }]
-      },
-      {
-        test: /.jsx$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/,
-        options: {
-          presets: ['es2015', 'react']
-        }
-      },
-      {
-        test: /\.flow$/,
-        loader: 'ignore-loader'
       }
     ]
   },
@@ -198,8 +186,7 @@ module.exports = {
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
     new CopyWebpackPlugin([
       { from: 'client/static' },
-      { from: './node_modules/prismjs/components', to: 'js/prism' },
-      { from: './node_modules/graphql-voyager/dist/voyager.worker.js', to: 'js/' }
+      { from: './node_modules/prismjs/components', to: 'js/prism' }
     ], {}),
     new MiniCssExtractPlugin({
       filename: 'css/bundle.[hash].css',
@@ -245,8 +232,7 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production'),
-      'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default')),
-      '__REACT_DEVTOOLS_GLOBAL_HOOK__': '({ isDisabled: true })'
+      'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default'))
     })
   ],
   optimization: {
@@ -273,7 +259,6 @@ module.exports = {
     extensions: [
       '.js',
       '.json',
-      'jsx',
       '.vue'
     ],
     modules: [

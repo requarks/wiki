@@ -568,6 +568,16 @@ export default {
     }
   }
 
+  &.is-editor-code {
+    top: 64px;
+    height: calc(100vh - 64px - 26px);
+
+    @include until($tablet) {
+      top: 56px;
+      height: calc(100vh - 56px - 24px);
+    }
+  }
+
   .filepond--root {
     margin-bottom: 0;
   }

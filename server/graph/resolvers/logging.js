@@ -35,8 +35,8 @@ module.exports = {
           }, []), 'key')
         }
       })
-      if (args.filter) { loggers = graphHelper.filter(loggers, args.filter) }
-      if (args.orderBy) { loggers = graphHelper.orderBy(loggers, args.orderBy) }
+      // if (args.filter) { loggers = graphHelper.filter(loggers, args.filter) }
+      if (args.orderBy) { loggers = _.sortBy(loggers, [args.orderBy]) }
       return loggers
     }
   },

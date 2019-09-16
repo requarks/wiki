@@ -26,25 +26,15 @@
                         )
                         .body-2.mt-7 Coming Soon
             v-flex(xs4)
-              v-hover
-                template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp.wait-p1s(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
-                      .body-2.mt-2.grey--text.text--darken-2 Code
-                      .caption.grey--text.text--darken-1 Raw HTML
-                    v-fade-transition
-                      v-overlay(
-                        v-if='hover'
-                        absolute
-                        color='primary'
-                        opacity='.8'
-                        )
-                        .body-2.mt-7 Coming Soon
+              v-card.radius-7.animated.fadeInUp.wait-p1s(
+                hover
+                light
+                ripple
+                )
+                v-card-text.text-center(@click='selectEditor("code")')
+                  img(src='/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
+                  .body-2.primary--text.mt-2 Code
+                  .caption.grey--text Raw HTML
             v-flex(xs4)
               v-card.radius-7.animated.fadeInUp.wait-p2s(
                 hover
@@ -75,17 +65,6 @@
                         opacity='.8'
                         )
                         .body-2.mt-7 Coming Soon
-            //- v-flex(xs4)
-            //-   v-card.radius-7.grey(
-            //-     hover
-            //-     light
-            //-     ripple
-            //-     disabled
-            //-     )
-            //-     v-card-text.text-center(@click='selectEditor("wysiwyg")')
-            //-       img(src='/svg/icon-open-in-browser.svg', alt='Visual Builder', style='width: 36px;')
-            //-       .body-2.mt-2.grey--text.text--darken-2 Visual Builder
-            //-       .caption.grey--text.text--darken-1 Drag-n-drop
             v-flex(xs4)
               v-card.radius-7.animated.fadeInUp.wait-p4s(
                 hover

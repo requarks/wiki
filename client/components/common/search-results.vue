@@ -209,6 +209,10 @@ export default {
 
     .highlighted {
       background: #FFF linear-gradient(to bottom, #FFF, mc('orange', '100'));
+
+      @at-root .theme--dark & {
+        background: mc('grey', '900') linear-gradient(to bottom, mc('orange', '900'), darken(mc('orange', '900'), 15%));
+      }
     }
   }
 

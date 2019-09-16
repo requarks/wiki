@@ -70,6 +70,7 @@
                     :label='$t("navigation.label")'
                     prepend-icon='mdi-format-title'
                     v-model='current.label'
+                    counter='255'
                   )
                   v-text-field(
                     outlined

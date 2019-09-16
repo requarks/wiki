@@ -4,15 +4,16 @@
       v-container
         v-layout
           v-flex(xs12, lg6, offset-lg3)
-            v-card.radius-7
+            v-card.radius-7.animated.fadeInUp
               .text-center
-                img.setup-logo(src='/svg/logo-wikijs.svg', alt='Wiki.js Logo')
-              v-alert(tile, color='indigo lighten-5', :value='true')
+                img.setup-logo.animated.fadeInUp.wait-p2s(src='/svg/logo-wikijs-full.svg', alt='Wiki.js Logo')
+              v-alert(v-model='error', type='error', icon='mdi-alert', tile, dismissible) {{ errorMessage }}
+              v-alert(v-if='!error', tile, color='indigo lighten-5', :value='true')
                 v-icon.mr-3(color='indigo') mdi-package-variant
                 span.indigo--text You are about to install Wiki.js #[strong {{wikiVersion}}].
               v-card-text
-                .overline.pl-3 Create Administrator Account
-                v-container.pa-3(grid-list-xl)
+                .overline.pl-3 Administrator Account
+                v-container.pa-3.mt-3(grid-list-xl)
                   v-layout(row, wrap)
                     v-flex(xs12)
                       v-text-field(
@@ -21,11 +22,7 @@
                         label='Administrator Email',
                         hint='The email address of the administrator account.',
                         persistent-hint
-                        v-validate='{ required: true, email: true }',
-                        data-vv-name='adminEmail',
-                        data-vv-as='Administrator Email',
-                        data-vv-scope='admin',
-                        :error-messages='errors.collect(`admin.adminEmail`)'
+                        required
                         ref='adminEmailInput'
                       )
                     v-flex(xs6)
@@ -40,11 +37,6 @@
                         :type="pwdMode ? 'password' : 'text'"
                         hint='At least 8 characters long.',
                         persistent-hint
-                        v-validate='{ required: true, min: 8 }',
-                        data-vv-name='adminPassword',
-                        data-vv-as='Password',
-                        data-vv-scope='admin',
-                        :error-messages='errors.collect(`admin.adminPassword`)'
                       )
                     v-flex(xs6)
                       v-text-field(
@@ -58,11 +50,6 @@
                         :type="pwdConfirmMode ? 'password' : 'text'"
                         hint='Verify your password again.',
                         persistent-hint
-                        v-validate='{ required: true, min: 8 }',
-                        data-vv-name='adminPasswordConfirm',
-                        data-vv-as='Confirm Password',
-                        data-vv-scope='admin',
-                        :error-messages='errors.collect(`admin.adminPasswordConfirm`)'
                         @keyup.enter='install'
                       )
                 v-divider.mb-4
@@ -73,10 +60,9 @@
                   persistent-hint,
                   hint='Help Wiki.js developers improve this app with anonymized telemetry.'
                 )
-              v-alert(:value='error', type='error', icon='mdi-alert') {{ errorMessage }}
-              v-divider.mt-3(v-if='!error')
+              v-divider.mt-2
               v-card-actions
-                v-btn(color='primary', @click='install', :disabled='loading', x-large, flat, block)
+                v-btn(color='primary', @click='install', :disabled='loading', x-large, depressed, block)
                   v-icon(left) mdi-check
                   span Install
 
@@ -98,8 +84,8 @@
 </template>
 
 <script>
-import axios from 'axios'
 import _ from 'lodash'
+import validate from 'validate.js'
 import { BreedingRhombusSpinner } from 'epic-spinners'
 
 export default {
@@ -135,27 +121,60 @@ export default {
   },
   methods: {
     async install () {
-      const validationSuccess = await this.$validator.validateAll('admin')
-      if (!validationSuccess || this.conf.adminPassword !== this.conf.adminPasswordConfirm) {
+      this.error = false
+
+      const validationResults = validate(this.conf, {
+        adminEmail: {
+          presence: {
+            allowEmpty: false
+          },
+          email: true
+        },
+        adminPassword: {
+          presence: {
+            allowEmpty: false
+          },
+          length: {
+            minimum: 6,
+            maximum: 255
+          }
+        },
+        adminPasswordConfirm: {
+          equality: 'adminPassword'
+        }
+      }, {
+        format: 'flat'
+      })
+      if (validationResults) {
+        this.error = true
+        this.errorMessage = validationResults[0]
+        this.$forceUpdate()
         return
       }
 
       this.loading = true
       this.success = false
-      this.error = false
       this.$forceUpdate()
 
       _.delay(async () => {
         try {
-          const resp = await axios.post('/finalize', this.conf)
-          if (resp.data.ok === true) {
+          const resp = await fetch('/finalize', {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(this.conf)
+          }).then(res => res.json())
+
+          if (resp.ok === true) {
             this.success = true
             _.delay(() => {
               window.location.assign('/login')
             }, 3000)
           } else {
             this.error = true
-            this.errorMessage = resp.data.error
+            this.errorMessage = resp.error
             this.loading = false
           }
         } catch (err) {
@@ -178,8 +197,8 @@ export default {
   }
 
   &-logo {
-    width: 300px;
-    margin: 3rem 0 2rem 0;
+    width: 400px;
+    margin: 2rem 0 2rem 0;
   }
 }
 </style>

@@ -1,12 +1,64 @@
 <template lang='pug'>
   .editor-code
     .editor-code-main
+      .editor-code-sidebar
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-link-plus
+          span {{$t('editor:markup.insertLink')}}
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+              v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') mdi-folder-multiple-image
+          span {{$t('editor:markup.insertAssets')}}
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)', disabled).mx-0
+              v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
+          span {{$t('editor:markup.insertBlock')}}
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-code-braces
+          span {{$t('editor:markup.insertCodeBlock')}}
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-library-video
+          span {{$t('editor:markup.insertVideoAudio')}}
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p5s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-chart-multiline
+          span {{$t('editor:markup.insertDiagram')}}
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p6s(icon, tile, v-on='on', dark, disabled).mx-0
+              v-icon mdi-function-variant
+          span {{$t('editor:markup.insertMathExpression')}}
+        template(v-if='$vuetify.breakpoint.mdAndUp')
+          v-spacer
+          v-tooltip(right, color='teal')
+            template(v-slot:activator='{ on }')
+              v-btn.mt-3.animated.fadeInLeft.wait-p8s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
+                v-icon mdi-arrow-expand-all
+            span {{$t('editor:markup.distractionFreeMode')}}
       .editor-code-editor
-        codemirror(ref='cm', v-model='code', :options='cmOptions', @ready='onCmReady', @input='onCmInput')
+        textarea(ref='cm')
+    v-system-bar.editor-code-sysbar(dark, status, color='grey darken-3')
+      .caption.editor-code-sysbar-locale {{locale.toUpperCase()}}
+      .caption.px-3 /{{path}}
+      template(v-if='$vuetify.breakpoint.mdAndUp')
+        v-spacer
+        .caption Code
+        v-spacer
+        .caption Ln {{cursorPos.line + 1}}, Col {{cursorPos.ch + 1}}
 </template>
 
 <script>
 import _ from 'lodash'
+import { get, sync } from 'vuex-pathify'
 
 // ========================================
 // IMPORTS
@@ -17,24 +69,21 @@ import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 
 // Language
-import 'codemirror/mode/markdown/markdown.js'
+import 'codemirror/mode/htmlmixed/htmlmixed.js'
 
 // Addons
 import 'codemirror/addon/selection/active-line.js'
 import 'codemirror/addon/display/fullscreen.js'
 import 'codemirror/addon/display/fullscreen.css'
 import 'codemirror/addon/selection/mark-selection.js'
-import 'codemirror/addon/scroll/annotatescrollbar.js'
-import 'codemirror/addon/search/matchesonscrollbar.js'
 import 'codemirror/addon/search/searchcursor.js'
-import 'codemirror/addon/search/match-highlighter.js'
 
 // ========================================
 // INIT
 // ========================================
 
 // Platform detection
-const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
+// const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 
 // ========================================
 // Vue Component
@@ -43,57 +92,170 @@ const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 export default {
   data() {
     return {
-      code: '<h1>Title</h1>\n\n<p>Some text here</p>',
-      cmOptions: {
-        tabSize: 2,
-        mode: 'text/html',
-        theme: 'wikijs-dark',
-        lineNumbers: true,
-        lineWrapping: true,
-        line: true,
-        styleActiveLine: true,
-        highlightSelectionMatches: {
-          annotateScrollbar: true
-        },
-        viewportMargin: 50
-      }
+      cm: null,
+      cursorPos: { ch: 0, line: 1 }
     }
   },
   computed: {
-    cm() {
-      return this.$refs.cm.codemirror
-    },
     isMobile() {
       return this.$vuetify.breakpoint.smAndDown
-    }
+    },
+    locale: get('page/locale'),
+    path: get('page/path'),
+    mode: get('editor/mode'),
+    activeModal: sync('editor/activeModal')
   },
   methods: {
-    onCmReady(cm) {
-      let self = this
-      const keyBindings = {
-        'F11' (cm) {
-          cm.setOption('fullScreen', !cm.getOption('fullScreen'))
-        },
-        'Esc' (cm) {
-          if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false)
-        }
-      }
-      _.set(keyBindings, `${CtrlKey}-S`, cm => {
-        self.$parent.save()
-      })
-
-      cm.setSize(null, 'calc(100vh - 64px)')
-      cm.setOption('extraKeys', keyBindings)
-      this.onCmInput(this.code)
+    toggleModal(key) {
+      this.activeModal = (this.activeModal === key) ? '' : key
+      this.helpShown = false
     },
-    onCmInput: _.debounce(function (newContent) {
-      this.$store.set('editor/content', newContent)
-    }, 500)
+    closeAllModal() {
+      this.activeModal = ''
+      this.helpShown = false
+    },
+    /**
+     * Insert content at cursor
+     */
+    insertAtCursor({ content }) {
+      const cursor = this.cm.doc.getCursor('head')
+      this.cm.doc.replaceRange(content, cursor)
+    },
+    /**
+     * Insert content after current line
+     */
+    insertAfter({ content, newLine }) {
+      const curLine = this.cm.doc.getCursor('to').line
+      const lineLength = this.cm.doc.getLine(curLine).length
+      this.cm.doc.replaceRange(newLine ? `\n${content}\n` : content, { line: curLine, ch: lineLength + 1 })
+    },
+    /**
+     * Insert content before current line
+     */
+    insertBeforeEachLine({ content, after }) {
+      let lines = []
+      if (!this.cm.doc.somethingSelected()) {
+        lines.push(this.cm.doc.getCursor('head').line)
+      } else {
+        lines = _.flatten(this.cm.doc.listSelections().map(sl => {
+          const range = Math.abs(sl.anchor.line - sl.head.line) + 1
+          const lowestLine = (sl.anchor.line > sl.head.line) ? sl.head.line : sl.anchor.line
+          return _.times(range, l => l + lowestLine)
+        }))
+      }
+      lines.forEach(ln => {
+        let lineContent = this.cm.doc.getLine(ln)
+        const lineLength = lineContent.length
+        if (_.startsWith(lineContent, content)) {
+          lineContent = lineContent.substring(content.length)
+        }
+
+        this.cm.doc.replaceRange(content + lineContent, { line: ln, ch: 0 }, { line: ln, ch: lineLength })
+      })
+      if (after) {
+        const lastLine = _.last(lines)
+        this.cm.doc.replaceRange(`\n${after}\n`, { line: lastLine, ch: this.cm.doc.getLine(lastLine).length + 1 })
+      }
+    },
+    /**
+     * Update cursor state
+     */
+    positionSync(cm) {
+      this.cursorPos = cm.getCursor('head')
+    },
+    toggleFullscreen () {
+      this.cm.setOption('fullScreen', true)
+    },
+    refresh() {
+      this.$nextTick(() => {
+        this.cm.refresh()
+      })
+    }
+  },
+  mounted() {
+    this.$store.set('editor/editorKey', 'code')
+
+    if (this.mode === 'create') {
+      this.$store.set('editor/content', '<h1>Title</h1>\n\n<p>Some text here</p>')
+    }
+
+    // Initialize CodeMirror
+
+    this.cm = CodeMirror.fromTextArea(this.$refs.cm, {
+      tabSize: 2,
+      mode: 'text/html',
+      theme: 'wikijs-dark',
+      lineNumbers: true,
+      lineWrapping: true,
+      line: true,
+      styleActiveLine: true,
+      highlightSelectionMatches: {
+        annotateScrollbar: true
+      },
+      viewportMargin: 50,
+      inputStyle: 'contenteditable',
+      allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif']
+    })
+    this.cm.setValue(this.$store.get('editor/content'))
+    this.cm.on('change', c => {
+      this.$store.set('editor/content', c.getValue())
+    })
+    if (this.$vuetify.breakpoint.mdAndUp) {
+      this.cm.setSize(null, 'calc(100vh - 64px - 24px)')
+    } else {
+      this.cm.setSize(null, 'calc(100vh - 56px - 16px)')
+    }
+
+    // Set Keybindings
+
+    const keyBindings = {
+      'F11' (c) {
+        c.setOption('fullScreen', !c.getOption('fullScreen'))
+      },
+      'Esc' (c) {
+        if (c.getOption('fullScreen')) c.setOption('fullScreen', false)
+      }
+    }
+    this.cm.setOption('extraKeys', keyBindings)
+
+    // Handle cursor movement
+
+    this.cm.on('cursorActivity', c => {
+      this.positionSync(c)
+    })
+
+    // Render initial preview
+
+    this.$root.$on('editorInsert', opts => {
+      switch (opts.kind) {
+        case 'IMAGE':
+          let img = `<img src="${opts.path}" alt="${opts.text}"`
+          if (opts.align && opts.align !== '') {
+            img += ` class="align-${opts.align}"`
+          }
+          img += ` />`
+          this.insertAtCursor({
+            content: img
+          })
+          break
+        case 'BINARY':
+          this.insertAtCursor({
+            content: `<a href="${opts.path}" title="${opts.text}">${opts.text}</a>`
+          })
+          break
+      }
+    })
+  },
+  beforeDestroy() {
+    this.$root.$off('editorInsert')
   }
 }
 </script>
 
 <style lang='scss'>
+$editor-height: calc(100vh - 64px - 24px);
+$editor-height-mobile: calc(100vh - 56px - 16px);
+
 .editor-code {
   &-main {
     display: flex;
@@ -104,7 +266,7 @@ export default {
     background-color: darken(mc('grey', '900'), 4.5%);
     flex: 1 1 50%;
     display: block;
-    height: calc(100vh - 96px);
+    height: $editor-height;
     position: relative;
 
     &-title {
@@ -127,6 +289,35 @@ export default {
       @include until($tablet) {
         display: none;
       }
+    }
+  }
+
+  &-sidebar {
+    background-color: mc('grey', '900');
+    width: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 24px 0;
+
+    @include until($tablet) {
+      padding: 12px 0;
+      width: 40px;
+    }
+  }
+
+  &-sysbar {
+    padding-left: 0;
+
+    &-locale {
+      background-color: rgba(255,255,255,.25);
+      display:inline-flex;
+      padding: 0 12px;
+      height: 24px;
+      width: 63px;
+      justify-content: center;
+      align-items: center;
     }
   }
 
@@ -180,10 +371,10 @@ export default {
     background: mc('blue','800');
   }
   .cm-s-wikijs-dark .CodeMirror-line::selection, .cm-s-wikijs-dark .CodeMirror-line > span::selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::selection {
-    background: mc('red', '500');
+    background: mc('amber', '500');
   }
   .cm-s-wikijs-dark .CodeMirror-line::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::-moz-selection {
-    background: mc('red', '500');
+    background: mc('amber', '500');
   }
   .cm-s-wikijs-dark .CodeMirror-gutters {
     background: darken(mc('grey','900'), 6%);

@@ -103,10 +103,12 @@
 
               v-list-item(to='/dev-flags')
                 v-list-item-title {{ $t('admin:dev.flags.title') }}
-              v-list-item(to='/dev-graphiql')
+              v-list-item(href='/graphql')
                 v-list-item-title {{ $t('admin:dev.graphiql.title') }}
-              v-list-item(to='/dev-voyager')
-                v-list-item-title {{ $t('admin:dev.voyager.title') }}
+              //- v-list-item(to='/dev-graphiql')
+              //-   v-list-item-title {{ $t('admin:dev.graphiql.title') }}
+              //- v-list-item(to='/dev-voyager')
+              //-   v-list-item-title {{ $t('admin:dev.voyager.title') }}
             v-divider.my-2
           v-list-item(to='/contribute')
             v-list-item-avatar(size='24'): v-icon mdi-heart-outline
@@ -163,8 +165,6 @@ const router = new VueRouter({
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
     { path: '/webhooks', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-webhooks.vue') },
     { path: '/dev-flags', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-flags.vue') },
-    { path: '/dev-graphiql', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-graphiql.vue') },
-    { path: '/dev-voyager', component: () => import(/* webpackChunkName: "admin-dev" */ './admin/admin-dev-voyager.vue') },
     { path: '/contribute', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-contribute.vue') }
   ]
 })

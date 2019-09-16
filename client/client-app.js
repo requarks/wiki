@@ -3,7 +3,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import VueClipboards from 'vue-clipboards'
-import VeeValidate from 'vee-validate'
 import { ApolloClient } from 'apollo-client'
 import { BatchHttpLink } from 'apollo-link-batch-http'
 import { ApolloLink, split } from 'apollo-link'
@@ -18,7 +17,6 @@ import Vuescroll from 'vuescroll/dist/vuescroll-native'
 import Hammer from 'hammerjs'
 import moment from 'moment'
 import VueMoment from 'vue-moment'
-import VueTour from 'vue-tour'
 import store from './store'
 import Cookies from 'js-cookie'
 
@@ -57,15 +55,17 @@ const graphQLWSEndpoint = ((window.location.protocol === 'https:') ? 'wss:' : 'w
 const graphQLLink = ApolloLink.from([
   new ErrorLink(({ graphQLErrors, networkError }) => {
     if (graphQLErrors) {
-      graphQLErrors.map(({ message, locations, path }) =>
-        console.error(
-          `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
-        )
-      )
+      let isAuthError = false
+      graphQLErrors.map(({ message, locations, path }) => {
+        if (message === `Forbidden`) {
+          isAuthError = true
+        }
+        console.error(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`)
+      })
       store.commit('showNotification', {
         style: 'red',
-        message: `An unexpected error occured.`,
-        icon: 'warning'
+        message: isAuthError ? `You are not authorized to access this resource.` : `An unexpected error occured.`,
+        icon: 'alert'
       })
     }
     if (networkError) {
@@ -73,7 +73,7 @@ const graphQLLink = ApolloLink.from([
       store.commit('showNotification', {
         style: 'red',
         message: `Network Error: ${networkError.message}`,
-        icon: 'error'
+        icon: 'alert'
       })
     }
   }),
@@ -138,11 +138,9 @@ Vue.use(VueApollo)
 Vue.use(VueClipboards)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
-Vue.use(VeeValidate, { mode: 'eager' })
 Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
 Vue.use(Vuescroll)
-Vue.use(VueTour)
 
 Vue.prototype.Velocity = Velocity
 

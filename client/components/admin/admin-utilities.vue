@@ -72,7 +72,7 @@ export default {
           key: 'UtilityImportv1',
           icon: 'mdi-database-import',
           i18nKey: 'importv1',
-          isAvailable: false
+          isAvailable: true
         },
         {
           key: 'UtilityTelemetry',

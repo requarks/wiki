@@ -23,12 +23,12 @@
 
 <script>
 import _ from 'lodash'
-import { Terminal } from 'xterm'
-import * as fit from 'xterm/lib/addons/fit/fit'
+// import { Terminal } from 'xterm'
+// import * as fit from 'xterm/lib/addons/fit/fit'
 
 import livetrailSubscription from 'gql/admin/logging/logging-subscription-livetrail.gql'
 
-Terminal.applyAddon(fit)
+// Terminal.applyAddon(fit)
 
 export default {
   term: null,
@@ -48,7 +48,7 @@ export default {
     value(newValue, oldValue) {
       if (newValue) {
         _.delay(() => {
-          this.term = new Terminal()
+          // this.term = new Terminal()
           this.term.open(this.$refs.consoleContainer)
           this.term.writeln('Connecting to \x1B[1;3;31mconsole output\x1B[0m...')
 

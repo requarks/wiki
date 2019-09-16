@@ -1,6 +1,6 @@
 query {
   search {
-    searchEngines(orderBy: "title ASC") {
+    searchEngines(orderBy: "title") {
       isEnabled
       key
       title

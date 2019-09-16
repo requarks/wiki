@@ -35,8 +35,8 @@ module.exports = {
           }, []), 'key')
         }
       })
-      if (args.filter) { targets = graphHelper.filter(targets, args.filter) }
-      if (args.orderBy) { targets = graphHelper.orderBy(targets, args.orderBy) }
+      // if (args.filter) { targets = graphHelper.filter(targets, args.filter) }
+      if (args.orderBy) { targets = _.sortBy(targets, [args.orderBy]) }
       return targets
     },
     async status(obj, args, context, info) {

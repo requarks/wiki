@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const axios = require('axios')
+const request = require('request-promise')
 const bugsnag = require('@bugsnag/node')
 const uuid = require('uuid/v4')
 const qs = require('querystring')
@@ -65,13 +65,13 @@ module.exports = {
   },
   sendBatchEvents(events) {
     if (!this.enabled || WIKI.IS_DEBUG) { return false }
-    axios({
-      method: 'post',
+    request({
+      method: 'POST',
       url: WIKI.data.telemetry.GA_REMOTE,
       headers: {
         'Content-type': 'text/plain'
       },
-      data: events.map(ev => {
+      body: events.map(ev => {
         return qs.stringify({
           v: 1, // API version
           tid: WIKI.data.telemetry.GA_ID, // Tracking ID

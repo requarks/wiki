@@ -30,8 +30,8 @@ module.exports = {
           }, []), 'key')
         }
       })
-      if (args.filter) { renderers = graphHelper.filter(renderers, args.filter) }
-      if (args.orderBy) { renderers = graphHelper.orderBy(renderers, args.orderBy) }
+      // if (args.filter) { renderers = graphHelper.filter(renderers, args.filter) }
+      if (args.orderBy) { renderers = _.sortBy(renderers, [args.orderBy]) }
       return renderers
     }
   },
