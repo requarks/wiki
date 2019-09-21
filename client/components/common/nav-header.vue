@@ -265,7 +265,7 @@ export default {
       }
     },
     isAdmin() {
-      return _.includes(this.permissions, 'manage:system')
+      return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
     }
   },
   created() {
