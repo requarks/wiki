@@ -32,7 +32,7 @@ module.exports = {
       let href = $(elm).attr('href')
 
       // -> Ignore empty / anchor links
-      if (!href || href.length < 1 || href.indexOf('#') === 0) {
+      if (!href || href.length < 1 || href.indexOf('#') === 0 || href.indexOf('mailto:') === 0) {
         return
       }
 
