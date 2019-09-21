@@ -54,6 +54,17 @@ module.exports = {
 
     const packageInfo = require(path.join(WIKI.ROOTPATH, 'package.json'))
 
+    // Load DB Password from Docker Secret File
+    if (process.env.DB_PASS_FILE) {
+      try {
+        appconfig.db.pass = fs.readFileSync(process.env.DB_PASS_FILE, 'utf8')
+      } catch (err) {
+        console.error(chalk.red.bold(`>>> Failed to read Docker Secret File using path defined in DB_PASS_FILE env variable!`))
+        console.error(err.message)
+        process.exit(1)
+      }
+    }
+
     WIKI.config = appconfig
     WIKI.data = appdata
     WIKI.version = packageInfo.version
