@@ -12,7 +12,10 @@ module.exports = {
   },
   MailQuery: {
     async config(obj, args, context, info) {
-      return WIKI.config.mail
+      return {
+        ...WIKI.config.mail,
+        pass: WIKI.config.mail.pass.length > 0 ? '********' : ''
+      }
     }
   },
   MailMutation: {
@@ -48,7 +51,7 @@ module.exports = {
           port: args.port,
           secure: args.secure,
           user: args.user,
-          pass: args.pass,
+          pass: (args.pass === '********') ? WIKI.config.mail.pass : args.pass,
           useDKIM: args.useDKIM,
           dkimDomainName: args.dkimDomainName,
           dkimKeySelector: args.dkimKeySelector,
