@@ -7,6 +7,7 @@ const fs = require('fs-extra')
 const yaml = require('js-yaml')
 const striptags = require('striptags')
 const emojiRegex = require('emoji-regex')
+const he = require('he')
 
 /* global WIKI */
 
@@ -17,7 +18,7 @@ const frontmatterRegex = {
 }
 
 const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
-const htmlEntitiesRegex = /(&#[0-9]{3};)|(&#x[a-zA-Z0-9]{2};)/ig
+// const htmlEntitiesRegex = /(&#[0-9]{3};)|(&#x[a-zA-Z0-9]{2};)/ig
 
 /**
  * Pages model
@@ -663,9 +664,10 @@ module.exports = class Page extends Model {
    * @returns {string} Cleaned Content Text
    */
   static cleanHTML(rawHTML = '') {
-    return striptags(rawHTML || '')
+    let data = striptags(rawHTML || '')
       .replace(emojiRegex(), '')
-      .replace(htmlEntitiesRegex, '')
+      // .replace(htmlEntitiesRegex, '')
+    return he.decode(data)
       .replace(punctuationRegex, ' ')
       .replace(/(\r\n|\n|\r)/gm, ' ')
       .replace(/\s\s+/g, ' ')
