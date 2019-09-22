@@ -33,6 +33,8 @@ type SystemMutation {
   setTelemetry(
     enabled: Boolean!
   ): DefaultResponse @auth(requires: ["manage:system"])
+
+  performUpgrade: DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -67,6 +69,7 @@ type SystemInfo {
   ramTotal: String @auth(requires: ["manage:system"])
   telemetry: Boolean @auth(requires: ["manage:system"])
   telemetryClientId: String @auth(requires: ["manage:system"])
+  upgradeCapable: Boolean @auth(requires: ["manage:system"])
   usersTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
   workingDirectory: String @auth(requires: ["manage:system"])
 }

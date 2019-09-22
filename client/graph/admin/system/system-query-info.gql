@@ -2,19 +2,20 @@ query {
   system {
     info {
       configFile
+      cpuCores
       currentVersion
+      dbHost
       dbType
       dbVersion
-      dbHost
+      hostname
       latestVersion
       latestVersionReleaseDate
+      nodeVersion
       operatingSystem
       platform
-      hostname
-      cpuCores
       ramTotal
+      upgradeCapable
       workingDirectory
-      nodeVersion
     }
   }
 }

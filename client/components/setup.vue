@@ -168,10 +168,12 @@ export default {
           }).then(res => res.json())
 
           if (resp.ok === true) {
-            this.success = true
             _.delay(() => {
-              window.location.assign('/login')
-            }, 3000)
+              this.success = true
+              _.delay(() => {
+                window.location.assign('/login')
+              }, 3000)
+            }, 10000)
           } else {
             this.error = true
             this.errorMessage = resp.error

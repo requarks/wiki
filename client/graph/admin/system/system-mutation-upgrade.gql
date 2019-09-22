@@ -1,0 +1,12 @@
+mutation {
+  system {
+    performUpgrade {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

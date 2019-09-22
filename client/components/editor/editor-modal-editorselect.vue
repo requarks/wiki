@@ -169,16 +169,16 @@
           v-toolbar(dense, flat, color='light-green darken-3')
             v-spacer
             .caption.mr-1 or convert from
-            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+            v-btn.mx-1.animated.fadeInUp(depressed, color='light-green darken-2', @click='', disabled)
               v-icon(left) mdi-alpha-a-circle
               .body-2.text-none AsciiDoc
-            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+            v-btn.mx-1.animated.fadeInUp.wait-p1s(depressed, color='light-green darken-2', @click='', disabled)
               v-icon(left) mdi-alpha-c-circle
               .body-2.text-none CREOLE
-            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+            v-btn.mx-1.animated.fadeInUp.wait-p2s(depressed, color='light-green darken-2', @click='', disabled)
               v-icon(left) mdi-alpha-t-circle
               .body-2.text-none Textile
-            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+            v-btn.mx-1.animated.fadeInUp.wait-p3s(depressed, color='light-green darken-2', @click='', disabled)
               v-icon(left) mdi-alpha-w-circle
               .body-2.text-none WikiText
             v-spacer

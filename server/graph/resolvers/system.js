@@ -7,6 +7,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const moment = require('moment')
 const graphHelper = require('../../helpers/graph')
+const Docker = require('dockerode')
 
 /* global WIKI */
 
@@ -20,13 +21,13 @@ const dbTypes = {
 
 module.exports = {
   Query: {
-    async system() { return {} }
+    async system () { return {} }
   },
   Mutation: {
-    async system() { return {} }
+    async system () { return {} }
   },
   SystemQuery: {
-    flags() {
+    flags () {
       return _.transform(WIKI.config.flags, (result, value, key) => {
         result.push({ key, value })
       }, [])
@@ -34,7 +35,7 @@ module.exports = {
     async info() { return {} }
   },
   SystemMutation: {
-    async updateFlags(obj, args, context) {
+    async updateFlags (obj, args, context) {
       WIKI.config.flags = _.transform(args.flags, (result, row) => {
         _.set(result, row.key, row.value)
       }, {})
@@ -44,7 +45,7 @@ module.exports = {
         responseResult: graphHelper.generateSuccess('System Flags applied successfully')
       }
     },
-    async resetTelemetryClientId(obj, args, context) {
+    async resetTelemetryClientId (obj, args, context) {
       try {
         WIKI.telemetry.generateClientId()
         await WIKI.configSvc.saveToDb(['telemetry'])
@@ -55,7 +56,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async setTelemetry(obj, args, context) {
+    async setTelemetry (obj, args, context) {
       try {
         _.set(WIKI.config, 'telemetry.isEnabled', args.enabled)
         WIKI.telemetry.enabled = args.enabled
@@ -66,22 +67,44 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    async performUpgrade (obj, args, context) {
+      try {
+        const dockerEngine = new Docker({ socketPath: '/var/run/docker.sock' })
+        await dockerEngine.run('containrrr/watchtower', ['--cleanup', '--run-once', 'wiki'], process.stdout, {
+          HostConfig: {
+            AutoRemove: true,
+            Mounts: [
+              {
+                Target: '/var/run/docker.sock',
+                Source: '/var/run/docker.sock',
+                Type: 'bind'
+              }
+            ]
+          }
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Upgrade has started.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   SystemInfo: {
-    configFile() {
+    configFile () {
       return path.join(process.cwd(), 'config.yml')
     },
-    cpuCores() {
+    cpuCores () {
       return os.cpus().length
     },
-    currentVersion() {
+    currentVersion () {
       return WIKI.version
     },
-    dbType() {
+    dbType () {
       return _.get(dbTypes, WIKI.config.db.type, 'Unknown DB')
     },
-    async dbVersion() {
+    async dbVersion () {
       let version = 'Unknown Version'
       switch (WIKI.config.db.type) {
         case 'mariadb':
@@ -102,26 +125,26 @@ module.exports = {
       }
       return version
     },
-    dbHost() {
+    dbHost () {
       if (WIKI.config.db.type === 'sqlite') {
         return WIKI.config.db.storage
       } else {
         return WIKI.config.db.host
       }
     },
-    hostname() {
+    hostname () {
       return os.hostname()
     },
-    latestVersion() {
+    latestVersion () {
       return WIKI.system.updates.version
     },
-    latestVersionReleaseDate() {
+    latestVersionReleaseDate () {
       return moment.utc(WIKI.system.updates.releaseDate)
     },
-    nodeVersion() {
+    nodeVersion () {
       return process.version.substr(1)
     },
-    async operatingSystem() {
+    async operatingSystem () {
       let osLabel = `${os.type()} (${os.platform()}) ${os.release()} ${os.arch()}`
       if (os.platform() === 'linux') {
         const osInfo = await getos()
@@ -136,27 +159,30 @@ module.exports = {
       }
       return os.platform()
     },
-    ramTotal() {
+    ramTotal () {
       return filesize(os.totalmem())
     },
-    telemetry() {
+    telemetry () {
       return WIKI.telemetry.enabled
     },
-    telemetryClientId() {
+    telemetryClientId () {
       return WIKI.config.telemetry.clientId
     },
-    workingDirectory() {
+    async upgradeCapable () {
+      return fs.pathExists('/var/run/docker.sock')
+    },
+    workingDirectory () {
       return process.cwd()
     },
-    async groupsTotal() {
+    async groupsTotal () {
       const total = await WIKI.models.groups.query().count('* as total').first().pluck('total')
       return _.toSafeInteger(total)
     },
-    async pagesTotal() {
+    async pagesTotal () {
       const total = await WIKI.models.pages.query().count('* as total').first().pluck('total')
       return _.toSafeInteger(total)
     },
-    async usersTotal() {
+    async usersTotal () {
       const total = await WIKI.models.users.query().count('* as total').first().pluck('total')
       return _.toSafeInteger(total)
     }
