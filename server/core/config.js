@@ -22,6 +22,10 @@ module.exports = {
       confPaths.config = path.join(WIKI.ROOTPATH, `dev/docker-${process.env.DEVDB}/config.yml`)
     }
 
+    if (process.env.CONFIG_FILE) {
+      confPaths.config = path.resolve(WIKI.ROOTPATH, process.env.CONFIG_FILE)
+    }
+
     process.stdout.write(chalk.blue(`Loading configuration from ${confPaths.config}... `))
 
     let appconfig = {}
