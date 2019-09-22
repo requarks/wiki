@@ -1,5 +1,6 @@
 <template lang='pug'>
-  v-dialog(v-model='isShown', persistent, max-width='700')
+  v-dialog(v-model='isShown', persistent, max-width='700', no-click-animation)
+    v-btn(fab, fixed, bottom, right, color='grey darken-3', dark, @click='goBack'): v-icon mdi-undo-variant
     v-card.radius-7(color='blue darken-3', dark)
       v-card-text.text-center.py-4
         .subtitle-1.white--text {{$t('editor:select.title')}}
@@ -8,15 +9,15 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp(
+                  v-card.radius-7.primary.animated.fadeInUp(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px;')
-                      .body-2.mt-2.grey--text.text--darken-2 API Docs
-                      .caption.grey--text.text--darken-1 REST / GraphQL
+                      img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px; opacity: .5;')
+                      .body-2.mt-2.blue--text.text--lighten-2 API Docs
+                      .caption.blue--text.text--lighten-1 REST / GraphQL
                     v-fade-transition
                       v-overlay(
                         v-if='hover'
@@ -28,15 +29,15 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp.wait-p1s(
+                  v-card.radius-7.primary.animated.fadeInUp.wait-p1s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px;')
-                      .body-2.grey--text.mt-2.text--darken-2 Blog
-                      .caption.grey--text.text--darken-1 Timeline of Posts
+                      img(src='/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px; opacity: .5;')
+                      .body-2.blue--text.mt-2.text--lighten-2 Blog
+                      .caption.blue--text.text--lighten-1 Timeline of Posts
                     v-fade-transition
                       v-overlay(
                         v-if='hover'
@@ -68,15 +69,15 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp.wait-p2s(
+                  v-card.radius-7.primary.animated.fadeInUp.wait-p2s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-tabular.svg', alt='Tabular', style='width: 36px;')
-                      .body-2.grey--text.mt-2.text--darken-2 Tabular
-                      .caption.grey--text.text--darken-1 Excel-like
+                      img(src='/svg/editor-icon-tabular.svg', alt='Tabular', style='width: 36px; opacity: .5;')
+                      .body-2.blue--text.mt-2.text--lighten-2 Tabular
+                      .caption.blue--text.text--lighten-1 Excel-like
                     v-fade-transition
                       v-overlay(
                         v-if='hover'
@@ -97,18 +98,6 @@
                   .caption.grey--text Rich-text WYSIWYG
         .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}
 
-    v-card.radius-7.mt-2(color='indigo darken-3', dark)
-      v-toolbar(dense, flat, color='light-green darken-3')
-        v-spacer
-        .caption.mr-1 Or convert from
-        v-btn.mx-1(depressed, color='light-green darken-2', @click='')
-          v-icon(left) mdi-alpha-a-box
-          .body-2.text-none AsciiDoc
-        v-btn.mx-1(depressed, color='light-green darken-2', @click='')
-          v-icon(left) mdi-alpha-w-circle
-          .body-2.text-none WikiText
-        v-spacer
-
     v-card.radius-7.mt-2(color='teal darken-3', dark)
       v-card-text.text-center.py-4
         .subtitle-1.white--text {{$t('editor:select.customView')}}
@@ -117,15 +106,15 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp(
+                  v-card.radius-7.teal.animated.fadeInUp(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-cube.svg', alt='From Template', style='width: 42px;')
-                      .body-2.mt-1.grey--text.text--darken-2 From Template
-                      .caption.grey--text.text--darken-1 Use an existing page / tree
+                      img(src='/svg/icon-cube.svg', alt='From Template', style='width: 42px; opacity: .5;')
+                      .body-2.mt-1.teal--text.text--lighten-2 From Template
+                      .caption.teal--text.text--lighten-1 Use an existing page / tree
                     v-fade-transition
                       v-overlay(
                         v-if='hover'
@@ -137,15 +126,15 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp.wait-p1s(
+                  v-card.radius-7.teal.animated.fadeInUp.wait-p1s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-tree-structure.svg', alt='Tree View', style='width: 42px;')
-                      .body-2.mt-1.grey--text.text--darken-2 Tree View
-                      .caption.grey--text.text--darken-1 List children pages
+                      img(src='/svg/icon-tree-structure.svg', alt='Tree View', style='width: 42px; opacity: .5;')
+                      .body-2.mt-1.teal--text.text--lighten-2 Tree View
+                      .caption.teal--text.text--lighten-1 List children pages
                     v-fade-transition
                       v-overlay(
                         v-if='hover'
@@ -157,15 +146,15 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.grey.animated.fadeInUp.wait-p2s(
+                  v-card.radius-7.teal.animated.fadeInUp.wait-p2s(
                     hover
                     light
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-sewing-patch.svg', alt='Code', style='width: 42px;')
-                      .body-2.mt-1.grey--text.text--darken-2 Embed
-                      .caption.grey--text.text--darken-1 Include external pages
+                      img(src='/svg/icon-sewing-patch.svg', alt='Code', style='width: 42px; opacity: .5;')
+                      .body-2.mt-1.teal--text.text--lighten-2 Embed
+                      .caption.teal--text.text--lighten-1 Include external pages
                     v-fade-transition
                       v-overlay(
                         v-if='hover'
@@ -174,13 +163,33 @@
                         opacity='.8'
                         )
                         .body-2.mt-7 Coming Soon
-    v-card.radius-7.mt-2(color='grey darken-3', dark)
-      v-toolbar(dense, flat)
-        v-spacer
-        v-btn(text, @click='goBack')
-          v-icon(left) mdi-undo-variant
-          span Cancel
-        v-spacer
+    v-hover
+      template(v-slot:default='{ hover }')
+        v-card.radius-7.mt-2(color='indigo darken-3', dark)
+          v-toolbar(dense, flat, color='light-green darken-3')
+            v-spacer
+            .caption.mr-1 or convert from
+            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+              v-icon(left) mdi-alpha-a-circle
+              .body-2.text-none AsciiDoc
+            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+              v-icon(left) mdi-alpha-c-circle
+              .body-2.text-none CREOLE
+            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+              v-icon(left) mdi-alpha-t-circle
+              .body-2.text-none Textile
+            v-btn.mx-1(depressed, color='light-green darken-2', @click='', disabled)
+              v-icon(left) mdi-alpha-w-circle
+              .body-2.text-none WikiText
+            v-spacer
+          v-fade-transition
+            v-overlay(
+              v-if='hover'
+              absolute
+              color='light-green darken-3'
+              opacity='.8'
+              )
+              .body-2 Coming Soon
 </template>
 
 <script>
