@@ -452,13 +452,13 @@
   // ---------------------------------
 
   code {
-    background-color: mc('indigo', '50');
+    background-color: mc('indigo', '50') !important;
     padding: 0 5px;
-    color: mc('indigo', '800');
+    color: mc('indigo', '800') !important;
     font-family: 'Roboto Mono', monospace;
-    font-weight: normal;
-    font-size: 1rem;
-    box-shadow: none;
+    font-weight: normal !important;
+    font-size: 1rem !important;
+    box-shadow: none !important;
 
     &::before, &::after {
       display: none;

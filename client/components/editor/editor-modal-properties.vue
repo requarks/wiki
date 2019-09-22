@@ -102,7 +102,6 @@
                     :close-on-content-click='false'
                     v-model='isPublishStartShown'
                     :return-value.sync='publishStartDate'
-                    full-width
                     width='460px'
                     :disabled='!isPublished || true'
                     )
@@ -221,7 +220,6 @@
               )
 
     page-selector(mode='create', v-model='pageSelectorShown', :path='path', :locale='locale', :open-handler='setPath')
-    v-tour(name='editorPropertiesTour', :steps='tourSteps')
 </template>
 
 <script>
@@ -242,13 +240,7 @@ export default {
       isPublishStartShown: false,
       isPublishEndShown: false,
       pageSelectorShown: false,
-      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang],
-      tourSteps: [
-        {
-          target: '.dialog-header',
-          content: `First-time tour help here. <strong>TODO</strong>!`
-        }
-      ]
+      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang]
     }
   },
   computed: {
