@@ -60,7 +60,6 @@
     "dependency-graph": "0.8.0",
     "diff": "4.0.1",
     "diff2html": "2.11.3",
-    "dockerode": "2.5.8",
     "dotize": "0.3.0",
     "elasticsearch6": "npm:@elastic/elasticsearch@6",
     "elasticsearch7": "npm:@elastic/elasticsearch@7",

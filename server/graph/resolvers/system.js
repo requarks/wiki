@@ -7,7 +7,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const moment = require('moment')
 const graphHelper = require('../../helpers/graph')
-const Docker = require('dockerode')
+const request = require('request-promise')
 
 /* global WIKI */
 
@@ -70,21 +70,16 @@ module.exports = {
     },
     async performUpgrade (obj, args, context) {
       try {
-        const dockerEngine = new Docker({ socketPath: '/var/run/docker.sock' })
-        await dockerEngine.run('containrrr/watchtower', ['--cleanup', '--run-once', 'wiki'], process.stdout, {
-          HostConfig: {
-            AutoRemove: true,
-            Mounts: [
-              {
-                Target: '/var/run/docker.sock',
-                Source: '/var/run/docker.sock',
-                Type: 'bind'
-              }
-            ]
+        if (process.env.UPGRADE_COMPANION) {
+          await request({
+            method: 'POST',
+            uri: 'http://wiki-update-companion/upgrade'
+          })
+          return {
+            responseResult: graphHelper.generateSuccess('Upgrade has started.')
           }
-        })
-        return {
-          responseResult: graphHelper.generateSuccess('Upgrade has started.')
+        } else {
+          throw new Error('You must run the wiki-update-companion container and pass the UPGRADE_COMPANION env var in order to use this feature.')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -169,7 +164,7 @@ module.exports = {
       return WIKI.config.telemetry.clientId
     },
     async upgradeCapable () {
-      return fs.pathExists('/var/run/docker.sock')
+      return !_.isNil(process.env.UPGRADE_COMPANION)
     },
     workingDirectory () {
       return process.cwd()
