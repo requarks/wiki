@@ -603,6 +603,9 @@
     &.decor-outline {
       border: 1px solid mc('grey', '400');
     }
+    &.uml-diagram {
+      margin: 1rem;
+    }
   }
 
   figure.image {

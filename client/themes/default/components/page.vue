@@ -203,17 +203,6 @@
                         )
                         v-icon(size='20') mdi-trash-can-outline
                     span Delete
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
-                    template(v-slot:activator='{ on }')
-                      v-btn.mb-4(
-                        fab
-                        color='teal'
-                        dark
-                        v-on='on'
-                        @click='pageHistory'
-                        )
-                        v-icon mdi-plus
-                    span New Page
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
