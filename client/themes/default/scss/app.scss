@@ -1,6 +1,6 @@
 /* THEME SPECIFIC STYLES */
 
-.contents {
+.v-application .contents {
   color: mc('grey', '800');
   padding: .5rem 0 50px;
   position: relative;
@@ -452,19 +452,19 @@
   // ---------------------------------
 
   code {
-    background-color: mc('indigo', '50') !important;
+    background-color: mc('indigo', '50');
     padding: 0 5px;
-    color: mc('indigo', '800') !important;
+    color: mc('indigo', '800');
     font-family: 'Roboto Mono', monospace;
-    font-weight: normal !important;
-    font-size: 1rem !important;
-    box-shadow: none !important;
+    font-weight: normal;
+    font-size: 1rem;
+    box-shadow: none;
 
     &::before, &::after {
       display: none;
     }
 
-    @at-root .theme--dark & {
+    @at-root .v-application.theme--dark .contents code {
       background-color: darken(mc('grey', '900'), 5%);
       color: mc('indigo', '100');
     }
@@ -720,5 +720,16 @@
     font-size: 14px;
   }
 
+  .v-application .contents {
+    .prismjs{
+      box-shadow: none;
+      background-color: #FFF;
 
+      > code {
+        color: #000;
+        box-shadow: none;
+        text-shadow: none;
+      }
+    }
+  }
 }
