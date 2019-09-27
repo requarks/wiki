@@ -53,6 +53,8 @@ export default {
         },
         defaultNS: 'common',
         lng: siteConfig.lang,
+        load: 'currentOnly',
+        lowerCaseLng: true,
         fallbackLng: siteConfig.lang,
         ns: ['common', 'auth']
       })
