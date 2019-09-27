@@ -1,4 +1,4 @@
-const mdPlantUml = require('markdown-it-plantuml')()
+const mdPlantUml = require('markdown-it-plantuml')
 
 // ------------------------------------
 // Markdown - PlantUML Preprocessor
@@ -7,10 +7,10 @@ const mdPlantUml = require('markdown-it-plantuml')()
 module.exports = {
   init (md, conf) {
     md.use(mdPlantUml, {
-      openMarker: this.config.openMarker,
-      closeMarker: this.config.closeMarker,
-      imageFormat: this.config.imageFormat,
-      server: this.config.server
+      openMarker: conf.openMarker,
+      closeMarker: conf.closeMarker,
+      imageFormat: conf.imageFormat,
+      server: conf.server
     })
   }
 }

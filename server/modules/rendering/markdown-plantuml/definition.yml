@@ -2,20 +2,18 @@ key: markdownPlantuml
 title: PlantUML
 description: PlantUML Markdown Parser
 author: ethanmdavidson
-input: markdown
-output: html
 icon: mdi-factory
-enabledDefault: false
+enabledDefault: true
 dependsOn: markdownCore
 props:
   openMarker:
     type: String
-    default: @startuml
+    default: "@startuml"
     title: Open Marker
     hint: String to use as opening delimiter
   closeMarker:
     type: String
-    default: @enduml
+    default: "@enduml"
     title: Close Marker
     hint: String to use as closing delimiter
   imageFormat:
