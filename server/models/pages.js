@@ -159,14 +159,7 @@ module.exports = class Page extends Model {
    * @returns {string} File Extension
    */
   getFileExtension() {
-    switch (this.contentType) {
-      case 'markdown':
-        return 'md'
-      case 'html':
-        return 'html'
-      default:
-        return 'txt'
-    }
+    return pageHelper.getFileExtension(this.contentType)
   }
 
   /**

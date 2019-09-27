@@ -89,5 +89,18 @@ module.exports = {
     } else {
       return false
     }
+  },
+  /**
+   * Get file extension from content type
+   */
+  getFileExtension(contentType) {
+    switch (contentType) {
+      case 'markdown':
+        return 'md'
+      case 'html':
+        return 'html'
+      default:
+        return 'txt'
+    }
   }
 }
