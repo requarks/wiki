@@ -1,0 +1,35 @@
+key: markdownPlantuml
+title: PlantUML
+description: PlantUML Markdown Parser
+author: ethanmdavidson
+input: markdown
+output: html
+icon: mdi-factory
+enabledDefault: false
+dependsOn: markdownCore
+props:
+  openMarker:
+    type: String
+    default: @startuml
+    title: Open Marker
+    hint: String to use as opening delimiter
+  closeMarker:
+    type: String
+    default: @enduml
+    title: Close Marker
+    hint: String to use as closing delimiter
+  imageFormat:
+    type: String
+    default: svg
+    title: Image Format
+    hint: Format to use for rendered PlantUML images
+    enum:
+      - svg
+      - png
+      - latex
+      - ascii
+  server:
+    type: String
+    default: http://www.plantuml.com/plantuml
+    title: PlantUML Server
+    hint: PlantUML server used for image generation
