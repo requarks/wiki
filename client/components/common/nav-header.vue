@@ -246,7 +246,7 @@ export default {
     pictureUrl: get('user/pictureUrl'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
-    picture() {
+    picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
           kind: 'image',
@@ -264,27 +264,44 @@ export default {
         }
       }
     },
-    isAdmin() {
+    isAdmin () {
       return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
     }
   },
-  created() {
+  created () {
     if (this.hideSearch || this.dense || this.$vuetify.breakpoint.smAndDown) {
       this.searchIsShown = false
     }
   },
+  mounted () {
+    this.$root.$on('pageEdit', () => {
+      this.pageEdit()
+    })
+    this.$root.$on('pageHistory', () => {
+      this.pageHistory()
+    })
+    this.$root.$on('pageSource', () => {
+      this.pageSource()
+    })
+    this.$root.$on('pageMove', () => {
+      this.pageMove()
+    })
+    this.$root.$on('pageDelete', () => {
+      this.pageDelete()
+    })
+  },
   methods: {
-    searchFocus() {
+    searchFocus () {
       this.searchIsFocused = true
     },
-    searchBlur() {
+    searchBlur () {
       this.searchIsFocused = false
     },
-    searchClose() {
+    searchClose () {
       this.search = ''
       this.searchBlur()
     },
-    searchToggle() {
+    searchToggle () {
       this.searchIsShown = !this.searchIsShown
       if (this.searchIsShown) {
         _.delay(() => {
@@ -292,7 +309,7 @@ export default {
         }, 200)
       }
     },
-    searchEnter() {
+    searchEnter () {
       this.$root.$emit('searchEnter', true)
     },
     searchMove(dir) {
@@ -339,7 +356,7 @@ export default {
         icon: 'ferry'
       })
     },
-    async changeLocale(locale) {
+    async changeLocale (locale) {
       await this.$i18n.i18next.changeLanguage(locale.code)
       switch (this.mode) {
         case 'view':

@@ -134,19 +134,86 @@
 
           v-flex.page-col-content(xs12, lg9, xl10)
             v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='isAuthenticated')
-              template(v-slot:activator='{ on }')
-                v-btn.btn-animate-edit(
-                  fab
+              template(v-slot:activator='{ on: onEditActivator }')
+                v-speed-dial(
+                  v-model='pageEditFab'
+                  direction='top'
+                  open-on-hover
+                  transition='scale-transition'
                   bottom
                   :right='!$vuetify.rtl'
                   :left='$vuetify.rtl'
-                  color='primary'
                   fixed
                   dark
-                  :href='"/e/" + locale + "/" + path'
-                  v-on='on'
                   )
-                  v-icon mdi-pencil
+                  template(v-slot:activator)
+                    v-btn.btn-animate-edit(
+                      fab
+                      color='primary'
+                      v-model='pageEditFab'
+                      @click='pageEdit'
+                      v-on='onEditActivator'
+                      )
+                      v-icon mdi-pencil
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        small
+                        color='white'
+                        light
+                        v-on='on'
+                        @click='pageHistory'
+                        )
+                        v-icon(size='20') mdi-history
+                    span History
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        small
+                        color='white'
+                        light
+                        v-on='on'
+                        @click='pageSource'
+                        )
+                        v-icon(size='20') mdi-code-tags
+                    span View Source
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        small
+                        color='white'
+                        light
+                        v-on='on'
+                        @click='pageMove'
+                        )
+                        v-icon(size='20') mdi-content-save-move-outline
+                    span Move / Rename
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        dark
+                        small
+                        color='red'
+                        v-on='on'
+                        @click='pageDelete'
+                        )
+                        v-icon(size='20') mdi-trash-can-outline
+                    span Delete
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn.mb-4(
+                        fab
+                        color='teal'
+                        dark
+                        v-on='on'
+                        @click='pageHistory'
+                        )
+                        v-icon mdi-plus
+                    span New Page
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
@@ -251,6 +318,7 @@ export default {
       navShown: false,
       navExpanded: false,
       upBtnShown: false,
+      pageEditFab: false,
       scrollOpts: {
         duration: 1500,
         offset: 0,
@@ -343,6 +411,21 @@ export default {
     },
     print () {
       window.print()
+    },
+    pageEdit () {
+      this.$root.$emit('pageEdit')
+    },
+    pageHistory () {
+      this.$root.$emit('pageHistory')
+    },
+    pageSource () {
+      this.$root.$emit('pageSource')
+    },
+    pageMove () {
+      this.$root.$emit('pageMove')
+    },
+    pageDelete () {
+      this.$root.$emit('pageDelete')
     }
   }
 }
