@@ -212,12 +212,14 @@ module.exports = () => {
 
       WIKI.logger.info('Creating default groups...')
       const adminGroup = await WIKI.models.groups.query().insert({
+        id: 1,
         name: 'Administrators',
         permissions: JSON.stringify(['manage:system']),
         pageRules: JSON.stringify([]),
         isSystem: true
       })
       const guestGroup = await WIKI.models.groups.query().insert({
+        id: 2,
         name: 'Guests',
         permissions: JSON.stringify(['read:pages', 'read:assets', 'read:comments']),
         pageRules: JSON.stringify([
@@ -254,8 +256,9 @@ module.exports = () => {
       await WIKI.models.users.query().delete().where({
         providerKey: 'local',
         email: req.body.adminEmail
-      })
+      }).orWhere('id', 1)
       const adminUser = await WIKI.models.users.query().insert({
+        id: 1,
         email: req.body.adminEmail,
         provider: 'local',
         password: req.body.adminPassword,
@@ -273,8 +276,9 @@ module.exports = () => {
       await WIKI.models.users.query().delete().where({
         providerKey: 'local',
         email: 'guest@example.com'
-      })
+      }).orWhere('id', 2)
       const guestUser = await WIKI.models.users.query().insert({
+        id: 2,
         provider: 'local',
         email: 'guest@example.com',
         name: 'Guest',
