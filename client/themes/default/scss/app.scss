@@ -196,7 +196,7 @@
   // ---------------------------------
 
   p {
-    padding: 1rem 24px 0 24px;
+    padding: 1rem 0 0 0;
     margin: 0;
     text-align: justify;
 
@@ -319,7 +319,7 @@
   // ---------------------------------
 
   ol, ul {
-    padding: 1rem 24px 0 24px;
+    padding: 1rem 0 0 0;
     list-style-position: inside;
 
     li + li {
@@ -396,7 +396,7 @@
     }
 
     &.grid-list {
-      margin: 1rem 24px 0 24px;
+      margin: 1rem 0 0 0;
       background-color: #FFF;
       border: 1px solid mc('grey', '200');
       padding: 1px;
@@ -476,7 +476,7 @@
     box-shadow: initial;
     background-color: mc('grey', '900');
     padding: 1rem 1rem 1rem 3rem;
-    margin: 1rem 24px;
+    margin: 1rem 0;
 
     @at-root .theme--dark & {
       background-color: darken(mc('grey', '900'), 5%);
@@ -604,12 +604,12 @@
       border: 1px solid mc('grey', '400');
     }
     &.uml-diagram {
-      margin: 1rem;
+      margin: 1rem 0;
     }
   }
 
   figure.image {
-    margin: 1rem 24px 0 24px;
+    margin: 1rem 0 0 0;
 
     img {
       margin: 0 auto;

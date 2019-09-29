@@ -84,6 +84,56 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    async importUsersFromV1(obj, args, context) {
+      try {
+        const MongoClient = require('mongodb').MongoClient
+        if (args.mongoDbConnString && args.mongoDbConnString.length > 10) {
+          const client = await MongoClient.connect(args.mongoDbConnString, {
+            appname: `Wiki.js ${WIKI.version} Migration Tool`
+          })
+          const dbUsers = client.db().collection('users')
+          const userCursor = dbUsers.find({ email: { '$ne': 'guest' } })
+
+          let failed = []
+          let usersCount = 0
+          let groupsCount = 0
+
+          while (await userCursor.hasNext()) {
+            const usr = await userCursor.next()
+            try {
+              await WIKI.models.users.createNewUser({
+                providerKey: usr.provider,
+                email: usr.email,
+                name: usr.name,
+                passwordRaw: usr.password,
+                mustChangePassword: false,
+                sendWelcomeEmail: false
+              })
+              usersCount++
+            } catch (err) {
+              failed.push({
+                provider: usr.provider,
+                email: usr.email,
+                error: err.message
+              })
+              WIKI.logger.warn(`${usr.email}: ${err}`)
+            }
+          }
+
+          client.close()
+          return {
+            responseResult: graphHelper.generateSuccess('Import completed.'),
+            usersCount: usersCount,
+            groupsCount: groupsCount,
+            failed: failed
+          }
+        } else {
+          throw new Error('MongoDB Connection String is missing or invalid.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   SystemInfo: {

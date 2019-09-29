@@ -597,6 +597,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     position: relative;
     height: $editor-height;
     overflow: hidden;
+    padding: 1rem;
 
     @at-root .theme--dark & {
       background-color: mc('grey', '900');
@@ -622,8 +623,8 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     &-content {
       height: $editor-height;
       overflow-y: scroll;
-      padding: 1rem 1rem 1rem 1rem;
-      width: calc(100% + 1rem + 17px);
+      padding: 0;
+      width: calc(100% + 17px);
       // -ms-overflow-style: none;
 
       // &::-webkit-scrollbar {
@@ -701,6 +702,8 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
   .CodeMirror {
     height: auto;
+    font-family: 'Roboto Mono', monospace;
+    font-size: .9rem;
 
     .cm-header-1 {
       font-size: 1.5rem;

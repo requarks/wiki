@@ -1,0 +1,19 @@
+mutation($mongoDbConnString: String!, $groupMode: SystemImportUsersGroupMode!) {
+  system {
+    importUsersFromV1(mongoDbConnString: $mongoDbConnString, groupMode: $groupMode) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+      usersCount
+      groupsCount
+      failed {
+        provider
+        email
+        error
+      }
+    }
+  }
+}

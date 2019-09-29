@@ -35,6 +35,11 @@ type SystemMutation {
   ): DefaultResponse @auth(requires: ["manage:system"])
 
   performUpgrade: DefaultResponse @auth(requires: ["manage:system"])
+
+  importUsersFromV1(
+    mongoDbConnString: String!
+    groupMode: SystemImportUsersGroupMode!
+  ): SystemImportUsersResponse @auth(requires:  ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -72,4 +77,23 @@ type SystemInfo {
   upgradeCapable: Boolean @auth(requires: ["manage:system"])
   usersTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
   workingDirectory: String @auth(requires: ["manage:system"])
+}
+
+enum SystemImportUsersGroupMode {
+  MULTI
+  SINGLE
+  NONE
+}
+
+type SystemImportUsersResponse {
+  responseResult: ResponseStatus
+  usersCount: Int
+  groupsCount: Int
+  failed: [SystemImportUsersResponseFailed]
+}
+
+type SystemImportUsersResponseFailed {
+  provider: String
+  email: String
+  error: String
 }
