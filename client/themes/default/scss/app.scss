@@ -1,6 +1,6 @@
 /* THEME SPECIFIC STYLES */
 
-.v-application .contents {
+.v-content .contents {
   color: mc('grey', '800');
   padding: .5rem 0 50px;
   position: relative;
@@ -464,7 +464,7 @@
       display: none;
     }
 
-    @at-root .v-application.theme--dark .contents code {
+    @at-root .theme--dark & {
       background-color: darken(mc('grey', '900'), 5%);
       color: mc('indigo', '100');
     }
@@ -697,7 +697,8 @@
   .v-navigation-drawer,
   .v-footer,
   .v-btn--fab,
-  .page-col-sd
+  .page-col-sd,
+  .v-tooltip__content
   {
     display: none !important;
   }
@@ -721,12 +722,24 @@
   .v-content {
     padding: 0 !important;
     font-size: 14px;
+    background-color: #FFF;
   }
 
-  .v-application .contents {
+  .v-content .contents {
+    color: #000;
+    background-color: #FFF;
+
+    @at-root .theme--dark & {
+      color: #000;
+    }
+
     .prismjs{
       box-shadow: none;
       background-color: #FFF;
+
+      @at-root .theme--dark & {
+        background-color: #FFF;
+      }
 
       > code {
         color: #000;
