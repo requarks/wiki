@@ -304,6 +304,7 @@ export default {
   },
   data() {
     return {
+      breaktest: this.$vuetify.breakpoint.name, // just to see current breakpoint of vuetify
       navShown: false,
       navExpanded: false,
       upBtnShown: false,
@@ -371,7 +372,7 @@ export default {
   },
   mounted () {
     Prism.highlightAllUnder(this.$refs.container)
-    this.navShown = this.$vuetify.breakpoint.smAndUp
+    this.navShown = this.$vuetify.breakpoint.lgAndUp
 
     this.$nextTick(() => {
       if (window.location.hash && window.location.hash.length > 1) {
