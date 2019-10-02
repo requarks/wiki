@@ -213,6 +213,10 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async createPage(opts) {
+    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0) {
+      throw new WIKI.Error.PageIllegalPath()
+    }
+
     const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
     if (dupCheck) {
       throw new WIKI.Error.PageDuplicateCreate()

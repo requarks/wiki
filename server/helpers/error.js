@@ -129,6 +129,10 @@ module.exports = {
     message: 'Page content cannot be empty.',
     code: 6004
   }),
+  PageIllegalPath: CustomError('PageIllegalPath', {
+    message: 'Page path cannot contains illegal characters.',
+    code: 6005
+  }),
   PageNotFound: CustomError('PageNotFound', {
     message: 'This page does not exist.',
     code: 6003
