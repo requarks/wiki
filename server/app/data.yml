@@ -19,7 +19,7 @@ defaults:
     ssl:
       enabled: false
     pool:
-      min: 0
+      min: 1
     bindIP: 0.0.0.0
     logLevel: info
     uploads:
