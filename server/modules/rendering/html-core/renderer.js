@@ -142,6 +142,17 @@ module.exports = {
       }
     }
 
+    // --------------------------------
+    // Add id to headers for navigation
+    // --------------------------------
+
+    let headerIdCounter = 0
+    $('h1,h2,h3,h4,h5,h6').each((idx, el) => {
+      const headerId = _.split(_.toLower(_.trim($(el).text())), /\s+/).join('-') + '-' + headerIdCounter
+      headerIdCounter += 1
+      $(el).attr({ id: headerId })
+    })
+
     return $.html('body').replace('<body>', '').replace('</body>', '')
   }
 }

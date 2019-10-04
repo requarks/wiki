@@ -62,9 +62,10 @@ module.exports = async (pageId) => {
       const leafSlug = $('.toc-anchor', el).first().attr('href')
       $('.toc-anchor', el).remove()
 
+      const headerAnchor = $(el).attr('id') ? `#${$(el).attr('id')}` : undefined
       _.get(toc, leafPath).push({
         title: _.trim($(el).text()),
-        anchor: leafSlug,
+        anchor: leafSlug || headerAnchor,
         children: []
       })
     })
