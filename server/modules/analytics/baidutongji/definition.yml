@@ -1,0 +1,13 @@
+key: baidutongji
+title: Baidu Tongji
+description: Baidu Tongji is a web analytics service offered by Baidu that tracks and reports website traffic.
+author: requarks.io
+logo: https://static.requarks.io/logo/google-analytics.svg
+website: https://tongji.baidu.com
+isAvailable: true
+props:
+  propertyTrackingId:
+    type: String
+    title: Property Tracking ID
+    hint: https://hm.baidu.com/hm.js?XXXXXXXXXXXX
+    order: 1
