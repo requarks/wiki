@@ -243,8 +243,8 @@ export default {
         locales: []
       })
     },
-    removeRule(rule) {
-      this.group.pageRules.splice(_.findIndex(this.group.pageRules, ['id', rule.id]), 1)
+    removeRule(ruleId) {
+      this.group.pageRules.splice(_.findIndex(this.group.pageRules, ['id', ruleId]), 1)
     },
     comingSoon() {
       this.$store.commit('showNotification', {
