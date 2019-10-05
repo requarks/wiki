@@ -21,7 +21,7 @@
               v-card-text Are you sure you want to delete group #[strong {{ group.name }}]? All users will be unassigned from this group.
               v-card-actions
                 v-spacer
-                v-btn(flat, @click='deleteGroupDialog = false') Cancel
+                v-btn(text, @click='deleteGroupDialog = false') Cancel
                 v-btn(color='red', dark, @click='deleteGroup') Delete
           v-btn.ml-2(color='success', large, depressed, @click='updateGroup')
             v-icon(left) mdi-check
