@@ -63,7 +63,7 @@
             v-col(v-if='gitAuthMode === `ssh`', cols='12')
               v-textarea(
                 outlined
-                label='Private Key'
+                label='Private Key Contents'
                 placeholder='-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----'
                 hide-details
                 v-model='gitPrivKey'
@@ -72,7 +72,7 @@
               v-col(cols='6')
                 v-text-field(
                   label='Username'
-                  v-model='gitUserEmail'
+                  v-model='gitUsername'
                   outlined
                   hide-details
                 )
@@ -80,7 +80,7 @@
                 v-text-field(
                   type='password'
                   label='Password / PAT'
-                  v-model='gitUserName'
+                  v-model='gitPassword'
                   outlined
                   hide-details
                 )
@@ -108,10 +108,14 @@
                 outlined
                 hide-details
               )
+              .caption.mt-2 This folder should be empty or not exist yet. #[strong.deep-orange--text.text--darken-2 DO NOT] point to your existing Wiki.js 1.x repository folder. In most cases, it should be left to the default value.
+          v-alert(color='deep-orange', outlined, icon='mdi-alert', prominent)
+            .body-2 - Note that if you already configured the git storage module, its configuration will be replaced with the above.
+            .body-2 - Although both v1 and v2 installations can use the same remote git repository, you shouldn't make edits to the same pages simultaneously.
         v-radio-group(v-model='contentMode', hide-details)
           v-divider
           v-radio.mt-3(
-            value='local'
+            value='disk'
             color='primary'
             )
             template(v-slot:label)
@@ -152,7 +156,7 @@
             template(v-slot:label)
               div
                 span Create groups for each unique user permissions configuration
-                .caption: em Note that this can result in a large amount of groups being created.
+                .caption: em #[strong.primary--text Recommended] | Users having identical permission sets will be assigned to the same group. Note that this can potentially result in a large amount of groups being created.
           v-divider
           v-radio.mt-3(
             value='SINGLE'
@@ -161,7 +165,7 @@
             template(v-slot:label)
               div
                 span Create a single group with all imported users
-                .caption: em #[strong.primary--text Recommended] | The new group will have read permissions enabled by default.
+                .caption: em The new group will have read permissions enabled by default.
           v-divider
           v-radio.mt-3(
             value='NONE'
@@ -171,6 +175,10 @@
               div
                 span Don't create any group
                 .caption: em Users will not be able to access your wiki until they are assigned to a group.
+
+        v-alert.mt-5(color='deep-orange', outlined, icon='mdi-alert', prominent)
+          .body-2 Note that any user that already exists in this installation will not be imported. A list of skipped users will be displayed upon completion.
+          .caption.grey--text You must first delete from this installation any user you want to migrate over from the old installation.
 
     v-card-chin
       v-btn.px-3(depressed, color='deep-orange darken-2', :disabled='!wantUsers && !wantContent', @click='startImport').ml-0
@@ -220,9 +228,6 @@
                 v-icon(left) mdi-alert
                 span {{failedUsers.length}} failed
             .body-2 #[strong {{successGroups}}] groups created
-          template(v-if='wantContent')
-            .body-2 #[strong {{successPages}}] pages
-            .body-2 #[strong {{successAssets}}] assets
         v-card-actions.green.darken-1
           v-spacer
           v-btn.px-5(
@@ -266,6 +271,10 @@ import _ from 'lodash'
 import { SemipolarSpinner } from 'epic-spinners'
 
 import utilityImportv1UsersMutation from 'gql/admin/utilities/utilities-mutation-importv1-users.gql'
+import storageTargetsQuery from 'gql/admin/storage/storage-query-targets.gql'
+import storageStatusQuery from 'gql/admin/storage/storage-query-status.gql'
+import targetExecuteActionMutation from 'gql/admin/storage/storage-mutation-executeaction.gql'
+import targetsSaveMutation from 'gql/admin/storage/storage-mutation-save-targets.gql'
 
 export default {
   components: {
@@ -274,7 +283,7 @@ export default {
   data() {
     return {
       importFilters: ['content', 'users'],
-      groupMode: 'SINGLE',
+      groupMode: 'MULTI',
       contentMode: 'git',
       dbConnStr: 'mongodb://',
       contentPath: '/wiki-v1/repo',
@@ -289,14 +298,14 @@ export default {
       gitRepoUrl: '',
       gitRepoBranch: 'master',
       gitPrivKey: '',
+      gitUsername: '',
+      gitPassword: '',
       gitUserEmail: '',
       gitUserName: '',
       gitRepoPath: './data/repo',
       progress: 0,
       successUsers: 0,
       successPages: 0,
-      successGroups: 0,
-      successAssets: 0,
       showFailedUsers: false,
       failedUsers: []
     }
@@ -321,40 +330,161 @@ export default {
       this.progress = 0
       this.failedUsers = []
 
-      // -> Import Users
+      _.delay(async () => {
+        // -> Import Users
 
-      if (this.wantUsers) {
-        try {
-          const resp = await this.$apollo.mutate({
-            mutation: utilityImportv1UsersMutation,
-            variables: {
-              mongoDbConnString: this.dbConnStr,
-              groupMode: this.groupMode
+        if (this.wantUsers) {
+          try {
+            const resp = await this.$apollo.mutate({
+              mutation: utilityImportv1UsersMutation,
+              variables: {
+                mongoDbConnString: this.dbConnStr,
+                groupMode: this.groupMode
+              }
+            })
+            const respObj = _.get(resp, 'data.system.importUsersFromV1', {})
+            if (!_.get(respObj, 'responseResult.succeeded', false)) {
+              throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occured'))
             }
-          })
-          const respObj = _.get(resp, 'data.system.importUsersFromV1', {})
-          if (!_.get(respObj, 'responseResult.succeeded', false)) {
-            throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occured'))
+            this.successUsers = _.get(respObj, 'usersCount', 0)
+            this.successGroups = _.get(respObj, 'groupsCount', 0)
+            this.failedUsers = _.get(respObj, 'failed', [])
+            this.progress += 50
+          } catch (err) {
+            this.$store.commit('pushGraphError', err)
+            this.isLoading = false
+            return
           }
-          this.successUsers = _.get(respObj, 'usersCount', 0)
-          this.successGroups = _.get(respObj, 'groupsCount', 0)
-          this.failedUsers = _.get(respObj, 'failed', [])
-          this.progress += 50
-        } catch (err) {
-          this.$store.commit('pushGraphError', err)
-          this.isLoading = false
-          return
         }
-      }
 
-      // -> Import Content
+        // -> Import Content
 
-      if (this.wantContent) {
+        if (this.wantContent) {
+          try {
+            const resp = await this.$apollo.query({
+              query: storageTargetsQuery,
+              fetchPolicy: 'network-only'
+            })
+            if (_.has(resp, 'data.storage.targets')) {
+              this.progress += 10
+              let targets = resp.data.storage.targets.map(str => {
+                let nStr = {
+                  ...str,
+                  config: _.sortBy(str.config.map(cfg => ({
+                    ...cfg,
+                    value: JSON.parse(cfg.value)
+                  })), [t => t.value.order])
+                }
 
-      }
+                // -> Setup Git Module
 
-      this.isLoading = false
-      this.isSuccess = true
+                if (this.contentMode === 'git' && nStr.key === 'git') {
+                  nStr.isEnabled = true
+                  nStr.mode = 'sync'
+                  nStr.syncInterval = 'PT5M'
+                  nStr.config = [
+                    { key: 'authType', value: { value: this.gitAuthMode } },
+                    { key: 'repoUrl', value: { value: this.gitRepoUrl } },
+                    { key: 'branch', value: { value: this.gitRepoBranch } },
+                    { key: 'sshPrivateKeyMode', value: { value: 'contents' } },
+                    { key: 'sshPrivateKeyPath', value: { value: '' } },
+                    { key: 'sshPrivateKeyContent', value: { value: this.gitPrivKey } },
+                    { key: 'verifySSL', value: { value: this.gitVerifySSL } },
+                    { key: 'basicUsername', value: { value: this.gitUsername } },
+                    { key: 'basicPassword', value: { value: this.gitPassword } },
+                    { key: 'defaultEmail', value: { value: this.gitUserEmail } },
+                    { key: 'defaultName', value: { value: this.gitUserName } },
+                    { key: 'localRepoPath', value: { value: this.gitRepoPath } },
+                    { key: 'gitBinaryPath', value: { value: '' } }
+                  ]
+                }
+                return nStr
+              })
+
+              // -> Save storage modules configuration
+
+              const respSv = await this.$apollo.mutate({
+                mutation: targetsSaveMutation,
+                variables: {
+                  targets: targets.map(tgt => _.pick(tgt, [
+                    'isEnabled',
+                    'key',
+                    'config',
+                    'mode',
+                    'syncInterval'
+                  ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
+                }
+              })
+              const respObj = _.get(respSv, 'data.storage.updateTargets', {})
+              if (!_.get(respObj, 'responseResult.succeeded', false)) {
+                throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occured'))
+              }
+
+              this.progress += 10
+
+              // -> Wait for success sync
+
+              let statusAttempts = 0
+              while (statusAttempts < 10) {
+                statusAttempts++
+                const respStatus = await this.$apollo.query({
+                  query: storageStatusQuery,
+                  fetchPolicy: 'network-only'
+                })
+                if (_.has(respStatus, 'data.storage.status[0]')) {
+                  const st = _.find(respStatus.data.storage.status, ['key', this.contentMode])
+                  if (!st) {
+                    throw new Error('Storage target could not be configured.')
+                  }
+                  switch (st.status) {
+                    case 'pending':
+                      if (statusAttempts >= 10) {
+                        throw new Error('Storage target is stuck in pending state. Try again.')
+                      } else {
+                        continue
+                      }
+                    case 'operational':
+                      statusAttempts = 10
+                      break
+                    case 'error':
+                      throw new Error(st.message)
+                  }
+                } else {
+                  throw new Error('Failed to fetch storage sync status.')
+                }
+              }
+
+              this.progress += 15
+
+              // -> Perform import all
+
+              const respImport = await this.$apollo.mutate({
+                mutation: targetExecuteActionMutation,
+                variables: {
+                  targetKey: this.contentMode,
+                  handler: 'importAll'
+                }
+              })
+
+              const respImportObj = _.get(respImport, 'data.storage.executeAction', {})
+              if (!_.get(respImportObj, 'responseResult.succeeded', false)) {
+                throw new Error(_.get(respImportObj, 'responseResult.message', 'An unexpected error occured'))
+              }
+
+              this.progress += 15
+            } else {
+              throw new Error('Failed to fetch storage targets.')
+            }
+          } catch (err) {
+            this.$store.commit('pushGraphError', err)
+            this.isLoading = false
+            return
+          }
+        }
+
+        this.isLoading = false
+        this.isSuccess = true
+      }, 1500)
     }
   }
 }

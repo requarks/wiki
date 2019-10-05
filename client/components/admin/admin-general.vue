@@ -163,6 +163,7 @@
                     persistent-hint
                     hint='Prevents other websites from embedding your wiki in an iframe. This provides clickjacking protection.'
                     )
+
                   v-divider.mt-3
                   v-switch(
                     inset
@@ -171,6 +172,16 @@
                     v-model='config.securityReferrerPolicy'
                     persistent-hint
                     hint='Limits the referrer header to same origin.'
+                    )
+
+                  v-divider.mt-3
+                  v-switch(
+                    inset
+                    label='Trust X-Forwarded-* Proxy Headers'
+                    color='red darken-2'
+                    v-model='config.securityTrustProxy'
+                    persistent-hint
+                    hint='Should be enabled when using a reverse-proxy like nginx, apache, CloudFlare, etc in front of Wiki.js. Turn off otherwise.'
                     )
 
                   v-divider.mt-3
@@ -250,6 +261,7 @@ export default {
         featureTinyPNG: false,
         securityIframe: true,
         securityReferrerPolicy: true,
+        securityTrustProxy: true,
         securityHSTS: false,
         securityHSTSDuration: 0,
         securityCSP: false,
@@ -296,6 +308,7 @@ export default {
             featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false),
             securityIframe: _.get(this.config, 'securityIframe', false),
             securityReferrerPolicy: _.get(this.config, 'securityReferrerPolicy', false),
+            securityTrustProxy: _.get(this.config, 'securityTrustProxy', false),
             securityHSTS: _.get(this.config, 'securityHSTS', false),
             securityHSTSDuration: _.get(this.config, 'securityHSTSDuration', 0),
             securityCSP: _.get(this.config, 'securityCSP', false),

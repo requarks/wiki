@@ -18,7 +18,7 @@
                 v-icon(color='red') mdi-trash-can-outline
             v-card
               .dialog-header.is-red Delete Group?
-              v-card-text Are you sure you want to delete group #[strong {{ group.name }}]? All users will be unassigned from this group.
+              v-card-text.pa-4 Are you sure you want to delete group #[strong {{ group.name }}]? All users will be unassigned from this group.
               v-card-actions
                 v-spacer
                 v-btn(text, @click='deleteGroupDialog = false') Cancel

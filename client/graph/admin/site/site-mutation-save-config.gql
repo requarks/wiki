@@ -13,6 +13,7 @@ mutation (
   $featurePersonalWikis: Boolean!
   $securityIframe: Boolean!
   $securityReferrerPolicy: Boolean!
+  $securityTrustProxy: Boolean!
   $securityHSTS: Boolean!
   $securityHSTSDuration: Int!
   $securityCSP: Boolean!
@@ -34,6 +35,7 @@ mutation (
       featurePersonalWikis: $featurePersonalWikis,
       securityIframe: $securityIframe,
       securityReferrerPolicy: $securityReferrerPolicy,
+      securityTrustProxy: $securityTrustProxy,
       securityHSTS: $securityHSTS,
       securityHSTSDuration: $securityHSTSDuration,
       securityCSP: $securityCSP,

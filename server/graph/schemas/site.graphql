@@ -38,6 +38,7 @@ type SiteMutation {
     featurePersonalWikis: Boolean!
     securityIframe: Boolean!
     securityReferrerPolicy: Boolean!
+    securityTrustProxy: Boolean!
     securityHSTS: Boolean!
     securityHSTSDuration: Int!
     securityCSP: Boolean!
@@ -64,6 +65,7 @@ type SiteConfig {
   featurePersonalWikis: Boolean!
   securityIframe: Boolean!
   securityReferrerPolicy: Boolean!
+  securityTrustProxy: Boolean!
   securityHSTS: Boolean!
   securityHSTSDuration: Int!
   securityCSP: Boolean!

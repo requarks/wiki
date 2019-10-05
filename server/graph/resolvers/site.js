@@ -46,12 +46,19 @@ module.exports = {
         WIKI.config.security = {
           securityIframe: args.securityIframe,
           securityReferrerPolicy: args.securityReferrerPolicy,
+          securityTrustProxy: args.securityTrustProxy,
           securityHSTS: args.securityHSTS,
           securityHSTSDuration: args.securityHSTSDuration,
           securityCSP: args.securityCSP,
           securityCSPDirectives: args.securityCSPDirectives
         }
         await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'seo', 'logo', 'features', 'security'])
+
+        if (WIKI.config.security.securityTrustProxy) {
+          WIKI.app.enable('trust proxy')
+        } else {
+          WIKI.app.disable('trust proxy')
+        }
 
         return {
           responseResult: graphHelper.generateSuccess('Site configuration updated successfully')

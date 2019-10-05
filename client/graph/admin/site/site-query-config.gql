@@ -15,6 +15,7 @@
       featurePersonalWikis
       securityIframe
       securityReferrerPolicy
+      securityTrustProxy
       securityHSTS
       securityHSTSDuration
       securityCSP
