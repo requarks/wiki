@@ -14,7 +14,7 @@
             v-icon mdi-arrow-left
           v-dialog(v-model='deleteGroupDialog', max-width='500', v-if='!group.isSystem')
             template(v-slot:activator='{ on }')
-              v-btn.ml-2(color='red', large, outlined, v-on='{ on }')
+              v-btn.ml-2(color='red', large, outlined, v-on='on')
                 v-icon(color='red') mdi-trash-can-outline
             v-card
               .dialog-header.is-red Delete Group?
