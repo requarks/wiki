@@ -132,7 +132,7 @@
                   v-icon.mr-3(:color='$vuetify.theme.dark ? `white` : `teal`') mdi-cloud-upload
                   .body-2(:class='$vuetify.theme.dark ? `white--text` : `teal--text`') {{$t('editor:assets.uploadAssets')}}
                 v-btn.my-0.ml-3.mr-0.radius-7(outlined, large, color='teal', @click='browse', v-if='$vuetify.breakpoint.mdAndUp')
-                  v-icon(left) mdi-library-plus
+                  v-icon(left) mdi-plus-box-multiple
                   span(:class='$vuetify.theme.dark ? `teal--text text--lighten-3` : ``') {{$t('common:actions.browse')}}
               file-pond.mt-3(
                 name='mediaUpload'
@@ -588,6 +588,10 @@ export default {
     > label {
       cursor: pointer;
     }
+  }
+
+  .filepond--file-action-button.filepond--action-process-item {
+    display: none;
   }
 
   .v-btn--icon {
