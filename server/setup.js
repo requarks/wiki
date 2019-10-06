@@ -88,7 +88,7 @@ module.exports = () => {
         featurePersonalWikis: true
       })
       _.set(WIKI.config, 'graphEndpoint', 'https://graph.requarks.io')
-      _.set(WIKI.config, 'host', 'http://')
+      _.set(WIKI.config, 'host', req.body.siteUrl)
       _.set(WIKI.config, 'lang', {
         code: 'en',
         autoUpdate: true,
@@ -140,14 +140,6 @@ module.exports = () => {
       // Basic checks
       if (!semver.satisfies(process.version, '>=10.12')) {
         throw new Error('Node.js 10.12.x or later required!')
-      }
-
-      // Upgrade from WIKI.js 1.x?
-      if (req.body.upgrade) {
-        WIKI.telemetry.sendEvent('setup', 'install-mongo-upgrade')
-        await WIKI.system.upgradeFromMongo({
-          mongoCnStr: cfgHelper.parseConfigValue(req.body.upgMongo)
-        })
       }
 
       // Create directory structure

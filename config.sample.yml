@@ -2,7 +2,7 @@
 # Wiki.js - CONFIGURATION                                             #
 #######################################################################
 # Full documentation + examples:
-# https://docs-beta.requarks.io/install
+# https://docs.requarks.io/install
 
 # ---------------------------------------------------------------------
 # Port the server should listen to
@@ -36,14 +36,6 @@ db:
 # ADVANCED OPTIONS                                                    #
 #######################################################################
 # Do not change unless you know what you are doing!
-
-# ---------------------------------------------------------------------
-# Use X-Forwarded-For header
-# ---------------------------------------------------------------------
-# Enable only if Wiki.js is behind a reverse-proxy (nginx, apache, etc)
-# or a cloud proxying services like Cloudflare.
-
-trustProxy: false
 
 # ---------------------------------------------------------------------
 # SSL/TLS Settings
