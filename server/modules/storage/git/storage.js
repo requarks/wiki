@@ -25,6 +25,9 @@ const getContenType = (filePath) => {
 }
 
 const getPagePath = (filePath) => {
+  if (process.platform === 'win32') {
+    filePath = filePath.replace(/\\/g, '/')
+  }
   let meta = {
     locale: 'en',
     path: _.initial(filePath.split('.')).join('')
@@ -194,7 +197,7 @@ module.exports = {
           await WIKI.models.pages.updatePage({
             id: currentPage.id,
             title: _.get(pageData, 'title', currentPage.title),
-            description: _.get(pageData, 'description', currentPage.description),
+            description: _.get(pageData, 'description', currentPage.description) || '',
             isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
             isPrivate: false,
             content: pageData.content,
@@ -209,7 +212,7 @@ module.exports = {
             path: contentPath.path,
             locale: contentPath.locale,
             title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
-            description: _.get(pageData, 'description', ''),
+            description: _.get(pageData, 'description', '') || '',
             isPublished: _.get(pageData, 'isPublished', true),
             isPrivate: false,
             content: pageData.content,
@@ -230,6 +233,7 @@ module.exports = {
           })
         } else {
           WIKI.logger.warn(`(STORAGE/GIT) Failed to open ${item.file}`)
+          console.error(err)
           WIKI.logger.warn(err)
         }
       }
@@ -310,7 +314,47 @@ module.exports = {
       '--author': `"${page.authorName} <${page.authorEmail}>"`
     })
   },
+  /**
+   * ASSET UPLOAD
+   *
+   * @param {Object} asset Asset to upload
+   */
+  async assetUploaded (asset) {
+    WIKI.logger.info(`(STORAGE/GIT) Committing new file ${asset.path}...`)
+    const filePath = path.join(this.repoPath, asset.path)
+    await fs.outputFile(filePath, asset, 'utf8')
 
+    await this.git.add(`./${asset.path}`)
+    await this.git.commit(`docs: upload ${asset.path}`, asset.path, {
+      '--author': `"${asset.authorName} <${asset.authorEmail}>"`
+    })
+  },
+  /**
+   * ASSET DELETE
+   *
+   * @param {Object} asset Asset to upload
+   */
+  async assetDeleted (asset) {
+    WIKI.logger.info(`(STORAGE/GIT) Committing removed file ${asset.path}...`)
+
+    await this.git.rm(`./${asset.path}`)
+    await this.git.commit(`docs: delete ${asset.path}`, asset.path, {
+      '--author': `"${asset.authorName} <${asset.authorEmail}>"`
+    })
+  },
+  /**
+   * ASSET RENAME
+   *
+   * @param {Object} asset Asset to upload
+   */
+  async assetRenamed (asset) {
+    WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${asset.sourcePath} to ${asset.destinationPath}...`)
+
+    await this.git.mv(`./${asset.sourcePath}`, `./${asset.destinationPath}`)
+    await this.git.commit(`docs: rename ${asset.sourcePath} to ${asset.destinationPath}`, asset.destinationPath, {
+      '--author': `"${asset.authorName} <${asset.authorEmail}>"`
+    })
+  },
   /**
    * HANDLERS
    */

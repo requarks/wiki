@@ -3,7 +3,7 @@
     v-card.page-selector
       .dialog-header.is-dark
         v-icon.mr-3(color='white') mdi-page-next-outline
-        span Select Page Location
+        .body-1 Select Page Location
         v-spacer
         v-progress-circular(
           indeterminate
@@ -12,44 +12,44 @@
           :width='2'
           v-show='searchLoading'
           )
-      //- .d-flex(style='min-height:400px;')
-      //-   v-flex(xs4).grey(:class='darkMode ? `darken-4` : `lighten-3`')
-      //-     v-toolbar(color='grey darken-3', dark, dense, flat)
-      //-       .body-2 Folders
-      //-       v-spacer
-      //-       v-btn(icon): v-icon create_new_folder
-      //-     v-treeview(
-      //-       v-model='tree'
-      //-       :items='treeFolders'
-      //-       :load-children='fetchFolders'
-      //-       activatable
-      //-       open-on-click
-      //-       hoverable
-      //-       )
-      //-       template(slot='prepend', slot-scope='{ item, open, leaf }')
-      //-         v-icon {{ open ? 'folder_open' : 'folder' }}
-      //-   v-flex(xs8)
-      //-     v-toolbar(color='grey darken-2', dark, dense, flat)
-      //-       .body-2 Pages
-      //-       v-spacer
-      //-       v-btn(icon): v-icon forward
-      //-       v-btn(icon): v-icon delete
-      //-     v-list(dense)
-      //-       v-list-item
-      //-         v-list-item-avatar: v-icon insert_drive_file
-      //-         v-list-item-title File A
-      //-       v-divider
-      //-       v-list-item
-      //-         v-list-item-avatar: v-icon insert_drive_file
-      //-         v-list-item-title File B
-      //-       v-divider
-      //-       v-list-item
-      //-         v-list-item-avatar: v-icon insert_drive_file
-      //-         v-list-item-title File C
-      //-       v-divider
-      //-       v-list-item
-      //-         v-list-item-avatar: v-icon insert_drive_file
-      //-         v-list-item-title File D
+      .d-flex(style='min-height:400px;')
+        v-flex.grey(xs4, :class='darkMode ? `darken-4` : `lighten-3`')
+          v-toolbar(color='grey darken-3', dark, dense, flat)
+            .body-2 Folders
+            //- v-spacer
+            //- v-btn(icon): v-icon create_new_folder
+          v-treeview(
+            v-model='tree'
+            :items='treeFolders'
+            :load-children='fetchFolders'
+            activatable
+            open-on-click
+            hoverable
+            )
+            template(slot='prepend', slot-scope='{ item, open, leaf }')
+              v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
+        v-flex(xs8)
+          v-toolbar(color='grey darken-2', dark, dense, flat)
+            .body-2 Pages
+            v-spacer
+            v-btn(icon): v-icon mdi-forward
+            v-btn(icon): v-icon mdi-delete
+          v-list(dense)
+            v-list-item
+              v-list-item-icon: v-icon mdi-file-document-box
+              v-list-item-title File A
+            v-divider
+            v-list-item
+              v-list-item-icon: v-icon mdi-file-document-box
+              v-list-item-title File B
+            v-divider
+            v-list-item
+              v-list-item-icon: v-icon mdi-file-document-box
+              v-list-item-title File C
+            v-divider
+            v-list-item
+              v-list-item-icon: v-icon mdi-file-document-box
+              v-list-item-title File D
       v-card-actions.grey.pa-2(:class='darkMode ? `darken-3-d5` : `lighten-1`')
         v-select(
           solo
@@ -58,7 +58,7 @@
           hide-details
           single-line
           :items='namespaces'
-          style='flex: 0 0 100px;'
+          style='flex: 0 0 100px; border-radius: 4px 0 0 4px;'
           v-model='currentLocale'
           )
         v-text-field(
@@ -68,6 +68,7 @@
           v-model='currentPath'
           flat
           clearable
+          style='border-radius: 0 4px 4px 0;'
         )
       v-card-chin
         v-spacer

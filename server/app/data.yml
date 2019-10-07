@@ -75,14 +75,18 @@ jobs:
     onInit: true
     schedule: PT15M
     offlineSkip: false
+    repeat: true
   syncGraphLocales:
     onInit: true
     schedule: P1D
     offlineSkip: true
-  syncGraphUpdates:
+    repeat: true
+  rebuildTree:
     onInit: true
-    schedule: P1D
-    offlineSkip: true
+    offlineSkip: false
+    repeat: false
+    immediate: true
+    worker: true
 groups:
   defaultPermissions:
     - 'read:pages'

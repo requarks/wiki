@@ -99,12 +99,13 @@ module.exports = {
         return
       }
 
-      const schedule = (configHelper.isValidDurationString(queueParams.schedule)) ? queueParams.schedule : _.get(WIKI.config, queueParams.schedule)
+      const schedule = (configHelper.isValidDurationString(queueParams.schedule)) ? queueParams.schedule : 'P1D'
       this.registerJob({
         name: _.kebabCase(queueName),
-        immediate: queueParams.onInit,
+        immediate: _.get(queueParams, 'onInit', false),
         schedule: schedule,
-        repeat: true
+        repeat: _.get(queueParams, 'repeat', false),
+        worker: _.get(queueParams, 'worker', false)
       })
     })
   },

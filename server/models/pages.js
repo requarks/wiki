@@ -251,7 +251,7 @@ module.exports = class Page extends Model {
     })
 
     // -> Save Tags
-    if (opts.tags.length > 0) {
+    if (opts.tags && opts.tags.length > 0) {
       await WIKI.models.tags.associateTags({ tags: opts.tags, page })
     }
 

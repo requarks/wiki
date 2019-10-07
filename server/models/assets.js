@@ -125,6 +125,14 @@ module.exports = class Asset extends Model {
 
     // Move temp upload to cache
     await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
+
+    // Add to Storage
+    if (!opts.skipStorage) {
+      await WIKI.models.storage.assetEvent({
+        event: 'uploaded',
+        asset
+      })
+    }
   }
 
   static async getAsset(assetPath, res) {

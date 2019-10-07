@@ -180,6 +180,17 @@ module.exports = class Storage extends Model {
     }
   }
 
+  static async assetEvent({ event, asset }) {
+    try {
+      for (let target of this.targets) {
+        await target.fn[`asset${_.capitalize(event)}`](asset)
+      }
+    } catch (err) {
+      WIKI.logger.warn(err)
+      throw err
+    }
+  }
+
   static async executeAction(targetKey, handler) {
     try {
       const target = _.find(this.targets, ['key', targetKey])
