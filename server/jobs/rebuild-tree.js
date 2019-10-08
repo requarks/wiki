@@ -43,6 +43,9 @@ module.exports = async (pageId) => {
             pageId: isFolder ? null : page.id
           })
           parentId = pik
+        } else if (isFolder && !found.isFolder) {
+          found.isFolder = true
+          parentId = found.id
         } else {
           parentId = found.id
         }

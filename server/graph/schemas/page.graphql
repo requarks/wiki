@@ -40,6 +40,12 @@ type PageQuery {
   ): Page @auth(requires: ["manage:pages", "delete:pages", "manage:system"])
 
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
+
+  tree(
+    parent: Int!
+    mode: PageTreeMode!
+    locale: String!
+  ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
 }
 
 # -----------------------------------------------
@@ -182,6 +188,19 @@ type PageListItem {
   tags: [String]
 }
 
+type PageTreeItem {
+  id: Int!
+  path: String!
+  depth: Int!
+  title: String!
+  isPrivate: Boolean!
+  isFolder: Boolean!
+  privateNS: String
+  parent: Int
+  pageId: Int
+  locale: String!
+}
+
 enum PageOrderBy {
   CREATED
   ID
@@ -193,4 +212,10 @@ enum PageOrderBy {
 enum PageOrderByDirection {
   ASC
   DESC
+}
+
+enum PageTreeMode {
+  FOLDERS
+  PAGES
+  ALL
 }

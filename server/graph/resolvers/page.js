@@ -115,6 +115,34 @@ module.exports = {
     },
     async tags (obj, args, context, info) {
       return WIKI.models.tags.query().orderBy('tag', 'asc')
+    },
+    async tree (obj, args, context, info) {
+      let results = []
+      let conds = {
+        localeCode: args.locale,
+        parent: (args.parent < 1) ? null : args.parent
+      }
+      switch (args.mode) {
+        case 'FOLDERS':
+          conds.isFolder = true
+          results = await WIKI.models.knex('pageTree').where(conds)
+          break
+        case 'PAGES':
+          await WIKI.models.knex('pageTree').where(conds).andWhereNotNull('pageId')
+          break
+        default:
+          results = await WIKI.models.knex('pageTree').where(conds)
+          break
+      }
+      return results.filter(r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: r.path,
+          locale: r.localeCode
+        })
+      }).map(r => ({
+        ...r,
+        locale: r.localeCode
+      }))
     }
   },
   PageMutation: {
