@@ -25,12 +25,13 @@ const getContenType = (filePath) => {
 }
 
 const getPagePath = (filePath) => {
+  let fpath = filePath
   if (process.platform === 'win32') {
-    filePath = filePath.replace(/\\/g, '/')
+    fpath = filePath.replace(/\\/g, '/')
   }
   let meta = {
     locale: 'en',
-    path: _.initial(filePath.split('.')).join('')
+    path: _.initial(fpath.split('.')).join('')
   }
   const result = localeFolderRegex.exec(meta.path)
   if (result[1]) {

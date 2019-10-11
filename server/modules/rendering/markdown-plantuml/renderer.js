@@ -166,7 +166,8 @@ function append3bytes (b1, b2, b3) {
   return r
 }
 
-function encode6bit(b) {
+function encode6bit(raw) {
+  let b = raw
   if (b < 10) {
     return String.fromCharCode(48 + b)
   }
