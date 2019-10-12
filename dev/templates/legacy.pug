@@ -43,21 +43,11 @@ html
 
     //- CSS
     <% for (var index in htmlWebpackPlugin.files.css) { %>
-      <% if (htmlWebpackPlugin.files.cssIntegrity) { %>
-    link(
-      type='text/css'
-      rel='stylesheet'
-      href='<%= htmlWebpackPlugin.files.css[index] %>'
-      integrity='<%= htmlWebpackPlugin.files.cssIntegrity[index] %>'
-      crossorigin='<%= webpackConfig.output.crossOriginLoading %>'
-    )
-      <% } else { %>
     link(
       type='text/css'
       rel='stylesheet'
       href='<%= htmlWebpackPlugin.files.css[index] %>'
     )
-      <% } %>
     <% } %>
 
     script(
@@ -67,19 +57,10 @@ html
 
     //- JS
     <% for (var index in htmlWebpackPlugin.files.js) { %>
-      <% if (htmlWebpackPlugin.files.cssIntegrity) { %>
-    script(
-      type='text/javascript'
-      src='<%= htmlWebpackPlugin.files.js[index] %>'
-      integrity='<%= htmlWebpackPlugin.files.jsIntegrity[index] %>'
-      crossorigin='<%= webpackConfig.output.crossOriginLoading %>'
-      )
-      <% } else { %>
     script(
       type='text/javascript'
       src='<%= htmlWebpackPlugin.files.js[index] %>'
       )
-      <% } %>
     <% } %>
 
     != analyticsCode.head

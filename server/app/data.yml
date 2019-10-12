@@ -46,6 +46,7 @@ defaults:
       securityIframe: true
       securityReferrerPolicy: true
       securityTrustProxy: true
+      securitySRI: true
       securityHSTS: false
       securityHSTSDuration: 300
       securityCSP: false

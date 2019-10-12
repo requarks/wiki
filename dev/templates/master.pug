@@ -52,7 +52,7 @@ html(lang=siteConfig.lang)
       type='text/css'
       rel='stylesheet'
       href='<%= htmlWebpackPlugin.files.css[index] %>'
-      integrity='<%= htmlWebpackPlugin.files.cssIntegrity[index] %>'
+      integrity=config.security.securitySRI ? '<%= htmlWebpackPlugin.files.cssIntegrity[index] %>' : false
       crossorigin='<%= webpackConfig.output.crossOriginLoading %>'
     )
       <% } else { %>
@@ -66,11 +66,11 @@ html(lang=siteConfig.lang)
 
     //- JS
     <% for (var index in htmlWebpackPlugin.files.js) { %>
-      <% if (htmlWebpackPlugin.files.cssIntegrity) { %>
+      <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
     script(
       type='text/javascript'
       src='<%= htmlWebpackPlugin.files.js[index] %>'
-      integrity='<%= htmlWebpackPlugin.files.jsIntegrity[index] %>'
+      integrity=config.security.securitySRI ? '<%= htmlWebpackPlugin.files.jsIntegrity[index] %>' : false
       crossorigin='<%= webpackConfig.output.crossOriginLoading %>'
       )
       <% } else { %>

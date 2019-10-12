@@ -187,6 +187,16 @@
                   v-divider.mt-3
                   v-switch(
                     inset
+                    label='Subresource Integrity'
+                    color='red darken-2'
+                    v-model='config.securitySRI'
+                    persistent-hint
+                    hint='This ensure that resources such as CSS and JS files are not altered during delivery.'
+                    )
+
+                  v-divider.mt-3
+                  v-switch(
+                    inset
                     label='Enforce HSTS'
                     color='red darken-2'
                     v-model='config.securityHSTS'
@@ -262,6 +272,7 @@ export default {
         securityIframe: true,
         securityReferrerPolicy: true,
         securityTrustProxy: true,
+        securitySRI: true,
         securityHSTS: false,
         securityHSTSDuration: 0,
         securityCSP: false,
@@ -309,6 +320,7 @@ export default {
             securityIframe: _.get(this.config, 'securityIframe', false),
             securityReferrerPolicy: _.get(this.config, 'securityReferrerPolicy', false),
             securityTrustProxy: _.get(this.config, 'securityTrustProxy', false),
+            securitySRI: _.get(this.config, 'securitySRI', false),
             securityHSTS: _.get(this.config, 'securityHSTS', false),
             securityHSTSDuration: _.get(this.config, 'securityHSTSDuration', 0),
             securityCSP: _.get(this.config, 'securityCSP', false),

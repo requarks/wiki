@@ -17,7 +17,7 @@
           v-toolbar(color='grey darken-3', dark, dense, flat)
             .body-2 Virtual Folders
             v-spacer
-            v-btn(icon, tile)
+            v-btn(icon, tile, href='https://docs.requarks.io/', target='_blank')
               v-icon mdi-help-box
           v-treeview(
             :active.sync='currentNode'
@@ -37,8 +37,8 @@
           v-toolbar(color='blue darken-2', dark, dense, flat)
             .body-2 Pages
             v-spacer
-            v-btn(icon, tile): v-icon mdi-content-save-move-outline
-            v-btn(icon, tile): v-icon mdi-trash-can-outline
+            v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
+            v-btn(icon, tile, disabled): v-icon mdi-trash-can-outline
           v-list.py-0(dense, v-if='currentPages.length > 0')
             v-list-item-group(
               v-model='currentPage'
@@ -131,6 +131,7 @@ export default {
         children: []
       }],
       pages: [],
+      all: [],
       namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang]
     }
   },
@@ -162,6 +163,20 @@ export default {
         this.$nextTick(() => {
           this.currentNode = oldValue
         })
+      } else {
+        if (this.openNodes.indexOf(newValue[0]) < 0) { // auto open and load children
+          const current = _.find(this.all, ['id', newValue[0]])
+          if (current) {
+            if (this.openNodes.indexOf(current.parent) < 0) {
+              this.$nextTick(() => {
+                this.openNodes.push(current.parent)
+              })
+            }
+          }
+          this.$nextTick(() => {
+            this.openNodes.push(newValue[0])
+          })
+        }
       }
     },
     currentPage (newValue, oldValue) {
@@ -203,6 +218,8 @@ export default {
         item.children = undefined
       }
       this.pages.push(...itemPages)
+
+      this.all.push(...items)
 
       this.searchLoading = false
     }

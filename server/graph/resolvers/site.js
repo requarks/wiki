@@ -47,6 +47,7 @@ module.exports = {
           securityIframe: args.securityIframe,
           securityReferrerPolicy: args.securityReferrerPolicy,
           securityTrustProxy: args.securityTrustProxy,
+          securitySRI: args.securitySRI,
           securityHSTS: args.securityHSTS,
           securityHSTSDuration: args.securityHSTSDuration,
           securityCSP: args.securityCSP,

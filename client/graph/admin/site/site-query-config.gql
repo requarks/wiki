@@ -16,6 +16,7 @@
       securityIframe
       securityReferrerPolicy
       securityTrustProxy
+      securitySRI
       securityHSTS
       securityHSTSDuration
       securityCSP
