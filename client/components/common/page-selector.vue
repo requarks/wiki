@@ -1,7 +1,7 @@
 <template lang="pug">
   v-dialog(v-model='isShown', max-width='850px')
     v-card.page-selector
-      .dialog-header.is-dark
+      .dialog-header.is-blue
         v-icon.mr-3(color='white') mdi-page-next-outline
         .body-1 Select Page Location
         v-spacer
@@ -15,45 +15,53 @@
       .d-flex(style='min-height:400px;')
         v-flex.grey(xs4, :class='darkMode ? `darken-4` : `lighten-3`')
           v-toolbar(color='grey darken-3', dark, dense, flat)
-            .body-2 Folders
-            //- v-spacer
-            //- v-btn(icon): v-icon create_new_folder
+            .body-2 Virtual Folders
+            v-spacer
+            v-btn(icon, tile)
+              v-icon mdi-help-box
           v-treeview(
-            v-model='tree'
-            :items='treeFolders'
+            :active.sync='currentNode'
+            :open.sync='openNodes'
+            :items='tree'
             :load-children='fetchFolders'
+            dense
+            expand-icon='mdi-menu-down-outline'
+            item-id='path'
+            item-text='title'
             activatable
-            open-on-click
             hoverable
             )
             template(slot='prepend', slot-scope='{ item, open, leaf }')
               v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
         v-flex(xs8)
-          v-toolbar(color='grey darken-2', dark, dense, flat)
+          v-toolbar(color='blue darken-2', dark, dense, flat)
             .body-2 Pages
             v-spacer
-            v-btn(icon): v-icon mdi-forward
-            v-btn(icon): v-icon mdi-delete
-          v-list(dense)
-            v-list-item
-              v-list-item-icon: v-icon mdi-file-document-box
-              v-list-item-title File A
-            v-divider
-            v-list-item
-              v-list-item-icon: v-icon mdi-file-document-box
-              v-list-item-title File B
-            v-divider
-            v-list-item
-              v-list-item-icon: v-icon mdi-file-document-box
-              v-list-item-title File C
-            v-divider
-            v-list-item
-              v-list-item-icon: v-icon mdi-file-document-box
-              v-list-item-title File D
-      v-card-actions.grey.pa-2(:class='darkMode ? `darken-3-d5` : `lighten-1`')
+            v-btn(icon, tile): v-icon mdi-content-save-move-outline
+            v-btn(icon, tile): v-icon mdi-trash-can-outline
+          v-list.py-0(dense, v-if='currentPages.length > 0')
+            v-list-item-group(
+              v-model='currentPage'
+              color='primary'
+              )
+              template(v-for='(page, idx) of currentPages')
+                v-list-item(:key='page.id', :value='page.path')
+                  v-list-item-icon: v-icon mdi-file-document-box
+                  v-list-item-title {{page.title}}
+                v-divider(v-if='idx < pages.length - 1')
+          v-alert.animated.fadeIn(
+            v-else
+            text
+            color='orange'
+            prominent
+            icon='mdi-alert'
+            )
+            .body-2 This folder is empty.
+      v-card-actions.grey.pa-2(:class='darkMode ? `darken-2` : `lighten-1`')
         v-select(
           solo
           dark
+          flat
           background-color='grey darken-3-d2'
           hide-details
           single-line
@@ -62,6 +70,7 @@
           v-model='currentLocale'
           )
         v-text-field(
+          ref='pathIpt'
           solo
           hide-details
           prefix='/'
@@ -73,13 +82,15 @@
       v-card-chin
         v-spacer
         v-btn(text, @click='close') Cancel
-        v-btn.px-4(color='primary', @click='open')
+        v-btn.px-4(color='primary', @click='open', :disabled='!isValidPath')
           v-icon(left) mdi-check
           span Select
 </template>
 
 <script>
+import _ from 'lodash'
 import { get } from 'vuex-pathify'
+import pageTreeQuery from 'gql/common/common-pages-query-tree.gql'
 
 /* global siteLangs, siteConfig */
 
@@ -111,8 +122,15 @@ export default {
       searchLoading: false,
       currentLocale: siteConfig.lang,
       currentPath: 'new-page',
-      tree: [],
-      treeChildren: [],
+      currentPage: null,
+      currentNode: [0],
+      openNodes: [0],
+      tree: [{
+        id: 0,
+        title: '/ (root',
+        children: []
+      }],
+      pages: [],
       namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang]
     }
   },
@@ -122,21 +140,33 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    treeFolders() {
-      return [
-        {
-          id: '/',
-          name: '/ (root)',
-          children: []
-        }
-      ]
+    currentPages () {
+      return _.filter(this.pages, ['parent', _.head(this.currentNode) || 0])
+    },
+    isValidPath () {
+      return this.currentPath && this.currentPath.length > 2
     }
   },
   watch: {
-    isShown(newValue, oldValue) {
+    isShown (newValue, oldValue) {
       if (newValue && !oldValue) {
         this.currentPath = this.path
         this.currentLocale = this.locale
+        _.delay(() => {
+          this.$refs.pathIpt.focus()
+        })
+      }
+    },
+    currentNode (newValue, oldValue) {
+      if (newValue.length < 1) { // force a selection
+        this.$nextTick(() => {
+          this.currentNode = oldValue
+        })
+      }
+    },
+    currentPage (newValue, oldValue) {
+      if (!_.isEmpty(newValue)) {
+        this.currentPath = newValue
       }
     }
   },
@@ -153,8 +183,28 @@ export default {
         this.close()
       }
     },
-    async fetchFolders(item) {
-      console.info(item)
+    async fetchFolders (item) {
+      this.searchLoading = true
+      const resp = await this.$apollo.query({
+        query: pageTreeQuery,
+        fetchPolicy: 'network-only',
+        variables: {
+          parent: item.id,
+          mode: 'ALL',
+          locale: this.currentLocale
+        }
+      })
+      const items = _.get(resp, 'data.pages.tree', [])
+      const itemFolders = _.filter(items, ['isFolder', true]).map(f => ({...f, children: []}))
+      const itemPages = _.filter(items, ['isFolder', false])
+      if (itemFolders.length > 0) {
+        item.children = itemFolders
+      } else {
+        item.children = undefined
+      }
+      this.pages.push(...itemPages)
+
+      this.searchLoading = false
     }
   }
 }

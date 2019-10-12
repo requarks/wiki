@@ -141,6 +141,7 @@ module.exports = {
         })
       }).map(r => ({
         ...r,
+        parent: r.parent || 0,
         locale: r.localeCode
       }))
     }
