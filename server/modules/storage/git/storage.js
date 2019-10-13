@@ -247,7 +247,7 @@ module.exports = {
    */
   async created(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing new file ${page.path}...`)
-    let fileName = `${page.path}.${page.getFileExtension()}`
+    let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
@@ -266,7 +266,7 @@ module.exports = {
    */
   async updated(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing updated file ${page.path}...`)
-    let fileName = `${page.path}.${page.getFileExtension()}`
+    let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
@@ -285,7 +285,7 @@ module.exports = {
    */
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing removed file ${page.path}...`)
-    let fileName = `${page.path}.${page.getFileExtension()}`
+    let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
     }
@@ -301,18 +301,22 @@ module.exports = {
    * @param {Object} page Page to rename
    */
   async renamed(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${page.sourcePath} to ${page.destinationPath}...`)
-    let sourceFilePath = `${page.sourcePath}.${page.getFileExtension()}`
-    let destinationFilePath = `${page.destinationPath}.${page.getFileExtension()}`
+    WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${page.path} to ${page.destinationPath}...`)
+    let sourceFilePath = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+    let destinationFilePath = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
-      sourceFilePath = `${page.localeCode}/${sourceFilePath}`
-      destinationFilePath = `${page.localeCode}/${destinationFilePath}`
+    if (WIKI.config.lang.namespacing) {
+      if (WIKI.config.lang.code !== page.localeCode) {
+        sourceFilePath = `${page.localeCode}/${sourceFilePath}`
+      }
+      if (WIKI.config.lang.code !== page.destinationLocaleCode) {
+        destinationFilePath = `${page.destinationLocaleCode}/${destinationFilePath}`
+      }
     }
 
     await this.git.mv(`./${sourceFilePath}`, `./${destinationFilePath}`)
-    await this.git.commit(`docs: rename ${page.sourcePath} to ${destinationFilePath}`, destinationFilePath, {
-      '--author': `"${page.authorName} <${page.authorEmail}>"`
+    await this.git.commit(`docs: rename ${page.path} to ${page.destinationPath}`, destinationFilePath, {
+      '--author': `"${page.moveAuthorName} <${page.moveAuthorEmail}>"`
     })
   },
   /**

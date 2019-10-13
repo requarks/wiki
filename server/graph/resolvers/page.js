@@ -11,6 +11,9 @@ module.exports = {
     async pages() { return {} }
   },
   PageQuery: {
+    /**
+     * PAGE HISTORY
+     */
     async history(obj, args, context, info) {
       return WIKI.models.pageHistory.getHistory({
         pageId: args.id,
@@ -18,6 +21,9 @@ module.exports = {
         offsetSize: args.offsetSize || 100
       })
     },
+    /**
+     * SEARCH PAGES
+     */
     async search (obj, args, context) {
       if (WIKI.data.searchEngine) {
         const resp = await WIKI.data.searchEngine.query(args.query, args)
@@ -38,6 +44,9 @@ module.exports = {
         }
       }
     },
+    /**
+     * LIST PAGES
+     */
     async list (obj, args, context, info) {
       let results = await WIKI.models.pages.query().column([
         'pages.id',
@@ -101,6 +110,9 @@ module.exports = {
       }
       return results
     },
+    /**
+     * FETCH SINGLE PAGE
+     */
     async single (obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
@@ -113,9 +125,15 @@ module.exports = {
         throw new WIKI.Error.PageNotFound()
       }
     },
+    /**
+     * FETCH TAGS
+     */
     async tags (obj, args, context, info) {
       return WIKI.models.tags.query().orderBy('tag', 'asc')
     },
+    /**
+     * FETCH PAGE TREE
+     */
     async tree (obj, args, context, info) {
       let results = []
       let conds = {
@@ -147,35 +165,75 @@ module.exports = {
     }
   },
   PageMutation: {
+    /**
+     * CREATE PAGE
+     */
     async create(obj, args, context) {
-      const page = await WIKI.models.pages.createPage({
-        ...args,
-        authorId: context.req.user.id
-      })
-      return {
-        responseResult: graphHelper.generateSuccess('Page created successfully.'),
-        page
+      try {
+        const page = await WIKI.models.pages.createPage({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page created successfully.'),
+          page
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
       }
     },
-    async delete(obj, args, context) {
-      await WIKI.models.pages.deletePage({
-        ...args,
-        authorId: context.req.user.id
-      })
-      return {
-        responseResult: graphHelper.generateSuccess('Page has been deleted.')
-      }
-    },
+    /**
+     * UPDATE PAGE
+     */
     async update(obj, args, context) {
-      const page = await WIKI.models.pages.updatePage({
-        ...args,
-        authorId: context.req.user.id
-      })
-      return {
-        responseResult: graphHelper.generateSuccess('Page has been updated.'),
-        page
+      try {
+        const page = await WIKI.models.pages.updatePage({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page has been updated.'),
+          page
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
       }
     },
+    /**
+     * MOVE PAGE
+     */
+    async move(obj, args, context) {
+      try {
+        await WIKI.models.pages.movePage({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page has been moved.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * DELETE PAGE
+     */
+    async delete(obj, args, context) {
+      try {
+        await WIKI.models.pages.deletePage({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page has been deleted.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * FLUSH PAGE CACHE
+     */
     async flushCache(obj, args, context) {
       try {
         await WIKI.models.pages.flushCache()
@@ -186,12 +244,33 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
+    /**
+     * MIGRATE ALL PAGES FROM SOURCE LOCALE TO TARGET LOCALE
+     */
     async migrateToLocale(obj, args, context) {
       try {
         const count = await WIKI.models.pages.migrateToLocale(args)
         return {
           responseResult: graphHelper.generateSuccess('Migrated content to target locale successfully.'),
           count
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * REBUILD TREE
+     */
+    async rebuildTree(obj, args, context) {
+      try {
+        const rebuildJob = await WIKI.scheduler.registerJob({
+          name: 'rebuild-tree',
+          immediate: true,
+          worker: true
+        })
+        await rebuildJob.finished
+        return {
+          responseResult: graphHelper.generateSuccess('Page tree rebuilt successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

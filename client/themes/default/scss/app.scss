@@ -226,7 +226,7 @@
   }
 
   blockquote {
-    padding: 0 0 1rem 0;
+    padding: 0 0 1rem 1rem;
     border-left: 5px solid mc('blue', '500');
     border-radius: .5rem;
     margin: 1rem 0;
@@ -242,9 +242,8 @@
 
     &.is-info {
       background-color: mc('blue', '50');
-      background-image: radial-gradient(ellipse at top, mc('blue', '50'), lighten(mc('blue', '50'), 5%));
-      border-color: mc('blue', '100');
-      box-shadow: 0 0 2px 0 mc('blue', '100');
+      border-color: mc('blue', '300');
+      color: mc('blue', '900');
 
       code {
         background-color: mc('blue', '50');
@@ -252,17 +251,15 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, rgba(mc('blue', '900'), .25), rgba(darken(mc('blue', '900'), 5%), .2));
+        background-color: mc('blue', '900');
+        color: mc('blue', '50');
         border-color: mc('blue', '500');
-        box-shadow: 0 0 2px 0 mc('grey', '900');
       }
     }
     &.is-warning {
       background-color: mc('orange', '50');
-      background-image: radial-gradient(ellipse at top, mc('orange', '50'), lighten(mc('orange', '50'), 5%));
-      border-color: mc('orange', '100');
-      box-shadow: 0 0 2px 0 mc('orange', '100');
+      border-color: mc('orange', '300');
+      color: darken(mc('orange', '900'), 10%);
 
       code {
         background-color: mc('orange', '50');
@@ -270,17 +267,16 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, rgba(mc('orange', '900'), .25), rgba(darken(mc('orange', '900'), 5%), .2));
+        background-color: darken(mc('orange', '900'), 5%);
+        color: mc('orange', '100');
         border-color: mc('orange', '500');
         box-shadow: 0 0 2px 0 mc('grey', '900');
       }
     }
     &.is-danger {
       background-color: mc('red', '50');
-      background-image: radial-gradient(ellipse at top, mc('red', '50'), lighten(mc('red', '50'), 5%));
-      border-color: mc('red', '100');
-      box-shadow: 0 0 2px 0 mc('red', '100');
+      border-color: mc('red', '300');
+      color: mc('red', '900');
 
       code {
         background-color: mc('red', '50');
@@ -288,17 +284,15 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, rgba(mc('red', '900'), .1), rgba(darken(mc('red', '900'), 5%), .2));
+        background-color: mc('red', '900');
+        color: mc('red', '100');
         border-color: mc('red', '500');
-        box-shadow: 0 0 2px 0 mc('grey', '900');
       }
     }
     &.is-success {
       background-color: mc('green', '50');
-      background-image: radial-gradient(ellipse at top, mc('green', '50'), lighten(mc('green', '50'), 5%));
-      border-color: mc('green', '100');
-      box-shadow: 0 0 2px 0 mc('green', '100');
+      border-color: mc('green', '300');
+      color: mc('green', '900');
 
       code {
         background-color: mc('green', '50');
@@ -306,10 +300,9 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('grey', '900');
-        background-image: radial-gradient(ellipse at top, rgba(mc('green', '900'), .4), rgba(darken(mc('green', '900'), 5%), .2));
+        background-color: mc('green', '900');
+        color: mc('green', '50');
         border-color: mc('green', '500');
-        box-shadow: 0 0 2px 0 mc('grey', '900');
       }
     }
   }

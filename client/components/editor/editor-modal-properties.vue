@@ -52,7 +52,6 @@
                     :items='namespaces'
                     v-model='locale'
                     hide-details
-                    :disabled='mode !== "create"'
                   )
                 v-flex(xs12, md10)
                   v-text-field(
@@ -63,7 +62,6 @@
                     :hint='$t(`editor:props.pathHint`)'
                     persistent-hint
                     @click:append='showPathSelector'
-                    :disabled='mode !== "create"'
                     )
           v-divider
           v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d5` : `lighten-4`')
@@ -219,7 +217,7 @@
               inset
               )
 
-    page-selector(mode='create', v-model='pageSelectorShown', :path='path', :locale='locale', :open-handler='setPath')
+    page-selector(:mode='pageSelectorMode', v-model='pageSelectorShown', :path='path', :locale='locale', :open-handler='setPath')
 </template>
 
 <script>
@@ -257,7 +255,10 @@ export default {
     path: sync('page/path'),
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
-    publishEndDate: sync('page/publishEndDate')
+    publishEndDate: sync('page/publishEndDate'),
+    pageSelectorMode () {
+      return (this.mode === 'create') ? 'create' : 'move'
+    }
   },
   watch: {
     value(newValue, oldValue) {

@@ -1,0 +1,12 @@
+mutation {
+  pages {
+    rebuildTree {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

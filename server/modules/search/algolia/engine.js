@@ -109,10 +109,10 @@ module.exports = {
    * @param {Object} page Page to rename
    */
   async renamed(page) {
-    await this.index.deleteObject(page.sourceHash)
+    await this.index.deleteObject(page.hash)
     await this.index.addObject({
       objectID: page.destinationHash,
-      locale: page.localeCode,
+      locale: page.destinationLocaleCode,
       path: page.destinationPath,
       title: page.title,
       description: page.description,

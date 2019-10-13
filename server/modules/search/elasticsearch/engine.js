@@ -210,7 +210,7 @@ module.exports = {
     await this.client.delete({
       index: this.config.indexName,
       type: '_doc',
-      id: page.sourceHash,
+      id: page.hash,
       refresh: true
     })
     await this.client.index({
@@ -219,7 +219,7 @@ module.exports = {
       id: page.destinationHash,
       body: {
         suggest: this.buildSuggest(page),
-        locale: page.localeCode,
+        locale: page.destinationLocaleCode,
         path: page.destinationPath,
         title: page.title,
         description: page.description,

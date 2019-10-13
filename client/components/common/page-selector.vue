@@ -98,6 +98,8 @@ import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import pageTreeQuery from 'gql/common/common-pages-query-tree.gql'
 
+const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
+
 /* global siteLangs, siteConfig */
 
 export default {
@@ -152,7 +154,22 @@ export default {
       return _.sortBy(_.filter(this.pages, ['parent', _.head(this.currentNode) || 0]), ['title', 'path'])
     },
     isValidPath () {
-      return this.currentPath && this.currentPath.length > 2
+      if (!this.currentPath) {
+        return false
+      }
+      const firstSection = _.head(this.currentPath.split('/'))
+      if (firstSection.length <= 1) {
+        return false
+      } else if (localeSegmentRegex.test(firstSection)) {
+        return false
+      } else if (
+        _.some(['login', 'logout', 'register', 'verify', 'favicons', 'fonts', 'img', 'js', 'svg'], p => {
+          return p === firstSection
+        })) {
+        return false
+      } else {
+        return true
+      }
     }
   },
   watch: {

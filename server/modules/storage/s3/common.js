@@ -1,4 +1,5 @@
 const S3 = require('aws-sdk/clients/s3')
+const pageHelper = require('../../../helpers/page.js')
 
 /* global WIKI */
 
@@ -6,7 +7,7 @@ const S3 = require('aws-sdk/clients/s3')
  * Deduce the file path given the `page` object and the object's key to the page's path.
  */
 const getFilePath = (page, pathKey) => {
-  const fileName = `${page[pathKey]}.${page.getFileExtension()}`
+  const fileName = `${page[pathKey]}.${pageHelper.getFileExtension(page.contentType)}`
   const withLocaleCode = WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode
   return withLocaleCode ? `${page.localeCode}/${fileName}` : fileName
 }
@@ -55,9 +56,17 @@ module.exports = class S3CompatibleStorage {
     await this.s3.deleteObject({ Key: filePath }).promise()
   }
   async renamed(page) {
-    WIKI.logger.info(`(STORAGE/${this.storageName}) Renaming file ${page.sourcePath} to ${page.destinationPath}...`)
-    const sourceFilePath = getFilePath(page, 'sourcePath')
-    const destinationFilePath = getFilePath(page, 'destinationPath')
+    WIKI.logger.info(`(STORAGE/${this.storageName}) Renaming file ${page.path} to ${page.destinationPath}...`)
+    let sourceFilePath = `${page.path}.${page.getFileExtension()}`
+    let destinationFilePath = `${page.destinationPath}.${page.getFileExtension()}`
+    if (WIKI.config.lang.namespacing) {
+      if (WIKI.config.lang.code !== page.localeCode) {
+        sourceFilePath = `${page.localeCode}/${sourceFilePath}`
+      }
+      if (WIKI.config.lang.code !== page.destinationLocaleCode) {
+        destinationFilePath = `${page.destinationLocaleCode}/${destinationFilePath}`
+      }
+    }
     await this.s3.copyObject({ CopySource: sourceFilePath, Key: destinationFilePath }).promise()
     await this.s3.deleteObject({ Key: sourceFilePath }).promise()
   }

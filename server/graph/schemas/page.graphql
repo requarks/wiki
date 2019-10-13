@@ -80,7 +80,13 @@ type PageMutation {
     publishStartDate: Date
     tags: [String]
     title: String
-  ): PageResponse @auth(requires: ["manage:pages", "manage:system"])
+  ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
+  move(
+    id: Int!
+    destinationPath: String!
+    destinationLocale: String!
+  ): DefaultResponse @auth(requires: ["manage:pages", "manage:system"])
 
   delete(
     id: Int!
@@ -92,6 +98,8 @@ type PageMutation {
     sourceLocale: String!
     targetLocale: String!
   ): PageMigrationResponse @auth(requires: ["manage:system"])
+
+  rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

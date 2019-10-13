@@ -129,7 +129,7 @@ module.exports = {
       locale: page.localeCode,
       path: page.sourcePath
     }).update({
-      locale: page.localeCode,
+      locale: page.destinationLocaleCode,
       path: page.destinationPath
     })
   },

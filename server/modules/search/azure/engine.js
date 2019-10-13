@@ -191,13 +191,13 @@ module.exports = {
     await this.client.indexes.use(this.config.indexName).index([
       {
         '@search.action': 'delete',
-        id: page.sourceHash
+        id: page.hash
       }
     ])
     await this.client.indexes.use(this.config.indexName).index([
       {
         id: page.destinationHash,
-        locale: page.localeCode,
+        locale: page.destinationLocaleCode,
         path: page.destinationPath,
         title: page.title,
         description: page.description,

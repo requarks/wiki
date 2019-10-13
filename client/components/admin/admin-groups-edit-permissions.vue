@@ -24,6 +24,7 @@
             v-card-text.pt-0
               template(v-for='(pm, idx) in pmGroup.items')
                 v-checkbox.pt-0(
+                  style='justify-content: space-between;'
                   :key='pm.permission'
                   :label='pm.permission'
                   :hint='pm.hint'
@@ -60,14 +61,14 @@ export default {
             },
             {
               permission: 'write:pages',
-              hint: 'Can create new pages, as specified in the Page Rules',
+              hint: 'Can create / edit pages, as specified in the Page Rules',
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
               permission: 'manage:pages',
-              hint: 'Can edit and move existing pages as specified in the Page Rules',
+              hint: 'Can move existing pages as specified in the Page Rules',
               warning: false,
               restrictedForSystem: false,
               disabled: false

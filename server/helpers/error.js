@@ -117,6 +117,14 @@ module.exports = {
     message: 'Mail template failed to load.',
     code: 3003
   }),
+  PageCreateForbidden: CustomError('PageCreateForbidden', {
+    message: 'You are not authorized to create this page.',
+    code: 6008
+  }),
+  PageDeleteForbidden: CustomError('PageDeleteForbidden', {
+    message: 'You are not authorized to delete this page.',
+    code: 6010
+  }),
   PageGenericError: CustomError('PageGenericError', {
     message: 'An unexpected error occured during a page operation.',
     code: 6001
@@ -133,9 +141,21 @@ module.exports = {
     message: 'Page path cannot contains illegal characters.',
     code: 6005
   }),
+  PageMoveForbidden: CustomError('PageMoveForbidden', {
+    message: 'You are not authorized to move this page.',
+    code: 6007
+  }),
   PageNotFound: CustomError('PageNotFound', {
     message: 'This page does not exist.',
     code: 6003
+  }),
+  PagePathCollision: CustomError('PagePathCollision', {
+    message: 'Destination page path already exists.',
+    code: 6006
+  }),
+  PageUpdateForbidden: CustomError('PageUpdateForbidden', {
+    message: 'You are not authorized to update this page.',
+    code: 6009
   }),
   SearchActivationFailed: CustomError('SearchActivationFailed', {
     message: 'Search Engine activation failed.',

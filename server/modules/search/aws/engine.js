@@ -255,7 +255,7 @@ module.exports = {
       documents: JSON.stringify([
         {
           type: 'delete',
-          id: page.sourceHash
+          id: page.hash
         }
       ])
     }).promise()
@@ -266,7 +266,7 @@ module.exports = {
           type: 'add',
           id: page.destinationHash,
           fields: {
-            locale: page.localeCode,
+            locale: page.destinationLocaleCode,
             path: page.destinationPath,
             title: page.title,
             description: page.description,

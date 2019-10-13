@@ -249,6 +249,11 @@ export default {
               style: 'success',
               icon: 'check'
             })
+            if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
+              _.delay(() => {
+                window.location.replace(`/e/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+              }, 1000)
+            }
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
           }

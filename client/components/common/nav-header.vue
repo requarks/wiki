@@ -204,6 +204,8 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import Cookies from 'js-cookie'
 
+import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
+
 /* global siteLangs */
 
 export default {
@@ -342,8 +344,26 @@ export default {
     pageMove () {
       this.movePageModal = true
     },
-    pageMoveRename ({ path, locale }) {
-
+    async pageMoveRename ({ path, locale }) {
+      this.$store.commit(`loadingStart`, 'page-move')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: movePageMutation,
+          variables: {
+            id: this.$store.get('page/id'),
+            destinationLocale: locale,
+            destinationPath: path
+          }
+        })
+        if (_.get(resp, 'data.pages.move.responseResult.succeeded', false)) {
+          window.location.replace(`/${locale}/${path}`)
+        } else {
+          throw new Error(_.get(resp, 'data.pages.move.responseResult.message', this.$t('common:error.unexpected')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+        this.$store.commit(`loadingStop`, 'page-move')
+      }
     },
     pageDelete () {
       this.deletePageModal = true

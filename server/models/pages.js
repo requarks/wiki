@@ -213,23 +213,35 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async createPage(opts) {
+    // -> Validate path
     if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
+    // -> Check for page access
+    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      throw new WIKI.Error.PageDeleteForbidden()
+    }
+
+    // -> Check for duplicate
     const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
     if (dupCheck) {
       throw new WIKI.Error.PageDuplicateCreate()
     }
 
+    // -> Check for empty content
     if (!opts.content || _.trim(opts.content).length < 1) {
       throw new WIKI.Error.PageEmptyContent()
     }
 
+    // -> Create page
     await WIKI.models.pages.query().insert({
-      authorId: opts.authorId,
+      authorId: opts.user.id,
       content: opts.content,
-      creatorId: opts.authorId,
+      creatorId: opts.user.id,
       contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
       description: opts.description,
       editorKey: opts.editor,
@@ -246,7 +258,7 @@ module.exports = class Page extends Model {
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
       locale: opts.locale,
-      userId: opts.authorId,
+      userId: opts.user.id,
       isPrivate: opts.isPrivate
     })
 
@@ -288,22 +300,35 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async updatePage(opts) {
+    // -> Fetch original page
     const ogPage = await WIKI.models.pages.query().findById(opts.id)
     if (!ogPage) {
       throw new Error('Invalid Page Id')
     }
 
+    // -> Check for page access
+    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      throw new WIKI.Error.PageUpdateForbidden()
+    }
+
+    // -> Check for empty content
     if (!opts.content || _.trim(opts.content).length < 1) {
       throw new WIKI.Error.PageEmptyContent()
     }
 
+    // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
       isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
       action: 'updated'
     })
+
+    // -> Update page
     await WIKI.models.pages.query().patch({
-      authorId: opts.authorId,
+      authorId: opts.user.id,
       content: opts.content,
       description: opts.description,
       isPublished: opts.isPublished === true || opts.isPublished === 1,
@@ -311,7 +336,7 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title
     }).where('id', ogPage.id)
-    const page = await WIKI.models.pages.getPageFromDb({
+    let page = await WIKI.models.pages.getPageFromDb({
       path: ogPage.path,
       locale: ogPage.localeCode,
       userId: ogPage.authorId,
@@ -336,7 +361,104 @@ module.exports = class Page extends Model {
         page
       })
     }
+
+    // -> Perform move?
+    if (opts.locale !== page.localeCode || opts.path !== page.path) {
+      await WIKI.models.pages.movePage({
+        id: page.id,
+        destinationLocale: opts.locale,
+        destinationPath: opts.path,
+        user: opts.user
+      })
+    }
+
     return page
+  }
+
+  /**
+   * Move a Page
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise with no value
+   */
+  static async movePage(opts) {
+    const page = await WIKI.models.pages.query().findById(opts.id)
+    if (!page) {
+      throw new WIKI.Error.PageNotFound()
+    }
+
+    // -> Check for source page access
+    if (!WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
+      locale: page.sourceLocale,
+      path: page.sourcePath
+    })) {
+      throw new WIKI.Error.PageMoveForbidden()
+    }
+    // -> Check for destination page access
+    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+      locale: opts.destinationLocale,
+      path: opts.destinationPath
+    })) {
+      throw new WIKI.Error.PageMoveForbidden()
+    }
+
+    // -> Check for existing page at destination path
+    const destPage = await await WIKI.models.pages.query().findOne({
+      path: opts.destinationPath,
+      localeCode: opts.destinationLocale
+    })
+    if (destPage) {
+      throw new WIKI.Error.PagePathCollision()
+    }
+
+    // -> Create version snapshot
+    await WIKI.models.pageHistory.addVersion({
+      ...page,
+      action: 'moved'
+    })
+
+    const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
+
+    // -> Move page
+    await WIKI.models.pages.query().patch({
+      path: opts.destinationPath,
+      localeCode: opts.destinationLocale,
+      hash: destinationHash
+    }).findById(page.id)
+    await WIKI.models.pages.deletePageFromCache(page)
+
+    // -> Rename in Search Index
+    await WIKI.data.searchEngine.renamed({
+      ...page,
+      destinationPath: opts.destinationPath,
+      destinationLocaleCode: opts.destinationLocale,
+      destinationHash
+    })
+
+    // -> Rename in Storage
+    if (!opts.skipStorage) {
+      await WIKI.models.storage.pageEvent({
+        event: 'renamed',
+        page: {
+          ...page,
+          destinationPath: opts.destinationPath,
+          destinationLocaleCode: opts.destinationLocale,
+          destinationHash,
+          moveAuthorId: opts.user.id,
+          moveAuthorName: opts.user.name,
+          moveAuthorEmail: opts.user.email
+        }
+      })
+    }
+
+    // -> Reconnect Links
+    await WIKI.models.pages.reconnectLinks({
+      sourceLocale: page.localeCode,
+      sourcePath: page.path,
+      locale: opts.destinationLocale,
+      path: opts.destinationPath,
+      mode: 'move'
+    })
   }
 
   /**
@@ -358,10 +480,22 @@ module.exports = class Page extends Model {
     if (!page) {
       throw new Error('Invalid Page Id')
     }
+
+    // -> Check for page access
+    if (!WIKI.auth.checkAccess(opts.user, ['delete:pages'], {
+      locale: page.locale,
+      path: page.path
+    })) {
+      throw new WIKI.Error.PageDeleteForbidden()
+    }
+
+    // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...page,
       action: 'deleted'
     })
+
+    // -> Delete page
     await WIKI.models.pages.query().delete().where('id', page.id)
     await WIKI.models.pages.deletePageFromCache(page)
 

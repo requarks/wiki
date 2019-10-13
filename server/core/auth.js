@@ -165,7 +165,7 @@ module.exports = {
     }
 
     // Check Page Rules
-    if (path && user.groups) {
+    if (page && user.groups) {
       let checkState = {
         deny: false,
         match: false,

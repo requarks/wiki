@@ -3,6 +3,12 @@
     v-toolbar(flat, color='primary', dark, dense)
       .subtitle-1 {{ $t('admin:utilities.contentTitle') }}
     v-card-text
+      .subtitle-1.pb-3.primary--text Rebuild Page Tree
+      .body-2 The virtual structure of your wiki is automatically inferred from all page paths. You can trigger a full rebuild of the tree if some virtual folders are missing or not valid anymore.
+      v-btn(outlined, color='primary', @click='rebuildTree', :disabled='loading').ml-0.mt-3
+        v-icon(left) mdi-gesture-double-tap
+        span Proceed
+      v-divider.my-5
       .subtitle-1.pb-3.pl-0.primary--text Migrate all pages to target locale
       .body-2 If you created content before selecting a different locale and activating the namespacing capabilities, you may want to transfer all content to the base locale.
       .body-2.red--text: strong This operation is destructive and cannot be reversed! Make sure you have proper backups!
@@ -35,6 +41,7 @@
 <script>
 import _ from 'lodash'
 import utilityContentMigrateLocaleMutation from 'gql/admin/utilities/utilities-mutation-content-migratelocale.gql'
+import utilityContentRebuildTreeMutation from 'gql/admin/utilities/utilities-mutation-content-rebuildtree.gql'
 
 /* global siteLangs, siteConfig */
 
@@ -55,7 +62,32 @@ export default {
     }
   },
   methods: {
-    async migrateToLocale() {
+    async rebuildTree () {
+      this.loading = true
+      this.$store.commit(`loadingStart`, 'admin-utilities-content-rebuildtree')
+
+      try {
+        const respRaw = await this.$apollo.mutate({
+          mutation: utilityContentRebuildTreeMutation
+        })
+        const resp = _.get(respRaw, 'data.pages.rebuildTree.responseResult', {})
+        if (resp.succeeded) {
+          this.$store.commit('showNotification', {
+            message: 'Page Tree rebuilt successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+        } else {
+          throw new Error(resp.message)
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+
+      this.$store.commit(`loadingStop`, 'admin-utilities-content-rebuildtree')
+      this.loading = false
+    },
+    async migrateToLocale () {
       this.loading = true
       this.$store.commit(`loadingStart`, 'admin-utilities-content-migratelocale')
 
