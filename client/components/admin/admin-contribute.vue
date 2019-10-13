@@ -26,6 +26,9 @@
               icons-and-text
               )
               v-tab
+                span GitHub
+                v-icon.my-1(size='24') mdi-github-circle
+              v-tab
                 span Patreon
                 img.my-1(src='/svg/icon-patreon.svg', style='height: 24px;')
               v-tab
@@ -40,6 +43,10 @@
               v-tab
                 span T-Shirts
                 img.my-1(src='/svg/icon-t-shirt.svg', style='height: 24px;')
+              v-tab-item(:transition='false', :reverse-transition='false')
+                .body-2.pa-3 {{ $t('admin:contribute.github') }}
+                a.ml-3(href='https://github.com/users/NGPixel/sponsorship', :title='$t(`admin:contribute.becomeASponsor`)')
+                  img(src='/img/donate_github.svg', :alt='$t(`admin:contribute.becomeASponsor`)' style='width:200px;')
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-2.pa-3 {{ $t('admin:contribute.patreon') }}
                 a.ml-3(href='https://www.patreon.com/bePatron?u=16744039', :title='$t(`admin:contribute.becomeAPatron`)')

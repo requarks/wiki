@@ -5,6 +5,7 @@ query ($parent: Int!, $mode: PageTreeMode!, $locale: String!) {
       path
       title
       isFolder
+      pageId
       parent
     }
   }

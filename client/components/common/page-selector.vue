@@ -1,9 +1,15 @@
 <template lang="pug">
-  v-dialog(v-model='isShown', max-width='850px')
+  v-dialog(
+    v-model='isShown'
+    max-width='850px'
+    overlay-color='blue darken-4'
+    overlay-opacity='.7'
+    )
     v-card.page-selector
       .dialog-header.is-blue
         v-icon.mr-3(color='white') mdi-page-next-outline
-        .body-1 Select Page Location
+        .body-1(v-if='mode === `create`') Select New Page Location
+        .body-1(v-else-if='mode === `move`') Move / Rename Page Location
         v-spacer
         v-progress-circular(
           indeterminate
@@ -13,11 +19,11 @@
           v-show='searchLoading'
           )
       .d-flex(style='min-height:400px;')
-        v-flex.grey(xs4, :class='darkMode ? `darken-4` : `lighten-3`')
+        v-flex.grey(xs5, :class='darkMode ? `darken-4` : `lighten-3`')
           v-toolbar(color='grey darken-3', dark, dense, flat)
             .body-2 Virtual Folders
             v-spacer
-            v-btn(icon, tile, href='https://docs.requarks.io/', target='_blank')
+            v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
               v-icon mdi-help-box
           v-treeview(
             :active.sync='currentNode'
@@ -33,7 +39,7 @@
             )
             template(slot='prepend', slot-scope='{ item, open, leaf }')
               v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
-        v-flex(xs8)
+        v-flex(xs7)
           v-toolbar(color='blue darken-2', dark, dense, flat)
             .body-2 Pages
             v-spacer
@@ -121,6 +127,7 @@ export default {
     return {
       searchLoading: false,
       currentLocale: siteConfig.lang,
+      currentFolderPath: '',
       currentPath: 'new-page',
       currentPage: null,
       currentNode: [0],
@@ -142,7 +149,7 @@ export default {
       set(val) { this.$emit('input', val) }
     },
     currentPages () {
-      return _.filter(this.pages, ['parent', _.head(this.currentNode) || 0])
+      return _.sortBy(_.filter(this.pages, ['parent', _.head(this.currentNode) || 0]), ['title', 'path'])
     },
     isValidPath () {
       return this.currentPath && this.currentPath.length > 2
@@ -164,8 +171,9 @@ export default {
           this.currentNode = oldValue
         })
       } else {
+        const current = _.find(this.all, ['id', newValue[0]])
+
         if (this.openNodes.indexOf(newValue[0]) < 0) { // auto open and load children
-          const current = _.find(this.all, ['id', newValue[0]])
           if (current) {
             if (this.openNodes.indexOf(current.parent) < 0) {
               this.$nextTick(() => {
@@ -177,6 +185,8 @@ export default {
             this.openNodes.push(newValue[0])
           })
         }
+
+        this.currentPath = _.compact([_.get(current, 'path', ''), _.last(this.currentPath.split('/'))]).join('/')
       }
     },
     currentPage (newValue, oldValue) {
@@ -211,7 +221,7 @@ export default {
       })
       const items = _.get(resp, 'data.pages.tree', [])
       const itemFolders = _.filter(items, ['isFolder', true]).map(f => ({...f, children: []}))
-      const itemPages = _.filter(items, ['isFolder', false])
+      const itemPages = _.filter(items, i => i.pageId > 0)
       if (itemFolders.length > 0) {
         item.children = itemFolders
       } else {
@@ -232,6 +242,9 @@ export default {
 .page-selector {
   .v-treeview-node__label {
     font-size: 13px;
+  }
+  .v-treeview-node__content {
+    cursor: pointer;
   }
 }
 

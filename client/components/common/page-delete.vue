@@ -1,5 +1,11 @@
 <template lang='pug'>
-  v-dialog(v-model='isShown', max-width='550', persistent)
+  v-dialog(
+    v-model='isShown'
+    max-width='550'
+    persistent
+    overlay-color='red darken-4'
+    overlay-opacity='.7'
+    )
     v-card
       .dialog-header.is-short.is-red
         v-icon.mr-2(color='white') mdi-file-document-box-remove-outline

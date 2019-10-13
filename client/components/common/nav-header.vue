@@ -132,10 +132,9 @@
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-content-save-move-outline
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-content-save-move-outline
                   v-list-item-content
-                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.move')}}
-                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+                    v-list-item-title.body-2 {{$t('common:header.move')}}
                 v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
                   v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
@@ -196,6 +195,7 @@
             span {{$t('common:header.login')}}
 
     page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
+    page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
     page-delete(v-model='deletePageModal', v-if='path && path.length')
 </template>
 
@@ -226,6 +226,7 @@ export default {
       searchIsShown: true,
       searchAdvMenuShown: false,
       newPageModal: false,
+      movePageModal: false,
       deletePageModal: false,
       locales: siteLangs
     }
@@ -339,11 +340,10 @@ export default {
       window.location.assign(`/s/${this.locale}/${this.path}`)
     },
     pageMove () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'ferry'
-      })
+      this.movePageModal = true
+    },
+    pageMoveRename ({ path, locale }) {
+
     },
     pageDelete () {
       this.deletePageModal = true
