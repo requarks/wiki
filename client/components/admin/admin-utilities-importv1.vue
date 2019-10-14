@@ -318,7 +318,7 @@ export default {
       return this.importFilters.indexOf('users') >= 0
     },
     needDisk () {
-      return this.contentMode === `local`
+      return this.contentMode === `disk`
     },
     needGit () {
       return this.contentMode === `git`
@@ -396,6 +396,17 @@ export default {
                     { key: 'defaultName', value: { value: this.gitUserName } },
                     { key: 'localRepoPath', value: { value: this.gitRepoPath } },
                     { key: 'gitBinaryPath', value: { value: '' } }
+                  ]
+                }
+
+                // -> Setup Disk Module
+                if (this.contentMode === 'disk' && nStr.key === 'disk') {
+                  nStr.isEnabled = true
+                  nStr.mode = 'push'
+                  nStr.syncInterval = 'P0D'
+                  nStr.config = [
+                    { key: 'path', value: { value: this.contentPath } },
+                    { key: 'createDailyBackups', value: { value: false } }
                   ]
                 }
                 return nStr
