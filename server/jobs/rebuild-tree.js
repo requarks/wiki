@@ -10,7 +10,6 @@ module.exports = async (pageId) => {
     await WIKI.configSvc.loadFromDb()
     await WIKI.configSvc.applyFlags()
 
-    await WIKI.models.knex.table('pageTree').truncate()
     const pages = await WIKI.models.pages.query().select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS').orderBy(['localeCode', 'path'])
     let tree = []
     let pik = 0
@@ -52,6 +51,7 @@ module.exports = async (pageId) => {
       }
     }
 
+    await WIKI.models.knex.table('pageTree').truncate()
     if (tree.length > 0) {
       await WIKI.models.knex.table('pageTree').insert(tree)
     }

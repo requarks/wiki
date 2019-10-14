@@ -263,12 +263,7 @@ module.exports = {
      */
     async rebuildTree(obj, args, context) {
       try {
-        const rebuildJob = await WIKI.scheduler.registerJob({
-          name: 'rebuild-tree',
-          immediate: true,
-          worker: true
-        })
-        await rebuildJob.finished
+        await WIKI.models.pages.rebuildTree()
         return {
           responseResult: graphHelper.generateSuccess('Page tree rebuilt successfully.')
         }

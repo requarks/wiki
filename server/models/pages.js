@@ -270,6 +270,9 @@ module.exports = class Page extends Model {
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
 
+    // -> Rebuild page tree
+    await WIKI.models.pages.rebuildTree()
+
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
     page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
@@ -370,6 +373,11 @@ module.exports = class Page extends Model {
         destinationPath: opts.path,
         user: opts.user
       })
+    } else {
+      // -> Update title of page tree entry
+      await WIKI.models.knex.table('pageTree').where({
+        pageId: page.id
+      }).update('title', page.title)
     }
 
     return page
@@ -426,6 +434,9 @@ module.exports = class Page extends Model {
       hash: destinationHash
     }).findById(page.id)
     await WIKI.models.pages.deletePageFromCache(page)
+
+    // -> Rebuild page tree
+    await WIKI.models.pages.rebuildTree()
 
     // -> Rename in Search Index
     await WIKI.data.searchEngine.renamed({
@@ -499,6 +510,9 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.query().delete().where('id', page.id)
     await WIKI.models.pages.deletePageFromCache(page)
 
+    // -> Rebuild page tree
+    await WIKI.models.pages.rebuildTree()
+
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
 
@@ -519,14 +533,14 @@ module.exports = class Page extends Model {
   }
 
   /**
-   * Reconnect links to new/updated/deleted page
+   * Reconnect links to new/move/deleted page
    *
    * @param {Object} opts - Page parameters
    * @param {string} opts.path - Page Path
    * @param {string} opts.locale - Page Locale Code
    * @param {string} [opts.sourcePath] - Previous Page Path (move only)
    * @param {string} [opts.sourceLocale] - Previous Page Locale Code (move only)
-   * @param {string} opts.mode - Page Update mode (new, move, delete)
+   * @param {string} opts.mode - Page Update mode (create, move, delete)
    * @returns {Promise} Promise with no value
    */
   static async reconnectLinks (opts) {
@@ -593,6 +607,20 @@ module.exports = class Page extends Model {
     for (const hash of affectedHashes) {
       await WIKI.models.pages.deletePageFromCache({ hash })
     }
+  }
+
+  /**
+   * Rebuild page tree for new/updated/deleted page
+   *
+   * @returns {Promise} Promise with no value
+   */
+  static async rebuildTree() {
+    const rebuildJob = await WIKI.scheduler.registerJob({
+      name: 'rebuild-tree',
+      immediate: true,
+      worker: true
+    })
+    return rebuildJob.finished
   }
 
   /**
