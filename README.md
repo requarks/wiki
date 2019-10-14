@@ -50,7 +50,7 @@ It is highly recommended to use the 1.x version until a stable version of 2.0 is
 
 <div align="center">
 
-Wiki.js is an open source project that has been made possible due to the generous contributions by community [backers](https://github.com/Requarks/wiki/blob/master/BACKERS.md). If you are interested in supporting this project, please consider [becoming a patron](https://www.patreon.com/requarks), donating to our [OpenCollective](https://opencollective.com/wikijs), via [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FLV5X255Z9CJU&source=url) or via Ethereum (`0xe1d55c19ae86f6bcbfb17e7f06ace96bdbb22cb5`).
+Wiki.js is an open source project that has been made possible due to the generous contributions by community [backers](https://github.com/Requarks/wiki/blob/master/BACKERS.md). If you are interested in supporting this project, please consider [becoming a sponsor](https://github.com/users/NGPixel/sponsorship), [becoming a patron](https://www.patreon.com/requarks), donating to our [OpenCollective](https://opencollective.com/wikijs), via [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FLV5X255Z9CJU&source=url) or via Ethereum (`0xe1d55c19ae86f6bcbfb17e7f06ace96bdbb22cb5`).
   
   [![Become a Sponsor](https://img.shields.io/badge/donate-github-lightgrey.svg?style=popout&logo=github)](https://github.com/users/NGPixel/sponsorship)
   [![Become a Patron](https://img.shields.io/badge/donate-patreon-orange.svg?style=popout&logo=patreon)](https://www.patreon.com/requarks)
@@ -63,13 +63,21 @@ Wiki.js is an open source project that has been made possible due to the generou
 
 <h2 align="center">Docker</h2>
 
+<div align="center">
+
 Docker is the recommended way to go! Simply use Docker image: `requarks/wiki:beta` 
 
 You can also use Docker Compose ([see example](https://github.com/Requarks/wiki/blob/master/dev/examples/docker-compose.yml)) to run Wiki.js with all dependencies.
 
+</div>
+
 <h2 align="center">Demo</h2>
 
+<div align="center">
+
 Check out our [documentation site](https://docs.requarks.io), it's running Wiki.js!
+
+</div>
 
 <h2 align="center">Slack</h2>
 
