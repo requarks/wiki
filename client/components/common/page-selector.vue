@@ -44,9 +44,9 @@
         v-flex(xs7)
           v-toolbar(color='blue darken-2', dark, dense, flat)
             .body-2 Pages
-            v-spacer
-            v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
-            v-btn(icon, tile, disabled): v-icon mdi-trash-can-outline
+            //- v-spacer
+            //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
+            //- v-btn(icon, tile, disabled): v-icon mdi-trash-can-outline
           div(v-if='currentPages.length > 0', style='height:400px;')
             vue-scroll(:ops='scrollStyle')
               v-list.py-0(dense)
