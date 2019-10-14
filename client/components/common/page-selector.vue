@@ -18,43 +18,47 @@
           :width='2'
           v-show='searchLoading'
           )
-      .d-flex(style='min-height:400px;')
+      .d-flex
         v-flex.grey(xs5, :class='darkMode ? `darken-4` : `lighten-3`')
           v-toolbar(color='grey darken-3', dark, dense, flat)
             .body-2 Virtual Folders
             v-spacer
             v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
               v-icon mdi-help-box
-          v-treeview(
-            :active.sync='currentNode'
-            :open.sync='openNodes'
-            :items='tree'
-            :load-children='fetchFolders'
-            dense
-            expand-icon='mdi-menu-down-outline'
-            item-id='path'
-            item-text='title'
-            activatable
-            hoverable
-            )
-            template(slot='prepend', slot-scope='{ item, open, leaf }')
-              v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
+          div(style='height:400px;')
+            vue-scroll(:ops='scrollStyle')
+              v-treeview(
+                :active.sync='currentNode'
+                :open.sync='openNodes'
+                :items='tree'
+                :load-children='fetchFolders'
+                dense
+                expand-icon='mdi-menu-down-outline'
+                item-id='path'
+                item-text='title'
+                activatable
+                hoverable
+                )
+                template(slot='prepend', slot-scope='{ item, open, leaf }')
+                  v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
         v-flex(xs7)
           v-toolbar(color='blue darken-2', dark, dense, flat)
             .body-2 Pages
             v-spacer
             v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
             v-btn(icon, tile, disabled): v-icon mdi-trash-can-outline
-          v-list.py-0(dense, v-if='currentPages.length > 0')
-            v-list-item-group(
-              v-model='currentPage'
-              color='primary'
-              )
-              template(v-for='(page, idx) of currentPages')
-                v-list-item(:key='page.id', :value='page.path')
-                  v-list-item-icon: v-icon mdi-file-document-box
-                  v-list-item-title {{page.title}}
-                v-divider(v-if='idx < pages.length - 1')
+          div(v-if='currentPages.length > 0', style='height:400px;')
+            vue-scroll(:ops='scrollStyle')
+              v-list.py-0(dense)
+                v-list-item-group(
+                  v-model='currentPage'
+                  color='primary'
+                  )
+                  template(v-for='(page, idx) of currentPages')
+                    v-list-item(:key='page.id', :value='page.path')
+                      v-list-item-icon: v-icon mdi-file-document-box
+                      v-list-item-title {{page.title}}
+                    v-divider(v-if='idx < pages.length - 1')
           v-alert.animated.fadeIn(
             v-else
             text
@@ -134,14 +138,34 @@ export default {
       currentPage: null,
       currentNode: [0],
       openNodes: [0],
-      tree: [{
-        id: 0,
-        title: '/ (root',
-        children: []
-      }],
+      tree: [
+        {
+          id: 0,
+          title: '/ (root',
+          children: []
+        }
+      ],
       pages: [],
       all: [],
-      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang]
+      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang],
+      scrollStyle: {
+        vuescroll: {},
+        scrollPanel: {
+          initialScrollX: 0.01, // fix scrollbar not disappearing on load
+          scrollingX: false,
+          speed: 50
+        },
+        rail: {
+          gutterOfEnds: '2px'
+        },
+        bar: {
+          onlyShowBarOnScroll: false,
+          background: '#999',
+          hoverStyle: {
+            background: '#64B5F6'
+          }
+        }
+      }
     }
   },
   computed: {
