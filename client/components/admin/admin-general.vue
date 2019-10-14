@@ -187,7 +187,7 @@
                   v-divider.mt-3
                   v-switch(
                     inset
-                    label='Subresource Integrity'
+                    label='Subresource Integrity (SRI)'
                     color='red darken-2'
                     v-model='config.securitySRI'
                     persistent-hint
