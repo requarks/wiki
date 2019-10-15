@@ -1,7 +1,6 @@
 const passport = require('passport')
 const passportJWT = require('passport-jwt')
 const _ = require('lodash')
-const path = require('path')
 const jwt = require('jsonwebtoken')
 const moment = require('moment')
 const Promise = require('bluebird')

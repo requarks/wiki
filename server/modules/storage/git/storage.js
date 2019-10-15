@@ -8,40 +8,7 @@ const pipeline = Promise.promisify(stream.pipeline)
 const klaw = require('klaw')
 const pageHelper = require('../../../helpers/page.js')
 
-const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
-
 /* global WIKI */
-
-const getContenType = (filePath) => {
-  const ext = _.last(filePath.split('.'))
-  switch (ext) {
-    case 'md':
-      return 'markdown'
-    case 'html':
-      return 'html'
-    default:
-      return false
-  }
-}
-
-const getPagePath = (filePath) => {
-  let fpath = filePath
-  if (process.platform === 'win32') {
-    fpath = filePath.replace(/\\/g, '/')
-  }
-  let meta = {
-    locale: 'en',
-    path: _.initial(fpath.split('.')).join('')
-  }
-  const result = localeFolderRegex.exec(meta.path)
-  if (result[1]) {
-    meta = {
-      locale: result[1],
-      path: result[2]
-    }
-  }
-  return meta
-}
 
 module.exports = {
   git: null,
@@ -145,6 +112,8 @@ module.exports = {
   async sync() {
     const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
 
+    const rootUser = await WIKI.models.users.getRootUser()
+
     // Pull rebase
     if (_.includes(['sync', 'pull'], this.mode)) {
       WIKI.logger.info(`(STORAGE/GIT) Performing pull rebase from origin on branch ${this.config.branch}...`)
@@ -167,7 +136,7 @@ module.exports = {
 
       const diff = await this.git.diffSummary(['-M', currentCommitLog.hash, latestCommitLog.hash])
       if (_.get(diff, 'files', []).length > 0) {
-        await this.processFiles(diff.files)
+        await this.processFiles(diff.files, rootUser)
       }
     }
   },
@@ -176,13 +145,13 @@ module.exports = {
    *
    * @param {Array<String>} files Array of files to process
    */
-  async processFiles(files) {
+  async processFiles(files, user) {
     for (const item of files) {
-      const contentType = getContenType(item.file)
+      const contentType = pageHelper.getContentType(item.file)
       if (!contentType) {
         continue
       }
-      const contentPath = getPagePath(item.file)
+      const contentPath = pageHelper.getPagePath(item.file)
 
       let itemContents = ''
       try {
@@ -202,7 +171,7 @@ module.exports = {
             isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
             isPrivate: false,
             content: pageData.content,
-            authorId: 1,
+            user: user,
             skipStorage: true
           })
         } else {
@@ -217,7 +186,7 @@ module.exports = {
             isPublished: _.get(pageData, 'isPublished', true),
             isPrivate: false,
             content: pageData.content,
-            authorId: 1,
+            user: user,
             editor: pageEditor,
             skipStorage: true
           })
@@ -233,8 +202,7 @@ module.exports = {
             skipStorage: true
           })
         } else {
-          WIKI.logger.warn(`(STORAGE/GIT) Failed to open ${item.file}`)
-          console.error(err)
+          WIKI.logger.warn(`(STORAGE/GIT) Failed to process ${item.file}`)
           WIKI.logger.warn(err)
         }
       }
@@ -365,6 +333,9 @@ module.exports = {
    */
   async importAll() {
     WIKI.logger.info(`(STORAGE/GIT) Importing all content from local Git repo to the DB...`)
+
+    const rootUser = await WIKI.models.users.getRootUser()
+
     await pipeline(
       klaw(this.repoPath, {
         filter: (f) => {
@@ -378,10 +349,11 @@ module.exports = {
           if (relPath && relPath.length > 3) {
             WIKI.logger.info(`(STORAGE/GIT) Processing ${relPath}...`)
             await this.processFiles([{
+              user: rootUser,
               file: relPath,
               deletions: 0,
               insertions: 0
-            }])
+            }], rootUser)
           }
           cb()
         }
@@ -391,6 +363,7 @@ module.exports = {
   },
   async syncUntracked() {
     WIKI.logger.info(`(STORAGE/GIT) Adding all untracked content...`)
+
     await pipeline(
       WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt').select().from('pages').where({
         isPrivate: false
