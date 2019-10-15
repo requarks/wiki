@@ -29,3 +29,6 @@ actions:
   - handler: backup
     label: Create Backup
     hint: Will create a manual backup archive at this point in time, in a subfolder named _manual, from the contents currently on disk.
+  - handler: importAll
+    label: Import Everything
+    hint: Will import all content currently in the local disk folder.

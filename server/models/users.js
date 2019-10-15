@@ -712,4 +712,14 @@ module.exports = class User extends Model {
     user.permissions = user.getGlobalPermissions()
     return user
   }
+
+  static async getRootUser () {
+    let user = await WIKI.models.users.query().findById(1)
+    if (!user) {
+      WIKI.logger.error('CRITICAL ERROR: Root Administrator user is missing!')
+      process.exit(1)
+    }
+    user.permissions = ['manage:system']
+    return user
+  }
 }

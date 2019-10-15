@@ -4,6 +4,13 @@ const crypto = require('crypto')
 const path = require('path')
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
+const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
+
+const contentToExt = {
+  markdown: 'md',
+  html: 'html'
+}
+const extToContent = _.invert(contentToExt)
 
 /* global WIKI */
 
@@ -94,13 +101,34 @@ module.exports = {
    * Get file extension from content type
    */
   getFileExtension(contentType) {
-    switch (contentType) {
-      case 'markdown':
-        return 'md'
-      case 'html':
-        return 'html'
-      default:
-        return 'txt'
+    _.get(contentToExt, contentType, 'txt')
+  },
+  /**
+   * Get content type from file extension
+   */
+  getContentType (filePath) {
+    const ext = _.last(filePath.split('.'))
+    return _.get(extToContent, ext, false)
+  },
+  /**
+   * Get Page Meta object from disk path
+   */
+  getPagePath (filePath) {
+    let fpath = filePath
+    if (process.platform === 'win32') {
+      fpath = filePath.replace(/\\/g, '/')
     }
+    let meta = {
+      locale: WIKI.config.lang.code,
+      path: _.initial(fpath.split('.')).join('')
+    }
+    const result = localeFolderRegex.exec(meta.path)
+    if (result[1]) {
+      meta = {
+        locale: result[1],
+        path: result[2]
+      }
+    }
+    return meta
   }
 }

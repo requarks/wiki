@@ -3,8 +3,10 @@ const path = require('path')
 const tar = require('tar-fs')
 const zlib = require('zlib')
 const stream = require('stream')
+const _ = require('lodash')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
+const klaw = require('klaw')
 const pageHelper = require('../../../helpers/page.js')
 const moment = require('moment')
 
@@ -113,5 +115,77 @@ module.exports = {
   },
   async backup() {
     return this.sync({ manual: true })
+  },
+  async importAll() {
+    WIKI.logger.info(`(STORAGE/DISK) Importing all content from local disk folder to the DB...`)
+
+    const rootUser = await WIKI.models.users.getRootUser()
+
+    await pipeline(
+      klaw(this.config.path, {
+        filter: (f) => {
+          return !_.includes(f, '.git')
+        }
+      }),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (file, enc, cb) => {
+          const relPath = file.path.substr(this.config.path.length + 1)
+          if (relPath && relPath.length > 3) {
+            WIKI.logger.info(`(STORAGE/DISK) Processing ${relPath}...`)
+            const contentType = pageHelper.getContentType(relPath)
+            if (!contentType) {
+              return cb()
+            }
+            const contentPath = pageHelper.getPagePath(relPath)
+
+            let itemContents = ''
+            try {
+              itemContents = await fs.readFile(path.join(this.config.path, relPath), 'utf8')
+              const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
+              const currentPage = await WIKI.models.pages.query().findOne({
+                path: contentPath.path,
+                localeCode: contentPath.locale
+              })
+              if (currentPage) {
+                // Already in the DB, can mark as modified
+                WIKI.logger.info(`(STORAGE/DISK) Page marked as modified: ${relPath}`)
+                await WIKI.models.pages.updatePage({
+                  id: currentPage.id,
+                  title: _.get(pageData, 'title', currentPage.title),
+                  description: _.get(pageData, 'description', currentPage.description) || '',
+                  isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
+                  isPrivate: false,
+                  content: pageData.content,
+                  user: rootUser,
+                  skipStorage: true
+                })
+              } else {
+                // Not in the DB, can mark as new
+                WIKI.logger.info(`(STORAGE/DISK) Page marked as new: ${relPath}`)
+                const pageEditor = await WIKI.models.editors.getDefaultEditor(contentType)
+                await WIKI.models.pages.createPage({
+                  path: contentPath.path,
+                  locale: contentPath.locale,
+                  title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
+                  description: _.get(pageData, 'description', '') || '',
+                  isPublished: _.get(pageData, 'isPublished', true),
+                  isPrivate: false,
+                  content: pageData.content,
+                  user: rootUser,
+                  editor: pageEditor,
+                  skipStorage: true
+                })
+              }
+            } catch (err) {
+              WIKI.logger.warn(`(STORAGE/DISK) Failed to process ${relPath}`)
+              WIKI.logger.warn(err)
+            }
+          }
+          cb()
+        }
+      })
+    )
+    WIKI.logger.info('(STORAGE/DISK) Import completed.')
   }
 }

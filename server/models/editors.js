@@ -99,6 +99,8 @@ module.exports = class Editor extends Model {
     switch (contentType) {
       case 'markdown':
         return 'markdown'
+      case 'html':
+        return 'ckeditor'
       default:
         return 'code'
     }
