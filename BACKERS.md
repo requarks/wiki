@@ -33,6 +33,7 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 - Douglas Lassance
 - Edward
 - Ernie Reid
+- Etienne
 - Günter Pavlas
 - Kyle Thomas
 - Loïc CRAMPON
