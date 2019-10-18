@@ -148,6 +148,8 @@ module.exports = {
 
     let headerIdCounter = 0
     $('h1,h2,h3,h4,h5,h6').each((idx, el) => {
+      const elmId = $(el).attr('id')
+      if (elmId) return // Skip if this element already has id
       const headerId = _.split(_.toLower(_.trim($(el).text())), /\s+/).join('-') + '-' + headerIdCounter
       headerIdCounter += 1
       $(el).attr({ id: headerId })
