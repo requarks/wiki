@@ -116,7 +116,17 @@
                     prepend-icon='search'
                     v-model='current.target'
                   )
-
+                  v-select(
+                    outlined
+                    prepend-icon='mdi-account-group'
+                    v-model="current.groups"
+                    :items="groups"
+                    item-text="name"
+                    item-value="id"
+                    label="Select Groups"
+                    multiple
+                  )
+                  .caption.pt-3.pl-5 Only groups specified can see this item. Leave blank to make item public.
                 v-card-chin
                   v-spacer
                   v-btn.px-5(color='red', outlined, @click='deleteItem(current)')
@@ -152,6 +162,7 @@ import uuid from 'uuid/v4'
 
 import treeSaveMutation from 'gql/admin/navigation/navigation-mutation-save-tree.gql'
 import treeQuery from 'gql/admin/navigation/navigation-query-tree.gql'
+import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 import draggable from 'vuedraggable'
 
@@ -247,6 +258,14 @@ export default {
       query: treeQuery,
       fetchPolicy: 'network-only',
       update: (data) => _.cloneDeep(data.navigation.tree),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-tree')
+      }
+    },
+    groups: {
+      query: groupsQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => data.groups.list,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-tree')
       }

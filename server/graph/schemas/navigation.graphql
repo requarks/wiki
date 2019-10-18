@@ -39,6 +39,7 @@ type NavigationItem {
   icon: String
   targetType: String
   target: String
+  groups: [Int!]
 }
 
 input NavigationItemInput {
@@ -48,4 +49,5 @@ input NavigationItemInput {
   icon: String
   targetType: String
   target: String
+  groups: [Int!]
 }

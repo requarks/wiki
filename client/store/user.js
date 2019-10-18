@@ -10,6 +10,7 @@ const state = {
   localeCode: '',
   defaultEditor: '',
   permissions: [],
+  groups: [],
   iat: 0,
   exp: 0,
   authenticated: false
@@ -32,6 +33,7 @@ export default {
           st.localeCode = jwtData.localeCode
           st.defaultEditor = jwtData.defaultEditor
           st.permissions = jwtData.permissions
+          st.groups = jwtData.groups
           st.iat = jwtData.iat
           st.exp = jwtData.exp
           st.authenticated = true
