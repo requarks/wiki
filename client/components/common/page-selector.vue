@@ -28,6 +28,7 @@
           div(style='height:400px;')
             vue-scroll(:ops='scrollStyle')
               v-treeview(
+                :key='`pageTree` + treeViewCacheId'
                 :active.sync='currentNode'
                 :open.sync='openNodes'
                 :items='tree'
@@ -55,7 +56,7 @@
                   color='primary'
                   )
                   template(v-for='(page, idx) of currentPages')
-                    v-list-item(:key='page.id', :value='page.path')
+                    v-list-item(:key='`page` + page.id', :value='page.path')
                       v-list-item-icon: v-icon mdi-file-document-box
                       v-list-item-title {{page.title}}
                     v-divider(v-if='idx < pages.length - 1')
@@ -131,6 +132,7 @@ export default {
   },
   data() {
     return {
+      treeViewCacheId: 0,
       searchLoading: false,
       currentLocale: siteConfig.lang,
       currentFolderPath: '',
@@ -234,6 +236,22 @@ export default {
       if (!_.isEmpty(newValue)) {
         this.currentPath = newValue
       }
+    },
+    currentLocale (newValue, oldValue) {
+      this.$nextTick(() => {
+        this.tree = [
+          {
+            id: 0,
+            title: '/ (root',
+            children: []
+          }
+        ]
+        this.currentNode = [0]
+        this.openNodes = [0]
+        this.pages = []
+        this.all = []
+        this.treeViewCacheId += 1
+      })
     }
   },
   methods: {

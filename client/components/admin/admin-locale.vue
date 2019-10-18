@@ -93,9 +93,9 @@
                           v-avatar.blue.white--text(tile, size='40', v-html='data.item.code.toUpperCase()')
                         v-list-item-content
                           v-list-item-title(v-html='data.item.name')
-                          v-list-item-sub-title(v-html='data.item.nativeName')
+                          v-list-item-subtitle(v-html='data.item.nativeName')
                         v-list-item-action
-                          v-checkbox(:input-value='data.tile.props.value', color='primary', value)
+                          v-checkbox(:input-value='data.attrs.inputValue', color='primary', value)
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='teal', dark, dense, flat)
