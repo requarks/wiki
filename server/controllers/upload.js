@@ -90,7 +90,7 @@ router.post('/u', multer({
     ...fileMeta,
     folderId: folderId,
     assetPath,
-    userId: req.user.id
+    user: req.user
   })
   res.send('ok')
 })

@@ -91,7 +91,7 @@
           //- LANGUAGES
 
           template(v-if='mode === `view` && locales.length > 0')
-            v-menu(offset-y, bottom, nudge-bottom='30', transition='slide-y-transition')
+            v-menu(offset-y, bottom, transition='slide-y-transition')
               template(v-slot:activator='{ on: menu }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
@@ -101,14 +101,14 @@
               v-list(nav)
                 template(v-for='(lc, idx) of locales')
                   v-list-item(@click='changeLocale(lc)')
-                    v-list-item-action: v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
+                    v-list-item-action(style='min-width:auto;'): v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
                     v-list-item-title {{lc.name}}
             v-divider(vertical)
 
           //- PAGE ACTIONS
 
           template(v-if='isAuthenticated && path && mode !== `edit`')
-            v-menu(offset-y, bottom, nudge-bottom='30', transition='slide-y-transition')
+            v-menu(offset-y, bottom, transition='slide-y-transition')
               template(v-slot:activator='{ on: menu }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
@@ -152,7 +152,7 @@
 
           //- ACCOUNT
 
-          v-menu(v-if='isAuthenticated', offset-y, bottom, nudge-bottom='30', min-width='300', transition='slide-y-transition')
+          v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition')
             template(v-slot:activator='{ on: menu }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')

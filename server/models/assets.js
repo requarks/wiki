@@ -96,7 +96,7 @@ module.exports = class Asset extends Model {
       mime: opts.mimetype,
       fileSize: opts.size,
       folderId: opts.folderId,
-      authorId: opts.userId
+      authorId: opts.user.id
     }
 
     // Save asset data
@@ -119,19 +119,26 @@ module.exports = class Asset extends Model {
           data: fileBuffer
         })
       }
+
+      // Move temp upload to cache
+      await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
+
+      // Add to Storage
+      if (!opts.skipStorage) {
+        await WIKI.models.storage.assetEvent({
+          event: 'uploaded',
+          asset: {
+            ...asset,
+            path: await asset.getAssetPath(),
+            data: fileBuffer,
+            authorId: opts.user.id,
+            authorName: opts.user.name,
+            authorEmail: opts.user.email
+          }
+        })
+      }
     } catch (err) {
       WIKI.logger.warn(err)
-    }
-
-    // Move temp upload to cache
-    await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
-
-    // Add to Storage
-    if (!opts.skipStorage) {
-      await WIKI.models.storage.assetEvent({
-        event: 'uploaded',
-        asset
-      })
     }
   }
 

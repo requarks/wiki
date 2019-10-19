@@ -283,7 +283,7 @@ module.exports = {
     }
 
     await this.git.mv(`./${sourceFilePath}`, `./${destinationFilePath}`)
-    await this.git.commit(`docs: rename ${page.path} to ${page.destinationPath}`, destinationFilePath, {
+    await this.git.commit(`docs: rename ${page.path} to ${page.destinationPath}`, [sourceFilePath, destinationFilePath], {
       '--author': `"${page.moveAuthorName} <${page.moveAuthorEmail}>"`
     })
   },
@@ -295,7 +295,7 @@ module.exports = {
   async assetUploaded (asset) {
     WIKI.logger.info(`(STORAGE/GIT) Committing new file ${asset.path}...`)
     const filePath = path.join(this.repoPath, asset.path)
-    await fs.outputFile(filePath, asset, 'utf8')
+    await fs.outputFile(filePath, asset.data, 'utf8')
 
     await this.git.add(`./${asset.path}`)
     await this.git.commit(`docs: upload ${asset.path}`, asset.path, {
@@ -321,11 +321,11 @@ module.exports = {
    * @param {Object} asset Asset to upload
    */
   async assetRenamed (asset) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${asset.sourcePath} to ${asset.destinationPath}...`)
+    WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${asset.path} to ${asset.destinationPath}...`)
 
-    await this.git.mv(`./${asset.sourcePath}`, `./${asset.destinationPath}`)
-    await this.git.commit(`docs: rename ${asset.sourcePath} to ${asset.destinationPath}`, asset.destinationPath, {
-      '--author': `"${asset.authorName} <${asset.authorEmail}>"`
+    await this.git.mv(`./${asset.path}`, `./${asset.destinationPath}`)
+    await this.git.commit(`docs: rename ${asset.path} to ${asset.destinationPath}`, [asset.path, asset.destinationPath], {
+      '--author': `"${asset.moveAuthorName} <${asset.moveAuthorEmail}>"`
     })
   },
   /**
@@ -364,6 +364,7 @@ module.exports = {
   async syncUntracked() {
     WIKI.logger.info(`(STORAGE/GIT) Adding all untracked content...`)
 
+    // -> Pages
     await pipeline(
       WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt').select().from('pages').where({
         isPrivate: false
@@ -375,10 +376,27 @@ module.exports = {
           if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
             fileName = `${page.localeCode}/${fileName}`
           }
-          WIKI.logger.info(`(STORAGE/GIT) Adding ${fileName}...`)
+          WIKI.logger.info(`(STORAGE/GIT) Adding page ${fileName}...`)
           const filePath = path.join(this.repoPath, fileName)
           await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
           await this.git.add(`./${fileName}`)
+          cb()
+        }
+      })
+    )
+
+    // -> Assets
+    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+
+    await pipeline(
+      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (asset, enc, cb) => {
+          const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
+          WIKI.logger.info(`(STORAGE/GIT) Adding asset ${filename}...`)
+          await fs.outputFile(path.join(this.repoPath, filename), asset.data)
+          await this.git.add(`./${filename}`)
           cb()
         }
       })

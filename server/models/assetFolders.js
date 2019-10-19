@@ -39,7 +39,7 @@ module.exports = class AssetFolder extends Model {
    *
    * @param {Number} folderId Id of the folder
    */
-  static async getHierarchy(folderId) {
+  static async getHierarchy (folderId) {
     const hier = await WIKI.models.knex.withRecursive('ancestors', qb => {
       qb.select('id', 'name', 'slug', 'parentId').from('assetFolders').where('id', folderId).union(sqb => {
         sqb.select('a.id', 'a.name', 'a.slug', 'a.parentId').from('assetFolders AS a').join('ancestors', 'ancestors.parentId', 'a.id')
@@ -47,5 +47,23 @@ module.exports = class AssetFolder extends Model {
     }).select('*').from('ancestors')
     // The ancestors are from children to grandparents, must reverse for correct path order.
     return _.reverse(hier)
+  }
+
+  /**
+   * Get full folder paths
+   */
+  static async getAllPaths () {
+    const all = await WIKI.models.assetFolders.query()
+    let folders = {}
+    all.forEach(fld => {
+      _.set(folders, fld.id, fld.slug)
+      let parentId = fld.parentId
+      while (parentId !== null || parentId > 0) {
+        const parent = _.find(all, ['id', parentId])
+        _.set(folders, fld.id, `${parent.slug}/${_.get(folders, fld.id)}`)
+        parentId = parent.parentId
+      }
+    })
+    return folders
   }
 }

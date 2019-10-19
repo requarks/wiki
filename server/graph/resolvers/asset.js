@@ -123,8 +123,11 @@ module.exports = {
             event: 'renamed',
             asset: {
               ...asset,
-              sourcePath: assetSourcePath,
-              destinationPath: assetTargetPath
+              path: assetSourcePath,
+              destinationPath: assetTargetPath,
+              moveAuthorId: context.req.user.id,
+              moveAuthorName: context.req.user.name,
+              moveAuthorEmail: context.req.user.email
             }
           })
 
@@ -146,7 +149,7 @@ module.exports = {
         const asset = await WIKI.models.assets.query().findById(args.id)
         if (asset) {
           // Check permissions
-          const assetPath = asset.getAssetPath()
+          const assetPath = await asset.getAssetPath()
           if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath })) {
             throw new WIKI.Error.AssetDeleteForbidden()
           }
@@ -158,7 +161,13 @@ module.exports = {
           // Delete from Storage
           await WIKI.models.storage.assetEvent({
             event: 'deleted',
-            asset
+            asset: {
+              ...asset,
+              path: assetPath,
+              authorId: context.req.user.id,
+              authorName: context.req.user.name,
+              authorEmail: context.req.user.email
+            }
           })
 
           return {
