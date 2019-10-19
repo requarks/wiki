@@ -45,7 +45,7 @@ module.exports = {
     }
   },
   async created(page) {
-    WIKI.logger.info(`(STORAGE/DISK) Creating file ${page.path}...`)
+    WIKI.logger.info(`(STORAGE/DISK) Creating file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
@@ -54,7 +54,7 @@ module.exports = {
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
   },
   async updated(page) {
-    WIKI.logger.info(`(STORAGE/DISK) Updating file ${page.path}...`)
+    WIKI.logger.info(`(STORAGE/DISK) Updating file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
@@ -63,7 +63,7 @@ module.exports = {
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
   },
   async deleted(page) {
-    WIKI.logger.info(`(STORAGE/DISK) Deleting file ${page.path}...`)
+    WIKI.logger.info(`(STORAGE/DISK) Deleting file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
@@ -72,7 +72,8 @@ module.exports = {
     await fs.unlink(filePath)
   },
   async renamed(page) {
-    WIKI.logger.info(`(STORAGE/DISK) Renaming file ${page.path} to ${page.destinationPath}...`)
+    WIKI.logger.info(`(STORAGE/DISK) Renaming file [${page.localeCode}] ${page.path} to [${page.destinationLocaleCode}] ${page.destinationPath}...`)
+
     let sourceFilePath = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     let destinationFilePath = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 

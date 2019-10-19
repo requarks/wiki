@@ -101,7 +101,7 @@ module.exports = {
    * Get file extension from content type
    */
   getFileExtension(contentType) {
-    _.get(contentToExt, contentType, 'txt')
+    return _.get(contentToExt, contentType, 'txt')
   },
   /**
    * Get content type from file extension

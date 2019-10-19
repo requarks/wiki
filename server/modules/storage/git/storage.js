@@ -214,7 +214,7 @@ module.exports = {
    * @param {Object} page Page to create
    */
   async created(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing new file ${page.path}...`)
+    WIKI.logger.info(`(STORAGE/GIT) Committing new file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
@@ -233,7 +233,7 @@ module.exports = {
    * @param {Object} page Page to update
    */
   async updated(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing updated file ${page.path}...`)
+    WIKI.logger.info(`(STORAGE/GIT) Committing updated file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
@@ -252,7 +252,7 @@ module.exports = {
    * @param {Object} page Page to delete
    */
   async deleted(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing removed file ${page.path}...`)
+    WIKI.logger.info(`(STORAGE/GIT) Committing removed file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
       fileName = `${page.localeCode}/${fileName}`
@@ -269,7 +269,7 @@ module.exports = {
    * @param {Object} page Page to rename
    */
   async renamed(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${page.path} to ${page.destinationPath}...`)
+    WIKI.logger.info(`(STORAGE/GIT) Committing file move from [${page.localeCode}] ${page.path} to [${page.destinationLocaleCode}] ${page.destinationPath}...`)
     let sourceFilePath = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     let destinationFilePath = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 
