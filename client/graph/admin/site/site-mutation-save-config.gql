@@ -14,6 +14,7 @@ mutation (
   $securityIframe: Boolean!
   $securityReferrerPolicy: Boolean!
   $securityTrustProxy: Boolean!
+  $securitySRI: Boolean!
   $securityHSTS: Boolean!
   $securityHSTSDuration: Int!
   $securityCSP: Boolean!
@@ -36,6 +37,7 @@ mutation (
       securityIframe: $securityIframe,
       securityReferrerPolicy: $securityReferrerPolicy,
       securityTrustProxy: $securityTrustProxy,
+      securitySRI: $securitySRI,
       securityHSTS: $securityHSTS,
       securityHSTSDuration: $securityHSTSDuration,
       securityCSP: $securityCSP,
