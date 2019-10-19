@@ -70,4 +70,32 @@ module.exports = class S3CompatibleStorage {
     await this.s3.copyObject({ CopySource: sourceFilePath, Key: destinationFilePath }).promise()
     await this.s3.deleteObject({ Key: sourceFilePath }).promise()
   }
+  /**
+   * ASSET UPLOAD
+   *
+   * @param {Object} asset Asset to upload
+   */
+  async assetUploaded (asset) {
+    WIKI.logger.info(`(STORAGE/${this.storageName}) Creating new file ${asset.path}...`)
+    await this.s3.putObject({ Key: asset.path, Body: asset.data }).promise()
+  }
+  /**
+   * ASSET DELETE
+   *
+   * @param {Object} asset Asset to delete
+   */
+  async assetDeleted (asset) {
+    WIKI.logger.info(`(STORAGE/${this.storageName}) Deleting file ${asset.path}...`)
+    await this.s3.deleteObject({ Key: asset.path }).promise()
+  }
+  /**
+   * ASSET RENAME
+   *
+   * @param {Object} asset Asset to rename
+   */
+  async assetRenamed (asset) {
+    WIKI.logger.info(`(STORAGE/${this.storageName}) Renaming file from ${asset.path} to ${asset.destinationPath}...`)
+    await this.s3.copyObject({ CopySource: asset.path, Key: asset.destinationPath }).promise()
+    await this.s3.deleteObject({ Key: asset.path }).promise()
+  }
 }
