@@ -88,6 +88,7 @@ router.post('/u', multer({
   // Process upload file
   await WIKI.models.assets.upload({
     ...fileMeta,
+    mode: 'upload',
     folderId: folderId,
     assetPath,
     user: req.user

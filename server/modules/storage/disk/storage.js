@@ -9,6 +9,7 @@ const pipeline = Promise.promisify(stream.pipeline)
 const klaw = require('klaw')
 const pageHelper = require('../../../helpers/page.js')
 const moment = require('moment')
+const mime = require('mime-types').lookup
 
 /* global WIKI */
 
@@ -167,6 +168,7 @@ module.exports = {
     WIKI.logger.info(`(STORAGE/DISK) Importing all content from local disk folder to the DB...`)
 
     const rootUser = await WIKI.models.users.getRootUser()
+    let assetFolders = await WIKI.models.assetFolders.getAllPaths()
 
     await pipeline(
       klaw(this.config.path, {
@@ -178,55 +180,102 @@ module.exports = {
         objectMode: true,
         transform: async (file, enc, cb) => {
           const relPath = file.path.substr(this.config.path.length + 1)
-          if (relPath && relPath.length > 3) {
+          if (file.stats.size < 1) {
+            // Skip directories and zero-byte files
+            return cb()
+          } else if (relPath && relPath.length > 3) {
             WIKI.logger.info(`(STORAGE/DISK) Processing ${relPath}...`)
             const contentType = pageHelper.getContentType(relPath)
-            if (!contentType) {
-              return cb()
-            }
-            const contentPath = pageHelper.getPagePath(relPath)
+            if (contentType) {
+              // -> Page
+              const contentPath = pageHelper.getPagePath(relPath)
 
-            let itemContents = ''
-            try {
-              itemContents = await fs.readFile(path.join(this.config.path, relPath), 'utf8')
-              const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
-              const currentPage = await WIKI.models.pages.query().findOne({
-                path: contentPath.path,
-                localeCode: contentPath.locale
-              })
-              if (currentPage) {
-                // Already in the DB, can mark as modified
-                WIKI.logger.info(`(STORAGE/DISK) Page marked as modified: ${relPath}`)
-                await WIKI.models.pages.updatePage({
-                  id: currentPage.id,
-                  title: _.get(pageData, 'title', currentPage.title),
-                  description: _.get(pageData, 'description', currentPage.description) || '',
-                  isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
-                  isPrivate: false,
-                  content: pageData.content,
-                  user: rootUser,
-                  skipStorage: true
-                })
-              } else {
-                // Not in the DB, can mark as new
-                WIKI.logger.info(`(STORAGE/DISK) Page marked as new: ${relPath}`)
-                const pageEditor = await WIKI.models.editors.getDefaultEditor(contentType)
-                await WIKI.models.pages.createPage({
+              let itemContents = ''
+              try {
+                itemContents = await fs.readFile(path.join(this.config.path, relPath), 'utf8')
+                const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
+                const currentPage = await WIKI.models.pages.query().findOne({
                   path: contentPath.path,
-                  locale: contentPath.locale,
-                  title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
-                  description: _.get(pageData, 'description', '') || '',
-                  isPublished: _.get(pageData, 'isPublished', true),
-                  isPrivate: false,
-                  content: pageData.content,
-                  user: rootUser,
-                  editor: pageEditor,
-                  skipStorage: true
+                  localeCode: contentPath.locale
                 })
+                if (currentPage) {
+                  // Already in the DB, can mark as modified
+                  WIKI.logger.info(`(STORAGE/DISK) Page marked as modified: ${relPath}`)
+                  await WIKI.models.pages.updatePage({
+                    id: currentPage.id,
+                    title: _.get(pageData, 'title', currentPage.title),
+                    description: _.get(pageData, 'description', currentPage.description) || '',
+                    isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
+                    isPrivate: false,
+                    content: pageData.content,
+                    user: rootUser,
+                    skipStorage: true
+                  })
+                } else {
+                  // Not in the DB, can mark as new
+                  WIKI.logger.info(`(STORAGE/DISK) Page marked as new: ${relPath}`)
+                  const pageEditor = await WIKI.models.editors.getDefaultEditor(contentType)
+                  await WIKI.models.pages.createPage({
+                    path: contentPath.path,
+                    locale: contentPath.locale,
+                    title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
+                    description: _.get(pageData, 'description', '') || '',
+                    isPublished: _.get(pageData, 'isPublished', true),
+                    isPrivate: false,
+                    content: pageData.content,
+                    user: rootUser,
+                    editor: pageEditor,
+                    skipStorage: true
+                  })
+                }
+              } catch (err) {
+                WIKI.logger.warn(`(STORAGE/DISK) Failed to process ${relPath}`)
+                WIKI.logger.warn(err)
               }
-            } catch (err) {
-              WIKI.logger.warn(`(STORAGE/DISK) Failed to process ${relPath}`)
-              WIKI.logger.warn(err)
+            } else {
+              // -> Asset
+
+              // -> Find existing folder
+              const filePathInfo = path.parse(file.path)
+              const folderPath = path.dirname(relPath).replace(/\\/g, '/')
+              let folderId = _.toInteger(_.findKey(assetFolders, fld => { return fld === folderPath })) || null
+
+              // -> Create missing folder structure
+              if (!folderId && folderPath !== '.') {
+                const folderParts = folderPath.split('/')
+                let currentFolderPath = []
+                let currentFolderParentId = null
+                for (const folderPart of folderParts) {
+                  currentFolderPath.push(folderPart)
+                  const existingFolderId = _.findKey(assetFolders, fld => { return fld === currentFolderPath.join('/') })
+                  if (!existingFolderId) {
+                    const newFolderObj = await WIKI.models.assetFolders.query().insert({
+                      slug: folderPart,
+                      name: folderPart,
+                      parentId: currentFolderParentId
+                    })
+                    _.set(assetFolders, newFolderObj.id, currentFolderPath.join('/'))
+                    currentFolderParentId = newFolderObj.id
+                  } else {
+                    currentFolderParentId = _.toInteger(existingFolderId)
+                  }
+                }
+                folderId = currentFolderParentId
+              }
+
+              // -> Import asset
+              await WIKI.models.assets.upload({
+                mode: 'import',
+                originalname: filePathInfo.base,
+                ext: filePathInfo.ext,
+                mimetype: mime(filePathInfo.base) || 'application/octet-stream',
+                size: file.stats.size,
+                folderId: folderId,
+                path: file.path,
+                assetPath: relPath,
+                user: rootUser,
+                skipStorage: true
+              })
             }
           }
           cb()

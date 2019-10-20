@@ -95,8 +95,7 @@ module.exports = class Asset extends Model {
       kind: _.startsWith(opts.mimetype, 'image/') ? 'image' : 'binary',
       mime: opts.mimetype,
       fileSize: opts.size,
-      folderId: opts.folderId,
-      authorId: opts.user.id
+      folderId: opts.folderId
     }
 
     // Save asset data
@@ -105,6 +104,9 @@ module.exports = class Asset extends Model {
 
       if (asset) {
         // Patch existing asset
+        if (opts.mode === 'upload') {
+          assetRow.authorId = opts.user.id
+        }
         await WIKI.models.assets.query().patch(assetRow).findById(asset.id)
         await WIKI.models.knex('assetData').where({
           id: asset.id
@@ -113,6 +115,7 @@ module.exports = class Asset extends Model {
         })
       } else {
         // Create asset entry
+        assetRow.authorId = opts.user.id
         asset = await WIKI.models.assets.query().insert(assetRow)
         await WIKI.models.knex('assetData').insert({
           id: asset.id,
@@ -121,7 +124,11 @@ module.exports = class Asset extends Model {
       }
 
       // Move temp upload to cache
-      await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
+      if (opts.mode === 'upload') {
+        await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
+      } else {
+        await fs.copy(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
+      }
 
       // Add to Storage
       if (!opts.skipStorage) {
