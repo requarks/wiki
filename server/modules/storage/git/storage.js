@@ -6,7 +6,10 @@ const stream = require('stream')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
 const klaw = require('klaw')
-const pageHelper = require('../../../helpers/page.js')
+
+const pageHelper = require('../../../helpers/page')
+const assetHelper = require('../../../helpers/asset')
+const commonDisk = require('../disk/common')
 
 /* global WIKI */
 
@@ -136,7 +139,29 @@ module.exports = {
 
       const diff = await this.git.diffSummary(['-M', currentCommitLog.hash, latestCommitLog.hash])
       if (_.get(diff, 'files', []).length > 0) {
-        await this.processFiles(diff.files, rootUser)
+        let filesToProcess = []
+        for (const f of diff.files) {
+          const fPath = path.join(this.repoPath, f.file)
+          let fStats = { size: 0 }
+          try {
+            fStats = await fs.stat(fPath)
+          } catch (err) {
+            if (err.code !== 'ENOENT') {
+              WIKI.logger.warn(`(STORAGE/GIT) Failed to access file ${f.file}! Skipping...`)
+              continue
+            }
+          }
+
+          filesToProcess.push({
+            ...f,
+            file: {
+              path: fPath,
+              stats: fStats
+            },
+            relPath: f.file
+          })
+        }
+        await this.processFiles(filesToProcess, rootUser)
       }
     }
   },
@@ -147,62 +172,65 @@ module.exports = {
    */
   async processFiles(files, user) {
     for (const item of files) {
-      const contentType = pageHelper.getContentType(item.file)
-      if (!contentType) {
-        continue
-      }
-      const contentPath = pageHelper.getPagePath(item.file)
+      const contentType = pageHelper.getContentType(item.relPath)
+      const fileExists = await fs.pathExists(item.file)
+      if (!item.binary && contentType) {
+        // -> Page
 
-      let itemContents = ''
-      try {
-        itemContents = await fs.readFile(path.join(this.repoPath, item.file), 'utf8')
-        const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
-        const currentPage = await WIKI.models.pages.query().findOne({
-          path: contentPath.path,
-          localeCode: contentPath.locale
-        })
-        if (currentPage) {
-          // Already in the DB, can mark as modified
-          WIKI.logger.info(`(STORAGE/GIT) Page marked as modified: ${item.file}`)
-          await WIKI.models.pages.updatePage({
-            id: currentPage.id,
-            title: _.get(pageData, 'title', currentPage.title),
-            description: _.get(pageData, 'description', currentPage.description) || '',
-            isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
-            isPrivate: false,
-            content: pageData.content,
-            user: user,
-            skipStorage: true
-          })
-        } else {
-          // Not in the DB, can mark as new
-          WIKI.logger.info(`(STORAGE/GIT) Page marked as new: ${item.file}`)
-          const pageEditor = await WIKI.models.editors.getDefaultEditor(contentType)
-          await WIKI.models.pages.createPage({
-            path: contentPath.path,
-            locale: contentPath.locale,
-            title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
-            description: _.get(pageData, 'description', '') || '',
-            isPublished: _.get(pageData, 'isPublished', true),
-            isPrivate: false,
-            content: pageData.content,
-            user: user,
-            editor: pageEditor,
-            skipStorage: true
-          })
-        }
-      } catch (err) {
-        if (err.code === 'ENOENT' && item.deletions > 0 && item.insertions === 0) {
-          // File was deleted by git, can safely mark as deleted in DB
-          WIKI.logger.info(`(STORAGE/GIT) Page marked as deleted: ${item.file}`)
+        if (!fileExists && item.deletions > 0 && item.insertions === 0) {
+          // Page was deleted by git, can safely mark as deleted in DB
+          WIKI.logger.info(`(STORAGE/GIT) Page marked as deleted: ${item.relPath}`)
 
+          const contentPath = pageHelper.getPagePath(item.relPath)
           await WIKI.models.pages.deletePage({
             path: contentPath.path,
             locale: contentPath.locale,
             skipStorage: true
           })
-        } else {
-          WIKI.logger.warn(`(STORAGE/GIT) Failed to process ${item.file}`)
+          continue
+        }
+
+        try {
+          await commonDisk.processPage({
+            user,
+            relPath: item.relPath,
+            fullPath: this.repoPath,
+            contentType: contentType,
+            moduleName: 'GIT'
+          })
+        } catch (err) {
+          WIKI.logger.warn(`(STORAGE/GIT) Failed to process ${item.relPath}`)
+          WIKI.logger.warn(err)
+        }
+      } else {
+        // -> Asset
+
+        if (!fileExists && ((item.before > 0 && item.after === 0) || (item.deletions > 0 && item.insertions === 0))) {
+          // Asset was deleted by git, can safely mark as deleted in DB
+          WIKI.logger.info(`(STORAGE/GIT) Asset marked as deleted: ${item.relPath}`)
+
+          const fileHash = assetHelper.generateHash(item.relPath)
+          const assetToDelete = await WIKI.models.assets.query().findOne({ hash: fileHash })
+          if (assetToDelete) {
+            await WIKI.models.knex('assetData').where('id', assetToDelete.id).del()
+            await WIKI.models.assets.query().deleteById(assetToDelete.id)
+            await assetToDelete.deleteAssetCache()
+          } else {
+            WIKI.logger.info(`(STORAGE/GIT) Asset was not found in the DB, nothing to delete: ${item.relPath}`)
+          }
+          continue
+        }
+
+        try {
+          await commonDisk.processAsset({
+            user,
+            relPath: item.relPath,
+            file: item.file,
+            contentType: contentType,
+            moduleName: 'GIT'
+          })
+        } catch (err) {
+          WIKI.logger.warn(`(STORAGE/GIT) Failed to process asset ${item.relPath}`)
           WIKI.logger.warn(err)
         }
       }
@@ -346,11 +374,15 @@ module.exports = {
         objectMode: true,
         transform: async (file, enc, cb) => {
           const relPath = file.path.substr(this.repoPath.length + 1)
-          if (relPath && relPath.length > 3) {
+          if (file.stats.size < 1) {
+            // Skip directories and zero-byte files
+            return cb()
+          } else if (relPath && relPath.length > 3) {
             WIKI.logger.info(`(STORAGE/GIT) Processing ${relPath}...`)
             await this.processFiles([{
               user: rootUser,
-              file: relPath,
+              relPath,
+              file,
               deletions: 0,
               insertions: 0
             }], rootUser)
@@ -359,6 +391,9 @@ module.exports = {
         }
       })
     )
+
+    commonDisk.clearFolderCache()
+
     WIKI.logger.info('(STORAGE/GIT) Import completed.')
   },
   async syncUntracked() {
@@ -401,6 +436,7 @@ module.exports = {
         }
       })
     )
+
     await this.git.commit(`docs: add all untracked content`)
     WIKI.logger.info('(STORAGE/GIT) All content is now tracked.')
   }
