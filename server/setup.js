@@ -144,10 +144,9 @@ module.exports = () => {
 
       // Create directory structure
       WIKI.logger.info('Creating data directories...')
-      const dataPath = path.join(process.cwd(), 'data')
-      await fs.ensureDir(dataPath)
-      await fs.emptyDir(path.join(dataPath, 'cache'))
-      await fs.ensureDir(path.join(dataPath, 'uploads'))
+      await fs.ensureDir(WIKI.paths.data)
+      await fs.emptyDir(path.join(WIKI.paths.data, 'cache'))
+      await fs.ensureDir(path.join(WIKI.paths.data, 'uploads'))
 
       // Generate certificates
       WIKI.logger.info('Generating certificates...')

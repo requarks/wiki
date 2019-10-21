@@ -11,7 +11,7 @@ const sanitize = require('sanitize-filename')
  * Upload files
  */
 router.post('/u', multer({
-  dest: path.join(WIKI.ROOTPATH, 'data/uploads'),
+  dest: path.join(WIKI.paths.data, 'uploads'),
   limits: {
     fileSize: WIKI.config.uploads.maxFileSize,
     files: WIKI.config.uploads.maxFiles

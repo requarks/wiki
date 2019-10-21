@@ -16,7 +16,7 @@ module.exports = {
   },
   init() {
     // Clear content cache
-    fs.emptyDir(path.join(WIKI.ROOTPATH, 'data/cache'))
+    fs.emptyDir(path.join(WIKI.paths.data, 'cache'))
 
     return this
   },

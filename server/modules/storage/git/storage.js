@@ -15,7 +15,7 @@ const commonDisk = require('../disk/common')
 
 module.exports = {
   git: null,
-  repoPath: path.join(process.cwd(), 'data/repo'),
+  repoPath: path.join(WIKI.paths.data, 'repo'),
   async activated() {
     // not used
   },
@@ -66,7 +66,7 @@ module.exports = {
         WIKI.logger.info('(STORAGE/GIT) Setting SSH Command config...')
         if (this.config.sshPrivateKeyMode === 'contents') {
           try {
-            this.config.sshPrivateKeyPath = path.join(WIKI.ROOTPATH, 'data/secure/git-ssh.pem')
+            this.config.sshPrivateKeyPath = path.join(WIKI.paths.data, 'secure/git-ssh.pem')
             await fs.outputFile(this.config.sshPrivateKeyPath, this.config.sshPrivateKeyContent, {
               encoding: 'utf8',
               mode: 0o600
