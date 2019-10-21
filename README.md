@@ -20,11 +20,13 @@
 
 </div>
 
-# :white_check_mark: 2.0 Release Candidate
+# 2.0 Release Candidate
   
 Wiki.js has now entered the release candidate phase of the 2.0 version. While we don't expect any breaking bugs at this point, it is not yet final. If you plan on deploying a wiki in critical production environment scenarios, you should either wait for the final release or use the 1.x version in the meantime. It's quick and simple to migrate from 1.x to 2.0 afterwards.
 
-:point_right: **[Go to version 1.x instead](https://github.com/Requarks/wiki-v1)** :point_left:
+:point_right: **[Go to version 1.x instead](https://github.com/Requarks/wiki-v1)**
+
+---
 
 - **[Official Website](https://wiki.js.org/)**
 - **[Documentation](https://docs.requarks.io/)**
