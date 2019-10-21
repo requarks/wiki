@@ -20,20 +20,11 @@
 
 </div>
 
-# :white_check_mark: STABLE v1.x version
+# :white_check_mark: 2.0 Release Candidate
   
-**This repository is for the 2.0 BETA of Wiki.js.**  
-It is highly recommended to use the 1.x version until a stable version of 2.0 is released. An easy and quick upgrade path will be provided to migrate from 1.x to 2.0.
+Wiki.js has now entered the release candidate phase of the 2.0 version. While we don't expect any breaking bugs at this point, it is not yet final. If you plan on deploying a wiki in critical production environment scenarios, you should either wait for the final release or use the 1.x version in the meantime. It's quick and simple to migrate from 1.x to 2.0 afterwards.
 
 :point_right: **[Go to version 1.x instead](https://github.com/Requarks/wiki-v1)** :point_left:
-
-**Version 2.0 should NOT be used in production! Once again, please use 1.x for now!**
-
----
-
-# :construction: UNSTABLE v2.0 BETA version
-
-**This version is for testing and development purposes only!** It is not ready for production and is still missing critical features. You cannot migrate 1.x data at this time!
 
 - **[Official Website](https://wiki.js.org/)**
 - **[Documentation](https://docs.requarks.io/)**
