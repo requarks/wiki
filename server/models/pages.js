@@ -728,7 +728,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async savePageToCache(page) {
-    const cachePath = path.join(WIKI.paths.data, `cache/${page.hash}.bin`)
+    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`)
     await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
       id: page.id,
       authorId: page.authorId,
@@ -757,7 +757,7 @@ module.exports = class Page extends Model {
    */
   static async getPageFromCache(opts) {
     const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' })
-    const cachePath = path.join(WIKI.paths.data, `cache/${pageHash}.bin`)
+    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${pageHash}.bin`)
 
     try {
       const pageBuffer = await fs.readFile(cachePath)
@@ -785,14 +785,14 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async deletePageFromCache(page) {
-    return fs.remove(path.join(WIKI.paths.data, `cache/${page.hash}.bin`))
+    return fs.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`))
   }
 
   /**
    * Flush the contents of the Cache
    */
   static async flushCache() {
-    return fs.emptyDir(path.join(WIKI.paths.data, `cache`))
+    return fs.emptyDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache`))
   }
 
   /**

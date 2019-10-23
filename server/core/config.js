@@ -70,10 +70,6 @@ module.exports = {
       }
     }
 
-    WIKI.paths = {}
-    WIKI.paths.data = path.resolve(WIKI.ROOTPATH, appconfig.paths.data)
-    WIKI.paths.content = path.resolve(WIKI.ROOTPATH, appconfig.paths.content)
-
     WIKI.config = appconfig
     WIKI.data = appdata
     WIKI.version = packageInfo.version

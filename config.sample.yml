@@ -107,9 +107,7 @@ uploads:
 offline: false
 
 # ---------------------------------------------------------------------
-# Paths
+# Data Path
 # ---------------------------------------------------------------------
-# Writeable paths for Wiki.js, mainly for cache and user uploads.
-paths:
-  content: ./content
-  data: ./data
+# Writeable data path for Wiki.js, mainly for cache and user uploads.
+dataPath: ./data
