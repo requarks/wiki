@@ -117,7 +117,7 @@ module.exports = class Analytics extends Model {
         code.bodyEnd = _.defaultTo(code.bodyEnd, '')
 
         _.forOwn(provider.config, (value, key) => {
-          code.head = _.replace(code.head, `{{${key}}}`, value)
+          code.head = _.replace(code.head, new RegExp(`{{${key}}}`, 'g'), value)
           code.bodyStart = _.replace(code.bodyStart, `{{${key}}}`, value)
           code.bodyEnd = _.replace(code.bodyEnd, `{{${key}}}`, value)
         })
