@@ -40,11 +40,21 @@ module.exports = class AssetFolder extends Model {
    * @param {Number} folderId Id of the folder
    */
   static async getHierarchy (folderId) {
-    const hier = await WIKI.models.knex.withRecursive('ancestors', qb => {
-      qb.select('id', 'name', 'slug', 'parentId').from('assetFolders').where('id', folderId).union(sqb => {
-        sqb.select('a.id', 'a.name', 'a.slug', 'a.parentId').from('assetFolders AS a').join('ancestors', 'ancestors.parentId', 'a.id')
-      })
-    }).select('*').from('ancestors')
+    let hier
+    if (WIKI.config.db.type === 'mssql') {
+      hier = await WIKI.models.knex.with('ancestors', qb => {
+        qb.select('id', 'name', 'slug', 'parentId').from('assetFolders').where('id', folderId).unionAll(sqb => {
+          sqb.select('a.id', 'a.name', 'a.slug', 'a.parentId').from('assetFolders AS a').join('ancestors', 'ancestors.parentId', 'a.id')
+        })
+      }).select('*').from('ancestors')
+    }
+    else {
+      hier = await WIKI.models.knex.withRecursive('ancestors', qb => {
+        qb.select('id', 'name', 'slug', 'parentId').from('assetFolders').where('id', folderId).union(sqb => {
+          sqb.select('a.id', 'a.name', 'a.slug', 'a.parentId').from('assetFolders AS a').join('ancestors', 'ancestors.parentId', 'a.id')
+        })
+      }).select('*').from('ancestors')
+    }
     // The ancestors are from children to grandparents, must reverse for correct path order.
     return _.reverse(hier)
   }
