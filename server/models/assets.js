@@ -74,7 +74,7 @@ module.exports = class Asset extends Model {
   }
 
   async deleteAssetCache() {
-    await fs.remove(path.join(process.cwd(), `data/cache/${this.hash}.dat`))
+    await fs.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${this.hash}.dat`))
   }
 
   static async upload(opts) {
@@ -125,9 +125,9 @@ module.exports = class Asset extends Model {
 
       // Move temp upload to cache
       if (opts.mode === 'upload') {
-        await fs.move(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
+        await fs.move(opts.path, path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`), { overwrite: true })
       } else {
-        await fs.copy(opts.path, path.join(process.cwd(), `data/cache/${fileHash}.dat`), { overwrite: true })
+        await fs.copy(opts.path, path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`), { overwrite: true })
       }
 
       // Add to Storage
@@ -158,7 +158,7 @@ module.exports = class Asset extends Model {
 
   static async getAssetFromCache(assetPath, res) {
     const fileHash = assetHelper.generateHash(assetPath)
-    const cachePath = path.join(process.cwd(), `data/cache/${fileHash}.dat`)
+    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
 
     return new Promise((resolve, reject) => {
       res.type(path.extname(assetPath))
@@ -174,7 +174,7 @@ module.exports = class Asset extends Model {
 
   static async getAssetFromDb(assetPath, res) {
     const fileHash = assetHelper.generateHash(assetPath)
-    const cachePath = path.join(process.cwd(), `data/cache/${fileHash}.dat`)
+    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
 
     const asset = await WIKI.models.assets.query().where('hash', fileHash).first()
     if (asset) {
@@ -188,6 +188,6 @@ module.exports = class Asset extends Model {
   }
 
   static async flushTempUploads() {
-    return fs.emptyDir(path.join(process.cwd(), `data/uploads`))
+    return fs.emptyDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `uploads`))
   }
 }

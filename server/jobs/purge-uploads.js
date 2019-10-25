@@ -9,7 +9,7 @@ module.exports = async () => {
   WIKI.logger.info('Purging orphaned upload files...')
 
   try {
-    const uplTempPath = path.resolve(process.cwd(), WIKI.config.paths.data, 'uploads')
+    const uplTempPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'uploads')
     await fs.ensureDir(uplTempPath)
     const ls = await fs.readdir(uplTempPath)
     const fifteenAgo = moment().subtract(15, 'minutes')

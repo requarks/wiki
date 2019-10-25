@@ -105,3 +105,9 @@ uploads:
 # download the offline files for sideloading.
 
 offline: false
+
+# ---------------------------------------------------------------------
+# Data Path
+# ---------------------------------------------------------------------
+# Writeable data path for Wiki.js, mainly for cache and user uploads.
+dataPath: ./data

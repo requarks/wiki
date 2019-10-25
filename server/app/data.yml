@@ -57,9 +57,7 @@ defaults:
     # System defaults
     channel: BETA
     setup: false
-    paths:
-      content: ./content
-      data: ./data
+    dataPath: ./data
     cors:
       credentials: true
       maxAge: 600
