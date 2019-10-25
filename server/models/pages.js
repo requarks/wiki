@@ -675,7 +675,26 @@ module.exports = class Page extends Model {
     try {
       return WIKI.models.pages.query()
         .column([
-          'pages.*',
+          'pages.id',
+          'pages.path',
+          'pages.hash',
+          'pages.title',
+          'pages.description',
+          'pages.isPrivate',
+          'pages.isPublished',
+          'pages.privateNS',
+          'pages.publishStartDate',
+          'pages.publishEndDate',
+          'pages.content',
+          'pages.render',
+          'pages.toc',
+          'pages.contentType',
+          'pages.createdAt',
+          'pages.updatedAt',
+          'pages.editorKey',
+          'pages.localeCode',
+          'pages.authorId',
+          'pages.creatorId',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
