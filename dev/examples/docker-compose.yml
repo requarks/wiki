@@ -10,8 +10,6 @@ services:
       driver: "none"
     volumes:
       - db-data:/var/lib/postgresql/data
-    networks:
-      - wikinet
 
   wiki:
     image: requarks/wiki:beta
@@ -24,13 +22,8 @@ services:
       DB_USER: wikijs
       DB_PASS: wikijsrocks
       DB_NAME: wiki
-    networks:
-      - wikinet
     ports:
       - "3000:3000" # <-- replace with "80:3000" to listen on port 80 instead
-
-networks:
-  wikinet:
 
 volumes:
   db-data:
