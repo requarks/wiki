@@ -188,6 +188,27 @@ module.exports = () => {
         'title'
       ])
 
+      // Truncate tables (reset from previous failed install)
+      if (WIKI.config.db.type !== 'mssql') {
+        await WIKI.models.locales.query().truncate()
+        await WIKI.models.groups.query().truncate()
+        await WIKI.models.users.query().truncate()
+        await WIKI.models.navigation.query().truncate()
+      } else {
+        await WIKI.models.locales.query().del()
+        await WIKI.models.groups.query().del()
+        await WIKI.models.users.query().del()
+        await WIKI.models.navigation.query().truncate()
+        await WIKI.models.knex.raw(`
+          IF EXISTS (SELECT * FROM sys.identity_columns WHERE OBJECT_NAME(OBJECT_ID) = 'groups' AND last_value IS NOT NULL)
+            DBCC CHECKIDENT ([groups], RESEED, 0)
+        `)
+        await WIKI.models.knex.raw(`
+          IF EXISTS (SELECT * FROM sys.identity_columns WHERE OBJECT_NAME(OBJECT_ID) = 'users' AND last_value IS NOT NULL)
+            DBCC CHECKIDENT ([users], RESEED, 0)
+        `)
+      }
+
       // Create default locale
       WIKI.logger.info('Installing default locale...')
       await WIKI.models.locales.query().insert({
@@ -277,7 +298,7 @@ module.exports = () => {
       })
       await guestUser.$relatedQuery('groups').relate(guestGroup.id)
       if (adminUser.id !== 1 || guestUser.id !== 2) {
-        throw new Error('Incorrect groups auto-increment configuration! Should start at 0 and increment by 1. Contact your database administrator.')
+        throw new Error('Incorrect users auto-increment configuration! Should start at 0 and increment by 1. Contact your database administrator.')
       }
 
       // Create site nav
@@ -315,6 +336,9 @@ module.exports = () => {
         }, 1000)
       })
     } catch (err) {
+      try {
+        await WIKI.models.knex('settings').truncate()
+      } catch (err) {}
       WIKI.telemetry.sendError(err)
       res.json({ ok: false, error: err.message })
     }
