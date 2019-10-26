@@ -9,7 +9,6 @@ const https = require('https')
 const Promise = require('bluebird')
 const fs = require('fs-extra')
 const _ = require('lodash')
-const cfgHelper = require('./helpers/config')
 const crypto = Promise.promisifyAll(require('crypto'))
 const pem2jwk = require('pem-jwk').pem2jwk
 const semver = require('semver')
@@ -203,14 +202,14 @@ module.exports = () => {
 
       WIKI.logger.info('Creating default groups...')
       const adminGroup = await WIKI.models.groups.query().insert({
-        id: 1,
+        ...(WIKI.config.db.type !== `mssql` && { id: 1 }),
         name: 'Administrators',
         permissions: JSON.stringify(['manage:system']),
         pageRules: JSON.stringify([]),
         isSystem: true
       })
       const guestGroup = await WIKI.models.groups.query().insert({
-        id: 2,
+        ...(WIKI.config.db.type !== `mssql` && { id: 2 }),
         name: 'Guests',
         permissions: JSON.stringify(['read:pages', 'read:assets', 'read:comments']),
         pageRules: JSON.stringify([
@@ -218,6 +217,9 @@ module.exports = () => {
         ]),
         isSystem: true
       })
+      if (adminGroup.id !== 1 || guestGroup.id !== 2) {
+        throw new Error('Incorrect groups auto-increment configuration! Should start at 0 and increment by 1. Contact your database administrator.')
+      }
 
       // Load authentication strategies + enable local
       await WIKI.models.authentication.refreshStrategiesFromDisk()
@@ -244,12 +246,8 @@ module.exports = () => {
 
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
-      await WIKI.models.users.query().delete().where({
-        providerKey: 'local',
-        email: req.body.adminEmail
-      }).orWhere('id', 1)
       const adminUser = await WIKI.models.users.query().insert({
-        id: 1,
+        ...(WIKI.config.db.type !== `mssql` && { id: 1 }),
         email: req.body.adminEmail,
         provider: 'local',
         password: req.body.adminPassword,
@@ -264,12 +262,8 @@ module.exports = () => {
 
       // Create Guest account
       WIKI.logger.info('Creating guest account...')
-      await WIKI.models.users.query().delete().where({
-        providerKey: 'local',
-        email: 'guest@example.com'
-      }).orWhere('id', 2)
       const guestUser = await WIKI.models.users.query().insert({
-        id: 2,
+        ...(WIKI.config.db.type !== `mssql` && { id: 2 }),
         provider: 'local',
         email: 'guest@example.com',
         name: 'Guest',
@@ -282,11 +276,13 @@ module.exports = () => {
         isVerified: true
       })
       await guestUser.$relatedQuery('groups').relate(guestGroup.id)
+      if (adminUser.id !== 1 || guestUser.id !== 2) {
+        throw new Error('Incorrect groups auto-increment configuration! Should start at 0 and increment by 1. Contact your database administrator.')
+      }
 
       // Create site nav
 
       WIKI.logger.info('Creating default site navigation')
-      await WIKI.models.navigation.query().delete().where({ key: 'site' })
       await WIKI.models.navigation.query().insert({
         key: 'site',
         config: [

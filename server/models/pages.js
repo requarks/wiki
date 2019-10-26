@@ -568,8 +568,8 @@ module.exports = class Page extends Model {
     }
 
     let affectedHashes = []
-    // -> Perform replace and return affected page hashes (POSTGRES, MSSQL only)
-    if (WIKI.config.db.type === 'postgres' || WIKI.config.db.type === 'mssql') {
+    // -> Perform replace and return affected page hashes (POSTGRES only)
+    if (WIKI.config.db.type === 'postgres') {
       affectedHashes = await WIKI.models.pages.query()
         .returning('hash')
         .patch({
@@ -583,7 +583,7 @@ module.exports = class Page extends Model {
         })
         .pluck('hash')
     } else {
-      // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, SQLITE only)
+      // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, MSSQL, SQLITE only)
       await WIKI.models.pages.query()
         .patch({
           render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])

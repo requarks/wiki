@@ -53,16 +53,7 @@ module.exports = async (pageId) => {
 
     await WIKI.models.knex.table('pageTree').truncate()
     if (tree.length > 0) {
-      const { bindings, sql } = WIKI.models.knex.table('pageTree').insert(tree).toSQL();
-      if (WIKI.config.db.type === 'mssql') {
-        await WIKI.models.knex.raw(sql, bindings).wrap(
-          'SET IDENTITY_INSERT pageTree ON;',
-          'SET IDENTITY_INSERT pageTree OFF;',
-        )
-      } else {
-        await WIKI.models.knex.raw(sql, bindings)
-      }
-      // await WIKI.models.knex.table('pageTree').insert(tree)
+      await WIKI.models.knex.table('pageTree').insert(tree)
     }
 
     await WIKI.models.knex.destroy()

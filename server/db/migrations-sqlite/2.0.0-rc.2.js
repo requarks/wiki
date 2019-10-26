@@ -2,7 +2,7 @@ exports.up = knex => {
   return knex.schema
     .dropTable('pageTree')
     .createTable('pageTree', table => {
-      table.increments('id').primary()
+      table.integer('id').primary()
       table.string('path').notNullable()
       table.integer('depth').unsigned().notNullable()
       table.string('title').notNullable()
@@ -20,7 +20,7 @@ exports.down = knex => {
   return knex.schema
     .dropTable('pageTree')
     .createTable('pageTree', table => {
-      table.increments('id').primary()
+      table.integer('id').primary()
       table.string('path').notNullable()
       table.integer('depth').unsigned().notNullable()
       table.string('title').notNullable()
