@@ -189,24 +189,35 @@ module.exports = () => {
       ])
 
       // Truncate tables (reset from previous failed install)
-      if (WIKI.config.db.type !== 'mssql') {
-        await WIKI.models.locales.query().truncate()
-        await WIKI.models.groups.query().truncate()
-        await WIKI.models.users.query().truncate()
-        await WIKI.models.navigation.query().truncate()
-      } else {
-        await WIKI.models.locales.query().del()
-        await WIKI.models.groups.query().del()
-        await WIKI.models.users.query().del()
-        await WIKI.models.navigation.query().truncate()
-        await WIKI.models.knex.raw(`
-          IF EXISTS (SELECT * FROM sys.identity_columns WHERE OBJECT_NAME(OBJECT_ID) = 'groups' AND last_value IS NOT NULL)
-            DBCC CHECKIDENT ([groups], RESEED, 0)
-        `)
-        await WIKI.models.knex.raw(`
-          IF EXISTS (SELECT * FROM sys.identity_columns WHERE OBJECT_NAME(OBJECT_ID) = 'users' AND last_value IS NOT NULL)
-            DBCC CHECKIDENT ([users], RESEED, 0)
-        `)
+      await WIKI.models.locales.query().where('code', '!=', 'x').del()
+      await WIKI.models.navigation.query().truncate()
+      switch (WIKI.config.db.type) {
+        case 'postgres':
+          await WIKI.models.knex.raw('TRUNCATE groups, users CASCADE')
+          break
+        case 'mysql':
+        case 'mariadb':
+          await WIKI.models.groups.query().where('id', '>', 0).del()
+          await WIKI.models.users.query().where('id', '>', 0).del()
+          await WIKI.models.knex.raw('ALTER TABLE groups AUTO_INCREMENT = 1')
+          await WIKI.models.knex.raw('ALTER TABLE users AUTO_INCREMENT = 1')
+          break
+        case 'mssql':
+          await WIKI.models.groups.query().del()
+          await WIKI.models.users.query().del()
+          await WIKI.models.knex.raw(`
+            IF EXISTS (SELECT * FROM sys.identity_columns WHERE OBJECT_NAME(OBJECT_ID) = 'groups' AND last_value IS NOT NULL)
+              DBCC CHECKIDENT ([groups], RESEED, 0)
+          `)
+          await WIKI.models.knex.raw(`
+            IF EXISTS (SELECT * FROM sys.identity_columns WHERE OBJECT_NAME(OBJECT_ID) = 'users' AND last_value IS NOT NULL)
+              DBCC CHECKIDENT ([users], RESEED, 0)
+          `)
+          break
+        case 'sqlite':
+          await WIKI.models.groups.query().truncate()
+          await WIKI.models.users.query().truncate()
+          break
       }
 
       // Create default locale
