@@ -315,6 +315,10 @@
     padding: 1rem 0 0 0;
     list-style-position: inside;
 
+    li > ul, li > ol {
+      padding-left: 1rem;
+    }
+
     li + li {
       margin-top: .5rem;
     }
