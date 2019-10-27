@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat)](https://github.com/requarks/wiki/blob/master/LICENSE)
 [![Backers on Open Collective](https://opencollective.com/wikijs/all/badge.svg)](https://opencollective.com/wikijs)
-[![Downloads](https://img.shields.io/github/downloads/Requarks/wiki/total.svg?style=flat)](https://www.npmjs.com/package/wiki.js)
+[![Downloads](https://img.shields.io/github/downloads/Requarks/wiki/total.svg?style=flat)](https://github.com/Requarks/wiki/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/requarks/wiki.svg)](https://hub.docker.com/r/requarks/wiki/)  
 [![Build status](https://dev.azure.com/requarks/wiki/_apis/build/status/build)](https://dev.azure.com/requarks/wiki/_build/latest?definitionId=9)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=wiki&metric=alert_status)](https://sonarcloud.io/dashboard?id=wiki)
