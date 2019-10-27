@@ -75,10 +75,11 @@ module.exports = {
     const contentPath = pageHelper.getPagePath(relPath)
     const itemContents = await fs.readFile(path.join(fullPath, relPath), 'utf8')
     const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
-    const currentPage = await WIKI.models.pages.query().findOne({
+    const currentPage = await WIKI.models.pages.getPageFromDb({
       path: contentPath.path,
-      localeCode: contentPath.locale
+      locale: contentPath.locale
     })
+    const newTags = !_.isNil(pageData.tags) ? _.get(pageData, 'tags', '').split(', ') : false
     if (currentPage) {
       // Already in the DB, can mark as modified
       WIKI.logger.info(`(STORAGE/${moduleName}) Page marked as modified: ${relPath}`)
@@ -86,6 +87,7 @@ module.exports = {
         id: currentPage.id,
         title: _.get(pageData, 'title', currentPage.title),
         description: _.get(pageData, 'description', currentPage.description) || '',
+        tags: newTags || currentPage.tags.map(t => t.tag),
         isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
         isPrivate: false,
         content: pageData.content,
@@ -101,6 +103,7 @@ module.exports = {
         locale: contentPath.locale,
         title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
         description: _.get(pageData, 'description', '') || '',
+        tags: newTags || [],
         isPublished: _.get(pageData, 'isPublished', true),
         isPrivate: false,
         content: pageData.content,

@@ -95,5 +95,7 @@ module.exports = class Tag extends Model {
     if (tagsToUnrelate.length > 0) {
       await page.$relatedQuery('tags').unrelate().whereIn('tags.id', _.map(tagsToUnrelate, 'id'))
     }
+
+    page.tags = targetTags
   }
 }

@@ -71,7 +71,7 @@ module.exports = {
       ['description', page.description],
       ['published', page.isPublished.toString()],
       ['date', page.updatedAt],
-      ['tags', '']
+      ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : '']
     ]
     const inject = {
       'markdown': '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content,
