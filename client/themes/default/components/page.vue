@@ -345,9 +345,10 @@ export default {
       }
     },
     breadcrumbs() {
+      console.info(this.locale)
       return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
         result.push({
-          path: _.map(result, 'path').join('/') + `/${value}`,
+          path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
           name: value
         })
         return result
