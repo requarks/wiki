@@ -20,12 +20,13 @@ module.exports = {
         scope: ['profile', 'email', 'openid'],
         allowHttpForRedirectUrl: WIKI.IS_DEBUG
       }, async (iss, sub, profile, cb) => {
+        const usrEmail = _.get(profile, '_json.email', null) || _.get(profile, '_json.preferred_username')
         try {
           const user = await WIKI.models.users.processProfile({
             profile: {
               id: profile.oid,
               displayName: profile.displayName,
-              email: _.get(profile, '_json.email', ''),
+              email: usrEmail,
               picture: ''
             },
             providerKey: 'azure'
