@@ -8223,11 +8223,6 @@ markdown-it-abbr@1.0.4:
   resolved "https://registry.yarnpkg.com/markdown-it-abbr/-/markdown-it-abbr-1.0.4.tgz#d66b5364521cbb3dd8aa59dadfba2fb6865c8fd8"
   integrity sha1-1mtTZFIcuz3Yqlna37ovtoZcj9g=
 
-markdown-it-anchor@5.2.5:
-  version "5.2.5"
-  resolved "https://registry.yarnpkg.com/markdown-it-anchor/-/markdown-it-anchor-5.2.5.tgz#dbf13cfcdbffd16a510984f1263e1d479a47d27a"
-  integrity sha512-xLIjLQmtym3QpoY9llBgApknl7pxAcN3WDRc2d3rwpl+/YvDZHPmKscGs+L6E05xf2KrCXPBvosWt7MZukwSpQ==
-
 markdown-it-attrs@3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/markdown-it-attrs/-/markdown-it-attrs-3.0.1.tgz#5ce7b4405f2286190fbcf4c482aa9e3e2d55ece5"

@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const cheerio = require('cheerio')
+const uslug = require('uslug')
 
 /* global WIKI */
 
@@ -141,6 +142,43 @@ module.exports = {
         await WIKI.models.pageLinks.query().delete().whereIn('id', _.map(outdatedLinks, 'id'))
       }
     }
+
+    // --------------------------------
+    // Add header handles
+    // --------------------------------
+
+    let headers = []
+    $('h1,h2,h3,h4,h5,h6').each((i, elm) => {
+      if ($(elm).attr('id')) {
+        return
+      }
+      let headerSlug = uslug($(elm).text())
+
+      // -> Cannot start with a number (CSS selector limitation)
+      if (headerSlug.match(/^\d/)) {
+        headerSlug = `h-${headerSlug}`
+      }
+
+      // -> Make sure header is unique
+      if (headers.indexOf(headerSlug) >= 0) {
+        let isUnique = false
+        let hIdx = 1
+        while (!isUnique) {
+          const headerSlugTry = `${headerSlug}-${hIdx}`
+          if (headers.indexOf(headerSlugTry) < 0) {
+            isUnique = true
+            headerSlug = headerSlugTry
+          }
+          hIdx++
+        }
+      }
+
+      // -> Add anchor
+      $(elm).attr('id', headerSlug).addClass('toc-header')
+      $(elm).prepend(`<a class="toc-anchor" href="#${headerSlug}">&#xB6;</a> `)
+
+      headers.push(headerSlug)
+    })
 
     return $.html('body').replace('<body>', '').replace('</body>', '')
   }

@@ -1,8 +1,6 @@
 const md = require('markdown-it')
-const mdAnchor = require('markdown-it-anchor')
 const mdAttrs = require('markdown-it-attrs')
 const _ = require('lodash')
-const uslug = require('uslug')
 
 const quoteStyles = {
   Chinese: '””‘’',
@@ -30,14 +28,6 @@ module.exports = {
       highlight(str, lang) {
         return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
       }
-    })
-
-    mkdown.use(mdAnchor, {
-      slugify: s => uslug(s),
-      permalink: true,
-      permalinkClass: 'toc-anchor',
-      permalinkSymbol: '¶',
-      permalinkBefore: true
     })
 
     mkdown.use(mdAttrs)
