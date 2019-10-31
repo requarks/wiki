@@ -354,7 +354,9 @@ module.exports = class Page extends Model {
 
     // -> Update Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+    console.info(pageContents.render)
     page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+    console.info(page.safeContent)
     await WIKI.data.searchEngine.updated(page)
 
     // -> Update on Storage
@@ -842,7 +844,7 @@ module.exports = class Page extends Model {
    * @returns {string} Cleaned Content Text
    */
   static cleanHTML(rawHTML = '') {
-    let data = striptags(rawHTML || '')
+    let data = striptags(rawHTML || '', [], ' ')
       .replace(emojiRegex(), '')
       // .replace(htmlEntitiesRegex, '')
     return he.decode(data)
