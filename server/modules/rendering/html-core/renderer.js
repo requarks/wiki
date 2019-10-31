@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const cheerio = require('cheerio')
 const uslug = require('uslug')
+const pageHelper = require('../../../helpers/page')
+const URL = require('url').URL
 
 /* global WIKI */
 
@@ -23,6 +25,7 @@ module.exports = {
 
     let internalRefs = []
     const reservedPrefixes = /^\/[a-z]\//gi
+    const exactReservedPaths = /^\/[a-z]$/gi
 
     const isHostSet = WIKI.config.host.length > 7 && WIKI.config.host !== 'http://'
     if (!isHostSet) {
@@ -50,21 +53,44 @@ module.exports = {
         }
 
         // -> Check for system prefix
-        if (!reservedPrefixes.test(href)) {
-          $(elm).addClass(`is-internal-link`)
+        if (!reservedPrefixes.test(href) && !exactReservedPaths.test(href)) {
+          let pagePath = null
 
-          // -> Reformat paths
-          if (href.indexOf('/') !== 0) {
-            href = `/${this.page.localeCode}/${this.page.path}/${href}`
-          } else if (href.charAt(3) !== '/') {
-            href = `/${this.page.localeCode}${href}`
+          // -> Add locale prefix if using namespacing
+          if (WIKI.config.lang.namespacing) {
+            // -> Reformat paths
+            if (href.indexOf('/') !== 0) {
+              href = `/${this.page.localeCode}/${this.page.path}/${href}`
+            } else if (href.charAt(3) !== '/') {
+              href = `/${this.page.localeCode}${href}`
+            }
+
+            try {
+              const parsedUrl = new URL(`http://x${href}`)
+              pagePath = pageHelper.parsePath(parsedUrl.pathname)
+            } catch (err) {
+              return
+            }
+          } else {
+            // -> Reformat paths
+            if (href.indexOf('/') !== 0) {
+              href = `/${this.page.path}/${href}`
+            }
+
+            try {
+              const parsedUrl = new URL(`http://x${href}`)
+              pagePath = pageHelper.parsePath(parsedUrl.pathname)
+            } catch (err) {
+              return
+            }
           }
-
           // -> Save internal references
           internalRefs.push({
-            localeCode: href.substring(1, 3),
-            path: _.head(href.substring(4).split('#'))
+            localeCode: pagePath.locale,
+            path: pagePath.path
           })
+
+          $(elm).addClass(`is-internal-link`)
         } else {
           $(elm).addClass(`is-system-link`)
         }
@@ -97,12 +123,15 @@ module.exports = {
       // -> Apply tag to internal links for found pages
       $('a.is-internal-link').each((i, elm) => {
         const href = $(elm).attr('href')
-        const hrefObj = {
-          localeCode: href.substring(1, 3),
-          path: _.head(href.substring(4).split('#'))
+        let hrefObj = {}
+        try {
+          const parsedUrl = new URL(`http://x${href}`)
+          hrefObj = pageHelper.parsePath(parsedUrl.pathname)
+        } catch (err) {
+          return
         }
         if (_.some(results, r => {
-          return r.localeCode === hrefObj.localeCode && r.path === hrefObj.path
+          return r.localeCode === hrefObj.locale && r.path === hrefObj.path
         })) {
           $(elm).addClass(`is-valid-page`)
         } else {
