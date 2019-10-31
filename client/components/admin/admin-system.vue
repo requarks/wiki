@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-container(fluid, grid-list-lg)
+  v-container.admin-system(fluid, grid-list-lg)
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
@@ -230,5 +230,9 @@ export default {
 </script>
 
 <style lang='scss'>
-
+.admin-system {
+  .v-list-item__subtitle {
+    user-select: text;
+  }
+}
 </style>
