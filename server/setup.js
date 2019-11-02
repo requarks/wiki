@@ -234,14 +234,12 @@ module.exports = () => {
 
       WIKI.logger.info('Creating default groups...')
       const adminGroup = await WIKI.models.groups.query().insert({
-        ...(WIKI.config.db.type !== `mssql` && { id: 1 }),
         name: 'Administrators',
         permissions: JSON.stringify(['manage:system']),
         pageRules: JSON.stringify([]),
         isSystem: true
       })
       const guestGroup = await WIKI.models.groups.query().insert({
-        ...(WIKI.config.db.type !== `mssql` && { id: 2 }),
         name: 'Guests',
         permissions: JSON.stringify(['read:pages', 'read:assets', 'read:comments']),
         pageRules: JSON.stringify([
@@ -279,7 +277,6 @@ module.exports = () => {
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
       const adminUser = await WIKI.models.users.query().insert({
-        ...(WIKI.config.db.type !== `mssql` && { id: 1 }),
         email: req.body.adminEmail,
         provider: 'local',
         password: req.body.adminPassword,
@@ -295,7 +292,6 @@ module.exports = () => {
       // Create Guest account
       WIKI.logger.info('Creating guest account...')
       const guestUser = await WIKI.models.users.query().insert({
-        ...(WIKI.config.db.type !== `mssql` && { id: 2 }),
         provider: 'local',
         email: 'guest@example.com',
         name: 'Guest',
