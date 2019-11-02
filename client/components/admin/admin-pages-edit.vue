@@ -58,17 +58,17 @@
             v-list-item
               v-list-item-content
                 v-list-item-title: .overline.grey--text Title
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.title }}
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.title }}
             v-divider
             v-list-item
               v-list-item-content
                 v-list-item-title: .overline.grey--text Description
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.description || '-' }}
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.description || '-' }}
             v-divider
             v-list-item
               v-list-item-content
                 v-list-item-title: .overline.grey--text Locale
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.locale }}
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.locale }}
               v-list-item-action
                 v-btn(icon, x-small)
                   v-icon(color='grey') mdi-pencil
@@ -76,7 +76,7 @@
             v-list-item
               v-list-item-content
                 v-list-item-title: .overline.grey--text Path
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.path }}
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.path }}
               v-list-item-action
                 v-btn(icon, x-small)
                   v-icon(color='grey') mdi-pencil
@@ -84,14 +84,14 @@
             v-list-item
               v-list-item-content
                 v-list-item-title: .overline.grey--text Editor
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.editor || '?' }}
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.editor || '?' }}
             v-divider
             v-list-item
               v-list-item-content
                 v-list-item-title: .overline.grey--text Content Type
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.contentType || '?' }}
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.contentType || '?' }}
 
-        v-toolbar.elevation-2.mt-3.animated.fadeInUp.wait-p4s(color='white', dense)
+        v-toolbar.elevation-2.mt-3.animated.fadeInUp.wait-p4s(:color='$vuetify.theme.dark ? `grey darken-3-d5` : `white`', dense)
           v-spacer
           v-btn(color='primary', text, :href='`/` + page.locale + `/` + page.path')
             v-icon(left) mdi-text-subject
@@ -124,7 +124,7 @@
                   v-icon(color='grey') mdi-account
               v-list-item-content
                 v-list-item-title: .overline.grey--text Creator
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.creatorName }} #[em.caption ({{ page.creatorEmail }})]
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.creatorName }} #[em.caption ({{ page.creatorEmail }})]
               v-list-item-action
                 v-list-item-action-text {{ page.createdAt | moment('calendar') }}
             v-divider
@@ -134,7 +134,7 @@
                   v-icon(color='grey') mdi-account
               v-list-item-content
                 v-list-item-title: .overline.grey--text Last Editor
-                v-list-item-subtitle.body-2.grey--text.text--darken-3 {{ page.authorName }} #[em.caption ({{ page.authorEmail }})]
+                v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.authorName }} #[em.caption ({{ page.authorEmail }})]
               v-list-item-action
                 v-list-item-action-text {{ page.updatedAt | moment('calendar') }}
         v-card.mt-3.animated.fadeInUp.wait-p4s

@@ -104,7 +104,7 @@
               v-list-item(to='/dev-flags')
                 v-list-item-title {{ $t('admin:dev.flags.title') }}
               v-list-item(href='/graphql')
-                v-list-item-title {{ $t('admin:dev.graphiql.title') }}
+                v-list-item-title GraphQL
               //- v-list-item(to='/dev-graphiql')
               //-   v-list-item-title {{ $t('admin:dev.graphiql.title') }}
               //- v-list-item(to='/dev-voyager')

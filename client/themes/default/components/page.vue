@@ -73,21 +73,21 @@
             v-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') Tags
-                v-chip.mr-1(
+                v-chip.mr-1.mb-1(
                   label
-                  color='teal lighten-5'
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   v-for='(tag, idx) in tags'
                   :href='`/t/` + tag.tag'
                   :key='`tag-` + tag.tag'
                   )
-                  v-icon(color='teal', left, small) mdi-tag
-                  span.teal--text.text--darken-2 {{tag.title}}
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
                 v-chip.mr-1(
                   label
-                  color='teal lighten-5'
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   :href='`/t/` + tags.map(t => t.tag).join(`/`)'
                   )
-                  v-icon(color='teal', size='20') mdi-tag-multiple
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
             v-card.mb-5
               .pa-5

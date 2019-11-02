@@ -1,20 +1,20 @@
 <template lang="pug">
-  .search-results(v-if='searchIsFocused || search.length > 1')
+  .search-results(v-if='searchIsFocused || (search && search.length > 1)')
     .search-results-container
-      .search-results-help(v-if='search.length < 2')
+      .search-results-help(v-if='search && search.length < 2')
         img(src='/svg/icon-search-alt.svg')
         .mt-4 {{$t('common:header.searchHint')}}
-      .search-results-loader(v-else-if='searchIsLoading && results.length < 1')
+      .search-results-loader(v-else-if='searchIsLoading && (!results || results.length < 1)')
         orbit-spinner(
           :animation-duration='1000'
           :size='100'
           color='#FFF'
         )
         .headline.mt-5 {{$t('common:header.searchLoading')}}
-      .search-results-none(v-else-if='!searchIsLoading && results.length < 1')
+      .search-results-none(v-else-if='!searchIsLoading && (!results || results.length < 1)')
         img(src='/svg/icon-no-results.svg', alt='No Results')
         .subheading {{$t('common:header.searchNoResult')}}
-      template(v-if='results.length > 0')
+      template(v-if='results && results.length > 0')
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
         v-list.search-results-items.radius-7.py-0(two-line)
           template(v-for='(item, idx) of results')
@@ -34,7 +34,7 @@
           v-model='pagination'
           :length='paginationLength'
         )
-      template(v-if='suggestions.length > 0')
+      template(v-if='suggestions && suggestions.length > 0')
         v-subheader.white--text.mt-3 {{$t('common:header.searchDidYouMean')}}
         v-list.search-results-suggestions.radius-7(dense, dark)
           template(v-for='(term, idx) of suggestions')
@@ -44,7 +44,7 @@
               v-list-item-content
                 v-list-item-title(v-html='term')
             v-divider(v-if='idx < suggestions.length - 1')
-      .text-xs-center.pt-5(v-if='search.length > 1')
+      .text-xs-center.pt-5(v-if='search && search.length > 1')
         //- v-btn.mx-2(outlined, color='orange', @click='search = ``', v-if='results.length > 0')
         //-   v-icon(left) mdi-content-save
         //-   span {{$t('common:header.searchCopyLink')}}
@@ -97,7 +97,7 @@ export default {
   watch: {
     search(newValue, oldValue) {
       this.cursor = 0
-      if (newValue.length < 2) {
+      if (newValue && newValue.length < 2) {
         this.response.results = []
         this.response.suggestions = []
       } else {
@@ -107,6 +107,7 @@ export default {
   },
   mounted() {
     this.$root.$on('searchMove', (dir) => {
+      console.info()
       this.cursor += ((dir === 'up') ? -1 : 1)
       if (this.cursor < -1) {
         this.cursor = -1
@@ -115,6 +116,10 @@ export default {
       }
     })
     this.$root.$on('searchEnter', () => {
+      if (!this.results) {
+        return
+      }
+
       if (this.cursor >= 0 && this.cursor < this.results.length) {
         this.goToPage(_.nth(this.results, this.cursor))
       } else if (this.cursor >= 0) {

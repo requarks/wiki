@@ -72,6 +72,7 @@
               chips
               deletable-chips
               small-chips
+              height='48px'
               style='flex: 0 1 440px;'
               :menu-props='{ "maxHeight": 500 }'
               clearable
@@ -99,6 +100,7 @@
               v-model='rule.match'
               placeholder='Match...'
               hide-details
+              height='48px'
               style='flex: 0 1 250px;'
               dense
               )
@@ -118,6 +120,7 @@
               placeholder='Any Locale'
               multiple
               hide-details
+              height='48px'
               dense
               :menu-props='{ "minWidth": 250 }'
               style='flex: 0 1 150px;'
@@ -161,7 +164,7 @@
               :color='$vuetify.theme.dark ? `grey` : `blue-grey`'
               )
 
-            v-btn.ml-2.mt-1(icon, @click='removeRule(rule.id)', small)
+            v-btn.ml-2(icon, @click='removeRule(rule.id)', small)
               v-icon(:color='$vuetify.theme.dark ? `grey` : `blue-grey`') mdi-close
 
         v-divider.mt-3
@@ -277,6 +280,7 @@ export default {
   background-color: mc('blue-grey', '100');
   border-radius: 4px;
   padding: .5rem;
+  align-items: center;
 
   &-enter-active, &-leave-active {
     transition: all .5s ease;
