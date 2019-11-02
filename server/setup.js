@@ -199,8 +199,8 @@ module.exports = () => {
         case 'mariadb':
           await WIKI.models.groups.query().where('id', '>', 0).del()
           await WIKI.models.users.query().where('id', '>', 0).del()
-          await WIKI.models.knex.raw('ALTER TABLE groups AUTO_INCREMENT = 1')
-          await WIKI.models.knex.raw('ALTER TABLE users AUTO_INCREMENT = 1')
+          await WIKI.models.knex.raw('ALTER TABLE `groups` AUTO_INCREMENT = 1')
+          await WIKI.models.knex.raw('ALTER TABLE `users` AUTO_INCREMENT = 1')
           break
         case 'mssql':
           await WIKI.models.groups.query().del()
