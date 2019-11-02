@@ -93,7 +93,7 @@ Follow our Twitter feed to learn about upcoming updates and new releases!
 
 <h2 align="center">Translations</h2>
 
-We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, contact us on our [Slack channel](https://wiki.requarks.io/slack) and we'll provide you access to our translation tool, absolutely no coding required!
+We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, [click here](https://lokalise.com/public/2994254859f751ea605a00.03473540/) to gain access to our translation tool, absolutely no coding required! Feel free to contact us on our [Slack channel](https://wiki.requarks.io/slack) if you have any questions.
 
 <h2 align="center">Special Thanks</h2>
 
