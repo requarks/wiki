@@ -8,7 +8,7 @@ isAvailable: true
 props:
   dictLanguage:
     type: String
-    title: Dictionnary Language
+    title: Dictionary Language
     hint: Language to use when creating and querying text search vectors.
     default: english
     enum:
