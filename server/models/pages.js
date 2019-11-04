@@ -13,7 +13,7 @@ const he = require('he')
 
 const frontmatterRegex = {
   html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,
-  legacy: /^(<!-- TITLE: ?([\w\W]+?) -{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) -{2}>)?(?:\n|\r)*([\w\W]*)*/i,
+  legacy: /^(<!-- TITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)*([\w\W]*)*/i,
   markdown: /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?(?:\n|\r)*([\w\W]*)*/
 }
 

@@ -6,6 +6,7 @@ const Knex = require('knex')
 const Objection = require('objection')
 
 const migrationSource = require('../db/migrator-source')
+const migrateFromBeta = require('../db/beta')
 
 /* global WIKI */
 
@@ -110,15 +111,8 @@ module.exports = {
     // Set init tasks
     let conAttempts = 0
     let initTasks = {
-      // -> Migrate DB Schemas
-      async syncSchemas() {
-        return self.knex.migrate.latest({
-          tableName: 'migrations',
-          migrationSource
-        })
-      },
       // -> Attempt initial connection
-      async connect() {
+      async connect () {
         try {
           WIKI.logger.info('Connecting to database...')
           await self.knex.raw('SELECT 1 + 1;')
@@ -133,11 +127,23 @@ module.exports = {
             throw err
           }
         }
+      },
+      // -> Migrate DB Schemas
+      async syncSchemas () {
+        return self.knex.migrate.latest({
+          tableName: 'migrations',
+          migrationSource
+        })
+      },
+      // -> Migrate DB Schemas from beta
+      async migrateFromBeta () {
+        return migrateFromBeta.migrate(self.knex)
       }
     }
 
     let initTasksQueue = (WIKI.IS_MASTER) ? [
       initTasks.connect,
+      initTasks.migrateFromBeta,
       initTasks.syncSchemas
     ] : [
       () => { return Promise.resolve() }

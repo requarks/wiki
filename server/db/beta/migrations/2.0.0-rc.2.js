@@ -1,10 +1,11 @@
 /* global WIKI */
 
-exports.up = knex => {
+exports.up = async knex => {
   const dbCompat = {
     charset: (WIKI.config.db.type === `mysql` || WIKI.config.db.type === `mariadb`),
     selfCascadeDelete: WIKI.config.db.type !== 'mssql'
   }
+
   return knex.schema
     .dropTable('pageTree')
     .createTable('pageTree', table => {

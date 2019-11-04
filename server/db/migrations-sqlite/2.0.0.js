@@ -1,19 +1,19 @@
-/* global WIKI */
-
 exports.up = knex => {
-  const dbCompat = {
-    charset: (WIKI.config.db.type === `mysql` || WIKI.config.db.type === `mariadb`)
-  }
   return knex.schema
     // =====================================
     // MODEL TABLES
     // =====================================
+    // ANALYTICS ---------------------------
+    .createTable('analytics', table => {
+      table.string('key').notNullable().primary()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.json('config').notNullable()
+    })
     // ASSETS ------------------------------
     .createTable('assets', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('filename').notNullable()
-      table.string('basename').notNullable()
+      table.string('hash').notNullable().defaultTo('')
       table.string('ext').notNullable()
       table.enum('kind', ['binary', 'image']).notNullable().defaultTo('binary')
       table.string('mime').notNullable().defaultTo('application/octet-stream')
@@ -21,10 +21,17 @@ exports.up = knex => {
       table.json('metadata')
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+
+      table.integer('folderId').unsigned().references('id').inTable('assetFolders')
+      table.integer('authorId').unsigned().references('id').inTable('users')
+    })
+    // ASSET DATA --------------------------
+    .createTable('assetData', table => {
+      table.integer('id').primary()
+      table.binary('data').notNullable()
     })
     // ASSET FOLDERS -----------------------
     .createTable('assetFolders', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('name').notNullable()
       table.string('slug').notNullable()
@@ -32,7 +39,6 @@ exports.up = knex => {
     })
     // AUTHENTICATION ----------------------
     .createTable('authentication', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config').notNullable()
@@ -42,22 +48,22 @@ exports.up = knex => {
     })
     // COMMENTS ----------------------------
     .createTable('comments', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.text('content').notNullable()
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+
+      table.integer('pageId').unsigned().references('id').inTable('pages')
+      table.integer('authorId').unsigned().references('id').inTable('users')
     })
     // EDITORS -----------------------------
     .createTable('editors', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config').notNullable()
     })
     // GROUPS ------------------------------
     .createTable('groups', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('name').notNullable()
       table.json('permissions').notNullable()
@@ -68,18 +74,17 @@ exports.up = knex => {
     })
     // LOCALES -----------------------------
     .createTable('locales', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('code', 5).notNullable().primary()
       table.json('strings')
       table.boolean('isRTL').notNullable().defaultTo(false)
       table.string('name').notNullable()
       table.string('nativeName').notNullable()
+      table.integer('availability').notNullable().defaultTo(0)
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
     })
     // LOGGING ----------------------------
     .createTable('loggers', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.string('level').notNullable().defaultTo('warn')
@@ -87,13 +92,11 @@ exports.up = knex => {
     })
     // NAVIGATION ----------------------------
     .createTable('navigation', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.json('config')
     })
     // PAGE HISTORY ------------------------
     .createTable('pageHistory', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('path').notNullable()
       table.string('hash').notNullable()
@@ -106,10 +109,22 @@ exports.up = knex => {
       table.text('content')
       table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
+      table.string('action').defaultTo('updated')
+
+      table.integer('pageId').unsigned()
+      table.string('editorKey').references('key').inTable('editors')
+      table.string('localeCode', 5).references('code').inTable('locales')
+      table.integer('authorId').unsigned().references('id').inTable('users')
+    })
+    // PAGE LINKS --------------------------
+    .createTable('pageLinks', table => {
+      table.increments('id').primary()
+      table.integer('pageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
+      table.string('path').notNullable()
+      table.string('localeCode', 5).notNullable()
     })
     // PAGES -------------------------------
     .createTable('pages', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('path').notNullable()
       table.string('hash').notNullable()
@@ -126,50 +141,55 @@ exports.up = knex => {
       table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+
+      table.string('editorKey').references('key').inTable('editors')
+      table.string('localeCode', 5).references('code').inTable('locales')
+      table.integer('authorId').unsigned().references('id').inTable('users')
+      table.integer('creatorId').unsigned().references('id').inTable('users')
     })
     // PAGE TREE ---------------------------
     .createTable('pageTree', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
-      table.increments('id').primary()
+      table.integer('id').primary()
       table.string('path').notNullable()
       table.integer('depth').unsigned().notNullable()
       table.string('title').notNullable()
       table.boolean('isPrivate').notNullable().defaultTo(false)
       table.boolean('isFolder').notNullable().defaultTo(false)
       table.string('privateNS')
+
+      table.integer('parent').unsigned().references('id').inTable('pageTree').onDelete('CASCADE')
+      table.integer('pageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
+      table.string('localeCode', 5).references('code').inTable('locales')
     })
     // RENDERERS ---------------------------
     .createTable('renderers', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config')
     })
     // SEARCH ------------------------------
     .createTable('searchEngines', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.json('config')
     })
     // SETTINGS ----------------------------
     .createTable('settings', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.json('value')
       table.string('updatedAt').notNullable()
     })
     // STORAGE -----------------------------
     .createTable('storage', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.string('key').notNullable().primary()
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.string('mode', ['sync', 'push', 'pull']).notNullable().defaultTo('push')
       table.json('config')
+      table.string('syncInterval')
+      table.json('state')
     })
     // TAGS --------------------------------
     .createTable('tags', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('tag').notNullable().unique()
       table.string('title')
@@ -178,16 +198,16 @@ exports.up = knex => {
     })
     // USER KEYS ---------------------------
     .createTable('userKeys', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('kind').notNullable()
       table.string('token').notNullable()
       table.string('createdAt').notNullable()
       table.string('validUntil').notNullable()
+
+      table.integer('userId').unsigned().references('id').inTable('users')
     })
     // USERS -------------------------------
     .createTable('users', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.string('email').notNullable()
       table.string('name').notNullable()
@@ -202,29 +222,31 @@ exports.up = knex => {
       table.boolean('isSystem').notNullable().defaultTo(false)
       table.boolean('isActive').notNullable().defaultTo(false)
       table.boolean('isVerified').notNullable().defaultTo(false)
+      table.boolean('mustChangePwd').notNullable().defaultTo(false)
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+
+      table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')
+      table.string('localeCode', 5).references('code').inTable('locales').notNullable().defaultTo('en')
+      table.string('defaultEditor').references('key').inTable('editors').notNullable().defaultTo('markdown')
     })
     // =====================================
     // RELATION TABLES
     // =====================================
     // PAGE HISTORY TAGS ---------------------------
     .createTable('pageHistoryTags', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.integer('pageId').unsigned().references('id').inTable('pageHistory').onDelete('CASCADE')
       table.integer('tagId').unsigned().references('id').inTable('tags').onDelete('CASCADE')
     })
     // PAGE TAGS ---------------------------
     .createTable('pageTags', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.integer('pageId').unsigned().references('id').inTable('pages').onDelete('CASCADE')
       table.integer('tagId').unsigned().references('id').inTable('tags').onDelete('CASCADE')
     })
     // USER GROUPS -------------------------
     .createTable('userGroups', table => {
-      if (dbCompat.charset) { table.charset('utf8mb4') }
       table.increments('id').primary()
       table.integer('userId').unsigned().references('id').inTable('users').onDelete('CASCADE')
       table.integer('groupId').unsigned().references('id').inTable('groups').onDelete('CASCADE')
@@ -232,61 +254,15 @@ exports.up = knex => {
     // =====================================
     // REFERENCES
     // =====================================
-    .table('assets', table => {
-      table.integer('folderId').unsigned().references('id').inTable('assetFolders')
-      table.integer('authorId').unsigned().references('id').inTable('users')
-    })
-    .table('comments', table => {
-      table.integer('pageId').unsigned().references('id').inTable('pages')
-      table.integer('authorId').unsigned().references('id').inTable('users')
-    })
-    .table('pageHistory', table => {
-      table.integer('pageId').unsigned().references('id').inTable('pages')
-      table.string('editorKey').references('key').inTable('editors')
-      table.string('localeCode', 5).references('code').inTable('locales')
-      table.integer('authorId').unsigned().references('id').inTable('users')
-    })
-    .table('pages', table => {
-      table.string('editorKey').references('key').inTable('editors')
-      table.string('localeCode', 5).references('code').inTable('locales')
-      table.integer('authorId').unsigned().references('id').inTable('users')
-      table.integer('creatorId').unsigned().references('id').inTable('users')
-    })
-    .table('pageTree', table => {
-      table.integer('parent').unsigned().references('id').inTable('pageTree')
-      table.integer('pageId').unsigned().references('id').inTable('pages')
-      table.string('localeCode', 5).references('code').inTable('locales')
-    })
-    .table('userKeys', table => {
-      table.integer('userId').unsigned().references('id').inTable('users')
-    })
     .table('users', table => {
-      table.string('providerKey').references('key').inTable('authentication').notNullable().defaultTo('local')
-      table.string('localeCode', 5).references('code').inTable('locales').notNullable().defaultTo('en')
-      table.string('defaultEditor').references('key').inTable('editors').notNullable().defaultTo('markdown')
-
       table.unique(['providerKey', 'email'])
     })
+    // =====================================
+    // INDEXES
+    // =====================================
+    .table('pageLinks', table => {
+      table.index(['path', 'localeCode'])
+    })
 }
 
-exports.down = knex => {
-  return knex.schema
-    .dropTableIfExists('userGroups')
-    .dropTableIfExists('pageHistoryTags')
-    .dropTableIfExists('pageHistory')
-    .dropTableIfExists('pageTags')
-    .dropTableIfExists('assets')
-    .dropTableIfExists('assetFolders')
-    .dropTableIfExists('comments')
-    .dropTableIfExists('editors')
-    .dropTableIfExists('groups')
-    .dropTableIfExists('locales')
-    .dropTableIfExists('navigation')
-    .dropTableIfExists('pages')
-    .dropTableIfExists('renderers')
-    .dropTableIfExists('settings')
-    .dropTableIfExists('storage')
-    .dropTableIfExists('tags')
-    .dropTableIfExists('userKeys')
-    .dropTableIfExists('users')
-}
+exports.down = knex => { }
