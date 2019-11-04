@@ -242,7 +242,7 @@ export default {
         this.tree = [
           {
             id: 0,
-            title: '/ (root',
+            title: '/ (root)',
             children: []
           }
         ]

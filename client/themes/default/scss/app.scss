@@ -683,6 +683,33 @@
 
   }
 
+  // ---------------------------------
+  // HIGHLIGHTING
+  // ---------------------------------
+
+  mark {
+    &.pen-red {
+      color: mc('red', '500');
+      background-color: initial;
+    }
+    &.pen-green {
+      color: mc('green', '500');
+      background-color: initial;
+    }
+    &.marker-blue {
+      background-color: mc('blue', '300');
+    }
+    &.marker-yellow {
+      background-color: mc('yellow', '300');
+    }
+    &.marker-pink {
+      background-color: mc('pink', '300');
+    }
+    &.marker-green {
+      background-color: mc('green', '300');
+    }
+  }
+
 }
 
 // ---------------
