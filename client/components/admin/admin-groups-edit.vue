@@ -27,10 +27,16 @@
             v-icon(left) mdi-check
             span Update Group
         v-card.mt-3
-          v-tabs(v-model='tab', :background-color='$vuetify.theme.dark ? "primary" : "grey darken-2"', fixed-tabs, slider-color='white', show-arrows, dark)
-            v-tab(key='permissions') Permissions
-            v-tab(key='rules') Page Rules
-            v-tab(key='users') Users
+          v-tabs.grad-tabs(v-model='tab', :color='$vuetify.theme.dark ? `blue` : `primary`', fixed-tabs, show-arrows, icons-and-text)
+            v-tab(key='permissions')
+              span Permissions
+              v-icon mdi-lock-pattern
+            v-tab(key='rules')
+              span Page Rules
+              v-icon mdi-file-lock
+            v-tab(key='users')
+              span Users
+              v-icon mdi-account-group
 
             v-tab-item(key='permissions', :transition='false', :reverse-transition='false')
               group-permissions(v-model='group', @refresh='refresh')
