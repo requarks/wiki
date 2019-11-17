@@ -6,6 +6,7 @@ const stream = require('stream')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
 const klaw = require('klaw')
+const os = require('os')
 
 const pageHelper = require('../../../helpers/page')
 const assetHelper = require('../../../helpers/asset')
@@ -67,7 +68,7 @@ module.exports = {
         if (this.config.sshPrivateKeyMode === 'contents') {
           try {
             this.config.sshPrivateKeyPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'secure/git-ssh.pem')
-            await fs.outputFile(this.config.sshPrivateKeyPath, this.config.sshPrivateKeyContent, {
+            await fs.outputFile(this.config.sshPrivateKeyPath, this.config.sshPrivateKeyContent + os.EOL, {
               encoding: 'utf8',
               mode: 0o600
             })
