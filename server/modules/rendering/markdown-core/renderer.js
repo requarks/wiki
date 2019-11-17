@@ -30,7 +30,9 @@ module.exports = {
       }
     })
 
-    mkdown.use(mdAttrs)
+    mkdown.use(mdAttrs, {
+      allowedAttributes: ['id', 'class']
+    })
 
     for (let child of this.children) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
