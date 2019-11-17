@@ -69,7 +69,6 @@ export default {
     }, 300))
 
     this.$root.$on('editorInsert', opts => {
-      console.info(opts)
       switch (opts.kind) {
         case 'IMAGE':
           this.editor.execute('imageInsert', {
@@ -77,8 +76,8 @@ export default {
           })
           break
         case 'BINARY':
-          this.insertAtCursor({
-            content: `[${opts.text}](${opts.path})`
+          this.editor.execute('link', opts.path, {
+            linkIsDownloadable: true
           })
           break
       }
