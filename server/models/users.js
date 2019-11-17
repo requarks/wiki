@@ -550,7 +550,7 @@ module.exports = class User extends Model {
         const dupUsr = await WIKI.models.users.query().select('id').where({
           email,
           providerKey: usr.providerKey
-        })
+        }).first()
         if (dupUsr) {
           throw new WIKI.Error.AuthAccountAlreadyExists()
         }
