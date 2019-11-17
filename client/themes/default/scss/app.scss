@@ -316,6 +316,7 @@
     list-style-position: inside;
 
     li > ul, li > ol {
+      padding-top: .5rem;
       padding-left: 1rem;
     }
 
