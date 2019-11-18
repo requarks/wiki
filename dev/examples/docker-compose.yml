@@ -12,7 +12,7 @@ services:
       - db-data:/var/lib/postgresql/data
 
   wiki:
-    image: requarks/wiki:beta
+    image: requarks/wiki:2
     depends_on:
       - db
     environment:
