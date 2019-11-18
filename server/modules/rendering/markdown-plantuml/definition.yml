@@ -8,7 +8,7 @@ dependsOn: markdownCore
 props:
   server:
     type: String
-    default: http://www.plantuml.com/plantuml
+    default: https://www.plantuml.com/plantuml
     title: PlantUML Server
     hint: PlantUML server used for image generation
     order: 1
