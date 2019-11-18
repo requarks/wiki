@@ -55,7 +55,7 @@ defaults:
       ldapdebug: false
       sqllog: false
     # System defaults
-    channel: BETA
+    channel: STABLE
     setup: false
     dataPath: ./data
     cors:
