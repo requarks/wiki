@@ -288,7 +288,7 @@ export default {
 
 <style lang='scss'>
 .editor-markdown-help {
-  position: fixed;
+  position: fixed !important;
   top: 112px;
   left: 64px;
   z-index: 10;
