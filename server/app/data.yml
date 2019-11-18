@@ -80,6 +80,11 @@ jobs:
     schedule: P1D
     offlineSkip: true
     repeat: true
+  syncGraphUpdates:
+    onInit: true
+    schedule: P1D
+    offlineSkip: true
+    repeat: true
   rebuildTree:
     onInit: true
     offlineSkip: false
