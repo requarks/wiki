@@ -1,7 +1,6 @@
 FROM requarks/wiki:2
 
 # For mounting config.yml as configmap, some directory operations should be done.
-
 WORKDIR /wiki
 
 RUN mkdir config && \
