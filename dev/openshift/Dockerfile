@@ -1,4 +1,4 @@
-FROM requarks/wiki:beta
+FROM requarks/wiki:2
 
 USER root
 
