@@ -1,8 +1,8 @@
-FROM requarks/wiki:beta
+FROM requarks/wiki:2
 
-USER root
+# For mounting config.yml as configmap, some directory operations should be done.
 
-RUN chgrp -R 0 /wiki /logs && \
-    chmod -R g=u /wiki /logs
-
-USER 1001
+WORKDIR /wiki
+    mkdir config && \
+    mv config.yml config/config.yml && \
+    ln -s config/config.yml config.yml
