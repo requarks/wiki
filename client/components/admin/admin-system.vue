@@ -231,10 +231,7 @@ export default {
 
 <style lang='scss'>
 .admin-system {
-    .v-list-item-title {
-    user-select: text;
-  }
-  .v-list-item__subtitle {
+  .v-list-item-title, .v-list-item__subtitle {
     user-select: text;
   }
 }
