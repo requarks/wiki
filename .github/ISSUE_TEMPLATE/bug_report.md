@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Host Info (please complete the following information):**
  - OS: [e.g. Ubuntu 18.04, Docker]
- - Wiki.js version: [e.g. 2.0.0-beta.115]
+ - Wiki.js version: [e.g. 2.0.1]
  - Database engine: [e.g. postgres 9.7, mysql 5.7]
 
 **Additional context**
