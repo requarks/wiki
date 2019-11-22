@@ -203,6 +203,7 @@
     "cache-loader": "4.1.0",
     "chart.js": "2.9.0",
     "clean-webpack-plugin": "3.0.0",
+    "clipboard": "2.0.4",
     "codemirror": "5.49.2",
     "copy-webpack-plugin": "5.0.4",
     "core-js": "3.3.4",

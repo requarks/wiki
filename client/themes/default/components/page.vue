@@ -232,6 +232,7 @@ import { StatusIndicator } from 'vue-status-indicator'
 import Prism from 'prismjs'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
+import ClipboardJS from 'clipboard'
 
 Prism.plugins.autoloader.languages_path = '/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
@@ -239,9 +240,33 @@ Prism.plugins.NormalizeWhitespace.setDefaults({
   'remove-indent': true,
   'left-trim': true,
   'right-trim': true,
-  'break-lines': 160,
   'remove-initial-line-feed': true,
   'tabs-to-spaces': 2
+})
+Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
+  let linkCopy = document.createElement('button')
+  linkCopy.textContent = 'Copy'
+
+  const clip = new ClipboardJS(linkCopy, {
+    text: () => { return env.code }
+  })
+
+  clip.on('success', () => {
+    linkCopy.textContent = 'Copied!'
+    resetClipboardText()
+  })
+  clip.on('error', () => {
+    linkCopy.textContent = 'Press Ctrl+C to copy'
+    resetClipboardText()
+  })
+
+  return linkCopy
+
+  function resetClipboardText() {
+    setTimeout(() => {
+      linkCopy.textContent = 'Copy'
+    }, 5000)
+  }
 })
 
 export default {
@@ -345,7 +370,6 @@ export default {
       }
     },
     breadcrumbs() {
-      console.info(this.locale)
       return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
         result.push({
           path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
