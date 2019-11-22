@@ -233,7 +233,9 @@ const md = new MarkdownIt({
     return `<pre class="line-numbers"><code class="language-${lang}">${str}</code></pre>`
   }
 })
-  .use(mdAttrs)
+  .use(mdAttrs, {
+    allowedAttributes: ['id', 'class', 'target']
+  })
   .use(mdEmoji)
   .use(mdTaskLists, {label: true, labelAfter: true})
   .use(mdExpandTabs)
