@@ -223,6 +223,17 @@ import Prism from 'prismjs'
 // Platform detection
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 
+// Prism Config
+Prism.plugins.autoloader.languages_path = '/js/prism/'
+Prism.plugins.NormalizeWhitespace.setDefaults({
+  'remove-trailing': true,
+  'remove-indent': true,
+  'left-trim': true,
+  'right-trim': true,
+  'remove-initial-line-feed': true,
+  'tabs-to-spaces': 2
+})
+
 // Markdown Instance
 const md = new MarkdownIt({
   html: true,
