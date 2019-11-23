@@ -66,7 +66,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   }
 
   if (page) {
-    if (!WIKI.auth.checkAccess(req.user, ['manage:pages'], pageArgs)) {
+    if (!WIKI.auth.checkAccess(req.user, ['write:pages', 'manage:pages'], pageArgs)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.render('unauthorized', { action: 'edit' })
     }
