@@ -122,12 +122,16 @@ router.get('/register', async (req, res, next) => {
  * Verify
  */
 router.get('/verify/:token', bruteforce.prevent, async (req, res, next) => {
-  const usr = await WIKI.models.userKeys.validateToken({ kind: 'verify', token: req.params.token })
-  await WIKI.models.users.query().patch({ isVerified: true }).where('id', usr.id)
-  const result = await WIKI.models.users.refreshToken(usr)
-  req.brute.reset()
-  res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
-  res.redirect('/')
+  try {
+    const usr = await WIKI.models.userKeys.validateToken({ kind: 'verify', token: req.params.token })
+    await WIKI.models.users.query().patch({ isVerified: true }).where('id', usr.id)
+    const result = await WIKI.models.users.refreshToken(usr)
+    req.brute.reset()
+    res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
+    res.redirect('/')
+  } catch (err) {
+    next(err)
+  }
 })
 
 /**
