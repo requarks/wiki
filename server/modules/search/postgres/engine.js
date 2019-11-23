@@ -127,7 +127,7 @@ module.exports = {
   async renamed(page) {
     await WIKI.models.knex('pagesVector').where({
       locale: page.localeCode,
-      path: page.sourcePath
+      path: page.path
     }).update({
       locale: page.destinationLocaleCode,
       path: page.destinationPath
