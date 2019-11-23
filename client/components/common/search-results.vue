@@ -1,7 +1,7 @@
 <template lang="pug">
   .search-results(v-if='searchIsFocused || (search && search.length > 1)')
     .search-results-container
-      .search-results-help(v-if='search && search.length < 2')
+      .search-results-help(v-if='!search || (search && search.length < 2)')
         img(src='/svg/icon-search-alt.svg')
         .mt-4 {{$t('common:header.searchHint')}}
       .search-results-loader(v-else-if='searchIsLoading && (!results || results.length < 1)')
@@ -107,7 +107,6 @@ export default {
   },
   mounted() {
     this.$root.$on('searchMove', (dir) => {
-      console.info()
       this.cursor += ((dir === 'up') ? -1 : 1)
       if (this.cursor < -1) {
         this.cursor = -1
