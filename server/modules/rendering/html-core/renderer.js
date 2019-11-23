@@ -53,7 +53,11 @@ module.exports = {
         }
 
         // -> Check for system prefix
-        if (!reservedPrefixes.test(href) && !exactReservedPaths.test(href)) {
+        if (reservedPrefixes.test(href) || exactReservedPaths.test(href)) {
+          $(elm).addClass(`is-system-link`)
+        } else if (href.indexOf('.') >= 0) {
+          $(elm).addClass(`is-asset-link`)
+        } else {
           let pagePath = null
 
           // -> Add locale prefix if using namespacing
@@ -91,8 +95,6 @@ module.exports = {
           })
 
           $(elm).addClass(`is-internal-link`)
-        } else {
-          $(elm).addClass(`is-system-link`)
         }
       } else {
         $(elm).addClass(`is-external-link`)
