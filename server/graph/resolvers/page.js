@@ -19,7 +19,11 @@ module.exports = {
     },
     async search (obj, args, context) {
       if (WIKI.data.searchEngine) {
-        return WIKI.data.searchEngine.query(args.query, args, context.req.user)
+        return WIKI.data.searchEngine.query(args.query, args).then((queryResult)=>{
+          // only return search pages that the user has permission to see
+          queryResult.results = queryResult.results.filter(page => WIKI.auth.checkAccess(context.req.user, ['read:pages'], page))
+          return queryResult;
+        })
       } else {
         return {
           results: [],
