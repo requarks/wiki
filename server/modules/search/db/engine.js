@@ -19,7 +19,7 @@ module.exports = {
    * @param {String} q Query
    * @param {Object} opts Additional options
    */
-  async query(q, opts, user) {
+  async query(q, opts) {
     let results = await WIKI.models.pages.query()
       .column('id', 'title', 'description', 'path', 'localeCode as locale')
       .where(builder => {
@@ -52,7 +52,6 @@ module.exports = {
         })
       })
       .limit(WIKI.config.search.maxHits)
-    results = results.filter(page => WIKI.auth.checkAccess(user, ['read:pages'], page))
     return {
       results,
       suggestions: [],
