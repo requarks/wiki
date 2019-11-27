@@ -62,7 +62,7 @@ module.exports = {
       let suggestions = []
       const results = await WIKI.models.knex.raw(`
         SELECT id, path, locale, title, description
-        FROM "pagesVector", to_tsquery(?) query
+        FROM "pagesVector", to_tsquery('${this.config.dictLanguage}',?) query
         WHERE query @@ "tokens"
         ORDER BY ts_rank(tokens, query) DESC
       `, [tsquery(q)])
