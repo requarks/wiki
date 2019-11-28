@@ -80,11 +80,13 @@ export default {
       pagination: 1,
       pages: [],
       headers: [
-        { text: 'ID', value: 'id', width: 80, sortable: true },
+        { text: 'ID', value: 'id', width: 80 },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
         { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 }
+        { text: 'Creator', value: 'creator'},       
+        { text: 'Last Updated', value: 'updatedAt', width: 250, sortable: true },
+        { text: 'Editor', value: 'editor'}
       ],
       search: '',
       selectedLang: null,
