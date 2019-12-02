@@ -1,0 +1,6 @@
+key: api
+title: API Docs
+description: REST / GraphQL Editor
+contentType: yml
+author: requarks.io
+props: {}

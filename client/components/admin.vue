@@ -29,6 +29,9 @@
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.pagesTotal }}
+            v-list-item(to='/tags', v-if='hasPermission([`manage:system`])', disabled)
+              v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-tag-multiple
+              v-list-item-title {{ $t('admin:tags.title') }}
             v-list-item(to='/theme', v-if='hasPermission([`manage:system`, `manage:theme`])')
               v-list-item-avatar(size='24'): v-icon mdi-palette-outline
               v-list-item-title {{ $t('admin:theme.title') }}

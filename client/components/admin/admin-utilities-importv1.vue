@@ -304,6 +304,7 @@ export default {
       gitUserName: '',
       gitRepoPath: './data/repo',
       progress: 0,
+      successGroups: 0,
       successUsers: 0,
       successPages: 0,
       showFailedUsers: false,

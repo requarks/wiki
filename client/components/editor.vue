@@ -62,6 +62,7 @@ export default {
   i18nOptions: { namespaces: 'editor' },
   components: {
     AtomSpinner,
+    editorApi: () => import(/* webpackChunkName: "editor-api", webpackMode: "lazy" */ './editor/editor-api.vue'),
     editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
     editorCkeditor: () => import(/* webpackChunkName: "editor-ckeditor", webpackMode: "lazy" */ './editor/editor-ckeditor.vue'),
     editorMarkdown: () => import(/* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'),
@@ -171,6 +172,9 @@ export default {
         return undefined
       }
     }
+
+    // this.$store.set('editor/mode', 'edit')
+    // this.currentEditor = `editorApi`
   },
   methods: {
     openPropsModal(name) {
