@@ -50,6 +50,8 @@
             :items-per-page='15'
             :loading='loading'
             must-sort,
+            sort-by='updatedAt',
+            sort-desc,
             hide-default-footer
           )
             template(slot='item', slot-scope='props')
@@ -80,13 +82,11 @@ export default {
       pagination: 1,
       pages: [],
       headers: [
-        { text: 'ID', value: 'id', width: 80 },
+        { text: 'ID', value: 'id', width: 80, sortable: true },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
         { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Creator', value: 'creator'},       
-        { text: 'Last Updated', value: 'updatedAt', width: 250, sortable: true },
-        { text: 'Editor', value: 'editor'}
+        { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
       search: '',
       selectedLang: null,
