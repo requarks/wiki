@@ -312,8 +312,8 @@
   // ---------------------------------
 
   ol, ul {
-    padding: 1rem 0 0 0;
-    list-style-position: inside;
+    padding: 1rem 0 0 1rem;
+    list-style-position: outside;
 
     li > ul, li > ol {
       padding-top: .5rem;
@@ -435,14 +435,7 @@
   }
 
   ul {
-    list-style: none;
-
-    > li::before {
-      content: '\25b8';
-      color: mc('grey', '600');
-      display: inline-block;
-      width: 1.35rem;
-    }
+    list-style: square outside;
   }
 
   // ---------------------------------
