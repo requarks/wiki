@@ -2,6 +2,7 @@
 
 Wiki.js is an AGPL-licensed open source project. It's an independent project with its ongoing development made possible entirely thanks to the support by the awesome backers listed below. If you'd like to join them, please consider:
 
+- [Become a GitHub Sponsor](https://github.com/sponsors/NGPixel)
 - [Become a backer or sponsor on Patreon](https://www.patreon.com/requarks).
 - [Become a backer or sponsor on OpenCollective](https://opencollective.com/wikijs).
 
@@ -10,6 +11,10 @@ Wiki.js is an AGPL-licensed open source project. It's an independent project wit
 Funds donated via Patreon go directly to support lead developer [Nicolas Giard](https://github.com/NGPixel)'s full-time work on Wiki.js. Funds donated via OpenCollective are managed with transparent expenses and will be used for compensating work and expenses for core team members. Your name/logo will receive proper recognition and exposure by donating on either platform.
 
 <br><br>
+
+<h2 align="center">GitHub Sponsors</h2>
+
+- M. Scott Ford ([@mscottford](https://github.com/mscottford))
 
 <h2 align="center">Sponsors via OpenCollective</h2>
 
