@@ -661,6 +661,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
       @include until($tablet) {
         padding-left: 8px;
+        overflow-x: scroll;
       }
     }
   }
