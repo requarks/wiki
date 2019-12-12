@@ -5,4 +5,5 @@ author: requarks.io
 icon: mdi-function-variant
 enabledDefault: false
 dependsOn: htmlCore
+step: pre
 props: {}

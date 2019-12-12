@@ -5,4 +5,5 @@ author: requarks.io
 icon: mdi-code-braces
 enabledDefault: true
 dependsOn: htmlCore
+step: pre
 props: {}

@@ -14,7 +14,11 @@ module.exports = {
       return ''
     }
 
-    for (let child of this.children) {
+    // --------------------------------
+    // STEP: PRE
+    // --------------------------------
+
+    for (let child of _.reject(this.children, ['step', 'post'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
       renderer.init($, child.config)
     }
@@ -211,6 +215,17 @@ module.exports = {
       headers.push(headerSlug)
     })
 
-    return $.html('body').replace('<body>', '').replace('</body>', '')
+    let output = $.html('body').replace('<body>', '').replace('</body>', '')
+
+    // --------------------------------
+    // STEP: POST
+    // --------------------------------
+
+    for (let child of _.filter(this.children, ['step', 'post'])) {
+      const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
+      output = renderer.init(output, child.config)
+    }
+
+    return output
   }
 }

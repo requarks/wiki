@@ -19,14 +19,16 @@ module.exports = {
           ...rendererInfo,
           ...rdr,
           config: _.sortBy(_.transform(rdr.config, (res, value, key) => {
-            const configData = _.get(rendererInfo.props, key, {})
-            res.push({
-              key,
-              value: JSON.stringify({
-                ...configData,
-                value
+            const configData = _.get(rendererInfo.props, key, false)
+            if (configData) {
+              res.push({
+                key,
+                value: JSON.stringify({
+                  ...configData,
+                  value
+                })
               })
-            })
+            }
           }, []), 'key')
         }
       })

@@ -5,14 +5,10 @@ author: requarks.io
 icon: mdi-fire
 enabledDefault: true
 dependsOn: htmlCore
+step: post
 props:
-  stripJS:
+  safeHTML:
     type: Boolean
-    title: Strip Javascript
-    default: false
-    hint: Javascript code within code blocks won't be affected
-  filterBadWords:
-    type: Boolean
-    title: Filter Bad Words
-    default: false
-    hint: Replace bad words with asterisks
+    title: Sanitize HTML
+    default: true
+    hint: Sanitize HTML from unsafe attributes and tags that could lead to XSS attacks

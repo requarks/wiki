@@ -161,6 +161,7 @@
     "uuid": "3.3.3",
     "validate.js": "0.13.1",
     "winston": "3.2.1",
+    "xss": "1.0.6",
     "yargs": "15.0.2"
   },
   "devDependencies": {
