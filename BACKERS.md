@@ -15,6 +15,7 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 <h2 align="center">GitHub Sponsors</h2>
 
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
+- Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 
 <h2 align="center">Sponsors via OpenCollective</h2>
 
