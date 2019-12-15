@@ -62,10 +62,10 @@ module.exports = {
       let suggestions = []
       const results = await WIKI.models.knex.raw(`
         SELECT id, path, locale, title, description
-        FROM "pagesVector", to_tsquery(?) query
+        FROM "pagesVector", to_tsquery(?,?) query
         WHERE query @@ "tokens"
         ORDER BY ts_rank(tokens, query) DESC
-      `, [tsquery(q)])
+      `, [this.config.dictLanguage, tsquery(q)])
       if (results.rows.length < 5) {
         const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 ORDER BY rank LIMIT 5;`, [q, q])
         suggestions = suggestResults.rows.map(r => r.word)
