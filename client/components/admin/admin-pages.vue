@@ -50,6 +50,8 @@
             :items-per-page='15'
             :loading='loading'
             must-sort,
+            sort-by='updatedAt',
+            sort-desc,
             hide-default-footer
           )
             template(slot='item', slot-scope='props')
