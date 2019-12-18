@@ -4,7 +4,7 @@ const crypto = require('crypto')
 const path = require('path')
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
-const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
+const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?)\/?(.*)/i
 
 const contentToExt = {
   markdown: 'md',
