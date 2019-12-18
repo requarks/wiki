@@ -1,0 +1,8 @@
+key: markdownKatex
+title: Katex
+description: Convert mathematical symbols to LaTeX using KaTeX
+author: aniketpanjwani
+icon: mdi-sitemap
+enabledDefault: true
+dependsOn: markdownCore
+props: {}

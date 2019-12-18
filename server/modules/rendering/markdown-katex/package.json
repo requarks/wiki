@@ -1,0 +1,15 @@
+{
+  "name": "markdown-katex",
+  "version": "1.0.0",
+  "description": "",
+  "main": "renderer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@liradb2000/markdown-it-katex": "^2.0.7",
+    "markdown-it": "^10.0.0"
+  }
+}
