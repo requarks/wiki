@@ -53,7 +53,9 @@ module.exports = async (pageId) => {
 
     await WIKI.models.knex.table('pageTree').truncate()
     if (tree.length > 0) {
-      await WIKI.models.knex.table('pageTree').insert(tree)
+      for (const chunk of _.chunk(tree, 100)) {
+        await WIKI.models.knex.table('pageTree').insert(chunk)
+      }
     }
 
     await WIKI.models.knex.destroy()
