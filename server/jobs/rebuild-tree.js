@@ -53,7 +53,10 @@ module.exports = async (pageId) => {
 
     await WIKI.models.knex.table('pageTree').truncate()
     if (tree.length > 0) {
-      await WIKI.models.knex.table('pageTree').insert(tree)
+      // -> Save in chunks, because of per query max parameters (35k Postgres, 2k MSSQL, 1k for SQLite)
+      for (const chunk of _.chunk(tree, 100)) {
+        await WIKI.models.knex.table('pageTree').insert(chunk)
+      }
     }
 
     await WIKI.models.knex.destroy()
