@@ -31,8 +31,7 @@ type SiteMutation {
     analyticsService: String!
     analyticsId: String!
     company: String!
-    hasLogo: Boolean!
-    logoIsSquare: Boolean!
+    logoUrl: String!
     featurePageRatings: Boolean!
     featurePageComments: Boolean!
     featurePersonalWikis: Boolean!
@@ -59,8 +58,7 @@ type SiteConfig {
   analyticsService: String!
   analyticsId: String!
   company: String!
-  hasLogo: Boolean!
-  logoIsSquare: Boolean!
+  logoUrl: String!
   featurePageRatings: Boolean!
   featurePageComments: Boolean!
   featurePersonalWikis: Boolean!

@@ -8,22 +8,22 @@
     v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
       vue-scroll(:ops='scrollStyle')
         v-list(dense, nav)
-          v-list-item(to='/dashboard')
+          v-list-item(to='/dashboard', color='primary')
             v-list-item-avatar(size='24'): v-icon mdi-view-dashboard-variant
             v-list-item-title {{ $t('admin:dashboard.title') }}
           template(v-if='hasPermission([`manage:system`, `manage:navigation`, `write:pages`, `manage:pages`, `delete:pages`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.site') }}
-            v-list-item(to='/general', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/general', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24'): v-icon mdi-widgets
               v-list-item-title {{ $t('admin:general.title') }}
-            v-list-item(to='/locale', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/locale', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24'): v-icon mdi-web
               v-list-item-title {{ $t('admin:locale.title') }}
-            v-list-item(to='/navigation', v-if='hasPermission([`manage:system`, `manage:navigation`])')
+            v-list-item(to='/navigation', color='primary', v-if='hasPermission([`manage:system`, `manage:navigation`])')
               v-list-item-avatar(size='24'): v-icon mdi-near-me
               v-list-item-title {{ $t('admin:navigation.title') }}
-            v-list-item(to='/pages', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`])')
+            v-list-item(to='/pages', color='primary', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`])')
               v-list-item-avatar(size='24'): v-icon mdi-file-document-outline
               v-list-item-title {{ $t('admin:pages.title') }}
               v-list-item-action(style='min-width:auto;')
@@ -32,19 +32,19 @@
             v-list-item(to='/tags', v-if='hasPermission([`manage:system`])', disabled)
               v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-tag-multiple
               v-list-item-title {{ $t('admin:tags.title') }}
-            v-list-item(to='/theme', v-if='hasPermission([`manage:system`, `manage:theme`])')
+            v-list-item(to='/theme', color='primary', v-if='hasPermission([`manage:system`, `manage:theme`])')
               v-list-item-avatar(size='24'): v-icon mdi-palette-outline
               v-list-item-title {{ $t('admin:theme.title') }}
           template(v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.users') }}
-            v-list-item(to='/groups', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`])')
+            v-list-item(to='/groups', color='primary', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`])')
               v-list-item-avatar(size='24'): v-icon mdi-account-group
               v-list-item-title {{ $t('admin:groups.title') }}
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.groupsTotal }}
-            v-list-item(to='/users', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
+            v-list-item(to='/users', color='primary', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
               v-list-item-avatar(size='24'): v-icon mdi-account-box
               v-list-item-title {{ $t('admin:users.title') }}
               v-list-item-action(style='min-width:auto;')
@@ -53,10 +53,10 @@
           template(v-if='hasPermission(`manage:system`)')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.modules') }}
-            v-list-item(to='/analytics')
+            v-list-item(to='/analytics', color='primary')
               v-list-item-avatar(size='24'): v-icon mdi-chart-timeline-variant
               v-list-item-title {{ $t('admin:analytics.title') }}
-            v-list-item(to='/auth')
+            v-list-item(to='/auth', color='primary')
               v-list-item-avatar(size='24'): v-icon mdi-lock-outline
               v-list-item-title {{ $t('admin:auth.title') }}
             v-list-item(to='/comments', disabled)
@@ -68,13 +68,13 @@
             v-list-item(to='/logging', disabled)
               v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-script-text-outline
               v-list-item-title {{ $t('admin:logging.title') }}
-            v-list-item(to='/rendering')
+            v-list-item(to='/rendering', color='primary')
               v-list-item-avatar(size='24'): v-icon mdi-cogs
               v-list-item-title {{ $t('admin:rendering.title') }}
-            v-list-item(to='/search')
+            v-list-item(to='/search', color='primary')
               v-list-item-avatar(size='24'): v-icon mdi-cloud-search-outline
               v-list-item-title {{ $t('admin:search.title') }}
-            v-list-item(to='/storage')
+            v-list-item(to='/storage', color='primary')
               v-list-item-avatar(size='24'): v-icon mdi-harddisk
               v-list-item-title {{ $t('admin:storage.title') }}
           template(v-if='hasPermission([`manage:system`, `manage:api`])')
@@ -83,13 +83,16 @@
             v-list-item(to='/api', v-if='hasPermission([`manage:system`, `manage:api`])', disabled)
               v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-call-split
               v-list-item-title {{ $t('admin:api.title') }}
-            v-list-item(to='/mail', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/mail', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24'): v-icon mdi-email-multiple-outline
               v-list-item-title {{ $t('admin:mail.title') }}
-            v-list-item(to='/system', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/ssl', color='primary', v-if='hasPermission(`manage:system`)')
+              v-list-item-avatar(size='24'): v-icon mdi-cloud-lock-outline
+              v-list-item-title {{ $t('admin:ssl.title') }}
+            v-list-item(to='/system', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24'): v-icon mdi-tune
               v-list-item-title {{ $t('admin:system.title') }}
-            v-list-item(to='/utilities', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/utilities', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24'): v-icon mdi-wrench-outline
               v-list-item-title {{ $t('admin:utilities.title') }}
             v-list-item(to='/webhooks', v-if='hasPermission(`manage:system`)', disabled)
@@ -104,16 +107,16 @@
                 v-list-item-avatar(size='24'): v-icon mdi-dev-to
                 v-list-item-title {{ $t('admin:dev.title') }}
 
-              v-list-item(to='/dev-flags')
+              v-list-item(to='/dev-flags', color='primary')
                 v-list-item-title {{ $t('admin:dev.flags.title') }}
-              v-list-item(href='/graphql')
+              v-list-item(href='/graphql', color='primary')
                 v-list-item-title GraphQL
               //- v-list-item(to='/dev-graphiql')
               //-   v-list-item-title {{ $t('admin:dev.graphiql.title') }}
               //- v-list-item(to='/dev-voyager')
               //-   v-list-item-title {{ $t('admin:dev.voyager.title') }}
             v-divider.my-2
-          v-list-item(to='/contribute')
+          v-list-item(to='/contribute', color='primary')
             v-list-item-avatar(size='24'): v-icon mdi-heart-outline
             v-list-item-title {{ $t('admin:contribute.title') }}
 
@@ -164,6 +167,7 @@ const router = new VueRouter({
     { path: '/storage', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-storage.vue') },
     { path: '/api', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-api.vue') },
     { path: '/mail', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-mail.vue') },
+    { path: '/ssl', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-ssl.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
     { path: '/webhooks', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-webhooks.vue') },

@@ -6,8 +6,7 @@ mutation (
   $analyticsService: String!
   $analyticsId: String!
   $company: String!
-  $hasLogo: Boolean!
-  $logoIsSquare: Boolean!
+  $logoUrl: String!
   $featurePageRatings: Boolean!
   $featurePageComments: Boolean!
   $featurePersonalWikis: Boolean!
@@ -29,8 +28,7 @@ mutation (
       analyticsService: $analyticsService,
       analyticsId: $analyticsId,
       company: $company,
-      hasLogo: $hasLogo,
-      logoIsSquare: $logoIsSquare,
+      logoUrl: $logoUrl,
       featurePageRatings: $featurePageRatings,
       featurePageComments: $featurePageComments,
       featurePersonalWikis: $featurePersonalWikis,

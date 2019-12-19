@@ -578,6 +578,20 @@ export default {
     }
   }
 
+  &.is-editor-common {
+    top: 64px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 64px);
+
+    @include until($tablet) {
+      top: 56px;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 56px);
+    }
+  }
+
   .filepond--root {
     margin-bottom: 0;
   }

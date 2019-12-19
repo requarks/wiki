@@ -38,6 +38,7 @@ defaults:
       clientId: ''
       isEnabled: false
     title: Wiki.js
+    logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
     theming:
       theme: 'default'
       iconset: 'md'

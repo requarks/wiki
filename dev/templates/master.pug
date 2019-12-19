@@ -29,7 +29,13 @@ html(lang=siteConfig.lang)
 
     //- Site Properties
     script.
-      var siteConfig = !{JSON.stringify(siteConfig)}; var siteLangs = !{JSON.stringify(langs)}
+      var siteConfig = !{JSON.stringify(siteConfig)}
+      var siteLangs = !{JSON.stringify(langs)}
+
+    //- Dev Mode Warning
+    if devMode
+      script.
+        siteConfig.devMode = true
 
     //- Icon Set
     if config.theming.iconset === 'fa'

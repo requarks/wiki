@@ -1,0 +1,20 @@
+key: markdownKatex
+title: Katex
+description: LaTeX Math Typesetting Renderer
+author: requarks.io
+icon: mdi-math-integral
+enabledDefault: true
+dependsOn: markdownCore
+props:
+  useInline:
+    type: Boolean
+    default: true
+    title: Inline TeX
+    hint: Process inline TeX expressions surrounded by $ symbols.
+    order: 1
+  useBlocks:
+    type: Boolean
+    default: true
+    title: TeX Blocks
+    hint: Process TeX blocks enclosed by $$ symbols.
+    order: 2

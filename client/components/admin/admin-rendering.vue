@@ -6,7 +6,6 @@
           img.animated.fadeInUp(src='/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft Rendering
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Configure how content is rendered #[v-chip(label, color='primary', small).white--text coming soon]
           v-spacer
           v-btn.mx-3.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
             v-icon mdi-refresh

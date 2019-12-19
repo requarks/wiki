@@ -8,8 +8,7 @@
       analyticsService
       analyticsId
       company
-      hasLogo
-      logoIsSquare
+      logoUrl
       featurePageRatings
       featurePageComments
       featurePersonalWikis

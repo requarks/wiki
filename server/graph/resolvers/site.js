@@ -15,8 +15,8 @@ module.exports = {
         host: WIKI.config.host,
         title: WIKI.config.title,
         company: WIKI.config.company,
+        logoUrl: WIKI.config.logoUrl,
         ...WIKI.config.seo,
-        ...WIKI.config.logo,
         ...WIKI.config.features,
         ...WIKI.config.security
       }
@@ -34,10 +34,7 @@ module.exports = {
           analyticsService: args.analyticsService,
           analyticsId: args.analyticsId
         }
-        WIKI.config.logo = {
-          hasLogo: args.hasLogo,
-          logoIsSquare: args.logoIsSquare
-        }
+        WIKI.config.logoUrl = args.logoUrl
         WIKI.config.features = {
           featurePageRatings: args.featurePageRatings,
           featurePageComments: args.featurePageComments,
@@ -53,7 +50,7 @@ module.exports = {
           securityCSP: args.securityCSP,
           securityCSPDirectives: args.securityCSPDirectives
         }
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'seo', 'logo', 'features', 'security'])
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'seo', 'logoUrl', 'features', 'security'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')

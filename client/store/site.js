@@ -7,6 +7,7 @@ const state = {
   dark: siteConfig.darkMode,
   mascot: true,
   title: siteConfig.title,
+  logoUrl: siteConfig.logoUrl,
   search: '',
   searchIsFocused: false,
   searchIsLoading: false,

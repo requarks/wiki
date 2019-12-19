@@ -19,7 +19,7 @@
               easing='easeOutQuint'
               )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.green.lighten-1.dashboard-card.animated.fadeInUp.wait-p2s(dark)
+        v-card.blue.darken-3.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
             v-icon.dashboard-icon mdi-account
             .overline {{$t('admin:dashboard.users')}}
@@ -30,7 +30,7 @@
               easing='easeOutQuint'
               )
       v-flex(xs12 md6 lg4 xl3 d-flex)
-        v-card.indigo.lighten-1.dashboard-card.animated.fadeInUp.wait-p4s(dark)
+        v-card.blue.darken-4.dashboard-card.animated.fadeInUp.wait-p4s(dark)
           v-card-text
             v-icon.dashboard-icon mdi-account-group
             .overline {{$t('admin:dashboard.groups')}}
@@ -42,11 +42,11 @@
               )
       v-flex(xs12 md6 lg12 xl3 d-flex)
         v-card.dashboard-card.animated.fadeInUp.wait-p6s(
-          :class='isLatestVersion ? "teal lighten-2" : "red lighten-2"'
+          :class='isLatestVersion ? "green" : "red lighten-2"'
           dark
           )
           v-btn.btn-animate-wrench(fab, absolute, :right='!$vuetify.rtl', :left='$vuetify.rtl', top, small, light, to='system', v-if='hasPermission(`manage:system`)')
-            v-icon(:color='isLatestVersion ? `teal` : `red darken-4`', small) mdi-wrench
+            v-icon(:color='isLatestVersion ? `green` : `red darken-4`', small) mdi-wrench
           v-card-text
             v-icon.dashboard-icon mdi-blur
             .subtitle-1 Wiki.js {{info.currentVersion}}

@@ -113,6 +113,7 @@ module.exports = async () => {
     image: '',
     url: '/'
   }
+  app.locals.devMode = WIKI.devMode
 
   // ----------------------------------------
   // HMR (Dev Mode Only)
@@ -151,7 +152,8 @@ module.exports = async () => {
       darkMode: WIKI.config.theming.darkMode,
       lang: WIKI.config.lang.code,
       rtl: WIKI.config.lang.rtl,
-      company: WIKI.config.company
+      company: WIKI.config.company,
+      logoUrl: WIKI.config.logoUrl
     }
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
     res.locals.analyticsCode = await WIKI.models.analytics.getCode({ cache: true })

@@ -41,19 +41,26 @@
                       persistent-hint
                       )
                   v-divider
-                  .overline.grey--text.pa-4 {{$t('admin:general.logo')}} #[v-chip.ml-2(label, color='grey', small, outlined) coming soon]
-                  v-card-text.pb-4.pl-5
-                    v-layout.px-3(row, align-center)
-                      v-avatar(size='100', :color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-3`', :tile='config.logoIsSquare')
-                      .ml-4
-                        v-btn.mr-3(color='teal', depressed, disabled)
-                          v-icon(left) mdi-cloud-upload
-                          span {{$t('admin:general.uploadLogo')}}
-                        v-btn(color='teal', depressed, disabled)
-                          v-icon(left) mdi-close
-                          span {{$t('admin:general.uploadClear')}}
-                        .caption.mt-3.grey--text {{$t('admin:general.uploadSizeHint', { size: '120x120' })}}
-                        .caption.grey--text {{$t('admin:general.uploadTypesHint', { typeList: 'SVG, PNG', lastType: 'JPG' })}}.
+                  .overline.grey--text.pa-4 {{$t('admin:general.logo')}}
+                  .pt-2.pb-7.pl-10.pr-3
+                    .d-flex.align-center
+                      v-avatar(size='100', tile)
+                        v-img(
+                          :src='config.logoUrl'
+                          lazy-src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNcWQ8AAdcBKrJda2oAAAAASUVORK5CYII='
+                          aspect-ratio='1'
+                          )
+                      .ml-4(style='flex: 1 1 auto;')
+                        v-text-field(
+                          outlined
+                          :label='$t(`admin:general.logoUrl`)'
+                          v-model='config.logoUrl'
+                          :hint='$t(`admin:general.logoUrlHint`)'
+                          persistent-hint
+                          append-icon='mdi-folder-image'
+                          @click:append='browseLogo'
+                          @keyup.enter='refreshLogo'
+                        )
                   v-divider
                   .overline.grey--text.pa-4 {{$t('admin:general.footerCopyright')}}
                   .px-3.pb-3
@@ -236,6 +243,7 @@
                     hint='One directive per line.'
                     disabled
                   )
+    component(:is='activeModal')
 
 </template>
 
@@ -245,7 +253,17 @@ import { get, sync } from 'vuex-pathify'
 import siteConfigQuery from 'gql/admin/site/site-query-config.gql'
 import siteUpdateConfigMutation from 'gql/admin/site/site-mutation-save-config.gql'
 
+import editorStore from '../../store/editor'
+
+/* global WIKI */
+
+WIKI.$store.registerModule('editor', editorStore)
+
 export default {
+  i18nOptions: { namespaces: 'editor' },
+  components: {
+    editorModalMedia: () => import(/* webpackChunkName: "editor", webpackMode: "lazy" */ '../editor/editor-modal-media.vue')
+  },
   data() {
     return {
       analyticsServices: [
@@ -262,8 +280,7 @@ export default {
         analyticsService: '',
         analyticsId: '',
         company: '',
-        hasLogo: false,
-        logoIsSquare: false,
+        logoUrl: '',
         featureAnalytics: false,
         featurePageRatings: false,
         featurePageComments: false,
@@ -297,7 +314,9 @@ export default {
   computed: {
     darkMode: get('site/dark'),
     siteTitle: sync('site/title'),
-    company: sync('site/company')
+    logoUrl: sync('site/logoUrl'),
+    company: sync('site/company'),
+    activeModal: sync('editor/activeModal')
   },
   methods: {
     async save () {
@@ -312,8 +331,7 @@ export default {
             analyticsService: _.get(this.config, 'analyticsService', ''),
             analyticsId: _.get(this.config, 'analyticsId', ''),
             company: _.get(this.config, 'company', ''),
-            hasLogo: _.get(this.config, 'hasLogo', false),
-            logoIsSquare: _.get(this.config, 'logoIsSquare', false),
+            logoUrl: _.get(this.config, 'logoUrl', ''),
             featurePageRatings: _.get(this.config, 'featurePageRatings', false),
             featurePageComments: _.get(this.config, 'featurePageComments', false),
             featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false),
@@ -337,10 +355,26 @@ export default {
         })
         this.siteTitle = this.config.title
         this.company = this.config.company
+        this.logoUrl = this.config.logoUrl
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
+    },
+    browseLogo () {
+      this.$store.set('editor/editorKey', 'common')
+      this.activeModal = 'editorModalMedia'
+    },
+    refreshLogo () {
+      this.$forceUpdate()
     }
+  },
+  mounted () {
+    this.$root.$on('editorInsert', opts => {
+      this.config.logoUrl = opts.path
+    })
+  },
+  beforeDestroy() {
+    this.$root.$off('editorInsert')
   },
   apollo: {
     config: {
