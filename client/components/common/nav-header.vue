@@ -461,7 +461,7 @@ export default {
   &-dev {
     background-color: mc('red', '600');
     position: absolute;
-    top: 10px;
+    top: 11px;
     left: 255px;
     padding: 5px 15px;
     border-radius: 5px;

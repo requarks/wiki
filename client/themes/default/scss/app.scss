@@ -325,6 +325,9 @@
     }
 
     &.links-list {
+      padding-left: 0;
+      list-style-type: none;
+
       li {
         background-color: mc('grey', '50');
         background-image: linear-gradient(to bottom, #FFF, mc('grey', '50'));
@@ -399,6 +402,7 @@
       border: 1px solid mc('grey', '200');
       padding: 1px;
       display: inline-block;
+      list-style-type: none;
 
       @at-root .theme--dark & {
         background-color: #000;

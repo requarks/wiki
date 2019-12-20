@@ -1,11 +1,13 @@
 {
   "eslint.enable": true,
-  "eslint.autoFixOnSave": true,
   "puglint.enable": true,
   "editor.formatOnSave": false,
   "editor.tabSize": 2,
   "eslint.validate": [
     "javascript",
     "vue"
-  ]
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
 }
