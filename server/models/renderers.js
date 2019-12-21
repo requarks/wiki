@@ -90,6 +90,14 @@ module.exports = class Renderer extends Model {
       } else {
         WIKI.logger.info(`No new renderers found: [ SKIPPED ]`)
       }
+
+      // -> Delete removed Renderers
+      for (const renderer of dbRenderers) {
+        if (!_.some(WIKI.data.renderers, ['key', renderer.key])) {
+          await WIKI.models.renderers.query().where('key', renderer.key).del()
+          WIKI.logger.info(`Removed renderer ${renderer.key} because it is no longer present in the modules folder: [ OK ]`)
+        }
+      }
     } catch (err) {
       WIKI.logger.error(`Failed to scan or load new renderers: [ FAILED ]`)
       WIKI.logger.error(err)

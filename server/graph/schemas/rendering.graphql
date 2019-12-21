@@ -50,6 +50,5 @@ type Renderer {
 input RendererInput {
   isEnabled: Boolean!
   key: String!
-  mode: String!
   config: [KeyValuePairInput]
 }

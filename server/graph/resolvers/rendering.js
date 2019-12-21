@@ -41,10 +41,10 @@ module.exports = {
     async updateRenderers(obj, args, context) {
       try {
         for (let rdr of args.renderers) {
-          await WIKI.models.storage.query().patch({
+          await WIKI.models.renderers.query().patch({
             isEnabled: rdr.isEnabled,
             config: _.reduce(rdr.config, (result, value, key) => {
-              _.set(result, `${value.key}`, value.value)
+              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result
             }, {})
           }).where('key', rdr.key)

@@ -20,7 +20,6 @@
           flat
           dark
           )
-          v-icon.mr-2 mdi-creation
           .subtitle-1 Pipeline
         v-expansion-panels.adm-rendering-pipeline(
           v-model='selectedCore'
@@ -132,6 +131,7 @@ import { get } from 'vuex-pathify'
 import { StatusIndicator } from 'vue-status-indicator'
 
 import renderersQuery from 'gql/admin/rendering/rendering-query-renderers.gql'
+import renderersSaveMutation from 'gql/admin/rendering/rendering-mutation-save-renderers.gql'
 
 export default {
   components: {
@@ -164,18 +164,34 @@ export default {
       })
     },
     async refresh () {
+      await this.$apollo.queries.renderers.refetch()
       this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'directions_boat'
+        message: 'Rendering active configuration has been reloaded.',
+        style: 'success',
+        icon: 'cached'
       })
     },
     async save () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'directions_boat'
+      this.$store.commit(`loadingStart`, 'admin-rendering-saverenderers')
+      await this.$apollo.mutate({
+        mutation: renderersSaveMutation,
+        variables: {
+          renderers: _.reduce(this.renderers, (result, core) => {
+            result = _.concat(result, core.children.map(rd => ({
+              key: rd.key,
+              isEnabled: rd.isEnabled,
+              config: rd.config.map(cfg => ({ key: cfg.key, value: JSON.stringify({ v: cfg.value.value }) }))
+            })))
+            return result
+          }, [])
+        }
       })
+      this.$store.commit('showNotification', {
+        message: 'Rendering configuration saved successfully.',
+        style: 'success',
+        icon: 'check'
+      })
+      this.$store.commit(`loadingStop`, 'admin-rendering-saverenderers')
     }
   },
   apollo: {
