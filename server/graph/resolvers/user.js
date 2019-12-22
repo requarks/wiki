@@ -29,7 +29,7 @@ module.exports = {
     }
   },
   UserMutation: {
-    async create(obj, args) {
+    async create (obj, args) {
       try {
         await WIKI.models.users.createNewUser(args)
 
@@ -40,10 +40,24 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    delete(obj, args) {
-      return WIKI.models.users.query().deleteById(args.id)
+    async delete (obj, args) {
+      try {
+        if (args.id <= 2) {
+          throw new WIKI.Error.UserDeleteProtected()
+        }
+        await WIKI.models.users.query().deleteById(args.id)
+        return {
+          responseResult: graphHelper.generateSuccess('User deleted successfully')
+        }
+      } catch (err) {
+        if (err.message.indexOf('foreign') >= 0) {
+          return graphHelper.generateError(new WIKI.Error.UserDeleteForeignConstraint())
+        } else {
+          return graphHelper.generateError(err)
+        }
+      }
     },
-    async update(obj, args) {
+    async update (obj, args) {
       try {
         await WIKI.models.users.updateUser(args)
 
@@ -54,7 +68,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    resetPassword(obj, args) {
+    resetPassword (obj, args) {
       return false
     }
   },

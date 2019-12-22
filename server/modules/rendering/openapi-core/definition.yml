@@ -1,0 +1,8 @@
+key: openapiCore
+title: Core
+description: Basic OpenAPI Parser
+author: requarks.io
+input: openapi
+output: html
+icon: mdi-api
+props: {}

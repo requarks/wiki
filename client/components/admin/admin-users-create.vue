@@ -57,7 +57,8 @@
           prepend-icon='mdi-account-group'
           v-model='group'
           label='Assign to Group(s)...'
-          dense
+          hint='Note that you cannot assign users to the Administrators or Guests groups from this dialog.'
+          persistent-hint
           clearable
           multiple
           )

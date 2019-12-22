@@ -169,6 +169,14 @@ module.exports = {
     message: 'An unexpected error occured during user creation.',
     code: 1009
   }),
+  UserDeleteForeignConstraint: CustomError('UserCreationFailed', {
+    message: 'Cannot delete user because of content relational constraints.',
+    code: 1017
+  }),
+  UserDeleteProtected: CustomError('UserDeleteProtected', {
+    message: 'Cannot delete a protected system account.',
+    code: 1018
+  }),
   UserNotFound: CustomError('UserNotFound', {
     message: 'This user does not exist.',
     code: 1016
