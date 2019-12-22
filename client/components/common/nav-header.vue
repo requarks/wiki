@@ -18,7 +18,7 @@
       )
     v-layout(row)
       v-flex(xs6, md4)
-        v-toolbar.nav-header-inner.pl-3(color='black', dark, flat)
+        v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
           //- v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')

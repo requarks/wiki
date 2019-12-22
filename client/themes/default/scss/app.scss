@@ -103,10 +103,10 @@
         background: linear-gradient(to right, mc('blue', '300') 0%, mc('blue', '500') 10%, rgba(mc('blue', '900'), 0) 100%);
       }
 
-      @at-root .application--is-rtl & {
+      @at-root .is-rtl & {
         background: linear-gradient(to left, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
       }
-      @at-root .theme--dark.application--is-rtl & {
+      @at-root .theme--dark.is-rtl & {
         background: linear-gradient(to left, mc('grey', '600'), rgba(mc('grey', '600'), 0));
       }
     }
@@ -133,10 +133,10 @@
         background: linear-gradient(to right, mc('grey', '300'), rgba(mc('grey', '700'), 0));
       }
 
-      @at-root .application--is-rtl & {
+      @at-root .is-rtl & {
         background: linear-gradient(to left, mc('grey', '700'), rgba(mc('grey', '700'), 0));
       }
-      @at-root .theme--dark.application--is-rtl & {
+      @at-root .theme--dark.is-rtl & {
         background: linear-gradient(to left, mc('grey', '300'), rgba(mc('grey', '700'), 0));
       }
     }
@@ -315,9 +315,19 @@
     padding: 1rem 0 0 1rem;
     list-style-position: outside;
 
+    @at-root .is-rtl & {
+      padding-left: 0;
+      padding-right: 1rem;
+    }
+
     li > ul, li > ol {
       padding-top: .5rem;
       padding-left: 1rem;
+
+      @at-root .is-rtl & {
+        padding-left: 0;
+        padding-right: 1rem;
+      }
     }
 
     li + li {
@@ -327,6 +337,10 @@
     &.links-list {
       padding-left: 0;
       list-style-type: none;
+
+      @at-root .is-rtl & {
+        padding-right: 0;
+      }
 
       li {
         background-color: mc('grey', '50');
@@ -339,10 +353,20 @@
         border-radius: 5px;
         font-weight: 500;
 
+        @at-root .is-rtl & {
+          border-left-width: 1px;
+          border-right-width: 5px;
+        }
+
         &:hover {
           background-image: linear-gradient(to bottom, #FFF, lighten(mc('blue', '50'), 4%));
           border-left-color: mc('blue', '500');
           cursor: pointer;
+
+          @at-root .is-rtl & {
+            border-left-color: mc('grey', '200');
+            border-right-width: mc('blue', '500');
+          }
         }
 
         &::before {
@@ -387,10 +411,20 @@
           border-left: 5px solid mc('grey', '700');
           box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.1);
 
+          @at-root .theme--dark.is-rtl & {
+            border-left-width: 1px;
+            border-right-width: 5px;
+          }
+
           &:hover {
             background-image: linear-gradient(to bottom, lighten(mc('grey', '900'), 2%), darken(mc('grey', '900'), 3%));
             border-left-color: mc('indigo', '300');
             cursor: pointer;
+
+            @at-root .theme--dark.is-rtl & {
+              border-left-color: mc('grey', '900');
+              border-right-width: mc('indigo', '300');
+            }
           }
         }
       }
@@ -708,6 +742,26 @@
     }
   }
 
+}
+
+// ---------------
+// RTL FIXES
+// Vuetify GH Issue: https://github.com/vuetifyjs/vuetify/issues/6317
+// ---------------
+
+.is-rtl {
+  .page-col-content.is-page-header {
+    @each $size, $width in $grid-breakpoints {
+      @media (min-width: $width) {
+        @for $n from 0 through 12 {
+          &.offset-#{$size}-#{$n} {
+            margin-left: 0;
+            margin-right: ($n / 12 * 100) * 1%;
+          }
+        }
+      }
+    }
+  }
 }
 
 // ---------------

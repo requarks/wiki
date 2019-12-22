@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app(v-scroll='upBtnScroll', :dark='darkMode')
+  v-app(v-scroll='upBtnScroll', :dark='darkMode', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header
     v-navigation-drawer(
       :class='darkMode ? `grey darken-4-d4` : `primary`'
@@ -49,7 +49,7 @@
         v-divider
       v-container.grey.pa-0(fluid, :class='darkMode ? `darken-4-l3` : `lighten-4`')
         v-row(no-gutters, align-content='center', style='height: 90px;')
-          v-col.pl-4.page-col-content(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;')
+          v-col.page-col-content.is-page-header(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')
             .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
             .caption.grey--text.text--darken-1 {{description}}
       v-divider

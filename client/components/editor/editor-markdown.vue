@@ -183,6 +183,8 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
 
+/* global siteConfig */
+
 // ========================================
 // IMPORTS
 // ========================================
@@ -491,7 +493,8 @@ export default {
       },
       viewportMargin: 50,
       inputStyle: 'contenteditable',
-      allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif']
+      allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
+      direction: siteConfig.rtl ? 'rtl' : 'ltr'
     })
     this.cm.setValue(this.$store.get('editor/content'))
     this.cm.on('change', c => {
