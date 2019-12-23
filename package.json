@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@aoberoi/passport-slack": "1.0.5",
+    "@azure/storage-blob": "12.0.1",
     "@bugsnag/js": "6.4.3",
     "@exlinc/keycloak-passport": "1.0.2",
     "algoliasearch": "3.35.1",

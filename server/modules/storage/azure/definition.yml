@@ -4,7 +4,43 @@ description: Azure Blob Storage by Microsoft provides massively scalable object 
 author: requarks.io
 logo: https://static.requarks.io/logo/azure.svg
 website: https://azure.microsoft.com/services/storage/blobs/
+isAvailable: true
+supportedModes:
+  - push
+defaultMode: push
+schedule: false
 props:
-  accountName: String
-  accountKey: String
-  container: String
+  accountName:
+    type: String
+    title: Account Name
+    default: ''
+    hint: Your unique account name.
+    order: 1
+  accountKey:
+    type: String
+    title: Account Access Key
+    default: ''
+    hint: Either key 1 or key 2.
+    order: 2
+  containerName:
+    type: String
+    title: Container Name
+    default: 'wiki'
+    hint: Will automatically be created if it doesn't exist yet.
+    order: 3
+  storageTier:
+    type: String
+    title: Storage Tier
+    hint: Represents the access tier on a blob. Use Cool for lower storage costs but at higher retrieval costs.
+    order: 4
+    default: 'Cool'
+    enum:
+        - 'Hot'
+        - 'Cool'
+actions:
+  - handler: exportAll
+    label: Export All
+    hint: Output all content from the DB to Azure Blog Storage, overwriting any existing data. If you enabled Azure Blog Storage after content was created or you temporarily disabled Git, you'll want to execute this action to add the missing content.
+  - handler: importAll
+    label: Import Everything
+    hint: Will import all content currently in Azure Blog Storage. Useful for importing or restoring content from a previously backed up state.

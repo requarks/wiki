@@ -57,8 +57,8 @@ module.exports = class S3CompatibleStorage {
   }
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Renaming file ${page.path} to ${page.destinationPath}...`)
-    let sourceFilePath = `${page.path}.${page.getFileExtension()}`
-    let destinationFilePath = `${page.destinationPath}.${page.getFileExtension()}`
+    let sourceFilePath = getFilePath(page, 'path')
+    let destinationFilePath = getFilePath(page, 'destinationPath')
     if (WIKI.config.lang.namespacing) {
       if (WIKI.config.lang.code !== page.localeCode) {
         sourceFilePath = `${page.localeCode}/${sourceFilePath}`
