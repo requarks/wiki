@@ -87,6 +87,7 @@ module.exports = {
   }
 }
 
+//function to retrieve value for attribute from a string
 function getAttrValue (attr, html) {
   let index = html.indexOf(attr)
   let contents = html.substr(index + attr.length + 2)
