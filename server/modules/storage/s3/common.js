@@ -1,4 +1,8 @@
 const S3 = require('aws-sdk/clients/s3')
+const stream = require('stream')
+const Promise = require('bluebird')
+const pipeline = Promise.promisify(stream.pipeline)
+const _ = require('lodash')
 const pageHelper = require('../../../helpers/page.js')
 
 /* global WIKI */
@@ -97,5 +101,45 @@ module.exports = class S3CompatibleStorage {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Renaming file from ${asset.path} to ${asset.destinationPath}...`)
     await this.s3.copyObject({ CopySource: asset.path, Key: asset.destinationPath }).promise()
     await this.s3.deleteObject({ Key: asset.path }).promise()
+  }
+  /**
+   * HANDLERS
+   */
+  async exportAll() {
+    WIKI.logger.info(`(STORAGE/${this.storageName}) Exporting all content to the cloud provider...`)
+
+    // -> Pages
+    await pipeline(
+      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt').select().from('pages').where({
+        isPrivate: false
+      }).stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (page, enc, cb) => {
+          const filePath = getFilePath(page, 'path')
+          WIKI.logger.info(`(STORAGE/${this.storageName}) Adding page ${filePath}...`)
+          await this.s3.putObject({ Key: filePath, Body: pageHelper.injectPageMetadata(page) }).promise()
+          cb()
+        }
+      })
+    )
+
+    // -> Assets
+    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+
+    await pipeline(
+      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (asset, enc, cb) => {
+          const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
+          WIKI.logger.info(`(STORAGE/${this.storageName}) Adding asset ${filename}...`)
+          await this.s3.putObject({ Key: filename, Body: asset.data }).promise()
+          cb()
+        }
+      })
+    )
+
+    WIKI.logger.info(`(STORAGE/${this.storageName}) All content has been pushed to the cloud provider.`)
   }
 }

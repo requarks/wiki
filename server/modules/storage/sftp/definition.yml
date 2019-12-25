@@ -1,0 +1,71 @@
+key: sftp
+title: SFTP
+description: SFTP (SSH File Transfer Protocol) is a secure file transfer protocol. It runs over the SSH protocol. It supports the full security and authentication functionality of SSH.
+author: requarks.io
+logo: https://static.requarks.io/logo/ssh.svg
+website: https://www.ssh.com/ssh/sftp
+isAvailable: true
+supportedModes:
+  - push
+defaultMode: push
+schedule: false
+props:
+  host:
+    type: String
+    title: Host
+    default: ''
+    hint: Hostname or IP of the remote SSH server.
+    order: 1
+  port:
+    type: Number
+    title: Port
+    default: 22
+    hint: SSH port of the remote server.
+    order: 2
+  authMode:
+    type: String
+    title: Authentication Method
+    default: 'privateKey'
+    hint: Whether to use Private Key or Password-based authentication. A private key is highly recommended for best security.
+    enum:
+      - privateKey
+      - password
+    order: 3
+  username:
+    type: String
+    title: Username
+    default: ''
+    hint: Username for authentication.
+    order: 4
+  privateKey:
+    type: String
+    title: Private Key Contents
+    default: ''
+    hint: (Private Key Authentication Only) - Contents of the private key
+    multiline: true
+    sensitive: true
+    order: 5
+  passphrase:
+    type: String
+    title: Private Key Passphrase
+    default: ''
+    hint: (Private Key Authentication Only) - Passphrase if the private key is encrypted, leave empty otherwise
+    sensitive: true
+    order: 6
+  password:
+    type: String
+    title: Password
+    default: ''
+    hint: (Password-based Authentication Only) - Password for authentication
+    sensitive: true
+    order: 6
+  basePath:
+    type: String
+    title: Base Directory Path
+    default: '/root/wiki'
+    hint: Base directory where files will be transferred to. The path must already exists and be writable by the user.
+actions:
+  - handler: exportAll
+    label: Export All
+    hint: Output all content from the DB to the remote SSH server, overwriting any existing data. If you enabled SFTP after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
+

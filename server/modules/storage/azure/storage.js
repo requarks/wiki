@@ -1,5 +1,9 @@
 const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob')
+const stream = require('stream')
+const Promise = require('bluebird')
+const pipeline = Promise.promisify(stream.pipeline)
 const pageHelper = require('../../../helpers/page.js')
+const _ = require('lodash')
 
 /* global WIKI */
 
@@ -110,5 +114,48 @@ module.exports = {
     await sourceBlockBlobClient.delete({
       deleteSnapshots: 'include'
     })
+  },
+  /**
+   * HANDLERS
+   */
+  async exportAll() {
+    WIKI.logger.info(`(STORAGE/AZURE) Exporting all content to Azure Blob Storage...`)
+
+    // -> Pages
+    await pipeline(
+      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt').select().from('pages').where({
+        isPrivate: false
+      }).stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (page, enc, cb) => {
+          const filePath = getFilePath(page, 'path')
+          WIKI.logger.info(`(STORAGE/AZURE) Adding page ${filePath}...`)
+          const pageContent = pageHelper.injectPageMetadata(page)
+          const blockBlobClient = this.container.getBlockBlobClient(filePath)
+          await blockBlobClient.upload(pageContent, pageContent.length, { tier: this.config.storageTier })
+          cb()
+        }
+      })
+    )
+
+    // -> Assets
+    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+
+    await pipeline(
+      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+      new stream.Transform({
+        objectMode: true,
+        transform: async (asset, enc, cb) => {
+          const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
+          WIKI.logger.info(`(STORAGE/AZURE) Adding asset ${filename}...`)
+          const blockBlobClient = this.container.getBlockBlobClient(filename)
+          await blockBlobClient.upload(asset.data, asset.data.length, { tier: this.config.storageTier })
+          cb()
+        }
+      })
+    )
+
+    WIKI.logger.info('(STORAGE/AZURE) All content has been pushed to Azure Blob Storage.')
   }
 }

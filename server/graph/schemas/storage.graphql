@@ -15,11 +15,7 @@ extend type Mutation {
 # -----------------------------------------------
 
 type StorageQuery {
-  targets(
-    filter: String
-    orderBy: String
-  ): [StorageTarget] @auth(requires: ["manage:system"])
-
+  targets: [StorageTarget] @auth(requires: ["manage:system"])
   status: [StorageStatus] @auth(requires: ["manage:system"])
 }
 

@@ -13,7 +13,7 @@ module.exports = {
   StorageQuery: {
     async targets(obj, args, context, info) {
       let targets = await WIKI.models.storage.getTargets()
-      targets = targets.map(tgt => {
+      targets = _.sortBy(targets.map(tgt => {
         const targetInfo = _.find(WIKI.data.storage, ['key', tgt.key]) || {}
         return {
           ...targetInfo,
@@ -28,15 +28,13 @@ module.exports = {
                 key,
                 value: JSON.stringify({
                   ...configData,
-                  value
+                  value: (configData.sensitive && value.length > 0) ? '********' : value
                 })
               })
             }
           }, []), 'key')
         }
-      })
-      // if (args.filter) { targets = graphHelper.filter(targets, args.filter) }
-      if (args.orderBy) { targets = _.sortBy(targets, [args.orderBy]) }
+      }), ['title', 'key'])
       return targets
     },
     async status(obj, args, context, info) {
@@ -56,13 +54,22 @@ module.exports = {
   StorageMutation: {
     async updateTargets(obj, args, context) {
       try {
+        let dbTargets = await WIKI.models.storage.getTargets()
         for (let tgt of args.targets) {
+          const currentDbTarget = _.find(dbTargets, ['key', tgt.key])
+          if (!currentDbTarget) {
+            continue
+          }
           await WIKI.models.storage.query().patch({
             isEnabled: tgt.isEnabled,
             mode: tgt.mode,
             syncInterval: tgt.syncInterval,
             config: _.reduce(tgt.config, (result, value, key) => {
-              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
+              let configValue = _.get(JSON.parse(value.value), 'v', null)
+              if (configValue === '********') {
+                configValue = _.get(currentDbTarget.config, value.key, '')
+              }
+              _.set(result, `${value.key}`, configValue)
               return result
             }, {}),
             state: {

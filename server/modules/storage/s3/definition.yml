@@ -29,4 +29,9 @@ props:
     type: String
     title: Secret Access Key
     hint: The Secret Access Key for the Access Key ID you created above.
+    sensitive: true
     order: 4
+actions:
+  - handler: exportAll
+    label: Export All
+    hint: Output all content from the DB to S3, overwriting any existing data. If you enabled S3 after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.

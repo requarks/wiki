@@ -1,6 +1,6 @@
 query {
   storage {
-    targets(orderBy: "title ASC") {
+    targets {
       isAvailable
       isEnabled
       key

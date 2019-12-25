@@ -32,6 +32,7 @@ module.exports = {
         hint: value.hint || false,
         enum: value.enum || false,
         multiline: value.multiline || false,
+        sensitive: value.sensitive || false,
         order: value.order || 100
       })
       return result

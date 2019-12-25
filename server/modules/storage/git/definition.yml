@@ -50,6 +50,7 @@ props:
     title: B - SSH Private Key Contents
     hint: SSH Authentication Only - Paste the contents of the private key. The key must NOT be passphrase-protected. Mode must be set to contents to use this option.
     multiline: true
+    sensitive: true
     order: 13
   verifySSL:
     type: Boolean
@@ -66,6 +67,7 @@ props:
     type: String
     title: Password / PAT
     hint: Basic Authentication Only
+    sensitive: true
     order: 21
   defaultEmail:
     type: String

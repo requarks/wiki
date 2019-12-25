@@ -94,6 +94,14 @@ module.exports = class Storage extends Model {
       } else {
         WIKI.logger.info(`No new storage targets found: [ SKIPPED ]`)
       }
+
+      // -> Delete removed targets
+      for (const target of dbTargets) {
+        if (!_.some(WIKI.data.storage, ['key', target.key])) {
+          await WIKI.models.storage.query().where('key', target.key).del()
+          WIKI.logger.info(`Removed target ${target.key} because it is no longer present in the modules folder: [ OK ]`)
+        }
+      }
     } catch (err) {
       WIKI.logger.error(`Failed to scan or load new storage providers: [ FAILED ]`)
       WIKI.logger.error(err)

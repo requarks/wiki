@@ -21,6 +21,7 @@ props:
     title: Account Access Key
     default: ''
     hint: Either key 1 or key 2.
+    sensitive: true
     order: 2
   containerName:
     type: String
@@ -40,7 +41,4 @@ props:
 actions:
   - handler: exportAll
     label: Export All
-    hint: Output all content from the DB to Azure Blog Storage, overwriting any existing data. If you enabled Azure Blog Storage after content was created or you temporarily disabled Git, you'll want to execute this action to add the missing content.
-  - handler: importAll
-    label: Import Everything
-    hint: Will import all content currently in Azure Blog Storage. Useful for importing or restoring content from a previously backed up state.
+    hint: Output all content from the DB to Azure Blog Storage, overwriting any existing data. If you enabled Azure Blog Storage after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
