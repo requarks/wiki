@@ -14,6 +14,17 @@ module.exports = {
       const imageFormat = opts.imageFormat || 'svg'
       const server = opts.server || 'https://www.plantuml.com/plantuml'
 
+      //attribute that will contain the plantuml
+      //that will be copied to the body
+      const pumlSearchAttribute = 'puml'
+
+      // do not declare so that these variables have a global scope
+      // This will be used in html-security to allow <object> tag
+      // when trying to load configured plantuml server path only
+      pumlImageFormat = imageFormat
+      pumlServer = server
+      pumlSearchAttr = pumlSearchAttribute
+
       md.block.ruler.before('fence', 'uml_diagram', (state, startLine, endLine, silent) => {
         let nextLine
         let markup
@@ -114,14 +125,32 @@ module.exports = {
 
         var zippedCode = encode64(zlib.deflateSync('@startuml\n' + contents + '\n@enduml').toString('binary'))
 
-        token = state.push('uml_diagram', 'img', 0)
-        // alt is constructed from children. No point in populating it here.
-        token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'] ]
-        token.block = true
-        token.children = altToken
-        token.info = params
-        token.map = [ startLine, nextLine ]
-        token.markup = markup
+        if (imageFormat === 'png') {
+          // png use the image tag
+          token = state.push('uml_diagram', 'img', 0)
+          // alt is constructed from children. No point in populating it here.
+          token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'] ]
+          token.block = true
+          token.children = altToken
+          token.info = params
+          token.map = [ startLine, nextLine ]
+          token.markup = markup
+        } else if (imageFormat === 'svg') {
+          // for svg create an <object> tag so that it can be rendered interactively
+          // dump the plantuml src into an attribute so that it can be moved to the body
+          // in html-security so that it is searchable
+
+          token = state.push('uml_diagram_obj', 'object', 0)
+          token.attrs = [ [ 'data', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'], ['style', 'max-width:100%;height:auto'], ['type', 'image/svg+xml'], [`${pumlSearchAttribute}`, contents] ]
+          token.block = true
+          token.children = altToken
+          token.info = params
+          token.map = [ startLine, nextLine ]
+          token.markup = markup
+
+          //object tags need to be closed
+          token = state.push('uml_diagram_close', 'object', -1)
+        }
 
         state.line = nextLine + (autoClosed ? 1 : 0)
 

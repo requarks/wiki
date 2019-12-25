@@ -34,9 +34,62 @@ module.exports = {
           tr: ['class', 'rowspan', 'style', 'align', 'valign'],
           ul: ['class', 'style']
         },
-        css: false
+        css: false,
+        onIgnoreTag: function(tag, html, options) {
+          // Allow the object tag only if object data attr begins with
+          // "$plantumlServer/$plantumlImageFormat...."
+          // i.e. the configured plantuml server and format in plantuml renderer
+          // these attrs are declared in markdown-plantuml module
+          // & class="uml-diagram" />
+          // i.e. created by the plantuml renderer
+
+          let searchAttr = `${pumlSearchAttr}`
+
+          if (tag === 'object' &&
+              html.includes(' class="uml-diagram"') &&
+              html.includes(' data="' + `${pumlServer}/${pumlImageFormat}`) &&
+              html.includes(' ' + searchAttr + '="')
+          ) {
+            // this is a plantuml object; mark it so that the
+            // closing tag can be handled correctly
+            puObjectTag = true
+
+            // put the plantuml (contained in attr puml="<plantuml>") in the content
+            // so that it's searchable & in a code block so that browsers
+            // that don't render <object> will render this nicely
+
+            let pumlIndex = html.indexOf(searchAttr)
+            let puml = getAttrValue(searchAttr, html)
+            let pumlURL = getAttrValue('data', html)
+
+            return (
+              html.substr(0, pumlIndex) + ' >' +
+              '<img src="' + pumlURL + '" />' +
+              '<pre class="prismjs line-numbers"><code class="language-plantuml">' +
+              puml +
+              '</code></pre>'
+            )
+          } else if (tag === 'object' && options.isClosing) {
+            // return </object>  if
+            // it is linked to a plantuml <object>
+            if (typeof puObjectTag !== 'undefined' && puObjectTag === true) {
+              puObjectTag = false
+              return html
+            } else {
+              // normal behaviour for converting </object> to text
+              return html.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            }
+          }
+        }
       })
     }
     return input
   }
+}
+
+function getAttrValue (attr, html) {
+  let index = html.indexOf(attr)
+  let contents = html.substr(index + attr.length + 2)
+  contents = contents.substr(0, contents.indexOf('"'))
+  return contents
 }
