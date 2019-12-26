@@ -104,6 +104,9 @@ We are looking for translators to make Wiki.js UI available in as many languages
 ![DigitalOcean](https://wiki.js.org/legacy/logo_digitalocean.png)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
+![Icons8](https://static.requarks.io/logo/icons8.svg)  
+[Icons8](https://icons8.com/) for providing beautiful icon sets.
+
 ![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
 
