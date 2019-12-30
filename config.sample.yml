@@ -22,6 +22,7 @@ port: 3000
 
 db:
   type: postgres
+
   # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
   host: localhost
   port: 5432
@@ -29,6 +30,19 @@ db:
   pass: wikijsrocks
   db: wiki
   ssl: false
+
+  # Optional - PostgreSQL / MySQL / MariaDB only:
+  # -> Uncomment lines you need below and set `auto` to false
+  # -> Full list of accepted options: https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options
+  sslOptions:
+    auto: true
+    # rejectUnauthorized: false
+    # ca: path/to/ca.crt
+    # cert: path/to/cert.crt
+    # key: path/to/key.pem
+    # pfx: path/to/cert.pfx
+    # passphrase: xyz123
+
   # SQLite only:
   storage: path/to/database.sqlite
 
@@ -95,7 +109,7 @@ logLevel: info
 uploads:
   # Maximum upload size in bytes per file (default: 5242880 (5 MB))
   maxFileSize: 5242880
-  # Maximum file uploads per request (default: 20)
+  # Maximum file uploads per request (default: 10)
   maxFiles: 10
 
 # ---------------------------------------------------------------------
@@ -109,5 +123,5 @@ offline: false
 # ---------------------------------------------------------------------
 # Data Path
 # ---------------------------------------------------------------------
-# Writeable data path for Wiki.js, mainly for cache and user uploads.
+# Writeable data path used for cache and temporary user uploads.
 dataPath: ./data
