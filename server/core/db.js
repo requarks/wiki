@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const autoload = require('auto-load')
 const path = require('path')
+const fs = require('fs')
 const Promise = require('bluebird')
 const Knex = require('knex')
 const Objection = require('objection')
@@ -48,7 +49,13 @@ module.exports = {
         dbClient = 'mysql2'
 
         if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = true
+          if (WIKI.config.db.ssl_cert) {
+            const ca = fs.readFileSync(path.resolve(__dirname, '../../', WIKI.config.db.ssl_cert))
+
+            dbConfig.ssl = { ca }
+          } else {
+            dbConfig.ssl = true
+          }
         }
 
         // Fix mysql boolean handling...
