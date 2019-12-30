@@ -138,7 +138,11 @@ module.exports = {
           WIKI.logger.info('Database Connection Successful [ OK ]')
         } catch (err) {
           if (conAttempts < 10) {
-            WIKI.logger.error(`Database Connection Error: ${err.code} ${err.address}:${err.port}`)
+            if (err.code) {
+              WIKI.logger.error(`Database Connection Error: ${err.code} ${err.address}:${err.port}`)
+            } else {
+              WIKI.logger.error(`Database Connection Error: ${err.message}`)
+            }
             WIKI.logger.warn(`Will retry in 3 seconds... [Attempt ${++conAttempts} of 10]`)
             await new Promise(resolve => setTimeout(resolve, 3000))
             await initTasks.connect()
@@ -170,6 +174,7 @@ module.exports = {
 
     // Perform init tasks
 
+    WIKI.logger.info(`Using database driver ${dbClient} for ${WIKI.config.db.type} [ OK ]`)
     this.onReady = Promise.each(initTasksQueue, t => t()).return(true)
 
     return {
