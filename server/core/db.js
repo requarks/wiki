@@ -3,6 +3,7 @@ const autoload = require('auto-load')
 const path = require('path')
 const Promise = require('bluebird')
 const Knex = require('knex')
+const fs = require('fs')
 const Objection = require('objection')
 
 const migrationSource = require('../db/migrator-source')
@@ -34,13 +35,31 @@ module.exports = {
     }
 
     const dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
+    let sslOptions = null
+    if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(dbConfig, 'sslOptions.auto', null) === false) {
+      sslOptions = dbConfig.sslOptions
+      if (sslOptions.ca) {
+        sslOptions.ca = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.ca))
+      }
+      if (sslOptions.cert) {
+        sslOptions.cert = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.cert))
+      }
+      if (sslOptions.key) {
+        sslOptions.key = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.key))
+      }
+      if (sslOptions.pfx) {
+        sslOptions.pfx = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.pfx))
+      }
+    } else {
+      sslOptions = true
+    }
 
     switch (WIKI.config.db.type) {
       case 'postgres':
         dbClient = 'pg'
 
         if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = true
+          dbConfig.ssl = sslOptions
         }
         break
       case 'mariadb':
@@ -48,7 +67,7 @@ module.exports = {
         dbClient = 'mysql2'
 
         if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = true
+          dbConfig.ssl = sslOptions
         }
 
         // Fix mysql boolean handling...
@@ -119,7 +138,11 @@ module.exports = {
           WIKI.logger.info('Database Connection Successful [ OK ]')
         } catch (err) {
           if (conAttempts < 10) {
-            WIKI.logger.error(`Database Connection Error: ${err.code} ${err.address}:${err.port}`)
+            if (err.code) {
+              WIKI.logger.error(`Database Connection Error: ${err.code} ${err.address}:${err.port}`)
+            } else {
+              WIKI.logger.error(`Database Connection Error: ${err.message}`)
+            }
             WIKI.logger.warn(`Will retry in 3 seconds... [Attempt ${++conAttempts} of 10]`)
             await new Promise(resolve => setTimeout(resolve, 3000))
             await initTasks.connect()
@@ -151,6 +174,7 @@ module.exports = {
 
     // Perform init tasks
 
+    WIKI.logger.info(`Using database driver ${dbClient} for ${WIKI.config.db.type} [ OK ]`)
     this.onReady = Promise.each(initTasksQueue, t => t()).return(true)
 
     return {
