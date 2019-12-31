@@ -61,9 +61,10 @@ module.exports = {
             let pumlIndex = html.indexOf(searchAttr)
             let puml = getAttrValue(searchAttr, html)
             let pumlURL = getAttrValue('data', html)
+            let objStyle = getAttrValue('style', html)
 
             return (
-              html.substr(0, pumlIndex) + ' >' +
+              '<object data="' + pumlURL + '" class="uml-diagram" type="image/svg+xml" style="'+ objStyle +'" >' +
               '<img src="' + pumlURL + '" />' +
               '<pre class="prismjs line-numbers"><code class="language-plantuml">' +
               puml +
