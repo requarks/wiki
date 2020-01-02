@@ -68,6 +68,42 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
+    async verify (obj, args) {
+      try {
+        await WIKI.models.users.query().patch({ isVerified: true }).findById(args.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User verified successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async activate (obj, args) {
+      try {
+        await WIKI.models.users.query().patch({ isActive: true }).findById(args.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User activated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async deactivate (obj, args) {
+      try {
+        if (args.id <= 2) {
+          throw new Error('Cannot deactivate system accounts.')
+        }
+        await WIKI.models.users.query().patch({ isActive: false }).findById(args.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User deactivated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
     resetPassword (obj, args) {
       return false
     }

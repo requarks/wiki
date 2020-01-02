@@ -34,12 +34,16 @@
             v-list(dense, nav)
               v-list-item(v-if='!user.isActive', @click='activateUser')
                 v-list-item-icon
-                  v-icon(color='purple') mdi-steering
+                  v-icon(color='purple') mdi-account-key
                 v-list-item-title Activate
               v-list-item(v-else, @click='deactivateUser', :disabled='user.id == currentUserId || user.isSystem')
                 v-list-item-icon
-                  v-icon(color='purple') mdi-cancel
+                  v-icon(color='purple') mdi-account-cancel
                 v-list-item-title Deactivate
+              v-list-item(@click='verifyUser', :disabled='user.isVerified')
+                v-list-item-icon
+                  v-icon(color='blue') mdi-account-check
+                v-list-item-title Set as Verified
               v-list-item(@click='deleteUserDialog = true', :disabled='user.id == currentUserId || user.isSystem')
                 v-list-item-icon
                   v-icon(color='red') mdi-trash-can-outline
@@ -343,13 +347,12 @@
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
+import gql from 'graphql-tag'
 
 import { StatusIndicator } from 'vue-status-indicator'
 
 import userQuery from 'gql/admin/users/users-query-single.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
-import updateUserMutation from 'gql/admin/users/users-mutation-update.gql'
-import deleteUserMutation from 'gql/admin/users/users-mutation-delete.gql'
 
 export default {
   components: {
@@ -638,20 +641,106 @@ export default {
     currentUserId: get('user/id')
   },
   methods: {
+    /**
+     * Activate a user (if previously deactivated)
+     */
     async activateUser () {
-
-    },
-    async deactivateUser () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'directions_boat'
+      this.$store.commit(`loadingStart`, 'admin-users-activate')
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              activate(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          id: this.user.id
+        }
       })
+      if (_.get(resp, 'data.users.activate.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:users.userActivateSuccess'),
+          icon: 'check'
+        })
+        this.user.isActive = true
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-activate')
     },
+    /**
+     * Deactivate a currently active user
+     */
+    async deactivateUser () {
+      this.$store.commit(`loadingStart`, 'admin-users-deactivate')
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              deactivate(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          id: this.user.id
+        }
+      })
+      if (_.get(resp, 'data.users.deactivate.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:users.userDeactivateSuccess'),
+          icon: 'check'
+        })
+        this.user.isActive = false
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-deactivate')
+    },
+    /**
+     * Delete a user
+     */
     async deleteUser () {
       this.$store.commit(`loadingStart`, 'admin-users-delete')
       const resp = await this.$apollo.mutate({
-        mutation: deleteUserMutation,
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              delete(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
         variables: {
           id: this.user.id
         }
@@ -673,10 +762,26 @@ export default {
       this.deleteUserDialog = false
       this.$store.commit(`loadingStop`, 'admin-users-delete')
     },
+    /**
+     * Update a user
+     */
     async updateUser() {
       this.$store.commit(`loadingStart`, 'admin-users-update')
       const resp = await this.$apollo.mutate({
-        mutation: updateUserMutation,
+        mutation: gql`
+          mutation ($id: Int!, $email: String, $name: String, $newPassword: String, $groups: [Int], $location: String, $jobTitle: String, $timezone: String) {
+            users {
+              update(id: $id, email: $email, name: $name, newPassword: $newPassword, groups: $groups, location: $location, jobTitle: $jobTitle, timezone: $timezone) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
         variables: {
           id: this.user.id,
           email: this.user.email,
@@ -704,6 +809,9 @@ export default {
       }
       this.$store.commit(`loadingStop`, 'admin-users-update')
     },
+    /**
+     * Focus an input after delay
+     */
     focusField (ipt) {
       this.$nextTick(() => {
         _.delay(() => {
@@ -711,6 +819,9 @@ export default {
         }, 200)
       })
     },
+    /**
+     * Assign group to user
+     */
     assignGroup() {
       if (_.some(this.user.groups, ['id', this.newGroup])) {
         this.$store.commit('showNotification', {
@@ -723,8 +834,51 @@ export default {
         this.newGroup = 0
       }
     },
+    /**
+     * Unassign group from user
+     */
     unassignGroup(gid) {
       this.user.groups = _.reject(this.user.groups, ['id', gid])
+    },
+    /**
+     * Manually set user as verified
+     */
+    async verifyUser () {
+      this.$store.commit(`loadingStart`, 'admin-users-verify')
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              verify(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          id: this.user.id
+        }
+      })
+      if (_.get(resp, 'data.users.verify.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:users.userVerifySuccess'),
+          icon: 'check'
+        })
+        this.user.isVerified = true
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-verify')
     }
   },
   apollo: {
