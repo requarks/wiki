@@ -28,8 +28,8 @@ module.exports = {
     // --------------------------------
 
     let internalRefs = []
-    const reservedPrefixes = /^\/[a-z]\//gi
-    const exactReservedPaths = /^\/[a-z]$/gi
+    const reservedPrefixes = /^\/[a-z]\//i
+    const exactReservedPaths = /^\/[a-z]$/i
 
     const isHostSet = WIKI.config.host.length > 7 && WIKI.config.host !== 'http://'
     if (!isHostSet) {
