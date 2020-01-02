@@ -95,6 +95,7 @@
     "markdown-it": "10.0.0",
     "markdown-it-abbr": "1.0.4",
     "markdown-it-attrs": "3.0.1",
+    "markdown-it-block-embed": "0.0.3",
     "markdown-it-emoji": "1.4.0",
     "markdown-it-expand-tabs": "1.0.13",
     "markdown-it-external-links": "0.0.6",
