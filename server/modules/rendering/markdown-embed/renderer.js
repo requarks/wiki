@@ -3,7 +3,7 @@ const embed = require('markdown-it-block-embed')
 class PageService {
   constructor (name, opts) {
     this.name = name
-    this.opts = opts
+    this.opts = Object.assign(opts || {}, env.options)
   }
 
   extractVideoID (token) {
