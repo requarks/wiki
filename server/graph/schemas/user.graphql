@@ -59,6 +59,18 @@ type UserMutation {
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
+  verify(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+
+  activate(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+
+  deactivate(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+
   resetPassword(
     id: Int!
   ): DefaultResponse

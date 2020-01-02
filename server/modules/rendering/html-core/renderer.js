@@ -28,8 +28,8 @@ module.exports = {
     // --------------------------------
 
     let internalRefs = []
-    const reservedPrefixes = /^\/[a-z]\//gi
-    const exactReservedPaths = /^\/[a-z]$/gi
+    const reservedPrefixes = /^\/[a-z]\//i
+    const exactReservedPaths = /^\/[a-z]$/i
 
     const isHostSet = WIKI.config.host.length > 7 && WIKI.config.host !== 'http://'
     if (!isHostSet) {
@@ -39,8 +39,9 @@ module.exports = {
     $('a').each((i, elm) => {
       let href = $(elm).attr('href')
 
-      // -> Ignore empty / anchor links
-      if (!href || href.length < 1 || href.indexOf('#') === 0 || href.indexOf('mailto:') === 0) {
+      // -> Ignore empty / anchor links, e-mail addresses, and telephone numbers
+      if (!href || href.length < 1 || href.indexOf('#') === 0 ||
+        href.indexOf('mailto:') === 0 || href.indexOf('tel:') === 0) {
         return
       }
 
