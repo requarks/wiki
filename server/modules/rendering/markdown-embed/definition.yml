@@ -1,0 +1,18 @@
+key: markdownEmbed
+title: Embed
+description: |
+   Markdown Block Embed (https://github.com/rotorz/markdown-it-block-embed) with extensions to support embeded Google docs, sheets, and Jira JQL results as Iframews 
+   - `@[gdoc]($docId)` 
+   - `@[sheet]($docId)`
+   - `@[deck]($docId)`
+   - `@[jira]($jql)`
+
+author: mat.taylor
+icon: mdi-sitemap
+enabledDefault: true
+dependsOn: markdownCore
+props: 
+  jiraURL:
+    type: string
+    default: https://jira.mycompany.com
+    title: Jira Base URL
