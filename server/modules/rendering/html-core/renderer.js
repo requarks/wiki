@@ -8,7 +8,9 @@ const URL = require('url').URL
 
 module.exports = {
   async render() {
-    const $ = cheerio.load(this.input)
+    const $ = cheerio.load(this.input, {
+      decodeEntities: false
+    })
 
     if ($.root().children().length < 1) {
       return ''
@@ -230,9 +232,9 @@ module.exports = {
     // STEP: POST
     // --------------------------------
 
-    for (let child of _.filter(this.children, ['step', 'post'])) {
+    for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
-      output = renderer.init(output, child.config)
+      output = await renderer.init(output, child.config)
     }
 
     return output
