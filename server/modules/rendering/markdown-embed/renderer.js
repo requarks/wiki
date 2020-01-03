@@ -1,7 +1,7 @@
 const embed = require('markdown-it-block-embed')
 
 class PageService {
-  constructor (name, opts) {
+  constructor (name, opts, env) {
     this.name = name
     this.opts = Object.assign(opts || {}, env.options)
   }
