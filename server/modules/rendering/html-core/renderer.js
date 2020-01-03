@@ -69,7 +69,11 @@ module.exports = {
           if (WIKI.config.lang.namespacing) {
             // -> Reformat paths
             if (href.indexOf('/') !== 0) {
-              href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+              if (this.config.absoluteLinks) {
+                href = `/${this.page.localeCode}/${href}`
+              } else {
+                href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+              }
             } else if (href.charAt(3) !== '/') {
               href = `/${this.page.localeCode}${href}`
             }
@@ -83,7 +87,11 @@ module.exports = {
           } else {
             // -> Reformat paths
             if (href.indexOf('/') !== 0) {
-              href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
+              if (this.config.absoluteLinks) {
+                href = `/${href}`
+              } else {
+                href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
+              }
             }
 
             try {

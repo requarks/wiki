@@ -5,4 +5,10 @@ author: requarks.io
 input: html
 output: html
 icon: mdi-language-html5
-props: {}
+props:
+  absoluteLinks:
+    type: Boolean
+    default: false
+    title: Treat relative links as root absolute
+    hint: For example, a link to foo/bar on page xyz will render as /foo/bar instead of /xyz/foo/bar.
+    order: 1
