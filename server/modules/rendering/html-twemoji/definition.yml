@@ -5,4 +5,6 @@ author: requarks.io
 icon: mdi-emoticon-happy-outline
 enabledDefault: true
 dependsOn: htmlCore
+step: post
+order: 10
 props: {}
