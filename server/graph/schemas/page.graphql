@@ -106,6 +106,10 @@ type PageMutation {
   ): PageMigrationResponse @auth(requires: ["manage:system"])
 
   rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
+
+  render(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

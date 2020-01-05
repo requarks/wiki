@@ -86,8 +86,8 @@
             v-list-item(to='/mail', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24'): v-icon mdi-email-multiple-outline
               v-list-item-title {{ $t('admin:mail.title') }}
-            v-list-item(to='/ssl', color='primary', v-if='hasPermission(`manage:system`)')
-              v-list-item-avatar(size='24'): v-icon mdi-cloud-lock-outline
+            v-list-item(to='/ssl', v-if='hasPermission(`manage:system`)', disabled)
+              v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-cloud-lock-outline
               v-list-item-title {{ $t('admin:ssl.title') }}
             v-list-item(to='/system', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24'): v-icon mdi-tune

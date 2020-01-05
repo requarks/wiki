@@ -312,6 +312,23 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * RENDER PAGE
+     */
+    async render (obj, args, context) {
+      try {
+        const page = await WIKI.models.pages.query().findById(args.id)
+        if (!page) {
+          throw new Error('Invalid Page Id')
+        }
+        await WIKI.models.pages.renderPage(page)
+        return {
+          responseResult: graphHelper.generateSuccess('Page rendered successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   Page: {
