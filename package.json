@@ -215,6 +215,7 @@
     "core-js": "3.6.1",
     "css-loader": "3.4.0",
     "cssnano": "4.1.10",
+    "d3": "5.15.0",
     "duplicate-package-checker-webpack-plugin": "3.0.0",
     "epic-spinners": "1.1.0",
     "eslint": "6.8.0",

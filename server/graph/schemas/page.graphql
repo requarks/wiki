@@ -42,10 +42,16 @@ type PageQuery {
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
 
   tree(
-    parent: Int!
+    path: String
+    parent: Int
     mode: PageTreeMode!
     locale: String!
+    includeParents: Boolean
   ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
+
+  links(
+    locale: String!
+  ): [PageLinkItem] @auth(requires: ["manage:system", "read:pages"])
 }
 
 # -----------------------------------------------
@@ -207,6 +213,13 @@ type PageTreeItem {
   parent: Int
   pageId: Int
   locale: String!
+}
+
+type PageLinkItem {
+  id: Int!
+  path: String!
+  title: String!
+  links: [String]!
 }
 
 enum PageOrderBy {

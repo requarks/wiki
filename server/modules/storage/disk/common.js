@@ -72,7 +72,8 @@ module.exports = {
   },
 
   async processPage ({ user, fullPath, relPath, contentType, moduleName }) {
-    const contentPath = pageHelper.getPagePath(relPath)
+    const normalizedRelPath = relPath.replace(/\\/g, '/')
+    const contentPath = pageHelper.getPagePath(normalizedRelPath)
     const itemContents = await fs.readFile(path.join(fullPath, relPath), 'utf8')
     const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
     const currentPage = await WIKI.models.pages.getPageFromDb({
@@ -82,7 +83,7 @@ module.exports = {
     const newTags = !_.isNil(pageData.tags) ? _.get(pageData, 'tags', '').split(', ') : false
     if (currentPage) {
       // Already in the DB, can mark as modified
-      WIKI.logger.info(`(STORAGE/${moduleName}) Page marked as modified: ${relPath}`)
+      WIKI.logger.info(`(STORAGE/${moduleName}) Page marked as modified: ${normalizedRelPath}`)
       await WIKI.models.pages.updatePage({
         id: currentPage.id,
         title: _.get(pageData, 'title', currentPage.title),
@@ -96,7 +97,7 @@ module.exports = {
       })
     } else {
       // Not in the DB, can mark as new
-      WIKI.logger.info(`(STORAGE/${moduleName}) Page marked as new: ${relPath}`)
+      WIKI.logger.info(`(STORAGE/${moduleName}) Page marked as new: ${normalizedRelPath}`)
       const pageEditor = await WIKI.models.editors.getDefaultEditor(contentType)
       await WIKI.models.pages.createPage({
         path: contentPath.path,

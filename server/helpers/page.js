@@ -4,7 +4,7 @@ const crypto = require('crypto')
 const path = require('path')
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
-const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?)\/?(.*)/i
+const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
 
 const contentToExt = {
   markdown: 'md',
@@ -125,7 +125,7 @@ module.exports = {
     const result = localeFolderRegex.exec(meta.path)
     if (result[1]) {
       meta = {
-        locale: result[1],
+        locale: result[1].replace('/', ''),
         path: result[2]
       }
     }
