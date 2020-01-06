@@ -6,6 +6,7 @@ icon: mdi-fire
 enabledDefault: true
 dependsOn: htmlCore
 step: post
+order: 99999
 props:
   safeHTML:
     type: Boolean

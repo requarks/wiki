@@ -8,7 +8,9 @@ const URL = require('url').URL
 
 module.exports = {
   async render() {
-    const $ = cheerio.load(this.input)
+    const $ = cheerio.load(this.input, {
+      decodeEntities: false
+    })
 
     if ($.root().children().length < 1) {
       return ''
@@ -69,7 +71,11 @@ module.exports = {
           if (WIKI.config.lang.namespacing) {
             // -> Reformat paths
             if (href.indexOf('/') !== 0) {
-              href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+              if (this.config.absoluteLinks) {
+                href = `/${this.page.localeCode}/${href}`
+              } else {
+                href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+              }
             } else if (href.charAt(3) !== '/') {
               href = `/${this.page.localeCode}${href}`
             }
@@ -83,7 +89,11 @@ module.exports = {
           } else {
             // -> Reformat paths
             if (href.indexOf('/') !== 0) {
-              href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
+              if (this.config.absoluteLinks) {
+                href = `/${href}`
+              } else {
+                href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
+              }
             }
 
             try {
@@ -222,9 +232,9 @@ module.exports = {
     // STEP: POST
     // --------------------------------
 
-    for (let child of _.filter(this.children, ['step', 'post'])) {
+    for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
-      output = renderer.init(output, child.config)
+      output = await renderer.init(output, child.config)
     }
 
     return output

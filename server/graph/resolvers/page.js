@@ -137,8 +137,12 @@ module.exports = {
     async tree (obj, args, context, info) {
       let results = []
       let conds = {
-        localeCode: args.locale,
-        parent: (args.parent < 1) ? null : args.parent
+        localeCode: args.locale
+      }
+      if (args.parent) {
+        conds.parent = (args.parent < 1) ? null : args.parent
+      } else if (args.path) {
+        // conds.parent = (args.parent < 1) ? null : args.parent
       }
       switch (args.mode) {
         case 'FOLDERS':
@@ -162,6 +166,44 @@ module.exports = {
         parent: r.parent || 0,
         locale: r.localeCode
       }))
+    },
+    /**
+     * FETCH PAGE LINKS
+     */
+    async links (obj, args, context, info) {
+      let results = []
+
+      results = await WIKI.models.knex('pages')
+        .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+        .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
+        .where({
+          'pages.localeCode': args.locale
+        })
+
+      return _.reduce(results, (result, val) => {
+        // -> Check if user has access to source and linked page
+        if (
+          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.path, locale: args.locale }) ||
+          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.link, locale: val.locale })
+        ) {
+          return result
+        }
+
+        const existingEntry = _.findIndex(result, ['id', val.id])
+        if (existingEntry >= 0) {
+          if (val.link) {
+            result[existingEntry].links.push(`${val.locale}/${val.link}`)
+          }
+        } else {
+          result.push({
+            id: val.id,
+            title: val.title,
+            path: `${args.locale}/${val.path}`,
+            links: val.link ? [`${val.locale}/${val.link}`] : []
+          })
+        }
+        return result
+      }, [])
     }
   },
   PageMutation: {
@@ -266,6 +308,23 @@ module.exports = {
         await WIKI.models.pages.rebuildTree()
         return {
           responseResult: graphHelper.generateSuccess('Page tree rebuilt successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * RENDER PAGE
+     */
+    async render (obj, args, context) {
+      try {
+        const page = await WIKI.models.pages.query().findById(args.id)
+        if (!page) {
+          throw new Error('Invalid Page Id')
+        }
+        await WIKI.models.pages.renderPage(page)
+        return {
+          responseResult: graphHelper.generateSuccess('Page rendered successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

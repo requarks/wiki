@@ -204,7 +204,10 @@ module.exports = class User extends Model {
     }
 
     // Parse picture URL
-    let pictureUrl = _.get(profile, 'picture', _.get(user, 'pictureUrl', null))
+    let pictureUrl = _.truncate(_.get(profile, 'picture', _.get(user, 'pictureUrl', null)), {
+      length: 255,
+      omission: ''
+    })
 
     // Update existing user
     if (user) {
