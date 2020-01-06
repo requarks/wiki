@@ -1,0 +1,89 @@
+doctype html
+html(lang=siteConfig.lang)
+  head
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(charset='UTF-8')
+    meta(name='viewport', content='user-scalable=yes, width=device-width, initial-scale=1, maximum-scale=5')
+    meta(name='theme-color', content='#1976d2')
+    meta(name='msapplication-TileColor', content='#1976d2')
+    meta(name='msapplication-TileImage', content='/favicons/mstile-150x150.png')
+
+    title= pageMeta.title + ' | ' + config.title
+
+    //- SEO / OpenGraph
+    meta(name='description', content=pageMeta.description)
+    meta(property='og:title', content=pageMeta.title)
+    meta(property='og:type', content='website')
+    meta(property='og:description', content=pageMeta.description)
+    meta(property='og:image', content=pageMeta.image)
+    meta(property='og:url', content=pageMeta.url)
+    meta(property='og:site_name', content=config.title)
+
+    //- Favicon
+    link(rel='apple-touch-icon', sizes='180x180', href='/apple-touch-icon.png')
+    link(rel='icon', type='image/png', sizes='192x192', href='/favicons/android-icon-192x192.png')
+    link(rel='icon', type='image/png', sizes='32x32', href='/favicons/favicon-32x32.png')
+    link(rel='icon', type='image/png', sizes='16x16', href='/favicons/favicon-16x16.png')
+    link(rel='mask-icon', href='/favicons/safari-pinned-tab.svg', color='#1976d2')
+    link(rel='manifest', href='/manifest.json')
+
+    //- Site Properties
+    script.
+      var siteConfig = !{JSON.stringify(siteConfig)}; var siteLangs = !{JSON.stringify(langs)}
+
+    //- Icon Set
+    if config.theming.iconset === 'fa'
+      link(
+        type='text/css'
+        rel='stylesheet'
+        href='https://use.fontawesome.com/releases/v5.10.0/css/all.css'
+        )
+    else if config.theming.iconset === 'fa4'
+      link(
+        type='text/css'
+        rel='stylesheet'
+        href='https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css'
+        )
+
+    //- CSS
+    
+      
+    link(
+      type='text/css'
+      rel='stylesheet'
+      href='/css/app.b98d10f6bb893bd895c4.css'
+      integrity=config.security.securitySRI ? 'sha256-jq2Kb/NnMahn7H/2jFJr2LA83xz2/E/Srkal5y7lsi0= sha512-i8DSU4d4hSct5qP/UwqIYX3k2zf6a216ksGM1VrCFL0O1JS57EZt3yeNpyC3J9hXFAmGzrD8Gbi5mCYKdsvogA==' : false
+      crossorigin='use-credentials'
+    )
+      
+    
+
+    //- JS
+    
+      
+    script(
+      type='text/javascript'
+      src='/js/runtime.79e192f68c7933313fc5.js'
+      integrity=config.security.securitySRI ? 'sha256-TXFe1uzjWUz4nYhXBGApuWeaoGyFCkdMMh2H4Z1wncA= sha512-vtPB7dXS9rQ0FrqXc6lClQTDHfA3Jd/AyCHRDplu7kl66Uibl6SxOlNB4ZYAYP+LzTOZbgRPOKDrcgyJfpCJyA==' : false
+      crossorigin='use-credentials'
+      )
+      
+    
+      
+    script(
+      type='text/javascript'
+      src='/js/app.b98d10f6bb893bd895c4.js'
+      integrity=config.security.securitySRI ? 'sha256-MOi4oo6UZd0XVJKbg+BPy4Vpf6PIGq7n2lD6PJN7tIk= sha512-NHmZtNstK6QfgFbwGqtDxBoaRW25AzhDXSgwPsM7U62ENF0xxWZmOAIBV7/Hh9KIUuXqzieWbrmLI1A/rNzGKA==' : false
+      crossorigin='use-credentials'
+      )
+      
+    
+
+    != analyticsCode.head
+
+    block head
+
+  body
+    != analyticsCode.bodyStart
+    block body
+    != analyticsCode.bodyEnd
