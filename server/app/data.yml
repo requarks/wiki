@@ -66,6 +66,7 @@ defaults:
       origin: true
     search:
       maxHits: 100
+    maintainerEmail: security@requarks.io
 localeNamespaces:
   - admin
   - auth

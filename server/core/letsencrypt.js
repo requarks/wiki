@@ -35,7 +35,7 @@ module.exports = {
     try {
       WIKI.logger.info(`(LETSENCRYPT) Initializing Let's Encrypt client...`)
       this.acme = ACME.create({
-        maintainerEmail: WIKI.config.ssl.maintainerEmail,
+        maintainerEmail: WIKI.config.maintainerEmail,
         packageAgent: `wikijs/${WIKI.version}`,
         notify: (ev, msg) => {
           if (_.includes(['warning', 'error'], ev)) {
@@ -54,7 +54,7 @@ module.exports = {
         WIKI.logger.info(`(LETSENCRYPT) Setting up account for the first time...`)
         const accountKeypair = await Keypairs.generate({ kty: 'EC', format: 'jwk' })
         const account = await this.acme.accounts.create({
-          subscriberEmail: WIKI.config.ssl.maintainerEmail,
+          subscriberEmail: WIKI.config.ssl.subscriberEmail,
           agreeToTerms: true,
           accountKey: accountKeypair.private
         })

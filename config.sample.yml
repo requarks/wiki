@@ -80,7 +80,7 @@ ssl:
 
   # ++++++ For letsencrypt only ++++++
   domain: wiki.yourdomain.com
-  maintainerEmail: admin@example.com
+  subscriberEmail: admin@example.com
 
 # ---------------------------------------------------------------------
 # Database Pool Options

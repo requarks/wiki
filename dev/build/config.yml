@@ -14,5 +14,5 @@ ssl:
   port: 3443
   provider: letsencrypt
   domain: $(LETSENCRYPT_DOMAIN)
-  maintainerEmail: $(LETSENCRYPT_EMAIL)
+  subscriberEmail: $(LETSENCRYPT_EMAIL)
 logLevel: info
