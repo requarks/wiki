@@ -29,6 +29,7 @@ LABEL maintainer="requarks.io"
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \
     mkdir -p /logs && \
+    mkdir -p /wiki/data/content && \
     chown -R node:node /wiki /logs
 
 WORKDIR /wiki
@@ -44,8 +45,11 @@ COPY --chown=node:node ./LICENSE ./LICENSE
 
 USER node
 
-EXPOSE 3000
+VOLUME ["/wiki/data/content"]
 
-# HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD curl -f http://localhost/healthz
+EXPOSE 3000
+EXPOSE 3443
+
+# HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD curl -f http://localhost:3000/healthz
 
 CMD ["node", "server"]

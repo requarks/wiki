@@ -29,7 +29,6 @@
             v-btn.px-5(value='rradial')
               v-icon(left, :color='graphMode === `rradial` ? `primary` : `grey darken-3`') mdi-blur-radial
               span.text-none Relational Radial
-              v-chip.ml-3(x-small) Beta
         .admin-pages-visualize-svg.pa-10(ref='svgContainer')
         v-alert(v-if='pages.length < 1', outlined, type='warning', style='max-width: 650px; margin: 0 auto;') Looks like there's no data yet to graph!
 </template>
@@ -61,9 +60,14 @@ export default {
     }
   },
   methods: {
+    goToPage (d) {
+      if (_.get(d, 'data.id', 0) > 0) {
+        this.$router.push(`${d.data.id}`)
+      }
+    },
     bilink (root) {
-      const map = new Map(root.leaves().map(d => [d.data.path, d]))
-      for (const d of root.leaves()) {
+      const map = new Map(root.descendants().map(d => [d.data.path, d]))
+      for (const d of root.descendants()) {
         d.incoming = []
         d.outgoing = []
         d.data.links.forEach(i => {
@@ -73,7 +77,7 @@ export default {
           }
         })
       }
-      for (const d of root.leaves()) {
+      for (const d of root.descendants()) {
         for (const o of d.outgoing) {
           if (o[1]) {
             o[1].incoming.push(o)
@@ -112,8 +116,11 @@ export default {
         children: result
       }
     },
+    /**
+     * Relational Radial
+     */
     drawRelations () {
-      const data = this.hierarchy(this.pages)
+      const data = this.hierarchy(this.pages, true)
 
       const line = d3.lineRadial()
         .curve(d3.curveBundle.beta(0.85))
@@ -124,16 +131,26 @@ export default {
         .size([2 * Math.PI, this.radius - 100])
 
       const root = tree(this.bilink(d3.hierarchy(data)
-        .sort((a, b) => d3.ascending(a.height, b.height) || d3.ascending(a.data.title, b.data.title))))
+        .sort((a, b) => d3.ascending(a.height, b.height) || d3.ascending(a.data.path, b.data.path))))
 
       const svg = d3.create('svg')
         .attr('viewBox', [-this.width / 2, -this.width / 2, this.width, this.width])
+
+      const link = svg.append('g')
+        .attr('stroke', '#CCC')
+        .attr('fill', 'none')
+        .selectAll('path')
+        .data(root.descendants().flatMap(leaf => leaf.outgoing))
+        .join('path')
+        .style('mix-blend-mode', 'multiply')
+        .attr('d', ([i, o]) => line(i.path(o)))
+        .each(function(d) { d.path = this })
 
       svg.append('g')
         .attr('font-family', 'sans-serif')
         .attr('font-size', 10)
         .selectAll('g')
-        .data(root.leaves())
+        .data(root.descendants())
         .join('g')
         .attr('transform', d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
         .append('text')
@@ -142,23 +159,17 @@ export default {
         .attr('text-anchor', d => d.x < Math.PI ? 'start' : 'end')
         .attr('transform', d => d.x >= Math.PI ? 'rotate(180)' : null)
         .attr('fill', this.$vuetify.theme.dark ? 'white' : '')
+        .attr('cursor', 'pointer')
         .text(d => d.data.title)
         .each(function(d) { d.text = this })
         .on('mouseover', overed)
         .on('mouseout', outed)
+        .on('click', d => this.goToPage(d))
         .call(text => text.append('title').text(d => `${d.data.path}
           ${d.outgoing.length} outgoing
           ${d.incoming.length} incoming`))
-
-      const link = svg.append('g')
-        .attr('stroke', '#CCC')
-        .attr('fill', 'none')
-        .selectAll('path')
-        .data(root.leaves().flatMap(leaf => leaf.outgoing))
-        .join('path')
-        .style('mix-blend-mode', 'multiply')
-        .attr('d', ([i, o]) => line(i.path(o)))
-        .each(function(d) { d.path = this })
+        .clone(true).lower()
+        .attr('stroke', this.$vuetify.theme.dark ? '#222' : 'white')
 
       function overed(d) {
         link.style('mix-blend-mode', null)
@@ -180,6 +191,9 @@ export default {
 
       this.$refs.svgContainer.appendChild(svg.node())
     },
+    /**
+     * Hierarchical Tree
+     */
     drawTree () {
       const data = this.hierarchy(this.pages, true)
 
@@ -232,12 +246,17 @@ export default {
         .attr('x', d => d.children ? -6 : 6)
         .attr('text-anchor', d => d.children ? 'end' : 'start')
         .attr('fill', this.$vuetify.theme.dark ? 'white' : '')
+        .attr('cursor', 'pointer')
         .text(d => d.data.title)
+        .on('click', d => this.goToPage(d))
         .clone(true).lower()
         .attr('stroke', this.$vuetify.theme.dark ? '#222' : 'white')
 
       this.$refs.svgContainer.appendChild(svg.node())
     },
+    /**
+     * Hierarchical Radial
+     */
     drawRadialTree () {
       const data = this.hierarchy(this.pages)
 
@@ -286,7 +305,9 @@ export default {
         .attr('transform', d => d.x >= Math.PI ? 'rotate(180)' : null)
         /* eslint-enable no-mixed-operators */
         .attr('fill', this.$vuetify.theme.dark ? 'white' : '')
+        .attr('cursor', 'pointer')
         .text(d => d.data.title)
+        .on('click', d => this.goToPage(d))
         .clone(true).lower()
         .attr('stroke', this.$vuetify.theme.dark ? '#222' : 'white')
 
