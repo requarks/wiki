@@ -11,5 +11,5 @@ props:
   safeHTML:
     type: Boolean
     title: Sanitize HTML
-    default: true
+    default: false
     hint: Sanitize HTML from unsafe attributes and tags that could lead to XSS attacks

@@ -23,7 +23,7 @@ class SheetService extends PageService {
     return `
       <div class="block-embed"><iframe 
         src="https://docs.google.com/spreadsheets/d/${path}" frameborder=0 width=1000 height=592 allowfullscreen=true
-        mozallowfullscreen=true webkitallowfullscreen=true/>
+        mozallowfullscreen=true webkitallowfullscreen=true></iframe>
       </div>`
   }
 }
@@ -36,7 +36,7 @@ class GdocService extends PageService {
       <div class="block-embed" _style="border-width:1;border-style:solid"><iframe 
         src="https://docs.google.com/document/d/${path}"
         frameborder=0 width=1000 height=592 allowfullscreen=true
-        mozallowfullscreen=true webkitallowfullscreen=true/>
+        mozallowfullscreen=true webkitallowfullscreen=true></iframe>
       </div>`
   }
 }
@@ -48,7 +48,7 @@ class DeckService extends PageService {
       <div class="block-embed" _style="border-width:1;border-style:solid"><iframe 
         src="https://docs.google.com/presentation/d/e/${token}/embed"
         frameborder=0 width=1000 height=592 allowfullscreen=true
-        mozallowfullscreen=true webkitallowfullscreen=true/>
+        mozallowfullscreen=true webkitallowfullscreen=true></iframe>
       </div>`
   }
 }
@@ -61,7 +61,7 @@ class JiraService extends PageService {
       <div class="jira-embed" style="position:relative;overflow:hidden;width:1000px;height:300px"><iframe 
         style="position:absolute;top:-175px;height:500px;width:1000px"
         frameborder=0
-        src="${this.opts.jiraURL}/sr/jira.issueviews:searchrequest-printable/temp/SearchRequest.html?jqlQuery=${token}"/>
+        src="${this.opts.jiraURL}/sr/jira.issueviews:searchrequest-printable/temp/SearchRequest.html?jqlQuery=${token}"></iframe>
       </div>`
   }
 }

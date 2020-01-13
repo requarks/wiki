@@ -11,6 +11,7 @@ module.exports = {
           code: ['class', 'style'],
           div: ['class', 'id', 'style'],
           em: ['class', 'style'],
+	  //iframe: ['class', 'src', 'height', 'width', 'style'],
           h1: ['class', 'id', 'style'],
           h2: ['class', 'id', 'style'],
           h3: ['class', 'id', 'style'],
