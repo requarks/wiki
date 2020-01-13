@@ -9,5 +9,10 @@ db:
   db: $(DB_NAME)
   storage: $(DB_FILEPATH)
   ssl: $(DB_SSL)
-trustProxy: $(TRUST_PROXY)
+ssl:
+  enabled: $(SSL_ACTIVE)
+  port: 3443
+  provider: letsencrypt
+  domain: $(LETSENCRYPT_DOMAIN)
+  subscriberEmail: $(LETSENCRYPT_EMAIL)
 logLevel: info
