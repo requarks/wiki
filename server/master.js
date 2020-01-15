@@ -81,6 +81,12 @@ module.exports = async () => {
   app.use(WIKI.auth.authenticate)
 
   // ----------------------------------------
+  // GraphQL Server
+  // ----------------------------------------
+
+  await WIKI.servers.startGraphQL()
+
+  // ----------------------------------------
   // SEO
   // ----------------------------------------
 
@@ -173,7 +179,6 @@ module.exports = async () => {
   // Start HTTP Server(s)
   // ----------------------------------------
 
-  await WIKI.servers.startGraphQL()
   await WIKI.servers.startHTTP()
 
   if (WIKI.config.ssl.enabled === true || WIKI.config.ssl.enabled === 'true' || WIKI.config.ssl.enabled === 1 || WIKI.config.ssl.enabled === '1') {

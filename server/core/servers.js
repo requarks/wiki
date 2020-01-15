@@ -136,7 +136,7 @@ module.exports = {
    * Close all active connections
    */
   closeConnections () {
-    for (const conn of this.connections) {
+    for (const conn of this.connections.values()) {
       conn.destroy()
     }
     this.connections.clear()
