@@ -42,8 +42,10 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 - Etienne
 - Günter Pavlas
 - Ian
+- Josh Stewart
 - Loïc CRAMPON
 - Matt Gedigian
+- Philipp Schürch
 - Richeir
 - Stepan Sokolovskyi
 - 张白驹
