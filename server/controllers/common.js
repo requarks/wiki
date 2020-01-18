@@ -109,7 +109,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 
-  if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+  if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
     return res.render('unauthorized', { action: 'history' })
   }
@@ -182,7 +182,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 
-  if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+  if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
     return res.render('unauthorized', { action: 'source' })
   }
 

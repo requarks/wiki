@@ -19,15 +19,11 @@ type ContributeQuery {
 # -----------------------------------------------
 
 type ContributeContributor {
-  company: String!
-  currency: String!
-  description: String!
-  id: Int!
-  image: String!
+  id: String!
+  source: String!
   name: String!
-  profile: String!
-  tier: String!
-  totalDonated: Int!
-  twitter: String!
-  website: String!
+  joined: Date!
+  website: String
+  twitter: String
+  avatar: String
 }
