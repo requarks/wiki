@@ -243,7 +243,7 @@ const md = new MarkdownIt({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    return `<pre class="line-numbers"><code class="language-${lang}">${str}</code></pre>`
+    return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
   }
 })
   .use(mdAttrs, {

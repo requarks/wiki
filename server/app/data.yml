@@ -16,6 +16,8 @@ defaults:
       db: wiki
       ssl: false
       storage: ./db.sqlite
+      sslOptions:
+        auto: true
     ssl:
       enabled: false
     pool:
