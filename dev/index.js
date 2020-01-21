@@ -67,8 +67,8 @@ const init = {
     console.warn(chalk.yellow('--- Closing DB connections...'))
     await global.WIKI.models.knex.destroy()
     console.warn(chalk.yellow('--- Closing Server connections...'))
-    if (global.WIKI.server) {
-      await new Promise((resolve, reject) => global.WIKI.server.destroy(resolve))
+    if (global.WIKI.servers) {
+      await global.WIKI.servers.stopServers()
     }
     console.warn(chalk.yellow('--- Purging node modules cache...'))
 

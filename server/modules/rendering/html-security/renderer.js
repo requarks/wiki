@@ -19,6 +19,7 @@ module.exports = {
           h6: ['class', 'id', 'style'],
           img: ['alt', 'class', 'draggable', 'height', 'src', 'style', 'width'],
           li: ['class', 'style'],
+          mark: ['class', 'style'],
           ol: ['class', 'style'],
           p: ['class', 'style'],
           path: ['d', 'style'],

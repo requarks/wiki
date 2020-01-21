@@ -179,7 +179,11 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     &.ck .ck-editor__nested-editable:focus,
     .ck-widget.table td.ck-editor__nested-editable.ck-editor__nested-editable_focused,
     .ck-widget.table th.ck-editor__nested-editable.ck-editor__nested-editable_focused {
-      background-color: mc('grey', '900');
+      background-color: mc('grey', '100');
+
+      @at-root .theme--dark & {
+        background-color: mc('grey', '900');
+      }
     }
   }
 }

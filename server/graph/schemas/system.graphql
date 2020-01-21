@@ -40,6 +40,12 @@ type SystemMutation {
     mongoDbConnString: String!
     groupMode: SystemImportUsersGroupMode!
   ): SystemImportUsersResponse @auth(requires:  ["manage:system"])
+
+  setHTTPSRedirection(
+    enabled: Boolean!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  renewHTTPSCertificate: DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -65,6 +71,9 @@ type SystemInfo {
   dbVersion: String @auth(requires: ["manage:system"])
   groupsTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
   hostname: String @auth(requires: ["manage:system"])
+  httpPort: Int @auth(requires: ["manage:system"])
+  httpRedirection: Boolean @auth(requires: ["manage:system"])
+  httpsPort: Int @auth(requires: ["manage:system"])
   latestVersion: String @auth(requires: ["manage:system"])
   latestVersionReleaseDate: Date @auth(requires: ["manage:system"])
   nodeVersion: String @auth(requires: ["manage:system"])
@@ -72,6 +81,11 @@ type SystemInfo {
   pagesTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:pages", "delete:pages"])
   platform: String @auth(requires: ["manage:system"])
   ramTotal: String @auth(requires: ["manage:system"])
+  sslDomain: String @auth(requires: ["manage:system"])
+  sslExpirationDate: Date @auth(requires: ["manage:system"])
+  sslProvider: String @auth(requires: ["manage:system"])
+  sslStatus: String @auth(requires: ["manage:system"])
+  sslSubscriberEmail: String @auth(requires: ["manage:system"])
   telemetry: Boolean @auth(requires: ["manage:system"])
   telemetryClientId: String @auth(requires: ["manage:system"])
   upgradeCapable: Boolean @auth(requires: ["manage:system"])

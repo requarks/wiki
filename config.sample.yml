@@ -59,7 +59,12 @@ db:
 
 ssl:
   enabled: false
+  port: 3443
 
+  # Provider to use, possible values: custom, letsencrypt
+  provider: custom
+
+  # ++++++ For custom only ++++++
   # Certificate format, either 'pem' or 'pfx':
   format: pem
   # Using PEM format:
@@ -73,9 +78,9 @@ ssl:
   # to 1024 bits (default: null):
   dhparam: null
 
-  # Listen on this HTTP port and redirect all requests to HTTPS.
-  # Set to false to disable (default: 80):
-  redirectNonSSLPort: 80
+  # ++++++ For letsencrypt only ++++++
+  domain: wiki.yourdomain.com
+  subscriberEmail: admin@example.com
 
 # ---------------------------------------------------------------------
 # Database Pool Options

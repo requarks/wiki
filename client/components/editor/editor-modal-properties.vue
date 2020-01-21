@@ -20,6 +20,7 @@
       v-tabs(color='white', background-color='blue darken-1', dark, centered)
         v-tab {{$t('editor:props.info')}}
         v-tab {{$t('editor:props.scheduling')}}
+        v-tab(disabled) {{$t('editor:props.scripts')}}
         v-tab {{$t('editor:props.social')}}
         v-tab-item
           v-card-text.pt-5
@@ -176,6 +177,25 @@
                         color='primary'
                         @click='$refs.menuPublishEnd.save(publishEndDate)'
                         ) {{$t('common:actions.ok')}}
+
+        v-tab-item
+          v-card-text
+            .overline.pb-3 {{$t('editor:props.js')}}
+            v-textarea(
+              outlined
+              rows='5'
+              :hint='$t(`editor:props.jsHint`)'
+              persistent-hint
+            )
+          v-divider
+          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+            .overline.pb-3 {{$t('editor:props.css')}}
+            v-textarea(
+              outlined
+              rows='5'
+              :hint='$t(`editor:props.cssHint`)'
+              persistent-hint
+            )
 
         v-tab-item
           v-card-text

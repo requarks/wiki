@@ -7,12 +7,8 @@ const express = require('express')
 const session = require('express-session')
 const KnexSessionStore = require('connect-session-knex')(session)
 const favicon = require('serve-favicon')
-const fs = require('fs-extra')
-const http = require('http')
-const https = require('https')
 const path = require('path')
 const _ = require('lodash')
-const { ApolloServer } = require('apollo-server-express')
 
 /* global WIKI */
 
@@ -63,6 +59,12 @@ module.exports = async () => {
   }))
 
   // ----------------------------------------
+  // SSL Handlers
+  // ----------------------------------------
+
+  app.use('/', ctrl.ssl)
+
+  // ----------------------------------------
   // Passport Authentication
   // ----------------------------------------
 
@@ -77,6 +79,12 @@ module.exports = async () => {
   }))
   app.use(WIKI.auth.passport.initialize())
   app.use(WIKI.auth.authenticate)
+
+  // ----------------------------------------
+  // GraphQL Server
+  // ----------------------------------------
+
+  await WIKI.servers.startGraphQL()
 
   // ----------------------------------------
   // SEO
@@ -104,6 +112,7 @@ module.exports = async () => {
   // View accessible data
   // ----------------------------------------
 
+  app.locals.siteConfig = {}
   app.locals.analyticsCode = {}
   app.locals.basedir = WIKI.ROOTPATH
   app.locals.config = WIKI.config
@@ -123,23 +132,6 @@ module.exports = async () => {
     app.use(global.WP_DEV.devMiddleware)
     app.use(global.WP_DEV.hotMiddleware)
   }
-
-  // ----------------------------------------
-  // Apollo Server (GraphQL)
-  // ----------------------------------------
-
-  const graphqlSchema = require('./graph')
-  const apolloServer = new ApolloServer({
-    ...graphqlSchema,
-    context: ({ req, res }) => ({ req, res }),
-    subscriptions: {
-      onConnect: (connectionParams, webSocket) => {
-
-      },
-      path: '/graphql-subscriptions'
-    }
-  })
-  apolloServer.applyMiddleware({ app })
 
   // ----------------------------------------
   // Routing
@@ -184,118 +176,13 @@ module.exports = async () => {
   })
 
   // ----------------------------------------
-  // HTTP/S server
+  // Start HTTP Server(s)
   // ----------------------------------------
 
-  let srvConnections = {}
+  await WIKI.servers.startHTTP()
 
-  app.set('port', WIKI.config.port)
-  if (WIKI.config.ssl.enabled) {
-    WIKI.logger.info(`HTTPS Server on port: [ ${WIKI.config.port} ]`)
-    const tlsOpts = {}
-    try {
-      if (WIKI.config.ssl.format === 'pem') {
-        tlsOpts.key = fs.readFileSync(WIKI.config.ssl.key)
-        tlsOpts.cert = fs.readFileSync(WIKI.config.ssl.cert)
-      } else {
-        tlsOpts.pfx = fs.readFileSync(WIKI.config.ssl.pfx)
-      }
-      if (!_.isEmpty(WIKI.config.ssl.passphrase)) {
-        tlsOpts.passphrase = WIKI.config.ssl.passphrase
-      }
-      if (!_.isEmpty(WIKI.config.ssl.dhparam)) {
-        tlsOpts.dhparam = WIKI.config.ssl.dhparam
-      }
-    } catch (err) {
-      WIKI.logger.error('Failed to setup HTTPS server parameters:')
-      WIKI.logger.error(err)
-      return process.exit(1)
-    }
-    WIKI.server = https.createServer(tlsOpts, app)
-
-    // HTTP Redirect Server
-    if (WIKI.config.ssl.redirectNonSSLPort) {
-      WIKI.serverAlt = http.createServer((req, res) => {
-        res.writeHead(301, { 'Location': 'https://' + req.headers['host'] + req.url })
-        res.end()
-      })
-    }
-  } else {
-    WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
-    WIKI.server = http.createServer(app)
-  }
-  apolloServer.installSubscriptionHandlers(WIKI.server)
-
-  WIKI.server.listen(WIKI.config.port, WIKI.config.bindIP)
-  WIKI.server.on('error', (error) => {
-    if (error.syscall !== 'listen') {
-      throw error
-    }
-
-    // handle specific listen errors with friendly messages
-    switch (error.code) {
-      case 'EACCES':
-        WIKI.logger.error('Listening on port ' + WIKI.config.port + ' requires elevated privileges!')
-        return process.exit(1)
-      case 'EADDRINUSE':
-        WIKI.logger.error('Port ' + WIKI.config.port + ' is already in use!')
-        return process.exit(1)
-      default:
-        throw error
-    }
-  })
-
-  WIKI.server.on('connection', conn => {
-    let key = `${conn.remoteAddress}:${conn.remotePort}`
-    srvConnections[key] = conn
-    conn.on('close', function() {
-      delete srvConnections[key]
-    })
-  })
-
-  WIKI.server.on('listening', () => {
-    if (WIKI.config.ssl.enabled) {
-      WIKI.logger.info('HTTPS Server: [ RUNNING ]')
-
-      // Start HTTP Redirect Server
-      if (WIKI.config.ssl.redirectNonSSLPort) {
-        WIKI.serverAlt.listen(WIKI.config.ssl.redirectNonSSLPort, WIKI.config.bindIP)
-
-        WIKI.serverAlt.on('error', (error) => {
-          if (error.syscall !== 'listen') {
-            throw error
-          }
-
-          switch (error.code) {
-            case 'EACCES':
-              WIKI.logger.error('(HTTP Redirect) Listening on port ' + WIKI.config.port + ' requires elevated privileges!')
-              return process.exit(1)
-            case 'EADDRINUSE':
-              WIKI.logger.error('(HTTP Redirect) Port ' + WIKI.config.port + ' is already in use!')
-              return process.exit(1)
-            default:
-              throw error
-          }
-        })
-
-        WIKI.serverAlt.on('listening', () => {
-          WIKI.logger.info('HTTP Server: [ RUNNING in redirect mode ]')
-        })
-      }
-    } else {
-      WIKI.logger.info('HTTP Server: [ RUNNING ]')
-    }
-  })
-
-  WIKI.server.destroy = (cb) => {
-    WIKI.server.close(cb)
-    for (let key in srvConnections) {
-      srvConnections[key].destroy()
-    }
-
-    if (WIKI.config.ssl.enabled && WIKI.config.ssl.redirectNonSSLPort) {
-      WIKI.serverAlt.close(cb)
-    }
+  if (WIKI.config.ssl.enabled === true || WIKI.config.ssl.enabled === 'true' || WIKI.config.ssl.enabled === 1 || WIKI.config.ssl.enabled === '1') {
+    await WIKI.servers.startHTTPS()
   }
 
   return true

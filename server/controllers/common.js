@@ -109,7 +109,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 
-  if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+  if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
     return res.render('unauthorized', { action: 'history' })
   }
@@ -126,6 +126,39 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
     res.render('history', { page })
   } else {
     res.redirect(`/${pageArgs.path}`)
+  }
+})
+
+/**
+ * Page ID redirection
+ */
+router.get(['/i', '/i/:id'], async (req, res, next) => {
+  const pageId = _.toSafeInteger(req.params.id)
+  if (pageId <= 0) {
+    return res.redirect('/')
+  }
+
+  const page = await WIKI.models.pages.query().column(['path', 'localeCode', 'isPrivate', 'privateNS']).findById(pageId)
+  if (!page) {
+    _.set(res.locals, 'pageMeta.title', 'Page Not Found')
+    return res.status(404).render('notfound', { action: 'view' })
+  }
+
+  if (!WIKI.auth.checkAccess(req.user, ['read:pages'], {
+    locale: page.localeCode,
+    path: page.path,
+    private: page.isPrivate,
+    privateNS: page.privateNS,
+    explicitLocale: false
+  })) {
+    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+    return res.render('unauthorized', { action: 'view' })
+  }
+
+  if (WIKI.config.lang.namespacing) {
+    return res.redirect(`/${page.localeCode}/${page.path}`)
+  } else {
+    return res.redirect(`/${page.path}`)
   }
 })
 
@@ -149,7 +182,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 
-  if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+  if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
     return res.render('unauthorized', { action: 'source' })
   }
 
