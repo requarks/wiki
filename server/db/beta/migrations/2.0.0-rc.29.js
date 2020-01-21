@@ -15,6 +15,17 @@ exports.up = knex => {
           break
       }
     })
+    .table('pageHistory', table => {
+      switch (WIKI.config.db.type) {
+        case 'mariadb':
+        case 'mysql':
+          table.specificType('content', 'LONGTEXT').alter()
+          break
+        case 'mssql':
+          table.specificType('content', 'VARCHAR(max)').alter()
+          break
+      }
+    })
 }
 
 exports.down = knex => { }

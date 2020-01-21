@@ -125,7 +125,19 @@ exports.up = knex => {
       table.string('publishEndDate')
       table.string('action').defaultTo('updated')
       table.integer('pageId').unsigned()
-      table.text('content')
+      switch (WIKI.config.db.type) {
+        case 'postgres':
+        case 'sqlite':
+          table.text('content')
+          break
+        case 'mariadb':
+        case 'mysql':
+          table.specificType('content', 'LONGTEXT')
+          break
+        case 'mssql':
+          table.specificType('content', 'VARCHAR(max)')
+          break
+      }
       table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
     })
