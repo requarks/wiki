@@ -54,6 +54,8 @@ defaults:
       securityHSTSDuration: 300
       securityCSP: false
       securityCSPDirectives: ''
+    server:
+      sslRedir: false
     flags:
       ldapdebug: false
       sqllog: false

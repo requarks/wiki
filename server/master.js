@@ -59,10 +59,10 @@ module.exports = async () => {
   }))
 
   // ----------------------------------------
-  // Let's Encrypt Challenge
+  // SSL Handlers
   // ----------------------------------------
 
-  app.use('/', ctrl.letsencrypt)
+  app.use('/', ctrl.ssl)
 
   // ----------------------------------------
   // Passport Authentication

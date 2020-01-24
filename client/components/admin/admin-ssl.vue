@@ -8,163 +8,259 @@
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:ssl.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft {{ $t('admin:ssl.subtitle') }}
           v-spacer
-          v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
-            v-icon(left) mdi-check
-            span {{$t('common:actions.apply')}}
+          v-btn.animated.fadeInDown(
+            v-if='info.sslProvider === `letsencrypt`'
+            color='black'
+            dark
+            depressed
+            @click='renewCertificate'
+            large
+            :loading='loadingRenew'
+            )
+            v-icon(left) mdi-cached
+            span {{$t('admin:ssl.renewCertificate')}}
         v-form.pt-3
           v-layout(row wrap)
             v-flex(lg6 xs12)
-              v-form
-                v-card.animated.fadeInUp
-                  v-toolbar(color='primary', dark, dense, flat)
-                    v-toolbar-title.subtitle-1 {{ $t('admin:ssl.provider') }}
-                  v-card-text
-                    v-select(
-                      :items='providers'
-                      outlined
-                      :label='$t(`admin:ssl.provider`)'
-                      required
-                      :counter='255'
-                      v-model='config.provider'
-                      prepend-icon='mdi-handshake'
-                      :hint='$t(`admin:ssl.providerHint`)'
-                      persistent-hint
-                      )
-                    v-text-field.mt-3(
-                      outlined
-                      :label='$t(`admin:ssl.domain`)'
-                      required
-                      :counter='255'
-                      v-model='config.domain'
-                      prepend-icon='mdi-earth'
-                      :hint='$t(`admin:ssl.domainHint`)'
-                      persistent-hint
-                      :disabled='config.provider === ``'
-                      )
-
-              v-card.animated.fadeInUp.wait-p2s.mt-3(v-if='config.provider !== ``')
-                v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title.subtitle-1 {{$t('admin:ssl.providerOptions')}}
-                v-card-text ---
+              v-card.animated.fadeInUp
+                v-subheader {{ $t('admin:ssl.currentState') }}
+                v-list(two-line, dense)
+                  v-list-item
+                    v-list-item-avatar
+                      v-icon.indigo.white--text mdi-handshake
+                    v-list-item-content
+                      v-list-item-title {{ $t(`admin:ssl.provider`) }}
+                      v-list-item-subtitle {{ providerTitle }}
+                  template(v-if='info.sslProvider === `letsencrypt`')
+                    v-list-item
+                      v-list-item-avatar
+                        v-icon.indigo.white--text mdi-application
+                      v-list-item-content
+                        v-list-item-title {{ $t(`admin:ssl.domain`) }}
+                        v-list-item-subtitle {{ info.sslDomain }}
+                    v-list-item
+                      v-list-item-avatar
+                        v-icon.indigo.white--text mdi-at
+                      v-list-item-content
+                        v-list-item-title {{ $t('admin:ssl.subscriberEmail') }}
+                        v-list-item-subtitle {{ info.sslSubscriberEmail }}
+                    v-list-item
+                      v-list-item-avatar
+                        v-icon.indigo.white--text mdi-calendar-remove-outline
+                      v-list-item-content
+                        v-list-item-title {{ $t('admin:ssl.expiration') }}
+                        v-list-item-subtitle {{ info.sslExpirationDate | moment('calendar') }}
+                    v-list-item
+                      v-list-item-avatar
+                        v-icon.indigo.white--text mdi-traffic-light
+                      v-list-item-content
+                        v-list-item-title {{ $t(`admin:ssl.status`) }}
+                        v-list-item-subtitle {{ info.sslStatus }}
 
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p2s
-                  v-toolbar(color='primary', dark, dense, flat)
-                    v-toolbar-title.subtitle-1 {{ $t('admin:ssl.ports') }}
-                  v-card-text
-                    v-row
-                      v-col(cols='6')
-                        v-text-field(
-                          outlined
-                          :label='$t(`admin:ssl.httpPort`)'
-                          v-model='config.httpPort'
-                          prepend-icon='mdi-lock-open-variant-outline'
-                          :hint='$t(`admin:ssl.httpPortHint`)'
-                          persistent-hint
+                v-subheader {{ $t('admin:ssl.ports') }}
+                v-list(two-line, dense)
+                  v-list-item
+                    v-list-item-avatar
+                      v-icon.blue.white--text mdi-lock-open-variant
+                    v-list-item-content
+                      v-list-item-title {{ $t(`admin:ssl.httpPort`) }}
+                      v-list-item-subtitle {{ info.httpPort }}
+                  template(v-if='info.httpsPort > 0')
+                    v-divider
+                    v-list-item
+                      v-list-item-avatar
+                        v-icon.green.white--text mdi-lock
+                      v-list-item-content
+                        v-list-item-title {{ $t(`admin:ssl.httpsPort`) }}
+                        v-list-item-subtitle {{ info.httpsPort }}
+                    v-divider
+                    v-list-item
+                      v-list-item-avatar
+                        v-icon.indigo.white--text mdi-sign-direction
+                      v-list-item-content
+                        v-list-item-title {{ $t(`admin:ssl.httpPortRedirect`) }}
+                        v-list-item-subtitle {{ info.httpRedirection }}
+                      v-list-item-action
+                        v-btn.red--text(
+                          v-if='info.httpRedirection'
+                          depressed
+                          :color='$vuetify.theme.dark ? `red darken-4` : `red lighten-5`'
+                          :class='$vuetify.theme.dark ? `text--lighten-5` : `text--darken-2`'
+                          @click='toggleRedir'
+                          :loading='loadingRedir'
                           )
-                      v-col(cols='6')
-                        v-checkbox(
-                          :label='$t(`admin:ssl.httpPortRedirect`)'
-                          v-model='config.httpRedirect'
-                          :hint='$t(`admin:ssl.httpPortRedirectHint`)'
-                          :disabled='config.provider === ``'
-                          persistent-hint
-                          color='primary'
+                          v-icon(left) mdi-power
+                          span {{$t('admin:ssl.httpPortRedirectTurnOff')}}
+                        v-btn.green--text(
+                          v-else
+                          depressed
+                          :color='$vuetify.theme.dark ? `green darken-4` : `green lighten-5`'
+                          :class='$vuetify.theme.dark ? `text--lighten-5` : `text--darken-2`'
+                          @click='toggleRedir'
+                          :loading='loadingRedir'
                           )
-                      v-col(cols='6')
-                        v-text-field(
-                          outlined
-                          :label='$t(`admin:ssl.httpsPort`)'
-                          v-model='config.httpsPort'
-                          prepend-icon='mdi-lock'
-                          :hint='$t(`admin:ssl.httpsPortHint`)'
-                          persistent-hint
-                          :disabled='config.provider === ``'
-                          )
-                  v-card-text.grey(:class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-4`')
-                    .caption {{$t(`admin:ssl.writableConfigFileWarning`)}}
+                          v-icon(left) mdi-power
+                          span {{$t('admin:ssl.httpPortRedirectTurnOn')}}
+
+    v-dialog(
+      v-model='loadingRenew'
+      persistent
+      max-width='450'
+      )
+      v-card(color='black', dark)
+        v-card-text.pa-10.text-center
+          semipolar-spinner.animated.fadeIn(
+            :animation-duration='1500'
+            :size='65'
+            color='#FFF'
+            style='margin: 0 auto;'
+          )
+          .mt-5.body-1.white--text {{$t('admin:ssl.renewCertificateLoadingTitle')}}
+          .caption.mt-4 {{$t('admin:ssl.renewCertificateLoadingSubtitle')}}
 
 </template>
 
 <script>
 import _ from 'lodash'
-import siteConfigQuery from 'gql/admin/site/site-query-config.gql'
-import siteUpdateConfigMutation from 'gql/admin/site/site-mutation-save-config.gql'
+import gql from 'graphql-tag'
+
+import { SemipolarSpinner } from 'epic-spinners'
 
 export default {
+  components: {
+    SemipolarSpinner
+  },
   data() {
     return {
-      config: {
-        provider: '',
-        domain: '',
-        httpPort: 3000,
-        httpPortRedirect: true,
-        httpsPort: 443
+      loadingRenew: false,
+      loadingRedir: false,
+      info: {
+        sslDomain: '',
+        sslProvider: '',
+        sslSubscriberEmail: '',
+        sslExpirationDate: false,
+        sslStatus: '',
+        httpPort: 0,
+        httpRedirection: false,
+        httpsPort: 0
       }
     }
   },
   computed: {
-    providers () {
-      return [
-        { text: this.$t('admin:ssl.providerDisabled'), value: '' },
-        { text: this.$t('admin:ssl.providerLetsEncrypt'), value: 'letsencrypt' },
-        { text: this.$t('admin:ssl.providerCustomCertificate'), value: 'custom' }
-      ]
+    providerTitle () {
+      switch (this.info.sslProvider) {
+        case 'custom':
+          return this.$t('admin:ssl.providerCustomCertificate')
+        case 'letsencrypt':
+          return this.$t('admin:ssl.providerLetsEncrypt')
+        default:
+          return this.$t('admin:ssl.providerDisabled')
+      }
     }
   },
   methods: {
-    async save () {
+    async toggleRedir () {
+      this.loadingRedir = true
       try {
+        this.info.httpRedirection = !this.info.httpRedirection
         await this.$apollo.mutate({
-          mutation: siteUpdateConfigMutation,
+          mutation: gql`
+            mutation ($enabled: Boolean!) {
+              system {
+                setHTTPSRedirection(enabled: $enabled) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
           variables: {
-            host: _.get(this.config, 'host', ''),
-            title: _.get(this.config, 'title', ''),
-            description: _.get(this.config, 'description', ''),
-            robots: _.get(this.config, 'robots', []),
-            analyticsService: _.get(this.config, 'analyticsService', ''),
-            analyticsId: _.get(this.config, 'analyticsId', ''),
-            company: _.get(this.config, 'company', ''),
-            hasLogo: _.get(this.config, 'hasLogo', false),
-            logoIsSquare: _.get(this.config, 'logoIsSquare', false),
-            featurePageRatings: _.get(this.config, 'featurePageRatings', false),
-            featurePageComments: _.get(this.config, 'featurePageComments', false),
-            featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false),
-            securityIframe: _.get(this.config, 'securityIframe', false),
-            securityReferrerPolicy: _.get(this.config, 'securityReferrerPolicy', false),
-            securityTrustProxy: _.get(this.config, 'securityTrustProxy', false),
-            securitySRI: _.get(this.config, 'securitySRI', false),
-            securityHSTS: _.get(this.config, 'securityHSTS', false),
-            securityHSTSDuration: _.get(this.config, 'securityHSTSDuration', 0),
-            securityCSP: _.get(this.config, 'securityCSP', false),
-            securityCSPDirectives: _.get(this.config, 'securityCSPDirectives', '')
+            enabled: _.get(this.info, 'httpRedirection', false)
           },
           watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-ssl-toggleRedirection')
           }
         })
         this.$store.commit('showNotification', {
           style: 'success',
-          message: 'Configuration saved successfully.',
+          message: this.$t('admin:ssl.httpPortRedirectSaveSuccess'),
           icon: 'check'
         })
-        this.siteTitle = this.config.title
-        this.company = this.config.company
+      } catch (err) {
+        this.info.httpRedirection = !this.info.httpRedirection
+        this.$store.commit('pushGraphError', err)
+      }
+      this.loadingRedir = false
+    },
+    async renewCertificate () {
+      this.loadingRenew = true
+      try {
+        const respRaw = await this.$apollo.mutate({
+          mutation: gql`
+            mutation {
+              system {
+                renewHTTPSCertificate {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-ssl-renew')
+          }
+        })
+        const resp = _.get(respRaw, 'data.system.renewHTTPSCertificate.responseResult', {})
+        if (resp.succeeded) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('admin:ssl.renewCertificateSuccess'),
+            icon: 'check'
+          })
+        } else {
+          throw new Error(resp.message)
+        }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
+      this.loadingRenew = false
+    }
+  },
+  apollo: {
+    info: {
+      query: gql`
+        {
+          system {
+            info {
+              httpPort
+              httpRedirection
+              httpsPort
+              sslDomain
+              sslExpirationDate
+              sslProvider
+              sslStatus
+              sslSubscriberEmail
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => _.cloneDeep(data.system.info),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-ssl-refresh')
+      }
     }
   }
-  // apollo: {
-  //   config: {
-  //     query: siteConfigQuery,
-  //     fetchPolicy: 'network-only',
-  //     update: (data) => _.cloneDeep(data.site.config),
-  //     watchLoading (isLoading) {
-  //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-refresh')
-  //     }
-  //   }
-  // }
 }
 </script>
 

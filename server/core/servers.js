@@ -46,7 +46,7 @@ module.exports = {
     })
 
     this.servers.http.on('connection', conn => {
-      let connKey = `${conn.remoteAddress}:${conn.remotePort}`
+      let connKey = `http:${conn.remoteAddress}:${conn.remotePort}`
       this.connections.set(connKey, conn)
       conn.on('close', () => {
         this.connections.delete(connKey)
@@ -108,7 +108,7 @@ module.exports = {
     })
 
     this.servers.https.on('connection', conn => {
-      let connKey = `${conn.remoteAddress}:${conn.remotePort}`
+      let connKey = `https:${conn.remoteAddress}:${conn.remotePort}`
       this.connections.set(connKey, conn)
       conn.on('close', () => {
         this.connections.delete(connKey)
@@ -135,11 +135,17 @@ module.exports = {
   /**
    * Close all active connections
    */
-  closeConnections () {
-    for (const conn of this.connections.values()) {
+  closeConnections (mode = 'all') {
+    for (const [key, conn] of this.connections) {
+      if (mode !== `all` && key.indexOf(`${mode}:`) !== 0) {
+        continue
+      }
       conn.destroy()
+      this.connections.delete(key)
     }
-    this.connections.clear()
+    if (mode === 'all') {
+      this.connections.clear()
+    }
   },
   /**
    * Stop all servers
@@ -155,5 +161,29 @@ module.exports = {
       this.servers.https = null
     }
     this.servers.graph = null
+  },
+  /**
+   * Restart Server
+   */
+  async restartServer (srv = 'https') {
+    this.closeConnections(srv)
+    switch (srv) {
+      case 'http':
+        if (this.servers.http) {
+          await Promise.fromCallback(cb => { this.servers.http.close(cb) })
+          this.servers.http = null
+        }
+        this.startHTTP()
+        break
+      case 'https':
+        if (this.servers.https) {
+          await Promise.fromCallback(cb => { this.servers.https.close(cb) })
+          this.servers.https = null
+        }
+        this.startHTTPS()
+        break
+      default:
+        throw new Error('Cannot restart server: Invalid designation')
+    }
   }
 }
