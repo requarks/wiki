@@ -702,8 +702,8 @@ module.exports = class Page extends Model {
             creatorEmail: 'creator.email'
           }
         ])
-        .joinRelation('author')
-        .joinRelation('creator')
+        .joinRelated('author')
+        .joinRelated('creator')
         .eagerAlgorithm(Model.JoinEagerAlgorithm)
         .eager('tags(selectTags)', {
           selectTags: builder => {
