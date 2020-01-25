@@ -29,7 +29,13 @@ html(lang=siteConfig.lang)
 
     //- Site Properties
     script.
-      var siteConfig = !{JSON.stringify(siteConfig)}; var siteLangs = !{JSON.stringify(langs)}
+      var siteConfig = !{JSON.stringify(siteConfig)}
+      var siteLangs = !{JSON.stringify(langs)}
+
+    //- Dev Mode Warning
+    if devMode
+      script.
+        siteConfig.devMode = true
 
     //- Icon Set
     if config.theming.iconset === 'fa'
@@ -47,34 +53,20 @@ html(lang=siteConfig.lang)
 
     //- CSS
     
-      
-    link(
-      type='text/css'
-      rel='stylesheet'
-      href='/css/app.b98d10f6bb893bd895c4.css'
-      integrity=config.security.securitySRI ? 'sha256-jq2Kb/NnMahn7H/2jFJr2LA83xz2/E/Srkal5y7lsi0= sha512-i8DSU4d4hSct5qP/UwqIYX3k2zf6a216ksGM1VrCFL0O1JS57EZt3yeNpyC3J9hXFAmGzrD8Gbi5mCYKdsvogA==' : false
-      crossorigin='use-credentials'
-    )
-      
-    
 
     //- JS
     
       
     script(
       type='text/javascript'
-      src='/js/runtime.79e192f68c7933313fc5.js'
-      integrity=config.security.securitySRI ? 'sha256-TXFe1uzjWUz4nYhXBGApuWeaoGyFCkdMMh2H4Z1wncA= sha512-vtPB7dXS9rQ0FrqXc6lClQTDHfA3Jd/AyCHRDplu7kl66Uibl6SxOlNB4ZYAYP+LzTOZbgRPOKDrcgyJfpCJyA==' : false
-      crossorigin='use-credentials'
+      src='/js/runtime.js'
       )
       
     
       
     script(
       type='text/javascript'
-      src='/js/app.b98d10f6bb893bd895c4.js'
-      integrity=config.security.securitySRI ? 'sha256-MOi4oo6UZd0XVJKbg+BPy4Vpf6PIGq7n2lD6PJN7tIk= sha512-NHmZtNstK6QfgFbwGqtDxBoaRW25AzhDXSgwPsM7U62ENF0xxWZmOAIBV7/Hh9KIUuXqzieWbrmLI1A/rNzGKA==' : false
-      crossorigin='use-credentials'
+      src='/js/app.js'
       )
       
     
