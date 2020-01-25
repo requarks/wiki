@@ -30,7 +30,7 @@ module.exports = {
 
     passport.deserializeUser(async (id, done) => {
       try {
-        const user = await WIKI.models.users.query().findById(id).modifyEager('groups', builder => {
+        const user = await WIKI.models.users.query().findById(id).withGraphFetched('groups').modifyGraph('groups', builder => {
           builder.select('groups.id', 'permissions')
         })
         if (user) {

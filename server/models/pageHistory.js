@@ -116,7 +116,7 @@ module.exports = class PageHistory extends Model {
           authorName: 'author.name'
         }
       ])
-      .joinRelation('author')
+      .joinRelated('author')
       .where({
         'pageHistory.pageId': pageId
       })
@@ -138,7 +138,7 @@ module.exports = class PageHistory extends Model {
             authorName: 'author.name'
           }
         ])
-        .joinRelation('author')
+        .joinRelated('author')
         .where({
           'pageHistory.pageId': pageId
         })
