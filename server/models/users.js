@@ -705,7 +705,7 @@ module.exports = class User extends Model {
   }
 
   static async getGuestUser () {
-    const user = await WIKI.models.users.query().findById(2).eager('groups').modifyEager('groups', builder => {
+    const user = await WIKI.models.users.query().findById(2).withGraphJoined('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions')
     })
     if (!user) {

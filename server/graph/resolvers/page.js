@@ -61,11 +61,9 @@ module.exports = {
         'createdAt',
         'updatedAt'
       ])
-        .eagerAlgorithm(WIKI.models.Objection.Model.JoinEagerAlgorithm)
-        .eager('tags(selectTags)', {
-          selectTags: builder => {
-            builder.select('tag')
-          }
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag')
         })
         .modify(queryBuilder => {
           if (args.limit) {

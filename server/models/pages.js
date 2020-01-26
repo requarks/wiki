@@ -704,11 +704,9 @@ module.exports = class Page extends Model {
         ])
         .joinRelated('author')
         .joinRelated('creator')
-        .eagerAlgorithm(Model.JoinEagerAlgorithm)
-        .eager('tags(selectTags)', {
-          selectTags: builder => {
-            builder.select('tag', 'title')
-          }
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag', 'title')
         })
         .where(queryModeID ? {
           'pages.id': opts
