@@ -50,6 +50,7 @@ module.exports = () => {
   app.locals.config = WIKI.config
   app.locals.data = WIKI.data
   app.locals._ = require('lodash')
+  app.locals.devMode = WIKI.devMode
 
   // ----------------------------------------
   // HMR (Dev Mode Only)
