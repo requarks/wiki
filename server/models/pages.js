@@ -570,7 +570,7 @@ module.exports = class Page extends Model {
     let affectedHashes = []
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
-      affectedHashes = await WIKI.models.pages.query()
+      const qryHashes = await WIKI.models.pages.query()
         .returning('hash')
         .patch({
           render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
@@ -581,7 +581,7 @@ module.exports = class Page extends Model {
             'pageLinks.localeCode': opts.locale
           })
         })
-        .pluck('hash')
+      affectedHashes = qryHashes.map(h => h.hash)
     } else {
       // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, MSSQL, SQLITE only)
       await WIKI.models.pages.query()
@@ -594,7 +594,7 @@ module.exports = class Page extends Model {
             'pageLinks.localeCode': opts.locale
           })
         })
-      affectedHashes = await WIKI.models.pages.query()
+      const qryHashes = await WIKI.models.pages.query()
         .column('hash')
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
@@ -602,7 +602,7 @@ module.exports = class Page extends Model {
             'pageLinks.localeCode': opts.locale
           })
         })
-        .pluck('hash')
+      affectedHashes = qryHashes.map(h => h.hash)
     }
     for (const hash of affectedHashes) {
       await WIKI.models.pages.deletePageFromCache({ hash })
