@@ -9,7 +9,8 @@
         v-btn.animated.fadeInDown(
           text
           color='green'
-          @click.native.stop='save'
+          @click='save'
+          @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
@@ -17,7 +18,7 @@
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
-          @click.native.stop='openPropsModal'
+          @click='openPropsModal'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
@@ -27,7 +28,7 @@
           text
           color='red'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
-          @click.native.stop='exit'
+          @click='exit'
           )
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
@@ -270,8 +271,17 @@ export default {
           style: 'error',
           icon: 'warning'
         })
+        throw err
       }
       this.hideProgressDialog()
+    },
+    async saveAndClose() {
+      try {
+        await this.save()
+        await this.exit()
+      } catch (err) {
+        // Error is already handled
+      }
     },
     async exit() {
       if (this.initContentParsed !== this.$store.get('editor/content')) {
