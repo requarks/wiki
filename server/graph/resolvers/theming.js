@@ -20,7 +20,14 @@ module.exports = {
       }]
     },
     async config(obj, args, context, info) {
-      return _.pick(WIKI.config.theming, ['theme', 'iconset', 'darkMode', 'injectCSS', 'injectHead', 'injectBody'])
+      return {
+        theme: WIKI.config.theming.theme,
+        iconset: WIKI.config.theming.iconset,
+        darkMode: WIKI.config.theming.darkMode,
+        injectCSS: new CleanCSS({ format: 'beautify' }).minify(WIKI.config.theming.injectCSS).styles,
+        injectHead: WIKI.config.theming.injectHead,
+        injectBody: WIKI.config.theming.injectBody
+      }
     }
   },
   ThemingMutation: {
