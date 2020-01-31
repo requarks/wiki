@@ -59,7 +59,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     isPrivate: false
   })
 
-  pageArgs.tags = page === undefined ? [] : page.tags
+  pageArgs.tags = _.get(page, 'tags', [])
 
   const injectCode = {
     css: WIKI.config.theming.injectCSS,
@@ -118,7 +118,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
     isPrivate: false
   })
 
-  pageArgs.tags = page === undefined ? [] : page.tags
+  pageArgs.tags = _.get(page, 'tags', [])
 
   if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
@@ -188,7 +188,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
     isPrivate: false
   })
 
-  pageArgs.tags = page === undefined ? [] : page.tags
+  pageArgs.tags = _.get(page, 'tags', [])
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/s/${pageArgs.locale}/${pageArgs.path}`)
@@ -239,7 +239,7 @@ router.get('/*', async (req, res, next) => {
         userId: req.user.id,
         isPrivate: false
       })
-      pageArgs.tags = page === undefined ? [] : page.tags
+      pageArgs.tags = _.get(page, 'tags', [])
 
       if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
         if (pageArgs.path === 'home') {
