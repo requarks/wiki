@@ -59,6 +59,8 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     isPrivate: false
   })
 
+  pageArgs.tags = _.get(page, 'tags', [])
+
   const injectCode = {
     css: WIKI.config.theming.injectCSS,
     head: WIKI.config.theming.injectHead,
@@ -109,17 +111,20 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 
-  if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
-    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-    return res.render('unauthorized', { action: 'history' })
-  }
-
   const page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
     isPrivate: false
   })
+
+  pageArgs.tags = _.get(page, 'tags', [])
+
+  if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
+    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+    return res.render('unauthorized', { action: 'history' })
+  }
+
   if (page) {
     _.set(res.locals, 'pageMeta.title', page.title)
     _.set(res.locals, 'pageMeta.description', page.description)
@@ -149,7 +154,8 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
     path: page.path,
     private: page.isPrivate,
     privateNS: page.privateNS,
-    explicitLocale: false
+    explicitLocale: false,
+    tags: page.tags
   })) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
     return res.render('unauthorized', { action: 'view' })
@@ -175,6 +181,14 @@ router.get(['/p', '/p/*'], (req, res, next) => {
  */
 router.get(['/s', '/s/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+  const page = await WIKI.models.pages.getPageFromDb({
+    path: pageArgs.path,
+    locale: pageArgs.locale,
+    userId: req.user.id,
+    isPrivate: false
+  })
+
+  pageArgs.tags = _.get(page, 'tags', [])
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/s/${pageArgs.locale}/${pageArgs.path}`)
@@ -186,12 +200,6 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
     return res.render('unauthorized', { action: 'source' })
   }
 
-  const page = await WIKI.models.pages.getPageFromDb({
-    path: pageArgs.path,
-    locale: pageArgs.locale,
-    userId: req.user.id,
-    isPrivate: false
-  })
   if (page) {
     _.set(res.locals, 'pageMeta.title', page.title)
     _.set(res.locals, 'pageMeta.description', page.description)
@@ -224,14 +232,6 @@ router.get('/*', async (req, res, next) => {
 
     req.i18n.changeLanguage(pageArgs.locale)
 
-    if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
-      if (pageArgs.path === 'home') {
-        return res.redirect('/login')
-      }
-      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.status(403).render('unauthorized', { action: 'view' })
-    }
-
     try {
       const page = await WIKI.models.pages.getPage({
         path: pageArgs.path,
@@ -239,6 +239,17 @@ router.get('/*', async (req, res, next) => {
         userId: req.user.id,
         isPrivate: false
       })
+      pageArgs.tags = _.get(page, 'tags', [])
+
+      if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+        if (pageArgs.path === 'home') {
+          return res.redirect('/login')
+        }
+        _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+        return res.status(403).render('unauthorized', {
+          action: 'view'
+        })
+      }
 
       _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
 

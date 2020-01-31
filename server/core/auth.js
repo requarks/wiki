@@ -176,19 +176,30 @@ module.exports = {
           switch (rule.match) {
             case 'START':
               if (_.startsWith(`/${page.path}`, `/${rule.path}`)) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['END', 'REGEX', 'EXACT'] })
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['END', 'REGEX', 'EXACT', 'TAG'] })
               }
               break
             case 'END':
               if (_.endsWith(page.path, rule.path)) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['REGEX', 'EXACT'] })
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['REGEX', 'EXACT', 'TAG'] })
               }
               break
             case 'REGEX':
               const reg = new RegExp(rule.path)
               if (reg.test(page.path)) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT'] })
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT', 'TAG'] })
               }
+              break
+            case 'TAG':
+              _.get(page, 'tags', []).forEach(tag => {
+                if (tag.tag === rule.path) {
+                  checkState = this._applyPageRuleSpecificity({
+                    rule,
+                    checkState,
+                    higherPriority: ['EXACT']
+                  })
+                }
+              })
               break
             case 'EXACT':
               if (`/${page.path}` === `/${rule.path}`) {
