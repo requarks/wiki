@@ -190,14 +190,8 @@ module.exports = {
                 checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT', 'TAG'] })
               }
               break
-            case 'EXACT':
-              if (`/${page.path}` === `/${rule.path}`) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })
-              }
-              break
             case 'TAG':
-              page.tags = page.tags === undefined ? [] : page.tags
-              page.tags.forEach(tag => {
+              _.get(page, 'tags', []).forEach(tag => {
                 if (tag.tag === rule.path) {
                   checkState = this._applyPageRuleSpecificity({
                     rule,
@@ -206,6 +200,11 @@ module.exports = {
                   })
                 }
               })
+              break
+            case 'EXACT':
+              if (`/${page.path}` === `/${rule.path}`) {
+                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })
+              }
               break
           }
         })
