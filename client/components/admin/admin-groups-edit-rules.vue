@@ -225,7 +225,7 @@ export default {
         { text: 'Path is Exactly...', value: 'EXACT', icon: '=' },
         { text: 'Path Ends With...', value: 'END', icon: '.../' },
         { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
-        { text: 'Tag Matches...', value: 'TAG', icon: '=' }
+        { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
       ],
       locales: [
         { text: 'English', value: 'en' }
