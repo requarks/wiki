@@ -144,7 +144,7 @@
 
           //- NEW PAGE
 
-          template(v-if='isAuthenticated')
+          template(v-if='isAuthenticated && path && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
