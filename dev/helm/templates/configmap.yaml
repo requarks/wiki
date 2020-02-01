@@ -1,10 +1,8 @@
-{{- $base := tpl (.Files.Get "config/config.base.yml") . | fromYaml -}}
-{{- $config := mergeOverwrite $base .Values.config -}}
+{{- if .Values.extraEnv }}
 apiVersion: v1
-kind: Secret
-type: Opaque
+kind: ConfigMap
 metadata:
-  name: {{ template "wiki.fullname" $ }}-config
+  name: {{ template "wiki.fullname" $ }}
   namespace: {{ .Release.Namespace | quote }}
   labels:
     app.kubernetes.io/name: {{ template "wiki.name" $ }}
@@ -12,4 +10,5 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name | quote }}
     app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
 data:
-  config.yml: {{ $config | toYaml | b64enc }}
+  {{- toYaml .Values.extraEnv | nindent 2 }}
+{{- end }}
