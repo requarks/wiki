@@ -14,7 +14,7 @@ const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WebpackBarPlugin = require('webpackbar')
-const SriWebpackPlugin = require('webpack-subresource-integrity')
+// const SriWebpackPlugin = require('webpack-subresource-integrity')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
@@ -218,10 +218,10 @@ module.exports = {
       sync: 'runtime.js',
       defaultAttribute: 'async'
     }),
-    new SriWebpackPlugin({
-      hashFuncNames: ['sha256', 'sha512'],
-      enabled: true
-    }),
+    // new SriWebpackPlugin({
+    //   hashFuncNames: ['sha256', 'sha512'],
+    //   enabled: true
+    // }),
     new WebpackBarPlugin({
       name: 'Client Assets'
     }),
