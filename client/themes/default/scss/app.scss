@@ -245,11 +245,6 @@
       border-color: mc('blue', '300');
       color: mc('blue', '900');
 
-      code {
-        background-color: mc('blue', '50');
-        color: mc('blue', '800');
-      }
-
       @at-root .theme--dark & {
         background-color: mc('blue', '900');
         color: mc('blue', '50');
