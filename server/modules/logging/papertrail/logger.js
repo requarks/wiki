@@ -6,7 +6,8 @@ const winston = require('winston')
 
 module.exports = {
   init (logger, conf) {
-    require('winston-papertrail').Papertrail // eslint-disable-line no-unused-expressions
+    // eslint-disable-next-line no-unused-expressions
+    require('winston-papertrail').Papertrail // NOSONAR
     logger.add(new winston.transports.Papertrail({
       host: conf.host,
       port: conf.port,
