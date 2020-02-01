@@ -475,11 +475,15 @@
 ul {
     list-style: none;
     width: 100%;
-    > li::before {		
-      content: '\25b8';		
-      color: mc('grey', '600');		
-      display: inline-block;		
-      width: 1.35rem;		
+    > li::before {
+      content: '\25b8';
+      color: mc('grey', '600');
+      display: inline-block;
+      width: 1.35rem;
+      
+      @at-root .is-rtl & {
+        content: '\25C0' ;
+      }
     }
     > li {
       display:flex;
