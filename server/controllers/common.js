@@ -47,6 +47,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   }
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
 
   if (pageHelper.isReservedPath(pageArgs.path)) {
     return next(new Error('Cannot create this page because it starts with a system reserved path.'))
@@ -110,6 +111,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   }
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
 
   const page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
@@ -195,6 +197,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   }
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
 
   if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
     return res.render('unauthorized', { action: 'source' })
@@ -252,11 +255,12 @@ router.get('/*', async (req, res, next) => {
       }
 
       _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
+      _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
 
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)
         _.set(res.locals, 'pageMeta.description', page.description)
-        const sidebar = await WIKI.models.navigation.getTree({ cache: true })
+        const sidebar = await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale })
         const injectCode = {
           css: WIKI.config.theming.injectCSS,
           head: WIKI.config.theming.injectHead,
