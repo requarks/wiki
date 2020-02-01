@@ -47,7 +47,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   }
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
-  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
+  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
   if (pageHelper.isReservedPath(pageArgs.path)) {
     return next(new Error('Cannot create this page because it starts with a system reserved path.'))
@@ -111,7 +111,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   }
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
-  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
+  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
   const page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
@@ -197,7 +197,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   }
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
-  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
+  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
   if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
     return res.render('unauthorized', { action: 'source' })
@@ -255,7 +255,7 @@ router.get('/*', async (req, res, next) => {
       }
 
       _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
-      _.set(res, 'locals.siteConfig.rtl', req.i18n.dir())
+      _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)

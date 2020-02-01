@@ -480,9 +480,9 @@ ul {
       color: mc('grey', '600');
       display: inline-block;
       width: 1.35rem;
-      
+
       @at-root .is-rtl & {
-        content: '\25C0' ;
+        content: '\25C3' ;
       }
     }
     > li {
@@ -645,6 +645,11 @@ ul {
       right: 1rem;
       height: calc(90px - 32px);
       width: auto;
+
+      @at-root .is-rtl & {
+        left: 1rem;
+        right: initial;
+      }
     }
     &.decor-shadow {
       box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
