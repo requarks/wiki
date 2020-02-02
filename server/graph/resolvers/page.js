@@ -130,6 +130,24 @@ module.exports = {
       return WIKI.models.tags.query().orderBy('tag', 'asc')
     },
     /**
+     * SEARCH TAGS
+     */
+    async searchTags (obj, args, context, info) {
+      const results = await WIKI.models.tags.query()
+        .column('tag')
+        .where(builder => {
+          builder.andWhere(builderSub => {
+            if (WIKI.config.db.type === 'postgres') {
+              builderSub.where('tag', 'ILIKE', `%${args.query}%`)
+            } else {
+              builderSub.where('tag', 'LIKE', `%${args.query}%`)
+            }
+          })
+        })
+        .limit(5)
+      return results.map(r => r.tag)
+    },
+    /**
      * FETCH PAGE TREE
      */
     async tree (obj, args, context, info) {

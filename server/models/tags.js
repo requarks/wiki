@@ -53,6 +53,10 @@ module.exports = class Tag extends Model {
   static async associateTags ({ tags, page }) {
     let existingTags = await WIKI.models.tags.query().column('id', 'tag')
 
+    // Format tags
+
+    tags = _.uniq(tags.map(t => t.toLowerCase()))
+
     // Create missing tags
 
     const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({

@@ -30,7 +30,6 @@ module.exports = {
         if (opts.path) {
           builder.andWhere('path', 'like', `${opts.path}%`)
         }
-        // TODO: Add user permissions filtering
         builder.andWhere(builderSub => {
           if (WIKI.config.db.type === 'postgres') {
             builderSub.where('title', 'ILIKE', `%${q}%`)

@@ -67,18 +67,32 @@
           v-divider
           v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5 {{$t('editor:props.categorization')}}
+            v-chip-group.radius-5.mb-5(column, v-if='tags && tags.length > 0')
+              v-chip(
+                v-for='tag of tags'
+                :key='`tag-` + tag'
+                close
+                label
+                color='teal'
+                text-color='teal lighten-5'
+                @click:close='removeTag(tag)'
+                ) {{tag}}
             v-combobox(
-              chips
-              deletable-chips
               :label='$t(`editor:props.tags`)'
               outlined
-              multiple
               v-model='tags'
               :hint='$t(`editor:props.tagsHint`)'
+              :items='newTagSuggestions'
+              :loading='$apollo.queries.newTagSuggestions.loading'
               persistent-hint
-              clearable
-              height='130'
+              deletable-chips
+              hide-no-data
+              hide-selected
+              :search-input.sync='newTagSearch'
+              multiple
               )
+              template(v-slot:selection='{ attrs, item, parent, selected }')
+                span
         v-tab-item
           v-card-text
             .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outlined).white--text coming soon]
@@ -243,6 +257,7 @@
 <script>
 import _ from 'lodash'
 import { sync, get } from 'vuex-pathify'
+import gql from 'graphql-tag'
 
 /* global siteLangs, siteConfig */
 
@@ -258,7 +273,10 @@ export default {
       isPublishStartShown: false,
       isPublishEndShown: false,
       pageSelectorShown: false,
-      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang]
+      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang],
+      newTag: '',
+      newTagSuggestions: [],
+      newTagSearch: ''
     }
   },
   computed: {
@@ -291,6 +309,14 @@ export default {
     }
   },
   methods: {
+    addTag () {
+      this.$nextTick(() => {
+        this.tags.push(this.newTag)
+      })
+    },
+    removeTag (tag) {
+      this.tags = _.without(this.tags, tag)
+    },
     close() {
       this.isShown = false
     },
@@ -300,6 +326,28 @@ export default {
     setPath({ path, locale }) {
       this.locale = locale
       this.path = path
+    }
+  },
+  apollo: {
+    newTagSuggestions: {
+      query: gql`
+        query ($query: String!) {
+          pages {
+            searchTags (query: $query)
+          }
+        }
+      `,
+      variables () {
+        return {
+          query: this.newTagSearch
+        }
+      },
+      fetchPolicy: 'cache-first',
+      update: (data) => _.get(data, 'pages.searchTags', []),
+      skip () {
+        return !this.value || _.isEmpty(this.newTagSearch)
+      },
+      throttle: 500
     }
   }
 }

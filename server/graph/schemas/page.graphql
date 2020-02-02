@@ -41,6 +41,10 @@ type PageQuery {
 
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
 
+  searchTags(
+    query: String!
+  ): [String]! @auth(requires: ["manage:system", "read:pages"])
+
   tree(
     path: String
     parent: Int
