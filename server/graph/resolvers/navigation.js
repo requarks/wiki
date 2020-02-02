@@ -11,7 +11,7 @@ module.exports = {
   },
   NavigationQuery: {
     async tree(obj, args, context, info) {
-      return WIKI.models.navigation.getTree()
+      return WIKI.models.navigation.getTree({ cache: false, locale: 'all' })
     }
   },
   NavigationMutation: {
