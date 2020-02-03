@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const EventEmitter = require('events')
+const EventEmitter = require('eventemitter2').EventEmitter2
 
 /* global WIKI */
 
@@ -37,6 +37,7 @@ module.exports = {
       WIKI.servers = require('./servers')
       WIKI.sideloader = require('./sideloader').init()
       WIKI.events = new EventEmitter()
+      await WIKI.models.subscribeToNotifications()
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
@@ -91,5 +92,21 @@ module.exports = {
       WIKI.logger.warn(err)
       WIKI.telemetry.sendError(err)
     })
+  },
+  /**
+   * Graceful shutdown
+   */
+  async shutdown () {
+    if (WIKI.models) {
+      await WIKI.models.unsubscribeToNotifications()
+      await WIKI.models.knex.client.pool.destroy()
+      await WIKI.models.knex.destroy()
+    }
+    if (WIKI.scheduler) {
+      WIKI.scheduler.stop()
+    }
+    if (WIKI.servers) {
+      await WIKI.servers.stopServers()
+    }
   }
 }

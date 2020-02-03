@@ -2401,6 +2401,19 @@
   resolved "https://registry.yarnpkg.com/@types/prettier/-/prettier-1.19.1.tgz#33509849f8e679e4add158959fdb086440e9553f"
   integrity sha512-5qOlnZscTn4xxM5MeGXAMOsIOIKIbh9e85zJWfBRVPlRMEVawzoPhINYbRGkBZCI8LxvBe7tJCdWiarA99OZfQ==
 
+"@types/pg-types@*":
+  version "1.11.5"
+  resolved "https://registry.yarnpkg.com/@types/pg-types/-/pg-types-1.11.5.tgz#1eebbe62b6772fcc75c18957a90f933d155e005b"
+  integrity sha512-L8ogeT6vDzT1vxlW3KITTCt+BVXXVkLXfZ/XNm6UqbcJgxf+KPO7yjWx7dQQE8RW07KopL10x2gNMs41+IkMGQ==
+
+"@types/pg@^7.4.14":
+  version "7.14.1"
+  resolved "https://registry.yarnpkg.com/@types/pg/-/pg-7.14.1.tgz#40358b57c34970f750f6a26e2a5463c9f4758136"
+  integrity sha512-gQgg4bLuykokypx4O1fwEzl5e6UjjyaBtN3znn5zhm0YB9BnKyHDw+e4cQY9rAPzpdM2qpJbn9TNzUazbmTsdw==
+  dependencies:
+    "@types/node" "*"
+    "@types/pg-types" "*"
+
 "@types/q@^1.5.1":
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
@@ -6861,6 +6874,11 @@ etag@~1.8.1:
   version "1.8.1"
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha1-Qa4u62XvpiJorr/qg6x9eSmbCIc=
+
+eventemitter2@6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/eventemitter2/-/eventemitter2-6.0.0.tgz#218eb512c3603c5341724b6af7b686a1aa5ab8f5"
+  integrity sha512-ZuNWHD7S7IoikyEmx35vPU8H1W0L+oi644+4mSTg7nwXvBQpIwQL7DPjYUF0VMB0jPkNMo3MqD07E7MYrkFmjQ==
 
 eventemitter3@^3.1.0:
   version "3.1.2"
@@ -11709,6 +11727,11 @@ pg-cursor@^2.1.9:
   resolved "https://registry.yarnpkg.com/pg-cursor/-/pg-cursor-2.1.9.tgz#ad73bd7b119db98d9da6bb148162d831d8cddc88"
   integrity sha512-ReAyfc0fiSzO268DZWtOoeUmMdMG368e7qu3zfwa7TpCjEmabk2XfZn+tdE23XzVlJ4OsdsFcxjASOWC0SS7jA==
 
+pg-format@^1.0.2:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/pg-format/-/pg-format-1.0.4.tgz#27734236c2ad3f4e5064915a59334e20040a828e"
+  integrity sha1-J3NCNsKtP05QZJFaWTNOIAQKgo4=
+
 pg-hstore@2.3.3:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/pg-hstore/-/pg-hstore-2.3.3.tgz#d1978c12a85359830b1388d3b0ff233b88928e96"
@@ -11735,6 +11758,21 @@ pg-query-stream@3.0.6:
   version "3.0.6"
   resolved "https://registry.yarnpkg.com/pg-query-stream/-/pg-query-stream-3.0.6.tgz#12f405c2c8c9723d8d9f1616cf3d58ecd1d87c83"
   integrity sha512-/caOI36GVCz1pY35SkftzGowwym4p39e3Ku+sx8MZKNNf+G9WgE0h+Ui9FHTVV9HWf6WWu1GYt5aYfw5ZMeJsQ==
+pg-pubsub@0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/pg-pubsub/-/pg-pubsub-0.5.0.tgz#5469737af32ac6d13fc3153dc3944f55da3d8840"
+  integrity sha512-lfNMbiVt6d8yomYOWV9+smMdrdUUj3Q8Uq9SiNL+3q2G+jjjjaT9+FKDudw9VEN94pYmCtJzhXz/BlaD4LgyZg==
+  dependencies:
+    "@types/pg" "^7.4.14"
+    pg "^7.4.3"
+    pg-format "^1.0.2"
+    promised-retry "^0.3.0"
+    verror "^1.10.0"
+
+pg-query-stream@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/pg-query-stream/-/pg-query-stream-3.0.0.tgz#b2b4c3d5eb105df6cf75d3f95c4e157dd527a2ab"
+  integrity sha512-yxeFKwVCW0vmFYSkygV7hd4KVlGCMHGljSUQvYcIZUtfUaAITIl8QOq9oXfCMmk0L6JOuHesZKpurxyuOU8gKg==
   dependencies:
     pg-cursor "^2.1.9"
 
@@ -11764,6 +11802,20 @@ pg@8.0.2:
     pg-connection-string "0.1.3"
     pg-pool "^3.1.0"
     pg-protocol "^1.2.1"
+    pg-types "^2.1.0"
+    pgpass "1.x"
+    semver "4.3.2"
+
+pg@^7.4.3:
+  version "7.18.1"
+  resolved "https://registry.yarnpkg.com/pg/-/pg-7.18.1.tgz#67f59c47a99456fcb34f9fe53662b79d4a992f6d"
+  integrity sha512-1KtKBKg/zWrjEEv//klBbVOPGucuc7HHeJf6OEMueVcUeyF3yueHf+DvhVwBjIAe9/97RAydO/lWjkcMwssuEw==
+  dependencies:
+    buffer-writer "2.0.0"
+    packet-reader "1.0.0"
+    pg-connection-string "0.1.3"
+    pg-packet-stream "^1.1.0"
+    pg-pool "^2.0.10"
     pg-types "^2.1.0"
     pgpass "1.x"
     semver "4.3.2"
@@ -12943,6 +12995,11 @@ promise@^7.0.1:
   integrity sha512-nolQXZ/4L+bP/UGlkfaIujX9BKxGwmQ9OT4mOt5yvy8iK1h3wqTEJCijzGANTCCl9nWjY41juyAn2K3Q1hLLTg==
   dependencies:
     asap "~2.0.3"
+
+promised-retry@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/promised-retry/-/promised-retry-0.3.0.tgz#fc3930ca1f76c4d1e559b7368b1f7e953ae0d6ad"
+  integrity sha512-oj7GS7q3g381QuIR8mMJeJe5GSKm16xXL7Q+7/+5MH2mlWBHXn7dUYmS/BBjGkoBm9M8h2KcVifj3vRZ62AB5A==
 
 prompts@^2.0.1:
   version "2.2.1"
@@ -15788,7 +15845,7 @@ vendors@^1.0.0:
   resolved "https://registry.yarnpkg.com/vendors/-/vendors-1.0.3.tgz#a6467781abd366217c050f8202e7e50cc9eef8c0"
   integrity sha512-fOi47nsJP5Wqefa43kyWSg80qF+Q3XA6MUkgi7Hp1HQaKDQW4cQrK2D0P7mmbFtsV1N89am55Yru/nyEwRubcw==
 
-verror@1.10.0, verror@^1.8.1:
+verror@1.10.0, verror@^1.10.0, verror@^1.8.1:
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/verror/-/verror-1.10.0.tgz#3a105ca17053af55d6e270c1f8288682e18da400"
   integrity sha1-OhBcoXBTr1XW4nDB+CiGguGNpAA=

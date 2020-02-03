@@ -17,6 +17,7 @@ const migrateFromBeta = require('../db/beta')
 module.exports = {
   Objection,
   knex: null,
+  listener: null,
   /**
    * Initialize DB
    *
@@ -182,5 +183,55 @@ module.exports = {
       ...this,
       ...models
     }
+  },
+  /**
+   * Subscribe to database LISTEN / NOTIFY for multi-instances events
+   */
+  async subscribeToNotifications () {
+    const useHA = (WIKI.config.ha === true || WIKI.config.ha === 'true' || WIKI.config.ha === 1 || WIKI.config.ha === '1')
+    if (!useHA) {
+      return
+    } else if (WIKI.config.db.type !== 'postgres') {
+      WIKI.logger.warn(`Database engine doesn't support pub/sub. Will not handle concurrent instances: [ DISABLED ]`)
+      return
+    }
+
+    const PGPubSub = require('pg-pubsub')
+
+    this.listener = new PGPubSub(this.knex.client.connectionSettings, {
+      log (ev) {
+        WIKI.logger.debug(ev)
+      }
+    })
+    this.listener.addChannel('wiki', payload => {
+      if (_.has(payload.event) && payload.source !== WIKI.INSTANCE_ID) {
+        WIKI.events.emit(payload.event, payload.value)
+      }
+    })
+    WIKI.events.onAny(this.notifyViaDB)
+
+    WIKI.logger.info(`High-Availability Listener initialized successfully: [ OK ]`)
+  },
+  /**
+   * Unsubscribe from database LISTEN / NOTIFY
+   */
+  async unsubscribeToNotifications () {
+    if (this.listener) {
+      WIKI.events.offAny(this.notifyViaDB)
+      this.listener.close()
+    }
+  },
+  /**
+   * Publish event via database NOTIFY
+   *
+   * @param {string} event Event fired
+   * @param {object} value Payload of the event
+   */
+  notifyViaDB (event, value) {
+    this.listener.publish('wiki', {
+      source: WIKI.INSTANCE_ID,
+      event,
+      value
+    })
   }
 }
