@@ -5,7 +5,6 @@
 // Licensed under AGPLv3
 // ===========================================
 
-const Promise = require('bluebird')
 const _ = require('lodash')
 const chalk = require('chalk')
 
@@ -60,16 +59,9 @@ const init = {
     })
   },
   async reload() {
-    console.warn(chalk.yellow('--- Stopping scheduled jobs...'))
-    if (global.WIKI.scheduler) {
-      global.WIKI.scheduler.stop()
-    }
-    console.warn(chalk.yellow('--- Closing DB connections...'))
-    await global.WIKI.models.knex.destroy()
-    console.warn(chalk.yellow('--- Closing Server connections...'))
-    if (global.WIKI.servers) {
-      await global.WIKI.servers.stopServers()
-    }
+    console.warn(chalk.yellow('--- Gracefully stopping server...'))
+    await global.WIKI.kernel.shutdown()
+
     console.warn(chalk.yellow('--- Purging node modules cache...'))
 
     global.WIKI = {}

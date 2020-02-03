@@ -16,3 +16,4 @@ ssl:
   domain: $(LETSENCRYPT_DOMAIN)
   subscriberEmail: $(LETSENCRYPT_EMAIL)
 logLevel: info
+ha: $(HA_ACTIVE)
