@@ -204,7 +204,7 @@ module.exports = {
               })
               break
             case 'EXACT':
-              if (`/${page.path}` === `/${rule.path}`) {
+              if (`/${page.path}` === `/${rule.path}` && hasRole) {
                 checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })
               }
               break
