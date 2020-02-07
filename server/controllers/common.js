@@ -245,7 +245,7 @@ router.get('/*', async (req, res, next) => {
       pageArgs.tags = _.get(page, 'tags', [])
 
       if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
-        if (pageArgs.path === 'home') {
+        if (pageArgs.path === 'home' && req.user.id === 2) {
           return res.redirect('/login')
         }
         _.set(res.locals, 'pageMeta.title', 'Unauthorized')
