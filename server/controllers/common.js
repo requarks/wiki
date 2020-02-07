@@ -245,6 +245,11 @@ router.get('/*', async (req, res, next) => {
       pageArgs.tags = _.get(page, 'tags', [])
 
       if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
+        if (req.user.id === 2) {
+          res.cookie('loginRedirect', req.path, {
+            maxAge: 15 * 60 * 1000
+          })
+        }
         if (pageArgs.path === 'home' && req.user.id === 2) {
           return res.redirect('/login')
         }

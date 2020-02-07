@@ -294,7 +294,13 @@ export default {
                 this.loaderTitle = this.$t('auth:loginSuccess')
                 Cookies.set('jwt', respObj.jwt, { expires: 365 })
                 _.delay(() => {
-                  window.location.replace('/') // TEMPORARY - USE RETURNURL
+                  const loginRedirect = Cookies.get('loginRedirect')
+                  if (loginRedirect) {
+                    Cookies.remove('loginRedirect')
+                    window.location.replace(loginRedirect)
+                  } else {
+                    window.location.replace('/')
+                  }
                 }, 1000)
               }
             } else {
