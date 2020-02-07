@@ -152,7 +152,7 @@ module.exports = {
    */
   checkAccess(user, permissions = [], page = false) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
-    const checkPermissions = permissions
+
     // System Admin
     if (_.includes(userPermissions, 'manage:system')) {
       return true
@@ -173,41 +173,41 @@ module.exports = {
       user.groups.forEach(grp => {
         const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
         _.get(WIKI.auth.groups, `${grpId}.pageRules`, []).forEach(rule => {
-          let hasRole = _.intersection(rule.roles, checkPermissions).length > 0
-
-          switch (rule.match) {
-            case 'START':
-              if (_.startsWith(`/${page.path}`, `/${rule.path}`) && hasRole) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['END', 'REGEX', 'EXACT', 'TAG'] })
-              }
-              break
-            case 'END':
-              if (_.endsWith(page.path, rule.path) && hasRole) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['REGEX', 'EXACT', 'TAG'] })
-              }
-              break
-            case 'REGEX':
-              const reg = new RegExp(rule.path)
-              if (reg.test(page.path) && hasRole) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT', 'TAG'] })
-              }
-              break
-            case 'TAG':
-              _.get(page, 'tags', []).forEach(tag => {
-                if (tag.tag === rule.path && hasRole) {
-                  checkState = this._applyPageRuleSpecificity({
-                    rule,
-                    checkState,
-                    higherPriority: ['EXACT']
-                  })
+          if(_.intersection(rule.roles, permissions).length > 0) {
+            switch (rule.match) {
+              case 'START':
+                if (_.startsWith(`/${page.path}`, `/${rule.path}`)) {
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['END', 'REGEX', 'EXACT', 'TAG'] })
                 }
-              })
-              break
-            case 'EXACT':
-              if (`/${page.path}` === `/${rule.path}` && hasRole) {
-                checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })
-              }
-              break
+                break
+              case 'END':
+                if (_.endsWith(page.path, rule.path)) {
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['REGEX', 'EXACT', 'TAG'] })
+                }
+                break
+              case 'REGEX':
+                const reg = new RegExp(rule.path)
+                if (reg.test(page.path)) {
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT', 'TAG'] })
+                }
+                break
+              case 'TAG':
+                _.get(page, 'tags', []).forEach(tag => {
+                  if (tag.tag === rule.path) {
+                    checkState = this._applyPageRuleSpecificity({
+                      rule,
+                      checkState,
+                      higherPriority: ['EXACT']
+                    })
+                  }
+                })
+                break
+              case 'EXACT':
+                if (`/${page.path}` === `/${rule.path}`) {
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })
+                }
+                break
+            }
           }
         })
       })
