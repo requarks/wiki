@@ -18,6 +18,7 @@ module.exports = {
           h5: ['class', 'id', 'style'],
           h6: ['class', 'id', 'style'],
           img: ['alt', 'class', 'draggable', 'height', 'src', 'style', 'width'],
+          kbd: ['class'],
           li: ['class', 'style'],
           mark: ['class', 'style'],
           ol: ['class', 'style'],
