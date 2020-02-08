@@ -312,8 +312,8 @@
   // ---------------------------------
 
   ol, ul {
-	  padding: 1rem 0 0 0;
-     list-style-position: inside;
+    padding: 1rem 0 0 0;
+    list-style-position: inside;
 
     @at-root .is-rtl & {
       padding-left: 0;
@@ -472,7 +472,7 @@
     }
   }
 
-ul {
+  ul {
     list-style: none;
     width: 100%;
     > li::before {
@@ -486,14 +486,12 @@ ul {
       }
     }
     > li {
-      display:flex;
-      flex-wrap: wrap;
       > p {
         display:inline-block;
         vertical-align:top;
         padding-top:0;
       }
-  }
+    }
   }
 
   // ---------------------------------
