@@ -113,6 +113,7 @@ module.exports = {
         }
       } else {
         $(elm).addClass(`is-external-link`)
+        $(elm).attr('target', '_blank')
       }
 
       // -> Update element
