@@ -102,6 +102,16 @@ type PageMutation {
     id: Int!
   ): DefaultResponse @auth(requires: ["delete:pages", "manage:system"])
 
+  deleteTag(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  updateTag(
+    id: Int!
+    tag: String!
+    title: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
   flushCache: DefaultResponse @auth(requires: ["manage:system"])
 
   migrateToLocale(

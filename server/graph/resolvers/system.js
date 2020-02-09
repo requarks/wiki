@@ -372,6 +372,10 @@ module.exports = {
     async usersTotal () {
       const total = await WIKI.models.users.query().count('* as total').first()
       return _.toSafeInteger(total.total)
+    },
+    async tagsTotal () {
+      const total = await WIKI.models.tags.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
     }
   }
 }

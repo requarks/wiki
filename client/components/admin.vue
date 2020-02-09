@@ -29,9 +29,12 @@
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.pagesTotal }}
-            v-list-item(to='/tags', v-if='hasPermission([`manage:system`])', disabled)
-              v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-tag-multiple
+            v-list-item(to='/tags', v-if='hasPermission([`manage:system`])')
+              v-list-item-avatar(size='24'): v-icon mdi-tag-multiple
               v-list-item-title {{ $t('admin:tags.title') }}
+              v-list-item-action(style='min-width:auto;')
+                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
+                  .caption.grey--text {{ info.tagsTotal }}
             v-list-item(to='/theme', color='primary', v-if='hasPermission([`manage:system`, `manage:theme`])')
               v-list-item-avatar(size='24'): v-icon mdi-palette-outline
               v-list-item-title {{ $t('admin:theme.title') }}
@@ -154,6 +157,7 @@ const router = new VueRouter({
     { path: '/pages', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages.vue') },
     { path: '/pages/:id(\\d+)', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages-edit.vue') },
     { path: '/pages/visualize', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages-visualize.vue') },
+    { path: '/tags', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-tags.vue') },
     { path: '/theme', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-theme.vue') },
     { path: '/groups', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups.vue') },
     { path: '/groups/:id(\\d+)', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups-edit.vue') },
