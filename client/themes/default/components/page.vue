@@ -122,10 +122,17 @@
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-bookmark
                   span {{$t('common:page.bookmark')}}
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-share-variant
-                  span {{$t('common:page.share')}}
+                v-menu(offset-y, bottom, min-width='300')
+                  template(v-slot:activator='{ on: menu }')
+                    v-tooltip(bottom)
+                      template(v-slot:activator='{ on: tooltip }')
+                        v-btn(icon, tile, v-on='{ ...menu, ...tooltip }'): v-icon(color='grey') mdi-share-variant
+                      span {{$t('common:page.share')}}
+                  social-sharing(
+                    :url='pageUrl'
+                    :title='title'
+                    :description='description'
+                  )
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, v-on='on', @click='print'): v-icon(color='grey') mdi-printer
@@ -377,7 +384,8 @@ export default {
         })
         return result
       }, []))
-    }
+    },
+    pageUrl () { return window.location.href }
   },
   created() {
     this.$store.commit('page/SET_AUTHOR_ID', this.authorId)
