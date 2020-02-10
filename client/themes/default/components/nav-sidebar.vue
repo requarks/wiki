@@ -13,7 +13,7 @@
           v-if='item.kind === `link`'
           :href='item.target'
           )
-          v-list-item-avatar(size='24')
+          v-list-item-avatar(size='24', tile)
             v-icon {{ item.icon }}
           v-list-item-title {{ item.label }}
         v-divider.my-2(v-else-if='item.kind === `divider`')
