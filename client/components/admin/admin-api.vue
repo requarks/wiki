@@ -3,27 +3,34 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
+          img.animated.fadeInUp(src='/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2 API Access
-            .subtitle-1.grey--text Manage keys to access the API #[v-chip(label, color='primary', small).white--text coming soon]
+            .headline.primary--text.animated.fadeInLeft API Access
+            .subtitle-1.grey--text.animated.fadeInLeft Manage keys to access the API
           v-spacer
-          v-btn(outline, color='grey', large, @click='refresh', disabled)
-            v-icon refresh
-          v-btn(color='green', disabled, depressed, large, @click='globalSwitch')
-            v-icon(left) power_settings_new
+          template(v-if='enabled')
+            status-indicator.mr-3(positive, pulse)
+            .caption.green--text.animated.fadeInLeft {{$t('admin:api.enabled')}}
+          template(v-else)
+            status-indicator.mr-3(negative, pulse)
+            .caption.red--text.animated.fadeInLeft {{$t('admin:api.disabled')}}
+          v-spacer
+          v-btn.mr-3.animated.fadeInDown.wait-p2s(outlined, color='grey', large, @click='refresh')
+            v-icon mdi-refresh
+          v-btn.mr-3.animated.fadeInDown.wait-p1s(color='green', depressed, large, @click='globalSwitch', dark)
+            v-icon(left) mdi-power
             | Enable API
-          v-btn(color='primary', depressed, large, @click='newKey', disabled)
-            v-icon(left) add
+          v-btn.animated.fadeInDown(color='primary', depressed, large, @click='newKey', dark)
+            v-icon(left) mdi-plus
             | New API Key
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp
           v-data-table(
             v-model='selected'
             :items='items',
             :headers='headers',
             :search='search',
             :pagination.sync='pagination',
-            :rows-per-page-items='[15]'
+            :rows-per-page-items='[-1]'
             select-all,
             hide-actions,
             disable-initial-sort
@@ -58,13 +65,18 @@
                 td {{ props.item.updatedOn }}
                 td: v-btn(icon): v-icon.grey--text.text--darken-1 more_horiz
             template(slot='no-data')
-              v-alert.mt-3(icon='info', :value='true', outline, color='info') No API keys have been generated yet.
+              v-alert.mt-3(icon='mdi-information', :value='true', outlined, color='info') No API keys have been generated yet.
           .text-xs-center.py-2
             v-pagination(v-model='pagination.page', :length='pages')
 </template>
 
 <script>
+import { StatusIndicator } from 'vue-status-indicator'
+
 export default {
+  components: {
+    StatusIndicator
+  },
   data() {
     return {
       selected: [],
