@@ -108,4 +108,5 @@ enum PageRuleMatch {
   EXACT
   END
   REGEX
+  TAG
 }

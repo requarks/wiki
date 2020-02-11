@@ -16,14 +16,14 @@
         .subheading {{$t('common:header.searchNoResult')}}
       template(v-if='results && results.length > 0')
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
-        v-list.search-results-items.radius-7.py-0(two-line)
+        v-list.search-results-items.radius-7.py-0(two-line, dense)
           template(v-for='(item, idx) of results')
             v-list-item(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
               v-list-item-avatar(tile)
                 img(src='/svg/icon-selective-highlighting.svg')
               v-list-item-content
                 v-list-item-title(v-html='item.title')
-                v-list-item-subtitle(v-html='item.description')
+                v-list-item-subtitle.caption(v-html='item.description')
                 .caption.grey--text(v-html='item.path')
               v-list-item-action
                 v-chip(label, outlined) {{item.locale.toUpperCase()}}
@@ -33,6 +33,7 @@
           dark
           v-model='pagination'
           :length='paginationLength'
+          circle
         )
       template(v-if='suggestions && suggestions.length > 0')
         v-subheader.white--text.mt-3 {{$t('common:header.searchDidYouMean')}}
@@ -68,6 +69,7 @@ export default {
     return {
       cursor: 0,
       pagination: 1,
+      perPage: 10,
       response: {
         results: [],
         suggestions: [],
@@ -82,7 +84,8 @@ export default {
     searchRestrictLocale: sync('site/searchRestrictLocale'),
     searchRestrictPath: sync('site/searchRestrictPath'),
     results() {
-      return this.response.results ? this.response.results : []
+      const currentIndex = (this.pagination - 1) * this.perPage
+      return this.response.results ? _.slice(this.response.results, currentIndex, currentIndex + this.perPage) : []
     },
     hits() {
       return this.response.totalHits ? this.response.totalHits : 0
@@ -91,7 +94,7 @@ export default {
       return this.response.suggestions ? this.response.suggestions : []
     },
     paginationLength() {
-      return (this.response.totalHits > 0) ? 0 : Math.ceil(this.response.totalHits / 10)
+      return (this.response.totalHits > 0) ? Math.ceil(this.response.totalHits / this.perPage) : 0
     }
   },
   watch: {

@@ -9,7 +9,7 @@
             .subtitle-1.grey--text.animated.fadeInLeft {{ $t('admin:ssl.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown(
-            v-if='info.sslProvider === `letsencrypt`'
+            v-if='info.sslProvider === `letsencrypt` && info.httpsPort > 0'
             color='black'
             dark
             depressed
@@ -31,7 +31,7 @@
                     v-list-item-content
                       v-list-item-title {{ $t(`admin:ssl.provider`) }}
                       v-list-item-subtitle {{ providerTitle }}
-                  template(v-if='info.sslProvider === `letsencrypt`')
+                  template(v-if='info.sslProvider === `letsencrypt` && info.httpsPort > 0')
                     v-list-item
                       v-list-item-avatar
                         v-icon.indigo.white--text mdi-application

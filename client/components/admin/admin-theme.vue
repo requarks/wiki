@@ -247,7 +247,7 @@ export default {
 
 <style lang='scss'>
 .v-textarea.is-monospaced textarea {
-  font-family: 'Roboto Mono';
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;

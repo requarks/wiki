@@ -199,6 +199,7 @@
                     v-model='config.securitySRI'
                     persistent-hint
                     hint='This ensure that resources such as CSS and JS files are not altered during delivery.'
+                    disabled
                     )
 
                   v-divider.mt-3

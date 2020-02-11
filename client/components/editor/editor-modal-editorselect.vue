@@ -9,15 +9,23 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.animated.fadeInUp(
+                  v-card.radius-7.primary.animated.fadeInUp(
                     hover
                     light
                     ripple
                     )
-                    v-card-text.text-center(@click='selectEditor(`api`)')
-                      img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px;')
-                      .body-2.primary--text.mt-2 API Docs
-                      .caption.grey--text REST / GraphQL
+                    v-card-text.text-center(@click='')
+                      img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px; opacity: .5;')
+                      .body-2.blue--text.mt-2.text--lighten-2 API Docs
+                      .caption.blue--text.text--lighten-1 REST / GraphQL
+                    v-fade-transition
+                      v-overlay(
+                        v-if='hover'
+                        absolute
+                        color='primary'
+                        opacity='.8'
+                        )
+                        .body-2.mt-7 Coming Soon
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')

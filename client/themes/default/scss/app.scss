@@ -315,7 +315,6 @@
     padding: 1rem 0 0 0;
     list-style-position: inside;
 
-
     @at-root .is-rtl & {
       padding-left: 0;
       padding-right: 1rem;
@@ -473,15 +472,26 @@
     }
   }
 
-  
-ul {
-  list-style: none;
-  width: 100%;
-  > li::before {		
-    content: '\25b8';		
-    color: mc('grey', '600');		
-    display: inline-block;		
-    width: 1.35rem;		
+  ul {
+    list-style: none;
+    width: 100%;
+    > li::before {
+      content: '\25b8';
+      color: mc('grey', '600');
+      display: inline-block;
+      width: 1.35rem;
+
+      @at-root .is-rtl & {
+        content: '\25C3' ;
+      }
+    }
+    > li {
+      > p {
+        display:inline-block;
+        vertical-align:top;
+        padding-top:0;
+      }
+    }
   }
   > li {
     display:flex;
@@ -643,6 +653,11 @@ ul {
       right: 1rem;
       height: calc(90px - 32px);
       width: auto;
+
+      @at-root .is-rtl & {
+        left: 1rem;
+        right: initial;
+      }
     }
     &.decor-shadow {
       box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
