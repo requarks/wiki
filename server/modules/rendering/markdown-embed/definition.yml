@@ -1,12 +1,13 @@
 key: markdownEmbed
 title: Embed
 description: |
-   Markdown Block Embed (https://github.com/rotorz/markdown-it-block-embed) with extensions to support embeded Google docs, sheets, and Jira JQL results as Iframews 
-   - `@[gdoc]($docId)` : include google doc
+   Markdown Block Embed (https://github.com/rotorz/markdown-it-block-embed) with extensions to support embeded Google docs, sheets, and Jira JQL results as Iframes 
+   - `@[gdoc]($docId)`  : include google doc
    - `@[sheet]($docId)` : include google sheet
-   - `@[deck]($docId)` : include google presentation
-   - `@[jira](jql)` : include jql results from configured jira server (cors must be enabled)
-   - `@[page]({url}#?{fragmentId})` : include fragment from another page
+   - `@[deck]($docId)` 	: include google presentation
+   - `@[jira](jql)` 	: include jql results from configured jira server (cors must be enabled)
+   - `@[page]({url}#{anchorId})` : transclude remote oage fragment from between the anchor identifier up  untill the next header element)
+   - `@[page]({url}#?{elementId})`   : transclude remote page frgment as identified by dom element id
 
 author: mat.taylor
 icon: mdi-sitemap
