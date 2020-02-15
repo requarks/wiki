@@ -57,7 +57,7 @@
                       v-icon(v-on='on') mdi-lock-outline
                     span System Group
             template(slot='no-data')
-              v-alert.ma-3(icon='warning', :value='true', outline) No groups to display.
+              v-alert.ma-3(icon='mdi-alert', :value='true', outline) No groups to display.
           .text-xs-center.py-2(v-if='pageCount > 1')
             v-pagination(v-model='pagination', :length='pageCount')
 </template>

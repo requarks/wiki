@@ -336,7 +336,6 @@ export default {
       align-items: center;
 
       kbd {
-        margin: 0 5px;
         display: inline-block;
         border: 1px solid #ccc;
         border-radius: 4px;

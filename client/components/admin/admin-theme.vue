@@ -100,7 +100,7 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t(`admin:theme.codeInjection`)}}
                 v-card-text
-                  v-textarea(
+                  v-textarea.is-monospaced(
                     v-model='config.injectCSS'
                     :label='$t(`admin:theme.cssOverride`)'
                     outlined
@@ -112,7 +112,7 @@
                   i18next.caption.pl-2.ml-1(path='admin:theme.cssOverrideWarning', tag='div')
                     strong.red--text(place='caution') {{$t('admin:theme.cssOverrideWarningCaution')}}
                     code(place='cssClass') .contents
-                  v-textarea.mt-3(
+                  v-textarea.is-monospaced.mt-3(
                     v-model='config.injectHead'
                     :label='$t(`admin:theme.headHtmlInjection`)'
                     outlined
@@ -121,7 +121,7 @@
                     :hint='$t(`admin:theme.headHtmlInjectionHint`)'
                     auto-grow
                     )
-                  v-textarea.mt-2(
+                  v-textarea.is-monospaced.mt-2(
                     v-model='config.injectBody'
                     :label='$t(`admin:theme.bodyHtmlInjection`)'
                     outlined
@@ -246,5 +246,10 @@ export default {
 </script>
 
 <style lang='scss'>
-
+.v-textarea.is-monospaced textarea {
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
 </style>

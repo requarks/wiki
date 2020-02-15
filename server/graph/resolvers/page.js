@@ -61,11 +61,9 @@ module.exports = {
         'createdAt',
         'updatedAt'
       ])
-        .eagerAlgorithm(WIKI.models.Objection.Model.JoinEagerAlgorithm)
-        .eager('tags(selectTags)', {
-          selectTags: builder => {
-            builder.select('tag')
-          }
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag')
         })
         .modify(queryBuilder => {
           if (args.limit) {
@@ -130,6 +128,24 @@ module.exports = {
      */
     async tags (obj, args, context, info) {
       return WIKI.models.tags.query().orderBy('tag', 'asc')
+    },
+    /**
+     * SEARCH TAGS
+     */
+    async searchTags (obj, args, context, info) {
+      const results = await WIKI.models.tags.query()
+        .column('tag')
+        .where(builder => {
+          builder.andWhere(builderSub => {
+            if (WIKI.config.db.type === 'postgres') {
+              builderSub.where('tag', 'ILIKE', `%${args.query}%`)
+            } else {
+              builderSub.where('tag', 'LIKE', `%${args.query}%`)
+            }
+          })
+        })
+        .limit(5)
+      return results.map(r => r.tag)
     },
     /**
      * FETCH PAGE TREE
@@ -268,6 +284,46 @@ module.exports = {
         })
         return {
           responseResult: graphHelper.generateSuccess('Page has been deleted.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * DELETE TAG
+     */
+    async deleteTag (obj, args, context) {
+      try {
+        const tagToDel = await WIKI.models.tags.query().findById(args.id)
+        if (tagToDel) {
+          await tagToDel.$relatedQuery('pages').unrelate()
+          await WIKI.models.tags.query().deleteById(args.id)
+        } else {
+          throw new Error('This tag does not exist.')
+        }
+        return {
+          responseResult: graphHelper.generateSuccess('Tag has been deleted.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * UPDATE TAG
+     */
+    async updateTag (obj, args, context) {
+      try {
+        const affectedRows = await WIKI.models.tags.query()
+          .findById(args.id)
+          .patch({
+            tag: args.tag,
+            title: args.title
+          })
+        if (affectedRows < 1) {
+          throw new Error('This tag does not exist.')
+        }
+        return {
+          responseResult: graphHelper.generateSuccess('Tag has been updated successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

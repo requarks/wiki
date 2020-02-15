@@ -157,8 +157,8 @@
               solo
               v-model='rule.path'
               label='Path'
-              :prefix='rule.match !== `END` ? `/` : null'
-              :placeholder='rule.match === `REGEX` ? `Regular Expression` : `Path`'
+              :prefix='(rule.match !== `END` && rule.match !== `TAG`) ? `/` : null'
+              :placeholder='rule.match === `REGEX` ? `Regular Expression` : rule.match === `TAG` ? `Tag` : `Path`'
               :suffix='rule.match === `REGEX` ? `/` : null'
               hide-details
               :color='$vuetify.theme.dark ? `grey` : `blue-grey`'
@@ -181,6 +181,8 @@
               strong Path Ends With...
             li
               strong Path Matches Regex...
+            li
+              strong Tag Matches...
             li
               strong Path Is Exactly...
               em.caption.pl-1 (highest)
@@ -222,7 +224,8 @@ export default {
         { text: 'Path Starts With...', value: 'START', icon: '/...' },
         { text: 'Path is Exactly...', value: 'EXACT', icon: '=' },
         { text: 'Path Ends With...', value: 'END', icon: '.../' },
-        { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' }
+        { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
+        { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
       ],
       locales: [
         { text: 'English', value: 'en' }

@@ -41,6 +41,10 @@ type PageQuery {
 
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
 
+  searchTags(
+    query: String!
+  ): [String]! @auth(requires: ["manage:system", "read:pages"])
+
   tree(
     path: String
     parent: Int
@@ -97,6 +101,16 @@ type PageMutation {
   delete(
     id: Int!
   ): DefaultResponse @auth(requires: ["delete:pages", "manage:system"])
+
+  deleteTag(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  updateTag(
+    id: Int!
+    tag: String!
+    title: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 
   flushCache: DefaultResponse @auth(requires: ["manage:system"])
 

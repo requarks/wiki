@@ -5,6 +5,10 @@
         v-layout
           v-flex(xs12, lg6, offset-lg3)
             v-card.elevation-20.radius-7.animated.fadeInUp
+              v-alert(v-if='isDevMode', tile, dark, color='red darken-3', icon='mdi-alert', prominent)
+                .body-2 You are running an unstable, unreleased development version. This code base is #[strong NOT] for production use!
+                .body-2.mt-3 Cloning the master branch directly from GitHub is #[strong NOT] the proper way to install Wiki.js!
+                .body-2 Read the #[a(href='https://docs.requarks.io/install', style='color: #FFF;') documentation] on correctly installing the latest stable version.
               .text-center
                 img.setup-logo.animated.fadeInUp.wait-p2s(src='/svg/logo-wikijs-full.svg', alt='Wiki.js Logo')
               v-alert(v-model='error', type='error', icon='mdi-alert', tile, dismissible) {{ errorMessage }}
@@ -101,6 +105,8 @@ import _ from 'lodash'
 import validate from 'validate.js'
 import { BreedingRhombusSpinner } from 'epic-spinners'
 
+/* global siteConfig */
+
 export default {
   components: {
     BreedingRhombusSpinner
@@ -125,13 +131,15 @@ export default {
         telemetry: true
       },
       pwdMode: true,
-      pwdConfirmMode: true
+      pwdConfirmMode: true,
+      isDevMode: false
     }
   },
   mounted() {
     _.delay(() => {
       this.$refs.adminEmailInput.focus()
     }, 500)
+    this.isDevMode = siteConfig.devMode === true
   },
   methods: {
     async install () {

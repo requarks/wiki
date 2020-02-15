@@ -86,6 +86,7 @@ type SystemInfo {
   sslProvider: String @auth(requires: ["manage:system"])
   sslStatus: String @auth(requires: ["manage:system"])
   sslSubscriberEmail: String @auth(requires: ["manage:system"])
+  tagsTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:pages", "delete:pages"])
   telemetry: Boolean @auth(requires: ["manage:system"])
   telemetryClientId: String @auth(requires: ["manage:system"])
   upgradeCapable: Boolean @auth(requires: ["manage:system"])

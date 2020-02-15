@@ -21,6 +21,11 @@ html
     script.
       var siteConfig = !{JSON.stringify({ title: config.title })}
 
+    //- Dev Mode Warning
+    if devMode
+      script.
+        siteConfig.devMode = true
+
     //- CSS
     <% for (var index in htmlWebpackPlugin.files.css) { %>
     link(

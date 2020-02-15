@@ -13,14 +13,14 @@ module.exports = {
    */
   async getMigrations() {
     const migrationFiles = await fs.readdir(baseMigrationPath)
-    return migrationFiles.sort(semver.compare).map(m => ({
+    return migrationFiles.map(m => m.replace('.js', '')).sort(semver.compare).map(m => ({
       file: m,
       directory: baseMigrationPath
     }))
   },
 
   getMigrationName(migration) {
-    return migration.file
+    return migration.file.indexOf('.js') >= 0 ? migration.file : `${migration.file}.js`
   },
 
   getMigration(migration) {

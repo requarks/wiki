@@ -793,6 +793,7 @@ export default {
           timezone: this.user.timezone
         }
       })
+      this.newPassword = ''
       if (_.get(resp, 'data.users.update.responseResult.succeeded', false)) {
         this.$store.commit('showNotification', {
           style: 'success',

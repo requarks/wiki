@@ -77,7 +77,10 @@ module.exports = {
             throw err
           }
         }
-        await this.git.addConfig('core.sshCommand', `ssh -i "${this.config.sshPrivateKeyPath}" -o StrictHostKeyChecking=no`)
+        if (this.config.sshPort <= 0) {
+          this.config.sshPort = 22
+        }
+        await this.git.addConfig('core.sshCommand', `ssh -i "${this.config.sshPrivateKeyPath}" -o StrictHostKeyChecking=no -p ${this.config.sshPort}`)
         WIKI.logger.info('(STORAGE/GIT) Adding origin remote via SSH...')
         await this.git.addRemote('origin', this.config.repoUrl)
         break
@@ -440,5 +443,11 @@ module.exports = {
 
     await this.git.commit(`docs: add all untracked content`)
     WIKI.logger.info('(STORAGE/GIT) All content is now tracked.')
+  },
+  async purge() {
+    WIKI.logger.info(`(STORAGE/GIT) Purging local repository...`)
+    await fs.emptyDir(this.repoPath)
+    WIKI.logger.info('(STORAGE/GIT) Local repository is now empty. Reinitializing...')
+    await this.init()
   }
 }

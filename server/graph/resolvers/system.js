@@ -362,16 +362,20 @@ module.exports = {
       return process.cwd()
     },
     async groupsTotal () {
-      const total = await WIKI.models.groups.query().count('* as total').first().pluck('total')
-      return _.toSafeInteger(total)
+      const total = await WIKI.models.groups.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
     },
     async pagesTotal () {
-      const total = await WIKI.models.pages.query().count('* as total').first().pluck('total')
-      return _.toSafeInteger(total)
+      const total = await WIKI.models.pages.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
     },
     async usersTotal () {
-      const total = await WIKI.models.users.query().count('* as total').first().pluck('total')
-      return _.toSafeInteger(total)
+      const total = await WIKI.models.users.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
+    },
+    async tagsTotal () {
+      const total = await WIKI.models.tags.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
     }
   }
 }
