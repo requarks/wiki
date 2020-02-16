@@ -68,17 +68,23 @@
               v-alert.mt-3(icon='mdi-information', :value='true', outlined, color='info') No API keys have been generated yet.
           .text-xs-center.py-2
             v-pagination(v-model='pagination.page', :length='pages')
+
+    create-api-key(v-model='isCreateDialogShown', @refresh='refresh(false)')
 </template>
 
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
 
+import CreateApiKey from './admin-api-create.vue'
+
 export default {
   components: {
-    StatusIndicator
+    StatusIndicator,
+    CreateApiKey
   },
   data() {
     return {
+      enabled: false,
       selected: [],
       pagination: {},
       items: [],
@@ -89,7 +95,8 @@ export default {
         { text: 'Updated On', value: 'updatedOn' },
         { text: '', value: 'actions', sortable: false, width: 50 }
       ],
-      search: ''
+      search: '',
+      isCreateDialogShown: false
     }
   },
   computed: {
@@ -132,11 +139,7 @@ export default {
       })
     },
     async newKey() {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'directions_boat'
-      })
+      this.isCreateDialogShown = true
     }
   }
 }
