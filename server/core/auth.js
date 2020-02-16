@@ -64,7 +64,8 @@ module.exports = {
         jwtFromRequest: securityHelper.extractJWT,
         secretOrKey: WIKI.config.certs.public,
         audience: WIKI.config.auth.audience,
-        issuer: 'urn:wiki.js'
+        issuer: 'urn:wiki.js',
+        algorithms: ['RS256']
       }, (jwtPayload, cb) => {
         cb(null, jwtPayload)
       }))

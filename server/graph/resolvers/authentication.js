@@ -13,6 +13,18 @@ module.exports = {
     async authentication () { return {} }
   },
   AuthenticationQuery: {
+    async apiKeys (obj, args, context) {
+      const keys = await WIKI.models.apiKeys.query()
+      return keys.map(k => ({
+        id: k.id,
+        name: k.name,
+        keyShort: k.key.substring(0, 5) + '... ...' + k.key.substring(k.key.length - 20),
+        isRevoked: k.isRevoked,
+        expiration: k.expiration,
+        createdAt: k.createdAt,
+        updatedAt: k.updatedAt
+      }))
+    },
     /**
      * Fetch active authentication strategies
      */
@@ -41,6 +53,19 @@ module.exports = {
     }
   },
   AuthenticationMutation: {
+    /**
+     * Create New API Key
+     */
+    async createApiKey (obj, args, context) {
+      try {
+        return {
+          key: await WIKI.models.apiKeys.createNewKey(args),
+          responseResult: graphHelper.generateSuccess('API Key created successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
     /**
      * Perform Login
      */
