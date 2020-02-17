@@ -4,7 +4,7 @@
       v-card
         .dialog-header.is-short
           v-icon.mr-3(color='white') mdi-plus
-          span New API Key
+          span {{$t('admin:api.newKeyTitle')}}
         v-card-text.pt-5
           v-text-field(
             outlined
@@ -13,7 +13,7 @@
             label='Name'
             persistent-hint
             ref='keyNameInput'
-            hint='Purpose of this key'
+            :hint='$t(`admin:api.newKeyNameHint`)'
             counter='255'
             )
           v-select.mt-3(
@@ -60,7 +60,7 @@
                 )
         v-card-chin
           v-spacer
-          v-btn(text, @click='isShown = false', :disabled='loading') Cancel
+          v-btn(text, @click='isShown = false', :disabled='loading') {{$t('common:actions.cancel')}}
           v-btn.px-3(depressed, color='primary', @click='generate', :loading='loading')
             v-icon(left) mdi-chevron-right
             span Generate
@@ -87,7 +87,7 @@
           )
         v-card-chin
           v-spacer
-          v-btn.px-3(depressed, dark, color='primary', @click='isCopyKeyDialogShown = false') Close
+          v-btn.px-3(depressed, dark, color='primary', @click='isCopyKeyDialogShown = false') {{$t('common:actions.close')}}
 </template>
 
 <script>
@@ -141,11 +141,11 @@ export default {
     async generate () {
       try {
         if (_.trim(this.name).length < 2 || this.name.length > 255) {
-          throw new Error('Name is missing or invalid.')
+          throw new Error(this.$t('admin:api.newKeyNameError'))
         } else if (!this.fullAccess && !this.group) {
-          throw new Error('You must select a group.')
+          throw new Error(this.$t('admin:api.newKeyGroupError'))
         } else if (!this.fullAccess && this.group === 2) {
-          throw new Error('The guests group cannot be used for API keys.')
+          throw new Error(this.$t('admin:api.newKeyGuestGroupError'))
         }
       } catch (err) {
         return this.$store.commit('showNotification', {
@@ -187,7 +187,7 @@ export default {
         if (_.get(resp, 'data.authentication.createApiKey.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
             style: 'success',
-            message: 'API key created successfully.',
+            message: this.$t('admin:api.newKeySuccess'),
             icon: 'check'
           })
 
