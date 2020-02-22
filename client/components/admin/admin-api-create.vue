@@ -164,7 +164,7 @@ export default {
       try {
         const resp = await this.$apollo.mutate({
           mutation: gql`
-            mutation ($name: String!, $expiration: String!, $fullAccess: Boolean!, $group: String) {
+            mutation ($name: String!, $expiration: String!, $fullAccess: Boolean!, $group: Int) {
               authentication {
                 createApiKey (name: $name, expiration: $expiration, fullAccess: $fullAccess, group: $group) {
                   key
@@ -181,7 +181,7 @@ export default {
           variables: {
             name: this.name,
             expiration: this.expiration,
-            fullAccess: this.fullAccess,
+            fullAccess: (this.fullAccess === true),
             group: this.group
           },
           watchLoading (isLoading) {

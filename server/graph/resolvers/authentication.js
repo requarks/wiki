@@ -13,17 +13,26 @@ module.exports = {
     async authentication () { return {} }
   },
   AuthenticationQuery: {
+    /**
+     * List of API Keys
+     */
     async apiKeys (obj, args, context) {
-      const keys = await WIKI.models.apiKeys.query()
+      const keys = await WIKI.models.apiKeys.query().orderBy(['isRevoked', 'name'])
       return keys.map(k => ({
         id: k.id,
         name: k.name,
-        keyShort: k.key.substring(0, 5) + '... ...' + k.key.substring(k.key.length - 20),
+        keyShort: '...' + k.key.substring(k.key.length - 20),
         isRevoked: k.isRevoked,
         expiration: k.expiration,
         createdAt: k.createdAt,
         updatedAt: k.updatedAt
       }))
+    },
+    /**
+     * Current API State
+     */
+    apiState () {
+      return WIKI.config.api.isEnabled
     },
     /**
      * Fetch active authentication strategies
@@ -121,6 +130,35 @@ module.exports = {
         await WIKI.models.users.register({ ...args, verify: true }, context)
         return {
           responseResult: graphHelper.generateSuccess('Registration success')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Set API state
+     */
+    async setApiState (obj, args, context) {
+      try {
+        WIKI.config.api.isEnabled = args.enabled
+        await WIKI.configSvc.saveToDb(['api'])
+        return {
+          responseResult: graphHelper.generateSuccess('API State changed successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Revoke an API key
+     */
+    async revokeApiKey (obj, args, context) {
+      try {
+        await WIKI.models.apiKeys.query().findById(args.id).patch({
+          isRevoked: true
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('API Key revoked successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)

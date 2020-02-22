@@ -17,7 +17,7 @@
           v-spacer
           v-btn.mr-3.animated.fadeInDown.wait-p2s(outlined, color='grey', large, @click='refresh')
             v-icon mdi-refresh
-          v-btn.mr-3.animated.fadeInDown.wait-p1s(:color='enabled ? `red` : `green`', depressed, large, @click='globalSwitch', dark)
+          v-btn.mr-3.animated.fadeInDown.wait-p1s(:color='enabled ? `red` : `green`', depressed, large, @click='globalSwitch', dark, :loading='isToggleLoading')
             v-icon(left) mdi-power
             span(v-if='!enabled') {{$t('admin:api.enableButton')}}
             span(v-else) {{$t('admin:api.disableButton')}}
@@ -37,12 +37,14 @@
                   th(width='100') {{$t('admin:api.headerRevoke')}}
               tbody
                 tr(v-for='key of keys', :key='`key-` + key.id')
-                  td: strong {{ key.name }}
+                  td
+                    strong(:class='key.isRevoked ? `red--text` : ``') {{ key.name }}
+                    em.caption.ml-1.red--text(v-if='key.isRevoked') (revoked)
                   td.caption {{ key.keyShort }}
-                  td {{ key.expiration | moment('calendar') }}
+                  td(:style='key.isRevoked ? `text-decoration: line-through;` : ``') {{ key.expiration | moment('LL') }}
                   td {{ key.createdAt | moment('calendar') }}
                   td {{ key.updatedAt | moment('calendar') }}
-                  td: v-btn(icon, @click='revoke(key)'): v-icon(color='error') mdi-cancel
+                  td: v-btn(icon, @click='revoke(key)', :disabled='key.isRevoked'): v-icon(color='error') mdi-cancel
           v-card-text(v-else)
             v-alert.mb-0(icon='mdi-information', :value='true', outlined, color='info') {{$t('admin:api.noKeyInfo')}}
 
@@ -61,6 +63,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import gql from 'graphql-tag'
 import { StatusIndicator } from 'vue-status-indicator'
 
@@ -74,6 +77,7 @@ export default {
   data() {
     return {
       enabled: false,
+      isToggleLoading: false,
       keys: [],
       isCreateDialogShown: false,
       isRevokeConfirmDialogShown: false,
@@ -93,7 +97,48 @@ export default {
       }
     },
     async globalSwitch () {
-
+      this.isToggleLoading = true
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($enabled: Boolean!) {
+              authentication {
+                setApiState (enabled: $enabled) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            enabled: !this.enabled
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-toggle')
+          }
+        })
+        if (_.get(resp, 'data.authentication.setApiState.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.enabled ? this.$t('admin:api.toggleStateDisabledSuccess') : this.$t('admin:api.toggleStateEnabledSuccess'),
+            icon: 'check'
+          })
+          await this.$apollo.queries.enabled.refetch()
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.authentication.setApiState.responseResult.message', 'An unexpected error occured.'),
+            icon: 'alert'
+          })
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.isToggleLoading = false
     },
     async newKey () {
       this.isCreateDialogShown = true
@@ -104,14 +149,65 @@ export default {
     },
     async revokeConfirm () {
       this.revokeLoading = true
-      this.$store.commit('showNotification', {
-        message: this.$t('admin:api.revokeSuccess'),
-        style: 'success',
-        icon: 'cached'
-      })
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($id: Int!) {
+              authentication {
+                revokeApiKey (id: $id) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.current.id
+          },
+          watchLoading (isLoading) {
+            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-revoke')
+          }
+        })
+        if (_.get(resp, 'data.authentication.revokeApiKey.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('admin:api.revokeSuccess'),
+            icon: 'check'
+          })
+          this.refresh(false)
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occured.'),
+            icon: 'alert'
+          })
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.isRevokeConfirmDialogShown = false
+      this.revokeLoading = false
     }
   },
   apollo: {
+    enabled: {
+      query: gql`
+        {
+          authentication {
+            apiState
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => data.authentication.apiState,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-state-refresh')
+      }
+    },
     keys: {
       query: gql`
         {
@@ -131,7 +227,7 @@ export default {
       fetchPolicy: 'network-only',
       update: (data) => data.authentication.apiKeys,
       watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-keys-refresh')
       }
     }
   }

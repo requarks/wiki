@@ -50,8 +50,7 @@ module.exports = class ApiKey extends Model {
 
     const key = jwt.sign({
       api: entry.id,
-      permissions: fullAccess ? ['manage:system'] : [],
-      groups: fullAccess ? 1 : group
+      grp: fullAccess ? 1 : group
     }, {
       key: WIKI.config.certs.private,
       passphrase: WIKI.config.sessionSecret

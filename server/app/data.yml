@@ -29,6 +29,8 @@ defaults:
       maxFiles: 10
     offline: false
     # DB defaults
+    api:
+      isEnabled: false
     graphEndpoint: 'https://graph.requarks.io'
     lang:
       code: en

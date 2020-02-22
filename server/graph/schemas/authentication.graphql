@@ -17,6 +17,8 @@ extend type Mutation {
 type AuthenticationQuery {
   apiKeys: [AuthenticationApiKey] @auth(requires: ["manage:system", "manage:api"])
 
+  apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
+
   strategies(
     isEnabled: Boolean
   ): [AuthenticationStrategy]
@@ -31,7 +33,7 @@ type AuthenticationMutation {
     name: String!
     expiration: String!
     fullAccess: Boolean!
-    group: String
+    group: Int
   ): AuthenticationCreateApiKeyResponse @auth(requires: ["manage:system", "manage:api"])
 
   login(
@@ -55,6 +57,14 @@ type AuthenticationMutation {
     password: String!
     name: String!
   ): AuthenticationRegisterResponse
+
+  revokeApiKey(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
+
+  setApiState(
+    enabled: Boolean!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
 
   updateStrategies(
     strategies: [AuthenticationStrategyInput]!
