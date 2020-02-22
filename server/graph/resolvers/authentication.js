@@ -157,6 +157,7 @@ module.exports = {
         await WIKI.models.apiKeys.query().findById(args.id).patch({
           isRevoked: true
         })
+        await WIKI.auth.reloadApiKeys()
         return {
           responseResult: graphHelper.generateSuccess('API Key revoked successfully')
         }
