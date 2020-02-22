@@ -167,12 +167,22 @@ module.exports = async () => {
   })
 
   app.use((err, req, res, next) => {
-    res.status(err.status || 500)
-    _.set(res.locals, 'pageMeta.title', 'Error')
-    res.render('error', {
-      message: err.message,
-      error: WIKI.IS_DEBUG ? err : {}
-    })
+    if (req.path === '/graphql') {
+      res.status(err.status || 500).json({
+        data: {},
+        errors: [{
+          message: err.message,
+          path: []
+        }]
+      })
+    } else {
+      res.status(err.status || 500)
+      _.set(res.locals, 'pageMeta.title', 'Error')
+      res.render('error', {
+        message: err.message,
+        error: WIKI.IS_DEBUG ? err : {}
+      })
+    }
   })
 
   // ----------------------------------------
