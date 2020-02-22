@@ -10,7 +10,7 @@
             outlined
             prepend-icon='mdi-format-title'
             v-model='name'
-            label='Name'
+            :label='$t(`admin:api.newKeyName`)'
             persistent-hint
             ref='keyNameInput'
             :hint='$t(`admin:api.newKeyNameHint`)'
@@ -21,12 +21,12 @@
             outlined
             prepend-icon='mdi-clock'
             v-model='expiration'
-            label='Expiration'
-            hint='You can still revoke a key anytime regardless of the expiration.'
+            :label='$t(`admin:api.newKeyExpiration`)'
+            :hint='$t(`admin:api.newKeyExpirationHint`)'
             persistent-hint
             )
           v-divider.mt-4
-          v-subheader.pl-2: strong.indigo--text Permission Scopes
+          v-subheader.pl-2: strong.indigo--text {{$t('admin:api.newKeyPermissionScopes')}}
           v-list.pl-8(nav)
             v-list-item-group(v-model='fullAccess')
               v-list-item(
@@ -42,9 +42,9 @@
                       @click='toggle'
                     )
                   v-list-item-content
-                    v-list-item-title Full Access
+                    v-list-item-title {{$t('admin:api.newKeyFullAccess')}}
             v-divider.mt-3
-            v-subheader.caption.indigo--text or use group permissions...
+            v-subheader.caption.indigo--text {{$t('admin:api.newKeyGroupPermissions')}}
             v-list-item
               v-select(
                 :disabled='fullAccess'
@@ -54,8 +54,8 @@
                 outlined
                 color='indigo'
                 v-model='group'
-                label='Group'
-                hint='The API key will have the same permissions as the selected group.'
+                :label='$t(`admin:api.newKeyGroup`)'
+                :hint='$t(`admin:api.newKeyGroupHint`)'
                 persistent-hint
                 )
         v-card-chin
@@ -63,7 +63,7 @@
           v-btn(text, @click='isShown = false', :disabled='loading') {{$t('common:actions.cancel')}}
           v-btn.px-3(depressed, color='primary', @click='generate', :loading='loading')
             v-icon(left) mdi-chevron-right
-            span Generate
+            span {{$t('common:actions.generate')}}
 
     v-dialog(
       v-model='isCopyKeyDialogShown'
@@ -73,9 +73,11 @@
       overlay-opacity='.9'
       )
       v-card
-        v-toolbar(dense, flat, color='primary', dark) API Key
+        v-toolbar(dense, flat, color='primary', dark) {{$t('admin:api.newKeyTitle')}}
         v-card-text.pt-5
-          .body-2.text-center Copy the key shown below as #[strong it will not be shown again].
+          .body-2.text-center
+            i18next(tag='span', path='admin:api.newKeyCopyWarn')
+              strong(place='bold') {{$t('admin:api.newKeyCopyWarnBold')}}
           v-textarea.mt-3(
             ref='keyContentsIpt'
             filled
@@ -108,13 +110,6 @@ export default {
       loading: false,
       name: '',
       expiration: '1y',
-      expirations: [
-        { value: '30d', text: '30 days' },
-        { value: '90d', text: '90 days' },
-        { value: '180d', text: '180 days' },
-        { value: '1y', text: '1 year' },
-        { value: '3y', text: '3 years' }
-      ],
       fullAccess: true,
       groups: [],
       group: null,
@@ -126,14 +121,23 @@ export default {
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
+    },
+    expirations() {
+      return [
+        { value: '30d', text: this.$t('admin:api.expiration30d') },
+        { value: '90d', text: this.$t('admin:api.expiration90d') },
+        { value: '180d', text: this.$t('admin:api.expiration180d') },
+        { value: '1y', text: this.$t('admin:api.expiration1y') },
+        { value: '3y', text: this.$t('admin:api.expiration3y') }
+      ]
     }
   },
   watch: {
-    value(newValue, oldValue) {
+    value (newValue, oldValue) {
       if (newValue) {
-        this.$nextTick(() => {
+        setTimeout(() => {
           this.$refs.keyNameInput.focus()
-        })
+        }, 400)
       }
     }
   },
