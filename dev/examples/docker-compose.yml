@@ -26,8 +26,8 @@ services:
       DB_NAME: wiki
     restart: unless-stopped
     ports:
-      - "80:3000"
-      - "443:3443"
+      - "3000:3000"
+      - "3443:3443"
 
 volumes:
   db-data:
