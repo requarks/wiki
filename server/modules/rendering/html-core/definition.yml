@@ -12,3 +12,9 @@ props:
     title: Treat relative links as root absolute
     hint: For example, a link to foo/bar on page xyz will render as /foo/bar instead of /xyz/foo/bar.
     order: 1
+  openExternalLinkNewTab:
+    type: Boolean
+    default: false
+    title: Open external links in a new tab
+    hint: External links will have a _blank target attribute added automatically.
+    order: 2
