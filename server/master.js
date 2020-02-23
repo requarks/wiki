@@ -145,6 +145,7 @@ module.exports = async () => {
       lang: WIKI.config.lang.code,
       rtl: WIKI.config.lang.rtl,
       company: WIKI.config.company,
+      contentLicense: WIKI.config.contentLicense,
       logoUrl: WIKI.config.logoUrl
     }
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })

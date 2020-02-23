@@ -42,6 +42,8 @@ defaults:
       clientId: ''
       isEnabled: false
     title: Wiki.js
+    company: ''
+    contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
     theming:
       theme: 'default'
