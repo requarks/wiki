@@ -140,7 +140,9 @@ module.exports = {
 
       // Process API tokens
       if (_.has(user, 'api')) {
-        if (_.includes(WIKI.auth.validApiKeys, user.api)) {
+        if (!WIKI.config.api.isEnabled) {
+          return next(new Error('API is disabled. You must enable it from the Administration Area first.'))
+        } else if (_.includes(WIKI.auth.validApiKeys, user.api)) {
           req.user = {
             id: 1,
             email: 'api@localhost',
