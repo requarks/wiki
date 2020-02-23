@@ -12,9 +12,11 @@
           @click='save'
           @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          :disabled='!isDirty'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+          span(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
+          span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
@@ -131,7 +133,18 @@ export default {
     activeModal: sync('editor/activeModal'),
     mode: get('editor/mode'),
     welcomeMode() { return this.mode === `create` && this.path === `home` },
-    currentPageTitle: get('page/title')
+    currentPageTitle: get('page/title'),
+    isDirty () {
+      return _.some([
+        this.initContentParsed !== this.$store.get('editor/content'),
+        this.locale !== this.$store.get('page/locale'),
+        this.path !== this.$store.get('page/path'),
+        this.title !== this.$store.get('page/title'),
+        this.description !== this.$store.get('page/description'),
+        this.tags !== this.$store.get('page/tags'),
+        this.isPublished !== this.$store.get('page/isPublished')
+      ], Boolean)
+    }
   },
   watch: {
     currentEditor(newValue, oldValue) {
@@ -284,7 +297,7 @@ export default {
       }
     },
     async exit() {
-      if (this.initContentParsed !== this.$store.get('editor/content')) {
+      if (this.isDirty) {
         this.dialogUnsaved = true
       } else {
         this.exitGo()
