@@ -49,6 +49,9 @@
           v-btn.ml-1.animated.fadeInDown(color='teal', large, outlined, @click='rerenderPage')
             v-icon(left) mdi-cube-scan
             span Re-render
+          v-btn.ml-3.animated.fadeInDown(color='primary', large, depressed, @click='updatePage')
+            v-icon(left) mdi-check
+            span {{$t('common:page.updatePage')}}
       v-flex(xs12, lg6)
         v-card.animated.fadeInUp
           v-toolbar(color='primary', dense, dark, flat)
@@ -70,16 +73,57 @@
                 v-list-item-title: .overline.grey--text Locale
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.locale }}
               v-list-item-action
-                v-btn(icon, x-small)
-                  v-icon(color='grey') mdi-pencil
+                v-menu(
+                  v-model='editPop.timezone'
+                  :close-on-content-click='false'
+                  min-width='350'
+                  left
+                  )
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptLocale`)')
+                      v-icon mdi-pencil
+                  v-card
+                    v-select(
+                      ref='iptLocale'
+                      :items='installedLocales'
+                      :label='$t(`admin:locale.title`)'
+                      v-model="page.locale"
+                      item-text='code'
+                      solo
+                      dense
+                      hide-details
+                      append-icon='mdi-check'
+                      @click:append='editPop.timezone = false'
+                      @keydown.enter='editPop.timezone = false'
+                      @keydown.esc='editPop.timezone = false'
+                    )
             v-divider
             v-list-item
               v-list-item-content
                 v-list-item-title: .overline.grey--text Path
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.path }}
               v-list-item-action
-                v-btn(icon, x-small)
-                  v-icon(color='grey') mdi-pencil
+                v-menu(
+                  v-model='editPop.path'
+                  :close-on-content-click='false'
+                  min-width='350'
+                  left
+                  )
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptPath`)')
+                      v-icon mdi-pencil
+                  v-card
+                    v-text-field(
+                      ref='iptPath'
+                      v-model="page.path"
+                      label='Path'
+                      solo
+                      hide-details
+                      append-icon='mdi-check'
+                      @click:append='editPop.path = false'
+                      @keydown.enter='editPop.path = false'
+                      @keydown.esc='editPop.path = false'
+                    )
             v-divider
             v-list-item
               v-list-item-content
@@ -165,9 +209,12 @@
 <script>
 import _ from 'lodash'
 import { StatusIndicator } from 'vue-status-indicator'
+import gql from 'graphql-tag'
 
+import localesQuery from 'gql/admin/locale/locale-query-list.gql'
 import pageQuery from 'gql/admin/pages/pages-query-single.gql'
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
+import updatePageMutation from 'gql/editor/update.gql'
 
 export default {
   components: {
@@ -177,7 +224,18 @@ export default {
     return {
       deletePageDialog: false,
       page: {},
-      loading: false
+      loading: false,
+      locales: [],
+      selectedLocale: 'en',
+      editPop: {
+        path: false,
+        timezone: false
+      }
+    }
+  },
+  computed: {
+    installedLocales() {
+      return _.filter(this.locales, ['isInstalled', true])
     }
   },
   methods: {
@@ -212,6 +270,58 @@ export default {
         message: `Coming soon...`,
         icon: 'directions_boat'
       })
+    },
+    /**
+     * Focus an input after delay
+     */
+    focusField (ipt) {
+      this.$nextTick(() => {
+        _.delay(() => {
+          this.$refs[ipt].focus()
+        }, 200)
+      })
+    },
+    /**
+     * Update a page
+     */
+    async updatePage() {
+      try {
+        let respContent = await this.$apollo.mutate({
+          mutation: gql`
+            query($id: Int!){
+              pages {
+                single(id:$id){
+                  content
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.page.id
+          }
+        })
+        let content = _.get(respContent, 'data.pages.single.content', false)
+        let respUpdatePage = await this.$apollo.mutate({
+          mutation: updatePageMutation,
+          variables: {
+            id: this.page.id,
+            content: content,
+            locale: this.page.locale,
+            path: this.page.path
+          }
+        })
+        console.log(respUpdatePage)
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          message: err.message,
+          style: 'error',
+          icon: 'warning'
+        })
+        throw err
+      }
+
+      this.$store.commit(`loadingStart`, 'admin-users-update')
+      this.$store.commit(`loadingStop`, 'admin-users-update')
     }
   },
   apollo: {
@@ -226,6 +336,14 @@ export default {
       update: (data) => data.pages.single,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
+      }
+    },
+    locales: {
+      query: localesQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => data.localization.locales.map(lc => ({ ...lc, isDownloading: false })),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-locale-refresh')
       }
     }
   }
