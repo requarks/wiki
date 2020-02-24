@@ -19,7 +19,12 @@ type PageQuery {
     id: Int!
     offsetPage: Int
     offsetSize: Int
-  ): PageHistoryResult @auth(requires: ["manage:system", "read:pages"])
+  ): PageHistoryResult @auth(requires: ["manage:system", "read:history"])
+
+  version(
+    pageId: Int!
+    versionId: Int!
+  ): PageVersion @auth(requires: ["manage:system", "read:history"])
 
   search(
     query: String!
@@ -150,7 +155,7 @@ type Page {
   isPublished: Boolean!
   privateNS: String
   publishStartDate: Date!
-  publishEndDate: String!
+  publishEndDate: Date!
   tags: [PageTag]!
   content: String!
   render: String
@@ -184,6 +189,27 @@ type PageHistory {
   valueBefore: String
   valueAfter: String
   createdAt: Date!
+}
+
+type PageVersion {
+  action: String!
+  authorId: String!
+  authorName: String!
+  content: String!
+  contentType: String!
+  createdAt: Date!
+  description: String!
+  editor: String!
+  isPrivate: Boolean!
+  isPublished: Boolean!
+  locale: String!
+  pageId: Int!
+  path: String!
+  publishEndDate: Date!
+  publishStartDate: Date!
+  tags: [String]!
+  title: String!
+  versionId: Int!
 }
 
 type PageHistoryResult {

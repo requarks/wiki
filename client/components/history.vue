@@ -3,7 +3,7 @@
     nav-header
     v-content
       v-toolbar(color='primary', dark)
-        .subheading Viewing history of page #[strong /{{path}}]
+        .subheading Viewing history of #[strong /{{path}}]
         v-spacer
         .caption.blue--text.text--lighten-3.mr-4 Trail Length: {{total}}
         .caption.blue--text.text--lighten-3 ID: {{pageId}}
@@ -42,12 +42,12 @@
                       template(v-slot:activator='{ on }')
                         v-btn.mr-2.radius-4(icon, v-on='on', small, tile): v-icon mdi-dots-horizontal
                       v-list(dense, nav).history-promptmenu
-                        v-list-item(@click='setDiffTarget(ph.versionId)')
-                          v-list-item-avatar(size='24'): v-icon mdi-call-received
-                          v-list-item-title Set as Differencing Target (B)
                         v-list-item(@click='setDiffSource(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-call-made
                           v-list-item-title Set as Differencing Source (A)
+                        v-list-item(@click='setDiffTarget(ph.versionId)')
+                          v-list-item-avatar(size='24'): v-icon mdi-call-received
+                          v-list-item-title Set as Differencing Target (B)
                         v-list-item
                           v-list-item-avatar(size='24'): v-icon mdi-code-tags
                           v-list-item-title View Source
@@ -94,7 +94,7 @@
               ) End of history trail
 
           v-flex(xs12, md8)
-            v-card.radius-7
+            v-card.radius-7.mt-8
               v-card-text
                 v-card.grey.radius-7(flat, :class='darkMode ? `darken-2` : `lighten-4`')
                   v-row(no-gutters, align='center')
@@ -118,8 +118,7 @@ import * as Diff2Html from 'diff2html'
 import { createPatch } from 'diff'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
-
-import historyTrailQuery from 'gql/history/history-trail-query.gql'
+import gql from 'graphql-tag'
 
 export default {
   props: {
@@ -140,14 +139,16 @@ export default {
       default: ''
     }
   },
-  data() {
+  data () {
     return {
       source: {
+        versionId: 0,
         content: '',
         title: '',
         description: ''
       },
       target: {
+        versionId: 0,
         content: '',
         title: '',
         description: ''
@@ -157,15 +158,16 @@ export default {
       diffTarget: 0,
       offsetPage: 0,
       total: 0,
-      viewMode: 'line-by-line'
+      viewMode: 'line-by-line',
+      cache: []
     }
   },
   computed: {
     darkMode: get('site/dark'),
-    diffs() {
+    diffs () {
       return createPatch(`/${this.path}`, this.source.content, this.target.content)
     },
-    diffHTML() {
+    diffHTML () {
       return Diff2Html.html(this.diffs, {
         inputFormat: 'diff',
         drawFileList: false,
@@ -175,10 +177,30 @@ export default {
     }
   },
   watch: {
-    trail(newValue, oldValue) {
+    trail (newValue, oldValue) {
       if (newValue && newValue.length > 0) {
         this.diffTarget = _.get(_.head(newValue), 'versionId', 0)
         this.diffSource = _.get(_.nth(newValue, 1), 'versionId', 0)
+      }
+    },
+    async diffSource (newValue, oldValue) {
+      if (this.diffSource !== this.source.versionId) {
+        const page = _.find(this.cache, { versionId: newValue })
+        if (page) {
+          this.source = page
+        } else {
+          this.source = await this.loadVersion(newValue)
+        }
+      }
+    },
+    async diffTarget (newValue, oldValue) {
+      if (this.diffTarget !== this.target.versionId) {
+        const page = _.find(this.cache, { versionId: newValue })
+        if (page) {
+          this.target = page
+        } else {
+          this.target = await this.loadVersion(newValue)
+        }
       }
     }
   },
@@ -192,19 +214,62 @@ export default {
     this.target.content = this.liveContent
   },
   methods: {
+    async loadVersion (versionId) {
+      this.$store.commit(`loadingStart`, 'history-version-' + versionId)
+      const resp = await this.$apollo.query({
+        query: gql`
+          query ($pageId: Int!, $versionId: Int!) {
+            pages {
+              version (pageId: $pageId, versionId: $versionId) {
+                action
+                authorId
+                authorName
+                content
+                contentType
+                createdAt
+                description
+                editor
+                isPrivate
+                isPublished
+                locale
+                pageId
+                path
+                publishEndDate
+                publishStartDate
+                tags
+                title
+                versionId
+              }
+            }
+          }
+        `,
+        variables: {
+          versionId,
+          pageId: this.pageId
+        }
+      })
+      this.$store.commit(`loadingStop`, 'history-version-' + versionId)
+      const page = _.get(resp, 'data.pages.version', null)
+      if (page) {
+        this.cache.push(page)
+        return page
+      } else {
+        return { content: '' }
+      }
+    },
     toggleViewMode () {
       this.viewMode = (this.viewMode === 'line-by-line') ? 'side-by-side' : 'line-by-line'
     },
-    goLive() {
+    goLive () {
       window.location.assign(`/${this.path}`)
     },
-    setDiffSource(versionId) {
+    setDiffSource (versionId) {
       this.diffSource = versionId
     },
-    setDiffTarget(versionId) {
+    setDiffTarget (versionId) {
       this.diffTarget = versionId
     },
-    loadMore() {
+    loadMore () {
       this.offsetPage++
       this.$apollo.queries.trail.fetchMore({
         variables: {
@@ -226,7 +291,7 @@ export default {
         }
       })
     },
-    trailColor(actionType) {
+    trailColor (actionType) {
       switch (actionType) {
         case 'edit':
           return 'primary'
@@ -238,7 +303,7 @@ export default {
           return 'grey'
       }
     },
-    trailIcon(actionType) {
+    trailIcon (actionType) {
       switch (actionType) {
         case 'edit':
           return '' // 'mdi-pencil'
@@ -250,7 +315,7 @@ export default {
           return 'warning'
       }
     },
-    trailBgColor(actionType) {
+    trailBgColor (actionType) {
       switch (actionType) {
         case 'move':
           return this.darkMode ? 'purple' : 'purple lighten-5'
@@ -263,8 +328,25 @@ export default {
   },
   apollo: {
     trail: {
-      query: historyTrailQuery,
-      variables() {
+      query: gql`
+        query($id: Int!, $offsetPage: Int, $offsetSize: Int) {
+          pages {
+            history(id:$id, offsetPage:$offsetPage, offsetSize:$offsetSize) {
+              trail {
+                versionId
+                authorId
+                authorName
+                actionType
+                valueBefore
+                valueAfter
+                createdAt
+              }
+              total
+            }
+          }
+        }
+      `,
+      variables () {
         return {
           id: this.pageId,
           offsetPage: 0,
@@ -272,7 +354,7 @@ export default {
         }
       },
       manual: true,
-      result({ data, loading, networkStatus }) {
+      result ({ data, loading, networkStatus }) {
         this.total = data.pages.history.total
         this.trail = data.pages.history.trail
       },
