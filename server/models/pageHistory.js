@@ -104,6 +104,40 @@ module.exports = class PageHistory extends Model {
     })
   }
 
+  static async getVersion({ pageId, versionId }) {
+    const version = await WIKI.models.pageHistory.query()
+      .column([
+        'pageHistory.path',
+        'pageHistory.title',
+        'pageHistory.description',
+        'pageHistory.isPrivate',
+        'pageHistory.isPublished',
+        'pageHistory.publishStartDate',
+        'pageHistory.publishEndDate',
+        'pageHistory.content',
+        'pageHistory.contentType',
+        'pageHistory.createdAt',
+        'pageHistory.action',
+        'pageHistory.authorId',
+        'pageHistory.pageId',
+        {
+          versionId: 'pageHistory.id',
+          editor: 'pageHistory.editorKey',
+          locale: 'pageHistory.localeCode',
+          authorName: 'author.name'
+        }
+      ])
+      .joinRelated('author')
+      .where({
+        'pageHistory.id': versionId,
+        'pageHistory.pageId': pageId
+      }).first()
+    return {
+      ...version,
+      tags: []
+    }
+  }
+
   static async getHistory({ pageId, offsetPage = 0, offsetSize = 100 }) {
     const history = await WIKI.models.pageHistory.query()
       .column([

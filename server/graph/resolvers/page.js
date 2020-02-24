@@ -22,6 +22,15 @@ module.exports = {
       })
     },
     /**
+     * PAGE VERSION
+     */
+    async version(obj, args, context, info) {
+      return WIKI.models.pageHistory.getVersion({
+        pageId: args.pageId,
+        versionId: args.versionId
+      })
+    },
+    /**
      * SEARCH PAGES
      */
     async search (obj, args, context) {
