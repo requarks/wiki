@@ -10,8 +10,8 @@
         v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Live Version
       v-container(fluid, grid-list-xl)
         v-layout(row, wrap)
-          v-flex(xs4)
-            v-chip.ma-0(
+          v-flex(xs12, md4)
+            v-chip.my-0.ml-6(
               label
               small
               :color='darkMode ? `grey darken-2` : `grey lighten-2`'
@@ -25,43 +25,29 @@
                 v-for='(ph, idx) in trail'
                 :key='ph.versionId'
                 :small='ph.actionType === `edit`'
-                fill-dot
                 :color='trailColor(ph.actionType)'
                 :icon='trailIcon(ph.actionType)'
                 :class='idx >= trail.length - 1 ? `pb-4` : `pb-2`'
                 )
                 v-card.radius-7(flat, :class='trailBgColor(ph.actionType)')
                   v-toolbar(flat, :color='trailBgColor(ph.actionType)', height='40')
-                    v-chip.ml-0.mr-3(
-                      v-if='diffSource === ph.versionId'
-                      small
-                      color='pink'
-                      label
-                      )
-                      .caption.white--text Source
-                    v-chip.ml-0.mr-3(
-                      v-if='diffTarget === ph.versionId'
-                      small
-                      color='pink'
-                      label
-                      )
-                      .caption.white--text Target
+                    .caption(:title='$options.filters.moment(ph.createdAt, `LLL`)') {{ ph.createdAt | moment('ll') }}
+                    v-divider.mx-3(vertical)
                     .caption(v-if='ph.actionType === `edit`') Edited by #[strong {{ ph.authorName }}]
                     .caption(v-else-if='ph.actionType === `move`') Moved from #[strong {{ph.valueBefore}}] to #[strong {{ph.valueAfter}}] by #[strong {{ ph.authorName }}]
                     .caption(v-else-if='ph.actionType === `initial`') Created by #[strong {{ ph.authorName }}]
                     .caption(v-else) Unknown Action by #[strong {{ ph.authorName }}]
                     v-spacer
-                    .caption.mr-3 {{ ph.createdAt | moment('calendar') }}
                     v-menu(offset-x, left)
                       template(v-slot:activator='{ on }')
-                        v-btn.mr-0(icon, v-on='on', small, tile): v-icon mdi-dots-horizontal
+                        v-btn.mr-2.radius-4(icon, v-on='on', small, tile): v-icon mdi-dots-horizontal
                       v-list(dense, nav).history-promptmenu
                         v-list-item(@click='setDiffTarget(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-call-received
-                          v-list-item-title Set as Differencing Target
+                          v-list-item-title Set as Differencing Target (B)
                         v-list-item(@click='setDiffSource(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-call-made
-                          v-list-item-title Set as Differencing Source
+                          v-list-item-title Set as Differencing Source (A)
                         v-list-item
                           v-list-item-avatar(size='24'): v-icon mdi-code-tags
                           v-list-item-title View Source
@@ -74,6 +60,22 @@
                         v-list-item
                           v-list-item-avatar(size='24'): v-icon mdi-source-branch
                           v-list-item-title Branch off from here
+                    v-btn.mr-2.radius-4(
+                      @click='setDiffSource(ph.versionId)'
+                      icon
+                      small
+                      depressed
+                      tile
+                      :class='diffSource === ph.versionId ? `pink white--text` : `grey lighten-2`'
+                      ): strong A
+                    v-btn.mr-0.radius-4(
+                      @click='setDiffTarget(ph.versionId)'
+                      icon
+                      small
+                      depressed
+                      tile
+                      :class='diffTarget === ph.versionId ? `pink white--text` : `grey lighten-2`'
+                      ): strong B
 
             v-btn.ma-0.radius-7(
               v-if='total > trail.length'
@@ -91,14 +93,20 @@
               :class='darkMode ? `grey--text text--lighten-2` : `grey--text text--darken-2`'
               ) End of history trail
 
-          v-flex(xs8)
+          v-flex(xs12, md8)
             v-card.radius-7
               v-card-text
                 v-card.grey.radius-7(flat, :class='darkMode ? `darken-2` : `lighten-4`')
-                  v-card-text
-                    .subheading Page Title
-                    .caption Some page description
-                v-card.mt-3(light, v-html='diffHTML')
+                  v-row(no-gutters, align='center')
+                    v-col(cols='11')
+                      v-card-text
+                        .subheading {{target.title}}
+                        .caption {{target.description}}
+                    v-col.text-right.py-3
+                      v-btn.mr-3(color='primary', small, dark, outlined, @click='toggleViewMode')
+                        v-icon(left) mdi-eye
+                        .overline View Mode
+                v-card.mt-3(light, v-html='diffHTML', flat)
 
     nav-footer
     notify
@@ -106,7 +114,7 @@
 </template>
 
 <script>
-import { Diff2Html } from 'diff2html'
+import * as Diff2Html from 'diff2html'
 import { createPatch } from 'diff'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
@@ -134,26 +142,35 @@ export default {
   },
   data() {
     return {
-      sourceText: '',
-      targetText: '',
+      source: {
+        content: '',
+        title: '',
+        description: ''
+      },
+      target: {
+        content: '',
+        title: '',
+        description: ''
+      },
       trail: [],
       diffSource: 0,
       diffTarget: 0,
       offsetPage: 0,
-      total: 0
+      total: 0,
+      viewMode: 'line-by-line'
     }
   },
   computed: {
     darkMode: get('site/dark'),
     diffs() {
-      return createPatch(`/${this.path}`, this.sourceText, this.targetText)
+      return createPatch(`/${this.path}`, this.source.content, this.target.content)
     },
     diffHTML() {
-      return Diff2Html.getPrettyHtml(this.diffs, {
+      return Diff2Html.html(this.diffs, {
         inputFormat: 'diff',
-        showFiles: false,
+        drawFileList: false,
         matching: 'lines',
-        outputFormat: 'line-by-line'
+        outputFormat: this.viewMode
       })
     }
   },
@@ -172,9 +189,12 @@ export default {
 
     this.$store.commit('page/SET_MODE', 'history')
 
-    this.targetText = this.liveContent
+    this.target.content = this.liveContent
   },
   methods: {
+    toggleViewMode () {
+      this.viewMode = (this.viewMode === 'line-by-line') ? 'side-by-side' : 'line-by-line'
+    },
     goLive() {
       window.location.assign(`/${this.path}`)
     },
@@ -221,7 +241,7 @@ export default {
     trailIcon(actionType) {
       switch (actionType) {
         case 'edit':
-          return 'mdi-pencil'
+          return '' // 'mdi-pencil'
         case 'move':
           return 'forward'
         case 'initial':
@@ -237,7 +257,7 @@ export default {
         case 'initial':
           return this.darkMode ? 'teal darken-3' : 'teal lighten-5'
         default:
-          return this.darkMode ? 'grey darken-3' : 'grey lighten-3'
+          return this.darkMode ? 'grey darken-3' : 'grey lighten-4'
       }
     }
   },
@@ -269,6 +289,15 @@ export default {
 .history {
   &-promptmenu {
     border-top: 5px solid mc('blue', '700');
+  }
+
+  .d2h-file-wrapper {
+    border: 1px solid #EEE;
+    border-left: none;
+  }
+
+  .d2h-file-header {
+    display: none;
   }
 }
 
