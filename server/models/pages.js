@@ -318,8 +318,10 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for empty content
-    if (!opts.content || _.trim(opts.content).length < 1) {
-      throw new WIKI.Error.PageEmptyContent()
+    if (opts.content) {
+      if (_.trim(opts.content).length < 1) {
+        throw new WIKI.Error.PageEmptyContent()
+      }
     }
 
     // -> Create version snapshot

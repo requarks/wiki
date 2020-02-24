@@ -73,15 +73,8 @@
                 v-list-item-title: .overline.grey--text Locale
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.locale }}
               v-list-item-action
-                v-menu(
-                  v-model='editPop.timezone'
-                  :close-on-content-click='false'
-                  min-width='350'
-                  left
-                  )
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='editLocale')
-                      v-icon mdi-pencil
+                v-btn(icon, color='grey', x-small, v-on='on', @click='editLocale')
+                  v-icon(color='grey') mdi-pencil
             v-divider
             v-list-item
               v-list-item-content
@@ -199,7 +192,6 @@ import gql from 'graphql-tag'
 import localesQuery from 'gql/admin/locale/locale-query-list.gql'
 import pageQuery from 'gql/admin/pages/pages-query-single.gql'
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
-import updatePageMutation from 'gql/editor/update.gql'
 
 export default {
   components: {
@@ -280,13 +272,15 @@ export default {
      * Update the current page
      */
     async updatePage() {
+      this.$store.commit(`loadingStart`, 'admin-users-update')
       try {
-        let respUpdatePage = await this.$apollo.mutate({
+        let resp = await this.$apollo.mutate({
           mutation: gql`
-            mutation($id: Int!, $path: String) {
+            mutation($id: Int!, $path: String, $locale: String) {
               pages {
-                update(id:$id, path: $path) {
+                update(id:$id, path: $path, locale: $locale) {
                   responseResult {
+                    succeeded
                     message
                     errorCode
                     slug
@@ -297,10 +291,24 @@ export default {
           `,
           variables: {
             id: this.page.id,
-            path: this.page.path
+            path: this.page.path,
+            locale: this.page.locale
           }
         })
-        console.log(respUpdatePage)
+        if (_.get(resp, 'data.pages.update.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('common:page.pageUpdateSuccess'),
+            icon: 'check'
+          })
+          // this.$router.push('/pages')
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.pages.update.responseResult.message', 'An unexpected error occured.'),
+            icon: 'warning'
+          })
+        }
       } catch (err) {
         this.$store.commit('showNotification', {
           message: err.message,
@@ -309,8 +317,6 @@ export default {
         })
         throw err
       }
-
-      this.$store.commit(`loadingStart`, 'admin-users-update')
       this.$store.commit(`loadingStop`, 'admin-users-update')
     }
   },
