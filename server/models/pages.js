@@ -346,8 +346,11 @@ module.exports = class Page extends Model {
       isPrivate: ogPage.isPrivate
     })
 
-    // -> Save Tags
-    await WIKI.models.tags.associateTags({ tags: opts.tags, page })
+    // -> Update only if there is a reason to do that
+    if (opts.tags) {
+      // -> Save Tags
+      await WIKI.models.tags.associateTags({tags: opts.tags, page})
+    }
 
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)

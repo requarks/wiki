@@ -80,23 +80,8 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptLocale`)')
+                    v-btn(icon, color='grey', x-small, v-on='on', @click='editLocale')
                       v-icon mdi-pencil
-                  v-card
-                    v-select(
-                      ref='iptLocale'
-                      :items='installedLocales'
-                      :label='$t(`admin:locale.title`)'
-                      v-model="page.locale"
-                      item-text='code'
-                      solo
-                      dense
-                      hide-details
-                      append-icon='mdi-check'
-                      @click:append='editPop.timezone = false'
-                      @keydown.enter='editPop.timezone = false'
-                      @keydown.esc='editPop.timezone = false'
-                    )
             v-divider
             v-list-item
               v-list-item-content
@@ -272,6 +257,16 @@ export default {
       })
     },
     /**
+     * Edit locale
+     */
+    editLocale () {
+      this.$store.commit('showNotification', {
+        style: 'indigo',
+        message: `Coming soon...`,
+        icon: 'directions_boat'
+      })
+    },
+    /**
      * Focus an input after delay
      */
     focusField (ipt) {
@@ -282,31 +277,26 @@ export default {
       })
     },
     /**
-     * Update a page
+     * Update the current page
      */
     async updatePage() {
       try {
-        let respContent = await this.$apollo.mutate({
+        let respUpdatePage = await this.$apollo.mutate({
           mutation: gql`
-            query($id: Int!){
+            mutation($id: Int!, $path: String) {
               pages {
-                single(id:$id){
-                  content
+                update(id:$id, path: $path) {
+                  responseResult {
+                    message
+                    errorCode
+                    slug
+                  }
                 }
               }
             }
           `,
           variables: {
-            id: this.page.id
-          }
-        })
-        let content = _.get(respContent, 'data.pages.single.content', false)
-        let respUpdatePage = await this.$apollo.mutate({
-          mutation: updatePageMutation,
-          variables: {
             id: this.page.id,
-            content: content,
-            locale: this.page.locale,
             path: this.page.path
           }
         })
