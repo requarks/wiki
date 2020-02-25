@@ -4,10 +4,11 @@
     v-content
       v-toolbar(color='primary', dark)
         .subheading Viewing history of #[strong /{{path}}]
-        v-spacer
-        .caption.blue--text.text--lighten-3.mr-4 Trail Length: {{total}}
-        .caption.blue--text.text--lighten-3 ID: {{pageId}}
-        v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Live Version
+        template(v-if='$vuetify.breakpoint.mdAndUp')
+          v-spacer
+          .caption.blue--text.text--lighten-3.mr-4 Trail Length: {{total}}
+          .caption.blue--text.text--lighten-3 ID: {{pageId}}
+          v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') Return to Live Version
       v-container(fluid, grid-list-xl)
         v-layout(row, wrap)
           v-flex(xs12, md4)
@@ -42,22 +43,22 @@
                       template(v-slot:activator='{ on }')
                         v-btn.mr-2.radius-4(icon, v-on='on', small, tile): v-icon mdi-dots-horizontal
                       v-list(dense, nav).history-promptmenu
-                        v-list-item(@click='setDiffSource(ph.versionId)')
-                          v-list-item-avatar(size='24'): v-icon mdi-call-made
-                          v-list-item-title Set as Differencing Source (A)
-                        v-list-item(@click='setDiffTarget(ph.versionId)')
-                          v-list-item-avatar(size='24'): v-icon mdi-call-received
-                          v-list-item-title Set as Differencing Target (B)
-                        v-list-item
+                        v-list-item(@click='setDiffSource(ph.versionId)', :disabled='ph.versionId >= diffTarget')
+                          v-list-item-avatar(size='24'): v-avatar A
+                          v-list-item-title Set as Differencing Source
+                        v-list-item(@click='setDiffTarget(ph.versionId)', :disabled='ph.versionId <= diffSource')
+                          v-list-item-avatar(size='24'): v-avatar B
+                          v-list-item-title Set as Differencing Target
+                        v-list-item(@click='viewSource(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-code-tags
                           v-list-item-title View Source
-                        v-list-item
+                        v-list-item(@click='download(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-cloud-download-outline
                           v-list-item-title Download Version
-                        v-list-item
+                        v-list-item(@click='restore(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-history
                           v-list-item-title Restore
-                        v-list-item
+                        v-list-item(@click='branchOff(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-source-branch
                           v-list-item-title Branch off from here
                     v-btn.mr-2.radius-4(
@@ -66,7 +67,8 @@
                       small
                       depressed
                       tile
-                      :class='diffSource === ph.versionId ? `pink white--text` : `grey lighten-2`'
+                      :class='diffSource === ph.versionId ? `pink white--text` : ($vuetify.theme.dark ? `grey darken-2` : `grey lighten-2`)'
+                      :disabled='ph.versionId >= diffTarget'
                       ): strong A
                     v-btn.mr-0.radius-4(
                       @click='setDiffTarget(ph.versionId)'
@@ -74,13 +76,14 @@
                       small
                       depressed
                       tile
-                      :class='diffTarget === ph.versionId ? `pink white--text` : `grey lighten-2`'
+                      :class='diffTarget === ph.versionId ? `pink white--text` : ($vuetify.theme.dark ? `grey darken-2` : `grey lighten-2`)'
+                      :disabled='ph.versionId <= diffSource'
                       ): strong B
 
             v-btn.ma-0.radius-7(
               v-if='total > trail.length'
               block
-              color='grey darken-2'
+              color='primary'
               @click='loadMore'
               )
               .caption.white--text Load More...
@@ -94,16 +97,16 @@
               ) End of history trail
 
           v-flex(xs12, md8)
-            v-card.radius-7.mt-8
+            v-card.radius-7(:class='$vuetify.breakpoint.mdAndUp ? `mt-8` : ``')
               v-card-text
                 v-card.grey.radius-7(flat, :class='darkMode ? `darken-2` : `lighten-4`')
                   v-row(no-gutters, align='center')
-                    v-col(cols='11')
+                    v-col
                       v-card-text
                         .subheading {{target.title}}
                         .caption {{target.description}}
-                    v-col.text-right.py-3
-                      v-btn.mr-3(color='primary', small, dark, outlined, @click='toggleViewMode')
+                    v-col.text-right.py-3(cols='2', v-if='$vuetify.breakpoint.mdAndUp')
+                      v-btn.mr-3(:color='$vuetify.theme.dark ? `white` : `grey darken-3`', small, dark, outlined, @click='toggleViewMode')
                         v-icon(left) mdi-eye
                         .overline View Mode
                 v-card.mt-3(light, v-html='diffHTML', flat)
@@ -257,6 +260,18 @@ export default {
         return { content: '' }
       }
     },
+    viewSource (versionId) {
+      window.location.assign(`/s/${this.locale}/${this.path}?v=${versionId}`)
+    },
+    download (versionId) {
+      window.location.assign(`/d/${this.locale}/${this.path}?v=${versionId}`)
+    },
+    restore (versionId) {
+
+    },
+    branchOff (versionId) {
+
+    },
     toggleViewMode () {
       this.viewMode = (this.viewMode === 'line-by-line') ? 'side-by-side' : 'line-by-line'
     },
@@ -275,7 +290,7 @@ export default {
         variables: {
           id: this.pageId,
           offsetPage: this.offsetPage,
-          offsetSize: 25
+          offsetSize: this.$vuetify.breakpoint.mdAndUp ? 25 : 5
         },
         updateQuery: (previousResult, { fetchMoreResult }) => {
           return {
@@ -350,7 +365,7 @@ export default {
         return {
           id: this.pageId,
           offsetPage: 0,
-          offsetSize: 25
+          offsetSize: this.$vuetify.breakpoint.mdAndUp ? 25 : 5
         }
       },
       manual: true,

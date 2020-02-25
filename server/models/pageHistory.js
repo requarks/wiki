@@ -134,6 +134,7 @@ module.exports = class PageHistory extends Model {
       }).first()
     return {
       ...version,
+      updatedAt: version.createdAt,
       tags: []
     }
   }
