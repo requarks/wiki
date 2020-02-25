@@ -189,7 +189,6 @@ import _ from 'lodash'
 import { StatusIndicator } from 'vue-status-indicator'
 import gql from 'graphql-tag'
 
-import localesQuery from 'gql/admin/locale/locale-query-list.gql'
 import pageQuery from 'gql/admin/pages/pages-query-single.gql'
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
 
@@ -202,17 +201,11 @@ export default {
       deletePageDialog: false,
       page: {},
       loading: false,
-      locales: [],
       selectedLocale: 'en',
       editPop: {
         path: false,
         timezone: false
       }
-    }
-  },
-  computed: {
-    installedLocales() {
-      return _.filter(this.locales, ['isInstalled', true])
     }
   },
   methods: {
@@ -272,7 +265,7 @@ export default {
      * Update the current page
      */
     async updatePage() {
-      this.$store.commit(`loadingStart`, 'admin-users-update')
+      this.$store.commit(`loadingStart`, 'page-update')
       try {
         let resp = await this.$apollo.mutate({
           mutation: gql`
@@ -317,7 +310,7 @@ export default {
         })
         throw err
       }
-      this.$store.commit(`loadingStop`, 'admin-users-update')
+      this.$store.commit(`loadingStop`, 'page-update')
     }
   },
   apollo: {
@@ -332,14 +325,6 @@ export default {
       update: (data) => data.pages.single,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
-      }
-    },
-    locales: {
-      query: localesQuery,
-      fetchPolicy: 'network-only',
-      update: (data) => data.localization.locales.map(lc => ({ ...lc, isDownloading: false })),
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-locale-refresh')
       }
     }
   }
