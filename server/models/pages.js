@@ -665,12 +665,12 @@ module.exports = class Page extends Model {
   }
 
   /**
-   * Fetch an Existing Page from the Database
+   * Fetch a specific Existing Page from the Database
    *
    * @param {Object} opts Page Properties
    * @returns {Promise} Promise of the Page Model Instance
    */
-  static async getPageFromDb(opts) {
+  static async getSpecificPageFromDb(opts) {
     const queryModeID = _.isNumber(opts)
     try {
       return WIKI.models.pages.query()
@@ -736,6 +736,32 @@ module.exports = class Page extends Model {
       WIKI.logger.warn(err)
       throw err
     }
+  }
+
+  /**
+   * Fetch an Existing Page from the Database, but try default page names if the page isn't found. This allows legacy wikis with _index.md, README.md (etc.) to render without having to rename or duplicate pages.
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
+  static async getPageFromDb(opts) {
+    let directPage = await WIKI.models.pages.getSpecificPageFromDb(opts);
+
+    if (directPage) { return directPage; }
+
+    let defaultPageList = ['_index', 'index', 'README'];
+
+    for (let i = 0; i < defaultPageList.length; i++) {
+      let defaultPageOpts = opts;
+
+      defaultPageOpts.path = opts.path + '/' + defaultPageList[i];
+
+      let defaultPage = await WIKI.models.pages.getSpecificPageFromDb(defaultPageOpts);
+
+      if (defaultPage) { return defaultPage; }
+    }
+
+    return null;
   }
 
   /**
