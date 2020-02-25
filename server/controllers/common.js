@@ -37,6 +37,49 @@ router.get(['/a', '/a/*'], (req, res, next) => {
 })
 
 /**
+ * Download Page / Version
+ */
+router.get(['/d', '/d/*'], async (req, res, next) => {
+  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+
+  const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
+
+  const page = await WIKI.models.pages.getPageFromDb({
+    path: pageArgs.path,
+    locale: pageArgs.locale,
+    userId: req.user.id,
+    isPrivate: false
+  })
+
+  pageArgs.tags = _.get(page, 'tags', [])
+
+  if (versionId > 0) {
+    if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+      return res.render('unauthorized', { action: 'downloadVersion' })
+    }
+  } else {
+    if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+      return res.render('unauthorized', { action: 'download' })
+    }
+  }
+
+  if (page) {
+    const fileName = _.last(page.path.split('/')) + '.' + pageHelper.getFileExtension(page.contentType)
+    res.attachment(fileName)
+    if (versionId > 0) {
+      const pageVersion = await WIKI.models.pageHistory.getVersion({ pageId: page.id, versionId })
+      res.send(pageHelper.injectPageMetadata(pageVersion))
+    } else {
+      res.send(pageHelper.injectPageMetadata(page))
+    }
+  } else {
+    res.status(404).end()
+  }
+})
+
+/**
  * Create/Edit document
  */
 router.get(['/e', '/e/*'], async (req, res, next) => {
