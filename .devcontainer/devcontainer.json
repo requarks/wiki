@@ -1,0 +1,24 @@
+// How to get remote container development working with VSCode:
+// 1. Install "Remote Development" extension pack (ms-vscode-remote.vscode-remote-extensionpack)
+// 2. copy "/dev/docker-postgres/sample.yml" to "/config.yml"
+// 3. Reopen in container
+
+{
+  "name": "WikiJS",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "wiki",
+  "workspaceFolder": "/wiki",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "EditorConfig.editorconfig",
+    "dbaeumer.vscode-eslint",
+    "christian-kohler.path-intellisense",
+    "mrmlnc.vscode-puglint",
+    "octref.vetur"
+  ],
+  "postCreateCommand": ["yarn", "install"]
+}
