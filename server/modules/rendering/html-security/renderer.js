@@ -12,6 +12,7 @@ module.exports = {
           details: ['class', 'style'],
           div: ['class', 'id', 'style'],
           em: ['class', 'style'],
+          figcaption: ['class', 'style'],
           figure: ['class', 'style'],
           h1: ['class', 'id', 'style'],
           h2: ['class', 'id', 'style'],
