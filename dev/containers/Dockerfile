@@ -1,7 +1,7 @@
 # -- DEV DOCKERFILE --
 # -- DO NOT USE IN PRODUCTION! --
 
-FROM node:10-alpine
+FROM node:12-alpine
 LABEL maintainer "requarks.io"
 
 RUN apk update && \
@@ -9,9 +9,6 @@ RUN apk update && \
     mkdir -p /wiki
 
 WORKDIR /wiki
-COPY package.json .
-RUN yarn --silent
-COPY ./dev/docker-postgres/init.sh ./init.sh
 
 ENV dockerdev 1
 ENV DEVDB postgres

@@ -1,5 +1,4 @@
 # -- DEV DOCKER-COMPOSE --
-# -- POSTGRES --
 # -- DO NOT USE IN PRODUCTION! --
 
 version: "3"
@@ -28,40 +27,38 @@ services:
     ports:
       - "3001:8080"
 
-  solr:
-    image: solr:7-alpine
-    logging:
-      driver: "none"
-    networks:
-      - wikinet
-    ports:
-      - "8983:8983"
-    volumes:
-      - solr-data:/opt/solr/server/solr/mycores
-    entrypoint:
-      - docker-entrypoint.sh
-      - solr-precreate
-      - wiki
+  # solr:
+  #   image: solr:7-alpine
+  #   logging:
+  #     driver: "none"
+  #   networks:
+  #     - wikinet
+  #   ports:
+  #     - "8983:8983"
+  #   volumes:
+  #     - solr-data:/opt/solr/server/solr/mycores
+  #   entrypoint:
+  #     - docker-entrypoint.sh
+  #     - solr-precreate
+  #     - wiki
 
   wiki:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: dev/containers/Dockerfile
     depends_on:
       - db
-      - solr
     networks:
       - wikinet
     ports:
       - "3000:3000"
     volumes:
-      - .:/wiki
+      - ../..:/wiki
       - /wiki/node_modules
-    command: ["sh", "./dev/docker-postgres/init.sh"]
 
 networks:
   wikinet:
 
 volumes:
   db-data:
-  solr-data:
+  # solr-data:
