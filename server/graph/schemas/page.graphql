@@ -183,12 +183,12 @@ type PageTag {
 
 type PageHistory {
   versionId: Int!
+  versionDate: Date!
   authorId: Int!
   authorName: String!
   actionType: String!
   valueBefore: String
   valueAfter: String
-  createdAt: Date!
 }
 
 type PageVersion {
@@ -198,6 +198,7 @@ type PageVersion {
   content: String!
   contentType: String!
   createdAt: Date!
+  versionDate: Date!
   description: String!
   editor: String!
   isPrivate: Boolean!
