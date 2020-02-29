@@ -226,6 +226,8 @@ router.get(['/p', '/p/*'], (req, res, next) => {
  */
 router.get(['/s', '/s/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+  const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
+
   const page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
@@ -242,14 +244,34 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
-  if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
-    return res.render('unauthorized', { action: 'source' })
+  if (versionId > 0) {
+    if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+      return res.render('unauthorized', { action: 'sourceVersion' })
+    }
+  } else {
+    if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
+      _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+      return res.render('unauthorized', { action: 'source' })
+    }
   }
 
   if (page) {
-    _.set(res.locals, 'pageMeta.title', page.title)
-    _.set(res.locals, 'pageMeta.description', page.description)
-    res.render('source', { page })
+    if (versionId > 0) {
+      const pageVersion = await WIKI.models.pageHistory.getVersion({ pageId: page.id, versionId })
+      _.set(res.locals, 'pageMeta.title', pageVersion.title)
+      _.set(res.locals, 'pageMeta.description', pageVersion.description)
+      res.render('source', {
+        page: {
+          ...page,
+          ...pageVersion
+        }
+      })
+    } else {
+      _.set(res.locals, 'pageMeta.title', page.title)
+      _.set(res.locals, 'pageMeta.description', page.description)
+      res.render('source', { page })
+    }
   } else {
     res.redirect(`/${pageArgs.path}`)
   }

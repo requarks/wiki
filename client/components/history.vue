@@ -23,30 +23,30 @@
               dense
               )
               v-timeline-item.pb-2(
-                v-for='(ph, idx) in trail'
+                v-for='(ph, idx) in fullTrail'
                 :key='ph.versionId'
                 :small='ph.actionType === `edit`'
                 :color='trailColor(ph.actionType)'
                 :icon='trailIcon(ph.actionType)'
-                :class='idx >= trail.length - 1 ? `pb-4` : `pb-2`'
                 )
                 v-card.radius-7(flat, :class='trailBgColor(ph.actionType)')
                   v-toolbar(flat, :color='trailBgColor(ph.actionType)', height='40')
-                    .caption(:title='$options.filters.moment(ph.createdAt, `LLL`)') {{ ph.createdAt | moment('ll') }}
+                    .caption(:title='$options.filters.moment(ph.versionDate, `LLL`)') {{ ph.versionDate | moment('ll') }}
                     v-divider.mx-3(vertical)
                     .caption(v-if='ph.actionType === `edit`') Edited by #[strong {{ ph.authorName }}]
                     .caption(v-else-if='ph.actionType === `move`') Moved from #[strong {{ph.valueBefore}}] to #[strong {{ph.valueAfter}}] by #[strong {{ ph.authorName }}]
                     .caption(v-else-if='ph.actionType === `initial`') Created by #[strong {{ ph.authorName }}]
+                    .caption(v-else-if='ph.actionType === `live`') Last Edited by #[strong {{ ph.authorName }}]
                     .caption(v-else) Unknown Action by #[strong {{ ph.authorName }}]
                     v-spacer
                     v-menu(offset-x, left)
                       template(v-slot:activator='{ on }')
                         v-btn.mr-2.radius-4(icon, v-on='on', small, tile): v-icon mdi-dots-horizontal
                       v-list(dense, nav).history-promptmenu
-                        v-list-item(@click='setDiffSource(ph.versionId)', :disabled='ph.versionId >= diffTarget')
+                        v-list-item(@click='setDiffSource(ph.versionId)', :disabled='(ph.versionId >= diffTarget && diffTarget !== 0) || ph.versionId === 0')
                           v-list-item-avatar(size='24'): v-avatar A
                           v-list-item-title Set as Differencing Source
-                        v-list-item(@click='setDiffTarget(ph.versionId)', :disabled='ph.versionId <= diffSource')
+                        v-list-item(@click='setDiffTarget(ph.versionId)', :disabled='ph.versionId <= diffSource && ph.versionId !== 0')
                           v-list-item-avatar(size='24'): v-avatar B
                           v-list-item-title Set as Differencing Target
                         v-list-item(@click='viewSource(ph.versionId)')
@@ -55,8 +55,8 @@
                         v-list-item(@click='download(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-cloud-download-outline
                           v-list-item-title Download Version
-                        v-list-item(@click='restore(ph.versionId)')
-                          v-list-item-avatar(size='24'): v-icon mdi-history
+                        v-list-item(@click='restore(ph.versionId)', :disabled='ph.versionId === 0')
+                          v-list-item-avatar(size='24'): v-icon(:disabled='ph.versionId === 0') mdi-history
                           v-list-item-title Restore
                         v-list-item(@click='branchOff(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-source-branch
@@ -68,7 +68,7 @@
                       depressed
                       tile
                       :class='diffSource === ph.versionId ? `pink white--text` : ($vuetify.theme.dark ? `grey darken-2` : `grey lighten-2`)'
-                      :disabled='ph.versionId >= diffTarget'
+                      :disabled='(ph.versionId >= diffTarget && diffTarget !== 0) || ph.versionId === 0'
                       ): strong A
                     v-btn.mr-0.radius-4(
                       @click='setDiffTarget(ph.versionId)'
@@ -77,7 +77,7 @@
                       depressed
                       tile
                       :class='diffTarget === ph.versionId ? `pink white--text` : ($vuetify.theme.dark ? `grey darken-2` : `grey lighten-2`)'
-                      :disabled='ph.versionId <= diffSource'
+                      :disabled='ph.versionId <= diffSource && ph.versionId !== 0'
                       ): strong B
 
             v-btn.ma-0.radius-7(
@@ -137,6 +137,38 @@ export default {
       type: String,
       default: 'home'
     },
+    title: {
+      type: String,
+      default: 'Untitled Page'
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    createdAt: {
+      type: String,
+      default: ''
+    },
+    updatedAt: {
+      type: String,
+      default: ''
+    },
+    tags: {
+      type: Array,
+      default: () => ([])
+    },
+    authorName: {
+      type: String,
+      default: 'Unknown'
+    },
+    authorId: {
+      type: Number,
+      default: 0
+    },
+    isPublished: {
+      type: Boolean,
+      default: false
+    },
     liveContent: {
       type: String,
       default: ''
@@ -167,6 +199,20 @@ export default {
   },
   computed: {
     darkMode: get('site/dark'),
+    fullTrail () {
+      return [
+        {
+          versionId: 0,
+          authorId: this.authorId,
+          authorName: this.authorName,
+          actionType: 'live',
+          valueBefore: null,
+          valueAfter: null,
+          versionDate: this.updatedAt
+        },
+        ...this.trail
+      ]
+    },
     diffs () {
       return createPatch(`/${this.path}`, this.source.content, this.target.content)
     },
@@ -182,8 +228,8 @@ export default {
   watch: {
     trail (newValue, oldValue) {
       if (newValue && newValue.length > 0) {
-        this.diffTarget = _.get(_.head(newValue), 'versionId', 0)
-        this.diffSource = _.get(_.nth(newValue, 1), 'versionId', 0)
+        this.diffTarget = 0
+        this.diffSource = _.get(_.head(newValue), 'versionId', 0)
       }
     },
     async diffSource (newValue, oldValue) {
@@ -214,7 +260,29 @@ export default {
 
     this.$store.commit('page/SET_MODE', 'history')
 
-    this.target.content = this.liveContent
+    this.cache.push({
+      action: 'live',
+      authorId: this.authorId,
+      authorName: this.authorName,
+      content: this.liveContent,
+      contentType: '',
+      createdAt: this.createdAt,
+      description: this.description,
+      editor: '',
+      isPrivate: false,
+      isPublished: this.isPublished,
+      locale: this.locale,
+      pageId: this.pageId,
+      path: this.path,
+      publishEndDate: '',
+      publishStartDate: '',
+      tags: this.tags,
+      title: this.title,
+      versionId: 0,
+      versionDate: this.updatedAt
+    })
+
+    this.target = this.cache[0]
   },
   methods: {
     async loadVersion (versionId) {
@@ -230,6 +298,7 @@ export default {
                 content
                 contentType
                 createdAt
+                versionDate
                 description
                 editor
                 isPrivate
@@ -314,6 +383,8 @@ export default {
           return 'purple'
         case 'initial':
           return 'teal'
+        case 'live':
+          return 'orange'
         default:
           return 'grey'
       }
@@ -326,8 +397,10 @@ export default {
           return 'forward'
         case 'initial':
           return 'mdi-plus'
+        case 'live':
+          return 'mdi-atom-variant'
         default:
-          return 'warning'
+          return 'mdi-alert'
       }
     },
     trailBgColor (actionType) {
@@ -336,6 +409,8 @@ export default {
           return this.darkMode ? 'purple' : 'purple lighten-5'
         case 'initial':
           return this.darkMode ? 'teal darken-3' : 'teal lighten-5'
+        case 'live':
+          return this.darkMode ? 'orange darken-3' : 'orange lighten-5'
         default:
           return this.darkMode ? 'grey darken-3' : 'grey lighten-4'
       }
@@ -354,7 +429,7 @@ export default {
                 actionType
                 valueBefore
                 valueAfter
-                createdAt
+                versionDate
               }
               total
             }

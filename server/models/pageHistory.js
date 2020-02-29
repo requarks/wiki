@@ -100,7 +100,8 @@ module.exports = class PageHistory extends Model {
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
-      action: opts.action || 'updated'
+      action: opts.action || 'updated',
+      versionDate: opts.versionDate
     })
   }
 
@@ -120,6 +121,7 @@ module.exports = class PageHistory extends Model {
         'pageHistory.action',
         'pageHistory.authorId',
         'pageHistory.pageId',
+        'pageHistory.versionDate',
         {
           versionId: 'pageHistory.id',
           editor: 'pageHistory.editorKey',
@@ -146,7 +148,7 @@ module.exports = class PageHistory extends Model {
         'pageHistory.path',
         'pageHistory.authorId',
         'pageHistory.action',
-        'pageHistory.createdAt',
+        'pageHistory.versionDate',
         {
           authorName: 'author.name'
         }
@@ -155,7 +157,7 @@ module.exports = class PageHistory extends Model {
       .where({
         'pageHistory.pageId': pageId
       })
-      .orderBy('pageHistory.createdAt', 'desc')
+      .orderBy('pageHistory.versionDate', 'desc')
       .page(offsetPage, offsetSize)
 
     let prevPh = null
@@ -168,7 +170,7 @@ module.exports = class PageHistory extends Model {
           'pageHistory.path',
           'pageHistory.authorId',
           'pageHistory.action',
-          'pageHistory.createdAt',
+          'pageHistory.versionDate',
           {
             authorName: 'author.name'
           }
@@ -177,7 +179,7 @@ module.exports = class PageHistory extends Model {
         .where({
           'pageHistory.pageId': pageId
         })
-        .orderBy('pageHistory.createdAt', 'desc')
+        .orderBy('pageHistory.versionDate', 'desc')
         .offset((offsetPage + 1) * offsetSize)
         .limit(1)
         .first()
@@ -204,7 +206,7 @@ module.exports = class PageHistory extends Model {
           actionType,
           valueBefore,
           valueAfter,
-          createdAt: ph.createdAt
+          versionDate: ph.versionDate
         })
 
         prevPh = ph
