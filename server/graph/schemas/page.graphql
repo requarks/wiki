@@ -129,6 +129,11 @@ type PageMutation {
   render(
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:system"])
+
+  restore(
+    pageId: Int!
+    versionId: Int!
+  ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 }
 
 # -----------------------------------------------

@@ -55,7 +55,7 @@
                         v-list-item(@click='download(ph.versionId)')
                           v-list-item-avatar(size='24'): v-icon mdi-cloud-download-outline
                           v-list-item-title Download Version
-                        v-list-item(@click='restore(ph.versionId)', :disabled='ph.versionId === 0')
+                        v-list-item(@click='restore(ph.versionId, ph.versionDate)', :disabled='ph.versionId === 0')
                           v-list-item-avatar(size='24'): v-icon(:disabled='ph.versionId === 0') mdi-history
                           v-list-item-title Restore
                         v-list-item(@click='branchOff(ph.versionId)')
@@ -111,6 +111,17 @@
                         .overline View Mode
                 v-card.mt-3(light, v-html='diffHTML', flat)
 
+    v-dialog(v-model='isRestoreConfirmDialogShown', max-width='650', persistent)
+      v-card
+        .dialog-header.is-orange {{$t('history:restore.confirmTitle')}}
+        v-card-text.pa-4
+          i18next(tag='span', path='history:restore.confirmText')
+            strong(place='date') {{ restoreTarget.versionDate | moment('LLL') }}
+        v-card-actions
+          v-spacer
+          v-btn(text, @click='isRestoreConfirmDialogShown = false', :disabled='restoreLoading') {{$t('common:actions.cancel')}}
+          v-btn(color='orange darken-2', dark, @click='restoreConfirm', :loading='restoreLoading') {{$t('history:restore.confirmButton')}}
+
     nav-footer
     notify
     search-results
@@ -124,6 +135,7 @@ import _ from 'lodash'
 import gql from 'graphql-tag'
 
 export default {
+  i18nOptions: { namespaces: 'history' },
   props: {
     pageId: {
       type: Number,
@@ -194,7 +206,13 @@ export default {
       offsetPage: 0,
       total: 0,
       viewMode: 'line-by-line',
-      cache: []
+      cache: [],
+      restoreTarget: {
+        versionId: 0,
+        versionDate: ''
+      },
+      isRestoreConfirmDialogShown: false,
+      restoreLoading: false
     }
   },
   computed: {
@@ -335,8 +353,59 @@ export default {
     download (versionId) {
       window.location.assign(`/d/${this.locale}/${this.path}?v=${versionId}`)
     },
-    restore (versionId) {
-
+    restore (versionId, versionDate) {
+      this.restoreTarget = {
+        versionId,
+        versionDate
+      }
+      this.isRestoreConfirmDialogShown = true
+    },
+    async restoreConfirm () {
+      this.restoreLoading = true
+      this.$store.commit(`loadingStart`, 'history-restore')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($pageId: Int!, $versionId: Int!) {
+              pages {
+                restore (pageId: $pageId, versionId: $versionId) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            versionId: this.restoreTarget.versionId,
+            pageId: this.pageId
+          }
+        })
+        if (_.get(resp, 'data.pages.restore.responseResult.succeeded', false) === true) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('history:restore.success'),
+            icon: 'check'
+          })
+          this.isRestoreConfirmDialogShown = false
+          setTimeout(() => {
+            window.location.assign(`/${this.locale}/${this.path}`)
+          }, 1000)
+        } else {
+          throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occured'))
+        }
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'alert'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'history-restore')
+      this.restoreLoading = false
     },
     branchOff (versionId) {
 
