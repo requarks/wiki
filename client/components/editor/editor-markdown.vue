@@ -474,7 +474,7 @@ export default {
   mounted() {
     this.$store.set('editor/editorKey', 'markdown')
 
-    if (this.mode === 'create') {
+    if (this.mode === 'create' && !this.$store.get('editor/content')) {
       this.$store.set('editor/content', '# Header\nYour content here')
     }
 
