@@ -326,7 +326,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
       isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
-      action: 'updated'
+      action: opts.action ? opts.action : 'updated',
+      versionDate: ogPage.updatedAt
     })
 
     // -> Update page
@@ -422,7 +423,8 @@ module.exports = class Page extends Model {
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...page,
-      action: 'moved'
+      action: 'moved',
+      versionDate: page.updatedAt
     })
 
     const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
@@ -503,7 +505,8 @@ module.exports = class Page extends Model {
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...page,
-      action: 'deleted'
+      action: 'deleted',
+      versionDate: page.updatedAt
     })
 
     // -> Delete page

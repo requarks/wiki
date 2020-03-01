@@ -153,6 +153,10 @@ module.exports = {
     message: 'Destination page path already exists.',
     code: 6006
   }),
+  PageRestoreForbidden: CustomError('PageRestoreForbidden', {
+    message: 'You are not authorized to restore this page version.',
+    code: 6011
+  }),
   PageUpdateForbidden: CustomError('PageUpdateForbidden', {
     message: 'You are not authorized to update this page.',
     code: 6009

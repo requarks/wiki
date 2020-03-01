@@ -385,11 +385,47 @@ module.exports = {
       try {
         const page = await WIKI.models.pages.query().findById(args.id)
         if (!page) {
-          throw new Error('Invalid Page Id')
+          throw new WIKI.Error.PageNotFound()
         }
         await WIKI.models.pages.renderPage(page)
         return {
           responseResult: graphHelper.generateSuccess('Page rendered successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * RESTORE PAGE VERSION
+     */
+    async restore (obj, args, context) {
+      try {
+        const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+        if (!page) {
+          throw new WIKI.Error.PageNotFound()
+        }
+
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          throw new WIKI.Error.PageRestoreForbidden()
+        }
+
+        const targetVersion = await WIKI.models.pageHistory.getVersion({ pageId: args.pageId, versionId: args.versionId })
+        if (!targetVersion) {
+          throw new WIKI.Error.PageNotFound()
+        }
+
+        await WIKI.models.pages.updatePage({
+          ...targetVersion,
+          id: targetVersion.pageId,
+          user: context.req.user,
+          action: 'restored'
+        })
+
+        return {
+          responseResult: graphHelper.generateSuccess('Page version restored successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)
