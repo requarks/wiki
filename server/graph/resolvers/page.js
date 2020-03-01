@@ -15,20 +15,36 @@ module.exports = {
      * PAGE HISTORY
      */
     async history(obj, args, context, info) {
-      return WIKI.models.pageHistory.getHistory({
-        pageId: args.id,
-        offsetPage: args.offsetPage || 0,
-        offsetSize: args.offsetSize || 100
-      })
+      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.id)
+      if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+        path: page.path,
+        locale: page.localeCode
+      })) {
+        return WIKI.models.pageHistory.getHistory({
+          pageId: args.id,
+          offsetPage: args.offsetPage || 0,
+          offsetSize: args.offsetSize || 100
+        })
+      } else {
+        throw new WIKI.Error.PageHistoryForbidden()
+      }
     },
     /**
      * PAGE VERSION
      */
     async version(obj, args, context, info) {
-      return WIKI.models.pageHistory.getVersion({
-        pageId: args.pageId,
-        versionId: args.versionId
-      })
+      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+      if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+        path: page.path,
+        locale: page.localeCode
+      })) {
+        return WIKI.models.pageHistory.getVersion({
+          pageId: args.pageId,
+          versionId: args.versionId
+        })
+      } else {
+        throw new WIKI.Error.PageHistoryForbidden()
+      }
     },
     /**
      * SEARCH PAGES
@@ -123,10 +139,17 @@ module.exports = {
     async single (obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
-        return {
-          ...page,
-          locale: page.localeCode,
-          editor: page.editorKey
+        if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          return {
+            ...page,
+            locale: page.localeCode,
+            editor: page.editorKey
+          }
+        } else {
+          throw new WIKI.Error.PageViewForbidden()
         }
       } else {
         throw new WIKI.Error.PageNotFound()

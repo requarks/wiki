@@ -84,6 +84,9 @@ module.exports = class PageHistory extends Model {
     this.createdAt = new Date().toISOString()
   }
 
+  /**
+   * Create Page Version
+   */
   static async addVersion(opts) {
     await WIKI.models.pageHistory.query().insert({
       pageId: opts.id,
@@ -105,6 +108,9 @@ module.exports = class PageHistory extends Model {
     })
   }
 
+  /**
+   * Get Page Version
+   */
   static async getVersion({ pageId, versionId }) {
     const version = await WIKI.models.pageHistory.query()
       .column([
@@ -134,13 +140,20 @@ module.exports = class PageHistory extends Model {
         'pageHistory.id': versionId,
         'pageHistory.pageId': pageId
       }).first()
-    return {
-      ...version,
-      updatedAt: version.createdAt,
-      tags: []
+    if (version) {
+      return {
+        ...version,
+        updatedAt: version.createdAt || null,
+        tags: []
+      }
+    } else {
+      return null
     }
   }
 
+  /**
+   * Get History Trail of a Page
+   */
   static async getHistory({ pageId, offsetPage = 0, offsetSize = 100 }) {
     const history = await WIKI.models.pageHistory.query()
       .column([
