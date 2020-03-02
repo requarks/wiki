@@ -252,6 +252,24 @@ module.exports = {
         }
         return result
       }, [])
+    },
+    /**
+     * CHECK FOR EDITING CONFLICT
+     */
+    async checkConflicts (obj, args, context, info) {
+      let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
+      if (page) {
+        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          return page.updatedAt !== args.checkoutDate
+        } else {
+          throw new WIKI.Error.PageUpdateForbidden()
+        }
+      } else {
+        throw new WIKI.Error.PageNotFound()
+      }
     }
   },
   PageMutation: {

@@ -61,6 +61,11 @@ type PageQuery {
   links(
     locale: String!
   ): [PageLinkItem] @auth(requires: ["manage:system", "read:pages"])
+
+  checkConflicts(
+    id: Int!
+    checkoutDate: Date!
+  ): Boolean! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 }
 
 # -----------------------------------------------

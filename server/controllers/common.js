@@ -147,7 +147,8 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
       mode: 'create',
       content: null,
       title: null,
-      description: null
+      description: null,
+      updatedAt: new Date().toISOString()
     }
 
     // -> From Template
