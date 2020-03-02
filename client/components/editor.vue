@@ -2,9 +2,16 @@
   v-app.editor(:dark='darkMode')
     nav-header(dense)
       template(slot='mid')
-        v-spacer
-        .subtitle-1.grey--text {{currentPageTitle}}
-        v-spacer
+        v-text-field.editor-title-input(
+          dark
+          solo
+          flat
+          v-model='currentPageTitle'
+          hide-details
+          background-color='black'
+          dense
+          full-width
+        )
       template(slot='actions')
         v-btn.animated.fadeInDown(
           text
@@ -133,7 +140,7 @@ export default {
     activeModal: sync('editor/activeModal'),
     mode: get('editor/mode'),
     welcomeMode() { return this.mode === `create` && this.path === `home` },
-    currentPageTitle: get('page/title'),
+    currentPageTitle: sync('page/title'),
     isDirty () {
       return _.some([
         this.initContentParsed !== this.$store.get('editor/content'),
@@ -327,6 +334,10 @@ export default {
 
     .application--wrap {
       background-color: mc('grey', '900');
+    }
+
+    &-title-input input {
+      text-align: center;
     }
   }
 
