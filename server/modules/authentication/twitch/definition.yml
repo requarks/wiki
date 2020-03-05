@@ -8,7 +8,7 @@ website: https://dev.twitch.tv/docs/authentication/
 isAvailable: true
 useForm: false
 scopes:
-  - user_read
+  - 'user:read:email'
 props:
   clientId:
     type: String
