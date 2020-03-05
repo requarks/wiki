@@ -5,7 +5,7 @@ exports.up = knex => {
   switch (WIKI.config.db.type) {
     case 'postgres':
     case 'mssql':
-      sqlVersionDate = 'UPDATE "pageHistory" h1 SET "versionDate" = COALESCE((SELECT prev."createdAt" FROM "pageHistory" prev WHERE prev."pageId" = h1."pageId" AND prev.id < h1.id ORDER BY prev.id DESC LIMIT 1), h1.createdAt)'
+      sqlVersionDate = 'UPDATE "pageHistory" h1 SET "versionDate" = COALESCE((SELECT prev."createdAt" FROM "pageHistory" prev WHERE prev."pageId" = h1."pageId" AND prev.id < h1.id ORDER BY prev.id DESC LIMIT 1), h1."createdAt")'
       break
     case 'mysql':
     case 'mariadb':
