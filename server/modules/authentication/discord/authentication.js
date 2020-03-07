@@ -18,7 +18,7 @@ module.exports = {
         scope: 'identify email guilds'
       }, async (accessToken, refreshToken, profile, cb) => {
         try {
-		  if (conf.guildId && !_.some(profile.guilds, { id: conf.guildId })) {
+		      if (conf.guildId && !_.some(profile.guilds, { id: conf.guildId })) {
             throw new WIKI.Error.AuthLoginFailed()
           }
           const user = await WIKI.models.users.processProfile({
