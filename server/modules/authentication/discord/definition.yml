@@ -18,3 +18,8 @@ props:
     title: Client Secret
     hint: Application Client Secret
     order: 2
+  guildId:
+    type: String
+    title: Server ID
+    hint: Optional - Your unique server identifier, such that only members are authorized
+    order: 3
