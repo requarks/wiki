@@ -199,7 +199,7 @@ export default {
   }
 }
 
-.dashboard-icon {
+.v-icon.dashboard-icon {
   position: absolute;
   right: 0;
   top: 12px;

@@ -7,7 +7,7 @@
         v-spacer
     v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
       vue-scroll(:ops='scrollStyle')
-        v-list(dense, nav)
+        v-list.radius-0(dense, nav)
           v-list-item(to='/dashboard', color='primary')
             v-list-item-avatar(size='24', tile): v-icon mdi-view-dashboard-variant
             v-list-item-title {{ $t('admin:dashboard.title') }}
@@ -83,8 +83,8 @@
           template(v-if='hasPermission([`manage:system`, `manage:api`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.system') }}
-            v-list-item(to='/api', v-if='hasPermission([`manage:system`, `manage:api`])', disabled)
-              v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-call-split
+            v-list-item(to='/api', v-if='hasPermission([`manage:system`, `manage:api`])')
+              v-list-item-avatar(size='24', tile): v-icon mdi-call-split
               v-list-item-title {{ $t('admin:api.title') }}
             v-list-item(to='/mail', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-email-multiple-outline

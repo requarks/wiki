@@ -158,6 +158,7 @@ export default {
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
+      this.deleteTagDialog = false
       this.$store.commit(`loadingStop`, 'admin-tags-delete')
     },
     async saveTag(tag) {

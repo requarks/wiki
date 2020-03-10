@@ -84,6 +84,7 @@ module.exports = async () => {
   // GraphQL Server
   // ----------------------------------------
 
+  app.use(bodyParser.json({ limit: '1mb' }))
   await WIKI.servers.startGraphQL()
 
   // ----------------------------------------
@@ -99,7 +100,6 @@ module.exports = async () => {
   app.set('views', path.join(WIKI.SERVERPATH, 'views'))
   app.set('view engine', 'pug')
 
-  app.use(bodyParser.json({ limit: '1mb' }))
   app.use(bodyParser.urlencoded({ extended: false, limit: '1mb' }))
 
   // ----------------------------------------
@@ -145,6 +145,7 @@ module.exports = async () => {
       lang: WIKI.config.lang.code,
       rtl: WIKI.config.lang.rtl,
       company: WIKI.config.company,
+      contentLicense: WIKI.config.contentLicense,
       logoUrl: WIKI.config.logoUrl
     }
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
@@ -167,12 +168,22 @@ module.exports = async () => {
   })
 
   app.use((err, req, res, next) => {
-    res.status(err.status || 500)
-    _.set(res.locals, 'pageMeta.title', 'Error')
-    res.render('error', {
-      message: err.message,
-      error: WIKI.IS_DEBUG ? err : {}
-    })
+    if (req.path === '/graphql') {
+      res.status(err.status || 500).json({
+        data: {},
+        errors: [{
+          message: err.message,
+          path: []
+        }]
+      })
+    } else {
+      res.status(err.status || 500)
+      _.set(res.locals, 'pageMeta.title', 'Error')
+      res.render('error', {
+        message: err.message,
+        error: WIKI.IS_DEBUG ? err : {}
+      })
+    }
   })
 
   // ----------------------------------------

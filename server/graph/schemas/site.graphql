@@ -31,6 +31,7 @@ type SiteMutation {
     analyticsService: String!
     analyticsId: String!
     company: String!
+    contentLicense: String!
     logoUrl: String!
     featurePageRatings: Boolean!
     featurePageComments: Boolean!
@@ -58,6 +59,7 @@ type SiteConfig {
   analyticsService: String!
   analyticsId: String!
   company: String!
+  contentLicense: String!
   logoUrl: String!
   featurePageRatings: Boolean!
   featurePageComments: Boolean!

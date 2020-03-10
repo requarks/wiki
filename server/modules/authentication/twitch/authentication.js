@@ -4,7 +4,7 @@
 // Twitch Account
 // ------------------------------------
 
-const TwitchStrategy = require('passport-twitch').Strategy
+const TwitchStrategy = require('passport-twitch-oauth').Strategy
 const _ = require('lodash')
 
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
           const user = await WIKI.models.users.processProfile({
             profile: {
               ...profile,
-              picture: _.get(profile, '_json.logo', '')
+              picture: _.get(profile, 'avatar', '')
             },
             providerKey: 'twitch'
           })

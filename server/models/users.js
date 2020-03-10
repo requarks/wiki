@@ -26,7 +26,6 @@ module.exports = class User extends Model {
         name: {type: 'string', minLength: 1, maxLength: 255},
         providerId: {type: 'string'},
         password: {type: 'string'},
-        role: {type: 'string', enum: ['admin', 'guest', 'user']},
         tfaIsActive: {type: 'boolean', default: false},
         tfaSecret: {type: 'string'},
         jobTitle: {type: 'string'},

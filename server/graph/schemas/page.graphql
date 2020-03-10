@@ -19,7 +19,12 @@ type PageQuery {
     id: Int!
     offsetPage: Int
     offsetSize: Int
-  ): PageHistoryResult @auth(requires: ["manage:system", "read:pages"])
+  ): PageHistoryResult @auth(requires: ["manage:system", "read:history"])
+
+  version(
+    pageId: Int!
+    versionId: Int!
+  ): PageVersion @auth(requires: ["manage:system", "read:history"])
 
   search(
     query: String!
@@ -56,6 +61,11 @@ type PageQuery {
   links(
     locale: String!
   ): [PageLinkItem] @auth(requires: ["manage:system", "read:pages"])
+
+  checkConflicts(
+    id: Int!
+    checkoutDate: Date!
+  ): Boolean! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -124,6 +134,11 @@ type PageMutation {
   render(
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:system"])
+
+  restore(
+    pageId: Int!
+    versionId: Int!
+  ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -150,7 +165,7 @@ type Page {
   isPublished: Boolean!
   privateNS: String
   publishStartDate: Date!
-  publishEndDate: String!
+  publishEndDate: Date!
   tags: [PageTag]!
   content: String!
   render: String
@@ -178,12 +193,34 @@ type PageTag {
 
 type PageHistory {
   versionId: Int!
+  versionDate: Date!
   authorId: Int!
   authorName: String!
   actionType: String!
   valueBefore: String
   valueAfter: String
+}
+
+type PageVersion {
+  action: String!
+  authorId: String!
+  authorName: String!
+  content: String!
+  contentType: String!
   createdAt: Date!
+  versionDate: Date!
+  description: String!
+  editor: String!
+  isPrivate: Boolean!
+  isPublished: Boolean!
+  locale: String!
+  pageId: Int!
+  path: String!
+  publishEndDate: Date!
+  publishStartDate: Date!
+  tags: [String]!
+  title: String!
+  versionId: Int!
 }
 
 type PageHistoryResult {

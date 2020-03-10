@@ -214,9 +214,13 @@ import mdSup from 'markdown-it-sup'
 import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
 import mdImsize from 'markdown-it-imsize'
+import katex from 'katex'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
+
+// Helpers
+import katexHelper from './common/katex'
 
 // ========================================
 // INIT
@@ -277,6 +281,35 @@ function injectLineNumbers (tokens, idx, options, env, slf) {
 md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
 md.renderer.rules.blockquote_open = injectLineNumbers
+
+// ========================================
+// KATEX
+// ========================================
+
+md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
+md.renderer.rules.katex_inline = (tokens, idx) => {
+  try {
+    return katex.renderToString(tokens[idx].content, {
+      displayMode: false
+    })
+  } catch (err) {
+    console.warn(err)
+    return tokens[idx].content
+  }
+}
+md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
+  alt: [ 'paragraph', 'reference', 'blockquote', 'list' ]
+})
+md.renderer.rules.katex_block = (tokens, idx) => {
+  try {
+    return `<p>` + katex.renderToString(tokens[idx].content, {
+      displayMode: true
+    }) + `</p>`
+  } catch (err) {
+    console.warn(err)
+    return tokens[idx].content
+  }
+}
 
 // ========================================
 // Vue Component
@@ -474,7 +507,7 @@ export default {
   mounted() {
     this.$store.set('editor/editorKey', 'markdown')
 
-    if (this.mode === 'create') {
+    if (this.mode === 'create' && !this.$store.get('editor/content')) {
       this.$store.set('editor/content', '# Header\nYour content here')
     }
 

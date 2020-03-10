@@ -15,6 +15,7 @@ module.exports = {
         host: WIKI.config.host,
         title: WIKI.config.title,
         company: WIKI.config.company,
+        contentLicense: WIKI.config.contentLicense,
         logoUrl: WIKI.config.logoUrl,
         ...WIKI.config.seo,
         ...WIKI.config.features,
@@ -28,6 +29,7 @@ module.exports = {
         WIKI.config.host = args.host
         WIKI.config.title = args.title
         WIKI.config.company = args.company
+        WIKI.config.contentLicense = args.contentLicense
         WIKI.config.seo = {
           description: args.description,
           robots: args.robots,
@@ -50,7 +52,7 @@ module.exports = {
           securityCSP: args.securityCSP,
           securityCSPDirectives: args.securityCSPDirectives
         }
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'seo', 'logoUrl', 'features', 'security'])
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'features', 'security'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')

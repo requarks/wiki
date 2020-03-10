@@ -19,7 +19,7 @@ module.exports = {
     }
 
     if (process.env.dockerdev) {
-      confPaths.config = path.join(WIKI.ROOTPATH, `dev/docker-${process.env.DEVDB}/config.yml`)
+      confPaths.config = path.join(WIKI.ROOTPATH, `dev/containers/config.yml`)
     }
 
     if (process.env.CONFIG_FILE) {

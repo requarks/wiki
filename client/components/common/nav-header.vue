@@ -126,10 +126,9 @@
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
-                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-history
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-history
                   v-list-item-content
-                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.history')}}
-                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+                    v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
@@ -342,12 +341,7 @@ export default {
       window.location.assign(`/e/${this.locale}/${this.path}`)
     },
     pageHistory () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'ferry'
-      })
-      // window.location.assign(`/h/${this.locale}/${this.path}`)
+      window.location.assign(`/h/${this.locale}/${this.path}`)
     },
     pageSource () {
       window.location.assign(`/s/${this.locale}/${this.path}`)

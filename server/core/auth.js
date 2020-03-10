@@ -17,6 +17,7 @@ module.exports = {
     cacheExpiration: moment.utc().subtract(1, 'd')
   },
   groups: {},
+  validApiKeys: [],
 
   /**
    * Initialize the authentication module
@@ -44,6 +45,7 @@ module.exports = {
     })
 
     this.reloadGroups()
+    this.reloadApiKeys()
 
     return this
   },
@@ -64,7 +66,8 @@ module.exports = {
         jwtFromRequest: securityHelper.extractJWT,
         secretOrKey: WIKI.config.certs.public,
         audience: WIKI.config.auth.audience,
-        issuer: 'urn:wiki.js'
+        issuer: 'urn:wiki.js',
+        algorithms: ['RS256']
       }, (jwtPayload, cb) => {
         cb(null, jwtPayload)
       }))
@@ -133,6 +136,33 @@ module.exports = {
         }
         req.user = WIKI.auth.guest
         return next()
+      }
+
+      // Process API tokens
+      if (_.has(user, 'api')) {
+        if (!WIKI.config.api.isEnabled) {
+          return next(new Error('API is disabled. You must enable it from the Administration Area first.'))
+        } else if (_.includes(WIKI.auth.validApiKeys, user.api)) {
+          req.user = {
+            id: 1,
+            email: 'api@localhost',
+            name: 'API',
+            pictureUrl: null,
+            timezone: 'America/New_York',
+            localeCode: 'en',
+            permissions: _.get(WIKI.auth.groups, `${user.grp}.permissions`, []),
+            groups: [user.grp],
+            getGlobalPermissions () {
+              return req.user.permissions
+            },
+            getGroups () {
+              return req.user.groups
+            }
+          }
+          return next()
+        } else {
+          return next(new Error('API Key is invalid or was revoked.'))
+        }
       }
 
       // JWT is valid
@@ -248,15 +278,23 @@ module.exports = {
   /**
    * Reload Groups from DB
    */
-  async reloadGroups() {
+  async reloadGroups () {
     const groupsArray = await WIKI.models.groups.query()
     this.groups = _.keyBy(groupsArray, 'id')
   },
 
   /**
+   * Reload valid API Keys from DB
+   */
+  async reloadApiKeys () {
+    const keys = await WIKI.models.apiKeys.query().select('id').where('isRevoked', false).andWhere('expiration', '>', moment.utc().toISOString())
+    this.validApiKeys = _.map(keys, 'id')
+  },
+
+  /**
    * Generate New Authentication Public / Private Key Certificates
    */
-  async regenerateCertificates() {
+  async regenerateCertificates () {
     WIKI.logger.info('Regenerating certificates...')
 
     _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
