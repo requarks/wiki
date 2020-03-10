@@ -46,3 +46,35 @@ block body
         div(v-pre)!= page.render
   if injectCode.body
     != injectCode.body
+  script.
+    // Replace the configs with your own configs
+    //
+    // databaseProvider: (String) 'wilddog' or 'firebase'
+    // databaseConfig: (Object) the config object copied from your database console
+    // pageURL(optional): (String) default value is current URL
+    // pageTitle(optional): (String) default value is current document title
+    // theme(optional): (String) 'light'(default) or 'dark'
+    // locale(optional): (String) 'en'(default) or 'zh-CN'
+    // defaultAvatarURL(optional): (String) default avatar is a cute fire fighter :-D
+    //
+    var wildfireConfig = () => ({
+      databaseProvider: 'firebase',
+      databaseConfig: {
+        apiKey: 'AIzaSyB39UJBnIUYAQxu3zKkpyzjTZDDfHt7lzc',
+        authDomain: 'wild-fire-ee770.firebaseapp.com',
+        databaseURL: 'https://wild-fire-ee770.firebaseio.com',
+        projectId: 'wild-fire-ee770',
+        storageBucket: 'wild-fire-ee770.appspot.com',
+        messagingSenderId: '655484997793'
+      }
+      // pageURL: YOUR_PAGE_URL,
+      // pageTitle: YOUR_PAGE_TITLE,
+      // theme: 'light',
+      // locale: 'en',
+      // defaultAvatarURL: 'https://image.flaticon.com/icons/svg/621/621863.svg'
+    })
+  script(src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js")
+  script(src="https://unpkg.com/@chengkang/wildfire/dist/wildfire.auto.js")
+  div(class=wildfire_thread)
+  astar0th
+  12345678
