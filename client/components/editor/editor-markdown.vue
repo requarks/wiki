@@ -347,6 +347,16 @@ export default {
     mode: get('editor/mode'),
     activeModal: sync('editor/activeModal')
   },
+  watch: {
+    previewShown (newValue, oldValue) {
+      if (newValue && !oldValue) {
+        this.$nextTick(() => {
+          Prism.highlightAllUnder(this.$refs.editorPreview)
+          Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
+        })
+      }
+    }
+  },
   methods: {
     toggleModal(key) {
       this.activeModal = (this.activeModal === key) ? '' : key
