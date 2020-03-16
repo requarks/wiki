@@ -15,11 +15,36 @@ module.exports = {
      * PAGE HISTORY
      */
     async history(obj, args, context, info) {
-      return WIKI.models.pageHistory.getHistory({
-        pageId: args.id,
-        offsetPage: args.offsetPage || 0,
-        offsetSize: args.offsetSize || 100
-      })
+      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.id)
+      if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+        path: page.path,
+        locale: page.localeCode
+      })) {
+        return WIKI.models.pageHistory.getHistory({
+          pageId: args.id,
+          offsetPage: args.offsetPage || 0,
+          offsetSize: args.offsetSize || 100
+        })
+      } else {
+        throw new WIKI.Error.PageHistoryForbidden()
+      }
+    },
+    /**
+     * PAGE VERSION
+     */
+    async version(obj, args, context, info) {
+      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+      if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+        path: page.path,
+        locale: page.localeCode
+      })) {
+        return WIKI.models.pageHistory.getVersion({
+          pageId: args.pageId,
+          versionId: args.versionId
+        })
+      } else {
+        throw new WIKI.Error.PageHistoryForbidden()
+      }
     },
     /**
      * SEARCH PAGES
@@ -114,10 +139,17 @@ module.exports = {
     async single (obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
-        return {
-          ...page,
-          locale: page.localeCode,
-          editor: page.editorKey
+        if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          return {
+            ...page,
+            locale: page.localeCode,
+            editor: page.editorKey
+          }
+        } else {
+          throw new WIKI.Error.PageViewForbidden()
         }
       } else {
         throw new WIKI.Error.PageNotFound()
@@ -220,6 +252,24 @@ module.exports = {
         }
         return result
       }, [])
+    },
+    /**
+     * CHECK FOR EDITING CONFLICT
+     */
+    async checkConflicts (obj, args, context, info) {
+      let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
+      if (page) {
+        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          return page.updatedAt !== args.checkoutDate
+        } else {
+          throw new WIKI.Error.PageUpdateForbidden()
+        }
+      } else {
+        throw new WIKI.Error.PageNotFound()
+      }
     }
   },
   PageMutation: {
@@ -376,11 +426,47 @@ module.exports = {
       try {
         const page = await WIKI.models.pages.query().findById(args.id)
         if (!page) {
-          throw new Error('Invalid Page Id')
+          throw new WIKI.Error.PageNotFound()
         }
         await WIKI.models.pages.renderPage(page)
         return {
           responseResult: graphHelper.generateSuccess('Page rendered successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * RESTORE PAGE VERSION
+     */
+    async restore (obj, args, context) {
+      try {
+        const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+        if (!page) {
+          throw new WIKI.Error.PageNotFound()
+        }
+
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          throw new WIKI.Error.PageRestoreForbidden()
+        }
+
+        const targetVersion = await WIKI.models.pageHistory.getVersion({ pageId: args.pageId, versionId: args.versionId })
+        if (!targetVersion) {
+          throw new WIKI.Error.PageNotFound()
+        }
+
+        await WIKI.models.pages.updatePage({
+          ...targetVersion,
+          id: targetVersion.pageId,
+          user: context.req.user,
+          action: 'restored'
+        })
+
+        return {
+          responseResult: graphHelper.generateSuccess('Page version restored successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

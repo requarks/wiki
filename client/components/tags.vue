@@ -245,13 +245,13 @@ export default {
   router,
   created () {
     this.$store.commit('page/SET_MODE', 'tags')
-
+    this.selection = _.compact(this.$route.path.split('/'))
+  },
+  mounted () {
     this.locales = _.concat(
       [{name: this.$t('tags:localeAny'), code: 'any'}],
       (siteLangs.length > 0 ? siteLangs : [])
     )
-
-    this.selection = _.compact(this.$route.path.split('/'))
   },
   methods: {
     toggleTag (tag) {

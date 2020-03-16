@@ -15,6 +15,10 @@ extend type Mutation {
 # -----------------------------------------------
 
 type AuthenticationQuery {
+  apiKeys: [AuthenticationApiKey] @auth(requires: ["manage:system", "manage:api"])
+
+  apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
+
   strategies(
     isEnabled: Boolean
   ): [AuthenticationStrategy]
@@ -25,6 +29,13 @@ type AuthenticationQuery {
 # -----------------------------------------------
 
 type AuthenticationMutation {
+  createApiKey(
+    name: String!
+    expiration: String!
+    fullAccess: Boolean!
+    group: Int
+  ): AuthenticationCreateApiKeyResponse @auth(requires: ["manage:system", "manage:api"])
+
   login(
     username: String!
     password: String!
@@ -47,12 +58,21 @@ type AuthenticationMutation {
     name: String!
   ): AuthenticationRegisterResponse
 
+  revokeApiKey(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
+
+  setApiState(
+    enabled: Boolean!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
+
   updateStrategies(
     strategies: [AuthenticationStrategyInput]!
     config: AuthenticationConfigInput
   ): DefaultResponse @auth(requires: ["manage:system"])
 
   regenerateCertificates: DefaultResponse @auth(requires: ["manage:system"])
+
   resetGuestUser: DefaultResponse @auth(requires: ["manage:system"])
 }
 
@@ -104,4 +124,19 @@ input AuthenticationConfigInput {
   audience: String!
   tokenExpiration: String!
   tokenRenewal: String!
+}
+
+type AuthenticationApiKey {
+  id: Int!
+  name: String!
+  keyShort: String!
+  expiration: Date!
+  createdAt: Date!
+  updatedAt: Date!
+  isRevoked: Boolean!
+}
+
+type AuthenticationCreateApiKeyResponse {
+  responseResult: ResponseStatus
+  key: String
 }

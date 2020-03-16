@@ -73,11 +73,14 @@ module.exports = {
       ['date', page.updatedAt],
       ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : '']
     ]
-    const inject = {
-      'markdown': '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content,
-      'html': '<!--\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n-->\n\n' + page.content
+    switch (page.contentType) {
+      case 'markdown':
+        return '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content
+      case 'html':
+        return '<!--\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n-->\n\n' + page.content
+      default:
+        return page.content
     }
-    return _.get(inject, page.contentType, page.content)
   },
   /**
    * Check if path is a reserved path

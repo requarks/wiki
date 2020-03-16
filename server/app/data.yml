@@ -29,6 +29,8 @@ defaults:
       maxFiles: 10
     offline: false
     # DB defaults
+    api:
+      isEnabled: false
     graphEndpoint: 'https://graph.requarks.io'
     lang:
       code: en
@@ -40,6 +42,8 @@ defaults:
       clientId: ''
       isEnabled: false
     title: Wiki.js
+    company: ''
+    contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
     theming:
       theme: 'default'

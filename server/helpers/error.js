@@ -137,6 +137,10 @@ module.exports = {
     message: 'Page content cannot be empty.',
     code: 6004
   }),
+  PageHistoryForbidden: CustomError('PageHistoryForbidden', {
+    message: 'You are not authorized to view the history of this page.',
+    code: 6012
+  }),
   PageIllegalPath: CustomError('PageIllegalPath', {
     message: 'Page path cannot contains illegal characters.',
     code: 6005
@@ -153,9 +157,17 @@ module.exports = {
     message: 'Destination page path already exists.',
     code: 6006
   }),
+  PageRestoreForbidden: CustomError('PageRestoreForbidden', {
+    message: 'You are not authorized to restore this page version.',
+    code: 6011
+  }),
   PageUpdateForbidden: CustomError('PageUpdateForbidden', {
     message: 'You are not authorized to update this page.',
     code: 6009
+  }),
+  PageViewForbidden: CustomError('PageViewForbidden', {
+    message: 'You are not authorized to view this page.',
+    code: 6013
   }),
   SearchActivationFailed: CustomError('SearchActivationFailed', {
     message: 'Search Engine activation failed.',
