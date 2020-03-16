@@ -215,6 +215,7 @@ import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
+import twemoji from 'twemoji'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
@@ -309,6 +310,18 @@ md.renderer.rules.katex_block = (tokens, idx) => {
     console.warn(err)
     return tokens[idx].content
   }
+}
+
+// ========================================
+// TWEMOJI
+// ========================================
+
+md.renderer.rules.emoji = (token, idx) => {
+  return twemoji.parse(token[idx].content, {
+    callback (icon, opts) {
+      return `/svg/twemoji/${icon}.svg`
+    }
+  })
 }
 
 // ========================================
