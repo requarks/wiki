@@ -597,6 +597,21 @@ module.exports = class User extends Model {
   }
 
   /**
+   * Delete a User
+   *
+   * @param {*} id User ID
+   */
+  static async deleteUser (id) {
+    const usr = await WIKI.models.users.query().findById(id)
+    if (usr) {
+      await WIKI.models.userKeys.query().delete().where('userId', id)
+      await WIKI.models.users.query().deleteById(id)
+    } else {
+      throw new WIKI.Error.UserNotFound()
+    }
+  }
+
+  /**
    * Register a new user (client-side registration)
    *
    * @param {Object} param0 User fields

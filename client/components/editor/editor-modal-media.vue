@@ -57,6 +57,8 @@
                 :items-per-page='15'
                 :loading='loading'
                 must-sort,
+                sort-by='ID',
+                sort-desc,
                 hide-default-footer,
                 dense
               )

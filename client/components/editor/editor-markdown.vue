@@ -215,6 +215,7 @@ import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
+import twemoji from 'twemoji'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
@@ -312,6 +313,18 @@ md.renderer.rules.katex_block = (tokens, idx) => {
 }
 
 // ========================================
+// TWEMOJI
+// ========================================
+
+md.renderer.rules.emoji = (token, idx) => {
+  return twemoji.parse(token[idx].content, {
+    callback (icon, opts) {
+      return `/svg/twemoji/${icon}.svg`
+    }
+  })
+}
+
+// ========================================
 // Vue Component
 // ========================================
 
@@ -346,6 +359,16 @@ export default {
     path: get('page/path'),
     mode: get('editor/mode'),
     activeModal: sync('editor/activeModal')
+  },
+  watch: {
+    previewShown (newValue, oldValue) {
+      if (newValue && !oldValue) {
+        this.$nextTick(() => {
+          Prism.highlightAllUnder(this.$refs.editorPreview)
+          Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
+        })
+      }
+    }
   },
   methods: {
     toggleModal(key) {
