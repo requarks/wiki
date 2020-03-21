@@ -105,7 +105,7 @@
             v-icon(left) mdi-code-tags
             span Source
           v-divider.mx-2(vertical)
-          v-btn(color='primary', text, :href='`/h/` + page.locale + `/` + page.path', disabled)
+          v-btn(color='primary', text, :href='`/h/` + page.locale + `/` + page.path')
             v-icon(left) mdi-history
             span History
           v-spacer

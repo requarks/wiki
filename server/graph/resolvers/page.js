@@ -139,7 +139,7 @@ module.exports = {
     async single (obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+        if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
           path: page.path,
           locale: page.localeCode
         })) {
@@ -263,9 +263,31 @@ module.exports = {
           path: page.path,
           locale: page.localeCode
         })) {
-          return page.updatedAt !== args.checkoutDate
+          return page.updatedAt > args.checkoutDate
         } else {
           throw new WIKI.Error.PageUpdateForbidden()
+        }
+      } else {
+        throw new WIKI.Error.PageNotFound()
+      }
+    },
+    /**
+     * FETCH LATEST VERSION FOR CONFLICT COMPARISON
+     */
+    async conflictLatest (obj, args, context, info) {
+      let page = await WIKI.models.pages.getPageFromDb(args.id)
+      if (page) {
+        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          return {
+            ...page,
+            tags: page.tags.map(t => t.tag),
+            locale: page.localeCode
+          }
+        } else {
+          throw new WIKI.Error.PageViewForbidden()
         }
       } else {
         throw new WIKI.Error.PageNotFound()

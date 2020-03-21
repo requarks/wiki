@@ -66,6 +66,10 @@ type PageQuery {
     id: Int!
     checkoutDate: Date!
   ): Boolean! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
+  conflictLatest(
+    id: Int!
+  ): PageConflictLatest! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -275,6 +279,21 @@ type PageLinkItem {
   path: String!
   title: String!
   links: [String]!
+}
+
+type PageConflictLatest {
+  id: Int!
+  authorId: String!
+  authorName: String!
+  content: String!
+  createdAt: Date!
+  description: String!
+  isPublished: Boolean!
+  locale: String!
+  path: String!
+  tags: [String]
+  title: String!
+  updatedAt: Date!
 }
 
 enum PageOrderBy {

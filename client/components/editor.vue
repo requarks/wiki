@@ -13,7 +13,7 @@
           full-width
         )
       template(slot='actions')
-        v-btn.mr-3.animated.fadeIn(color='amber', outlined, small, v-if='isConflict')
+        v-btn.mr-3.animated.fadeIn(color='amber', outlined, small, v-if='isConflict', @click='openConflict')
           .overline.amber--text.mr-3 Conflict
           status-indicator(intermediary, pulse)
         v-btn.animated.fadeInDown(
@@ -22,10 +22,9 @@
           @click='save'
           @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
-          :disabled='!isDirty'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
+          span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
           span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
@@ -86,7 +85,8 @@ export default {
     editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue'),
     editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue'),
     editorModalMedia: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-media.vue'),
-    editorModalBlocks: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-blocks.vue')
+    editorModalBlocks: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-blocks.vue'),
+    editorModalConflict: () => import(/* webpackChunkName: "editor-conflict", webpackMode: "lazy" */ './editor/editor-modal-conflict.vue')
   },
   props: {
     locale: {
@@ -136,6 +136,7 @@ export default {
   },
   data() {
     return {
+      isSaving: false,
       isConflict: false,
       dialogProps: false,
       dialogProgress: false,
@@ -152,6 +153,7 @@ export default {
     mode: get('editor/mode'),
     welcomeMode() { return this.mode === `create` && this.path === `home` },
     currentPageTitle: sync('page/title'),
+    checkoutDateActive: sync('editor/checkoutDateActive'),
     isDirty () {
       return _.some([
         this.initContentParsed !== this.$store.get('editor/content'),
@@ -183,6 +185,8 @@ export default {
     this.$store.commit('page/SET_TITLE', this.title)
 
     this.$store.commit('page/SET_MODE', 'edit')
+
+    this.checkoutDateActive = this.checkoutDate
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')
@@ -205,6 +209,10 @@ export default {
       }
     }
 
+    this.$root.$on('resetEditorConflict', () => {
+      this.isConflict = false
+    })
+
     // this.$store.set('editor/mode', 'edit')
     // this.currentEditor = `editorApi`
   },
@@ -218,8 +226,12 @@ export default {
     hideProgressDialog() {
       this.dialogProgress = false
     },
-    async save() {
+    openConflict() {
+      this.$root.$emit('saveConflict')
+    },
+    async save({ rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
+      this.isSaving = true
       try {
         if (this.$store.get('editor/mode') === 'create') {
           // --------------------------------------------
@@ -244,6 +256,8 @@ export default {
           })
           resp = _.get(resp, 'data.pages.create', {})
           if (_.get(resp, 'responseResult.succeeded')) {
+            this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
+            this.isConflict = false
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.createSuccess'),
               style: 'success',
@@ -260,6 +274,25 @@ export default {
           // --------------------------------------------
           // -> UPDATE EXISTING PAGE
           // --------------------------------------------
+
+          const conflictResp = await this.$apollo.query({
+            query: gql`
+              query ($id: Int!, $checkoutDate: Date!) {
+                pages {
+                  checkConflicts(id: $id, checkoutDate: $checkoutDate)
+                }
+              }
+            `,
+            fetchPolicy: 'network-only',
+            variables: {
+              id: this.pageId,
+              checkoutDate: this.checkoutDateActive
+            }
+          })
+          if (_.get(conflictResp, 'data.pages.checkConflicts', false)) {
+            this.$root.$emit('saveConflict')
+            throw new Error('Save conflict! Another user has already modified this page.')
+          }
 
           let resp = await this.$apollo.mutate({
             mutation: updatePageMutation,
@@ -280,6 +313,8 @@ export default {
           })
           resp = _.get(resp, 'data.pages.update', {})
           if (_.get(resp, 'responseResult.succeeded')) {
+            this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
+            this.isConflict = false
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.updateSuccess'),
               style: 'success',
@@ -302,13 +337,16 @@ export default {
           style: 'error',
           icon: 'warning'
         })
-        throw err
+        if (rethrow === true) {
+          throw err
+        }
       }
+      this.isSaving = false
       this.hideProgressDialog()
     },
     async saveAndClose() {
       try {
-        await this.save()
+        await this.save({ rethrow: true })
         await this.exit()
       } catch (err) {
         // Error is already handled
@@ -348,12 +386,12 @@ export default {
       variables () {
         return {
           id: this.pageId,
-          checkoutDate: this.checkoutDate
+          checkoutDate: this.checkoutDateActive
         }
       },
       update: (data) => _.cloneDeep(data.pages.checkConflicts),
       skip () {
-        return this.mode === 'create' || !this.isDirty
+        return this.mode === 'create' || this.isSaving || !this.isDirty
       }
     }
   }

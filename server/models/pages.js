@@ -293,6 +293,9 @@ module.exports = class Page extends Model {
       mode: 'create'
     })
 
+    // -> Get latest updatedAt
+    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
+
     return page
   }
 
@@ -340,12 +343,7 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title
     }).where('id', ogPage.id)
-    let page = await WIKI.models.pages.getPageFromDb({
-      path: ogPage.path,
-      locale: ogPage.localeCode,
-      userId: ogPage.authorId,
-      isPrivate: ogPage.isPrivate
-    })
+    let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
     await WIKI.models.tags.associateTags({ tags: opts.tags, page })
@@ -380,6 +378,9 @@ module.exports = class Page extends Model {
         pageId: page.id
       }).update('title', page.title)
     }
+
+    // -> Get latest updatedAt
+    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
 
     return page
   }
