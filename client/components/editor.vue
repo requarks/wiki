@@ -203,7 +203,7 @@ export default {
 
     window.onbeforeunload = () => {
       if (!this.exitConfirmed && this.initContentParsed !== this.$store.get('editor/content')) {
-        return 'You have unsaved edits. Are you sure you want to leave the editor?'
+        return this.$t('editor:unsavedWarning')
       } else {
         return undefined
       }
@@ -291,7 +291,7 @@ export default {
           })
           if (_.get(conflictResp, 'data.pages.checkConflicts', false)) {
             this.$root.$emit('saveConflict')
-            throw new Error('Save conflict! Another user has already modified this page.')
+            throw new Error(this.$t('editor:conflict.warning'))
           }
 
           let resp = await this.$apollo.mutate({

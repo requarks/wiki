@@ -3,66 +3,72 @@
     .pa-4
       v-toolbar.radius-7(flat, color='indigo', style='border-bottom-left-radius: 0; border-bottom-right-radius: 0;', dark)
         v-icon.mr-3 mdi-merge
-        .subtitle-1 Resolve Save Conflict
+        .subtitle-1 {{$t('editor:conflict.title')}}
         v-spacer
-        v-btn(outlined, color='white', @click='useLocal', title='Use content in the left panel')
+        v-btn(outlined, color='white', @click='useLocal', :title='$t(`editor:conflict.useLocalHint`)')
           v-icon(left) mdi-alpha-l-box
-          span Use Local
+          span {{$t('editor:conflict.useLocal')}}
         v-dialog(
           v-model='isRemoteConfirmDiagShown'
           width='500'
           )
           template(v-slot:activator='{ on }')
-            v-btn.ml-3(outlined, color='white', v-on='on', title='Discard local changes and use latest version')
+            v-btn.ml-3(outlined, color='white', v-on='on', :title='$t(`editor:conflict.useRemoteHint`)')
               v-icon(left) mdi-alpha-r-box
-              span Use Remote
+              span {{$t('editor:conflict.useRemote')}}
           v-card
             .dialog-header.is-short.is-indigo
               v-icon.mr-3(color='white') mdi-alpha-r-box
-              span Overwrite with Remote Version?
+              span {{$t('editor:conflict.overwrite.title')}}
             v-card-text.pa-4
-              .body-2 Are you sure you want to replace your current version with the latest remote content? #[strong Your current edits will be lost.]
+              i18next.body-2(tag='div', path='editor:conflict.overwrite.description')
+                strong(place='refEditsLost') {{$t('editor:conflict.overwrite.editsLost')}}
             v-card-chin
               v-spacer
               v-btn(outlined, color='indigo', @click='isRemoteConfirmDiagShown = false')
                 v-icon(left) mdi-close
-                span Cancel
+                span {{$t('common:actions.cancel')}}
               v-btn(@click='useRemote', color='indigo', dark)
                 v-icon(left) mdi-check
-                span Confirm
+                span {{$t('common:actions.confirm')}}
         v-divider.mx-3(vertical)
         v-btn(outlined, color='indigo lighten-4', @click='close')
           v-icon(left) mdi-close
-          span Cancel
+          span {{$t('common:actions.cancel')}}
       v-row.indigo.darken-1.body-2(no-gutters)
         v-col.pa-4
           v-icon.mr-3(color='white') mdi-alpha-l-box
-          span.white--text Local Version #[em.indigo--text.text--lighten-4 (editable)]
+          i18next.white--text(tag='span', path='editor:conflict.localVersion')
+            em.indigo--text.text--lighten-4(place='refEditable') {{$t('editor:conflict.editable')}}
         v-divider(vertical)
         v-col.pa-4
           v-icon.mr-3(color='white') mdi-alpha-r-box
-          span.white--text Remote Version #[em.indigo--text.text--lighten-4 (read-only)]
+          i18next.white--text(tag='span', path='editor:conflict.remoteVersion')
+            em.indigo--text.text--lighten-4(place='refReadOnly') {{$t('editor:conflict.readonly')}}
       v-row.grey.lighten-2.body-2(no-gutters)
         v-col.px-4.py-2
-          em.grey--text.text--darken-2 Your current edit, based on page version from #[span(:title='$options.filters.moment(checkoutDateActive, `LLL`)') {{ checkoutDateActive | moment('from') }}]
+          i18next.grey--text.text--darken-2(tag='em', path='editor:conflict.leftPanelInfo')
+            span(place='date', :title='$options.filters.moment(checkoutDateActive, `LLL`)') {{ checkoutDateActive | moment('from') }}
         v-divider(vertical)
         v-col.px-4.py-2
-          em.grey--text.text--darken-2 Last edited by #[strong {{latest.authorName}}], #[span(:title='$options.filters.moment(latest.updatedAt, `LLL`)') {{ latest.updatedAt | moment('from') }}]
+          i18next.grey--text.text--darken-2(tag='em', path='editor:conflict.rightPanelInfo')
+            strong(place='authorName') {{latest.authorName}}
+            span(place='date', :title='$options.filters.moment(latest.updatedAt, `LLL`)') {{ latest.updatedAt | moment('from') }}
       v-row.grey.lighten-3.grey--text.text--darken-3(no-gutters)
         v-col.pa-4
           .body-2
-            strong.indigo--text Title:
+            strong.indigo--text {{$t('editor:conflict.pageTitle')}}
             strong.pl-2 {{title}}
           .caption
-            strong.indigo--text Description:
+            strong.indigo--text {{$t('editor:conflict.pageDescription')}}
             span.pl-2 {{description}}
         v-divider(vertical, light)
         v-col.pa-4
           .body-2
-            strong.indigo--text Title:
+            strong.indigo--text {{$t('editor:conflict.pageTitle')}}
             strong.pl-2 {{latest.title}}
           .caption
-            strong.indigo--text Description:
+            strong.indigo--text {{$t('editor:conflict.pageDescription')}}
             span.pl-2 {{latest.description}}
       v-card.radius-7(:light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark')
         div(ref='cm')

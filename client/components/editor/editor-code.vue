@@ -245,6 +245,14 @@ export default {
           break
       }
     })
+
+    // Handle save conflict
+    this.$root.$on('saveConflict', () => {
+      this.toggleModal(`editorModalConflict`)
+    })
+    this.$root.$on('overwriteEditorContent', () => {
+      this.cm.setValue(this.$store.get('editor/content'))
+    })
   },
   beforeDestroy() {
     this.$root.$off('editorInsert')
