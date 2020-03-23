@@ -226,16 +226,25 @@ export default {
   computed: {
     darkMode: get('site/dark'),
     fullTrail () {
+      const liveTrailItem = {
+        versionId: 0,
+        authorId: this.authorId,
+        authorName: this.authorName,
+        actionType: 'live',
+        valueBefore: null,
+        valueAfter: null,
+        versionDate: this.updatedAt
+      }
+      // -> Check for move between latest and live
+      const prevPage = _.find(this.cache, ['versionId', _.get(this.trail, '[0].versionId', -1)])
+      if (prevPage && this.path !== prevPage.path) {
+        liveTrailItem.actionType = 'move'
+        liveTrailItem.valueBefore = prevPage.path
+        liveTrailItem.valueAfter = this.path
+      }
+      // -> Combine trail with live
       return [
-        {
-          versionId: 0,
-          authorId: this.authorId,
-          authorName: this.authorName,
-          actionType: 'live',
-          valueBefore: null,
-          valueAfter: null,
-          versionDate: this.updatedAt
-        },
+        liveTrailItem,
         ...this.trail
       ]
     },
@@ -480,7 +489,7 @@ export default {
         case 'edit':
           return '' // 'mdi-pencil'
         case 'move':
-          return 'forward'
+          return 'mdi-forward'
         case 'initial':
           return 'mdi-plus'
         case 'live':
