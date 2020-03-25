@@ -225,7 +225,7 @@
 
 <script>
 import _ from 'lodash'
-import uuid from 'uuid/v4'
+import { v4 as uuid } from 'uuid'
 import { get, sync } from 'vuex-pathify'
 
 export default {

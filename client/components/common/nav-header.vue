@@ -147,7 +147,7 @@
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
-                  v-icon(color='grey') mdi-file-document-box-plus-outline
+                  v-icon(color='grey') mdi-text-box-plus-outline
               span {{$t('common:header.newPage')}}
             v-divider(vertical)
 
@@ -172,18 +172,18 @@
                 v-list-item-content
                   v-list-item-title {{name}}
                   v-list-item-subtitle {{email}}
-              v-list-item(href='/w', disabled)
-                v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
-                v-list-item-content
-                  v-list-item-title {{$t('common:header.myWiki')}}
-                  v-list-item-subtitle.overline Coming soon
-              v-list-item(href='/p', disabled)
-                v-list-item-action: v-icon(color='blue') mdi-face-profile
-                v-list-item-content
-                  v-list-item-title {{$t('common:header.profile')}}
-                  v-list-item-subtitle.overline Coming soon
+              //- v-list-item(href='/w', disabled)
+              //-   v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
+              //-   v-list-item-content
+              //-     v-list-item-title {{$t('common:header.myWiki')}}
+              //-     v-list-item-subtitle.overline Coming soon
+              //- v-list-item(href='/p', disabled)
+              //-   v-list-item-action: v-icon(color='blue') mdi-face-profile
+              //-   v-list-item-content
+              //-     v-list-item-title {{$t('common:header.profile')}}
+              //-     v-list-item-subtitle.overline Coming soon
               v-list-item(href='/a', v-if='isAuthenticated && isAdmin')
-                v-list-item-action.btn-animate-rotate: v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-3` : `blue-grey`') mdi-settings
+                v-list-item-action.btn-animate-rotate: v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-3` : `blue-grey`') mdi-cog
                 v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.admin')}}
               v-list-item(@click='logout')
                 v-list-item-action: v-icon(color='red') mdi-logout

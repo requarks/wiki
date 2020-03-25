@@ -9,15 +9,20 @@
         v-spacer
         .caption Visual Editor
         v-spacer
-        .caption {{stats.characters}} Chars, {{stats.words}} Words
+        .caption {{$t('editor:ckeditor.stats', { chars: stats.characters, words: stats.words })}}
+    editor-conflict(v-model='isConflict', v-if='isConflict')
 </template>
 
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import DecoupledEditor from '@requarks/ckeditor5'
+import EditorConflict from './ckeditor/conflict.vue'
 
 export default {
+  components: {
+    EditorConflict
+  },
   props: {
     save: {
       type: Function,
@@ -31,7 +36,8 @@ export default {
         characters: 0,
         words: 0
       },
-      content: ''
+      content: '',
+      isConflict: false
     }
   },
   computed: {
@@ -81,6 +87,14 @@ export default {
           })
           break
       }
+    })
+
+    // Handle save conflict
+    this.$root.$on('saveConflict', () => {
+      this.isConflict = true
+    })
+    this.$root.$on('overwriteEditorContent', () => {
+      this.editor.setData(this.$store.get('editor/content'))
     })
   },
   beforeDestroy () {
