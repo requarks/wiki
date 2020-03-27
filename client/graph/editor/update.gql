@@ -7,6 +7,9 @@ mutation ($id: Int!, $content: String, $description: String, $editor: String, $i
         slug
         message
       }
+      page {
+        updatedAt
+      }
     }
   }
 }

@@ -8,5 +8,13 @@ block body
       :page-id=page.id
       locale=page.localeCode
       path=page.path
+      title=page.title
+      description=page.description
+      :tags=page.tags
+      created-at=page.createdAt
+      updated-at=page.updatedAt
+      author-name=page.authorName
+      :author-id=page.authorId
+      :is-published=page.isPublished.toString()
       live-content=page.content
       )

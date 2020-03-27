@@ -126,10 +126,9 @@
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
-                  v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-history
+                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-history
                   v-list-item-content
-                    v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.history')}}
-                    v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+                    v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
                   v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
@@ -148,7 +147,7 @@
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
-                  v-icon(color='grey') mdi-file-document-box-plus-outline
+                  v-icon(color='grey') mdi-text-box-plus-outline
               span {{$t('common:header.newPage')}}
             v-divider(vertical)
 
@@ -173,18 +172,18 @@
                 v-list-item-content
                   v-list-item-title {{name}}
                   v-list-item-subtitle {{email}}
-              v-list-item(href='/w', disabled)
-                v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
-                v-list-item-content
-                  v-list-item-title {{$t('common:header.myWiki')}}
-                  v-list-item-subtitle.overline Coming soon
-              v-list-item(href='/p', disabled)
-                v-list-item-action: v-icon(color='blue') mdi-face-profile
-                v-list-item-content
-                  v-list-item-title {{$t('common:header.profile')}}
-                  v-list-item-subtitle.overline Coming soon
+              //- v-list-item(href='/w', disabled)
+              //-   v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
+              //-   v-list-item-content
+              //-     v-list-item-title {{$t('common:header.myWiki')}}
+              //-     v-list-item-subtitle.overline Coming soon
+              //- v-list-item(href='/p', disabled)
+              //-   v-list-item-action: v-icon(color='blue') mdi-face-profile
+              //-   v-list-item-content
+              //-     v-list-item-title {{$t('common:header.profile')}}
+              //-     v-list-item-subtitle.overline Coming soon
               v-list-item(href='/a', v-if='isAuthenticated && isAdmin')
-                v-list-item-action.btn-animate-rotate: v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-3` : `blue-grey`') mdi-settings
+                v-list-item-action.btn-animate-rotate: v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-3` : `blue-grey`') mdi-cog
                 v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.admin')}}
               v-list-item(@click='logout')
                 v-list-item-action: v-icon(color='red') mdi-logout
@@ -342,12 +341,7 @@ export default {
       window.location.assign(`/e/${this.locale}/${this.path}`)
     },
     pageHistory () {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
-        message: `Coming soon...`,
-        icon: 'ferry'
-      })
-      // window.location.assign(`/h/${this.locale}/${this.path}`)
+      window.location.assign(`/h/${this.locale}/${this.path}`)
     },
     pageSource () {
       window.location.assign(`/s/${this.locale}/${this.path}`)

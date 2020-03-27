@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const request = require('request-promise')
 const bugsnag = require('@bugsnag/node')
-const uuid = require('uuid/v4')
+const { v4: uuid } = require('uuid')
 const qs = require('querystring')
 const os = require('os')
 

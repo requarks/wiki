@@ -26,7 +26,6 @@ module.exports = class User extends Model {
         name: {type: 'string', minLength: 1, maxLength: 255},
         providerId: {type: 'string'},
         password: {type: 'string'},
-        role: {type: 'string', enum: ['admin', 'guest', 'user']},
         tfaIsActive: {type: 'boolean', default: false},
         tfaSecret: {type: 'string'},
         jobTitle: {type: 'string'},
@@ -592,6 +591,21 @@ module.exports = class User extends Model {
         usrData.timezone = timezone
       }
       await WIKI.models.users.query().patch(usrData).findById(id)
+    } else {
+      throw new WIKI.Error.UserNotFound()
+    }
+  }
+
+  /**
+   * Delete a User
+   *
+   * @param {*} id User ID
+   */
+  static async deleteUser (id) {
+    const usr = await WIKI.models.users.query().findById(id)
+    if (usr) {
+      await WIKI.models.userKeys.query().delete().where('userId', id)
+      await WIKI.models.users.query().deleteById(id)
     } else {
       throw new WIKI.Error.UserNotFound()
     }

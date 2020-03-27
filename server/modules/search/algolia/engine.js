@@ -47,8 +47,7 @@ module.exports = {
    */
   async query(q, opts) {
     try {
-      const results = await this.index.search({
-        query: q,
+      const results = await this.index.search(q, {
         hitsPerPage: 50
       })
       return {
@@ -73,7 +72,7 @@ module.exports = {
    * @param {Object} page Page to create
    */
   async created(page) {
-    await this.index.addObject({
+    await this.index.saveObject({
       objectID: page.hash,
       locale: page.localeCode,
       path: page.path,
@@ -110,7 +109,7 @@ module.exports = {
    */
   async renamed(page) {
     await this.index.deleteObject(page.hash)
-    await this.index.addObject({
+    await this.index.saveObject({
       objectID: page.destinationHash,
       locale: page.destinationLocaleCode,
       path: page.destinationPath,
@@ -124,7 +123,7 @@ module.exports = {
    */
   async rebuild() {
     WIKI.logger.info(`(SEARCH/ALGOLIA) Rebuilding Index...`)
-    await this.index.clearIndex()
+    await this.index.clearObjects()
 
     const MAX_DOCUMENT_BYTES = 10 * Math.pow(2, 10) // 10 KB
     const MAX_INDEXING_BYTES = 10 * Math.pow(2, 20) - Buffer.from('[').byteLength - Buffer.from(']').byteLength // 10 MB
@@ -171,7 +170,7 @@ module.exports = {
     const flushBuffer = async () => {
       WIKI.logger.info(`(SEARCH/ALGOLIA) Sending batch of ${chunks.length}...`)
       try {
-        await this.index.addObjects(
+        await this.index.saveObjects(
           _.map(chunks, doc => ({
             objectID: doc.id,
             locale: doc.locale,

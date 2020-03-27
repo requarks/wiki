@@ -1,5 +1,5 @@
 const path = require('path')
-const uuid = require('uuid/v4')
+const { v4: uuid } = require('uuid')
 const bodyParser = require('body-parser')
 const compression = require('compression')
 const express = require('express')

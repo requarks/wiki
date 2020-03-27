@@ -9,7 +9,7 @@ const URL = require('url').URL
 module.exports = {
   async render() {
     const $ = cheerio.load(this.input, {
-      decodeEntities: false
+      decodeEntities: true
     })
 
     if ($.root().children().length < 1) {
@@ -113,6 +113,9 @@ module.exports = {
         }
       } else {
         $(elm).addClass(`is-external-link`)
+        if (this.config.openExternalLinkNewTab) {
+          $(elm).attr('target', '_blank')
+        }
       }
 
       // -> Update element
@@ -226,7 +229,7 @@ module.exports = {
       headers.push(headerSlug)
     })
 
-    let output = $.html('body').replace('<body>', '').replace('</body>', '')
+    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
 
     // --------------------------------
     // STEP: POST
@@ -239,4 +242,15 @@ module.exports = {
 
     return output
   }
+}
+
+function decodeEscape (string) {
+  return string.replace(/&#x([0-9a-f]{1,6});/ig, (entity, code) => {
+    code = parseInt(code, 16)
+
+    // Don't unescape ASCII characters, assuming they're encoded for a good reason
+    if (code < 0x80) return entity
+
+    return String.fromCodePoint(code)
+  })
 }

@@ -14,9 +14,16 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 
 <h2 align="center">GitHub Sponsors</h2>
 
+- Alexander Casassovici ([@alexksso](https://github.com/alexksso))
+- CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
+- Dragan Espenschied ([@despens](https://github.com/despens))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
+- Noel Cower ([@nilium](https://github.com/nilium))
+- Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
+- aytaa ([@aytaa](https://github.com/aytaa))
+- nicole-wiegand ([@nicole-wiegand](https://github.com/nicole-wiegand))
 
 <h2 align="center">Sponsors via OpenCollective</h2>
 
@@ -43,6 +50,7 @@ Funds donated via Patreon go directly to support lead developer [Nicolas Giard](
 - Flemis Jurgenheimer
 - Günter Pavlas
 - Ian
+- Iskander Callos
 - Josh Stewart
 - Loïc CRAMPON
 - Matt Gedigian

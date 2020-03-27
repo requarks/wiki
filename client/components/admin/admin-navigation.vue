@@ -148,7 +148,7 @@
 
 <script>
 import _ from 'lodash'
-import uuid from 'uuid/v4'
+import { v4 as uuid } from 'uuid'
 
 import treeSaveMutation from 'gql/admin/navigation/navigation-mutation-save-tree.gql'
 import treeQuery from 'gql/admin/navigation/navigation-query-tree.gql'

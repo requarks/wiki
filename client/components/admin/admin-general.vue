@@ -73,6 +73,16 @@
                       persistent-hint
                       :hint='$t(`admin:general.companyNameHint`)'
                       )
+                    v-select.mt-3(
+                      outlined
+                      :label='$t(`admin:general.contentLicense`)'
+                      :items='contentLicenses'
+                      v-model='config.contentLicense'
+                      prepend-icon='mdi-creative-commons'
+                      :return-object='false'
+                      :hint='$t(`admin:general.contentLicenseHint`)'
+                      persistent-hint
+                      )
                   v-divider
                   .overline.grey--text.pa-4 SEO
                   .px-3.pb-3
@@ -251,8 +261,7 @@
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
-import siteConfigQuery from 'gql/admin/site/site-query-config.gql'
-import siteUpdateConfigMutation from 'gql/admin/site/site-mutation-save-config.gql'
+import gql from 'graphql-tag'
 
 import editorStore from '../../store/editor'
 
@@ -281,6 +290,7 @@ export default {
         analyticsService: '',
         analyticsId: '',
         company: '',
+        contentLicense: '',
         logoUrl: '',
         featureAnalytics: false,
         featurePageRatings: false,
@@ -317,13 +327,82 @@ export default {
     siteTitle: sync('site/title'),
     logoUrl: sync('site/logoUrl'),
     company: sync('site/company'),
-    activeModal: sync('editor/activeModal')
+    contentLicense: sync('site/contentLicense'),
+    activeModal: sync('editor/activeModal'),
+    contentLicenses () {
+      return [
+        { value: '', text: this.$t('common:license.none') },
+        { value: 'alr', text: this.$t('common:license.alr') },
+        { value: 'cc0', text: this.$t('common:license.cc0') },
+        { value: 'ccby', text: this.$t('common:license.ccby') },
+        { value: 'ccbysa', text: this.$t('common:license.ccbysa') },
+        { value: 'ccbynd', text: this.$t('common:license.ccbynd') },
+        { value: 'ccbync', text: this.$t('common:license.ccbync') },
+        { value: 'ccbyncsa', text: this.$t('common:license.ccbyncsa') },
+        { value: 'ccbyncnd', text: this.$t('common:license.ccbyncnd') }
+      ]
+    }
   },
   methods: {
     async save () {
       try {
         await this.$apollo.mutate({
-          mutation: siteUpdateConfigMutation,
+          mutation: gql`
+            mutation (
+              $host: String!
+              $title: String!
+              $description: String!
+              $robots: [String]!
+              $analyticsService: String!
+              $analyticsId: String!
+              $company: String!
+              $contentLicense: String!
+              $logoUrl: String!
+              $featurePageRatings: Boolean!
+              $featurePageComments: Boolean!
+              $featurePersonalWikis: Boolean!
+              $securityIframe: Boolean!
+              $securityReferrerPolicy: Boolean!
+              $securityTrustProxy: Boolean!
+              $securitySRI: Boolean!
+              $securityHSTS: Boolean!
+              $securityHSTSDuration: Int!
+              $securityCSP: Boolean!
+              $securityCSPDirectives: String!
+            ) {
+              site {
+                updateConfig(
+                  host: $host,
+                  title: $title,
+                  description: $description,
+                  robots: $robots,
+                  analyticsService: $analyticsService,
+                  analyticsId: $analyticsId,
+                  company: $company,
+                  contentLicense: $contentLicense,
+                  logoUrl: $logoUrl,
+                  featurePageRatings: $featurePageRatings,
+                  featurePageComments: $featurePageComments,
+                  featurePersonalWikis: $featurePersonalWikis,
+                  securityIframe: $securityIframe,
+                  securityReferrerPolicy: $securityReferrerPolicy,
+                  securityTrustProxy: $securityTrustProxy,
+                  securitySRI: $securitySRI,
+                  securityHSTS: $securityHSTS,
+                  securityHSTSDuration: $securityHSTSDuration,
+                  securityCSP: $securityCSP,
+                  securityCSPDirectives: $securityCSPDirectives
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
           variables: {
             host: _.get(this.config, 'host', ''),
             title: _.get(this.config, 'title', ''),
@@ -332,6 +411,7 @@ export default {
             analyticsService: _.get(this.config, 'analyticsService', ''),
             analyticsId: _.get(this.config, 'analyticsId', ''),
             company: _.get(this.config, 'company', ''),
+            contentLicense: _.get(this.config, 'contentLicense', ''),
             logoUrl: _.get(this.config, 'logoUrl', ''),
             featurePageRatings: _.get(this.config, 'featurePageRatings', false),
             featurePageComments: _.get(this.config, 'featurePageComments', false),
@@ -356,6 +436,7 @@ export default {
         })
         this.siteTitle = this.config.title
         this.company = this.config.company
+        this.contentLicense = this.config.contentLicense
         this.logoUrl = this.config.logoUrl
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -379,7 +460,34 @@ export default {
   },
   apollo: {
     config: {
-      query: siteConfigQuery,
+      query: gql`
+        {
+          site {
+            config {
+              host
+              title
+              description
+              robots
+              analyticsService
+              analyticsId
+              company
+              contentLicense
+              logoUrl
+              featurePageRatings
+              featurePageComments
+              featurePersonalWikis
+              securityIframe
+              securityReferrerPolicy
+              securityTrustProxy
+              securitySRI
+              securityHSTS
+              securityHSTSDuration
+              securityCSP
+              securityCSPDirectives
+            }
+          }
+        }
+      `,
       fetchPolicy: 'network-only',
       update: (data) => _.cloneDeep(data.site.config),
       watchLoading (isLoading) {

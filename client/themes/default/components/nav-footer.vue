@@ -1,7 +1,9 @@
 <template lang="pug">
   v-footer.justify-center(:color='bgColor', inset)
     .caption.grey--text.text--darken-1
-      span(v-if='company && company.length > 0') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
+      template(v-if='company && company.length > 0 && contentLicense !== ``')
+        span(v-if='contentLicense === `alr`') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
+        span(v-else) {{ $t('common:footer.license', { company: company, license: $t('common:license.' + contentLicense), interpolation: { escapeValue: false } }) }} |&nbsp;
       span {{ $t('common:footer.poweredBy') }} #[a(href='https://wiki.js.org', ref='nofollow') Wiki.js]
 </template>
 
@@ -26,6 +28,7 @@ export default {
   },
   computed: {
     company: get('site/company'),
+    contentLicense: get('site/contentLicense'),
     darkMode: get('site/dark'),
     bgColor() {
       if (!this.darkMode) {

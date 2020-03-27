@@ -10,7 +10,8 @@ const state = {
     folderTree: [],
     currentFolderId: 0,
     currentFileId: null
-  }
+  },
+  checkoutDateActive: ''
 }
 
 export default {

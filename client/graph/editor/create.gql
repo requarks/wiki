@@ -9,6 +9,7 @@ mutation ($content: String!, $description: String!, $editor: String!, $isPrivate
       }
       page {
         id
+        updatedAt
       }
     }
   }

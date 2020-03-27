@@ -293,6 +293,9 @@ module.exports = class Page extends Model {
       mode: 'create'
     })
 
+    // -> Get latest updatedAt
+    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
+
     return page
   }
 
@@ -326,7 +329,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
       isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
-      action: 'updated'
+      action: opts.action ? opts.action : 'updated',
+      versionDate: ogPage.updatedAt
     })
 
     // -> Update page
@@ -339,12 +343,7 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title
     }).where('id', ogPage.id)
-    let page = await WIKI.models.pages.getPageFromDb({
-      path: ogPage.path,
-      locale: ogPage.localeCode,
-      userId: ogPage.authorId,
-      isPrivate: ogPage.isPrivate
-    })
+    let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
     await WIKI.models.tags.associateTags({ tags: opts.tags, page })
@@ -379,6 +378,9 @@ module.exports = class Page extends Model {
         pageId: page.id
       }).update('title', page.title)
     }
+
+    // -> Get latest updatedAt
+    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
 
     return page
   }
@@ -422,7 +424,8 @@ module.exports = class Page extends Model {
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...page,
-      action: 'moved'
+      action: 'moved',
+      versionDate: page.updatedAt
     })
 
     const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
@@ -503,7 +506,8 @@ module.exports = class Page extends Model {
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...page,
-      action: 'deleted'
+      action: 'deleted',
+      versionDate: page.updatedAt
     })
 
     // -> Delete page
