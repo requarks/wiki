@@ -213,6 +213,7 @@ import mdAbbr from 'markdown-it-abbr'
 import mdSup from 'markdown-it-sup'
 import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
+import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
 import twemoji from 'twemoji'
@@ -261,6 +262,7 @@ const md = new MarkdownIt({
   .use(mdSup)
   .use(mdSub)
   .use(mdMark)
+  .use(mdFootnote)
   .use(mdImsize)
 
 // ========================================
