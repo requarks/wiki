@@ -111,7 +111,22 @@ We are looking for translators to make Wiki.js UI available in as many languages
 ![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
 
-<h2 align="center">Sponsors</h2>
+<h2 align="center">GitHub Sponsors</h2>
+
+Support this project by becoming a sponsor. Your name will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://github.com/users/NGPixel/sponsorship)]
+
+- Alexander Casassovici ([@alexksso](https://github.com/alexksso))
+- CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
+- Dragan Espenschied ([@despens](https://github.com/despens))
+- M. Scott Ford ([@mscottford](https://github.com/mscottford))
+- Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
+- Noel Cower ([@nilium](https://github.com/nilium))
+- Oleksii ([@idokka](https://github.com/idokka))
+- Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
+- aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
+- aytaa ([@aytaa](https://github.com/aytaa))
+
+<h2 align="center">OpenCollective Sponsors</h2>
 
 Support this project by becoming a sponsor. Your logo will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://opencollective.com/wikijs#sponsor)]
 
@@ -126,7 +141,32 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
 <a href="https://opencollective.com/wikijs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/8/avatar.svg"></a>
 <a href="https://opencollective.com/wikijs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/9/avatar.svg"></a>
 
-<h2 align="center">Backers</h2>
+<h2 align="center">Patreon Backers</h2>
+
+Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/requarks)]
+
+<!--5 start-->
+- Al Romano
+- Alex Balabanov
+- Brandon Curtis
+- djagoo
+- Douglas Lassance
+- Ernie Reid
+- Etienne
+- Flemis Jurgenheimer
+- Günter Pavlas
+- Ian
+- Iskander Callos
+- Josh Stewart
+- Loïc CRAMPON
+- Matt Gedigian
+- Philipp Schürch
+- Richeir
+- Stepan Sokolovskyi
+- 张白驹
+<!--5 end-->
+
+<h2 align="center">OpenCollective Backers</h2>
 
 Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/wikijs#backer)]
 
