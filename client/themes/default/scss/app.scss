@@ -476,12 +476,12 @@
     > li::before {
       position: absolute;
       left: -1.1rem;
-      content: '\26AB';
+      content: '\25b8';
       color: mc('grey', '600');
       width: 1.35rem;
 
       @at-root .is-rtl & {
-        content: '•' ;
+        content: '\25C3';
       }
     }
   }
