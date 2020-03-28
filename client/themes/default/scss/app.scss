@@ -633,6 +633,8 @@
     &.align-right {
       float: right;
       margin: 0 0 1rem 1rem;
+      z-index: 1;
+      position: relative;
     }
     &.align-center {
       display: block;
