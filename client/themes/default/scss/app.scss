@@ -198,7 +198,6 @@
   p {
     padding: 1rem 0 0 0;
     margin: 0;
-    text-align: justify;
 
     @at-root .contents > div > p:first-child {
       padding-top: 0;
@@ -312,8 +311,8 @@
   // ---------------------------------
 
   ol, ul {
-    padding: 1rem 0 0 0;
-    list-style-position: inside;
+    padding-top: 1rem;
+    width: 100%;
 
     @at-root .is-rtl & {
       padding-left: 0;
@@ -474,18 +473,21 @@
 
   ul {
     list-style: none;
-    width: 100%;
     > li::before {
+      position: absolute;
+      left: -1.1rem;
       content: '\25b8';
       color: mc('grey', '600');
-      display: inline-block;
       width: 1.35rem;
 
       @at-root .is-rtl & {
-        content: '\25C3' ;
+        content: '\25C3';
       }
     }
+  }
+  ul, ol {
     > li {
+      position: relative;
       > p {
         display:inline-block;
         vertical-align:top;
