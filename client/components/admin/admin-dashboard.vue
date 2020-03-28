@@ -200,7 +200,7 @@ export default {
 }
 
 .v-icon.dashboard-icon {
-  position: absolute;
+  position: absolute !important;
   right: 0;
   top: 12px;
   font-size: 100px !important;
