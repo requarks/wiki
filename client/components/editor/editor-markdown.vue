@@ -216,6 +216,7 @@ import mdMark from 'markdown-it-mark'
 import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
+import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 
 // Prism (Syntax Highlighting)
