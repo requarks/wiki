@@ -1,6 +1,6 @@
 <template lang="pug">
   v-dialog(v-model='isShown', max-width='550')
-    v-card.wiki-form
+    v-card
       .dialog-header.is-short.is-red
         v-icon.mr-2(color='white') mdi-alert
         span {{$t('editor:unsaved.title')}}

@@ -28,7 +28,7 @@
           div(style='height:400px;')
             vue-scroll(:ops='scrollStyle')
               v-treeview(
-                :key='`pageTree` + treeViewCacheId'
+                :key='`pageTree-` + treeViewCacheId'
                 :active.sync='currentNode'
                 :open.sync='openNodes'
                 :items='tree'
@@ -56,8 +56,8 @@
                   color='primary'
                   )
                   template(v-for='(page, idx) of currentPages')
-                    v-list-item(:key='`page` + page.id', :value='page.path')
-                      v-list-item-icon: v-icon mdi-file-document-box
+                    v-list-item(:key='`page-` + page.id', :value='page.path')
+                      v-list-item-icon: v-icon mdi-text-box
                       v-list-item-title {{page.title}}
                     v-divider(v-if='idx < pages.length - 1')
           v-alert.animated.fadeIn(
@@ -143,7 +143,7 @@ export default {
       tree: [
         {
           id: 0,
-          title: '/ (root',
+          title: '/ (root)',
           children: []
         }
       ],
@@ -286,9 +286,8 @@ export default {
       } else {
         item.children = undefined
       }
-      this.pages.push(...itemPages)
-
-      this.all.push(...items)
+      this.pages = _.unionBy(this.pages, itemPages, 'id')
+      this.all = _.unionBy(this.all, items, 'id')
 
       this.searchLoading = false
     }

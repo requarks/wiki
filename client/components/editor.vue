@@ -203,7 +203,7 @@ export default {
 
     window.onbeforeunload = () => {
       if (!this.exitConfirmed && this.initContentParsed !== this.$store.get('editor/content')) {
-        return 'You have unsaved edits. Are you sure you want to leave the editor?'
+        return this.$t('editor:unsavedWarning')
       } else {
         return undefined
       }
@@ -232,6 +232,11 @@ export default {
     async save({ rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
       this.isSaving = true
+
+      const saveTimeoutHandle = setTimeout(() => {
+        throw new Error('Save operation timed out.')
+      }, 30000)
+
       try {
         if (this.$store.get('editor/mode') === 'create') {
           // --------------------------------------------
@@ -291,7 +296,7 @@ export default {
           })
           if (_.get(conflictResp, 'data.pages.checkConflicts', false)) {
             this.$root.$emit('saveConflict')
-            throw new Error('Save conflict! Another user has already modified this page.')
+            throw new Error(this.$t('editor:conflict.warning'))
           }
 
           let resp = await this.$apollo.mutate({
@@ -338,9 +343,13 @@ export default {
           icon: 'warning'
         })
         if (rethrow === true) {
+          clearTimeout(saveTimeoutHandle)
+          this.isSaving = false
+          this.hideProgressDialog()
           throw err
         }
       }
+      clearTimeout(saveTimeoutHandle)
       this.isSaving = false
       this.hideProgressDialog()
     },
