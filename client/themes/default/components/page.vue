@@ -173,7 +173,7 @@
                         @click='pageHistory'
                         )
                         v-icon(size='20') mdi-history
-                    span History
+                    span {{$t('common:header.history')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -185,7 +185,19 @@
                         @click='pageSource'
                         )
                         v-icon(size='20') mdi-code-tags
-                    span View Source
+                    span {{$t('common:header.viewSource')}}
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        small
+                        color='white'
+                        light
+                        v-on='on'
+                        @click='pageDuplicate'
+                        )
+                        v-icon(size='20') mdi-content-duplicate
+                    span {{$t('common:header.duplicate')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -197,7 +209,7 @@
                         @click='pageMove'
                         )
                         v-icon(size='20') mdi-content-save-move-outline
-                    span Move / Rename
+                    span {{$t('common:header.move')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -209,7 +221,7 @@
                         @click='pageDelete'
                         )
                         v-icon(size='20') mdi-trash-can-outline
-                    span Delete
+                    span {{$t('common:header.delete')}}
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
@@ -457,6 +469,9 @@ export default {
     },
     pageSource () {
       this.$root.$emit('pageSource')
+    },
+    pageDuplicate () {
+      this.$root.$emit('pageDuplicate')
     },
     pageMove () {
       this.$root.$emit('pageMove')
