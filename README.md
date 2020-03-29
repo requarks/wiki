@@ -125,6 +125,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
+- magicpotato ([@fortheday](https://github.com/fortheday))
 
 <h2 align="center">OpenCollective Sponsors</h2>
 
