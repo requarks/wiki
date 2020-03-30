@@ -14,13 +14,13 @@ props:
     order: 1
   openMarker:
     type: String
-    default: "@startuml"
+    default: "```plantuml"
     title: Open Marker
     hint: String to use as opening delimiter
     order: 2
   closeMarker:
     type: String
-    default: "@enduml"
+    default: "```"
     title: Close Marker
     hint: String to use as closing delimiter
     order: 3
