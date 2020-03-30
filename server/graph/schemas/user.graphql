@@ -27,6 +27,8 @@ type UserQuery {
   single(
     id: Int!
   ): User @auth(requires: ["manage:users", "manage:system"])
+
+  profile: UserProfile
 }
 
 # -----------------------------------------------
@@ -109,4 +111,20 @@ type User {
   createdAt: Date!
   updatedAt: Date!
   groups: [Group]!
+}
+
+type UserProfile {
+  id: Int!
+  name: String!
+  email: String!
+  providerName: String
+  isSystem: Boolean!
+  isVerified: Boolean!
+  location: String!
+  jobTitle: String!
+  timezone: String!
+  createdAt: Date!
+  updatedAt: Date!
+  lastLoginOn: Date!
+  groups: [String]!
 }

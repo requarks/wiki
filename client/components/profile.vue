@@ -4,14 +4,14 @@
     v-navigation-drawer.pb-0(v-model='profileDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense, nav)
         v-list-item(to='/profile')
-          v-list-item-action: v-icon mdi-account-badge
+          v-list-item-action: v-icon mdi-face-profile
           v-list-item-content
             v-list-item-title Profile
-        v-list-item(to='/preferences', disabled)
-          v-list-item-action: v-icon(color='grey lighten-1') mdi-settings-outline
-          v-list-item-content
-            v-list-item-title Preferences
-            v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
+        //- v-list-item(to='/preferences', disabled)
+        //-   v-list-item-action: v-icon(color='grey lighten-1') mdi-cog-outline
+        //-   v-list-item-content
+        //-     v-list-item-title Preferences
+        //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
         v-list-item(to='/pages', disabled)
           v-list-item-action: v-icon(color='grey lighten-1') mdi-file-document
           v-list-item-content
@@ -43,7 +43,7 @@ const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/profile' },
     { path: '/profile', component: () => import(/* webpackChunkName: "profile" */ './profile/profile.vue') },
-    { path: '/preferences', component: () => import(/* webpackChunkName: "profile" */ './profile/preferences.vue') },
+    // { path: '/preferences', component: () => import(/* webpackChunkName: "profile" */ './profile/preferences.vue') },
     { path: '/pages', component: () => import(/* webpackChunkName: "profile" */ './profile/pages.vue') },
     { path: '/comments', component: () => import(/* webpackChunkName: "profile" */ './profile/comments.vue') }
   ]
@@ -59,6 +59,7 @@ router.afterEach((to, from) => {
 })
 
 export default {
+  i18nOptions: { namespaces: 'profile' },
   data() {
     return {
       profileDrawerShown: true
