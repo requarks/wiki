@@ -27,10 +27,10 @@ module.exports = {
 
     let dbClient = null
     let dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
-      host: WIKI.config.db.host,
-      user: WIKI.config.db.user,
-      password: WIKI.config.db.pass,
-      database: WIKI.config.db.db,
+      host: WIKI.config.db.host.toString(),
+      user: WIKI.config.db.user.toString(),
+      password: WIKI.config.db.pass.toString(),
+      database: WIKI.config.db.db.toString(),
       port: WIKI.config.db.port
     }
 

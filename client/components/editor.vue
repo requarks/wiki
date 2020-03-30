@@ -232,6 +232,11 @@ export default {
     async save({ rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
       this.isSaving = true
+
+      const saveTimeoutHandle = setTimeout(() => {
+        throw new Error('Save operation timed out.')
+      }, 30000)
+
       try {
         if (this.$store.get('editor/mode') === 'create') {
           // --------------------------------------------
@@ -338,9 +343,13 @@ export default {
           icon: 'warning'
         })
         if (rethrow === true) {
+          clearTimeout(saveTimeoutHandle)
+          this.isSaving = false
+          this.hideProgressDialog()
           throw err
         }
       }
+      clearTimeout(saveTimeoutHandle)
       this.isSaving = false
       this.hideProgressDialog()
     },

@@ -213,12 +213,17 @@ import mdAbbr from 'markdown-it-abbr'
 import mdSup from 'markdown-it-sup'
 import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
+import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
+import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
+
+// Mermaid
+import mermaid from 'mermaid'
 
 // Helpers
 import katexHelper from './common/katex'
@@ -261,6 +266,7 @@ const md = new MarkdownIt({
   .use(mdSup)
   .use(mdSub)
   .use(mdMark)
+  .use(mdFootnote)
   .use(mdImsize)
 
 // ========================================
@@ -328,6 +334,8 @@ md.renderer.rules.emoji = (token, idx) => {
 // Vue Component
 // ========================================
 
+let mermaidId = 0
+
 export default {
   components: {
     markdownHelp
@@ -364,6 +372,7 @@ export default {
     previewShown (newValue, oldValue) {
       if (newValue && !oldValue) {
         this.$nextTick(() => {
+          this.renderMermaidDiagrams()
           Prism.highlightAllUnder(this.$refs.editorPreview)
           Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         })
@@ -384,6 +393,7 @@ export default {
       this.$store.set('editor/content', newContent)
       this.previewHTML = md.render(newContent)
       this.$nextTick(() => {
+        this.renderMermaidDiagrams()
         Prism.highlightAllUnder(this.$refs.editorPreview)
         Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         this.scrollSync(this.cm)
@@ -525,6 +535,15 @@ export default {
       this.$nextTick(() => {
         this.cm.refresh()
       })
+    },
+    renderMermaidDiagrams () {
+      document.querySelectorAll('.editor-markdown-preview pre.line-numbers > code.language-mermaid').forEach(elm => {
+        mermaidId++
+        const mermaidDef = elm.innerText
+        const mmElm = document.createElement('div')
+        mmElm.innerHTML = `<div id="mermaid-id-${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
+        elm.parentElement.replaceWith(mmElm)
+      })
     }
   },
   mounted() {
@@ -533,6 +552,12 @@ export default {
     if (this.mode === 'create' && !this.$store.get('editor/content')) {
       this.$store.set('editor/content', '# Header\nYour content here')
     }
+
+    // Initialize Mermaid API
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: this.$vuetify.theme.dark ? `dark` : `default`
+    })
 
     // Initialize CodeMirror
 

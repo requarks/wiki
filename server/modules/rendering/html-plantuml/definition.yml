@@ -1,8 +1,0 @@
-key: htmlPlantuml
-title: PlantUML
-description: Generate diagrams from PlantUML syntax
-author: requarks.io
-icon: mdi-sitemap
-enabledDefault: false
-dependsOn: htmlCore
-props: {}
