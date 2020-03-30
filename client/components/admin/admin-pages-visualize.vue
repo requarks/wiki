@@ -371,9 +371,10 @@ export default {
 <style lang='scss'>
 .admin-pages-visualize-svg {
   text-align: center;
-
+  overflow-x: auto;
   > svg {
     height: 100vh;
+    width: 80vw;
   }
 }
 </style>
