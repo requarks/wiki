@@ -248,6 +248,7 @@
     "ignore-loader": "0.1.2",
     "jest": "25.1.0",
     "js-cookie": "2.2.1",
+    "mermaid": "8.4.8",
     "mini-css-extract-plugin": "0.9.0",
     "moment-duration-format": "2.3.2",
     "offline-plugin": "5.0.7",

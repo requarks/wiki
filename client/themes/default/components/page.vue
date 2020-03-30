@@ -249,6 +249,7 @@
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
 import Prism from 'prismjs'
+import mermaid from 'mermaid'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
@@ -431,6 +432,12 @@ export default {
 
     // -> Highlight Code Blocks
     Prism.highlightAllUnder(this.$refs.container)
+
+    // -> Render Mermaid diagrams
+    mermaid.mermaidAPI.initialize({
+      startOnLoad: true,
+      theme: this.$vuetify.theme.dark ? `dark` : `default`
+    })
 
     // -> Handle anchor scrolling
     this.$nextTick(() => {
