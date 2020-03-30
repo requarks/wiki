@@ -26,6 +26,24 @@ module.exports = {
       usr.password = ''
       usr.tfaSecret = ''
       return usr
+    },
+    async profile (obj, args, context, info) {
+      if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
+        throw new WIKI.Error.AuthRequired()
+      }
+      const usr = await WIKI.models.users.query().findById(context.req.user.id)
+      if (!usr.isActive) {
+        throw new WIKI.Error.AuthAccountBanned()
+      }
+      const usrGroups = await usr.$relatedQuery('groups')
+      return {
+        ...usr,
+        password: '',
+        providerKey: '',
+        tfaSecret: '',
+        lastLoginOn: '1970-01-01',
+        groups: usrGroups.map(g => g.name)
+      }
     }
   },
   UserMutation: {

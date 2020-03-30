@@ -69,6 +69,10 @@ module.exports = {
     message: 'You are not authorized to register. Your domain is not whitelisted.',
     code: 1011
   }),
+  AuthRequired: CustomError('AuthRequired', {
+    message: 'You must be authenticated to access this resource.',
+    code: 1019
+  }),
   AuthTFAFailed: CustomError('AuthTFAFailed', {
     message: 'Incorrect TFA Security Code.',
     code: 1005
