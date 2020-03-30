@@ -19,8 +19,8 @@
         v-btn.animated.fadeInDown(
           text
           color='green'
-          @click.exact='save'
           @click.ctrl.exact='saveAndClose'
+          @click.exact='save'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
