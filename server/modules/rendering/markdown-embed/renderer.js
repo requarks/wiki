@@ -58,7 +58,7 @@ class JiraService extends PageService {
   getEmbedCode (token) {
     return `
       <base target="_top" />
-      <div class="jira-embed" style="position:relative;overflow:hidden;width:1000px;height:105px"><iframe 
+      <div class="jira-embed" style="position:relative;overflow:hidden;width:1000px;height:100px"><iframe 
       style="position:absolute;top:-150px;height:300px;width:1000px"
         src="${this.opts.jiraURL}/sr/jira.issueviews:searchrequest-printable/temp/SearchRequest.html?jqlQuery=key%3D${token}"></iframe>
       </div>`
