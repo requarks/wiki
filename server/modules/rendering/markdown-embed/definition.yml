@@ -5,7 +5,8 @@ description: |
    - `@[gdoc]($docId)`  : include google doc
    - `@[sheet]($docId)` : include google sheet
    - `@[deck]($docId)` 	: include google presentation
-   - `@[jira](jql)` 	: include jql results from configured jira server (cors must be enabled)
+   - `@[jql]($jql)` 	   : include jql results from configured jira server (cors must be enabled)
+   - `@[jira]($jiraKey)` : include single jira ticket
    - `@[page]({url}#{anchorId})` : transclude remote oage fragment from between the anchor identifier up  untill the next header element)
    - `@[page]({url}#?{elementId})`   : transclude remote page frgment as identified by dom element id
 
