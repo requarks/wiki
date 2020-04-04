@@ -118,6 +118,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Alexander Casassovici ([@alexksso](https://github.com/alexksso))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - Dragan Espenschied ([@despens](https://github.com/despens))
+- Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))

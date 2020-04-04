@@ -19,7 +19,7 @@
         v-btn.animated.fadeInDown(
           text
           color='green'
-          @click='save'
+          @click.exact='save'
           @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
