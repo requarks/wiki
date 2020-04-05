@@ -122,6 +122,7 @@ type User {
   timezone: String!
   createdAt: Date!
   updatedAt: Date!
+  lastLoginAt: Date
   groups: [Group]!
 }
 

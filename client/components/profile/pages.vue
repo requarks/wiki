@@ -2,9 +2,11 @@
   v-container(fluid, fill-height, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .headline.primary--text Pages
-        .subheading.grey--text List of pages I created or contributed
-
+        .profile-header
+          img.animated.fadeInUp(src='/svg/icon-file.svg', alt='Users', style='width: 80px;')
+          .profile-header-title
+            .headline.primary--text.animated.fadeInLeft {{$t('profile:pages.title')}}
+            .subheading.grey--text.animated.fadeInLeft {{$t('profile:pages.subtitle')}}
 </template>
 
 <script>

@@ -12,7 +12,7 @@
           //-   v-icon(left) mdi-earth
           //-   span {{$t('profile:viewPublicProfile')}}
       v-flex(lg6 xs12)
-        v-card
+        v-card.animated.fadeInUp
           v-toolbar(color='primary', dark, dense, flat)
             v-toolbar-title.subtitle-1 {{$t('profile:myInfo')}}
           v-list(two-line, dense)
@@ -117,32 +117,43 @@
                   v-model='editPop.timezone'
                   :close-on-content-click='false'
                   min-width='350'
+                  max-width='350'
                   left
                   )
                   template(v-slot:activator='{ on }')
                     v-btn(text, color='grey', small, v-on='on', @click='focusField(`iptTimezone`)')
                       v-icon(left) mdi-pencil
                       span {{ $t('common:actions:edit') }}
-                  v-card
+                  v-card(flat)
                     v-select(
                       ref='iptTimezone'
                       :items='timezones'
                       v-model='user.timezone'
                       :label='$t(`profile:timezone`)'
                       solo
+                      flat
                       dense
                       hide-details
-                      append-icon='mdi-check'
-                      @click:append='editPop.timezone = false'
                       @keydown.enter='editPop.timezone = false'
                       @keydown.esc='editPop.timezone = false'
+                      style='height: 44px;'
                     )
+                    v-card-chin
+                      v-spacer
+                      v-btn(
+                        small
+                        text
+                        color='primary'
+                        @click='editPop.timezone = false'
+                        )
+                        v-icon(left) mdi-check
+                        span {{$t('common:actions.ok')}}
           v-card-chin
             v-spacer
             v-btn.px-4(color='success', depressed, @click='saveProfile', :loading='saveLoading')
               v-icon(left) mdi-content-save
               span {{$t('common:actions.save')}}
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dark, dense, flat)
             v-toolbar-title
               .subtitle-1 {{$t('profile:auth.title')}}
@@ -209,7 +220,7 @@
         //-       v-img(:src='picture.url')
         //-     v-btn(outlined).mx-4 Upload Picture
         //-     v-btn(outlined, disabled) Remove Picture
-        v-card
+        v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dark, dense, flat)
             v-toolbar-title
               .subtitle-1 {{$t('profile:groups.title')}}
@@ -221,7 +232,7 @@
                 v-list-item-content
                   v-list-item-title.body-2 {{grp}}
               v-divider(v-if='idx < user.groups.length - 1')
-        v-card.mt-3
+        v-card.mt-3.animated.fadeInUp.wait-p3s
           v-toolbar(color='teal', dark, dense, flat)
             v-toolbar-title
               .subtitle-1 {{$t('profile:activity.title')}}
@@ -249,6 +260,9 @@ import validate from 'validate.js'
 import PasswordStrength from '../common/password-strength.vue'
 
 export default {
+  i18nOptions: {
+    namespaces: ['profile', 'auth']
+  },
   components: {
     PasswordStrength
   },
