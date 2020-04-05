@@ -8,9 +8,9 @@
             .headline.primary--text.animated.fadeInLeft {{$t('profile:title')}}
             .subheading.grey--text.animated.fadeInLeft {{$t('profile:subtitle')}}
           v-spacer
-          v-btn.animated.fadeInDown(outlined, color='primary', disabled).mr-0
-            v-icon(left) mdi-earth
-            span {{$t('profile:viewPublicProfile')}}
+          //- v-btn.animated.fadeInDown(outlined, color='primary', disabled).mr-0
+          //-   v-icon(left) mdi-earth
+          //-   span {{$t('profile:viewPublicProfile')}}
       v-flex(lg6 xs12)
         v-card
           v-toolbar(color='primary', dark, dense, flat)
@@ -30,8 +30,9 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptDisplayName`)')
-                      v-icon mdi-pencil
+                    v-btn(text, color='grey', small, v-on='on', @click='focusField(`iptDisplayName`)')
+                      v-icon(left) mdi-pencil
+                      span {{ $t('common:actions:edit') }}
                   v-card
                     v-text-field(
                       ref='iptDisplayName'
@@ -59,8 +60,9 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptLocation`)')
-                      v-icon mdi-pencil
+                    v-btn(text, color='grey', small, v-on='on', @click='focusField(`iptLocation`)')
+                      v-icon(left) mdi-pencil
+                      span {{ $t('common:actions:edit') }}
                   v-card
                     v-text-field(
                       ref='iptLocation'
@@ -88,8 +90,9 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptJobTitle`)')
-                      v-icon mdi-pencil
+                    v-btn(text, color='grey', small, v-on='on', @click='focusField(`iptJobTitle`)')
+                      v-icon(left) mdi-pencil
+                      span {{ $t('common:actions:edit') }}
                   v-card
                     v-text-field(
                       ref='iptJobTitle'
@@ -117,8 +120,9 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptTimezone`)')
-                      v-icon mdi-pencil
+                    v-btn(text, color='grey', small, v-on='on', @click='focusField(`iptTimezone`)')
+                      v-icon(left) mdi-pencil
+                      span {{ $t('common:actions:edit') }}
                   v-card
                     v-select(
                       ref='iptTimezone'
@@ -135,15 +139,15 @@
                     )
           v-card-chin
             v-spacer
-            v-btn.px-4(color='success')
+            v-btn.px-4(color='success', depressed, @click='saveProfile', :loading='saveLoading')
               v-icon(left) mdi-content-save
               span {{$t('common:actions.save')}}
         v-card.mt-3
           v-toolbar(color='primary', dark, dense, flat)
             v-toolbar-title
-              .subtitle-1 Authentication
-          v-card-text
-            v-subheader.pl-0 Provider
+              .subtitle-1 {{$t('profile:auth.title')}}
+          v-card-text.pt-0
+            v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.provider')}}
             v-toolbar(
               flat
               :color='$vuetify.theme.dark ? "grey darken-2" : "purple lighten-5"'
@@ -151,36 +155,64 @@
               :class='$vuetify.theme.dark ? "grey--text text--lighten-1" : "purple--text text--darken-4"'
               )
               v-icon(:color='$vuetify.theme.dark ? "grey lighten-1" : "purple darken-4"') mdi-shield-lock
-              .subheading.ml-3 Local
-            v-divider.mt-3
-            v-subheader.pl-0 Two-Factor Authentication (2FA)
-            .caption.mb-2 2FA adds an extra layer of security by requiring a unique code generated on your smartphone when signing in.
-            v-btn(color='purple darken-4', disabled).ml-0 Enable 2FA
-            v-btn(color='purple darken-4', dark, depressed, disabled).ml-0 Disable 2FA
-            v-divider.mt-3
-            v-subheader.pl-0 Change Password
-            v-text-field(label='Current Password', type='password', prepend-icon='mdi-textbox-password')
-            v-text-field(label='New Password', type='password', prepend-icon='mdi-textbox-password')
-            v-text-field(label='Confirm New Password', type='password', prepend-icon='mdi-textbox-password')
+              .subheading.ml-3 {{ user.providerName }}
+            //- v-divider.mt-3
+            //- v-subheader.pl-0: span.subtitle-2 Two-Factor Authentication (2FA)
+            //- .caption.mb-2 2FA adds an extra layer of security by requiring a unique code generated on your smartphone when signing in.
+            //- v-btn(color='purple darken-4', disabled).ml-0 Enable 2FA
+            //- v-btn(color='purple darken-4', dark, depressed, disabled).ml-0 Disable 2FA
+            template(v-if='user.providerKey === `local`')
+              v-divider.mt-3
+              v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.changePassword')}}
+              v-text-field(
+                ref='iptCurrentPass'
+                v-model='currentPass'
+                outlined
+                :label='$t(`profile:auth.currentPassword`)'
+                type='password'
+                prepend-inner-icon='mdi-textbox-password'
+                )
+              v-text-field(
+                ref='iptNewPass'
+                v-model='newPass'
+                outlined
+                :label='$t(`profile:auth.newPassword`)'
+                type='password'
+                prepend-inner-icon='mdi-textbox-password'
+                counter='255'
+                loading
+                )
+                password-strength(slot='progress', v-model='newPass')
+              v-text-field(
+                ref='iptVerifyPass'
+                v-model='verifyPass'
+                outlined
+                :label='$t(`profile:auth.verifyPassword`)'
+                type='password'
+                prepend-inner-icon='mdi-textbox-password'
+                hide-details
+                )
           v-card-chin
             v-spacer
-            v-btn.px-4(color='purple darken-4', dark)
+            v-btn.px-4(color='purple darken-4', dark, depressed, @click='changePassword', :loading='changePassLoading')
               v-icon(left) mdi-progress-check
-              span Change Password
+              span {{$t('profile:auth.changePassword')}}
       v-flex(lg6 xs12)
+        //- v-card
+        //-   v-toolbar(color='primary', dark, dense, flat)
+        //-     v-toolbar-title
+        //-       .subtitle-1 Picture
+        //-   v-card-title
+        //-     v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
+        //-       span.white--text.subheading {{picture.initials}}
+        //-     v-avatar(v-else-if='picture.kind === `image`', :size='40')
+        //-       v-img(:src='picture.url')
+        //-     v-btn(outlined).mx-4 Upload Picture
+        //-     v-btn(outlined, disabled) Remove Picture
         v-card
           v-toolbar(color='primary', dark, dense, flat)
             v-toolbar-title
-              .subtitle-1 Picture
-          v-card-title
-            v-avatar(size='64', color='grey')
-              v-icon(size='64', color='grey lighten-2') mdi-account-circle
-            v-btn(depressed).mx-4.elevation-1 Upload Picture
-            v-btn(depressed, disabled).elevation-1 Remove Picture
-        v-card.mt-3
-          v-toolbar(color='primary', dark, dense, flat)
-            v-toolbar-title
-              .subtitle-1 Groups
+              .subtitle-1 {{$t('profile:groups.title')}}
           v-list(dense)
             template(v-for='(grp, idx) of user.groups')
               v-list-item(:key='`grp-id-` + grp')
@@ -192,34 +224,51 @@
         v-card.mt-3
           v-toolbar(color='teal', dark, dense, flat)
             v-toolbar-title
-              .subtitle-1 Activity
+              .subtitle-1 {{$t('profile:activity.title')}}
           v-card-text.grey--text.text--darken-2
-            .caption.grey--text Joined on
+            .caption.grey--text {{$t('profile:activity.joinedOn')}}
             .body-2: strong {{ user.createdAt | moment('LLLL') }}
-            .caption.grey--text.mt-3 Profile last updated on
+            .caption.grey--text.mt-3 {{$t('profile:activity.lastUpdatedOn')}}
             .body-2: strong {{ user.updatedAt | moment('LLLL') }}
-            .caption.grey--text.mt-3 Last login on
-            .body-2: strong {{ user.lastLoginOn | moment('LLLL') }}
+            .caption.grey--text.mt-3 {{$t('profile:activity.lastLoginOn')}}
+            .body-2: strong {{ user.lastLoginAt | moment('LLLL') }}
             v-divider.mt-3
-            .caption.grey--text.mt-3 Pages created
-            .body-2: strong 0
-            .caption.grey--text.mt-3 Comments posted
+            .caption.grey--text.mt-3 {{$t('profile:activity.pagesCreated')}}
+            .body-2: strong {{ user.pagesTotal }}
+            .caption.grey--text.mt-3 {{$t('profile:activity.commentsPosted')}}
             .body-2: strong 0
 </template>
 
 <script>
+import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
 import _ from 'lodash'
+import Cookies from 'js-cookie'
+import validate from 'validate.js'
+
+import PasswordStrength from '../common/password-strength.vue'
 
 export default {
+  components: {
+    PasswordStrength
+  },
   data() {
     return {
+      saveLoading: false,
+      changePassLoading: false,
       user: {
+        name: 'unknown',
+        location: '',
+        jobTitle: '',
+        timezone: '',
         createdAt: '1970-01-01',
         updatedAt: '1970-01-01',
-        lastLoginOn: '1970-01-01',
+        lastLoginAt: '1970-01-01',
         groups: []
       },
+      currentPass: '',
+      newPass: '',
+      verifyPass: '',
       editPop: {
         name: false,
         location: false,
@@ -480,6 +529,27 @@ export default {
       ]
     }
   },
+  computed: {
+    pictureUrl: get('user/pictureUrl'),
+    picture () {
+      if (this.pictureUrl && this.pictureUrl.length > 1) {
+        return {
+          kind: 'image',
+          url: this.pictureUrl
+        }
+      } else {
+        const nameParts = this.user.name.toUpperCase().split(' ')
+        let initials = _.head(nameParts).charAt(0)
+        if (nameParts.length > 1) {
+          initials += _.last(nameParts).charAt(0)
+        }
+        return {
+          kind: 'initials',
+          initials
+        }
+      }
+    }
+  },
   methods: {
     /**
      * Focus an input after delay
@@ -490,6 +560,164 @@ export default {
           this.$refs[ipt].focus()
         }, 200)
       })
+    },
+    /**
+     * Save User Profile
+     */
+    async saveProfile () {
+      this.saveLoading = true
+      this.$store.commit(`loadingStart`, 'profile-save')
+
+      try {
+        const respRaw = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($name: String!, $location: String!, $jobTitle: String!, $timezone: String!) {
+              users {
+                updateProfile(name: $name, location: $location, jobTitle: $jobTitle, timezone: $timezone) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                  jwt
+                }
+              }
+            }
+          `,
+          variables: {
+            name: this.user.name,
+            location: this.user.location,
+            jobTitle: this.user.jobTitle,
+            timezone: this.user.timezone
+          }
+        })
+        const resp = _.get(respRaw, 'data.users.updateProfile.responseResult', {})
+        if (resp.succeeded) {
+          Cookies.set('jwt', _.get(respRaw, 'data.users.updateProfile.jwt', ''), { expires: 365 })
+          this.$store.set('user/name', this.user.name)
+          this.$store.commit('showNotification', {
+            message: this.$t('profile:save.success'),
+            style: 'success',
+            icon: 'check'
+          })
+        } else {
+          throw new Error(resp.message)
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+
+      this.$store.commit(`loadingStop`, 'profile-save')
+      this.saveLoading = false
+    },
+    /**
+     * Change Password
+     */
+    async changePassword () {
+      const validation = validate({
+        current: this.currentPass,
+        password: this.newPass,
+        verifyPassword: this.verifyPass
+      }, {
+        current: {
+          presence: {
+            message: this.$t('auth:missingPassword'),
+            allowEmpty: false
+          },
+          length: {
+            minimum: 6,
+            tooShort: this.$t('auth:passwordTooShort')
+          }
+        },
+        password: {
+          presence: {
+            message: this.$t('auth:missingPassword'),
+            allowEmpty: false
+          },
+          length: {
+            minimum: 6,
+            tooShort: this.$t('auth:passwordTooShort')
+          }
+        },
+        verifyPassword: {
+          equality: {
+            attribute: 'password',
+            message: this.$t('auth:passwordNotMatch')
+          }
+        }
+      }, { fullMessages: false })
+
+      if (validation) {
+        if (validation.current) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: validation.current[0],
+            icon: 'warning'
+          })
+          this.$refs.iptCurrentPass.focus()
+        } else if (validation.password) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: validation.password[0],
+            icon: 'warning'
+          })
+          this.$refs.iptNewPass.focus()
+        } else if (validation.verifyPassword) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: validation.verifyPassword[0],
+            icon: 'warning'
+          })
+          this.$refs.iptVerifyPass.focus()
+        }
+      } else {
+        this.changePassLoading = true
+        this.$store.commit(`loadingStart`, 'profile-changepassword')
+
+        try {
+          const respRaw = await this.$apollo.mutate({
+            mutation: gql`
+              mutation ($current: String!, $new: String!) {
+                users {
+                  changePassword(current: $current, new: $new) {
+                    responseResult {
+                      succeeded
+                      errorCode
+                      slug
+                      message
+                    }
+                    jwt
+                  }
+                }
+              }
+            `,
+            variables: {
+              current: this.currentPass,
+              new: this.newPass
+            }
+          })
+          const resp = _.get(respRaw, 'data.users.changePassword.responseResult', {})
+          if (resp.succeeded) {
+            this.currentPass = ''
+            this.newPass = ''
+            this.verifyPass = ''
+            Cookies.set('jwt', _.get(respRaw, 'data.users.changePassword.jwt', ''), { expires: 365 })
+            this.$store.commit('showNotification', {
+              message: this.$t('profile:auth.changePassSuccess'),
+              style: 'success',
+              icon: 'check'
+            })
+          } else {
+            throw new Error(resp.message)
+          }
+        } catch (err) {
+          this.$store.commit('pushGraphError', err)
+        }
+
+        this.$store.commit(`loadingStop`, 'profile-changepassword')
+        this.changePassLoading = false
+      }
     }
   },
   apollo: {
@@ -501,6 +729,7 @@ export default {
               id
               name
               email
+              providerKey
               providerName
               isSystem
               isVerified
@@ -509,8 +738,9 @@ export default {
               timezone
               createdAt
               updatedAt
-              lastLoginOn
+              lastLoginAt
               groups
+              pagesTotal
             }
           }
         }

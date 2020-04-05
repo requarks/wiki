@@ -166,7 +166,7 @@ export default {
             return 'mdi-linux'
           }
         case 'win32':
-          return 'mdi-windows'
+          return 'mdi-microsoft-windows'
         default:
           return ''
       }

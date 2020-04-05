@@ -341,6 +341,9 @@ module.exports = class User extends Model {
       user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions')
     }
 
+    // Update Last Login Date
+    await WIKI.models.users.query().findById(user.id).patch({ lastLoginAt: new Date().toISOString() })
+
     return {
       token: jwt.sign({
         id: user.id,
