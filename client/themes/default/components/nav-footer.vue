@@ -29,9 +29,8 @@ export default {
   computed: {
     company: get('site/company'),
     contentLicense: get('site/contentLicense'),
-    darkMode: get('site/dark'),
     bgColor() {
-      if (!this.darkMode) {
+      if (!this.$vuetify.theme.dark) {
         return this.color
       } else {
         return this.darkColor

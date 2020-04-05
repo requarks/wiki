@@ -2,7 +2,7 @@
 
 const Model = require('objection').Model
 const moment = require('moment')
-const nanoid = require('nanoid')
+const nanoid = require('nanoid').nanoid
 
 /**
  * Users model

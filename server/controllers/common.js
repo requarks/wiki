@@ -278,6 +278,10 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
  * Profile
  */
 router.get(['/p', '/p/*'], (req, res, next) => {
+  if (!req.user || req.user.id < 1 || req.user.id === 2) {
+    return res.render('unauthorized', { action: 'view' })
+  }
+
   _.set(res.locals, 'pageMeta.title', 'User Profile')
   res.render('profile')
 })

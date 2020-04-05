@@ -57,6 +57,10 @@ module.exports = {
     message: 'Invalid email / username or password.',
     code: 1002
   }),
+  AuthPasswordInvalid: CustomError('AuthPasswordInvalid', {
+    message: 'Password is incorrect.',
+    code: 1020
+  }),
   AuthProviderInvalid: CustomError('AuthProviderInvalid', {
     message: 'Invalid authentication provider.',
     code: 1003

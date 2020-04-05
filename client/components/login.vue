@@ -170,7 +170,7 @@
                     v-spacer
 
     loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
-    nav-footer(color='grey darken-5')
+    nav-footer(color='grey darken-5', dark-color='grey darken-5')
     notify
 </template>
 

@@ -76,6 +76,18 @@ type UserMutation {
   resetPassword(
     id: Int!
   ): DefaultResponse
+
+  updateProfile(
+    name: String!
+    location: String!
+    jobTitle: String!
+    timezone: String!
+  ): UserTokenResponse
+
+  changePassword(
+    current: String!
+    new: String!
+  ): UserTokenResponse
 }
 
 # -----------------------------------------------
@@ -117,6 +129,7 @@ type UserProfile {
   id: Int!
   name: String!
   email: String!
+  providerKey: String
   providerName: String
   isSystem: Boolean!
   isVerified: Boolean!
@@ -125,6 +138,12 @@ type UserProfile {
   timezone: String!
   createdAt: Date!
   updatedAt: Date!
-  lastLoginOn: Date!
+  lastLoginAt: Date
   groups: [String]!
+  pagesTotal: Int!
+}
+
+type UserTokenResponse {
+  responseResult: ResponseStatus!
+  jwt: String
 }
