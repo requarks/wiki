@@ -22,7 +22,7 @@
         //-     v-list-item-title {{$t('profile:comments.title')}}
         //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
 
-    v-content
+    v-content(:class='darkMode ? "grey darken-4" : "grey lighten-5"')
       transition(name='profile-router')
         router-view
 
