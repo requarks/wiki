@@ -148,7 +148,7 @@
                       v-tooltip(top)
                         template(v-slot:activator='{ on: tooltip }')
                           v-btn(icon, color='grey', x-small, v-on='{ ...menu, ...tooltip }', @click='focusField(`iptNewPassword`)')
-                            v-icon mdi-cached
+                            v-icon mdi-pencil
                         span {{$t('admin:users.changePassword')}}
                     v-card
                       v-text-field(
@@ -267,7 +267,7 @@
             v-divider
             v-list-item
               v-list-item-avatar(size='32')
-                v-icon mdi-account-badge-horizontal-outline
+                v-icon mdi-briefcase
               v-list-item-content
                 v-list-item-title {{$t('admin:users.jobTitle')}}
                 v-list-item-subtitle {{ user.jobTitle }}
@@ -324,8 +324,21 @@
                       @keydown.enter='editPop.timezone = false'
                       @keydown.esc='editPop.timezone = false'
                     )
+
         v-card.mt-3.animated.fadeInUp.wait-p4s
-          v-toolbar(color='primary', dense, dark, flat)
+          v-toolbar(color='teal', dark, dense, flat)
+            v-toolbar-title
+              .subtitle-1 {{$t('profile:activity.title')}}
+          v-card-text.grey--text.text--darken-2
+            .caption.grey--text {{$t('profile:activity.joinedOn')}}
+            .body-2: strong {{ user.createdAt | moment('LLLL') }}
+            .caption.grey--text.mt-3 {{$t('profile:activity.lastUpdatedOn')}}
+            .body-2: strong {{ user.updatedAt | moment('LLLL') }}
+            .caption.grey--text.mt-3 {{$t('profile:activity.lastLoginOn')}}
+            .body-2: strong {{ user.lastLoginAt | moment('LLLL') }}
+
+        v-card.mt-3.animated.fadeInUp.wait-p6s
+          v-toolbar(color='teal', dense, dark, flat)
             v-icon.mr-2 mdi-file-document-box-multiple-outline
             span Content
           v-card-text
@@ -351,10 +364,12 @@ import gql from 'graphql-tag'
 
 import { StatusIndicator } from 'vue-status-indicator'
 
-import userQuery from 'gql/admin/users/users-query-single.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 export default {
+  i18nOptions: {
+    namespaces: ['admin', 'profile']
+  },
   components: {
     StatusIndicator
   },
@@ -884,7 +899,32 @@ export default {
   },
   apollo: {
     user: {
-      query: userQuery,
+      query: gql`
+        query ($id: Int!) {
+          users {
+            single(id: $id) {
+              id
+              name
+              email
+              providerKey
+              providerId
+              location
+              jobTitle
+              timezone
+              isSystem
+              isActive
+              isVerified
+              createdAt
+              updatedAt
+              lastLoginAt
+              groups {
+                id
+                name
+              }
+            }
+          }
+        }
+      `,
       variables() {
         return {
           id: _.toSafeInteger(this.$route.params.id)

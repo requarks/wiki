@@ -123,7 +123,7 @@
             v-list-item-avatar(size='24', tile): v-icon mdi-heart-outline
             v-list-item-title {{ $t('admin:contribute.title') }}
 
-    v-content(:class='darkMode ? "grey darken-4" : ""')
+    v-content(:class='darkMode ? "grey darken-4" : "grey lighten-5"')
       transition(name='admin-router')
         router-view
 

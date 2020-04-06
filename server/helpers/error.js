@@ -57,6 +57,10 @@ module.exports = {
     message: 'Invalid email / username or password.',
     code: 1002
   }),
+  AuthPasswordInvalid: CustomError('AuthPasswordInvalid', {
+    message: 'Password is incorrect.',
+    code: 1020
+  }),
   AuthProviderInvalid: CustomError('AuthProviderInvalid', {
     message: 'Invalid authentication provider.',
     code: 1003
@@ -68,6 +72,10 @@ module.exports = {
   AuthRegistrationDomainUnauthorized: CustomError('AuthRegistrationDomainUnauthorized', {
     message: 'You are not authorized to register. Your domain is not whitelisted.',
     code: 1011
+  }),
+  AuthRequired: CustomError('AuthRequired', {
+    message: 'You must be authenticated to access this resource.',
+    code: 1019
   }),
   AuthTFAFailed: CustomError('AuthTFAFailed', {
     message: 'Incorrect TFA Security Code.',
