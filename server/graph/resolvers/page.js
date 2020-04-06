@@ -97,6 +97,18 @@ module.exports = {
           if (args.locale) {
             queryBuilder.where('localeCode', args.locale)
           }
+          if (args.creatorId && args.authorId && args.creatorId > 0 && args.authorId > 0) {
+            queryBuilder.where(function () {
+              this.where('creatorId', args.creatorId).orWhere('authorId', args.authorId)
+            })
+          } else {
+            if (args.creatorId && args.creatorId > 0) {
+              queryBuilder.where('creatorId', args.creatorId)
+            }
+            if (args.authorId && args.authorId > 0) {
+              queryBuilder.where('authorId', args.authorId)
+            }
+          }
           if (args.tags && args.tags.length > 0) {
             queryBuilder.whereIn('tags.tag', args.tags)
           }

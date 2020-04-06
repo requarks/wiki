@@ -38,6 +38,8 @@ type PageQuery {
     orderByDirection: PageOrderByDirection
     tags: [String!]
     locale: String
+    creatorId: Int
+    authorId: Int
   ): [PageListItem!]! @auth(requires: ["manage:system", "read:pages"])
 
   single(
