@@ -1,0 +1,19 @@
+key: default
+title: Default
+description: Built-in advanced comments tool.
+author: requarks.io
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+website: https://wiki.js.org
+displayMode: dynamic
+codeTemplate: false
+isAvailable: true
+props:
+  displayMode:
+    type: String
+    title: Display mode
+    default: 'page'
+    enum:
+      - inline
+      - page
+    hint: Whether to display the comments under the content (inline) or on a dedicated page (page).
+    order: 1

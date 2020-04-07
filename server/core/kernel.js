@@ -69,6 +69,7 @@ module.exports = {
   async postBootMaster() {
     await WIKI.models.analytics.refreshProvidersFromDisk()
     await WIKI.models.authentication.refreshStrategiesFromDisk()
+    await WIKI.models.commentProviders.refreshProvidersFromDisk()
     await WIKI.models.editors.refreshEditorsFromDisk()
     await WIKI.models.loggers.refreshLoggersFromDisk()
     await WIKI.models.renderers.refreshRenderersFromDisk()

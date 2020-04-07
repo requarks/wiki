@@ -1,39 +1,57 @@
+const _ = require('lodash')
+const graphHelper = require('../../helpers/graph')
+
+/* global WIKI */
+
 module.exports = {
-  // Query: {
-  //   comments(obj, args, context, info) {
-  //     return WIKI.models.Comment.findAll({ where: args })
-  //   }
-  // },
-  // Mutation: {
-  //   createComment(obj, args) {
-  //     return WIKI.models.Comment.create({
-  //       content: args.content,
-  //       author: args.userId,
-  //       document: args.documentId
-  //     })
-  //   },
-  //   deleteComment(obj, args) {
-  //     return WIKI.models.Comment.destroy({
-  //       where: {
-  //         id: args.id
-  //       },
-  //       limit: 1
-  //     })
-  //   },
-  //   modifyComment(obj, args) {
-  //     return WIKI.models.Comment.update({
-  //       content: args.content
-  //     }, {
-  //       where: { id: args.id }
-  //     })
-  //   }
-  // },
-  // Comment: {
-  //   author(cm) {
-  //     return cm.getAuthor()
-  //   },
-  //   document(cm) {
-  //     return cm.getDocument()
-  //   }
-  // }
+  Query: {
+    async comments() { return {} }
+  },
+  Mutation: {
+    async comments() { return {} }
+  },
+  CommentQuery: {
+    async providers(obj, args, context, info) {
+      const providers = await WIKI.models.commentProviders.getProviders()
+      return providers.map(provider => {
+        const providerInfo = _.find(WIKI.data.commentProviders, ['key', provider.key]) || {}
+        return {
+          ...providerInfo,
+          ...provider,
+          config: _.sortBy(_.transform(provider.config, (res, value, key) => {
+            const configData = _.get(providerInfo.props, key, false)
+            if (configData) {
+              res.push({
+                key,
+                value: JSON.stringify({
+                  ...configData,
+                  value
+                })
+              })
+            }
+          }, []), 'key')
+        }
+      })
+    }
+  },
+  CommentMutation: {
+    async updateProviders(obj, args, context) {
+      try {
+        for (let provider of args.providers) {
+          await WIKI.models.providers.query().patch({
+            isEnabled: provider.isEnabled,
+            config: _.reduce(provider.config, (result, value, key) => {
+              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
+              return result
+            }, {})
+          }).where('key', provider.key)
+        }
+        return {
+          responseResult: graphHelper.generateSuccess('Comment Providers updated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    }
+  }
 }

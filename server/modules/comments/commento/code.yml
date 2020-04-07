@@ -1,0 +1,4 @@
+main: |
+  <div id="commento"></div>
+bodyEnd: |
+  <script defer src="{{instanceUrl}}/js/commento.js"></script>
