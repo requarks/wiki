@@ -9,7 +9,7 @@ const moment = require('moment')
 const graphHelper = require('../../helpers/graph')
 const request = require('request-promise')
 const crypto = require('crypto')
-const nanoid = require('nanoid/non-secure/generate')
+const nanoid = require('nanoid/non-secure').customAlphabet('1234567890abcdef', 10)
 
 /* global WIKI */
 
@@ -150,7 +150,7 @@ module.exports = {
                       roles = _.concat(roles, ['write:pages', 'manage:pages', 'read:source', 'read:history', 'write:assets', 'manage:assets'])
                     }
                     return {
-                      id: nanoid('1234567890abcdef', 10),
+                      id: nanoid(),
                       roles: roles,
                       match: r.exact ? 'EXACT' : 'START',
                       deny: r.deny,

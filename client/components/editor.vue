@@ -19,7 +19,7 @@
         v-btn.animated.fadeInDown(
           text
           color='green'
-          @click='save'
+          @click.exact='save'
           @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
@@ -355,8 +355,12 @@ export default {
     },
     async saveAndClose() {
       try {
-        await this.save({ rethrow: true })
-        await this.exit()
+        if (this.$store.get('editor/mode') === 'create') {
+          await this.save()
+        } else {
+          await this.save({ rethrow: true })
+          await this.exit()
+        }
       } catch (err) {
         // Error is already handled
       }

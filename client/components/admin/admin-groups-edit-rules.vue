@@ -195,7 +195,9 @@
 
 <script>
 import _ from 'lodash'
-import nanoid from 'nanoid/non-secure/generate'
+import { customAlphabet } from 'nanoid/non-secure'
+
+const nanoid = customAlphabet('1234567890abcdef', 10)
 
 export default {
   props: {
@@ -241,7 +243,7 @@ export default {
   methods: {
     addRule(group) {
       this.group.pageRules.push({
-        id: nanoid('1234567890abcdef', 10),
+        id: nanoid(),
         path: '',
         roles: [],
         match: 'START',

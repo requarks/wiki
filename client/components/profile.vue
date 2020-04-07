@@ -2,23 +2,27 @@
   v-app(:dark='darkMode').profile
     nav-header
     v-navigation-drawer.pb-0(v-model='profileDrawerShown', app, fixed, clipped, left, permanent)
-      v-list(dense)
-        v-list-item.pt-2(to='/profile')
-          v-list-item-action: v-icon account_circle
-          v-list-item-title Profile
-        v-list-item(to='/preferences')
-          v-list-item-action: v-icon settings
-          v-list-item-title Preferences
-        v-divider.my-2
-        v-subheader My Content
-        v-list-item(to='/pages')
-          v-list-item-action: v-icon pages
-          v-list-item-title Pages
-        v-list-item(to='/comments')
-          v-list-item-action: v-icon question_answer
-          v-list-item-title Comments
+      v-list(dense, nav)
+        v-list-item(to='/profile', color='primary')
+          v-list-item-action: v-icon mdi-face-profile
+          v-list-item-content
+            v-list-item-title {{$t('profile:title')}}
+        //- v-list-item(to='/preferences', disabled)
+        //-   v-list-item-action: v-icon(color='grey lighten-1') mdi-cog-outline
+        //-   v-list-item-content
+        //-     v-list-item-title Preferences
+        //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
+        v-list-item(to='/pages', color='primary')
+          v-list-item-action: v-icon mdi-file-document-outline
+          v-list-item-content
+            v-list-item-title {{$t('profile:pages.title')}}
+        //- v-list-item(to='/comments', disabled)
+        //-   v-list-item-action: v-icon(color='grey lighten-1') mdi-message-reply-text
+        //-   v-list-item-content
+        //-     v-list-item-title {{$t('profile:comments.title')}}
+        //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
 
-    v-content
+    v-content(:class='darkMode ? "grey darken-4" : "grey lighten-5"')
       transition(name='profile-router')
         router-view
 
@@ -38,7 +42,7 @@ const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/profile' },
     { path: '/profile', component: () => import(/* webpackChunkName: "profile" */ './profile/profile.vue') },
-    { path: '/preferences', component: () => import(/* webpackChunkName: "profile" */ './profile/preferences.vue') },
+    // { path: '/preferences', component: () => import(/* webpackChunkName: "profile" */ './profile/preferences.vue') },
     { path: '/pages', component: () => import(/* webpackChunkName: "profile" */ './profile/pages.vue') },
     { path: '/comments', component: () => import(/* webpackChunkName: "profile" */ './profile/comments.vue') }
   ]
@@ -54,6 +58,7 @@ router.afterEach((to, from) => {
 })
 
 export default {
+  i18nOptions: { namespaces: 'profile' },
   data() {
     return {
       profileDrawerShown: true
@@ -81,6 +86,16 @@ export default {
   }
   &-enter, &-leave-to {
     opacity: 0;
+  }
+}
+
+.profile-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+
+  &-title {
+    margin-left: 1rem;
   }
 }
 
