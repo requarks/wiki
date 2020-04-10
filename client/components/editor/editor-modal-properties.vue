@@ -80,19 +80,14 @@
             v-combobox(
               :label='$t(`editor:props.tags`)'
               outlined
-              v-model='tags'
+              v-model='newTag'
               :hint='$t(`editor:props.tagsHint`)'
               :items='newTagSuggestions'
               :loading='$apollo.queries.newTagSuggestions.loading'
               persistent-hint
-              deletable-chips
               hide-no-data
-              hide-selected
               :search-input.sync='newTagSearch'
-              multiple
               )
-              template(v-slot:selection='{ attrs, item, parent, selected }')
-                span
         v-tab-item
           v-card-text
             .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outlined).white--text coming soon]
@@ -306,14 +301,20 @@ export default {
           // this.$tours['editorPropertiesTour'].start()
         }, 500)
       }
+    },
+    newTag(newValue, oldValue) {
+      const tagClean = _.trim(newValue || '').toLowerCase()
+      if (tagClean && tagClean.length > 0) {
+        if (!_.includes(this.tags, tagClean)) {
+          this.tags = [...this.tags, tagClean]
+        }
+        this.$nextTick(() => {
+          this.newTag = null
+        })
+      }
     }
   },
   methods: {
-    addTag () {
-      this.$nextTick(() => {
-        this.tags.push(this.newTag)
-      })
-    },
     removeTag (tag) {
       this.tags = _.without(this.tags, tag)
     },

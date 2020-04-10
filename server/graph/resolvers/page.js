@@ -110,7 +110,7 @@ module.exports = {
             }
           }
           if (args.tags && args.tags.length > 0) {
-            queryBuilder.whereIn('tags.tag', args.tags)
+            queryBuilder.whereIn('tags.tag', args.tags.map(t => _.trim(t).toLowerCase()))
           }
           const orderDir = args.orderByDirection === 'DESC' ? 'desc' : 'asc'
           switch (args.orderBy) {
@@ -177,14 +177,15 @@ module.exports = {
      * SEARCH TAGS
      */
     async searchTags (obj, args, context, info) {
+      const query = _.trim(args.query)
       const results = await WIKI.models.tags.query()
         .column('tag')
         .where(builder => {
           builder.andWhere(builderSub => {
             if (WIKI.config.db.type === 'postgres') {
-              builderSub.where('tag', 'ILIKE', `%${args.query}%`)
+              builderSub.where('tag', 'ILIKE', `%${query}%`)
             } else {
-              builderSub.where('tag', 'LIKE', `%${args.query}%`)
+              builderSub.where('tag', 'LIKE', `%${query}%`)
             }
           })
         })
@@ -400,8 +401,8 @@ module.exports = {
         const affectedRows = await WIKI.models.tags.query()
           .findById(args.id)
           .patch({
-            tag: args.tag,
-            title: args.title
+            tag: _.trim(args.tag).toLowerCase(),
+            title: _.trim(args.title)
           })
         if (affectedRows < 1) {
           throw new Error('This tag does not exist.')
