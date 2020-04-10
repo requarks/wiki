@@ -92,15 +92,48 @@
 
             v-card.mb-5
               .pa-5
-                .overline.indigo--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                .overline.pb-2.pink--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-4`')
+                  span Talk
+                  v-spacer
+                  v-chip.text-center(
+                    label
+                    x-small
+                    :color='$vuetify.theme.dark ? `pink darken-3` : `pink darken-4`'
+                    dark
+                    style='min-width: 50px; justify-content: center;'
+                    )
+                    span 334
+                .d-flex
+                  v-btn.text-none(
+                    :color='$vuetify.theme.dark ? `pink` : `pink darken-3`'
+                    outlined
+                    style='flex: 1 1 100%;'
+                    small
+                    )
+                    span.pink--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-4`') View Discussion
+                  v-tooltip(right, v-if='isAuthenticated')
+                    template(v-slot:activator='{ on }')
+                      v-btn.ml-2(
+                        :href='"/h/" + locale + "/" + path'
+                        v-on='on'
+                        outlined
+                        small
+                        :color='$vuetify.theme.dark ? `pink` : `pink darken-3`'
+                        )
+                        v-icon(:color='$vuetify.theme.dark ? `pink lighten-1` : `pink darken-4`', dense) mdi-comment-plus
+                    span New Comment
+
+            v-card.mb-5
+              .pa-5
+                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
-                  //- v-spacer
-                  //- v-tooltip(top, v-if='isAuthenticated')
-                  //-   template(v-slot:activator='{ on }')
-                  //-     v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
-                  //-       v-icon(color='grey', dense) mdi-history
-                  //-   span History
-                .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
+                  v-spacer
+                  v-tooltip(right, v-if='isAuthenticated')
+                    template(v-slot:activator='{ on }')
+                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
+                        v-icon(color='indigo', dense) mdi-history
+                    span {{$t('common:header.history')}}
+                .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- v-card.mb-5
