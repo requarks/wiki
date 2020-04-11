@@ -60,12 +60,26 @@ module.exports = {
   async query(q, opts) {
     try {
       let suggestions = []
-      const results = await WIKI.models.knex.raw(`
+      let qry = `
         SELECT id, path, locale, title, description
         FROM "pagesVector", to_tsquery(?,?) query
-        WHERE query @@ "tokens"
-        ORDER BY ts_rank(tokens, query) DESC
-      `, [this.config.dictLanguage, tsquery(q)])
+        WHERE (query @@ "tokens" OR path ILIKE ?)
+      `
+      let qryEnd = `ORDER BY ts_rank(tokens, query) DESC`
+      let qryParams = [this.config.dictLanguage, tsquery(q), `%${q.toLowerCase()}%`]
+
+      if (opts.locale) {
+        qry = `${qry} AND locale = ?`
+        qryParams.push(opts.locale)
+      }
+      if (opts.path) {
+        qry = `${qry} AND path ILIKE ?`
+        qryParams.push(`%${opts.path}`)
+      }
+      const results = await WIKI.models.knex.raw(`
+        ${qry}
+        ${qryEnd}
+      `, qryParams)
       if (results.rows.length < 5) {
         const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 ORDER BY rank LIMIT 5;`, [q, q])
         suggestions = suggestResults.rows.map(r => r.word)

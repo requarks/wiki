@@ -34,9 +34,11 @@ module.exports = {
           if (WIKI.config.db.type === 'postgres') {
             builderSub.where('title', 'ILIKE', `%${q}%`)
             builderSub.orWhere('description', 'ILIKE', `%${q}%`)
+            builderSub.orWhere('path', 'ILIKE', `%${q.toLowerCase()}%`)
           } else {
             builderSub.where('title', 'LIKE', `%${q}%`)
             builderSub.orWhere('description', 'LIKE', `%${q}%`)
+            builderSub.orWhere('path', 'LIKE', `%${q.toLowerCase()}%`)
           }
         })
       })

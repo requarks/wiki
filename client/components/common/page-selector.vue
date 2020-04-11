@@ -10,6 +10,7 @@
         v-icon.mr-3(color='white') mdi-page-next-outline
         .body-1(v-if='mode === `create`') Select New Page Location
         .body-1(v-else-if='mode === `move`') Move / Rename Page Location
+        .body-1(v-else-if='mode === `select`') Select Page
         v-spacer
         v-progress-circular(
           indeterminate
