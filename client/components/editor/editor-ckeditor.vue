@@ -11,6 +11,7 @@
         v-spacer
         .caption {{$t('editor:ckeditor.stats', { chars: stats.characters, words: stats.words })}}
     editor-conflict(v-model='isConflict', v-if='isConflict')
+    page-selector(mode='select', v-model='insertLinkDialog', :open-handler='insertLinkHandler', :path='path', :locale='locale')
 </template>
 
 <script>
@@ -18,6 +19,8 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import DecoupledEditor from '@requarks/ckeditor5'
 import EditorConflict from './ckeditor/conflict.vue'
+
+/* global siteLangs */
 
 export default {
   components: {
@@ -37,7 +40,8 @@ export default {
         words: 0
       },
       content: '',
-      isConflict: false
+      isConflict: false,
+      insertLinkDialog: false
     }
   },
   computed: {
@@ -49,6 +53,12 @@ export default {
     activeModal: sync('editor/activeModal')
   },
   methods: {
+    insertLink () {
+      this.insertLinkDialog = true
+    },
+    insertLinkHandler ({ locale, path }) {
+      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path})` : `/${path}`)
+    }
   },
   async mounted () {
     this.$store.set('editor/editorKey', 'ckeditor')
@@ -87,6 +97,10 @@ export default {
           })
           break
       }
+    })
+
+    this.$root.$on('editorLinkToPage', opts => {
+      this.insertLink()
     })
 
     // Handle save conflict
