@@ -38,7 +38,7 @@
           v-list-item-title {{ item.title }}
         v-list-item(v-else, :href='`/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
           v-list-item-avatar(size='24')
-            v-icon mdi-file-document-box
+            v-icon mdi-text-box
           v-list-item-title {{ item.title }}
 </template>
 
@@ -74,7 +74,8 @@ export default {
         id: 0,
         title: '/ (root)'
       },
-      all: []
+      parents: [],
+      loadedCache: []
     }
   },
   computed: {
@@ -84,25 +85,40 @@ export default {
   methods: {
     switchMode (mode) {
       this.currentMode = mode
-      if (mode === `browse`) {
-        this.fetchBrowseItems()
+      if (mode === `browse` && this.loadedCache.length < 1) {
+        this.loadFromCurrentPath()
       }
     },
     async fetchBrowseItems (item) {
       this.$store.commit(`loadingStart`, 'browse-load')
       if (!item) {
         item = this.currentParent
+      }
+
+      if (this.loadedCache.indexOf(item.id) < 0) {
+        this.currentItems = []
+      }
+
+      if (item.id === 0) {
+        this.parents = []
       } else {
-        if (!_.some(this.parents, ['id', item.id])) {
+        const flushRightIndex = _.findIndex(this.parents, ['id', item.id])
+        if (flushRightIndex >= 0) {
+          this.parents = _.take(this.parents, flushRightIndex)
+        }
+        if (this.parents.length < 1) {
           this.parents.push(this.currentParent)
         }
-        this.currentParent = item
+        this.parents.push(item)
       }
+
+      this.currentParent = item
+
       const resp = await this.$apollo.query({
         query: gql`
-          query ($parent: Int!, $locale: String!) {
+          query ($parent: Int, $locale: String!) {
             pages {
-              tree(parent: $parent, mode: ALL, locale: $locale, includeParents: true) {
+              tree(parent: $parent, mode: ALL, locale: $locale) {
                 id
                 path
                 title
@@ -119,15 +135,63 @@ export default {
           locale: this.locale
         }
       })
+      this.loadedCache = _.union(this.loadedCache, [item.id])
       this.currentItems = _.get(resp, 'data.pages.tree', [])
-      this.all.push(...this.currentItems)
+      this.$store.commit(`loadingStop`, 'browse-load')
+    },
+    async loadFromCurrentPath() {
+      this.$store.commit(`loadingStart`, 'browse-load')
+      const resp = await this.$apollo.query({
+        query: gql`
+          query ($path: String, $locale: String!) {
+            pages {
+              tree(path: $path, mode: ALL, locale: $locale, includeAncestors: true) {
+                id
+                path
+                title
+                isFolder
+                pageId
+                parent
+              }
+            }
+          }
+        `,
+        fetchPolicy: 'cache-first',
+        variables: {
+          path: this.path,
+          locale: this.locale
+        }
+      })
+      const items = _.get(resp, 'data.pages.tree', [])
+      const curPage = _.find(items, ['pageId', this.$store.get('page/id')])
+      if (!curPage) {
+        console.warn('Could not find current page in page tree listing!')
+        return
+      }
+
+      let curParentId = curPage.parent
+      let invertedAncestors = []
+      while (curParentId) {
+        const curParent = _.find(items, ['id', curParentId])
+        if (!curParent) {
+          break
+        }
+        invertedAncestors.push(curParent)
+        curParentId = curParent.parent
+      }
+
+      this.parents = [this.currentParent, ...invertedAncestors.reverse()]
+      this.currentParent = _.last(this.parents)
+
+      this.loadedCache = [curPage.parent]
+      this.currentItems = _.filter(items, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
     }
   },
   mounted () {
     this.currentMode = this.mode
     if (this.mode === 'browse') {
-      this.fetchBrowseItems()
+      this.loadFromCurrentPath()
     }
   }
 }

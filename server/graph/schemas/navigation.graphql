@@ -16,6 +16,7 @@ extend type Mutation {
 
 type NavigationQuery {
   tree: [NavigationTree]!
+  config: NavigationConfig!
 }
 
 # -----------------------------------------------
@@ -25,6 +26,9 @@ type NavigationQuery {
 type NavigationMutation {
   updateTree(
     tree: [NavigationTreeInput]!
+  ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
+  updateConfig(
+    mode: NavigationMode!
   ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
 }
 
@@ -58,4 +62,14 @@ input NavigationItemInput {
   icon: String
   targetType: String
   target: String
+}
+
+type NavigationConfig {
+  mode: NavigationMode!
+}
+
+enum NavigationMode {
+  NONE
+  TREE
+  MIXED
 }

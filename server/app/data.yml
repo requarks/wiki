@@ -45,6 +45,8 @@ defaults:
     company: ''
     contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    nav:
+      mode: 'MIXED'
     theming:
       theme: 'default'
       iconset: 'md'
