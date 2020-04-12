@@ -20,35 +20,35 @@
                 v-toolbar(color='teal', dark, dense, flat, height='56')
                   v-toolbar-title.subtitle-1 {{$t('admin:navigation.mode')}}
                 v-list(nav, two-line)
-                  v-list-item-group(v-model='navMode', mandatory, :color='$vuetify.theme.dark ? `teal lighten-3` : `teal`')
-                    v-list-item(value='classic')
+                  v-list-item-group(v-model='config.mode', mandatory, :color='$vuetify.theme.dark ? `teal lighten-3` : `teal`')
+                    v-list-item(value='TREE')
                       v-list-item-avatar
                         img(src='/svg/icon-tree-structure-dotted.svg', alt='Site Tree')
                       v-list-item-content
                         v-list-item-title {{$t('admin:navigation.modeSiteTree.title')}}
                         v-list-item-subtitle {{$t('admin:navigation.modeSiteTree.description')}}
                       v-list-item-avatar
-                        v-icon(v-if='$vuetify.theme.dark', :color='navMode === `classic` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
-                        v-icon(v-else, :color='navMode === `classic` ? `teal` : `grey lighten-3`') mdi-check-circle
-                    v-list-item(value='custom')
+                        v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `TREE` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
+                        v-icon(v-else, :color='config.mode === `TREE` ? `teal` : `grey lighten-3`') mdi-check-circle
+                    v-list-item(value='MIXED')
                       v-list-item-avatar
                         img(src='/svg/icon-user-menu-male-dotted.svg', alt='Custom Navigation')
                       v-list-item-content
                         v-list-item-title {{$t('admin:navigation.modeCustom.title')}}
                         v-list-item-subtitle {{$t('admin:navigation.modeCustom.description')}}
                       v-list-item-avatar
-                        v-icon(v-if='$vuetify.theme.dark', :color='navMode === `custom` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
-                        v-icon(v-else, :color='navMode === `custom` ? `teal` : `grey lighten-3`') mdi-check-circle
-                    v-list-item(value='none')
+                        v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `MIXED` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
+                        v-icon(v-else, :color='config.mode === `MIXED` ? `teal` : `grey lighten-3`') mdi-check-circle
+                    v-list-item(value='NONE')
                       v-list-item-avatar
                         img(src='/svg/icon-cancel-dotted.svg', alt='None')
                       v-list-item-content
                         v-list-item-title {{$t('admin:navigation.modeNone.title')}}
                         v-list-item-subtitle {{$t('admin:navigation.modeNone.description')}}
                       v-list-item-avatar
-                        v-icon(v-if='$vuetify.theme.dark', :color='navMode === `none` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
-                        v-icon(v-else, :color='navMode === `none` ? `teal` : `grey lighten-3`') mdi-check-circle
-            v-col(cols='9', v-if='navMode === `custom`')
+                        v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `none` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
+                        v-icon(v-else, :color='config.mode === `none` ? `teal` : `grey lighten-3`') mdi-check-circle
+            v-col(cols='9', v-if='config.mode === `MIXED`')
               v-card.animated.fadeInUp.wait-p2s
                 v-row(no-gutters, align='stretch')
                   v-col(style='flex: 0 0 350px;')
@@ -232,7 +232,7 @@
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
-import uuid from 'uuid/v4'
+import { v4 as uuid } from 'uuid'
 
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
@@ -247,11 +247,13 @@ export default {
   data() {
     return {
       selectPageModal: false,
-      navMode: 'custom',
       navTree: [],
       current: {},
       currentLang: 'en',
-      groups: []
+      groups: [],
+      config: {
+        mode: 'NONE'
+      }
     }
   },
   computed: {
@@ -355,6 +357,22 @@ export default {
     this.currentLang = siteConfig.lang
   },
   apollo: {
+    config: {
+      query: gql`
+        {
+          navigation {
+            config {
+              mode
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => _.cloneDeep(data.navigation.config),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-config')
+      }
+    },
     navTree: {
       query: gql`
         {

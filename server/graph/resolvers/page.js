@@ -196,27 +196,41 @@ module.exports = {
      * FETCH PAGE TREE
      */
     async tree (obj, args, context, info) {
-      let results = []
-      let conds = {
-        localeCode: args.locale
+      let curPage = null
+
+      if (!args.locale) { args.locale = WIKI.config.lang.code }
+
+      if (args.path && !args.parent) {
+        curPage = await WIKI.models.knex('pageTree').first('parent', 'ancestors').where({
+          path: args.path,
+          localeCode: args.locale
+        })
+        if (curPage) {
+          args.parent = curPage.parent || 0
+        } else {
+          return []
+        }
       }
-      if (args.parent) {
-        conds.parent = (args.parent < 1) ? null : args.parent
-      } else if (args.path) {
-        // conds.parent = (args.parent < 1) ? null : args.parent
-      }
-      switch (args.mode) {
-        case 'FOLDERS':
-          conds.isFolder = true
-          results = await WIKI.models.knex('pageTree').where(conds)
-          break
-        case 'PAGES':
-          await WIKI.models.knex('pageTree').where(conds).andWhereNotNull('pageId')
-          break
-        default:
-          results = await WIKI.models.knex('pageTree').where(conds)
-          break
-      }
+
+      const results = await WIKI.models.knex('pageTree').where(builder => {
+        builder.where('localeCode', args.locale)
+        switch (args.mode) {
+          case 'FOLDERS':
+            builder.andWhere('isFolder', true)
+            break
+          case 'PAGES':
+            builder.andWhereNotNull('pageId')
+            break
+        }
+        if (!args.parent || args.parent < 1) {
+          builder.whereNull('parent')
+        } else {
+          builder.where('parent', args.parent)
+          if (args.includeAncestors && curPage && curPage.ancestors.length > 0) {
+            builder.orWhereIn('id', curPage.ancestors)
+          }
+        }
+      }).orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
       return results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,

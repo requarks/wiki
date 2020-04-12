@@ -409,19 +409,19 @@ export default {
     }
   },
   created() {
-    this.$store.commit('page/SET_AUTHOR_ID', this.authorId)
-    this.$store.commit('page/SET_AUTHOR_NAME', this.authorName)
-    this.$store.commit('page/SET_CREATED_AT', this.createdAt)
-    this.$store.commit('page/SET_DESCRIPTION', this.description)
-    this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
-    this.$store.commit('page/SET_ID', this.pageId)
-    this.$store.commit('page/SET_LOCALE', this.locale)
-    this.$store.commit('page/SET_PATH', this.path)
-    this.$store.commit('page/SET_TAGS', this.tags)
-    this.$store.commit('page/SET_TITLE', this.title)
-    this.$store.commit('page/SET_UPDATED_AT', this.updatedAt)
+    this.$store.set('page/authorId', this.authorId)
+    this.$store.set('page/authorName', this.authorName)
+    this.$store.set('page/createdAt', this.createdAt)
+    this.$store.set('page/description', this.description)
+    this.$store.set('page/isPublished', this.isPublished)
+    this.$store.set('page/id', this.pageId)
+    this.$store.set('page/locale', this.locale)
+    this.$store.set('page/path', this.path)
+    this.$store.set('page/tags', this.tags)
+    this.$store.set('page/title', this.title)
+    this.$store.set('page/updatedAt', this.updatedAt)
 
-    this.$store.commit('page/SET_MODE', 'view')
+    this.$store.set('page/mode', 'view')
   },
   mounted () {
     // -> Check side navigation visibility
