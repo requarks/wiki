@@ -2,6 +2,7 @@
   v-app(v-scroll='upBtnScroll', :dark='darkMode', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header
     v-navigation-drawer(
+      v-if='navMode !== `NONE`'
       :class='darkMode ? `grey darken-4-d4` : `primary`'
       dark
       app
@@ -12,9 +13,9 @@
       :right='$vuetify.rtl'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='darkMode ? `grey darken-4-d4` : `primary`', :items='sidebar')
+        nav-sidebar(:color='darkMode ? `grey darken-4-d4` : `primary`', :items='sidebar', :nav-mode='navMode')
 
-    v-fab-transition
+    v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
         fab
         color='primary'
@@ -345,6 +346,10 @@ export default {
     sidebar: {
       type: Array,
       default: () => []
+    },
+    navMode: {
+      type: String,
+      default: 'MIXED'
     }
   },
   data() {

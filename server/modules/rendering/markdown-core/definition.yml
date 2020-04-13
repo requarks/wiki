@@ -11,26 +11,31 @@ props:
     default: true
     title: Allow HTML
     hint: Enable HTML tags in content
+    order: 1
   linkify:
     type: Boolean
     default: true
     title: Automatically convert links
     hint: Links will automatically be converted to clickable links.
+    order: 2
   linebreaks:
     type: Boolean
     default: true
     title: Automatically convert line breaks
     hint: Add linebreaks within paragraphs.
+    order: 3
   typographer:
     type: Boolean
     default: false
     title: Typographer
     hint: Enable some language-neutral replacement + quotes beautification
+    order: 4
   quotes:
     type: String
     default: English
     title: Quotes style
     hint: When typographer is enabled. Double + single quotes replacement pairs. e.g. «»„“ for Russian, „“‚‘ for German, etc.
+    order: 5
     enum:
       - Chinese
       - English
