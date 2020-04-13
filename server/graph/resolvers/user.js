@@ -46,6 +46,13 @@ module.exports = {
       usr.tfaSecret = ''
 
       return usr
+    },
+    async lastLogins (obj, args, context, info) {
+      return WIKI.models.users.query()
+        .select('id', 'name', 'lastLoginAt')
+        .whereNotNull('lastLoginAt')
+        .orderBy('lastLoginAt', 'desc')
+        .limit(10)
     }
   },
   UserMutation: {

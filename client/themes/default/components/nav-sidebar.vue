@@ -1,6 +1,6 @@
 <template lang="pug">
   div
-    .blue.darken-3.pa-3.d-flex
+    .blue.darken-3.pa-3.d-flex(v-if='navMode === `MIXED`')
       v-btn(depressed, color='blue darken-2', style='min-width:0;', href='/')
         v-icon(size='20') mdi-home
       v-btn.ml-3(v-if='currentMode === `custom`', depressed, color='blue darken-2', style='flex: 1 1 100%;', @click='switchMode(`browse`)')
@@ -61,10 +61,6 @@ export default {
       type: Array,
       default: () => []
     },
-    mode: {
-      type: String,
-      default: 'browse'
-    },
     navMode: {
       type: String,
       default: 'MIXED'
@@ -72,7 +68,7 @@ export default {
   },
   data() {
     return {
-      currentMode: 'browse',
+      currentMode: 'custom',
       currentItems: [],
       currentParent: {
         id: 0,
@@ -193,9 +189,11 @@ export default {
     }
   },
   mounted () {
-    this.currentMode = this.mode
-    if (this.mode === 'browse') {
+    if (this.navMode === 'TREE') {
+      this.currentMode = 'browse'
       this.loadFromCurrentPath()
+    } else {
+      this.currentMode = 'custom'
     }
   }
 }

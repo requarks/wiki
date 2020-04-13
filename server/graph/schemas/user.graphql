@@ -29,6 +29,8 @@ type UserQuery {
   ): User @auth(requires: ["manage:users", "manage:system"])
 
   profile: UserProfile
+
+  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -97,6 +99,12 @@ type UserMutation {
 type UserResponse {
   responseResult: ResponseStatus!
   user: User
+}
+
+type UserLastLogin {
+  id: Int!
+  name: String!
+  lastLoginAt: Date!
 }
 
 type UserMinimal {
