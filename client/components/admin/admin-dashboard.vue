@@ -60,7 +60,7 @@
             v-spacer
           v-data-table.pb-2(
             :items='recentPages'
-            :headers='headers'
+            :headers='recentPagesHeaders'
             :loading='recentPagesLoading'
             hide-default-footer
             hide-default-header
@@ -77,23 +77,20 @@
         v-card.radius-7.animated.fadeInUp.wait-p4s
           v-toolbar(:color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`', dense, flat)
             v-spacer
-            .overline {{$t('admin:dashboard.mostPopularPages')}}
+            .overline {{$t('admin:dashboard.lastLogins')}}
             v-spacer
           v-data-table.pb-2(
-            :items='popularPages'
-            :headers='headers'
-            :loading='popularPagesLoading'
+            :items='lastLogins'
+            :headers='lastLoginsHeaders'
+            :loading='lastLoginsLoading'
             hide-default-footer
             hide-default-header
             )
             template(slot='item', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
+              tr.is-clickable(:active='props.selected', @click='$router.push(`/users/` + props.item.id)')
                 td
-                  .body-2: strong {{ props.item.title }}
-                td.admin-pages-path
-                  v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
-                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
-                td.text-right.caption(width='250') {{ props.item.updatedAt | moment('calendar') }}
+                  .body-2: strong {{ props.item.name }}
+                td.text-right.caption(width='250') {{ props.item.lastLoginAt | moment('calendar') }}
 
       v-flex(xs12)
         v-card.dashboard-contribute.animated.fadeInUp.wait-p4s
@@ -112,8 +109,7 @@
 import _ from 'lodash'
 import AnimatedNumber from 'animated-number-vue'
 import { get } from 'vuex-pathify'
-
-import recentPagesQuery from 'gql/admin/dashboard/dashboard-query-recentpages.gql'
+import gql from 'graphql-tag'
 
 export default {
   components: {
@@ -123,13 +119,16 @@ export default {
     return {
       recentPages: [],
       recentPagesLoading: false,
-      popularPages: [],
-      popularPagesLoading: false,
-      headers: [
-        { text: 'ID', value: 'id', width: 80 },
+      recentPagesHeaders: [
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
         { text: 'Last Updated', value: 'updatedAt', width: 250 }
+      ],
+      lastLogins: [],
+      lastLoginsLoading: false,
+      lastLoginsHeaders: [
+        { text: 'User', value: 'displayName' },
+        { text: 'Last Login', value: 'lastLoginAt', width: 250 }
       ]
     }
   },
@@ -154,11 +153,48 @@ export default {
   },
   apollo: {
     recentPages: {
-      query: recentPagesQuery,
+      query: gql`
+        query {
+          pages {
+            list(limit: 10, orderBy: UPDATED, orderByDirection: DESC) {
+              id
+              locale
+              path
+              title
+              description
+              contentType
+              isPublished
+              isPrivate
+              privateNS
+              createdAt
+              updatedAt
+            }
+          }
+        }
+      `,
       update: (data) => data.pages.list,
       watchLoading (isLoading) {
         this.recentPagesLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-recentpages')
+      }
+    },
+    lastLogins: {
+      query: gql`
+        query {
+          users {
+            lastLogins {
+              id
+              name
+              lastLoginAt
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => data.users.lastLogins,
+      watchLoading (isLoading) {
+        this.lastLoginsLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-lastlogins')
       }
     }
   }
