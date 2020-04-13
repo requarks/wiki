@@ -64,6 +64,10 @@ export default {
     mode: {
       type: String,
       default: 'browse'
+    },
+    navMode: {
+      type: String,
+      default: 'MIXED'
     }
   },
   data() {

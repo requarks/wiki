@@ -199,7 +199,13 @@ export default {
       query: renderersQuery,
       fetchPolicy: 'network-only',
       update: (data) => {
-        let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))}))
+        let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({
+          ...str,
+          config: _.sortBy(str.config.map(cfg => ({
+            ...cfg,
+            value: JSON.parse(cfg.value)
+          })), [t => t.value.order])
+        }))
         // Build tree
         const graph = new DepGraph({ circular: true })
         const rawCores = _.filter(renderers, ['dependsOn', null]).map(core => {
