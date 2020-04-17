@@ -80,7 +80,7 @@
                     td(v-if='$vuetify.breakpoint.smAndUp')
                       v-menu(offset-x, min-width='200')
                         template(v-slot:activator='{ on }')
-                          v-btn(icon, v-on='on', tile, small)
+                          v-btn(icon, v-on='on', tile, small, @click.left='currentFileId = props.item.id')
                             v-icon(color='grey darken-2') mdi-dots-horizontal
                         v-list(nav, style='border-top: 5px solid #444;')
                           v-list-item(@click='', disabled)
