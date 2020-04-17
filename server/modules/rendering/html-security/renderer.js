@@ -20,6 +20,7 @@ module.exports = {
           h4: ['class', 'id', 'style'],
           h5: ['class', 'id', 'style'],
           h6: ['class', 'id', 'style'],
+          i: ['class', 'style'],
           img: ['alt', 'class', 'draggable', 'height', 'src', 'style', 'width'],
           input: ['class', 'disabled', 'type', 'checked', 'id'],
           kbd: ['class'],
