@@ -40,6 +40,8 @@ module.exports = {
     // TODO
   },
   async sendInstanceEvent(eventType) {
+    if (WIKI.devMode) { return }
+
     try {
       const apollo = createApolloFetch({
         uri: WIKI.config.graphEndpoint
