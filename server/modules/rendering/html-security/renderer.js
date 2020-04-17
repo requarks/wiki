@@ -27,7 +27,7 @@ module.exports = {
           label: ['class', 'id', 'for'],
           li: ['class', 'style'],
           mark: ['class', 'style'],
-          ol: ['class', 'style'],
+          ol: ['class', 'style', 'start'],
           p: ['class', 'style'],
           path: ['d', 'style'],
           pre: ['class', 'style'],
