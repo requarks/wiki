@@ -134,7 +134,7 @@ module.exports = () => {
 
       // Init Telemetry
       WIKI.kernel.initTelemetry()
-      WIKI.telemetry.sendEvent('setup', 'install-start')
+      // WIKI.telemetry.sendEvent('setup', 'install-start')
 
       // Basic checks
       if (!semver.satisfies(process.version, '>=10.12')) {
@@ -269,7 +269,7 @@ module.exports = () => {
       await WIKI.models.searchEngines.refreshSearchEnginesFromDisk()
       await WIKI.models.searchEngines.query().patch({ isEnabled: true }).where('key', 'db')
 
-      WIKI.telemetry.sendEvent('setup', 'install-loadedmodules')
+      // WIKI.telemetry.sendEvent('setup', 'install-loadedmodules')
 
       // Load storage targets
       await WIKI.models.storage.refreshTargetsFromDisk()
@@ -326,12 +326,16 @@ module.exports = () => {
       })
 
       WIKI.logger.info('Setup is complete!')
-      WIKI.telemetry.sendEvent('setup', 'install-completed')
+      // WIKI.telemetry.sendEvent('setup', 'install-completed')
       res.json({
         ok: true,
         redirectPath: '/',
         redirectPort: WIKI.config.port
       }).end()
+
+      if (WIKI.config.telemetry.isEnabled) {
+        await WIKI.telemetry.sendInstanceEvent('INSTALL')
+      }
 
       WIKI.config.setup = false
 
