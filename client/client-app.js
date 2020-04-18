@@ -215,6 +215,7 @@ let bootstrap = () => {
   // Load theme-specific code
   // ====================================
 
+  // eslint-disable-next-line no-unused-expressions
   import(/* webpackChunkName: "theme-page"  */ './themes/' + process.env.CURRENT_THEME + '/js/app.js')
 }
 
