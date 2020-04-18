@@ -105,6 +105,7 @@ module.exports = {
       connection: dbConfig,
       pool: {
         ...WIKI.config.pool,
+        propagateCreateError: false,
         async afterCreate(conn, done) {
           // -> Set Connection App Name
           switch (WIKI.config.db.type) {

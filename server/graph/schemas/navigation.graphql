@@ -53,6 +53,8 @@ type NavigationItem {
   icon: String
   targetType: String
   target: String
+  visibilityMode: String
+  visibilityGroups: [Int]
 }
 
 input NavigationItemInput {
@@ -62,6 +64,8 @@ input NavigationItemInput {
   icon: String
   targetType: String
   target: String
+  visibilityMode: String
+  visibilityGroups: [Int]
 }
 
 type NavigationConfig {

@@ -1,14 +1,14 @@
 <template lang="pug">
   div
     .blue.darken-3.pa-3.d-flex(v-if='navMode === `MIXED`')
-      v-btn(depressed, color='blue darken-2', style='min-width:0;', href='/')
+      v-btn(depressed, color='blue darken-2', style='min-width:0;', @click='goHome')
         v-icon(size='20') mdi-home
       v-btn.ml-3(v-if='currentMode === `custom`', depressed, color='blue darken-2', style='flex: 1 1 100%;', @click='switchMode(`browse`)')
         v-icon(left) mdi-file-tree
-        .body-2.text-none Browse
+        .body-2.text-none {{$t('common:sidebar.browse')}}
       v-btn.ml-3(v-else-if='currentMode === `browse`', depressed, color='blue darken-2', style='flex: 1 1 100%;', @click='switchMode(`custom`)')
         v-icon(left) mdi-navigation
-        .body-2.text-none Main Menu
+        .body-2.text-none {{$t('common:sidebar.mainMenu')}}
     v-divider
     //-> Custom Navigation
     v-list.py-2(v-if='currentMode === `custom`', dense, :class='color', :dark='dark')
@@ -30,7 +30,7 @@
             v-icon(small) mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-subheader.pl-4 Current Directory
+        v-subheader.pl-4 {{$t('common:sidebar.currentDirectory')}}
       template(v-for='item of currentItems')
         v-list-item(v-if='item.isFolder', :key='`childfolder-` + item.id', @click='fetchBrowseItems(item)')
           v-list-item-avatar(size='24')
@@ -46,6 +46,8 @@
 import _ from 'lodash'
 import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
+
+/* global siteLangs */
 
 export default {
   props: {
@@ -85,6 +87,7 @@ export default {
   methods: {
     switchMode (mode) {
       this.currentMode = mode
+      window.localStorage.setItem('navPref', mode)
       if (mode === `browse` && this.loadedCache.length < 1) {
         this.loadFromCurrentPath()
       }
@@ -186,14 +189,20 @@ export default {
       this.loadedCache = [curPage.parent]
       this.currentItems = _.filter(items, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
+    },
+    goHome () {
+      window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
     }
   },
   mounted () {
+    this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
     if (this.navMode === 'TREE') {
       this.currentMode = 'browse'
-      this.loadFromCurrentPath()
     } else {
-      this.currentMode = 'custom'
+      this.currentMode = window.localStorage.getItem('navPref') || 'custom'
+    }
+    if (this.currentMode === 'browse') {
+      this.loadFromCurrentPath()
     }
   }
 }

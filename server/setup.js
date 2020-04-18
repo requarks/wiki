@@ -315,12 +315,17 @@ module.exports = () => {
         key: 'site',
         config: [
           {
-            id: uuid(),
-            icon: 'mdi-home',
-            kind: 'link',
-            label: 'Home',
-            target: '/',
-            targetType: 'home'
+            locale: 'en',
+            items: [
+              {
+                id: uuid(),
+                icon: 'mdi-home',
+                kind: 'link',
+                label: 'Home',
+                target: '/',
+                targetType: 'home'
+              }
+            ]
           }
         ]
       })

@@ -69,12 +69,12 @@
                           item-value='code'
                         )
                       v-list.py-2(dense, nav, dark, class='blue darken-2', style='border-radius: 0;')
-                        v-list-item(v-if='navTree.length < 1')
+                        v-list-item(v-if='currentTree.length < 1')
                           v-list-item-avatar(size='24'): v-icon(color='blue lighten-3') mdi-alert
                           v-list-item-content
                             em.caption.blue--text.text--lighten-4 {{$t('navigation.emptyList')}}
-                        draggable(v-model='navTree')
-                          template(v-for='navItem in navTree')
+                        draggable(v-model='currentTree')
+                          template(v-for='navItem in currentTree')
                             v-list-item(
                               v-if='navItem.kind === "link"'
                               :key='navItem.id'
@@ -223,7 +223,7 @@
                           )
                       template(v-else)
                         v-toolbar(height='56', color='teal lighten-1', flat, dark)
-                        v-card-text.grey--text(v-if='navTree.length > 0') {{$t('navigation.noSelectionText')}}
+                        v-card-text.grey--text(v-if='currentTree.length > 0') {{$t('navigation.noSelectionText')}}
                         v-card-text.grey--text(v-else) {{$t('navigation.noItemsText')}}
 
     page-selector(mode='select', v-model='selectPageModal', :open-handler='selectPageHandle', path='home', :locale='currentLang')
@@ -247,9 +247,9 @@ export default {
   data() {
     return {
       selectPageModal: false,
-      navTree: [],
+      trees: [],
       current: {},
-      currentLang: 'en',
+      currentLang: siteConfig.lang,
       groups: [],
       config: {
         mode: 'NONE'
@@ -267,6 +267,33 @@ export default {
     },
     locales () {
       return siteLangs
+    },
+    currentTree: {
+      get () {
+        return _.get(_.find(this.trees, ['locale', this.currentLang]), 'items', null) || []
+      },
+      set (val) {
+        const tree = _.find(this.trees, ['locale', this.currentLang])
+        if (tree) {
+          tree.items = val
+        } else {
+          this.trees = [...this.trees, {
+            locale: this.currentLang,
+            items: val
+          }]
+        }
+      }
+    }
+  },
+  watch: {
+    currentLang (newValue, oldValue) {
+      this.$nextTick(() => {
+        if (this.currentTree.length > 0) {
+          this.current = this.currentTree[0]
+        } else {
+          this.current = {}
+        }
+      })
     }
   },
   methods: {
@@ -291,11 +318,11 @@ export default {
           newItem.label = this.$t('navigation.untitled', { kind: this.$t(`navigation.header`) })
           break
       }
-      this.navTree.push(newItem)
+      this.currentTree = [...this.currentTree, newItem]
       this.current = newItem
     },
     deleteItem(item) {
-      this.navTree = _.pull(this.navTree, item)
+      this.currentTree = _.pull(this.currentTree, item)
       this.current = {}
     },
     selectItem(item) {
@@ -326,7 +353,7 @@ export default {
             }
           `,
           variables: {
-            tree: this.navTree
+            tree: this.trees
           }
         })
         if (_.get(resp, 'data.navigation.updateTree.responseResult.succeeded', false)) {
@@ -344,7 +371,7 @@ export default {
       this.$store.commit(`loadingStop`, 'admin-navigation-save')
     },
     async refresh() {
-      await this.$apollo.queries.navTree.refetch()
+      await this.$apollo.queries.trees.refetch()
       this.current = {}
       this.$store.commit('showNotification', {
         message: 'Navigation has been refreshed.',
@@ -352,9 +379,6 @@ export default {
         icon: 'cached'
       })
     }
-  },
-  mounted () {
-    this.currentLang = siteConfig.lang
   },
   apollo: {
     config: {
@@ -373,7 +397,7 @@ export default {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-config')
       }
     },
-    navTree: {
+    trees: {
       query: gql`
         {
           navigation {
@@ -386,6 +410,8 @@ export default {
                 icon
                 targetType
                 target
+                visibilityMode
+                visibilityGroups
               }
             }
           }

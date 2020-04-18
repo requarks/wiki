@@ -11,7 +11,7 @@ module.exports = {
   },
   NavigationQuery: {
     async tree (obj, args, context, info) {
-      return WIKI.models.navigation.getTree({ cache: false, locale: 'all' })
+      return WIKI.models.navigation.getTree({ cache: false, locale: 'all', bypassAuth: true })
     },
     config (obj, args, context, info) {
       return WIKI.config.nav
@@ -23,7 +23,9 @@ module.exports = {
         await WIKI.models.navigation.query().patch({
           config: args.tree
         }).where('key', 'site')
-        await WIKI.cache.set('nav:sidebar', args.tree, 300)
+        for (const tree of args.tree) {
+          await WIKI.cache.set(`nav:sidebar:${tree.locale}`, tree.items, 300)
+        }
 
         return {
           responseResult: graphHelper.generateSuccess('Navigation updated successfully')

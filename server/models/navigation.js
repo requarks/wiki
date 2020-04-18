@@ -22,20 +22,24 @@ module.exports = class Navigation extends Model {
     }
   }
 
-  static async getTree({ cache = false, locale = 'en' } = {}) {
+  static async getTree({ cache = false, locale = 'en', groups = [], bypassAuth = false } = {}) {
     if (cache) {
       const navTreeCached = await WIKI.cache.get(`nav:sidebar:${locale}`)
       if (navTreeCached) {
-        return navTreeCached
+        return bypassAuth ? navTreeCached : WIKI.models.navigation.getAuthorizedItems(navTreeCached, groups)
       }
     }
-    const navTree = await WIKI.models.navigation.query().findOne('key', 'site')
+    const navTree = await WIKI.models.navigation.query().findOne('key', `site`)
     if (navTree) {
-      // Check for pre-2.1 format
+      // Check for pre-2.3 format
       if (_.has(navTree.config[0], 'kind')) {
         navTree.config = [{
           locale: 'en',
-          items: navTree.config
+          items: navTree.config.map(item => ({
+            ...item,
+            visibilityMode: 'all',
+            visibilityGroups: []
+          }))
         }]
       }
 
@@ -44,10 +48,20 @@ module.exports = class Navigation extends Model {
           await WIKI.cache.set(`nav:sidebar:${tree.locale}`, tree.items, 300)
         }
       }
-      return locale === 'all' ? navTree.config : WIKI.cache.get(`nav:sidebar:${locale}`)
+      if (bypassAuth) {
+        return locale === 'all' ? navTree.config : WIKI.cache.get(`nav:sidebar:${locale}`)
+      } else {
+        return locale === 'all' ? WIKI.models.navigation.getAuthorizedItems(navTree.config, groups) : WIKI.models.navigation.getAuthorizedItems(WIKI.cache.get(`nav:sidebar:${locale}`), groups)
+      }
     } else {
       WIKI.logger.warn('Site Navigation is missing or corrupted.')
       return []
     }
+  }
+
+  static getAuthorizedItems(tree = [], groups = []) {
+    return _.filter(tree, leaf => {
+      return leaf.visibilityMode === 'all' || _.intersection(leaf.visibilityGroups, groups).length > 0
+    })
   }
 }
