@@ -77,7 +77,7 @@ module.exports = {
             throw err
           }
         }
-        if (this.config.sshPort <= 0) {
+        if (!this.config.sshPort || !_.isSafeInteger(this.config.sshPort) || this.config.sshPort <= 0) {
           this.config.sshPort = 22
         }
         await this.git.addConfig('core.sshCommand', `ssh -i "${this.config.sshPrivateKeyPath}" -o StrictHostKeyChecking=no -p ${this.config.sshPort}`)
