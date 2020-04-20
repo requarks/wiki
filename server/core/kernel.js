@@ -36,8 +36,10 @@ module.exports = {
       WIKI.scheduler = require('./scheduler').init()
       WIKI.servers = require('./servers')
       WIKI.sideloader = require('./sideloader').init()
-      WIKI.events = new EventEmitter()
-      await WIKI.models.subscribeToNotifications()
+      WIKI.events = {
+        inbound: new EventEmitter(),
+        outbound: new EventEmitter()
+      }
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
@@ -77,6 +79,8 @@ module.exports = {
     await WIKI.models.searchEngines.initEngine()
     await WIKI.models.storage.initTargets()
     WIKI.scheduler.start()
+
+    await WIKI.models.subscribeToNotifications()
   },
   /**
    * Init Telemetry

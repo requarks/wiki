@@ -203,12 +203,22 @@ module.exports = {
         WIKI.logger.debug(ev)
       }
     })
+
+    // -> Outbound events handling
+
     this.listener.addChannel('wiki', payload => {
       if (_.has(payload.event) && payload.source !== WIKI.INSTANCE_ID) {
-        WIKI.events.emit(payload.event, payload.value)
+        WIKI.logger.debug(`Received event ${payload.event} from instance ${payload.source}: [ OK ]`)
+        WIKI.events.inbound.emit(payload.event, payload.value)
       }
     })
-    WIKI.events.onAny(this.notifyViaDB)
+    WIKI.events.outbound.onAny(this.notifyViaDB)
+
+    // -> Listen to inbound events
+
+    WIKI.auth.subscribeToEvents()
+    WIKI.configSvc.subscribeToEvents()
+    WIKI.models.pages.subscribeToEvents()
 
     WIKI.logger.info(`High-Availability Listener initialized successfully: [ OK ]`)
   },
@@ -217,7 +227,8 @@ module.exports = {
    */
   async unsubscribeToNotifications () {
     if (this.listener) {
-      WIKI.events.offAny(this.notifyViaDB)
+      WIKI.events.outbound.offAny(this.notifyViaDB)
+      WIKI.events.inbound.removeAllListeners()
       this.listener.close()
     }
   },

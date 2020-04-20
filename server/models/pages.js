@@ -436,7 +436,8 @@ module.exports = class Page extends Model {
       localeCode: opts.destinationLocale,
       hash: destinationHash
     }).findById(page.id)
-    await WIKI.models.pages.deletePageFromCache(page)
+    await WIKI.models.pages.deletePageFromCache(page.hash)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
     await WIKI.models.pages.rebuildTree()
@@ -512,7 +513,8 @@ module.exports = class Page extends Model {
 
     // -> Delete page
     await WIKI.models.pages.query().delete().where('id', page.id)
-    await WIKI.models.pages.deletePageFromCache(page)
+    await WIKI.models.pages.deletePageFromCache(page.hash)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
     await WIKI.models.pages.rebuildTree()
@@ -609,7 +611,8 @@ module.exports = class Page extends Model {
       affectedHashes = qryHashes.map(h => h.hash)
     }
     for (const hash of affectedHashes) {
-      await WIKI.models.pages.deletePageFromCache({ hash })
+      await WIKI.models.pages.deletePageFromCache(hash)
+      WIKI.events.outbound.emit('deletePageFromCache', hash)
     }
   }
 
@@ -852,5 +855,17 @@ module.exports = class Page extends Model {
       .replace(/(\r\n|\n|\r)/gm, ' ')
       .replace(/\s\s+/g, ' ')
       .split(' ').filter(w => w.length > 1).join(' ').toLowerCase()
+  }
+
+  /**
+   * Subscribe to HA propagation events
+   */
+  static subscribeToEvents() {
+    WIKI.events.inbound.on('deletePageFromCache', hash => {
+      WIKI.models.pages.deletePageFromCache(hash)
+    })
+    WIKI.events.inbound.on('flushCache', () => {
+      WIKI.models.pages.flushCache()
+    })
   }
 }

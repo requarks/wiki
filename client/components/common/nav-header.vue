@@ -120,27 +120,27 @@
               v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-box-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-box-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
                 v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-history
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-history
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageDuplicate', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-content-duplicate
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
                 v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-content-save-move-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
                 v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='red darken-2') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
             v-divider(vertical)
 

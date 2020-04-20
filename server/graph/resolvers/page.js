@@ -434,6 +434,7 @@ module.exports = {
     async flushCache(obj, args, context) {
       try {
         await WIKI.models.pages.flushCache()
+        WIKI.events.outbound.emit('flushCache')
         return {
           responseResult: graphHelper.generateSuccess('Pages Cache has been flushed successfully.')
         }

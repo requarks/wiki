@@ -186,7 +186,7 @@ module.exports = () => {
         'telemetry',
         'theming',
         'title'
-      ])
+      ], false)
 
       // Truncate tables (reset from previous failed install)
       await WIKI.models.locales.query().where('code', '!=', 'x').del()

@@ -205,6 +205,7 @@ module.exports = {
 
           if (args.groupMode !== `NONE`) {
             await WIKI.auth.reloadGroups()
+            WIKI.events.outbound.emit('reloadGroups')
           }
 
           client.close()
