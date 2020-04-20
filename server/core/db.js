@@ -207,8 +207,8 @@ module.exports = {
     // -> Outbound events handling
 
     this.listener.addChannel('wiki', payload => {
-      if (_.has(payload.event) && payload.source !== WIKI.INSTANCE_ID) {
-        WIKI.logger.debug(`Received event ${payload.event} from instance ${payload.source}: [ OK ]`)
+      if (_.has(payload, 'event') && payload.source !== WIKI.INSTANCE_ID) {
+        WIKI.logger.info(`Received event ${payload.event} from instance ${payload.source}: [ OK ]`)
         WIKI.events.inbound.emit(payload.event, payload.value)
       }
     })
@@ -239,7 +239,7 @@ module.exports = {
    * @param {object} value Payload of the event
    */
   notifyViaDB (event, value) {
-    this.listener.publish('wiki', {
+    WIKI.models.listener.publish('wiki', {
       source: WIKI.INSTANCE_ID,
       event,
       value

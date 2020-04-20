@@ -350,6 +350,7 @@ module.exports = class Page extends Model {
 
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Update Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -804,12 +805,11 @@ module.exports = class Page extends Model {
   /**
    * Delete an Existing Page from Cache
    *
-   * @param {Object} page Page Model Instance
-   * @param {string} page.hash Hash of the Page
+   * @param {String} page Page Unique Hash
    * @returns {Promise} Promise with no value
    */
-  static async deletePageFromCache(page) {
-    return fs.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`))
+  static async deletePageFromCache(hash) {
+    return fs.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${hash}.bin`))
   }
 
   /**
