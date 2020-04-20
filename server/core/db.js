@@ -39,6 +39,7 @@ module.exports = {
     let sslOptions = null
     if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(dbConfig, 'sslOptions.auto', null) === false) {
       sslOptions = dbConfig.sslOptions
+      sslOptions.rejectUnauthorized = _.get(sslOptions, 'rejectUnauthorized', true)
       if (sslOptions.ca) {
         sslOptions.ca = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.ca))
       }
@@ -60,7 +61,7 @@ module.exports = {
         dbClient = 'pg'
 
         if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = sslOptions
+          dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
         }
         break
       case 'mariadb':
@@ -106,7 +107,6 @@ module.exports = {
       connection: dbConfig,
       pool: {
         ...WIKI.config.pool,
-        propagateCreateError: false,
         async afterCreate(conn, done) {
           // -> Set Connection App Name
           switch (WIKI.config.db.type) {
