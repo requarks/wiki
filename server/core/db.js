@@ -26,6 +26,8 @@ module.exports = {
   init() {
     let self = this
 
+    // Fetch DB Config
+
     let dbClient = null
     let dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
       host: WIKI.config.db.host.toString(),
@@ -35,12 +37,15 @@ module.exports = {
       port: WIKI.config.db.port
     }
 
-    const dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
+    // Handle SSL Options
+
+    let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
     let sslOptions = null
-    if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(dbConfig, 'sslOptions.auto', null) === false) {
-      sslOptions = dbConfig.sslOptions
-      sslOptions.rejectUnauthorized = _.get(sslOptions, 'rejectUnauthorized', true)
-      if (sslOptions.ca) {
+    if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(WIKI.config.db, 'sslOptions.auto', null) === false) {
+      sslOptions = WIKI.config.db.sslOptions
+      // eslint-disable-next-line no-unneeded-ternary
+      sslOptions.rejectUnauthorized = sslOptions.rejectUnauthorized === false ? false : true
+      if (sslOptions.ca && sslOptions.ca.indexOf('-----') !== 0) {
         sslOptions.ca = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.ca))
       }
       if (sslOptions.cert) {
@@ -56,6 +61,16 @@ module.exports = {
       sslOptions = true
     }
 
+    // Handle inline SSL CA Certificate mode
+    if (!_.isEmpty(process.env.DB_SSL_CA) && process.env.DB_SSL_CA) {
+      dbUseSSL = true
+      sslOptions = {
+        rejectUnauthorized: true,
+        ca: process.env.DB_SSL_CA
+      }
+    }
+
+    // Engine-specific config
     switch (WIKI.config.db.type) {
       case 'postgres':
         dbClient = 'pg'
@@ -100,6 +115,7 @@ module.exports = {
         process.exit(1)
     }
 
+    // Initialize Knex
     this.knex = Knex({
       client: dbClient,
       useNullAsDefault: true,
