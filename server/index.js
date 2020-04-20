@@ -4,7 +4,7 @@
 // ===========================================
 
 const path = require('path')
-const nanoid = require('nanoid')
+const { nanoid } = require('nanoid')
 
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
