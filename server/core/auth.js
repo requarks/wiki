@@ -281,7 +281,7 @@ module.exports = {
   async reloadGroups () {
     const groupsArray = await WIKI.models.groups.query()
     this.groups = _.keyBy(groupsArray, 'id')
-    WIKI.auth.guest = await WIKI.models.users.getGuestUser()
+    WIKI.auth.guest.cacheExpiration = moment.utc().subtract(1, 'd')
   },
 
   /**
