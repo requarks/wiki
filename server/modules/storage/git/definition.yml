@@ -97,7 +97,7 @@ props:
     type: Number
     title: SSH Port
     default: 22
-    hint: Optional - SSH Authentication Only - Allows overriding ssh default port.
+    hint: Optional - SSH Authentication Only - Allows overriding ssh default port (22).
     order: 60
 actions:
   - handler: syncUntracked
