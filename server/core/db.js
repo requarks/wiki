@@ -62,11 +62,16 @@ module.exports = {
     }
 
     // Handle inline SSL CA Certificate mode
-    if (!_.isEmpty(process.env.DB_SSL_CA) && process.env.DB_SSL_CA) {
+    if (!_.isEmpty(process.env.DB_SSL_CA)) {
+      const chunks = []
+      for (let i = 0, charsLength = process.env.DB_SSL_CA.length; i < charsLength; i += 64) {
+        chunks.push(process.env.DB_SSL_CA.substring(i, i + 64))
+      }
+
       dbUseSSL = true
       sslOptions = {
         rejectUnauthorized: true,
-        ca: process.env.DB_SSL_CA
+        ca: '-----BEGIN CERTIFICATE-----\n' + chunks.join('\n') + '\n-----END CERTIFICATE-----\n'
       }
     }
 
