@@ -55,7 +55,7 @@
                     v-card.grey(flat, style='height: 100%; border-radius: 4px 0 0 4px;', :class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-3`')
                       .teal.pa-2(style='margin-bottom: 1px; height: 56px;')
                         v-select(
-                          v-if='locales.length > 0'
+                          :disabled='locales.length < 2'
                           label='Locale'
                           hide-details
                           solo
