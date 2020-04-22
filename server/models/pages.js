@@ -400,8 +400,8 @@ module.exports = class Page extends Model {
 
     // -> Check for source page access
     if (!WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
-      locale: page.sourceLocale,
-      path: page.sourcePath
+      locale: page.localeCode,
+      path: page.path
     })) {
       throw new WIKI.Error.PageMoveForbidden()
     }
