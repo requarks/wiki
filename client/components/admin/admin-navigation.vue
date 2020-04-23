@@ -311,7 +311,7 @@ export default {
             label: this.$t('navigation.untitled', { kind: this.$t(`navigation.link`) }),
             icon: 'mdi-chevron-right',
             targetType: 'home',
-            target: '/'
+            target: ''
           }
           break
         case 'header':
