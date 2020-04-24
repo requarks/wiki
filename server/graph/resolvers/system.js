@@ -239,7 +239,7 @@ module.exports = {
       try {
         if (!WIKI.config.ssl.enabled) {
           throw new WIKI.Error.SystemSSLDisabled()
-        } else if (WIKI.config.ssl.provider !== `letsencrypt`) {
+        } else if (WIKI.config.ssl.provider !== `letsencrypt` || WIKI.config.ssl.provider == null) {
           throw new WIKI.Error.SystemSSLRenewInvalidProvider()
         } else if (!WIKI.servers.le) {
           throw new WIKI.Error.SystemSSLLEUnavailable()
