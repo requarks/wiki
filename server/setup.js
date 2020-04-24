@@ -323,7 +323,9 @@ module.exports = () => {
                 kind: 'link',
                 label: 'Home',
                 target: '/',
-                targetType: 'home'
+                targetType: 'home',
+                visibilityMode: 'all',
+                visibilityGroups: null
               }
             ]
           }
