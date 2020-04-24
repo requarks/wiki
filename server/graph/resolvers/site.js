@@ -1,4 +1,5 @@
 const graphHelper = require('../../helpers/graph')
+const _ = require('lodash')
 
 /* global WIKI */
 
@@ -25,10 +26,14 @@ module.exports = {
   },
   SiteMutation: {
     async updateConfig(obj, args, context) {
+      let siteHost = _.trim(args.host)
+      if (siteHost.endsWith('/')) {
+        siteHost = siteHost.splice(0, -1)
+      }
       try {
-        WIKI.config.host = args.host
-        WIKI.config.title = args.title
-        WIKI.config.company = args.company
+        WIKI.config.host = siteHost
+        WIKI.config.title = _.trim(args.title)
+        WIKI.config.company = _.trim(args.company)
         WIKI.config.contentLicense = args.contentLicense
         WIKI.config.seo = {
           description: args.description,
@@ -36,7 +41,7 @@ module.exports = {
           analyticsService: args.analyticsService,
           analyticsId: args.analyticsId
         }
-        WIKI.config.logoUrl = args.logoUrl
+        WIKI.config.logoUrl = _.trim(args.logoUrl)
         WIKI.config.features = {
           featurePageRatings: args.featurePageRatings,
           featurePageComments: args.featurePageComments,

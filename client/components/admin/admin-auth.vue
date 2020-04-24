@@ -204,7 +204,7 @@
                   inset
                 )
 
-        v-card.mt-4.wiki-form.animated.fadeInUp.wait-p4s
+        v-card.mt-4.wiki-form.animated.fadeInUp.wait-p4s(v-if='selectedStrategy !== `local`')
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{$t('admin:auth.configReference')}}
           v-card-text
