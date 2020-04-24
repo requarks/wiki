@@ -5,7 +5,7 @@
         v-spacer
         .overline.grey--text {{$t('admin:adminArea')}}
         v-spacer
-    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
+    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
       vue-scroll(:ops='scrollStyle')
         v-list.radius-0(dense, nav)
           v-list-item(to='/dashboard', color='primary')
@@ -123,7 +123,7 @@
             v-list-item-avatar(size='24', tile): v-icon mdi-heart-outline
             v-list-item-title {{ $t('admin:contribute.title') }}
 
-    v-content(:class='darkMode ? "grey darken-4" : "grey lighten-5"')
+    v-content(:class='darkMode ? "grey darken-5" : "grey lighten-5"')
       transition(name='admin-router')
         router-view
 

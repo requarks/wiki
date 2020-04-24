@@ -429,6 +429,8 @@ export default {
     this.$store.set('page/mode', 'view')
   },
   mounted () {
+    this.scrollStyle.bar.background = '#424242'
+
     // -> Check side navigation visibility
     this.handleSideNavVisibility()
     window.addEventListener('resize', _.debounce(() => {
