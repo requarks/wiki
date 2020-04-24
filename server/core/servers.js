@@ -57,7 +57,7 @@ module.exports = {
    * Start HTTPS Server
    */
   async startHTTPS () {
-    if (WIKI.config.ssl.provider === 'letsencrypt' || WIKI.config.ssl.provider == null) {
+    if (WIKI.config.ssl.provider === 'letsencrypt') {
       this.le = require('./letsencrypt')
       await this.le.init()
     }
