@@ -376,9 +376,17 @@ export default {
       try {
         const resp = await this.$apollo.mutate({
           mutation: gql`
-            mutation ($tree: [NavigationTreeInput]!) {
+            mutation ($tree: [NavigationTreeInput]!, $mode: NavigationMode!) {
               navigation{
                 updateTree(tree: $tree) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                },
+                updateConfig(mode: $mode) {
                   responseResult {
                     succeeded
                     errorCode
@@ -390,10 +398,11 @@ export default {
             }
           `,
           variables: {
-            tree: this.trees
+            tree: this.trees,
+            mode: this.config.mode
           }
         })
-        if (_.get(resp, 'data.navigation.updateTree.responseResult.succeeded', false)) {
+        if (_.get(resp, 'data.navigation.updateTree.responseResult.succeeded', false) && _.get(resp, 'data.navigation.updateConfig.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
             message: this.$t('navigation.saveSuccess'),
             style: 'success',
