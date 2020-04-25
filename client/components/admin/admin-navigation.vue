@@ -53,7 +53,7 @@
                 v-row(no-gutters, align='stretch')
                   v-col(style='flex: 0 0 350px;')
                     v-card.grey(flat, style='height: 100%; border-radius: 4px 0 0 4px;', :class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-3`')
-                      .teal.pa-2(style='margin-bottom: 1px; height: 56px;')
+                      .teal.lighten-1.pa-2.d-flex(style='margin-bottom: 1px; height:56px;')
                         v-select(
                           :disabled='locales.length < 2'
                           label='Locale'
@@ -65,9 +65,14 @@
                           dense
                           v-model='currentLang'
                           :items='locales'
-                          item-text='name'
+                          item-text='nativeName'
                           item-value='code'
                         )
+                        v-tooltip(top)
+                          template(v-slot:activator='{ on }')
+                            v-btn.ml-2(icon, tile, color='white', v-on='on', @click='copyFromLocaleDialogIsShown = true')
+                              v-icon mdi-arrange-send-backward
+                          span {{$t('admin:navigation.copyFromLocale')}}
                       v-list.py-2(dense, nav, dark, class='blue darken-2', style='border-radius: 0;')
                         v-list-item(v-if='currentTree.length < 1')
                           v-list-item-avatar(size='24'): v-icon(color='blue lighten-3') mdi-alert
@@ -226,6 +231,31 @@
                         v-card-text.grey--text(v-if='currentTree.length > 0') {{$t('navigation.noSelectionText')}}
                         v-card-text.grey--text(v-else) {{$t('navigation.noItemsText')}}
 
+    v-dialog(v-model='copyFromLocaleDialogIsShown', max-width='650', persistent)
+      v-card
+        .dialog-header.is-short.is-teal
+          v-icon.mr-3(color='white') mdi-arrange-send-backward
+          span {{$t('admin:navigation.copyFromLocale')}}
+        v-card-text.pt-5
+          .body-2 {{$t('admin:navigation.copyFromLocaleInfoText')}}
+          v-select.mt-3(
+            :items='locales'
+            item-text='nativeName'
+            item-value='code'
+            outlined
+            prepend-icon='mdi-web'
+            v-model='copyFromLocaleCode'
+            :label='$t(`admin:navigation.sourceLocale`)'
+            :hint='$t(`admin:navigation.sourceLocaleHint`)'
+            persistent-hint
+            )
+        v-card-chin
+          v-spacer
+          v-btn(text, @click='copyFromLocaleDialogIsShown = false') {{$t('common:actions.cancel')}}
+          v-btn.px-3(depressed, color='primary', @click='copyFromLocale')
+            v-icon(left) mdi-chevron-right
+            span {{$t('common:actions.copy')}}
+
     page-selector(mode='select', v-model='selectPageModal', :open-handler='selectPageHandle', path='home', :locale='currentLang')
 </template>
 
@@ -251,9 +281,12 @@ export default {
       current: {},
       currentLang: siteConfig.lang,
       groups: [],
+      copyFromLocaleDialogIsShown: false,
       config: {
         mode: 'NONE'
-      }
+      },
+      allLocales: [],
+      copyFromLocaleCode: 'en'
     }
   },
   computed: {
@@ -266,7 +299,7 @@ export default {
       ]
     },
     locales () {
-      return siteLangs
+      return _.intersectionBy(this.allLocales, _.unionBy(siteLangs, [{ code: 'en' }, { code: siteConfig.lang }], 'code'), 'code')
     },
     currentTree: {
       get () {
@@ -333,6 +366,10 @@ export default {
     },
     selectPageHandle ({ path, locale }) {
       this.current.target = `/${locale}/${path}`
+    },
+    copyFromLocale () {
+      this.copyFromLocaleDialogIsShown = false
+      this.currentTree = [...this.currentTree, ..._.get(_.find(this.trees, ['locale', this.copyFromLocaleCode]), 'items', null) || []]
     },
     async save() {
       this.$store.commit(`loadingStart`, 'admin-navigation-save')
@@ -429,6 +466,24 @@ export default {
       update: (data) => data.groups.list,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-groups')
+      }
+    },
+    allLocales: {
+      query: gql`
+        {
+          localization {
+            locales {
+              code
+              name
+              nativeName
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => data.localization.locales,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-locales')
       }
     }
   }
