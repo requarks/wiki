@@ -302,19 +302,24 @@ module.exports = {
    */
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing file move from [${page.localeCode}] ${page.path} to [${page.destinationLocaleCode}] ${page.destinationPath}...`)
-    let sourceFilePath = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    let destinationFilePath = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
+    let sourceFileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+    let destinationFileName = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 
     if (WIKI.config.lang.namespacing) {
       if (WIKI.config.lang.code !== page.localeCode) {
-        sourceFilePath = `${page.localeCode}/${sourceFilePath}`
+        sourceFileName = `${page.localeCode}/${sourceFileName}`
       }
       if (WIKI.config.lang.code !== page.destinationLocaleCode) {
-        destinationFilePath = `${page.destinationLocaleCode}/${destinationFilePath}`
+        destinationFileName = `${page.destinationLocaleCode}/${destinationFileName}`
       }
     }
 
-    await this.git.mv(`./${sourceFilePath}`, `./${destinationFilePath}`)
+    const sourceFilePath = path.join(this.repoPath, sourceFileName)
+    const destinationFilePath = path.join(this.repoPath, destinationFileName)
+    await fs.move(sourceFilePath, destinationFilePath)
+
+    await this.git.rm(`./${sourceFileName}`)
+    await this.git.add(`./${destinationFileName}`)
     await this.git.commit(`docs: rename ${page.path} to ${page.destinationPath}`, [sourceFilePath, destinationFilePath], {
       '--author': `"${page.moveAuthorName} <${page.moveAuthorEmail}>"`
     })
