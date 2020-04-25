@@ -214,8 +214,13 @@ module.exports = class Page extends Model {
    */
   static async createPage(opts) {
     // -> Validate path
-    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0) {
+    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.index('\\') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
+    }
+
+    // -> Remove trailing slash
+    if (opts.path.endsWidth('/')) {
+      opts.path = opts.path.slice(0, -1)
     }
 
     // -> Check for page access
@@ -396,6 +401,16 @@ module.exports = class Page extends Model {
     const page = await WIKI.models.pages.query().findById(opts.id)
     if (!page) {
       throw new WIKI.Error.PageNotFound()
+    }
+
+    // -> Validate path
+    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.index('\\') >= 0) {
+      throw new WIKI.Error.PageIllegalPath()
+    }
+
+    // -> Remove trailing slash
+    if (opts.destinationPath.endsWidth('/')) {
+      opts.destinationPath = opts.destinationPath.slice(0, -1)
     }
 
     // -> Check for source page access
