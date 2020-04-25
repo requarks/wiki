@@ -39,6 +39,15 @@
                       v-list-item-avatar
                         v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `MIXED` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
                         v-icon(v-else, :color='config.mode === `MIXED` ? `teal` : `grey lighten-3`') mdi-check-circle
+                    v-list-item(value='STATIC')
+                      v-list-item-avatar
+                        img(src='/svg/icon-features-list.svg', alt='Static Navigation')
+                      v-list-item-content
+                        v-list-item-title {{$t('admin:navigation.modeStatic.title')}}
+                        v-list-item-subtitle {{$t('admin:navigation.modeStatic.description')}}
+                      v-list-item-avatar
+                        v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `STATIC` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
+                        v-icon(v-else, :color='config.mode === `STATIC` ? `teal` : `grey lighten-3`') mdi-check-circle
                     v-list-item(value='NONE')
                       v-list-item-avatar
                         img(src='/svg/icon-cancel-dotted.svg', alt='None')
@@ -48,7 +57,7 @@
                       v-list-item-avatar
                         v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `none` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
                         v-icon(v-else, :color='config.mode === `none` ? `teal` : `grey lighten-3`') mdi-check-circle
-            v-col(cols='9', v-if='config.mode === `MIXED`')
+            v-col(cols='9', v-if='config.mode === `MIXED` || config.mode === `STATIC`')
               v-card.animated.fadeInUp.wait-p2s
                 v-row(no-gutters, align='stretch')
                   v-col(style='flex: 0 0 350px;')

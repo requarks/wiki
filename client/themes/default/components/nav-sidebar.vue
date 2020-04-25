@@ -198,6 +198,8 @@ export default {
     this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
     if (this.navMode === 'TREE') {
       this.currentMode = 'browse'
+    } else if (this.navMode === 'STATIC') {
+      this.currentMode = 'custom'
     } else {
       this.currentMode = window.localStorage.getItem('navPref') || 'custom'
     }
