@@ -77,10 +77,7 @@ module.exports = {
             throw err
           }
         }
-        if (!this.config.sshPort || (_.isString(this.config.sshPort) && _.isEmpty(this.config.sshPort.length)) || (_.isSafeInteger(this.config.sshPort) && this.config.sshPort <= 0)) {
-          this.config.sshPort = 22
-        }
-        await this.git.addConfig('core.sshCommand', `ssh -i "${this.config.sshPrivateKeyPath}" -o StrictHostKeyChecking=no -p ${this.config.sshPort}`)
+        await this.git.addConfig('core.sshCommand', `ssh -i "${this.config.sshPrivateKeyPath}" -o StrictHostKeyChecking=no`)
         WIKI.logger.info('(STORAGE/GIT) Adding origin remote via SSH...')
         await this.git.addRemote('origin', this.config.repoUrl)
         break
