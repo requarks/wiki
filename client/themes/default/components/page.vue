@@ -429,7 +429,9 @@ export default {
     this.$store.set('page/mode', 'view')
   },
   mounted () {
-    this.scrollStyle.bar.background = '#424242'
+    if (this.$vuetify.theme.dark) {
+      this.scrollStyle.bar.background = '#424242'
+    }
 
     // -> Check side navigation visibility
     this.handleSideNavVisibility()
