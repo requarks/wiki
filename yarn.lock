@@ -16036,10 +16036,10 @@ vuetify-loader@1.4.3:
   dependencies:
     loader-utils "^1.2.0"
 
-vuetify@2.2.23:
-  version "2.2.23"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-2.2.23.tgz#9529094425e710d7534e95e41302c7d7d6ea5d8e"
-  integrity sha512-VZ0kBLXH7KsVj8dKLz0X1MFvbyf1kOPwh0jXa6M/gKqKkWsEAnwNXpM/H5EMOKDp2H6fjwI1yGAZO0GTpQHoXg==
+vuetify@2.2.24:
+  version "2.2.24"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-2.2.24.tgz#2bd560a9a04f418b3fc4d5d5faccb707daadb612"
+  integrity sha512-CHgKR+DqrH6dPlJnqO7JEHgs2a/dMEheS1bYPN9pC4NXJLfFZdt1LTO9nRa86kgcVowxR0LIZnL5bfLfPH8kMQ==
 
 vuex-pathify@1.4.1:
   version "1.4.1"
