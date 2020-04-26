@@ -57,7 +57,7 @@ export default {
       this.insertLinkDialog = true
     },
     insertLinkHandler ({ locale, path }) {
-      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path})` : `/${path}`)
+      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
     }
   },
   async mounted () {

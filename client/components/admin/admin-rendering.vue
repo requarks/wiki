@@ -53,7 +53,7 @@
                     @click='selectRenderer(rdr.key)'
                     :class='currentRenderer.key === rdr.key ? (darkMode ? `grey darken-4-l4` : `blue lighten-5`) : ``'
                     )
-                    v-list-item-avatar(size='24')
+                    v-list-item-avatar(size='24', tile)
                       v-icon(:color='currentRenderer.key === rdr.key ? "primary" : "grey"') {{rdr.icon}}
                     v-list-item-content
                       v-list-item-title {{rdr.title}}
