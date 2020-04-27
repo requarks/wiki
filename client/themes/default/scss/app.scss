@@ -310,7 +310,7 @@
   // LISTS
   // ---------------------------------
 
-  ol, ul {
+  ol, ul:not(.tabset-tabs) {
     padding-top: 1rem;
     width: 100%;
 
@@ -471,7 +471,7 @@
     }
   }
 
-  ul {
+  ul:not(.tabset-tabs) {
     list-style: none;
     > li::before {
       position: absolute;
@@ -485,7 +485,7 @@
       }
     }
   }
-  ul, ol {
+  ol, ul:not(.tabset-tabs) {
     > li {
       position: relative;
       > p {

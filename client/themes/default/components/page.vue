@@ -249,11 +249,16 @@
 
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
+import Tabset from './tabset.vue'
+import NavSidebar from './nav-sidebar.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
+import Vue from 'vue'
+
+Vue.component('tabset', Tabset)
 
 Prism.plugins.autoloader.languages_path = '/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
@@ -292,6 +297,7 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 
 export default {
   components: {
+    NavSidebar,
     StatusIndicator
   },
   props: {

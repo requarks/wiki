@@ -169,7 +169,6 @@ Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunk
 Vue.component('welcome', () => import(/* webpackChunkName: "welcome" */ './components/welcome.vue'))
 
 Vue.component('nav-footer', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
-Vue.component('nav-sidebar', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-sidebar.vue'))
 Vue.component('page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
 let bootstrap = () => {
