@@ -8,7 +8,7 @@ module.exports = {
         let tabs = []
         let tabContents = []
         $(elm).nextUntil(_.times(i, t => `h${t + 1}`).join(', '), `h${i + 1}`).each((hidx, hd) => {
-          tabs.push(`<li @click="switchTab(${hidx})">${$(hd).html()}</li>`)
+          tabs.push(`<li>${$(hd).html()}</li>`)
           let tabContent = ''
           $(hd).nextUntil(_.times(i + 1, t => `h${t + 1}`).join(', ')).each((cidx, celm) => {
             tabContent += $.html(celm)
