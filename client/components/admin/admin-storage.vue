@@ -111,7 +111,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -122,7 +122,7 @@
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
                   color='primary'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   inset
@@ -133,7 +133,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -144,7 +144,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'

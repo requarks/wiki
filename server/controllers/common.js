@@ -395,7 +395,7 @@ router.get('/*', async (req, res, next) => {
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)
         _.set(res.locals, 'pageMeta.description', page.description)
-        const sidebar = await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale })
+        const sidebar = await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })
         const injectCode = {
           css: WIKI.config.theming.injectCSS,
           head: WIKI.config.theming.injectHead,

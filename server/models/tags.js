@@ -55,7 +55,7 @@ module.exports = class Tag extends Model {
 
     // Format tags
 
-    tags = _.uniq(tags.map(t => t.toLowerCase()))
+    tags = _.uniq(tags.map(t => _.trim(t).toLowerCase()))
 
     // Create missing tags
 

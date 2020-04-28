@@ -67,8 +67,11 @@ module.exports = {
      */
     async createApiKey (obj, args, context) {
       try {
+        const key = await WIKI.models.apiKeys.createNewKey(args)
+        await WIKI.auth.reloadApiKeys()
+        WIKI.events.outbound.emit('reloadApiKeys')
         return {
-          key: await WIKI.models.apiKeys.createNewKey(args),
+          key,
           responseResult: graphHelper.generateSuccess('API Key created successfully')
         }
       } catch (err) {
@@ -158,6 +161,7 @@ module.exports = {
           isRevoked: true
         })
         await WIKI.auth.reloadApiKeys()
+        WIKI.events.outbound.emit('reloadApiKeys')
         return {
           responseResult: graphHelper.generateSuccess('API Key revoked successfully')
         }
@@ -190,6 +194,7 @@ module.exports = {
           }).where('key', str.key)
         }
         await WIKI.auth.activateStrategies()
+        WIKI.events.outbound.emit('reloadAuthStrategies')
         return {
           responseResult: graphHelper.generateSuccess('Strategies updated successfully')
         }

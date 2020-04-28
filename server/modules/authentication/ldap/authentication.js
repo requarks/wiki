@@ -19,6 +19,7 @@ module.exports = {
           searchBase: conf.searchBase,
           searchFilter: conf.searchFilter,
           tlsOptions: (conf.tlsEnabled) ? {
+            rejectUnauthorized: conf.verifyTLSCertificate,
             ca: [
               fs.readFileSync(conf.tlsCertPath)
             ]

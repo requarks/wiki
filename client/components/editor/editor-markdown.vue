@@ -109,7 +109,7 @@
       .editor-markdown-sidebar
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, disabled).mx-0
+            v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, @click='insertLink').mx-0
               v-icon mdi-link-plus
           span {{$t('editor:markup.insertLink')}}
         v-tooltip(right, color='teal')
@@ -130,7 +130,7 @@
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
             v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-library-video
+              v-icon mdi-movie
           span {{$t('editor:markup.insertVideoAudio')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
@@ -176,14 +176,16 @@
         .caption Ln {{cursorPos.line + 1}}, Col {{cursorPos.ch + 1}}
 
     markdown-help(v-if='helpShown')
+    page-selector(mode='select', v-model='insertLinkDialog', :open-handler='insertLinkHandler', :path='path', :locale='locale')
 </template>
 
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
+import gql from 'graphql-tag'
 
-/* global siteConfig */
+/* global siteConfig, siteLangs */
 
 // ========================================
 // IMPORTS
@@ -202,6 +204,7 @@ import 'codemirror/addon/display/fullscreen.js'
 import 'codemirror/addon/display/fullscreen.css'
 import 'codemirror/addon/selection/mark-selection.js'
 import 'codemirror/addon/search/searchcursor.js'
+import 'codemirror/addon/hint/show-hint.js'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
@@ -353,7 +356,8 @@ export default {
       cursorPos: { ch: 0, line: 1 },
       previewShown: true,
       previewHTML: '',
-      helpShown: false
+      helpShown: false,
+      insertLinkDialog: false
     }
   },
   computed: {
@@ -544,6 +548,72 @@ export default {
         mmElm.innerHTML = `<div id="mermaid-id-${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
         elm.parentElement.replaceWith(mmElm)
       })
+    },
+    autocomplete (cm, change) {
+      if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {
+        return
+      }
+
+      // Links
+      if (change.text[0] === '(') {
+        const curLine = cm.getLine(change.from.line).substring(0, change.from.ch)
+        if (curLine[curLine.length - 1] === ']') {
+          cm.showHint({
+            hint: async (cm, options) => {
+              const cur = cm.getCursor()
+              const token = cm.getTokenAt(cur)
+              try {
+                const respRaw = await this.$apollo.query({
+                  query: gql`
+                    query ($query: String!, $locale: String) {
+                      pages {
+                        search(query:$query, locale:$locale) {
+                          results {
+                            title
+                            path
+                            locale
+                          }
+                          totalHits
+                        }
+                      }
+                    }
+                  `,
+                  variables: {
+                    query: token.string,
+                    locale: this.locale
+                  },
+                  fetchPolicy: 'cache-first'
+                })
+                const resp = _.get(respRaw, 'data.pages.search', {})
+                if (resp && resp.totalHits > 0) {
+                  return {
+                    list: resp.results.map(r => ({
+                      text: (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
+                      displayText: siteLangs.length > 0 ? `/${r.locale}/${r.path} - ${r.title}` : `/${r.path} - ${r.title}`
+                    })),
+                    from: CodeMirror.Pos(cur.line, token.start),
+                    to: CodeMirror.Pos(cur.line, token.end)
+                  }
+                }
+              } catch (err) {}
+              return {
+                list: [],
+                from: CodeMirror.Pos(cur.line, token.start),
+                to: CodeMirror.Pos(cur.line, token.end)
+              }
+            }
+          })
+        }
+      }
+    },
+    insertLink () {
+      this.insertLinkDialog = true
+    },
+    insertLinkHandler ({ locale, path }) {
+      const lastPart = _.last(path.split('/'))
+      this.insertAtCursor({
+        content: siteLangs.length > 0 ? `[${lastPart}](/${locale}/${path})` : `[${lastPart}](/${path})`
+      })
     }
   },
   mounted() {
@@ -623,6 +693,8 @@ export default {
       return false
     })
     this.cm.setOption('extraKeys', keyBindings)
+
+    this.cm.on('inputRead', this.autocomplete)
 
     // Handle cursor movement
 
@@ -921,6 +993,43 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     text-decoration: underline;
     color: white !important;
   }
+}
 
+// HINT DROPDOWN
+
+.CodeMirror-hints {
+  position: absolute;
+  z-index: 10;
+  overflow: hidden;
+  list-style: none;
+
+  margin: 0;
+  padding: 1px;
+
+  box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  border: 1px solid mc('grey', '700');
+
+  background: mc('grey', '900');
+  font-family: 'Roboto Mono', monospace;
+  font-size: .9rem;
+
+  max-height: 150px;
+  overflow-y: auto;
+
+  min-width: 250px;
+  max-width: 80vw;
+}
+
+.CodeMirror-hint {
+  margin: 0;
+  padding: 0 4px;
+  white-space: pre;
+  color: #FFF;
+  cursor: pointer;
+}
+
+li.CodeMirror-hint-active {
+  background: mc('blue', '500');
+  color: #FFF;
 }
 </style>

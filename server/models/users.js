@@ -342,7 +342,8 @@ module.exports = class User extends Model {
     }
 
     // Update Last Login Date
-    await WIKI.models.users.query().findById(user.id).patch({ lastLoginAt: new Date().toISOString() })
+    // -> Bypass Objection.js to avoid updating the updatedAt field
+    await WIKI.models.knex('users').where('id', user.id).update({ lastLoginAt: new Date().toISOString() })
 
     return {
       token: jwt.sign({

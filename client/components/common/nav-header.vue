@@ -17,7 +17,7 @@
         @keyup.enter='searchEnter'
       )
     v-layout(row)
-      v-flex(xs6, md4)
+      v-flex(xs5, md4)
         v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
@@ -42,7 +42,7 @@
           //-       v-list-item-content
           //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
           //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-          v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-0": $vuetify.breakpoint.smAndDown }')
+          v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
@@ -73,7 +73,7 @@
                 v-btn.ml-2.mr-0(icon, v-on='on', href='/t')
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
-      v-flex(xs6, md4)
+      v-flex(xs7, md4)
         v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
           v-spacer
           .navHeaderLoading.mr-3
@@ -120,27 +120,27 @@
               v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-box-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-box-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
                 v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-file-document-edit-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-history
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-history
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-code-tags
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageDuplicate', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-content-duplicate
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
                 v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='indigo') mdi-content-save-move-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
                 v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
-                  v-list-item-avatar(size='24'): v-icon(color='red darken-2') mdi-trash-can-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='red darken-2') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
             v-divider(vertical)
 

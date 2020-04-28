@@ -168,9 +168,8 @@ Vue.component('unauthorized', () => import(/* webpackChunkName: "unauthorized" *
 Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
 Vue.component('welcome', () => import(/* webpackChunkName: "welcome" */ './components/welcome.vue'))
 
-Vue.component('nav-footer', () => import(/* webpackChunkName: "theme-page"  */ './themes/' + process.env.CURRENT_THEME + '/components/nav-footer.vue'))
-Vue.component('nav-sidebar', () => import(/* webpackChunkName: "theme-page" */ './themes/' + process.env.CURRENT_THEME + '/components/nav-sidebar.vue'))
-Vue.component('page', () => import(/* webpackChunkName: "theme-page" */ './themes/' + process.env.CURRENT_THEME + '/components/page.vue'))
+Vue.component('nav-footer', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
+Vue.component('page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
 let bootstrap = () => {
   // ====================================
@@ -210,12 +209,6 @@ let bootstrap = () => {
   // ----------------------------------
 
   window.boot.notify('vue')
-
-  // ====================================
-  // Load theme-specific code
-  // ====================================
-
-  import(/* webpackChunkName: "theme-page"  */ './themes/' + process.env.CURRENT_THEME + '/js/app.js')
 }
 
 window.boot.onDOMReady(bootstrap)

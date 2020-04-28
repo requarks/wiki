@@ -42,32 +42,37 @@ props:
     type: Boolean
     default: false
     order: 6
+  verifyTLSCertificate:
+    title: Verify TLS Certificate
+    type: Boolean
+    default: true
+    order: 7
   tlsCertPath:
     title: TLS Certificate Path
     type: String
     hint: Absolute path to the TLS certificate on the server.
-    order: 7
+    order: 8
   mappingUID:
     title: Unique ID Field Mapping
     type: String
     default: 'uid'
     hint: The field storing the user unique identifier. Usually "uid" or "sAMAccountName".
-    order: 8
+    order: 20
   mappingEmail:
     title: Email Field Mapping
     type: String
     default: 'mail'
     hint: The field storing the user email. Usually "mail".
-    order: 9
+    order: 21
   mappingDisplayName:
     title: Display Name Field Mapping
     type: String
     default: 'displayName'
     hint: The field storing the user display name. Usually "displayName" or "cn".
-    order: 10
+    order: 22
   mappingPicture:
     title: Avatar Picture Field Mapping
     type: String
     default: 'jpegPhoto'
     hint: The field storing the user avatar picture. Usually "jpegPhoto" or "thumbnailPhoto".
-    order: 11
+    order: 23

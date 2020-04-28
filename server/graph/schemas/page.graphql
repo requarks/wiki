@@ -57,7 +57,7 @@ type PageQuery {
     parent: Int
     mode: PageTreeMode!
     locale: String!
-    includeParents: Boolean
+    includeAncestors: Boolean
   ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
 
   links(

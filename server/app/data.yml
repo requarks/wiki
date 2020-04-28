@@ -28,6 +28,7 @@ defaults:
       maxFileSize: 5242880
       maxFiles: 10
     offline: false
+    ha: false
     # DB defaults
     api:
       isEnabled: false
@@ -45,6 +46,8 @@ defaults:
     company: ''
     contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    nav:
+      mode: 'MIXED'
     theming:
       theme: 'default'
       iconset: 'md'

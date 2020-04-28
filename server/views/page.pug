@@ -41,9 +41,10 @@ block body
       :toc=page.toc
       :page-id=page.id
       :sidebar=sidebar
+      nav-mode=config.nav.mode
       )
       template(slot='contents')
-        div(v-pre)!= page.render
+        div!= page.render
   if injectCode.body
     != injectCode.body
   script.

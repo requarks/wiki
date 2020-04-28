@@ -126,6 +126,15 @@ uploads:
 offline: false
 
 # ---------------------------------------------------------------------
+# High-Availability
+# ---------------------------------------------------------------------
+# Set to true if you have multiple concurrent instances running off the
+# same DB (e.g. Kubernetes pods / load balanced instances). Leave false
+# otherwise. You MUST be using PostgreSQL to use this feature.
+
+ha: false
+
+# ---------------------------------------------------------------------
 # Data Path
 # ---------------------------------------------------------------------
 # Writeable data path used for cache and temporary user uploads.

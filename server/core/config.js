@@ -95,7 +95,7 @@ module.exports = {
    * @param {Array} keys Array of keys to save
    * @returns Promise
    */
-  async saveToDb(keys) {
+  async saveToDb(keys, propagate = true) {
     try {
       for (let key of keys) {
         let value = _.get(WIKI.config, key, null)
@@ -106,6 +106,9 @@ module.exports = {
         if (affectedRows === 0 && value) {
           await WIKI.models.settings.query().insert({ key, value })
         }
+      }
+      if (propagate) {
+        WIKI.events.outbound.emit('reloadConfig')
       }
     } catch (err) {
       WIKI.logger.error(`Failed to save configuration to DB: ${err.message}`)
@@ -119,5 +122,15 @@ module.exports = {
    */
   async applyFlags() {
     WIKI.models.knex.client.config.debug = WIKI.config.flags.sqllog
+  },
+
+  /**
+   * Subscribe to HA propagation events
+   */
+  subscribeToEvents() {
+    WIKI.events.inbound.on('reloadConfig', async () => {
+      await WIKI.configSvc.loadFromDb()
+      await WIKI.configSvc.applyFlags()
+    })
   }
 }
