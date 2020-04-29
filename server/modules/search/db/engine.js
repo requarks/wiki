@@ -36,7 +36,7 @@ module.exports = {
             builderSub.orWhere('description', 'ILIKE', `%${q}%`)
             builderSub.orWhere('path', 'ILIKE', `%${q.toLowerCase()}%`)
             if (this.config.allowContentSearch) {
-              builderSub.orWhere('content', 'LIKE', `%${q}%`)
+              builderSub.orWhere('content', 'ILIKE', `%${q}%`)
             }
           } else {
             builderSub.where('title', 'LIKE', `%${q}%`)
