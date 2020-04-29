@@ -5,4 +5,10 @@ author: requarks.io
 logo: https://static.requarks.io/logo/database.svg
 website: https://www.requarks.io/
 isAvailable: true
-props: {}
+props:
+  allowContentSearch:
+    type: Boolean
+    title: Allow content search
+    hint: 'Should Wiki.js search page contents as well? (Warning: Very database heavy)'
+    default: false
+    order: 1

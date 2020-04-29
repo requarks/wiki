@@ -35,10 +35,16 @@ module.exports = {
             builderSub.where('title', 'ILIKE', `%${q}%`)
             builderSub.orWhere('description', 'ILIKE', `%${q}%`)
             builderSub.orWhere('path', 'ILIKE', `%${q.toLowerCase()}%`)
+            if (this.config.allowContentSearch) {
+              builderSub.orWhere('content', 'LIKE', `%${q}%`)
+            }
           } else {
             builderSub.where('title', 'LIKE', `%${q}%`)
             builderSub.orWhere('description', 'LIKE', `%${q}%`)
             builderSub.orWhere('path', 'LIKE', `%${q.toLowerCase()}%`)
+            if (this.config.allowContentSearch) {
+              builderSub.orWhere('content', 'LIKE', `%${q}%`)
+            }
           }
         })
       })
