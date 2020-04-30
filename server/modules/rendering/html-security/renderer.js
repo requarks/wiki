@@ -10,10 +10,12 @@ module.exports = {
           blockquote: ['class', 'id', 'style'],
           code: ['class', 'style'],
           details: ['class', 'style'],
+          defs: ['stroke', 'fill', 'stroke-width', 'transform'],
           div: ['class', 'id', 'style'],
           em: ['class', 'style'],
           figcaption: ['class', 'style'],
           figure: ['class', 'style'],
+          g: ['transform', 'stroke', 'stroke-width', 'fill'],
           h1: ['class', 'id', 'style'],
           h2: ['class', 'id', 'style'],
           h3: ['class', 'id', 'style'],
@@ -29,7 +31,7 @@ module.exports = {
           mark: ['class', 'style'],
           ol: ['class', 'style', 'start'],
           p: ['class', 'style'],
-          path: ['d', 'style'],
+          path: ['d', 'style', 'id'],
           pre: ['class', 'style'],
           section: ['class', 'style'],
           span: ['class', 'style', 'aria-hidden'],
@@ -44,7 +46,8 @@ module.exports = {
           th: ['align', 'class', 'colspan', 'rowspan', 'style', 'valign'],
           thead: ['class', 'style'],
           tr: ['class', 'rowspan', 'style', 'align', 'valign'],
-          ul: ['class', 'style']
+          ul: ['class', 'style'],
+          use: ['href', 'transform']
         },
         css: false
       })

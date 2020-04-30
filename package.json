@@ -109,7 +109,7 @@
     "markdown-it-sub": "1.0.0",
     "markdown-it-sup": "1.0.0",
     "markdown-it-task-lists": "2.1.1",
-    "mathjax-node": "2.1.1",
+    "mathjax": "3.0.5",
     "mime-types": "2.1.27",
     "moment": "2.24.0",
     "moment-timezone": "0.5.28",
