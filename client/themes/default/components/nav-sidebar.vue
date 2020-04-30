@@ -40,7 +40,7 @@
           v-list-item-avatar(size='24')
             v-icon mdi-folder
           v-list-item-title {{ item.title }}
-        v-list-item(v-else, :href='`/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
+        v-list-item(v-else, :href='`/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ item.title }}
@@ -132,6 +132,7 @@ export default {
                 isFolder
                 pageId
                 parent
+                locale
               }
             }
           }
@@ -159,6 +160,7 @@ export default {
                 isFolder
                 pageId
                 parent
+                locale
               }
             }
           }
