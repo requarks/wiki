@@ -19,6 +19,7 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import DecoupledEditor from '@requarks/ckeditor5'
 import EditorConflict from './ckeditor/conflict.vue'
+import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
 
 /* global siteLangs */
 
@@ -81,7 +82,7 @@ export default {
     }
 
     this.editor.model.document.on('change:data', _.debounce(evt => {
-      this.$store.set('editor/content', this.editor.getData())
+      this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
     }, 300))
 
     this.$root.$on('editorInsert', opts => {
