@@ -190,6 +190,7 @@
                 :label='$t(`profile:auth.newPassword`)'
                 type='password'
                 prepend-inner-icon='mdi-textbox-password'
+                autocomplete='off'
                 counter='255'
                 loading
                 )
@@ -201,6 +202,7 @@
                 :label='$t(`profile:auth.verifyPassword`)'
                 type='password'
                 prepend-inner-icon='mdi-textbox-password'
+                autocomplete='off'
                 hide-details
                 )
           v-card-chin

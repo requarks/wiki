@@ -15,6 +15,7 @@
         prepend-inner-icon='mdi-magnify'
         :loading='searchIsLoading'
         @keyup.enter='searchEnter'
+        autocomplete='off'
       )
     v-layout(row)
       v-flex(xs5, md4)
@@ -67,6 +68,7 @@
                 @blur='searchBlur'
                 @keyup.down='searchMove(`down`)'
                 @keyup.up='searchMove(`up`)'
+                autocomplete='off'
               )
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
