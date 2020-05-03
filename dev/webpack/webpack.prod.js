@@ -10,6 +10,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
@@ -184,6 +185,10 @@ module.exports = {
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
+    new MomentTimezoneDataPlugin({
+      startYear: 2017,
+      endYear: (new Date().getFullYear()) + 5
+    }),
     new CopyWebpackPlugin([
       { from: 'client/static' },
       { from: './node_modules/prismjs/components', to: 'js/prism' }

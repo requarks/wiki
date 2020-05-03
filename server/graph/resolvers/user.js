@@ -147,12 +147,22 @@ module.exports = {
           throw new WIKI.Error.AuthAccountNotVerified()
         }
 
+        if (!['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'].includes(args.dateFormat)) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
+        if (!['', 'light', 'dark'].includes(args.appearance)) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
         await WIKI.models.users.updateUser({
           id: usr.id,
           name: _.trim(args.name),
           jobTitle: _.trim(args.jobTitle),
           location: _.trim(args.location),
-          timezone: args.timezone
+          timezone: args.timezone,
+          dateFormat: args.dateFormat,
+          appearance: args.appearance
         })
 
         const newToken = await WIKI.models.users.refreshToken(usr.id)

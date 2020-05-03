@@ -22,7 +22,7 @@
         //-     v-list-item-title {{$t('profile:comments.title')}}
         //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
 
-    v-content(:class='darkMode ? "grey darken-4" : "grey lighten-5"')
+    v-content(:class='$vuetify.theme.dark ? "grey darken-4" : "grey lighten-5"')
       transition(name='profile-router')
         router-view
 
@@ -42,7 +42,6 @@ const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/profile' },
     { path: '/profile', component: () => import(/* webpackChunkName: "profile" */ './profile/profile.vue') },
-    // { path: '/preferences', component: () => import(/* webpackChunkName: "profile" */ './profile/preferences.vue') },
     { path: '/pages', component: () => import(/* webpackChunkName: "profile" */ './profile/pages.vue') },
     { path: '/comments', component: () => import(/* webpackChunkName: "profile" */ './profile/comments.vue') }
   ]

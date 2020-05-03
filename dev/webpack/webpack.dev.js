@@ -8,6 +8,7 @@ const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
+const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
 const SriWebpackPlugin = require('webpack-subresource-integrity')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
@@ -179,6 +180,10 @@ module.exports = {
   plugins: [
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
+    new MomentTimezoneDataPlugin({
+      startYear: 2017,
+      endYear: (new Date().getFullYear()) + 5
+    }),
     new CopyWebpackPlugin([
       { from: 'client/static' },
       { from: './node_modules/prismjs/components', to: 'js/prism' }
