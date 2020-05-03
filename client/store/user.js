@@ -9,6 +9,9 @@ const state = {
   pictureUrl: '',
   localeCode: '',
   defaultEditor: '',
+  timezone: '',
+  dateFormat: '',
+  appearance: '',
   permissions: [],
   iat: 0,
   exp: 0,
@@ -28,9 +31,12 @@ export default {
           st.id = jwtData.id
           st.email = jwtData.email
           st.name = jwtData.name
-          st.pictureUrl = jwtData.pictureUrl
-          st.localeCode = jwtData.localeCode
-          st.defaultEditor = jwtData.defaultEditor
+          st.pictureUrl = jwtData.av
+          st.localeCode = jwtData.lc
+          st.timezone = jwtData.tz || Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+          st.dateFormat = jwtData.df || ''
+          st.appearance = jwtData.ap || ''
+          // st.defaultEditor = jwtData.defaultEditor
           st.permissions = jwtData.permissions
           st.iat = jwtData.iat
           st.exp = jwtData.exp

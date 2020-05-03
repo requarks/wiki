@@ -8,12 +8,15 @@
             .headline.primary--text.animated.fadeInLeft {{$t('profile:title')}}
             .subheading.grey--text.animated.fadeInLeft {{$t('profile:subtitle')}}
           v-spacer
+          v-btn.animated.fadeInDown(color='success', depressed, @click='saveProfile', :loading='saveLoading', large)
+            v-icon(left) mdi-check
+            span {{$t('common:actions.save')}}
           //- v-btn.animated.fadeInDown(outlined, color='primary', disabled).mr-0
           //-   v-icon(left) mdi-earth
           //-   span {{$t('profile:viewPublicProfile')}}
       v-flex(lg6 xs12)
         v-card.animated.fadeInUp
-          v-toolbar(color='primary', dark, dense, flat)
+          v-toolbar(color='blue-grey', dark, dense, flat)
             v-toolbar-title.subtitle-1 {{$t('profile:myInfo')}}
           v-list(two-line, dense)
             v-list-item
@@ -105,7 +108,80 @@
                       @keydown.enter='editPop.jobTitle = false'
                       @keydown.esc='editPop.jobTitle = false'
                     )
-            v-divider
+
+        v-card.mt-3.animated.fadeInUp.wait-p2s
+          v-toolbar(color='blue-grey', dark, dense, flat)
+            v-toolbar-title
+              .subtitle-1 {{$t('profile:auth.title')}}
+          v-card-text.pt-0
+            v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.provider')}}
+            v-toolbar(
+              flat
+              :color='$vuetify.theme.dark ? "grey darken-2" : "purple lighten-5"'
+              dense
+              :class='$vuetify.theme.dark ? "grey--text text--lighten-1" : "purple--text text--darken-4"'
+              )
+              v-icon(:color='$vuetify.theme.dark ? "grey lighten-1" : "purple darken-4"') mdi-shield-lock
+              .subheading.ml-3 {{ user.providerName }}
+            //- v-divider.mt-3
+            //- v-subheader.pl-0: span.subtitle-2 Two-Factor Authentication (2FA)
+            //- .caption.mb-2 2FA adds an extra layer of security by requiring a unique code generated on your smartphone when signing in.
+            //- v-btn(color='purple darken-4', disabled).ml-0 Enable 2FA
+            //- v-btn(color='purple darken-4', dark, depressed, disabled).ml-0 Disable 2FA
+            template(v-if='user.providerKey === `local`')
+              v-divider.mt-3
+              v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.changePassword')}}
+              v-text-field(
+                ref='iptCurrentPass'
+                v-model='currentPass'
+                outlined
+                :label='$t(`profile:auth.currentPassword`)'
+                type='password'
+                prepend-inner-icon='mdi-form-textbox-password'
+                )
+              v-text-field(
+                ref='iptNewPass'
+                v-model='newPass'
+                outlined
+                :label='$t(`profile:auth.newPassword`)'
+                type='password'
+                prepend-inner-icon='mdi-form-textbox-password'
+                autocomplete='off'
+                counter='255'
+                loading
+                )
+                password-strength(slot='progress', v-model='newPass')
+              v-text-field(
+                ref='iptVerifyPass'
+                v-model='verifyPass'
+                outlined
+                :label='$t(`profile:auth.verifyPassword`)'
+                type='password'
+                prepend-inner-icon='mdi-form-textbox-password'
+                autocomplete='off'
+                hide-details
+                )
+          v-card-chin
+            v-spacer
+            v-btn.px-4(color='purple darken-4', dark, depressed, @click='changePassword', :loading='changePassLoading')
+              v-icon(left) mdi-progress-check
+              span {{$t('profile:auth.changePassword')}}
+      v-flex(lg6 xs12)
+        //- v-card
+        //-   v-toolbar(color='blue-grey', dark, dense, flat)
+        //-     v-toolbar-title
+        //-       .subtitle-1 Picture
+        //-   v-card-title
+        //-     v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
+        //-       span.white--text.subheading {{picture.initials}}
+        //-     v-avatar(v-else-if='picture.kind === `image`', :size='40')
+        //-       v-img(:src='picture.url')
+        //-     v-btn(outlined).mx-4 Upload Picture
+        //-     v-btn(outlined, disabled) Remove Picture
+        v-card.animated.fadeInUp.wait-p2s
+          v-toolbar(color='blue-grey', dark, dense, flat)
+            v-toolbar-title.subtitle-1 {{$t('profile:preferences')}}
+          v-list(two-line, dense)
             v-list-item
               v-list-item-avatar(size='32')
                 v-icon mdi-map-clock-outline
@@ -136,7 +212,7 @@
                       hide-details
                       @keydown.enter='editPop.timezone = false'
                       @keydown.esc='editPop.timezone = false'
-                      style='height: 44px;'
+                      style='height: 38px;'
                     )
                     v-card-chin
                       v-spacer
@@ -148,79 +224,94 @@
                         )
                         v-icon(left) mdi-check
                         span {{$t('common:actions.ok')}}
-          v-card-chin
-            v-spacer
-            v-btn.px-4(color='success', depressed, @click='saveProfile', :loading='saveLoading')
-              v-icon(left) mdi-content-save
-              span {{$t('common:actions.save')}}
-        v-card.mt-3.animated.fadeInUp.wait-p2s
-          v-toolbar(color='primary', dark, dense, flat)
-            v-toolbar-title
-              .subtitle-1 {{$t('profile:auth.title')}}
-          v-card-text.pt-0
-            v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.provider')}}
-            v-toolbar(
-              flat
-              :color='$vuetify.theme.dark ? "grey darken-2" : "purple lighten-5"'
-              dense
-              :class='$vuetify.theme.dark ? "grey--text text--lighten-1" : "purple--text text--darken-4"'
-              )
-              v-icon(:color='$vuetify.theme.dark ? "grey lighten-1" : "purple darken-4"') mdi-shield-lock
-              .subheading.ml-3 {{ user.providerName }}
-            //- v-divider.mt-3
-            //- v-subheader.pl-0: span.subtitle-2 Two-Factor Authentication (2FA)
-            //- .caption.mb-2 2FA adds an extra layer of security by requiring a unique code generated on your smartphone when signing in.
-            //- v-btn(color='purple darken-4', disabled).ml-0 Enable 2FA
-            //- v-btn(color='purple darken-4', dark, depressed, disabled).ml-0 Disable 2FA
-            template(v-if='user.providerKey === `local`')
-              v-divider.mt-3
-              v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.changePassword')}}
-              v-text-field(
-                ref='iptCurrentPass'
-                v-model='currentPass'
-                outlined
-                :label='$t(`profile:auth.currentPassword`)'
-                type='password'
-                prepend-inner-icon='mdi-textbox-password'
-                )
-              v-text-field(
-                ref='iptNewPass'
-                v-model='newPass'
-                outlined
-                :label='$t(`profile:auth.newPassword`)'
-                type='password'
-                prepend-inner-icon='mdi-textbox-password'
-                counter='255'
-                loading
-                )
-                password-strength(slot='progress', v-model='newPass')
-              v-text-field(
-                ref='iptVerifyPass'
-                v-model='verifyPass'
-                outlined
-                :label='$t(`profile:auth.verifyPassword`)'
-                type='password'
-                prepend-inner-icon='mdi-textbox-password'
-                hide-details
-                )
-          v-card-chin
-            v-spacer
-            v-btn.px-4(color='purple darken-4', dark, depressed, @click='changePassword', :loading='changePassLoading')
-              v-icon(left) mdi-progress-check
-              span {{$t('profile:auth.changePassword')}}
-      v-flex(lg6 xs12)
-        //- v-card
-        //-   v-toolbar(color='primary', dark, dense, flat)
-        //-     v-toolbar-title
-        //-       .subtitle-1 Picture
-        //-   v-card-title
-        //-     v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
-        //-       span.white--text.subheading {{picture.initials}}
-        //-     v-avatar(v-else-if='picture.kind === `image`', :size='40')
-        //-       v-img(:src='picture.url')
-        //-     v-btn(outlined).mx-4 Upload Picture
-        //-     v-btn(outlined, disabled) Remove Picture
-        v-card.animated.fadeInUp.wait-p2s
+            v-divider
+            v-list-item
+              v-list-item-avatar(size='32')
+                v-icon mdi-calendar-month-outline
+              v-list-item-content
+                v-list-item-title {{$t('profile:dateFormat')}}
+                v-list-item-subtitle {{ user.dateFormat && user.dateFormat.length > 0 ? user.dateFormat : $t('profile:localeDefault') }}
+              v-list-item-action
+                v-menu(
+                  v-model='editPop.dateFormat'
+                  :close-on-content-click='false'
+                  min-width='350'
+                  max-width='350'
+                  left
+                  )
+                  template(v-slot:activator='{ on }')
+                    v-btn(text, color='grey', small, v-on='on', @click='focusField(`iptDateFormat`)')
+                      v-icon(left) mdi-pencil
+                      span {{ $t('common:actions:edit') }}
+                  v-card(flat)
+                    v-select(
+                      ref='iptDateFormat'
+                      :items='dateFormats'
+                      v-model='user.dateFormat'
+                      :label='$t(`profile:dateFormat`)'
+                      solo
+                      flat
+                      dense
+                      hide-details
+                      @keydown.enter='editPop.dateFormat = false'
+                      @keydown.esc='editPop.dateFormat = false'
+                      style='height: 38px;'
+                    )
+                    v-card-chin
+                      v-spacer
+                      v-btn(
+                        small
+                        text
+                        color='primary'
+                        @click='editPop.dateFormat = false'
+                        )
+                        v-icon(left) mdi-check
+                        span {{$t('common:actions.ok')}}
+            v-divider
+            v-list-item
+              v-list-item-avatar(size='32')
+                v-icon mdi-palette
+              v-list-item-content
+                v-list-item-title {{$t('profile:appearance')}}
+                v-list-item-subtitle {{ currentAppearance }}
+              v-list-item-action
+                v-menu(
+                  v-model='editPop.appearance'
+                  :close-on-content-click='false'
+                  min-width='350'
+                  max-width='350'
+                  left
+                  )
+                  template(v-slot:activator='{ on }')
+                    v-btn(text, color='grey', small, v-on='on', @click='focusField(`iptAppearance`)')
+                      v-icon(left) mdi-pencil
+                      span {{ $t('common:actions:edit') }}
+                  v-card(flat)
+                    v-select(
+                      ref='iptAppearance'
+                      :items='appearances'
+                      v-model='user.appearance'
+                      :label='$t(`profile:appearance`)'
+                      solo
+                      flat
+                      dense
+                      hide-details
+                      @keydown.enter='editPop.appearance = false'
+                      @keydown.esc='editPop.appearance = false'
+                      style='height: 38px;'
+                    )
+                    v-card-chin
+                      v-spacer
+                      v-btn(
+                        small
+                        text
+                        color='primary'
+                        @click='editPop.appearance = false'
+                        )
+                        v-icon(left) mdi-check
+                        span {{$t('common:actions.ok')}}
+
+        v-card.mt-3.animated.fadeInUp.wait-p3s
           v-toolbar(color='primary', dark, dense, flat)
             v-toolbar-title
               .subtitle-1 {{$t('profile:groups.title')}}
@@ -232,7 +323,8 @@
                 v-list-item-content
                   v-list-item-title.body-2 {{grp}}
               v-divider(v-if='idx < user.groups.length - 1')
-        v-card.mt-3.animated.fadeInUp.wait-p3s
+
+        v-card.mt-3.animated.fadeInUp.wait-p4s
           v-toolbar(color='teal', dark, dense, flat)
             v-toolbar-title
               .subtitle-1 {{$t('profile:activity.title')}}
@@ -259,6 +351,8 @@ import validate from 'validate.js'
 
 import PasswordStrength from '../common/password-strength.vue'
 
+/* global WIKI, siteConfig */
+
 export default {
   i18nOptions: {
     namespaces: ['profile', 'auth']
@@ -275,6 +369,8 @@ export default {
         location: '',
         jobTitle: '',
         timezone: '',
+        dateFormat: '',
+        appearance: '',
         createdAt: '1970-01-01',
         updatedAt: '1970-01-01',
         lastLoginAt: '1970-01-01',
@@ -287,7 +383,9 @@ export default {
         name: false,
         location: false,
         jobTitle: false,
-        timezone: false
+        timezone: false,
+        dateFormat: false,
+        appearance: false
       },
       timezones: [
         { text: '(GMT-11:00) Niue', value: 'Pacific/Niue' },
@@ -544,6 +642,26 @@ export default {
     }
   },
   computed: {
+    dateFormats () {
+      return [
+        { text: this.$t('profile:localeDefault'), value: '' },
+        { text: 'DD/MM/YYYY', value: 'DD/MM/YYYY' },
+        { text: 'DD.MM.YYYY', value: 'DD.MM.YYYY' },
+        { text: 'MM/DD/YYYY', value: 'MM/DD/YYYY' },
+        { text: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
+        { text: 'YYYY/MM/DD', value: 'YYYY/MM/DD' }
+      ]
+    },
+    appearances () {
+      return [
+        { text: this.$t('profile:appearanceDefault'), value: '' },
+        { text: this.$t('profile:appearanceLight'), value: 'light' },
+        { text: this.$t('profile:appearanceDark'), value: 'dark' }
+      ]
+    },
+    currentAppearance () {
+      return _.get(_.find(this.appearances, ['value', this.user.appearance]), 'text', false) || this.$t('profile:appearanceDefault')
+    },
     pictureUrl: get('user/pictureUrl'),
     picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
@@ -561,6 +679,33 @@ export default {
           kind: 'initials',
           initials
         }
+      }
+    }
+  },
+  watch: {
+    'user.appearance': (newValue, oldValue) => {
+      if (newValue === '') {
+        WIKI.$vuetify.theme.dark = siteConfig.darkMode
+      } else {
+        WIKI.$vuetify.theme.dark = (newValue === 'dark')
+      }
+    },
+    'user.dateFormat': (newValue, oldValue) => {
+      if (newValue === '') {
+        WIKI.$moment.updateLocale(WIKI.$moment.locale(), null)
+      } else {
+        WIKI.$moment.updateLocale(WIKI.$moment.locale(), {
+          longDateFormat: {
+            'L': newValue
+          }
+        })
+      }
+    },
+    'user.timezone': (newValue, oldValue) => {
+      if (newValue === '') {
+        WIKI.$moment.tz.setDefault()
+      } else {
+        WIKI.$moment.tz.setDefault(newValue)
       }
     }
   },
@@ -585,9 +730,9 @@ export default {
       try {
         const respRaw = await this.$apollo.mutate({
           mutation: gql`
-            mutation ($name: String!, $location: String!, $jobTitle: String!, $timezone: String!) {
+            mutation ($name: String!, $location: String!, $jobTitle: String!, $timezone: String!, $dateFormat: String!, $appearance: String!) {
               users {
-                updateProfile(name: $name, location: $location, jobTitle: $jobTitle, timezone: $timezone) {
+                updateProfile(name: $name, location: $location, jobTitle: $jobTitle, timezone: $timezone, dateFormat: $dateFormat, appearance: $appearance) {
                   responseResult {
                     succeeded
                     errorCode
@@ -603,7 +748,9 @@ export default {
             name: this.user.name,
             location: this.user.location,
             jobTitle: this.user.jobTitle,
-            timezone: this.user.timezone
+            timezone: this.user.timezone,
+            dateFormat: this.user.dateFormat,
+            appearance: this.user.appearance
           }
         })
         const resp = _.get(respRaw, 'data.users.updateProfile.responseResult', {})
@@ -750,6 +897,8 @@ export default {
               location
               jobTitle
               timezone
+              dateFormat
+              appearance
               createdAt
               updatedAt
               lastLoginAt

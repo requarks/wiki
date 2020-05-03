@@ -36,7 +36,7 @@ module.exports = {
 
     for (let child of this.children) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
-      renderer.init(mkdown, child.config)
+      await renderer.init(mkdown, child.config)
     }
 
     return mkdown.render(this.input)

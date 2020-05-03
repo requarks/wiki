@@ -15,7 +15,7 @@ import Vuetify from 'vuetify/lib'
 import Velocity from 'velocity-animate'
 import Vuescroll from 'vuescroll/dist/vuescroll-native'
 import Hammer from 'hammerjs'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import VueMoment from 'vue-moment'
 import store from './store'
 import Cookies from 'js-cookie'
@@ -189,6 +189,12 @@ let bootstrap = () => {
   // ====================================
 
   const i18n = localization.init()
+
+  let darkModeEnabled = siteConfig.darkMode
+  if ((store.get('user/appearance') || '').length > 0) {
+    darkModeEnabled = (store.get('user/appearance') === 'dark')
+  }
+
   window.WIKI = new Vue({
     el: '#root',
     components: {},
@@ -199,9 +205,22 @@ let bootstrap = () => {
     vuetify: new Vuetify({
       rtl: siteConfig.rtl,
       theme: {
-        dark: siteConfig.darkMode
+        dark: darkModeEnabled
       }
-    })
+    }),
+    mounted () {
+      this.$moment.locale(siteConfig.lang)
+      if ((store.get('user/dateFormat') || '').length > 0) {
+        this.$moment.updateLocale(this.$moment.locale(), {
+          longDateFormat: {
+            'L': store.get('user/dateFormat')
+          }
+        })
+      }
+      if ((store.get('user/timezone') || '').length > 0) {
+        this.$moment.tz.setDefault(store.get('user/timezone'))
+      }
+    }
   })
 
   // ----------------------------------

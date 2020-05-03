@@ -1,9 +1,9 @@
-key: markdownKatex
-title: Katex
+key: markdownMathjax
+title: Mathjax
 description: LaTeX Math + Chemical Expression Typesetting Renderer
 author: requarks.io
 icon: mdi-math-integral
-enabledDefault: true
+enabledDefault: false
 dependsOn: markdownCore
 props:
   useInline:

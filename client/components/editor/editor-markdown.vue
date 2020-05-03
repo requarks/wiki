@@ -184,6 +184,7 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
 import gql from 'graphql-tag'
+import DOMPurify from 'dompurify'
 
 /* global siteConfig, siteLangs */
 
@@ -395,7 +396,7 @@ export default {
     onCmInput: _.debounce(function (newContent) {
       linesMap = []
       this.$store.set('editor/content', newContent)
-      this.previewHTML = md.render(newContent)
+      this.previewHTML = DOMPurify.sanitize(md.render(newContent))
       this.$nextTick(() => {
         this.renderMermaidDiagrams()
         Prism.highlightAllUnder(this.$refs.editorPreview)

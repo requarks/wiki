@@ -133,7 +133,7 @@
               v-divider
               v-list-item
                 v-list-item-avatar(size='32')
-                  v-icon mdi-textbox-password
+                  v-icon mdi-form-textbox-password
                 v-list-item-content
                   v-list-item-title {{$t('admin:users.password')}}
                   v-list-item-subtitle &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
