@@ -56,7 +56,7 @@
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
-          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', style='margin-top: -90px;')
+          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', align-self-start, style='margin-top: -90px; position: sticky; top: 70px;')
             v-card.mb-5(v-if='toc.length')
               .overline.pa-5.pb-0(:class='darkMode ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='darkMode ? `darken-3-d3` : ``')
