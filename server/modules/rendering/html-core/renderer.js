@@ -115,6 +115,7 @@ module.exports = {
         $(elm).addClass(`is-external-link`)
         if (this.config.openExternalLinkNewTab) {
           $(elm).attr('target', '_blank')
+          $(elm).attr('rel', this.config.relAttributeExternalLink)
         }
       }
 

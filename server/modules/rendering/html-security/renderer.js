@@ -6,7 +6,7 @@ module.exports = {
       input = xss(input, {
         whiteList: {
           ...xss.whiteList,
-          a: ['class', 'id', 'href', 'style', 'target', 'title'],
+          a: ['class', 'id', 'href', 'style', 'target', 'title', 'rel'],
           blockquote: ['class', 'id', 'style'],
           code: ['class', 'style'],
           details: ['class', 'style'],
