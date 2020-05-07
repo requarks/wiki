@@ -26,4 +26,4 @@ props:
     order: 3
     enum:
         - noreferrer
-        - noopen
+        - noopener
