@@ -395,17 +395,28 @@ router.get('/*', async (req, res, next) => {
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)
         _.set(res.locals, 'pageMeta.description', page.description)
-        const sidebar = await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })
+
+        let sdi = 1
+        const sidebar = (await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({
+          i: `sdi-${sdi++}`,
+          k: n.kind,
+          l: n.label,
+          c: n.icon,
+          y: n.targetType,
+          t: n.target
+        }))
+
         const injectCode = {
           css: WIKI.config.theming.injectCSS,
           head: WIKI.config.theming.injectHead,
           body: WIKI.config.theming.injectBody
         }
 
+        if (!_.isString(page.toc)) {
+          page.toc = JSON.stringify(page.toc)
+        }
+
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
-          if (_.isString(page.toc)) {
-            page.toc = JSON.parse(page.toc)
-          }
           res.render('legacy/page', { page, sidebar, injectCode, isAuthenticated: req.user && req.user.id !== 2 })
         } else {
           res.render('page', { page, sidebar, injectCode })
