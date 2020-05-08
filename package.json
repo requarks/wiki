@@ -92,6 +92,7 @@
     "js-base64": "2.5.2",
     "js-binary": "1.2.0",
     "js-yaml": "3.13.1",
+    "jsdom": "16.2.2",
     "jsonwebtoken": "8.5.1",
     "katex": "0.11.1",
     "klaw": "3.0.0",
