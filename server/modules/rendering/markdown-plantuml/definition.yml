@@ -8,22 +8,25 @@ dependsOn: markdownCore
 props:
   server:
     type: String
-    default: https://www.plantuml.com/plantuml
+    default: https://plantuml.requarks.io
     title: PlantUML Server
     hint: PlantUML server used for image generation
     order: 1
+    public: true
   openMarker:
     type: String
     default: "```plantuml"
     title: Open Marker
     hint: String to use as opening delimiter
     order: 2
+    public: true
   closeMarker:
     type: String
     default: "```"
     title: Close Marker
     hint: String to use as closing delimiter
     order: 3
+    public: true
   imageFormat:
     type: String
     default: svg
@@ -35,3 +38,4 @@ props:
       - latex
       - ascii
     order: 4
+    public: true
