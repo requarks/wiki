@@ -27,13 +27,13 @@
               v-list-item-avatar(size='24', tile): v-icon mdi-file-document-outline
               v-list-item-title {{ $t('admin:pages.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.pagesTotal }}
             v-list-item(to='/tags', v-if='hasPermission([`manage:system`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-tag-multiple
               v-list-item-title {{ $t('admin:tags.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.tagsTotal }}
             v-list-item(to='/theme', color='primary', v-if='hasPermission([`manage:system`, `manage:theme`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-palette-outline
@@ -45,13 +45,13 @@
               v-list-item-avatar(size='24', tile): v-icon mdi-account-group
               v-list-item-title {{ $t('admin:groups.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.groupsTotal }}
             v-list-item(to='/users', color='primary', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-account-box
               v-list-item-title {{ $t('admin:users.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.usersTotal }}
           template(v-if='hasPermission(`manage:system`)')
             v-divider.my-2
@@ -123,7 +123,7 @@
             v-list-item-avatar(size='24', tile): v-icon mdi-heart-outline
             v-list-item-title {{ $t('admin:contribute.title') }}
 
-    v-content(:class='darkMode ? "grey darken-5" : "grey lighten-5"')
+    v-content(:class='$vuetify.theme.dark ? "grey darken-5" : "grey lighten-5"')
       transition(name='admin-router')
         router-view
 
@@ -210,7 +210,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     info: sync('admin/info'),
     permissions: get('user/permissions')
   },

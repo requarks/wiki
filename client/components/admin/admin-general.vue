@@ -260,7 +260,7 @@
 
 <script>
 import _ from 'lodash'
-import { get, sync } from 'vuex-pathify'
+import { sync } from 'vuex-pathify'
 import gql from 'graphql-tag'
 
 import editorStore from '../../store/editor'
@@ -323,7 +323,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     siteTitle: sync('site/title'),
     logoUrl: sync('site/logoUrl'),
     company: sync('site/company'),

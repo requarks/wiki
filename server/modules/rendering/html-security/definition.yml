@@ -13,3 +13,10 @@ props:
     title: Sanitize HTML
     default: true
     hint: Sanitize HTML from unsafe attributes and tags that could lead to XSS attacks
+    order: 1
+  allowIFrames:
+    type: Boolean
+    title: Allow iframes
+    default: false
+    hint: iframes will not be stripped if enabled. (Not recommended)
+    order: 2

@@ -41,7 +41,7 @@
               :hint='$t(`editor:props.shortDescriptionHint`)'
               )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             .overline.pb-5 {{$t('editor:props.path')}}
             v-container.pa-0(fluid, grid-list-lg)
               v-layout(row, wrap)
@@ -65,7 +65,7 @@
                     @click:append='showPathSelector'
                     )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d5` : `lighten-4`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5 {{$t('editor:props.categorization')}}
             v-chip-group.radius-5.mb-5(column, v-if='tags && tags.length > 0')
               v-chip(
@@ -101,7 +101,7 @@
               inset
               )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             v-container.pa-0(fluid, grid-list-lg)
               v-row
                 v-col(cols='6')
@@ -197,7 +197,7 @@
               persistent-hint
             )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             .overline.pb-3 {{$t('editor:props.css')}}
             v-textarea(
               outlined
@@ -279,7 +279,6 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    darkMode: get('site/dark'),
     mode: get('editor/mode'),
     title: sync('page/title'),
     description: sync('page/description'),

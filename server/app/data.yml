@@ -46,6 +46,10 @@ defaults:
     company: ''
     contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    mail:
+      host: ''
+      secure: true
+      verifySSL: true
     nav:
       mode: 'MIXED'
     theming:

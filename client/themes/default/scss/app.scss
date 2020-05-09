@@ -226,9 +226,26 @@
 
   blockquote {
     padding: 0 1rem 1rem 1rem;
-    border-left: 5px solid mc('blue', '500');
+    background-color: mc('blue-grey', '50');
+    border-left: 55px solid mc('blue-grey', '500');
     border-radius: .5rem;
     margin: 1rem 0;
+    position: relative;
+
+    @at-root .theme--dark & {
+      background-color: mc('blue-grey', '900');
+    }
+
+    &::before {
+      display: inline-block;
+      font: normal normal normal 24px/1 "Material Design Icons";
+      position: absolute;
+      margin-top: -12px;
+      top: 50%;
+      left: -38px;
+      color: rgba(255, 255, 255, .7);
+      content: "\F02FC";
+    }
 
     > p:first-child .emoji {
       margin-right: .5rem;
@@ -243,6 +260,10 @@
       background-color: mc('blue', '50');
       border-color: mc('blue', '300');
       color: mc('blue', '900');
+
+      &::before {
+        content: "\F02FC";
+      }
 
       code {
         background-color: mc('blue', '50');
@@ -259,6 +280,10 @@
       background-color: mc('orange', '50');
       border-color: mc('orange', '300');
       color: darken(mc('orange', '900'), 10%);
+
+      &::before {
+        content: "\F0026";
+      }
 
       code {
         background-color: mc('orange', '50');
@@ -277,6 +302,10 @@
       border-color: mc('red', '300');
       color: mc('red', '900');
 
+      &::before {
+        content: "\F0159";
+      }
+
       code {
         background-color: mc('red', '50');
         color: mc('red', '800');
@@ -292,6 +321,10 @@
       background-color: mc('green', '50');
       border-color: mc('green', '300');
       color: mc('green', '900');
+
+      &::before {
+        content: "\F0E1E";
+      }
 
       code {
         background-color: mc('green', '50');

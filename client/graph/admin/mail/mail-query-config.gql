@@ -6,6 +6,7 @@
       host
       port
       secure
+      verifySSL
       user
       pass
       useDKIM

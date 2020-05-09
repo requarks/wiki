@@ -119,7 +119,7 @@
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)', disabled).mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
               v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
           span {{$t('editor:markup.insertBlock')}}
         v-tooltip(right, color='teal')
@@ -222,6 +222,7 @@ import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
+import plantuml from './markdown/plantuml'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
@@ -257,7 +258,11 @@ const md = new MarkdownIt({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    if (['mermaid', 'plantuml'].includes(lang)) {
+      return `<pre class="codeblock-${lang}"><code>${_.escape(str)}</code></pre>`
+    } else {
+      return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    }
   }
 })
   .use(mdAttrs, {
@@ -292,6 +297,13 @@ function injectLineNumbers (tokens, idx, options, env, slf) {
 md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
 md.renderer.rules.blockquote_open = injectLineNumbers
+
+// ========================================
+// PLANTUML
+// ========================================
+
+// TODO: Use same options as defined in backend
+plantuml.init(md, {})
 
 // ========================================
 // KATEX
@@ -542,7 +554,7 @@ export default {
       })
     },
     renderMermaidDiagrams () {
-      document.querySelectorAll('.editor-markdown-preview pre.line-numbers > code.language-mermaid').forEach(elm => {
+      document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
         mermaidId++
         const mermaidDef = elm.innerText
         const mmElm = document.createElement('div')

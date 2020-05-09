@@ -104,6 +104,7 @@ module.exports = () => {
         host: '',
         port: 465,
         secure: true,
+        verifySSL: true,
         user: '',
         pass: '',
         useDKIM: false,

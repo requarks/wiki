@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app(:dark='darkMode').profile
+  v-app(:dark='$vuetify.theme.dark').profile
     nav-header
     v-navigation-drawer.pb-0(v-model='profileDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense, nav)
@@ -34,7 +34,7 @@
 <script>
 import VueRouter from 'vue-router'
 
-/* global WIKI, siteConfig */
+/* global WIKI */
 
 const router = new VueRouter({
   mode: 'history',
@@ -62,9 +62,6 @@ export default {
     return {
       profileDrawerShown: true
     }
-  },
-  computed: {
-    darkMode() { return siteConfig.darkMode }
   },
   router,
   created() {
