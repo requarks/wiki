@@ -20,44 +20,69 @@ module.exports = {
         logoUrl: WIKI.config.logoUrl,
         ...WIKI.config.seo,
         ...WIKI.config.features,
-        ...WIKI.config.security
+        ...WIKI.config.security,
+        uploadMaxFileSize: WIKI.config.uploads.maxFileSize,
+        uploadMaxFiles: WIKI.config.uploads.maxFiles
       }
     }
   },
   SiteMutation: {
     async updateConfig(obj, args, context) {
-      let siteHost = _.trim(args.host)
-      if (siteHost.endsWith('/')) {
-        siteHost = siteHost.splice(0, -1)
-      }
       try {
-        WIKI.config.host = siteHost
-        WIKI.config.title = _.trim(args.title)
-        WIKI.config.company = _.trim(args.company)
-        WIKI.config.contentLicense = args.contentLicense
+        if (args.host) {
+          let siteHost = _.trim(args.host)
+          if (siteHost.endsWith('/')) {
+            siteHost = siteHost.splice(0, -1)
+          }
+          WIKI.config.host = siteHost
+        }
+
+        if (args.title) {
+          WIKI.config.title = _.trim(args.title)
+        }
+
+        if (args.company) {
+          WIKI.config.company = _.trim(args.company)
+        }
+
+        if (args.contentLicense) {
+          WIKI.config.contentLicense = args.contentLicense
+        }
+
+        if (args.logoUrl) {
+          WIKI.config.logoUrl = _.trim(args.logoUrl)
+        }
+
         WIKI.config.seo = {
-          description: args.description,
-          robots: args.robots,
-          analyticsService: args.analyticsService,
-          analyticsId: args.analyticsId
+          description: _.get(args, 'description', WIKI.config.seo.description),
+          robots: _.get(args, 'robots', WIKI.config.seo.robots),
+          analyticsService: _.get(args, 'analyticsService', WIKI.config.seo.analyticsService),
+          analyticsId: _.get(args, 'analyticsId', WIKI.config.seo.analyticsId)
         }
-        WIKI.config.logoUrl = _.trim(args.logoUrl)
+
         WIKI.config.features = {
-          featurePageRatings: args.featurePageRatings,
-          featurePageComments: args.featurePageComments,
-          featurePersonalWikis: args.featurePersonalWikis
+          featurePageRatings: _.get(args, 'featurePageRatings', WIKI.config.features.featurePageRatings),
+          featurePageComments: _.get(args, 'featurePageComments', WIKI.config.features.featurePageComments),
+          featurePersonalWikis: _.get(args, 'featurePersonalWikis', WIKI.config.features.featurePersonalWikis)
         }
+
         WIKI.config.security = {
-          securityIframe: args.securityIframe,
-          securityReferrerPolicy: args.securityReferrerPolicy,
-          securityTrustProxy: args.securityTrustProxy,
-          securitySRI: args.securitySRI,
-          securityHSTS: args.securityHSTS,
-          securityHSTSDuration: args.securityHSTSDuration,
-          securityCSP: args.securityCSP,
-          securityCSPDirectives: args.securityCSPDirectives
+          securityIframe: _.get(args, 'securityIframe', WIKI.config.security.securityIframe),
+          securityReferrerPolicy: _.get(args, 'securityReferrerPolicy', WIKI.config.security.securityReferrerPolicy),
+          securityTrustProxy: _.get(args, 'securityTrustProxy', WIKI.config.security.securityTrustProxy),
+          securitySRI: _.get(args, 'securitySRI', WIKI.config.security.securitySRI),
+          securityHSTS: _.get(args, 'securityHSTS', WIKI.config.security.securityHSTS),
+          securityHSTSDuration: _.get(args, 'securityHSTSDuration', WIKI.config.security.securityHSTSDuration),
+          securityCSP: _.get(args, 'securityCSP', WIKI.config.security.securityCSP),
+          securityCSPDirectives: _.get(args, 'securityCSPDirectives', WIKI.config.security.securityCSPDirectives)
         }
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'features', 'security'])
+
+        WIKI.config.uploads = {
+          maxFileSize: _.get(args, 'uploadMaxFileSize', WIKI.config.uploads.maxFileSize),
+          maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles)
+        }
+
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'features', 'security', 'uploads'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')

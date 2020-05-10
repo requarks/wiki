@@ -186,6 +186,7 @@ module.exports = () => {
         'sessionSecret',
         'telemetry',
         'theming',
+        'uploads',
         'title'
       ], false)
 
