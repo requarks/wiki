@@ -115,6 +115,7 @@ We are looking for translators to make Wiki.js UI available in as many languages
 
 Support this project by becoming a sponsor. Your name will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://github.com/users/NGPixel/sponsorship)]
 
+- Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Alexander Casassovici ([@alexksso](https://github.com/alexksso))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
