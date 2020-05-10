@@ -17,8 +17,9 @@
               v-card.animated.fadeInUp
                 v-toolbar(color='red darken-2', dark, dense, flat)
                   v-toolbar-title.subtitle-1 Security
+                v-card-info(color='red')
+                  span Make sure to understand the implications before turning on / off a security feature.
                 v-card-text
-                  v-alert(outlined, color='red darken-2', icon='mdi-information-outline').body-2 Make sure to understand the implications before turning on / off a security feature.
                   v-switch.mt-3(
                     inset
                     label='Block IFrame Embedding'
@@ -106,8 +107,10 @@
               v-card.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{ $t('admin:security.uploads') }}
+                v-card-info(color='blue')
+                  span {{$t('admin:security.uploadsInfo')}}
                 v-card-text
-                  v-text-field(
+                  v-text-field.mt-3(
                     outlined
                     :label='$t(`admin:security.maxUploadSize`)'
                     required

@@ -97,8 +97,9 @@
                 v-form
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title.subtitle-1 {{ $t('admin:mail.dkim') }}
+                  v-card-info
+                    span {{ $t('admin:mail.dkimHint') }}
                   .pa-4
-                    .body-2.grey--text.text--darken-2 {{ $t('admin:mail.dkimHint') }}
                     v-switch(
                       v-model='config.useDKIM'
                       :label='$t(`admin:mail.dkimUse`)'
