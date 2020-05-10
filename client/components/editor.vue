@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app.editor(:dark='darkMode')
+  v-app.editor(:dark='$vuetify.theme.dark')
     nav-header(dense)
       template(slot='mid')
         v-text-field.editor-title-input(
@@ -81,6 +81,7 @@ export default {
     editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
     editorCkeditor: () => import(/* webpackChunkName: "editor-ckeditor", webpackMode: "lazy" */ './editor/editor-ckeditor.vue'),
     editorMarkdown: () => import(/* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'),
+    editorRedirect: () => import(/* webpackChunkName: "editor-redirect", webpackMode: "lazy" */ './editor/editor-redirect.vue'),
     editorModalEditorselect: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-editorselect.vue'),
     editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue'),
     editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue'),
@@ -148,7 +149,6 @@ export default {
   },
   computed: {
     currentEditor: sync('editor/editor'),
-    darkMode: get('site/dark'),
     activeModal: sync('editor/activeModal'),
     mode: get('editor/mode'),
     welcomeMode() { return this.mode === `create` && this.path === `home` },
