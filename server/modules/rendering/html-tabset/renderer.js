@@ -14,7 +14,6 @@ module.exports = {
             tabContent += $.html(celm)
             $(celm).remove()
           })
-          console.info(tabContent)
           tabContents.push(`<div class="tabset-panel">${tabContent}</div>`)
           $(hd).remove()
         })
