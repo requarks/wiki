@@ -460,11 +460,19 @@ export default {
     })
 
     // -> Handle anchor scrolling
-    window.addEventListener('load', () => {
-      if (window.location.hash && window.location.hash.length > 1) {
-        this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+    if (window.location.hash && window.location.hash.length > 1) {
+      if (document.readyState === 'complete') {
+        this.$nextTick(() => {
+          this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+        })
+      } else {
+        window.addEventListener('load', () => {
+          this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+        })
       }
+    }
 
+    this.$nextTick(() => {
       this.$refs.container.querySelectorAll(`a[href^="#"], a[href^="${window.location.href.replace(window.location.hash, '')}#"]`).forEach(el => {
         el.onclick = ev => {
           ev.preventDefault()
