@@ -171,6 +171,9 @@ Vue.component('welcome', () => import(/* webpackChunkName: "welcome" */ './compo
 Vue.component('nav-footer', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
 Vue.component('page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
+Vue.component('page-component', () => import(/* webpackChunkName: "pagecomponent" */ './components/page-component.vue'))
+
+
 let bootstrap = () => {
   // ====================================
   // Notifications
