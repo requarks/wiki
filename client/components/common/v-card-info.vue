@@ -1,6 +1,6 @@
 <template lang='pug'>
   .v-card-info(:class='`is-` + color')
-    v-card-text(:class='colors.cls')
+    v-card-text.d-flex.align-center(:class='colors.cls')
       v-icon(:color='colors.icon', left) {{icon}}
       slot
 </template>
@@ -22,12 +22,12 @@ export default {
       switch (this.color) {
         case 'blue':
           return {
-            cls: this.$vuetify.theme.dark ? 'grey darken-4-l5' : 'blue lighten-5 blue--text text--darken-3',
+            cls: this.$vuetify.theme.dark ? 'grey darken-4-l5 blue--text text--lighten-4' : 'blue lighten-5 blue--text text--darken-3',
             icon: 'blue lighten-3'
           }
         case 'red':
           return {
-            cls: this.$vuetify.theme.dark ? 'grey darken-4-l5' : 'red lighten-5 red--text text--darken-2',
+            cls: this.$vuetify.theme.dark ? 'grey darken-4-l5 red--text text--lighten-4' : 'red lighten-5 red--text text--darken-2',
             icon: 'red lighten-3'
           }
         default:
@@ -47,10 +47,18 @@ export default {
 
   &.is-blue {
     border-bottom-color: mc('blue', '100');
+
+    @at-root .theme--dark & {
+      border-bottom-color: rgba(mc('blue', '100'), .3);
+    }
   }
 
   &.is-red {
     border-bottom-color: mc('red', '100');
+
+    @at-root .theme--dark & {
+      border-bottom-color: rgba(mc('red', '100'), .3);
+    }
   }
 }
 </style>
