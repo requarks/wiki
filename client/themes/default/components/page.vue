@@ -460,7 +460,7 @@ export default {
     })
 
     // -> Handle anchor scrolling
-    this.$nextTick(() => {
+    window.addEventListener('load', () => {
       if (window.location.hash && window.location.hash.length > 1) {
         this.$vuetify.goTo(window.location.hash, this.scrollOpts)
       }
