@@ -110,6 +110,7 @@ import _ from 'lodash'
 import AnimatedNumber from 'animated-number-vue'
 import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
+import semverLte from 'semver/functions/lte'
 
 export default {
   components: {
@@ -134,7 +135,7 @@ export default {
   },
   computed: {
     isLatestVersion() {
-      return this.info.currentVersion === this.info.latestVersion
+      return semverLte(this.info.latestVersion, this.info.currentVersion)
     },
     info: get('admin/info'),
     permissions: get('user/permissions')

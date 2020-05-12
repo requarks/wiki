@@ -62,12 +62,12 @@ export default {
           i18nKey: 'cache',
           isAvailable: true
         },
-        {
-          key: 'UtilityGraphEndpoint',
-          icon: 'mdi-graphql',
-          i18nKey: 'graphEndpoint',
-          isAvailable: false
-        },
+        // {
+        //   key: 'UtilityGraphEndpoint',
+        //   icon: 'mdi-graphql',
+        //   i18nKey: 'graphEndpoint',
+        //   isAvailable: false
+        // },
         {
           key: 'UtilityImportv1',
           icon: 'mdi-database-import',

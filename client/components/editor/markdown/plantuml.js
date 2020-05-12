@@ -1,4 +1,4 @@
-const zlib = require('zlib')
+const pako = require('pako')
 
 // ------------------------------------
 // Markdown - PlantUML Preprocessor
@@ -112,11 +112,11 @@ module.exports = {
           altToken
         )
 
-        var zippedCode = encode64(zlib.deflateRawSync('@startuml\n' + contents + '\n@enduml').toString('binary'))
+        var zippedCode = encode64(pako.deflate('@startuml\n' + contents + '\n@enduml', { to: 'string' }))
 
         token = state.push('uml_diagram', 'img', 0)
         // alt is constructed from children. No point in populating it here.
-        token.attrs = [ [ 'src', `${server}/${imageFormat}/~1${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'] ]
+        token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'] ]
         token.block = true
         token.children = altToken
         token.info = params

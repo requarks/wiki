@@ -168,7 +168,7 @@
                             hide-details
                           )
                           v-text-field.mt-4(
-                            v-if='current.targetType === `external`'
+                            v-if='current.targetType === `external` || current.targetType === `externalblank`'
                             outlined
                             :label='$t("navigation.target")'
                             prepend-icon='mdi-near-me'
@@ -302,6 +302,7 @@ export default {
     navTypes () {
       return [
         { text: this.$t('navigation.navType.external'), value: 'external' },
+        { text: this.$t('navigation.navType.externalblank'), value: 'externalblank' },
         { text: this.$t('navigation.navType.home'), value: 'home' },
         { text: this.$t('navigation.navType.page'), value: 'page' }
         // { text: this.$t('navigation.navType.searchQuery'), value: 'search' }

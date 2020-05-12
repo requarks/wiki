@@ -104,6 +104,7 @@ module.exports = () => {
         host: '',
         port: 465,
         secure: true,
+        verifySSL: true,
         user: '',
         pass: '',
         useDKIM: false,
@@ -185,6 +186,7 @@ module.exports = () => {
         'sessionSecret',
         'telemetry',
         'theming',
+        'uploads',
         'title'
       ], false)
 

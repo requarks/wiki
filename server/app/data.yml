@@ -24,9 +24,6 @@ defaults:
       min: 1
     bindIP: 0.0.0.0
     logLevel: info
-    uploads:
-      maxFileSize: 5242880
-      maxFiles: 10
     offline: false
     ha: false
     # DB defaults
@@ -46,6 +43,10 @@ defaults:
     company: ''
     contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    mail:
+      host: ''
+      secure: true
+      verifySSL: true
     nav:
       mode: 'MIXED'
     theming:
@@ -63,6 +64,9 @@ defaults:
       securityCSPDirectives: ''
     server:
       sslRedir: false
+    uploads:
+      maxFileSize: 5242880
+      maxFiles: 10
     flags:
       ldapdebug: false
       sqllog: false

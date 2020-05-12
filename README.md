@@ -115,10 +115,12 @@ We are looking for translators to make Wiki.js UI available in as many languages
 
 Support this project by becoming a sponsor. Your name will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://github.com/users/NGPixel/sponsorship)]
 
+- Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Alexander Casassovici ([@alexksso](https://github.com/alexksso))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - Dragan Espenschied ([@despens](https://github.com/despens))
+- Ernie ([@iamernie](https://github.com/iamernie))
 - Loki ([@binaryloki](https://github.com/binaryloki))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
@@ -163,6 +165,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Iskander Callos
 - Josh Stewart
 - Loïc CRAMPON
+- Ludgeir Ibanez
 - Matt Gedigian
 - Philipp Schürch
 - Richeir

@@ -63,21 +63,21 @@ export default {
               permission: 'write:pages',
               hint: 'Can create / edit pages, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'manage:pages',
               hint: 'Can move existing pages as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'delete:pages',
               hint: 'Can delete existing pages, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
@@ -105,14 +105,14 @@ export default {
               permission: 'write:assets',
               hint: 'Can upload new assets (such as images and files), as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'manage:assets',
               hint: 'Can edit and delete existing assets (such as images and files), as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
@@ -126,14 +126,14 @@ export default {
               permission: 'write:comments',
               hint: 'Can post new comments, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'manage:comments',
               hint: 'Can edit and delete existing comments, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             }
           ]

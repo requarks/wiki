@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app(:dark='darkMode').tags
+  v-app(:dark='$vuetify.theme.dark').tags
     nav-header
     v-navigation-drawer.pb-0.elevation-1(app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
       vue-scroll(:ops='scrollStyle')
@@ -151,7 +151,6 @@
 </template>
 
 <script>
-import { get } from 'vuex-pathify'
 import VueRouter from 'vue-router'
 import _ from 'lodash'
 
@@ -209,7 +208,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     tagsGrouped () {
       return _.groupBy(this.tags, t => t.title.charAt(0).toUpperCase())
     },
