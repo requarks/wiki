@@ -162,6 +162,7 @@
     "scim-query-filter-parser": "2.0.4",
     "semver": "7.3.2",
     "serve-favicon": "2.5.0",
+    "sharp": "0.25.2",
     "simple-git": "1.132.0",
     "solr-node": "1.2.1",
     "sqlite3": "4.1.1",

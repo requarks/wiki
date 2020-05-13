@@ -68,6 +68,9 @@
             v-list-item(to='/editor', disabled)
               v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-playlist-edit
               v-list-item-title {{ $t('admin:editor.title') }}
+            v-list-item(to='/extensions')
+              v-list-item-avatar(size='24', tile): v-icon mdi-chip
+              v-list-item-title {{ $t('admin:extensions.title') }}
             v-list-item(to='/logging', disabled)
               v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-script-text-outline
               v-list-item-title {{ $t('admin:logging.title') }}
@@ -170,6 +173,7 @@ const router = new VueRouter({
     { path: '/auth', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-auth.vue') },
     { path: '/rendering', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-rendering.vue') },
     { path: '/editor', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-editor.vue') },
+    { path: '/extensions', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-extensions.vue') },
     { path: '/logging', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-logging.vue') },
     { path: '/search', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-search.vue') },
     { path: '/storage', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-storage.vue') },
