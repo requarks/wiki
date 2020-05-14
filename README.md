@@ -154,6 +154,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 <!--5 start-->
 - Al Romano
 - Alex Balabanov
+- Arti Zirk
 - Brandon Curtis
 - djagoo
 - Douglas Lassance
