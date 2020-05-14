@@ -30,7 +30,7 @@
                       hide-details
                       ref='iptEmail'
                       v-model='username'
-                      :placeholder='$t("auth:fields.emailUser")'
+                      :placeholder='(selectedStrategy.key === `ldap`) ? $t("auth:fields.user") : $t("auth:fields.email")'
                       )
                     v-text-field.mt-2(
                       solo
