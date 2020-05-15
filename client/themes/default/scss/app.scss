@@ -514,6 +514,7 @@
       width: 1.35rem;
 
       @at-root .is-rtl & {
+        right: -1.1rem;
         content: '\25C3';
       }
     }
