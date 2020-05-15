@@ -21,12 +21,16 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL
       }, async (accessToken, refreshToken, profile, cb) => {
+        let displayName = profile.username
+        if (_.isString(profile.fullName) && profile.fullName.length > 0) {
+          displayName = profile.fullName
+        }
         try {
           const user = await WIKI.models.users.processProfile({
             profile: {
               id: profile.keycloakId,
               email: profile.email,
-              name: profile.username,
+              name: displayName,
               picture: ''
             },
             providerKey: 'keycloak'
