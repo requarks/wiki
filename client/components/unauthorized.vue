@@ -2,7 +2,7 @@
   v-app
     .unauthorized
       .unauthorized-content
-        img.animated.fadeIn(src='/svg/icon-delete-shield.svg', alt='Unauthorized')
+        img.animated.fadeIn(src='/_assets/svg/icon-delete-shield.svg', alt='Unauthorized')
         .headline {{$t('unauthorized.title')}}
         .subtitle-1.mt-3 {{$t('unauthorized.action.' + action)}}
         v-btn.mt-5(href='/login', x-large)

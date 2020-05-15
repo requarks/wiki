@@ -59,7 +59,7 @@
                       v-list-item-group(v-model='kind', mandatory, color='primary')
                         v-list-item(value='rest')
                           v-list-item-avatar
-                            img(src='/svg/icon-transaction-list.svg', alt='REST')
+                            img(src='/_assets/svg/icon-transaction-list.svg', alt='REST')
                           v-list-item-content
                             v-list-item-title REST API
                             v-list-item-subtitle Classic REST Endpoints
@@ -67,7 +67,7 @@
                             v-icon(:color='kind === `rest` ? `primary` : `grey lighten-3`') mdi-check-circle
                         v-list-item(value='graphql', disabled)
                           v-list-item-avatar
-                            img(src='/svg/icon-graphql.svg', alt='GraphQL')
+                            img(src='/_assets/svg/icon-graphql.svg', alt='GraphQL')
                           v-list-item-content
                             v-list-item-title GraphQL
                             v-list-item-subtitle.grey--text.text--lighten-1 Schema-based API

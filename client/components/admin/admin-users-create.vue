@@ -91,9 +91,9 @@
 <script>
 import _ from 'lodash'
 import validate from 'validate.js'
+import gql from 'graphql-tag'
 
 import createUserMutation from 'gql/admin/users/users-mutation-create.gql'
-import providersQuery from 'gql/admin/users/users-query-strategies.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 export default {
@@ -227,7 +227,20 @@ export default {
   },
   apollo: {
     providers: {
-      query: providersQuery,
+      query: gql`
+        query {
+          authentication {
+            strategies(
+              isEnabled: true
+            ) {
+              key
+              title
+              icon
+              color
+            }
+          }
+        }
+      `,
       fetchPolicy: 'network-only',
       update: (data) => data.authentication.strategies,
       watchLoading (isLoading) {

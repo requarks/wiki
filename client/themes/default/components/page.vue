@@ -105,6 +105,7 @@
                     span 334
                 .d-flex
                   v-btn.text-none(
+                    :href='"/c/" + locale + "/" + path'
                     :color='$vuetify.theme.dark ? `pink` : `pink darken-3`'
                     outlined
                     style='flex: 1 1 100%;'
@@ -114,7 +115,7 @@
                   v-tooltip(right, v-if='isAuthenticated')
                     template(v-slot:activator='{ on }')
                       v-btn.ml-2(
-                        :href='"/h/" + locale + "/" + path'
+                        :href='"/c/" + locale + "/" + path + `?new`'
                         v-on='on'
                         outlined
                         small
@@ -133,7 +134,7 @@
                       v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
                         v-icon(color='indigo', dense) mdi-history
                     span {{$t('common:header.history')}}
-                .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
+                .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- v-card.mb-5
@@ -293,7 +294,7 @@ import Vue from 'vue'
 
 Vue.component('tabset', Tabset)
 
-Prism.plugins.autoloader.languages_path = '/js/prism/'
+Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
   'remove-trailing': true,
   'remove-indent': true,

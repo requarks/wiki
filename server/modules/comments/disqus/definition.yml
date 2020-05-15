@@ -6,7 +6,7 @@ logo: https://static.requarks.io/logo/disqus.svg
 website: https://disqus.com/
 displayMode: footer
 codeTemplate: true
-isAvailable: true
+isAvailable: false
 props:
   accountName:
     type: String

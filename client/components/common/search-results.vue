@@ -2,7 +2,7 @@
   .search-results(v-if='searchIsFocused || (search && search.length > 1)')
     .search-results-container
       .search-results-help(v-if='!search || (search && search.length < 2)')
-        img(src='/svg/icon-search-alt.svg')
+        img(src='/_assets/svg/icon-search-alt.svg')
         .mt-4 {{$t('common:header.searchHint')}}
       .search-results-loader(v-else-if='searchIsLoading && (!results || results.length < 1)')
         orbit-spinner(
@@ -12,7 +12,7 @@
         )
         .headline.mt-5 {{$t('common:header.searchLoading')}}
       .search-results-none(v-else-if='!searchIsLoading && (!results || results.length < 1)')
-        img(src='/svg/icon-no-results.svg', alt='No Results')
+        img(src='/_assets/svg/icon-no-results.svg', alt='No Results')
         .subheading {{$t('common:header.searchNoResult')}}
       template(v-if='results && results.length > 0')
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
@@ -20,7 +20,7 @@
           template(v-for='(item, idx) of results')
             v-list-item(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
               v-list-item-avatar(tile)
-                img(src='/svg/icon-selective-highlighting.svg')
+                img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
                 v-list-item-title(v-html='item.title')
                 v-list-item-subtitle.caption(v-html='item.description')

@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-browse-page.svg', alt='Dashboard', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-browse-page.svg', alt='Dashboard', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:dashboard.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin:dashboard.subtitle') }}
@@ -95,7 +95,7 @@
       v-flex(xs12)
         v-card.dashboard-contribute.animated.fadeInUp.wait-p4s
           v-card-text
-            img(src='/svg/icon-heart-health.svg', alt='Contribute', style='height: 80px;')
+            img(src='/_assets/svg/icon-heart-health.svg', alt='Contribute', style='height: 80px;')
             .pl-5
               .subtitle-1 {{$t('admin:contribute.title')}}
               .body-2.mt-3: strong {{$t('admin:dashboard.contributeSubtitle')}}

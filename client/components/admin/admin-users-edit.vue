@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-male-user.svg', :alt='$t(`admin:users.edit`)', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-male-user.svg', :alt='$t(`admin:users.edit`)', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft {{$t('admin:users.edit')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{user.name}}

@@ -6,7 +6,7 @@ logo: https://static.requarks.io/logo/commento.svg
 website: https://commento.io/
 displayMode: footer
 codeTemplate: true
-isAvailable: true
+isAvailable: false
 props:
   instanceUrl:
     type: String

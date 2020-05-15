@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-triangle-arrow.svg', alt='Navigation', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-triangle-arrow.svg', alt='Navigation', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('navigation.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('navigation.subtitle')}}
@@ -23,7 +23,7 @@
                   v-list-item-group(v-model='config.mode', mandatory, :color='$vuetify.theme.dark ? `teal lighten-3` : `teal`')
                     v-list-item(value='TREE')
                       v-list-item-avatar
-                        img(src='/svg/icon-tree-structure-dotted.svg', alt='Site Tree')
+                        img(src='/_assets/svg/icon-tree-structure-dotted.svg', alt='Site Tree')
                       v-list-item-content
                         v-list-item-title {{$t('admin:navigation.modeSiteTree.title')}}
                         v-list-item-subtitle {{$t('admin:navigation.modeSiteTree.description')}}
@@ -32,7 +32,7 @@
                         v-icon(v-else, :color='config.mode === `TREE` ? `teal` : `grey lighten-3`') mdi-check-circle
                     v-list-item(value='MIXED')
                       v-list-item-avatar
-                        img(src='/svg/icon-user-menu-male-dotted.svg', alt='Custom Navigation')
+                        img(src='/_assets/svg/icon-user-menu-male-dotted.svg', alt='Custom Navigation')
                       v-list-item-content
                         v-list-item-title {{$t('admin:navigation.modeCustom.title')}}
                         v-list-item-subtitle {{$t('admin:navigation.modeCustom.description')}}
@@ -41,7 +41,7 @@
                         v-icon(v-else, :color='config.mode === `MIXED` ? `teal` : `grey lighten-3`') mdi-check-circle
                     v-list-item(value='STATIC')
                       v-list-item-avatar
-                        img(src='/svg/icon-features-list.svg', alt='Static Navigation')
+                        img(src='/_assets/svg/icon-features-list.svg', alt='Static Navigation')
                       v-list-item-content
                         v-list-item-title {{$t('admin:navigation.modeStatic.title')}}
                         v-list-item-subtitle {{$t('admin:navigation.modeStatic.description')}}
@@ -50,7 +50,7 @@
                         v-icon(v-else, :color='config.mode === `STATIC` ? `teal` : `grey lighten-3`') mdi-check-circle
                     v-list-item(value='NONE')
                       v-list-item-avatar
-                        img(src='/svg/icon-cancel-dotted.svg', alt='None')
+                        img(src='/_assets/svg/icon-cancel-dotted.svg', alt='None')
                       v-list-item-content
                         v-list-item-title {{$t('admin:navigation.modeNone.title')}}
                         v-list-item-subtitle {{$t('admin:navigation.modeNone.description')}}

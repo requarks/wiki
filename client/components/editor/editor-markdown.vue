@@ -241,7 +241,7 @@ import katexHelper from './common/katex'
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 
 // Prism Config
-Prism.plugins.autoloader.languages_path = '/js/prism/'
+Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
   'remove-trailing': true,
   'remove-indent': true,

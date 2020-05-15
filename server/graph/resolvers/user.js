@@ -13,7 +13,7 @@ module.exports = {
   UserQuery: {
     async list(obj, args, context, info) {
       return WIKI.models.users.query()
-        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'createdAt')
+        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'isActive', 'createdAt', 'lastLoginAt')
     },
     async search(obj, args, context, info) {
       return WIKI.models.users.query()

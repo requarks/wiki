@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-registry-editor.svg', alt='Logging', style='width: 80px;')
+          img(src='/_assets/svg/icon-registry-editor.svg', alt='Logging', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Logging
             .subtitle-1.grey--text Configure the system logger(s) #[v-chip(label, color='primary', small).white--text coming soon]

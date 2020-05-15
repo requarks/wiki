@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-unlock.svg', alt='Authentication', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-unlock.svg', alt='Authentication', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:auth.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:auth.subtitle') }}
@@ -92,7 +92,7 @@
               .overline.my-5 {{$t('admin:auth.strategyConfiguration')}}
               .body-2.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em {{$t('admin:auth.strategyNoConfiguration')}}
               template(v-else, v-for='cfg in strategy.config')
-                v-select(
+                v-select.mb-3(
                   v-if='cfg.value.type === "string" && cfg.value.enum'
                   outlined
                   :items='cfg.value.enum'
@@ -103,8 +103,9 @@
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
+                  :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
                 )
-                v-switch.mb-3(
+                v-switch.mb-6(
                   v-else-if='cfg.value.type === "boolean"'
                   :key='cfg.key'
                   :label='cfg.value.title'
@@ -115,7 +116,7 @@
                   persistent-hint
                   inset
                   )
-                v-textarea(
+                v-textarea.mb-3(
                   v-else-if='cfg.value.type === "string" && cfg.value.multiline'
                   outlined
                   :key='cfg.key'
@@ -126,7 +127,7 @@
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
-                v-text-field(
+                v-text-field.mb-3(
                   v-else
                   outlined
                   :key='cfg.key'
@@ -136,6 +137,7 @@
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
+                  :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
                   )
               v-divider.mt-3
               .overline.my-5 {{$t('admin:auth.registration')}}

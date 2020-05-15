@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-social-group.svg', alt='Edit Group', style='width: 80px;')
+          img(src='/_assets/svg/icon-social-group.svg', alt='Edit Group', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Edit Group
             .subtitle-1.grey--text {{group.name}}

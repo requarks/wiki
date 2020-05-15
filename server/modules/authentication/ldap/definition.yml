@@ -19,11 +19,13 @@ props:
     type: String
     default: cn='root'
     hint: The dstinguished name (dn) of the account used for binding.
+    maxWidth: 600
     order: 2
   bindCredentials:
     title: Admin Bind Credentials
     type: String
     hint: The password of the account used above for binding.
+    maxWidth: 600
     order: 3
   searchBase:
     title: Search Base
@@ -57,22 +59,26 @@ props:
     type: String
     default: 'uid'
     hint: The field storing the user unique identifier. Usually "uid" or "sAMAccountName".
+    maxWidth: 500
     order: 20
   mappingEmail:
     title: Email Field Mapping
     type: String
     default: 'mail'
     hint: The field storing the user email. Usually "mail".
+    maxWidth: 500
     order: 21
   mappingDisplayName:
     title: Display Name Field Mapping
     type: String
     default: 'displayName'
     hint: The field storing the user display name. Usually "displayName" or "cn".
+    maxWidth: 500
     order: 22
   mappingPicture:
     title: Avatar Picture Field Mapping
     type: String
     default: 'jpegPhoto'
     hint: The field storing the user avatar picture. Usually "jpegPhoto" or "thumbnailPhoto".
+    maxWidth: 500
     order: 23
