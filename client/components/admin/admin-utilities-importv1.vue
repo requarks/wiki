@@ -4,7 +4,7 @@
       .subtitle-1 {{ $t('admin:utilities.importv1Title') }}
     v-card-text
       .text-center
-        img.animated.fadeInUp.wait-p1s(src='/svg/icon-software.svg')
+        img.animated.fadeInUp.wait-p1s(src='/_assets/svg/icon-software.svg')
         .body-2 Import from Wiki.js 1.x
       v-divider.my-4
       .body-2 Data from a Wiki.js 1.x installation can easily be imported using this tool. What do you want to import?

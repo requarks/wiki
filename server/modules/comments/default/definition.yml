@@ -8,12 +8,16 @@ displayMode: dynamic
 codeTemplate: false
 isAvailable: true
 props:
-  displayMode:
+  akismet:
     type: String
-    title: Display mode
-    default: 'page'
-    enum:
-      - inline
-      - page
-    hint: Whether to display the comments under the content (inline) or on a dedicated page (page).
+    title: Akismet API Key
+    default: ''
+    hint: 'Prevent spam by using the Akismet service. Enter your API key here to enable. Leave empty to disable.'
     order: 1
+  minDelay:
+    type: Number
+    title: Post delay
+    default: 30
+    hint: 'Minimum delay (in seconds) between comments per IP address.'
+    maxWidth: 400
+    order: 2

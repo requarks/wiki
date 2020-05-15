@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft Rendering
           v-spacer

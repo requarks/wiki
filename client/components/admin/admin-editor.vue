@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-web-design.svg', alt='Editor', style='width: 80px;')
+          img(src='/_assets/svg/icon-web-design.svg', alt='Editor', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Editor
             .subtitle-1.grey--text Configure the content editors #[v-chip(label, color='primary', small).white--text coming soon]

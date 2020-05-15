@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-chat-bubble.svg', alt='Comments', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-chat-bubble.svg', alt='Comments', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('admin:comments.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:comments.subtitle')}}
@@ -45,7 +45,7 @@
             .overline.my-5 {{$t('admin:comments.providerConfig')}}
             .body-2.ml-3(v-if='!provider.config || provider.config.length < 1'): em {{$t('admin:comments.providerNoConfig')}}
             template(v-else, v-for='cfg in provider.config')
-              v-select(
+              v-select.mb-3(
                 v-if='cfg.value.type === "string" && cfg.value.enum'
                 outlined
                 :items='cfg.value.enum'
@@ -56,8 +56,9 @@
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
+                :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
               )
-              v-switch.mb-3(
+              v-switch.mb-6(
                 v-else-if='cfg.value.type === "boolean"'
                 :key='cfg.key'
                 :label='cfg.value.title'
@@ -68,7 +69,7 @@
                 persistent-hint
                 inset
                 )
-              v-textarea(
+              v-textarea.mb-3(
                 v-else-if='cfg.value.type === "string" && cfg.value.multiline'
                 outlined
                 :key='cfg.key'
@@ -79,7 +80,7 @@
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
                 )
-              v-text-field(
+              v-text-field.mb-3(
                 v-else
                 outlined
                 :key='cfg.key'
@@ -89,6 +90,7 @@
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
+                :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
                 )
 </template>
 

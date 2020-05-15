@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-customer.svg', alt='Users', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-customer.svg', alt='Users', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Users
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage users
@@ -55,10 +55,12 @@
                 td {{ props.item.providerKey }}
                 td {{ props.item.createdAt | moment('from') }}
                 td
-                  v-tooltip(left, v-if='props.item.isSystem')
-                    template(v-slot:activator='{ on }')
-                      v-icon(v-on='{ on }') mdi-lock-outline
-                    span System User
+                  span(v-if='props.item.lastLoginAt') {{ props.item.lastLoginAt | moment('from') }}
+                  em.grey--text(v-else) Never
+                td.text-right
+                  v-icon.mr-3(v-if='props.item.isSystem') mdi-lock-outline
+                  status-indicator(positive, pulse, v-if='props.item.isActive')
+                  status-indicator(negative, pulse, v-else)
             template(slot='no-data')
               .pa-3
                 v-alert.text-left(icon='mdi-alert', outlined, color='grey')
@@ -73,14 +75,14 @@
 
 <script>
 import _ from 'lodash'
+import gql from 'graphql-tag'
 
-import usersQuery from 'gql/admin/users/users-query-list.gql'
-import providersQuery from 'gql/admin/users/users-query-strategies.gql'
-
+import { StatusIndicator } from 'vue-status-indicator'
 import UserCreate from './admin-users-create.vue'
 
 export default {
   components: {
+    StatusIndicator,
     UserCreate
   },
   data() {
@@ -95,7 +97,8 @@ export default {
         { text: 'Email', value: 'email', sortable: true },
         { text: 'Provider', value: 'provider', sortable: true },
         { text: 'Created', value: 'createdAt', sortable: true },
-        { text: '', value: 'actions', sortable: false, width: 50 }
+        { text: 'Last Login', value: 'lastLoginAt', sortable: true },
+        { text: '', value: 'actions', sortable: false, width: 80 }
       ],
       strategies: [],
       filterStrategy: 'all',
@@ -127,7 +130,22 @@ export default {
   },
   apollo: {
     users: {
-      query: usersQuery,
+      query: gql`
+        query {
+          users {
+            list {
+              id
+              name
+              email
+              providerKey
+              isSystem
+              isActive
+              createdAt
+              lastLoginAt
+            }
+          }
+        }
+      `,
       fetchPolicy: 'network-only',
       update: (data) => data.users.list,
       watchLoading (isLoading) {
@@ -136,7 +154,20 @@ export default {
       }
     },
     strategies: {
-      query: providersQuery,
+      query: gql`
+        query {
+          authentication {
+            strategies(
+              isEnabled: true
+            ) {
+              key
+              title
+              icon
+              color
+            }
+          }
+        }
+      `,
       fetchPolicy: 'network-only',
       update: (data) => {
         return _.concat({

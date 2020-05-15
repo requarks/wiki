@@ -12,23 +12,26 @@ scopes:
   - email
   - openid
 props:
-  clientId:
-    title: Client ID
-    type: String
-    hint: 20 chars alphanumeric string
-    order: 2
-  clientSecret:
-    title: Client Secret
-    type: String
-    hint: 40 chars alphanumeric string with a hyphen(s)
-    order: 3
-  idp:
-    title: Identity Provider ID (idp)
-    type: String
-    hint: (Optional) - 20 chars alphanumeric string
-    order: 4
   audience:
     title: Org URL
     type: String
     hint: Okta organization URL (e.g. https://example.okta.com, https://example.oktapreview.com), found on the Developer Dashboard, in the upper right.
     order: 1
+  clientId:
+    title: Client ID
+    type: String
+    hint: 20 chars alphanumeric string
+    maxWidth: 400
+    order: 2
+  clientSecret:
+    title: Client Secret
+    type: String
+    hint: 40 chars alphanumeric string with a hyphen(s)
+    maxWidth: 600
+    order: 3
+  idp:
+    title: Identity Provider ID (idp)
+    type: String
+    hint: (Optional) - 20 chars alphanumeric string
+    maxWidth: 400
+    order: 4

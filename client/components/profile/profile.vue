@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .profile-header
-          img.animated.fadeInUp(src='/svg/icon-profile.svg', alt='Users', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-profile.svg', alt='Users', style='width: 80px;')
           .profile-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('profile:title')}}
             .subheading.grey--text.animated.fadeInLeft {{$t('profile:subtitle')}}

@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-categorize.svg', alt='General', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-categorize.svg', alt='General', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:general.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft {{ $t('admin:general.subtitle') }}
@@ -111,41 +111,39 @@
               v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='indigo', dark, dense, flat)
                   v-toolbar-title.subtitle-1 Features
-                  v-spacer
-                  v-chip(label, color='white', small).indigo--text coming soon
                 v-card-text
-                  v-switch(
-                    inset
-                    label='Asset Image Optimization'
-                    color='indigo'
-                    v-model='config.featureTinyPNG'
-                    persistent-hint
-                    hint='Image optimization tool to reduce filesize and bandwidth costs.'
-                    disabled
-                    )
-                  v-text-field.mt-3(
-                    outlined
-                    label='TinyPNG API Key'
-                    :counter='255'
-                    v-model='config.description'
-                    prepend-icon='mdi-subdirectory-arrow-right'
-                    hint='Get your API key at https://tinypng.com/developers'
-                    persistent-hint
-                    disabled
-                    )
+                  //- v-switch(
+                  //-   inset
+                  //-   label='Asset Image Optimization'
+                  //-   color='indigo'
+                  //-   v-model='config.featureTinyPNG'
+                  //-   persistent-hint
+                  //-   hint='Image optimization tool to reduce filesize and bandwidth costs.'
+                  //-   disabled
+                  //-   )
+                  //- v-text-field.mt-3(
+                  //-   outlined
+                  //-   label='TinyPNG API Key'
+                  //-   :counter='255'
+                  //-   v-model='config.description'
+                  //-   prepend-icon='mdi-subdirectory-arrow-right'
+                  //-   hint='Get your API key at https://tinypng.com/developers'
+                  //-   persistent-hint
+                  //-   disabled
+                  //-   )
 
-                  v-divider.mt-3
-                  v-switch(
-                    inset
-                    label='Page Ratings'
-                    color='indigo'
-                    v-model='config.featurePageRatings'
-                    persistent-hint
-                    hint='Allow users to rate pages.'
-                    disabled
-                    )
+                  //- v-divider.mt-3
+                  //- v-switch(
+                  //-   inset
+                  //-   label='Page Ratings'
+                  //-   color='indigo'
+                  //-   v-model='config.featurePageRatings'
+                  //-   persistent-hint
+                  //-   hint='Allow users to rate pages.'
+                  //-   disabled
+                  //-   )
 
-                  v-divider.mt-3
+                  //- v-divider.mt-3
                   v-switch(
                     inset
                     label='Page Comments'
@@ -153,19 +151,18 @@
                     v-model='config.featurePageComments'
                     persistent-hint
                     hint='Allow users to leave comments on pages.'
-                    disabled
                     )
 
-                  v-divider.mt-3
-                  v-switch(
-                    inset
-                    label='Personal Wikis'
-                    color='indigo'
-                    v-model='config.featurePersonalWikis'
-                    persistent-hint
-                    hint='Allow users to have their own personal wiki.'
-                    disabled
-                    )
+                  //- v-divider.mt-3
+                  //- v-switch(
+                  //-   inset
+                  //-   label='Personal Wikis'
+                  //-   color='indigo'
+                  //-   v-model='config.featurePersonalWikis'
+                  //-   persistent-hint
+                  //-   hint='Allow users to have their own personal wiki.'
+                  //-   disabled
+                  //-   )
 
     component(:is='activeModal')
 

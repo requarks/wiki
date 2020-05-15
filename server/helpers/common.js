@@ -33,6 +33,7 @@ module.exports = {
         enum: value.enum || false,
         multiline: value.multiline || false,
         sensitive: value.sensitive || false,
+        maxWidth: value.maxWidth || 0,
         order: value.order || 100
       })
       return result

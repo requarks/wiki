@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-venn-diagram.svg', alt='Visualize Pages', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-venn-diagram.svg', alt='Visualize Pages', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Visualize Pages
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Dendrogram representation of your pages

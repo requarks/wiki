@@ -112,7 +112,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='fromTemplate')
-                      img(src='/svg/icon-cube.svg', alt='From Template', style='width: 42px; opacity: .5;')
+                      img(src='/_assets/svg/icon-cube.svg', alt='From Template', style='width: 42px; opacity: .5;')
                       .body-2.mt-1.teal--text From Template
                       .caption.grey--text Use an existing page...
             v-flex(xs4)
@@ -124,7 +124,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='selectEditor("redirect")')
-                      img(src='/svg/icon-route.svg', alt='Redirection', style='width: 42px; opacity: .5;')
+                      img(src='/_assets/svg/icon-route.svg', alt='Redirection', style='width: 42px; opacity: .5;')
                       .body-2.mt-1.teal--text Redirection
                       .caption.grey--text Redirect the user to...
             v-flex(xs4)
@@ -136,7 +136,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-sewing-patch.svg', alt='Code', style='width: 42px; opacity: .5;')
+                      img(src='/_assets/svg/icon-sewing-patch.svg', alt='Code', style='width: 42px; opacity: .5;')
                       .body-2.mt-1.teal--text.text--lighten-2 Embed
                       .caption.teal--text.text--lighten-1 Include external pages
                     v-fade-transition

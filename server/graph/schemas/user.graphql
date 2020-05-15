@@ -117,7 +117,9 @@ type UserMinimal {
   email: String!
   providerKey: String!
   isSystem: Boolean!
+  isActive: Boolean!
   createdAt: Date!
+  lastLoginAt: Date
 }
 
 type User {

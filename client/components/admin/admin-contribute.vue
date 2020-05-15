@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-heart-health.svg', alt='Contribute', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-heart-health.svg', alt='Contribute', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:contribute.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:contribute.subtitle') }}
@@ -30,19 +30,19 @@
                 v-icon.my-1(size='24') mdi-github-circle
               v-tab
                 span Patreon
-                img.my-1(src='/svg/icon-patreon.svg', style='height: 24px;')
+                img.my-1(src='/_assets/svg/icon-patreon.svg', style='height: 24px;')
               v-tab
                 span OpenCollective
-                img.my-1(src='/svg/icon-opencollective.svg', style='height: 24px;')
+                img.my-1(src='/_assets/svg/icon-opencollective.svg', style='height: 24px;')
               v-tab
                 span PayPal
-                img.my-1(src='/svg/icon-paypal.svg', style='height: 24px;')
+                img.my-1(src='/_assets/svg/icon-paypal.svg', style='height: 24px;')
               v-tab
                 span Ethereum
-                img.my-1(src='/svg/icon-ethereum.svg', style='height: 24px;')
+                img.my-1(src='/_assets/svg/icon-ethereum.svg', style='height: 24px;')
               v-tab
                 span T-Shirts
-                img.my-1(src='/svg/icon-t-shirt.svg', style='height: 24px;')
+                img.my-1(src='/_assets/svg/icon-t-shirt.svg', style='height: 24px;')
               v-tab-item(:transition='false', :reverse-transition='false')
                 .body-2.pa-3 {{ $t('admin:contribute.github') }}
                 a.ml-3(href='https://github.com/users/NGPixel/sponsorship', :title='$t(`admin:contribute.becomeASponsor`)')
