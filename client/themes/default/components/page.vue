@@ -106,7 +106,7 @@
                     span 334
                 .d-flex
                   v-btn.text-none(
-                    :href='"/c/" + locale + "/" + path'
+                    @click='goToComments'
                     :color='$vuetify.theme.dark ? `pink` : `pink darken-3`'
                     outlined
                     style='flex: 1 1 100%;'
@@ -116,7 +116,7 @@
                   v-tooltip(right, v-if='isAuthenticated')
                     template(v-slot:activator='{ on }')
                       v-btn.ml-2(
-                        :href='"/c/" + locale + "/" + path + `?new`'
+                        @click='goToComments(true)'
                         v-on='on'
                         outlined
                         small
@@ -398,9 +398,9 @@ export default {
       type: Boolean,
       default: false
     },
-    commentsProvider: {
+    commentsPermissions: {
       type: String,
-      default: 'default'
+      default: ''
     },
     commentsExternal: {
       type: Boolean,
@@ -485,6 +485,9 @@ export default {
     this.$store.set('page/tags', this.tags)
     this.$store.set('page/title', this.title)
     this.$store.set('page/updatedAt', this.updatedAt)
+    if (this.commentsPermissions) {
+      this.$store.set('page/comments', JSON.parse(atob(this.commentsPermissions)))
+    }
 
     this.$store.set('page/mode', 'view')
   },
@@ -570,6 +573,12 @@ export default {
         this.navShown = true
       } else {
         this.navShown = false
+      }
+    },
+    goToComments (focusNewComment = false) {
+      this.$vuetify.goTo('#discussion', this.scrollOpts)
+      if (focusNewComment) {
+        document.querySelector('#discussion-new').focus()
       }
     }
   }
