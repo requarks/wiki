@@ -1,0 +1,14 @@
+key: rocketchat
+title: Rocket.Chat
+description: Authenticate via your Rocket.Chat installation
+author: joachim@dilab.co
+logo: https://avatars1.githubusercontent.com/u/12508788?s=200&v=4
+color: indigo darken-4
+website: https://rocket.chat
+isAvailable: true
+useForm: false
+props:
+  clientId: String
+  clientSecret: String
+  authorizationURL: String
+  tokenURL: String
