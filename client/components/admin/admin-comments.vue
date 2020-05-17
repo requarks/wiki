@@ -17,7 +17,7 @@
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
           v-toolbar(flat, color='primary', dark, dense)
-            .subtitle-1 {{$t('admin:comments.providers')}}
+            .subtitle-1 {{$t('admin:comments.provider')}}
           v-list.py-0(two-line, dense)
             template(v-for='(provider, idx) in providers')
               v-list-item(:key='provider.key', @click='selectedProvider = provider.key', :disabled='!provider.isAvailable')
@@ -127,7 +127,20 @@ export default {
       this.$store.commit(`loadingStart`, 'admin-comments-saveproviders')
       try {
         const resp = await this.$apollo.mutate({
-          mutation: gql``,
+          mutation: gql`
+            mutation($providers: [CommentProviderInput]!) {
+              comments {
+                updateProviders(providers: $providers) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
           variables: {
             providers: this.providers.map(tgt => ({
               isEnabled: tgt.key === this.selectedProvider,
@@ -136,19 +149,19 @@ export default {
             }))
           }
         })
-        if (_.get(resp, 'data.comments.updateEngines.responseResult.succeeded', false)) {
+        if (_.get(resp, 'data.comments.updateProviders.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
             message: this.$t('admin:comments.configSaveSuccess'),
             style: 'success',
             icon: 'check'
           })
         } else {
-          throw new Error(_.get(resp, 'data.comments.updateEngines.responseResult.message', this.$t('common:error.unexpected')))
+          throw new Error(_.get(resp, 'data.comments.updateProviders.responseResult.message', this.$t('common:error.unexpected')))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
-      this.$store.commit(`loadingStop`, 'admin-comments-saveengines')
+      this.$store.commit(`loadingStop`, 'admin-comments-saveproviders')
     }
   },
   apollo: {

@@ -4,9 +4,8 @@ description: Disqus help publishers power online discussions with comments.
 author: requarks.io
 logo: https://static.requarks.io/logo/disqus.svg
 website: https://disqus.com/
-displayMode: footer
 codeTemplate: true
-isAvailable: false
+isAvailable: true
 props:
   accountName:
     type: String

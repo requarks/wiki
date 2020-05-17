@@ -4,9 +4,8 @@ description: A fast, privacy-focused commenting platform.
 author: requarks.io
 logo: https://static.requarks.io/logo/commento.svg
 website: https://commento.io/
-displayMode: footer
 codeTemplate: true
-isAvailable: false
+isAvailable: true
 props:
   instanceUrl:
     type: String

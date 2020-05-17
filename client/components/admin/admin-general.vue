@@ -146,7 +146,7 @@
                   //- v-divider.mt-3
                   v-switch(
                     inset
-                    label='Page Comments'
+                    label='Comments'
                     color='indigo'
                     v-model='config.featurePageComments'
                     persistent-hint

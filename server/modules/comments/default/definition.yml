@@ -4,7 +4,6 @@ description: Built-in advanced comments tool.
 author: requarks.io
 logo: https://static.requarks.io/logo/wikijs-butterfly.svg
 website: https://wiki.js.org
-displayMode: dynamic
 codeTemplate: false
 isAvailable: true
 props:

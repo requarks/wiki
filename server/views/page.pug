@@ -5,6 +5,8 @@ block head
     style(type='text/css')!= injectCode.css
   if injectCode.head
     != injectCode.head
+  if config.features.featurePageComments
+    != comments.head
 
 block body
   #root
@@ -23,8 +25,15 @@ block body
       :page-id=page.id
       sidebar=Buffer.from(JSON.stringify(sidebar)).toString('base64')
       nav-mode=config.nav.mode
+      comments-enabled=config.features.featurePageComments
+      comments-provider=comments.key
+      comments-external=comments.codeTemplate
       )
       template(slot='contents')
         div!= page.render
+      template(slot='comments')
+        div!= comments.main
   if injectCode.body
     != injectCode.body
+  if config.features.featurePageComments
+    != comments.body

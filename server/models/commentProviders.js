@@ -51,38 +51,38 @@ module.exports = class CommentProvider extends Model {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/comments', dir, 'definition.yml'), 'utf8')
         diskProviders.push(yaml.safeLoad(def))
       }
-      WIKI.data.commentProviders = diskProviders.map(engine => ({
-        ...engine,
-        props: commonHelper.parseModuleProps(engine.props)
+      WIKI.data.commentProviders = diskProviders.map(provider => ({
+        ...provider,
+        props: commonHelper.parseModuleProps(provider.props)
       }))
 
       let newProviders = []
-      for (let engine of WIKI.data.commentProviders) {
-        if (!_.some(dbProviders, ['key', engine.key])) {
+      for (let provider of WIKI.data.commentProviders) {
+        if (!_.some(dbProviders, ['key', provider.key])) {
           newProviders.push({
-            key: engine.key,
-            isEnabled: engine.key === 'default',
-            config: _.transform(engine.props, (result, value, key) => {
+            key: provider.key,
+            isEnabled: provider.key === 'default',
+            config: _.transform(provider.props, (result, value, key) => {
               _.set(result, key, value.default)
               return result
             }, {})
           })
         } else {
-          const engineConfig = _.get(_.find(dbProviders, ['key', engine.key]), 'config', {})
+          const providerConfig = _.get(_.find(dbProviders, ['key', provider.key]), 'config', {})
           await WIKI.models.commentProviders.query().patch({
-            config: _.transform(engine.props, (result, value, key) => {
+            config: _.transform(provider.props, (result, value, key) => {
               if (!_.has(result, key)) {
                 _.set(result, key, value.default)
               }
               return result
-            }, engineConfig)
-          }).where('key', engine.key)
+            }, providerConfig)
+          }).where('key', provider.key)
         }
       }
       if (newProviders.length > 0) {
         trx = await WIKI.models.Objection.transaction.start(WIKI.models.knex)
-        for (let engine of newProviders) {
-          await WIKI.models.commentProviders.query(trx).insert(engine)
+        for (let provider of newProviders) {
+          await WIKI.models.commentProviders.query(trx).insert(provider)
         }
         await trx.commit()
         WIKI.logger.info(`Loaded ${newProviders.length} new comment providers: [ OK ]`)
@@ -95,6 +95,43 @@ module.exports = class CommentProvider extends Model {
       if (trx) {
         trx.rollback()
       }
+    }
+  }
+
+  static async initProvider() {
+    const commentProvider = await WIKI.models.commentProviders.query().findOne('isEnabled', true)
+    if (commentProvider) {
+      WIKI.data.commentProvider = {
+        ..._.find(WIKI.data.commentProviders, ['key', commentProvider.key]),
+        head: '',
+        bodyStart: '',
+        bodyEnd: '',
+        main: '<comments></comments>'
+      }
+
+      if (WIKI.data.commentProvider.codeTemplate) {
+        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/comments', commentProvider.key, 'code.yml'), 'utf8')
+        let code = yaml.safeLoad(def)
+        code.head = _.defaultTo(code.head, '')
+        code.body = _.defaultTo(code.body, '')
+        code.main = _.defaultTo(code.main, '')
+
+        _.forOwn(commentProvider.config, (value, key) => {
+          code.head = _.replace(code.head, new RegExp(`{{${key}}}`, 'g'), value)
+          code.body = _.replace(code.body, new RegExp(`{{${key}}}`, 'g'), value)
+          code.main = _.replace(code.main, new RegExp(`{{${key}}}`, 'g'), value)
+        })
+
+        WIKI.data.commentProvider.head = code.head
+        WIKI.data.commentProvider.body = code.body
+        WIKI.data.commentProvider.main = code.main
+      } else {
+        WIKI.data.commentProvider = {
+          ...WIKI.data.commentProvider,
+          ...require(`../modules/comments/${commentProvider.key}/comment`)
+        }
+      }
+      WIKI.data.commentProvider.config = commentProvider.config
     }
   }
 }
