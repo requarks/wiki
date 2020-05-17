@@ -90,12 +90,13 @@
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
-            v-card.mb-5
+            v-card.mb-5(v-if='commentsEnabled')
               .pa-5
                 .overline.pb-2.pink--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-4`')
                   span Talk
                   v-spacer
                   v-chip.text-center(
+                    v-if='!commentsExternal'
                     label
                     x-small
                     :color='$vuetify.theme.dark ? `pink darken-3` : `pink darken-4`'
@@ -260,6 +261,8 @@
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
+            .comments-container#discussion
+              slot(name='comments')
     nav-footer
     notify
     search-results
@@ -390,6 +393,18 @@ export default {
     navMode: {
       type: String,
       default: 'MIXED'
+    },
+    commentsEnabled: {
+      type: Boolean,
+      default: false
+    },
+    commentsProvider: {
+      type: String,
+      default: 'default'
+    },
+    commentsExternal: {
+      type: Boolean,
+      default: false
     }
   },
   data() {

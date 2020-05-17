@@ -38,7 +38,7 @@ module.exports = {
     async updateProviders(obj, args, context) {
       try {
         for (let provider of args.providers) {
-          await WIKI.models.providers.query().patch({
+          await WIKI.models.commentProviders.query().patch({
             isEnabled: provider.isEnabled,
             config: _.reduce(provider.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
@@ -46,6 +46,7 @@ module.exports = {
             }, {})
           }).where('key', provider.key)
         }
+        await WIKI.models.commentProviders.initProvider()
         return {
           responseResult: graphHelper.generateSuccess('Comment Providers updated successfully')
         }

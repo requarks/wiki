@@ -805,6 +805,16 @@
 
 }
 
+.comments-container {
+  background-color: mc('blue-grey', '50');
+  border-radius: 7px;
+  padding: 20px;
+
+  @at-root .theme--dark & {
+    background-color: darken(mc('grey', '900'), 5%);
+  }
+}
+
 // ---------------
 // RTL FIXES
 // Vuetify GH Issue: https://github.com/vuetifyjs/vuetify/issues/6317
