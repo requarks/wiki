@@ -416,12 +416,12 @@ router.get('/*', async (req, res, next) => {
           body: WIKI.config.theming.injectBody
         }
 
-        // -> Convert page TOC
-        if (!_.isString(page.toc)) {
-          page.toc = JSON.stringify(page.toc)
-        }
-
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
+          // -> Convert page TOC
+          if (_.isString(page.toc)) {
+            page.toc = JSON.parse(page.toc)
+          }
+
           // -> Render legacy view
           res.render('legacy/page', {
             page,
@@ -430,6 +430,11 @@ router.get('/*', async (req, res, next) => {
             isAuthenticated: req.user && req.user.id !== 2
           })
         } else {
+          // -> Convert page TOC
+          if (!_.isString(page.toc)) {
+            page.toc = JSON.stringify(page.toc)
+          }
+
           // -> Inject comments variables
           if (WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
             [

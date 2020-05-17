@@ -13,7 +13,7 @@
               v-alert.mb-4(outlined, color='error', icon='mdi-alert')
                 span New extensions cannot be installed at the moment. This feature is coming in a future release.
               v-expansion-panels.admin-extensions-exp(hover, popout)
-                v-expansion-panel(v-for='ext of extensions')
+                v-expansion-panel(v-for='ext of extensions', :key='`ext-` + ext.key')
                   v-expansion-panel-header(disable-icon-rotate)
                     span {{ext.title}}
                     template(v-slot:actions)
@@ -49,6 +49,7 @@ export default {
       config: {},
       extensions: [
         {
+          key: 'git',
           title: 'Git',
           description: 'Distributed version control system. Required for the Git storage module.',
           platforms: {
@@ -61,6 +62,7 @@ export default {
           installed: true
         },
         {
+          key: 'pandoc',
           title: 'Pandoc',
           description: 'Convert between markup formats. Required for converting from other formats such as MediaWiki, AsciiDoc, Textile and other wikis.',
           platforms: {
@@ -73,6 +75,7 @@ export default {
           installed: false
         },
         {
+          key: 'puppeteer',
           title: 'Puppeteer',
           description: 'Headless chromium browser for server-side rendering. Required for generating PDF versions of pages and render content elements on the server (e.g. Mermaid diagrams)',
           platforms: {
@@ -85,6 +88,7 @@ export default {
           installed: false
         },
         {
+          key: 'sharp',
           title: 'Sharp',
           description: 'Process and transform images. Required to generate thumbnails of uploaded images and perform transformations.',
           platforms: {
