@@ -1,9 +1,9 @@
 key: markdownKroki
 title: Kroki
-description: Kroki Parser
+description: Kroki Diagrams Parser
 author: rlanyi (based on PlantUML renderer)
 icon: mdi-sitemap
-enabledDefault: true
+enabledDefault: false
 dependsOn: markdownCore
 props:
   server:
