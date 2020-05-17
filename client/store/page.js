@@ -14,7 +14,12 @@ const state = {
   tags: [],
   title: '',
   updatedAt: '',
-  mode: ''
+  mode: '',
+  comments: {
+    view: false,
+    post: false,
+    manage: false
+  }
 }
 
 export default {
