@@ -103,10 +103,10 @@
                     dark
                     style='min-width: 50px; justify-content: center;'
                     )
-                    span 334
+                    span {{commentsCount}}
                 .d-flex
                   v-btn.text-none(
-                    @click='goToComments'
+                    @click='goToComments()'
                     :color='$vuetify.theme.dark ? `pink` : `pink darken-3`'
                     outlined
                     style='flex: 1 1 100%;'
@@ -441,6 +441,7 @@ export default {
   },
   computed: {
     isAuthenticated: get('user/authenticated'),
+    commentsCount: get('page/commentsCount'),
     rating: {
       get () {
         return 3.5
