@@ -19,7 +19,8 @@ const state = {
     view: false,
     post: false,
     manage: false
-  }
+  },
+  commentsCount: 0
 }
 
 export default {

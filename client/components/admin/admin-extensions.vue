@@ -17,7 +17,7 @@
                   v-expansion-panel-header(disable-icon-rotate)
                     span {{ext.title}}
                     template(v-slot:actions)
-                      v-chip(label, color='success', small, v-if='ext.installed') Installed
+                      v-chip(label, color='success', small, v-if='ext.isInstalled') Installed
                       v-chip(label, color='warning', small, v-else) Not Installed
                   v-expansion-panel-content.pa-0
                     v-card(flat, :class='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-5`', tile)
@@ -25,18 +25,15 @@
                         .body-2 {{ext.description}}
                         v-divider.my-4
                         .body-2
-                          strong.mr-3 Supported Platforms:
-                          v-chip.mr-1(label, small, :color='ext.platforms[`linux-amd64`] ? `success` : `error`') Linux (x64)
-                          v-chip.mr-1(label, small, :color='ext.platforms[`linux-arm64`] ? `success` : `error`') Linux (arm64)
-                          v-chip.mr-1(label, small, :color='ext.platforms[`linux-armv7`] ? `success` : `error`') Linux (armv7)
-                          v-chip.mr-1(label, small, :color='ext.platforms.macos ? `success` : `error`') MacOS
-                          v-chip.mr-1(label, small, :color='ext.platforms.windows ? `success` : `error`') Windows
+                          strong.mr-2 This extensions is
+                          v-chip.mr-2(v-if='ext.isCompatible', label, outlined, small, color='success') compatible
+                          v-chip.mr-2(v-else, label, small, color='error') not compatible
+                          strong with your host.
                       v-card-chin
                         v-spacer
                         v-btn(disabled)
                           v-icon(left) mdi-plus
                           span Install
-
 </template>
 
 <script>
@@ -46,122 +43,70 @@ import gql from 'graphql-tag'
 export default {
   data() {
     return {
-      config: {},
-      extensions: [
-        {
-          key: 'git',
-          title: 'Git',
-          description: 'Distributed version control system. Required for the Git storage module.',
-          platforms: {
-            'linux-amd64': true,
-            'linux-arm64': true,
-            'linux-armv7': true,
-            'macos': true,
-            'windows': true
-          },
-          installed: true
-        },
-        {
-          key: 'pandoc',
-          title: 'Pandoc',
-          description: 'Convert between markup formats. Required for converting from other formats such as MediaWiki, AsciiDoc, Textile and other wikis.',
-          platforms: {
-            'linux-amd64': true,
-            'linux-arm64': false,
-            'linux-armv7': false,
-            'macos': true,
-            'windows': true
-          },
-          installed: false
-        },
-        {
-          key: 'puppeteer',
-          title: 'Puppeteer',
-          description: 'Headless chromium browser for server-side rendering. Required for generating PDF versions of pages and render content elements on the server (e.g. Mermaid diagrams)',
-          platforms: {
-            'linux-amd64': true,
-            'linux-arm64': false,
-            'linux-armv7': false,
-            'macos': true,
-            'windows': true
-          },
-          installed: false
-        },
-        {
-          key: 'sharp',
-          title: 'Sharp',
-          description: 'Process and transform images. Required to generate thumbnails of uploaded images and perform transformations.',
-          platforms: {
-            'linux-amd64': true,
-            'linux-arm64': false,
-            'linux-armv7': false,
-            'macos': true,
-            'windows': true
-          },
-          installed: false
-        }
-      ]
+      extensions: []
     }
-  },
-  computed: {
   },
   methods: {
     async save () {
-      try {
-        await this.$apollo.mutate({
-          mutation: gql`
-            mutation (
-              $host: String!
-            ) {
-              site {
-                updateConfig(
-                  host: $host
-                ) {
-                  responseResult {
-                    succeeded
-                    errorCode
-                    slug
-                    message
-                  }
-                }
-              }
+      // try {
+      //   await this.$apollo.mutate({
+      //     mutation: gql`
+      //       mutation (
+      //         $host: String!
+      //       ) {
+      //         site {
+      //           updateConfig(
+      //             host: $host
+      //           ) {
+      //             responseResult {
+      //               succeeded
+      //               errorCode
+      //               slug
+      //               message
+      //             }
+      //           }
+      //         }
+      //       }
+      //     `,
+      //     variables: {
+      //       host: _.get(this.config, 'host', '')
+      //     },
+      //     watchLoading (isLoading) {
+      //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-extensions-update')
+      //     }
+      //   })
+      //   this.$store.commit('showNotification', {
+      //     style: 'success',
+      //     message: 'Configuration saved successfully.',
+      //     icon: 'check'
+      //   })
+      // } catch (err) {
+      //   this.$store.commit('pushGraphError', err)
+      // }
+    }
+  },
+  apollo: {
+    extensions: {
+      query: gql`
+        {
+          system {
+            extensions {
+              key
+              title
+              description
+              isInstalled
+              isCompatible
             }
-          `,
-          variables: {
-            host: _.get(this.config, 'host', '')
-          },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
           }
-        })
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'Configuration saved successfully.',
-          icon: 'check'
-        })
-      } catch (err) {
-        this.$store.commit('pushGraphError', err)
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => _.cloneDeep(data.system.extensions),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-extensions-refresh')
       }
     }
   }
-  // apollo: {
-  //   config: {
-  //     query: gql`
-  //       {
-  //         site {
-  //           config {
-  //             host
-  //           }
-  //         }
-  //       }
-  //     `,
-  //     fetchPolicy: 'network-only',
-  //     update: (data) => _.cloneDeep(data.site.config),
-  //     watchLoading (isLoading) {
-  //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-refresh')
-  //     }
-  //   }
-  // }
 }
 </script>
 
