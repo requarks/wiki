@@ -49,12 +49,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ../../client:/wiki/client
-      - ../../server:/wiki/server
-      - ../../dev:/wiki/dev
-      - ../../package.json:/wiki/package.json
-      - ../../yarn.lock:/wiki/yarn.lock
-      - ../../.babelrc:/wiki/.babelrc
+      - ../..:/wiki
+      - /wiki/node_modules
+      - /wiki/.git
 
 
 volumes:
