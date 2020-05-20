@@ -170,6 +170,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Matt Gedigian
 - Philipp Schürch
 - Richeir
+- SmartNET.works
 - Stepan Sokolovskyi
 - 张白驹
 <!--5 end-->
