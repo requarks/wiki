@@ -93,41 +93,36 @@ export default {
       }
       return root
     },
-    hierarchy (data, rootOnly = false) {
-      let result = []
-      let level = { result }
-      const map = new Map(data.map(d => [d.path, d]))
-      data.forEach(d => {
-        const pathParts = d.path.split('/')
-        pathParts.reduce((r, part, i) => {
-          const curPath = _.take(pathParts, i + 1).join('/')
-          if (!r[part]) {
-            r[part] = { result: [] }
-            const page = map.get(curPath)
-            r.result.push(page ? {
-              ...d,
-              children: r[part].result
-            } : {
-              title: part,
-              links: [],
-              path: curPath,
-              children: r[part].result
-            })
-          }
-
-          return r[part]
-        }, level)
-      })
-
-      return rootOnly ? _.head(result) || { children: [] } : {
-        children: result
+    hierarchy (pages) {
+      const map = new Map(pages.map(p => [p.path, p]))
+      const getPage = path => map.get(path) || {
+        path: path,
+        title: path.split('/').slice(-1)[0],
+        links: []
       }
+
+      function recurse (depth, [parent, descendants]) {
+        const truncatePath = path => _.take(path.split('/'), depth).join('/')
+        const descendantsByChild =
+          Object.entries(_.groupBy(descendants, page => truncatePath(page.path)))
+            .map(([childPath, descendantsGroup]) => [getPage(childPath), descendantsGroup])
+            .map(([child, descendantsGroup]) =>
+              [child, _.filter(descendantsGroup, d => d.path != child.path)])
+        return {
+          ...parent,
+          children: descendantsByChild.map(_.partial(recurse, depth + 1))
+        }
+      }
+      const root = { path: this.currentLocale, title: this.currentLocale, links: [] }
+      // start at depth=2 because we're taking {locale} as the root and
+      // all paths start with {locale}/
+      return recurse(2, [root, pages])
     },
     /**
      * Relational Radial
      */
     drawRelations () {
-      const data = this.hierarchy(this.pages, true)
+      const data = this.hierarchy(this.pages)
 
       const line = d3.lineRadial()
         .curve(d3.curveBundle.beta(0.85))
@@ -202,7 +197,7 @@ export default {
      * Hierarchical Tree
      */
     drawTree () {
-      const data = this.hierarchy(this.pages, true)
+      const data = this.hierarchy(this.pages)
 
       const treeRoot = d3.hierarchy(data)
       treeRoot.dx = 10
