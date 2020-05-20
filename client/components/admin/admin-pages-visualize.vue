@@ -138,7 +138,13 @@ export default {
       const svg = d3.create('svg')
         .attr('viewBox', [-this.width / 2, -this.width / 2, this.width, this.width])
 
-      const link = svg.append('g')
+      const g = svg.append('g')
+
+      svg.call(d3.zoom().on('zoom', function() {
+        g.attr('transform', d3.event.transform)
+      }))
+
+      const link = g.append('g')
         .attr('stroke', '#CCC')
         .attr('fill', 'none')
         .selectAll('path')
@@ -148,7 +154,7 @@ export default {
         .attr('d', ([i, o]) => line(i.path(o)))
         .each(function(d) { d.path = this })
 
-      svg.append('g')
+      g.append('g')
         .attr('font-family', 'sans-serif')
         .attr('font-size', 10)
         .selectAll('g')
@@ -214,7 +220,16 @@ export default {
       const svg = d3.create('svg')
         .attr('viewBox', [0, 0, this.width, x1 - x0 + root.dx * 2])
 
-      const g = svg.append('g')
+      // this extra level is necessary because the element that we
+      // apply the zoom tranform to must be above the element where
+      // we apply the translation (`g`), or else zoom is wonky
+      const gZoom = svg.append('g')
+
+      svg.call(d3.zoom().on('zoom', function() {
+        gZoom.attr('transform', d3.event.transform)
+      }))
+
+      const g = gZoom.append('g')
         .attr('font-family', 'sans-serif')
         .attr('font-size', 10)
         .attr('transform', `translate(${root.dy / 3},${root.dx - x0})`)
@@ -272,7 +287,13 @@ export default {
       const svg = d3.create('svg')
         .style('font', '10px sans-serif')
 
-      svg.append('g')
+      const g = svg.append('g')
+
+      svg.call(d3.zoom().on('zoom', function () {
+        g.attr('transform', d3.event.transform)
+      }))
+
+      const link = g.append('g')
         .attr('fill', 'none')
         .attr('stroke', this.$vuetify.theme.dark ? 'white' : '#555')
         .attr('stroke-opacity', 0.4)
@@ -284,7 +305,7 @@ export default {
           .angle(d => d.x)
           .radius(d => d.y))
 
-      const node = svg.append('g')
+      const node = g.append('g')
         .attr('stroke-linejoin', 'round')
         .attr('stroke-width', 3)
         .selectAll('g')
@@ -373,9 +394,11 @@ export default {
 <style lang='scss'>
 .admin-pages-visualize-svg {
   text-align: center;
+  height: 78vh;  // fit to height; no vertical scroll
 
   > svg {
-    height: 100vh;
+    height: 100%;
+    width: 100%;
   }
 }
 </style>
