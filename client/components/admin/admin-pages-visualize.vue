@@ -61,8 +61,15 @@ export default {
   },
   methods: {
     goToPage (d) {
-      if (_.get(d, 'data.id', 0) > 0) {
-        this.$router.push(`${d.data.id}`)
+      const id = d.data.id
+      if (id) {
+        if (d3.event.ctrlKey || d3.event.metaKey) {
+          const { href } = this.$router.resolve(String(id));
+          window.open(href, '_blank');
+        }
+        else {
+          this.$router.push(String(id))
+        }
       }
     },
     bilink (root) {
