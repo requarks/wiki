@@ -1,4 +1,5 @@
 const graphHelper = require('../../helpers/graph')
+const _ = require('lodash')
 
 /* global WIKI */
 
@@ -26,6 +27,32 @@ module.exports = {
       usr.password = ''
       usr.tfaSecret = ''
       return usr
+    },
+    async profile (obj, args, context, info) {
+      if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
+        throw new WIKI.Error.AuthRequired()
+      }
+      const usr = await WIKI.models.users.query().findById(context.req.user.id)
+      if (!usr.isActive) {
+        throw new WIKI.Error.AuthAccountBanned()
+      }
+
+      const providerInfo = _.find(WIKI.data.authentication, ['key', usr.providerKey])
+
+      usr.providerName = _.get(providerInfo, 'title', 'Unknown')
+      usr.lastLoginAt = usr.lastLoginAt || usr.updatedAt
+      usr.password = ''
+      usr.providerId = ''
+      usr.tfaSecret = ''
+
+      return usr
+    },
+    async lastLogins (obj, args, context, info) {
+      return WIKI.models.users.query()
+        .select('id', 'name', 'lastLoginAt')
+        .whereNotNull('lastLoginAt')
+        .orderBy('lastLoginAt', 'desc')
+        .limit(10)
     }
   },
   UserMutation: {
@@ -106,11 +133,98 @@ module.exports = {
     },
     resetPassword (obj, args) {
       return false
+    },
+    async updateProfile (obj, args, context) {
+      try {
+        if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
+          throw new WIKI.Error.AuthRequired()
+        }
+        const usr = await WIKI.models.users.query().findById(context.req.user.id)
+        if (!usr.isActive) {
+          throw new WIKI.Error.AuthAccountBanned()
+        }
+        if (!usr.isVerified) {
+          throw new WIKI.Error.AuthAccountNotVerified()
+        }
+
+        if (!['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'].includes(args.dateFormat)) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
+        if (!['', 'light', 'dark'].includes(args.appearance)) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
+        await WIKI.models.users.updateUser({
+          id: usr.id,
+          name: _.trim(args.name),
+          jobTitle: _.trim(args.jobTitle),
+          location: _.trim(args.location),
+          timezone: args.timezone,
+          dateFormat: args.dateFormat,
+          appearance: args.appearance
+        })
+
+        const newToken = await WIKI.models.users.refreshToken(usr.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User profile updated successfully'),
+          jwt: newToken.token
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async changePassword (obj, args, context) {
+      try {
+        if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
+          throw new WIKI.Error.AuthRequired()
+        }
+        const usr = await WIKI.models.users.query().findById(context.req.user.id)
+        if (!usr.isActive) {
+          throw new WIKI.Error.AuthAccountBanned()
+        }
+        if (!usr.isVerified) {
+          throw new WIKI.Error.AuthAccountNotVerified()
+        }
+        if (usr.providerKey !== 'local') {
+          throw new WIKI.Error.AuthProviderInvalid()
+        }
+        try {
+          await usr.verifyPassword(args.current)
+        } catch (err) {
+          throw new WIKI.Error.AuthPasswordInvalid()
+        }
+
+        await WIKI.models.users.updateUser({
+          id: usr.id,
+          newPassword: args.new
+        })
+
+        const newToken = await WIKI.models.users.refreshToken(usr)
+
+        return {
+          responseResult: graphHelper.generateSuccess('Password changed successfully'),
+          jwt: newToken.token
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   User: {
-    groups(usr) {
+    groups (usr) {
       return usr.$relatedQuery('groups')
+    }
+  },
+  UserProfile: {
+    async groups (usr) {
+      const usrGroups = await usr.$relatedQuery('groups')
+      return usrGroups.map(g => g.name)
+    },
+    async pagesTotal (usr) {
+      const result = await WIKI.models.pages.query().count('* as total').where('creatorId', usr.id).first()
+      return _.toSafeInteger(result.total)
     }
   }
 }

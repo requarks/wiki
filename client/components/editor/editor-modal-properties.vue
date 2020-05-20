@@ -41,7 +41,7 @@
               :hint='$t(`editor:props.shortDescriptionHint`)'
               )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             .overline.pb-5 {{$t('editor:props.path')}}
             v-container.pa-0(fluid, grid-list-lg)
               v-layout(row, wrap)
@@ -65,7 +65,7 @@
                     @click:append='showPathSelector'
                     )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d5` : `lighten-4`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5 {{$t('editor:props.categorization')}}
             v-chip-group.radius-5.mb-5(column, v-if='tags && tags.length > 0')
               v-chip(
@@ -80,19 +80,14 @@
             v-combobox(
               :label='$t(`editor:props.tags`)'
               outlined
-              v-model='tags'
+              v-model='newTag'
               :hint='$t(`editor:props.tagsHint`)'
               :items='newTagSuggestions'
               :loading='$apollo.queries.newTagSuggestions.loading'
               persistent-hint
-              deletable-chips
               hide-no-data
-              hide-selected
               :search-input.sync='newTagSearch'
-              multiple
               )
-              template(v-slot:selection='{ attrs, item, parent, selected }')
-                span
         v-tab-item
           v-card-text
             .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outlined).white--text coming soon]
@@ -106,7 +101,7 @@
               inset
               )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             v-container.pa-0(fluid, grid-list-lg)
               v-row
                 v-col(cols='6')
@@ -202,7 +197,7 @@
               persistent-hint
             )
           v-divider
-          v-card-text.grey.pt-5(:class='darkMode ? `darken-3-d3` : `lighten-5`')
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             .overline.pb-3 {{$t('editor:props.css')}}
             v-textarea(
               outlined
@@ -284,7 +279,6 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    darkMode: get('site/dark'),
     mode: get('editor/mode'),
     title: sync('page/title'),
     description: sync('page/description'),
@@ -306,14 +300,20 @@ export default {
           // this.$tours['editorPropertiesTour'].start()
         }, 500)
       }
+    },
+    newTag(newValue, oldValue) {
+      const tagClean = _.trim(newValue || '').toLowerCase()
+      if (tagClean && tagClean.length > 0) {
+        if (!_.includes(this.tags, tagClean)) {
+          this.tags = [...this.tags, tagClean]
+        }
+        this.$nextTick(() => {
+          this.newTag = null
+        })
+      }
     }
   },
   methods: {
-    addTag () {
-      this.$nextTick(() => {
-        this.tags.push(this.newTag)
-      })
-    },
     removeTag (tag) {
       this.tags = _.without(this.tags, tag)
     },

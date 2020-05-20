@@ -33,6 +33,7 @@ type MailMutation {
     host: String!
     port: Int!
     secure: Boolean!
+    verifySSL: Boolean!
     user: String!
     pass: String!
     useDKIM: Boolean!
@@ -52,6 +53,7 @@ type MailConfig {
   host: String!
   port: Int!
   secure: Boolean!
+  verifySSL: Boolean!
   user: String!
   pass: String!
   useDKIM: Boolean!

@@ -109,7 +109,7 @@
       .editor-markdown-sidebar
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, disabled).mx-0
+            v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, @click='insertLink').mx-0
               v-icon mdi-link-plus
           span {{$t('editor:markup.insertLink')}}
         v-tooltip(right, color='teal')
@@ -119,7 +119,7 @@
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)', disabled).mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
               v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
           span {{$t('editor:markup.insertBlock')}}
         v-tooltip(right, color='teal')
@@ -130,7 +130,7 @@
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
             v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-library-video
+              v-icon mdi-movie
           span {{$t('editor:markup.insertVideoAudio')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
@@ -176,14 +176,17 @@
         .caption Ln {{cursorPos.line + 1}}, Col {{cursorPos.ch + 1}}
 
     markdown-help(v-if='helpShown')
+    page-selector(mode='select', v-model='insertLinkDialog', :open-handler='insertLinkHandler', :path='path', :locale='locale')
 </template>
 
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
+import gql from 'graphql-tag'
+import DOMPurify from 'dompurify'
 
-/* global siteConfig */
+/* global siteConfig, siteLangs */
 
 // ========================================
 // IMPORTS
@@ -202,6 +205,7 @@ import 'codemirror/addon/display/fullscreen.js'
 import 'codemirror/addon/display/fullscreen.css'
 import 'codemirror/addon/selection/mark-selection.js'
 import 'codemirror/addon/search/searchcursor.js'
+import 'codemirror/addon/hint/show-hint.js'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
@@ -216,10 +220,15 @@ import mdMark from 'markdown-it-mark'
 import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
+import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
+import plantuml from './markdown/plantuml'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
+
+// Mermaid
+import mermaid from 'mermaid'
 
 // Helpers
 import katexHelper from './common/katex'
@@ -249,7 +258,11 @@ const md = new MarkdownIt({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    if (['mermaid', 'plantuml'].includes(lang)) {
+      return `<pre class="codeblock-${lang}"><code>${_.escape(str)}</code></pre>`
+    } else {
+      return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    }
   }
 })
   .use(mdAttrs, {
@@ -284,6 +297,13 @@ function injectLineNumbers (tokens, idx, options, env, slf) {
 md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
 md.renderer.rules.blockquote_open = injectLineNumbers
+
+// ========================================
+// PLANTUML
+// ========================================
+
+// TODO: Use same options as defined in backend
+plantuml.init(md, {})
 
 // ========================================
 // KATEX
@@ -330,6 +350,8 @@ md.renderer.rules.emoji = (token, idx) => {
 // Vue Component
 // ========================================
 
+let mermaidId = 0
+
 export default {
   components: {
     markdownHelp
@@ -347,7 +369,8 @@ export default {
       cursorPos: { ch: 0, line: 1 },
       previewShown: true,
       previewHTML: '',
-      helpShown: false
+      helpShown: false,
+      insertLinkDialog: false
     }
   },
   computed: {
@@ -366,6 +389,7 @@ export default {
     previewShown (newValue, oldValue) {
       if (newValue && !oldValue) {
         this.$nextTick(() => {
+          this.renderMermaidDiagrams()
           Prism.highlightAllUnder(this.$refs.editorPreview)
           Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         })
@@ -384,8 +408,9 @@ export default {
     onCmInput: _.debounce(function (newContent) {
       linesMap = []
       this.$store.set('editor/content', newContent)
-      this.previewHTML = md.render(newContent)
+      this.previewHTML = DOMPurify.sanitize(md.render(newContent))
       this.$nextTick(() => {
+        this.renderMermaidDiagrams()
         Prism.highlightAllUnder(this.$refs.editorPreview)
         Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         this.scrollSync(this.cm)
@@ -527,6 +552,81 @@ export default {
       this.$nextTick(() => {
         this.cm.refresh()
       })
+    },
+    renderMermaidDiagrams () {
+      document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
+        mermaidId++
+        const mermaidDef = elm.innerText
+        const mmElm = document.createElement('div')
+        mmElm.innerHTML = `<div id="mermaid-id-${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
+        elm.parentElement.replaceWith(mmElm)
+      })
+    },
+    autocomplete (cm, change) {
+      if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {
+        return
+      }
+
+      // Links
+      if (change.text[0] === '(') {
+        const curLine = cm.getLine(change.from.line).substring(0, change.from.ch)
+        if (curLine[curLine.length - 1] === ']') {
+          cm.showHint({
+            hint: async (cm, options) => {
+              const cur = cm.getCursor()
+              const token = cm.getTokenAt(cur)
+              try {
+                const respRaw = await this.$apollo.query({
+                  query: gql`
+                    query ($query: String!, $locale: String) {
+                      pages {
+                        search(query:$query, locale:$locale) {
+                          results {
+                            title
+                            path
+                            locale
+                          }
+                          totalHits
+                        }
+                      }
+                    }
+                  `,
+                  variables: {
+                    query: token.string,
+                    locale: this.locale
+                  },
+                  fetchPolicy: 'cache-first'
+                })
+                const resp = _.get(respRaw, 'data.pages.search', {})
+                if (resp && resp.totalHits > 0) {
+                  return {
+                    list: resp.results.map(r => ({
+                      text: (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
+                      displayText: siteLangs.length > 0 ? `/${r.locale}/${r.path} - ${r.title}` : `/${r.path} - ${r.title}`
+                    })),
+                    from: CodeMirror.Pos(cur.line, token.start),
+                    to: CodeMirror.Pos(cur.line, token.end)
+                  }
+                }
+              } catch (err) {}
+              return {
+                list: [],
+                from: CodeMirror.Pos(cur.line, token.start),
+                to: CodeMirror.Pos(cur.line, token.end)
+              }
+            }
+          })
+        }
+      }
+    },
+    insertLink () {
+      this.insertLinkDialog = true
+    },
+    insertLinkHandler ({ locale, path }) {
+      const lastPart = _.last(path.split('/'))
+      this.insertAtCursor({
+        content: siteLangs.length > 0 ? `[${lastPart}](/${locale}/${path})` : `[${lastPart}](/${path})`
+      })
     }
   },
   mounted() {
@@ -535,6 +635,12 @@ export default {
     if (this.mode === 'create' && !this.$store.get('editor/content')) {
       this.$store.set('editor/content', '# Header\nYour content here')
     }
+
+    // Initialize Mermaid API
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: this.$vuetify.theme.dark ? `dark` : `default`
+    })
 
     // Initialize CodeMirror
 
@@ -600,6 +706,8 @@ export default {
       return false
     })
     this.cm.setOption('extraKeys', keyBindings)
+
+    this.cm.on('inputRead', this.autocomplete)
 
     // Handle cursor movement
 
@@ -898,6 +1006,43 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     text-decoration: underline;
     color: white !important;
   }
+}
 
+// HINT DROPDOWN
+
+.CodeMirror-hints {
+  position: absolute;
+  z-index: 10;
+  overflow: hidden;
+  list-style: none;
+
+  margin: 0;
+  padding: 1px;
+
+  box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  border: 1px solid mc('grey', '700');
+
+  background: mc('grey', '900');
+  font-family: 'Roboto Mono', monospace;
+  font-size: .9rem;
+
+  max-height: 150px;
+  overflow-y: auto;
+
+  min-width: 250px;
+  max-width: 80vw;
+}
+
+.CodeMirror-hint {
+  margin: 0;
+  padding: 0 4px;
+  white-space: pre;
+  color: #FFF;
+  cursor: pointer;
+}
+
+li.CodeMirror-hint-active {
+  background: mc('blue', '500');
+  color: #FFF;
 }
 </style>

@@ -104,6 +104,7 @@ module.exports = () => {
         host: '',
         port: 465,
         secure: true,
+        verifySSL: true,
         user: '',
         pass: '',
         useDKIM: false,
@@ -134,7 +135,7 @@ module.exports = () => {
 
       // Init Telemetry
       WIKI.kernel.initTelemetry()
-      WIKI.telemetry.sendEvent('setup', 'install-start')
+      // WIKI.telemetry.sendEvent('setup', 'install-start')
 
       // Basic checks
       if (!semver.satisfies(process.version, '>=10.12')) {
@@ -185,8 +186,9 @@ module.exports = () => {
         'sessionSecret',
         'telemetry',
         'theming',
+        'uploads',
         'title'
-      ])
+      ], false)
 
       // Truncate tables (reset from previous failed install)
       await WIKI.models.locales.query().where('code', '!=', 'x').del()
@@ -269,7 +271,7 @@ module.exports = () => {
       await WIKI.models.searchEngines.refreshSearchEnginesFromDisk()
       await WIKI.models.searchEngines.query().patch({ isEnabled: true }).where('key', 'db')
 
-      WIKI.telemetry.sendEvent('setup', 'install-loadedmodules')
+      // WIKI.telemetry.sendEvent('setup', 'install-loadedmodules')
 
       // Load storage targets
       await WIKI.models.storage.refreshTargetsFromDisk()
@@ -315,23 +317,34 @@ module.exports = () => {
         key: 'site',
         config: [
           {
-            id: uuid(),
-            icon: 'mdi-home',
-            kind: 'link',
-            label: 'Home',
-            target: '/',
-            targetType: 'home'
+            locale: 'en',
+            items: [
+              {
+                id: uuid(),
+                icon: 'mdi-home',
+                kind: 'link',
+                label: 'Home',
+                target: '/',
+                targetType: 'home',
+                visibilityMode: 'all',
+                visibilityGroups: null
+              }
+            ]
           }
         ]
       })
 
       WIKI.logger.info('Setup is complete!')
-      WIKI.telemetry.sendEvent('setup', 'install-completed')
+      // WIKI.telemetry.sendEvent('setup', 'install-completed')
       res.json({
         ok: true,
         redirectPath: '/',
         redirectPort: WIKI.config.port
       }).end()
+
+      if (WIKI.config.telemetry.isEnabled) {
+        await WIKI.telemetry.sendInstanceEvent('INSTALL')
+      }
 
       WIKI.config.setup = false
 

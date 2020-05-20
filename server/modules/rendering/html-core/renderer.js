@@ -115,6 +115,7 @@ module.exports = {
         $(elm).addClass(`is-external-link`)
         if (this.config.openExternalLinkNewTab) {
           $(elm).attr('target', '_blank')
+          $(elm).attr('rel', this.config.relAttributeExternalLink)
         }
       }
 
@@ -229,11 +230,30 @@ module.exports = {
       headers.push(headerSlug)
     })
 
-    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
+    // --------------------------------
+    // Escape mustache expresions
+    // --------------------------------
+
+    function iterateMustacheNode (node) {
+      const list = $(node).contents().toArray()
+      list.forEach(item => {
+        if (item.type === 'text') {
+          const rawText = $(item).text()
+          if (rawText.indexOf('{{') >= 0 && rawText.indexOf('}}') > 1) {
+            $(item).parent().attr('v-pre', true)
+          }
+        } else {
+          iterateMustacheNode(item)
+        }
+      })
+    }
+    iterateMustacheNode($.root())
 
     // --------------------------------
     // STEP: POST
     // --------------------------------
+
+    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
 
     for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)

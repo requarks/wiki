@@ -54,6 +54,7 @@ module.exports = {
         isSystem: false
       })
       await WIKI.auth.reloadGroups()
+      WIKI.events.outbound.emit('reloadGroups')
       return {
         responseResult: graphHelper.generateSuccess('Group created successfully.'),
         group
@@ -62,6 +63,7 @@ module.exports = {
     async delete(obj, args) {
       await WIKI.models.groups.query().deleteById(args.id)
       await WIKI.auth.reloadGroups()
+      WIKI.events.outbound.emit('reloadGroups')
       return {
         responseResult: graphHelper.generateSuccess('Group has been deleted.')
       }
@@ -94,6 +96,7 @@ module.exports = {
       }).where('id', args.id)
 
       await WIKI.auth.reloadGroups()
+      WIKI.events.outbound.emit('reloadGroups')
 
       return {
         responseResult: graphHelper.generateSuccess('Group has been updated.')

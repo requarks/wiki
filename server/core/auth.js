@@ -281,6 +281,7 @@ module.exports = {
   async reloadGroups () {
     const groupsArray = await WIKI.models.groups.query()
     this.groups = _.keyBy(groupsArray, 'id')
+    WIKI.auth.guest.cacheExpiration = moment.utc().subtract(1, 'd')
   },
 
   /**
@@ -324,6 +325,7 @@ module.exports = {
     ])
 
     await WIKI.auth.activateStrategies()
+    WIKI.events.outbound.emit('reloadAuthStrategies')
 
     WIKI.logger.info('Regenerated certificates: [ COMPLETED ]')
   },
@@ -356,5 +358,20 @@ module.exports = {
     await guestUser.$relatedQuery('groups').relate(guestGroup.id)
 
     WIKI.logger.info('Guest user has been reset: [ COMPLETED ]')
+  },
+
+  /**
+   * Subscribe to HA propagation events
+   */
+  subscribeToEvents() {
+    WIKI.events.inbound.on('reloadGroups', () => {
+      WIKI.auth.reloadGroups()
+    })
+    WIKI.events.inbound.on('reloadApiKeys', () => {
+      WIKI.auth.reloadApiKeys()
+    })
+    WIKI.events.inbound.on('reloadAuthStrategies', () => {
+      WIKI.auth.activateStrategies()
+    })
   }
 }

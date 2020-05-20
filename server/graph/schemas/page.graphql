@@ -38,6 +38,8 @@ type PageQuery {
     orderByDirection: PageOrderByDirection
     tags: [String!]
     locale: String
+    creatorId: Int
+    authorId: Int
   ): [PageListItem!]! @auth(requires: ["manage:system", "read:pages"])
 
   single(
@@ -55,7 +57,7 @@ type PageQuery {
     parent: Int
     mode: PageTreeMode!
     locale: String!
-    includeParents: Boolean
+    includeAncestors: Boolean
   ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
 
   links(

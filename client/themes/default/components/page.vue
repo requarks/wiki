@@ -1,8 +1,9 @@
 <template lang="pug">
-  v-app(v-scroll='upBtnScroll', :dark='darkMode', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
+  v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header
     v-navigation-drawer(
-      :class='darkMode ? `grey darken-4-d4` : `primary`'
+      v-if='navMode !== `NONE`'
+      :class='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`'
       dark
       app
       clipped
@@ -12,9 +13,9 @@
       :right='$vuetify.rtl'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='darkMode ? `grey darken-4-d4` : `primary`', :items='sidebar')
+        nav-sidebar(:color='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`', :items='sidebarDecoded', :nav-mode='navMode')
 
-    v-fab-transition
+    v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
         fab
         color='primary'
@@ -31,7 +32,7 @@
 
     v-content(ref='content')
       template(v-if='path !== `home`')
-        v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
+        v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
           //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
           //-   v-icon(color='grey darken-2', left) menu
           //-   span Navigation
@@ -47,19 +48,19 @@
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
         v-divider
-      v-container.grey.pa-0(fluid, :class='darkMode ? `darken-4-l3` : `lighten-4`')
+      v-container.grey.pa-0(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
         v-row(no-gutters, align-content='center', style='height: 90px;')
           v-col.page-col-content.is-page-header(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')
-            .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
+            .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
             .caption.grey--text.text--darken-1 {{description}}
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
-          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', style='margin-top: -90px;')
-            v-card.mb-5(v-if='toc.length')
-              .overline.pa-5.pb-0(:class='darkMode ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
-              v-list.pb-3(dense, nav, :class='darkMode ? `darken-3-d3` : ``')
-                template(v-for='(tocItem, tocIdx) in toc')
+          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', align-self-start, style='margin-top: -90px; position: sticky; top: 70px;')
+            v-card.mb-5(v-if='tocDecoded.length')
+              .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
+              v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
+                template(v-for='(tocItem, tocIdx) in tocDecoded')
                   v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
                     v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
                     v-list-item-title.px-3 {{tocItem.title}}
@@ -67,7 +68,7 @@
                   template(v-for='tocSubItem in tocItem.children')
                     v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
                       v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                      v-list-item-title.px-3.caption.grey--text(:class='darkMode ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
+                      v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
             v-card.mb-5(v-if='tags.length > 0')
@@ -99,7 +100,7 @@
                   //-     v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
                   //-       v-icon(color='grey', dense) mdi-history
                   //-   span History
-                .body-2.grey--text(:class='darkMode ? `` : `text--darken-3`') {{ authorName }}
+                .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- v-card.mb-5
@@ -116,7 +117,7 @@
             //-       .caption.grey--text 5 votes
 
             v-card(flat)
-              v-toolbar(:color='darkMode ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
+              v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
                 v-spacer
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
@@ -173,7 +174,7 @@
                         @click='pageHistory'
                         )
                         v-icon(size='20') mdi-history
-                    span History
+                    span {{$t('common:header.history')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -185,7 +186,19 @@
                         @click='pageSource'
                         )
                         v-icon(size='20') mdi-code-tags
-                    span View Source
+                    span {{$t('common:header.viewSource')}}
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        small
+                        color='white'
+                        light
+                        v-on='on'
+                        @click='pageDuplicate'
+                        )
+                        v-icon(size='20') mdi-content-duplicate
+                    span {{$t('common:header.duplicate')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -197,7 +210,7 @@
                         @click='pageMove'
                         )
                         v-icon(size='20') mdi-content-save-move-outline
-                    span Move / Rename
+                    span {{$t('common:header.move')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -209,7 +222,7 @@
                         @click='pageDelete'
                         )
                         v-icon(size='20') mdi-trash-can-outline
-                    span Delete
+                    span {{$t('common:header.delete')}}
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
@@ -236,10 +249,16 @@
 
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
+import Tabset from './tabset.vue'
+import NavSidebar from './nav-sidebar.vue'
 import Prism from 'prismjs'
+import mermaid from 'mermaid'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
+import Vue from 'vue'
+
+Vue.component('tabset', Tabset)
 
 Prism.plugins.autoloader.languages_path = '/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
@@ -278,6 +297,7 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 
 export default {
   components: {
+    NavSidebar,
     StatusIndicator
   },
   props: {
@@ -326,12 +346,16 @@ export default {
       default: false
     },
     toc: {
-      type: Array,
-      default: () => []
+      type: String,
+      default: ''
     },
     sidebar: {
-      type: Array,
-      default: () => []
+      type: String,
+      default: ''
+    },
+    navMode: {
+      type: String,
+      default: 'MIXED'
     }
   },
   data() {
@@ -367,7 +391,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     isAuthenticated: get('user/authenticated'),
     rating: {
       get () {
@@ -393,24 +416,34 @@ export default {
       } else {
         return this.$vuetify.rtl ? `right: 65px;` : `left: 65px;`
       }
+    },
+    sidebarDecoded () {
+      return JSON.parse(atob(this.sidebar))
+    },
+    tocDecoded () {
+      return JSON.parse(atob(this.toc))
     }
   },
   created() {
-    this.$store.commit('page/SET_AUTHOR_ID', this.authorId)
-    this.$store.commit('page/SET_AUTHOR_NAME', this.authorName)
-    this.$store.commit('page/SET_CREATED_AT', this.createdAt)
-    this.$store.commit('page/SET_DESCRIPTION', this.description)
-    this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
-    this.$store.commit('page/SET_ID', this.pageId)
-    this.$store.commit('page/SET_LOCALE', this.locale)
-    this.$store.commit('page/SET_PATH', this.path)
-    this.$store.commit('page/SET_TAGS', this.tags)
-    this.$store.commit('page/SET_TITLE', this.title)
-    this.$store.commit('page/SET_UPDATED_AT', this.updatedAt)
+    this.$store.set('page/authorId', this.authorId)
+    this.$store.set('page/authorName', this.authorName)
+    this.$store.set('page/createdAt', this.createdAt)
+    this.$store.set('page/description', this.description)
+    this.$store.set('page/isPublished', this.isPublished)
+    this.$store.set('page/id', this.pageId)
+    this.$store.set('page/locale', this.locale)
+    this.$store.set('page/path', this.path)
+    this.$store.set('page/tags', this.tags)
+    this.$store.set('page/title', this.title)
+    this.$store.set('page/updatedAt', this.updatedAt)
 
-    this.$store.commit('page/SET_MODE', 'view')
+    this.$store.set('page/mode', 'view')
   },
   mounted () {
+    if (this.$vuetify.theme.dark) {
+      this.scrollStyle.bar.background = '#424242'
+    }
+
     // -> Check side navigation visibility
     this.handleSideNavVisibility()
     window.addEventListener('resize', _.debounce(() => {
@@ -420,12 +453,26 @@ export default {
     // -> Highlight Code Blocks
     Prism.highlightAllUnder(this.$refs.container)
 
-    // -> Handle anchor scrolling
-    this.$nextTick(() => {
-      if (window.location.hash && window.location.hash.length > 1) {
-        this.$vuetify.goTo(window.location.hash, this.scrollOpts)
-      }
+    // -> Render Mermaid diagrams
+    mermaid.mermaidAPI.initialize({
+      startOnLoad: true,
+      theme: this.$vuetify.theme.dark ? `dark` : `default`
+    })
 
+    // -> Handle anchor scrolling
+    if (window.location.hash && window.location.hash.length > 1) {
+      if (document.readyState === 'complete') {
+        this.$nextTick(() => {
+          this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+        })
+      } else {
+        window.addEventListener('load', () => {
+          this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+        })
+      }
+    }
+
+    this.$nextTick(() => {
       this.$refs.container.querySelectorAll(`a[href^="#"], a[href^="${window.location.href.replace(window.location.hash, '')}#"]`).forEach(el => {
         el.onclick = ev => {
           ev.preventDefault()
@@ -457,6 +504,9 @@ export default {
     },
     pageSource () {
       this.$root.$emit('pageSource')
+    },
+    pageDuplicate () {
+      this.$root.$emit('pageDuplicate')
     },
     pageMove () {
       this.$root.$emit('pageMove')

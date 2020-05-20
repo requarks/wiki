@@ -51,9 +51,9 @@
                   v-list-item(
                     :key='rdr.key'
                     @click='selectRenderer(rdr.key)'
-                    :class='currentRenderer.key === rdr.key ? (darkMode ? `grey darken-4-l4` : `blue lighten-5`) : ``'
+                    :class='currentRenderer.key === rdr.key ? ($vuetify.theme.dark ? `grey darken-4-l4` : `blue lighten-5`) : ``'
                     )
-                    v-list-item-avatar(size='24')
+                    v-list-item-avatar(size='24', tile)
                       v-icon(:color='currentRenderer.key === rdr.key ? "primary" : "grey"') {{rdr.icon}}
                     v-list-item-content
                       v-list-item-title {{rdr.title}}
@@ -126,7 +126,6 @@
 <script>
 import _ from 'lodash'
 import { DepGraph } from 'dependency-graph'
-import { get } from 'vuex-pathify'
 
 import { StatusIndicator } from 'vue-status-indicator'
 
@@ -143,9 +142,6 @@ export default {
       renderers: [],
       currentRenderer: {}
     }
-  },
-  computed: {
-    darkMode: get('site/dark')
   },
   watch: {
     renderers(newValue, oldValue) {
@@ -199,7 +195,13 @@ export default {
       query: renderersQuery,
       fetchPolicy: 'network-only',
       update: (data) => {
-        let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))}))
+        let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({
+          ...str,
+          config: _.sortBy(str.config.map(cfg => ({
+            ...cfg,
+            value: JSON.parse(cfg.value)
+          })), [t => t.value.order])
+        }))
         // Build tree
         const graph = new DepGraph({ circular: true })
         const rawCores = _.filter(renderers, ['dependsOn', null]).map(core => {

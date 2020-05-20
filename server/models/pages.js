@@ -214,8 +214,13 @@ module.exports = class Page extends Model {
    */
   static async createPage(opts) {
     // -> Validate path
-    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0) {
+    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.indexOf('\\') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
+    }
+
+    // -> Remove trailing slash
+    if (opts.path.endsWith('/')) {
+      opts.path = opts.path.slice(0, -1)
     }
 
     // -> Check for page access
@@ -350,6 +355,7 @@ module.exports = class Page extends Model {
 
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Update Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -397,10 +403,20 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageNotFound()
     }
 
+    // -> Validate path
+    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.indexOf('\\') >= 0) {
+      throw new WIKI.Error.PageIllegalPath()
+    }
+
+    // -> Remove trailing slash
+    if (opts.destinationPath.endsWith('/')) {
+      opts.destinationPath = opts.destinationPath.slice(0, -1)
+    }
+
     // -> Check for source page access
     if (!WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
-      locale: page.sourceLocale,
-      path: page.sourcePath
+      locale: page.localeCode,
+      path: page.path
     })) {
       throw new WIKI.Error.PageMoveForbidden()
     }
@@ -436,7 +452,8 @@ module.exports = class Page extends Model {
       localeCode: opts.destinationLocale,
       hash: destinationHash
     }).findById(page.id)
-    await WIKI.models.pages.deletePageFromCache(page)
+    await WIKI.models.pages.deletePageFromCache(page.hash)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
     await WIKI.models.pages.rebuildTree()
@@ -512,7 +529,8 @@ module.exports = class Page extends Model {
 
     // -> Delete page
     await WIKI.models.pages.query().delete().where('id', page.id)
-    await WIKI.models.pages.deletePageFromCache(page)
+    await WIKI.models.pages.deletePageFromCache(page.hash)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
     await WIKI.models.pages.rebuildTree()
@@ -609,7 +627,8 @@ module.exports = class Page extends Model {
       affectedHashes = qryHashes.map(h => h.hash)
     }
     for (const hash of affectedHashes) {
-      await WIKI.models.pages.deletePageFromCache({ hash })
+      await WIKI.models.pages.deletePageFromCache(hash)
+      WIKI.events.outbound.emit('deletePageFromCache', hash)
     }
   }
 
@@ -801,12 +820,11 @@ module.exports = class Page extends Model {
   /**
    * Delete an Existing Page from Cache
    *
-   * @param {Object} page Page Model Instance
-   * @param {string} page.hash Hash of the Page
+   * @param {String} page Page Unique Hash
    * @returns {Promise} Promise with no value
    */
-  static async deletePageFromCache(page) {
-    return fs.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`))
+  static async deletePageFromCache(hash) {
+    return fs.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${hash}.bin`))
   }
 
   /**
@@ -852,5 +870,17 @@ module.exports = class Page extends Model {
       .replace(/(\r\n|\n|\r)/gm, ' ')
       .replace(/\s\s+/g, ' ')
       .split(' ').filter(w => w.length > 1).join(' ').toLowerCase()
+  }
+
+  /**
+   * Subscribe to HA propagation events
+   */
+  static subscribeToEvents() {
+    WIKI.events.inbound.on('deletePageFromCache', hash => {
+      WIKI.models.pages.deletePageFromCache(hash)
+    })
+    WIKI.events.inbound.on('flushCache', () => {
+      WIKI.models.pages.flushCache()
+    })
   }
 }

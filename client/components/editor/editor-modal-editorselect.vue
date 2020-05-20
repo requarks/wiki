@@ -106,43 +106,27 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.teal.animated.fadeInUp(
+                  v-card.radius-7.animated.fadeInUp(
                     hover
                     light
                     ripple
                     )
-                    v-card-text.text-center(@click='')
+                    v-card-text.text-center(@click='fromTemplate')
                       img(src='/svg/icon-cube.svg', alt='From Template', style='width: 42px; opacity: .5;')
-                      .body-2.mt-1.teal--text.text--lighten-2 From Template
-                      .caption.teal--text.text--lighten-1 Use an existing page / tree
-                    v-fade-transition
-                      v-overlay(
-                        v-if='hover'
-                        absolute
-                        color='teal'
-                        opacity='.8'
-                        )
-                        .body-2.mt-7 Coming Soon
+                      .body-2.mt-1.teal--text From Template
+                      .caption.grey--text Use an existing page...
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.teal.animated.fadeInUp.wait-p1s(
+                  v-card.radius-7.animated.fadeInUp.wait-p1s(
                     hover
                     light
                     ripple
                     )
-                    v-card-text.text-center(@click='')
-                      img(src='/svg/icon-tree-structure.svg', alt='Tree View', style='width: 42px; opacity: .5;')
-                      .body-2.mt-1.teal--text.text--lighten-2 Tree View
-                      .caption.teal--text.text--lighten-1 List children pages
-                    v-fade-transition
-                      v-overlay(
-                        v-if='hover'
-                        absolute
-                        color='teal'
-                        opacity='.8'
-                        )
-                        .body-2.mt-7 Coming Soon
+                    v-card-text.text-center(@click='selectEditor("redirect")')
+                      img(src='/svg/icon-route.svg', alt='Redirection', style='width: 42px; opacity: .5;')
+                      .body-2.mt-1.teal--text Redirection
+                      .caption.grey--text Redirect the user to...
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
@@ -190,11 +174,13 @@
               opacity='.8'
               )
               .body-2 Coming Soon
+
+    page-selector(mode='select', v-model='templateDialogIsShown', :open-handler='fromTemplateHandle', :path='path', :locale='locale', must-exist)
 </template>
 
 <script>
 import _ from 'lodash'
-import { sync } from 'vuex-pathify'
+import { sync, get } from 'vuex-pathify'
 
 export default {
   props: {
@@ -204,22 +190,36 @@ export default {
     }
   },
   data() {
-    return { }
+    return {
+      templateDialogIsShown: false
+    }
   },
   computed: {
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    currentEditor: sync('editor/editor')
+    currentEditor: sync('editor/editor'),
+    locale: get('page/locale'),
+    path: get('page/path')
   },
   methods: {
-    selectEditor(name) {
+    selectEditor (name) {
       this.currentEditor = `editor${_.startCase(name)}`
       this.isShown = false
     },
-    goBack() {
+    goBack () {
       window.history.go(-1)
+    },
+    fromTemplate () {
+      this.templateDialogIsShown = true
+    },
+    fromTemplateHandle ({ id }) {
+      this.templateDialogIsShown = false
+      this.isShown = false
+      this.$nextTick(() => {
+        window.location.assign(`/e/${this.locale}/${this.path}?from=${id}`)
+      })
     }
   }
 }

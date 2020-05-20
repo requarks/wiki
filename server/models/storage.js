@@ -152,11 +152,11 @@ module.exports = class Storage extends Model {
           }
 
           // -> Set internal recurring sync job
-          if (targetDef.intervalSchedule && targetDef.intervalSchedule !== `P0D`) {
+          if (targetDef.internalSchedule && targetDef.internalSchedule !== `P0D`) {
             WIKI.scheduler.registerJob({
               name: `sync-storage`,
               immediate: false,
-              schedule: target.intervalSchedule,
+              schedule: target.internalSchedule,
               repeat: true
             }, target.key)
           }
