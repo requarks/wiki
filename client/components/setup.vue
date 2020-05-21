@@ -104,6 +104,7 @@
 import _ from 'lodash'
 import validate from 'validate.js'
 import { BreedingRhombusSpinner } from 'epic-spinners'
+import confetti from 'canvas-confetti'
 
 /* global siteConfig */
 
@@ -206,6 +207,11 @@ export default {
 
           if (resp.ok === true) {
             _.delay(() => {
+              confetti({
+                particleCount: 100,
+                spread: 70,
+                zIndex: 100000
+              })
               this.success = true
               _.delay(() => {
                 window.location.assign('/login')

@@ -217,6 +217,7 @@
     "babel-plugin-prismjs": "2.0.1",
     "babel-plugin-transform-imports": "2.0.0",
     "cache-loader": "4.1.0",
+    "canvas-confetti": "1.2.0",
     "chart.js": "2.9.3",
     "clean-webpack-plugin": "3.0.0",
     "clipboard": "2.0.6",
