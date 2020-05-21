@@ -95,7 +95,9 @@
                               :class='(navItem === current) ? "blue" : ""'
                               @click='selectItem(navItem)'
                               )
-                              v-list-item-avatar(size='24', tile): v-icon {{navItem.icon}}
+                              v-list-item-avatar(size='24', tile)
+                                v-icon(v-if='navItem.icon.match(/fa[a-z] fa-/)', size='19') {{ navItem.icon }}
+                                v-icon(v-else) {{ navItem.icon }}
                               v-list-item-title {{navItem.label}}
                             .py-2.clickable(
                               v-else-if='navItem.kind === "divider"'
