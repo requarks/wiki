@@ -16,6 +16,14 @@ extend type Mutation {
 
 type CommentQuery {
   providers: [CommentProvider] @auth(requires: ["manage:system"])
+
+  list(
+    pageId: Int!
+  ): [CommentPost]! @auth(requires: ["read:comments", "manage:system"])
+
+  single(
+    id: Int!
+  ): CommentPost @auth(requires: ["read:comments", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -27,7 +35,16 @@ type CommentMutation {
     providers: [CommentProviderInput]
   ): DefaultResponse @auth(requires: ["manage:system"])
 
-  rebuildIndex: DefaultResponse @auth(requires: ["manage:system"])
+  create(
+    pageId: Int!
+    replyTo: Int
+    content: String!
+  ): DefaultResponse @auth(requires: ["write:comments", "manage:system"])
+
+  update(
+    id: Int!
+    content: String!
+  ): DefaultResponse @auth(requires: ["write:comments", "manage:comments", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -49,4 +66,16 @@ input CommentProviderInput {
   isEnabled: Boolean!
   key: String!
   config: [KeyValuePairInput]
+}
+
+type CommentPost {
+  id: Int!
+  content: String!
+  render: String!
+  authorId: Int!
+  authorName: String!
+  authorEmail: String! @auth(requires: ["manage:system"])
+  authorIP: String! @auth(requires: ["manage:system"])
+  createdAt: Date!
+  updatedAt: Date!
 }
