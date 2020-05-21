@@ -25,7 +25,7 @@
                         .body-2 {{ext.description}}
                         v-divider.my-4
                         .body-2
-                          strong.mr-2 This extensions is
+                          strong.mr-2 This extension is
                           v-chip.mr-2(v-if='ext.isCompatible', label, outlined, small, color='success') compatible
                           v-chip.mr-2(v-else, label, small, color='error') not compatible
                           strong with your host.
