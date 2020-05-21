@@ -29,7 +29,7 @@
             v-btn.px-5(value='rradial')
               v-icon(left, :color='graphMode === `rradial` ? `primary` : `grey darken-3`') mdi-blur-radial
               span.text-none Relational Radial
-        .admin-pages-visualize-svg.pa-10(ref='svgContainer')
+        .admin-pages-visualize-svg(ref='svgContainer', v-show='pages.length >= 1')
         v-alert(v-if='pages.length < 1', outlined, type='warning', style='max-width: 650px; margin: 0 auto;') Looks like there's no data yet to graph!
 </template>
 
@@ -64,10 +64,9 @@ export default {
       const id = d.data.id
       if (id) {
         if (d3.event.ctrlKey || d3.event.metaKey) {
-          const { href } = this.$router.resolve(String(id));
-          window.open(href, '_blank');
-        }
-        else {
+          const { href } = this.$router.resolve(String(id))
+          window.open(href, '_blank')
+        } else {
           this.$router.push(String(id))
         }
       }
@@ -107,7 +106,7 @@ export default {
           Object.entries(_.groupBy(descendants, page => truncatePath(page.path)))
             .map(([childPath, descendantsGroup]) => [getPage(childPath), descendantsGroup])
             .map(([child, descendantsGroup]) =>
-              [child, _.filter(descendantsGroup, d => d.path != child.path)])
+              [child, _.filter(descendantsGroup, d => d.path !== child.path)])
         return {
           ...parent,
           children: descendantsByChild.map(_.partial(recurse, depth + 1))
@@ -293,6 +292,7 @@ export default {
         g.attr('transform', d3.event.transform)
       }))
 
+      // eslint-disable-next-line no-unused-vars
       const link = g.append('g')
         .attr('fill', 'none')
         .attr('stroke', this.$vuetify.theme.dark ? 'white' : '#555')
@@ -394,7 +394,8 @@ export default {
 <style lang='scss'>
 .admin-pages-visualize-svg {
   text-align: center;
-  height: 78vh;  // fit to height; no vertical scroll
+  // 100vh - header - title section - footer - content padding
+  height: calc(100vh - 64px - 92px - 32px - 16px);
 
   > svg {
     height: 100%;
