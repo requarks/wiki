@@ -56,7 +56,7 @@
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
-          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', align-self-start, style='margin-top: -90px; position: sticky; top: 70px;')
+          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp')
             v-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
@@ -601,6 +601,20 @@ export default {
   .v-breadcrumbs__divider:nth-child(2) {
     padding: 0 6px 0 12px;
   }
+}
+
+.page-col-sd {
+  margin-top: -90px;
+  align-self: flex-start;
+  position: sticky;
+  top: 64px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  -ms-overflow-style: none;
+}
+
+.page-col-sd::-webkit-scrollbar {
+  display: none;
 }
 
 </style>
