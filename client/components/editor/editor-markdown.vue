@@ -825,6 +825,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       @include until($tablet) {
         height: $editor-height-mobile;
       }
+
+      p.line {
+        overflow-wrap: break-word;
+      }
     }
   }
 
@@ -913,6 +917,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     .cm-header-6 {
       font-size: 1.025rem;
     }
+  }
+
+  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
+    word-break: break-word;
   }
 
   .CodeMirror-focused .cm-matchhighlight {
