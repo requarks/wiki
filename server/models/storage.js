@@ -203,7 +203,7 @@ module.exports = class Storage extends Model {
     try {
       const target = _.find(this.targets, ['key', targetKey])
       if (target) {
-        if (_.has(target.fn, handler)) {
+        if (_.hasIn(target.fn, handler)) {
           await target.fn[handler]()
         } else {
           throw new Error('Invalid Handler for Storage Target')
