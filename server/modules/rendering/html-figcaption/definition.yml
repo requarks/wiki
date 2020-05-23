@@ -1,0 +1,21 @@
+key: htmlFigcaption
+title: Figures with Captions
+description: Use class ".caption" in paragraphs below an image to render image as figure with integrated caption. Optionally float the figure by adding classes ".left" or ".right".
+author: despens
+icon: mdi-tooltip-image
+enabledDefault: true
+dependsOn: htmlCore
+props:
+  images:
+    type: Boolean
+    title: Caption images
+    default: true
+    hint: Enable captioning for regular images.
+    order: 1
+  enumerate:
+    type: Boolean
+    title: Enumerate captions
+    default: false
+    hint: Automatically add numbers to captions
+    order: 99
+
