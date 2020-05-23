@@ -15,7 +15,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px; opacity: .5;')
+                      img(src='/_assets/svg/editor-icon-api.svg', alt='API', style='width: 36px; opacity: .5;')
                       .body-2.blue--text.mt-2.text--lighten-2 API Docs
                       .caption.blue--text.text--lighten-1 REST / GraphQL
                     v-fade-transition
@@ -35,7 +35,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px; opacity: .5;')
+                      img(src='/_assets/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px; opacity: .5;')
                       .body-2.blue--text.mt-2.text--lighten-2 Blog
                       .caption.blue--text.text--lighten-1 Timeline of Posts
                     v-fade-transition
@@ -53,7 +53,7 @@
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("code")')
-                  img(src='/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
+                  img(src='/_assets/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
                   .body-2.primary--text.mt-2 Code
                   .caption.grey--text Raw HTML
             v-flex(xs4)
@@ -63,7 +63,7 @@
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("markdown")')
-                  img(src='/svg/editor-icon-markdown.svg', alt='Markdown', style='width: 36px;')
+                  img(src='/_assets/svg/editor-icon-markdown.svg', alt='Markdown', style='width: 36px;')
                   .body-2.primary--text.mt-2 Markdown
                   .caption.grey--text Plain Text Formatting
             v-flex(xs4)
@@ -75,7 +75,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-tabular.svg', alt='Tabular', style='width: 36px; opacity: .5;')
+                      img(src='/_assets/svg/editor-icon-tabular.svg', alt='Tabular', style='width: 36px; opacity: .5;')
                       .body-2.blue--text.mt-2.text--lighten-2 Tabular
                       .caption.blue--text.text--lighten-1 Excel-like
                     v-fade-transition
@@ -93,7 +93,7 @@
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("ckeditor")')
-                  img(src='/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
+                  img(src='/_assets/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
                   .body-2.mt-2.primary--text Visual Editor
                   .caption.grey--text Rich-text WYSIWYG
         .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}

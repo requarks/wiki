@@ -8,31 +8,36 @@
             .headline.blue--text.text--darken-2.animated.fadeInLeft Users
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage users
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', large, @click='refresh')
+          v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', icon, @click='refresh')
             v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser')
             v-icon(left) mdi-plus
             span New User
-        v-card.wiki-form.mt-3.animated.fadeInUp
-          v-toolbar(flat, :color='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
-            v-spacer
+        v-card.mt-3.animated.fadeInUp
+          .pa-2.d-flex.align-center(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
             v-text-field(
-              outlined
+              solo
+              flat
               v-model='search'
               prepend-inner-icon='mdi-account-search-outline'
               label='Search Users...'
               hide-details
+              style='max-width: 400px;'
+              dense
               )
-            v-select.ml-2(
-              outlined
+            v-spacer
+            v-select(
+              solo
+              flat
               hide-details
               label='Identity Provider'
               :items='strategies'
               v-model='filterStrategy'
               item-text='title'
               item-value='key'
+              style='max-width: 300px;'
+              dense
             )
-            v-spacer
           v-divider
           v-data-table(
             v-model='selected'
@@ -172,7 +177,7 @@ export default {
       update: (data) => {
         return _.concat({
           key: 'all',
-          title: 'All'
+          title: 'All Providers'
         }, data.authentication.strategies)
       },
       watchLoading (isLoading) {

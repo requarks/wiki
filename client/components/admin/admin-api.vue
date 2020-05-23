@@ -15,9 +15,9 @@
             status-indicator.mr-3(negative, pulse)
             .caption.red--text.animated.fadeInLeft {{$t('admin:api.disabled')}}
           v-spacer
-          v-btn.mr-3.animated.fadeInDown.wait-p2s(outlined, color='grey', large, @click='refresh')
+          v-btn.mr-3.animated.fadeInDown.wait-p2s(outlined, color='grey', icon, @click='refresh')
             v-icon mdi-refresh
-          v-btn.mr-3.animated.fadeInDown.wait-p1s(:color='enabled ? `red` : `green`', depressed, large, @click='globalSwitch', dark, :loading='isToggleLoading')
+          v-btn.mr-3.animated.fadeInDown.wait-p1s(:color='enabled ? `red` : `green`', depressed, @click='globalSwitch', dark, :loading='isToggleLoading')
             v-icon(left) mdi-power
             span(v-if='!enabled') {{$t('admin:api.enableButton')}}
             span(v-else) {{$t('admin:api.disableButton')}}

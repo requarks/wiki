@@ -8,7 +8,7 @@
             .headline.primary--text.animated.fadeInLeft {{$t('tags.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('tags.subtitle')}}
           v-spacer
-          v-btn.animated.fadeInDown(outlined, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown(outlined, color='grey', @click='refresh', icon)
             v-icon mdi-refresh
         v-container.pa-0.mt-3(fluid, grid-list-lg)
           v-layout(row)

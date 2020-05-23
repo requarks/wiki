@@ -8,6 +8,8 @@
             .headline.blue--text.text--darken-2.animated.fadeInLeft {{$t('admin:users.edit')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{user.name}}
           v-spacer
+          i18next.pr-4.caption.grey--text.animated.fadeInDown(path='admin:users.id', tag='div')
+            strong(place='id') {{user.id}}
           template(v-if='user.isActive')
             status-indicator.mr-3(positive, pulse)
             .caption.green--text {{$t('admin:users.active')}}
@@ -21,14 +23,11 @@
             status-indicator.mr-3.ml-4(intermediary, pulse)
             .caption.deep-orange--text {{$t('admin:users.unverified')}}
           v-spacer
-          i18next.caption.grey--text.animated.fadeInRight.wait-p5s(path='admin:users.id', tag='div')
-            strong(place='id') {{user.id}}
-          v-divider.animated.fadeInRight.wait-p4s.ml-3(vertical)
-          v-btn.ml-3.animated.fadeInDown.wait-p3s(color='grey', large, outlined, to='/users')
+          v-btn.ml-3.animated.fadeInDown.wait-p3s(color='grey', icon, outlined, to='/users')
             v-icon mdi-arrow-left
           v-menu(offset-y, origin='top right')
             template(v-slot:activator='{ on }')
-              v-btn.ml-3.animated.fadeInDown.wait-p2s(color='indigo', v-on='on', large, depressed, dark)
+              v-btn.ml-3.animated.fadeInDown.wait-p2s(color='black', v-on='on', depressed, dark)
                 span Actions
                 v-icon(right) mdi-chevron-down
             v-list(dense, nav)

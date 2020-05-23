@@ -8,9 +8,11 @@
             .headline.primary--text.animated.fadeInLeft {{$t('admin:comments.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:comments.subtitle')}}
           v-spacer
-          v-btn.mx-1.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/comments', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.mx-3.animated.fadeInDown.wait-p2s(icon, outlined, color='grey', @click='refresh')
             v-icon mdi-refresh
-          v-btn.ml-1.animated.fadeInDown(color='success', @click='save', depressed, large)
+          v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
