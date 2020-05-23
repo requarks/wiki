@@ -83,7 +83,7 @@
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
                   span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
-                v-chip.mr-1(
+                v-chip.mr-1.mb-1(
                   label
                   :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   :href='`/t/` + tags.map(t => t.tag).join(`/`)'
@@ -92,14 +92,14 @@
 
             v-card.mb-5(v-if='commentsEnabled')
               .pa-5
-                .overline.pb-2.pink--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-4`')
+                .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
                   span Talk
                   v-spacer
                   v-chip.text-center(
                     v-if='!commentsExternal'
                     label
                     x-small
-                    :color='$vuetify.theme.dark ? `pink darken-3` : `pink darken-4`'
+                    :color='$vuetify.theme.dark ? `blue-grey darken-3` : `blue-grey darken-2`'
                     dark
                     style='min-width: 50px; justify-content: center;'
                     )
@@ -107,12 +107,12 @@
                 .d-flex
                   v-btn.text-none(
                     @click='goToComments()'
-                    :color='$vuetify.theme.dark ? `pink` : `pink darken-3`'
+                    :color='$vuetify.theme.dark ? `blue-grey` : `blue-grey darken-2`'
                     outlined
                     style='flex: 1 1 100%;'
                     small
                     )
-                    span.pink--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-4`') View Discussion
+                    span.blue-grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') View Discussion
                   v-tooltip(right, v-if='isAuthenticated')
                     template(v-slot:activator='{ on }')
                       v-btn.ml-2(
@@ -120,9 +120,9 @@
                         v-on='on'
                         outlined
                         small
-                        :color='$vuetify.theme.dark ? `pink` : `pink darken-3`'
+                        :color='$vuetify.theme.dark ? `blue-grey` : `blue-grey darken-2`'
                         )
-                        v-icon(:color='$vuetify.theme.dark ? `pink lighten-1` : `pink darken-4`', dense) mdi-comment-plus
+                        v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-1` : `blue-grey darken-2`', dense) mdi-comment-plus
                     span New Comment
 
             v-card.mb-5
@@ -262,7 +262,11 @@
             .contents(ref='container')
               slot(name='contents')
             .comments-container#discussion
-              slot(name='comments')
+              .comments-header
+                v-icon.mr-2(dark) mdi-comment-text-outline
+                span Comments
+              .comments-main
+                slot(name='comments')
     nav-footer
     notify
     search-results

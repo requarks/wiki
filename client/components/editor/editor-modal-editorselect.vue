@@ -118,15 +118,16 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.animated.fadeInUp.wait-p1s(
+                  v-card.radius-7.teal.animated.fadeInUp.wait-p1s(
                     hover
                     light
                     ripple
                     )
-                    v-card-text.text-center(@click='selectEditor("redirect")')
+                    //- v-card-text.text-center(@click='selectEditor("redirect")')
+                    v-card-text.text-center(@click='')
                       img(src='/_assets/svg/icon-route.svg', alt='Redirection', style='width: 42px; opacity: .5;')
-                      .body-2.mt-1.teal--text Redirection
-                      .caption.grey--text Redirect the user to...
+                      .body-2.mt-1.teal--text.text--lighten-2 Redirection
+                      .caption.teal--text.text--lighten-1 Redirect the user to...
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')

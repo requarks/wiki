@@ -32,6 +32,9 @@ module.exports = {
           }, []), 'key')
         }
       })
+    },
+    async list (obj, args, context) {
+      return []
     }
   },
   CommentMutation: {
