@@ -53,6 +53,13 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(favicon(path.join(WIKI.ROOTPATH, 'assets', 'favicon.ico')))
+  app.use('/_assets/svg/twemoji', async (req, res, next) => {
+    try {
+      WIKI.asar.serve('twemoji', req, res, next)
+    } catch (err) {
+      res.sendStatus(404)
+    }
+  })
   app.use('/_assets', express.static(path.join(WIKI.ROOTPATH, 'assets'), {
     index: false,
     maxAge: '7d'

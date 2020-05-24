@@ -41,6 +41,7 @@ module.exports = {
         outbound: new EventEmitter()
       }
       WIKI.extensions = require('./extensions')
+      WIKI.asar = require('./asar')
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
@@ -113,6 +114,9 @@ module.exports = {
     }
     if (WIKI.scheduler) {
       WIKI.scheduler.stop()
+    }
+    if (WIKI.asar) {
+      await WIKI.asar.unload()
     }
     if (WIKI.servers) {
       await WIKI.servers.stopServers()
