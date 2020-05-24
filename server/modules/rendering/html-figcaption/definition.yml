@@ -1,6 +1,6 @@
 key: htmlFigcaption
 title: Figures with Captions
-description: Use class ".caption" in paragraphs below an image to render image as figure with integrated caption. Optionally float the figure by adding classes ".left" or ".right".
+description: Render floating figures
 author: despens
 icon: mdi-tooltip-image
 enabledDefault: true
@@ -17,5 +17,11 @@ props:
     title: Enumerate captions
     default: false
     hint: Automatically add numbers to captions
+    order: 98
+  enumerate_prefix:
+    type: String
+    title: Enumeration prefix
+    default: "Fig. "
+    hint: String for naming enumerated figures, such as "Figure", "Fig.", "Abbildung"
     order: 99
 

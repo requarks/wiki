@@ -18,7 +18,7 @@ module.exports = {
     // a single figureable element, the current
     // paragraph's text will be used as a caption
     // for the figurable.
-    $('p.caption').each((idx, elm) => {
+    $('p.figcaption').each((idx, elm) => {
       let figurable_elm, caption_elm, replace_elm
 
       let transform = false
@@ -31,11 +31,11 @@ module.exports = {
           .append(elm.contents())
         replace_elm = elm
         transform = true
-      }
+
       // figurable to be captioned is in the paragraph above
-      else {
+      } else {
         let prev = elm.prev('p')
-        if (prev.text().trim().length == 0) {
+        if (prev.text().trim().length === 0) {
           figurable_elm = prev.children(figurable_selector)
           caption_elm = $('<figcaption>')
             .append(elm.contents())
@@ -46,13 +46,13 @@ module.exports = {
       }
 
       if (transform) {
-        elm.removeClass('caption')
+        elm.removeClass('figcaption')
         let wrapper_elm = $('<div>')
           .attr('class', elm.attr('class'))
           .addClass('illustration')
 
         if (config.enumerate) {
-          caption_elm.prepend(`<label>Fig ${idx + 1}: </label>`)
+          caption_elm.prepend(`<label>${config.enumerate_prefix}${idx + 1}: </label>`)
         }
 
         let figure = $('<figure>')
