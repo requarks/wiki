@@ -406,7 +406,9 @@ module.exports = class Page extends Model {
     }
 
     // -> Update page
-    await WIKI.models.pages.query().patch({
+    const contentType = _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, ogPage.contentType)
+    const contentTypeChanged = contentType !== ogPage.contentType;
+    const patch = {
       authorId: opts.user.id,
       content: opts.content,
       description: opts.description,
@@ -419,8 +421,37 @@ module.exports = class Page extends Model {
         js: scriptJs,
         css: scriptCss
       })
-    }).where('id', ogPage.id)
+    }
+    if (!contentTypeChanged) {
+      patch.editorKey = opts.editor
+      patch.contentType = contentType
+    }
+    await WIKI.models.pages.query().patch(patch).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
+
+    // -> Convert content to new type
+    if (contentTypeChanged) {
+      try {
+        const convertJob = await WIKI.scheduler.registerJob({
+          name: 'convert-type',
+          immediate: true,
+          worker: true
+        }, JSON.stringify({
+          id: page.id,
+          fromType: ogPage.contentType,
+          toType: contentType
+        }))
+        await convertJob.finished
+        await WIKI.models.pages.query().patch({
+          editorKey: opts.editor,
+          contentType,
+        }).where('id', page.id)
+        page = await WIKI.models.pages.getPageFromDb(page.id)
+      } catch (e) {
+        WIKI.logger.error(`Converting page ID ${page.id} type: [ FAILED ]`)
+        WIKI.logger.error(err.message)
+      }
+    }
 
     // -> Save Tags
     await WIKI.models.tags.associateTags({ tags: opts.tags, page })
@@ -436,6 +467,21 @@ module.exports = class Page extends Model {
 
     // -> Update on Storage
     if (!opts.skipStorage) {
+      if (contentTypeChanged) {
+        await WIKI.models.storage.pageEvent({
+          event: 'renamed',
+          page: {
+            ...page,
+            destinationPath: page.path,
+            destinationLocaleCode: page.localeCode,
+            destinationHash: page.hash,
+            moveAuthorId: opts.user.id,
+            moveAuthorName: opts.user.name,
+            moveAuthorEmail: opts.user.email,
+            sourceContentType: ogPage.contentType,
+          }
+        })
+      }
       await WIKI.models.storage.pageEvent({
         event: 'updated',
         page

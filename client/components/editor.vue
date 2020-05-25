@@ -46,7 +46,7 @@
         v-divider.ml-3(vertical)
     v-content
       component(:is='currentEditor', :save='save')
-      editor-modal-properties(v-model='dialogProps')
+      editor-modal-properties(v-model='dialogProps' v-on:editor_changed="saveAndRefresh")
       editor-modal-editorselect(v-model='dialogEditorSelector')
       editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
       component(:is='activeModal')
@@ -506,6 +506,10 @@ export default {
       } catch (err) {
         // Error is already handled
       }
+    },
+    async saveAndRefresh() {
+      await this.save({ rethrow: true })
+      window.location.reload()
     },
     async exit() {
       if (this.isDirty) {
