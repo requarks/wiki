@@ -39,12 +39,18 @@ type CommentMutation {
     pageId: Int!
     replyTo: Int
     content: String!
+    guestName: String
+    guestEmail: String
   ): DefaultResponse @auth(requires: ["write:comments", "manage:system"])
 
   update(
     id: Int!
     content: String!
   ): DefaultResponse @auth(requires: ["write:comments", "manage:comments", "manage:system"])
+
+  delete(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:comments", "manage:system"])
 }
 
 # -----------------------------------------------

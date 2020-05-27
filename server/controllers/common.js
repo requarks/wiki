@@ -447,12 +447,24 @@ router.get('/*', async (req, res, next) => {
             })
           }
 
+          // -> Comments Permissions
+          const commentsPermissions = WIKI.config.features.featurePageComments ? {
+            read: WIKI.auth.checkAccess(req.user, ['read:comments'], pageArgs),
+            write: WIKI.auth.checkAccess(req.user, ['write:comments'], pageArgs),
+            manage: WIKI.auth.checkAccess(req.user, ['manage:comments'], pageArgs)
+          } : {
+            read: false,
+            write: false,
+            manage: false
+          }
+
           // -> Render view
           res.render('page', {
             page,
             sidebar,
             injectCode,
-            comments: WIKI.data.commentProvider
+            comments: WIKI.data.commentProvider,
+            commentsPermissions
           })
         }
       } else if (pageArgs.path === 'home') {

@@ -15,9 +15,9 @@ const state = {
   title: '',
   updatedAt: '',
   mode: '',
-  comments: {
-    view: false,
-    post: false,
+  commentsPermissions: {
+    read: false,
+    write: false,
     manage: false
   },
   commentsCount: 0

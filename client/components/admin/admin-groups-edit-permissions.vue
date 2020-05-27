@@ -126,7 +126,7 @@ export default {
               permission: 'write:comments',
               hint: 'Can post new comments, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: true,
+              restrictedForSystem: false,
               disabled: false
             },
             {

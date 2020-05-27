@@ -90,7 +90,7 @@
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
-            v-card.mb-5(v-if='commentsEnabled')
+            v-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
                 .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
                   span Talk
@@ -113,7 +113,7 @@
                     small
                     )
                     span.blue-grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') View Discussion
-                  v-tooltip(right, v-if='isAuthenticated')
+                  v-tooltip(right, v-if='commentsPerms.write')
                     template(v-slot:activator='{ on }')
                       v-btn.ml-2(
                         @click='goToComments(true)'
@@ -261,7 +261,7 @@
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
-            .comments-container#discussion
+            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
               .comments-header
                 v-icon.mr-2(dark) mdi-comment-text-outline
                 span Comments
@@ -446,6 +446,7 @@ export default {
   computed: {
     isAuthenticated: get('user/authenticated'),
     commentsCount: get('page/commentsCount'),
+    commentsPerms: get('page/commentsPermissions'),
     rating: {
       get () {
         return 3.5
@@ -491,7 +492,7 @@ export default {
     this.$store.set('page/title', this.title)
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.commentsPermissions) {
-      this.$store.set('page/comments', JSON.parse(atob(this.commentsPermissions)))
+      this.$store.set('page/commentsPermissions', JSON.parse(atob(this.commentsPermissions)))
     }
 
     this.$store.set('page/mode', 'view')

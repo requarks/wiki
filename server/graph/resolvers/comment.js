@@ -11,6 +11,9 @@ module.exports = {
     async comments() { return {} }
   },
   CommentQuery: {
+    /**
+     * Fetch list of Comments Providers
+     */
     async providers(obj, args, context, info) {
       const providers = await WIKI.models.commentProviders.getProviders()
       return providers.map(provider => {
@@ -33,11 +36,33 @@ module.exports = {
         }
       })
     },
+    /**
+     * Fetch list of comments for a page
+     */
     async list (obj, args, context) {
       return []
     }
   },
   CommentMutation: {
+    /**
+     * Create New Comment
+     */
+    async create (obj, args, context) {
+      try {
+        // WIKI.data.commentProvider.create({
+        //   ...args,
+        //   user: context.req.user
+        // })
+        return {
+          responseResult: graphHelper.generateSuccess('New comment posted successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Update Comments Providers
+     */
     async updateProviders(obj, args, context) {
       try {
         for (let provider of args.providers) {
