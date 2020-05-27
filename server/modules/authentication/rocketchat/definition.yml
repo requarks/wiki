@@ -2,8 +2,8 @@ key: rocketchat
 title: Rocket.Chat
 description: Authenticate via your Rocket.Chat installation
 author: joachim@dilab.co
-logo: https://avatars1.githubusercontent.com/u/12508788?s=200&v=4
-color: indigo darken-4
+logo: https://xcamp.co/rocketchat.svg
+color: white
 website: https://rocket.chat
 isAvailable: true
 useForm: false
