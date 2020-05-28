@@ -530,12 +530,13 @@ export default {
       }
     }
 
+    // -> Handle anchor links within the page contents
     this.$nextTick(() => {
       this.$refs.container.querySelectorAll(`a[href^="#"], a[href^="${window.location.href.replace(window.location.hash, '')}#"]`).forEach(el => {
         el.onclick = ev => {
           ev.preventDefault()
           ev.stopPropagation()
-          this.$vuetify.goTo(ev.target.hash, this.scrollOpts)
+          this.$vuetify.goTo(decodeURIComponent(ev.target.hash), this.scrollOpts)
         }
       })
     })
