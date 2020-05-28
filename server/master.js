@@ -41,6 +41,12 @@ module.exports = async () => {
   // Security
   // ----------------------------------------
 
+  // strip all repeating / in req.url to prevent open redirect
+  app.use(function (req, res, next) {
+    req.url = req.url.replace(/(\/)(?=\/*\1)/g, "");
+    next()
+  })
+
   app.use(mw.security)
   app.use(cors(WIKI.config.cors))
   app.options('*', cors(WIKI.config.cors))
