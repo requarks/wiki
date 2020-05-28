@@ -16,5 +16,4 @@ ssl:
   domain: $(LETSENCRYPT_DOMAIN)
   subscriberEmail: $(LETSENCRYPT_EMAIL)
 logLevel: info
-offline: $(OFFLINE)
 ha: $(HA_ACTIVE)
