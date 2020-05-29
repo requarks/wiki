@@ -11,7 +11,7 @@ keywords:
   - reference
   - editor
 home: https://wiki.js.org
-icon: https://github.com/Requarks/wiki/raw/master/client/static/favicons/android-icon-192x192.png
+icon: https://github.com/Requarks/wiki/raw/master/client/static/favicons/android-chrome-192x192.png
 sources:
   - https://github.com/Requarks/wiki
 maintainers:
