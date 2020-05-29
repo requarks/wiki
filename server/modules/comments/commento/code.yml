@@ -1,0 +1,12 @@
+main: |
+  <div id="commento"></div>
+body: |
+  <script>
+    window.onload = function() {
+      var d = document, s = d.createElement('script');
+      s.src = '{{instanceUrl}}/js/commento.js';
+      s.defer = true
+      s.setAttribute('data-auto-init', true);
+      (d.head || d.body).appendChild(s);
+    };
+  </script>

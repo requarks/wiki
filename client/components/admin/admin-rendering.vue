@@ -3,11 +3,14 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-process.svg', alt='Rendering', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text.animated.fadeInLeft Rendering
+            .headline.primary--text.animated.fadeInLeft {{ $t('admin:rendering.title') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:rendering.subtitle') }}
           v-spacer
-          v-btn.mx-3.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/rendering', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.mx-3.animated.fadeInDown.wait-p2s(icon, outlined, color='grey', @click='refresh')
             v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) mdi-check
@@ -15,7 +18,7 @@
 
       v-flex.animated.fadeInUp(lg3, xs12)
         v-toolbar(
-          color='primary'
+          color='blue darken-2'
           dense
           flat
           dark
@@ -66,7 +69,7 @@
       v-flex(lg9, xs12)
         v-card.wiki-form.animated.fadeInUp
           v-toolbar(
-            color='grey darken-1'
+            color='indigo'
             dark
             flat
             dense
@@ -82,6 +85,16 @@
               hide-details
               inset
               )
+          v-card-text.py-2.pl-4
+            .body-2.pt-3 {{currentRenderer.description}}
+            .body-2.pt-1.pb-5: a(href='https://docs.requarks.io/en/rendering', target='_blank') Documentation
+            i18next.body-2(path='admin:auth.strategyState', tag='div', v-if='currentRenderer.isEnabled')
+              v-chip(color='green', small, dark, label, place='state') {{$t('admin:auth.strategyStateActive')}}
+              span(v-if='selectedCore === `local`', place='locked') {{$t('admin:auth.strategyStateLocked')}}
+              span(v-else, place='locked', v-text='')
+            i18next.body-2(path='admin:auth.strategyState', tag='div', v-else)
+              v-chip(color='red', small, dark, label, place='state') {{$t('admin:auth.strategyStateInactive')}}
+          v-divider.mt-3
           v-card-text.pb-4.pt-2.pl-4
             .overline.my-5 Rendering Module Configuration
             .body-2.ml-3(v-if='!currentRenderer.config || currentRenderer.config.length < 1'): em This rendering module has no configuration options you can modify.
@@ -96,13 +109,14 @@
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
+                color='indigo'
               )
               v-switch(
                 v-else-if='cfg.value.type === "boolean"'
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                color='primary'
+                color='indigo'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 inset
@@ -116,6 +130,7 @@
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
+                color='indigo'
                 )
               v-divider.my-5(v-if='idx < currentRenderer.config.length - 1')
           v-card-chin

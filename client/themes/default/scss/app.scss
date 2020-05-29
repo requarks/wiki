@@ -867,7 +867,38 @@
   }
 }
 
+// ---------------------------------
+// COMMENTS
+// ---------------------------------
 
+.comments {
+  &-container {
+    border-radius: 7px;
+  }
+
+  &-header {
+    color: #FFF;
+    padding: 8px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    background-color: mc('blue-grey', '500');
+    border-radius: 7px 7px 0 0;
+
+    @at-root .theme--dark & {
+      background-color: lighten(mc('grey', '900'), 5%);
+    }
+  }
+
+  &-main {
+    background-color: mc('blue-grey', '50');
+    border-radius: 0 0 7px 7px;
+    padding: 20px;
+
+    @at-root .theme--dark & {
+      background-color: darken(mc('grey', '900'), 5%);
+    }
+  }
+}
 
 // ---------------
 // RTL FIXES

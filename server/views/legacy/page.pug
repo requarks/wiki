@@ -14,21 +14,21 @@ block body
       span.header-login
         if !isAuthenticated
           a(href='/login', title='Login')
-            i.material-icons account_circle
+            i.mdi.mdi-account-circle
         else
           a(href='/logout', title='Logout')
-            i.material-icons logout
+            i.mdi.mdi-logout
     .main
       .sidebar
         each navItem in sidebar
-          if navItem.kind === 'link'
-            a.sidebar-link(href=navItem.target)
-              i.material-icons= navItem.icon
-              span= navItem.label
-          else if navItem.kind === 'divider'
+          if navItem.k === 'link'
+            a.sidebar-link(href=navItem.t)
+              i.mdi(class=navItem.c)
+              span= navItem.l
+          else if navItem.k === 'divider'
             .sidebar-divider
-          else if navItem.kind === 'header'
-            .sidebar-title= navItem.label
+          else if navItem.k === 'header'
+            .sidebar-title= navItem.l
       .main-container
         .page-header
           .page-header-left
@@ -38,21 +38,21 @@ block body
           //-   .page-header-right-title Last edited by
           //-   .page-header-right-author= page.authorName
           //-   .page-header-right-updated= page.updatedAt
-        .page-contents
+        .page-contents.v-content
           .contents
             div!= page.render
           if page.toc.length
             .toc
               .toc-title= t('page.toc')
               each tocItem, tocIdx in page.toc
-                a.toc-tile(href='#' + tocItem.anchor)
-                  i.material-icons arrow_right
+                a.toc-tile(href=tocItem.anchor)
+                  i.mdi.mdi-chevron-right
                   span= tocItem.title
                 if tocIdx < page.toc.length - 1 || tocItem.children.length
                   .toc-divider
                 each tocSubItem in tocItem.children
-                  a.toc-tile.inset(href='#' + tocSubItem.anchor)
-                    i.material-icons arrow_right
+                  a.toc-tile.inset(href=tocSubItem.anchor)
+                    i.mdi.mdi-chevron-right
                     span= tocSubItem.title
                   if tocIdx < page.toc.length - 1
                     .toc-divider.inset

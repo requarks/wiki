@@ -56,7 +56,7 @@
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
-          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp', align-self-start, style='margin-top: -90px; position: sticky; top: 70px;')
+          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp')
             v-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
@@ -83,23 +83,58 @@
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
                   span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
-                v-chip.mr-1(
+                v-chip.mr-1.mb-1(
                   label
                   :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   :href='`/t/` + tags.map(t => t.tag).join(`/`)'
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
+            v-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
+              .pa-5
+                .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
+                  span Talk
+                  v-spacer
+                  v-chip.text-center(
+                    v-if='!commentsExternal'
+                    label
+                    x-small
+                    :color='$vuetify.theme.dark ? `blue-grey darken-3` : `blue-grey darken-2`'
+                    dark
+                    style='min-width: 50px; justify-content: center;'
+                    )
+                    span {{commentsCount}}
+                .d-flex
+                  v-btn.text-none(
+                    @click='goToComments()'
+                    :color='$vuetify.theme.dark ? `blue-grey` : `blue-grey darken-2`'
+                    outlined
+                    style='flex: 1 1 100%;'
+                    small
+                    )
+                    span.blue-grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') View Discussion
+                  v-tooltip(right, v-if='commentsPerms.write')
+                    template(v-slot:activator='{ on }')
+                      v-btn.ml-2(
+                        @click='goToComments(true)'
+                        v-on='on'
+                        outlined
+                        small
+                        :color='$vuetify.theme.dark ? `blue-grey` : `blue-grey darken-2`'
+                        )
+                        v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-1` : `blue-grey darken-2`', dense) mdi-comment-plus
+                    span New Comment
+
             v-card.mb-5
               .pa-5
-                .overline.indigo--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
-                  //- v-spacer
-                  //- v-tooltip(top, v-if='isAuthenticated')
-                  //-   template(v-slot:activator='{ on }')
-                  //-     v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
-                  //-       v-icon(color='grey', dense) mdi-history
-                  //-   span History
+                  v-spacer
+                  v-tooltip(right, v-if='isAuthenticated')
+                    template(v-slot:activator='{ on }')
+                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
+                        v-icon(color='indigo', dense) mdi-history
+                    span {{$t('common:header.history')}}
                 .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
@@ -226,6 +261,12 @@
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
+            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
+              .comments-header
+                v-icon.mr-2(dark) mdi-comment-text-outline
+                span Comments
+              .comments-main
+                slot(name='comments')
     nav-footer
     notify
     search-results
@@ -260,7 +301,7 @@ import Vue from 'vue'
 
 Vue.component('tabset', Tabset)
 
-Prism.plugins.autoloader.languages_path = '/js/prism/'
+Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
   'remove-trailing': true,
   'remove-indent': true,
@@ -356,6 +397,18 @@ export default {
     navMode: {
       type: String,
       default: 'MIXED'
+    },
+    commentsEnabled: {
+      type: Boolean,
+      default: false
+    },
+    commentsPermissions: {
+      type: String,
+      default: ''
+    },
+    commentsExternal: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -392,6 +445,8 @@ export default {
   },
   computed: {
     isAuthenticated: get('user/authenticated'),
+    commentsCount: get('page/commentsCount'),
+    commentsPerms: get('page/commentsPermissions'),
     rating: {
       get () {
         return 3.5
@@ -436,6 +491,9 @@ export default {
     this.$store.set('page/tags', this.tags)
     this.$store.set('page/title', this.title)
     this.$store.set('page/updatedAt', this.updatedAt)
+    if (this.commentsPermissions) {
+      this.$store.set('page/commentsPermissions', JSON.parse(atob(this.commentsPermissions)))
+    }
 
     this.$store.set('page/mode', 'view')
   },
@@ -522,6 +580,12 @@ export default {
       } else {
         this.navShown = false
       }
+    },
+    goToComments (focusNewComment = false) {
+      this.$vuetify.goTo('#discussion', this.scrollOpts)
+      if (focusNewComment) {
+        document.querySelector('#discussion-new').focus()
+      }
     }
   }
 }
@@ -542,6 +606,20 @@ export default {
   .v-breadcrumbs__divider:nth-child(2) {
     padding: 0 6px 0 12px;
   }
+}
+
+.page-col-sd {
+  margin-top: -90px;
+  align-self: flex-start;
+  position: sticky;
+  top: 64px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  -ms-overflow-style: none;
+}
+
+.page-col-sd::-webkit-scrollbar {
+  display: none;
 }
 
 </style>

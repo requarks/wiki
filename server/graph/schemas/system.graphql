@@ -17,6 +17,7 @@ extend type Mutation {
 type SystemQuery {
   flags: [SystemFlag] @auth(requires: ["manage:system"])
   info: SystemInfo
+  extensions: [SystemExtension]! @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -111,4 +112,12 @@ type SystemImportUsersResponseFailed {
   provider: String
   email: String
   error: String
+}
+
+type SystemExtension {
+  key: String!
+  title: String!
+  description: String!
+  isInstalled: Boolean!
+  isCompatible: Boolean!
 }

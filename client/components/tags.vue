@@ -89,7 +89,7 @@
           v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-down
       v-divider
       .text-center.pt-10(v-if='selection.length < 1')
-        img(src='/svg/icon-price-tag.svg')
+        img(src='/_assets/svg/icon-price-tag.svg')
         .subtitle-2.grey--text {{$t('tags:selectOneMoreTagsHint')}}
       .px-5.py-2(v-else)
         v-data-iterator(
@@ -112,11 +112,11 @@
               .subtitle-2.grey--text.mt-5 {{$t('tags:retrievingResultsLoading')}}
           template(v-slot:no-data)
             .text-center.pt-10
-              img(src='/svg/icon-info.svg')
+              img(src='/_assets/svg/icon-info.svg')
               .subtitle-2.grey--text {{$t('tags:noResults')}}
           template(v-slot:no-results)
             .text-center.pt-10
-              img(src='/svg/icon-info.svg')
+              img(src='/_assets/svg/icon-info.svg')
               .subtitle-2.grey--text {{$t('tags:noResultsWithFilter')}}
           template(v-slot:default='props')
             v-row(align='stretch')

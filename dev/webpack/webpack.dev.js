@@ -9,7 +9,6 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
-const SriWebpackPlugin = require('webpack-subresource-integrity')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
 const WebpackBarPlugin = require('webpackbar')
@@ -31,7 +30,7 @@ module.exports = {
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
-    publicPath: '/',
+    publicPath: '/_assets/',
     filename: 'js/[name].js',
     chunkFilename: 'js/[name].js',
     globalObject: 'this',
@@ -210,10 +209,6 @@ module.exports = {
       excludeChunks: ['app', 'legacy']
     }),
     new HtmlWebpackPugPlugin(),
-    new SriWebpackPlugin({
-      hashFuncNames: ['sha256', 'sha512'],
-      enabled: false
-    }),
     new WebpackBarPlugin({
       name: 'Client Assets'
     }),

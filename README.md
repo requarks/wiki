@@ -121,12 +121,14 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Ernie ([@iamernie](https://github.com/iamernie))
+- Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - Loki ([@binaryloki](https://github.com/binaryloki))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
 - Oleksii ([@idokka](https://github.com/idokka))
+- Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
@@ -154,6 +156,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 <!--5 start-->
 - Al Romano
 - Alex Balabanov
+- Alex Zen
 - Arti Zirk
 - Brandon Curtis
 - djagoo

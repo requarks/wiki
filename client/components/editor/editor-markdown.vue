@@ -119,7 +119,7 @@
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)').mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, disabled, @click='toggleModal(`editorModalBlocks`)').mx-0
               v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
           span {{$t('editor:markup.insertBlock')}}
         v-tooltip(right, color='teal')
@@ -241,7 +241,7 @@ import katexHelper from './common/katex'
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 
 // Prism Config
-Prism.plugins.autoloader.languages_path = '/js/prism/'
+Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
   'remove-trailing': true,
   'remove-indent': true,
@@ -341,7 +341,7 @@ md.renderer.rules.katex_block = (tokens, idx) => {
 md.renderer.rules.emoji = (token, idx) => {
   return twemoji.parse(token[idx].content, {
     callback (icon, opts) {
-      return `/svg/twemoji/${icon}.svg`
+      return `/_assets/svg/twemoji/${icon}.svg`
     }
   })
 }
@@ -825,6 +825,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       @include until($tablet) {
         height: $editor-height-mobile;
       }
+
+      p.line {
+        overflow-wrap: break-word;
+      }
     }
   }
 
@@ -913,6 +917,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     .cm-header-6 {
       font-size: 1.025rem;
     }
+  }
+
+  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
+    word-break: break-word;
   }
 
   .CodeMirror-focused .cm-matchhighlight {

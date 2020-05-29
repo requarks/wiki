@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-console.svg', alt='Developer Tools', style='width: 80px;')
+          img(src='/_assets/svg/icon-console.svg', alt='Developer Tools', style='width: 80px;')
           .admin-header-title
             .headline.primary--text Developer Tools
             .subtitle-1.grey--text Flags

@@ -3,44 +3,52 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-file.svg', alt='Page', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-file.svg', alt='Page', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Pages
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage pages
           v-spacer
-          v-btn.animated.fadeInDown.wait-p1s(color='grey', outlined, @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p1s(icon, color='grey', outlined, @click='refresh')
             v-icon.grey--text mdi-refresh
-          v-btn.animated.fadeInDown.mx-3(color='primary', outlined, large, @click='recyclebin', disabled)
+          v-btn.animated.fadeInDown.mx-3(color='primary', outlined, @click='recyclebin', disabled)
             v-icon(left) mdi-delete-outline
             span Recycle Bin
           v-btn.animated.fadeInDown(color='primary', depressed, large, to='pages/visualize')
             v-icon(left) mdi-graph
             span Visualize
-        v-card.wiki-form.mt-3.animated.fadeInUp
-          v-toolbar(flat, :color='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-5`', height='80')
-            v-spacer
+        v-card.mt-3.animated.fadeInUp
+          .pa-2.d-flex.align-center(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
             v-text-field(
-              outlined
+              solo
+              flat
               v-model='search'
               prepend-inner-icon='mdi-file-search-outline'
               label='Search Pages...'
               hide-details
+              dense
+              style='max-width: 400px;'
               )
+            v-spacer
             v-select.ml-2(
-              outlined
+              solo
+              flat
               hide-details
+              dense
               label='Locale'
               :items='langs'
               v-model='selectedLang'
+              style='max-width: 250px;'
             )
             v-select.ml-2(
-              outlined
+              solo
+              flat
               hide-details
+              dense
               label='Publish State'
               :items='states'
               v-model='selectedState'
+              style='max-width: 250px;'
             )
-            v-spacer
           v-divider
           v-data-table(
             :items='filteredPages'
