@@ -36,6 +36,7 @@ type SiteMutation {
     featurePageRatings: Boolean
     featurePageComments: Boolean
     featurePersonalWikis: Boolean
+    securityOpenRedirect: Boolean
     securityIframe: Boolean
     securityReferrerPolicy: Boolean
     securityTrustProxy: Boolean
@@ -67,6 +68,7 @@ type SiteConfig {
   featurePageRatings: Boolean!
   featurePageComments: Boolean!
   featurePersonalWikis: Boolean!
+  securityOpenRedirect: Boolean!
   securityIframe: Boolean!
   securityReferrerPolicy: Boolean!
   securityTrustProxy: Boolean!
