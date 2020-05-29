@@ -54,6 +54,7 @@ defaults:
       iconset: 'md'
       darkMode: false
     security:
+      securityOpenRedirect: true
       securityIframe: true
       securityReferrerPolicy: true
       securityTrustProxy: true

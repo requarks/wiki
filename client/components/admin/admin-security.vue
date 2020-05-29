@@ -22,6 +22,15 @@
                 v-card-text
                   v-switch.mt-3(
                     inset
+                    label='Block Open Redirect'
+                    color='red darken-2'
+                    v-model='config.securityOpenRedirect'
+                    persistent-hint
+                    hint='Prevents user controlled URLs from directing to websites outside of your wiki. This provides Open Redirect protection.'
+                    )
+
+                  v-switch.mt-3(
+                    inset
                     label='Block IFrame Embedding'
                     color='red darken-2'
                     v-model='config.securityIframe'
@@ -145,6 +154,7 @@ export default {
       config: {
         uploadMaxFileSize: 0,
         uploadMaxFiles: 0,
+        securityOpenRedirect: true,
         securityIframe: true,
         securityReferrerPolicy: true,
         securityTrustProxy: true,
@@ -175,6 +185,7 @@ export default {
             mutation (
               $uploadMaxFileSize: Int
               $uploadMaxFiles: Int
+              $securityOpenRedirect: Boolean
               $securityIframe: Boolean
               $securityReferrerPolicy: Boolean
               $securityTrustProxy: Boolean
@@ -188,6 +199,7 @@ export default {
                 updateConfig(
                   uploadMaxFileSize: $uploadMaxFileSize,
                   uploadMaxFiles: $uploadMaxFiles,
+                  securityOpenRedirect: $securityOpenRedirect,
                   securityIframe: $securityIframe,
                   securityReferrerPolicy: $securityReferrerPolicy,
                   securityTrustProxy: $securityTrustProxy,
@@ -210,6 +222,7 @@ export default {
           variables: {
             uploadMaxFileSize: _.toSafeInteger(_.get(this.config, 'uploadMaxFileSize', 0)),
             uploadMaxFiles: _.toSafeInteger(_.get(this.config, 'uploadMaxFiles', 0)),
+            securityOpenRedirect: _.get(this.config, 'securityOpenRedirect', false),
             securityIframe: _.get(this.config, 'securityIframe', false),
             securityReferrerPolicy: _.get(this.config, 'securityReferrerPolicy', false),
             securityTrustProxy: _.get(this.config, 'securityTrustProxy', false),
@@ -241,6 +254,7 @@ export default {
             config {
               uploadMaxFileSize
               uploadMaxFiles
+              securityOpenRedirect
               securityIframe
               securityReferrerPolicy
               securityTrustProxy
