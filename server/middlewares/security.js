@@ -39,7 +39,7 @@ module.exports = function (req, res, next) {
   // -> Prevent Open Redirect from user provided URL
   if (WIKI.config.security.securityOpenRedirect) {
     // Strips out all repeating / character in the provided URL
-    req.url = req.url.replace(/(\/)(?=\/*\1)/g, "")
+    req.url = req.url.replace(/(\/)(?=\/*\1)/g, '')
   }
 
   return next()

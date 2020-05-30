@@ -20,7 +20,7 @@
                 v-card-info(color='red')
                   span Make sure to understand the implications before turning on / off a security feature.
                 v-card-text
-                  v-switch.mt-3(
+                  v-switch(
                     inset
                     label='Block Open Redirect'
                     color='red darken-2'
@@ -29,6 +29,7 @@
                     hint='Prevents user controlled URLs from directing to websites outside of your wiki. This provides Open Redirect protection.'
                     )
 
+                  v-divider.mt-3
                   v-switch.mt-3(
                     inset
                     label='Block IFrame Embedding'
