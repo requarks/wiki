@@ -72,7 +72,7 @@ module.exports = {
         if (args.id <= 2) {
           throw new WIKI.Error.UserDeleteProtected()
         }
-        await WIKI.models.users.deleteUser(args.id)
+        await WIKI.models.users.deleteUser(args.id, args.replaceId)
         return {
           responseResult: graphHelper.generateSuccess('User deleted successfully')
         }

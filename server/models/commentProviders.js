@@ -128,8 +128,10 @@ module.exports = class CommentProvider extends Model {
       } else {
         WIKI.data.commentProvider = {
           ...WIKI.data.commentProvider,
-          ...require(`../modules/comments/${commentProvider.key}/comment`)
+          ...require(`../modules/comments/${commentProvider.key}/comment`),
+          config: commentProvider.config
         }
+        await WIKI.data.commentProvider.init()
       }
       WIKI.data.commentProvider.config = commentProvider.config
     }

@@ -10,8 +10,6 @@ const { AkismetClient } = require('akismet-api')
 const window = new JSDOM('').window
 const DOMPurify = createDOMPurify(window)
 
-md.use(mdEmoji)
-
 let akismetClient = null
 
 // ------------------------------------
@@ -23,6 +21,7 @@ module.exports = {
    * Init
    */
   async init (config) {
+    WIKI.logger.info('(COMMENTS/DEFAULT) Initializing...')
     if (WIKI.data.commentProvider.config.akismet && WIKI.data.commentProvider.config.akismet.length > 2) {
       akismetClient = new AkismetClient({
         key: WIKI.data.commentProvider.config.akismet,
@@ -33,14 +32,19 @@ module.exports = {
       try {
         const isValid = await akismetClient.verifyKey()
         if (!isValid) {
-          WIKI.logger.warn('Akismet Key is invalid!')
+          akismetClient = null
+          WIKI.logger.warn('(COMMENTS/DEFAULT) Akismet Key is invalid! [ DISABLED ]')
+        } else {
+          WIKI.logger.info('(COMMENTS/DEFAULT) Akismet key is valid. [ OK ]')
         }
       } catch (err) {
-        WIKI.logger.warn('Unable to verify Akismet Key: ' + err.message)
+        akismetClient = null
+        WIKI.logger.warn('(COMMENTS/DEFAULT) Unable to verify Akismet Key: ' + err.message)
       }
     } else {
       akismetClient = null
     }
+    WIKI.logger.info('(COMMENTS/DEFAULT) Initialization completed.')
   },
   /**
    * Create New Comment
@@ -55,6 +59,8 @@ module.exports = {
         return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
       }
     })
+
+    mkdown.use(mdEmoji)
 
     // -> Build New Comment
     const newComment = {

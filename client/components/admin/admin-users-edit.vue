@@ -43,7 +43,7 @@
                 v-list-item-icon
                   v-icon(color='blue') mdi-account-check
                 v-list-item-title Set as Verified
-              v-list-item(@click='deleteUserDialog = true', :disabled='user.id == currentUserId || user.isSystem')
+              v-list-item(@click='deleteUserConfirm', :disabled='user.id == currentUserId || user.isSystem')
                 v-list-item-icon
                   v-icon(color='red') mdi-trash-can-outline
                 v-list-item-title Delete
@@ -221,8 +221,9 @@
               hide-details
               @keydown.esc='editPop.assignGroup = false'
               style='max-width: 300px;'
+              dense
             )
-            v-btn.ml-2.px-4(depressed, color='primary', height='48', @click='assignGroup', :disabled='newGroup === 0')
+            v-btn.ml-2.px-4(depressed, color='primary', @click='assignGroup', :disabled='newGroup === 0')
               v-icon(left) mdi-clipboard-account-outline
               span {{$t('admin:users.groupAssign')}}
           v-system-bar(window, :color='$vuetify.theme.dark ? `grey darken-4-l3` : `grey lighten-3`')
@@ -349,19 +350,31 @@
         v-card-text.pt-5
           i18next(path='admin:users.deleteConfirmText', tag='span')
             strong(place='username') {{ user.email }}
-          .caption.mt-3 {{$t('admin:users.deleteConfirmForeignNotice')}}
-        v-card-actions
+          .mt-3 {{$t('admin:users.deleteConfirmReplaceWarn')}}
+          v-divider.my-3
+          .d-flex.align-center.mt-3
+            v-btn.text-none(color='primary', depressed, @click='deleteSearchUserDialog = true')
+              v-icon(left) mdi-clipboard-account
+              | Select User...
+            .caption.pl-3
+              strong ID {{deleteReplaceUser.id}}
+              .caption {{deleteReplaceUser.name}}
+              em {{deleteReplaceUser.email}}
+        v-card-chin
           v-spacer
           v-btn(text, @click='deleteUserDialog = false') {{$t('common:actions.cancel')}}
           v-btn(color='red', dark, @click='deleteUser') {{$t('common:actions.delete')}}
+
+        user-search(v-model='deleteSearchUserDialog', @select='assignDeleteUser')
 
 </template>
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
-
 import { StatusIndicator } from 'vue-status-indicator'
+
+import UserSearch from '../common/user-search.vue'
 
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
@@ -370,11 +383,18 @@ export default {
     namespaces: ['admin', 'profile']
   },
   components: {
-    StatusIndicator
+    StatusIndicator,
+    UserSearch
   },
-  data() {
+  data () {
     return {
       deleteUserDialog: false,
+      deleteSearchUserDialog: false,
+      deleteReplaceUser: {
+        id: 1,
+        name: '',
+        email: ''
+      },
       editPop: {
         email: false,
         name: false,
@@ -738,13 +758,21 @@ export default {
     /**
      * Delete a user
      */
+    deleteUserConfirm () {
+      this.deleteUserDialog = true
+      this.deleteReplaceUser = {
+        id: this.currentUserId,
+        name: this.$store.get('user/name'),
+        email: this.$store.get('user/email')
+      }
+    },
     async deleteUser () {
       this.$store.commit(`loadingStart`, 'admin-users-delete')
       const resp = await this.$apollo.mutate({
         mutation: gql`
-          mutation ($id: Int!) {
+          mutation ($id: Int!, $replaceId: Int!) {
             users {
-              delete(id: $id) {
+              delete(id: $id, replaceId: $replaceId) {
                 responseResult {
                   succeeded
                   errorCode
@@ -756,7 +784,8 @@ export default {
           }
         `,
         variables: {
-          id: this.user.id
+          id: this.user.id,
+          replaceId: this.deleteReplaceUser.id
         }
       })
       if (_.get(resp, 'data.users.delete.responseResult.succeeded', false)) {
@@ -775,6 +804,23 @@ export default {
       }
       this.deleteUserDialog = false
       this.$store.commit(`loadingStop`, 'admin-users-delete')
+    },
+    assignDeleteUser (selUsr) {
+      if (selUsr.id === this.user.id) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'You cannot select the account you\'re about to delete!',
+          icon: 'warning'
+        })
+      } else if (selUsr.id === 2) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'You cannot use the guest account for this operation.',
+          icon: 'warning'
+        })
+      } else {
+        this.deleteReplaceUser = selUsr
+      }
     },
     /**
      * Update a user

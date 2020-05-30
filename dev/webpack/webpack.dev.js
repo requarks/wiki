@@ -183,10 +183,12 @@ module.exports = {
       startYear: 2017,
       endYear: (new Date().getFullYear()) + 5
     }),
-    new CopyWebpackPlugin([
-      { from: 'client/static' },
-      { from: './node_modules/prismjs/components', to: 'js/prism' }
-    ], {}),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'client/static' },
+        { from: './node_modules/prismjs/components', to: 'js/prism' }
+      ]
+    }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/master.pug',
       filename: '../server/views/master.pug',

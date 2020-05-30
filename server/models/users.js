@@ -613,9 +613,15 @@ module.exports = class User extends Model {
    *
    * @param {*} id User ID
    */
-  static async deleteUser (id) {
+  static async deleteUser (id, replaceId) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
+      await WIKI.models.assets.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.comments.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.pageHistory.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.pages.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.pages.query().patch({ creatorId: replaceId }).where('creatorId', id)
+
       await WIKI.models.userKeys.query().delete().where('userId', id)
       await WIKI.models.users.query().deleteById(id)
     } else {
