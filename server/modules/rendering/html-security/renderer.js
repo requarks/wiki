@@ -8,7 +8,7 @@ module.exports = {
       const DOMPurify = createDOMPurify(window)
 
       const allowedAttrs = ['v-pre', 'v-slot:tabs', 'v-slot:content']
-      const allowedTags = ['tabset', 'template']
+      const allowedTags = ['tabset', 'template', 'component']
 
       if (config.allowIFrames) {
         allowedTags.push('iframe')

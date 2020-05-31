@@ -250,20 +250,24 @@ module.exports = {
     iterateMustacheNode($.root())
 
     // --------------------------------
+    // Escape style elements
+    // --------------------------------
+
+    $('style').each(function(i, item) {
+      item.tagName = 'component';
+      $(this).attr('is', 'style');
+    })
+
+    // --------------------------------
     // STEP: POST
     // --------------------------------
 
-    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
+    let output = decodeEscape($.html('body').replace(/^<body>/, '').replace(/<\/body>$/, ''))
 
     for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
       output = await renderer.init(output, child.config)
     }
-
-    // --------------------------------
-    // Escape style elemtns
-    // --------------------------------
-    output = output.replace(/<style/g, `<component is="style"`).replace(/<\/style>/g, `</component>`);
 
     return output
   }
