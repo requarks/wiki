@@ -14,6 +14,19 @@ module.exports = {
         allowedTags.push('iframe')
       }
 
+      DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+        if (data.tagName === 'component') {
+          try {
+            if (node.attributes.is.value === 'style') {
+              return
+            }
+          } catch (e) {
+            // attribute does not exist
+          }
+          node.parentNode.removeChild(node)
+        }
+      })
+
       input = DOMPurify.sanitize(input, {
         ADD_ATTR: allowedAttrs,
         ADD_TAGS: allowedTags
