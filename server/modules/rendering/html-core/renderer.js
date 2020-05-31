@@ -260,6 +260,11 @@ module.exports = {
       output = await renderer.init(output, child.config)
     }
 
+    // --------------------------------
+    // Escape style elemtns
+    // --------------------------------
+    output = output.replace(/<style/g, `<component is="style"`).replace(/<\/style>/g, `</component>`);
+
     return output
   }
 }
