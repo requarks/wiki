@@ -124,6 +124,39 @@ module.exports = class Comment extends Model {
   }
 
   /**
+   * Update an Existing Comment
+   */
+  static async updateComment ({ id, content, user, ip }) {
+    // -> Load Page
+    const pageId = await WIKI.data.commentProvider.getPageIdFromCommentId(id)
+    if (!pageId) {
+      throw new WIKI.Error.CommentNotFound()
+    }
+    const page = await WIKI.models.pages.getPageFromDb(pageId)
+    if (page) {
+      if (!WIKI.auth.checkAccess(user, ['manage:comments'], {
+        path: page.path,
+        locale: page.localeCode
+      })) {
+        throw new WIKI.Error.CommentManageForbidden()
+      }
+    } else {
+      throw new WIKI.Error.PageNotFound()
+    }
+
+    // -> Process by comment provider
+    return WIKI.data.commentProvider.update({
+      id,
+      content,
+      page,
+      user: {
+        ...user,
+        ip
+      }
+    })
+  }
+
+  /**
    * Delete an Existing Comment
    */
   static async deleteComment ({ id, user, ip }) {

@@ -97,17 +97,13 @@ module.exports = {
     message: 'Too many attempts! Try again later.',
     code: 1008
   }),
-  CommentGenericError: CustomError('CommentGenericError', {
-    message: 'An unexpected error occured.',
-    code: 8001
-  }),
-  CommentPostForbidden: CustomError('CommentPostForbidden', {
-    message: 'You are not authorized to post a comment on this page.',
-    code: 8002
-  }),
   CommentContentMissing: CustomError('CommentContentMissing', {
     message: 'Comment content is missing or too short.',
     code: 8003
+  }),
+  CommentGenericError: CustomError('CommentGenericError', {
+    message: 'An unexpected error occured.',
+    code: 8001
   }),
   CommentManageForbidden: CustomError('CommentManageForbidden', {
     message: 'You are not authorized to manage comments on this page.',
@@ -116,6 +112,14 @@ module.exports = {
   CommentNotFound: CustomError('CommentNotFound', {
     message: 'This comment does not exist.',
     code: 8005
+  }),
+  CommentPostForbidden: CustomError('CommentPostForbidden', {
+    message: 'You are not authorized to post a comment on this page.',
+    code: 8002
+  }),
+  CommentViewForbidden: CustomError('CommentViewForbidden', {
+    message: 'You are not authorized to view comments for this page.',
+    code: 8006
   }),
   InputInvalid: CustomError('InputInvalid', {
     message: 'Input data is invalid.',

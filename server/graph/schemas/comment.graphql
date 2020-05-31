@@ -47,7 +47,7 @@ type CommentMutation {
   update(
     id: Int!
     content: String!
-  ): DefaultResponse @auth(requires: ["write:comments", "manage:comments", "manage:system"])
+  ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:comments", "manage:system"])
 
   delete(
     id: Int!
@@ -77,7 +77,7 @@ input CommentProviderInput {
 
 type CommentPost {
   id: Int!
-  content: String!
+  content: String! @auth(requires: ["write:comments", "manage:comments", "manage:system"])
   render: String!
   authorId: Int!
   authorName: String!
@@ -90,4 +90,9 @@ type CommentPost {
 type CommentCreateResponse {
   responseResult: ResponseStatus
   id: Int
+}
+
+type CommentUpdateResponse {
+  responseResult: ResponseStatus
+  render: String
 }

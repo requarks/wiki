@@ -76,12 +76,42 @@
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
           v-card-text
-            .comments-post-actions(v-if='permissions.manage && !isBusy')
+            .comments-post-actions(v-if='permissions.manage && !isBusy && commentEditId === 0')
               v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
               v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
             .comments-post-name.caption: strong {{cm.authorName}}
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - modified {{cm.updatedAt | moment('from') }}]
-            .comments-post-content.mt-3(v-html='cm.render')
+            .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
+            .comments-post-editcontent.mt-3(v-else)
+              v-textarea(
+                outlined
+                flat
+                auto-grow
+                dense
+                rows='3'
+                hide-details
+                v-model='commentEditContent'
+                color='blue-grey darken-2'
+                :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+              )
+              .d-flex.align-center.pt-3
+                v-spacer
+                v-btn.mr-3(
+                  dark
+                  color='blue-grey darken-2'
+                  @click='editCommentCancel'
+                  outlined
+                  )
+                  v-icon(left) mdi-close
+                  span.text-none Cancel
+                v-btn(
+                  dark
+                  color='blue-grey darken-2'
+                  @click='updateComment'
+                  depressed
+                  )
+                  v-icon(left) mdi-comment
+                  span.text-none Update Comment
     .pt-5.text-center.body-2.blue-grey--text(v-else-if='permissions.write') Be the first to comment.
     .text-center.body-2.blue-grey--text(v-else) No comments yet.
 
@@ -113,6 +143,8 @@ export default {
       guestName: '',
       guestEmail: '',
       commentToDelete: {},
+      commentEditId: 0,
+      commentEditContent: null,
       deleteCommentDialogShown: false,
       isBusy: false,
       scrollOpts: {
@@ -286,9 +318,118 @@ export default {
         })
       }
     },
+    /**
+     * Show Comment Editing Form
+     */
     async editComment (cm) {
-
+      this.$store.commit(`loadingStart`, 'comments-edit')
+      this.isBusy = true
+      try {
+        const results = await this.$apollo.query({
+          query: gql`
+            query ($id: Int!) {
+              comments {
+                single(id: $id) {
+                  content
+                }
+              }
+            }
+          `,
+          variables: {
+            id: cm.id
+          },
+          fetchPolicy: 'network-only'
+        })
+        this.commentEditContent = _.get(results, 'data.comments.single.content', null)
+        if (this.commentEditContent === null) {
+          throw new Error('Failed to load comment content.')
+        }
+      } catch (err) {
+        console.warn(err)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'alert'
+        })
+      }
+      this.commentEditId = cm.id
+      this.isBusy = false
+      this.$store.commit(`loadingStop`, 'comments-edit')
     },
+    /**
+     * Cancel Comment Edit
+     */
+    editCommentCancel () {
+      this.commentEditId = 0
+      this.commentEditContent = null
+    },
+    /**
+     * Update Comment with new content
+     */
+    async updateComment () {
+      this.$store.commit(`loadingStart`, 'comments-edit')
+      this.isBusy = true
+      try {
+        if (this.commentEditContent.length < 2) {
+          throw new Error('Comment is empty or too short!')
+        }
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $id: Int!
+              $content: String!
+            ) {
+              comments {
+                update (
+                  id: $id,
+                  content: $content
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                  render
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.commentEditId,
+            content: this.commentEditContent
+          }
+        })
+
+        if (_.get(resp, 'data.comments.update.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'Comment was updated successfully.',
+            icon: 'check'
+          })
+
+          const cm = _.find(this.comments, ['id', this.commentEditId])
+          cm.render = _.get(resp, 'data.comments.update.render', '-- Failed to load updated comment --')
+          cm.updatedAt = (new Date()).toISOString()
+
+          this.editCommentCancel()
+        } else {
+          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'))
+        }
+      } catch (err) {
+        console.warn(err)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'alert'
+        })
+      }
+      this.isBusy = false
+      this.$store.commit(`loadingStop`, 'comments-edit')
+    },
+    /**
+     * Show Delete Comment Confirmation Dialog
+     */
     deleteCommentConfirm (cm) {
       this.commentToDelete = cm
       this.deleteCommentDialogShown = true

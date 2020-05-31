@@ -13,6 +13,17 @@ const DOMPurify = createDOMPurify(window)
 
 let akismetClient = null
 
+const mkdown = md({
+  html: false,
+  breaks: true,
+  linkify: true,
+  highlight(str, lang) {
+    return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
+  }
+})
+
+mkdown.use(mdEmoji)
+
 // ------------------------------------
 // Default Comment Provider
 // ------------------------------------
@@ -51,18 +62,6 @@ module.exports = {
    * Create New Comment
    */
   async create ({ page, replyTo, content, user }) {
-    // -> Render Markdown
-    const mkdown = md({
-      html: false,
-      breaks: true,
-      linkify: true,
-      highlight(str, lang) {
-        return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
-      }
-    })
-
-    mkdown.use(mdEmoji)
-
     // -> Build New Comment
     const newComment = {
       content,
@@ -121,13 +120,20 @@ module.exports = {
     // -> Return Comment ID
     return cm.id
   },
-  async update ({ id, content, user, ip }) {
-
+  /**
+   * Update an existing comment
+   */
+  async update ({ id, content, user }) {
+    const renderedContent = DOMPurify.sanitize(mkdown.render(content))
+    await WIKI.models.comments.query().findById(id).patch({
+      render: renderedContent
+    })
+    return renderedContent
   },
   /**
    * Delete an existing comment by ID
    */
-  async remove ({ id, user, ip }) {
+  async remove ({ id, user }) {
     return WIKI.models.comments.query().findById(id).delete()
   },
   /**
@@ -136,6 +142,12 @@ module.exports = {
   async getPageIdFromCommentId (id) {
     const result = await WIKI.models.comments.query().select('pageId').findById(id)
     return (result) ? result.pageId : false
+  },
+  /**
+   * Get a comment by ID
+   */
+  async getCommentById (id) {
+    return WIKI.models.comments.query().findById(id)
   },
   /**
    * Get the total comments count for a page ID
