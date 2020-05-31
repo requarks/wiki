@@ -42,7 +42,7 @@ type CommentMutation {
     content: String!
     guestName: String
     guestEmail: String
-  ): CommentCreateResponse @auth(requires: ["write:comments", "manage:system"])
+  ): CommentCreateResponse @auth(requires: ["write:comments", "manage:system"]) @rateLimit(limit: 1, duration: 15)
 
   update(
     id: Int!

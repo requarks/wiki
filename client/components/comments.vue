@@ -131,40 +131,51 @@ export default {
   methods: {
     onIntersect (entries, observer, isIntersecting) {
       if (isIntersecting) {
-        this.fetch()
+        this.fetch(true)
       }
     },
-    async fetch () {
+    async fetch (silent = false) {
       this.isLoading = true
-      const results = await this.$apollo.query({
-        query: gql`
-          query ($locale: String!, $path: String!) {
-            comments {
-              list(locale: $locale, path: $path) {
-                id
-                render
-                authorName
-                createdAt
-                updatedAt
+      try {
+        const results = await this.$apollo.query({
+          query: gql`
+            query ($locale: String!, $path: String!) {
+              comments {
+                list(locale: $locale, path: $path) {
+                  id
+                  render
+                  authorName
+                  createdAt
+                  updatedAt
+                }
               }
             }
+          `,
+          variables: {
+            locale: this.$store.get('page/locale'),
+            path: this.$store.get('page/path')
+          },
+          fetchPolicy: 'network-only'
+        })
+        this.comments = _.get(results, 'data.comments.list', []).map(c => {
+          const nameParts = c.authorName.toUpperCase().split(' ')
+          let initials = _.head(nameParts).charAt(0)
+          if (nameParts.length > 1) {
+            initials += _.last(nameParts).charAt(0)
           }
-        `,
-        variables: {
-          locale: this.$store.get('page/locale'),
-          path: this.$store.get('page/path')
-        },
-        fetchPolicy: 'network-only'
-      })
-      this.comments = _.get(results, 'data.comments.list', []).map(c => {
-        const nameParts = c.authorName.toUpperCase().split(' ')
-        let initials = _.head(nameParts).charAt(0)
-        if (nameParts.length > 1) {
-          initials += _.last(nameParts).charAt(0)
+          c.initials = initials
+          return c
+        })
+      } catch (err) {
+        console.warn(err)
+        if (!silent) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: err.message,
+            icon: 'alert'
+          })
         }
-        c.initials = initials
-        return c
-      })
+      }
       this.isLoading = false
       this.hasLoadedOnce = true
     },
@@ -214,59 +225,63 @@ export default {
         return
       }
 
-      const resp = await this.$apollo.mutate({
-        mutation: gql`
-          mutation (
-            $pageId: Int!
-            $replyTo: Int
-            $content: String!
-            $guestName: String
-            $guestEmail: String
-          ) {
-            comments {
-              create (
-                pageId: $pageId
-                replyTo: $replyTo
-                content: $content
-                guestName: $guestName
-                guestEmail: $guestEmail
-              ) {
-                responseResult {
-                  succeeded
-                  errorCode
-                  slug
-                  message
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $pageId: Int!
+              $replyTo: Int
+              $content: String!
+              $guestName: String
+              $guestEmail: String
+            ) {
+              comments {
+                create (
+                  pageId: $pageId
+                  replyTo: $replyTo
+                  content: $content
+                  guestName: $guestName
+                  guestEmail: $guestEmail
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                  id
                 }
-                id
               }
             }
+          `,
+          variables: {
+            pageId: this.pageId,
+            replyTo: 0,
+            content: this.newcomment,
+            guestName: this.guestName,
+            guestEmail: this.guestEmail
           }
-        `,
-        variables: {
-          pageId: this.pageId,
-          replyTo: 0,
-          content: this.newcomment,
-          guestName: this.guestName,
-          guestEmail: this.guestEmail
+        })
+
+        if (_.get(resp, 'data.comments.create.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'New comment posted successfully.',
+            icon: 'check'
+          })
+
+          this.newcomment = ''
+          await this.fetch()
+          this.$nextTick(() => {
+            this.$vuetify.goTo(`#comment-post-id-${_.get(resp, 'data.comments.create.id', 0)}`, this.scrollOpts)
+          })
+        } else {
+          throw new Error(_.get(resp, 'data.comments.create.responseResult.message', 'An unexpected error occured.'))
         }
-      })
-
-      if (_.get(resp, 'data.comments.create.responseResult.succeeded', false)) {
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'New comment posted successfully.',
-          icon: 'check'
-        })
-
-        this.newcomment = ''
-        await this.fetch()
-        this.$nextTick(() => {
-          this.$vuetify.goTo(`#comment-post-id-${_.get(resp, 'data.comments.create.id', 0)}`, this.scrollOpts)
-        })
-      } else {
+      } catch (err) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.comments.create.responseResult.message', 'An unexpected error occured.'),
+          message: err.message,
           icon: 'alert'
         })
       }
@@ -286,42 +301,46 @@ export default {
       this.isBusy = true
       this.deleteCommentDialogShown = false
 
-      const resp = await this.$apollo.mutate({
-        mutation: gql`
-          mutation (
-            $id: Int!
-          ) {
-            comments {
-              delete (
-                id: $id
-              ) {
-                responseResult {
-                  succeeded
-                  errorCode
-                  slug
-                  message
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $id: Int!
+            ) {
+              comments {
+                delete (
+                  id: $id
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
                 }
               }
             }
+          `,
+          variables: {
+            id: this.commentToDelete.id
           }
-        `,
-        variables: {
-          id: this.commentToDelete.id
-        }
-      })
-
-      if (_.get(resp, 'data.comments.delete.responseResult.succeeded', false)) {
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'Comment was deleted successfully.',
-          icon: 'check'
         })
 
-        this.comments = _.reject(this.comments, ['id', this.commentToDelete.id])
-      } else {
+        if (_.get(resp, 'data.comments.delete.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'Comment was deleted successfully.',
+            icon: 'check'
+          })
+
+          this.comments = _.reject(this.comments, ['id', this.commentToDelete.id])
+        } else {
+          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'))
+        }
+      } catch (err) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'),
+          message: err.message,
           icon: 'alert'
         })
       }
@@ -362,6 +381,7 @@ export default {
 
     img {
       max-width: 100%;
+      border-radius: 5px;
     }
 
     code {

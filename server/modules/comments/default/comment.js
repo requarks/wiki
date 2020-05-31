@@ -4,6 +4,7 @@ const { JSDOM } = require('jsdom')
 const createDOMPurify = require('dompurify')
 const _ = require('lodash')
 const { AkismetClient } = require('akismet-api')
+const moment = require('moment')
 
 /* global WIKI */
 
@@ -103,6 +104,14 @@ module.exports = {
 
       if (isSpam) {
         throw new Error('Comment was rejected because it is marked as spam.')
+      }
+    }
+
+    // -> Check for minimum delay between posts
+    if (WIKI.data.commentProvider.config.minDelay > 0) {
+      const lastComment = await WIKI.models.comments.query().select('updatedAt').findOne('authorId', user.id).orderBy('updatedAt', 'desc')
+      if (lastComment && moment().subtract(WIKI.data.commentProvider.config.minDelay, 'seconds').isBefore(lastComment.updatedAt)) {
+        throw new Error('Your administrator has set a time limit before you can post another comment. Try again later.')
       }
     }
 
