@@ -51,7 +51,7 @@
         v-icon(left) mdi-comment
         span.text-none Post Comment
     v-divider.mt-3(v-if='permissions.write')
-    .pa-5.d-flex.align-center.justify-center(v-if='isLoading')
+    .pa-5.d-flex.align-center.justify-center(v-if='isLoading && !hasLoadedOnce')
       v-progress-circular(
         indeterminate
         size='20'
@@ -63,22 +63,38 @@
       dense
       v-else-if='comments && comments.length > 0'
       )
-      v-timeline-item(
+      v-timeline-item.comments-post(
         color='pink darken-4'
         large
         v-for='cm of comments'
         :key='`comment-` + cm.id'
+        :id='`comment-post-id-` + cm.id'
         )
         template(v-slot:icon)
-          v-avatar
-            v-img(src='http://i.pravatar.cc/64')
+          v-avatar(color='blue-grey')
+            //- v-img(src='http://i.pravatar.cc/64')
+            span.white--text.title {{cm.initials}}
         v-card.elevation-1
           v-card-text
-            .caption: strong {{cm.authorName}}
-            .overline.grey--text 3 minutes ago
-            .mt-3 {{cm.render}}
+            .comments-post-actions(v-if='permissions.manage && !isBusy')
+              v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
+              v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
+            .comments-post-name.caption: strong {{cm.authorName}}
+            .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - modified {{cm.updatedAt | moment('from') }}]
+            .comments-post-content.mt-3(v-html='cm.render')
     .pt-5.text-center.body-2.blue-grey--text(v-else-if='permissions.write') Be the first to comment.
     .text-center.body-2.blue-grey--text(v-else) No comments yet.
+
+    v-dialog(v-model='deleteCommentDialogShown', max-width='500')
+      v-card
+        .dialog-header.is-red Confirm Delete
+        v-card-text.pt-5
+          span Are you sure you want to permanently delete this comment?
+          .caption: strong This action cannot be undone!
+        v-card-chin
+          v-spacer
+          v-btn(text, @click='deleteCommentDialogShown = false') {{$t('common:actions.cancel')}}
+          v-btn(color='red', dark, @click='deleteComment') {{$t('common:actions.delete')}}
 </template>
 
 <script>
@@ -92,10 +108,18 @@ export default {
     return {
       newcomment: '',
       isLoading: true,
-      canFetch: false,
+      hasLoadedOnce: false,
       comments: [],
       guestName: '',
-      guestEmail: ''
+      guestEmail: '',
+      commentToDelete: {},
+      deleteCommentDialogShown: false,
+      isBusy: false,
+      scrollOpts: {
+        duration: 1500,
+        offset: 0,
+        easing: 'easeInOutCubic'
+      }
     }
   },
   computed: {
@@ -107,10 +131,46 @@ export default {
   methods: {
     onIntersect (entries, observer, isIntersecting) {
       if (isIntersecting) {
-        this.isLoading = true
-        this.canFetch = true
+        this.fetch()
       }
     },
+    async fetch () {
+      this.isLoading = true
+      const results = await this.$apollo.query({
+        query: gql`
+          query ($locale: String!, $path: String!) {
+            comments {
+              list(locale: $locale, path: $path) {
+                id
+                render
+                authorName
+                createdAt
+                updatedAt
+              }
+            }
+          }
+        `,
+        variables: {
+          locale: this.$store.get('page/locale'),
+          path: this.$store.get('page/path')
+        },
+        fetchPolicy: 'network-only'
+      })
+      this.comments = _.get(results, 'data.comments.list', []).map(c => {
+        const nameParts = c.authorName.toUpperCase().split(' ')
+        let initials = _.head(nameParts).charAt(0)
+        if (nameParts.length > 1) {
+          initials += _.last(nameParts).charAt(0)
+        }
+        c.initials = initials
+        return c
+      })
+      this.isLoading = false
+      this.hasLoadedOnce = true
+    },
+    /**
+     * Post New Comment
+     */
     async postComment () {
       let rules = {
         comment: {
@@ -177,6 +237,7 @@ export default {
                   slug
                   message
                 }
+                id
               }
             }
           }
@@ -198,6 +259,10 @@ export default {
         })
 
         this.newcomment = ''
+        await this.fetch()
+        this.$nextTick(() => {
+          this.$vuetify.goTo(`#comment-post-id-${_.get(resp, 'data.comments.create.id', 0)}`, this.scrollOpts)
+        })
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
@@ -205,41 +270,117 @@ export default {
           icon: 'alert'
         })
       }
-    }
-  },
-  apollo: {
-    comments: {
-      query: gql`
-        query ($pageId: Int!) {
-          comments {
-            list(pageId: $pageId) {
-              id
-              render
-              authorName
-              createdAt
-              updatedAt
+    },
+    async editComment (cm) {
+
+    },
+    deleteCommentConfirm (cm) {
+      this.commentToDelete = cm
+      this.deleteCommentDialogShown = true
+    },
+    /**
+     * Delete Comment
+     */
+    async deleteComment () {
+      this.$store.commit(`loadingStart`, 'comments-delete')
+      this.isBusy = true
+      this.deleteCommentDialogShown = false
+
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation (
+            $id: Int!
+          ) {
+            comments {
+              delete (
+                id: $id
+              ) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
             }
           }
+        `,
+        variables: {
+          id: this.commentToDelete.id
         }
-      `,
-      variables() {
-        return {
-          pageId: this.pageId
-        }
-      },
-      skip () {
-        return !this.canFetch
-      },
-      fetchPolicy: 'cache-and-network',
-      update: (data) => data.comments.list,
-      watchLoading (isLoading) {
-        this.isLoading = isLoading
+      })
+
+      if (_.get(resp, 'data.comments.delete.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: 'Comment was deleted successfully.',
+          icon: 'check'
+        })
+
+        this.comments = _.reject(this.comments, ['id', this.commentToDelete.id])
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'),
+          icon: 'alert'
+        })
       }
+      this.isBusy = false
+      this.$store.commit(`loadingStop`, 'comments-delete')
     }
   }
 }
 </script>
 
 <style lang="scss">
+.comments-post {
+  position: relative;
 
+  &:hover {
+    .comments-post-actions {
+      opacity: 1;
+    }
+  }
+
+  &-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+
+  &-content {
+    > p:first-child {
+      padding-top: 0;
+    }
+
+    p {
+      padding-top: 1rem;
+      margin-bottom: 0;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    code {
+      background-color: rgba(mc('pink', '500'), .1);
+      box-shadow: none;
+    }
+
+    pre > code {
+      margin-top: 1rem;
+      padding: 12px;
+      background-color: #111;
+      box-shadow: none;
+      border-radius: 5px;
+      width: 100%;
+      color: #FFF;
+      font-weight: 400;
+      font-size: .85rem;
+      font-family: Roboto Mono, monospace;
+    }
+  }
+}
 </style>

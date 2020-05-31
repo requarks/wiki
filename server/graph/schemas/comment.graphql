@@ -18,7 +18,8 @@ type CommentQuery {
   providers: [CommentProvider] @auth(requires: ["manage:system"])
 
   list(
-    pageId: Int!
+    locale: String!
+    path: String!
   ): [CommentPost]! @auth(requires: ["read:comments", "manage:system"])
 
   single(
@@ -41,7 +42,7 @@ type CommentMutation {
     content: String!
     guestName: String
     guestEmail: String
-  ): DefaultResponse @auth(requires: ["write:comments", "manage:system"])
+  ): CommentCreateResponse @auth(requires: ["write:comments", "manage:system"])
 
   update(
     id: Int!
@@ -84,4 +85,9 @@ type CommentPost {
   authorIP: String! @auth(requires: ["manage:system"])
   createdAt: Date!
   updatedAt: Date!
+}
+
+type CommentCreateResponse {
+  responseResult: ResponseStatus
+  id: Int
 }

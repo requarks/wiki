@@ -823,7 +823,7 @@
     border-radius: 7px 7px 0 0;
 
     @at-root .theme--dark & {
-      background-color: lighten(mc('grey', '900'), 5%);
+      background-color: lighten(mc('blue-grey', '900'), 5%);
     }
   }
 

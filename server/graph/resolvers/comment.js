@@ -40,7 +40,25 @@ module.exports = {
      * Fetch list of comments for a page
      */
     async list (obj, args, context) {
-      return []
+      const page = await WIKI.models.pages.getPage(args)
+      if (page) {
+        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          const comments = await WIKI.models.comments.query().where('pageId', page.id)
+          return comments.map(c => ({
+            ...c,
+            authorName: c.name,
+            authorEmail: c.email,
+            authorIP: c.ip
+          }))
+        } else {
+          throw new WIKI.Error.PageViewForbidden()
+        }
+      } else {
+        return []
+      }
     }
   },
   CommentMutation: {
@@ -49,12 +67,31 @@ module.exports = {
      */
     async create (obj, args, context) {
       try {
-        // WIKI.data.commentProvider.create({
-        //   ...args,
-        //   user: context.req.user
-        // })
+        const cmId = await WIKI.models.comments.postNewComment({
+          ...args,
+          user: context.req.user,
+          ip: context.req.ip
+        })
         return {
-          responseResult: graphHelper.generateSuccess('New comment posted successfully')
+          responseResult: graphHelper.generateSuccess('New comment posted successfully'),
+          id: cmId
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Delete an Existing Comment
+     */
+    async delete (obj, args, context) {
+      try {
+        await WIKI.models.comments.deleteComment({
+          id: args.id,
+          user: context.req.user,
+          ip: context.req.ip
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Comment deleted successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)

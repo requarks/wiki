@@ -74,7 +74,7 @@ module.exports = {
       ip: user.ip
     }
 
-    // Check for Spam with Akismet
+    // -> Check for Spam with Akismet
     if (akismetClient) {
       let userRole = 'user'
       if (user.groups.indexOf(1) >= 0) {
@@ -106,16 +106,33 @@ module.exports = {
       }
     }
 
-    // Save Comment
-    await WIKI.models.comments.query().insert(newComment)
+    // -> Save Comment to DB
+    const cm = await WIKI.models.comments.query().insert(newComment)
+
+    // -> Return Comment ID
+    return cm.id
   },
   async update ({ id, content, user, ip }) {
 
   },
+  /**
+   * Delete an existing comment by ID
+   */
   async remove ({ id, user, ip }) {
-
+    return WIKI.models.comments.query().findById(id).delete()
   },
-  async count ({ pageId }) {
-
+  /**
+   * Get the page ID from a comment ID
+   */
+  async getPageIdFromCommentId (id) {
+    const result = await WIKI.models.comments.query().select('pageId').findById(id)
+    return (result) ? result.pageId : false
+  },
+  /**
+   * Get the total comments count for a page ID
+   */
+  async count (pageId) {
+    const result = await WIKI.models.comments.query().count('* as total').where('pageId', pageId).first()
+    return _.toSafeInteger(result.total)
   }
 }
