@@ -129,6 +129,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Noel Cower ([@nilium](https://github.com/nilium))
 - Oleksii ([@idokka](https://github.com/idokka))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
+- Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
