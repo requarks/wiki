@@ -1,5 +1,6 @@
 const { JSDOM } = require('jsdom')
 const createDOMPurify = require('dompurify')
+const _ = require('lodash')
 
 module.exports = {
   async init(input, config) {
@@ -16,14 +17,9 @@ module.exports = {
 
       DOMPurify.addHook('uponSanitizeElement', (node, data) => {
         if (data.tagName === 'component') {
-          try {
-            if (node.attributes.is.value === 'style') {
-              return
-            }
-          } catch (e) {
-            // attribute does not exist
+          if (_.get(node, ['attributes', 'is', 'value']) !== 'style') {
+            node.parentNode.removeChild(node)
           }
-          node.parentNode.removeChild(node)
         }
       })
 
