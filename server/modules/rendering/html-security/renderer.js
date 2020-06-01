@@ -16,10 +16,8 @@ module.exports = {
       }
 
       DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-        if (data.tagName === 'component') {
-          if (_.get(node, ['attributes', 'is', 'value']) !== 'style') {
-            node.parentNode.removeChild(node)
-          }
+        if (data.tagName === 'component' && _.get(node, ['attributes', 'is', 'value']) !== 'style') {
+          node.parentNode.removeChild(node)
         }
       })
 
