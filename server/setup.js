@@ -34,7 +34,7 @@ module.exports = () => {
   // ----------------------------------------
 
   app.use(favicon(path.join(WIKI.ROOTPATH, 'assets', 'favicon.ico')))
-  app.use(express.static(path.join(WIKI.ROOTPATH, 'assets')))
+  app.use('/_assets', express.static(path.join(WIKI.ROOTPATH, 'assets')))
 
   // ----------------------------------------
   // View Engine Setup
