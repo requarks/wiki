@@ -473,10 +473,10 @@ export default {
       }
     },
     sidebarDecoded () {
-      return JSON.parse(atob(this.sidebar))
+      return JSON.parse(Buffer.from(this.sidebar, 'base64').toString())
     },
     tocDecoded () {
-      return JSON.parse(atob(this.toc))
+      return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     }
   },
   created() {
