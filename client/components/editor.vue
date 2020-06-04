@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app.editor(:dark='darkMode')
+  v-app.editor(:dark='$vuetify.theme.dark')
     nav-header(dense)
       template(slot='mid')
         v-text-field.editor-title-input(
@@ -81,6 +81,7 @@ export default {
     editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
     editorCkeditor: () => import(/* webpackChunkName: "editor-ckeditor", webpackMode: "lazy" */ './editor/editor-ckeditor.vue'),
     editorMarkdown: () => import(/* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'),
+    editorRedirect: () => import(/* webpackChunkName: "editor-redirect", webpackMode: "lazy" */ './editor/editor-redirect.vue'),
     editorModalEditorselect: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-editorselect.vue'),
     editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue'),
     editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue'),
@@ -143,12 +144,19 @@ export default {
       dialogEditorSelector: false,
       dialogUnsaved: false,
       exitConfirmed: false,
-      initContentParsed: ''
+      initContentParsed: '',
+      savedState: {
+        description: '',
+        isPublished: false,
+        publishEndDate: '',
+        publishStartDate: '',
+        tags: '',
+        title: ''
+      }
     }
   },
   computed: {
     currentEditor: sync('editor/editor'),
-    darkMode: get('site/dark'),
     activeModal: sync('editor/activeModal'),
     mode: get('editor/mode'),
     welcomeMode() { return this.mode === `create` && this.path === `home` },
@@ -159,10 +167,10 @@ export default {
         this.initContentParsed !== this.$store.get('editor/content'),
         this.locale !== this.$store.get('page/locale'),
         this.path !== this.$store.get('page/path'),
-        this.title !== this.$store.get('page/title'),
-        this.description !== this.$store.get('page/description'),
-        this.tags !== this.$store.get('page/tags'),
-        this.isPublished !== this.$store.get('page/isPublished')
+        this.savedState.title !== this.$store.get('page/title'),
+        this.savedState.description !== this.$store.get('page/description'),
+        this.savedState.tags !== this.$store.get('page/tags'),
+        this.savedState.isPublished !== this.$store.get('page/isPublished')
       ], Boolean)
     }
   },
@@ -185,6 +193,8 @@ export default {
     this.$store.commit('page/SET_TITLE', this.title)
 
     this.$store.commit('page/SET_MODE', 'edit')
+
+    this.setCurrentSavedState()
 
     this.checkoutDateActive = this.checkoutDate
   },
@@ -336,6 +346,7 @@ export default {
         }
 
         this.initContentParsed = this.$store.get('editor/content')
+        this.setCurrentSavedState()
       } catch (err) {
         this.$store.commit('showNotification', {
           message: err.message,
@@ -383,6 +394,16 @@ export default {
           window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
         }
       }, 500)
+    },
+    setCurrentSavedState () {
+      this.savedState = {
+        description: this.$store.get('page/description'),
+        isPublished: this.$store.get('page/isPublished'),
+        publishEndDate: this.$store.get('page/publishEndDate') || '',
+        publishStartDate: this.$store.get('page/publishStartDate') || '',
+        tags: this.$store.get('page/tags'),
+        title: this.$store.get('page/title')
+      }
     }
   },
   apollo: {

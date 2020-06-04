@@ -2,7 +2,7 @@
 
 const express = require('express')
 const ExpressBrute = require('express-brute')
-const BruteKnex = require('brute-knex')
+const BruteKnex = require('../helpers/brute-knex')
 const router = express.Router()
 const moment = require('moment')
 const _ = require('lodash')

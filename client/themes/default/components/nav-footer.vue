@@ -1,6 +1,6 @@
 <template lang="pug">
   v-footer.justify-center(:color='bgColor', inset)
-    .caption.grey--text.text--darken-1
+    .caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`')
       template(v-if='company && company.length > 0 && contentLicense !== ``')
         span(v-if='contentLicense === `alr`') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
         span(v-else) {{ $t('common:footer.license', { company: company, license: $t('common:license.' + contentLicense), interpolation: { escapeValue: false } }) }} |&nbsp;

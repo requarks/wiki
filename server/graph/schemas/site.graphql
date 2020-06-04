@@ -24,26 +24,30 @@ type SiteQuery {
 
 type SiteMutation {
   updateConfig(
-    host: String!
-    title: String!
-    description: String!
-    robots: [String]!
-    analyticsService: String!
-    analyticsId: String!
-    company: String!
-    contentLicense: String!
-    logoUrl: String!
-    featurePageRatings: Boolean!
-    featurePageComments: Boolean!
-    featurePersonalWikis: Boolean!
-    securityIframe: Boolean!
-    securityReferrerPolicy: Boolean!
-    securityTrustProxy: Boolean!
-    securitySRI: Boolean!
-    securityHSTS: Boolean!
-    securityHSTSDuration: Int!
-    securityCSP: Boolean!
-    securityCSPDirectives: String!
+    host: String
+    title: String
+    description: String
+    robots: [String]
+    analyticsService: String
+    analyticsId: String
+    company: String
+    contentLicense: String
+    logoUrl: String
+    featurePageRatings: Boolean
+    featurePageComments: Boolean
+    featurePersonalWikis: Boolean
+    securityOpenRedirect: Boolean
+    securityIframe: Boolean
+    securityReferrerPolicy: Boolean
+    securityTrustProxy: Boolean
+    securitySRI: Boolean
+    securityHSTS: Boolean
+    securityHSTSDuration: Int
+    securityCSP: Boolean
+    securityCSPDirectives: String
+    uploadMaxFileSize: Int
+    uploadMaxFiles: Int
+
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
@@ -64,6 +68,7 @@ type SiteConfig {
   featurePageRatings: Boolean!
   featurePageComments: Boolean!
   featurePersonalWikis: Boolean!
+  securityOpenRedirect: Boolean!
   securityIframe: Boolean!
   securityReferrerPolicy: Boolean!
   securityTrustProxy: Boolean!
@@ -72,4 +77,6 @@ type SiteConfig {
   securityHSTSDuration: Int!
   securityCSP: Boolean!
   securityCSPDirectives: String!
+  uploadMaxFileSize: Int!
+  uploadMaxFiles: Int!
 }

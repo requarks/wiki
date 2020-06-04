@@ -3,18 +3,16 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-social-group.svg', alt='Edit Group', style='width: 80px;')
+          img(src='/_assets/svg/icon-social-group.svg', alt='Edit Group', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Edit Group
             .subtitle-1.grey--text {{group.name}}
           v-spacer
-          .caption.grey--text ID #[strong {{group.id}}]
-          v-divider.mx-3(vertical)
-          v-btn(color='grey', large, outlined, to='/groups')
+          v-btn(color='grey', icon, outlined, to='/groups')
             v-icon mdi-arrow-left
           v-dialog(v-model='deleteGroupDialog', max-width='500', v-if='!group.isSystem')
             template(v-slot:activator='{ on }')
-              v-btn.ml-2(color='red', large, outlined, v-on='on')
+              v-btn.ml-2(color='red', icon, outlined, v-on='on')
                 v-icon(color='red') mdi-trash-can-outline
             v-card
               .dialog-header.is-red Delete Group?
@@ -46,6 +44,9 @@
 
             v-tab-item(key='users', :transition='false', :reverse-transition='false')
               group-users(v-model='group', @refresh='refresh')
+          v-card-chin
+            v-spacer
+            .caption.grey--text.pr-2 Group ID #[strong {{group.id}}]
 </template>
 
 <script>

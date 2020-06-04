@@ -57,10 +57,13 @@ type UserMutation {
     location: String
     jobTitle: String
     timezone: String
+    dateFormat: String
+    appearance: String
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
   delete(
     id: Int!
+    replaceId: Int!
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
   verify(
@@ -84,6 +87,8 @@ type UserMutation {
     location: String!
     jobTitle: String!
     timezone: String!
+    dateFormat: String!
+    appearance: String!
   ): UserTokenResponse
 
   changePassword(
@@ -113,7 +118,9 @@ type UserMinimal {
   email: String!
   providerKey: String!
   isSystem: Boolean!
+  isActive: Boolean!
   createdAt: Date!
+  lastLoginAt: Date
 }
 
 type User {
@@ -128,6 +135,8 @@ type User {
   location: String!
   jobTitle: String!
   timezone: String!
+  dateFormat: String!
+  appearance: String!
   createdAt: Date!
   updatedAt: Date!
   lastLoginAt: Date
@@ -145,6 +154,8 @@ type UserProfile {
   location: String!
   jobTitle: String!
   timezone: String!
+  dateFormat: String!
+  appearance: String!
   createdAt: Date!
   updatedAt: Date!
   lastLoginAt: Date

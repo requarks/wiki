@@ -214,8 +214,13 @@ module.exports = class Page extends Model {
    */
   static async createPage(opts) {
     // -> Validate path
-    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0) {
+    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.indexOf('\\') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
+    }
+
+    // -> Remove trailing slash
+    if (opts.path.endsWith('/')) {
+      opts.path = opts.path.slice(0, -1)
     }
 
     // -> Check for page access
@@ -398,10 +403,20 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageNotFound()
     }
 
+    // -> Validate path
+    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.indexOf('\\') >= 0) {
+      throw new WIKI.Error.PageIllegalPath()
+    }
+
+    // -> Remove trailing slash
+    if (opts.destinationPath.endsWith('/')) {
+      opts.destinationPath = opts.destinationPath.slice(0, -1)
+    }
+
     // -> Check for source page access
     if (!WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
-      locale: page.sourceLocale,
-      path: page.sourcePath
+      locale: page.localeCode,
+      path: page.path
     })) {
       throw new WIKI.Error.PageMoveForbidden()
     }

@@ -34,7 +34,7 @@ module.exports = () => {
   // ----------------------------------------
 
   app.use(favicon(path.join(WIKI.ROOTPATH, 'assets', 'favicon.ico')))
-  app.use(express.static(path.join(WIKI.ROOTPATH, 'assets')))
+  app.use('/_assets', express.static(path.join(WIKI.ROOTPATH, 'assets')))
 
   // ----------------------------------------
   // View Engine Setup
@@ -104,6 +104,7 @@ module.exports = () => {
         host: '',
         port: 465,
         secure: true,
+        verifySSL: true,
         user: '',
         pass: '',
         useDKIM: false,
@@ -185,6 +186,7 @@ module.exports = () => {
         'sessionSecret',
         'telemetry',
         'theming',
+        'uploads',
         'title'
       ], false)
 
@@ -323,7 +325,9 @@ module.exports = () => {
                 kind: 'link',
                 label: 'Home',
                 target: '/',
-                targetType: 'home'
+                targetType: 'home',
+                visibilityMode: 'all',
+                visibilityGroups: null
               }
             ]
           }

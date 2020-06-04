@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app(:dark='darkMode').profile
+  v-app(:dark='$vuetify.theme.dark').profile
     nav-header
     v-navigation-drawer.pb-0(v-model='profileDrawerShown', app, fixed, clipped, left, permanent)
       v-list(dense, nav)
@@ -22,7 +22,7 @@
         //-     v-list-item-title {{$t('profile:comments.title')}}
         //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
 
-    v-content(:class='darkMode ? "grey darken-4" : "grey lighten-5"')
+    v-content(:class='$vuetify.theme.dark ? "grey darken-4" : "grey lighten-5"')
       transition(name='profile-router')
         router-view
 
@@ -34,7 +34,7 @@
 <script>
 import VueRouter from 'vue-router'
 
-/* global WIKI, siteConfig */
+/* global WIKI */
 
 const router = new VueRouter({
   mode: 'history',
@@ -42,7 +42,6 @@ const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/profile' },
     { path: '/profile', component: () => import(/* webpackChunkName: "profile" */ './profile/profile.vue') },
-    // { path: '/preferences', component: () => import(/* webpackChunkName: "profile" */ './profile/preferences.vue') },
     { path: '/pages', component: () => import(/* webpackChunkName: "profile" */ './profile/pages.vue') },
     { path: '/comments', component: () => import(/* webpackChunkName: "profile" */ './profile/comments.vue') }
   ]
@@ -63,9 +62,6 @@ export default {
     return {
       profileDrawerShown: true
     }
-  },
-  computed: {
-    darkMode() { return siteConfig.darkMode }
   },
   router,
   created() {

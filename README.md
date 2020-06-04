@@ -115,16 +115,21 @@ We are looking for translators to make Wiki.js UI available in as many languages
 
 Support this project by becoming a sponsor. Your name will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://github.com/users/NGPixel/sponsorship)]
 
+- Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Alexander Casassovici ([@alexksso](https://github.com/alexksso))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - Dragan Espenschied ([@despens](https://github.com/despens))
+- Ernie ([@iamernie](https://github.com/iamernie))
+- Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - Loki ([@binaryloki](https://github.com/binaryloki))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
 - Oleksii ([@idokka](https://github.com/idokka))
+- Robert Lanzke ([@winkelement](https://github.com/winkelement))
+- Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
@@ -152,6 +157,8 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 <!--5 start-->
 - Al Romano
 - Alex Balabanov
+- Alex Zen
+- Arti Zirk
 - Brandon Curtis
 - djagoo
 - Douglas Lassance
@@ -163,9 +170,11 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Iskander Callos
 - Josh Stewart
 - Loïc CRAMPON
+- Ludgeir Ibanez
 - Matt Gedigian
 - Philipp Schürch
 - Richeir
+- SmartNET.works
 - Stepan Sokolovskyi
 - 张白驹
 <!--5 end-->

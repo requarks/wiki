@@ -12,24 +12,28 @@ props:
     title: Allow HTML
     hint: Enable HTML tags in content
     order: 1
+    public: true
   linkify:
     type: Boolean
     default: true
     title: Automatically convert links
     hint: Links will automatically be converted to clickable links.
     order: 2
+    public: true
   linebreaks:
     type: Boolean
     default: true
     title: Automatically convert line breaks
     hint: Add linebreaks within paragraphs.
     order: 3
+    public: true
   typographer:
     type: Boolean
     default: false
     title: Typographer
     hint: Enable some language-neutral replacement + quotes beautification
     order: 4
+    public: true
   quotes:
     type: String
     default: English
@@ -49,3 +53,4 @@ props:
       - Russian
       - Spanish
       - Swedish
+    public: true

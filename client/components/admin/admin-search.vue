@@ -3,17 +3,19 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-search.svg', alt='Search Engine', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('admin:search.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:search.subtitle')}}
           v-spacer
-          v-btn.mx-1.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
+          v-btn.mr-3.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/search', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.animated.fadeInDown.wait-p2s(icon, outlined, color='grey', @click='refresh')
             v-icon mdi-refresh
-          v-btn.mx-2.animated.fadeInDown.wait-p1s(color='black', dark, large, depressed, @click='rebuild')
+          v-btn.mx-3.animated.fadeInDown.wait-p1s(color='black', dark, depressed, @click='rebuild')
             v-icon(left) mdi-cached
             span {{$t('admin:search.rebuildIndex')}}
-          v-btn.ml-1.animated.fadeInDown(color='success', @click='save', depressed, large)
+          v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
@@ -55,7 +57,7 @@
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='mdi-settings-box'
+                prepend-icon='mdi-cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
@@ -66,7 +68,7 @@
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
                 color='primary'
-                prepend-icon='mdi-settings-box'
+                prepend-icon='mdi-cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 inset
@@ -77,7 +79,7 @@
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='mdi-settings-box'
+                prepend-icon='mdi-cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
@@ -88,7 +90,7 @@
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='mdi-settings-box'
+                prepend-icon='mdi-cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'

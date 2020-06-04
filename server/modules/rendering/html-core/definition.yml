@@ -18,3 +18,12 @@ props:
     title: Open external links in a new tab
     hint: External links will have a _blank target attribute added automatically.
     order: 2
+  relAttributeExternalLink:
+    type: String
+    default: noreferrer
+    title: Protect against XSS when opening _blank target links
+    hint: External links with _blank attribute will have an additional rel attribute.
+    order: 3
+    enum:
+        - noreferrer
+        - noopener

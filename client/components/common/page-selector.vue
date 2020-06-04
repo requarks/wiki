@@ -20,7 +20,7 @@
           v-show='searchLoading'
           )
       .d-flex
-        v-flex.grey(xs5, :class='darkMode ? `darken-4` : `lighten-3`')
+        v-flex.grey(xs5, :class='$vuetify.theme.dark ? `darken-4` : `lighten-3`')
           v-toolbar(color='grey darken-3', dark, dense, flat)
             .body-2 Virtual Folders
             v-spacer
@@ -57,7 +57,7 @@
                   color='primary'
                   )
                   template(v-for='(page, idx) of currentPages')
-                    v-list-item(:key='`page-` + page.id', :value='page.path')
+                    v-list-item(:key='`page-` + page.id', :value='page')
                       v-list-item-icon: v-icon mdi-text-box
                       v-list-item-title {{page.title}}
                     v-divider(v-if='idx < pages.length - 1')
@@ -69,7 +69,7 @@
             icon='mdi-alert'
             )
             .body-2 This folder is empty.
-      v-card-actions.grey.pa-2(:class='darkMode ? `darken-2` : `lighten-1`')
+      v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
         v-select(
           solo
           dark
@@ -101,8 +101,7 @@
 
 <script>
 import _ from 'lodash'
-import { get } from 'vuex-pathify'
-import pageTreeQuery from 'gql/common/common-pages-query-tree.gql'
+import gql from 'graphql-tag'
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
@@ -129,6 +128,10 @@ export default {
     openHandler: {
       type: Function,
       default: () => {}
+    },
+    mustExist: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -172,7 +175,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
@@ -182,6 +184,9 @@ export default {
     },
     isValidPath () {
       if (!this.currentPath) {
+        return false
+      }
+      if (this.mustExist && !this.currentPage) {
         return false
       }
       const firstSection = _.head(this.currentPath.split('/'))
@@ -235,7 +240,7 @@ export default {
     },
     currentPage (newValue, oldValue) {
       if (!_.isEmpty(newValue)) {
-        this.currentPath = newValue
+        this.currentPath = newValue.path
       }
     },
     currentLocale (newValue, oldValue) {
@@ -262,7 +267,8 @@ export default {
     open() {
       const exit = this.openHandler({
         locale: this.currentLocale,
-        path: this.currentPath
+        path: this.currentPath,
+        id: (this.mustExist && this.currentPage) ? this.currentPage.pageId : 0
       })
       if (exit !== false) {
         this.close()
@@ -271,7 +277,20 @@ export default {
     async fetchFolders (item) {
       this.searchLoading = true
       const resp = await this.$apollo.query({
-        query: pageTreeQuery,
+        query: gql`
+          query ($parent: Int!, $mode: PageTreeMode!, $locale: String!) {
+            pages {
+              tree(parent: $parent, mode: $mode, locale: $locale) {
+                id
+                path
+                title
+                isFolder
+                pageId
+                parent
+              }
+            }
+          }
+        `,
         fetchPolicy: 'network-only',
         variables: {
           parent: item.id,

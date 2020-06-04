@@ -366,6 +366,7 @@ router.get('/*', async (req, res, next) => {
     req.i18n.changeLanguage(pageArgs.locale)
 
     try {
+      // -> Get Page from cache
       const page = await WIKI.models.pages.getPage({
         path: pageArgs.path,
         locale: pageArgs.locale,
@@ -374,6 +375,7 @@ router.get('/*', async (req, res, next) => {
       })
       pageArgs.tags = _.get(page, 'tags', [])
 
+      // -> Check User Access
       if (!WIKI.auth.checkAccess(req.user, ['read:pages'], pageArgs)) {
         if (req.user.id === 2) {
           res.cookie('loginRedirect', req.path, {
@@ -395,7 +397,19 @@ router.get('/*', async (req, res, next) => {
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)
         _.set(res.locals, 'pageMeta.description', page.description)
-        const sidebar = await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })
+
+        // -> Build sidebar navigation
+        let sdi = 1
+        const sidebar = (await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({
+          i: `sdi-${sdi++}`,
+          k: n.kind,
+          l: n.label,
+          c: n.icon,
+          y: n.targetType,
+          t: n.target
+        }))
+
+        // -> Build theme code injection
         const injectCode = {
           css: WIKI.config.theming.injectCSS,
           head: WIKI.config.theming.injectHead,
@@ -403,12 +417,55 @@ router.get('/*', async (req, res, next) => {
         }
 
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
+          // -> Convert page TOC
           if (_.isString(page.toc)) {
             page.toc = JSON.parse(page.toc)
           }
-          res.render('legacy/page', { page, sidebar, injectCode, isAuthenticated: req.user && req.user.id !== 2 })
+
+          // -> Render legacy view
+          res.render('legacy/page', {
+            page,
+            sidebar,
+            injectCode,
+            isAuthenticated: req.user && req.user.id !== 2
+          })
         } else {
-          res.render('page', { page, sidebar, injectCode })
+          // -> Convert page TOC
+          if (!_.isString(page.toc)) {
+            page.toc = JSON.stringify(page.toc)
+          }
+
+          // -> Inject comments variables
+          if (WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
+            [
+              { key: 'pageUrl', value: `${WIKI.config.host}/i/${page.id}` },
+              { key: 'pageId', value: page.id }
+            ].forEach((cfg) => {
+              WIKI.data.commentProvider.head = _.replace(WIKI.data.commentProvider.head, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+              WIKI.data.commentProvider.body = _.replace(WIKI.data.commentProvider.body, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+              WIKI.data.commentProvider.main = _.replace(WIKI.data.commentProvider.main, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+            })
+          }
+
+          // -> Comments Permissions
+          const commentsPermissions = WIKI.config.features.featurePageComments ? {
+            read: WIKI.auth.checkAccess(req.user, ['read:comments'], pageArgs),
+            write: WIKI.auth.checkAccess(req.user, ['write:comments'], pageArgs),
+            manage: WIKI.auth.checkAccess(req.user, ['manage:comments'], pageArgs)
+          } : {
+            read: false,
+            write: false,
+            manage: false
+          }
+
+          // -> Render view
+          res.render('page', {
+            page,
+            sidebar,
+            injectCode,
+            comments: WIKI.data.commentProvider,
+            commentsPermissions
+          })
         }
       } else if (pageArgs.path === 'home') {
         _.set(res.locals, 'pageMeta.title', 'Welcome')

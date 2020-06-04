@@ -119,7 +119,7 @@
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)', disabled).mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, disabled, @click='toggleModal(`editorModalBlocks`)').mx-0
               v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
           span {{$t('editor:markup.insertBlock')}}
         v-tooltip(right, color='teal')
@@ -184,6 +184,7 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
 import gql from 'graphql-tag'
+import DOMPurify from 'dompurify'
 
 /* global siteConfig, siteLangs */
 
@@ -221,6 +222,7 @@ import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
+import plantuml from './markdown/plantuml'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
@@ -239,7 +241,7 @@ import katexHelper from './common/katex'
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 
 // Prism Config
-Prism.plugins.autoloader.languages_path = '/js/prism/'
+Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
   'remove-trailing': true,
   'remove-indent': true,
@@ -256,7 +258,11 @@ const md = new MarkdownIt({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    if (['mermaid', 'plantuml'].includes(lang)) {
+      return `<pre class="codeblock-${lang}"><code>${_.escape(str)}</code></pre>`
+    } else {
+      return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    }
   }
 })
   .use(mdAttrs, {
@@ -291,6 +297,13 @@ function injectLineNumbers (tokens, idx, options, env, slf) {
 md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
 md.renderer.rules.blockquote_open = injectLineNumbers
+
+// ========================================
+// PLANTUML
+// ========================================
+
+// TODO: Use same options as defined in backend
+plantuml.init(md, {})
 
 // ========================================
 // KATEX
@@ -328,7 +341,7 @@ md.renderer.rules.katex_block = (tokens, idx) => {
 md.renderer.rules.emoji = (token, idx) => {
   return twemoji.parse(token[idx].content, {
     callback (icon, opts) {
-      return `/svg/twemoji/${icon}.svg`
+      return `/_assets/svg/twemoji/${icon}.svg`
     }
   })
 }
@@ -395,7 +408,7 @@ export default {
     onCmInput: _.debounce(function (newContent) {
       linesMap = []
       this.$store.set('editor/content', newContent)
-      this.previewHTML = md.render(newContent)
+      this.previewHTML = DOMPurify.sanitize(md.render(newContent))
       this.$nextTick(() => {
         this.renderMermaidDiagrams()
         Prism.highlightAllUnder(this.$refs.editorPreview)
@@ -541,7 +554,7 @@ export default {
       })
     },
     renderMermaidDiagrams () {
-      document.querySelectorAll('.editor-markdown-preview pre.line-numbers > code.language-mermaid').forEach(elm => {
+      document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
         mermaidId++
         const mermaidDef = elm.innerText
         const mmElm = document.createElement('div')
@@ -812,6 +825,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       @include until($tablet) {
         height: $editor-height-mobile;
       }
+
+      p.line {
+        overflow-wrap: break-word;
+      }
     }
   }
 
@@ -900,6 +917,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     .cm-header-6 {
       font-size: 1.025rem;
     }
+  }
+
+  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
+    word-break: break-word;
   }
 
   .CodeMirror-focused .cm-matchhighlight {

@@ -71,13 +71,19 @@ module.exports = {
       ['description', page.description],
       ['published', page.isPublished.toString()],
       ['date', page.updatedAt],
-      ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : '']
+      ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : ''],
+      ['editor', page.editorKey]
     ]
     switch (page.contentType) {
       case 'markdown':
         return '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content
       case 'html':
         return '<!--\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n-->\n\n' + page.content
+      case 'json':
+        return {
+          ...page.content,
+          _meta: _.fromPairs(meta)
+        }
       default:
         return page.content
     }

@@ -13,7 +13,7 @@ module.exports = {
   UserQuery: {
     async list(obj, args, context, info) {
       return WIKI.models.users.query()
-        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'createdAt')
+        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'isActive', 'createdAt', 'lastLoginAt')
     },
     async search(obj, args, context, info) {
       return WIKI.models.users.query()
@@ -72,7 +72,7 @@ module.exports = {
         if (args.id <= 2) {
           throw new WIKI.Error.UserDeleteProtected()
         }
-        await WIKI.models.users.deleteUser(args.id)
+        await WIKI.models.users.deleteUser(args.id, args.replaceId)
         return {
           responseResult: graphHelper.generateSuccess('User deleted successfully')
         }
@@ -147,12 +147,22 @@ module.exports = {
           throw new WIKI.Error.AuthAccountNotVerified()
         }
 
+        if (!['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'].includes(args.dateFormat)) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
+        if (!['', 'light', 'dark'].includes(args.appearance)) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
         await WIKI.models.users.updateUser({
           id: usr.id,
           name: _.trim(args.name),
           jobTitle: _.trim(args.jobTitle),
           location: _.trim(args.location),
-          timezone: args.timezone
+          timezone: args.timezone,
+          dateFormat: args.dateFormat,
+          appearance: args.appearance
         })
 
         const newToken = await WIKI.models.users.refreshToken(usr.id)

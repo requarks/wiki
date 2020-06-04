@@ -19,6 +19,7 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import DecoupledEditor from '@requarks/ckeditor5'
 import EditorConflict from './ckeditor/conflict.vue'
+import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
 
 /* global siteLangs */
 
@@ -57,13 +58,14 @@ export default {
       this.insertLinkDialog = true
     },
     insertLinkHandler ({ locale, path }) {
-      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path})` : `/${path}`)
+      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
     }
   },
   async mounted () {
     this.$store.set('editor/editorKey', 'ckeditor')
 
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
+      language: this.locale,
       placeholder: 'Type the page content here',
       wordCount: {
         onUpdate: stats => {
@@ -81,7 +83,7 @@ export default {
     }
 
     this.editor.model.document.on('change:data', _.debounce(evt => {
-      this.$store.set('editor/content', this.editor.getData())
+      this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
     }, 300))
 
     this.$root.$on('editorInsert', opts => {

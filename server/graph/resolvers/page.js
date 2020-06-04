@@ -227,7 +227,7 @@ module.exports = {
         } else {
           builder.where('parent', args.parent)
           if (args.includeAncestors && curPage && curPage.ancestors.length > 0) {
-            builder.orWhereIn('id', curPage.ancestors)
+            builder.orWhereIn('id', _.isString(curPage.ancestors) ? JSON.parse(curPage.ancestors) : curPage.ancestors)
           }
         }
       }).orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])

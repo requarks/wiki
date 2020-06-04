@@ -5,6 +5,8 @@ block head
     style(type='text/css')!= injectCode.css
   if injectCode.head
     != injectCode.head
+  if config.features.featurePageComments
+    != comments.head
 
 block body
   #root
@@ -19,12 +21,19 @@ block body
       author-name=page.authorName
       :author-id=page.authorId
       :is-published=page.isPublished.toString()
-      :toc=page.toc
+      toc=Buffer.from(page.toc).toString('base64')
       :page-id=page.id
-      :sidebar=sidebar
+      sidebar=Buffer.from(JSON.stringify(sidebar)).toString('base64')
       nav-mode=config.nav.mode
+      comments-enabled=config.features.featurePageComments
+      comments-permissions=Buffer.from(JSON.stringify(commentsPermissions)).toString('base64')
+      comments-external=comments.codeTemplate
       )
       template(slot='contents')
-        div(v-pre)!= page.render
+        div!= page.render
+      template(slot='comments')
+        div!= comments.main
   if injectCode.body
     != injectCode.body
+  if config.features.featurePageComments
+    != comments.body

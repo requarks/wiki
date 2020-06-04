@@ -4,7 +4,7 @@
       .subtitle-1 {{ $t('admin:utilities.importv1Title') }}
     v-card-text
       .text-center
-        img.animated.fadeInUp.wait-p1s(src='/svg/icon-software.svg')
+        img.animated.fadeInUp.wait-p1s(src='/_assets/svg/icon-software.svg')
         .body-2 Import from Wiki.js 1.x
       v-divider.my-4
       .body-2 Data from a Wiki.js 1.x installation can easily be imported using this tool. What do you want to import?
@@ -44,21 +44,13 @@
                 hide-details
                 color='primary'
               )
-            v-col(:cols='gitAuthMode === `ssh` ? 6 : 8')
+            v-col(cols='8')
               v-text-field(
                 outlined
                 label='Repository URL'
                 :placeholder='(gitAuthMode === `ssh`) ? `e.g. git@github.com:orgname/repo.git` : `e.g. https://github.com/orgname/repo.git`'
                 hide-details
                 v-model='gitRepoUrl'
-              )
-            v-col(v-if='gitAuthMode === `ssh`', cols='2')
-              v-text-field(
-                label='Port'
-                placeholder='e.g. 22'
-                v-model='gitRepoPort'
-                outlined
-                hide-details
               )
             v-col(cols='4')
               v-text-field(
@@ -304,7 +296,6 @@ export default {
       ],
       gitVerifySSL: true,
       gitRepoUrl: '',
-      gitRepoPort: 22,
       gitRepoBranch: 'master',
       gitPrivKey: '',
       gitUsername: '',
@@ -396,7 +387,6 @@ export default {
                     { key: 'authType', value: { value: this.gitAuthMode } },
                     { key: 'repoUrl', value: { value: this.gitRepoUrl } },
                     { key: 'branch', value: { value: this.gitRepoBranch } },
-                    { key: 'sshPort', value: { value: this.gitRepoPort } },
                     { key: 'sshPrivateKeyMode', value: { value: 'contents' } },
                     { key: 'sshPrivateKeyPath', value: { value: '' } },
                     { key: 'sshPrivateKeyContent', value: { value: this.gitPrivKey } },

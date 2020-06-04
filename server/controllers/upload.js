@@ -10,13 +10,15 @@ const sanitize = require('sanitize-filename')
 /**
  * Upload files
  */
-router.post('/u', multer({
-  dest: path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'uploads'),
-  limits: {
-    fileSize: WIKI.config.uploads.maxFileSize,
-    files: WIKI.config.uploads.maxFiles
-  }
-}).array('mediaUpload'), async (req, res, next) => {
+router.post('/u', (req, res, next) => {
+  multer({
+    dest: path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'uploads'),
+    limits: {
+      fileSize: WIKI.config.uploads.maxFileSize,
+      files: WIKI.config.uploads.maxFiles
+    }
+  }).array('mediaUpload')(req, res, next)
+}, async (req, res, next) => {
   if (!_.some(req.user.permissions, pm => _.includes(['write:assets', 'manage:system'], pm))) {
     return res.status(403).json({
       succeeded: false,

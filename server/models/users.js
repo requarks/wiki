@@ -350,10 +350,12 @@ module.exports = class User extends Model {
         id: user.id,
         email: user.email,
         name: user.name,
-        pictureUrl: user.pictureUrl,
-        timezone: user.timezone,
-        localeCode: user.localeCode,
-        defaultEditor: user.defaultEditor,
+        av: user.pictureUrl,
+        tz: user.timezone,
+        lc: user.localeCode,
+        df: user.dateFormat,
+        ap: user.appearance,
+        // defaultEditor: user.defaultEditor,
         permissions: user.getGlobalPermissions(),
         groups: user.getGroups()
       }, {
@@ -548,7 +550,7 @@ module.exports = class User extends Model {
    *
    * @param {Object} param0 User ID and fields to update
    */
-  static async updateUser ({ id, email, name, newPassword, groups, location, jobTitle, timezone }) {
+  static async updateUser ({ id, email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
       let usrData = {}
@@ -594,6 +596,12 @@ module.exports = class User extends Model {
       if (!_.isEmpty(timezone) && timezone !== usr.timezone) {
         usrData.timezone = timezone
       }
+      if (!_.isNil(dateFormat) && dateFormat !== usr.dateFormat) {
+        usrData.dateFormat = dateFormat
+      }
+      if (!_.isNil(appearance) && appearance !== usr.appearance) {
+        usrData.appearance = appearance
+      }
       await WIKI.models.users.query().patch(usrData).findById(id)
     } else {
       throw new WIKI.Error.UserNotFound()
@@ -605,9 +613,15 @@ module.exports = class User extends Model {
    *
    * @param {*} id User ID
    */
-  static async deleteUser (id) {
+  static async deleteUser (id, replaceId) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
+      await WIKI.models.assets.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.comments.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.pageHistory.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.pages.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.models.pages.query().patch({ creatorId: replaceId }).where('creatorId', id)
+
       await WIKI.models.userKeys.query().delete().where('userId', id)
       await WIKI.models.users.query().deleteById(id)
     } else {

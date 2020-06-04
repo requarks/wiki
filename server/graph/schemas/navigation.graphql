@@ -76,4 +76,5 @@ enum NavigationMode {
   NONE
   TREE
   MIXED
+  STATIC
 }

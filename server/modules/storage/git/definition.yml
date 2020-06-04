@@ -93,12 +93,6 @@ props:
     default: ''
     hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
     order: 50
-  sshPort:
-    type: Number
-    title: SSH Port
-    default: 22
-    hint: Optional - SSH Authentication Only - Allows overriding ssh default port.
-    order: 60
 actions:
   - handler: syncUntracked
     label: Add Untracked Changes
