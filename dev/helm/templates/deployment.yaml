@@ -28,10 +28,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            {{ if .Values.postgresql.enabled }}
             - name: DB_TYPE
               value: postgres
-            {{ end }}
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
             - name: DB_PORT
