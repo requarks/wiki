@@ -214,13 +214,18 @@ module.exports = class Page extends Model {
    */
   static async createPage(opts) {
     // -> Validate path
-    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.indexOf('\\') >= 0) {
+    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.indexOf('\\') >= 0 || opts.path.indexOf('//') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
     // -> Remove trailing slash
     if (opts.path.endsWith('/')) {
       opts.path = opts.path.slice(0, -1)
+    }
+
+    // -> Remove starting slash
+    if (opts.path.startsWith('/')) {
+      opts.path = opts.path.slice(1)
     }
 
     // -> Check for page access
@@ -404,13 +409,18 @@ module.exports = class Page extends Model {
     }
 
     // -> Validate path
-    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.indexOf('\\') >= 0) {
+    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.indexOf('\\') >= 0 || opts.destinationPath.indexOf('//') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
     // -> Remove trailing slash
     if (opts.destinationPath.endsWith('/')) {
       opts.destinationPath = opts.destinationPath.slice(0, -1)
+    }
+
+    // -> Remove starting slash
+    if (opts.destinationPath.startsWith('/')) {
+      opts.destinationPath = opts.destinationPath.slice(1)
     }
 
     // -> Check for source page access

@@ -32,7 +32,7 @@ module.exports = {
         if (args.host) {
           let siteHost = _.trim(args.host)
           if (siteHost.endsWith('/')) {
-            siteHost = siteHost.splice(0, -1)
+            siteHost = siteHost.slice(0, -1)
           }
           WIKI.config.host = siteHost
         }
@@ -67,6 +67,7 @@ module.exports = {
         }
 
         WIKI.config.security = {
+          securityOpenRedirect: _.get(args, 'securityOpenRedirect', WIKI.config.security.securityOpenRedirect),
           securityIframe: _.get(args, 'securityIframe', WIKI.config.security.securityIframe),
           securityReferrerPolicy: _.get(args, 'securityReferrerPolicy', WIKI.config.security.securityReferrerPolicy),
           securityTrustProxy: _.get(args, 'securityTrustProxy', WIKI.config.security.securityTrustProxy),

@@ -45,6 +45,7 @@ props:
     type: String
     title: Signature Algorithm
     hint: Signature algorithm used for signing requests
+    maxWidth: 400
     order: 7
     default: sha1
     enum:
@@ -96,6 +97,7 @@ props:
     type: String
     title: Request Binding
     hint: Binding used for request authentication from IDP.
+    maxWidth: 400
     order: 15
     default: 'HTTP-POST'
     enum:

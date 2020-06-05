@@ -15,7 +15,8 @@ const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WebpackBarPlugin = require('webpackbar')
-// const SriWebpackPlugin = require('webpack-subresource-integrity')
+
+const now = Math.round(Date.now() / 1000)
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
@@ -34,9 +35,9 @@ module.exports = {
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
-    publicPath: '/',
-    filename: 'js/[name].[hash].js',
-    chunkFilename: 'js/[name].[chunkhash].js',
+    publicPath: '/_assets/',
+    filename: `js/[name].js?${now}`,
+    chunkFilename: `js/[name].js?${now}`,
     globalObject: 'this',
     crossOriginLoading: 'use-credentials'
   },
@@ -189,10 +190,12 @@ module.exports = {
       startYear: 2017,
       endYear: (new Date().getFullYear()) + 5
     }),
-    new CopyWebpackPlugin([
-      { from: 'client/static' },
-      { from: './node_modules/prismjs/components', to: 'js/prism' }
-    ], {}),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'client/static' },
+        { from: './node_modules/prismjs/components', to: 'js/prism' }
+      ]
+    }),
     new MiniCssExtractPlugin({
       filename: 'css/bundle.[hash].css',
       chunkFilename: 'css/[name].[chunkhash].css'
@@ -223,10 +226,6 @@ module.exports = {
       sync: 'runtime.js',
       defaultAttribute: 'async'
     }),
-    // new SriWebpackPlugin({
-    //   hashFuncNames: ['sha256', 'sha512'],
-    //   enabled: true
-    // }),
     new WebpackBarPlugin({
       name: 'Client Assets'
     }),
@@ -238,6 +237,9 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production'),
       'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default'))
+    }),
+    new webpack.optimize.MinChunkSizePlugin({
+      minChunkSize: 50000
     })
   ],
   optimization: {

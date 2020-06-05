@@ -1,6 +1,7 @@
 extends:
   - requarks
   - plugin:vue/strongly-recommended
+  - plugin:cypress/recommended
 env:
   node: true
   jest: true

@@ -63,6 +63,7 @@ type UserMutation {
 
   delete(
     id: Int!
+    replaceId: Int!
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
   verify(
@@ -117,7 +118,9 @@ type UserMinimal {
   email: String!
   providerKey: String!
   isSystem: Boolean!
+  isActive: Boolean!
   createdAt: Date!
+  lastLoginAt: Date
 }
 
 type User {

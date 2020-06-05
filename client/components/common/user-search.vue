@@ -30,7 +30,7 @@
           dense
           )
           template(v-for='(usr, idx) in items')
-            v-list-item(:key='usr.id', @click='setUser(usr.id)')
+            v-list-item(:key='usr.id', @click='setUser(usr)')
               v-list-item-avatar(size='40', color='primary')
                 span.body-1.white--text {{usr.name | initials}}
               v-list-item-content
@@ -50,8 +50,7 @@
 
 <script>
 import _ from 'lodash'
-
-import searchUsersQuery from 'gql/common/common-users-query-search.gql'
+import gql from 'graphql-tag'
 
 export default {
   filters: {
@@ -96,8 +95,8 @@ export default {
     close() {
       this.$emit('input', false)
     },
-    setUser(id) {
-      this.$emit('select', id)
+    setUser(usr) {
+      this.$emit('select', usr)
       this.close()
     },
     searchFilter(item, queryText, itemText) {
@@ -106,7 +105,18 @@ export default {
   },
   apollo: {
     items: {
-      query: searchUsersQuery,
+      query: gql`
+        query ($query: String!) {
+          users {
+            search(query:$query) {
+              id
+              name
+              email
+              providerKey
+            }
+          }
+        }
+      `,
       variables() {
         return {
           query: this.search

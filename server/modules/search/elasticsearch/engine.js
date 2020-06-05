@@ -92,8 +92,26 @@ module.exports = {
         index: this.config.indexName,
         body: {
           query: {
-            simple_query_string: {
-              query: q
+            bool: {
+              filter: [
+                {
+                  bool: {
+                    should: [
+                      {
+                        simple_query_string: {
+                          query: q
+                        }
+                      },
+                      {
+                        query_string: {
+                          query: "*" + q + "*"
+                        }
+                      }
+                    ],
+                    minimum_should_match: 1
+                  }
+                }
+              ]
             }
           },
           from: 0,

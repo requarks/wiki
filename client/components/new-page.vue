@@ -2,7 +2,7 @@
   v-app
     .newpage
       .newpage-content
-        img.animated.fadeIn(src='/svg/icon-delete-file.svg', alt='Not Found')
+        img.animated.fadeIn(src='/_assets/svg/icon-delete-file.svg', alt='Not Found')
         .headline {{ $t('newpage.title') }}
         .subtitle-1.mt-3 {{ $t('newpage.subtitle') }}
         v-btn.mt-5(:href='`/e/` + locale + `/` + path', x-large)

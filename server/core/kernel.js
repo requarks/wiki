@@ -40,6 +40,8 @@ module.exports = {
         inbound: new EventEmitter(),
         outbound: new EventEmitter()
       }
+      WIKI.extensions = require('./extensions')
+      WIKI.asar = require('./asar')
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
@@ -69,13 +71,17 @@ module.exports = {
   async postBootMaster() {
     await WIKI.models.analytics.refreshProvidersFromDisk()
     await WIKI.models.authentication.refreshStrategiesFromDisk()
+    await WIKI.models.commentProviders.refreshProvidersFromDisk()
     await WIKI.models.editors.refreshEditorsFromDisk()
     await WIKI.models.loggers.refreshLoggersFromDisk()
     await WIKI.models.renderers.refreshRenderersFromDisk()
     await WIKI.models.searchEngines.refreshSearchEnginesFromDisk()
     await WIKI.models.storage.refreshTargetsFromDisk()
 
+    await WIKI.extensions.init()
+
     await WIKI.auth.activateStrategies()
+    await WIKI.models.commentProviders.initProvider()
     await WIKI.models.searchEngines.initEngine()
     await WIKI.models.storage.initTargets()
     WIKI.scheduler.start()
@@ -108,6 +114,9 @@ module.exports = {
     }
     if (WIKI.scheduler) {
       WIKI.scheduler.stop()
+    }
+    if (WIKI.asar) {
+      await WIKI.asar.unload()
     }
     if (WIKI.servers) {
       await WIKI.servers.stopServers()
