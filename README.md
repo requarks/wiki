@@ -28,6 +28,7 @@
 - [Feature Requests](https://wiki.js.org/feedback)
 - [Chat with us on Slack](#slack)
 - [Translations](#translations) *(We need your help!)*
+- [E2E Testing Results](https://dashboard.cypress.io/projects/r7qxah/runs)
 - [Special Thanks](#special-thanks)
 - [Contribute](#contributors)
 
