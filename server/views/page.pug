@@ -5,19 +5,15 @@ block head
     style(type='text/css')!= injectCode.css
   if injectCode.head
     != injectCode.head
-<<<<<<< HEAD
   script.
     window.onload = function() {
       document.querySelectorAll('div.embed-page').forEach(node => {
         let [url, anc] = node.innerHTML.split('#')
-        console.log('Embed Node:', url, anc)
         fetch(url, {credentials: 'same-origin'}).then(res => res.text()).then(txt => { 
           if (!anc) node.innerHTML = txt
           else if (anc.startsWith('?')) { 
-            console.log('GOT ANC QUERY', anc.substring(1))
             let dom = (new DOMParser()).parseFromString(txt, 'text/html')
             let ext = dom.getElementById(anc.substring(1))
-            console.log(dom)
           } else {
             let exp = new RegExp(`<h(\\d) id="${anc}".*?<\\/h\\d>([\\s\\S]+?)<(h\\1|h3|h2|h1|\\/div)`)
             let ext = exp.exec(txt)
@@ -26,11 +22,9 @@ block head
         })
       })
     }
-=======
   if config.features.featurePageComments
     != comments.head
 
->>>>>>> upstream/master
 block body
   #root
     page(
@@ -58,7 +52,6 @@ block body
         div!= comments.main
   if injectCode.body
     != injectCode.body
-<<<<<<< HEAD
   script.
     // Replace the configs with your own configs
     //
@@ -91,7 +84,5 @@ block body
   div(class=wildfire_thread)
   astar0th
   12345678
-=======
   if config.features.featurePageComments
     != comments.body
->>>>>>> upstream/master
