@@ -121,6 +121,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - Dragan Espenschied ([@despens](https://github.com/despens))
+- Elijah Zobenko ([@he110](https://github.com/he110))
 - Ernie ([@iamernie](https://github.com/iamernie))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - Loki ([@binaryloki](https://github.com/binaryloki))
