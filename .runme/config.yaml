@@ -1,0 +1,21 @@
+version: '1.0'
+publish: wiki
+services:
+  wiki:
+    image: requarks/wiki:latest
+    environment:
+      DB_TYPE: mysql
+      DB_PORT: 3306
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASS: demo
+      DB_NAME: wiki
+    ports:
+    - container: 3000
+      public: 80
+
+  mysql:
+    image: bitnami/mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: demo
+      MYSQL_DATABASE: wiki

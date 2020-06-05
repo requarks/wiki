@@ -61,7 +61,9 @@ You can also use Docker Compose ([see example](https://github.com/Requarks/wiki/
 
 <div align="center">
 
-Check out our [documentation site](https://docs.requarks.io), it's running Wiki.js!
+Click on [![Runme](https://runme.io/static/button.svg)](https://runme.io/run?app_id=2c611fb1-84e5-4ce8-8efc-3333111e495a) or
+
+check out our [documentation site](https://docs.requarks.io), it's running Wiki.js!
 
 </div>
 
