@@ -1,0 +1,1 @@
+docker run --name cypress --network="host" -v $(Build.SourcesDirectory):/e2e -w /e2e -e "CYPRESS_RECORD_KEY=$(CYPRESS_KEY)" cypress/included:4.7.0 --record --headless --ci-build-id "$(Build.BuildNumber)"
