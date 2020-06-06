@@ -116,11 +116,44 @@ We are looking for translators to make Wiki.js UI available in as many languages
 
 Support this project by becoming a sponsor. Your name will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://github.com/users/NGPixel/sponsorship)]
 
+<div align="center">
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle" width="148">
+        <a href="https://github.com/alexksso" target="_blank">
+          Alexander Casassovici<br />(@alexksso)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
+        <a href="https://github.com/GigabiteLabs" target="_blank">
+          <img src="https://static.requarks.io/sponsors/gigabitelabs-148x129.png">
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
+        <a href="https://github.com/idokka" target="_blank">
+          Oleksii<br />(@idokka)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
+        <a href="https://github.com/TheodoreChu" target="_blank">
+          Theodore Chu<br />(@TheodoreChu)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
+        <a href="https://github.com/sponsors/NGPixel" target="_blank">
+          <img src="https://static.requarks.io/sponsors/become-148x72.png">
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148"></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
-- Alexander Casassovici ([@alexksso](https://github.com/alexksso))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
-- Dan Burkhardt ([@DanBurkhardt](https://github.com/DanBurkhardt))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
 - Ernie ([@iamernie](https://github.com/iamernie))
@@ -130,10 +163,8 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
-- Oleksii ([@idokka](https://github.com/idokka))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
-- Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - magicpotato ([@fortheday](https://github.com/fortheday))
