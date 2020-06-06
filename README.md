@@ -120,6 +120,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Alexander Casassovici ([@alexksso](https://github.com/alexksso))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
+- Dan Burkhardt ([@DanBurkhardt](https://github.com/DanBurkhardt))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
 - Ernie ([@iamernie](https://github.com/iamernie))
