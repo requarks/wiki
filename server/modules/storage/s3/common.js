@@ -31,17 +31,35 @@ module.exports = class S3CompatibleStorage {
   }
   async init() {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Initializing...`)
-    const { accessKeyId, secretAccessKey, region, bucket, endpoint } = this.config
-    this.s3 = new S3({
+    const { accessKeyId, secretAccessKey, bucket } = this.config
+    const s3Config = {
       accessKeyId,
       secretAccessKey,
-      region,
-      endpoint,
       params: { Bucket: bucket },
       apiVersions: '2006-03-01'
-    })
+    }
+
+    if (!_.isNil(this.config.region)) {
+      s3Config.region = this.config.region
+    }
+    if (!_.isNil(this.config.endpoint)) {
+      s3Config.endpoint = this.config.endpoint
+    }
+    if (!_.isNil(this.config.sslEnabled)) {
+      s3Config.sslEnabled = this.config.sslEnabled
+    }
+    if (!_.isNil(this.config.s3ForcePathStyle)) {
+      s3Config.s3ForcePathStyle = this.config.s3ForcePathStyle
+    }
+    if (!_.isNil(this.config.s3BucketEndpoint)) {
+      s3Config.s3BucketEndpoint = this.config.s3BucketEndpoint
+    }
+
+    this.s3 = new S3(s3Config)
+
     // determine if a bucket exists and you have permission to access it
     await this.s3.headBucket().promise()
+
     WIKI.logger.info(`(STORAGE/${this.storageName}) Initialization completed.`)
   }
   async created(page) {

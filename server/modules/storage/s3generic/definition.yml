@@ -26,12 +26,30 @@ props:
     title: Access Key ID
     hint: The Access Key ID.
     order: 3
-  secretAccessKey :
+  secretAccessKey:
     type: String
     title: Access Key Secret
     hint: The Access Key Secret for the Access Key ID above.
     sensitive: true
     order: 4
+  sslEnabled:
+    type: Boolean
+    title: Use SSL
+    hint: Whether to enable SSL for requests
+    default: true
+    order: 5
+  s3ForcePathStyle:
+    type: Boolean
+    title: Force Path Style for S3 objects
+    hint: Whether to force path style URLs for S3 objects.
+    default: false
+    order: 6
+  s3BucketEndpoint:
+    type: Boolean
+    title: Single Bucket Endpoint
+    hint: Whether the provided endpoint addresses an individual bucket.
+    default: false
+    order: 7
 actions:
   - handler: exportAll
     label: Export All
