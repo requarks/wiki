@@ -22,25 +22,25 @@ module.exports = {
       }
       const folderHierarchy = await WIKI.models.assetFolders.getHierarchy(args.folderId)
       const folderPath = folderHierarchy.map(h => h.slug).join('/')
-      const results = _.filter(await WIKI.models.assets.query().where(cond), r => {
+      const results = await WIKI.models.assets.query().where(cond)
+      return _.filter(results, r => {
         const path = folderPath ? `${folderPath}/${r.filename}` : r.filename
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
-      })
-      return results.map(a => ({
+      }).map(a => ({
         ...a,
         kind: a.kind.toUpperCase()
       }))
     },
     async folders(obj, args, context) {
+      const results = await WIKI.models.assetFolders.query().where({
+        parentId: args.parentFolderId === 0 ? null : args.parentFolderId
+      })
       const parentHierarchy = await WIKI.models.assetFolders.getHierarchy(args.parentFolderId)
       const parentPath = parentHierarchy.map(h => h.slug).join('/')
-      const results = _.filter(await WIKI.models.assetFolders.query().where({
-        parentId: args.parentFolderId === 0 ? null : args.parentFolderId
-      }), r => {
+      return _.filter(results, r => {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path });
       })
-      return results
     }
   },
   AssetMutation: {
