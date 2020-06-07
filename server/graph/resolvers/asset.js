@@ -22,8 +22,7 @@ module.exports = {
       }
       const folderHierarchy = await WIKI.models.assetFolders.getHierarchy(args.folderId)
       const folderPath = folderHierarchy.map(h => h.slug).join('/')
-      let results = await WIKI.models.assets.query().where(cond)
-      results = _.filter(results, r => {
+      const results = _.filter(await WIKI.models.assets.query().where(cond), r => {
         const path = folderPath ? `${folderPath}/${r.filename}` : r.filename
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
       })
@@ -33,12 +32,11 @@ module.exports = {
       }))
     },
     async folders(obj, args, context) {
-      let results = await WIKI.models.assetFolders.query().where({
-        parentId: args.parentFolderId === 0 ? null : args.parentFolderId
-      })
       const parentHierarchy = await WIKI.models.assetFolders.getHierarchy(args.parentFolderId)
       const parentPath = parentHierarchy.map(h => h.slug).join('/')
-      results = _.filter(results, r => {
+      const results = _.filter(await WIKI.models.assetFolders.query().where({
+        parentId: args.parentFolderId === 0 ? null : args.parentFolderId
+      }), r => {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path });
       })
