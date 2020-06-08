@@ -6,6 +6,7 @@ logo: https://static.requarks.io/logo/oauth2.svg
 color: grey darken-4
 website: https://oauth.net/2/
 useForm: false
+isAvailable: true
 props:
   clientId: String
   clientSecret: String
