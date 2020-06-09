@@ -72,6 +72,14 @@ module.exports = class Page extends Model {
           to: 'pageLinks.pageId'
         }
       },
+      backLinks: {
+        relation: Model.HasManyRelation,
+        modelClass: require('./pageLinks'),
+        join: {
+          from: 'pages.path',
+          to: 'pageLinks.path'
+        }
+      },
       author: {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./users'),
@@ -695,8 +703,9 @@ module.exports = class Page extends Model {
    */
   static async getPageFromDb(opts) {
     const queryModeID = _.isNumber(opts)
+    let page, backLink, backLinkPage
     try {
-      return WIKI.models.pages.query()
+      page = await WIKI.models.pages.query()
         .column([
           'pages.id',
           'pages.path',
@@ -731,6 +740,10 @@ module.exports = class Page extends Model {
         .modifyGraph('tags', builder => {
           builder.select('tag', 'title')
         })
+        .withGraphFetched('backLinks')
+        .modifyGraph('backLinks', builder => {
+          builder.select('path', 'pageId')
+        })
         .where(queryModeID ? {
           'pages.id': opts
         } : {
@@ -755,10 +768,18 @@ module.exports = class Page extends Model {
         //   }
         // })
         .first()
+      if (page.backLinks && page.backLinks.length) {
+        page.backLinkPages = []
+        for (backLink of page.backLinks) {
+          backLinkPage = await backLink.$relatedQuery('page').column(['id', 'path', 'title'])
+          page.backLinkPages.push(backLinkPage)
+        }
+      }
     } catch (err) {
       WIKI.logger.warn(err)
       throw err
     }
+    return page
   }
 
   /**

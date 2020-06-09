@@ -173,6 +173,7 @@ type Page {
   publishStartDate: Date!
   publishEndDate: Date!
   tags: [PageTag]!
+  backLinkPages: [Page]
   content: String!
   render: String
   toc: String

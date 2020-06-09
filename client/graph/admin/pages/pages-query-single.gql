@@ -11,6 +11,11 @@ query($id: Int!) {
       privateNS
       publishStartDate
       publishEndDate
+      backLinkPages {
+        id
+        path
+        title
+      }
       contentType
       createdAt
       updatedAt
