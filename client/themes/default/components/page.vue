@@ -176,7 +176,7 @@
                 v-spacer
 
           v-flex.page-col-content(xs12, lg9, xl10)
-            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='isAuthenticated')
+            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions()')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
                   v-model='pageEditFab'
@@ -196,9 +196,10 @@
                       v-model='pageEditFab'
                       @click='pageEdit'
                       v-on='onEditActivator'
+                      :disabled='!hasWritePagesPermission()'
                       )
                       v-icon mdi-pencil
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission()')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -210,7 +211,7 @@
                         )
                         v-icon(size='20') mdi-history
                     span {{$t('common:header.history')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission()')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -222,7 +223,7 @@
                         )
                         v-icon(size='20') mdi-code-tags
                     span {{$t('common:header.viewSource')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission()')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -234,7 +235,7 @@
                         )
                         v-icon(size='20') mdi-content-duplicate
                     span {{$t('common:header.duplicate')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission()')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -246,7 +247,7 @@
                         )
                         v-icon(size='20') mdi-content-save-move-outline
                     span {{$t('common:header.move')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission()')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -447,6 +448,7 @@ export default {
     isAuthenticated: get('user/authenticated'),
     commentsCount: get('page/commentsCount'),
     commentsPerms: get('page/commentsPermissions'),
+    permissions: get('user/permissions'),
     rating: {
       get () {
         return 3.5
@@ -587,7 +589,37 @@ export default {
       if (focusNewComment) {
         document.querySelector('#discussion-new').focus()
       }
-    }
+    },
+    hasPermission(prm) {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      if (_.isArray(prm)) {
+        return _.some(prm, p => {
+          return _.includes(this.permissions, p)
+        })
+      } else {
+        return _.includes(this.permissions, prm)
+      }
+    },
+    hasWritePagesPermission () {
+      return this.hasPermission(['manage:system', 'write:pages'])
+    },
+    hasManagePagesPermission () {
+      return this.hasPermission(['manage:system', 'manage:pages'])
+    },
+    hasDeletePagesPermission () {
+      return this.hasPermission(['manage:system', 'delete:pages'])
+    },
+    hasReadSourcePermission () {
+      return this.hasPermission(['manage:system', 'read:source'])
+    },
+    hasReadHistoryPermission () {
+      return this.hasPermission(['manage:system', 'read:history'])
+    },
+    hasAnyPagePermissions () {
+      return this.hasPermission(['manage:system', 'write:pages', 'manage:pages', 'delete:pages', 'read:source', 'read:history'])
+    },
   }
 }
 </script>
