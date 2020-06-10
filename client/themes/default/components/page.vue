@@ -176,7 +176,7 @@
                 v-spacer
 
           v-flex.page-col-content(xs12, lg9, xl10)
-            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions()')
+            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
                   v-model='pageEditFab'
@@ -196,10 +196,10 @@
                       v-model='pageEditFab'
                       @click='pageEdit'
                       v-on='onEditActivator'
-                      :disabled='!hasWritePagesPermission()'
+                      :disabled='!hasWritePagesPermission'
                       )
                       v-icon mdi-pencil
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission()')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -211,7 +211,7 @@
                         )
                         v-icon(size='20') mdi-history
                     span {{$t('common:header.history')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission()')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -223,7 +223,7 @@
                         )
                         v-icon(size='20') mdi-code-tags
                     span {{$t('common:header.viewSource')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission()')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -235,7 +235,7 @@
                         )
                         v-icon(size='20') mdi-content-duplicate
                     span {{$t('common:header.duplicate')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission()')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -247,7 +247,7 @@
                         )
                         v-icon(size='20') mdi-content-save-move-outline
                     span {{$t('common:header.move')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission()')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -479,6 +479,28 @@ export default {
     },
     tocDecoded () {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
+    },
+    hasAdminPermission () {
+      return _.intersection(this.permissions, ['manage:system']).length > 0
+    },
+    hasWritePagesPermission () {
+      return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
+    },
+    hasManagePagesPermission () {
+      return this.hasAdminPermission || _.intersection(this.permissions, ['manage:pages']).length > 0
+    },
+    hasDeletePagesPermission () {
+      return this.hasAdminPermission || _.intersection(this.permissions, ['delete:pages']).length > 0
+    },
+    hasReadSourcePermission () {
+      return this.hasAdminPermission || _.intersection(this.permissions, ['read:source']).length > 0
+    },
+    hasReadHistoryPermission () {
+      return this.hasAdminPermission || _.intersection(this.permissions, [ 'read:history']).length > 0
+    },
+    hasAnyPagePermissions () {
+      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
+        this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     }
   },
   created() {
@@ -589,37 +611,7 @@ export default {
       if (focusNewComment) {
         document.querySelector('#discussion-new').focus()
       }
-    },
-    hasPermission(prm) {
-      if (!this.isAuthenticated) {
-        return false
-      }
-      if (_.isArray(prm)) {
-        return _.some(prm, p => {
-          return _.includes(this.permissions, p)
-        })
-      } else {
-        return _.includes(this.permissions, prm)
-      }
-    },
-    hasWritePagesPermission () {
-      return this.hasPermission(['manage:system', 'write:pages'])
-    },
-    hasManagePagesPermission () {
-      return this.hasPermission(['manage:system', 'manage:pages'])
-    },
-    hasDeletePagesPermission () {
-      return this.hasPermission(['manage:system', 'delete:pages'])
-    },
-    hasReadSourcePermission () {
-      return this.hasPermission(['manage:system', 'read:source'])
-    },
-    hasReadHistoryPermission () {
-      return this.hasPermission(['manage:system', 'read:history'])
-    },
-    hasAnyPagePermissions () {
-      return this.hasPermission(['manage:system', 'write:pages', 'manage:pages', 'delete:pages', 'read:source', 'read:history'])
-    },
+    }
   }
 }
 </script>
