@@ -118,6 +118,7 @@ module.exports = {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
           user = newToken.user
           user.permissions = user.getGlobalPermissions()
+          user.groups = user.getGroups()
           req.user = user
 
           // Try headers, otherwise cookies for response
