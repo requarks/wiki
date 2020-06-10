@@ -111,7 +111,7 @@
 
           //- PAGE ACTIONS
 
-          template(v-if='isAuthenticated && path && mode !== `edit`')
+          template(v-if='path && mode !== `edit` && hasAnyPagePermissions()')
             v-menu(offset-y, bottom, transition='slide-y-transition', left)
               template(v-slot:activator='{ on: menu }')
                 v-tooltip(bottom)
@@ -122,33 +122,33 @@
               v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-box-outline
+                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
-                v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && isAuthenticated')
+                v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission()')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
-                v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history`')
+                v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission()')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-history
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.history')}}
-                v-list-item.pl-4(@click='pageSource', v-if='mode !== `source`')
+                v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission()')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
-                v-list-item.pl-4(@click='pageDuplicate', v-if='isAuthenticated')
+                v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission()')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
-                v-list-item.pl-4(@click='pageMove', v-if='isAuthenticated')
+                v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission()')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
-                v-list-item.pl-4(@click='pageDelete', v-if='isAuthenticated')
+                v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission()')
                   v-list-item-avatar(size='24', tile): v-icon(color='red darken-2') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
             v-divider(vertical)
 
           //- NEW PAGE
 
-          template(v-if='isAuthenticated && path && mode !== `edit`')
+          template(v-if='path && mode !== `edit` && hasWritePagesPermission()')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
@@ -287,7 +287,7 @@ export default {
       }
     },
     isAdmin () {
-      return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
+      return this.hasPermission(['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api'])
     }
   },
   created () {
@@ -420,7 +420,37 @@ export default {
     },
     goHome () {
       window.location.assign('/')
-    }
+    },
+    hasPermission(prm) {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      if (_.isArray(prm)) {
+        return _.some(prm, p => {
+          return _.includes(this.permissions, p)
+        })
+      } else {
+        return _.includes(this.permissions, prm)
+      }
+    },
+    hasWritePagesPermission () {
+      return this.hasPermission(['manage:system', 'write:pages'])
+    },
+    hasManagePagesPermission () {
+      return this.hasPermission(['manage:system', 'manage:pages'])
+    },
+    hasDeletePagesPermission () {
+      return this.hasPermission(['manage:system', 'delete:pages'])
+    },
+    hasReadSourcePermission () {
+      return this.hasPermission(['manage:system', 'read:source'])
+    },
+    hasReadHistoryPermission () {
+      return this.hasPermission(['manage:system', 'read:history'])
+    },
+    hasAnyPagePermissions () {
+      return this.hasPermission(['manage:system', 'write:pages', 'manage:pages', 'delete:pages', 'read:source', 'read:history'])
+    },
   }
 }
 </script>
