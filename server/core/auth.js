@@ -2,6 +2,7 @@ const passport = require('passport')
 const passportJWT = require('passport-jwt')
 const _ = require('lodash')
 const jwt = require('jsonwebtoken')
+const ms = require('ms')
 const moment = require('moment')
 const Promise = require('bluebird')
 const crypto = Promise.promisifyAll(require('crypto'))
@@ -112,7 +113,8 @@ module.exports = {
       if (err) { return next() }
 
       // Expired but still valid within N days, just renew
-      if (info instanceof Error && info.name === 'TokenExpiredError' && moment().subtract(14, 'days').isBefore(info.expiredAt)) {
+      if (info instanceof Error && info.name === 'TokenExpiredError' &&
+        moment.subtract(ms(WIKI.config.auth.tokenRenewal), 'ms').isBefore(info.expiredAt)) {
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
