@@ -111,7 +111,7 @@
 
           //- PAGE ACTIONS
 
-          template(v-if='path && mode !== `edit` && hasAnyPagePermissions')
+          template(v-if='hasAnyPagePermissions && path && mode !== `edit`')
             v-menu(offset-y, bottom, transition='slide-y-transition', left)
               template(v-slot:activator='{ on: menu }')
                 v-tooltip(bottom)
@@ -148,7 +148,7 @@
 
           //- NEW PAGE
 
-          template(v-if='path && mode !== `edit` && hasWritePagesPermission')
+          template(v-if='hasWritePagesPermission && path && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
