@@ -116,7 +116,11 @@ module.exports = {
 
         token = state.push('uml_diagram', 'img', 0)
         // alt is constructed from children. No point in populating it here.
-        token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'] ]
+        const classes = ['uml-diagram']
+        if (imageFormat === 'svg') {
+          classes.push('pre-fetch-candidate')
+        }
+        token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', `${classes.join(' ')}`] ]
         token.block = true
         token.children = altToken
         token.info = params
