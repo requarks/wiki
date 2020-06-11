@@ -18,4 +18,5 @@ block body
       init-editor=page.editorKey
       init-content=page.content
       checkout-date=page.updatedAt
+      effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
       )

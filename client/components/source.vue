@@ -50,6 +50,10 @@ export default {
     versionDate: {
       type: String,
       default: ''
+    },
+    effectivePermissions: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -60,7 +64,11 @@ export default {
     this.$store.commit('page/SET_LOCALE', this.locale)
     this.$store.commit('page/SET_PATH', this.path)
 
-    this.$store.commit('page/SET_MODE', 'history')
+    this.$store.commit('page/SET_MODE', 'source')
+
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions', JSON.parse(atob(this.effectivePermissions)))
+    }
   },
   methods: {
     goLive() {

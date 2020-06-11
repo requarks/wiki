@@ -185,6 +185,10 @@ export default {
     liveContent: {
       type: String,
       default: ''
+    },
+    effectivePermissions: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -316,6 +320,10 @@ export default {
     })
 
     this.target = this.cache[0]
+
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions', JSON.parse(atob(this.effectivePermissions)))
+    }
   },
   methods: {
     async loadVersion (versionId) {

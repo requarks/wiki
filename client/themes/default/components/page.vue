@@ -448,7 +448,6 @@ export default {
     isAuthenticated: get('user/authenticated'),
     commentsCount: get('page/commentsCount'),
     commentsPerms: get('page/effectivePermissions@comments'),
-    permissions: get('user/permissions'),
     rating: {
       get () {
         return 3.5

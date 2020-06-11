@@ -148,7 +148,7 @@
 
           //- NEW PAGE
 
-          template(v-if='hasWritePagesPermission && path && mode !== `edit`')
+          template(v-if='hasNewPagePermission && path && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
@@ -289,24 +289,15 @@ export default {
     isAdmin () {
       return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
     },
-    hasAdminPermission () {
-      return _.intersection(this.permissions, ['manage:system']).length > 0
-    },
-    hasWritePagesPermission () {
+    hasNewPagePermission () {
       return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
     },
-    hasManagePagesPermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['manage:pages']).length > 0
-    },
-    hasDeletePagesPermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['delete:pages']).length > 0
-    },
-    hasReadSourcePermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['read:source']).length > 0
-    },
-    hasReadHistoryPermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, [ 'read:history']).length > 0
-    },
+    hasAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
+    hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
+    hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
+    hasReadSourcePermission: get('page/effectivePermissions@source.read'),
+    hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
