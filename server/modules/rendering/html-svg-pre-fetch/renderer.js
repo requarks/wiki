@@ -11,13 +11,12 @@ module.exports = {
       const url = attrs.src
       delete attrs.src
       const svg = await request(url)
-      const newDiv = $('div', '<div/>')
+      const container = $('div', '<div/>')
       _.each(attrs, (value, key) => {
-        newDiv.attr(key, value)
+        container.attr(key, value)
       })
-      newDiv.append($('svg', svg))
-      elm.replaceWith(newDiv);
-
+      container.append($('svg', svg))
+      elm.replaceWith(container);
     }
     $('img.pre-fetch-candidate').each((i, elm) => {
       promises.push(handler($(elm)))
