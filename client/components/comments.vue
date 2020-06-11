@@ -156,7 +156,7 @@ export default {
   },
   computed: {
     pageId: get('page/id'),
-    permissions: get('page/commentsPermissions'),
+    permissions: get('page/effectivePermissions@comments'),
     isAuthenticated: get('user/authenticated'),
     userDisplayName: get('user/name')
   },

@@ -403,7 +403,7 @@ export default {
       type: Boolean,
       default: false
     },
-    commentsPermissions: {
+    effectivePermissions: {
       type: String,
       default: ''
     },
@@ -447,7 +447,7 @@ export default {
   computed: {
     isAuthenticated: get('user/authenticated'),
     commentsCount: get('page/commentsCount'),
-    commentsPerms: get('page/commentsPermissions'),
+    commentsPerms: get('page/effectivePermissions@comments'),
     permissions: get('user/permissions'),
     rating: {
       get () {
@@ -480,24 +480,12 @@ export default {
     tocDecoded () {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     },
-    hasAdminPermission () {
-      return _.intersection(this.permissions, ['manage:system']).length > 0
-    },
-    hasWritePagesPermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
-    },
-    hasManagePagesPermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['manage:pages']).length > 0
-    },
-    hasDeletePagesPermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['delete:pages']).length > 0
-    },
-    hasReadSourcePermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['read:source']).length > 0
-    },
-    hasReadHistoryPermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, [ 'read:history']).length > 0
-    },
+    hasAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
+    hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
+    hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
+    hasReadSourcePermission: get('page/effectivePermissions@source.read'),
+    hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
@@ -515,8 +503,8 @@ export default {
     this.$store.set('page/tags', this.tags)
     this.$store.set('page/title', this.title)
     this.$store.set('page/updatedAt', this.updatedAt)
-    if (this.commentsPermissions) {
-      this.$store.set('page/commentsPermissions', JSON.parse(atob(this.commentsPermissions)))
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions', JSON.parse(atob(this.effectivePermissions)))
     }
 
     this.$store.set('page/mode', 'view')

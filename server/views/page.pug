@@ -26,7 +26,7 @@ block body
       sidebar=Buffer.from(JSON.stringify(sidebar)).toString('base64')
       nav-mode=config.nav.mode
       comments-enabled=config.features.featurePageComments
-      comments-permissions=Buffer.from(JSON.stringify(commentsPermissions)).toString('base64')
+      effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
       comments-external=comments.codeTemplate
       )
       template(slot='contents')

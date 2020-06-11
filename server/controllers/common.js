@@ -447,15 +447,27 @@ router.get('/*', async (req, res, next) => {
             })
           }
 
-          // -> Comments Permissions
-          const commentsPermissions = WIKI.config.features.featurePageComments ? {
-            read: WIKI.auth.checkAccess(req.user, ['read:comments'], pageArgs),
-            write: WIKI.auth.checkAccess(req.user, ['write:comments'], pageArgs),
-            manage: WIKI.auth.checkAccess(req.user, ['manage:comments'], pageArgs)
-          } : {
-            read: false,
-            write: false,
-            manage: false
+          // -> Effective Permissions
+          const effectivePermissions = {
+            comments: {
+              read: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['read:comments'], pageArgs) : false,
+              write: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['write:comments'], pageArgs) : false,
+              manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:comments'], pageArgs) : false
+            },
+            history: {
+              read: WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)
+            },
+            source: {
+              read: WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)
+            },
+            pages: {
+              write: WIKI.auth.checkAccess(req.user, ['write:pages'], pageArgs),
+              manage: WIKI.auth.checkAccess(req.user, ['manage:pages'], pageArgs),
+              delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], pageArgs)
+            },
+            system: {
+              manage: WIKI.auth.checkAccess(req.user, ['manage:system'], pageArgs)
+            }
           }
 
           // -> Render view
@@ -464,7 +476,7 @@ router.get('/*', async (req, res, next) => {
             sidebar,
             injectCode,
             comments: WIKI.data.commentProvider,
-            commentsPermissions
+            effectivePermissions
           })
         }
       } else if (pageArgs.path === 'home') {
