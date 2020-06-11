@@ -10,7 +10,8 @@
     "dev": "node dev",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
-    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest"
+    "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
+    "cypress:open": "cypress open"
   },
   "repository": {
     "type": "git",
@@ -229,12 +230,14 @@
     "core-js": "3.6.5",
     "css-loader": "3.5.3",
     "cssnano": "4.1.10",
+    "cypress": "4.7.0",
     "d3": "5.16.0",
     "duplicate-package-checker-webpack-plugin": "3.0.0",
     "epic-spinners": "1.1.0",
     "eslint": "7.1.0",
     "eslint-config-requarks": "1.0.7",
     "eslint-config-standard": "14.1.1",
+    "eslint-plugin-cypress": "2.11.1",
     "eslint-plugin-import": "2.20.2",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "4.2.1",

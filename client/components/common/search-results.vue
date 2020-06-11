@@ -100,9 +100,10 @@ export default {
   watch: {
     search(newValue, oldValue) {
       this.cursor = 0
-      if (newValue && newValue.length < 2) {
+      if (!newValue || (newValue && newValue.length < 2)) {
         this.response.results = []
         this.response.suggestions = []
+        this.searchIsLoading = false
       } else {
         this.searchIsLoading = true
       }

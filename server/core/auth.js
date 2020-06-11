@@ -77,21 +77,25 @@ module.exports = {
       for (let idx in enabledStrategies) {
         const stg = enabledStrategies[idx]
         if (!stg.isEnabled) { continue }
+        try {
+          const strategy = require(`../modules/authentication/${stg.key}/authentication.js`)
 
-        const strategy = require(`../modules/authentication/${stg.key}/authentication.js`)
+          stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
+          strategy.init(passport, stg.config)
+          strategy.config = stg.config
 
-        stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
-        strategy.init(passport, stg.config)
-        strategy.config = stg.config
-
-        WIKI.auth.strategies[stg.key] = {
-          ...strategy,
-          ...stg
+          WIKI.auth.strategies[stg.key] = {
+            ...strategy,
+            ...stg
+          }
+          WIKI.logger.info(`Authentication Strategy ${stg.key}: [ OK ]`)
+        } catch (err) {
+          WIKI.logger.error(`Authentication Strategy ${stg.key}: [ FAILED ]`)
+          WIKI.logger.error(err)
         }
-        WIKI.logger.info(`Authentication Strategy ${stg.key}: [ OK ]`)
       }
     } catch (err) {
-      WIKI.logger.error(`Authentication Strategy: [ FAILED ]`)
+      WIKI.logger.error(`Failed to initialize Authentication Strategies: [ ERROR ]`)
       WIKI.logger.error(err)
     }
   },
@@ -114,6 +118,7 @@ module.exports = {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
           user = newToken.user
           user.permissions = user.getGlobalPermissions()
+          user.groups = user.getGroups()
           req.user = user
 
           // Try headers, otherwise cookies for response

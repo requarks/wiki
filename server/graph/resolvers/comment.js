@@ -40,13 +40,10 @@ module.exports = {
      * Fetch list of comments for a page
      */
     async list (obj, args, context) {
-      const page = await WIKI.models.pages.getPage(args)
+      const page = await WIKI.models.pages.query().select('id').findOne({ localeCode: args.locale, path: args.path })
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
-          path: page.path,
-          locale: page.localeCode
-        })) {
-          const comments = await WIKI.models.comments.query().where('pageId', page.id)
+        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], args)) {
+          const comments = await WIKI.models.comments.query().where('pageId', page.id).orderBy('createdAt')
           return comments.map(c => ({
             ...c,
             authorName: c.name,
@@ -54,10 +51,38 @@ module.exports = {
             authorIP: c.ip
           }))
         } else {
-          throw new WIKI.Error.PageViewForbidden()
+          throw new WIKI.Error.CommentViewForbidden()
         }
       } else {
         return []
+      }
+    },
+    /**
+     * Fetch a single comment
+     */
+    async single (obj, args, context) {
+      const cm = await WIKI.data.commentProvider.getCommentById(args.id)
+      if (!cm || !cm.pageId) {
+        throw new WIKI.Error.CommentNotFound()
+      }
+      const page = await WIKI.models.pages.query().select('localeCode', 'path').findById(cm.pageId)
+      if (page) {
+        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          return {
+            ...cm,
+            authorName: cm.name,
+            authorEmail: cm.email,
+            authorIP: cm.ip
+          }
+        } else {
+          throw new WIKI.Error.CommentViewForbidden()
+        }
+      } else {
+        WIKI.logger.warn(`Comment #${cm.id} is linked to a page #${cm.pageId} that doesn't exist! [ERROR]`)
+        throw new WIKI.Error.CommentGenericError()
       }
     }
   },
@@ -75,6 +100,24 @@ module.exports = {
         return {
           responseResult: graphHelper.generateSuccess('New comment posted successfully'),
           id: cmId
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Update an Existing Comment
+     */
+    async update (obj, args, context) {
+      try {
+        const cmRender = await WIKI.models.comments.updateComment({
+          ...args,
+          user: context.req.user,
+          ip: context.req.ip
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Comment updated successfully'),
+          render: cmRender
         }
       } catch (err) {
         return graphHelper.generateError(err)

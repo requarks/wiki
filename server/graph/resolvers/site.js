@@ -32,7 +32,7 @@ module.exports = {
         if (args.host) {
           let siteHost = _.trim(args.host)
           if (siteHost.endsWith('/')) {
-            siteHost = siteHost.splice(0, -1)
+            siteHost = siteHost.slice(0, -1)
           }
           WIKI.config.host = siteHost
         }

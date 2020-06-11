@@ -76,12 +76,42 @@
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
           v-card-text
-            .comments-post-actions(v-if='permissions.manage && !isBusy')
+            .comments-post-actions(v-if='permissions.manage && !isBusy && commentEditId === 0')
               v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
               v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
             .comments-post-name.caption: strong {{cm.authorName}}
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - modified {{cm.updatedAt | moment('from') }}]
-            .comments-post-content.mt-3(v-html='cm.render')
+            .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
+            .comments-post-editcontent.mt-3(v-else)
+              v-textarea(
+                outlined
+                flat
+                auto-grow
+                dense
+                rows='3'
+                hide-details
+                v-model='commentEditContent'
+                color='blue-grey darken-2'
+                :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+              )
+              .d-flex.align-center.pt-3
+                v-spacer
+                v-btn.mr-3(
+                  dark
+                  color='blue-grey darken-2'
+                  @click='editCommentCancel'
+                  outlined
+                  )
+                  v-icon(left) mdi-close
+                  span.text-none Cancel
+                v-btn(
+                  dark
+                  color='blue-grey darken-2'
+                  @click='updateComment'
+                  depressed
+                  )
+                  v-icon(left) mdi-comment
+                  span.text-none Update Comment
     .pt-5.text-center.body-2.blue-grey--text(v-else-if='permissions.write') Be the first to comment.
     .text-center.body-2.blue-grey--text(v-else) No comments yet.
 
@@ -113,6 +143,8 @@ export default {
       guestName: '',
       guestEmail: '',
       commentToDelete: {},
+      commentEditId: 0,
+      commentEditContent: null,
       deleteCommentDialogShown: false,
       isBusy: false,
       scrollOpts: {
@@ -131,40 +163,51 @@ export default {
   methods: {
     onIntersect (entries, observer, isIntersecting) {
       if (isIntersecting) {
-        this.fetch()
+        this.fetch(true)
       }
     },
-    async fetch () {
+    async fetch (silent = false) {
       this.isLoading = true
-      const results = await this.$apollo.query({
-        query: gql`
-          query ($locale: String!, $path: String!) {
-            comments {
-              list(locale: $locale, path: $path) {
-                id
-                render
-                authorName
-                createdAt
-                updatedAt
+      try {
+        const results = await this.$apollo.query({
+          query: gql`
+            query ($locale: String!, $path: String!) {
+              comments {
+                list(locale: $locale, path: $path) {
+                  id
+                  render
+                  authorName
+                  createdAt
+                  updatedAt
+                }
               }
             }
+          `,
+          variables: {
+            locale: this.$store.get('page/locale'),
+            path: this.$store.get('page/path')
+          },
+          fetchPolicy: 'network-only'
+        })
+        this.comments = _.get(results, 'data.comments.list', []).map(c => {
+          const nameParts = c.authorName.toUpperCase().split(' ')
+          let initials = _.head(nameParts).charAt(0)
+          if (nameParts.length > 1) {
+            initials += _.last(nameParts).charAt(0)
           }
-        `,
-        variables: {
-          locale: this.$store.get('page/locale'),
-          path: this.$store.get('page/path')
-        },
-        fetchPolicy: 'network-only'
-      })
-      this.comments = _.get(results, 'data.comments.list', []).map(c => {
-        const nameParts = c.authorName.toUpperCase().split(' ')
-        let initials = _.head(nameParts).charAt(0)
-        if (nameParts.length > 1) {
-          initials += _.last(nameParts).charAt(0)
+          c.initials = initials
+          return c
+        })
+      } catch (err) {
+        console.warn(err)
+        if (!silent) {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: err.message,
+            icon: 'alert'
+          })
         }
-        c.initials = initials
-        return c
-      })
+      }
       this.isLoading = false
       this.hasLoadedOnce = true
     },
@@ -214,66 +257,179 @@ export default {
         return
       }
 
-      const resp = await this.$apollo.mutate({
-        mutation: gql`
-          mutation (
-            $pageId: Int!
-            $replyTo: Int
-            $content: String!
-            $guestName: String
-            $guestEmail: String
-          ) {
-            comments {
-              create (
-                pageId: $pageId
-                replyTo: $replyTo
-                content: $content
-                guestName: $guestName
-                guestEmail: $guestEmail
-              ) {
-                responseResult {
-                  succeeded
-                  errorCode
-                  slug
-                  message
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $pageId: Int!
+              $replyTo: Int
+              $content: String!
+              $guestName: String
+              $guestEmail: String
+            ) {
+              comments {
+                create (
+                  pageId: $pageId
+                  replyTo: $replyTo
+                  content: $content
+                  guestName: $guestName
+                  guestEmail: $guestEmail
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                  id
                 }
-                id
               }
             }
+          `,
+          variables: {
+            pageId: this.pageId,
+            replyTo: 0,
+            content: this.newcomment,
+            guestName: this.guestName,
+            guestEmail: this.guestEmail
           }
-        `,
-        variables: {
-          pageId: this.pageId,
-          replyTo: 0,
-          content: this.newcomment,
-          guestName: this.guestName,
-          guestEmail: this.guestEmail
+        })
+
+        if (_.get(resp, 'data.comments.create.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'New comment posted successfully.',
+            icon: 'check'
+          })
+
+          this.newcomment = ''
+          await this.fetch()
+          this.$nextTick(() => {
+            this.$vuetify.goTo(`#comment-post-id-${_.get(resp, 'data.comments.create.id', 0)}`, this.scrollOpts)
+          })
+        } else {
+          throw new Error(_.get(resp, 'data.comments.create.responseResult.message', 'An unexpected error occured.'))
         }
-      })
-
-      if (_.get(resp, 'data.comments.create.responseResult.succeeded', false)) {
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'New comment posted successfully.',
-          icon: 'check'
-        })
-
-        this.newcomment = ''
-        await this.fetch()
-        this.$nextTick(() => {
-          this.$vuetify.goTo(`#comment-post-id-${_.get(resp, 'data.comments.create.id', 0)}`, this.scrollOpts)
-        })
-      } else {
+      } catch (err) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.comments.create.responseResult.message', 'An unexpected error occured.'),
+          message: err.message,
           icon: 'alert'
         })
       }
     },
+    /**
+     * Show Comment Editing Form
+     */
     async editComment (cm) {
-
+      this.$store.commit(`loadingStart`, 'comments-edit')
+      this.isBusy = true
+      try {
+        const results = await this.$apollo.query({
+          query: gql`
+            query ($id: Int!) {
+              comments {
+                single(id: $id) {
+                  content
+                }
+              }
+            }
+          `,
+          variables: {
+            id: cm.id
+          },
+          fetchPolicy: 'network-only'
+        })
+        this.commentEditContent = _.get(results, 'data.comments.single.content', null)
+        if (this.commentEditContent === null) {
+          throw new Error('Failed to load comment content.')
+        }
+      } catch (err) {
+        console.warn(err)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'alert'
+        })
+      }
+      this.commentEditId = cm.id
+      this.isBusy = false
+      this.$store.commit(`loadingStop`, 'comments-edit')
     },
+    /**
+     * Cancel Comment Edit
+     */
+    editCommentCancel () {
+      this.commentEditId = 0
+      this.commentEditContent = null
+    },
+    /**
+     * Update Comment with new content
+     */
+    async updateComment () {
+      this.$store.commit(`loadingStart`, 'comments-edit')
+      this.isBusy = true
+      try {
+        if (this.commentEditContent.length < 2) {
+          throw new Error('Comment is empty or too short!')
+        }
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $id: Int!
+              $content: String!
+            ) {
+              comments {
+                update (
+                  id: $id,
+                  content: $content
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                  render
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.commentEditId,
+            content: this.commentEditContent
+          }
+        })
+
+        if (_.get(resp, 'data.comments.update.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'Comment was updated successfully.',
+            icon: 'check'
+          })
+
+          const cm = _.find(this.comments, ['id', this.commentEditId])
+          cm.render = _.get(resp, 'data.comments.update.render', '-- Failed to load updated comment --')
+          cm.updatedAt = (new Date()).toISOString()
+
+          this.editCommentCancel()
+        } else {
+          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'))
+        }
+      } catch (err) {
+        console.warn(err)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'alert'
+        })
+      }
+      this.isBusy = false
+      this.$store.commit(`loadingStop`, 'comments-edit')
+    },
+    /**
+     * Show Delete Comment Confirmation Dialog
+     */
     deleteCommentConfirm (cm) {
       this.commentToDelete = cm
       this.deleteCommentDialogShown = true
@@ -286,42 +442,46 @@ export default {
       this.isBusy = true
       this.deleteCommentDialogShown = false
 
-      const resp = await this.$apollo.mutate({
-        mutation: gql`
-          mutation (
-            $id: Int!
-          ) {
-            comments {
-              delete (
-                id: $id
-              ) {
-                responseResult {
-                  succeeded
-                  errorCode
-                  slug
-                  message
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $id: Int!
+            ) {
+              comments {
+                delete (
+                  id: $id
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
                 }
               }
             }
+          `,
+          variables: {
+            id: this.commentToDelete.id
           }
-        `,
-        variables: {
-          id: this.commentToDelete.id
-        }
-      })
-
-      if (_.get(resp, 'data.comments.delete.responseResult.succeeded', false)) {
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'Comment was deleted successfully.',
-          icon: 'check'
         })
 
-        this.comments = _.reject(this.comments, ['id', this.commentToDelete.id])
-      } else {
+        if (_.get(resp, 'data.comments.delete.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'Comment was deleted successfully.',
+            icon: 'check'
+          })
+
+          this.comments = _.reject(this.comments, ['id', this.commentToDelete.id])
+        } else {
+          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'))
+        }
+      } catch (err) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'),
+          message: err.message,
           icon: 'alert'
         })
       }
@@ -362,6 +522,7 @@ export default {
 
     img {
       max-width: 100%;
+      border-radius: 5px;
     }
 
     code {

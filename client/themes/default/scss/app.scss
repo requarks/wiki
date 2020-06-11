@@ -244,7 +244,7 @@
       top: 50%;
       left: -38px;
       color: rgba(255, 255, 255, .7);
-      content: "\F02FC";
+      content: "\F0757";
     }
 
     > p:first-child .emoji {
@@ -716,6 +716,14 @@
         background-color: mc('grey', '800');
       }
     }
+  }
+
+  figure.image-style-align-right {
+    float: right;
+  }
+
+  figure.image-style-align-left {
+    float: left;
   }
 
   // ---------------------------------

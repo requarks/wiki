@@ -53,6 +53,10 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+    features:
+      featurePageRatings: true
+      featurePageComments: true
+      featurePersonalWikis: true
     security:
       securityOpenRedirect: true
       securityIframe: true

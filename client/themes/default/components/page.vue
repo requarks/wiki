@@ -94,16 +94,16 @@
               .pa-5
                 .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
                   span Talk
-                  v-spacer
-                  v-chip.text-center(
-                    v-if='!commentsExternal'
-                    label
-                    x-small
-                    :color='$vuetify.theme.dark ? `blue-grey darken-3` : `blue-grey darken-2`'
-                    dark
-                    style='min-width: 50px; justify-content: center;'
-                    )
-                    span {{commentsCount}}
+                  //- v-spacer
+                  //- v-chip.text-center(
+                  //-   v-if='!commentsExternal'
+                  //-   label
+                  //-   x-small
+                  //-   :color='$vuetify.theme.dark ? `blue-grey darken-3` : `blue-grey darken-2`'
+                  //-   dark
+                  //-   style='min-width: 50px; justify-content: center;'
+                  //-   )
+                  //-   span {{commentsCount}}
                 .d-flex
                   v-btn.text-none(
                     @click='goToComments()'
@@ -473,10 +473,10 @@ export default {
       }
     },
     sidebarDecoded () {
-      return JSON.parse(atob(this.sidebar))
+      return JSON.parse(Buffer.from(this.sidebar, 'base64').toString())
     },
     tocDecoded () {
-      return JSON.parse(atob(this.toc))
+      return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     }
   },
   created() {
