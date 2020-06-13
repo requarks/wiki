@@ -1,22 +1,23 @@
 const request = require('request-promise')
 
+const preFetch = async (element) => {
+  const url = element.attr(`src`)
+  const response = await request({
+    method: `GET`,
+    url,
+    resolveWithFullResponse: true
+  })
+  const contentType = response.headers[`content-type`]
+  const image = Buffer.from(response.body).toString('base64')
+  element.attr('src', `data:${contentType};base64,${image}`)
+  element.removeClass('pre-fetch-candidate');
+}
+
 module.exports = {
   async init($) {
     const promises = [];
-    const handler = async (elm) => {
-      const url = elm.attr(`src`)
-      const response = await request({
-        method: `GET`,
-        url,
-        resolveWithFullResponse: true
-      })
-      const contentType = response.headers[`content-type`]
-      const image = Buffer.from(response.body).toString('base64')
-      elm.attr('src', `data:${contentType};base64,${image}`)
-      elm.removeClass('pre-fetch-candidate');
-    }
-    $('img.pre-fetch-candidate').each((i, elm) => {
-      promises.push(handler($(elm)))
+    $('img.pre-fetch-candidate').each((_, element) => {
+      promises.push(preFetch($(element)))
     })
     await Promise.all(promises)
   }
