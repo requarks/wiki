@@ -1,0 +1,8 @@
+key: htmlImagePreFetch
+title: Image Pre Fetch
+description: Pre fetch remotely rendered images (korki/plantuml)
+author: requarks.io
+icon: mdi-cloud-download-outline
+enabledDefault: false
+dependsOn: htmlCore
+props: {}

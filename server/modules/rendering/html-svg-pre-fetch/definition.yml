@@ -1,8 +1,0 @@
-key: htmlSvgPreFetch
-title: SVG Pre Fetch
-description: Pre fetch remotely rendered SVGs
-author: requarks.io
-icon: mdi-cloud-download-outline
-enabledDefault: false
-dependsOn: htmlCore
-props: {}
