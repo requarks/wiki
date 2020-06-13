@@ -5,18 +5,17 @@ module.exports = {
   async init($) {
     const promises = [];
     const handler = async (elm) => {
-      const attrs = {
-        ...elm.attr()
-      }
-      const url = attrs.src
-      delete attrs.src
-      const svg = await request(url)
-      const container = $('div', '<div/>')
-      _.each(attrs, (value, key) => {
-        container.attr(key, value)
+      elm.removeClass('pre-fetch-candidate');
+      const url = elm.attr(`src`)
+      const response = await request({
+        method: `GET`,
+        url,
+        resolveWithFullResponse: true
       })
-      container.append($('svg', svg))
-      elm.replaceWith(container);
+      const image = response.body
+      const contentType = response.headers[`content-type`]
+      const base64 = Buffer.from(image).toString('base64')
+      elm.attr('src', `data:${contentType};base64,${base64}`)
     }
     $('img.pre-fetch-candidate').each((i, elm) => {
       promises.push(handler($(elm)))
