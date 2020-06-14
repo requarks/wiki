@@ -34,16 +34,28 @@ module.exports = {
     apiState () {
       return WIKI.config.api.isEnabled
     },
+    async strategies () {
+      return WIKI.data.authentication.map(stg => ({
+        ...stg,
+        isAvailable: stg.isAvailable === true,
+        props: _.sortBy(_.transform(stg.props, (res, value, key) => {
+          res.push({
+            key,
+            value: JSON.stringify(value)
+          })
+        }, []), 'key')
+      }))
+    },
     /**
      * Fetch active authentication strategies
      */
-    async strategies (obj, args, context, info) {
-      let strategies = await WIKI.models.authentication.getStrategies(args.isEnabled)
+    async activeStrategies (obj, args, context, info) {
+      let strategies = await WIKI.models.authentication.getStrategies()
       strategies = strategies.map(stg => {
-        const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
+        const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey]) || {}
         return {
-          ...strategyInfo,
           ...stg,
+          strategy: strategyInfo,
           config: _.sortBy(_.transform(stg.config, (res, value, key) => {
             const configData = _.get(strategyInfo.props, key, false)
             if (configData) {

@@ -19,9 +19,8 @@ type AuthenticationQuery {
 
   apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
 
-  strategies(
-    isEnabled: Boolean
-  ): [AuthenticationStrategy]
+  strategies: [AuthenticationStrategy] @auth(requires: ["manage:system"])
+  activeStrategies: [AuthenticationActiveStrategy]
 }
 
 # -----------------------------------------------
@@ -81,9 +80,8 @@ type AuthenticationMutation {
 # -----------------------------------------------
 
 type AuthenticationStrategy {
-  isEnabled: Boolean!
   key: String!
-  props: [String]
+  props: [KeyValuePair] @auth(requires: ["manage:system"])
   title: String!
   description: String
   isAvailable: Boolean
@@ -92,6 +90,13 @@ type AuthenticationStrategy {
   color: String
   website: String
   icon: String
+}
+
+type AuthenticationActiveStrategy {
+  key: String!
+  strategy: AuthenticationStrategy!
+  displayName: String!
+  order: Int!
   config: [KeyValuePair] @auth(requires: ["manage:system"])
   selfRegistration: Boolean!
   domainWhitelist: [String]! @auth(requires: ["manage:system"])

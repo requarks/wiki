@@ -142,6 +142,37 @@
                     :suffix='$t(`admin:security.maxUploadBatchSuffix`)'
                     style='max-width: 450px;'
                     )
+
+              v-card.mt-3.animated.fadeInUp.wait-p2s
+                v-toolbar(flat, color='primary', dark, dense)
+                  .subtitle-1 {{$t('admin:security.JWTSettings')}}
+                v-card-info(color='blue')
+                  span {{$t('admin:security.jwtInfo')}}
+                v-card-text
+                  v-text-field.md2(
+                    v-model='config.jwtAudience'
+                    outlined
+                    prepend-icon='mdi-account-group-outline'
+                    :label='$t(`admin:auth.jwtAudience`)'
+                    :hint='$t(`admin:auth.jwtAudienceHint`)'
+                    persistent-hint
+                  )
+                  v-text-field.mt-3.md2(
+                    v-model='config.jwtExpiration'
+                    outlined
+                    prepend-icon='mdi-clock-outline'
+                    :label='$t(`admin:auth.tokenExpiration`)'
+                    :hint='$t(`admin:auth.tokenExpirationHint`)'
+                    persistent-hint
+                  )
+                  v-text-field.mt-3.md2(
+                    v-model='config.jwtRenewablePeriod'
+                    outlined
+                    prepend-icon='mdi-update'
+                    :label='$t(`admin:auth.tokenRenewalPeriod`)'
+                    :hint='$t(`admin:auth.tokenRenewalPeriodHint`)'
+                    persistent-hint
+                  )
 </template>
 
 <script>
@@ -163,7 +194,10 @@ export default {
         securityHSTS: false,
         securityHSTSDuration: 0,
         securityCSP: false,
-        securityCSPDirectives: ''
+        securityCSPDirectives: '',
+        jwtAudience: 'urn:wiki.js',
+        jwtExpiration: '30m',
+        jwtRenewablePeriod: '14d'
       },
       hstsDurations: [
         { value: 300, text: '5 minutes' },

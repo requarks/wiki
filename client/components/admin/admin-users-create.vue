@@ -11,7 +11,7 @@
       v-card-text.pt-5
         v-select(
           :items='providers'
-          item-text='title'
+          item-text='displayName'
           item-value='key'
           outlined
           prepend-icon='mdi-domain'
@@ -230,19 +230,15 @@ export default {
       query: gql`
         query {
           authentication {
-            strategies(
-              isEnabled: true
-            ) {
+            activeStrategies {
               key
-              title
-              icon
-              color
+              displayName
             }
           }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.authentication.strategies,
+      update: (data) => data.authentication.activeStrategies,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-strategies-refresh')
       }

@@ -18,195 +18,188 @@
 
       v-flex(lg3, xs12)
         v-card.animated.fadeInUp
-          v-toolbar(flat, color='primary', dark, dense)
-            .subtitle-1 {{$t('admin:auth.strategies')}}
+          v-toolbar(flat, color='teal', dark, dense)
+            .subtitle-1 {{$t('admin:auth.activeStrategies')}}
           v-list(two-line, dense).py-0
-            template(v-for='(str, idx) in strategies')
-              v-list-item(:key='str.key', @click='selectedStrategy = str.key', :disabled='!str.isAvailable')
-                v-list-item-avatar(size='24')
-                  v-icon(color='grey', v-if='!str.isAvailable') mdi-minus-box-outline
-                  v-icon(color='primary', v-else-if='str.isEnabled && str.key !== `local`', v-ripple, @click='str.isEnabled = false') mdi-checkbox-marked-outline
-                  v-icon(color='primary', v-else-if='str.isEnabled && str.key === `local`') mdi-checkbox-marked-outline
-                  v-icon(color='grey', v-else, v-ripple, @click='str.isEnabled = true') mdi-checkbox-blank-outline
-                v-list-item-content
-                  v-list-item-title.body-2(:class='!str.isAvailable ? `grey--text` : (selectedStrategy === str.key ? `primary--text` : ``)') {{ str.title }}
-                  v-list-item-subtitle: .caption(:class='!str.isAvailable ? `grey--text text--lighten-1` : (selectedStrategy === str.key ? `blue--text ` : ``)') {{ str.description }}
-                v-list-item-avatar(v-if='selectedStrategy === str.key', size='24')
-                  v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
-              v-divider(v-if='idx < strategies.length - 1')
-
-        v-card.mt-3.animated.fadeInUp.wait-p2s
-          v-toolbar(flat, color='primary', dark, dense)
-            .subtitle-1 {{$t('admin:auth.globalAdvSettings')}}
-          v-card-text
-            v-text-field.md2(
-              v-model='jwtAudience'
-              outlined
-              prepend-icon='mdi-account-group-outline'
-              :label='$t(`admin:auth.jwtAudience`)'
-              :hint='$t(`admin:auth.jwtAudienceHint`)'
-              persistent-hint
-            )
-            v-text-field.mt-3.md2(
-              v-model='jwtExpiration'
-              outlined
-              prepend-icon='mdi-clock-outline'
-              :label='$t(`admin:auth.tokenExpiration`)'
-              :hint='$t(`admin:auth.tokenExpirationHint`)'
-              persistent-hint
-            )
-            v-text-field.mt-3.md2(
-              v-model='jwtRenewablePeriod'
-              outlined
-              prepend-icon='mdi-update'
-              :label='$t(`admin:auth.tokenRenewalPeriod`)'
-              :hint='$t(`admin:auth.tokenRenewalPeriodHint`)'
-              persistent-hint
-            )
+            draggable(
+              v-model='activeStrategies'
+              handle='.is-handle'
+              direction='vertical'
+              :store='order'
+              )
+              transition-group
+                v-list-item(
+                  v-for='(str, idx) in activeStrategies'
+                  :key='str.key'
+                  @click='selectedStrategy = str.key'
+                  :class='selectedStrategy === str.key ? ($vuetify.theme.dark ? `grey darken-5` : `teal lighten-5`) : ``'
+                  )
+                  v-list-item-avatar.is-handle(size='24')
+                    v-icon(:color='selectedStrategy === str.key ? `teal` : `grey`') mdi-drag-horizontal
+                  v-list-item-content
+                    v-list-item-title.body-2(:class='selectedStrategy === str.key ? `teal--text` : ``') {{ str.displayName }}
+                    v-list-item-subtitle: .caption(:class='selectedStrategy === str.key ? `teal--text ` : ``') {{ str.strategy.title }}
+                  v-list-item-avatar(v-if='selectedStrategy === str.key', size='24')
+                    v-icon.animated.fadeInLeft(color='teal', large) mdi-chevron-right
+          v-card-chin
+            v-menu(offset-y, bottom, min-width='250px', max-width='550px', max-height='50vh', style='flex: 1 1;', center)
+              template(v-slot:activator='{ on }')
+                v-btn(v-on='on', color='primary', depressed, block)
+                  v-icon(left) mdi-plus
+                  span {{$t('admin:auth.addStrategy')}}
+              v-list(dense)
+                template(v-for='(str, idx) of strategies')
+                  v-list-item(
+                    :key='str.key'
+                    :disabled='str.isDisabled'
+                    @click='addStrategy(str)'
+                    )
+                    v-list-item-avatar(height='24', width='48', tile)
+                      v-img(:src='str.logo', width='48px', height='24px', contain, :style='str.isDisabled ? `opacity: .25;` : ``')
+                    v-list-item-content
+                      v-list-item-title {{str.title}}
+                      v-list-item-subtitle: .caption(:style='str.isDisabled ? `opacity: .4;` : ``') {{str.description}}
+                  v-divider(v-if='idx < strategies.length - 1')
 
       v-flex(xs12, lg9)
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
-            .subtitle-1 {{strategy.title}}
+            .subtitle-1 {{strategy.displayName}} #[em ({{strategy.strategy.title}})]
             v-spacer
-            v-switch(
-              dark
-              color='blue lighten-5'
-              label='Active'
-              v-model='strategy.isEnabled'
-              hide-details
-              inset
-              :disabled='strategy.key === `local`'
-              )
+            v-btn(small, outlined, dark, color='white', :disabled='strategy.key === `local`')
+              v-icon(left) mdi-close
+              span {{$t('common:actions.delete')}}
+          v-card-info(color='blue')
+            div
+              span {{strategy.strategy.description}}
+              .caption: a(:href='strategy.strategy.website') {{strategy.strategy.website}}
+            v-spacer
+            .authlogo
+              img(:src='strategy.strategy.logo', :alt='strategy.strategy.title')
           v-card-text
-            v-form
-              .authlogo
-                img(:src='strategy.logo', :alt='strategy.title')
-              .body-2.pt-3 {{strategy.description}}
-              .body-2.pt-3.pb-5: a(:href='strategy.website') {{strategy.website}}
-              i18next.body-2(path='admin:auth.strategyState', tag='div', v-if='strategy.isEnabled')
-                v-chip(color='green', small, dark, label, place='state') {{$t('admin:auth.strategyStateActive')}}
-                span(v-if='selectedStrategy === `local`', place='locked') {{$t('admin:auth.strategyStateLocked')}}
-                span(v-else, place='locked', v-text='')
-              i18next.body-2(path='admin:auth.strategyState', tag='div', v-else)
-                v-chip(color='red', small, dark, label, place='state') {{$t('admin:auth.strategyStateInactive')}}
+            .overline.mb-5 {{$t('admin:auth.strategyConfiguration')}}
+            v-text-field.mb-3(
+              outlined
+              label='Display Name'
+              v-model='strategy.displayName'
+              prepend-icon='mdi-format-title'
+              hint='The title shown to the end user for this authentication strategy.'
+              persistent-hint
+              )
+            template(v-for='cfg in strategy.config')
+              v-select.mb-3(
+                v-if='cfg.value.type === "string" && cfg.value.enum'
+                outlined
+                :items='cfg.value.enum'
+                :key='cfg.key'
+                :label='cfg.value.title'
+                v-model='cfg.value.value'
+                prepend-icon='mdi-cog-box'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
+                :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
+              )
+              v-switch.mb-6(
+                v-else-if='cfg.value.type === "boolean"'
+                :key='cfg.key'
+                :label='cfg.value.title'
+                v-model='cfg.value.value'
+                color='primary'
+                prepend-icon='mdi-cog-box'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                inset
+                )
+              v-textarea.mb-3(
+                v-else-if='cfg.value.type === "string" && cfg.value.multiline'
+                outlined
+                :key='cfg.key'
+                :label='cfg.value.title'
+                v-model='cfg.value.value'
+                prepend-icon='mdi-cog-box'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
+                )
+              v-text-field.mb-3(
+                v-else
+                outlined
+                :key='cfg.key'
+                :label='cfg.value.title'
+                v-model='cfg.value.value'
+                prepend-icon='mdi-cog-box'
+                :hint='cfg.value.hint ? cfg.value.hint : ""'
+                persistent-hint
+                :class='cfg.value.hint ? "mb-2" : ""'
+                :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
+                )
+            v-divider.mt-3
+            .overline.my-5 {{$t('admin:auth.registration')}}
+            .pr-3
+              v-switch.ml-3(
+                v-model='strategy.selfRegistration'
+                :label='$t(`admin:auth.selfRegistration`)'
+                color='primary'
+                :hint='$t(`admin:auth.selfRegistrationHint`)'
+                persistent-hint
+                inset
+              )
+              v-combobox.ml-3.mt-3(
+                :label='$t(`admin:auth.domainsWhitelist`)'
+                v-model='strategy.domainWhitelist'
+                prepend-icon='mdi-email-check-outline'
+                outlined
+                :disabled='!strategy.selfRegistration'
+                :hint='$t(`admin:auth.domainsWhitelistHint`)'
+                persistent-hint
+                small-chips
+                deletable-chips
+                clearable
+                multiple
+                chips
+                )
+              v-autocomplete.mt-3.ml-3(
+                outlined
+                :disabled='!strategy.selfRegistration'
+                :items='groups'
+                item-text='name'
+                item-value='id'
+                :label='$t(`admin:auth.autoEnrollGroups`)'
+                v-model='strategy.autoEnrollGroups'
+                prepend-icon='mdi-account-group'
+                :hint='$t(`admin:auth.autoEnrollGroupsHint`)'
+                small-chips
+                persistent-hint
+                deletable-chips
+                clearable
+                multiple
+                chips
+                )
+            template(v-if='strategy.useForm')
               v-divider.mt-3
-              .overline.my-5 {{$t('admin:auth.strategyConfiguration')}}
-              .body-2.ml-3(v-if='!strategy.config || strategy.config.length < 1'): em {{$t('admin:auth.strategyNoConfiguration')}}
-              template(v-else, v-for='cfg in strategy.config')
-                v-select.mb-3(
-                  v-if='cfg.value.type === "string" && cfg.value.enum'
-                  outlined
-                  :items='cfg.value.enum'
-                  :key='cfg.key'
-                  :label='cfg.value.title'
-                  v-model='cfg.value.value'
-                  prepend-icon='mdi-cog-box'
-                  :hint='cfg.value.hint ? cfg.value.hint : ""'
-                  persistent-hint
-                  :class='cfg.value.hint ? "mb-2" : ""'
-                  :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
-                )
-                v-switch.mb-6(
-                  v-else-if='cfg.value.type === "boolean"'
-                  :key='cfg.key'
-                  :label='cfg.value.title'
-                  v-model='cfg.value.value'
-                  color='primary'
-                  prepend-icon='mdi-cog-box'
-                  :hint='cfg.value.hint ? cfg.value.hint : ""'
-                  persistent-hint
-                  inset
-                  )
-                v-textarea.mb-3(
-                  v-else-if='cfg.value.type === "string" && cfg.value.multiline'
-                  outlined
-                  :key='cfg.key'
-                  :label='cfg.value.title'
-                  v-model='cfg.value.value'
-                  prepend-icon='mdi-cog-box'
-                  :hint='cfg.value.hint ? cfg.value.hint : ""'
-                  persistent-hint
-                  :class='cfg.value.hint ? "mb-2" : ""'
-                  )
-                v-text-field.mb-3(
-                  v-else
-                  outlined
-                  :key='cfg.key'
-                  :label='cfg.value.title'
-                  v-model='cfg.value.value'
-                  prepend-icon='mdi-cog-box'
-                  :hint='cfg.value.hint ? cfg.value.hint : ""'
-                  persistent-hint
-                  :class='cfg.value.hint ? "mb-2" : ""'
-                  :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
-                  )
-              v-divider.mt-3
-              .overline.my-5 {{$t('admin:auth.registration')}}
-              .pr-3
-                v-switch.ml-3(
-                  v-model='strategy.selfRegistration'
-                  :label='$t(`admin:auth.selfRegistration`)'
-                  color='primary'
-                  :hint='$t(`admin:auth.selfRegistrationHint`)'
-                  persistent-hint
-                  inset
-                )
-                v-combobox.ml-3.mt-3(
-                  :label='$t(`admin:auth.domainsWhitelist`)'
-                  v-model='strategy.domainWhitelist'
-                  prepend-icon='mdi-email-check-outline'
-                  outlined
-                  :disabled='!strategy.selfRegistration'
-                  :hint='$t(`admin:auth.domainsWhitelistHint`)'
-                  persistent-hint
-                  small-chips
-                  deletable-chips
-                  clearable
-                  multiple
-                  chips
-                  )
-                v-autocomplete.mt-3.ml-3(
-                  outlined
-                  :disabled='!strategy.selfRegistration'
-                  :items='groups'
-                  item-text='name'
-                  item-value='id'
-                  :label='$t(`admin:auth.autoEnrollGroups`)'
-                  v-model='strategy.autoEnrollGroups'
-                  prepend-icon='mdi-account-group'
-                  :hint='$t(`admin:auth.autoEnrollGroupsHint`)'
-                  small-chips
-                  persistent-hint
-                  deletable-chips
-                  clearable
-                  multiple
-                  chips
-                  )
-              template(v-if='strategy.useForm')
-                v-divider.mt-3
-                .d-flex.my-5.align-center
-                  .overline {{$t('admin:auth.security')}}
-                  v-chip.ml-3.grey--text(outlined, small, label) Coming soon
-                v-switch.ml-3(
-                  v-if='strategy.key === `local`'
-                  :disabled='!strategy.selfRegistration || true'
-                  v-model='strategy.recaptcha'
-                  label='Use reCAPTCHA by Google'
-                  color='primary'
-                  hint='Protects against spam robots and malicious registrations.'
-                  persistent-hint
-                  inset
-                )
-                v-switch.ml-3(
-                  v-model='strategy.recaptcha'
-                  :disabled='true'
-                  :label='$t(`admin:auth.force2fa`)'
-                  color='primary'
-                  :hint='$t(`admin:auth.force2faHint`)'
-                  persistent-hint
-                  inset
-                )
+              .d-flex.my-5.align-center
+                .overline {{$t('admin:auth.security')}}
+                v-chip.ml-3.grey--text(outlined, small, label) Coming soon
+              v-switch.ml-3(
+                v-if='strategy.key === `local`'
+                :disabled='!strategy.selfRegistration || true'
+                v-model='strategy.recaptcha'
+                label='Use reCAPTCHA by Google'
+                color='primary'
+                hint='Protects against spam robots and malicious registrations.'
+                persistent-hint
+                inset
+              )
+              v-switch.ml-3(
+                v-model='strategy.recaptcha'
+                :disabled='true'
+                :label='$t(`admin:auth.force2fa`)'
+                color='primary'
+                :hint='$t(`admin:auth.force2faHint`)'
+                persistent-hint
+                inset
+              )
 
         v-card.mt-4.wiki-form.animated.fadeInUp.wait-p4s(v-if='selectedStrategy !== `local`')
           v-toolbar(color='primary', dense, flat, dark)
@@ -236,13 +229,18 @@
 
 <script>
 import _ from 'lodash'
+import gql from 'graphql-tag'
 
 import groupsQuery from 'gql/admin/auth/auth-query-groups.gql'
-import strategiesQuery from 'gql/admin/auth/auth-query-strategies.gql'
 import strategiesSaveMutation from 'gql/admin/auth/auth-mutation-save-strategies.gql'
 import hostQuery from 'gql/admin/auth/auth-query-host.gql'
 
+import draggable from 'vuedraggable'
+
 export default {
+  components: {
+    draggable
+  },
   filters: {
     startCase(val) { return _.startCase(val) }
   },
@@ -250,30 +248,36 @@ export default {
     return {
       groups: [],
       strategies: [],
+      activeStrategies: [],
       selectedStrategy: '',
       host: '',
-      strategy: {},
-      jwtAudience: 'urn:wiki.js',
-      jwtExpiration: '30m',
-      jwtRenewablePeriod: '14d'
+      strategy: {
+        strategy: {}
+      }
     }
   },
   computed: {
-    activeStrategies() {
-      return _.filter(this.strategies, 'isEnabled')
+    order: {
+      get () {
+        return this.strategies
+      },
+      set (val) {
+
+      }
     }
   },
   watch: {
     selectedStrategy(newValue, oldValue) {
-      this.strategy = _.find(this.strategies, ['key', newValue]) || {}
+      this.strategy = _.find(this.activeStrategies, ['key', newValue]) || {}
     },
-    strategies(newValue, oldValue) {
+    activeStrategies(newValue, oldValue) {
       this.selectedStrategy = 'local'
     }
   },
   methods: {
     async refresh() {
       await this.$apollo.queries.strategies.refetch()
+      await this.$apollo.queries.activeStrategies.refetch()
       this.$store.commit('showNotification', {
         message: this.$t('admin:auth.refreshSuccess'),
         style: 'success',
@@ -314,9 +318,66 @@ export default {
   },
   apollo: {
     strategies: {
-      query: strategiesQuery,
+      query: gql`
+        query {
+          authentication {
+            strategies {
+              key
+              title
+              description
+              isAvailable
+              useForm
+              logo
+              website
+              props {
+                key
+                value
+              }
+            }
+          }
+        }
+      `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.authentication.strategies).map(str => ({
+      update: (data) => _.get(data, 'authentication.strategies', []).map(str => ({
+        ...str,
+        isDisabled: !str.isAvailable || str.key === `local`,
+        props: _.sortBy(str.props.map(cfg => ({
+          key: cfg.key,
+          ...JSON.parse(cfg.value)
+        })), [t => t.order])
+      })),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-strategies-refresh')
+      }
+    },
+    activeStrategies: {
+      query: gql`
+        query {
+          authentication {
+            activeStrategies {
+              key
+              strategy {
+                title
+                description
+                useForm
+                logo
+                website
+              }
+              config {
+                key
+                value
+              }
+              order
+              displayName
+              selfRegistration
+              domainWhitelist
+              autoEnrollGroups
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => _.get(data, 'authentication.activeStrategies', []).map(str => ({
         ...str,
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,
@@ -324,7 +385,7 @@ export default {
         })), [t => t.value.order])
       })),
       watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-refresh')
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-activestrategies-refresh')
       }
     },
     groups: {
@@ -351,7 +412,7 @@ export default {
 
 .authlogo {
   width: 250px;
-  height: 85px;
+  height: 60px;
   float:right;
   display: flex;
   justify-content: flex-end;

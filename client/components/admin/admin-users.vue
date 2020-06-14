@@ -33,7 +33,7 @@
               label='Identity Provider'
               :items='strategies'
               v-model='filterStrategy'
-              item-text='title'
+              item-text='displayName'
               item-value='key'
               style='max-width: 300px;'
               dense
@@ -162,13 +162,9 @@ export default {
       query: gql`
         query {
           authentication {
-            strategies(
-              isEnabled: true
-            ) {
+            activeStrategies {
               key
-              title
-              icon
-              color
+              displayName
             }
           }
         }
@@ -177,8 +173,8 @@ export default {
       update: (data) => {
         return _.concat({
           key: 'all',
-          title: 'All Providers'
-        }, data.authentication.strategies)
+          displayName: 'All Providers'
+        }, data.authentication.activeStrategies)
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-strategies-refresh')
