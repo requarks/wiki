@@ -15,10 +15,9 @@ const preFetch = async (element) => {
 
 module.exports = {
   async init($) {
-    const promises = [];
-    $('img.pre-fetch-candidate').each((_, element) => {
-      promises.push(preFetch($(element)))
-    })
+    const promises = $('img.pre-fetch-candidate').map((_, element) => {
+      return preFetch($(element))
+    }).toArray()
     await Promise.all(promises)
   }
 }
