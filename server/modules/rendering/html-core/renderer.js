@@ -4,6 +4,8 @@ const uslug = require('uslug')
 const pageHelper = require('../../../helpers/page')
 const URL = require('url').URL
 
+const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
+
 /* global WIKI */
 
 module.exports = {
@@ -231,6 +233,16 @@ module.exports = {
     })
 
     // --------------------------------
+    // Wrap root text nodes
+    // --------------------------------
+
+    $('body').contents().toArray().forEach(item => {
+      if (item.type === 'text' && item.parent.name === 'body') {
+        $(item).wrap('<div></div>')
+      }
+    })
+
+    // --------------------------------
     // Escape mustache expresions
     // --------------------------------
 
@@ -239,7 +251,7 @@ module.exports = {
       list.forEach(item => {
         if (item.type === 'text') {
           const rawText = $(item).text()
-          if (rawText.indexOf('{{') >= 0 && rawText.indexOf('}}') > 1) {
+          if (mustacheRegExp.test(rawText)) {
             $(item).parent().attr('v-pre', true)
           }
         } else {
