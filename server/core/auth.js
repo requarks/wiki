@@ -78,7 +78,6 @@ module.exports = {
       const enabledStrategies = await WIKI.models.authentication.getStrategies()
       for (let idx in enabledStrategies) {
         const stg = enabledStrategies[idx]
-        if (!stg.isEnabled) { continue }
         try {
           const strategy = require(`../modules/authentication/${stg.key}/authentication.js`)
 

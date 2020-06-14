@@ -17,11 +17,10 @@ module.exports = class Authentication extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['key', 'isEnabled'],
+      required: ['key'],
 
       properties: {
         key: {type: 'string'},
-        isEnabled: {type: 'boolean'},
         selfRegistration: {type: 'boolean'}
       }
     }

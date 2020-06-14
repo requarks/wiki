@@ -253,9 +253,17 @@ module.exports = () => {
         throw new Error('Incorrect groups auto-increment configuration! Should start at 0 and increment by 1. Contact your database administrator.')
       }
 
-      // Load authentication strategies + enable local
-      await WIKI.models.authentication.refreshStrategiesFromDisk()
-      await WIKI.models.authentication.query().patch({ isEnabled: true }).where('key', 'local')
+      // Load local authentication strategy
+      await WIKI.models.authentication.query().insert({
+        key: 'local',
+        config: {},
+        selfRegistration: false,
+        domainWhitelist: {v: []},
+        autoEnrollGroups: {v: []},
+        order: 0,
+        strategyKey: 'Local',
+        displayName: 'Local'
+      })
 
       // Load editors + enable default
       await WIKI.models.editors.refreshEditorsFromDisk()
