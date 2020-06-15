@@ -148,7 +148,14 @@ module.exports = class Page extends Model {
       ],
       title: 'string',
       toc: 'string',
-      updatedAt: 'string'
+      updatedAt: 'string',
+      backLinkPages: [
+        {
+          id: 'uint',
+          path: 'string',
+          title: 'string'
+        }
+      ]
     })
   }
 
@@ -703,7 +710,7 @@ module.exports = class Page extends Model {
    */
   static async getPageFromDb(opts) {
     const queryModeID = _.isNumber(opts)
-    let page, backLink, backLinkPage
+    let page, backLink, backLinkPage,promises = []
     try {
       page = await WIKI.models.pages.query()
         .column([
@@ -742,7 +749,7 @@ module.exports = class Page extends Model {
         })
         .withGraphFetched('backLinks')
         .modifyGraph('backLinks', builder => {
-          builder.select('path', 'pageId')
+          builder.select('path', 'pageId', 'localeCode')
         })
         .where(queryModeID ? {
           'pages.id': opts
@@ -768,12 +775,14 @@ module.exports = class Page extends Model {
         //   }
         // })
         .first()
-      if (page.backLinks && page.backLinks.length) {
-        page.backLinkPages = []
+      if (page && page.backLinks && page.backLinks.length) {
+        page.backLinks = page.backLinks.filter((link)=>{
+          return link.localeCode === page.localeCode
+        })
         for (backLink of page.backLinks) {
-          backLinkPage = await backLink.$relatedQuery('page').column(['id', 'path', 'title'])
-          page.backLinkPages.push(backLinkPage)
+          promises.push(backLink.$relatedQuery('page').column(['id', 'path', 'title']))
         }
+        page.backLinkPages = await Promise.all(promises)
       }
     } catch (err) {
       WIKI.logger.warn(err)
