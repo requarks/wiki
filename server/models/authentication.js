@@ -44,7 +44,7 @@ module.exports = class Authentication extends Model {
   }
 
   static async getStrategiesForLegacyClient() {
-    const strategies = await WIKI.models.authentication.query().select('key', 'selfRegistration').where({ isEnabled: true })
+    const strategies = await WIKI.models.authentication.query().select('key', 'selfRegistration')
     let formStrategies = []
     let socialStrategies = []
 

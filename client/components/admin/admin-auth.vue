@@ -230,6 +230,7 @@
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
+import { v4 as uuid } from 'uuid'
 
 import groupsQuery from 'gql/admin/auth/auth-query-groups.gql'
 import strategiesSaveMutation from 'gql/admin/auth/auth-mutation-save-strategies.gql'
@@ -282,6 +283,28 @@ export default {
         message: this.$t('admin:auth.refreshSuccess'),
         style: 'success',
         icon: 'cached'
+      })
+    },
+    addStrategy (str) {
+      const newStr = {
+        key: uuid(),
+        strategy: str,
+        config: str.props.map(c => ({
+          key: c.key,
+          value: {
+            ...c,
+            value: c.default
+          }
+        })),
+        order: this.activeStrategies.length,
+        displayName: str.title,
+        selfRegistration: false,
+        domainWhitelist: [],
+        autoEnrollGroups: []
+      }
+      this.activeStrategies = [...this.activeStrategies, newStr]
+      this.$nextTick(() => {
+        this.selectedStrategy = newStr.key
       })
     },
     async save() {

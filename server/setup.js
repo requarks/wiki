@@ -261,7 +261,7 @@ module.exports = () => {
         domainWhitelist: {v: []},
         autoEnrollGroups: {v: []},
         order: 0,
-        strategyKey: 'Local',
+        strategyKey: 'local',
         displayName: 'Local'
       })
 
