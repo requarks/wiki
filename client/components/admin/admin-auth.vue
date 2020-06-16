@@ -66,7 +66,7 @@
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{strategy.displayName}} #[em ({{strategy.strategy.title}})]
             v-spacer
-            v-btn(small, outlined, dark, color='white', :disabled='strategy.key === `local`')
+            v-btn(small, outlined, dark, color='white', :disabled='strategy.key === `local`', @click='deleteStrategy()')
               v-icon(left) mdi-close
               span {{$t('common:actions.delete')}}
           v-card-info(color='blue')
@@ -306,6 +306,9 @@ export default {
       this.$nextTick(() => {
         this.selectedStrategy = newStr.key
       })
+    },
+    deleteStrategy () {
+      this.activeStrategies = _.reject(this.activeStrategies, ['key', this.strategy.key])
     },
     async save() {
       this.$store.commit(`loadingStart`, 'admin-auth-savestrategies')

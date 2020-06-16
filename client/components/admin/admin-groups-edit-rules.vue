@@ -1,7 +1,7 @@
 <template lang="pug">
   v-card(flat)
     v-card-text(v-if='group.id === 1')
-      v-alert.radius-7(
+      v-alert.radius-7.mb-0(
         :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
         color='orange darken-2'
         outlined

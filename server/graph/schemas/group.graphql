@@ -37,6 +37,7 @@ type GroupMutation {
   update(
     id: Int!
     name: String!
+    redirectOnLogin: String!
     permissions: [String]!
     pageRules: [PageRuleInput]!
   ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
@@ -78,6 +79,7 @@ type Group {
   id: Int!
   name: String!
   isSystem: Boolean!
+  redirectOnLogin: String
   permissions: [String]!
   pageRules: [PageRule]
   users: [UserMinimal]
