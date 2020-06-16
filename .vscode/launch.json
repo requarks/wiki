@@ -36,11 +36,11 @@
             "type": "firefox",
             "request": "launch",
             "url": "http://localhost:3000/",
-            "webRoot": "${workspaceFolder}",
+            "webRoot": "${workspaceRoot}",
             "pathMappings": [
                 {
                     "url": "webpack:///client",
-                    "path": "${workspaceFolder}/client"
+                    "path": "${workspaceRoot}/client"
                 }
             ]
         },
