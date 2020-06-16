@@ -38,7 +38,7 @@ module.exports = {
           const user = await WIKI.models.users.processProfile({
             profile: {
               id: userId,
-              email: _.get(profile, conf.mappingEmail, ''),
+              email: String(_.get(profile, conf.mappingEmail, '')).split(',')[0],
               displayName: _.get(profile, conf.mappingDisplayName, '???'),
               picture: _.get(profile, conf.mappingPicture, '')
             },
