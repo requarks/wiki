@@ -14,7 +14,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceRoot}\\server.js"
+            "program": "${workspaceRoot}\\server\\index.js"
         },
         {
             "type": "node",
@@ -36,7 +36,7 @@
             "type": "firefox",
             "request": "launch",
             "url": "http://localhost:3000/",
-            "webRoot": "${workspaceFolder}/wwwroot",
+            "webRoot": "${workspaceFolder}",
             "pathMappings": [
                 {
                     "url": "webpack:///client",
