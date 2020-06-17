@@ -11393,6 +11393,11 @@ markdown-it-mathjax@2.0.0:
   resolved "https://registry.yarnpkg.com/markdown-it-mathjax/-/markdown-it-mathjax-2.0.0.tgz#ae2b4f4c5c719a03f9e475c664f7b2685231d9e9"
   integrity sha1-ritPTFxxmgP55HXGZPeyaFIx2ek=
 
+markdown-it-plugin-underline@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/markdown-it-plugin-underline/-/markdown-it-plugin-underline-0.0.1.tgz#02af7fff0c54286f2d954ee2742c283261a3a1ef"
+  integrity sha512-DtmxlE70JpNSacXU62kLa7degjVft4GU9QkR8cL0LYZLK7k6xgibpoUMsNdvtDG8QSUGOl1955AFtDJC7d9t6g==
+
 markdown-it-sub@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/markdown-it-sub/-/markdown-it-sub-1.0.0.tgz#375fd6026eae7ddcb012497f6411195ea1e3afe8"

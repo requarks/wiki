@@ -210,6 +210,7 @@ import 'codemirror/addon/hint/show-hint.js'
 // Markdown-it
 import MarkdownIt from 'markdown-it'
 import mdAttrs from 'markdown-it-attrs'
+import underline from 'markdown-it-plugin-underline'
 import mdEmoji from 'markdown-it-emoji'
 import mdTaskLists from 'markdown-it-task-lists'
 import mdExpandTabs from 'markdown-it-expand-tabs'
@@ -268,6 +269,7 @@ const md = new MarkdownIt({
   .use(mdAttrs, {
     allowedAttributes: ['id', 'class', 'target']
   })
+  .use(underline)
   .use(mdEmoji)
   .use(mdTaskLists, {label: true, labelAfter: true})
   .use(mdExpandTabs)
