@@ -31,7 +31,9 @@ module.exports = {
       }
     })
 
-    mkdown.use(underline)
+    if (this.config.underline) {
+      mkdown.use(underline)
+    }
 
     mkdown.use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']
