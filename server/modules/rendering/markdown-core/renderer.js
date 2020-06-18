@@ -1,7 +1,7 @@
 const md = require('markdown-it')
 const mdAttrs = require('markdown-it-attrs')
 const _ = require('lodash')
-const underline = require('markdown-it-plugin-underline')
+const underline = require('./underline')
 
 const quoteStyles = {
   Chinese: '””‘’',

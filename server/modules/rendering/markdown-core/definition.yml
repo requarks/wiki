@@ -38,7 +38,7 @@ props:
     type: Boolean
     default: false
     title: Underline Support
-    hint: Enable underline by using ++underline++
+    hint: Enable underline by using _underline_
     order: 5
     public: true
   quotes:
