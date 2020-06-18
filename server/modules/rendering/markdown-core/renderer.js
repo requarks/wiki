@@ -1,6 +1,7 @@
 const md = require('markdown-it')
 const mdAttrs = require('markdown-it-attrs')
 const _ = require('lodash')
+const underline = require('./underline')
 
 const quoteStyles = {
   Chinese: '””‘’',
@@ -29,6 +30,10 @@ module.exports = {
         return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
       }
     })
+
+    if (this.config.underline) {
+      mkdown.use(underline)
+    }
 
     mkdown.use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']

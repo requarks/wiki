@@ -34,12 +34,19 @@ props:
     hint: Enable some language-neutral replacement + quotes beautification
     order: 4
     public: true
+  underline:
+    type: Boolean
+    default: false
+    title: Underline Support
+    hint: Enable underline by using _underline_
+    order: 5
+    public: true
   quotes:
     type: String
     default: English
     title: Quotes style
     hint: When typographer is enabled. Double + single quotes replacement pairs. e.g. «»„“ for Russian, „“‚‘ for German, etc.
-    order: 5
+    order: 6
     enum:
       - Chinese
       - English

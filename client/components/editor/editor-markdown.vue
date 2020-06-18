@@ -220,6 +220,7 @@ import mdMark from 'markdown-it-mark'
 import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
+import underline from '../../libs/markdown-it-underline'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 import plantuml from './markdown/plantuml'
@@ -268,6 +269,7 @@ const md = new MarkdownIt({
   .use(mdAttrs, {
     allowedAttributes: ['id', 'class', 'target']
   })
+  .use(underline)
   .use(mdEmoji)
   .use(mdTaskLists, {label: true, labelAfter: true})
   .use(mdExpandTabs)
