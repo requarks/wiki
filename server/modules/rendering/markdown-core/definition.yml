@@ -54,3 +54,10 @@ props:
       - Spanish
       - Swedish
     public: true
+  underline:
+    type: Boolean
+    default: false
+    title: Underline Support
+    hint: Enable underline by using ++underline++
+    order: 6
+    public: true
