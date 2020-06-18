@@ -1,6 +1,6 @@
 const request = require('request-promise')
 
-const preFetch = async (element) => {
+const prefetch = async (element) => {
   const url = element.attr(`src`)
   const response = await request({
     method: `GET`,
@@ -10,13 +10,13 @@ const preFetch = async (element) => {
   const contentType = response.headers[`content-type`]
   const image = Buffer.from(response.body).toString('base64')
   element.attr('src', `data:${contentType};base64,${image}`)
-  element.removeClass('pre-fetch-candidate');
+  element.removeClass('prefetch-candidate');
 }
 
 module.exports = {
   async init($) {
-    const promises = $('img.pre-fetch-candidate').map((_, element) => {
-      return preFetch($(element))
+    const promises = $('img.prefetch-candidate').map((_, element) => {
+      return prefetch($(element))
     }).toArray()
     await Promise.all(promises)
   }
