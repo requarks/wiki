@@ -24,7 +24,7 @@ module.exports = {
 
     for (let child of _.reject(this.children, ['step', 'post'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
-      renderer.init($, child.config)
+      await renderer.init($, child.config)
     }
 
     // --------------------------------
