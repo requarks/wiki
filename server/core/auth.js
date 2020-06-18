@@ -114,7 +114,7 @@ module.exports = {
 
       // Expired but still valid within N days, just renew
       if (info instanceof Error && info.name === 'TokenExpiredError' &&
-        moment.subtract(ms(WIKI.config.auth.tokenRenewal), 'ms').isBefore(info.expiredAt)) {
+        moment().subtract(ms(WIKI.config.auth.tokenRenewal), 'ms').isBefore(info.expiredAt)) {
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
