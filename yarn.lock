@@ -11378,6 +11378,11 @@ markdown-it-footnote@3.0.2:
   resolved "https://registry.yarnpkg.com/markdown-it-footnote/-/markdown-it-footnote-3.0.2.tgz#1575ee7a093648d4e096aa33386b058d92ac8bc1"
   integrity sha512-JVW6fCmZWjvMdDQSbOT3nnOQtd9iAXmw7hTSh26+v42BnvXeVyGMDBm5b/EZocMed2MbCAHiTX632vY0FyGB8A==
 
+markdown-it-gallery@0.1.6:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/markdown-it-gallery/-/markdown-it-gallery-0.1.6.tgz#910445c2951b19b48f91c8c344db7a522197c6eb"
+  integrity sha1-kQRFwpUbGbSPkcjDRNt6UiGXxus=
+
 markdown-it-imsize@2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/markdown-it-imsize/-/markdown-it-imsize-2.0.1.tgz#cca0427905d05338a247cb9ca9d968c5cddd5170"

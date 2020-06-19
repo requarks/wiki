@@ -1,0 +1,8 @@
+key: markdownItGallery
+title: Markdown It Gallery
+description: Gallery for images
+author: Anton Mokrushin
+icon: mdi-view-carousel-outline
+enabledDefault: true
+dependsOn: markdownCore
+props: {}
