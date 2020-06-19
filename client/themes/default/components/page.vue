@@ -503,7 +503,7 @@ export default {
     this.$store.set('page/title', this.title)
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions', JSON.parse(atob(this.effectivePermissions)))
+      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
 
     this.$store.set('page/mode', 'view')
