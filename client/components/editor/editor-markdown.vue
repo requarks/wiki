@@ -233,7 +233,6 @@ import mermaid from 'mermaid'
 
 // Helpers
 import katexHelper from './common/katex'
-const galleryPlugin = require('markdown-it-gallery')
 
 // ========================================
 // INIT
@@ -279,7 +278,6 @@ const md = new MarkdownIt({
   .use(mdSub)
   .use(mdMark)
   .use(mdFootnote)
-  .use(galleryPlugin)
   .use(mdImsize)
 
 // ========================================
