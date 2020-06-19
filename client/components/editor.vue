@@ -133,6 +133,10 @@ export default {
     checkoutDate: {
       type: String,
       default: new Date().toISOString()
+    },
+    effectivePermissions: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -197,6 +201,10 @@ export default {
     this.setCurrentSavedState()
 
     this.checkoutDateActive = this.checkoutDate
+
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')

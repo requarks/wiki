@@ -132,7 +132,7 @@
                   v-spacer
                   v-tooltip(right, v-if='isAuthenticated')
                     template(v-slot:activator='{ on }')
-                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small)
+                      v-btn.btn-animate-edit(icon, :href='"/h/" + locale + "/" + path', v-on='on', x-small, v-if="hasReadHistoryPermission")
                         v-icon(color='indigo', dense) mdi-history
                     span {{$t('common:header.history')}}
                 .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
@@ -176,7 +176,7 @@
                 v-spacer
 
           v-flex.page-col-content(xs12, lg9, xl10)
-            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='isAuthenticated')
+            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
                   v-model='pageEditFab'
@@ -196,9 +196,10 @@
                       v-model='pageEditFab'
                       @click='pageEdit'
                       v-on='onEditActivator'
+                      :disabled='!hasWritePagesPermission'
                       )
                       v-icon mdi-pencil
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -210,7 +211,7 @@
                         )
                         v-icon(size='20') mdi-history
                     span {{$t('common:header.history')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -222,7 +223,7 @@
                         )
                         v-icon(size='20') mdi-code-tags
                     span {{$t('common:header.viewSource')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -234,7 +235,7 @@
                         )
                         v-icon(size='20') mdi-content-duplicate
                     span {{$t('common:header.duplicate')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -246,7 +247,7 @@
                         )
                         v-icon(size='20') mdi-content-save-move-outline
                     span {{$t('common:header.move')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
@@ -402,7 +403,7 @@ export default {
       type: Boolean,
       default: false
     },
-    commentsPermissions: {
+    effectivePermissions: {
       type: String,
       default: ''
     },
@@ -446,7 +447,7 @@ export default {
   computed: {
     isAuthenticated: get('user/authenticated'),
     commentsCount: get('page/commentsCount'),
-    commentsPerms: get('page/commentsPermissions'),
+    commentsPerms: get('page/effectivePermissions@comments'),
     rating: {
       get () {
         return 3.5
@@ -477,6 +478,16 @@ export default {
     },
     tocDecoded () {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
+    },
+    hasAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
+    hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
+    hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
+    hasReadSourcePermission: get('page/effectivePermissions@source.read'),
+    hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
+    hasAnyPagePermissions () {
+      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
+        this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     }
   },
   created() {
@@ -491,8 +502,8 @@ export default {
     this.$store.set('page/tags', this.tags)
     this.$store.set('page/title', this.title)
     this.$store.set('page/updatedAt', this.updatedAt)
-    if (this.commentsPermissions) {
-      this.$store.set('page/commentsPermissions', JSON.parse(atob(this.commentsPermissions)))
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
 
     this.$store.set('page/mode', 'view')

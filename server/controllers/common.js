@@ -7,6 +7,30 @@ const _ = require('lodash')
 
 const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
 
+const getPageEffectivePermissions = (req, page) => {
+  return {
+    comments: {
+      read: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['read:comments'], page) : false,
+      write: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['write:comments'], page) : false,
+      manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:comments'], page) : false
+    },
+    history: {
+      read: WIKI.auth.checkAccess(req.user, ['read:history'], page)
+    },
+    source: {
+      read: WIKI.auth.checkAccess(req.user, ['read:source'], page)
+    },
+    pages: {
+      write: WIKI.auth.checkAccess(req.user, ['write:pages'], page),
+      manage: WIKI.auth.checkAccess(req.user, ['manage:pages'], page),
+      delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], page)
+    },
+    system: {
+      manage: WIKI.auth.checkAccess(req.user, ['manage:system'], page)
+    }
+  }
+}
+
 /**
  * Robots.txt
  */
@@ -196,7 +220,11 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
       }
     }
   }
-  res.render('editor', { page, injectCode })
+
+  // -> Effective Permissions
+  const effectivePermissions = getPageEffectivePermissions(req, pageArgs)
+
+  res.render('editor', { page, injectCode, effectivePermissions })
 })
 
 /**
@@ -234,7 +262,11 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   if (page) {
     _.set(res.locals, 'pageMeta.title', page.title)
     _.set(res.locals, 'pageMeta.description', page.description)
-    res.render('history', { page })
+
+    // -> Effective Permissions
+    const effectivePermissions = getPageEffectivePermissions(req, pageArgs)
+
+    res.render('history', { page, effectivePermissions })
   } else {
     res.redirect(`/${pageArgs.path}`)
   }
@@ -335,7 +367,11 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
     } else {
       _.set(res.locals, 'pageMeta.title', page.title)
       _.set(res.locals, 'pageMeta.description', page.description)
-      res.render('source', { page })
+
+      // -> Effective Permissions
+      const effectivePermissions = getPageEffectivePermissions(req, pageArgs)
+
+      res.render('source', { page, effectivePermissions })
     }
   } else {
     res.redirect(`/${pageArgs.path}`)
@@ -447,16 +483,8 @@ router.get('/*', async (req, res, next) => {
             })
           }
 
-          // -> Comments Permissions
-          const commentsPermissions = WIKI.config.features.featurePageComments ? {
-            read: WIKI.auth.checkAccess(req.user, ['read:comments'], pageArgs),
-            write: WIKI.auth.checkAccess(req.user, ['write:comments'], pageArgs),
-            manage: WIKI.auth.checkAccess(req.user, ['manage:comments'], pageArgs)
-          } : {
-            read: false,
-            write: false,
-            manage: false
-          }
+          // -> Effective Permissions
+          const effectivePermissions = getPageEffectivePermissions(req, pageArgs)
 
           // -> Render view
           res.render('page', {
@@ -464,7 +492,7 @@ router.get('/*', async (req, res, next) => {
             sidebar,
             injectCode,
             comments: WIKI.data.commentProvider,
-            commentsPermissions
+            effectivePermissions
           })
         }
       } else if (pageArgs.path === 'home') {
