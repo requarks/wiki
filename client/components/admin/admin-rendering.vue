@@ -45,7 +45,7 @@
                 )
                 v-spacer
                 .body-2 {{core.input}}
-                v-icon.mx-2 mdi-arrow-right-bold-hexagon-outline
+                v-icon.mx-2 mdi-arrow-right-circle
                 .caption {{core.output}}
                 v-spacer
             v-expansion-panel-content

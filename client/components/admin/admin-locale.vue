@@ -8,7 +8,9 @@
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:locale.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:locale.subtitle') }}
           v-spacer
-          v-btn.animated.fadeInDown(color='success', depressed, @click='save', large, :loading='loading')
+          v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/locales', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.animated.fadeInDown.ml-3(color='success', depressed, @click='save', large, :loading='loading')
             v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
         v-form.pt-3
