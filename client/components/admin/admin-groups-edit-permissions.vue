@@ -81,6 +81,20 @@ export default {
               disabled: false
             },
             {
+              permission: 'write:styles',
+              hint: 'Can insert CSS styles in pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'write:scripts',
+              hint: 'Can insert JavaScript in pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
               permission: 'read:source',
               hint: 'Can view pages source, as specified in the Page Rules',
               warning: false,
