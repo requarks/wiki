@@ -189,11 +189,11 @@
 
         v-tab-item(:transition='false', :reverse-transition='false')
           .editor-props-codeeditor-title
-            .overline {{$t('editor:props.js')}}
+            .overline {{$t('editor:props.html')}}
           .editor-props-codeeditor
             textarea(ref='codejs')
           .editor-props-codeeditor-hint
-            .caption {{$t('editor:props.jsHint')}}
+            .caption {{$t('editor:props.htmlHint')}}
 
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
@@ -250,7 +250,7 @@ import gql from 'graphql-tag'
 
 import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
-import 'codemirror/mode/javascript/javascript.js'
+import 'codemirror/mode/htmlmixed/htmlmixed.js'
 import 'codemirror/mode/css/css.js'
 
 /* global siteLangs, siteConfig */
@@ -323,7 +323,7 @@ export default {
       if (newValue === 2) {
         this.$nextTick(() => {
           setTimeout(() => {
-            this.loadEditor(this.$refs.codejs, 'javascript')
+            this.loadEditor(this.$refs.codejs, 'html')
           }, 100)
         })
       } else if (newValue === 4) {
@@ -363,7 +363,7 @@ export default {
         direction: 'ltr'
       })
       switch (mode) {
-        case 'javascript':
+        case 'html':
           this.cm.setValue(this.scriptJs)
           this.cm.on('change', c => {
             this.scriptJs = c.getValue()

@@ -51,6 +51,10 @@ module.exports = class Page extends Model {
     }
   }
 
+  static get jsonAttributes() {
+    return ['extra']
+  }
+
   static get relationMappings() {
     return {
       tags: {
@@ -139,6 +143,10 @@ module.exports = class Page extends Model {
           title: 'string'
         }
       ],
+      extra: {
+        js: 'string',
+        css: 'string'
+      },
       title: 'string',
       toc: 'string',
       updatedAt: 'string'
@@ -248,7 +256,7 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageEmptyContent()
     }
 
-    // -> Format JS Scripts
+    // -> Format CSS Scripts
     let scriptCss = ''
     if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
       locale: opts.locale,
@@ -375,7 +383,7 @@ module.exports = class Page extends Model {
       ogPage.extra = {}
     }
 
-    // -> Format JS Scripts
+    // -> Format CSS Scripts
     let scriptCss = _.get(ogPage, 'extra.css', '')
     if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
       locale: opts.locale,
@@ -787,6 +795,7 @@ module.exports = class Page extends Model {
           'pages.localeCode',
           'pages.authorId',
           'pages.creatorId',
+          'pages.extra',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
@@ -846,6 +855,10 @@ module.exports = class Page extends Model {
       creatorId: page.creatorId,
       creatorName: page.creatorName,
       description: page.description,
+      extra: {
+        css: page.extra ? page.extra.css : '',
+        js: page.extra ? page.extra.js : ''
+      },
       isPrivate: page.isPrivate === 1 || page.isPrivate === true,
       isPublished: page.isPublished === 1 || page.isPublished === true,
       publishEndDate: page.publishEndDate,

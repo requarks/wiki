@@ -111,6 +111,14 @@ export default {
       type: Boolean,
       default: true
     },
+    scriptCss: {
+      type: String,
+      default: ''
+    },
+    scriptJs: {
+      type: String,
+      default: ''
+    },
     initEditor: {
       type: String,
       default: null
@@ -185,15 +193,17 @@ export default {
     }
   },
   created() {
-    this.$store.commit('page/SET_ID', this.pageId)
-    this.$store.commit('page/SET_DESCRIPTION', this.description)
-    this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
-    this.$store.commit('page/SET_LOCALE', this.locale)
-    this.$store.commit('page/SET_PATH', this.path)
-    this.$store.commit('page/SET_TAGS', this.tags)
-    this.$store.commit('page/SET_TITLE', this.title)
+    this.$store.set('page/id', this.pageId)
+    this.$store.set('page/description', this.description)
+    this.$store.set('page/isPublished', this.isPublished)
+    this.$store.set('page/locale', this.locale)
+    this.$store.set('page/path', this.path)
+    this.$store.set('page/tags', this.tags)
+    this.$store.set('page/title', this.title)
+    this.$store.set('page/scriptCss', this.scriptCss)
+    this.$store.set('page/scriptJs', this.scriptJs)
 
-    this.$store.commit('page/SET_MODE', 'edit')
+    this.$store.set('page/mode', 'edit')
 
     this.setCurrentSavedState()
 

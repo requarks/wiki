@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const pageHelper = require('../helpers/page')
 const _ = require('lodash')
+const CleanCSS = require('clean-css')
 
 /* global WIKI */
 
@@ -152,6 +153,11 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     // -> Get page tags
     await page.$relatedQuery('tags')
     page.tags = _.map(page.tags, 'tag')
+
+    // -> Beautify Script CSS
+    if (!_.isEmpty(page.extra.css)) {
+      page.extra.css = new CleanCSS({ format: 'beautify' }).minify(page.extra.css).styles
+    }
 
     _.set(res.locals, 'pageMeta.title', `Edit ${page.title}`)
     _.set(res.locals, 'pageMeta.description', page.description)
@@ -452,6 +458,14 @@ router.get('/*', async (req, res, next) => {
           css: WIKI.config.theming.injectCSS,
           head: WIKI.config.theming.injectHead,
           body: WIKI.config.theming.injectBody
+        }
+
+        if (!_.isEmpty(page.extra.css)) {
+          injectCode.css = `${injectCode.css}\n${page.extra.css}`
+        }
+
+        if (!_.isEmpty(page.extra.js)) {
+          injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
 
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
