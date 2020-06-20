@@ -15,6 +15,8 @@ const state = {
   title: '',
   updatedAt: '',
   mode: '',
+  scriptJs: '',
+  scriptCss: '',
   effectivePermissions: {
     comments: {
       read: false,
@@ -30,7 +32,9 @@ const state = {
     pages: {
       write: false,
       manage: false,
-      delete: false
+      delete: false,
+      script: false,
+      style: false
     },
     system: {
       manage: false

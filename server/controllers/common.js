@@ -23,7 +23,9 @@ const getPageEffectivePermissions = (req, page) => {
     pages: {
       write: WIKI.auth.checkAccess(req.user, ['write:pages'], page),
       manage: WIKI.auth.checkAccess(req.user, ['manage:pages'], page),
-      delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], page)
+      delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], page),
+      script: WIKI.auth.checkAccess(req.user, ['write:scripts'], page),
+      style: WIKI.auth.checkAccess(req.user, ['write:styles'], page)
     },
     system: {
       manage: WIKI.auth.checkAccess(req.user, ['manage:system'], page)
