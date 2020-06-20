@@ -8,6 +8,7 @@ const yaml = require('js-yaml')
 const striptags = require('striptags')
 const emojiRegex = require('emoji-regex')
 const he = require('he')
+const CleanCSS = require('clean-css')
 
 /* global WIKI */
 
@@ -247,6 +248,28 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageEmptyContent()
     }
 
+    // -> Format JS Scripts
+    let scriptCss = ''
+    if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      if (!_.isEmpty(opts.scriptCss)) {
+        scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
+      } else {
+        scriptCss = ''
+      }
+    }
+
+    // -> Format JS Scripts
+    let scriptJs = ''
+    if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      scriptJs = opts.scriptJs || ''
+    }
+
     // -> Create page
     await WIKI.models.pages.query().insert({
       authorId: opts.user.id,
@@ -263,7 +286,11 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
-      toc: '[]'
+      toc: '[]',
+      extra: JSON.stringify({
+        js: scriptJs,
+        css: scriptCss
+      })
     })
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
@@ -343,6 +370,33 @@ module.exports = class Page extends Model {
       versionDate: ogPage.updatedAt
     })
 
+    // -> Format Extra Properties
+    if (!_.isPlainObject(ogPage.extra)) {
+      ogPage.extra = {}
+    }
+
+    // -> Format JS Scripts
+    let scriptCss = _.get(ogPage, 'extra.css', '')
+    if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      if (!_.isEmpty(opts.scriptCss)) {
+        scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
+      } else {
+        scriptCss = ''
+      }
+    }
+
+    // -> Format JS Scripts
+    let scriptJs = _.get(ogPage, 'extra.js', '')
+    if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      scriptJs = opts.scriptJs || ''
+    }
+
     // -> Update page
     await WIKI.models.pages.query().patch({
       authorId: opts.user.id,
@@ -351,7 +405,12 @@ module.exports = class Page extends Model {
       isPublished: opts.isPublished === true || opts.isPublished === 1,
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
-      title: opts.title
+      title: opts.title,
+      extra: JSON.stringify({
+        ...ogPage.extra,
+        js: scriptJs,
+        css: scriptCss
+      })
     }).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 

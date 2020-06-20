@@ -63,9 +63,6 @@ import { AtomSpinner } from 'epic-spinners'
 import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 
-import createPageMutation from 'gql/editor/create.gql'
-import updatePageMutation from 'gql/editor/update.gql'
-
 import editorStore from '../store/editor'
 
 /* global WIKI */
@@ -262,7 +259,52 @@ export default {
           // --------------------------------------------
 
           let resp = await this.$apollo.mutate({
-            mutation: createPageMutation,
+            mutation: gql`
+              mutation (
+                $content: String!
+                $description: String!
+                $editor: String!
+                $isPrivate: Boolean!
+                $isPublished: Boolean!
+                $locale: String!
+                $path: String!
+                $publishEndDate: Date
+                $publishStartDate: Date
+                $scriptCss: String
+                $scriptJs: String
+                $tags: [String]!
+                $title: String!
+              ) {
+                pages {
+                  create(
+                    content: $content
+                    description: $description
+                    editor: $editor
+                    isPrivate: $isPrivate
+                    isPublished: $isPublished
+                    locale: $locale
+                    path: $path
+                    publishEndDate: $publishEndDate
+                    publishStartDate: $publishStartDate
+                    scriptCss: $scriptCss
+                    scriptJs: $scriptJs
+                    tags: $tags
+                    title: $title
+                  ) {
+                    responseResult {
+                      succeeded
+                      errorCode
+                      slug
+                      message
+                    }
+                    page {
+                      id
+                      updatedAt
+                    }
+                  }
+                }
+              }
+            `,
             variables: {
               content: this.$store.get('editor/content'),
               description: this.$store.get('page/description'),
@@ -273,6 +315,8 @@ export default {
               path: this.$store.get('page/path'),
               publishEndDate: this.$store.get('page/publishEndDate') || '',
               publishStartDate: this.$store.get('page/publishStartDate') || '',
+              scriptCss: this.$store.get('page/scriptCss'),
+              scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -318,7 +362,53 @@ export default {
           }
 
           let resp = await this.$apollo.mutate({
-            mutation: updatePageMutation,
+            mutation: gql`
+              mutation (
+                $id: Int!
+                $content: String
+                $description: String
+                $editor: String
+                $isPrivate: Boolean
+                $isPublished: Boolean
+                $locale: String
+                $path: String
+                $publishEndDate: Date
+                $publishStartDate: Date
+                $scriptCss: String
+                $scriptJs: String
+                $tags: [String]
+                $title: String
+              ) {
+                pages {
+                  update(
+                    id: $id
+                    content: $content
+                    description: $description
+                    editor: $editor
+                    isPrivate: $isPrivate
+                    isPublished: $isPublished
+                    locale: $locale
+                    path: $path
+                    publishEndDate: $publishEndDate
+                    publishStartDate: $publishStartDate
+                    scriptCss: $scriptCss
+                    scriptJs: $scriptJs
+                    tags: $tags
+                    title: $title
+                  ) {
+                    responseResult {
+                      succeeded
+                      errorCode
+                      slug
+                      message
+                    }
+                    page {
+                      updatedAt
+                    }
+                  }
+                }
+              }
+            `,
             variables: {
               id: this.$store.get('page/id'),
               content: this.$store.get('editor/content'),
@@ -330,6 +420,8 @@ export default {
               path: this.$store.get('page/path'),
               publishEndDate: this.$store.get('page/publishEndDate') || '',
               publishStartDate: this.$store.get('page/publishStartDate') || '',
+              scriptCss: this.$store.get('page/scriptCss'),
+              scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }

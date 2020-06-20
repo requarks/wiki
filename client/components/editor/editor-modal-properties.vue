@@ -188,6 +188,8 @@
                         ) {{$t('common:actions.ok')}}
 
         v-tab-item(:transition='false', :reverse-transition='false')
+          .editor-props-codeeditor-title
+            .overline {{$t('editor:props.js')}}
           .editor-props-codeeditor
             textarea(ref='codejs')
           .editor-props-codeeditor-hint
@@ -231,6 +233,8 @@
               )
 
         v-tab-item(:transition='false', :reverse-transition='false')
+          .editor-props-codeeditor-title
+            .overline {{$t('editor:props.css')}}
           .editor-props-codeeditor
             textarea(ref='codecss')
           .editor-props-codeeditor-hint
@@ -415,6 +419,13 @@ export default {
 
   > textarea {
     visibility: hidden;
+  }
+
+  &-title {
+    background-color: mc('grey', '900');
+    border-bottom: 1px solid lighten(mc('grey', '900'), 10%);
+    color: #FFF;
+    padding: 10px;
   }
 
   &-hint {
