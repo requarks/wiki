@@ -43,7 +43,7 @@
       v-spacer
       .caption.mr-3(v-if='isAuthenticated')
         i18next(tag='span', path='common:comments.postingAs')
-          strong(place='bold') {{userDisplayName}}
+          strong(place='name') {{userDisplayName}}
       v-btn(
         dark
         color='blue-grey darken-2'
