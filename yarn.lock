@@ -2863,10 +2863,10 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@requarks/ckeditor5@12.4.0-wiki.16":
-  version "12.4.0-wiki.16"
-  resolved "https://registry.yarnpkg.com/@requarks/ckeditor5/-/ckeditor5-12.4.0-wiki.16.tgz#ac025edac283df1cbb5dd9f838b5fe06d0a93e84"
-  integrity sha512-EVVxnbXU9PXGuBo58xSZziTzFQebYimczZOswQSPRIvJqaK0Xc1mqDmND6BSrUIAdue2j71+zukLudgYeKMKWQ==
+"@requarks/ckeditor5@19.0.1-wiki.1":
+  version "19.0.1-wiki.1"
+  resolved "https://registry.yarnpkg.com/@requarks/ckeditor5/-/ckeditor5-19.0.1-wiki.1.tgz#257b5b38e2fe9138474656856ce0d20bd99c8fda"
+  integrity sha512-q5l3I7rnL3zeIFqpI4ymMaQ0XJg4h0E7zbuuQt6JSGjTmZooiAIDLIguE2t4T6BdQjkATPw0THyfgyPGylMfgg==
 
 "@root/acme@^3.0.2":
   version "3.0.9"

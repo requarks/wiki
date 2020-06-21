@@ -199,7 +199,7 @@
     "@babel/preset-env": "^7.10.1",
     "@mdi/font": "5.3.45",
     "@panter/vue-i18next": "0.15.2",
-    "@requarks/ckeditor5": "12.4.0-wiki.16",
+    "@requarks/ckeditor5": "19.0.1-wiki.1",
     "@vue/babel-preset-app": "4.4.1",
     "animate-sass": "0.8.2",
     "animated-number-vue": "1.0.0",

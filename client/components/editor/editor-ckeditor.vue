@@ -159,11 +159,26 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
   }
 
+  .contents {
+    table {
+      margin: inherit;
+    }
+    pre > code {
+      background-color: unset;
+      color: unset;
+      padding: .15em;
+    }
+  }
+
   .ck.ck-toolbar {
     border: none;
     justify-content: center;
     background-color: mc('grey', '300');
     color: #FFF;
+  }
+
+  .ck.ck-toolbar__items {
+    justify-content: center;
   }
 
   > .ck-editor__editable {
