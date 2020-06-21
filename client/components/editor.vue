@@ -168,7 +168,9 @@ export default {
         publishEndDate: '',
         publishStartDate: '',
         tags: '',
-        title: ''
+        title: '',
+        css: '',
+        js: ''
       }
     }
   },
@@ -188,7 +190,11 @@ export default {
         this.savedState.title !== this.$store.get('page/title'),
         this.savedState.description !== this.$store.get('page/description'),
         this.savedState.tags !== this.$store.get('page/tags'),
-        this.savedState.isPublished !== this.$store.get('page/isPublished')
+        this.savedState.isPublished !== this.$store.get('page/isPublished'),
+        this.savedState.publishStartDate !== this.$store.get('page/publishStartDate'),
+        this.savedState.publishEndDate !== this.$store.get('page/publishEndDate'),
+        this.savedState.css !== this.$store.get('page/scriptCss'),
+        this.savedState.js !== this.$store.get('page/scriptJs')
       ], Boolean)
     }
   },
@@ -526,7 +532,9 @@ export default {
         publishEndDate: this.$store.get('page/publishEndDate') || '',
         publishStartDate: this.$store.get('page/publishStartDate') || '',
         tags: this.$store.get('page/tags'),
-        title: this.$store.get('page/title')
+        title: this.$store.get('page/title'),
+        css: this.$store.get('page/scriptCss'),
+        js: this.$store.get('page/scriptJs')
       }
     },
     injectCustomCss: _.debounce(css => {

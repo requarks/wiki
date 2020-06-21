@@ -21,7 +21,7 @@
         v-tab {{$t('editor:props.info')}}
         v-tab {{$t('editor:props.scheduling')}}
         v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
-        v-tab {{$t('editor:props.social')}}
+        v-tab(disabled) {{$t('editor:props.social')}}
         v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.pt-5
