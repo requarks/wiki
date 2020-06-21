@@ -179,6 +179,7 @@ export default {
     welcomeMode() { return this.mode === `create` && this.path === `home` },
     currentPageTitle: sync('page/title'),
     checkoutDateActive: sync('editor/checkoutDateActive'),
+    currentStyling: get('page/scriptCss'),
     isDirty () {
       return _.some([
         this.initContentParsed !== this.$store.get('editor/content'),
@@ -198,6 +199,9 @@ export default {
           this.dialogProps = true
         }, 500)
       }
+    },
+    currentStyling(newValue) {
+      this.injectCustomCss(newValue)
     }
   },
   created() {
@@ -524,7 +528,20 @@ export default {
         tags: this.$store.get('page/tags'),
         title: this.$store.get('page/title')
       }
-    }
+    },
+    injectCustomCss: _.debounce(css => {
+      const oldStyl = document.querySelector('#editor-script-css')
+      if (oldStyl) {
+        document.head.removeChild(oldStyl)
+      }
+      if (!_.isEmpty(css)) {
+        const styl = document.createElement('style')
+        styl.type = 'text/css'
+        styl.id = 'editor-script-css'
+        document.head.appendChild(styl)
+        styl.appendChild(document.createTextNode(css))
+      }
+    }, 1000)
   },
   apollo: {
     isConflict: {
