@@ -260,12 +260,14 @@
                         v-icon(size='20') mdi-trash-can-outline
                     span {{$t('common:header.delete')}}
               span {{$t('common:page.editPage')}}
+            v-alert.mb-5(v-if='!isPublished', color='red', outlined, icon='mdi-minus-circle', dense)
+              .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container')
               slot(name='contents')
             .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
               .comments-header
                 v-icon.mr-2(dark) mdi-comment-text-outline
-                span Comments
+                span {{$t('common:comments.title')}}
               .comments-main
                 slot(name='comments')
     nav-footer
@@ -503,7 +505,7 @@ export default {
     this.$store.set('page/title', this.title)
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
 
     this.$store.set('page/mode', 'view')

@@ -136,12 +136,12 @@
                       )
                       v-spacer
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='isPublishStartShown = false'
                         ) {{$t('common:actions.cancel')}}
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='$refs.menuPublishStart.save(publishStartDate)'
                         ) {{$t('common:actions.ok')}}
@@ -177,12 +177,12 @@
                       )
                       v-spacer
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='isPublishEndShown = false'
                         ) {{$t('common:actions.cancel')}}
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='$refs.menuPublishEnd.save(publishEndDate)'
                         ) {{$t('common:actions.ok')}}

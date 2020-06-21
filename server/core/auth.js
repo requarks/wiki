@@ -380,5 +380,35 @@ module.exports = {
     WIKI.events.inbound.on('reloadAuthStrategies', () => {
       WIKI.auth.activateStrategies()
     })
+  },
+
+  /**
+   * Get all user permissions for a specific page
+   */
+  getEffectivePermissions (req, page) {
+    return {
+      comments: {
+        read: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['read:comments'], page) : false,
+        write: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['write:comments'], page) : false,
+        manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:comments'], page) : false
+      },
+      history: {
+        read: WIKI.auth.checkAccess(req.user, ['read:history'], page)
+      },
+      source: {
+        read: WIKI.auth.checkAccess(req.user, ['read:source'], page)
+      },
+      pages: {
+        read: WIKI.auth.checkAccess(req.user, ['read:pages'], page),
+        write: WIKI.auth.checkAccess(req.user, ['write:pages'], page),
+        manage: WIKI.auth.checkAccess(req.user, ['manage:pages'], page),
+        delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], page),
+        script: WIKI.auth.checkAccess(req.user, ['write:scripts'], page),
+        style: WIKI.auth.checkAccess(req.user, ['write:styles'], page)
+      },
+      system: {
+        manage: WIKI.auth.checkAccess(req.user, ['manage:system'], page)
+      }
+    }
   }
 }

@@ -115,6 +115,14 @@ export default {
       type: String,
       default: ''
     },
+    publishStartDate: {
+      type: String,
+      default: ''
+    },
+    publishEndDate: {
+      type: String,
+      default: ''
+    },
     scriptJs: {
       type: String,
       default: ''
@@ -196,6 +204,8 @@ export default {
     this.$store.set('page/id', this.pageId)
     this.$store.set('page/description', this.description)
     this.$store.set('page/isPublished', this.isPublished)
+    this.$store.set('page/publishStartDate', this.publishStartDate)
+    this.$store.set('page/publishEndDate', this.publishEndDate)
     this.$store.set('page/locale', this.locale)
     this.$store.set('page/path', this.path)
     this.$store.set('page/tags', this.tags)

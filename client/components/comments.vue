@@ -3,7 +3,7 @@
     v-textarea#discussion-new(
       outlined
       flat
-      placeholder='Write a new comment...'
+      :placeholder='$t(`common:comments.newPlaceholder`)'
       auto-grow
       dense
       rows='3'
@@ -19,7 +19,7 @@
           outlined
           color='blue-grey darken-2'
           :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
-          placeholder='Your Name'
+          :placeholder='$t(`common:comments.fieldName`)'
           hide-details
           dense
           autocomplete='name'
@@ -30,7 +30,7 @@
           outlined
           color='blue-grey darken-2'
           :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
-          placeholder='Your Email Address'
+          :placeholder='$t(`common:comments.fieldEmail`)'
           hide-details
           type='email'
           dense
@@ -39,9 +39,11 @@
         )
     .d-flex.align-center.pt-3(v-if='permissions.write')
       v-icon.mr-1(color='blue-grey') mdi-language-markdown-outline
-      .caption.blue-grey--text Markdown Format
+      .caption.blue-grey--text {{$t('common:comments.markdownFormat')}}
       v-spacer
-      .caption.mr-3(v-if='isAuthenticated') Posting as #[strong {{userDisplayName}}]
+      .caption.mr-3(v-if='isAuthenticated')
+        i18next(tag='span', path='common:comments.postingAs')
+          strong(place='bold') {{userDisplayName}}
       v-btn(
         dark
         color='blue-grey darken-2'
@@ -49,7 +51,7 @@
         depressed
         )
         v-icon(left) mdi-comment
-        span.text-none Post Comment
+        span.text-none {{$t('common:comments.postComment')}}
     v-divider.mt-3(v-if='permissions.write')
     .pa-5.d-flex.align-center.justify-center(v-if='isLoading && !hasLoadedOnce')
       v-progress-circular(
@@ -58,7 +60,7 @@
         width='1'
         color='blue-grey'
       )
-      .caption.blue-grey--text.pl-3: em Loading comments...
+      .caption.blue-grey--text.pl-3: em {{$t('common:comments.loading')}}
     v-timeline(
       dense
       v-else-if='comments && comments.length > 0'
@@ -80,7 +82,7 @@
               v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
               v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
             .comments-post-name.caption: strong {{cm.authorName}}
-            .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - modified {{cm.updatedAt | moment('from') }}]
+            .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
               v-textarea(
@@ -103,7 +105,7 @@
                   outlined
                   )
                   v-icon(left) mdi-close
-                  span.text-none Cancel
+                  span.text-none {{$t('common:action.cancel')}}
                 v-btn(
                   dark
                   color='blue-grey darken-2'
@@ -111,16 +113,16 @@
                   depressed
                   )
                   v-icon(left) mdi-comment
-                  span.text-none Update Comment
-    .pt-5.text-center.body-2.blue-grey--text(v-else-if='permissions.write') Be the first to comment.
-    .text-center.body-2.blue-grey--text(v-else) No comments yet.
+                  span.text-none {{$t('common:comments.updateComment')}}
+    .pt-5.text-center.body-2.blue-grey--text(v-else-if='permissions.write') {{$t('common:comments.beFirst')}}
+    .text-center.body-2.blue-grey--text(v-else) {{$t('common:comments.none')}}
 
     v-dialog(v-model='deleteCommentDialogShown', max-width='500')
       v-card
-        .dialog-header.is-red Confirm Delete
+        .dialog-header.is-red {{$t('common:comments.deleteConfirmTitle')}}
         v-card-text.pt-5
-          span Are you sure you want to permanently delete this comment?
-          .caption: strong This action cannot be undone!
+          span {{$t('common:comments.deleteWarn')}}
+          .caption: strong {{$t('common:comments.deletePermanentWarn')}}
         v-card-chin
           v-spacer
           v-btn(text, @click='deleteCommentDialogShown = false') {{$t('common:actions.cancel')}}
@@ -298,7 +300,7 @@ export default {
         if (_.get(resp, 'data.comments.create.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
             style: 'success',
-            message: 'New comment posted successfully.',
+            message: this.$t('common:comments.postSuccess'),
             icon: 'check'
           })
 
@@ -371,7 +373,7 @@ export default {
       this.isBusy = true
       try {
         if (this.commentEditContent.length < 2) {
-          throw new Error('Comment is empty or too short!')
+          throw new Error(this.$t('common:comments.contentMissingError'))
         }
         const resp = await this.$apollo.mutate({
           mutation: gql`
@@ -404,7 +406,7 @@ export default {
         if (_.get(resp, 'data.comments.update.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
             style: 'success',
-            message: 'Comment was updated successfully.',
+            message: this.$t('common:comments.updateSuccess'),
             icon: 'check'
           })
 
@@ -470,7 +472,7 @@ export default {
         if (_.get(resp, 'data.comments.delete.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
             style: 'success',
-            message: 'Comment was deleted successfully.',
+            message: this.$t('common:comments.deleteSuccess'),
             icon: 'check'
           })
 
