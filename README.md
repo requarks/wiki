@@ -82,6 +82,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="148">
+        <a href="https://github.com/xDacon" target="_blank">
+          Dacon<br />(@xDacon)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
         <a href="https://github.com/GigabiteLabs" target="_blank">
           <img src="https://static.requarks.io/sponsors/gigabitelabs-148x129.png">
         </a>
@@ -101,7 +106,6 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           <img src="https://static.requarks.io/sponsors/become-148x72.png">
         </a>
       </td>
-      <td align="center" valign="middle" width="148"></td>
     </tr>
   </tbody>
 </table>
