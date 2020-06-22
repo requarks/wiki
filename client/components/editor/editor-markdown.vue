@@ -100,9 +100,14 @@
           span {{$t('editor:markup.horizontalBar')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
+          v-tooltip(bottom, color='primary', v-if='previewShown')
+            template(v-slot:activator='{ on }')
+              v-btn.animated.fadeIn.wait-p1s(icon, tile, v-on='on', @click='spellModeActive = !spellModeActive').mx-0
+                v-icon(:color='spellModeActive ? `amber` : `white`') mdi-spellcheck
+            span {{$t('editor:markup.toggleSpellcheck')}}
           v-tooltip(bottom, color='primary')
             template(v-slot:activator='{ on }')
-              v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
+              v-btn.animated.fadeIn.wait-p2s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
                 v-icon mdi-book-open-outline
             span {{$t('editor:markup.togglePreviewPane')}}
     .editor-markdown-main
@@ -164,7 +169,13 @@
       transition(name='editor-markdown-preview')
         .editor-markdown-preview(v-if='previewShown')
           .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
-            div(ref='editorPreview', v-html='previewHTML')
+            div(
+              ref='editorPreview'
+              v-html='previewHTML'
+              :spellcheck='spellModeActive'
+              :contenteditable='spellModeActive'
+              @blur='spellModeActive = false'
+              )
 
     v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
       .caption.editor-markdown-sysbar-locale {{locale.toUpperCase()}}
@@ -372,6 +383,7 @@ export default {
       previewShown: true,
       previewHTML: '',
       helpShown: false,
+      spellModeActive: false,
       insertLinkDialog: false
     }
   },
@@ -394,6 +406,13 @@ export default {
           this.renderMermaidDiagrams()
           Prism.highlightAllUnder(this.$refs.editorPreview)
           Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
+        })
+      }
+    },
+    spellModeActive (newValue, oldValue) {
+      if (newValue) {
+        this.$nextTick(() => {
+          this.$refs.editorPreview.focus()
         })
       }
     }
@@ -826,6 +845,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
       @include until($tablet) {
         height: $editor-height-mobile;
+      }
+
+      > div {
+        outline: none;
       }
 
       p.line {
