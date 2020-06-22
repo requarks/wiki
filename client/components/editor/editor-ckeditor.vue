@@ -67,6 +67,7 @@ export default {
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
       language: this.locale,
       placeholder: 'Type the page content here',
+      disableNativeSpellChecker: false,
       wordCount: {
         onUpdate: stats => {
           this.stats = {
