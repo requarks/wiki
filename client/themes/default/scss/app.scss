@@ -653,6 +653,37 @@
     }
   }
 
+  figure.table {
+    margin: 0;
+
+    > table {
+      background-color: #FFF;
+      margin: 0;
+      border-collapse: collapse;
+      box-shadow: 0 0 5px 0 rgba(0, 0, 0, .07);
+
+      td, th {
+        border: 1px solid mc('blue-grey', '100');
+        box-shadow: inset -1px -1px 0 0 #FFF, inset 1px 0 0 #FFF;
+        padding: .5rem .75rem;
+      }
+
+      th {
+        background-color: lighten(mc('blue-grey', '50'), 1%);;
+        font-weight: 700;
+        color: mc('grey', '800');
+      }
+
+      thead th {
+        border-bottom: 2px solid mc('blue-grey', '100');
+      }
+
+      tbody th {
+        background-color: lighten(mc('blue-grey', '50'), 4%);
+      }
+    }
+  }
+
   // ---------------------------------
   // IMAGES
   // ---------------------------------
