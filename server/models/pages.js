@@ -856,8 +856,8 @@ module.exports = class Page extends Model {
       creatorName: page.creatorName,
       description: page.description,
       extra: {
-        css: page.extra ? page.extra.css : '',
-        js: page.extra ? page.extra.js : ''
+        css: _.get(page, 'extra.css', ''),
+        js: _.get(page, 'extra.js', '')
       },
       isPrivate: page.isPrivate === 1 || page.isPrivate === true,
       isPublished: page.isPublished === 1 || page.isPublished === true,
