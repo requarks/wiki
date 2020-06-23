@@ -68,6 +68,17 @@ export default {
       language: this.locale,
       placeholder: 'Type the page content here',
       disableNativeSpellChecker: false,
+      // TODO: Mention autocomplete
+      //
+      // mention: {
+      //   feeds: [
+      //     {
+      //       marker: '@',
+      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
+      //       minimumCharacters: 1
+      //     }
+      //   ]
+      // },
       wordCount: {
         onUpdate: stats => {
           this.stats = {

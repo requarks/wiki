@@ -662,24 +662,46 @@
       border-collapse: collapse;
       box-shadow: 0 0 5px 0 rgba(0, 0, 0, .07);
 
+      @at-root .theme--dark & {
+        background-color: darken(mc('grey', '900'), 3%);
+      }
+
       td, th {
         border: 1px solid mc('blue-grey', '100');
         box-shadow: inset -1px -1px 0 0 #FFF, inset 1px 0 0 #FFF;
         padding: .5rem .75rem;
+
+        @at-root .theme--dark & {
+          border-color: mc('grey', '700');
+          box-shadow: inset -1px -1px 0 0 rgba(0,0,0, .5);
+        }
       }
 
       th {
-        background-color: lighten(mc('blue-grey', '50'), 1%);;
+        background-color: lighten(mc('blue-grey', '50'), 1%);
         font-weight: 700;
-        color: mc('grey', '800');
+        color: mc('blue-grey', '700');
+
+        @at-root .theme--dark & {
+          background-color: mc('grey', '800');
+          color: mc('grey', '400');
+        }
       }
 
       thead th {
         border-bottom: 2px solid mc('blue-grey', '100');
+
+        @at-root .theme--dark & {
+          border-bottom: none;
+        }
       }
 
       tbody th {
         background-color: lighten(mc('blue-grey', '50'), 4%);
+
+        @at-root .theme--dark & {
+          background-color: darken(mc('grey', '800'), 8%);
+        }
       }
     }
   }
@@ -839,6 +861,15 @@
     }
     &.marker-green {
       background-color: mc('green', '300');
+    }
+  }
+
+  .mention {
+    background-color: rgba(153, 0, 48, .1);
+    color: #990030;
+
+    @at-root .theme--dark & {
+      color: mc('pink', '500');
     }
   }
 
