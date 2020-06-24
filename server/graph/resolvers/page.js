@@ -181,7 +181,8 @@ module.exports = {
           path: r.path,
           locale: r.locale
         })
-      }).flatMap(r => r.tags)
+      })
+        .flatMap(r => r.tags)
       return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
     },
     /**
@@ -211,7 +212,8 @@ module.exports = {
           path: r.path,
           locale: r.locale
         })
-      }).flatMap(r => r.tags)
+      })
+        .flatMap(r => r.tags)
         .map(t => t.tag)
       return _.uniq(allTags).slice(0, 5)
     },
