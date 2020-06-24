@@ -246,14 +246,20 @@ module.exports = {
      * FETCH PAGE LINKS
      */
     async links (obj, args, context, info) {
-      let results = []
-
-      results = await WIKI.models.knex('pages')
+      const results = await WIKI.models.knex('pages')
         .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
-        .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
+        .leftJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
         .where({
           'pages.localeCode': args.locale
         })
+        .unionAll(
+          WIKI.models.knex('pageLinks')
+            .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+            .leftJoin('pages', 'pageLinks.pageId', 'pages.id')
+            .where({
+              'pages.localeCode': args.locale
+            })
+        )
 
       return _.reduce(results, (result, val) => {
         // -> Check if user has access to source and linked page
