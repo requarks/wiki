@@ -337,6 +337,10 @@ module.exports = class User extends Model {
         WIKI.logger.warn(`Failed to refresh token for user ${user}: Not found.`)
         throw new WIKI.Error.AuthGenericError()
       }
+      if (!user.isActive) {
+        WIKI.logger.warn(`Failed to refresh token for user ${user}: Inactive.`)
+        throw new WIKI.Error.AuthAccountBanned()
+      }
     } else if (_.isNil(user.groups)) {
       user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions')
     }
