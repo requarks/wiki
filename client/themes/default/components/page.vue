@@ -7,7 +7,7 @@
       dark
       app
       clipped
-      mobile-break-point='600'
+      mobile-breakpoint='600'
       :temporary='$vuetify.breakpoint.smAndDown'
       v-model='navShown'
       :right='$vuetify.rtl'
@@ -30,7 +30,7 @@
         )
         v-icon mdi-menu
 
-    v-content(ref='content')
+    v-main(ref='content')
       template(v-if='path !== `home`')
         v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
           //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
