@@ -133,7 +133,6 @@ module.exports = {
 
       // Revalidate and renew token
       if (mustRevalidate) {
-        console.info('MUST REVALIDATE')
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
