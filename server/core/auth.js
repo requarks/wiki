@@ -3,7 +3,7 @@ const passportJWT = require('passport-jwt')
 const _ = require('lodash')
 const jwt = require('jsonwebtoken')
 const ms = require('ms')
-const moment = require('moment')
+const { DateTime } = require('luxon')
 const Promise = require('bluebird')
 const crypto = Promise.promisifyAll(require('crypto'))
 const pem2jwk = require('pem-jwk').pem2jwk
@@ -15,7 +15,7 @@ const securityHelper = require('../helpers/security')
 module.exports = {
   strategies: {},
   guest: {
-    cacheExpiration: moment.utc().subtract(1, 'd')
+    cacheExpiration: DateTime.utc().minus({ days: 1 })
   },
   groups: {},
   validApiKeys: [],
@@ -55,7 +55,7 @@ module.exports = {
   /**
    * Load authentication strategies
    */
-  async activateStrategies() {
+  async activateStrategies () {
     try {
       // Unload any active strategies
       WIKI.auth.strategies = {}
@@ -109,23 +109,25 @@ module.exports = {
    * @param {Express Response} res
    * @param {Express Next Callback} next
    */
-  authenticate(req, res, next) {
+  authenticate (req, res, next) {
     WIKI.auth.passport.authenticate('jwt', {session: false}, async (err, user, info) => {
       if (err) { return next() }
       let mustRevalidate = false
 
       // Expired but still valid within N days, just renew
-      if (info instanceof Error && info.name === 'TokenExpiredError' && moment().subtract(ms(WIKI.config.auth.tokenRenewal), 'ms').isBefore(info.expiredAt)) {
+      if (info instanceof Error && info.name === 'TokenExpiredError' && DateTime.utc().minus(ms(WIKI.config.auth.tokenRenewal)) < DateTime.fromSeconds(info.expiredAt)) {
         mustRevalidate = true
       }
 
       // Check if user / group is in revokation list
       if (user) {
-        if (WIKI.auth.revokationList.has(`u${_.toString(user.id)}`)) {
+        const uRevalidate = WIKI.auth.revokationList.get(`u${_.toString(user.id)}`)
+        if (uRevalidate && user.iat < uRevalidate) {
           mustRevalidate = true
         }
         for (const gid of user.groups) {
-          if (WIKI.auth.revokationList.has(`g${_.toString(gid)}`)) {
+          const gRevalidate = WIKI.auth.revokationList.get(`g${_.toString(gid)}`)
+          if (gRevalidate && user.iat < gRevalidate) {
             mustRevalidate = true
           }
         }
@@ -133,6 +135,7 @@ module.exports = {
 
       // Revalidate and renew token
       if (mustRevalidate) {
+        console.info('MUST REVALIDATE')
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
@@ -145,7 +148,7 @@ module.exports = {
           if (req.get('content-type') === 'application/json') {
             res.set('new-jwt', newToken.token)
           } else {
-            res.cookie('jwt', newToken.token, { expires: moment().add(365, 'days').toDate() })
+            res.cookie('jwt', newToken.token, { expires: DateTime.utc().plus({ days: 365 }).toJSDate() })
           }
         } catch (errc) {
           WIKI.logger.warn(errc)
@@ -155,9 +158,9 @@ module.exports = {
 
       // JWT is NOT valid, set as guest
       if (!user) {
-        if (WIKI.auth.guest.cacheExpiration.isSameOrBefore(moment.utc())) {
+        if (WIKI.auth.guest.cacheExpiration <= DateTime.utc()) {
           WIKI.auth.guest = await WIKI.models.users.getGuestUser()
-          WIKI.auth.guest.cacheExpiration = moment.utc().add(1, 'm')
+          WIKI.auth.guest.cacheExpiration = DateTime.utc().plus({ minutes: 1 })
         }
         req.user = WIKI.auth.guest
         return next()
@@ -306,14 +309,14 @@ module.exports = {
   async reloadGroups () {
     const groupsArray = await WIKI.models.groups.query()
     this.groups = _.keyBy(groupsArray, 'id')
-    WIKI.auth.guest.cacheExpiration = moment.utc().subtract(1, 'd')
+    WIKI.auth.guest.cacheExpiration = DateTime.utc().minus({ days: 1 })
   },
 
   /**
    * Reload valid API Keys from DB
    */
   async reloadApiKeys () {
-    const keys = await WIKI.models.apiKeys.query().select('id').where('isRevoked', false).andWhere('expiration', '>', moment.utc().toISOString())
+    const keys = await WIKI.models.apiKeys.query().select('id').where('isRevoked', false).andWhere('expiration', '>', DateTime.utc().toISO())
     this.validApiKeys = _.map(keys, 'id')
   },
 
@@ -437,6 +440,6 @@ module.exports = {
    * Add user / group ID to JWT revokation list, forcing all requests to be validated against the latest permissions
    */
   revokeUserTokens ({ id, kind = 'u' }) {
-    WIKI.auth.revokationList.set(`${kind}${_.toString(id)}`, true, Math.ceil(ms(WIKI.config.auth.tokenExpiration) / 1000))
+    WIKI.auth.revokationList.set(`${kind}${_.toString(id)}`, Math.round(DateTime.utc().minus({ seconds: 5 }).toSeconds()), Math.ceil(ms(WIKI.config.auth.tokenExpiration) / 1000))
   }
 }

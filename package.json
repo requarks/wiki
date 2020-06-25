@@ -103,6 +103,7 @@
     "klaw": "3.0.0",
     "knex": "0.21.1",
     "lodash": "4.17.15",
+    "luxon": "1.24.1",
     "markdown-it": "11.0.0",
     "markdown-it-abbr": "1.0.4",
     "markdown-it-attrs": "3.0.3",
