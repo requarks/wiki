@@ -42,6 +42,10 @@ module.exports = {
         throw new gql.GraphQLError('User is already assigned to group.')
       }
       await grp.$relatedQuery('users').relate(usr.id)
+
+      WIKI.auth.revokeUserTokens({ id: usr.id, kind: 'u' })
+      WIKI.events.outbound.emit('addAuthRevoke', { id: usr.id, kind: 'u' })
+
       return {
         responseResult: graphHelper.generateSuccess('User has been assigned to group.')
       }
@@ -62,8 +66,13 @@ module.exports = {
     },
     async delete(obj, args) {
       await WIKI.models.groups.query().deleteById(args.id)
+
+      WIKI.auth.revokeUserTokens({ id: args.id, kind: 'g' })
+      WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'g' })
+
       await WIKI.auth.reloadGroups()
       WIKI.events.outbound.emit('reloadGroups')
+
       return {
         responseResult: graphHelper.generateSuccess('Group has been deleted.')
       }
@@ -78,6 +87,10 @@ module.exports = {
         throw new gql.GraphQLError('Invalid User ID')
       }
       await grp.$relatedQuery('users').unrelate().where('userId', usr.id)
+
+      WIKI.auth.revokeUserTokens({ id: usr.id, kind: 'u' })
+      WIKI.events.outbound.emit('addAuthRevoke', { id: usr.id, kind: 'u' })
+
       return {
         responseResult: graphHelper.generateSuccess('User has been unassigned from group.')
       }
@@ -94,6 +107,9 @@ module.exports = {
         permissions: JSON.stringify(args.permissions),
         pageRules: JSON.stringify(args.pageRules)
       }).where('id', args.id)
+
+      WIKI.auth.revokeUserTokens({ id: args.id, kind: 'g' })
+      WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'g' })
 
       await WIKI.auth.reloadGroups()
       WIKI.events.outbound.emit('reloadGroups')

@@ -19,6 +19,7 @@ module.exports = {
   },
   groups: {},
   validApiKeys: [],
+  revokationList: require('./cache').init(),
 
   /**
    * Initialize the authentication module
@@ -111,10 +112,28 @@ module.exports = {
   authenticate(req, res, next) {
     WIKI.auth.passport.authenticate('jwt', {session: false}, async (err, user, info) => {
       if (err) { return next() }
+      let mustRevalidate = false
 
       // Expired but still valid within N days, just renew
-      if (info instanceof Error && info.name === 'TokenExpiredError' &&
-        moment().subtract(ms(WIKI.config.auth.tokenRenewal), 'ms').isBefore(info.expiredAt)) {
+      if (info instanceof Error && info.name === 'TokenExpiredError' && moment().subtract(ms(WIKI.config.auth.tokenRenewal), 'ms').isBefore(info.expiredAt)) {
+        mustRevalidate = true
+      }
+
+      // Check if user / group is in revokation list
+      if (user) {
+        if (WIKI.auth.revokationList.has(`u${_.toString(user.id)}`)) {
+          mustRevalidate = true
+        }
+        for (const gid of user.groups) {
+          if (WIKI.auth.revokationList.has(`g${_.toString(gid)}`)) {
+            mustRevalidate = true
+          }
+        }
+      }
+
+      // Revalidate and renew token
+      if (mustRevalidate) {
+        console.info('MUST REVALIDATE')
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
@@ -380,6 +399,9 @@ module.exports = {
     WIKI.events.inbound.on('reloadAuthStrategies', () => {
       WIKI.auth.activateStrategies()
     })
+    WIKI.events.inbound.on('addAuthRevoke', (args) => {
+      WIKI.auth.revokeUserTokens(args)
+    })
   },
 
   /**
@@ -410,5 +432,13 @@ module.exports = {
         manage: WIKI.auth.checkAccess(req.user, ['manage:system'], page)
       }
     }
+  },
+
+  /**
+   * Add user / group ID to JWT revokation list, forcing all requests to be validated against the latest permissions
+   */
+  revokeUserTokens ({ id, kind = 'u' }) {
+    console.info(Math.ceil(ms(WIKI.config.auth.tokenRenewal) / 1000))
+    WIKI.auth.revokationList.set(`${kind}${_.toString(id)}`, true, Math.ceil(ms(WIKI.config.auth.tokenRenewal) / 1000))
   }
 }

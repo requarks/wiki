@@ -73,6 +73,10 @@ module.exports = {
           throw new WIKI.Error.UserDeleteProtected()
         }
         await WIKI.models.users.deleteUser(args.id, args.replaceId)
+
+        WIKI.auth.revokeUserTokens({ id: args.id, kind: 'u' })
+        WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
+
         return {
           responseResult: graphHelper.generateSuccess('User deleted successfully')
         }
@@ -123,6 +127,9 @@ module.exports = {
           throw new Error('Cannot deactivate system accounts.')
         }
         await WIKI.models.users.query().patch({ isActive: false }).findById(args.id)
+
+        WIKI.auth.revokeUserTokens({ id: args.id, kind: 'u' })
+        WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
 
         return {
           responseResult: graphHelper.generateSuccess('User deactivated successfully')
