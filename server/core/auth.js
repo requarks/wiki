@@ -438,7 +438,6 @@ module.exports = {
    * Add user / group ID to JWT revokation list, forcing all requests to be validated against the latest permissions
    */
   revokeUserTokens ({ id, kind = 'u' }) {
-    console.info(Math.ceil(ms(WIKI.config.auth.tokenRenewal) / 1000))
-    WIKI.auth.revokationList.set(`${kind}${_.toString(id)}`, true, Math.ceil(ms(WIKI.config.auth.tokenRenewal) / 1000))
+    WIKI.auth.revokationList.set(`${kind}${_.toString(id)}`, true, Math.ceil(ms(WIKI.config.auth.tokenExpiration) / 1000))
   }
 }
