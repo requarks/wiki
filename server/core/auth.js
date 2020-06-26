@@ -19,7 +19,7 @@ module.exports = {
   },
   groups: {},
   validApiKeys: [],
-  revokationList: require('./cache').init(),
+  revocationList: require('./cache').init(),
 
   /**
    * Initialize the authentication module
@@ -119,16 +119,16 @@ module.exports = {
         mustRevalidate = true
       }
 
-      // Check if user / group is in revokation list
+      // Check if user / group is in revocation list
       if (user && !mustRevalidate) {
-        const uRevalidate = WIKI.auth.revokationList.get(`u${_.toString(user.id)}`)
+        const uRevalidate = WIKI.auth.revocationList.get(`u${_.toString(user.id)}`)
         if (uRevalidate && user.iat < uRevalidate) {
           mustRevalidate = true
         } else if (DateTime.fromSeconds(user.iat) <= WIKI.startedAt) { // Prevent new / restarted instance from allowing revoked tokens
           mustRevalidate = true
         } else {
           for (const gid of user.groups) {
-            const gRevalidate = WIKI.auth.revokationList.get(`g${_.toString(gid)}`)
+            const gRevalidate = WIKI.auth.revocationList.get(`g${_.toString(gid)}`)
             if (gRevalidate && user.iat < gRevalidate) {
               mustRevalidate = true
               break
@@ -440,9 +440,9 @@ module.exports = {
   },
 
   /**
-   * Add user / group ID to JWT revokation list, forcing all requests to be validated against the latest permissions
+   * Add user / group ID to JWT revocation list, forcing all requests to be validated against the latest permissions
    */
   revokeUserTokens ({ id, kind = 'u' }) {
-    WIKI.auth.revokationList.set(`${kind}${_.toString(id)}`, Math.round(DateTime.utc().minus({ seconds: 5 }).toSeconds()), Math.ceil(ms(WIKI.config.auth.tokenExpiration) / 1000))
+    WIKI.auth.revocationList.set(`${kind}${_.toString(id)}`, Math.round(DateTime.utc().minus({ seconds: 5 }).toSeconds()), Math.ceil(ms(WIKI.config.auth.tokenExpiration) / 1000))
   }
 }
