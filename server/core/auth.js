@@ -115,27 +115,30 @@ module.exports = {
       let mustRevalidate = false
 
       // Expired but still valid within N days, just renew
-      if (info instanceof Error && info.name === 'TokenExpiredError' && DateTime.utc().minus(ms(WIKI.config.auth.tokenRenewal)) < DateTime.fromSeconds(info.expiredAt)) {
+      if (info instanceof Error && info.name === 'TokenExpiredError' && DateTime.utc().minus(ms(WIKI.config.auth.tokenRenewal)) < DateTime.fromISO(info.expiredAt)) {
         mustRevalidate = true
       }
 
       // Check if user / group is in revokation list
-      if (user) {
+      if (user && !mustRevalidate) {
         const uRevalidate = WIKI.auth.revokationList.get(`u${_.toString(user.id)}`)
         if (uRevalidate && user.iat < uRevalidate) {
           mustRevalidate = true
-        }
-        for (const gid of user.groups) {
-          const gRevalidate = WIKI.auth.revokationList.get(`g${_.toString(gid)}`)
-          if (gRevalidate && user.iat < gRevalidate) {
-            mustRevalidate = true
+        } else if (DateTime.fromSeconds(user.iat) <= WIKI.startedAt) { // Prevent new / restarted instance from allowing revoked tokens
+          mustRevalidate = true
+        } else {
+          for (const gid of user.groups) {
+            const gRevalidate = WIKI.auth.revokationList.get(`g${_.toString(gid)}`)
+            if (gRevalidate && user.iat < gRevalidate) {
+              mustRevalidate = true
+              break
+            }
           }
         }
       }
 
       // Revalidate and renew token
       if (mustRevalidate) {
-        console.info('MUST REVALIDATE')
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
