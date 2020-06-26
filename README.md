@@ -247,4 +247,4 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 <h2 align="center">Translations</h2>
 
-We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, [click here](https://lokalise.com/public/2994254859f751ea605a00.03473540/) to gain access to our translation tool, absolutely no coding required! Feel free to contact us on our [Slack channel](https://wiki.requarks.io/slack) if you have any questions.
+We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, [click here](https://docs.requarks.io/dev/translations) to learn how to gain access to our translation tool, absolutely no coding required! Feel free to contact us on our [Slack channel](https://wiki.requarks.io/slack) if you have any questions.
