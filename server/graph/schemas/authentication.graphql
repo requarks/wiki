@@ -23,7 +23,7 @@ type AuthenticationQuery {
     isEnabled: Boolean
   ): [AuthenticationStrategy]
 
-  authConfig: AuthenticationConfig
+  authConfig: AuthenticationConfig @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
