@@ -22,6 +22,8 @@ type AuthenticationQuery {
   strategies(
     isEnabled: Boolean
   ): [AuthenticationStrategy]
+
+  authConfig: AuthenticationConfig
 }
 
 # -----------------------------------------------
@@ -139,4 +141,10 @@ type AuthenticationApiKey {
 type AuthenticationCreateApiKeyResponse {
   responseResult: ResponseStatus
   key: String
+}
+
+type AuthenticationConfig {
+  audience: String
+  tokenExpiration: String
+  tokenRenewal: String
 }

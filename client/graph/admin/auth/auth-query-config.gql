@@ -1,0 +1,9 @@
+query {
+  authentication {
+    authConfig {
+      audience
+      tokenExpiration
+      tokenRenewal
+    }
+  }
+}

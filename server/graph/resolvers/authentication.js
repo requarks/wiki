@@ -59,6 +59,12 @@ module.exports = {
         }
       })
       return strategies
+    },
+    /**
+     * Fetch auth config
+     */
+    authConfig () {
+      return WIKI.config.auth
     }
   },
   AuthenticationMutation: {
