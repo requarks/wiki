@@ -40,7 +40,7 @@
             .subtitle-1 {{$t('admin:auth.globalAdvSettings')}}
           v-card-text
             v-text-field.md2(
-              v-model='jwtAudience'
+              v-model='authConfig.audience'
               outlined
               prepend-icon='mdi-account-group-outline'
               :label='$t(`admin:auth.jwtAudience`)'
@@ -48,7 +48,7 @@
               persistent-hint
             )
             v-text-field.mt-3.md2(
-              v-model='jwtExpiration'
+              v-model='authConfig.tokenExpiration'
               outlined
               prepend-icon='mdi-clock-outline'
               :label='$t(`admin:auth.tokenExpiration`)'
@@ -56,7 +56,7 @@
               persistent-hint
             )
             v-text-field.mt-3.md2(
-              v-model='jwtRenewablePeriod'
+              v-model='authConfig.tokenRenewal'
               outlined
               prepend-icon='mdi-update'
               :label='$t(`admin:auth.tokenRenewalPeriod`)'
@@ -241,6 +241,7 @@ import groupsQuery from 'gql/admin/auth/auth-query-groups.gql'
 import strategiesQuery from 'gql/admin/auth/auth-query-strategies.gql'
 import strategiesSaveMutation from 'gql/admin/auth/auth-mutation-save-strategies.gql'
 import hostQuery from 'gql/admin/auth/auth-query-host.gql'
+import configQuery from 'gql/admin/auth/auth-query-config.gql'
 
 export default {
   filters: {
@@ -253,9 +254,11 @@ export default {
       selectedStrategy: '',
       host: '',
       strategy: {},
-      jwtAudience: 'urn:wiki.js',
-      jwtExpiration: '30m',
-      jwtRenewablePeriod: '14d'
+      authConfig: {
+        audience: 'urn:wiki.js',
+        tokenExpiration: '30m',
+        tokenRenewal: '14d'
+      }
     }
   },
   computed: {
@@ -274,6 +277,7 @@ export default {
   methods: {
     async refresh() {
       await this.$apollo.queries.strategies.refetch()
+
       this.$store.commit('showNotification', {
         message: this.$t('admin:auth.refreshSuccess'),
         style: 'success',
@@ -286,11 +290,7 @@ export default {
         await this.$apollo.mutate({
           mutation: strategiesSaveMutation,
           variables: {
-            config: {
-              audience: this.jwtAudience,
-              tokenExpiration: this.jwtExpiration,
-              tokenRenewal: this.jwtRenewablePeriod
-            },
+            config: this.authConfig,
             strategies: this.strategies.map(str => _.pick(str, [
               'isEnabled',
               'key',
@@ -341,6 +341,14 @@ export default {
       update: (data) => _.cloneDeep(data.site.config.host),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-host-refresh')
+      }
+    },
+    authConfig: {
+      query: configQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => _.cloneDeep(data.authentication.authConfig),
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-authConfig-refresh')
       }
     }
   }
