@@ -27,11 +27,13 @@
 - [Demo](https://docs.requarks.io/demo)
 - [Change Log](https://docs.requarks.io/releases)
 - [Feature Requests](https://wiki.js.org/feedback)
-- [Chat with us on Slack](#slack)
-- [Translations](#translations) *(We need your help!)*
+- [Chat with us on Slack]((https://wiki.requarks.io/slack)
+- [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
 - [E2E Testing Results](https://dashboard.cypress.io/projects/r7qxah/runs)
 - [Special Thanks](#special-thanks)
 - [Contribute](#contributors)
+
+[Follow our Twitter feed](https://twitter.com/requarks) to learn about upcoming updates and new releases!
 
 <h2 align="center">Donate</h2>
 
@@ -46,25 +48,6 @@ Wiki.js is an open source project that has been made possible due to the generou
   [![Donate via Ethereum](https://img.shields.io/badge/donate-ethereum-999.svg?style=popout&logo=ethereum&logoColor=CCC)](https://etherscan.io/address/0xe1d55c19ae86f6bcbfb17e7f06ace96bdbb22cb5)
   [![Donate via Bitcoin](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?style=popout&logo=bitcoin&logoColor=CCC)](https://checkout.opennode.com/p/2553c612-f863-4407-82b3-1a7685268747)
   [![Buy a T-Shirt](https://img.shields.io/badge/buy-t--shirts-teal.svg?style=popout&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHg9IjBweCIgeT0iMHB4Igp3aWR0aD0iMjQiIGhlaWdodD0iMjQiCnZpZXdCb3g9IjAgMCAxOTIgMTkyIgpzdHlsZT0iIGZpbGw6IzAwMDAwMDsiPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0ibm9uemVybyIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS1kYXNoYXJyYXk9IiIgc3Ryb2tlLWRhc2hvZmZzZXQ9IjAiIGZvbnQtZmFtaWx5PSJub25lIiBmb250LXdlaWdodD0ibm9uZSIgZm9udC1zaXplPSJub25lIiB0ZXh0LWFuY2hvcj0ibm9uZSIgc3R5bGU9Im1peC1ibGVuZC1tb2RlOiBub3JtYWwiPjxwYXRoIGQ9Ik0wLDE5MnYtMTkyaDE5MnYxOTJ6IiBmaWxsPSJub25lIj48L3BhdGg+PGcgZmlsbD0iIzFhYmM5YyI+PGcgaWQ9InN1cmZhY2UxIj48cGF0aCBkPSJNOTYsMGMtMTUuMjE4NzUsMCAtMjQuNjg3NSwzLjY1NjI1IC0yNS41LDRsLTIyLjUsNy4yNWMtMTAuNDA2MjUsMy4xODc1IC0xOS4wOTM3NSw5LjQzNzUgLTI1LjUsMTguMjVsLTIyLjUsNDIuNWwyNy4yNSwxNi43NWwxMi43NSwtMjR2MTE5LjI1YzAsNC40MDYyNSAyNS4wNjI1LDggNTYsOGMzMC45Mzc1LDAgNTYsLTMuNTkzNzUgNTYsLTh2LTExOS4yNWwxMi43NSwyNGwyNy4yNSwtMTYuNzVsLTIyLjUsLTQyLjVjLTYuNDA2MjUsLTguODEyNSAtMTUuMTU2MjUsLTE1LjA2MjUgLTI0Ljc1LC0xOC4yNWwtMjIuMjUsLTcuMjVjLTAuMTg3NSwwIC0xLjAzMTI1LDEuMzEyNSAtMiwyLjc1bDEuMjUsLTIuNWMwLDAgLTkuODQzNzUsLTQuMjUgLTI1Ljc1LC00LjI1ek05Niw4YzExLjQwNjI1LDAgMTguNDM3NSwyLjI1IDIxLDMuMjVjLTQuNDY4NzUsNS43NSAtMTEuNDA2MjUsMTIuNzUgLTIxLDEyLjc1Yy05LjQwNjI1LDAgLTE2LjQwNjI1LC03LjA2MjUgLTIwLjc1LC0xMi43NWMyLjg3NSwtMS4wNjI1IDkuODc1LC0zLjI1IDIwLjc1LC0zLjI1eiI+PC9wYXRoPjwvZz48L2c+PC9nPjwvc3ZnPg==)](https://wikijs.threadless.com)
-
-</div>
-
-<h2 align="center">Slack</h2>
-
-<div align="center">
-
-Want to discuss features, ideas or issues? Join our [Slack channel](https://wiki.requarks.io/slack). We are very active and friendly!  
-
-[![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
-
-</div>
-
-<h2 align="center">Twitter</h2>
-
-<div align="center">
-
-Follow our Twitter feed to learn about upcoming updates and new releases!  
-[![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=popout&logo=twitter)](https://twitter.com/requarks)  
 
 </div>
 
@@ -244,7 +227,3 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 ![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
-
-<h2 align="center">Translations</h2>
-
-We are looking for translators to make Wiki.js UI available in as many languages as possible. If you would like to contribute to this project, [click here](https://docs.requarks.io/dev/translations) to learn how to gain access to our translation tool, absolutely no coding required! Feel free to contact us on our [Slack channel](https://wiki.requarks.io/slack) if you have any questions.
