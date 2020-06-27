@@ -13,7 +13,7 @@ module.exports = {
       new DiscordStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        authorizationURL: 'https://discordapp.com/api/oauth2/authorize?prompt=none',
+        authorizationURL: 'https://discord.com/api/oauth2/authorize?prompt=none',
         callbackURL: conf.callbackURL,
         scope: 'identify email guilds'
       }, async (accessToken, refreshToken, profile, cb) => {
