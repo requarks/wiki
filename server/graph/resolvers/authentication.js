@@ -186,16 +186,18 @@ module.exports = {
      */
     async updateStrategies (obj, args, context) {
       try {
-        WIKI.config.auth = {
-          audience: _.get(args, 'config.audience', WIKI.config.auth.audience),
-          tokenExpiration: _.get(args, 'config.tokenExpiration', WIKI.config.auth.tokenExpiration),
-          tokenRenewal: _.get(args, 'config.tokenRenewal', WIKI.config.auth.tokenRenewal)
-        }
-        await WIKI.configSvc.saveToDb(['auth'])
+        // WIKI.config.auth = {
+        //   audience: _.get(args, 'config.audience', WIKI.config.auth.audience),
+        //   tokenExpiration: _.get(args, 'config.tokenExpiration', WIKI.config.auth.tokenExpiration),
+        //   tokenRenewal: _.get(args, 'config.tokenRenewal', WIKI.config.auth.tokenRenewal)
+        // }
+        // await WIKI.configSvc.saveToDb(['auth'])
 
-        for (let str of args.strategies) {
-          await WIKI.models.authentication.query().patch({
-            isEnabled: str.isEnabled,
+        const previousStrategies = await WIKI.models.authentication.getStrategies()
+        for (const str of args.strategies) {
+          const newStr = {
+            displayName: str.displayName,
+            order: str.order,
             config: _.reduce(str.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result
@@ -203,8 +205,32 @@ module.exports = {
             selfRegistration: str.selfRegistration,
             domainWhitelist: { v: str.domainWhitelist },
             autoEnrollGroups: { v: str.autoEnrollGroups }
-          }).where('key', str.key)
+          }
+
+          if (_.some(previousStrategies, ['key', str.key])) {
+            await WIKI.models.authentication.query().patch({
+              key: str.key,
+              strategyKey: str.strategyKey,
+              ...newStr
+            }).where('key', str.key)
+          } else {
+            await WIKI.models.authentication.query().insert({
+              key: str.key,
+              strategyKey: str.strategyKey,
+              ...newStr
+            })
+          }
         }
+
+        for (const str of _.differenceBy(previousStrategies, args.strategies, 'key')) {
+          const hasUsers = await WIKI.models.users.query().count('* as total').where({ providerKey: str.key }).first()
+          if (_.toSafeInteger(hasUsers.total) > 0) {
+            throw new Error(`Cannot delete ${str.displayName} as 1 or more users are still using it.`)
+          } else {
+            await WIKI.models.authentication.query().delete().where('key', str.key)
+          }
+        }
+
         await WIKI.auth.activateStrategies()
         WIKI.events.outbound.emit('reloadAuthStrategies')
         return {

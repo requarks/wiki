@@ -2,57 +2,74 @@
   v-app
     .login
       .login-sd
-        .login-sd-logo
-          v-avatar(tile, size='34')
-            v-img(:src='logoUrl')
-        .login-sd-content
-          .text-h5.mt-5.text-center Login to {{ siteTitle }}
-          v-divider.my-5
-          v-btn.mb-3(
-            color='white'
-            block
-            large
-            v-for='stg of strategies'
-            :key='stg.key'
-            @click='selectStrategy(stg)'
+        .d-flex
+          .login-logo
+            v-avatar(tile, size='34')
+              v-img(:src='logoUrl')
+          .login-title
+            .text-h6 {{ siteTitle }}
+        .login-subtitle.mt-5
+          .text-subtitle-1 Select Authentication Provider
+        .login-list
+          v-list.elevation-1.radius-7(nav)
+            v-list-item-group(v-model='selectedStrategyKey')
+              v-list-item(
+                v-for='(stg, idx) of strategies'
+                :key='stg.key'
+                :value='stg.key'
+                :color='stg.strategy.color'
+                )
+                v-avatar.mr-3(tile, size='24', v-html='stg.strategy.icon')
+                span.text-none {{stg.displayName}}
+        template(v-if='selectedStrategy.strategy.useForm')
+          .login-subtitle
+            .text-subtitle-1 Enter your credentials
+          .login-form
+            v-text-field(
+              solo
+              flat
+              prepend-inner-icon='mdi-clipboard-account'
+              background-color='white'
+              hide-details
+              ref='iptEmail'
+              v-model='username'
+              :placeholder='$t("auth:fields.emailUser")'
+              )
+            v-text-field.mt-2(
+              solo
+              flat
+              prepend-inner-icon='mdi-form-textbox-password'
+              background-color='white'
+              hide-details
+              ref='iptPassword'
+              v-model='password'
+              :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
+              @click:append='() => (hidePassword = !hidePassword)'
+              :type='hidePassword ? "password" : "text"'
+              :placeholder='$t("auth:fields.password")'
+              @keyup.enter='login'
             )
-            v-avatar.mr-3(tile, size='24', v-html='stg.strategy.icon')
-            span.text-none {{stg.displayName}}
-          v-divider.my-5
-          .text-caption: strong Enter your Active Directory login:
-          v-text-field.mt-3(
-            solo
-            flat
-            prepend-inner-icon='mdi-clipboard-account'
-            background-color='white'
-            hide-details
-            ref='iptEmail'
-            v-model='username'
-            :placeholder='$t("auth:fields.emailUser")'
-            )
-          v-text-field.mt-2(
-            solo
-            flat
-            prepend-inner-icon='mdi-form-textbox-password'
-            background-color='white'
-            hide-details
-            ref='iptPassword'
-            v-model='password'
-            :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
-            @click:append='() => (hidePassword = !hidePassword)'
-            :type='hidePassword ? "password" : "text"'
-            :placeholder='$t("auth:fields.password")'
-            @keyup.enter='login'
-          )
-          v-btn.mt-2(
-            width='100%'
-            v-if='screen === "login"'
-            large
-            color='primary'
-            dark
-            @click='login'
-            :loading='isLoading'
-            ) {{ $t('auth:actions.login') }}
+            v-btn.mt-2(
+              width='100%'
+              v-if='screen === "login"'
+              large
+              color='primary'
+              dark
+              @click='login'
+              :loading='isLoading'
+              ) {{ $t('auth:actions.login') }}
+            .text-center.mt-5
+              v-btn.text-none(
+                text
+                block
+                color='primary'
+                @click.stop.prevent='forgotPassword'
+                href='#forgot'
+                ): .caption {{ $t('auth:forgotPasswordLink') }}
+            .text-center.mt-2
+              v-divider.mb-5
+              i18next.caption(path='auth:switchToRegister.text', tag='div')
+                a.caption(href='/register', place='link') {{ $t('auth:switchToRegister.link') }}
       .login-main
       //- v-container(grid-list-lg, fluid)
       //-   v-row(no-gutters)
@@ -235,7 +252,8 @@ export default {
     return {
       error: false,
       strategies: [],
-      selectedStrategy: { key: 'local' },
+      selectedStrategyKey: 'local',
+      selectedStrategy: { key: 'local', strategy: { useForm: true } },
       screen: 'login',
       username: '',
       password: '',
@@ -261,7 +279,10 @@ export default {
   },
   watch: {
     strategies(newValue, oldValue) {
-      this.selectedStrategy = _.find(newValue, ['key', 'local'])
+      this.selectedStrategy = _.head(newValue)
+    },
+    selectedStrategyKey (newValue, oldValue) {
+      this.selectedStrategy = _.find(this.strategies, ['key', newValue])
     }
   },
   mounted () {
@@ -274,12 +295,12 @@ export default {
     /**
      * SELECT STRATEGY
      */
-    selectStrategy (strategy) {
-      this.selectedStrategy = strategy
+    selectStrategy (stg) {
+      this.selectedStrategy = stg
       this.screen = 'login'
-      if (!strategy.useForm) {
+      if (!stg.strategy.useForm) {
         this.isLoading = true
-        window.location.assign('/login/' + strategy.key)
+        window.location.assign('/login/' + stg.key)
       } else {
         this.$nextTick(() => {
           this.$refs.iptEmail.focus()
@@ -396,7 +417,11 @@ export default {
       } else {
         this.isLoading = true
         this.$apollo.mutate({
-          mutation: gql``,
+          mutation: gql`
+            {
+
+            }
+          `,
           variables: {
             continuationToken: this.continuationToken,
             securityCode: this.securityCode
@@ -439,7 +464,11 @@ export default {
       this.loaderTitle = this.$t('auth:changePwd.loading')
       this.isLoading = true
       const resp = await this.$apollo.mutate({
-        mutation: gql``,
+        mutation: gql`
+          {
+
+          }
+        `,
         variables: {
           continuationToken: this.continuationToken,
           newPassword: this.newPassword
@@ -502,7 +531,7 @@ export default {
           }
         }
       `,
-      update: (data) => data.authentication.activeStrategies,
+      update: (data) => _.sortBy(data.authentication.activeStrategies, ['order']),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'login-strategies-refresh')
       }
@@ -526,26 +555,55 @@ export default {
       background-color: rgba(255,255,255,.8);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      border-left: 1px solid rgba(255,255,255,.85);
       border-right: 1px solid rgba(255,255,255,.85);
       width: 450px;
       flex: 1 0 450px;
+      margin-left: 5vw;
 
       @at-root .no-backdropfilter & {
         background-color: rgba(255,255,255,.95);
       }
+    }
 
-      &-logo {
-        padding: 12px 0 0 12px;
-        width: 58px;
-        height: 58px;
-        background-color: #222;
-        border-bottom-right-radius: 7px;
-      }
+    &-logo {
+      padding: 12px 0 0 12px;
+      width: 58px;
+      height: 58px;
+      background-color: #222;
+      margin-left: 12px;
+      border-bottom-left-radius: 7px;
+      border-bottom-right-radius: 7px;
+    }
 
-      &-content {
-        padding: 12px;
-        text-shadow: .5px .5px #FFF;
-      }
+    &-title {
+      height: 58px;
+      padding-left: 12px;
+      display: flex;
+      align-items: center;
+      text-shadow: .5px .5px #FFF;
+    }
+
+    &-subtitle {
+      padding: 24px 12px 12px 12px;
+      color: #111;
+      font-weight: 500;
+      text-shadow: 1px 1px rgba(255,255,255,.5);
+      // background-color: rgba(0,0,0,.4);
+      background-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.15));
+      text-align: center;
+      // border-top: 1px solid rgba(255,255,255,.6);
+      border-bottom: 1px solid rgba(0,0,0,.3);
+    }
+
+    &-list {
+      border-top: 1px solid rgba(255,255,255,.85);
+      padding: 12px;
+    }
+
+    &-form {
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.85);
     }
 
     &-main {

@@ -4,6 +4,7 @@
     top
     multi-line
     v-model='notificationState'
+    :timeout='6000'
     )
     .text-left
       v-icon.mr-3(dark) mdi-{{ notification.icon }}
@@ -26,16 +27,15 @@ export default {
 
 <style lang='scss'>
 .nav-notify {
-  // top: 60px;
+  top: -64px;
+  padding-top: 0;
   z-index: 999;
 
   .v-snack__wrapper {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
-  }
-
-  .v-snack__content {
     position: relative;
+    margin-top: 0;
 
     &::after {
       content: '';

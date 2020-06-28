@@ -92,7 +92,7 @@ module.exports = class Authentication extends Model {
       }
 
       for (const strategy of dbStrategies) {
-        const strategyDef = _.find(WIKI.data.authentication, ['key', strategy.key])
+        const strategyDef = _.find(WIKI.data.authentication, ['key', strategy.strategyKey])
         strategy.config = _.transform(strategyDef.props, (result, value, key) => {
           if (!_.has(result, key)) {
             _.set(result, key, value.default)

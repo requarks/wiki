@@ -233,7 +233,6 @@ import gql from 'graphql-tag'
 import { v4 as uuid } from 'uuid'
 
 import groupsQuery from 'gql/admin/auth/auth-query-groups.gql'
-import strategiesSaveMutation from 'gql/admin/auth/auth-mutation-save-strategies.gql'
 import hostQuery from 'gql/admin/auth/auth-query-host.gql'
 
 import draggable from 'vuedraggable'
@@ -313,29 +312,43 @@ export default {
     async save() {
       this.$store.commit(`loadingStart`, 'admin-auth-savestrategies')
       try {
-        await this.$apollo.mutate({
-          mutation: strategiesSaveMutation,
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation($strategies: [AuthenticationStrategyInput]!) {
+              authentication {
+                updateStrategies(strategies: $strategies) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
           variables: {
-            config: {
-              audience: this.jwtAudience,
-              tokenExpiration: this.jwtExpiration,
-              tokenRenewal: this.jwtRenewablePeriod
-            },
-            strategies: this.strategies.map(str => _.pick(str, [
-              'isEnabled',
-              'key',
-              'config',
-              'selfRegistration',
-              'domainWhitelist',
-              'autoEnrollGroups'
-            ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
+            strategies: this.activeStrategies.map(str => ({
+              key: str.key,
+              strategyKey: str.strategy.key,
+              displayName: str.displayName,
+              order: str.order,
+              config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })})),
+              selfRegistration: str.selfRegistration,
+              domainWhitelist: str.domainWhitelist,
+              autoEnrollGroups: str.autoEnrollGroups
+            }))
           }
         })
-        this.$store.commit('showNotification', {
-          message: this.$t('admin:auth.saveSuccess'),
-          style: 'success',
-          icon: 'check'
-        })
+        if (_.get(resp, 'data.authentication.updateStrategies.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            message: this.$t('admin:auth.saveSuccess'),
+            style: 'success',
+            icon: 'check'
+          })
+        } else {
+          throw new Error(_.get(resp, 'data.authentication.updateStrategies.responseResult.message', this.$t('common:error.unexpected')))
+        }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
@@ -383,6 +396,7 @@ export default {
             activeStrategies {
               key
               strategy {
+                key
                 title
                 description
                 useForm
