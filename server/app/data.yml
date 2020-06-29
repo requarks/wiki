@@ -53,6 +53,12 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+    auth:
+      autoLogin: false
+      loginBgUrl: ''
+      audience: 'urn:wiki.js'
+      tokenExpiration: '30m'
+      tokenRenewal: '14d'
     features:
       featurePageRatings: true
       featurePageComments: true

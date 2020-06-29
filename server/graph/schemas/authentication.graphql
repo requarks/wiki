@@ -126,12 +126,6 @@ input AuthenticationStrategyInput {
   autoEnrollGroups: [Int]!
 }
 
-input AuthenticationConfigInput {
-  audience: String!
-  tokenExpiration: String!
-  tokenRenewal: String!
-}
-
 type AuthenticationApiKey {
   id: Int!
   name: String!

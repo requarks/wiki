@@ -8,20 +8,27 @@
               v-img(:src='logoUrl')
           .login-title
             .text-h6 {{ siteTitle }}
-        .login-subtitle.mt-5
-          .text-subtitle-1 Select Authentication Provider
-        .login-list
-          v-list.elevation-1.radius-7(nav)
-            v-list-item-group(v-model='selectedStrategyKey')
-              v-list-item(
-                v-for='(stg, idx) of strategies'
-                :key='stg.key'
-                :value='stg.key'
-                :color='stg.strategy.color'
-                )
-                v-avatar.mr-3(tile, size='24', v-html='stg.strategy.icon')
-                span.text-none {{stg.displayName}}
-        template(v-if='selectedStrategy.strategy.useForm')
+        //-------------------------------------------------
+        //- PROVIDERS LIST
+        //-------------------------------------------------
+        template(v-if='screen === `login` && strategies.length > 1')
+          .login-subtitle.mt-5
+            .text-subtitle-1 Select Authentication Provider
+          .login-list
+            v-list.elevation-1.radius-7(nav)
+              v-list-item-group(v-model='selectedStrategyKey')
+                v-list-item(
+                  v-for='(stg, idx) of strategies'
+                  :key='stg.key'
+                  :value='stg.key'
+                  :color='stg.strategy.color'
+                  )
+                  v-avatar.mr-3(tile, size='24', v-html='stg.strategy.icon')
+                  span.text-none {{stg.displayName}}
+        //-------------------------------------------------
+        //- LOGIN FORM
+        //-------------------------------------------------
+        template(v-if='screen === `login` && selectedStrategy.strategy.useForm')
           .login-subtitle
             .text-subtitle-1 Enter your credentials
           .login-form
@@ -49,7 +56,7 @@
               :placeholder='$t("auth:fields.password")'
               @keyup.enter='login'
             )
-            v-btn.mt-2(
+            v-btn.mt-2.text-none(
               width='100%'
               v-if='screen === "login"'
               large
@@ -58,19 +65,22 @@
               @click='login'
               :loading='isLoading'
               ) {{ $t('auth:actions.login') }}
-            .text-center.mt-5
+            .text-center.mt-5(v-if='screen === "login"')
               v-btn.text-none(
                 text
-                block
-                color='primary'
+                rounded
+                color='grey darken-3'
                 @click.stop.prevent='forgotPassword'
                 href='#forgot'
                 ): .caption {{ $t('auth:forgotPasswordLink') }}
-            .text-center.mt-2
-              v-divider.mb-5
-              i18next.caption(path='auth:switchToRegister.text', tag='div')
-                a.caption(href='/register', place='link') {{ $t('auth:switchToRegister.link') }}
-      .login-main
+              v-btn.text-none(
+                v-if='screen === "login" && selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
+                color='indigo darken-2'
+                text
+                rounded
+                href='/register'
+                ): .caption {{ $t('auth:switchToRegister.link') }}
+      //- .login-main
       //- v-container(grid-list-lg, fluid)
       //-   v-row(no-gutters)
       //-     v-col(cols='12', xl='4')
@@ -211,27 +221,6 @@
             //-       v-spacer
             //-       a.caption(@click.stop.prevent='screen = `login`', href='#cancelforgot') {{ $t('auth:forgotPasswordCancel') }}
             //-       v-spacer
-            //-     template(v-if='screen === "login" && isSocialShown')
-            //-       v-divider
-            //-       v-card-text.grey.lighten-4.text-center
-            //-         .pb-2.body-2.text-xs-center.grey--text.text--darken-2 {{ $t('auth:orLoginUsingStrategy') }}
-            //-         v-btn.mx-1.social-login-btn(
-            //-           v-for='strategy in strategies', :key='strategy.key'
-            //-           large
-            //-           @click='selectStrategy(strategy)'
-            //-           dark
-            //-           :color='strategy.color'
-            //-           :depressed='strategy.key === selectedStrategy.key'
-            //-           )
-            //-           v-avatar.mr-3(tile, :class='strategy.color', size='24', v-html='strategy.icon')
-            //-           span(style='text-transform: none;') {{ strategy.title }}
-            //-     template(v-if='screen === "login" && selectedStrategy.key === `local` && selectedStrategy.selfRegistration')
-            //-       v-divider
-            //-       v-card-actions.py-3(:class='isSocialShown ? "" : "grey lighten-4"')
-            //-         v-spacer
-            //-         i18next.caption(path='auth:switchToRegister.text', tag='div')
-            //-           a.caption(href='/register', place='link') {{ $t('auth:switchToRegister.link') }}
-            //-         v-spacer
 
     loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
     notify
@@ -245,6 +234,7 @@
 import _ from 'lodash'
 import Cookies from 'js-cookie'
 import gql from 'graphql-tag'
+import { sync } from 'vuex-pathify'
 
 export default {
   i18nOptions: { namespaces: 'auth' },
@@ -269,6 +259,7 @@ export default {
     }
   },
   computed: {
+    activeModal: sync('editor/activeModal'),
     siteTitle () {
       return siteConfig.title
     },
@@ -283,6 +274,15 @@ export default {
     },
     selectedStrategyKey (newValue, oldValue) {
       this.selectedStrategy = _.find(this.strategies, ['key', newValue])
+      this.screen = 'login'
+      if (!this.selectedStrategy.strategy.useForm) {
+        this.isLoading = true
+        window.location.assign('/login/' + newValue)
+      } else {
+        this.$nextTick(() => {
+          this.$refs.iptEmail.focus()
+        })
+      }
     }
   },
   mounted () {
@@ -292,21 +292,6 @@ export default {
     })
   },
   methods: {
-    /**
-     * SELECT STRATEGY
-     */
-    selectStrategy (stg) {
-      this.selectedStrategy = stg
-      this.screen = 'login'
-      if (!stg.strategy.useForm) {
-        this.isLoading = true
-        window.location.assign('/login/' + stg.key)
-      } else {
-        this.$nextTick(() => {
-          this.$refs.iptEmail.focus()
-        })
-      }
-    },
     /**
      * LOGIN
      */
@@ -547,9 +532,6 @@ export default {
     background-position: center center;
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: stretch;
-    align-items: stretch;
 
     &-sd {
       background-color: rgba(255,255,255,.8);
@@ -558,11 +540,16 @@ export default {
       border-left: 1px solid rgba(255,255,255,.85);
       border-right: 1px solid rgba(255,255,255,.85);
       width: 450px;
-      flex: 1 0 450px;
+      height: 100%;
       margin-left: 5vw;
 
       @at-root .no-backdropfilter & {
         background-color: rgba(255,255,255,.95);
+      }
+
+      @include until($tablet) {
+        margin-left: 0;
+        width: 100%;
       }
     }
 
@@ -589,10 +576,8 @@ export default {
       color: #111;
       font-weight: 500;
       text-shadow: 1px 1px rgba(255,255,255,.5);
-      // background-color: rgba(0,0,0,.4);
       background-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.15));
       text-align: center;
-      // border-top: 1px solid rgba(255,255,255,.6);
       border-bottom: 1px solid rgba(0,0,0,.3);
     }
 
@@ -609,14 +594,6 @@ export default {
     &-main {
       flex: 1 0 100vw;
       height: 100vh;
-    }
-
-    &-overlay {
-      width: 450px;
-      height: 100%;
-      background-color: rgba(255,255,255,.5);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
     }
   }
 </style>
