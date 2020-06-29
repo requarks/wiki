@@ -559,13 +559,20 @@ module.exports = class Page extends Model {
       })
     }
 
-    // -> Reconnect Links
+    // -> Reconnect Links : Changing old links to the new path
     await WIKI.models.pages.reconnectLinks({
       sourceLocale: page.localeCode,
       sourcePath: page.path,
       locale: opts.destinationLocale,
       path: opts.destinationPath,
       mode: 'move'
+    })
+   
+    // -> Reconnect Links : Validate invalid links to the new path
+    await WIKI.models.pages.reconnectLinks({
+      locale: opts.destinationLocale,
+      path: opts.destinationPath,
+      mode: 'create'
     })
   }
 
@@ -655,7 +662,7 @@ module.exports = class Page extends Model {
         break
       case 'move':
         const prevPageHref = `/${opts.sourceLocale}/${opts.sourcePath}`
-        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-valid-page">`
         replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'delete':
