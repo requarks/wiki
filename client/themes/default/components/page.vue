@@ -1,8 +1,8 @@
 <template lang="pug">
   v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
-    nav-header
+    nav-header(v-if='!printView')
     v-navigation-drawer(
-      v-if='navMode !== `NONE`'
+      v-if='navMode !== `NONE` && !printView'
       :class='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`'
       dark
       app
@@ -171,7 +171,8 @@
                   )
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on', @click='print'): v-icon(color='grey') mdi-printer
+                    v-btn(icon, tile, v-on='on', @click='print')
+                      v-icon(:color='printView ? `primary` : `grey`') mdi-printer
                   span {{$t('common:page.printFormat')}}
                 v-spacer
 
@@ -264,7 +265,7 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container')
               slot(name='contents')
-            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
+            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
               .comments-header
                 v-icon.mr-2(dark) mdi-comment-text-outline
                 span {{$t('common:comments.title')}}
@@ -297,7 +298,7 @@ import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
-import { get } from 'vuex-pathify'
+import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
@@ -490,7 +491,8 @@ export default {
     hasAnyPagePermissions () {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
-    }
+    },
+    printView: sync('site/printView')
   },
   created() {
     this.$store.set('page/authorId', this.authorId)
@@ -566,7 +568,14 @@ export default {
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
     print () {
-      window.print()
+      if (this.printView) {
+        this.printView = false
+      } else {
+        this.printView = true
+        this.$nextTick(() => {
+          window.print()
+        })
+      }
     },
     pageEdit () {
       this.$root.$emit('pageEdit')
