@@ -171,18 +171,18 @@ module.exports = {
      * FETCH TAGS
      */
     async tags (obj, args, context, info) {
-      const pages = await WIKI.models.pages.query().column([
-        'path',
-        { locale: 'localeCode' },
-      ])
+      const pages = await WIKI.models.pages.query()
+        .column([
+          'path',
+          { locale: 'localeCode' }
+        ])
         .withGraphJoined('tags')
       const allTags = _.filter(pages, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
           locale: r.locale
         })
-      })
-        .flatMap(r => r.tags)
+      }).flatMap(r => r.tags)
       return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
     },
     /**
@@ -190,10 +190,11 @@ module.exports = {
      */
     async searchTags (obj, args, context, info) {
       const query = _.trim(args.query)
-      const pages = await WIKI.models.pages.query().column([
-        'path',
-        { locale: 'localeCode' },
-      ])
+      const pages = await WIKI.models.pages.query()
+        .column([
+          'path',
+          { locale: 'localeCode' }
+        ])
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
           builder.select('tag')
@@ -212,9 +213,7 @@ module.exports = {
           path: r.path,
           locale: r.locale
         })
-      })
-        .flatMap(r => r.tags)
-        .map(t => t.tag)
+      }).flatMap(r => r.tags).map(t => t.tag)
       return _.uniq(allTags).slice(0, 5)
     },
     /**
@@ -271,7 +270,7 @@ module.exports = {
      * FETCH PAGE LINKS
      */
     async links (obj, args, context, info) {
-      let results;
+      let results
 
       if (WIKI.config.db.type === 'mysql' || WIKI.config.db.type === 'mariadb' || WIKI.config.db.type === 'sqlite') {
         results = await WIKI.models.knex('pages')
