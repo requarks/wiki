@@ -184,6 +184,7 @@ module.exports = {
 
           const contentPath = pageHelper.getPagePath(item.relPath)
           await WIKI.models.pages.deletePage({
+            user: user,
             path: contentPath.path,
             locale: contentPath.locale,
             skipStorage: true
