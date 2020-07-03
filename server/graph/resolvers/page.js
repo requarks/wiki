@@ -171,26 +171,51 @@ module.exports = {
      * FETCH TAGS
      */
     async tags (obj, args, context, info) {
-      return WIKI.models.tags.query().orderBy('tag', 'asc')
+      const pages = await WIKI.models.pages.query().column([
+        'path',
+        { locale: 'localeCode' },
+      ])
+        .withGraphJoined('tags')
+      const allTags = _.filter(pages, r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: r.path,
+          locale: r.locale
+        })
+      })
+        .flatMap(r => r.tags)
+      return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
     },
     /**
      * SEARCH TAGS
      */
     async searchTags (obj, args, context, info) {
       const query = _.trim(args.query)
-      const results = await WIKI.models.tags.query()
-        .column('tag')
-        .where(builder => {
-          builder.andWhere(builderSub => {
+      const pages = await WIKI.models.pages.query().column([
+        'path',
+        { locale: 'localeCode' },
+      ])
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag')
+        })
+        .modify(queryBuilder => {
+          queryBuilder.andWhere(builderSub => {
             if (WIKI.config.db.type === 'postgres') {
-              builderSub.where('tag', 'ILIKE', `%${query}%`)
+              builderSub.where('tags.tag', 'ILIKE', `%${query}%`)
             } else {
-              builderSub.where('tag', 'LIKE', `%${query}%`)
+              builderSub.where('tags.tag', 'LIKE', `%${query}%`)
             }
           })
         })
-        .limit(5)
-      return results.map(r => r.tag)
+      const allTags = _.filter(pages, r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: r.path,
+          locale: r.locale
+        })
+      })
+        .flatMap(r => r.tags)
+        .map(t => t.tag)
+      return _.uniq(allTags).slice(0, 5)
     },
     /**
      * FETCH PAGE TREE
