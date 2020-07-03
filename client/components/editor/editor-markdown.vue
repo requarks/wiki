@@ -228,6 +228,7 @@ import mdAbbr from 'markdown-it-abbr'
 import mdSup from 'markdown-it-sup'
 import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
+import mdMultiTable from 'markdown-it-multimd-table'
 import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
@@ -287,6 +288,7 @@ const md = new MarkdownIt({
   .use(mdAbbr)
   .use(mdSup)
   .use(mdSub)
+  .use(mdMultiTable, {multiline: true, rowspan: true, headerless: true})
   .use(mdMark)
   .use(mdFootnote)
   .use(mdImsize)
