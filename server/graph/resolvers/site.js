@@ -21,6 +21,11 @@ module.exports = {
         ...WIKI.config.seo,
         ...WIKI.config.features,
         ...WIKI.config.security,
+        authAutoLogin: WIKI.config.auth.autoLogin,
+        authLoginBgUrl: WIKI.config.auth.loginBgUrl,
+        authJwtAudience: WIKI.config.auth.audience,
+        authJwtExpiration: WIKI.config.auth.tokenExpiration,
+        authJwtRenewablePeriod: WIKI.config.auth.tokenRenewal,
         uploadMaxFileSize: WIKI.config.uploads.maxFileSize,
         uploadMaxFiles: WIKI.config.uploads.maxFiles
       }
@@ -60,6 +65,14 @@ module.exports = {
           analyticsId: _.get(args, 'analyticsId', WIKI.config.seo.analyticsId)
         }
 
+        WIKI.config.auth = {
+          autoLogin: _.get(args, 'authAutoLogin', WIKI.config.auth.autoLogin),
+          loginBgUrl: _.get(args, 'authLoginBgUrl', WIKI.config.auth.loginBgUrl),
+          audience: _.get(args, 'authJwtAudience', WIKI.config.auth.audience),
+          tokenExpiration: _.get(args, 'authJwtExpiration', WIKI.config.auth.tokenExpiration),
+          tokenRenewal: _.get(args, 'authJwtRenewablePeriod', WIKI.config.auth.tokenRenewal)
+        }
+
         WIKI.config.features = {
           featurePageRatings: _.get(args, 'featurePageRatings', WIKI.config.features.featurePageRatings),
           featurePageComments: _.get(args, 'featurePageComments', WIKI.config.features.featurePageComments),
@@ -83,7 +96,7 @@ module.exports = {
           maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles)
         }
 
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'features', 'security', 'uploads'])
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'auth', 'features', 'security', 'uploads'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')

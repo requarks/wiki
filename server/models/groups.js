@@ -14,6 +14,8 @@ module.exports = class Group extends Model {
       properties: {
         id: {type: 'integer'},
         name: {type: 'string'},
+        isSystem: {type: 'boolean'},
+        redirectOnLogin: {type: 'string'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }

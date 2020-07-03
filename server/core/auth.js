@@ -78,9 +78,8 @@ module.exports = {
       const enabledStrategies = await WIKI.models.authentication.getStrategies()
       for (let idx in enabledStrategies) {
         const stg = enabledStrategies[idx]
-        if (!stg.isEnabled) { continue }
         try {
-          const strategy = require(`../modules/authentication/${stg.key}/authentication.js`)
+          const strategy = require(`../modules/authentication/${stg.strategyKey}/authentication.js`)
 
           stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
           strategy.init(passport, stg.config)
@@ -90,9 +89,9 @@ module.exports = {
             ...strategy,
             ...stg
           }
-          WIKI.logger.info(`Authentication Strategy ${stg.key}: [ OK ]`)
+          WIKI.logger.info(`Authentication Strategy ${stg.displayName}: [ OK ]`)
         } catch (err) {
-          WIKI.logger.error(`Authentication Strategy ${stg.key}: [ FAILED ]`)
+          WIKI.logger.error(`Authentication Strategy ${stg.displayName} (${stg.key}): [ FAILED ]`)
           WIKI.logger.error(err)
         }
       }

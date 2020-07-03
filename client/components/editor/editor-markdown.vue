@@ -245,6 +245,7 @@ import mermaid from 'mermaid'
 
 // Helpers
 import katexHelper from './common/katex'
+import tabsetHelper from './markdown/tabset'
 
 // ========================================
 // INIT
@@ -433,6 +434,7 @@ export default {
       this.$store.set('editor/content', newContent)
       this.previewHTML = DOMPurify.sanitize(md.render(newContent))
       this.$nextTick(() => {
+        tabsetHelper.format()
         this.renderMermaidDiagrams()
         Prism.highlightAllUnder(this.$refs.editorPreview)
         Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
@@ -855,6 +857,44 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
       p.line {
         overflow-wrap: break-word;
+      }
+
+      .tabset {
+        background-color: mc('teal', '700');
+        color: mc('teal', '100') !important;
+        padding: 5px 12px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 5px 0 0 0;
+        font-style: italic;
+
+        &::after {
+          display: none;
+        }
+
+        &-header {
+          background-color: mc('teal', '500');
+          color: #FFF !important;
+          padding: 5px 12px;
+          font-size: 14px;
+          font-weight: 500;
+          margin-top: 0 !important;
+
+          &::after {
+            display: none;
+          }
+        }
+
+        &-content {
+          border-left: 5px solid mc('teal', '500');
+          background-color: mc('teal', '50');
+          padding: 0 15px 15px;
+          overflow: hidden;
+
+          @at-root .theme--dark & {
+            background-color: rgba(mc('teal', '500'), .1);
+          }
+        }
       }
     }
   }

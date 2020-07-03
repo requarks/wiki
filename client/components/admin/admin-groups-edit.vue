@@ -12,7 +12,7 @@
             v-icon mdi-arrow-left
           v-dialog(v-model='deleteGroupDialog', max-width='500', v-if='!group.isSystem')
             template(v-slot:activator='{ on }')
-              v-btn.ml-2(color='red', icon, outlined, v-on='on')
+              v-btn.ml-3(color='red', icon, outlined, v-on='on')
                 v-icon(color='red') mdi-trash-can-outline
             v-card
               .dialog-header.is-red Delete Group?
@@ -21,11 +21,14 @@
                 v-spacer
                 v-btn(text, @click='deleteGroupDialog = false') Cancel
                 v-btn(color='red', dark, @click='deleteGroup') Delete
-          v-btn.ml-2(color='success', large, depressed, @click='updateGroup')
+          v-btn.ml-3(color='success', large, depressed, @click='updateGroup')
             v-icon(left) mdi-check
             span Update Group
         v-card.mt-3
           v-tabs.grad-tabs(v-model='tab', :color='$vuetify.theme.dark ? `blue` : `primary`', fixed-tabs, show-arrows, icons-and-text)
+            v-tab(key='settings')
+              span Settings
+              v-icon mdi-cog-box
             v-tab(key='permissions')
               span Permissions
               v-icon mdi-lock-pattern
@@ -36,6 +39,44 @@
               span Users
               v-icon mdi-account-group
 
+            v-tab-item(key='settings', :transition='false', :reverse-transition='false')
+              v-card(flat)
+                template(v-if='group.id <= 2')
+                  v-card-text
+                    v-alert.radius-7.mb-0(
+                      color='orange darken-2'
+                      :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
+                      outlined
+                      :value='true'
+                      icon='mdi-lock-outline'
+                      ) This is a system group and its settings cannot be modified.
+                  v-divider
+                v-card-text
+                  v-text-field(
+                    outlined
+                    v-model='group.name'
+                    label='Group Name'
+                    hide-details
+                    prepend-icon='mdi-account-group'
+                    style='max-width: 600px;'
+                    :disabled='group.id <= 2'
+                  )
+                template(v-if='group.id > 2')
+                  v-divider
+                  v-card-text
+                    v-text-field(
+                      outlined
+                      v-model='group.redirectOnLogin'
+                      label='Redirect on Login'
+                      persistent-hint
+                      hint='The path / URL where the user will be redirected upon successful login.'
+                      prepend-icon='mdi-arrow-top-left-thick'
+                      append-icon='mdi-folder-search'
+                      @click:append='selectPage'
+                      style='max-width: 850px;'
+                      :counter='255'
+                    )
+
             v-tab-item(key='permissions', :transition='false', :reverse-transition='false')
               group-permissions(v-model='group', @refresh='refresh')
 
@@ -44,21 +85,23 @@
 
             v-tab-item(key='users', :transition='false', :reverse-transition='false')
               group-users(v-model='group', @refresh='refresh')
+
           v-card-chin
             v-spacer
             .caption.grey--text.pr-2 Group ID #[strong {{group.id}}]
+
+    page-selector(mode='select', v-model='selectPageModal', :open-handler='selectPageHandle', path='home', :locale='currentLang')
 </template>
 
 <script>
 import _ from 'lodash'
+import gql from 'graphql-tag'
 
 import GroupPermissions from './admin-groups-edit-permissions.vue'
 import GroupRules from './admin-groups-edit-rules.vue'
 import GroupUsers from './admin-groups-edit-users.vue'
 
-import groupQuery from 'gql/admin/groups/groups-query-single.gql'
-import deleteGroupMutation from 'gql/admin/groups/groups-mutation-delete.gql'
-import updateGroupMutation from 'gql/admin/groups/groups-mutation-update.gql'
+/* global siteConfig */
 
 export default {
   components: {
@@ -74,20 +117,55 @@ export default {
         isSystem: false,
         permissions: [],
         pageRules: [],
-        users: []
+        users: [],
+        redirectOnLogin: '/'
       },
       deleteGroupDialog: false,
-      tab: null
+      tab: null,
+      selectPageModal: false,
+      currentLang: siteConfig.lang
     }
   },
   methods: {
+    selectPage () {
+      this.selectPageModal = true
+    },
+    selectPageHandle ({ path, locale }) {
+      this.group.redirectOnLogin = `/${locale}/${path}`
+    },
     async updateGroup() {
       try {
         await this.$apollo.mutate({
-          mutation: updateGroupMutation,
+          mutation: gql`
+            mutation (
+              $id: Int!
+              $name: String!
+              $redirectOnLogin: String!
+              $permissions: [String]!
+              $pageRules: [PageRuleInput]!
+            ) {
+              groups {
+                update(
+                  id: $id
+                  name: $name
+                  redirectOnLogin: $redirectOnLogin
+                  permissions: $permissions
+                  pageRules: $pageRules
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
           variables: {
             id: this.group.id,
             name: this.group.name,
+            redirectOnLogin: this.group.redirectOnLogin,
             permissions: this.group.permissions,
             pageRules: this.group.pageRules
           },
@@ -108,7 +186,20 @@ export default {
       this.deleteGroupDialog = false
       try {
         await this.$apollo.mutate({
-          mutation: deleteGroupMutation,
+          mutation: gql`
+            mutation ($id: Int!) {
+              groups {
+                delete(id: $id) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
           variables: {
             id: this.group.id
           },
@@ -132,7 +223,34 @@ export default {
   },
   apollo: {
     group: {
-      query: groupQuery,
+      query: gql`
+        query ($id: Int!) {
+          groups {
+            single(id: $id) {
+              id
+              name
+              redirectOnLogin
+              isSystem
+              permissions
+              pageRules {
+                id
+                path
+                roles
+                match
+                deny
+                locales
+              }
+              users {
+                id
+                name
+                email
+              }
+              createdAt
+              updatedAt
+            }
+          }
+        }
+      `,
       variables() {
         return {
           id: _.toSafeInteger(this.$route.params.id)

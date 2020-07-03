@@ -102,8 +102,13 @@ module.exports = {
         throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')
       }
 
+      if (_.isEmpty(args.redirectOnLogin)) {
+        args.redirectOnLogin = '/'
+      }
+
       await WIKI.models.groups.query().patch({
         name: args.name,
+        redirectOnLogin: args.redirectOnLogin,
         permissions: JSON.stringify(args.permissions),
         pageRules: JSON.stringify(args.pageRules)
       }).where('id', args.id)
