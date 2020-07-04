@@ -23,7 +23,7 @@ services:
     logging:
       driver: "none"
     ports:
-      - "3001:8080"
+      - 8080:8080
 
   # solr:
   #   container_name: wiki-solr
@@ -47,12 +47,57 @@ services:
     depends_on:
       - db
     ports:
-      - "3000:3000"
+      - 3000:3000
     volumes:
       - ../..:/wiki
       - /wiki/node_modules
       - /wiki/.git
 
+### Gamma  -----------------------
+
+  gamma-db:
+    image: postgres:10
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: password
+
+  gamma-frontend:
+    image: cthit/gamma-frontend:development
+    ports:
+      - 3001:3000
+
+  gamma-backend:
+    image: cthit/gamma-backend
+    environment:
+      # Default admin user name = admin
+      # Default admin password  = password
+
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_HOST: gamma-db
+      DB_PORT: 5432
+      DB_NAME: postgres
+
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ""
+
+      SERVER_PORT: 8081
+      FRONTEND_REDIRECT_URI: http://localhost:3001/login
+      SUCCESSFUL_LOGIN: http://localhost:3001
+      CORS_ALLOWED_ORIGIN: http://localhost:3001
+      COOKIE_DOMAIN: localhost
+      PRODUCTION: "false"
+      IS_MOCKING_CLIENT: "true"
+      DEFAULT_REDIRECT_URI: http://localhost:3000/login/gamma/callback
+
+    ports:
+      - 8081:8081
+
+  redis:
+    image: redis:5.0
+
+### Gamma  -----------------------
 
 volumes:
   db-data:
