@@ -404,7 +404,11 @@ export default {
         this.$apollo.mutate({
           mutation: gql`
             {
-
+              authentication {
+                activeStrategies {
+                  key
+                }
+              }
             }
           `,
           variables: {
@@ -451,7 +455,11 @@ export default {
       const resp = await this.$apollo.mutate({
         mutation: gql`
           {
-
+            authentication {
+              activeStrategies {
+                key
+              }
+            }
           }
         `,
         variables: {
