@@ -4,8 +4,7 @@
 // Gamma Account
 // ------------------------------------
 
-const GammaStrategy = require('./strategy')
-const _ = require('lodash')
+const GammaStrategy = require('./strategy').Strategy
 
 module.exports = {
   init (passport, conf) {

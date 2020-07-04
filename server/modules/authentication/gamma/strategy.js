@@ -1,6 +1,6 @@
 // Load modules.
-const axios = require('axios')
-const querystring = require('querystring')
+const request = require('request')
+const qs = require('querystring')
 var Base64 = require('js-base64').Base64
 
 /**
@@ -50,20 +50,21 @@ Strategy.prototype.authenticate = function (req, options) {
   }
 
   if (req.query && req.query.code) {
-    this._exchange(req.query.code)
-      .then(res => {
-        console.log('Successfuly go an access_token')
-        console.log(res.data.access_token)
-        this._loadProfile(res.data.access_token)
-      })
-      .catch(err => this.error(err))
+    this._exchange(req.query.code, (err, res, body) => {
+      if (err) {
+        this.error(err)
+        return
+      }
+
+      this._loadProfile(JSON.parse(body).access_token)
+    })
     return
   }
 
   this._redirectToLogin()
 }
 
-Strategy.prototype._loadProfile = function (access_token) {
+Strategy.prototype._loadProfile = function (accessToken) {
   var done = (err, profile) => {
     if (err) {
       this.fail(err)
@@ -77,10 +78,10 @@ Strategy.prototype._loadProfile = function (access_token) {
       this.error(err)
       return
     }
-    this._verify(access_token, user, done)
+    this._verify(accessToken, user, done)
   }
 
-  this.userProfile(access_token, verify)
+  this.userProfile(accessToken, verify)
 }
 
 Strategy.prototype._redirectToLogin = function () {
@@ -91,10 +92,9 @@ Strategy.prototype._redirectToLogin = function () {
   this.redirect(uri.href)
 }
 
-Strategy.prototype._exchange = function (code) {
-  return axios.post(
-    this._options.tokenURL,
-    querystring.stringify({
+Strategy.prototype._exchange = function (code, callback) {
+  return request.post(
+    this._options.tokenURL + '?' + qs.stringify({
       grant_type: 'authorization_code',
       redirect_uri: this._callbackURL,
       code: code
@@ -105,25 +105,24 @@ Strategy.prototype._exchange = function (code) {
                     'Basic ' +
                     Base64.encode(this._clientID + ':' + this._clientSecret)
       }
-    }
+    }, callback
   )
 }
 
-const addProvider = (user) => {
-  user.provider = 'gamma'
-  return user
-}
-
 Strategy.prototype.userProfile = function (accessToken, done) {
-  axios
+  request
     .get(this._profileURL, {
       headers: {
         Authorization: 'Bearer ' + accessToken
       }
+    }, (err, res, body) => {
+      if (err) {
+        done(err, null)
+        return
+      }
+      done(null, JSON.parse(body))
     })
-    .then(res => done(null, addProvider(res.data)))
-    .catch(err => done(err, null))
 }
 
 // Expose constructor
-module.exports = Strategy
+module.exports = {Strategy}

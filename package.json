@@ -51,7 +51,6 @@
     "apollo-server-express": "2.15.0",
     "auto-load": "3.0.4",
     "aws-sdk": "2.704.0",
-    "axios": "^0.19.2",
     "azure-search-client": "3.1.5",
     "bcryptjs-then": "1.0.1",
     "bluebird": "3.7.2",
