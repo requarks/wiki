@@ -1,0 +1,43 @@
+key: gamma
+title: Gamma
+description: Gamma is the authentication service for the IT student union at Chalmers University of Technology
+author: chalmers.it
+logo: https://gamma.chalmers.it/api/img/itlogo.svg
+color: indigo
+website: https://gamma.chalmers.it
+isAvailable: true
+useForm: false
+scopes:
+  - read
+  - write
+props:
+  authorizationUrl:
+    type: String
+    title: Authorization Url
+    hint: ""
+    order: 1
+  tokenUrl:
+    type: String
+    title: Token Url
+    hint: ""
+    order: 2
+  clientId:
+    type: String
+    title: App ID
+    hint: Application ID
+    order: 3
+  clientSecret:
+    type: String
+    title: App Secret
+    hint: Application Secret
+    order: 4
+  profileURL:
+    type: String
+    title: Profile URL
+    hint: Calling /me
+    order: 5
+  authority:
+    type: String
+    title: Authority
+    hint: Required authority for this application
+    order: 6
