@@ -6,5 +6,6 @@
   "pluginsFile": "dev/cypress/plugins/index.js",
   "screenshotsFolder": "dev/cypress/screenshots",
   "supportFile": "dev/cypress/support/index.js",
-  "videosFolder": "dev/cypress/videos"
+  "videosFolder": "dev/cypress/videos",
+  "numTestsKeptInMemory": 1
 }
