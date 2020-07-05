@@ -163,11 +163,20 @@
                   v-switch(
                     inset
                     :label='$t(`admin:security.bypassLogin`)'
-                    color='red darken-2'
+                    color='primary'
                     v-model='config.authAutoLogin'
                     prepend-icon='mdi-fast-forward'
                     persistent-hint
                     :hint='$t(`admin:security.bypassLoginHint`)'
+                    )
+                  v-switch(
+                    inset
+                    :label='$t(`admin:security.hideLocalLogin`)'
+                    color='primary'
+                    v-model='config.authHideLocal'
+                    prepend-icon='mdi-eye-off-outline'
+                    persistent-hint
+                    :hint='$t(`admin:security.hideLocalLoginHint`)'
                     )
                 v-divider.mt-3
                 .overline.grey--text.pa-4 {{$t('admin:security.jwt')}}
@@ -231,6 +240,7 @@ export default {
         securityCSP: false,
         securityCSPDirectives: '',
         authAutoLogin: false,
+        authHideLocal: false,
         authLoginBgUrl: '',
         authJwtAudience: 'urn:wiki.js',
         authJwtExpiration: '30m',
@@ -256,6 +266,7 @@ export default {
           mutation: gql`
             mutation (
               $authAutoLogin: Boolean
+              $authHideLocal: Boolean
               $authLoginBgUrl: String
               $authJwtAudience: String
               $authJwtExpiration: String
@@ -275,6 +286,7 @@ export default {
               site {
                 updateConfig(
                   authAutoLogin: $authAutoLogin,
+                  authHideLocal: $authHideLocal,
                   authLoginBgUrl: $authLoginBgUrl,
                   authJwtAudience: $authJwtAudience,
                   authJwtExpiration: $authJwtExpiration,
@@ -303,6 +315,7 @@ export default {
           `,
           variables: {
             authAutoLogin: _.get(this.config, 'authAutoLogin', false),
+            authHideLocal: _.get(this.config, 'authHideLocal', false),
             authLoginBgUrl: _.get(this.config, 'authLoginBgUrl', ''),
             authJwtAudience: _.get(this.config, 'authJwtAudience', ''),
             authJwtExpiration: _.get(this.config, 'authJwtExpiration', ''),
@@ -352,6 +365,7 @@ export default {
           site {
             config {
               authAutoLogin
+              authHideLocal
               authLoginBgUrl
               authJwtAudience
               authJwtExpiration

@@ -1,6 +1,6 @@
 <template lang="pug">
   v-app
-    .login
+    .login(:style='`background-image: url(` + bgUrl + `);`')
       .login-sd
         .d-flex
           .login-logo
@@ -238,6 +238,16 @@ import { sync } from 'vuex-pathify'
 
 export default {
   i18nOptions: { namespaces: 'auth' },
+  props: {
+    bgUrl: {
+      type: String,
+      default: ''
+    },
+    hideLocal: {
+      type: Boolean,
+      default: false
+    }
+  },
   data () {
     return {
       error: false,
@@ -535,7 +545,8 @@ export default {
 
 <style lang="scss">
   .login {
-    background-image: url('/_assets/img/splash/1.jpg');
+    // background-image: url('/_assets/img/splash/1.jpg');
+    background-color: mc('grey', '900');
     background-size: cover;
     background-position: center center;
     width: 100%;

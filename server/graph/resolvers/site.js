@@ -22,6 +22,7 @@ module.exports = {
         ...WIKI.config.features,
         ...WIKI.config.security,
         authAutoLogin: WIKI.config.auth.autoLogin,
+        authHideLocal: WIKI.config.auth.hideLocal,
         authLoginBgUrl: WIKI.config.auth.loginBgUrl,
         authJwtAudience: WIKI.config.auth.audience,
         authJwtExpiration: WIKI.config.auth.tokenExpiration,
@@ -67,6 +68,7 @@ module.exports = {
 
         WIKI.config.auth = {
           autoLogin: _.get(args, 'authAutoLogin', WIKI.config.auth.autoLogin),
+          hideLocal: _.get(args, 'authHideLocal', WIKI.config.auth.hideLocal),
           loginBgUrl: _.get(args, 'authLoginBgUrl', WIKI.config.auth.loginBgUrl),
           audience: _.get(args, 'authJwtAudience', WIKI.config.auth.audience),
           tokenExpiration: _.get(args, 'authJwtExpiration', WIKI.config.auth.tokenExpiration),

@@ -33,7 +33,17 @@ router.get('/login', async (req, res, next) => {
       socialStrategies
     })
   } else {
-    res.render('login')
+    // -> Bypass Login
+    if (WIKI.config.auth.autoLogin && !req.query.all) {
+      const stg = await WIKI.models.authentication.query().orderBy('order').first()
+      const stgInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey])
+      if (!stgInfo.useForm) {
+        return res.redirect(`/login/${stg.key}`)
+      }
+    }
+    // -> Show Login
+    const bgUrl = !_.isEmpty(WIKI.config.auth.loginBgUrl) ? WIKI.config.auth.loginBgUrl : '/_assets/img/splash/1.jpg'
+    res.render('login', { bgUrl, hideLocal: WIKI.config.auth.hideLocal })
   }
 })
 

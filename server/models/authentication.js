@@ -36,11 +36,11 @@ module.exports = class Authentication extends Model {
 
   static async getStrategies() {
     const strategies = await WIKI.models.authentication.query().orderBy('order')
-    return _.sortBy(strategies.map(str => ({
+    return strategies.map(str => ({
       ...str,
       domainWhitelist: _.get(str.domainWhitelist, 'v', []),
       autoEnrollGroups: _.get(str.autoEnrollGroups, 'v', [])
-    })), ['key'])
+    }))
   }
 
   static async getStrategiesForLegacyClient() {
