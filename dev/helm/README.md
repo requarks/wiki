@@ -87,8 +87,8 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `image.tag`                          | Wiki.js image tag                            | `latest`                                                      |
 | `imagePullPolicy`                    | Image pull policy                           | `IfNotPresent`                                             |
 | `replicacount`                   | Amount of wiki.js service pods to run                   | `1`                                                        |
-| `resources.limits`               | wiki.js service resource limits                         | `{cpu: 500m, memory: 500Mi}`                               |
-| `resources.requests`             | wiki.js service resource requests                       | `{cpu: 300m, memory: 300Mi}`                               |
+| `resources.limits`               | wiki.js service resource limits                         | `nil`                               |
+| `resources.requests`             | wiki.js service resource requests                       | `nil`                               |
 | `nodeSelector`                   | Node labels for wiki.js pod assignment          | `{}`                                                       |
 | `affinity`                       | Affinity settings for wiki.js pod assignment    | `{}`                                                       |
 | `schedulerName`                  | Name of an alternate scheduler for wiki.js pod  | `nil`                                                      |
@@ -106,7 +106,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `postgresql.persistence.enabled`                | Enable postgres persistence using PVC                | `true`                                                     |
 | `postgresql.persistence.existingClaim`          | Provide an existing `PersistentVolumeClaim` for postgres | `nil`                                                      |
 | `postgresql.persistence.storageClass`           | Postgres PVC Storage Class (example: `nfs`)                           | `nil`                 |
-| `postgresql.persistence.size`                   | Postgers PVC Storage Request                         | `10Gi`                                                     |
+| `postgresql.persistence.size`                   | Postgers PVC Storage Request                         | `8Gi`                                                     |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
