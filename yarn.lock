@@ -6520,10 +6520,10 @@ config-chain@^1.1.12:
     ini "^1.3.4"
     proto-list "~1.2.1"
 
-connect-session-knex@1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/connect-session-knex/-/connect-session-knex-1.7.2.tgz#7c3b0d5291a507c6902e9e5c6aefa454e31d96cb"
-  integrity sha512-U2/AhYqmrTV9T9DC7wGACU+dSCeqz2TtRHEl2peHCc3HwVvqV8QtlRsFDGw3hSZ8Zf/6uHVD3OrqbXxxE46aqw==
+connect-session-knex@1.7.3:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/connect-session-knex/-/connect-session-knex-1.7.3.tgz#ae012f9948ac127d6d4a6cfc5d590fed2d749474"
+  integrity sha512-PBiVi9vT6c3gmom/MhRJR0/k4X7YQe1+AfETW6HLwTwKCzdubk1Sile8Mpqjwp0+yepJoarJO8HMsC3t6WkQ1Q==
   dependencies:
     bluebird "^3.7.2"
     knex "^0.21.1"
@@ -9630,10 +9630,10 @@ graphql-upload@^8.0.2:
     http-errors "^1.7.2"
     object-path "^0.11.4"
 
-graphql@15.2.0:
-  version "15.2.0"
-  resolved "https://registry.yarnpkg.com/graphql/-/graphql-15.2.0.tgz#d9c655a523a3196d4b23657ec6ec5963b3bd4970"
-  integrity sha512-tsceRyHfgzZo+ee0YK3o8f0CR0cXAXxRlxoORWFo/CoM1bVy3UXGWeyzBcf+Y6oqPvO27BDmOEVATcunOO/MrQ==
+graphql@15.3.0:
+  version "15.3.0"
+  resolved "https://registry.yarnpkg.com/graphql/-/graphql-15.3.0.tgz#3ad2b0caab0d110e3be4a5a9b2aa281e362b5278"
+  integrity sha512-GTCJtzJmkFLWRfFJuoo9RWWa/FfamUHgiFosxi/X1Ani4AVWbeyBenZTNX6dM+7WSbbFfTo/25eh0LLkwHMw2w==
 
 "graphql@>=0.9.4 <0.11", graphql@^0.10.0, graphql@^0.10.3:
   version "0.10.5"
@@ -11983,12 +11983,12 @@ markdown-it-mathjax@2.0.0:
   resolved "https://registry.yarnpkg.com/markdown-it-mathjax/-/markdown-it-mathjax-2.0.0.tgz#ae2b4f4c5c719a03f9e475c664f7b2685231d9e9"
   integrity sha1-ritPTFxxmgP55HXGZPeyaFIx2ek=
 
-markdown-it-multimd-table@4.0.2:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/markdown-it-multimd-table/-/markdown-it-multimd-table-4.0.2.tgz#3dfbdb35356fa5e3de85e6868985dddcd1051e17"
-  integrity sha512-SlcssTj7FoYstVQ7MsM8A46/lhbN1K6/q0e9v56o/5kaWmTheXZXQX3nuZgw7WQocn+3nyQGcoO7ovcqeFxaAw==
+markdown-it-multimd-table@4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/markdown-it-multimd-table/-/markdown-it-multimd-table-4.0.3.tgz#abd12fa7383677f2ee50545776e9ffcd168a1154"
+  integrity sha512-uVLriNj6doq1dGyJppQdwbaGcK6uSzbrk7osxRHjOmZBeShgMtPS6/d+pnIKkohOjaRyP9e5kwTAlAIe/lEaIQ==
   dependencies:
-    markdown-it "^8.4.2"
+    markdown-it "^11.0.0"
 
 markdown-it-sub@1.0.0:
   version "1.0.0"
@@ -12005,7 +12005,7 @@ markdown-it-task-lists@2.1.1:
   resolved "https://registry.yarnpkg.com/markdown-it-task-lists/-/markdown-it-task-lists-2.1.1.tgz#f68f4d2ac2bad5a2c373ba93081a1a6848417088"
   integrity sha512-TxFAc76Jnhb2OUu+n3yz9RMu4CwGfaT788br6HhEDlvWfdeJcLUsxk1Hgw2yJio0OXsxv7pyIPmvECY7bMbluA==
 
-markdown-it@11.0.0:
+markdown-it@11.0.0, markdown-it@^11.0.0:
   version "11.0.0"
   resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-11.0.0.tgz#dbfc30363e43d756ebc52c38586b91b90046b876"
   integrity sha512-+CvOnmbSubmQFSA9dKz1BRiaSMV7rhexl3sngKqFyXSagoA3fBdJQ8oZWtRy2knXdpDXaBw44euz37DeJQ9asg==
@@ -12023,17 +12023,6 @@ markdown-it@^10.0.0:
   dependencies:
     argparse "^1.0.7"
     entities "~2.0.0"
-    linkify-it "^2.0.0"
-    mdurl "^1.0.1"
-    uc.micro "^1.0.5"
-
-markdown-it@^8.4.2:
-  version "8.4.2"
-  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.4.2.tgz#386f98998dc15a37722aa7722084f4020bdd9b54"
-  integrity sha512-GcRz3AWTqSUphY3vsUqQSFMbgR38a4Lh3GWlHRh/7MRwz8mcu9n2IO7HOh+bXHrR9kOPDl5RNCaEsrneb+xhHQ==
-  dependencies:
-    argparse "^1.0.7"
-    entities "~1.1.1"
     linkify-it "^2.0.0"
     mdurl "^1.0.1"
     uc.micro "^1.0.5"
