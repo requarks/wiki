@@ -179,6 +179,18 @@
                     :hint='$t(`admin:security.hideLocalLoginHint`)'
                     )
                 v-divider.mt-3
+                .overline.grey--text.pa-4 {{$t('admin:security.loginSecurity')}}
+                .px-4.pb-3
+                  v-switch.mt-0(
+                    inset
+                    :label='$t(`admin:security.enforce2fa`)'
+                    color='primary'
+                    v-model='config.authEnforce2FA'
+                    prepend-icon='mdi-two-factor-authentication'
+                    :hint='$t(`admin:security.enforce2faHint`)'
+                    persistent-hint
+                  )
+                v-divider.mt-3
                 .overline.grey--text.pa-4 {{$t('admin:security.jwt')}}
                 .px-4.pb-3
                   v-text-field(

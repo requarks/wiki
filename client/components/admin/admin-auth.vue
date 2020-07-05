@@ -176,30 +176,6 @@
                 multiple
                 chips
                 )
-            template(v-if='strategy.useForm')
-              v-divider.mt-3
-              .d-flex.my-5.align-center
-                .overline {{$t('admin:auth.security')}}
-                v-chip.ml-3.grey--text(outlined, small, label) Coming soon
-              v-switch.ml-3(
-                v-if='strategy.key === `local`'
-                :disabled='!strategy.selfRegistration || true'
-                v-model='strategy.recaptcha'
-                label='Use reCAPTCHA by Google'
-                color='primary'
-                hint='Protects against spam robots and malicious registrations.'
-                persistent-hint
-                inset
-              )
-              v-switch.ml-3(
-                v-model='strategy.recaptcha'
-                :disabled='true'
-                :label='$t(`admin:auth.force2fa`)'
-                color='primary'
-                :hint='$t(`admin:auth.force2faHint`)'
-                persistent-hint
-                inset
-              )
 
         v-card.mt-4.wiki-form.animated.fadeInUp.wait-p4s(v-if='selectedStrategy !== `local`')
           v-toolbar(color='primary', dense, flat, dark)

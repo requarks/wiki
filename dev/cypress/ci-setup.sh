@@ -13,6 +13,9 @@ mariadb)
   echo "Using MariaDB..."
   docker run -d -p 3306:3306 --name db --network="host" -e "MYSQL_ROOT_PASSWORD=Password123!" -e "MYSQL_USER=wiki" -e "MYSQL_PASSWORD=Password123!" -e "MYSQL_DATABASE=wiki" mariadb:10
   docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mariadb" -e "DB_HOST=localhost" -e "DB_PORT=3306" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-$BUILD_BUILDNUMBER
+  sleep 5
+  docker logs wiki
+  echo "MariaDB environment started."
   ;;
 mssql)
   echo "Using MS SQL Server..."
@@ -29,6 +32,3 @@ sqlite)
   echo "Invalid DB Type!"
   ;;
 esac
-
-sleep 5
-docker logs wiki
