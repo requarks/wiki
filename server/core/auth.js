@@ -114,8 +114,11 @@ module.exports = {
       let mustRevalidate = false
 
       // Expired but still valid within N days, just renew
-      if (info instanceof Error && info.name === 'TokenExpiredError' && DateTime.utc().minus(ms(WIKI.config.auth.tokenRenewal)) < DateTime.fromISO(info.expiredAt)) {
-        mustRevalidate = true
+      if (info instanceof Error && info.name === 'TokenExpiredError') {
+        const expiredDate = (info.expiredAt instanceof Date) ? info.expiredAt.toISOString() : info.expiredAt
+        if (DateTime.utc().minus(ms(WIKI.config.auth.tokenRenewal)) < DateTime.fromISO(expiredDate)) {
+          mustRevalidate = true
+        }
       }
 
       // Check if user / group is in revocation list
