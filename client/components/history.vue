@@ -322,7 +322,7 @@ export default {
     this.target = this.cache[0]
 
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
   },
   methods: {

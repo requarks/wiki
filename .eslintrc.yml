@@ -13,4 +13,3 @@ globals:
   document: false
   navigator: false
   window: false
-  FuseBox: false

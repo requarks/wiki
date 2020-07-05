@@ -20,8 +20,7 @@ mssql)
   sleep 30
   docker exec db /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "Password123!" -Q 'CREATE DATABASE wiki'
   docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mssql" -e "DB_HOST=localhost" -e "DB_PORT=1433" -e "DB_NAME=wiki" -e "DB_USER=SA" -e "DB_PASS=Password123!" requarks/wiki:canary-$BUILD_BUILDNUMBER
-  docker logs wiki
-  sleep 15
+  sleep 5
   docker logs wiki
   ;;
 sqlite)
