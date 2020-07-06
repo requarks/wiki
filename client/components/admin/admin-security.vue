@@ -278,6 +278,7 @@ export default {
           mutation: gql`
             mutation (
               $authAutoLogin: Boolean
+              $authEnforce2FA: Boolean
               $authHideLocal: Boolean
               $authLoginBgUrl: String
               $authJwtAudience: String
@@ -298,6 +299,7 @@ export default {
               site {
                 updateConfig(
                   authAutoLogin: $authAutoLogin,
+                  authEnforce2FA: $authEnforce2FA,
                   authHideLocal: $authHideLocal,
                   authLoginBgUrl: $authLoginBgUrl,
                   authJwtAudience: $authJwtAudience,
@@ -327,6 +329,7 @@ export default {
           `,
           variables: {
             authAutoLogin: _.get(this.config, 'authAutoLogin', false),
+            authEnforce2FA: _.get(this.config, 'authEnforce2FA', false),
             authHideLocal: _.get(this.config, 'authHideLocal', false),
             authLoginBgUrl: _.get(this.config, 'authLoginBgUrl', ''),
             authJwtAudience: _.get(this.config, 'authJwtAudience', ''),
@@ -377,6 +380,7 @@ export default {
           site {
             config {
               authAutoLogin
+              authEnforce2FA
               authHideLocal
               authLoginBgUrl
               authJwtAudience

@@ -18,7 +18,7 @@
             v-list.elevation-1.radius-7(nav)
               v-list-item-group(v-model='selectedStrategyKey')
                 v-list-item(
-                  v-for='(stg, idx) of strategies'
+                  v-for='(stg, idx) of filteredStrategies'
                   :key='stg.key'
                   :value='stg.key'
                   :color='stg.strategy.color'
@@ -252,8 +252,8 @@ export default {
     return {
       error: false,
       strategies: [],
-      selectedStrategyKey: 'local',
-      selectedStrategy: { key: 'local', strategy: { useForm: true } },
+      selectedStrategyKey: 'unselected',
+      selectedStrategy: { key: 'unselected', strategy: { useForm: false } },
       screen: 'login',
       username: '',
       password: '',
@@ -276,11 +276,21 @@ export default {
     isSocialShown () {
       return this.strategies.length > 1
     },
-    logoUrl () { return siteConfig.logoUrl }
+    logoUrl () { return siteConfig.logoUrl },
+    filteredStrategies () {
+      const qParams = new URLSearchParams(window.location.search)
+      if (this.hideLocal && !qParams.has('all')) {
+        return _.reject(this.strategies, ['key', 'local'])
+      } else {
+        return this.strategies
+      }
+    }
   },
   watch: {
-    strategies(newValue, oldValue) {
-      this.selectedStrategy = _.head(newValue)
+    filteredStrategies (newValue, oldValue) {
+      if (_.head(newValue).strategy.useForm) {
+        this.selectedStrategyKey = _.head(newValue).key
+      }
     },
     selectedStrategyKey (newValue, oldValue) {
       this.selectedStrategy = _.find(this.strategies, ['key', newValue])

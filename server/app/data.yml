@@ -55,6 +55,7 @@ defaults:
       darkMode: false
     auth:
       autoLogin: false
+      enforce2FA: false
       hideLocal: false
       loginBgUrl: ''
       audience: 'urn:wiki.js'

@@ -34,6 +34,7 @@ type SiteMutation {
     contentLicense: String
     logoUrl: String
     authAutoLogin: Boolean
+    authEnforce2FA: Boolean
     authHideLocal: Boolean
     authLoginBgUrl: String
     authJwtAudience: String
@@ -72,6 +73,7 @@ type SiteConfig {
   contentLicense: String!
   logoUrl: String!
   authAutoLogin: Boolean
+  authEnforce2FA: Boolean
   authHideLocal: Boolean
   authLoginBgUrl: String
   authJwtAudience: String
