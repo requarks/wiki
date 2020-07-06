@@ -104,6 +104,9 @@ module.exports = {
     await this.ensureDirectory(asset.destinationPath)
     await this.sftp.rename(path.posix.join(this.config.basePath, asset.path), path.posix.join(this.config.basePath, asset.destinationPath))
   },
+  async getLocalLocation () {
+
+  },
   /**
    * HANDLERS
    */

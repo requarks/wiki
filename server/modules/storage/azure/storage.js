@@ -115,6 +115,9 @@ module.exports = {
       deleteSnapshots: 'include'
     })
   },
+  async getLocalLocation () {
+
+  },
   /**
    * HANDLERS
    */

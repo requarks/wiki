@@ -363,6 +363,9 @@ module.exports = {
       '--author': `"${asset.moveAuthorName} <${asset.moveAuthorEmail}>"`
     })
   },
+  async getLocalLocation (asset) {
+    return path.join(this.repoPath, asset.path)
+  },
   /**
    * HANDLERS
    */
