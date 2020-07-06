@@ -7,11 +7,19 @@ postgres)
 mysql)
   echo "Using MySQL..."
   docker run -d -p 3306:3306 --name db --network="host" -e "MYSQL_ROOT_PASSWORD=Password123!" -e "MYSQL_USER=wiki" -e "MYSQL_PASSWORD=Password123!" -e "MYSQL_DATABASE=wiki" mysql:8
+  while ! docker exec db mysql --user=root --password=Password123! -e "SELECT 1" &> /dev/null ; do
+    echo "Waiting for database connection..."
+    sleep 2
+  done
   docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mysql" -e "DB_HOST=localhost" -e "DB_PORT=3306" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-2.5.67
   ;;
 mariadb)
   echo "Using MariaDB..."
   docker run -d -p 3306:3306 --name db --network="host" -e "MYSQL_ROOT_PASSWORD=Password123!" -e "MYSQL_USER=wiki" -e "MYSQL_PASSWORD=Password123!" -e "MYSQL_DATABASE=wiki" mariadb:10
+  while ! docker exec db mysql --user=root --password=Password123! -e "SELECT 1" &> /dev/null ; do
+    echo "Waiting for database connection..."
+    sleep 2
+  done
   docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mariadb" -e "DB_HOST=localhost" -e "DB_PORT=3306" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-2.5.67
   ;;
 mssql)
