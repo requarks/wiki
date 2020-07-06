@@ -6,7 +6,7 @@ postgres)
     echo "Waiting for database connection..."
     sleep 2
   done
-  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=postgres" -e "DB_HOST=localhost" -e "DB_PORT=5432" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-2.5.67
+  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=postgres" -e "DB_HOST=localhost" -e "DB_PORT=5432" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-$BUILD_BUILDNUMBER
   ;;
 mysql)
   echo "Using MySQL..."
@@ -15,7 +15,7 @@ mysql)
     echo "Waiting for database connection..."
     sleep 2
   done
-  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mysql" -e "DB_HOST=localhost" -e "DB_PORT=3306" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-2.5.67
+  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mysql" -e "DB_HOST=localhost" -e "DB_PORT=3306" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-$BUILD_BUILDNUMBER
   ;;
 mariadb)
   echo "Using MariaDB..."
@@ -24,7 +24,7 @@ mariadb)
     echo "Waiting for database connection..."
     sleep 2
   done
-  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mariadb" -e "DB_HOST=localhost" -e "DB_PORT=3306" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-2.5.67
+  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mariadb" -e "DB_HOST=localhost" -e "DB_PORT=3306" -e "DB_NAME=wiki" -e "DB_USER=wiki" -e "DB_PASS=Password123!" requarks/wiki:canary-$BUILD_BUILDNUMBER
   ;;
 mssql)
   echo "Using MS SQL Server..."
@@ -33,11 +33,11 @@ mssql)
     echo "Waiting for database connection..."
     sleep 2
   done
-  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mssql" -e "DB_HOST=localhost" -e "DB_PORT=1433" -e "DB_NAME=wiki" -e "DB_USER=SA" -e "DB_PASS=Password123!" requarks/wiki:canary-2.5.67
+  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=mssql" -e "DB_HOST=localhost" -e "DB_PORT=1433" -e "DB_NAME=wiki" -e "DB_USER=SA" -e "DB_PASS=Password123!" requarks/wiki:canary-$BUILD_BUILDNUMBER
   ;;
 sqlite)
   echo "Using SQLite..."
-  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=sqlite" -e "DB_FILEPATH=db.sqlite" requarks/wiki:canary-2.5.67
+  docker run -d -p 3000:3000 --name wiki --network="host" -e "DB_TYPE=sqlite" -e "DB_FILEPATH=db.sqlite" requarks/wiki:canary-$BUILD_BUILDNUMBER
   ;;
 *)
   echo "Invalid DB Type!"
