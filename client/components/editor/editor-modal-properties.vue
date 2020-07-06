@@ -66,6 +66,47 @@
                     @click:append='showPathSelector'
                     )
           v-divider
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
+            .overline.pb-5 Theme Options
+            v-radio-group(
+              row
+              outlined
+              persistent-hint
+              prepend-icon='mdi-serial-port'
+              v-model='tocLevel'
+              label='Max Heading Level'
+              hint='The table of contents will show headings up to the selected level. By default, only heading levels up to H2 are shown.'
+            )
+              v-spacer
+              v-radio(
+                label='Global'
+                v-bind:value='0'
+              )
+              v-radio(
+                label='H1'
+                v-bind:value='1'
+              )
+              v-radio(
+                label='H2'
+                v-bind:value='2'
+              )
+              v-radio(
+                label='H3'
+                v-bind:value='3'
+              )
+              v-radio(
+                label='H4'
+                v-bind:value='4'
+              )
+              v-radio(
+                label='H5'
+                v-bind:value='5'
+              )
+              v-radio(
+                label='H6'
+                v-bind:value='6'
+              )
+          v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5 {{$t('editor:props.categorization')}}
             v-chip-group.radius-5.mb-5(column, v-if='tags && tags.length > 0')
@@ -289,6 +330,7 @@ export default {
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
+    tocLevel: sync('page/tocLevel'),
     scriptJs: sync('page/scriptJs'),
     scriptCss: sync('page/scriptCss'),
     hasScriptPermission: get('page/effectivePermissions@pages.script'),

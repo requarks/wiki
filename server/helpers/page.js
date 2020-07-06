@@ -74,6 +74,9 @@ module.exports = {
       ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : ''],
       ['editor', page.editorKey]
     ]
+    if (page.tocLevel) {
+      meta.push(['tocLevel', page.tocLevel])
+    }
     switch (page.contentType) {
       case 'markdown':
         return '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content

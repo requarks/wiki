@@ -4,6 +4,7 @@ query {
       theme
       iconset
       darkMode
+      tocLevel
       injectCSS
       injectHead
       injectBody
