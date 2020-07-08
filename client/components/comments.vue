@@ -12,6 +12,7 @@
       color='blue-grey darken-2'
       :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
       v-if='permissions.write'
+      :aria-label='$t(`common:comments.fieldContent`)'
     )
     v-row.mt-2(dense, v-if='!isAuthenticated && permissions.write')
       v-col(cols='12', lg='6')
@@ -24,6 +25,7 @@
           dense
           autocomplete='name'
           v-model='guestName'
+          :aria-label='$t(`common:comments.fieldName`)'
         )
       v-col(cols='12', lg='6')
         v-text-field(
@@ -36,6 +38,7 @@
           dense
           autocomplete='email'
           v-model='guestEmail'
+          :aria-label='$t(`common:comments.fieldEmail`)'
         )
     .d-flex.align-center.pt-3(v-if='permissions.write')
       v-icon.mr-1(color='blue-grey') mdi-language-markdown-outline
@@ -49,6 +52,7 @@
         color='blue-grey darken-2'
         @click='postComment'
         depressed
+        :aria-label='$t(`common:comments.postComment`)'
         )
         v-icon(left) mdi-comment
         span.text-none {{$t('common:comments.postComment')}}

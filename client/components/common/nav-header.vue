@@ -72,7 +72,7 @@
               )
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn.ml-2.mr-0(icon, v-on='on', href='/t')
+                v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
@@ -96,10 +96,18 @@
 
           template(v-if='mode === `view` && locales.length > 0')
             v-menu(offset-y, bottom, transition='slide-y-transition', max-height='320px', min-width='210px', left)
-              template(v-slot:activator='{ on: menu }')
+              template(v-slot:activator='{ on: menu, attrs }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
-                    v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-3` : ``', tile, height='64')
+                    v-btn(
+                      icon
+                      v-bind='attrs'
+                      v-on='{ ...menu, ...tooltip }'
+                      :class='$vuetify.rtl ? `ml-3` : ``'
+                      tile
+                      height='64'
+                      :aria-label='$t(`common:header.language`)'
+                      )
                       v-icon(color='grey') mdi-web
                   span {{$t('common:header.language')}}
               v-list(nav)
@@ -113,10 +121,18 @@
 
           template(v-if='hasAnyPagePermissions && path && mode !== `edit`')
             v-menu(offset-y, bottom, transition='slide-y-transition', left)
-              template(v-slot:activator='{ on: menu }')
+              template(v-slot:activator='{ on: menu, attrs }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
-                    v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-3` : ``', tile, height='64')
+                    v-btn(
+                      icon
+                      v-bind='attrs'
+                      v-on='{ ...menu, ...tooltip }'
+                      :class='$vuetify.rtl ? `ml-3` : ``'
+                      tile
+                      height='64'
+                      :aria-label='$t(`common:header.pageActions`)'
+                      )
                       v-icon(color='grey') mdi-file-document-edit-outline
                   span {{$t('common:header.pageActions')}}
               v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
@@ -151,7 +167,7 @@
           template(v-if='hasNewPagePermission && path && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
+                v-btn(icon, tile, height='64', v-on='on', @click='pageNew', :aria-label='$t(`common:header.newPage`)')
                   v-icon(color='grey') mdi-text-box-plus-outline
               span {{$t('common:header.newPage')}}
             v-divider(vertical)
@@ -159,10 +175,18 @@
           //- ACCOUNT
 
           v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition', left)
-            template(v-slot:activator='{ on: menu }')
+            template(v-slot:activator='{ on: menu, attrs }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn(icon, v-on='{ ...menu, ...tooltip }', :class='$vuetify.rtl ? `ml-0` : ``', tile, height='64')
+                  v-btn(
+                    icon
+                    v-bind='attrs'
+                    v-on='{ ...menu, ...tooltip }'
+                    :class='$vuetify.rtl ? `ml-0` : ``'
+                    tile
+                    height='64'
+                    :aria-label='$t(`common:header.account`)'
+                    )
                     v-icon(v-if='picture.kind === `initials`', color='grey') mdi-account-circle
                     v-avatar(v-else-if='picture.kind === `image`', :size='34')
                       v-img(:src='picture.url')
@@ -195,7 +219,7 @@
 
           v-tooltip(v-else, left)
             template(v-slot:activator='{ on }')
-              v-btn(icon, v-on='on', color='grey darken-3', href='/login')
+              v-btn(icon, v-on='on', color='grey darken-3', href='/login', :aria-label='$t(`common:header.login`)')
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
