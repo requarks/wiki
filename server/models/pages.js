@@ -27,26 +27,26 @@ const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
 module.exports = class Page extends Model {
   static get tableName() { return 'pages' }
 
-  static get jsonSchema() {
+  static get jsonSchema () {
     return {
       type: 'object',
       required: ['path', 'title'],
 
       properties: {
-        id: { type: 'integer' },
-        path: { type: 'string' },
-        hash: { type: 'string' },
-        title: { type: 'string' },
-        description: { type: 'string' },
-        isPublished: { type: 'boolean' },
-        privateNS: { type: 'string' },
-        publishStartDate: { type: 'string' },
-        publishEndDate: { type: 'string' },
-        content: { type: 'string' },
-        contentType: { type: 'string' },
+        id: {type: 'integer'},
+        path: {type: 'string'},
+        hash: {type: 'string'},
+        title: {type: 'string'},
+        description: {type: 'string'},
+        isPublished: {type: 'boolean'},
+        privateNS: {type: 'string'},
+        publishStartDate: {type: 'string'},
+        publishEndDate: {type: 'string'},
+        content: {type: 'string'},
+        contentType: {type: 'string'},
 
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' }
+        createdAt: {type: 'string'},
+        updatedAt: {type: 'string'}
       }
     }
   }
@@ -166,7 +166,7 @@ module.exports = class Page extends Model {
    *
    * @returns {string} Page Contents with Injected Metadata
    */
-  injectMetadata() {
+  injectMetadata () {
     return pageHelper.injectPageMetadata(this)
   }
 
@@ -186,7 +186,7 @@ module.exports = class Page extends Model {
    * @param {String} contentType Content Type
    * @returns {Object} Parsed Page Metadata with Raw Content
    */
-  static parseMetadata(raw, contentType) {
+  static parseMetadata (raw, contentType) {
     let result
     switch (contentType) {
       case 'markdown':
@@ -575,7 +575,7 @@ module.exports = class Page extends Model {
       path: opts.destinationPath,
       mode: 'move'
     })
-
+   
     // -> Reconnect Links : Validate invalid links to the new path
     await WIKI.models.pages.reconnectLinks({
       locale: opts.destinationLocale,
@@ -645,6 +645,7 @@ module.exports = class Page extends Model {
       mode: 'delete'
     })
   }
+
   /**
    * Reconnect links to new/move/deleted page
    *
@@ -656,7 +657,7 @@ module.exports = class Page extends Model {
    * @param {string} opts.mode - Page Update mode (create, move, delete)
    * @returns {Promise} Promise with no value
    */
-  static async reconnectLinks(opts) {
+  static async reconnectLinks (opts) {
     const pageHref = `/${opts.locale}/${opts.path}`
     let replaceArgs = {
       from: '',
@@ -946,7 +947,7 @@ module.exports = class Page extends Model {
       .where({
         localeCode: sourceLocale
       })
-      .whereNotExists(function () {
+      .whereNotExists(function() {
         this.select('id').from('pages AS pagesm').where('pagesm.localeCode', targetLocale).andWhereRaw('pagesm.path = pages.path')
       })
   }
@@ -960,7 +961,7 @@ module.exports = class Page extends Model {
   static cleanHTML(rawHTML = '') {
     let data = striptags(rawHTML || '', [], ' ')
       .replace(emojiRegex(), '')
-    // .replace(htmlEntitiesRegex, '')
+      // .replace(htmlEntitiesRegex, '')
     return he.decode(data)
       .replace(punctuationRegex, ' ')
       .replace(/(\r\n|\n|\r)/gm, ' ')
