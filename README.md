@@ -112,6 +112,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - magicpotato ([@fortheday](https://github.com/fortheday))
+- valantien ([@valantien](https://github.com/valantien))
 
 <h2 align="center">OpenCollective Sponsors</h2>
 
