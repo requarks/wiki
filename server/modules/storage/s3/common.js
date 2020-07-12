@@ -120,6 +120,9 @@ module.exports = class S3CompatibleStorage {
     await this.s3.copyObject({ CopySource: asset.path, Key: asset.destinationPath }).promise()
     await this.s3.deleteObject({ Key: asset.path }).promise()
   }
+  async getLocalLocation () {
+
+  }
   /**
    * HANDLERS
    */

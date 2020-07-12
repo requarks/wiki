@@ -19,5 +19,8 @@ module.exports = {
   },
   async renamed() {
 
+  },
+  async getLocalLocation () {
+
   }
 }

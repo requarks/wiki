@@ -116,7 +116,9 @@ module.exports = {
     WIKI.logger.info(`(STORAGE/DISK) Renaming file from ${asset.path} to ${asset.destinationPath}...`)
     await fs.move(path.join(this.config.path, asset.path), path.join(this.config.path, asset.destinationPath), { overwrite: true })
   },
-
+  async getLocalLocation (asset) {
+    return path.join(this.config.path, asset.path)
+  },
   /**
    * HANDLERS
    */

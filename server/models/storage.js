@@ -199,6 +199,23 @@ module.exports = class Storage extends Model {
     }
   }
 
+  static async getLocalLocations({ asset }) {
+    const locations = []
+    const promises = this.targets.map(async (target) => {
+      try {
+        const path = await target.fn.getLocalLocation(asset)
+        locations.push({
+          path,
+          key: target.key
+        })
+      } catch (err) {
+        WIKI.logger.warn(err)
+      }
+    })
+    await Promise.all(promises)
+    return locations
+  }
+
   static async executeAction(targetKey, handler) {
     try {
       const target = _.find(this.targets, ['key', targetKey])
