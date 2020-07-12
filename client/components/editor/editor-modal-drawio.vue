@@ -10,21 +10,21 @@
 <script>
 import { sync, get } from 'vuex-pathify'
 
-const xmlTest = `<?xml version="1.0" encoding="UTF-8"?>
-<mxfile version="13.4.2">
-  <diagram id="SgbkCjxR32CZT1FvBvkp" name="Page-1">
-    <mxGraphModel dx="2062" dy="1123" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="5gE3BTvRYS_8FoJnOusC-1" value="" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
-          <mxGeometry x="380" y="530" width="80" height="80" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>
-`
+// const xmlTest = `<?xml version="1.0" encoding="UTF-8"?>
+// <mxfile version="13.4.2">
+//   <diagram id="SgbkCjxR32CZT1FvBvkp" name="Page-1">
+//     <mxGraphModel dx="2062" dy="1123" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+//       <root>
+//         <mxCell id="0" />
+//         <mxCell id="1" parent="0" />
+//         <mxCell id="5gE3BTvRYS_8FoJnOusC-1" value="" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+//           <mxGeometry x="380" y="530" width="80" height="80" as="geometry" />
+//         </mxCell>
+//       </root>
+//     </mxGraphModel>
+//   </diagram>
+// </mxfile>
+// `
 
 export default {
   data() {
@@ -60,9 +60,10 @@ export default {
               action: 'load',
               autosave: 0,
               modified: 'unsavedChanges',
-              xml: xmlTest,
+              xml: this.$store.get('editor/activeModalData'),
               title: this.$store.get('page/title')
             })
+            this.$store.set('editor/activeModalData', null)
             break
           }
           case 'save': {

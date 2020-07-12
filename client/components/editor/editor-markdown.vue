@@ -678,7 +678,13 @@ export default {
           foundStart = line
         } else if (ln.text === '```' && found) {
           switch (found) {
+            // ------------------------------
+            // -> DIAGRAM
+            // ------------------------------
             case 'diagram': {
+              if (line - foundStart !== 2) {
+                return
+              }
               this.addMarker({
                 kind: 'diagram',
                 from: { line: foundStart, ch: 3 },
@@ -687,8 +693,17 @@ export default {
                 action: ((start, end) => {
                   return (ev) => {
                     this.cm.doc.setSelection({ line: start, ch: 0 }, { line: end, ch: 3 })
-                    // this.$store.set('editor/activeModalData', )
-                    this.toggleModal(`editorModalDrawio`)
+                    try {
+                      const raw = this.cm.doc.getLine(end - 1)
+                      this.$store.set('editor/activeModalData', Buffer.from(raw, 'base64').toString())
+                      this.toggleModal(`editorModalDrawio`)
+                    } catch (err) {
+                      return this.$store.commit('showNotification', {
+                        message: 'Failed to process diagram data.',
+                        style: 'warning',
+                        icon: 'warning'
+                      })
+                    }
                   }
                 })(foundStart, line)
               })
