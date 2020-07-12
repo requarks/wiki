@@ -272,7 +272,9 @@ const md = new MarkdownIt({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    if (['mermaid', 'plantuml'].includes(lang)) {
+    if (lang === 'diagram') {
+      return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
+    } else if (['mermaid', 'plantuml'].includes(lang)) {
       return `<pre class="codeblock-${lang}"><code>${_.escape(str)}</code></pre>`
     } else {
       return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
@@ -764,6 +766,11 @@ export default {
         case 'BINARY':
           this.insertAtCursor({
             content: `[${opts.text}](${opts.path})`
+          })
+          break
+        case 'DIAGRAM':
+          this.insertAtCursor({
+            content: '```diagram\n' + opts.text + '\n```'
           })
           break
       }

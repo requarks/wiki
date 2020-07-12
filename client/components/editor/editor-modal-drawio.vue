@@ -2,7 +2,7 @@
   v-card.editor-modal-drawio.animated.fadeIn(flat, tile)
     iframe(
       ref='drawio'
-      src='https://embed.diagrams.net/?embed=1&proto=json&spin=1&saveAndExit=0'
+      src='https://embed.diagrams.net/?embed=1&proto=json&spin=1&saveAndExit=1&noSaveBtn=1&noExitBtn=0'
       frameborder='0'
     )
 </template>
@@ -11,7 +11,7 @@
 import { sync, get } from 'vuex-pathify'
 
 const xmlTest = `<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" modified="2020-07-10T23:41:09.492Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 Edg/83.0.478.61" etag="nuFLQDTKlZwSpOz4sG5q" version="13.4.2">
+<mxfile version="13.4.2">
   <diagram id="SgbkCjxR32CZT1FvBvkp" name="Page-1">
     <mxGraphModel dx="2062" dy="1123" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -29,7 +29,7 @@ const xmlTest = `<?xml version="1.0" encoding="UTF-8"?>
 export default {
   data() {
     return {
-
+      content: ''
     }
   },
   computed: {
@@ -59,7 +59,6 @@ export default {
             this.send({
               action: 'load',
               autosave: 0,
-              saveAndExit: '0',
               modified: 'unsavedChanges',
               xml: xmlTest,
               title: this.$store.get('page/title')
@@ -67,16 +66,22 @@ export default {
             break
           }
           case 'save': {
-            console.info(msg)
             if (msg.exit) {
-              this.close()
-            } else {
               this.send({
-                action: 'status',
-                messageKey: 'allChangesSaved',
-                modified: false
+                action: 'export',
+                format: 'xmlsvg'
               })
             }
+            break
+          }
+          case 'export': {
+            const svgDataStart = msg.data.indexOf('base64,') + 7
+            this.$root.$emit('editorInsert', {
+              kind: 'DIAGRAM',
+              text: msg.data.slice(svgDataStart)
+              // text: msg.xml.replace(/ agent="(.*?)"/, '').replace(/ host="(.*?)"/, '').replace(/ etag="(.*?)"/, '')
+            })
+            this.close()
             break
           }
           case 'exit': {

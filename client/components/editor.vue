@@ -44,7 +44,7 @@
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
-    v-content
+    v-main
       component(:is='currentEditor', :save='save')
       editor-modal-properties(v-model='dialogProps')
       editor-modal-editorselect(v-model='dialogEditorSelector')
