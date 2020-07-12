@@ -87,3 +87,14 @@
   border-radius: 5px;
   text-shadow: none;
 }
+
+.cm-s-wikijs-dark .CodeMirror-buttonmarker {
+  display: inline-block;
+  background-color: rgba(mc('blue', '500'), .3);
+  border: 1px solid mc('blue', '800');
+  padding: 1px 10px;
+  color: mc('blue', '200') !important;
+  border-radius: 5px;
+  margin-left: 5px;
+  cursor: pointer;
+}
