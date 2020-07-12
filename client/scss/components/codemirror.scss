@@ -77,3 +77,13 @@
   text-decoration: underline;
   color: white !important;
 }
+
+.cm-s-wikijs-dark .CodeMirror-foldmarker {
+  margin-left: 10px;
+  display: inline-block;
+  background-color: rgba(mc('amber', '800'), .3);
+  padding: 8px 5px;
+  color: mc('amber', '500');
+  border-radius: 5px;
+  text-shadow: none;
+}

@@ -217,6 +217,10 @@ import 'codemirror/addon/display/fullscreen.css'
 import 'codemirror/addon/selection/mark-selection.js'
 import 'codemirror/addon/search/searchcursor.js'
 import 'codemirror/addon/hint/show-hint.js'
+import 'codemirror/addon/fold/foldcode.js'
+import 'codemirror/addon/fold/foldgutter.js'
+import 'codemirror/addon/fold/foldgutter.css'
+import './markdown/fold'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
@@ -685,7 +689,9 @@ export default {
       viewportMargin: 50,
       inputStyle: 'contenteditable',
       allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
-      direction: siteConfig.rtl ? 'rtl' : 'ltr'
+      direction: siteConfig.rtl ? 'rtl' : 'ltr',
+      foldGutter: true,
+      gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
     })
     this.cm.setValue(this.$store.get('editor/content'))
     this.cm.on('change', c => {
@@ -769,9 +775,11 @@ export default {
           })
           break
         case 'DIAGRAM':
+          const foldLine = this.cm.getCursor().line
           this.insertAtCursor({
             content: '```diagram\n' + opts.text + '\n```'
           })
+          this.cm.foldCode(foldLine)
           break
       }
     })
