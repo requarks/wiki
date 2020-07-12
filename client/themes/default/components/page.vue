@@ -59,32 +59,9 @@
           v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp')
             v-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
-              v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
-                template(v-for='tocItem in tocDecoded')
-                  v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
-                    v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                    v-list-item-title.px-3 {{tocItem.title}}
-                  template(v-for='tocSubItem in tocItem.children', v-if='tocLevel > 1')
-                    v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
-                      v-icon.pl-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                      v-list-item-title.pl-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-4`') {{tocSubItem.title}}
-                    template(v-for='tocSubItem2nd in tocSubItem.children', v-if='tocLevel > 2')
-                      v-list-item(@click='$vuetify.goTo(tocSubItem2nd.anchor, scrollOpts)')
-                        v-icon.pl-6(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                        v-list-item-title.pl-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-4` : `text--darken-3`') {{tocSubItem2nd.title}}
-                      template(v-for='tocSubItem3rd in tocSubItem2nd.children', v-if='tocLevel > 3')
-                        v-list-item(@click='$vuetify.goTo(tocSubItem3rd.anchor, scrollOpts)')
-                          v-icon.pl-9(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                          v-list-item-title.pl-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-5` : `text--darken-2`') {{tocSubItem3rd.title}}
-                        template(v-for='tocSubItem4th in tocSubItem3rd.children', v-if='tocLevel > 4')
-                          v-list-item(@click='$vuetify.goTo(tocSubItem4th.anchor, scrollOpts)')
-                            v-icon.pl-12(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                            v-list-item-title.pl-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-5` : `text--darken-2`') {{tocSubItem4th.title}}
-                          template(v-for='tocSubItem5th in tocSubItem4th.children', v-if='tocLevel > 5')
-                            v-list-item(@click='$vuetify.goTo(tocSubItem5th.anchor, scrollOpts)')
-                              v-icon.pl-15(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                              v-list-item-title.pl-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-5` : `text--darken-2`') {{tocSubItem5th.title}}
-
+              v-list.py-0(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
+                template(v-for='item in tocDecoded')
+                  page-toc-item(:item='item', :tocLevel='tocLevel', :tocCollapseLevel='tocCollapseLevel')
             v-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
@@ -321,6 +298,7 @@
 import { StatusIndicator } from 'vue-status-indicator'
 import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
+import PageTocItem from './page-toc-item.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get, sync } from 'vuex-pathify'
@@ -368,6 +346,7 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 export default {
   components: {
     NavSidebar,
+    PageTocItem,
     StatusIndicator
   },
   props: {
@@ -443,6 +422,10 @@ export default {
       type: Number,
       default: 2
     },
+    tocCollapseLevel: {
+      type: Number,
+      default: 2
+    }
   },
   data() {
     return {

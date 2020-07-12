@@ -127,6 +127,7 @@ module.exports = () => {
         theme: 'default',
         darkMode: false,
         tocLevel: 2,
+        tocCollapseLevel: 2,
         iconset: 'mdi',
         injectCSS: '',
         injectHead: '',

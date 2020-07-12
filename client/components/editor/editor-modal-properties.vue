@@ -106,6 +106,44 @@
                 label='H6'
                 v-bind:value='6'
               )
+            v-radio-group(
+              row
+              outlined
+              persistent-hint
+              prepend-icon='mdi-serial-port'
+              v-model='tocCollapseLevel'
+              label='Collapse Heading Level'
+              hint='The table of contents will collapse headings starting from the selected level. By default, only heading levels from H2 are collapsed.'
+            )
+              v-spacer
+              v-radio(
+                label='Global'
+                v-bind:value='0'
+              )
+              v-radio(
+                label='H1'
+                v-bind:value='1'
+              )
+              v-radio(
+                label='H2'
+                v-bind:value='2'
+              )
+              v-radio(
+                label='H3'
+                v-bind:value='3'
+              )
+              v-radio(
+                label='H4'
+                v-bind:value='4'
+              )
+              v-radio(
+                label='H5'
+                v-bind:value='5'
+              )
+              v-radio(
+                label='H6'
+                v-bind:value='6'
+              )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5 {{$t('editor:props.categorization')}}
@@ -331,6 +369,7 @@ export default {
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
     tocLevel: sync('page/tocLevel'),
+    tocCollapseLevel: sync('page/tocCollapseLevel'),
     scriptJs: sync('page/scriptJs'),
     scriptCss: sync('page/scriptCss'),
     hasScriptPermission: get('page/effectivePermissions@pages.script'),

@@ -54,6 +54,7 @@ defaults:
       iconset: 'md'
       darkMode: false
       tocLevel: 2
+      tocCollapseLevel: 2
     auth:
       autoLogin: false
       enforce2FA: false

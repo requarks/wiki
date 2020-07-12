@@ -148,6 +148,10 @@ export default {
       type: Number,
       default: 0
     },
+    tocCollapseLevel: {
+      type: Number,
+      default: 0
+    },
     checkoutDate: {
       type: String,
       default: new Date().toISOString()
@@ -195,6 +199,7 @@ export default {
         this.savedState.title !== this.$store.get('page/title'),
         this.savedState.description !== this.$store.get('page/description'),
         this.savedState.tocLevel !== this.$store.get('page/tocLevel'),
+        this.savedState.tocCollapseLevel !== this.$store.get('page/tocCollapseLevel'),
         this.savedState.tags !== this.$store.get('page/tags'),
         this.savedState.isPublished !== this.$store.get('page/isPublished'),
         this.savedState.publishStartDate !== this.$store.get('page/publishStartDate'),
@@ -229,6 +234,7 @@ export default {
     this.$store.set('page/scriptCss', this.scriptCss)
     this.$store.set('page/scriptJs', this.scriptJs)
     this.$store.set('page/tocLevel', this.tocLevel)
+    this.$store.set('page/tocCollapseLevel', this.tocCollapseLevel)
 
     this.$store.set('page/mode', 'edit')
 
@@ -310,6 +316,7 @@ export default {
                 $scriptCss: String
                 $scriptJs: String
                 $tocLevel: Int!
+                $tocCollapseLevel: Int!
                 $tags: [String]!
                 $title: String!
               ) {
@@ -327,6 +334,7 @@ export default {
                     scriptCss: $scriptCss
                     scriptJs: $scriptJs
                     tocLevel: $tocLevel
+                    tocCollapseLevel: $tocCollapseLevel
                     tags: $tags
                     title: $title
                   ) {
@@ -357,6 +365,7 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tocLevel: this.$store.get('page/tocLevel'),
+              tocCollapseLevel: this.$store.get('page/tocCollapseLevel'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -417,6 +426,7 @@ export default {
                 $scriptCss: String
                 $scriptJs: String
                 $tocLevel: Int
+                $tocCollapseLevel: Int
                 $tags: [String]
                 $title: String
               ) {
@@ -435,6 +445,7 @@ export default {
                     scriptCss: $scriptCss
                     scriptJs: $scriptJs
                     tocLevel: $tocLevel
+                    tocCollapseLevel: $tocCollapseLevel
                     tags: $tags
                     title: $title
                   ) {
@@ -465,6 +476,7 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tocLevel: this.$store.get('page/tocLevel'),
+              tocCollapseLevel: this.$store.get('page/tocCollapseLevel'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -548,7 +560,8 @@ export default {
         title: this.$store.get('page/title'),
         css: this.$store.get('page/scriptCss'),
         js: this.$store.get('page/scriptJs'),
-        tocLevel: this.$store.get('page/tocLevel')
+        tocLevel: this.$store.get('page/tocLevel'),
+        tocCollapseLevel: this.$store.get('page/tocCollapseLevel')
       }
     },
     injectCustomCss: _.debounce(css => {

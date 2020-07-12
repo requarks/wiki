@@ -93,6 +93,7 @@ module.exports = {
         isPrivate: false,
         content: pageData.content,
         tocLevel: pageData.tocLevel,
+        tocCollapseLevel: pageData.tocCollapseLevel,
         user: user,
         skipStorage: true
       })
@@ -112,7 +113,8 @@ module.exports = {
         user: user,
         editor: pageEditor,
         skipStorage: true,
-        tocLevel: pageData.tocLevel
+        tocLevel: pageData.tocLevel,
+        tocCollapseLevel: pageData.tocCollapseLevel
       })
     }
   },

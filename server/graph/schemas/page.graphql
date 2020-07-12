@@ -94,6 +94,7 @@ type PageMutation {
     tags: [String]!
     title: String!
     tocLevel: Int
+    tocCollapseLevel: Int
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   update(
@@ -112,6 +113,7 @@ type PageMutation {
     tags: [String]
     title: String
     tocLevel: Int
+    tocCollapseLevel: Int
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   move(
@@ -183,6 +185,7 @@ type Page {
   render: String
   toc: String
   tocLevel: Int!
+  tocCollapseLevel: Int!
   contentType: String!
   createdAt: Date!
   updatedAt: Date!

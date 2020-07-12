@@ -29,6 +29,7 @@ type ThemingMutation {
     iconset: String!
     darkMode: Boolean!
     tocLevel: Int!
+    tocCollapseLevel: Int!
     injectCSS: String
     injectHead: String
     injectBody: String
@@ -44,6 +45,7 @@ type ThemingConfig {
   iconset: String!
   darkMode: Boolean!
   tocLevel: Int!
+  tocCollapseLevel: Int!
   injectCSS: String
   injectHead: String
   injectBody: String

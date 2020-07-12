@@ -16,7 +16,8 @@ const state = {
   updatedAt: '',
   mode: '',
   scriptJs: '',
-  tocLevel: 0,
+  tocLevel: 2,
+  tocCollapseLevel: 2,
   scriptCss: '',
   effectivePermissions: {
     comments: {
