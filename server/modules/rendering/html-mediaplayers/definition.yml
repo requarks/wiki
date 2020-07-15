@@ -5,4 +5,10 @@ author: requarks.io
 icon: mdi-video
 enabledDefault: true
 dependsOn: htmlCore
-props: {}
+props:
+  videoJS:
+    type: Boolean
+    default: false
+    title: Enable Video-JS support
+    hint: all <video> tags will be handled by VideoJS library
+    order: 1
