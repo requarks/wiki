@@ -91,8 +91,8 @@ export default {
         previewsInData: true,
         extraProviders: [{
           name: 'wiki.js-video-assets',
-          url: new RegExp('^' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '(\\/(\\w|\\/|\\.)+)(\\.(ogm|ogg|ogv|avi|asd|mp4|webm))'),
-          html: (match) => `<video style="width: 100%;" controls><source src="${match[1]}.${match[4]}" type="video/${match[4]}"></video>`
+          url: new RegExp('^(' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '\\/|\\/)((\\w|\\/|\\.)+)(ogm|ogg|ogv|avi|asd|mp4|webm)$'),
+          html: (match) => `<video style="width: 100%;" controls><source src="/${match[2]}${match[4]}" type="video/${match[4]}"></video>`
         }]
       }
     })
