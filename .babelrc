@@ -1,5 +1,11 @@
 {
   "comments": true,
+  "env": {
+    "development": {
+      "sourceMaps": true,
+      "retainLines": true
+    }
+  },
   "plugins": [
     "lodash",
     "graphql-tag",

@@ -3,19 +3,19 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
+    "compounds": [
+        {
+            "name": "Server / Client Debug",
+            "configurations": ["Launch Program", "Launch Firefox Client Debug"]
+        }
+    ],
     "configurations": [
-    {
-      "type": "node",
-      "request": "attach",
-      "name": "Attach (Inspector Protocol)",
-      "port": 9229,
-      "protocol": "inspector"
-    },
         {
             "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceRoot}\\server.js"
+            "request": "attach",
+            "name": "Attach (Inspector Protocol)",
+            "port": 9229,
+            "protocol": "inspector"
         },
         {
             "type": "node",
@@ -23,6 +23,25 @@
             "name": "Attach to Port",
             "address": "localhost",
             "port": 9222
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "program": "${workspaceRoot}\\server\\index.js"
+        },
+	{
+            "name": "Launch Firefox Client Debug",
+            "type": "firefox",
+            "request": "launch",
+            "url": "http://localhost:3000/",
+            "webRoot": "${workspaceRoot}",
+            "pathMappings": [
+                {
+                    "url": "webpack:///client",
+                    "path": "${workspaceRoot}/client"
+                }
+            ]
+        },
     ]
 }
