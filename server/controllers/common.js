@@ -36,6 +36,20 @@ router.get('/healthz', (req, res, next) => {
  * Administration
  */
 router.get(['/a', '/a/*'], (req, res, next) => {
+  if (!WIKI.auth.checkAccess(req.user, [
+    'manage:system',
+    'write:users',
+    'manage:users',
+    'write:groups',
+    'manage:groups',
+    'manage:navigation',
+    'manage:theme',
+    'manage:api'
+  ])) {
+    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+    return res.render('unauthorized', { action: 'view' })
+  }
+
   _.set(res.locals, 'pageMeta.title', 'Admin')
   res.render('admin')
 })

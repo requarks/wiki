@@ -15,8 +15,8 @@ extend type Mutation {
 # -----------------------------------------------
 
 type NavigationQuery {
-  tree: [NavigationTree]!
-  config: NavigationConfig!
+  tree: [NavigationTree]! @auth(requires: ["manage:navigation", "manage:system"])
+  config: NavigationConfig! @auth(requires: ["manage:navigation", "manage:system"])
 }
 
 # -----------------------------------------------
