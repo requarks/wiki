@@ -40,7 +40,7 @@
               hide-details
               ref='iptEmail'
               v-model='username'
-              :placeholder='$t("auth:fields.emailUser")'
+              :placeholder='$t(selectedStrategy.strategy.usernameLabel)'
               )
             v-text-field.mt-2(
               solo
@@ -536,6 +536,7 @@ export default {
                 color
                 icon
                 useForm
+                usernameLabel
               }
               displayName
               order

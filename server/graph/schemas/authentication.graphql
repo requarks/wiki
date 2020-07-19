@@ -85,6 +85,7 @@ type AuthenticationStrategy {
   description: String
   isAvailable: Boolean
   useForm: Boolean!
+  usernameLabel: String
   logo: String
   color: String
   website: String
