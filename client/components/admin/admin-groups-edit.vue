@@ -61,7 +61,7 @@
                     style='max-width: 600px;'
                     :disabled='group.id <= 2'
                   )
-                template(v-if='group.id > 2')
+                template(v-if='group.id !== 2')
                   v-divider
                   v-card-text
                     v-text-field(

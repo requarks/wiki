@@ -281,6 +281,13 @@ module.exports = class User extends Model {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
+          // Get redirect target
+          user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
+          let redirect = '/'
+          if (user.groups && user.groups.length > 0) {
+            redirect = user.groups[0].redirectOnLogin
+          }
+
           // Must Change Password?
           if (user.mustChangePwd) {
             try {
@@ -291,7 +298,8 @@ module.exports = class User extends Model {
 
               return resolve({
                 mustChangePwd: true,
-                continuationToken: pwdChangeToken
+                continuationToken: pwdChangeToken,
+                redirect
               })
             } catch (errc) {
               WIKI.logger.warn(errc)
@@ -308,7 +316,8 @@ module.exports = class User extends Model {
               })
               return resolve({
                 tfaRequired: true,
-                continuationToken: tfaToken
+                continuationToken: tfaToken,
+                redirect
               })
             } catch (errc) {
               WIKI.logger.warn(errc)
@@ -319,7 +328,7 @@ module.exports = class User extends Model {
           context.req.logIn(user, { session: !strInfo.useForm }, async errc => {
             if (errc) { return reject(errc) }
             const jwtToken = await WIKI.models.users.refreshToken(user)
-            resolve({ jwt: jwtToken.token })
+            resolve({ jwt: jwtToken.token, redirect })
           })
         })(context.req, context.res, () => {})
       })

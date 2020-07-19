@@ -350,6 +350,7 @@ export default {
                     mustChangePwd
                     mustProvideTFA
                     continuationToken
+                    redirect
                   }
                 }
               }
@@ -386,6 +387,8 @@ export default {
                   if (loginRedirect) {
                     Cookies.remove('loginRedirect')
                     window.location.replace(loginRedirect)
+                  } else if (respObj.redirect) {
+                    window.location.replace(respObj.redirect)
                   } else {
                     window.location.replace('/')
                   }

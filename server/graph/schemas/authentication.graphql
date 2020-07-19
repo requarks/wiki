@@ -109,6 +109,7 @@ type AuthenticationLoginResponse {
   mustChangePwd: Boolean
   mustProvideTFA: Boolean
   continuationToken: String
+  redirect: String
 }
 
 type AuthenticationRegisterResponse {
