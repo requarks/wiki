@@ -58,14 +58,13 @@
             )
             v-btn.mt-2.text-none(
               width='100%'
-              v-if='screen === "login"'
               large
               color='primary'
               dark
               @click='login'
               :loading='isLoading'
               ) {{ $t('auth:actions.login') }}
-            .text-center.mt-5(v-if='screen === "login"')
+            .text-center.mt-5
               v-btn.text-none(
                 text
                 rounded
@@ -74,153 +73,111 @@
                 href='#forgot'
                 ): .caption {{ $t('auth:forgotPasswordLink') }}
               v-btn.text-none(
-                v-if='screen === "login" && selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
+                v-if='selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
                 color='indigo darken-2'
                 text
                 rounded
                 href='/register'
                 ): .caption {{ $t('auth:switchToRegister.link') }}
-      //- .login-main
-      //- v-container(grid-list-lg, fluid)
-      //-   v-row(no-gutters)
-      //-     v-col(cols='12', xl='4')
-            //- transition(name='fadeUp')
-            //-   v-card.elevation-5(v-show='isShown', light)
-            //-     v-toolbar(color='indigo', flat, dense, dark)
-            //-       v-spacer
-            //-       .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
-            //-       .subheading(v-if='screen === "changePwd"') {{ $t('auth:changePwd.subtitle') }}
-            //-       .subheading(v-else-if='selectedStrategy.key !== "local"') {{ $t('auth:loginUsingStrategy', { strategy: selectedStrategy.title, interpolation: { escapeValue: false } }) }}
-            //-       .subheading(v-else) {{ $t('auth:loginRequired') }}
-            //-       v-spacer
-            //-     v-card-text.text-center
-            //-       h1.display-1.indigo--text.py-2 {{ siteTitle }}
-            //-       template(v-if='screen === "login"')
-            //-         v-text-field.mt-3(
-            //-           solo
-            //-           flat
-            //-           prepend-icon='mdi-clipboard-account'
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptEmail'
-            //-           v-model='username'
-            //-           :placeholder='$t("auth:fields.emailUser")'
-            //-           )
-            //-         v-text-field.mt-2(
-            //-           solo
-            //-           flat
-            //-           prepend-icon='mdi-textbox-password'
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptPassword'
-            //-           v-model='password'
-            //-           :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
-            //-           @click:append='() => (hidePassword = !hidePassword)'
-            //-           :type='hidePassword ? "password" : "text"'
-            //-           :placeholder='$t("auth:fields.password")'
-            //-           @keyup.enter='login'
-            //-         )
-            //-       template(v-else-if='screen === "tfa"')
-            //-         .body-2 Enter the security code generated from your trusted device:
-            //-         v-text-field.centered.mt-2(
-            //-           solo
-            //-           flat
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptTFA'
-            //-           v-model='securityCode'
-            //-           :placeholder='$t("auth:tfa.placeholder")'
-            //-           @keyup.enter='verifySecurityCode'
-            //-         )
-            //-       template(v-else-if='screen === "changePwd"')
-            //-         .body-2 {{$t('auth:changePwd.instructions')}}
-            //-         v-text-field.mt-2(
-            //-           type='password'
-            //-           solo
-            //-           flat
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptNewPassword'
-            //-           v-model='newPassword'
-            //-           :placeholder='$t(`auth:changePwd.newPasswordPlaceholder`)'
-            //-         )
-            //-         v-text-field.mt-2(
-            //-           type='password'
-            //-           solo
-            //-           flat
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           v-model='newPasswordVerify'
-            //-           :placeholder='$t(`auth:changePwd.newPasswordVerifyPlaceholder`)'
-            //-           @keyup.enter='changePassword'
-            //-         )
-            //-       template(v-else-if='screen === "forgot"')
-            //-         .body-2 {{ $t('auth:forgotPasswordSubtitle') }}
-            //-         v-text-field.mt-3(
-            //-           solo
-            //-           flat
-            //-           prepend-icon='mdi-email'
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptEmailForgot'
-            //-           v-model='username'
-            //-           :placeholder='$t("auth:fields.email")'
-            //-           )
-            //-     v-card-actions.pb-4
-            //-       v-spacer
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-if='screen === "login"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='login'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:actions.login') }}
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-else-if='screen === "tfa"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='verifySecurityCode'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:tfa.verifyToken') }}
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-else-if='screen === "changePwd"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='changePassword'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:changePwd.proceed') }}
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-else-if='screen === "forgot"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='forgotPasswordSubmit'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:sendResetPassword') }}
-            //-       v-spacer
-            //-     v-card-actions.pb-3(v-if='screen === "login" && selectedStrategy.key === "local"')
-            //-       v-spacer
-            //-       a.caption(@click.stop.prevent='forgotPassword', href='#forgot') {{ $t('auth:forgotPasswordLink') }}
-            //-       v-spacer
-            //-     v-card-actions.pb-3(v-else-if='screen === "forgot"')
-            //-       v-spacer
-            //-       a.caption(@click.stop.prevent='screen = `login`', href='#cancelforgot') {{ $t('auth:forgotPasswordCancel') }}
-            //-       v-spacer
+        //-------------------------------------------------
+        //- FORGOT PASSWORD FORM
+        //-------------------------------------------------
+        template(v-if='screen === `forgot`')
+          .login-subtitle
+            .text-subtitle-1 Forgot your password
+          .login-info {{ $t('auth:forgotPasswordSubtitle') }}
+          .login-form
+            v-text-field(
+              solo
+              flat
+              prepend-inner-icon='mdi-clipboard-account'
+              background-color='white'
+              hide-details
+              ref='iptForgotPwdEmail'
+              v-model='username'
+              :placeholder='$t(selectedStrategy.strategy.usernameLabel)'
+              )
+            v-btn.mt-2.text-none(
+              width='100%'
+              large
+              color='primary'
+              dark
+              @click='forgotPasswordSubmit'
+              :loading='isLoading'
+              ) {{ $t('auth:sendResetPassword') }}
+            .text-center.mt-5
+              v-btn.text-none(
+                text
+                rounded
+                color='grey darken-3'
+                @click.stop.prevent='screen = `login`'
+                href='#forgot'
+                ): .caption {{ $t('auth:forgotPasswordCancel') }}
+        //-------------------------------------------------
+        //- CHANGE PASSWORD FORM
+        //-------------------------------------------------
+        template(v-if='screen === `changePwd`')
+          .login-subtitle
+            .text-subtitle-1 {{ $t('auth:changePwd.subtitle') }}
+          .login-form
+            v-text-field.mt-2(
+              type='password'
+              solo
+              flat
+              prepend-inner-icon='mdi-form-textbox-password'
+              background-color='white'
+              hide-details
+              ref='iptNewPassword'
+              v-model='newPassword'
+              :placeholder='$t(`auth:changePwd.newPasswordPlaceholder`)'
+              )
+              password-strength(slot='progress', v-model='newPassword')
+            v-text-field.mt-2(
+              type='password'
+              solo
+              flat
+              prepend-inner-icon='mdi-form-textbox-password'
+              background-color='white'
+              hide-details
+              v-model='newPasswordVerify'
+              :placeholder='$t(`auth:changePwd.newPasswordVerifyPlaceholder`)'
+              @keyup.enter='changePassword'
+            )
+            v-btn.mt-2.text-none(
+              width='100%'
+              large
+              color='primary'
+              dark
+              @click='changePassword'
+              :loading='isLoading'
+              ) {{ $t('auth:changePwd.proceed') }}
+
+    //-------------------------------------------------
+    //- TFA FORM
+    //-------------------------------------------------
+    v-dialog(v-model='isTFAShown', max-width='500', persistent)
+      v-card
+        .login-tfa.text-center.pa-5
+          img(src='_assets/svg/icon-pin-pad.svg')
+          .subtitle-2 Enter the security code generated from your trusted device:
+          v-text-field.login-tfa-field.mt-2(
+            solo
+            flat
+            background-color='white'
+            hide-details
+            ref='iptTFA'
+            v-model='securityCode'
+            :placeholder='$t("auth:tfa.placeholder")'
+            @keyup.enter='verifySecurityCode'
+          )
+          v-btn.mt-2.text-none(
+            width='100%'
+            large
+            color='primary'
+            dark
+            @click='verifySecurityCode'
+            :loading='isLoading'
+            ) {{ $t('auth:tfa.verifyToken') }}
 
     loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
     notify
@@ -265,7 +222,8 @@ export default {
       loaderTitle: 'Working...',
       isShown: false,
       newPassword: '',
-      newPasswordVerify: ''
+      newPasswordVerify: '',
+      isTFAShown: false
     }
   },
   computed: {
@@ -307,9 +265,6 @@ export default {
   },
   mounted () {
     this.isShown = true
-    this.$nextTick(() => {
-      // this.$refs.iptEmail.focus()
-    })
   },
   methods: {
     /**
@@ -614,6 +569,15 @@ export default {
       border-bottom: 1px solid rgba(0,0,0,.3);
     }
 
+    &-info {
+      border-top: 1px solid rgba(255,255,255,.85);
+      background-color: rgba(255,255,255,.15);
+      border-bottom: 1px solid rgba(0,0,0,.15);
+      padding: 12px;
+      font-size: 13px;
+      text-align: center;
+    }
+
     &-list {
       border-top: 1px solid rgba(255,255,255,.85);
       padding: 12px;
@@ -627,6 +591,15 @@ export default {
     &-main {
       flex: 1 0 100vw;
       height: 100vh;
+    }
+
+    &-tfa {
+      background-color: #EEE;
+      border: 7px solid #FFF;
+
+      &-field input {
+        text-align: center;
+      }
     }
   }
 </style>
