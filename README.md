@@ -97,6 +97,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
+- David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
 - Ernie ([@iamernie](https://github.com/iamernie))
