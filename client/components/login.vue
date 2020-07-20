@@ -40,7 +40,9 @@
               hide-details
               ref='iptEmail'
               v-model='username'
-              :placeholder='$t(selectedStrategy.strategy.usernameLabel)'
+              :placeholder='isUsernameEmail ? $t(`auth:fields.email`) : $t(`auth:fields.username`)'
+              :type='isUsernameEmail ? `email` : `text`'
+              :autocomplete='isUsernameEmail ? `email` : `username`'
               )
             v-text-field.mt-2(
               solo
@@ -54,6 +56,7 @@
               @click:append='() => (hidePassword = !hidePassword)'
               :type='hidePassword ? "password" : "text"'
               :placeholder='$t("auth:fields.password")'
+              autocomplete='current-password'
               @keyup.enter='login'
             )
             v-btn.mt-2.text-none(
@@ -95,7 +98,9 @@
               hide-details
               ref='iptForgotPwdEmail'
               v-model='username'
-              :placeholder='$t(selectedStrategy.strategy.usernameLabel)'
+              :placeholder='$t(`auth:fields.email`)'
+              type='email'
+              autocomplete='email'
               )
             v-btn.mt-2.text-none(
               width='100%'
@@ -130,6 +135,7 @@
               ref='iptNewPassword'
               v-model='newPassword'
               :placeholder='$t(`auth:changePwd.newPasswordPlaceholder`)'
+              autocomplete='new-password'
               )
               password-strength(slot='progress', v-model='newPassword')
             v-text-field.mt-2(
@@ -141,6 +147,7 @@
               hide-details
               v-model='newPasswordVerify'
               :placeholder='$t(`auth:changePwd.newPasswordVerifyPlaceholder`)'
+              autocomplete='new-password'
               @keyup.enter='changePassword'
             )
             v-btn.mt-2.text-none(
@@ -168,6 +175,7 @@
             ref='iptTFA'
             v-model='securityCode'
             :placeholder='$t("auth:tfa.placeholder")'
+            autocomplete='one-time-code'
             @keyup.enter='verifySecurityCode'
           )
           v-btn.mt-2.text-none(
@@ -210,7 +218,7 @@ export default {
       error: false,
       strategies: [],
       selectedStrategyKey: 'unselected',
-      selectedStrategy: { key: 'unselected', strategy: { useForm: false } },
+      selectedStrategy: { key: 'unselected', strategy: { useForm: false, usernameType: 'email' } },
       screen: 'login',
       username: '',
       password: '',
@@ -242,6 +250,9 @@ export default {
       } else {
         return this.strategies
       }
+    },
+    isUsernameEmail () {
+      return this.selectedStrategy.strategy.usernameType === `email`
     }
   },
   watch: {
@@ -403,7 +414,15 @@ export default {
                 icon: 'check'
               })
               _.delay(() => {
-                window.location.replace('/') // TEMPORARY - USE RETURNURL
+                const loginRedirect = Cookies.get('loginRedirect')
+                if (loginRedirect) {
+                  Cookies.remove('loginRedirect')
+                  window.location.replace(loginRedirect)
+                } else if (respObj.redirect) {
+                  window.location.replace(respObj.redirect)
+                } else {
+                  window.location.replace('/')
+                }
               }, 1000)
               this.isLoading = false
             } else {
@@ -467,7 +486,7 @@ export default {
     forgotPassword () {
       this.screen = 'forgot'
       this.$nextTick(() => {
-        this.$refs.iptEmailForgot.focus()
+        this.$refs.iptForgotPwdEmail.focus()
       })
     },
     /**
@@ -494,7 +513,7 @@ export default {
                 color
                 icon
                 useForm
-                usernameLabel
+                usernameType
               }
               displayName
               order
