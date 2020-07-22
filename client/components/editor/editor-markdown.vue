@@ -273,7 +273,6 @@ Prism.plugins.NormalizeWhitespace.setDefaults({
 let linesMap = []
 
 function initMD(renderers) {
-  console.log(`Initializing MD with ${renderers}`)
   const rendererSetting = (section, key, _default) => {
     if (renderers && renderers[section] && renderers[section].config[key]) {
       return renderers[section].config[key].value.value
