@@ -45,7 +45,7 @@
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
     v-main
-      component(:is='currentEditor', :save='save')
+      component(:is='currentEditor', :save='save', :renderers='renderers' v-if='renderers')
       editor-modal-properties(v-model='dialogProps')
       editor-modal-editorselect(v-model='dialogEditorSelector')
       editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
@@ -62,6 +62,8 @@ import { get, sync } from 'vuex-pathify'
 import { AtomSpinner } from 'epic-spinners'
 import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
+
+import renderersQuery from 'gql/admin/rendering/rendering-query-renderers.gql'
 
 import editorStore from '../store/editor'
 
@@ -172,7 +174,8 @@ export default {
         title: '',
         css: '',
         js: ''
-      }
+      },
+      renderers: null
     }
   },
   computed: {
@@ -572,6 +575,23 @@ export default {
       update: (data) => _.cloneDeep(data.pages.checkConflicts),
       skip () {
         return this.mode === 'create' || this.isSaving || !this.isDirty
+      }
+    },
+    renderers: {
+      query: renderersQuery,
+      fetchPolicy: 'network-only',
+      update: (data) => {
+        let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({
+          ...str,
+          config: _.keyBy(str.config.map(cfg => ({
+            ...cfg,
+            value: JSON.parse(cfg.value)
+          })), 'key')
+        }))
+        return _.keyBy(renderers, 'key')
+      },
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-rendering-refresh')
       }
     }
   }
