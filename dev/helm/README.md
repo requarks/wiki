@@ -56,6 +56,10 @@ To install the chart with the release name `my-release` run the following from t
 ```console
 $ helm install --name my-release . 
 ```
+With Helm 3 use:
+```console
+$ helm install <my-release-name> . 
+```
 
 The command deploys Wiki.js on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
