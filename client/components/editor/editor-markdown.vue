@@ -320,7 +320,6 @@ function initMD(renderers) {
       allowedAttributes: ['id', 'class', 'target']
     })
     .use(mdTaskLists, {label: true, labelAfter: true})
-    .use(mdExpandTabs)
     .use(mdSup)
     .use(mdSub)
     .use(mdMultiTable, {multiline: true, rowspan: true, headerless: true})
@@ -332,6 +331,11 @@ function initMD(renderers) {
   }
   if (rendererEnabled('markdownAbbr')) {
     md.use(mdAbbr)
+  }
+  if (rendererEnabled('markdownExpandtabs')) {
+    md.use(mdExpandTabs, {
+      tabWidth: _.toInteger(rendererSetting('markdownExpandtabs', 'tabWidth') || 4)
+    })
   }
   // ========================================
   // HELPER FUNCTIONS
