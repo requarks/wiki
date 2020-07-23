@@ -294,6 +294,10 @@ function initMD(renderers) {
     }
     return _default
   }
+  const rendererEnabled = (section) => {
+    return renderers && renderers[section].isEnabled
+  }
+
   // Markdown Instance
   const md = new MarkdownIt({
     html: rendererSetting('markdownCore', 'allowHTML', true),
@@ -318,7 +322,6 @@ function initMD(renderers) {
     .use(mdEmoji)
     .use(mdTaskLists, {label: true, labelAfter: true})
     .use(mdExpandTabs)
-    .use(mdAbbr)
     .use(mdSup)
     .use(mdSub)
     .use(mdMultiTable, {multiline: true, rowspan: true, headerless: true})
@@ -327,6 +330,9 @@ function initMD(renderers) {
     .use(mdImsize)
   if (rendererSetting('markdownCore', 'underline')) {
     md.use(underline)
+  }
+  if (rendererEnabled('markdownAbbr')) {
+    md.use(mdAbbr)
   }
   // ========================================
   // HELPER FUNCTIONS
