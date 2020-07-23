@@ -324,7 +324,6 @@ function initMD(renderers) {
     .use(mdSub)
     .use(mdMultiTable, {multiline: true, rowspan: true, headerless: true})
     .use(mdMark)
-    .use(mdFootnote)
     .use(mdImsize)
   if (rendererSetting('markdownCore', 'underline')) {
     md.use(underline)
@@ -336,6 +335,9 @@ function initMD(renderers) {
     md.use(mdExpandTabs, {
       tabWidth: _.toInteger(rendererSetting('markdownExpandtabs', 'tabWidth') || 4)
     })
+  }
+  if (rendererEnabled('markdownFootnotes')) {
+    md.use(mdFootnote)
   }
   // ========================================
   // HELPER FUNCTIONS
