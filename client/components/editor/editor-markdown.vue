@@ -368,14 +368,14 @@ function initMD(renderers) {
   // ========================================
   // PLANTUML
   // ========================================
-
-  plantuml.init(md, {
-    openMarker: rendererSetting('markdownPlantuml', 'openMarker'),
-    closeMarker: rendererSetting('markdownPlantuml', 'closeMarker'),
-    imageFormat: rendererSetting('markdownPlantuml', 'imageFormat'),
-    server: rendererSetting('markdownPlantuml', 'server')
-  })
-
+  if (rendererEnabled('markdownPlantuml')) {
+    plantuml.init(md, {
+      openMarker: rendererSetting('markdownPlantuml', 'openMarker'),
+      closeMarker: rendererSetting('markdownPlantuml', 'closeMarker'),
+      imageFormat: rendererSetting('markdownPlantuml', 'imageFormat'),
+      server: rendererSetting('markdownPlantuml', 'server')
+    })
+  }
   // ========================================
   // KATEX
   // ========================================
