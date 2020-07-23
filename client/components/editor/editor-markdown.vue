@@ -319,7 +319,6 @@ function initMD(renderers) {
     .use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']
     })
-    .use(mdTaskLists, {label: true, labelAfter: true})
     .use(mdMark)
   if (rendererSetting('markdownCore', 'underline')) {
     md.use(underline)
@@ -352,6 +351,9 @@ function initMD(renderers) {
     if (rendererSetting('markdownSupsub', 'subEnabled')) {
       md.use(mdSub)
     }
+  }
+  if (rendererEnabled('markdownTasklists')) {
+    md.use(mdTaskLists, {label: true, labelAfter: true})
   }
   // ========================================
   // HELPER FUNCTIONS
