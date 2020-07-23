@@ -373,32 +373,36 @@ function initMD(renderers) {
   // ========================================
   // KATEX
   // ========================================
-
-  md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
-  md.renderer.rules.katex_inline = (tokens, idx) => {
-    try {
-      return katex.renderToString(tokens[idx].content, {
-        displayMode: false
+  if (rendererEnabled('markdownKatex')) {
+    if (rendererSetting('markdownKatex', 'useInline')) {
+      md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
+      md.renderer.rules.katex_inline = (tokens, idx) => {
+        try {
+          return katex.renderToString(tokens[idx].content, {
+            displayMode: false
+          })
+        } catch (err) {
+          console.warn(err)
+          return tokens[idx].content
+        }
+      }
+    }
+    if (rendererSetting('markdownKatex', 'useBlocks')) {
+      md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
+        alt: [ 'paragraph', 'reference', 'blockquote', 'list' ]
       })
-    } catch (err) {
-      console.warn(err)
-      return tokens[idx].content
+      md.renderer.rules.katex_block = (tokens, idx) => {
+        try {
+          return `<p>` + katex.renderToString(tokens[idx].content, {
+            displayMode: true
+          }) + `</p>`
+        } catch (err) {
+          console.warn(err)
+          return tokens[idx].content
+        }
+      }
     }
   }
-  md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
-    alt: [ 'paragraph', 'reference', 'blockquote', 'list' ]
-  })
-  md.renderer.rules.katex_block = (tokens, idx) => {
-    try {
-      return `<p>` + katex.renderToString(tokens[idx].content, {
-        displayMode: true
-      }) + `</p>`
-    } catch (err) {
-      console.warn(err)
-      return tokens[idx].content
-    }
-  }
-
   // ========================================
   // TWEMOJI
   // ========================================
