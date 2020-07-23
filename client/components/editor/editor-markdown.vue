@@ -322,7 +322,6 @@ function initMD(renderers) {
     .use(mdTaskLists, {label: true, labelAfter: true})
     .use(mdSup)
     .use(mdSub)
-    .use(mdMultiTable, {multiline: true, rowspan: true, headerless: true})
     .use(mdMark)
   if (rendererSetting('markdownCore', 'underline')) {
     md.use(underline)
@@ -340,6 +339,13 @@ function initMD(renderers) {
   }
   if (rendererEnabled('markdownImsize')) {
     md.use(mdImsize)
+  }
+  if (rendererEnabled('markdownMultiTable')) {
+    md.use(mdMultiTable, {
+      multiline: rendererSetting('markdownMultiTable', 'multilineEnabled', true),
+      rowspan: rendererSetting('markdownMultiTable', 'rowspanEnabled', true),
+      headerless: rendererSetting('markdownMultiTable', 'headerlessEnabled', true)
+    })
   }
   // ========================================
   // HELPER FUNCTIONS
