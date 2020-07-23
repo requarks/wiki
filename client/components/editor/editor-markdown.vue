@@ -320,8 +320,6 @@ function initMD(renderers) {
       allowedAttributes: ['id', 'class', 'target']
     })
     .use(mdTaskLists, {label: true, labelAfter: true})
-    .use(mdSup)
-    .use(mdSub)
     .use(mdMark)
   if (rendererSetting('markdownCore', 'underline')) {
     md.use(underline)
@@ -346,6 +344,14 @@ function initMD(renderers) {
       rowspan: rendererSetting('markdownMultiTable', 'rowspanEnabled', true),
       headerless: rendererSetting('markdownMultiTable', 'headerlessEnabled', true)
     })
+  }
+  if (rendererEnabled('markdownSupsub')) {
+    if (rendererSetting('markdownSupsub', 'supEnabled')) {
+      md.use(mdSup)
+    }
+    if (rendererSetting('markdownSupsub', 'subEnabled')) {
+      md.use(mdSub)
+    }
   }
   // ========================================
   // HELPER FUNCTIONS
