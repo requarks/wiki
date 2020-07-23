@@ -319,7 +319,6 @@ function initMD(renderers) {
     .use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']
     })
-    .use(mdEmoji)
     .use(mdTaskLists, {label: true, labelAfter: true})
     .use(mdExpandTabs)
     .use(mdSup)
@@ -395,13 +394,15 @@ function initMD(renderers) {
   // ========================================
   // TWEMOJI
   // ========================================
-
-  md.renderer.rules.emoji = (token, idx) => {
-    return twemoji.parse(token[idx].content, {
-      callback (icon, opts) {
-        return `/_assets/svg/twemoji/${icon}.svg`
-      }
-    })
+  if (rendererEnabled('markdownEmoji')) {
+    md.use(mdEmoji)
+    md.renderer.rules.emoji = (token, idx) => {
+      return twemoji.parse(token[idx].content, {
+        callback (icon, opts) {
+          return `/_assets/svg/twemoji/${icon}.svg`
+        }
+      })
+    }
   }
   return md
 }
