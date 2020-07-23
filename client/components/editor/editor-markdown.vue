@@ -272,6 +272,21 @@ Prism.plugins.NormalizeWhitespace.setDefaults({
 // Inject line numbers for preview scroll sync
 let linesMap = []
 
+const quoteStyles = {
+  Chinese: '””‘’',
+  English: '“”‘’',
+  French: ['«\xA0', '\xA0»', '‹\xA0', '\xA0›'],
+  German: '„“‚‘',
+  Greek: '«»‘’',
+  Japanese: '「」「」',
+  Hungarian: '„”’’',
+  Polish: '„”‚‘',
+  Portuguese: '«»‘’',
+  Russian: '«»„“',
+  Spanish: '«»‘’',
+  Swedish: '””’’'
+}
+
 function initMD(renderers) {
   const rendererSetting = (section, key, _default) => {
     if (renderers && renderers[section] && renderers[section].config[key]) {
@@ -281,9 +296,11 @@ function initMD(renderers) {
   }
   // Markdown Instance
   const md = new MarkdownIt({
-    html: true,
-    breaks: true,
-    linkify: true,
+    html: rendererSetting('markdownCore', 'allowHTML', true),
+    breaks: rendererSetting('markdownCore', 'linebreaks', true),
+    linkify: rendererSetting('markdownCore', 'linkify', true),
+    typographer: rendererSetting('markdownCore', 'typographer', true),
+    quotes: _.get(quoteStyles, rendererSetting('markdownCore', 'quotes'), quoteStyles.English),
     typography: true,
     highlight(str, lang) {
       if (lang === 'diagram') {
@@ -298,7 +315,6 @@ function initMD(renderers) {
     .use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']
     })
-    .use(underline)
     .use(mdEmoji)
     .use(mdTaskLists, {label: true, labelAfter: true})
     .use(mdExpandTabs)
@@ -309,7 +325,9 @@ function initMD(renderers) {
     .use(mdMark)
     .use(mdFootnote)
     .use(mdImsize)
-
+  if (rendererSetting('markdownCore', 'underline')) {
+    md.use(underline)
+  }
   // ========================================
   // HELPER FUNCTIONS
   // ========================================
