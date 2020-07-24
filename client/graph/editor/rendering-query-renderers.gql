@@ -1,0 +1,12 @@
+{
+  rendering {
+    renderers {
+      isEnabled
+      key
+      config {
+        key
+        value
+      }
+    }
+  }
+}

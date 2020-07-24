@@ -290,12 +290,12 @@ const quoteStyles = {
 function initMD(renderers) {
   const rendererSetting = (section, key, _default) => {
     if (renderers && renderers[section] && renderers[section].config[key]) {
-      return renderers[section].config[key].value.value
+      return renderers[section].config[key].value
     }
     return _default
   }
   const rendererEnabled = (section) => {
-    return renderers && renderers[section].isEnabled
+    return renderers && renderers[section] && renderers[section].isEnabled
   }
 
   // Markdown Instance
