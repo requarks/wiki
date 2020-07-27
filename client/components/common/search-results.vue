@@ -166,6 +166,7 @@ export default {
   position: fixed;
   top: 64px;
   left: 0;
+  overflow-y: scroll;
   width: 100%;
   height: calc(100% - 64px);
   background-color: rgba(0,0,0,.9);
