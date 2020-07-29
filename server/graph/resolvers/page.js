@@ -565,6 +565,9 @@ module.exports = {
     }
   },
   Page: {
+    async tags (obj) {
+      return await WIKI.models.pages.relatedQuery('tags').for(obj.id)
+    }
     // comments(pg) {
     //   return pg.$relatedQuery('comments')
     // }
