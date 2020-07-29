@@ -119,7 +119,15 @@ module.exports = class Page extends Model {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
   }
-
+  /**
+   * Solving the violates foreign key constraint using cascade strategy
+   * using static hooks
+   * @see https://vincit.github.io/objection.js/api/types/#type-statichookarguments
+   */
+  static async beforeDelete({ asFindQuery }) {
+    const page = await asFindQuery().select('id')
+    await WIKI.models.comments.query().delete().where('pageId', page[0].id)
+  }
   /**
    * Cache Schema
    */
