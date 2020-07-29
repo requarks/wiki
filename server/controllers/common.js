@@ -43,8 +43,6 @@ router.get(['/a', '/a/*'], (req, res, next) => {
  */
 router.get(['/d', '/d/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
-
-  req.i18n.changeLanguage(pageArgs.locale)
   
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
 
