@@ -63,7 +63,7 @@ import { AtomSpinner } from 'epic-spinners'
 import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 
-import renderersQuery from 'gql/admin/rendering/rendering-query-renderers.gql'
+import renderersQuery from 'gql/editor/rendering-query-renderers.gql'
 
 import editorStore from '../store/editor'
 
@@ -585,7 +585,7 @@ export default {
           ...str,
           config: _.keyBy(str.config.map(cfg => ({
             ...cfg,
-            value: JSON.parse(cfg.value)
+            value: JSON.parse(cfg.value).value
           })), 'key')
         }))
         return _.keyBy(renderers, 'key')
