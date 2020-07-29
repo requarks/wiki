@@ -84,7 +84,7 @@ postgresql:
   ## Default to wiki-postgresql unless fullname override is set for Chart
   ##
   fullnameOverride: ""
-  ### PostgreSQL User to create.
+  ## PostgreSQL User to create.
   ##
   postgresqlUser: postgres
   ## PostgreSQL Database to create.
@@ -94,7 +94,7 @@ postgresql:
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
   ##
   replication:
-    ## Enable PostgreSQL replication (master/slave)
+    ## Enable PostgreSQL replication (primary/secondary)
     ##
     enabled: false
   persistence:
