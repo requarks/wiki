@@ -6,6 +6,10 @@ logo: https://static.requarks.io/logo/oidc.svg
 color: blue-grey darken-2
 website: http://openid.net/connect/
 useForm: false
+scopes:
+  - openid
+  - profile
+  - email
 props:
   clientId: String
   clientSecret: String
