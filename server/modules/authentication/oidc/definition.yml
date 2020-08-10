@@ -5,6 +5,7 @@ author: requarks.io
 logo: https://static.requarks.io/logo/oidc.svg
 color: blue-grey darken-2
 website: http://openid.net/connect/
+isAvailable: true
 useForm: false
 scopes:
   - openid
