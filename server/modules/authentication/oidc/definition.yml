@@ -12,6 +12,6 @@ props:
   authorizationURL: String
   tokenURL: String
   issuer: String
-  userInfoUrl: String
+  userInfoURL: String
   emailClaim: String
   usernameClaim: String

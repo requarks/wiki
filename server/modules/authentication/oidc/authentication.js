@@ -17,6 +17,7 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         issuer: conf.issuer,
+        userInfoURL: conf.userInfoURL,
         callbackURL: conf.callbackURL
       }, (iss, sub, profile, jwtClaims, accessToken, refreshToken, params, cb) => {
         WIKI.models.users.processProfile({
