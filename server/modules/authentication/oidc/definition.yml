@@ -18,4 +18,3 @@ props:
   issuer: String
   userInfoURL: String
   emailClaim: String
-  usernameClaim: String
