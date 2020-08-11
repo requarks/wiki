@@ -63,8 +63,6 @@ import { AtomSpinner } from 'epic-spinners'
 import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 
-import renderersQuery from 'gql/editor/rendering-query-renderers.gql'
-
 import editorStore from '../store/editor'
 
 /* global WIKI */
@@ -578,7 +576,20 @@ export default {
       }
     },
     renderers: {
-      query: renderersQuery,
+      query: gql`
+      query {
+        rendering {
+          renderers {
+            isEnabled
+            key
+            config {
+              key
+              value
+            }
+          }
+        }
+      }
+      `,
       fetchPolicy: 'network-only',
       update: (data) => {
         let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({
