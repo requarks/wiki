@@ -300,7 +300,7 @@ module.exports = {
    */
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing file move from [${page.localeCode}] ${page.path} to [${page.destinationLocaleCode}] ${page.destinationPath}...`)
-    let sourceFileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+    let sourceFileName = `${page.path}.${pageHelper.getFileExtension(page.sourceContentType || page.contentType)}`
     let destinationFileName = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 
     if (WIKI.config.lang.namespacing) {

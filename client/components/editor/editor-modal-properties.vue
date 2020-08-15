@@ -89,6 +89,23 @@
               hide-no-data
               :search-input.sync='newTagSearch'
               )
+          v-divider
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
+            .overline.pb-5 Editor
+            v-container.pa-0(fluid, grid-list-lg)
+              v-layout(row, wrap)
+                v-flex(xs12, md3)
+                  v-select(
+                    outlined
+                    label='Editor'
+                    :items='editors'
+                    v-model='editorKey'
+                    hide-details
+                  )
+                v-flex.align-self-center(xs12, md2)
+                  v-btn(color='success', depressed, @click='changeEditor', large)
+                    v-icon(left) mdi-check
+                    span Save & Refresh
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
             .overline {{$t('editor:props.publishState')}}
@@ -271,6 +288,7 @@ export default {
       newTag: '',
       newTagSuggestions: [],
       newTagSearch: '',
+      editors: [{text: 'CODE', value: 'code'}, {text: 'MARKDOWN', value: 'markdown'}, {text: 'VISUAL', value: 'ckeditor'}],
       currentTab: 0,
       cm: null
     }
@@ -280,6 +298,7 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
+    editorKey: sync('editor/editorKey'),
     mode: get('editor/mode'),
     title: sync('page/title'),
     description: sync('page/description'),
@@ -348,6 +367,10 @@ export default {
     setPath({ path, locale }) {
       this.locale = locale
       this.path = path
+    },
+    async changeEditor() {
+      this.close()
+      this.$emit('editor_changed')
     },
     loadEditor(ref, mode) {
       this.cm = CodeMirror.fromTextArea(ref, {

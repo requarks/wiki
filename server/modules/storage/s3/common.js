@@ -10,8 +10,9 @@ const pageHelper = require('../../../helpers/page.js')
 /**
  * Deduce the file path given the `page` object and the object's key to the page's path.
  */
-const getFilePath = (page, pathKey) => {
-  const fileName = `${page[pathKey]}.${pageHelper.getFileExtension(page.contentType)}`
+const getFilePath = (page, pathKey, isSource) => {
+  const fileName = `${page[pathKey]}.${
+    pageHelper.getFileExtension((isSource ? page.sourceContentType : undefined) || page.contentType)}`
   const withLocaleCode = WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode
   return withLocaleCode ? `${page.localeCode}/${fileName}` : fileName
 }
@@ -79,7 +80,7 @@ module.exports = class S3CompatibleStorage {
   }
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Renaming file ${page.path} to ${page.destinationPath}...`)
-    let sourceFilePath = getFilePath(page, 'path')
+    let sourceFilePath = getFilePath(page, 'path', true)
     let destinationFilePath = getFilePath(page, 'destinationPath')
     if (WIKI.config.lang.namespacing) {
       if (WIKI.config.lang.code !== page.localeCode) {

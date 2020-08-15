@@ -75,7 +75,7 @@ module.exports = {
   async renamed(page) {
     WIKI.logger.info(`(STORAGE/DISK) Renaming file [${page.localeCode}] ${page.path} to [${page.destinationLocaleCode}] ${page.destinationPath}...`)
 
-    let sourceFilePath = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+    let sourceFilePath = `${page.path}.${pageHelper.getFileExtension(page.sourceContentType || page.contentType)}`
     let destinationFilePath = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 
     if (WIKI.config.lang.namespacing) {
