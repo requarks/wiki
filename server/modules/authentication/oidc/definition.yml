@@ -5,13 +5,17 @@ author: requarks.io
 logo: https://static.requarks.io/logo/oidc.svg
 color: blue-grey darken-2
 website: http://openid.net/connect/
+isAvailable: true
 useForm: false
+scopes:
+  - openid
+  - profile
+  - email
 props:
   clientId: String
   clientSecret: String
   authorizationURL: String
   tokenURL: String
   issuer: String
-  userInfoUrl: String
+  userInfoURL: String
   emailClaim: String
-  usernameClaim: String
