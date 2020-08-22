@@ -314,7 +314,7 @@ export default {
             this.$vuetify.goTo(`#comment-post-id-${_.get(resp, 'data.comments.create.id', 0)}`, this.scrollOpts)
           })
         } else {
-          throw new Error(_.get(resp, 'data.comments.create.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.comments.create.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         this.$store.commit('showNotification', {
@@ -420,7 +420,7 @@ export default {
 
           this.editCommentCancel()
         } else {
-          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         console.warn(err)
@@ -482,7 +482,7 @@ export default {
 
           this.comments = _.reject(this.comments, ['id', this.commentToDelete.id])
         } else {
-          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.comments.delete.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         this.$store.commit('showNotification', {

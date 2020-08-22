@@ -174,7 +174,8 @@
                   v-icon mdi-two-factor-authentication
                 v-list-item-content
                   v-list-item-title {{$t('admin:users.tfa')}}
-                  v-list-item-subtitle.red--text Inactive
+                  v-list-item-subtitle.green--text(v-if='user.tfaIsActive') Active
+                  v-list-item-subtitle.red--text(v-else) Inactive
                 v-list-item-action
                   v-tooltip(top)
                     template(v-slot:activator='{ on }')
@@ -709,7 +710,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -749,7 +750,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -798,7 +799,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.delete.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.delete.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -864,7 +865,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.update.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.update.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -935,7 +936,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -962,6 +963,7 @@ export default {
               createdAt
               updatedAt
               lastLoginAt
+              tfaIsActive
               groups {
                 id
                 name

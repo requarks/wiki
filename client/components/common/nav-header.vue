@@ -172,6 +172,19 @@
               span {{$t('common:header.newPage')}}
             v-divider(vertical)
 
+          //- ADMIN
+
+          template(v-if='isAuthenticated && isAdmin')
+            v-tooltip(bottom, v-if='mode !== `admin`')
+              template(v-slot:activator='{ on }')
+                v-btn(icon, tile, height='64', v-on='on', href='/a', :aria-label='$t(`common:header.admin`)')
+                  v-icon(color='grey') mdi-cog
+              span {{$t('common:header.admin')}}
+            v-btn(v-else, text, tile, height='64', href='/', :aria-label='$t(`common:actions.exit`)')
+              v-icon(left, color='grey') mdi-exit-to-app
+              span {{$t('common:actions.exit')}}
+            v-divider(vertical)
+
           //- ACCOUNT
 
           v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition', left)
@@ -210,9 +223,6 @@
                 v-list-item-action: v-icon(color='blue-grey') mdi-face-profile
                 v-list-item-content
                   v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.profile')}}
-              v-list-item(href='/a', v-if='isAuthenticated && isAdmin')
-                v-list-item-action.btn-animate-rotate: v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-3` : `blue-grey`') mdi-cog
-                v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.admin')}}
               v-list-item(@click='logout')
                 v-list-item-action: v-icon(color='red') mdi-logout
                 v-list-item-title.red--text {{$t('common:header.logout')}}

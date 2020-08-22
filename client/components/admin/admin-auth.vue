@@ -74,7 +74,7 @@
               span {{strategy.strategy.description}}
               .caption: a(:href='strategy.strategy.website') {{strategy.strategy.website}}
             v-spacer
-            .authlogo
+            .admin-providerlogo
               img(:src='strategy.strategy.logo', :alt='strategy.strategy.title')
           v-card-text
             .overline.mb-5 {{$t('admin:auth.strategyConfiguration')}}
@@ -423,22 +423,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss' scoped>
-
-.authlogo {
-  width: 250px;
-  height: 60px;
-  float:right;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-left: 16px;
-
-  img {
-    max-width: 100%;
-    max-height: 50px;
-  }
-}
-
-</style>

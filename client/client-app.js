@@ -64,7 +64,7 @@ const graphQLLink = ApolloLink.from([
       })
       store.commit('showNotification', {
         style: 'red',
-        message: isAuthError ? `You are not authorized to access this resource.` : `An unexpected error occured.`,
+        message: isAuthError ? `You are not authorized to access this resource.` : `An unexpected error occurred.`,
         icon: 'alert'
       })
     }

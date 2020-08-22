@@ -140,6 +140,7 @@ type User {
   createdAt: Date!
   updatedAt: Date!
   lastLoginAt: Date
+  tfaIsActive: Boolean!
   groups: [Group]!
 }
 

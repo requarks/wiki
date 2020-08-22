@@ -44,6 +44,7 @@ type AuthenticationMutation {
   loginTFA(
     continuationToken: String!
     securityCode: String!
+    setup: Boolean
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   loginChangePassword(
@@ -108,8 +109,10 @@ type AuthenticationLoginResponse {
   jwt: String
   mustChangePwd: Boolean
   mustProvideTFA: Boolean
+  mustSetupTFA: Boolean
   continuationToken: String
   redirect: String
+  tfaQRImage: String
 }
 
 type AuthenticationRegisterResponse {

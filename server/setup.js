@@ -442,7 +442,7 @@ module.exports = () => {
     WIKI.logger.info('HTTP Server: [ RUNNING ]')
     WIKI.logger.info('🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻')
     WIKI.logger.info('')
-    WIKI.logger.info(`Browse to http://localhost:${WIKI.config.port}/ to complete setup!`)
+    WIKI.logger.info(`Browse to http://YOUR-SERVER-IP:${WIKI.config.port}/ to complete setup!`)
     WIKI.logger.info('')
     WIKI.logger.info('🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺')
   })

@@ -2,17 +2,27 @@
   v-app
     .login(:style='`background-image: url(` + bgUrl + `);`')
       .login-sd
-        .d-flex
+        .d-flex.mb-5
           .login-logo
             v-avatar(tile, size='34')
               v-img(:src='logoUrl')
           .login-title
             .text-h6 {{ siteTitle }}
+        v-alert.mb-0(
+          v-model='errorShown'
+          transition='slide-y-reverse-transition'
+          color='red darken-2'
+          tile
+          dark
+          dense
+          icon='mdi-alert'
+          )
+          .body-2 {{errorMessage}}
         //-------------------------------------------------
         //- PROVIDERS LIST
         //-------------------------------------------------
         template(v-if='screen === `login` && strategies.length > 1')
-          .login-subtitle.mt-5
+          .login-subtitle
             .text-subtitle-1 Select Authentication Provider
           .login-list
             v-list.elevation-1.radius-7(nav)
@@ -176,19 +186,51 @@
             v-model='securityCode'
             :placeholder='$t("auth:tfa.placeholder")'
             autocomplete='one-time-code'
-            @keyup.enter='verifySecurityCode'
+            @keyup.enter='verifySecurityCode(false)'
           )
           v-btn.mt-2.text-none(
             width='100%'
             large
             color='primary'
             dark
-            @click='verifySecurityCode'
+            @click='verifySecurityCode(false)'
+            :loading='isLoading'
+            ) {{ $t('auth:tfa.verifyToken') }}
+
+    //-------------------------------------------------
+    //- SETUP TFA FORM
+    //-------------------------------------------------
+    v-dialog(v-model='isTFASetupShown', max-width='600', persistent)
+      v-card
+        .login-tfa.text-center.pa-5
+          .subtitle-1.primary--text Your administrator has required Two-Factor Authentication (2FA) to be enabled on your account.
+          v-divider.my-5
+          .subtitle-2 1) Scan the QR code below from your mobile 2FA application:
+          .caption (e.g. #[a(href='https://authy.com/', target='_blank', noopener) Authy], #[a(href='https://support.google.com/accounts/answer/1066447', target='_blank', noopener) Google Authenticator], #[a(href='https://www.microsoft.com/en-us/account/authenticator', target='_blank', noopener) Microsoft Authenticator], etc.)
+          .login-tfa-qr.mt-5(v-if='isTFASetupShown', v-html='tfaQRImage')
+          .subtitle-2.mt-5 2) Enter the security code generated from your trusted device:
+          v-text-field.login-tfa-field.mt-2(
+            solo
+            flat
+            background-color='white'
+            hide-details
+            ref='iptTFASetup'
+            v-model='securityCode'
+            :placeholder='$t("auth:tfa.placeholder")'
+            autocomplete='one-time-code'
+            @keyup.enter='verifySecurityCode(true)'
+          )
+          v-btn.mt-2.text-none(
+            width='100%'
+            large
+            color='primary'
+            dark
+            @click='verifySecurityCode(true)'
             :loading='isLoading'
             ) {{ $t('auth:tfa.verifyToken') }}
 
     loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
-    notify
+    notify(style='padding-top: 64px;')
 </template>
 
 <script>
@@ -231,7 +273,11 @@ export default {
       isShown: false,
       newPassword: '',
       newPasswordVerify: '',
-      isTFAShown: false
+      isTFAShown: false,
+      isTFASetupShown: false,
+      tfaQRImage: '',
+      errorShown: false,
+      errorMessage: ''
     }
   },
   computed: {
@@ -282,26 +328,21 @@ export default {
      * LOGIN
      */
     async login () {
+      this.errorShown = false
       if (this.username.length < 2) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: this.$t('auth:invalidEmailUsername'),
-          icon: 'alert'
-        })
+        this.errorMessage = this.$t('auth:invalidEmailUsername')
+        this.errorShown = true
         this.$refs.iptEmail.focus()
       } else if (this.password.length < 2) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: this.$t('auth:invalidPassword'),
-          icon: 'alert'
-        })
+        this.errorMessage = this.$t('auth:invalidPassword')
+        this.errorShown = true
         this.$refs.iptPassword.focus()
       } else {
         this.loaderColor = 'grey darken-4'
         this.loaderTitle = this.$t('auth:signingIn')
         this.isLoading = true
         try {
-          let resp = await this.$apollo.mutate({
+          const resp = await this.$apollo.mutate({
             mutation: gql`
               mutation($username: String!, $password: String!, $strategy: String!) {
                 authentication {
@@ -315,8 +356,10 @@ export default {
                     jwt
                     mustChangePwd
                     mustProvideTFA
+                    mustSetupTFA
                     continuationToken
                     redirect
+                    tfaQRImage
                   }
                 }
               }
@@ -328,38 +371,9 @@ export default {
             }
           })
           if (_.has(resp, 'data.authentication.login')) {
-            let respObj = _.get(resp, 'data.authentication.login', {})
+            const respObj = _.get(resp, 'data.authentication.login', {})
             if (respObj.responseResult.succeeded === true) {
-              this.continuationToken = respObj.continuationToken
-              if (respObj.mustChangePwd === true) {
-                this.screen = 'changePwd'
-                this.$nextTick(() => {
-                  this.$refs.iptNewPassword.focus()
-                })
-                this.isLoading = false
-              } else if (respObj.mustProvideTFA === true) {
-                this.screen = 'tfa'
-                this.securityCode = ''
-                this.$nextTick(() => {
-                  this.$refs.iptTFA.focus()
-                })
-                this.isLoading = false
-              } else {
-                this.loaderColor = 'green darken-1'
-                this.loaderTitle = this.$t('auth:loginSuccess')
-                Cookies.set('jwt', respObj.jwt, { expires: 365 })
-                _.delay(() => {
-                  const loginRedirect = Cookies.get('loginRedirect')
-                  if (loginRedirect) {
-                    Cookies.remove('loginRedirect')
-                    window.location.replace(loginRedirect)
-                  } else if (respObj.redirect) {
-                    window.location.replace(respObj.redirect)
-                  } else {
-                    window.location.replace('/')
-                  }
-                }, 1000)
-              }
+              this.handleLoginResponse(respObj)
             } else {
               throw new Error(respObj.responseResult.message)
             }
@@ -380,58 +394,70 @@ export default {
     /**
      * VERIFY TFA CODE
      */
-    verifySecurityCode () {
+    async verifySecurityCode (setup = false) {
       if (this.securityCode.length !== 6) {
         this.$store.commit('showNotification', {
           style: 'red',
           message: 'Enter a valid security code.',
-          icon: 'warning'
+          icon: 'alert'
         })
-        this.$refs.iptTFA.focus()
+        if (setup) {
+          this.$refs.iptTFASetup.focus()
+        } else {
+          this.$refs.iptTFA.focus()
+        }
       } else {
+        this.loaderColor = 'grey darken-4'
+        this.loaderTitle = this.$t('auth:signingIn')
         this.isLoading = true
-        this.$apollo.mutate({
-          mutation: gql`
-            {
-              authentication {
-                activeStrategies {
-                  key
+        try {
+          const resp = await this.$apollo.mutate({
+            mutation: gql`
+              mutation(
+                $continuationToken: String!
+                $securityCode: String!
+                $setup: Boolean
+                ) {
+                authentication {
+                  loginTFA(
+                    continuationToken: $continuationToken
+                    securityCode: $securityCode
+                    setup: $setup
+                    ) {
+                    responseResult {
+                      succeeded
+                      errorCode
+                      slug
+                      message
+                    }
+                    jwt
+                    mustChangePwd
+                    continuationToken
+                    redirect
+                  }
                 }
               }
+            `,
+            variables: {
+              continuationToken: this.continuationToken,
+              securityCode: this.securityCode,
+              setup
             }
-          `,
-          variables: {
-            continuationToken: this.continuationToken,
-            securityCode: this.securityCode
-          }
-        }).then(resp => {
+          })
           if (_.has(resp, 'data.authentication.loginTFA')) {
             let respObj = _.get(resp, 'data.authentication.loginTFA', {})
             if (respObj.responseResult.succeeded === true) {
-              this.$store.commit('showNotification', {
-                message: 'Login successful!',
-                style: 'success',
-                icon: 'check'
-              })
-              _.delay(() => {
-                const loginRedirect = Cookies.get('loginRedirect')
-                if (loginRedirect) {
-                  Cookies.remove('loginRedirect')
-                  window.location.replace(loginRedirect)
-                } else if (respObj.redirect) {
-                  window.location.replace(respObj.redirect)
-                } else {
-                  window.location.replace('/')
-                }
-              }, 1000)
-              this.isLoading = false
+              this.handleLoginResponse(respObj)
             } else {
+              if (!setup) {
+                this.isTFAShown = false
+              }
               throw new Error(respObj.responseResult.message)
             }
           } else {
             throw new Error(this.$t('auth:genericError'))
           }
-        }).catch(err => {
+        } catch (err) {
           console.error(err)
           this.$store.commit('showNotification', {
             style: 'red',
@@ -439,7 +465,7 @@ export default {
             icon: 'alert'
           })
           this.isLoading = false
-        })
+        }
       }
     },
     /**
@@ -498,6 +524,46 @@ export default {
         message: 'Coming soon!',
         icon: 'ferry'
       })
+    },
+    handleLoginResponse (respObj) {
+      this.continuationToken = respObj.continuationToken
+      if (respObj.mustChangePwd === true) {
+        this.screen = 'changePwd'
+        this.$nextTick(() => {
+          this.$refs.iptNewPassword.focus()
+        })
+        this.isLoading = false
+      } else if (respObj.mustProvideTFA === true) {
+        this.securityCode = ''
+        this.isTFAShown = true
+        setTimeout(() => {
+          this.$refs.iptTFA.focus()
+        }, 500)
+        this.isLoading = false
+      } else if (respObj.mustSetupTFA === true) {
+        this.securityCode = ''
+        this.isTFASetupShown = true
+        this.tfaQRImage = respObj.tfaQRImage
+        setTimeout(() => {
+          this.$refs.iptTFASetup.focus()
+        }, 500)
+        this.isLoading = false
+      } else {
+        this.loaderColor = 'green darken-1'
+        this.loaderTitle = this.$t('auth:loginSuccess')
+        Cookies.set('jwt', respObj.jwt, { expires: 365 })
+        _.delay(() => {
+          const loginRedirect = Cookies.get('loginRedirect')
+          if (loginRedirect) {
+            Cookies.remove('loginRedirect')
+            window.location.replace(loginRedirect)
+          } else if (respObj.redirect) {
+            window.location.replace(respObj.redirect)
+          } else {
+            window.location.replace('/')
+          }
+        }, 1000)
+      }
     }
   },
   apollo: {
@@ -618,6 +684,15 @@ export default {
 
       &-field input {
         text-align: center;
+      }
+
+      &-qr {
+        background-color: #FFF;
+        padding: 5px;
+        border-radius: 5px;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
       }
     }
   }

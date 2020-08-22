@@ -309,6 +309,21 @@ export default {
   }
 }
 
+.admin-providerlogo {
+  width: 250px;
+  height: 50px;
+  float: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-left: 16px;
+
+  img {
+    max-width: 100%;
+    max-height: 50px;
+  }
+}
+
 .v-application.admin {
   code {
     box-shadow: none;

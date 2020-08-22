@@ -6,6 +6,7 @@ const tfa = require('node-2fa')
 const jwt = require('jsonwebtoken')
 const Model = require('objection').Model
 const validate = require('validate.js')
+const qr = require('qr-image')
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
@@ -118,13 +119,21 @@ module.exports = class User extends Model {
     }
   }
 
-  async enableTFA() {
+  async generateTFA() {
     let tfaInfo = tfa.generateSecret({
-      name: WIKI.config.site.title
+      name: WIKI.config.title,
+      account: this.email
     })
-    return this.$query.patch({
-      tfaIsActive: true,
+    await WIKI.models.users.query().findById(this.id).patch({
+      tfaIsActive: false,
       tfaSecret: tfaInfo.secret
+    })
+    return qr.imageSync(`otpauth://totp/${WIKI.config.title}:${this.email}?secret=${tfaInfo.secret}`, { type: 'svg' })
+  }
+
+  async enableTFA() {
+    return WIKI.models.users.query().findById(this.id).patch({
+      tfaIsActive: true
     })
   }
 
@@ -135,7 +144,7 @@ module.exports = class User extends Model {
     })
   }
 
-  async verifyTFA(code) {
+  verifyTFA(code) {
     let result = tfa.verifyToken(this.tfaSecret, code)
     return (result && _.has(result, 'delta') && result.delta === 0)
   }
@@ -281,60 +290,90 @@ module.exports = class User extends Model {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
-          // Get redirect target
-          user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
-          let redirect = '/'
-          if (user.groups && user.groups.length > 0) {
-            redirect = user.groups[0].redirectOnLogin
+          try {
+            const resp = await WIKI.models.users.afterLoginChecks(user, context)
+            resolve(resp)
+          } catch (err) {
+            reject(err)
           }
-
-          // Must Change Password?
-          if (user.mustChangePwd) {
-            try {
-              const pwdChangeToken = await WIKI.models.userKeys.generateToken({
-                kind: 'changePwd',
-                userId: user.id
-              })
-
-              return resolve({
-                mustChangePwd: true,
-                continuationToken: pwdChangeToken,
-                redirect
-              })
-            } catch (errc) {
-              WIKI.logger.warn(errc)
-              return reject(new WIKI.Error.AuthGenericError())
-            }
-          }
-
-          // Is 2FA required?
-          if (user.tfaIsActive) {
-            try {
-              const tfaToken = await WIKI.models.userKeys.generateToken({
-                kind: 'tfa',
-                userId: user.id
-              })
-              return resolve({
-                tfaRequired: true,
-                continuationToken: tfaToken,
-                redirect
-              })
-            } catch (errc) {
-              WIKI.logger.warn(errc)
-              return reject(new WIKI.Error.AuthGenericError())
-            }
-          }
-
-          context.req.logIn(user, { session: !strInfo.useForm }, async errc => {
-            if (errc) { return reject(errc) }
-            const jwtToken = await WIKI.models.users.refreshToken(user)
-            resolve({ jwt: jwtToken.token, redirect })
-          })
         })(context.req, context.res, () => {})
       })
     } else {
       throw new WIKI.Error.AuthProviderInvalid()
     }
+  }
+
+  static async afterLoginChecks (user, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
+    // Get redirect target
+    user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
+    let redirect = '/'
+    if (user.groups && user.groups.length > 0) {
+      redirect = user.groups[0].redirectOnLogin
+    }
+
+    // Is 2FA required?
+    if (!skipTFA) {
+      if (user.tfaIsActive && user.tfaSecret) {
+        try {
+          const tfaToken = await WIKI.models.userKeys.generateToken({
+            kind: 'tfa',
+            userId: user.id
+          })
+          return {
+            mustProvideTFA: true,
+            continuationToken: tfaToken,
+            redirect
+          }
+        } catch (errc) {
+          WIKI.logger.warn(errc)
+          throw new WIKI.Error.AuthGenericError()
+        }
+      } else if (WIKI.config.auth.enforce2FA || (user.tfaIsActive && !user.tfaSecret)) {
+        try {
+          const tfaQRImage = await user.generateTFA()
+          const tfaToken = await WIKI.models.userKeys.generateToken({
+            kind: 'tfaSetup',
+            userId: user.id
+          })
+          return {
+            mustSetupTFA: true,
+            continuationToken: tfaToken,
+            tfaQRImage,
+            redirect
+          }
+        } catch (errc) {
+          WIKI.logger.warn(errc)
+          throw new WIKI.Error.AuthGenericError()
+        }
+      }
+    }
+
+    // Must Change Password?
+    if (!skipChangePwd && user.mustChangePwd) {
+      try {
+        const pwdChangeToken = await WIKI.models.userKeys.generateToken({
+          kind: 'changePwd',
+          userId: user.id
+        })
+
+        return {
+          mustChangePwd: true,
+          continuationToken: pwdChangeToken,
+          redirect
+        }
+      } catch (errc) {
+        WIKI.logger.warn(errc)
+        throw new WIKI.Error.AuthGenericError()
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      context.req.login(user, { session: false }, async errc => {
+        if (errc) { return reject(errc) }
+        const jwtToken = await WIKI.models.users.refreshToken(user)
+        resolve({ jwt: jwtToken.token, redirect })
+      })
+    })
   }
 
   static async refreshToken(user) {
@@ -384,26 +423,21 @@ module.exports = class User extends Model {
     }
   }
 
-  static async loginTFA (opts, context) {
-    if (opts.securityCode.length === 6 && opts.loginToken.length === 64) {
-      let result = await WIKI.redis.get(`tfa:${opts.loginToken}`)
-      if (result) {
-        let userId = _.toSafeInteger(result)
-        if (userId && userId > 0) {
-          let user = await WIKI.models.users.query().findById(userId)
-          if (user && user.verifyTFA(opts.securityCode)) {
-            return Promise.fromCallback(clb => {
-              context.req.logIn(user, clb)
-            }).return({
-              succeeded: true,
-              message: 'Login Successful'
-            }).catch(err => {
-              WIKI.logger.warn(err)
-              throw new WIKI.Error.AuthGenericError()
-            })
-          } else {
-            throw new WIKI.Error.AuthTFAFailed()
+  static async loginTFA ({ securityCode, continuationToken, setup }, context) {
+    if (securityCode.length === 6 && continuationToken.length > 1) {
+      const user = await WIKI.models.userKeys.validateToken({
+        kind: setup ? 'tfaSetup' : 'tfa',
+        token: continuationToken,
+        skipDelete: setup
+      })
+      if (user) {
+        if (user.verifyTFA(securityCode)) {
+          if (setup) {
+            await user.enableTFA()
           }
+          return WIKI.models.users.afterLoginChecks(user, context, { skipTFA: true })
+        } else {
+          throw new WIKI.Error.AuthTFAFailed()
         }
       }
     }

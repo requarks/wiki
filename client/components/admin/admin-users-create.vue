@@ -212,7 +212,7 @@ export default {
         } else {
           this.$store.commit('showNotification', {
             style: 'red',
-            message: _.get(resp, 'data.users.create.responseResult.message', 'An unexpected error occured.'),
+            message: _.get(resp, 'data.users.create.responseResult.message', 'An unexpected error occurred.'),
             icon: 'alert'
           })
         }

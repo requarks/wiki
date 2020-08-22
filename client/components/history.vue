@@ -418,7 +418,7 @@ export default {
             window.location.assign(`/${this.locale}/${this.path}`)
           }, 1000)
         } else {
-          throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occured'))
+          throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occurred'))
         }
       } catch (err) {
         this.$store.commit('showNotification', {

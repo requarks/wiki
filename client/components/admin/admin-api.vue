@@ -131,7 +131,7 @@ export default {
         } else {
           this.$store.commit('showNotification', {
             style: 'red',
-            message: _.get(resp, 'data.authentication.setApiState.responseResult.message', 'An unexpected error occured.'),
+            message: _.get(resp, 'data.authentication.setApiState.responseResult.message', 'An unexpected error occurred.'),
             icon: 'alert'
           })
         }
@@ -182,7 +182,7 @@ export default {
         } else {
           this.$store.commit('showNotification', {
             style: 'red',
-            message: _.get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occured.'),
+            message: _.get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occurred.'),
             icon: 'alert'
           })
         }
