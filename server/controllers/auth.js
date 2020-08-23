@@ -135,10 +135,14 @@ router.get('/verify/:token', bruteforce.prevent, async (req, res, next) => {
   try {
     const usr = await WIKI.models.userKeys.validateToken({ kind: 'verify', token: req.params.token })
     await WIKI.models.users.query().patch({ isVerified: true }).where('id', usr.id)
-    const result = await WIKI.models.users.refreshToken(usr)
     req.brute.reset()
-    res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
-    res.redirect('/')
+    if (WIKI.config.auth.enforce2FA) {
+      res.redirect('/login')
+    } else {
+      const result = await WIKI.models.users.refreshToken(usr)
+      res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
+      res.redirect('/')
+    }
   } catch (err) {
     next(err)
   }
