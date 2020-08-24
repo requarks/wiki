@@ -229,7 +229,7 @@ module.exports = {
     message: 'An unexpected error occured during user creation.',
     code: 1009
   }),
-  UserDeleteForeignConstraint: CustomError('UserCreationFailed', {
+  UserDeleteForeignConstraint: CustomError('UserDeleteForeignConstraint', {
     message: 'Cannot delete user because of content relational constraints.',
     code: 1017
   }),
