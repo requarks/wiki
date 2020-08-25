@@ -24,6 +24,7 @@ services:
       DB_USER: wikijs
       DB_PASS: wikijsrocks
       DB_NAME: wiki
+      LOGLEVEL: info
     restart: unless-stopped
     ports:
       - "80:3000"
