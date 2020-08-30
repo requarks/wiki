@@ -23,9 +23,11 @@ module.exports = {
         .select('id', 'email', 'name', 'providerKey', 'createdAt')
     },
     async single(obj, args, context, info) {
+      console.info(WIKI.auth.strategies)
       let usr = await WIKI.models.users.query().findById(args.id)
       usr.password = ''
       usr.tfaSecret = ''
+      usr.providerName = _.get(WIKI.auth.strategies, usr.providerKey).displayName
       return usr
     },
     async profile (obj, args, context, info) {
@@ -37,9 +39,9 @@ module.exports = {
         throw new WIKI.Error.AuthAccountBanned()
       }
 
-      const providerInfo = _.find(WIKI.data.authentication, ['key', usr.providerKey])
+      const providerInfo = _.get(WIKI.auth.strategies, usr.providerKey, {})
 
-      usr.providerName = _.get(providerInfo, 'title', 'Unknown')
+      usr.providerName = providerInfo.displayName || 'Unknown'
       usr.lastLoginAt = usr.lastLoginAt || usr.updatedAt
       usr.password = ''
       usr.providerId = ''

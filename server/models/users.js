@@ -163,7 +163,7 @@ module.exports = class User extends Model {
 
   static async processProfile({ profile, providerKey }) {
     const provider = _.get(WIKI.auth.strategies, providerKey, {})
-    provider.info = _.find(WIKI.data.authentication, ['key', providerKey])
+    provider.info = _.find(WIKI.data.authentication, ['key', provider.stategyKey])
 
     // Find existing user
     let user = await WIKI.models.users.query().findOne({
@@ -273,7 +273,8 @@ module.exports = class User extends Model {
 
   static async login (opts, context) {
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
-      const strInfo = _.find(WIKI.data.authentication, ['key', opts.strategy])
+      const selStrategy = _.get(WIKI.auth.strategies, opts.strategy)
+      const strInfo = _.find(WIKI.data.authentication, ['key', selStrategy.strategyKey])
 
       // Inject form user/pass
       if (strInfo.useForm) {
@@ -283,7 +284,7 @@ module.exports = class User extends Model {
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate(opts.strategy, {
+        WIKI.auth.passport.authenticate(selStrategy.strategyKey, {
           session: !strInfo.useForm,
           scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
@@ -291,7 +292,10 @@ module.exports = class User extends Model {
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
           try {
-            const resp = await WIKI.models.users.afterLoginChecks(user, context)
+            const resp = await WIKI.models.users.afterLoginChecks(user, context, {
+              skipTFA: !strInfo.useForm,
+              skipChangePwd: !strInfo.useForm
+            })
             resolve(resp)
           } catch (err) {
             reject(err)

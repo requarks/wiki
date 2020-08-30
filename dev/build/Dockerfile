@@ -1,7 +1,7 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:12-alpine AS assets
+FROM node:14-alpine AS assets
 
 RUN apk add yarn g++ make python --no-cache
 
@@ -23,10 +23,10 @@ RUN yarn --production --frozen-lockfile --non-interactive
 # ===============
 # --- Release ---
 # ===============
-FROM node:12-alpine
+FROM node:14-alpine
 LABEL maintainer="requarks.io"
 
-RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
+RUN apk add bash curl git openssh gnupg sqlite pandoc --no-cache && \
     mkdir -p /wiki && \
     mkdir -p /logs && \
     mkdir -p /wiki/data/content && \

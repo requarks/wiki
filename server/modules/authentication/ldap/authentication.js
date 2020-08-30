@@ -28,7 +28,7 @@ module.exports = {
         usernameField: 'email',
         passwordField: 'password',
         passReqToCallback: false
-      }, async (profile, cb) => {
+      }, async (req, profile, cb) => {
         try {
           const userId = _.get(profile, conf.mappingUID, null)
           if (!userId) {
@@ -36,13 +36,13 @@ module.exports = {
           }
 
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               id: userId,
               email: String(_.get(profile, conf.mappingEmail, '')).split(',')[0],
               displayName: _.get(profile, conf.mappingDisplayName, '???'),
               picture: _.get(profile, conf.mappingPicture, '')
-            },
-            providerKey: 'ldap'
+            }
           })
           cb(null, user)
         } catch (err) {

@@ -18,18 +18,19 @@ module.exports = {
         clientSecret: conf.clientSecret,
         issuer: conf.issuer,
         userInfoURL: conf.userInfoURL,
-        callbackURL: conf.callbackURL
-      }, async (iss, sub, profile, cb) => {
+        callbackURL: conf.callbackURL,
+        passReqToCallback: true
+      }, async (req, iss, sub, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               ...profile,
               email: _.get(profile, '_json.' + conf.emailClaim)
-            },
-            providerKey: 'oidc'
+            }
           })
           cb(null, user)
-        } catch(err) {
+        } catch (err) {
           cb(err, null)
         }
       })

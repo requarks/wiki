@@ -161,7 +161,7 @@
                 autocomplete='off'
                 hide-details
                 )
-          v-card-chin
+          v-card-chin(v-if='user.providerKey === `local`')
             v-spacer
             v-btn.px-4(color='purple darken-4', dark, depressed, @click='changePassword', :loading='changePassLoading')
               v-icon(left) mdi-progress-check

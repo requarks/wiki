@@ -1,11 +1,11 @@
 # -- DEV DOCKERFILE --
 # -- DO NOT USE IN PRODUCTION! --
 
-FROM node:12
+FROM node:14
 LABEL maintainer "requarks.io"
 
 RUN apt-get update && \
-    apt-get install -y bash curl git python make g++ nano openssh-server gnupg && \
+    apt-get install -y bash curl git python make g++ nano openssh-server gnupg pandoc && \
     mkdir -p /wiki
 
 WORKDIR /wiki

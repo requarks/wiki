@@ -125,7 +125,7 @@
                 v-icon mdi-domain
               v-list-item-content
                 v-list-item-title {{$t('admin:users.authProvider')}}
-                v-list-item-subtitle {{ user.providerKey }}
+                v-list-item-subtitle {{ user.providerName }} #[em.caption ({{ user.providerKey }})]
               //- v-list-item-action
               //-   v-img(src='https://static.requarks.io/logo/wikijs.svg', alt='', contain, max-height='32', position='center right')
             template(v-if='user.providerKey === `local`')
@@ -953,6 +953,7 @@ export default {
               name
               email
               providerKey
+              providerName
               providerId
               location
               jobTitle

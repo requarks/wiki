@@ -11,14 +11,19 @@ module.exports = {
     passport.use('cas',
       new CASStrategy({
         ssoBaseURL: conf.ssoBaseURL,
-        serverBaseURL: conf.serverBaseURL
-      }, (profile, cb) => {
-        WIKI.models.users.processProfile(profile).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
-      }
-      ))
+        serverBaseURL: conf.serverBaseURL,
+        passReqToCallback: true
+      }, async (req, profile, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
+            profile
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
+      })
+    )
   }
 }

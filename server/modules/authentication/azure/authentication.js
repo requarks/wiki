@@ -18,18 +18,19 @@ module.exports = {
         responseType: 'id_token',
         responseMode: 'form_post',
         scope: ['profile', 'email', 'openid'],
-        allowHttpForRedirectUrl: WIKI.IS_DEBUG
-      }, async (iss, sub, profile, cb) => {
+        allowHttpForRedirectUrl: WIKI.IS_DEBUG,
+        passReqToCallback: true
+      }, async (req, iss, sub, profile, cb) => {
         const usrEmail = _.get(profile, '_json.email', null) || _.get(profile, '_json.preferred_username')
         try {
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               id: profile.oid,
               displayName: profile.displayName,
               email: usrEmail,
               picture: ''
-            },
-            providerKey: 'azure'
+            }
           })
           cb(null, user)
         } catch (err) {

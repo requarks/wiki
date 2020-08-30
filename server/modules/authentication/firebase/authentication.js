@@ -1,28 +1,30 @@
 /* global WIKI */
 
 // ------------------------------------
-// GitHub Account
+// Firebase Account
 // ------------------------------------
 
-const GitHubStrategy = require('passport-github2').Strategy
+// INCOMPLETE / TODO
+
+const FirebaseStrategy = require('passport-github2').Strategy
 const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('github',
-      new GitHubStrategy({
+    passport.use('firebase',
+      new FirebaseStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
         scope: ['user:email']
-      }, async (accessToken, refreshToken, profile, cb) => {
+      }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               ...profile,
               picture: _.get(profile, 'photos[0].value', '')
-            },
-            providerKey: 'github'
+            }
           })
           cb(null, user)
         } catch (err) {
