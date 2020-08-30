@@ -93,6 +93,11 @@ module.exports = class Authentication extends Model {
 
       for (const strategy of dbStrategies) {
         const strategyDef = _.find(WIKI.data.authentication, ['key', strategy.strategyKey])
+        if (!strategyDef) {
+          await WIKI.models.authentication.query().delete().where('key', strategy.key)
+          WIKI.logger.info(`Authentication strategy ${strategy.strategyKey} was removed from disk: [ REMOVED ]`)
+          continue
+        }
         strategy.config = _.transform(strategyDef.props, (result, value, key) => {
           if (!_.has(result, key)) {
             _.set(result, key, value.default)
