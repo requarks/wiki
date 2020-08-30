@@ -26,7 +26,7 @@ RUN yarn --production --frozen-lockfile --non-interactive
 FROM node:14-alpine
 LABEL maintainer="requarks.io"
 
-RUN apk add bash curl git openssh gnupg sqlite pandoc --no-cache && \
+RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \
     mkdir -p /logs && \
     mkdir -p /wiki/data/content && \
