@@ -23,11 +23,15 @@ module.exports = {
         .select('id', 'email', 'name', 'providerKey', 'createdAt')
     },
     async single(obj, args, context, info) {
-      console.info(WIKI.auth.strategies)
       let usr = await WIKI.models.users.query().findById(args.id)
       usr.password = ''
       usr.tfaSecret = ''
-      usr.providerName = _.get(WIKI.auth.strategies, usr.providerKey).displayName
+
+      const str = _.get(WIKI.auth.strategies, usr.providerKey)
+      str.strategy = _.find(WIKI.data.authentication, ['key', str.strategyKey])
+      usr.providerName = str.displayName
+      usr.providerIs2FACapable = _.get(str, 'strategy.useForm', false)
+
       return usr
     },
     async profile (obj, args, context, info) {
@@ -135,6 +139,28 @@ module.exports = {
 
         return {
           responseResult: graphHelper.generateSuccess('User deactivated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async enableTFA (obj, args) {
+      try {
+        await WIKI.models.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User 2FA enabled successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async disableTFA (obj, args) {
+      try {
+        await WIKI.models.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User 2FA disabled successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
