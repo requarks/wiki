@@ -52,6 +52,10 @@ type AuthenticationMutation {
     newPassword: String!
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
+  forgotPassword(
+    email: String!
+  ): DefaultResponse @rateLimit(limit: 3, duration: 60)
+
   register(
     email: String!
     password: String!

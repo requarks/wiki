@@ -149,6 +149,28 @@ router.get('/verify/:token', bruteforce.prevent, async (req, res, next) => {
 })
 
 /**
+ * Reset Password
+ */
+router.get('/login-reset/:token', bruteforce.prevent, async (req, res, next) => {
+  try {
+    const usr = await WIKI.models.userKeys.validateToken({ kind: 'resetPwd', token: req.params.token })
+    if (!usr) {
+      throw new Error('Invalid Token')
+    }
+    req.brute.reset()
+
+    const changePwdContinuationToken = await WIKI.models.userKeys.generateToken({
+      userId: usr.id,
+      kind: 'changePwd'
+    })
+    const bgUrl = !_.isEmpty(WIKI.config.auth.loginBgUrl) ? WIKI.config.auth.loginBgUrl : '/_assets/img/splash/1.jpg'
+    res.render('login', { bgUrl, hideLocal: WIKI.config.auth.hideLocal, changePwdContinuationToken })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
  * JWT Public Endpoints
  */
 router.get('/.well-known/jwk.json', function (req, res, next) {

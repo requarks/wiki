@@ -253,6 +253,10 @@ export default {
     hideLocal: {
       type: Boolean,
       default: false
+    },
+    changePwdContinuationToken: {
+      type: String,
+      default: null
     }
   },
   data () {
@@ -309,6 +313,9 @@ export default {
     },
     selectedStrategyKey (newValue, oldValue) {
       this.selectedStrategy = _.find(this.strategies, ['key', newValue])
+      if (this.screen === 'changePwd') {
+        return
+      }
       this.screen = 'login'
       if (!this.selectedStrategy.strategy.useForm) {
         this.isLoading = true
@@ -322,6 +329,10 @@ export default {
   },
   mounted () {
     this.isShown = true
+    if (this.changePwdContinuationToken) {
+      this.screen = 'changePwd'
+      this.continuationToken = this.changePwdContinuationToken
+    }
   },
   methods: {
     /**
@@ -475,32 +486,51 @@ export default {
       this.loaderColor = 'grey darken-4'
       this.loaderTitle = this.$t('auth:changePwd.loading')
       this.isLoading = true
-      const resp = await this.$apollo.mutate({
-        mutation: gql`
-          {
-            authentication {
-              activeStrategies {
-                key
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $continuationToken: String!
+              $newPassword: String!
+            ) {
+              authentication {
+                loginChangePassword (
+                  continuationToken: $continuationToken
+                  newPassword: $newPassword
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                  jwt
+                  continuationToken
+                  redirect
+                }
               }
             }
+          `,
+          variables: {
+            continuationToken: this.continuationToken,
+            newPassword: this.newPassword
           }
-        `,
-        variables: {
-          continuationToken: this.continuationToken,
-          newPassword: this.newPassword
+        })
+        if (_.has(resp, 'data.authentication.loginChangePassword')) {
+          let respObj = _.get(resp, 'data.authentication.loginChangePassword', {})
+          if (respObj.responseResult.succeeded === true) {
+            this.handleLoginResponse(respObj)
+          } else {
+            throw new Error(respObj.responseResult.message)
+          }
+        } else {
+          throw new Error(this.$t('auth:genericError'))
         }
-      })
-      if (_.get(resp, 'data.authentication.loginChangePassword.responseResult.succeeded', false) === true) {
-        this.loaderColor = 'green darken-1'
-        this.loaderTitle = this.$t('auth:loginSuccess')
-        Cookies.set('jwt', _.get(resp, 'data.authentication.loginChangePassword.jwt', ''), { expires: 365 })
-        _.delay(() => {
-          window.location.replace('/') // TEMPORARY - USE RETURNURL
-        }, 1000)
-      } else {
+      } catch (err) {
+        console.error(err)
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.authentication.loginChangePassword.responseResult.message', false),
+          message: err.message,
           icon: 'alert'
         })
         this.isLoading = false
@@ -519,11 +549,57 @@ export default {
      * FORGOT PASSWORD SUBMIT
      */
     async forgotPasswordSubmit () {
-      this.$store.commit('showNotification', {
-        style: 'pink',
-        message: 'Coming soon!',
-        icon: 'ferry'
-      })
+      this.loaderColor = 'grey darken-4'
+      this.loaderTitle = this.$t('auth:forgotPasswordLoading')
+      this.isLoading = true
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $email: String!
+            ) {
+              authentication {
+                forgotPassword (
+                  email: $email
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            email: this.username
+          }
+        })
+        if (_.has(resp, 'data.authentication.forgotPassword.responseResult')) {
+          let respObj = _.get(resp, 'data.authentication.forgotPassword.responseResult', {})
+          if (respObj.succeeded === true) {
+            this.$store.commit('showNotification', {
+              style: 'success',
+              message: this.$t('auth:forgotPasswordSuccess'),
+              icon: 'email'
+            })
+            this.screen = 'login'
+          } else {
+            throw new Error(respObj.message)
+          }
+        } else {
+          throw new Error(this.$t('auth:genericError'))
+        }
+      } catch (err) {
+        console.error(err)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'alert'
+        })
+      }
+      this.isLoading = false
     },
     handleLoginResponse (respObj) {
       this.continuationToken = respObj.continuationToken

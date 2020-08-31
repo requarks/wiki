@@ -138,6 +138,19 @@ module.exports = {
       }
     },
     /**
+     * Perform Mandatory Password Change after Login
+     */
+    async forgotPassword (obj, args, context) {
+      try {
+        await WIKI.models.users.loginForgotPassword(args, context)
+        return {
+          responseResult: graphHelper.generateSuccess('Password reset request processed.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
      * Register a new account
      */
     async register (obj, args, context) {
