@@ -72,7 +72,8 @@ module.exports = {
       ['published', page.isPublished.toString()],
       ['date', page.updatedAt],
       ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : ''],
-      ['editor', page.editorKey]
+      ['editor', page.editorKey],
+      ['dateCreated', page.createdAt],
     ]
     switch (page.contentType) {
       case 'markdown':
