@@ -30,7 +30,7 @@ published: ${markdownPage.isPublished.toString()}
 date: ${markdownPage.updatedAt}
 tags:\x20
 editor: ${markdownPage.editorKey}
-date_creation: ${markdownPage.createdAt}\n---
+dateCreated: ${markdownPage.createdAt}\n---
 
 TEST CONTENT`
 
@@ -52,7 +52,7 @@ published: ${htmlPage.isPublished.toString()}
 date: ${htmlPage.updatedAt}
 tags:\x20
 editor: ${htmlPage.editorKey}
-date_creation: ${htmlPage.createdAt}\n-->
+dateCreated: ${htmlPage.createdAt}\n-->
 
 TEST CONTENT`
 
