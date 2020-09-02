@@ -462,8 +462,7 @@ export default {
       }
     },
     logout () {
-      Cookies.remove('jwt')
-      window.location.assign('/')
+      window.location.assign('/logout')
     },
     goHome () {
       window.location.assign('/')

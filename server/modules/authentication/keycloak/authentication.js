@@ -42,5 +42,15 @@ module.exports = {
         }
       })
     )
+  },
+  logout (conf) {
+    if (!conf.logoutUpstream) {
+      return '/'
+    } else if (conf.logoutURL && conf.logoutURL.length > 5) {
+      return `${conf.logoutURL}?redirect_uri=${encodeURIComponent(WIKI.config.host)}`
+    } else {
+      WIKI.logger.warn('Keycloak logout URL is not configured!')
+      return '/'
+    }
   }
 }

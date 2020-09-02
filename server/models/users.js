@@ -271,6 +271,9 @@ module.exports = class User extends Model {
     throw new Error('You are not authorized to login.')
   }
 
+  /**
+   * Login a user
+   */
   static async login (opts, context) {
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
       const selStrategy = _.get(WIKI.auth.strategies, opts.strategy)
@@ -307,6 +310,9 @@ module.exports = class User extends Model {
     }
   }
 
+  /**
+   * Perform post-login checks
+   */
   static async afterLoginChecks (user, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
     // Get redirect target
     user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
@@ -380,6 +386,9 @@ module.exports = class User extends Model {
     })
   }
 
+  /**
+   * Generate a new token for a user
+   */
   static async refreshToken(user) {
     if (_.isSafeInteger(user)) {
       user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
@@ -427,6 +436,9 @@ module.exports = class User extends Model {
     }
   }
 
+  /**
+   * Verify a TFA login
+   */
   static async loginTFA ({ securityCode, continuationToken, setup }, context) {
     if (securityCode.length === 6 && continuationToken.length > 1) {
       const user = await WIKI.models.userKeys.validateToken({
@@ -817,6 +829,18 @@ module.exports = class User extends Model {
     } else {
       throw new WIKI.Error.AuthRegistrationDisabled()
     }
+  }
+
+  /**
+   * Logout the current user
+   */
+  static async logout (context) {
+    if (!context.req.user || context.req.user.id === 2) {
+      return '/'
+    }
+    const usr = await WIKI.models.users.query().findById(context.req.user.id).select('providerKey')
+    const provider = _.find(WIKI.auth.strategies, ['key', usr.providerKey])
+    return provider.logout ? provider.logout(provider.config) : '/'
   }
 
   static async getGuestUser () {

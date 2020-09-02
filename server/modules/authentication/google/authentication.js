@@ -30,5 +30,8 @@ module.exports = {
         }
       })
     )
+  },
+  logout (conf) {
+    return '/'
   }
 }
