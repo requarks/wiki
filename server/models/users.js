@@ -277,6 +277,10 @@ module.exports = class User extends Model {
   static async login (opts, context) {
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
       const selStrategy = _.get(WIKI.auth.strategies, opts.strategy)
+      if (!selStrategy.isEnabled) {
+        throw new WIKI.Error.AuthProviderInvalid()
+      }
+
       const strInfo = _.find(WIKI.data.authentication, ['key', selStrategy.strategyKey])
 
       // Inject form user/pass

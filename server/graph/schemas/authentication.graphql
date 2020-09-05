@@ -20,7 +20,10 @@ type AuthenticationQuery {
   apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
 
   strategies: [AuthenticationStrategy] @auth(requires: ["manage:system"])
-  activeStrategies: [AuthenticationActiveStrategy]
+
+  activeStrategies(
+    enabledOnly: Boolean
+  ): [AuthenticationActiveStrategy]
 }
 
 # -----------------------------------------------
@@ -102,6 +105,7 @@ type AuthenticationActiveStrategy {
   strategy: AuthenticationStrategy!
   displayName: String!
   order: Int!
+  isEnabled: Boolean!
   config: [KeyValuePair] @auth(requires: ["manage:system"])
   selfRegistration: Boolean!
   domainWhitelist: [String]! @auth(requires: ["manage:system"])
@@ -130,6 +134,7 @@ input AuthenticationStrategyInput {
   config: [KeyValuePairInput]
   displayName: String!
   order: Int!
+  isEnabled: Boolean!
   selfRegistration: Boolean!
   domainWhitelist: [String]!
   autoEnrollGroups: [Int]!

@@ -77,64 +77,80 @@
             .admin-providerlogo
               img(:src='strategy.strategy.logo', :alt='strategy.strategy.title')
           v-card-text
-            .overline.mb-5 {{$t('admin:auth.strategyConfiguration')}}
-            v-text-field.mb-3(
-              outlined
-              label='Display Name'
-              v-model='strategy.displayName'
-              prepend-icon='mdi-format-title'
-              hint='The title shown to the end user for this authentication strategy.'
-              persistent-hint
-              )
-            template(v-for='cfg in strategy.config')
-              v-select.mb-3(
-                v-if='cfg.value.type === "string" && cfg.value.enum'
-                outlined
-                :items='cfg.value.enum'
-                :key='cfg.key'
-                :label='cfg.value.title'
-                v-model='cfg.value.value'
-                prepend-icon='mdi-cog-box'
-                :hint='cfg.value.hint ? cfg.value.hint : ""'
-                persistent-hint
-                :class='cfg.value.hint ? "mb-2" : ""'
-                :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
-              )
-              v-switch.mb-6(
-                v-else-if='cfg.value.type === "boolean"'
-                :key='cfg.key'
-                :label='cfg.value.title'
-                v-model='cfg.value.value'
-                color='primary'
-                prepend-icon='mdi-cog-box'
-                :hint='cfg.value.hint ? cfg.value.hint : ""'
-                persistent-hint
-                inset
-                )
-              v-textarea.mb-3(
-                v-else-if='cfg.value.type === "string" && cfg.value.multiline'
-                outlined
-                :key='cfg.key'
-                :label='cfg.value.title'
-                v-model='cfg.value.value'
-                prepend-icon='mdi-cog-box'
-                :hint='cfg.value.hint ? cfg.value.hint : ""'
-                persistent-hint
-                :class='cfg.value.hint ? "mb-2" : ""'
-                )
-              v-text-field.mb-3(
-                v-else
-                outlined
-                :key='cfg.key'
-                :label='cfg.value.title'
-                v-model='cfg.value.value'
-                prepend-icon='mdi-cog-box'
-                :hint='cfg.value.hint ? cfg.value.hint : ""'
-                persistent-hint
-                :class='cfg.value.hint ? "mb-2" : ""'
-                :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
-                )
-            v-divider.mt-3
+            .row
+              .col-8
+                v-text-field(
+                  outlined
+                  :label='$t(`admin:auth.displayName`)'
+                  v-model='strategy.displayName'
+                  prepend-icon='mdi-format-title'
+                  :hint='$t(`admin:auth.displayNameHint`)'
+                  persistent-hint
+                  )
+              .col-4
+                v-switch.mt-1(
+                  :label='$t(`admin:auth.strategyIsEnabled`)'
+                  v-model='strategy.isEnabled'
+                  color='primary'
+                  prepend-icon='mdi-power'
+                  :hint='$t(`admin:auth.strategyIsEnabledHint`)'
+                  persistent-hint
+                  inset
+                  :disabled='strategy.key === `local`'
+                  )
+            template(v-if='strategy.config && Object.keys(strategy.config).length > 0')
+              v-divider
+              .overline.my-5 {{$t('admin:auth.strategyConfiguration')}}
+              .pr-3
+                template(v-for='cfg in strategy.config')
+                  v-select.mb-3(
+                    v-if='cfg.value.type === "string" && cfg.value.enum'
+                    outlined
+                    :items='cfg.value.enum'
+                    :key='cfg.key'
+                    :label='cfg.value.title'
+                    v-model='cfg.value.value'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    :class='cfg.value.hint ? "mb-2" : ""'
+                    :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
+                  )
+                  v-switch.mb-6(
+                    v-else-if='cfg.value.type === "boolean"'
+                    :key='cfg.key'
+                    :label='cfg.value.title'
+                    v-model='cfg.value.value'
+                    color='primary'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    inset
+                    )
+                  v-textarea.mb-3(
+                    v-else-if='cfg.value.type === "string" && cfg.value.multiline'
+                    outlined
+                    :key='cfg.key'
+                    :label='cfg.value.title'
+                    v-model='cfg.value.value'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    :class='cfg.value.hint ? "mb-2" : ""'
+                    )
+                  v-text-field.mb-3(
+                    v-else
+                    outlined
+                    :key='cfg.key'
+                    :label='cfg.value.title'
+                    v-model='cfg.value.value'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    :class='cfg.value.hint ? "mb-2" : ""'
+                    :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
+                    )
+            v-divider
             .overline.my-5 {{$t('admin:auth.registration')}}
             .pr-3
               v-switch.ml-3(
@@ -145,7 +161,7 @@
                 persistent-hint
                 inset
               )
-              v-combobox.ml-3.mt-3(
+              v-combobox.ml-3.mt-5(
                 :label='$t(`admin:auth.domainsWhitelist`)'
                 v-model='strategy.domainWhitelist'
                 prepend-icon='mdi-email-check-outline'
@@ -272,6 +288,7 @@ export default {
           }
         })),
         order: this.activeStrategies.length,
+        isEnabled: true,
         displayName: str.title,
         selfRegistration: false,
         domainWhitelist: [],
@@ -309,6 +326,7 @@ export default {
               strategyKey: str.strategy.key,
               displayName: str.displayName,
               order: str.order,
+              isEnabled: str.isEnabled,
               config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })})),
               selfRegistration: str.selfRegistration,
               domainWhitelist: str.domainWhitelist,
@@ -384,6 +402,7 @@ export default {
                 value
               }
               order
+              isEnabled
               displayName
               selfRegistration
               domainWhitelist

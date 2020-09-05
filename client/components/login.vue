@@ -661,7 +661,7 @@ export default {
       query: gql`
         {
           authentication {
-            activeStrategies {
+            activeStrategies(enabledOnly: true) {
               key
               strategy {
                 key
