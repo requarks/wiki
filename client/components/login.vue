@@ -7,7 +7,7 @@
             v-avatar(tile, size='34')
               v-img(:src='logoUrl')
           .login-title
-            .text-h6 {{ siteTitle }}
+            .text-h6.grey--text.text--darken-4 {{ siteTitle }}
         v-alert.mb-0(
           v-model='errorShown'
           transition='slide-y-reverse-transition'
@@ -25,7 +25,7 @@
           .login-subtitle
             .text-subtitle-1 Select Authentication Provider
           .login-list
-            v-list.elevation-1.radius-7(nav)
+            v-list.elevation-1.radius-7(nav, light)
               v-list-item-group(v-model='selectedStrategyKey')
                 v-list-item(
                   v-for='(stg, idx) of filteredStrategies'
@@ -47,18 +47,21 @@
               flat
               prepend-inner-icon='mdi-clipboard-account'
               background-color='white'
+              color='blue darken-2'
               hide-details
               ref='iptEmail'
               v-model='username'
               :placeholder='isUsernameEmail ? $t(`auth:fields.email`) : $t(`auth:fields.username`)'
               :type='isUsernameEmail ? `email` : `text`'
               :autocomplete='isUsernameEmail ? `email` : `username`'
+              light
               )
             v-text-field.mt-2(
               solo
               flat
               prepend-inner-icon='mdi-form-textbox-password'
               background-color='white'
+              color='blue darken-2'
               hide-details
               ref='iptPassword'
               v-model='password'
@@ -68,11 +71,12 @@
               :placeholder='$t("auth:fields.password")'
               autocomplete='current-password'
               @keyup.enter='login'
+              light
             )
             v-btn.mt-2.text-none(
               width='100%'
               large
-              color='primary'
+              color='blue darken-2'
               dark
               @click='login'
               :loading='isLoading'
@@ -105,17 +109,19 @@
               flat
               prepend-inner-icon='mdi-clipboard-account'
               background-color='white'
+              color='blue darken-2'
               hide-details
               ref='iptForgotPwdEmail'
               v-model='username'
               :placeholder='$t(`auth:fields.email`)'
               type='email'
               autocomplete='email'
+              light
               )
             v-btn.mt-2.text-none(
               width='100%'
               large
-              color='primary'
+              color='blue darken-2'
               dark
               @click='forgotPasswordSubmit'
               :loading='isLoading'
@@ -141,11 +147,13 @@
               flat
               prepend-inner-icon='mdi-form-textbox-password'
               background-color='white'
+              color='blue darken-2'
               hide-details
               ref='iptNewPassword'
               v-model='newPassword'
               :placeholder='$t(`auth:changePwd.newPasswordPlaceholder`)'
               autocomplete='new-password'
+              light
               )
               password-strength(slot='progress', v-model='newPassword')
             v-text-field.mt-2(
@@ -154,16 +162,18 @@
               flat
               prepend-inner-icon='mdi-form-textbox-password'
               background-color='white'
+              color='blue darken-2'
               hide-details
               v-model='newPasswordVerify'
               :placeholder='$t(`auth:changePwd.newPasswordVerifyPlaceholder`)'
               autocomplete='new-password'
               @keyup.enter='changePassword'
+              light
             )
             v-btn.mt-2.text-none(
               width='100%'
               large
-              color='primary'
+              color='blue darken-2'
               dark
               @click='changePassword'
               :loading='isLoading'
@@ -174,24 +184,26 @@
     //-------------------------------------------------
     v-dialog(v-model='isTFAShown', max-width='500', persistent)
       v-card
-        .login-tfa.text-center.pa-5
+        .login-tfa.text-center.pa-5.grey--text.text--darken-3
           img(src='_assets/svg/icon-pin-pad.svg')
           .subtitle-2 Enter the security code generated from your trusted device:
           v-text-field.login-tfa-field.mt-2(
             solo
             flat
             background-color='white'
+            color='blue darken-2'
             hide-details
             ref='iptTFA'
             v-model='securityCode'
             :placeholder='$t("auth:tfa.placeholder")'
             autocomplete='one-time-code'
             @keyup.enter='verifySecurityCode(false)'
+            light
           )
           v-btn.mt-2.text-none(
             width='100%'
             large
-            color='primary'
+            color='blue darken-2'
             dark
             @click='verifySecurityCode(false)'
             :loading='isLoading'
@@ -202,7 +214,7 @@
     //-------------------------------------------------
     v-dialog(v-model='isTFASetupShown', max-width='600', persistent)
       v-card
-        .login-tfa.text-center.pa-5
+        .login-tfa.text-center.pa-5.grey--text.text--darken-3
           .subtitle-1.primary--text Your administrator has required Two-Factor Authentication (2FA) to be enabled on your account.
           v-divider.my-5
           .subtitle-2 1) Scan the QR code below from your mobile 2FA application:
@@ -213,17 +225,19 @@
             solo
             flat
             background-color='white'
+            color='blue darken-2'
             hide-details
             ref='iptTFASetup'
             v-model='securityCode'
             :placeholder='$t("auth:tfa.placeholder")'
             autocomplete='one-time-code'
             @keyup.enter='verifySecurityCode(true)'
+            light
           )
           v-btn.mt-2.text-none(
             width='100%'
             large
-            color='primary'
+            color='blue darken-2'
             dark
             @click='verifySecurityCode(true)'
             :loading='isLoading'
@@ -737,6 +751,7 @@ export default {
       padding: 12px;
       font-size: 13px;
       text-align: center;
+      color: mc('grey', '900');
     }
 
     &-list {
