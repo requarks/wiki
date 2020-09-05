@@ -27,7 +27,7 @@ module.exports = {
         },
         usernameField: 'email',
         passwordField: 'password',
-        passReqToCallback: false
+        passReqToCallback: true
       }, async (req, profile, cb) => {
         try {
           const userId = _.get(profile, conf.mappingUID, null)
