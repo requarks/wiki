@@ -248,7 +248,6 @@
 <script>
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
-import Cookies from 'js-cookie'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 
