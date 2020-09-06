@@ -149,6 +149,10 @@ type PageMutation {
     pageId: Int!
     versionId: Int!
   ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
+  purgeHistory (
+    olderThan: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

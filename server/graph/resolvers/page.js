@@ -562,11 +562,24 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * Purge history
+     */
+    async purgeHistory (obj, args, context) {
+      try {
+        await WIKI.models.pageHistory.purge(args.olderThan)
+        return {
+          responseResult: graphHelper.generateSuccess('Page history purged successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   Page: {
     async tags (obj) {
-      return await WIKI.models.pages.relatedQuery('tags').for(obj.id)
+      return WIKI.models.pages.relatedQuery('tags').for(obj.id)
     }
     // comments(pg) {
     //   return pg.$relatedQuery('comments')

@@ -8,7 +8,9 @@
       v-btn(outlined, color='primary', @click='rebuildTree', :disabled='loading').ml-0.mt-3
         v-icon(left) mdi-gesture-double-tap
         span Proceed
+
       v-divider.my-5
+
       .subtitle-1.pb-3.primary--text Rerender All Pages
       .body-2 All pages will be rendered again. Useful if internal links are broken or the rendering pipeline has changed.
       v-btn(outlined, color='primary', @click='rerenderPages', :disabled='loading', :loading='isRerendering').ml-0.mt-3
@@ -37,7 +39,9 @@
               rounded
               :buffer-value='0'
             )
+
       v-divider.my-5
+
       .subtitle-1.pb-3.pl-0.primary--text Migrate all pages to target locale
       .body-2 If you created content before selecting a different locale and activating the namespacing capabilities, you may want to transfer all content to the base locale.
       .body-2.red--text: strong This operation is destructive and cannot be reversed! Make sure you have proper backups!
@@ -65,6 +69,25 @@
       v-btn(outlined, color='primary', @click='migrateToLocale', :disabled='loading').ml-0.mt-3
         v-icon(left) mdi-gesture-double-tap
         span Proceed
+
+      v-divider.my-5
+
+      .subtitle-1.pb-3.pl-0.primary--text Purge Page History
+      .body-2 You may want to purge old history for pages to reduce database usage.
+      .body-2 This operation only affects the database and not any history saved by a storage module (e.g. git version history)
+      v-toolbar.radius-7.mt-5(flat, :color='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-4`', height='80')
+        v-select(
+          label='Delete history older than...'
+          outlined
+          hide-details
+          :items='purgeHistoryOptions'
+          item-text='title'
+          item-value='key'
+          v-model='purgeHistorySelection'
+        )
+      v-btn(outlined, color='primary', @click='purgeHistory', :disabled='loading').ml-0.mt-3
+        v-icon(left) mdi-gesture-double-tap
+        span Proceed
 </template>
 
 <script>
@@ -90,7 +113,18 @@ export default {
       renderTotal: 0,
       renderCurrentPath: '',
       sourceLocale: '',
-      targetLocale: ''
+      targetLocale: '',
+      purgeHistorySelection: 'P1Y',
+      purgeHistoryOptions: [
+        { key: 'P1D', title: 'Today' },
+        { key: 'P1M', title: '1 month' },
+        { key: 'P3M', title: '3 months' },
+        { key: 'P6M', title: '6 months' },
+        { key: 'P1Y', title: '1 year' },
+        { key: 'P2Y', title: '2 years' },
+        { key: 'P3Y', title: '3 years' },
+        { key: 'P5Y', title: '5 years' }
+      ]
     }
   },
   computed: {
@@ -230,6 +264,49 @@ export default {
       }
 
       this.$store.commit(`loadingStop`, 'admin-utilities-content-migratelocale')
+      this.loading = false
+    },
+    async purgeHistory () {
+      this.loading = true
+      this.$store.commit(`loadingStart`, 'admin-utilities-content-purgehistory')
+
+      try {
+        const respRaw = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($olderThan: String!) {
+              pages {
+                purgeHistory (
+                  olderThan: $olderThan
+                ) {
+                  responseResult {
+                    errorCode
+                    message
+                    slug
+                    succeeded
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            olderThan: this.purgeHistorySelection
+          }
+        })
+        const resp = _.get(respRaw, 'data.pages.purgeHistory.responseResult', {})
+        if (resp.succeeded) {
+          this.$store.commit('showNotification', {
+            message: `Purged history successfully.`,
+            style: 'success',
+            icon: 'check'
+          })
+        } else {
+          throw new Error(resp.message)
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+
+      this.$store.commit(`loadingStop`, 'admin-utilities-content-purgehistory')
       this.loading = false
     }
   }

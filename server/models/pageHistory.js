@@ -1,5 +1,6 @@
 const Model = require('objection').Model
 const _ = require('lodash')
+const { DateTime, Duration } = require('luxon')
 
 /* global WIKI */
 
@@ -227,5 +228,16 @@ module.exports = class PageHistory extends Model {
       }, []),
       total: history.total
     }
+  }
+
+  /**
+   * Purge history older than X
+   *
+   * @param {String} olderThan ISO 8601 Duration
+   */
+  static async purge (olderThan) {
+    const dur = Duration.fromISO(olderThan)
+    const olderThanISO = DateTime.utc().minus(dur)
+    await WIKI.models.pageHistory.query().where('versionDate', '<', olderThanISO.toISO()).del()
   }
 }
