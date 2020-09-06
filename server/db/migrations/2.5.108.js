@@ -6,7 +6,7 @@ exports.up = async knex => {
   if (!has(localStrategy, 'isEnabled')) {
     await knex.schema
       .alterTable('authentication', table => {
-        table.boolean('isEnabled').notNullable().defaultTo(true)
+        table.boolean('isEnabled').notNullable().defaultTo(true).alter()
       })
   }
 }
