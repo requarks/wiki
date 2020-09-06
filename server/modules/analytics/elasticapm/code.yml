@@ -1,10 +1,12 @@
 head: |
   <!-- Elastic APM RUM -->
-  <script async src="https://unpkg.com/@elastic/apm-rum/dist/bundles/elastic-apm-rum.umd.min.js"></script>
   <script>
-    elasticApm.init({
-      serviceName: '{{serviceName}}',
-      serverUrl: '{{serverUrl}}',
-      environment: '{{environment}}'
-    })
+    ;(function(d, s, c) {
+      var j = d.createElement(s),
+        t = d.getElementsByTagName(s)[0]
+
+      j.src = 'https://unpkg.com/@elastic/apm-rum/dist/bundles/elastic-apm-rum.umd.min.js'
+      j.onload = function() {elasticApm.init(c)}
+      t.parentNode.insertBefore(j, t)
+    })(document, 'script', {serviceName: '{{serviceName}}', serverUrl: '{{serverUrl}}', environment: '{{environment}}'})
   </script>
