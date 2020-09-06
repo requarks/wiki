@@ -1,8 +1,13 @@
 exports.up = async knex => {
   // Check for users using disabled strategies
+  let protectedStrategies = []
   const disabledStrategies = await knex('authentication').where('isEnabled', false)
-  const incompatibleUsers = await knex('users').distinct('providerKey').whereIn('providerKey', disabledStrategies.map(s => s.key))
-  const protectedStrategies = (incompatibleUsers && incompatibleUsers.length > 0) ? incompatibleUsers.map(u => u.providerKey) : []
+  if (disabledStrategies) {
+    const incompatibleUsers = await knex('users').distinct('providerKey').whereIn('providerKey', disabledStrategies.map(s => s.key))
+    if (incompatibleUsers && incompatibleUsers.length > 0) {
+      protectedStrategies = incompatibleUsers.map(u => u.providerKey)
+    }
+  }
 
   // Delete disabled strategies
   await knex('authentication').whereNotIn('key', protectedStrategies).andWhere('isEnabled', false).del()
