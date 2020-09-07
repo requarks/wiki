@@ -25,7 +25,6 @@
               v-model='activeStrategies'
               handle='.is-handle'
               direction='vertical'
-              :store='order'
               )
               transition-group
                 v-list-item(
@@ -248,16 +247,6 @@ export default {
       }
     }
   },
-  computed: {
-    order: {
-      get () {
-        return this.strategies
-      },
-      set (val) {
-
-      }
-    }
-  },
   watch: {
     selectedStrategy(newValue, oldValue) {
       this.strategy = _.find(this.activeStrategies, ['key', newValue]) || {}
@@ -321,11 +310,11 @@ export default {
             }
           `,
           variables: {
-            strategies: this.activeStrategies.map(str => ({
+            strategies: this.activeStrategies.map((str, idx) => ({
               key: str.key,
               strategyKey: str.strategy.key,
               displayName: str.displayName,
-              order: str.order,
+              order: idx,
               isEnabled: str.isEnabled,
               config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })})),
               selfRegistration: str.selfRegistration,
@@ -412,13 +401,13 @@ export default {
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.get(data, 'authentication.activeStrategies', []).map(str => ({
+      update: (data) => _.sortBy(_.get(data, 'authentication.activeStrategies', []).map(str => ({
         ...str,
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,
           value: JSON.parse(cfg.value)
         })), [t => t.value.order])
-      })),
+      })), ['order']),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-activestrategies-refresh')
       }
