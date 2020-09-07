@@ -258,6 +258,7 @@ module.exports = () => {
         key: 'local',
         config: {},
         selfRegistration: false,
+        isEnabled: true,
         domainWhitelist: {v: []},
         autoEnrollGroups: {v: []},
         order: 0,
