@@ -59,7 +59,7 @@ router.get(['/a', '/a/*'], (req, res, next) => {
  */
 router.get(['/d', '/d/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
-  
+
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
 
   const page = await WIKI.models.pages.getPageFromDb({
@@ -108,7 +108,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   }
 
   req.i18n.changeLanguage(pageArgs.locale)
-  
+
   // -> Set Editor Lang
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
@@ -239,7 +239,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/h/${pageArgs.locale}/${pageArgs.path}`)
   }
-  
+
   req.i18n.changeLanguage(pageArgs.locale)
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
@@ -388,6 +388,22 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 router.get(['/t', '/t/*'], (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Tags')
   res.render('tags')
+})
+
+/**
+ * User Avatar
+ */
+router.get('/_userav/:uid', async (req, res, next) => {
+  if (!WIKI.auth.checkAccess(req.user, ['read:pages'])) {
+    return res.sendStatus(403)
+  }
+  const av = await WIKI.models.users.getUserAvatarData(req.params.uid)
+  if (av) {
+    res.set('Content-Type', 'image/jpeg')
+    res.send(av)
+  }
+
+  return res.sendStatus(404)
 })
 
 /**

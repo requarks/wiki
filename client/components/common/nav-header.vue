@@ -305,7 +305,7 @@ export default {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
           kind: 'image',
-          url: this.pictureUrl
+          url: (this.pictureUrl === 'internal') ? `/_userav/${this.$store.get('user/id')}` : this.pictureUrl
         }
       } else {
         const nameParts = this.name.toUpperCase().split(' ')
