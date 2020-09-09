@@ -226,8 +226,13 @@ module.exports = {
       return false
     }
 
+    // Skip if no page rule to check
+    if (!page) {
+      return true
+    }
+
     // Check Page Rules
-    if (page && user.groups) {
+    if (user.groups) {
       let checkState = {
         deny: false,
         match: false,

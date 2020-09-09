@@ -148,6 +148,9 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     await page.$relatedQuery('tags')
     page.tags = _.map(page.tags, 'tag')
 
+    // Handle missing extra field
+    page.extra = page.extra || { css: '', js: '' }
+
     // -> Beautify Script CSS
     if (!_.isEmpty(page.extra.css)) {
       page.extra.css = new CleanCSS({ format: 'beautify' }).minify(page.extra.css).styles
