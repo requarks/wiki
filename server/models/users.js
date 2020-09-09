@@ -675,7 +675,7 @@ module.exports = class User extends Model {
         if (dupUsr) {
           throw new WIKI.Error.AuthAccountAlreadyExists()
         }
-        usrData.email = email
+        usrData.email = _.toLower(email)
       }
       if (!_.isEmpty(name) && name !== usr.name) {
         usrData.name = _.trim(name)

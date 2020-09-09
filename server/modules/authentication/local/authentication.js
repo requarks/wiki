@@ -15,7 +15,7 @@ module.exports = {
       }, async (uEmail, uPassword, done) => {
         try {
           const user = await WIKI.models.users.query().findOne({
-            email: uEmail,
+            email: uEmail.toLowerCase(),
             providerKey: 'local'
           })
           if (user) {
