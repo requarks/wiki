@@ -287,6 +287,34 @@ module.exports = {
   },
 
   /**
+   * Check for exclusive permissions (contain any X permission(s) but not any Y permission(s))
+   *
+   * @param {User} user
+   * @param {Array<String>} includePermissions
+   * @param {Array<String>} excludePermissions
+   */
+  checkExclusiveAccess(user, includePermissions = [], excludePermissions = []) {
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+
+    // System Admin
+    if (userPermissions.includes('manage:system')) {
+      return true
+    }
+
+    // Check Inclusion Permissions
+    if (_.intersection(userPermissions, includePermissions).length < 1) {
+      return false
+    }
+
+    // Check Exclusion Permissions
+    if (_.intersection(userPermissions, excludePermissions).length > 0) {
+      return false
+    }
+
+    return true
+  },
+
+  /**
    * Check and apply Page Rule specificity
    *
    * @access private
