@@ -35,5 +35,12 @@ module.exports = {
         }
       })
     )
+  },
+  logout (conf) {
+    if (!conf.logoutURL) {
+      return '/'
+    } else {
+      return conf.logoutURL
+    }
   }
 }

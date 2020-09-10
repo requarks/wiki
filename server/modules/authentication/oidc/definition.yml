@@ -49,3 +49,8 @@ props:
     default: email
     maxWidth: 500
     order: 7
+  logoutURL:
+    type: String
+    title: Logout URL
+    hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
+    order: 8
