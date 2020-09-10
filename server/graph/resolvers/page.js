@@ -57,7 +57,8 @@ module.exports = {
           results: _.filter(resp.results, r => {
             return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
               path: r.path,
-              locale: r.locale
+              locale: r.locale,
+              tags: r.tags // Tags are needed since access permissions can be limited by page tags too
             })
           })
         }
