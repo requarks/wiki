@@ -128,7 +128,8 @@ module.exports = class User extends Model {
       tfaIsActive: false,
       tfaSecret: tfaInfo.secret
     })
-    return qr.imageSync(`otpauth://totp/${WIKI.config.title}:${this.email}?secret=${tfaInfo.secret}`, { type: 'svg' })
+    const safeTitle = WIKI.config.title.replace(/[\s-.,=!@#$%?&*()+[\]{}/\\;<>]/g, '')
+    return qr.imageSync(`otpauth://totp/${safeTitle}:${this.email}?secret=${tfaInfo.secret}`, { type: 'svg' })
   }
 
   async enableTFA() {
