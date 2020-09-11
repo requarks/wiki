@@ -296,11 +296,6 @@ module.exports = {
   checkExclusiveAccess(user, includePermissions = [], excludePermissions = []) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
-    // System Admin
-    if (userPermissions.includes('manage:system')) {
-      return true
-    }
-
     // Check Inclusion Permissions
     if (_.intersection(userPermissions, includePermissions).length < 1) {
       return false
