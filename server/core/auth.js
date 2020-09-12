@@ -122,7 +122,7 @@ module.exports = {
       }
 
       // Check if user / group is in revocation list
-      if (user && !mustRevalidate) {
+      if (user && !user.api && !mustRevalidate) {
         const uRevalidate = WIKI.auth.revocationList.get(`u${_.toString(user.id)}`)
         if (uRevalidate && user.iat < uRevalidate) {
           mustRevalidate = true
