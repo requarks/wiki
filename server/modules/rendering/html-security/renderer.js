@@ -29,6 +29,7 @@ module.exports = {
 
       if (config.allowIFrames) {
         allowedTags.push('iframe')
+        allowedAttrs.push('allow')
       }
 
       input = DOMPurify.sanitize(input, {
