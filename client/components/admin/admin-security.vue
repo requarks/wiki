@@ -367,7 +367,7 @@ export default {
   },
   mounted () {
     this.$root.$on('editorInsert', opts => {
-      this.config.loginBgUrl = opts.path
+      this.config.authLoginBgUrl = opts.path
     })
   },
   beforeDestroy() {
