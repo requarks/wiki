@@ -23,7 +23,7 @@
         //-------------------------------------------------
         template(v-if='screen === `login` && strategies.length > 1')
           .login-subtitle
-            .text-subtitle-1 Select Authentication Provider
+            .text-subtitle-1 {{$t('auth:selectAuthProvider')}}
           .login-list
             v-list.elevation-1.radius-7(nav, light)
               v-list-item-group(v-model='selectedStrategyKey')
@@ -40,7 +40,7 @@
         //-------------------------------------------------
         template(v-if='screen === `login` && selectedStrategy.strategy.useForm')
           .login-subtitle
-            .text-subtitle-1 Enter your credentials
+            .text-subtitle-1 {{$t('auth:enterCredentials')}}
           .login-form
             v-text-field(
               solo
@@ -101,7 +101,7 @@
         //-------------------------------------------------
         template(v-if='screen === `forgot`')
           .login-subtitle
-            .text-subtitle-1 Forgot your password
+            .text-subtitle-1 {{$t('auth:forgotPasswordTitle')}}
           .login-info {{ $t('auth:forgotPasswordSubtitle') }}
           .login-form
             v-text-field(
@@ -186,7 +186,7 @@
       v-card
         .login-tfa.text-center.pa-5.grey--text.text--darken-3
           img(src='_assets/svg/icon-pin-pad.svg')
-          .subtitle-2 Enter the security code generated from your trusted device:
+          .subtitle-2 {{$t('auth:tfaFormTitle')}}
           v-text-field.login-tfa-field.mt-2(
             solo
             flat
@@ -215,12 +215,12 @@
     v-dialog(v-model='isTFASetupShown', max-width='600', persistent)
       v-card
         .login-tfa.text-center.pa-5.grey--text.text--darken-3
-          .subtitle-1.primary--text Your administrator has required Two-Factor Authentication (2FA) to be enabled on your account.
+          .subtitle-1.primary--text {{$t('auth:tfaSetupTitle')}}
           v-divider.my-5
-          .subtitle-2 1) Scan the QR code below from your mobile 2FA application:
-          .caption (e.g. #[a(href='https://authy.com/', target='_blank', noopener) Authy], #[a(href='https://support.google.com/accounts/answer/1066447', target='_blank', noopener) Google Authenticator], #[a(href='https://www.microsoft.com/en-us/account/authenticator', target='_blank', noopener) Microsoft Authenticator], etc.)
+          .subtitle-2 {{$t('auth:tfaSetupInstrFirst')}}
+          .caption (#[a(href='https://authy.com/', target='_blank', noopener) Authy], #[a(href='https://support.google.com/accounts/answer/1066447', target='_blank', noopener) Google Authenticator], #[a(href='https://www.microsoft.com/en-us/account/authenticator', target='_blank', noopener) Microsoft Authenticator], etc.)
           .login-tfa-qr.mt-5(v-if='isTFASetupShown', v-html='tfaQRImage')
-          .subtitle-2.mt-5 2) Enter the security code generated from your trusted device:
+          .subtitle-2.mt-5 {{$t('auth:tfaSetupInstrSecond')}}
           v-text-field.login-tfa-field.mt-2(
             solo
             flat
