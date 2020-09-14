@@ -8,9 +8,9 @@
     v-card.page-selector
       .dialog-header.is-blue
         v-icon.mr-3(color='white') mdi-page-next-outline
-        .body-1(v-if='mode === `create`') Select New Page Location
-        .body-1(v-else-if='mode === `move`') Move / Rename Page Location
-        .body-1(v-else-if='mode === `select`') Select a Page
+        .body-1(v-if='mode === `create`') {{$t('common:pageSelector.createTitle')}}
+        .body-1(v-else-if='mode === `move`') {{$t('common:pageSelector.moveTitle')}}
+        .body-1(v-else-if='mode === `select`') {{$t('common:pageSelector.selectTitle')}}
         v-spacer
         v-progress-circular(
           indeterminate
@@ -22,7 +22,7 @@
       .d-flex
         v-flex.grey(xs5, :class='$vuetify.theme.dark ? `darken-4` : `lighten-3`')
           v-toolbar(color='grey darken-3', dark, dense, flat)
-            .body-2 Virtual Folders
+            .body-2 {{$t('common:pageSelector.virtualFolders')}}
             v-spacer
             v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
               v-icon mdi-help-box
@@ -45,7 +45,7 @@
                   v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
         v-flex(xs7)
           v-toolbar(color='blue darken-2', dark, dense, flat)
-            .body-2 Pages
+            .body-2 {{$t('common:pageSelector.pages')}}
             //- v-spacer
             //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
             //- v-btn(icon, tile, disabled): v-icon mdi-trash-can-outline
@@ -68,7 +68,7 @@
             prominent
             icon='mdi-alert'
             )
-            .body-2 This folder is empty.
+            .body-2 {{$t('common:pageSelector.folderEmptyWarning')}}
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
         v-select(
           solo
@@ -93,10 +93,10 @@
         )
       v-card-chin
         v-spacer
-        v-btn(text, @click='close') Cancel
+        v-btn(text, @click='close') {{$t('common:actions.cancel')}}
         v-btn.px-4(color='primary', @click='open', :disabled='!isValidPath')
           v-icon(left) mdi-check
-          span Select
+          span {{$t('common:actions.select')}}
 </template>
 
 <script>
