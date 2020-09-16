@@ -5,8 +5,8 @@
         .admin-header
           img.animated.fadeInUp(src='/_assets/svg/icon-people.svg', alt='Groups', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Groups
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{ $t('admin:groups.title') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:groups.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/groups', target='_blank')
             v-icon mdi-help-circle
@@ -16,15 +16,15 @@
             template(v-slot:activator='{ on }')
               v-btn.animated.fadeInDown(color='primary', depressed, v-on='on', large)
                 v-icon(left) mdi-plus
-                span New Group
+                span {{ $t('admin:groups.newGroup') }}
             v-card
-              .dialog-header.is-short New Group
+              .dialog-header.is-short {{ $t('admin:groups.newGroup') }}
               v-card-text.pt-5
                 v-text-field.md2(
                   outlined
                   prepend-icon='mdi-account-group'
                   v-model='newGroupName'
-                  label='Group Name'
+                  v-bind:label="$t('admin:groups.newGroupName')"
                   counter='255'
                   @keyup.enter='createGroup'
                   @keyup.esc='newGroupDialog = false'
@@ -32,8 +32,8 @@
                   )
               v-card-chin
                 v-spacer
-                v-btn(text, @click='newGroupDialog = false') Cancel
-                v-btn(color='primary', @click='createGroup') Create
+                v-btn(text, @click='newGroupDialog = false') {{ $t('common:actions.cancel') }}
+                v-btn(color='primary', @click='createGroup') {{ $t('common:actions.create') }}
         v-card.mt-3.animated.fadeInUp
           v-data-table(
             :items='groups'
@@ -57,9 +57,9 @@
                   v-tooltip(left, v-if='props.item.isSystem')
                     template(v-slot:activator='{ on }')
                       v-icon(v-on='on') mdi-lock-outline
-                    span System Group
+                    span {{ $t('admin:groups.systemGroup') }}
             template(slot='no-data')
-              v-alert.ma-3(icon='mdi-alert', :value='true', outline) No groups to display.
+              v-alert.ma-3(icon='mdi-alert', :value='true', outline) {{ $t('admin:groups.noGroups') }}
           .text-xs-center.py-2(v-if='pageCount > 1')
             v-pagination(v-model='pagination', :length='pageCount')
 </template>
@@ -81,10 +81,10 @@ export default {
       groups: [],
       headers: [
         { text: 'ID', value: 'id', width: 80, sortable: true },
-        { text: 'Name', value: 'name' },
-        { text: 'Users', value: 'userCount', width: 200 },
-        { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 },
+        { text: this.$t('admin:groups.groupName'), value: 'name' },
+        { text: this.$t('admin:groups.groupUserNum'), value: 'userCount', width: 200 },
+        { text: this.$t('admin:groups.groupCreateTime'), value: 'createdAt', width: 250 },
+        { text: this.$t('admin:groups.groupUpdateTime'), value: 'updatedAt', width: 250 },
         { text: '', value: 'isSystem', width: 20, sortable: false }
       ],
       search: '',
@@ -104,7 +104,7 @@ export default {
     async refresh() {
       await this.$apollo.queries.groups.refetch()
       this.$store.commit('showNotification', {
-        message: 'Groups have been refreshed.',
+        message: this.$t('admin:groups.refreshSuccess'),
         style: 'success',
         icon: 'cached'
       })
@@ -113,7 +113,7 @@ export default {
       if (_.trim(this.newGroupName).length < 1) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: 'Enter a group name.',
+          message: this.$t('admin:groups.newGroupNameAlert'),
           icon: 'warning'
         })
         return
@@ -143,7 +143,7 @@ export default {
         this.newGroupName = ''
         this.$store.commit('showNotification', {
           style: 'success',
-          message: `Group has been created successfully.`,
+          message: this.$t('admin:groups.newGroupSuccess'),
           icon: 'check'
         })
       } catch (err) {

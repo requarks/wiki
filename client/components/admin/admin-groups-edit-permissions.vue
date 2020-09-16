@@ -9,7 +9,7 @@
             outlined
             :value='true'
             icon='mdi-lock-outline'
-            ) This is a system group. Some permissions cannot be modified.
+            ) {{$t('admin:groups.banEditPermission')}}
         v-flex(xs12, md6, lg4, v-for='pmGroup in permissions', :key='pmGroup.category')
           v-card.md2(flat, :class='$vuetify.theme.dark ? "grey darken-3-d5" : "grey lighten-5"')
             .overline.px-5.pt-5.pb-3.grey--text.text--darken-2 {{pmGroup.category}}
@@ -42,102 +42,102 @@ export default {
     return {
       permissions: [
         {
-          category: 'Content',
+          category: this.$t('admin:permission.contentTitle'),
           items: [
             {
-              permission: 'read:pages',
-              hint: 'Can view pages, as specified in the Page Rules',
+              permission: this.$t('admin:permission.readPages'),
+              hint: this.$t('admin:permission.readPagesHint'),
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
-              permission: 'write:pages',
-              hint: 'Can create / edit pages, as specified in the Page Rules',
+              permission: this.$t('admin:permission.writePages'),
+              hint: this.$t('admin:permission.writePagesHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'manage:pages',
-              hint: 'Can move existing pages as specified in the Page Rules',
+              permission: this.$t('admin:permission.managePages'),
+              hint: this.$t('admin:permission.managePagesHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'delete:pages',
-              hint: 'Can delete existing pages, as specified in the Page Rules',
+              permission: this.$t('admin:permission.deletePages'),
+              hint: this.$t('admin:permission.deletePagesHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'write:styles',
-              hint: 'Can insert CSS styles in pages, as specified in the Page Rules',
+              permission: this.$t('admin:permission.writeStyles'),
+              hint: this.$t('admin:permission.writeStylesHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'write:scripts',
-              hint: 'Can insert JavaScript in pages, as specified in the Page Rules',
+              permission: this.$t('admin:permission.writeScripts'),
+              hint: this.$t('admin:permission.writeScriptsHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'read:source',
-              hint: 'Can view pages source, as specified in the Page Rules',
+              permission: this.$t('admin:permission.readSource'),
+              hint: this.$t('admin:permission.readSourceHint'),
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
-              permission: 'read:history',
-              hint: 'Can view pages history, as specified in the Page Rules',
+              permission: this.$t('admin:permission.readHistory'),
+              hint: this.$t('admin:permission.readHistoryHint'),
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
-              permission: 'read:assets',
-              hint: 'Can view / use assets (such as images and files), as specified in the Page Rules',
+              permission: this.$t('admin:permission.readAssets'),
+              hint: this.$t('admin:permission.readAssetsHint'),
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
-              permission: 'write:assets',
-              hint: 'Can upload new assets (such as images and files), as specified in the Page Rules',
+              permission: this.$t('admin:permission.writeAssets'),
+              hint: this.$t('admin:permission.writeAssetsHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'manage:assets',
-              hint: 'Can edit and delete existing assets (such as images and files), as specified in the Page Rules',
+              permission: this.$t('admin:permission.manageAssets'),
+              hint: this.$t('admin:permission.manageAssetsHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'read:comments',
-              hint: 'Can view comments, as specified in the Page Rules',
+              permission: this.$t('admin:permission.readComments'),
+              hint: this.$t('admin:permission.readCommentsHint'),
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
-              permission: 'write:comments',
-              hint: 'Can post new comments, as specified in the Page Rules',
+              permission: this.$t('admin:permission.writeComments'),
+              hint: this.$t('admin:permission.writeCommentsHint'),
               warning: false,
               restrictedForSystem: false,
               disabled: false
             },
             {
-              permission: 'manage:comments',
-              hint: 'Can edit and delete existing comments, as specified in the Page Rules',
+              permission: this.$t('admin:permission.manageComments'),
+              hint: this.$t('admin:permission.manageCommentsHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
@@ -145,32 +145,32 @@ export default {
           ]
         },
         {
-          category: 'Users',
+          category: this.$t('admin:permission.usersTitle'),
           items: [
             {
-              permission: 'write:users',
-              hint: 'Can create or authorize new users, but not modify existing ones',
+              permission: this.$t('admin:permission.writeUsers'),
+              hint: this.$t('admin:permission.writeUsersHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'manage:users',
-              hint: 'Can manage all users (but not users with administrative permissions)',
+              permission: this.$t('admin:permission.manageUsers'),
+              hint: this.$t('admin:permission.manageUsersHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'write:groups',
-              hint: 'Can manage groups and assign CONTENT permissions / page rules',
+              permission: this.$t('admin:permission.writeGroups'),
+              hint: this.$t('admin:permission.writeGroupsHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'manage:groups',
-              hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
+              permission: this.$t('admin:permission.manageGroups'),
+              hint: this.$t('admin:permission.manageGroupsHint'),
               warning: true,
               restrictedForSystem: true,
               disabled: false
@@ -178,32 +178,32 @@ export default {
           ]
         },
         {
-          category: 'Administration',
+          category: this.$t('admin:permission.administrationTitle'),
           items: [
             {
-              permission: 'manage:navigation',
-              hint: 'Can manage the site navigation',
+              permission: this.$t('admin:permission.manageNavigation'),
+              hint: this.$t('admin:permission.manageNavigationHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'manage:theme',
-              hint: 'Can manage and modify themes',
+              permission: this.$t('admin:permission.manageTheme'),
+              hint: this.$t('admin:permission.manageThemeHint'),
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'manage:api',
-              hint: 'Can generate and revoke API keys',
+              permission: this.$t('admin:permission.manageApi'),
+              hint: this.$t('admin:permission.manageApiHint'),
               warning: true,
               restrictedForSystem: true,
               disabled: false
             },
             {
-              permission: 'manage:system',
-              hint: 'Can manage and access everything. Root administrator.',
+              permission: this.$t('admin:permission.manageSystem'),
+              hint: this.$t('admin:permission.manageSystemHint'),
               warning: true,
               restrictedForSystem: true,
               disabled: true
