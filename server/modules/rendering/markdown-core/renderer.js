@@ -40,7 +40,7 @@ module.exports = {
     }
 
     mkdown.use(mdAttrs, {
-      allowedAttributes: ['id', 'class', 'target']
+      allowedAttributes: ['id', 'class', 'target', 'width', 'height']
     })
 
     for (let child of this.children) {
