@@ -626,6 +626,8 @@ export default {
           cm.showHint({
             hint: async (cm, options) => {
               const cur = cm.getCursor()
+              const curLine = cm.getLine(cur.line).substring(0, cur.ch)
+              const queryString = curLine.substring(curLine.lastIndexOf('[')+1,curLine.length-2)
               const token = cm.getTokenAt(cur)
               try {
                 const respRaw = await this.$apollo.query({
@@ -644,7 +646,7 @@ export default {
                     }
                   `,
                   variables: {
-                    query: token.string,
+                    query: queryString,
                     locale: this.locale
                   },
                   fetchPolicy: 'cache-first'
@@ -653,7 +655,7 @@ export default {
                 if (resp && resp.totalHits > 0) {
                   return {
                     list: resp.results.map(r => ({
-                      text: (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
+                      text: '(' + (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
                       displayText: siteLangs.length > 0 ? `/${r.locale}/${r.path} - ${r.title}` : `/${r.path} - ${r.title}`
                     })),
                     from: CodeMirror.Pos(cur.line, token.start),
