@@ -25,8 +25,8 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.image.repository }}:{{ default "latest" .Values.image.tag }}"
+          imagePullPolicy: {{ default "IfNotPresent" .Values.image.imagePullPolicy }}
           env:
             - name: DB_TYPE
               value: postgres
