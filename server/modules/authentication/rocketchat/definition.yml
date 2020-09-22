@@ -1,0 +1,29 @@
+key: rocketchat
+title: Rocket.chat
+description: Communicate and collaborate with your team, share files, chat in real-time, or switch to video/audio conferencing.
+author: requarks.io
+logo: https://static.requarks.io/logo/rocketchat.svg
+color: red accent-3
+website: https://rocket.chat/
+isAvailable: true
+useForm: false
+scopes:
+  - openid
+  - profile
+  - email
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
+  siteURL:
+    type: String
+    title: Rocket.chat Site URL
+    hint: The base URL of your Rocket.chat site (e.g. https://example.rocket.chat)
+    order: 3

@@ -203,6 +203,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ian
 - Iskander Callos
 - Josh Stewart
+- Keir
 - Loïc CRAMPON
 - Ludgeir Ibanez
 - Matt Gedigian
