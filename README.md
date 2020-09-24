@@ -207,6 +207,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Loïc CRAMPON
 - Ludgeir Ibanez
 - Matt Gedigian
+- Patryk
 - Philipp Schürch
 - Richeir
 - SmartNET.works
