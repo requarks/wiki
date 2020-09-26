@@ -92,7 +92,7 @@ Set postgres secret
 {{- if .Values.postgresql.enabled -}}
 {{- template "wiki.postgresql.fullname" . -}}
 {{- else -}}
-{{- template "wiki.fullname" . -}}
+{{- default "postgresql-password" .Values.postgresql.existingSecret | quote -}}
 {{- end -}}
 {{- end -}}
 
