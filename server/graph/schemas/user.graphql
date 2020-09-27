@@ -78,6 +78,14 @@ type UserMutation {
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
+  enableTFA(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+
+  disableTFA(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+
   resetPassword(
     id: Int!
   ): DefaultResponse
@@ -128,7 +136,9 @@ type User {
   name: String!
   email: String!
   providerKey: String!
+  providerName: String
   providerId: String
+  providerIs2FACapable: Boolean
   isSystem: Boolean!
   isActive: Boolean!
   isVerified: Boolean!
@@ -140,6 +150,7 @@ type User {
   createdAt: Date!
   updatedAt: Date!
   lastLoginAt: Date
+  tfaIsActive: Boolean!
   groups: [Group]!
 }
 

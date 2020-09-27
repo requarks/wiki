@@ -345,7 +345,7 @@ export default {
             })
             const respObj = _.get(resp, 'data.system.importUsersFromV1', {})
             if (!_.get(respObj, 'responseResult.succeeded', false)) {
-              throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occured'))
+              throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occurred'))
             }
             this.successUsers = _.get(respObj, 'usersCount', 0)
             this.successGroups = _.get(respObj, 'groupsCount', 0)
@@ -429,7 +429,7 @@ export default {
               })
               const respObj = _.get(respSv, 'data.storage.updateTargets', {})
               if (!_.get(respObj, 'responseResult.succeeded', false)) {
-                throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occured'))
+                throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occurred'))
               }
 
               this.progress += 10
@@ -480,7 +480,7 @@ export default {
 
               const respImportObj = _.get(respImport, 'data.storage.executeAction', {})
               if (!_.get(respImportObj, 'responseResult.succeeded', false)) {
-                throw new Error(_.get(respImportObj, 'responseResult.message', 'An unexpected error occured'))
+                throw new Error(_.get(respImportObj, 'responseResult.message', 'An unexpected error occurred'))
               }
 
               this.progress += 15

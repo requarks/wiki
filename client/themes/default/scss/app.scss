@@ -1,6 +1,6 @@
 /* THEME SPECIFIC STYLES */
 
-.v-content .contents {
+.v-main .contents {
   color: mc('grey', '800');
   padding: .5rem 0 50px;
   position: relative;
@@ -244,7 +244,7 @@
       top: 50%;
       left: -38px;
       color: rgba(255, 255, 255, .7);
-      content: "\F02FC";
+      content: "\F0757";
     }
 
     > p:first-child .emoji {
@@ -581,6 +581,10 @@
     }
   }
 
+  .diagram {
+    margin-top: 1rem;
+  }
+
   // ---------------------------------
   // TASK LISTS
   // ---------------------------------
@@ -649,6 +653,59 @@
     tr {
       td {
         border-bottom: 1px solid mc('grey', '200');
+      }
+    }
+  }
+
+  figure.table {
+    margin: 0;
+
+    > table {
+      background-color: #FFF;
+      margin: 0;
+      border-collapse: collapse;
+      box-shadow: 0 0 5px 0 rgba(0, 0, 0, .07);
+
+      @at-root .theme--dark & {
+        background-color: darken(mc('grey', '900'), 3%);
+      }
+
+      td, th {
+        border: 1px solid mc('blue-grey', '100');
+        box-shadow: inset -1px -1px 0 0 #FFF, inset 1px 0 0 #FFF;
+        padding: .5rem .75rem;
+
+        @at-root .theme--dark & {
+          border-color: mc('grey', '700');
+          box-shadow: inset -1px -1px 0 0 rgba(0,0,0, .5);
+        }
+      }
+
+      th {
+        background-color: lighten(mc('blue-grey', '50'), 1%);
+        font-weight: 700;
+        color: mc('blue-grey', '700');
+
+        @at-root .theme--dark & {
+          background-color: mc('grey', '800');
+          color: mc('grey', '400');
+        }
+      }
+
+      thead th {
+        border-bottom: 2px solid mc('blue-grey', '100');
+
+        @at-root .theme--dark & {
+          border-bottom: none;
+        }
+      }
+
+      tbody th {
+        background-color: lighten(mc('blue-grey', '50'), 4%);
+
+        @at-root .theme--dark & {
+          background-color: darken(mc('grey', '800'), 8%);
+        }
       }
     }
   }
@@ -811,6 +868,15 @@
     }
   }
 
+  .mention {
+    background-color: rgba(153, 0, 48, .1);
+    color: #990030;
+
+    @at-root .theme--dark & {
+      color: mc('pink', '500');
+    }
+  }
+
 }
 
 // ---------------------------------
@@ -928,5 +994,9 @@
         text-shadow: none;
       }
     }
+  }
+
+  .comments-container {
+    display: none;
   }
 }

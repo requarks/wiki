@@ -44,7 +44,7 @@
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
-    v-content
+    v-main
       component(:is='currentEditor', :save='save')
       editor-modal-properties(v-model='dialogProps')
       editor-modal-editorselect(v-model='dialogEditorSelector')
@@ -62,9 +62,6 @@ import { get, sync } from 'vuex-pathify'
 import { AtomSpinner } from 'epic-spinners'
 import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
-
-import createPageMutation from 'gql/editor/create.gql'
-import updatePageMutation from 'gql/editor/update.gql'
 
 import editorStore from '../store/editor'
 
@@ -87,7 +84,8 @@ export default {
     editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue'),
     editorModalMedia: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-media.vue'),
     editorModalBlocks: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-blocks.vue'),
-    editorModalConflict: () => import(/* webpackChunkName: "editor-conflict", webpackMode: "lazy" */ './editor/editor-modal-conflict.vue')
+    editorModalConflict: () => import(/* webpackChunkName: "editor-conflict", webpackMode: "lazy" */ './editor/editor-modal-conflict.vue'),
+    editorModalDrawio: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-drawio.vue')
   },
   props: {
     locale: {
@@ -114,6 +112,22 @@ export default {
       type: Boolean,
       default: true
     },
+    scriptCss: {
+      type: String,
+      default: ''
+    },
+    publishStartDate: {
+      type: String,
+      default: ''
+    },
+    publishEndDate: {
+      type: String,
+      default: ''
+    },
+    scriptJs: {
+      type: String,
+      default: ''
+    },
     initEditor: {
       type: String,
       default: null
@@ -133,6 +147,10 @@ export default {
     checkoutDate: {
       type: String,
       default: new Date().toISOString()
+    },
+    effectivePermissions: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -151,7 +169,9 @@ export default {
         publishEndDate: '',
         publishStartDate: '',
         tags: '',
-        title: ''
+        title: '',
+        css: '',
+        js: ''
       }
     }
   },
@@ -162,6 +182,7 @@ export default {
     welcomeMode() { return this.mode === `create` && this.path === `home` },
     currentPageTitle: sync('page/title'),
     checkoutDateActive: sync('editor/checkoutDateActive'),
+    currentStyling: get('page/scriptCss'),
     isDirty () {
       return _.some([
         this.initContentParsed !== this.$store.get('editor/content'),
@@ -170,7 +191,11 @@ export default {
         this.savedState.title !== this.$store.get('page/title'),
         this.savedState.description !== this.$store.get('page/description'),
         this.savedState.tags !== this.$store.get('page/tags'),
-        this.savedState.isPublished !== this.$store.get('page/isPublished')
+        this.savedState.isPublished !== this.$store.get('page/isPublished'),
+        this.savedState.publishStartDate !== this.$store.get('page/publishStartDate'),
+        this.savedState.publishEndDate !== this.$store.get('page/publishEndDate'),
+        this.savedState.css !== this.$store.get('page/scriptCss'),
+        this.savedState.js !== this.$store.get('page/scriptJs')
       ], Boolean)
     }
   },
@@ -181,22 +206,33 @@ export default {
           this.dialogProps = true
         }, 500)
       }
+    },
+    currentStyling(newValue) {
+      this.injectCustomCss(newValue)
     }
   },
   created() {
-    this.$store.commit('page/SET_ID', this.pageId)
-    this.$store.commit('page/SET_DESCRIPTION', this.description)
-    this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
-    this.$store.commit('page/SET_LOCALE', this.locale)
-    this.$store.commit('page/SET_PATH', this.path)
-    this.$store.commit('page/SET_TAGS', this.tags)
-    this.$store.commit('page/SET_TITLE', this.title)
+    this.$store.set('page/id', this.pageId)
+    this.$store.set('page/description', this.description)
+    this.$store.set('page/isPublished', this.isPublished)
+    this.$store.set('page/publishStartDate', this.publishStartDate)
+    this.$store.set('page/publishEndDate', this.publishEndDate)
+    this.$store.set('page/locale', this.locale)
+    this.$store.set('page/path', this.path)
+    this.$store.set('page/tags', this.tags)
+    this.$store.set('page/title', this.title)
+    this.$store.set('page/scriptCss', this.scriptCss)
+    this.$store.set('page/scriptJs', this.scriptJs)
 
-    this.$store.commit('page/SET_MODE', 'edit')
+    this.$store.set('page/mode', 'edit')
 
     this.setCurrentSavedState()
 
     this.checkoutDateActive = this.checkoutDate
+
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')
@@ -254,7 +290,52 @@ export default {
           // --------------------------------------------
 
           let resp = await this.$apollo.mutate({
-            mutation: createPageMutation,
+            mutation: gql`
+              mutation (
+                $content: String!
+                $description: String!
+                $editor: String!
+                $isPrivate: Boolean!
+                $isPublished: Boolean!
+                $locale: String!
+                $path: String!
+                $publishEndDate: Date
+                $publishStartDate: Date
+                $scriptCss: String
+                $scriptJs: String
+                $tags: [String]!
+                $title: String!
+              ) {
+                pages {
+                  create(
+                    content: $content
+                    description: $description
+                    editor: $editor
+                    isPrivate: $isPrivate
+                    isPublished: $isPublished
+                    locale: $locale
+                    path: $path
+                    publishEndDate: $publishEndDate
+                    publishStartDate: $publishStartDate
+                    scriptCss: $scriptCss
+                    scriptJs: $scriptJs
+                    tags: $tags
+                    title: $title
+                  ) {
+                    responseResult {
+                      succeeded
+                      errorCode
+                      slug
+                      message
+                    }
+                    page {
+                      id
+                      updatedAt
+                    }
+                  }
+                }
+              }
+            `,
             variables: {
               content: this.$store.get('editor/content'),
               description: this.$store.get('page/description'),
@@ -265,6 +346,8 @@ export default {
               path: this.$store.get('page/path'),
               publishEndDate: this.$store.get('page/publishEndDate') || '',
               publishStartDate: this.$store.get('page/publishStartDate') || '',
+              scriptCss: this.$store.get('page/scriptCss'),
+              scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -310,7 +393,53 @@ export default {
           }
 
           let resp = await this.$apollo.mutate({
-            mutation: updatePageMutation,
+            mutation: gql`
+              mutation (
+                $id: Int!
+                $content: String
+                $description: String
+                $editor: String
+                $isPrivate: Boolean
+                $isPublished: Boolean
+                $locale: String
+                $path: String
+                $publishEndDate: Date
+                $publishStartDate: Date
+                $scriptCss: String
+                $scriptJs: String
+                $tags: [String]
+                $title: String
+              ) {
+                pages {
+                  update(
+                    id: $id
+                    content: $content
+                    description: $description
+                    editor: $editor
+                    isPrivate: $isPrivate
+                    isPublished: $isPublished
+                    locale: $locale
+                    path: $path
+                    publishEndDate: $publishEndDate
+                    publishStartDate: $publishStartDate
+                    scriptCss: $scriptCss
+                    scriptJs: $scriptJs
+                    tags: $tags
+                    title: $title
+                  ) {
+                    responseResult {
+                      succeeded
+                      errorCode
+                      slug
+                      message
+                    }
+                    page {
+                      updatedAt
+                    }
+                  }
+                }
+              }
+            `,
             variables: {
               id: this.$store.get('page/id'),
               content: this.$store.get('editor/content'),
@@ -322,6 +451,8 @@ export default {
               path: this.$store.get('page/path'),
               publishEndDate: this.$store.get('page/publishEndDate') || '',
               publishStartDate: this.$store.get('page/publishStartDate') || '',
+              scriptCss: this.$store.get('page/scriptCss'),
+              scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -402,9 +533,24 @@ export default {
         publishEndDate: this.$store.get('page/publishEndDate') || '',
         publishStartDate: this.$store.get('page/publishStartDate') || '',
         tags: this.$store.get('page/tags'),
-        title: this.$store.get('page/title')
+        title: this.$store.get('page/title'),
+        css: this.$store.get('page/scriptCss'),
+        js: this.$store.get('page/scriptJs')
       }
-    }
+    },
+    injectCustomCss: _.debounce(css => {
+      const oldStyl = document.querySelector('#editor-script-css')
+      if (oldStyl) {
+        document.head.removeChild(oldStyl)
+      }
+      if (!_.isEmpty(css)) {
+        const styl = document.createElement('style')
+        styl.type = 'text/css'
+        styl.id = 'editor-script-css'
+        document.head.appendChild(styl)
+        styl.appendChild(document.createTextNode(css))
+      }
+    }, 1000)
   },
   apollo: {
     isConflict: {

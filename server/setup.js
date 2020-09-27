@@ -253,9 +253,18 @@ module.exports = () => {
         throw new Error('Incorrect groups auto-increment configuration! Should start at 0 and increment by 1. Contact your database administrator.')
       }
 
-      // Load authentication strategies + enable local
-      await WIKI.models.authentication.refreshStrategiesFromDisk()
-      await WIKI.models.authentication.query().patch({ isEnabled: true }).where('key', 'local')
+      // Load local authentication strategy
+      await WIKI.models.authentication.query().insert({
+        key: 'local',
+        config: {},
+        selfRegistration: false,
+        isEnabled: true,
+        domainWhitelist: {v: []},
+        autoEnrollGroups: {v: []},
+        order: 0,
+        strategyKey: 'local',
+        displayName: 'Local'
+      })
 
       // Load editors + enable default
       await WIKI.models.editors.refreshEditorsFromDisk()
@@ -434,7 +443,7 @@ module.exports = () => {
     WIKI.logger.info('HTTP Server: [ RUNNING ]')
     WIKI.logger.info('🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻')
     WIKI.logger.info('')
-    WIKI.logger.info(`Browse to http://localhost:${WIKI.config.port}/ to complete setup!`)
+    WIKI.logger.info(`Browse to http://YOUR-SERVER-IP:${WIKI.config.port}/ to complete setup!`)
     WIKI.logger.info('')
     WIKI.logger.info('🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺')
   })

@@ -1,6 +1,7 @@
 const md = require('markdown-it')
 const mdAttrs = require('markdown-it-attrs')
 const _ = require('lodash')
+const underline = require('./underline')
 
 const quoteStyles = {
   Chinese: '””‘’',
@@ -26,9 +27,17 @@ module.exports = {
       typographer: this.config.typographer,
       quotes: _.get(quoteStyles, this.config.quotes, quoteStyles.English),
       highlight(str, lang) {
-        return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
+        if (lang === 'diagram') {
+          return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
+        } else {
+          return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
+        }
       }
     })
+
+    if (this.config.underline) {
+      mkdown.use(underline)
+    }
 
     mkdown.use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']

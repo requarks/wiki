@@ -41,13 +41,15 @@
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{engine.title}}
-          v-card-text
-            .enginelogo
+          v-card-info(color='blue')
+            div
+              div {{engine.description}}
+              span.caption: a(:href='engine.website') {{engine.website}}
+            v-spacer
+            .admin-providerlogo
               img(:src='engine.logo', :alt='engine.title')
-            .caption.pt-3 {{engine.description}}
-            .caption.pb-3: a(:href='engine.website') {{engine.website}}
-            v-divider.mt-3
-            .overline.my-5 {{$t('admin:search.engineConfig')}}
+          v-card-text
+            .overline.mb-5 {{$t('admin:search.engineConfig')}}
             .body-2.ml-3(v-if='!engine.config || engine.config.length < 1'): em {{$t('admin:search.engineNoConfig')}}
             template(v-else, v-for='cfg in engine.config')
               v-select(

@@ -33,6 +33,13 @@ type SiteMutation {
     company: String
     contentLicense: String
     logoUrl: String
+    authAutoLogin: Boolean
+    authEnforce2FA: Boolean
+    authHideLocal: Boolean
+    authLoginBgUrl: String
+    authJwtAudience: String
+    authJwtExpiration: String
+    authJwtRenewablePeriod: String
     featurePageRatings: Boolean
     featurePageComments: Boolean
     featurePersonalWikis: Boolean
@@ -65,6 +72,13 @@ type SiteConfig {
   company: String!
   contentLicense: String!
   logoUrl: String!
+  authAutoLogin: Boolean
+  authEnforce2FA: Boolean
+  authHideLocal: Boolean
+  authLoginBgUrl: String
+  authJwtAudience: String
+  authJwtExpiration: String
+  authJwtRenewablePeriod: String
   featurePageRatings: Boolean!
   featurePageComments: Boolean!
   featurePersonalWikis: Boolean!

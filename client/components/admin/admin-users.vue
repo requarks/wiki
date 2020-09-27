@@ -33,7 +33,7 @@
               label='Identity Provider'
               :items='strategies'
               v-model='filterStrategy'
-              item-text='title'
+              item-text='displayName'
               item-value='key'
               style='max-width: 300px;'
               dense
@@ -57,7 +57,7 @@
                 td {{ props.item.id }}
                 td: strong {{ props.item.name }}
                 td {{ props.item.email }}
-                td {{ props.item.providerKey }}
+                td {{ getStrategyName(props.item.providerKey) }}
                 td {{ props.item.createdAt | moment('from') }}
                 td
                   span(v-if='props.item.lastLoginAt') {{ props.item.lastLoginAt | moment('from') }}
@@ -131,6 +131,9 @@ export default {
           icon: 'cached'
         })
       }
+    },
+    getStrategyName(key) {
+      return (_.find(this.strategies, ['key', key]) || {}).displayName || key
     }
   },
   apollo: {
@@ -162,13 +165,9 @@ export default {
       query: gql`
         query {
           authentication {
-            strategies(
-              isEnabled: true
-            ) {
+            activeStrategies {
               key
-              title
-              icon
-              color
+              displayName
             }
           }
         }
@@ -177,8 +176,8 @@ export default {
       update: (data) => {
         return _.concat({
           key: 'all',
-          title: 'All Providers'
-        }, data.authentication.strategies)
+          displayName: 'All Providers'
+        }, data.authentication.activeStrategies)
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-strategies-refresh')

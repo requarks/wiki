@@ -17,12 +17,13 @@
         v-icon(left) mdi-check
         span {{ $t('common:actions.ok') }}
     v-card(tile)
-      v-tabs(color='white', background-color='blue darken-1', dark, centered)
+      v-tabs(color='white', background-color='blue darken-1', dark, centered, v-model='currentTab')
         v-tab {{$t('editor:props.info')}}
         v-tab {{$t('editor:props.scheduling')}}
-        v-tab(disabled) {{$t('editor:props.scripts')}}
-        v-tab {{$t('editor:props.social')}}
-        v-tab-item
+        v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
+        v-tab(disabled) {{$t('editor:props.social')}}
+        v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
+        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.pt-5
             .overline.pb-5 {{$t('editor:props.pageInfo')}}
             v-text-field(
@@ -88,16 +89,15 @@
               hide-no-data
               :search-input.sync='newTagSearch'
               )
-        v-tab-item
+        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
-            .overline.pb-5 {{$t('editor:props.publishState')}} #[v-chip.ml-3(label, color='grey', small, outlined).white--text coming soon]
+            .overline {{$t('editor:props.publishState')}}
             v-switch(
               :label='$t(`editor:props.publishToggle`)'
               v-model='isPublished'
               color='primary'
               :hint='$t(`editor:props.publishToggleHint`)'
               persistent-hint
-              disabled
               inset
               )
           v-divider
@@ -111,7 +111,7 @@
                     v-model='isPublishStartShown'
                     :return-value.sync='publishStartDate'
                     width='460px'
-                    :disabled='!isPublished || true'
+                    :disabled='!isPublished'
                     )
                     template(v-slot:activator='{ on }')
                       v-text-field(
@@ -124,7 +124,7 @@
                         clearable
                         :hint='$t(`editor:props.publishStartHint`)'
                         persistent-hint
-                        :disabled='!isPublished || true'
+                        :disabled='!isPublished'
                         )
                     v-date-picker(
                       v-model='publishStartDate'
@@ -136,12 +136,12 @@
                       )
                       v-spacer
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='isPublishStartShown = false'
                         ) {{$t('common:actions.cancel')}}
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='$refs.menuPublishStart.save(publishStartDate)'
                         ) {{$t('common:actions.ok')}}
@@ -152,7 +152,7 @@
                     v-model='isPublishEndShown'
                     :return-value.sync='publishEndDate'
                     width='460px'
-                    :disabled='!isPublished || true'
+                    :disabled='!isPublished'
                     )
                     template(v-slot:activator='{ on }')
                       v-text-field(
@@ -165,7 +165,7 @@
                         clearable
                         :hint='$t(`editor:props.publishEndHint`)'
                         persistent-hint
-                        :disabled='!isPublished || true'
+                        :disabled='!isPublished'
                         )
                     v-date-picker(
                       v-model='publishEndDate'
@@ -177,45 +177,33 @@
                       )
                       v-spacer
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='isPublishEndShown = false'
                         ) {{$t('common:actions.cancel')}}
                       v-btn(
-                        flat=''
+                        text
                         color='primary'
                         @click='$refs.menuPublishEnd.save(publishEndDate)'
                         ) {{$t('common:actions.ok')}}
 
-        v-tab-item
-          v-card-text
-            .overline.pb-3 {{$t('editor:props.js')}}
-            v-textarea(
-              outlined
-              rows='5'
-              :hint='$t(`editor:props.jsHint`)'
-              persistent-hint
-            )
-          v-divider
-          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
-            .overline.pb-3 {{$t('editor:props.css')}}
-            v-textarea(
-              outlined
-              rows='5'
-              :hint='$t(`editor:props.cssHint`)'
-              persistent-hint
-            )
+        v-tab-item(:transition='false', :reverse-transition='false')
+          .editor-props-codeeditor-title
+            .overline {{$t('editor:props.html')}}
+          .editor-props-codeeditor
+            textarea(ref='codejs')
+          .editor-props-codeeditor-hint
+            .caption {{$t('editor:props.htmlHint')}}
 
-        v-tab-item
+        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
-            .overline.pb-5 {{$t('editor:props.socialFeatures')}} #[v-chip.ml-3(label, color='grey', small, outlined).white--text coming soon]
+            .overline {{$t('editor:props.socialFeatures')}}
             v-switch(
               :label='$t(`editor:props.allowComments`)'
               v-model='isPublished'
               color='primary'
               :hint='$t(`editor:props.allowCommentsHint`)'
               persistent-hint
-              disabled
               inset
               )
             v-switch(
@@ -233,7 +221,6 @@
               color='primary'
               :hint='$t(`editor:props.displayAuthorHint`)'
               persistent-hint
-              disabled
               inset
               )
             v-switch(
@@ -242,9 +229,16 @@
               color='primary'
               :hint='$t(`editor:props.displaySharingBarHint`)'
               persistent-hint
-              disabled
               inset
               )
+
+        v-tab-item(:transition='false', :reverse-transition='false')
+          .editor-props-codeeditor-title
+            .overline {{$t('editor:props.css')}}
+          .editor-props-codeeditor
+            textarea(ref='codecss')
+          .editor-props-codeeditor-hint
+            .caption {{$t('editor:props.cssHint')}}
 
     page-selector(:mode='pageSelectorMode', v-model='pageSelectorShown', :path='path', :locale='locale', :open-handler='setPath')
 </template>
@@ -253,6 +247,11 @@
 import _ from 'lodash'
 import { sync, get } from 'vuex-pathify'
 import gql from 'graphql-tag'
+
+import CodeMirror from 'codemirror'
+import 'codemirror/lib/codemirror.css'
+import 'codemirror/mode/htmlmixed/htmlmixed.js'
+import 'codemirror/mode/css/css.js'
 
 /* global siteLangs, siteConfig */
 
@@ -263,7 +262,7 @@ export default {
       default: false
     }
   },
-  data() {
+  data () {
     return {
       isPublishStartShown: false,
       isPublishEndShown: false,
@@ -271,7 +270,9 @@ export default {
       namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang],
       newTag: '',
       newTagSuggestions: [],
-      newTagSearch: ''
+      newTagSearch: '',
+      currentTab: 0,
+      cm: null
     }
   },
   computed: {
@@ -288,20 +289,23 @@ export default {
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
+    scriptJs: sync('page/scriptJs'),
+    scriptCss: sync('page/scriptCss'),
+    hasScriptPermission: get('page/effectivePermissions@pages.script'),
+    hasStylePermission: get('page/effectivePermissions@pages.style'),
     pageSelectorMode () {
       return (this.mode === 'create') ? 'create' : 'move'
     }
   },
   watch: {
-    value(newValue, oldValue) {
+    value (newValue, oldValue) {
       if (newValue) {
         _.delay(() => {
           this.$refs.iptTitle.focus()
-          // this.$tours['editorPropertiesTour'].start()
         }, 500)
       }
     },
-    newTag(newValue, oldValue) {
+    newTag (newValue, oldValue) {
       const tagClean = _.trim(newValue || '').toLowerCase()
       if (tagClean && tagClean.length > 0) {
         if (!_.includes(this.tags, tagClean)) {
@@ -309,6 +313,24 @@ export default {
         }
         this.$nextTick(() => {
           this.newTag = null
+        })
+      }
+    },
+    currentTab (newValue, oldValue) {
+      if (this.cm) {
+        this.cm.toTextArea()
+      }
+      if (newValue === 2) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.loadEditor(this.$refs.codejs, 'html')
+          }, 100)
+        })
+      } else if (newValue === 4) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.loadEditor(this.$refs.codecss, 'css')
+          }, 100)
         })
       }
     }
@@ -326,6 +348,42 @@ export default {
     setPath({ path, locale }) {
       this.locale = locale
       this.path = path
+    },
+    loadEditor(ref, mode) {
+      this.cm = CodeMirror.fromTextArea(ref, {
+        tabSize: 2,
+        mode: `text/${mode}`,
+        theme: 'wikijs-dark',
+        lineNumbers: true,
+        lineWrapping: true,
+        line: true,
+        styleActiveLine: true,
+        viewportMargin: 50,
+        inputStyle: 'contenteditable',
+        direction: 'ltr'
+      })
+      switch (mode) {
+        case 'html':
+          this.cm.setValue(this.scriptJs)
+          this.cm.on('change', c => {
+            this.scriptJs = c.getValue()
+          })
+          break
+        case 'css':
+          this.cm.setValue(this.scriptCss)
+          this.cm.on('change', c => {
+            this.scriptCss = c.getValue()
+          })
+          break
+        default:
+          console.warn('Invalid Editor Mode')
+          break
+      }
+      this.cm.setSize(null, '500px')
+      this.$nextTick(() => {
+        this.cm.refresh()
+        this.cm.focus()
+      })
     }
   },
   apollo: {
@@ -354,5 +412,28 @@ export default {
 </script>
 
 <style lang='scss'>
+
+.editor-props-codeeditor {
+  background-color: mc('grey', '900');
+  min-height: 500px;
+
+  > textarea {
+    visibility: hidden;
+  }
+
+  &-title {
+    background-color: mc('grey', '900');
+    border-bottom: 1px solid lighten(mc('grey', '900'), 10%);
+    color: #FFF;
+    padding: 10px;
+  }
+
+  &-hint {
+    background-color: mc('grey', '900');
+    border-top: 1px solid lighten(mc('grey', '900'), 5%);
+    color: mc('grey', '500');
+    padding: 5px 10px;
+  }
+}
 
 </style>

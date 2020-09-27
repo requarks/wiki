@@ -33,7 +33,17 @@ router.get('/login', async (req, res, next) => {
       socialStrategies
     })
   } else {
-    res.render('login')
+    // -> Bypass Login
+    if (WIKI.config.auth.autoLogin && !req.query.all) {
+      const stg = await WIKI.models.authentication.query().orderBy('order').first()
+      const stgInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey])
+      if (!stgInfo.useForm) {
+        return res.redirect(`/login/${stg.key}`)
+      }
+    }
+    // -> Show Login
+    const bgUrl = !_.isEmpty(WIKI.config.auth.loginBgUrl) ? WIKI.config.auth.loginBgUrl : '/_assets/img/splash/1.jpg'
+    res.render('login', { bgUrl, hideLocal: WIKI.config.auth.hideLocal })
   }
 })
 
@@ -61,7 +71,7 @@ router.all('/login/:strategy/callback', async (req, res, next) => {
       strategy: req.params.strategy
     }, { req, res })
     res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
-    res.redirect('/')
+    res.redirect(authResult.redirect)
   } catch (err) {
     next(err)
   }
@@ -99,10 +109,11 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
 /**
  * Logout
  */
-router.get('/logout', function (req, res) {
+router.get('/logout', async (req, res) => {
+  const redirURL = await WIKI.models.users.logout({ req, res })
   req.logout()
   res.clearCookie('jwt')
-  res.redirect('/')
+  res.redirect(redirURL)
 })
 
 /**
@@ -125,10 +136,36 @@ router.get('/verify/:token', bruteforce.prevent, async (req, res, next) => {
   try {
     const usr = await WIKI.models.userKeys.validateToken({ kind: 'verify', token: req.params.token })
     await WIKI.models.users.query().patch({ isVerified: true }).where('id', usr.id)
-    const result = await WIKI.models.users.refreshToken(usr)
     req.brute.reset()
-    res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
-    res.redirect('/')
+    if (WIKI.config.auth.enforce2FA) {
+      res.redirect('/login')
+    } else {
+      const result = await WIKI.models.users.refreshToken(usr)
+      res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
+      res.redirect('/')
+    }
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * Reset Password
+ */
+router.get('/login-reset/:token', bruteforce.prevent, async (req, res, next) => {
+  try {
+    const usr = await WIKI.models.userKeys.validateToken({ kind: 'resetPwd', token: req.params.token })
+    if (!usr) {
+      throw new Error('Invalid Token')
+    }
+    req.brute.reset()
+
+    const changePwdContinuationToken = await WIKI.models.userKeys.generateToken({
+      userId: usr.id,
+      kind: 'changePwd'
+    })
+    const bgUrl = !_.isEmpty(WIKI.config.auth.loginBgUrl) ? WIKI.config.auth.loginBgUrl : '/_assets/img/splash/1.jpg'
+    res.render('login', { bgUrl, hideLocal: WIKI.config.auth.hideLocal, changePwdContinuationToken })
   } catch (err) {
     next(err)
   }

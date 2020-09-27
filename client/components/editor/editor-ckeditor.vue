@@ -18,6 +18,7 @@
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import DecoupledEditor from '@requarks/ckeditor5'
+// import DecoupledEditor from '../../../../wiki-ckeditor5/build/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
 import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
 
@@ -67,6 +68,18 @@ export default {
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
       language: this.locale,
       placeholder: 'Type the page content here',
+      disableNativeSpellChecker: false,
+      // TODO: Mention autocomplete
+      //
+      // mention: {
+      //   feeds: [
+      //     {
+      //       marker: '@',
+      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
+      //       minimumCharacters: 1
+      //     }
+      //   ]
+      // },
       wordCount: {
         onUpdate: stats => {
           this.stats = {
@@ -96,6 +109,11 @@ export default {
         case 'BINARY':
           this.editor.execute('link', opts.path, {
             linkIsDownloadable: true
+          })
+          break
+        case 'DIAGRAM':
+          this.editor.execute('imageInsert', {
+            source: `data:image/svg+xml;base64,${opts.text}`
           })
           break
       }
@@ -159,11 +177,26 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
   }
 
+  .contents {
+    table {
+      margin: inherit;
+    }
+    pre > code {
+      background-color: unset;
+      color: unset;
+      padding: .15em;
+    }
+  }
+
   .ck.ck-toolbar {
     border: none;
     justify-content: center;
     background-color: mc('grey', '300');
     color: #FFF;
+  }
+
+  .ck.ck-toolbar__items {
+    justify-content: center;
   }
 
   > .ck-editor__editable {

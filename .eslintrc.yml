@@ -1,6 +1,7 @@
 extends:
   - requarks
   - plugin:vue/strongly-recommended
+  - plugin:cypress/recommended
 env:
   node: true
   jest: true
@@ -12,4 +13,3 @@ globals:
   document: false
   navigator: false
   window: false
-  FuseBox: false

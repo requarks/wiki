@@ -10,7 +10,7 @@ props:
     type: Boolean
     default: true
     title: Allow HTML
-    hint: Enable HTML tags in content
+    hint: Enable HTML tags in content.
     order: 1
     public: true
   linkify:
@@ -27,19 +27,26 @@ props:
     hint: Add linebreaks within paragraphs.
     order: 3
     public: true
+  underline:
+    type: Boolean
+    default: false
+    title: Underline Emphasis
+    hint: Enable text underlining by using _underline_ syntax.
+    order: 4
+    public: true
   typographer:
     type: Boolean
     default: false
     title: Typographer
-    hint: Enable some language-neutral replacement + quotes beautification
-    order: 4
+    hint: Enable some language-neutral replacement + quotes beautification.
+    order: 5
     public: true
   quotes:
     type: String
     default: English
     title: Quotes style
     hint: When typographer is enabled. Double + single quotes replacement pairs. e.g. «»„“ for Russian, „“‚‘ for German, etc.
-    order: 5
+    order: 6
     enum:
       - Chinese
       - English

@@ -177,6 +177,8 @@ import editorStore from '../../store/editor'
 
 /* global WIKI */
 
+const titleRegex = /[<>"]/i
+
 WIKI.$store.registerModule('editor', editorStore)
 
 export default {
@@ -186,12 +188,6 @@ export default {
   },
   data() {
     return {
-      analyticsServices: [
-        { text: 'None', value: '' },
-        { text: 'Elasticsearch APM RUM', value: 'elk' },
-        { text: 'Google Analytics', value: 'ga' },
-        { text: 'Google Tag Manager', value: 'gtm' }
-      ],
       config: {
         host: '',
         title: '',
@@ -238,6 +234,15 @@ export default {
   },
   methods: {
     async save () {
+      const title = _.get(this.config, 'title', '')
+      if (titleRegex.test(title)) {
+        this.$store.commit('showNotification', {
+          style: 'error',
+          message: this.$t('admin:general.siteTitleInvalidChars'),
+          icon: 'alert'
+        })
+        return
+      }
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -300,7 +305,7 @@ export default {
         })
         this.$store.commit('showNotification', {
           style: 'success',
-          message: 'Configuration saved successfully.',
+          message: this.$t('admin:general.saveSuccess'),
           icon: 'check'
         })
         this.siteTitle = this.config.title

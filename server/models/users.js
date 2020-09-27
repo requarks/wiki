@@ -6,6 +6,7 @@ const tfa = require('node-2fa')
 const jwt = require('jsonwebtoken')
 const Model = require('objection').Model
 const validate = require('validate.js')
+const qr = require('qr-image')
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
@@ -27,7 +28,7 @@ module.exports = class User extends Model {
         providerId: {type: 'string'},
         password: {type: 'string'},
         tfaIsActive: {type: 'boolean', default: false},
-        tfaSecret: {type: 'string'},
+        tfaSecret: {type: ['string', null]},
         jobTitle: {type: 'string'},
         location: {type: 'string'},
         pictureUrl: {type: 'string'},
@@ -118,13 +119,22 @@ module.exports = class User extends Model {
     }
   }
 
-  async enableTFA() {
+  async generateTFA() {
     let tfaInfo = tfa.generateSecret({
-      name: WIKI.config.site.title
+      name: WIKI.config.title,
+      account: this.email
     })
-    return this.$query.patch({
-      tfaIsActive: true,
+    await WIKI.models.users.query().findById(this.id).patch({
+      tfaIsActive: false,
       tfaSecret: tfaInfo.secret
+    })
+    const safeTitle = WIKI.config.title.replace(/[\s-.,=!@#$%?&*()+[\]{}/\\;<>]/g, '')
+    return qr.imageSync(`otpauth://totp/${safeTitle}:${this.email}?secret=${tfaInfo.secret}`, { type: 'svg' })
+  }
+
+  async enableTFA() {
+    return WIKI.models.users.query().findById(this.id).patch({
+      tfaIsActive: true
     })
   }
 
@@ -135,7 +145,7 @@ module.exports = class User extends Model {
     })
   }
 
-  async verifyTFA(code) {
+  verifyTFA(code) {
     let result = tfa.verifyToken(this.tfaSecret, code)
     return (result && _.has(result, 'delta') && result.delta === 0)
   }
@@ -154,7 +164,7 @@ module.exports = class User extends Model {
 
   static async processProfile({ profile, providerKey }) {
     const provider = _.get(WIKI.auth.strategies, providerKey, {})
-    provider.info = _.find(WIKI.data.authentication, ['key', providerKey])
+    provider.info = _.find(WIKI.data.authentication, ['key', provider.stategyKey])
 
     // Find existing user
     let user = await WIKI.models.users.query().findOne({
@@ -202,11 +212,16 @@ module.exports = class User extends Model {
       displayName = primaryEmail.split('@')[0]
     }
 
-    // Parse picture URL
-    let pictureUrl = _.truncate(_.get(profile, 'picture', _.get(user, 'pictureUrl', null)), {
-      length: 255,
-      omission: ''
-    })
+    // Parse picture URL / Data
+    let pictureUrl = ''
+    if (profile.picture && Buffer.isBuffer(profile.picture)) {
+      pictureUrl = 'internal'
+    } else {
+      pictureUrl = _.truncate(_.get(profile, 'picture', _.get(user, 'pictureUrl', null)), {
+        length: 255,
+        omission: ''
+      })
+    }
 
     // Update existing user
     if (user) {
@@ -222,6 +237,10 @@ module.exports = class User extends Model {
         name: displayName,
         pictureUrl: pictureUrl
       })
+
+      if (pictureUrl === 'internal') {
+        await WIKI.models.users.updateUserAvatarData(user.id, profile.picture)
+      }
 
       return user
     }
@@ -256,71 +275,53 @@ module.exports = class User extends Model {
         await user.$relatedQuery('groups').relate(provider.autoEnrollGroups)
       }
 
+      if (pictureUrl === 'internal') {
+        await WIKI.models.users.updateUserAvatarData(user.id, profile.picture)
+      }
+
       return user
     }
 
     throw new Error('You are not authorized to login.')
   }
 
+  /**
+   * Login a user
+   */
   static async login (opts, context) {
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
-      const strInfo = _.find(WIKI.data.authentication, ['key', opts.strategy])
+      const selStrategy = _.get(WIKI.auth.strategies, opts.strategy)
+      if (!selStrategy.isEnabled) {
+        throw new WIKI.Error.AuthProviderInvalid()
+      }
+
+      const strInfo = _.find(WIKI.data.authentication, ['key', selStrategy.strategyKey])
 
       // Inject form user/pass
       if (strInfo.useForm) {
         _.set(context.req, 'body.email', opts.username)
         _.set(context.req, 'body.password', opts.password)
+        _.set(context.req.params, 'strategy', opts.strategy)
       }
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate(opts.strategy, {
+        WIKI.auth.passport.authenticate(selStrategy.strategyKey, {
           session: !strInfo.useForm,
           scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
           if (err) { return reject(err) }
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
-          // Must Change Password?
-          if (user.mustChangePwd) {
-            try {
-              const pwdChangeToken = await WIKI.models.userKeys.generateToken({
-                kind: 'changePwd',
-                userId: user.id
-              })
-
-              return resolve({
-                mustChangePwd: true,
-                continuationToken: pwdChangeToken
-              })
-            } catch (errc) {
-              WIKI.logger.warn(errc)
-              return reject(new WIKI.Error.AuthGenericError())
-            }
+          try {
+            const resp = await WIKI.models.users.afterLoginChecks(user, context, {
+              skipTFA: !strInfo.useForm,
+              skipChangePwd: !strInfo.useForm
+            })
+            resolve(resp)
+          } catch (err) {
+            reject(err)
           }
-
-          // Is 2FA required?
-          if (user.tfaIsActive) {
-            try {
-              const tfaToken = await WIKI.models.userKeys.generateToken({
-                kind: 'tfa',
-                userId: user.id
-              })
-              return resolve({
-                tfaRequired: true,
-                continuationToken: tfaToken
-              })
-            } catch (errc) {
-              WIKI.logger.warn(errc)
-              return reject(new WIKI.Error.AuthGenericError())
-            }
-          }
-
-          context.req.logIn(user, { session: !strInfo.useForm }, async errc => {
-            if (errc) { return reject(errc) }
-            const jwtToken = await WIKI.models.users.refreshToken(user)
-            resolve({ jwt: jwtToken.token })
-          })
         })(context.req, context.res, () => {})
       })
     } else {
@@ -328,6 +329,85 @@ module.exports = class User extends Model {
     }
   }
 
+  /**
+   * Perform post-login checks
+   */
+  static async afterLoginChecks (user, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
+    // Get redirect target
+    user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
+    let redirect = '/'
+    if (user.groups && user.groups.length > 0) {
+      redirect = user.groups[0].redirectOnLogin
+    }
+
+    // Is 2FA required?
+    if (!skipTFA) {
+      if (user.tfaIsActive && user.tfaSecret) {
+        try {
+          const tfaToken = await WIKI.models.userKeys.generateToken({
+            kind: 'tfa',
+            userId: user.id
+          })
+          return {
+            mustProvideTFA: true,
+            continuationToken: tfaToken,
+            redirect
+          }
+        } catch (errc) {
+          WIKI.logger.warn(errc)
+          throw new WIKI.Error.AuthGenericError()
+        }
+      } else if (WIKI.config.auth.enforce2FA || (user.tfaIsActive && !user.tfaSecret)) {
+        try {
+          const tfaQRImage = await user.generateTFA()
+          const tfaToken = await WIKI.models.userKeys.generateToken({
+            kind: 'tfaSetup',
+            userId: user.id
+          })
+          return {
+            mustSetupTFA: true,
+            continuationToken: tfaToken,
+            tfaQRImage,
+            redirect
+          }
+        } catch (errc) {
+          WIKI.logger.warn(errc)
+          throw new WIKI.Error.AuthGenericError()
+        }
+      }
+    }
+
+    // Must Change Password?
+    if (!skipChangePwd && user.mustChangePwd) {
+      try {
+        const pwdChangeToken = await WIKI.models.userKeys.generateToken({
+          kind: 'changePwd',
+          userId: user.id
+        })
+
+        return {
+          mustChangePwd: true,
+          continuationToken: pwdChangeToken,
+          redirect
+        }
+      } catch (errc) {
+        WIKI.logger.warn(errc)
+        throw new WIKI.Error.AuthGenericError()
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      context.req.login(user, { session: false }, async errc => {
+        if (errc) { return reject(errc) }
+        const jwtToken = await WIKI.models.users.refreshToken(user)
+        resolve({ jwt: jwtToken.token, redirect })
+      })
+    })
+  }
+
+  /**
+   * Generate a new token for a user
+   */
   static async refreshToken(user) {
     if (_.isSafeInteger(user)) {
       user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
@@ -336,6 +416,10 @@ module.exports = class User extends Model {
       if (!user) {
         WIKI.logger.warn(`Failed to refresh token for user ${user}: Not found.`)
         throw new WIKI.Error.AuthGenericError()
+      }
+      if (!user.isActive) {
+        WIKI.logger.warn(`Failed to refresh token for user ${user}: Inactive.`)
+        throw new WIKI.Error.AuthAccountBanned()
       }
     } else if (_.isNil(user.groups)) {
       user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions')
@@ -371,26 +455,24 @@ module.exports = class User extends Model {
     }
   }
 
-  static async loginTFA (opts, context) {
-    if (opts.securityCode.length === 6 && opts.loginToken.length === 64) {
-      let result = await WIKI.redis.get(`tfa:${opts.loginToken}`)
-      if (result) {
-        let userId = _.toSafeInteger(result)
-        if (userId && userId > 0) {
-          let user = await WIKI.models.users.query().findById(userId)
-          if (user && user.verifyTFA(opts.securityCode)) {
-            return Promise.fromCallback(clb => {
-              context.req.logIn(user, clb)
-            }).return({
-              succeeded: true,
-              message: 'Login Successful'
-            }).catch(err => {
-              WIKI.logger.warn(err)
-              throw new WIKI.Error.AuthGenericError()
-            })
-          } else {
-            throw new WIKI.Error.AuthTFAFailed()
+  /**
+   * Verify a TFA login
+   */
+  static async loginTFA ({ securityCode, continuationToken, setup }, context) {
+    if (securityCode.length === 6 && continuationToken.length > 1) {
+      const user = await WIKI.models.userKeys.validateToken({
+        kind: setup ? 'tfaSetup' : 'tfa',
+        token: continuationToken,
+        skipDelete: setup
+      })
+      if (user) {
+        if (user.verifyTFA(securityCode)) {
+          if (setup) {
+            await user.enableTFA()
           }
+          return WIKI.models.users.afterLoginChecks(user, context, { skipTFA: true })
+        } else {
+          throw new WIKI.Error.AuthTFAFailed()
         }
       }
     }
@@ -425,6 +507,38 @@ module.exports = class User extends Model {
     } else {
       throw new WIKI.Error.UserNotFound()
     }
+  }
+
+  /**
+   * Send a password reset request
+   */
+  static async loginForgotPassword ({ email }, context) {
+    const usr = await WIKI.models.users.query().where({
+      email,
+      providerKey: 'local'
+    }).first()
+    if (!usr) {
+      WIKI.logger.debug(`Password reset attempt on nonexistant local account ${email}: [DISCARDED]`)
+      return
+    }
+    const resetToken = await WIKI.models.userKeys.generateToken({
+      userId: usr.id,
+      kind: 'resetPwd'
+    })
+
+    await WIKI.mail.send({
+      template: 'accountResetPwd',
+      to: email,
+      subject: `Password Reset Request`,
+      data: {
+        preheadertext: `A password reset was requested for ${WIKI.config.title}`,
+        title: `A password reset was requested for ${WIKI.config.title}`,
+        content: `Click the button below to reset your password. If you didn't request this password reset, simply discard this email.`,
+        buttonLink: `${WIKI.config.host}/login-reset/${resetToken}`,
+        buttonText: 'Reset Password'
+      },
+      text: `A password reset was requested for wiki ${WIKI.config.title}. Open the following link to proceed: ${WIKI.config.host}/login-reset/${resetToken}`
+    })
   }
 
   /**
@@ -562,7 +676,7 @@ module.exports = class User extends Model {
         if (dupUsr) {
           throw new WIKI.Error.AuthAccountAlreadyExists()
         }
-        usrData.email = email
+        usrData.email = _.toLower(email)
       }
       if (!_.isEmpty(name) && name !== usr.name) {
         usrData.name = _.trim(name)
@@ -736,6 +850,18 @@ module.exports = class User extends Model {
     }
   }
 
+  /**
+   * Logout the current user
+   */
+  static async logout (context) {
+    if (!context.req.user || context.req.user.id === 2) {
+      return '/'
+    }
+    const usr = await WIKI.models.users.query().findById(context.req.user.id).select('providerKey')
+    const provider = _.find(WIKI.auth.strategies, ['key', usr.providerKey])
+    return provider.logout ? provider.logout(provider.config) : '/'
+  }
+
   static async getGuestUser () {
     const user = await WIKI.models.users.query().findById(2).withGraphJoined('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions')
@@ -756,5 +882,45 @@ module.exports = class User extends Model {
     }
     user.permissions = ['manage:system']
     return user
+  }
+
+  /**
+   * Add / Update User Avatar Data
+   */
+  static async updateUserAvatarData (userId, data) {
+    try {
+      WIKI.logger.debug(`Updating user ${userId} avatar data...`)
+      if (data.length > 1024 * 1024) {
+        throw new Error('Avatar image filesize is too large. 1MB max.')
+      }
+      const existing = await WIKI.models.knex('userAvatars').select('id').where('id', userId).first()
+      if (existing) {
+        await WIKI.models.knex('userAvatars').where({
+          id: userId
+        }).update({
+          data
+        })
+      } else {
+        await WIKI.models.knex('userAvatars').insert({
+          id: userId,
+          data
+        })
+      }
+    } catch (err) {
+      WIKI.logger.warn(`Failed to process binary thumbnail data for user ${userId}: ${err.message}`)
+    }
+  }
+
+  static async getUserAvatarData (userId) {
+    try {
+      const usrData = await WIKI.models.knex('userAvatars').where('id', userId).first()
+      if (usrData) {
+        return usrData.data
+      } else {
+        return null
+      }
+    } catch (err) {
+      WIKI.logger.warn(`Failed to process binary thumbnail data for user ${userId}`)
+    }
   }
 }

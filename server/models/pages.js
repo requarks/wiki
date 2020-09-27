@@ -8,6 +8,7 @@ const yaml = require('js-yaml')
 const striptags = require('striptags')
 const emojiRegex = require('emoji-regex')
 const he = require('he')
+const CleanCSS = require('clean-css')
 
 /* global WIKI */
 
@@ -48,6 +49,10 @@ module.exports = class Page extends Model {
         updatedAt: {type: 'string'}
       }
     }
+  }
+
+  static get jsonAttributes() {
+    return ['extra']
   }
 
   static get relationMappings() {
@@ -122,7 +127,15 @@ module.exports = class Page extends Model {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
   }
-
+  /**
+   * Solving the violates foreign key constraint using cascade strategy
+   * using static hooks
+   * @see https://vincit.github.io/objection.js/api/types/#type-statichookarguments
+   */
+  static async beforeDelete({ asFindQuery }) {
+    const page = await asFindQuery().select('id')
+    await WIKI.models.comments.query().delete().where('pageId', page[0].id)
+  }
   /**
    * Cache Schema
    */
@@ -146,6 +159,10 @@ module.exports = class Page extends Model {
           title: 'string'
         }
       ],
+      extra: {
+        js: 'string',
+        css: 'string'
+      },
       title: 'string',
       toc: 'string',
       updatedAt: 'string',
@@ -229,13 +246,18 @@ module.exports = class Page extends Model {
    */
   static async createPage(opts) {
     // -> Validate path
-    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.indexOf('\\') >= 0) {
+    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.indexOf('\\') >= 0 || opts.path.indexOf('//') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
     // -> Remove trailing slash
     if (opts.path.endsWith('/')) {
       opts.path = opts.path.slice(0, -1)
+    }
+
+    // -> Remove starting slash
+    if (opts.path.startsWith('/')) {
+      opts.path = opts.path.slice(1)
     }
 
     // -> Check for page access
@@ -257,6 +279,28 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageEmptyContent()
     }
 
+    // -> Format CSS Scripts
+    let scriptCss = ''
+    if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      if (!_.isEmpty(opts.scriptCss)) {
+        scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
+      } else {
+        scriptCss = ''
+      }
+    }
+
+    // -> Format JS Scripts
+    let scriptJs = ''
+    if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      scriptJs = opts.scriptJs || ''
+    }
+
     // -> Create page
     await WIKI.models.pages.query().insert({
       authorId: opts.user.id,
@@ -273,7 +317,11 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
-      toc: '[]'
+      toc: '[]',
+      extra: JSON.stringify({
+        js: scriptJs,
+        css: scriptCss
+      })
     })
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
@@ -353,6 +401,33 @@ module.exports = class Page extends Model {
       versionDate: ogPage.updatedAt
     })
 
+    // -> Format Extra Properties
+    if (!_.isPlainObject(ogPage.extra)) {
+      ogPage.extra = {}
+    }
+
+    // -> Format CSS Scripts
+    let scriptCss = _.get(ogPage, 'extra.css', '')
+    if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      if (!_.isEmpty(opts.scriptCss)) {
+        scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
+      } else {
+        scriptCss = ''
+      }
+    }
+
+    // -> Format JS Scripts
+    let scriptJs = _.get(ogPage, 'extra.js', '')
+    if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
+      locale: opts.locale,
+      path: opts.path
+    })) {
+      scriptJs = opts.scriptJs || ''
+    }
+
     // -> Update page
     await WIKI.models.pages.query().patch({
       authorId: opts.user.id,
@@ -361,7 +436,12 @@ module.exports = class Page extends Model {
       isPublished: opts.isPublished === true || opts.isPublished === 1,
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
-      title: opts.title
+      title: opts.title,
+      extra: JSON.stringify({
+        ...ogPage.extra,
+        js: scriptJs,
+        css: scriptCss
+      })
     }).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
@@ -419,13 +499,18 @@ module.exports = class Page extends Model {
     }
 
     // -> Validate path
-    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.indexOf('\\') >= 0) {
+    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.indexOf('\\') >= 0 || opts.destinationPath.indexOf('//') >= 0) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
     // -> Remove trailing slash
     if (opts.destinationPath.endsWith('/')) {
       opts.destinationPath = opts.destinationPath.slice(0, -1)
+    }
+
+    // -> Remove starting slash
+    if (opts.destinationPath.startsWith('/')) {
+      opts.destinationPath = opts.destinationPath.slice(1)
     }
 
     // -> Check for source page access
@@ -497,13 +582,20 @@ module.exports = class Page extends Model {
       })
     }
 
-    // -> Reconnect Links
+    // -> Reconnect Links : Changing old links to the new path
     await WIKI.models.pages.reconnectLinks({
       sourceLocale: page.localeCode,
       sourcePath: page.path,
       locale: opts.destinationLocale,
       path: opts.destinationPath,
       mode: 'move'
+    })
+   
+    // -> Reconnect Links : Validate invalid links to the new path
+    await WIKI.models.pages.reconnectLinks({
+      locale: opts.destinationLocale,
+      path: opts.destinationPath,
+      mode: 'create'
     })
   }
 
@@ -593,7 +685,7 @@ module.exports = class Page extends Model {
         break
       case 'move':
         const prevPageHref = `/${opts.sourceLocale}/${opts.sourcePath}`
-        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-valid-page">`
         replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'delete':
@@ -734,6 +826,7 @@ module.exports = class Page extends Model {
           'pages.localeCode',
           'pages.authorId',
           'pages.creatorId',
+          'pages.extra',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
@@ -807,6 +900,10 @@ module.exports = class Page extends Model {
       creatorId: page.creatorId,
       creatorName: page.creatorName,
       description: page.description,
+      extra: {
+        css: _.get(page, 'extra.css', ''),
+        js: _.get(page, 'extra.js', '')
+      },
       isPrivate: page.isPrivate === 1 || page.isPrivate === true,
       isPublished: page.isPublished === 1 || page.isPublished === true,
       publishEndDate: page.publishEndDate,

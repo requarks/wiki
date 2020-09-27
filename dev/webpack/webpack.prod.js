@@ -168,10 +168,7 @@ module.exports = {
         ]
       },
       {
-        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
-        exclude: [
-          path.join(process.cwd(), 'client')
-        ],
+        test: /\.(woff2|woff|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
         use: [{
           loader: 'file-loader',
           options: {
@@ -179,6 +176,10 @@ module.exports = {
             outputPath: 'fonts/'
           }
         }]
+      },
+      {
+        loader: 'webpack-modernizr-loader',
+        test: /\.modernizrrc\.js$/
       }
     ]
   },
@@ -261,7 +262,8 @@ module.exports = {
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
       'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),
-      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro')
+      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
+      'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
     },
     extensions: [
       '.js',

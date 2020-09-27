@@ -1,8 +1,8 @@
 /* global WIKI */
 
 const Model = require('objection').Model
-const moment = require('moment')
-const nanoid = require('nanoid').nanoid
+const { DateTime } = require('luxon')
+const { nanoid } = require('nanoid')
 
 /**
  * Users model
@@ -41,30 +41,36 @@ module.exports = class UserKey extends Model {
   async $beforeInsert(context) {
     await super.$beforeInsert(context)
 
-    this.createdAt = moment.utc().toISOString()
+    this.createdAt = DateTime.utc().toISO()
   }
 
   static async generateToken ({ userId, kind }, context) {
-    const token = nanoid()
+    const token = await nanoid()
     await WIKI.models.userKeys.query().insert({
       kind,
       token,
-      validUntil: moment.utc().add(1, 'days').toISOString(),
+      validUntil: DateTime.utc().plus({ days: 1 }).toISO(),
       userId
     })
     return token
   }
 
-  static async validateToken ({ kind, token }, context) {
+  static async validateToken ({ kind, token, skipDelete }, context) {
     const res = await WIKI.models.userKeys.query().findOne({ kind, token }).withGraphJoined('user')
     if (res) {
-      await WIKI.models.userKeys.query().deleteById(res.id)
-      if (moment.utc().isAfter(moment.utc(res.validUntil))) {
+      if (skipDelete !== true) {
+        await WIKI.models.userKeys.query().deleteById(res.id)
+      }
+      if (DateTime.utc() > DateTime.fromISO(res.validUntil)) {
         throw new WIKI.Error.AuthValidationTokenInvalid()
       }
       return res.user
     } else {
       throw new WIKI.Error.AuthValidationTokenInvalid()
     }
+  }
+
+  static async destroyToken ({ token }) {
+    return WIKI.models.userKeys.query().findOne({ token }).delete()
   }
 }

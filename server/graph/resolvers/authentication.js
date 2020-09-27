@@ -34,16 +34,28 @@ module.exports = {
     apiState () {
       return WIKI.config.api.isEnabled
     },
+    async strategies () {
+      return WIKI.data.authentication.map(stg => ({
+        ...stg,
+        isAvailable: stg.isAvailable === true,
+        props: _.sortBy(_.transform(stg.props, (res, value, key) => {
+          res.push({
+            key,
+            value: JSON.stringify(value)
+          })
+        }, []), 'key')
+      }))
+    },
     /**
      * Fetch active authentication strategies
      */
-    async strategies (obj, args, context, info) {
-      let strategies = await WIKI.models.authentication.getStrategies(args.isEnabled)
+    async activeStrategies (obj, args, context, info) {
+      let strategies = await WIKI.models.authentication.getStrategies()
       strategies = strategies.map(stg => {
-        const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
+        const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey]) || {}
         return {
-          ...strategyInfo,
           ...stg,
+          strategy: strategyInfo,
           config: _.sortBy(_.transform(stg.config, (res, value, key) => {
             const configData = _.get(strategyInfo.props, key, false)
             if (configData) {
@@ -58,7 +70,7 @@ module.exports = {
           }, []), 'key')
         }
       })
-      return strategies
+      return args.enabledOnly ? _.filter(strategies, 'isEnabled') : strategies
     }
   },
   AuthenticationMutation: {
@@ -126,6 +138,19 @@ module.exports = {
       }
     },
     /**
+     * Perform Mandatory Password Change after Login
+     */
+    async forgotPassword (obj, args, context) {
+      try {
+        await WIKI.models.users.loginForgotPassword(args, context)
+        return {
+          responseResult: graphHelper.generateSuccess('Password reset request processed.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
      * Register a new account
      */
     async register (obj, args, context) {
@@ -174,15 +199,11 @@ module.exports = {
      */
     async updateStrategies (obj, args, context) {
       try {
-        WIKI.config.auth = {
-          audience: _.get(args, 'config.audience', WIKI.config.auth.audience),
-          tokenExpiration: _.get(args, 'config.tokenExpiration', WIKI.config.auth.tokenExpiration),
-          tokenRenewal: _.get(args, 'config.tokenRenewal', WIKI.config.auth.tokenRenewal)
-        }
-        await WIKI.configSvc.saveToDb(['auth'])
-
-        for (let str of args.strategies) {
-          await WIKI.models.authentication.query().patch({
+        const previousStrategies = await WIKI.models.authentication.getStrategies()
+        for (const str of args.strategies) {
+          const newStr = {
+            displayName: str.displayName,
+            order: str.order,
             isEnabled: str.isEnabled,
             config: _.reduce(str.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
@@ -191,8 +212,32 @@ module.exports = {
             selfRegistration: str.selfRegistration,
             domainWhitelist: { v: str.domainWhitelist },
             autoEnrollGroups: { v: str.autoEnrollGroups }
-          }).where('key', str.key)
+          }
+
+          if (_.some(previousStrategies, ['key', str.key])) {
+            await WIKI.models.authentication.query().patch({
+              key: str.key,
+              strategyKey: str.strategyKey,
+              ...newStr
+            }).where('key', str.key)
+          } else {
+            await WIKI.models.authentication.query().insert({
+              key: str.key,
+              strategyKey: str.strategyKey,
+              ...newStr
+            })
+          }
         }
+
+        for (const str of _.differenceBy(previousStrategies, args.strategies, 'key')) {
+          const hasUsers = await WIKI.models.users.query().count('* as total').where({ providerKey: str.key }).first()
+          if (_.toSafeInteger(hasUsers.total) > 0) {
+            throw new Error(`Cannot delete ${str.displayName} as 1 or more users are still using it.`)
+          } else {
+            await WIKI.models.authentication.query().delete().where('key', str.key)
+          }
+        }
+
         await WIKI.auth.activateStrategies()
         WIKI.events.outbound.emit('reloadAuthStrategies')
         return {

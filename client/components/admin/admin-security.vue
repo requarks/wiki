@@ -93,25 +93,25 @@
                     .caption Defines the duration for which the server should only deliver content through HTTPS.
                     .caption It's a good idea to start with small values and make sure that nothing breaks on your wiki before moving to longer values.
 
-                  v-divider.mt-3
-                  v-switch(
-                    inset
-                    label='Enforce CSP'
-                    color='red darken-2'
-                    v-model='config.securityCSP'
-                    persistent-hint
-                    hint='Restricts scripts to pre-approved content sources.'
-                    disabled
-                    )
-                  v-textarea.mt-5(
-                    label='CSP Directives'
-                    outlined
-                    v-model='config.securityCSPDirectives'
-                    prepend-icon='mdi-subdirectory-arrow-right'
-                    persistent-hint
-                    hint='One directive per line.'
-                    disabled
-                  )
+                  //- v-divider.mt-3
+                  //- v-switch(
+                  //-   inset
+                  //-   label='Enforce CSP'
+                  //-   color='red darken-2'
+                  //-   v-model='config.securityCSP'
+                  //-   persistent-hint
+                  //-   hint='Restricts scripts to pre-approved content sources.'
+                  //-   disabled
+                  //-   )
+                  //- v-textarea.mt-5(
+                  //-   label='CSP Directives'
+                  //-   outlined
+                  //-   v-model='config.securityCSPDirectives'
+                  //-   prepend-icon='mdi-subdirectory-arrow-right'
+                  //-   persistent-hint
+                  //-   hint='One directive per line.'
+                  //-   disabled
+                  //- )
 
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p2s
@@ -142,6 +142,83 @@
                     :suffix='$t(`admin:security.maxUploadBatchSuffix`)'
                     style='max-width: 450px;'
                     )
+
+              v-card.mt-3.animated.fadeInUp.wait-p2s
+                v-toolbar(flat, color='primary', dark, dense)
+                  .subtitle-1 {{$t('admin:security.login')}}
+                //- v-card-info(color='blue')
+                //-   span {{$t('admin:security.loginInfo')}}
+                .overline.grey--text.pa-4 {{$t('admin:security.loginScreen')}}
+                .px-4.pb-3
+                  v-text-field(
+                    outlined
+                    :label='$t(`admin:security.loginBgUrl`)'
+                    v-model='config.authLoginBgUrl'
+                    :hint='$t(`admin:security.loginBgUrlHint`)'
+                    persistent-hint
+                    prepend-icon='mdi-image-area'
+                    append-icon='mdi-folder-image'
+                    @click:append='browseLoginBg'
+                  )
+                  v-switch(
+                    inset
+                    :label='$t(`admin:security.bypassLogin`)'
+                    color='primary'
+                    v-model='config.authAutoLogin'
+                    prepend-icon='mdi-fast-forward'
+                    persistent-hint
+                    :hint='$t(`admin:security.bypassLoginHint`)'
+                    )
+                  v-switch(
+                    inset
+                    :label='$t(`admin:security.hideLocalLogin`)'
+                    color='primary'
+                    v-model='config.authHideLocal'
+                    prepend-icon='mdi-eye-off-outline'
+                    persistent-hint
+                    :hint='$t(`admin:security.hideLocalLoginHint`)'
+                    )
+                v-divider.mt-3
+                .overline.grey--text.pa-4 {{$t('admin:security.loginSecurity')}}
+                .px-4.pb-3
+                  v-switch.mt-0(
+                    inset
+                    :label='$t(`admin:security.enforce2fa`)'
+                    color='primary'
+                    v-model='config.authEnforce2FA'
+                    prepend-icon='mdi-two-factor-authentication'
+                    :hint='$t(`admin:security.enforce2faHint`)'
+                    persistent-hint
+                  )
+                v-divider.mt-3
+                .overline.grey--text.pa-4 {{$t('admin:security.jwt')}}
+                .px-4.pb-3
+                  v-text-field(
+                    v-model='config.authJwtAudience'
+                    outlined
+                    prepend-icon='mdi-account-group-outline'
+                    :label='$t(`admin:auth.jwtAudience`)'
+                    :hint='$t(`admin:auth.jwtAudienceHint`)'
+                    persistent-hint
+                  )
+                  v-text-field.mt-3(
+                    v-model='config.authJwtExpiration'
+                    outlined
+                    prepend-icon='mdi-clock-outline'
+                    :label='$t(`admin:auth.tokenExpiration`)'
+                    :hint='$t(`admin:auth.tokenExpirationHint`)'
+                    persistent-hint
+                  )
+                  v-text-field.mt-3(
+                    v-model='config.authJwtRenewablePeriod'
+                    outlined
+                    prepend-icon='mdi-update'
+                    :label='$t(`admin:auth.tokenRenewalPeriod`)'
+                    :hint='$t(`admin:auth.tokenRenewalPeriodHint`)'
+                    persistent-hint
+                  )
+
+    component(:is='activeModal')
 </template>
 
 <script>
@@ -149,7 +226,17 @@ import _ from 'lodash'
 import { sync } from 'vuex-pathify'
 import gql from 'graphql-tag'
 
+import editorStore from '../../store/editor'
+
+/* global WIKI */
+
+WIKI.$store.registerModule('editor', editorStore)
+
 export default {
+  i18nOptions: { namespaces: 'editor' },
+  components: {
+    editorModalMedia: () => import(/* webpackChunkName: "editor", webpackMode: "lazy" */ '../editor/editor-modal-media.vue')
+  },
   data() {
     return {
       config: {
@@ -163,7 +250,13 @@ export default {
         securityHSTS: false,
         securityHSTSDuration: 0,
         securityCSP: false,
-        securityCSPDirectives: ''
+        securityCSPDirectives: '',
+        authAutoLogin: false,
+        authHideLocal: false,
+        authLoginBgUrl: '',
+        authJwtAudience: 'urn:wiki.js',
+        authJwtExpiration: '30m',
+        authJwtRenewablePeriod: '14d'
       },
       hstsDurations: [
         { value: 300, text: '5 minutes' },
@@ -184,6 +277,13 @@ export default {
         await this.$apollo.mutate({
           mutation: gql`
             mutation (
+              $authAutoLogin: Boolean
+              $authEnforce2FA: Boolean
+              $authHideLocal: Boolean
+              $authLoginBgUrl: String
+              $authJwtAudience: String
+              $authJwtExpiration: String
+              $authJwtRenewablePeriod: String
               $uploadMaxFileSize: Int
               $uploadMaxFiles: Int
               $securityOpenRedirect: Boolean
@@ -198,6 +298,13 @@ export default {
             ) {
               site {
                 updateConfig(
+                  authAutoLogin: $authAutoLogin,
+                  authEnforce2FA: $authEnforce2FA,
+                  authHideLocal: $authHideLocal,
+                  authLoginBgUrl: $authLoginBgUrl,
+                  authJwtAudience: $authJwtAudience,
+                  authJwtExpiration: $authJwtExpiration,
+                  authJwtRenewablePeriod: $authJwtRenewablePeriod,
                   uploadMaxFileSize: $uploadMaxFileSize,
                   uploadMaxFiles: $uploadMaxFiles,
                   securityOpenRedirect: $securityOpenRedirect,
@@ -221,6 +328,13 @@ export default {
             }
           `,
           variables: {
+            authAutoLogin: _.get(this.config, 'authAutoLogin', false),
+            authEnforce2FA: _.get(this.config, 'authEnforce2FA', false),
+            authHideLocal: _.get(this.config, 'authHideLocal', false),
+            authLoginBgUrl: _.get(this.config, 'authLoginBgUrl', ''),
+            authJwtAudience: _.get(this.config, 'authJwtAudience', ''),
+            authJwtExpiration: _.get(this.config, 'authJwtExpiration', ''),
+            authJwtRenewablePeriod: _.get(this.config, 'authJwtRenewablePeriod', ''),
             uploadMaxFileSize: _.toSafeInteger(_.get(this.config, 'uploadMaxFileSize', 0)),
             uploadMaxFiles: _.toSafeInteger(_.get(this.config, 'uploadMaxFiles', 0)),
             securityOpenRedirect: _.get(this.config, 'securityOpenRedirect', false),
@@ -245,7 +359,19 @@ export default {
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
+    },
+    browseLoginBg () {
+      this.$store.set('editor/editorKey', 'common')
+      this.activeModal = 'editorModalMedia'
     }
+  },
+  mounted () {
+    this.$root.$on('editorInsert', opts => {
+      this.config.authLoginBgUrl = opts.path
+    })
+  },
+  beforeDestroy() {
+    this.$root.$off('editorInsert')
   },
   apollo: {
     config: {
@@ -253,6 +379,13 @@ export default {
         {
           site {
             config {
+              authAutoLogin
+              authEnforce2FA
+              authHideLocal
+              authLoginBgUrl
+              authJwtAudience
+              authJwtExpiration
+              authJwtRenewablePeriod
               uploadMaxFileSize
               uploadMaxFiles
               securityOpenRedirect

@@ -3,7 +3,6 @@ name: Question / Help
 about: Need help installing, configuring or using Wiki.js?
 title: ''
 labels: help
-assignees: NGPixel
 
 ---
 

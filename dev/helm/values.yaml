@@ -1,41 +1,117 @@
-##
+# Default values for wiki.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: requarks/wiki
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  # Annotations applied for services such as externalDNS or
+  # service type LoadBalancer
+  # type: LoadBalancer
+  # httpsPort: 443
+  # annotations: {}
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: wiki.local
+      paths: ["/"]
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
 ## Configuration values for the postgresql dependency.
 ## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
+##
 postgresql:
-  ##
   ## Use the PostgreSQL chart dependency.
-  ## Set to false if bringing your own PostgreSQL.
+  ## Set to false if bringing your own PostgreSQL, and set secret value postgresql-uri.
+  ##
   enabled: true
+  ## PostgreSQL fullname Override
+  ## Default to wiki-postgresql unless fullname override is set for Chart
   ##
-  ## If you are bringing your own PostgreSQL, you should set postgresHost and
-  ## also probably service.port, postgresUser, postgresPassword, and postgresDatabase
-  ## postgresHost:
-  ##
-  ## PostgreSQL port
-  service:
-    port: 5432
+  fullnameOverride: ""
   ## PostgreSQL User to create.
-  postgresUser: wiki
   ##
-  ## PostgreSQL Password for the new user.
-  ## If not set, a random 10 characters password will be used.
-  postgresPassword: wikijsrocks
-  ##
+  postgresqlUser: postgres
   ## PostgreSQL Database to create.
-  postgresDatabase: wiki
   ##
+  postgresqlDatabase: wiki
   ## Persistent Volume Storage configuration.
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
+  ##
+  replication:
+    ## Enable PostgreSQL replication (primary/secondary)
+    ##
+    enabled: false
   persistence:
-    ##
     ## Enable PostgreSQL persistence using Persistent Volume Claims.
+    ##
     enabled: true
+    ## concourse data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
     ##
-    ## Persistant class
-    # storageClass: classname
+    # storageClass: "-"
+    ## Persistent Volume Access Mode.
     ##
-    ## Access mode:
     accessMode: ReadWriteOnce
+    ## Persistent Volume Storage Size.
     ##
-    ## Requested size:
-    size: 10Gi
+    size: 8Gi

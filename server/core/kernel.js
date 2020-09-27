@@ -32,10 +32,10 @@ module.exports = {
   async preBootMaster() {
     try {
       await this.initTelemetry()
+      WIKI.sideloader = await require('./sideloader').init()
       WIKI.cache = require('./cache').init()
       WIKI.scheduler = require('./scheduler').init()
       WIKI.servers = require('./servers')
-      WIKI.sideloader = require('./sideloader').init()
       WIKI.events = {
         inbound: new EventEmitter(),
         outbound: new EventEmitter()

@@ -100,9 +100,14 @@
           span {{$t('editor:markup.horizontalBar')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
+          v-tooltip(bottom, color='primary', v-if='previewShown')
+            template(v-slot:activator='{ on }')
+              v-btn.animated.fadeIn.wait-p1s(icon, tile, v-on='on', @click='spellModeActive = !spellModeActive').mx-0
+                v-icon(:color='spellModeActive ? `amber` : `white`') mdi-spellcheck
+            span {{$t('editor:markup.toggleSpellcheck')}}
           v-tooltip(bottom, color='primary')
             template(v-slot:activator='{ on }')
-              v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
+              v-btn.animated.fadeIn.wait-p2s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
                 v-icon mdi-book-open-outline
             span {{$t('editor:markup.togglePreviewPane')}}
     .editor-markdown-main
@@ -134,7 +139,7 @@
           span {{$t('editor:markup.insertVideoAudio')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p5s(icon, tile, v-on='on', dark, disabled).mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p5s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
         v-tooltip(right, color='teal')
@@ -164,7 +169,13 @@
       transition(name='editor-markdown-preview')
         .editor-markdown-preview(v-if='previewShown')
           .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
-            div(ref='editorPreview', v-html='previewHTML')
+            div(
+              ref='editorPreview'
+              v-html='previewHTML'
+              :spellcheck='spellModeActive'
+              :contenteditable='spellModeActive'
+              @blur='spellModeActive = false'
+              )
 
     v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
       .caption.editor-markdown-sysbar-locale {{locale.toUpperCase()}}
@@ -206,6 +217,10 @@ import 'codemirror/addon/display/fullscreen.css'
 import 'codemirror/addon/selection/mark-selection.js'
 import 'codemirror/addon/search/searchcursor.js'
 import 'codemirror/addon/hint/show-hint.js'
+import 'codemirror/addon/fold/foldcode.js'
+import 'codemirror/addon/fold/foldgutter.js'
+import 'codemirror/addon/fold/foldgutter.css'
+import './markdown/fold'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
@@ -217,9 +232,11 @@ import mdAbbr from 'markdown-it-abbr'
 import mdSup from 'markdown-it-sup'
 import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
+import mdMultiTable from 'markdown-it-multimd-table'
 import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
+import underline from '../../libs/markdown-it-underline'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 import plantuml from './markdown/plantuml'
@@ -232,6 +249,7 @@ import mermaid from 'mermaid'
 
 // Helpers
 import katexHelper from './common/katex'
+import tabsetHelper from './markdown/tabset'
 
 // ========================================
 // INIT
@@ -258,7 +276,9 @@ const md = new MarkdownIt({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    if (['mermaid', 'plantuml'].includes(lang)) {
+    if (lang === 'diagram') {
+      return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
+    } else if (['mermaid', 'plantuml'].includes(lang)) {
       return `<pre class="codeblock-${lang}"><code>${_.escape(str)}</code></pre>`
     } else {
       return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
@@ -268,15 +288,32 @@ const md = new MarkdownIt({
   .use(mdAttrs, {
     allowedAttributes: ['id', 'class', 'target']
   })
+  .use(underline)
   .use(mdEmoji)
   .use(mdTaskLists, {label: true, labelAfter: true})
   .use(mdExpandTabs)
   .use(mdAbbr)
   .use(mdSup)
   .use(mdSub)
+  .use(mdMultiTable, {multiline: true, rowspan: true, headerless: true})
   .use(mdMark)
   .use(mdFootnote)
   .use(mdImsize)
+
+// DOMPurify fix for draw.io
+DOMPurify.addHook('uponSanitizeElement', (elm) => {
+  if (elm.querySelectorAll) {
+    const breaks = elm.querySelectorAll('foreignObject br, foreignObject p')
+    if (breaks && breaks.length) {
+      for (let i = 0; i < breaks.length; i++) {
+        breaks[i].parentNode.replaceChild(
+          document.createElement('div'),
+          breaks[i]
+        )
+      }
+    }
+  }
+})
 
 // ========================================
 // HELPER FUNCTIONS
@@ -370,6 +407,7 @@ export default {
       previewShown: true,
       previewHTML: '',
       helpShown: false,
+      spellModeActive: false,
       insertLinkDialog: false
     }
   },
@@ -394,6 +432,13 @@ export default {
           Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         })
       }
+    },
+    spellModeActive (newValue, oldValue) {
+      if (newValue) {
+        this.$nextTick(() => {
+          this.$refs.editorPreview.focus()
+        })
+      }
     }
   },
   methods: {
@@ -406,16 +451,8 @@ export default {
       this.helpShown = false
     },
     onCmInput: _.debounce(function (newContent) {
-      linesMap = []
-      this.$store.set('editor/content', newContent)
-      this.previewHTML = DOMPurify.sanitize(md.render(newContent))
-      this.$nextTick(() => {
-        this.renderMermaidDiagrams()
-        Prism.highlightAllUnder(this.$refs.editorPreview)
-        Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
-        this.scrollSync(this.cm)
-      })
-    }, 500),
+      this.processContent(newContent)
+    }, 600),
     onCmPaste (cm, ev) {
       // const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
       // for (let clipItem of clipItems) {
@@ -432,6 +469,21 @@ export default {
       //     reader.readAsDataURL(file)
       //   }
       // }
+    },
+    processContent (newContent) {
+      linesMap = []
+      // this.$store.set('editor/content', newContent)
+      this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
+      this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
+        ADD_TAGS: ['foreignObject']
+      })
+      this.$nextTick(() => {
+        tabsetHelper.format()
+        this.renderMermaidDiagrams()
+        Prism.highlightAllUnder(this.$refs.editorPreview)
+        Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
+        this.scrollSync(this.cm)
+      })
     },
     /**
      * Update cursor state
@@ -574,6 +626,8 @@ export default {
           cm.showHint({
             hint: async (cm, options) => {
               const cur = cm.getCursor()
+              const curLine = cm.getLine(cur.line).substring(0, cur.ch)
+              const queryString = curLine.substring(curLine.lastIndexOf('[')+1,curLine.length-2)
               const token = cm.getTokenAt(cur)
               try {
                 const respRaw = await this.$apollo.query({
@@ -592,7 +646,7 @@ export default {
                     }
                   `,
                   variables: {
-                    query: token.string,
+                    query: queryString,
                     locale: this.locale
                   },
                   fetchPolicy: 'cache-first'
@@ -601,7 +655,7 @@ export default {
                 if (resp && resp.totalHits > 0) {
                   return {
                     list: resp.results.map(r => ({
-                      text: (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
+                      text: '(' + (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
                       displayText: siteLangs.length > 0 ? `/${r.locale}/${r.path} - ${r.title}` : `/${r.path} - ${r.title}`
                     })),
                     from: CodeMirror.Pos(cur.line, token.start),
@@ -627,6 +681,67 @@ export default {
       this.insertAtCursor({
         content: siteLangs.length > 0 ? `[${lastPart}](/${locale}/${path})` : `[${lastPart}](/${path})`
       })
+    },
+    processMarkers (from, to) {
+      let found = null
+      let foundStart = 0
+      this.cm.doc.getAllMarks().forEach(mk => {
+        if (mk.__kind) {
+          mk.clear()
+        }
+      })
+      this.cm.eachLine(from, to, ln => {
+        const line = ln.lineNo()
+        if (ln.text.startsWith('```diagram')) {
+          found = 'diagram'
+          foundStart = line
+        } else if (ln.text === '```' && found) {
+          switch (found) {
+            // ------------------------------
+            // -> DIAGRAM
+            // ------------------------------
+            case 'diagram': {
+              if (line - foundStart !== 2) {
+                return
+              }
+              this.addMarker({
+                kind: 'diagram',
+                from: { line: foundStart, ch: 3 },
+                to: { line: foundStart, ch: 10 },
+                text: 'Edit Diagram',
+                action: ((start, end) => {
+                  return (ev) => {
+                    this.cm.doc.setSelection({ line: start, ch: 0 }, { line: end, ch: 3 })
+                    try {
+                      const raw = this.cm.doc.getLine(end - 1)
+                      this.$store.set('editor/activeModalData', Buffer.from(raw, 'base64').toString())
+                      this.toggleModal(`editorModalDrawio`)
+                    } catch (err) {
+                      return this.$store.commit('showNotification', {
+                        message: 'Failed to process diagram data.',
+                        style: 'warning',
+                        icon: 'warning'
+                      })
+                    }
+                  }
+                })(foundStart, line)
+              })
+              if (ln.height > 0) {
+                this.cm.foldCode(foundStart)
+              }
+              break
+            }
+          }
+          found = null
+        }
+      })
+    },
+    addMarker ({ kind, from, to, text, action }) {
+      const markerElm = document.createElement('span')
+      markerElm.appendChild(document.createTextNode(text))
+      markerElm.className = 'CodeMirror-buttonmarker'
+      markerElm.addEventListener('click', action)
+      this.cm.markText(from, to, { replacedWith: markerElm, __kind: kind })
     }
   },
   mounted() {
@@ -658,7 +773,9 @@ export default {
       viewportMargin: 50,
       inputStyle: 'contenteditable',
       allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
-      direction: siteConfig.rtl ? 'rtl' : 'ltr'
+      direction: siteConfig.rtl ? 'rtl' : 'ltr',
+      foldGutter: true,
+      gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
     })
     this.cm.setValue(this.$store.get('editor/content'))
     this.cm.on('change', c => {
@@ -722,7 +839,7 @@ export default {
 
     // Render initial preview
 
-    this.onCmInput(this.$store.get('editor/content'))
+    this.processContent(this.$store.get('editor/content'))
     this.refresh()
 
     this.$root.$on('editorInsert', opts => {
@@ -740,6 +857,12 @@ export default {
           this.insertAtCursor({
             content: `[${opts.text}](${opts.path})`
           })
+          break
+        case 'DIAGRAM':
+          const selStartLine = this.cm.getCursor('from').line
+          const selEndLine = this.cm.getCursor('to').line + 1
+          this.cm.doc.replaceSelection('```diagram\n' + opts.text + '\n```\n', 'start')
+          this.processMarkers(selStartLine, selEndLine)
           break
       }
     })
@@ -826,8 +949,50 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
         height: $editor-height-mobile;
       }
 
+      > div {
+        outline: none;
+      }
+
       p.line {
         overflow-wrap: break-word;
+      }
+
+      .tabset {
+        background-color: mc('teal', '700');
+        color: mc('teal', '100') !important;
+        padding: 5px 12px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 5px 0 0 0;
+        font-style: italic;
+
+        &::after {
+          display: none;
+        }
+
+        &-header {
+          background-color: mc('teal', '500');
+          color: #FFF !important;
+          padding: 5px 12px;
+          font-size: 14px;
+          font-weight: 500;
+          margin-top: 0 !important;
+
+          &::after {
+            display: none;
+          }
+        }
+
+        &-content {
+          border-left: 5px solid mc('teal', '500');
+          background-color: mc('teal', '50');
+          padding: 0 15px 15px;
+          overflow: hidden;
+
+          @at-root .theme--dark & {
+            background-color: rgba(mc('teal', '500'), .1);
+          }
+        }
       }
     }
   }
@@ -933,86 +1098,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
   .CodeMirror-selection-highlight-scrollbar {
     background-color: mc('green', '600');
-  }
-
-  .cm-s-wikijs-dark.CodeMirror {
-    background: darken(mc('grey','900'), 3%);
-    color: #e0e0e0;
-  }
-  .cm-s-wikijs-dark div.CodeMirror-selected {
-    background: mc('blue','800');
-  }
-  .cm-s-wikijs-dark .cm-matchhighlight {
-    background: mc('blue','800');
-  }
-  .cm-s-wikijs-dark .CodeMirror-line::selection, .cm-s-wikijs-dark .CodeMirror-line > span::selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::selection {
-    background: mc('amber', '500');
-  }
-  .cm-s-wikijs-dark .CodeMirror-line::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::-moz-selection {
-    background: mc('amber', '500');
-  }
-  .cm-s-wikijs-dark .CodeMirror-gutters {
-    background: darken(mc('grey','900'), 6%);
-    border-right: 1px solid mc('grey','900');
-  }
-  .cm-s-wikijs-dark .CodeMirror-guttermarker {
-    color: #ac4142;
-  }
-  .cm-s-wikijs-dark .CodeMirror-guttermarker-subtle {
-    color: #505050;
-  }
-  .cm-s-wikijs-dark .CodeMirror-linenumber {
-    color: mc('grey','800');
-  }
-  .cm-s-wikijs-dark .CodeMirror-cursor {
-    border-left: 1px solid #b0b0b0;
-  }
-  .cm-s-wikijs-dark span.cm-comment {
-    color: mc('orange','800');
-  }
-  .cm-s-wikijs-dark span.cm-atom {
-    color: #aa759f;
-  }
-  .cm-s-wikijs-dark span.cm-number {
-    color: #aa759f;
-  }
-  .cm-s-wikijs-dark span.cm-property, .cm-s-wikijs-dark span.cm-attribute {
-    color: #90a959;
-  }
-  .cm-s-wikijs-dark span.cm-keyword {
-    color: #ac4142;
-  }
-  .cm-s-wikijs-dark span.cm-string {
-    color: #f4bf75;
-  }
-  .cm-s-wikijs-dark span.cm-variable {
-    color: #90a959;
-  }
-  .cm-s-wikijs-dark span.cm-variable-2 {
-    color: #6a9fb5;
-  }
-  .cm-s-wikijs-dark span.cm-def {
-    color: #d28445;
-  }
-  .cm-s-wikijs-dark span.cm-bracket {
-    color: #e0e0e0;
-  }
-  .cm-s-wikijs-dark span.cm-tag {
-    color: #ac4142;
-  }
-  .cm-s-wikijs-dark span.cm-link {
-    color: #aa759f;
-  }
-  .cm-s-wikijs-dark span.cm-error {
-    background: #ac4142;
-    color: #b0b0b0;
-  }
-  .cm-s-wikijs-dark .CodeMirror-activeline-background {
-    background: mc('grey','900');
-  }
-  .cm-s-wikijs-dark .CodeMirror-matchingbracket {
-    text-decoration: underline;
-    color: white !important;
   }
 }
 

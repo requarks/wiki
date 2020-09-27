@@ -14,9 +14,15 @@ props:
     default: true
     hint: Sanitize HTML from unsafe attributes and tags that could lead to XSS attacks
     order: 1
+  allowDrawIoUnsafe:
+    type: Boolean
+    title: Allow Draw.io Unsafe Elements
+    default: true
+    hint: Draw.io diagrams may introduce some elements that are usually filtered. Turning off this option may cause some diagrams to be completely removed during the sanitization process.
+    order: 2
   allowIFrames:
     type: Boolean
     title: Allow iframes
     default: false
     hint: iframes will not be stripped if enabled. (Not recommended)
-    order: 2
+    order: 3

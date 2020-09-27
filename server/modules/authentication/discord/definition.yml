@@ -4,7 +4,7 @@ description: Discord is a proprietary freeware VoIP application designed for gam
 author: requarks.io
 logo: https://static.requarks.io/logo/discord.svg
 color: indigo lighten-2
-website: https://discordapp.com/
+website: https://discord.com/
 isAvailable: true
 useForm: false
 props:

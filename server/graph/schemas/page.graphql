@@ -44,7 +44,7 @@ type PageQuery {
 
   single(
     id: Int!
-  ): Page @auth(requires: ["manage:pages", "delete:pages", "manage:system"])
+  ): Page @auth(requires: ["read:pages", "manage:system"])
 
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
 
@@ -89,6 +89,8 @@ type PageMutation {
     path: String!
     publishEndDate: Date
     publishStartDate: Date
+    scriptCss: String
+    scriptJs: String
     tags: [String]!
     title: String!
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
@@ -104,6 +106,8 @@ type PageMutation {
     path: String
     publishEndDate: Date
     publishStartDate: Date
+    scriptCss: String
+    scriptJs: String
     tags: [String]
     title: String
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
@@ -145,6 +149,10 @@ type PageMutation {
     pageId: Int!
     versionId: Int!
   ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
+  purgeHistory (
+    olderThan: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -167,27 +175,29 @@ type Page {
   hash: String!
   title: String!
   description: String!
-  isPrivate: Boolean!
-  isPublished: Boolean!
-  privateNS: String
-  publishStartDate: Date!
-  publishEndDate: Date!
+  isPrivate: Boolean! @auth(requires: ["write:pages", "manage:system"])
+  isPublished: Boolean! @auth(requires: ["write:pages", "manage:system"])
+  privateNS: String @auth(requires: ["write:pages", "manage:system"])
+  publishStartDate: Date! @auth(requires: ["write:pages", "manage:system"])
+  publishEndDate: Date! @auth(requires: ["write:pages", "manage:system"])
   tags: [PageTag]!
   backLinkPages: [Page]
-  content: String!
+  content: String! @auth(requires: ["read:source", "write:pages", "manage:system"])
   render: String
   toc: String
   contentType: String!
   createdAt: Date!
   updatedAt: Date!
-  editor: String!
+  editor: String! @auth(requires: ["write:pages", "manage:system"])
   locale: String!
-  authorId: Int!
-  authorName: String!
-  authorEmail: String!
-  creatorId: Int!
-  creatorName: String!
-  creatorEmail: String!
+  scriptCss: String
+  scriptJs: String
+  authorId: Int! @auth(requires: ["write:pages", "manage:system"])
+  authorName: String! @auth(requires: ["write:pages", "manage:system"])
+  authorEmail: String! @auth(requires: ["write:pages", "manage:system"])
+  creatorId: Int! @auth(requires: ["write:pages", "manage:system"])
+  creatorName: String! @auth(requires: ["write:pages", "manage:system"])
+  creatorEmail: String! @auth(requires: ["write:pages", "manage:system"])
 }
 
 type PageTag {

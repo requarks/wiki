@@ -185,6 +185,10 @@ export default {
     liveContent: {
       type: String,
       default: ''
+    },
+    effectivePermissions: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -316,6 +320,10 @@ export default {
     })
 
     this.target = this.cache[0]
+
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
   },
   methods: {
     async loadVersion (versionId) {
@@ -410,7 +418,7 @@ export default {
             window.location.assign(`/${this.locale}/${this.path}`)
           }, 1000)
         } else {
-          throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occured'))
+          throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occurred'))
         }
       } catch (err) {
         this.$store.commit('showNotification', {

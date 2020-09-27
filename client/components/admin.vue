@@ -129,7 +129,7 @@
             v-list-item-avatar(size='24', tile): v-icon mdi-heart-outline
             v-list-item-title {{ $t('admin:contribute.title') }}
 
-    v-content(:class='$vuetify.theme.dark ? "grey darken-5" : "grey lighten-5"')
+    v-main(:class='$vuetify.theme.dark ? "grey darken-5" : "grey lighten-5"')
       transition(name='admin-router')
         router-view
 
@@ -306,6 +306,21 @@ export default {
 
   &-title {
     margin-left: 1rem;
+  }
+}
+
+.admin-providerlogo {
+  width: 250px;
+  height: 50px;
+  float: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-left: 16px;
+
+  img {
+    max-width: 100%;
+    max-height: 50px;
   }
 }
 

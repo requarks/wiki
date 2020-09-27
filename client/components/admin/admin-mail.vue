@@ -226,7 +226,7 @@ export default {
           }
         })
         if (!_.get(resp, 'data.mail.sendTest.responseResult.succeeded', false)) {
-          throw new Error(_.get(resp, 'data.mail.sendTest.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.mail.sendTest.responseResult.message', 'An unexpected error occurred.'))
         }
 
         this.testEmail = ''

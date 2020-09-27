@@ -5,6 +5,7 @@
 
 const path = require('path')
 const { nanoid } = require('nanoid')
+const { DateTime } = require('luxon')
 
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
@@ -14,7 +15,8 @@ let WIKI = {
   SERVERPATH: path.join(process.cwd(), 'server'),
   Error: require('./helpers/error'),
   configSvc: require('./core/config'),
-  kernel: require('./core/kernel')
+  kernel: require('./core/kernel'),
+  startedAt: DateTime.utc()
 }
 global.WIKI = WIKI
 

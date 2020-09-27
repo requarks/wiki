@@ -1,5 +1,5 @@
 key: local
-title: Local
+title: Local Database
 description: Built-in authentication for Wiki.js
 author: requarks.io
 logo: https://static.requarks.io/logo/wikijs.svg
@@ -7,4 +7,5 @@ color: primary
 website: https://wiki.js.org
 isAvailable: true
 useForm: true
+usernameType: email
 props: {}

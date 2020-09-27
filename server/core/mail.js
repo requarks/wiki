@@ -56,7 +56,7 @@ module.exports = {
       subject: `${opts.subject} - ${WIKI.config.title}`,
       text: opts.text,
       html: _.get(this.templates, opts.template)({
-        logo: '',
+        logo: WIKI.config.logoUrl,
         siteTitle: WIKI.config.title,
         copyright: WIKI.config.company.length > 0 ? WIKI.config.company : 'Powered by Wiki.js',
         ...opts.data

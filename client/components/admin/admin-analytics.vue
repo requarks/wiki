@@ -46,14 +46,16 @@
               hide-details
               inset
               )
+          v-card-info(color='blue')
+            div
+              div {{provider.description}}
+              span.caption: a(:href='provider.website') {{provider.website}}
+            v-spacer
+            .admin-providerlogo
+              img(:src='provider.logo', :alt='provider.title')
           v-card-text
             v-form
-              .analytic-provider-logo
-                img(:src='provider.logo', :alt='provider.title')
-              .body-2.pt-3 {{provider.description}}
-              .body-2.pt-3: a(:href='provider.website') {{provider.website}}
-              v-divider.mt-5
-              .overline.py-5 {{$t('admin:analytics.providerConfiguration')}}
+              .overline.pb-5 {{$t('admin:analytics.providerConfiguration')}}
               .body-1.ml-3(v-if='!provider.config || provider.config.length < 1'): em {{$t('admin:analytics.providerNoConfiguration')}}
               template(v-else, v-for='cfg in provider.config')
                 v-select(
@@ -177,21 +179,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss' scoped>
-
-.analytic-provider-logo {
-  width: 250px;
-  height: 85px;
-  float:right;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-
-  img {
-    max-width: 100%;
-    max-height: 50px;
-  }
-}
-
-</style>

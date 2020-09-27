@@ -8,7 +8,9 @@
             .headline.blue--text.text--darken-2.animated.fadeInLeft Groups
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s.mr-3(color='grey', outlined, @click='refresh', icon)
+          v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/groups', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.animated.fadeInDown.wait-p2s.mx-3(color='grey', outlined, @click='refresh', icon)
             v-icon mdi-refresh
           v-dialog(v-model='newGroupDialog', max-width='500')
             template(v-slot:activator='{ on }')

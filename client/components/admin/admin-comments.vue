@@ -38,12 +38,14 @@
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, flat, dark)
             .subtitle-1 {{provider.title}}
-          v-card-text
-            .providerlogo
+          v-card-info(color='blue')
+            div
+              div {{provider.description}}
+              span.caption: a(:href='provider.website') {{provider.website}}
+            v-spacer
+            .admin-providerlogo
               img(:src='provider.logo', :alt='provider.title')
-            .caption.pt-3 {{provider.description}}
-            .caption.pb-3: a(:href='provider.website') {{provider.website}}
-            v-divider.mt-3
+          v-card-text
             .overline.my-5 {{$t('admin:comments.providerConfig')}}
             .body-2.ml-3(v-if='!provider.config || provider.config.length < 1'): em {{$t('admin:comments.providerNoConfig')}}
             template(v-else, v-for='cfg in provider.config')
@@ -202,21 +204,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss' scoped>
-
-.providerlogo {
-  width: 250px;
-  height: 85px;
-  float:right;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-
-  img {
-    max-width: 100%;
-    max-height: 50px;
-  }
-}
-
-</style>

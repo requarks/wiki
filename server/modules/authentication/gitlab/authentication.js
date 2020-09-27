@@ -15,15 +15,16 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
         baseURL: conf.baseUrl,
-        scope: ['read_user']
-      }, async (accessToken, refreshToken, profile, cb) => {
+        scope: ['read_user'],
+        passReqToCallback: true
+      }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               ...profile,
               picture: _.get(profile, 'avatarUrl', '')
-            },
-            providerKey: 'gitlab'
+            }
           })
           cb(null, user)
         } catch (err) {

@@ -6,6 +6,7 @@ const state = {
   content: '',
   mode: 'create',
   activeModal: '',
+  activeModalData: null,
   media: {
     folderTree: [],
     currentFolderId: 0,

@@ -135,7 +135,11 @@ export default {
   },
   computed: {
     isLatestVersion() {
-      return semverLte(this.info.latestVersion, this.info.currentVersion)
+      if (this.info.latestVersion === 'n/a' || this.info.currentVersion === 'n/a') {
+        return true
+      } else {
+        return semverLte(this.info.latestVersion, this.info.currentVersion)
+      }
     },
     info: get('admin/info'),
     permissions: get('user/permissions')

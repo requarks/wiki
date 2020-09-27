@@ -14,8 +14,13 @@ block body
       description=page.description
       :tags=page.tags
       :is-published=page.isPublished
+      publish-start-date=page.publishStartDate
+      publish-end-date=page.publishEndDate
+      script-css=page.extra.css
+      script-js=page.extra.js
       init-mode=page.mode
       init-editor=page.editorKey
       init-content=page.content
       checkout-date=page.updatedAt
+      effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
       )
