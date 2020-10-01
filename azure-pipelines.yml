@@ -105,7 +105,7 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)'
 
     - script: |
-        docker run --name cypress --ipc=host --shm-size 1G -v $BUILD_SOURCESDIRECTORY:/e2e -w /e2e cypress/included:4.9.0 --record --key "$(CYPRESS_KEY)" --headless --group "$MATRIXENV" --ci-build-id "$BUILD_BUILDNUMBER" --config baseUrl=http://172.17.0.1:3000'
+        docker run --name cypress --ipc=host --shm-size 1G -v $BUILD_SOURCESDIRECTORY:/e2e -w /e2e cypress/included:4.9.0 --record --key "$(CYPRESS_KEY)" --headless --group "$MATRIXENV" --ci-build-id "$BUILD_BUILDNUMBER" --config baseUrl=http://172.17.0.1:3000
       displayName: 'Run Tests'
 
   # -------------------------------
