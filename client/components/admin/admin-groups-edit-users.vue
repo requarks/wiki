@@ -6,7 +6,7 @@
         flat
         prepend-inner-icon='mdi-magnify'
         v-model='search'
-        label='Search Group Users...'
+        v-bind:label="$t('admin:groups.userSearch')"
         hide-details
         dense
         style='max-width: 450px;'
@@ -14,7 +14,7 @@
       v-spacer
       v-btn(color='primary', depressed, @click='searchUserDialog = true', :disabled='group.id === 2')
         v-icon(left) mdi-clipboard-account
-        | Assign User
+        | {{$t('admin:groups.userAssign')}}
     v-data-table(
       :items='group.users',
       :headers='headers',
@@ -34,12 +34,12 @@
             v-list-item(:to='`/users/` + item.id')
               v-list-item-action: v-icon(color='primary') mdi-account-outline
               v-list-item-content
-                v-list-item-title View User Profile
+                v-list-item-title {{$t('admin:groups.userViewProfile')}}
             template(v-if='item.id !== 2')
               v-list-item(@click='unassignUser(item.id)')
                 v-list-item-action: v-icon(color='orange') mdi-account-remove-outline
                 v-list-item-content
-                  v-list-item-title Unassign
+                  v-list-item-title {{$t('admin:groups.userUnassign')}}
       template(slot='no-data')
         v-alert.ma-3(icon='mdi-alert', outlined) No users to display.
     .text-center.py-2(v-if='group.users.length > 15')
@@ -68,9 +68,9 @@ export default {
     return {
       headers: [
         { text: 'ID', value: 'id', width: 70 },
-        { text: 'Name', value: 'name' },
-        { text: 'Email', value: 'email' },
-        { text: 'Actions', value: 'actions', sortable: false, width: 50 }
+        { text: this.$t('admin:groups.userName'), value: 'name' },
+        { text: this.$t('admin:groups.userEmail'), value: 'email' },
+        { text: this.$t('admin:groups.userActions'), value: 'actions', sortable: false, width: 50 }
       ],
       searchUserDialog: false,
       pagination: 1,
@@ -106,7 +106,7 @@ export default {
         })
         this.$store.commit('showNotification', {
           style: 'success',
-          message: `User has been assigned to ${this.group.name}.`,
+          message: this.$t('admin:groups.userAssignSuccess', {groupName: this.group.name}),
           icon: 'assignment_ind'
         })
         this.$emit('refresh')
@@ -132,7 +132,7 @@ export default {
         })
         this.$store.commit('showNotification', {
           style: 'success',
-          message: `User has been unassigned from ${this.group.name}.`,
+          message: this.$t('admin:groups.userUnassignSuccess', {groupName: this.group.name}),
           icon: 'assignment_ind'
         })
         this.$emit('refresh')

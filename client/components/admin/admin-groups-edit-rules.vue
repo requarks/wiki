@@ -6,7 +6,7 @@
         color='orange darken-2'
         outlined
         icon='mdi-lock-outline'
-        ) This group has access to everything.
+        ) {{$t('admin:groups.administrator')}}
     template(v-else)
       v-card-title(:class='$vuetify.theme.dark ? `grey darken-3-d5` : ``')
         v-alert.radius-7.caption(
@@ -14,11 +14,11 @@
           color='grey'
           outlined
           icon='mdi-information'
-          ) You must enable global content permissions (under Permissions tab) for page rules to have any effect.
+          ) {{$t('admin:groups.pageRuleAlert')}}
         v-spacer
         v-btn.mx-2(depressed, color='primary', @click='addRule')
           v-icon(left) mdi-plus
-          | Add Rule
+          | {{$t('admin:groups.addRule')}}
         v-menu(
           right
           offset-y
@@ -31,26 +31,26 @@
             v-list-item(@click='comingSoon')
               v-list-item-avatar
                 v-icon mdi-application-import
-              v-list-item-title Load Preset
+              v-list-item-title {{$t('admin:groups.loadPreset')}}
             v-divider
             v-list-item(@click='comingSoon')
               v-list-item-avatar
                 v-icon mdi-application-export
-              v-list-item-title Save As Preset
+              v-list-item-title {{$t('admin:groups.saveAsPreset')}}
             v-divider
             v-list-item(@click='comingSoon')
               v-list-item-avatar
                 v-icon mdi-cloud-upload
-              v-list-item-title Import Rules
+              v-list-item-title {{$t('admin:groups.importRules')}}
             v-divider
             v-list-item(@click='comingSoon')
               v-list-item-avatar
                 v-icon mdi-cloud-download
-              v-list-item-title Export Rules
+              v-list-item-title {{$t('admin:groups.exportRules')}}
       v-card-text(:class='$vuetify.theme.dark ? `grey darken-4-l5` : `white`')
         .rules
           .caption(v-if='group.pageRules.length === 0')
-            em(:class='$vuetify.theme.dark ? `grey--text` : `blue-grey--text`') This group has no page rules yet.
+            em(:class='$vuetify.theme.dark ? `grey--text` : `blue-grey--text`') {{$t('admin:groups.noRules')}}
           .rule(v-for='rule of group.pageRules', :key='rule.id')
             v-btn.ma-0.radius-4.rule-deny-btn(
               solo
@@ -66,7 +66,7 @@
               solo
               :items='roles'
               v-model='rule.roles'
-              placeholder='Select Role(s)...'
+              v-bind:placeholder="$t('admin:groups.selectRoles')"
               hide-details
               multiple
               chips
@@ -80,7 +80,7 @@
               )
               template(slot='selection', slot-scope='{ item, index }')
                 v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value }}
-                v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 2 }} more
+                v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 2 }} {{$t('admin:groups.ruleMore')}}
               template(slot='item', slot-scope='props')
                 v-list-item-action(style='min-width: 30px;')
                   v-checkbox(
@@ -117,7 +117,7 @@
               solo
               :items='locales'
               v-model='rule.locales'
-              placeholder='Any Locale'
+              v-bind:placeholder="$t('admin:groups.ruleLocales')"
               item-value='code'
               item-text='name'
               multiple
@@ -170,28 +170,34 @@
               v-icon(:color='$vuetify.theme.dark ? `grey` : `blue-grey`') mdi-close
 
         v-divider.mt-3
-        .overline.py-3 Rules Order
-        .body-2.pl-3 Rules are applied in order of path specificity. A more precise path will always override a less defined path.
-        .body-2.pl-5 For example, #[span.teal--text /geography/countries] will override #[span.teal--text /geography].
-        .body-2.pl-3.pt-2 When 2 rules have the same specificity, the priority is given from lowest to highest as follows:
+        .overline.py-3 {{$t('admin:groups.ruleOrderTitle')}}
+        .body-2.pl-3 {{$t('admin:groups.ruleOrderPath')}}
+        .body-2.pl-5
+          i18next(path=('admin:groups.ruleOrderPathExample'))
+            span(class='teal--text', place='0') /geography/countries
+            span(class='teal--text', place='1') /geography
+        .body-2.pl-3.pt-2 {{$t('admin:groups.ruleOrderPriorityTitle')}}
         .body-2.pl-3.pt-1
           ul
             li
-              strong Path Starts With...
+              strong {{$t('admin:groups.ruleMatchPathStart')}}
               em.caption.pl-1 (lowest)
             li
-              strong Path Ends With...
+              strong {{$t('admin:groups.ruleMatchPathEnds')}}
             li
-              strong Path Matches Regex...
+              strong {{$t('admin:groups.ruleMatchPathRegex')}}
             li
-              strong Tag Matches...
+              strong {{$t('admin:groups.ruleMatchTag')}}
             li
-              strong Path Is Exactly...
+              strong {{$t('admin:groups.ruleMatchPathExactly')}}
               em.caption.pl-1 (highest)
-        .body-2.pl-3.pt-2 When 2 rules have the same path specificity AND the same match type, #[strong.red--text DENY] will always override an #[strong.green--text ALLOW] rule.
+        .body-2.pl-3.pt-2
+          i18next(path='admin:groups.ruleOrderOverride')
+            strong(class='red--text', place='0') {{$t('admin:permission.deny')}}
+            strong(class='green--text', place='1') {{$t('admin:permission.allow')}}
         v-divider.mt-3
-        .overline.py-3 Regular Expressions
-        span Expressions that are deemed unsafe or could result in exponential time processing will be rejected upon saving.
+        .overline.py-3 {{$t('admin:groups.ruleRegularExpressions')}}
+        span {{$t('admin:groups.ruleRegularExpressionsHint')}}
 
 </template>
 
@@ -213,25 +219,25 @@ export default {
   data() {
     return {
       roles: [
-        { text: 'Read Pages', value: 'read:pages', icon: 'mdi-file-eye-outline' },
-        { text: 'Create Pages', value: 'write:pages', icon: 'mdi-file-plus-outline' },
-        { text: 'Edit + Move Pages', value: 'manage:pages', icon: 'mdi-file-document-edit-outline' },
-        { text: 'Delete Pages', value: 'delete:pages', icon: 'mdi-file-remove-outline' },
-        { text: 'View Pages Source', value: 'read:source', icon: 'mdi-code-tags' },
-        { text: 'View Pages History', value: 'read:history', icon: 'mdi-history' },
-        { text: 'Read / Use Assets', value: 'read:assets', icon: 'mdi-image-search-outline' },
-        { text: 'Upload Assets', value: 'write:assets', icon: 'mdi-image-plus' },
-        { text: 'Edit + Delete Assets', value: 'manage:assets', icon: 'mdi-image-size-select-large' },
-        { text: 'Read Comments', value: 'read:comments', icon: 'mdi-comment-search-outline' },
-        { text: 'Create Comments', value: 'write:comments', icon: 'mdi-comment-plus-outline' },
-        { text: 'Edit + Delete Comments', value: 'manage:comments', icon: 'mdi-comment-remove-outline' }
+        { text: this.$t('admin:permission.readPages'), value: 'read:pages', icon: 'mdi-file-eye-outline' },
+        { text: this.$t('admin:permission.writePages'), value: 'write:pages', icon: 'mdi-file-plus-outline' },
+        { text: this.$t('admin:permission.managePages'), value: 'manage:pages', icon: 'mdi-file-document-edit-outline' },
+        { text: this.$t('admin:permission.deletePages'), value: 'delete:pages', icon: 'mdi-file-remove-outline' },
+        { text: this.$t('admin:permission.readSource'), value: 'read:source', icon: 'mdi-code-tags' },
+        { text: this.$t('admin:permission.readHistory'), value: 'read:history', icon: 'mdi-history' },
+        { text: this.$t('admin:permission.readAssets'), value: 'read:assets', icon: 'mdi-image-search-outline' },
+        { text: this.$t('admin:permission.writeAssets'), value: 'write:assets', icon: 'mdi-image-plus' },
+        { text: this.$t('admin:permission.manageAssets'), value: 'manage:assets', icon: 'mdi-image-size-select-large' },
+        { text: this.$t('admin:permission.readComments'), value: 'read:comments', icon: 'mdi-comment-search-outline' },
+        { text: this.$t('admin:permission.writeComments'), value: 'write:comments', icon: 'mdi-comment-plus-outline' },
+        { text: this.$t('admin:permission.manageComments'), value: 'manage:comments', icon: 'mdi-comment-remove-outline' }
       ],
       matches: [
-        { text: 'Path Starts With...', value: 'START', icon: '/...' },
-        { text: 'Path is Exactly...', value: 'EXACT', icon: '=' },
-        { text: 'Path Ends With...', value: 'END', icon: '.../' },
-        { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
-        { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
+        { text: this.$t('admin:groups.ruleMatchPathStart'), value: 'START', icon: '/...' },
+        { text: this.$t('admin:groups.ruleMatchPathExactly'), value: 'EXACT', icon: '=' },
+        { text: this.$t('admin:groups.ruleMatchPathEnds'), value: 'END', icon: '.../' },
+        { text: this.$t('admin:groups.ruleMatchPathRegex'), value: 'REGEX', icon: '$.*' },
+        { text: this.$t('admin:groups.ruleMatchTag'), value: 'TAG', icon: 'T' }
       ]
     }
   },
