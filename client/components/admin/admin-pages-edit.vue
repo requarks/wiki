@@ -5,7 +5,7 @@
         .admin-header
           img.animated.fadeInUp(src='/_assets/svg/icon-view-details.svg', alt='Edit Page', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Page Details
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{$t('admin:pages:detailTitle')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s
               v-chip.ml-0.mr-2(label, small).caption ID {{page.id}}
               span /{{page.locale}}/{{page.path}}
@@ -28,47 +28,47 @@
           v-menu(offset-y, origin='top right')
             template(v-slot:activator='{ on }')
               v-btn.mx-3.animated.fadeInDown.wait-p2s(color='black', v-on='on', depressed, dark)
-                span Actions
+                span {{$t('common:actions.actions')}}
                 v-icon(right) mdi-chevron-down
             v-list(dense, nav)
               v-list-item(:href='`/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-text-subject
-                v-list-item-title View
+                v-list-item-title {{$t('common:actions.view')}}
               v-list-item(:href='`/e/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-pencil
-                v-list-item-title Edit
+                v-list-item-title {{$t('common:actions.edit')}}
               v-list-item(@click='', disabled)
                 v-list-item-icon
                   v-icon(color='grey') mdi-cube-scan
-                v-list-item-title Re-Render
+                v-list-item-title {{$t('admin:pages.reRender')}}
               v-list-item(@click='', disabled)
                 v-list-item-icon
                   v-icon(color='grey') mdi-earth-remove
-                v-list-item-title Unpublish
+                v-list-item-title {{$t('common:page.unpublished')}}
               v-list-item(:href='`/s/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-code-tags
-                v-list-item-title View Source
+                v-list-item-title {{$t('common:header.viewSource')}}
               v-list-item(:href='`/h/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-history
-                v-list-item-title View History
+                v-list-item-title {{$t('admin:pages.viewHistory')}}
               v-list-item(@click='', disabled)
                 v-list-item-icon
                   v-icon(color='grey') mdi-content-duplicate
-                v-list-item-title Duplicate
+                v-list-item-title {{$t('common:header.duplicate')}}
               v-list-item(@click='', disabled)
                 v-list-item-icon
                   v-icon(color='grey') mdi-content-save-move-outline
-                v-list-item-title Move / Rename
+                v-list-item-title {{$t('common:header.move')}}
               v-dialog(v-model='deletePageDialog', max-width='500')
                 template(v-slot:activator='{ on }')
                   v-list-item(v-on='on')
                     v-list-item-icon
                       v-icon(color='red') mdi-trash-can-outline
-                    v-list-item-title Delete
+                    v-list-item-title {{$t('common:actions.delete')}}
                 v-card
                   .dialog-header.is-short.is-red
                     v-icon.mr-2(color='white') mdi-file-document-box-remove-outline
@@ -87,60 +87,60 @@
                     v-btn(color='red darken-2', @click='deletePage', :loading='loading').white--text {{$t('common:actions.delete')}}
           v-btn.animated.fadeInDown(color='success', large, depressed, disabled)
             v-icon(left) mdi-check
-            span Save Changes
+            span {{$t('common:actions.saveChanges')}}
       v-flex(xs12, lg6)
         v-card.animated.fadeInUp
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 mdi-text-subject
-            span Properties
+            span {{$t('common:actions.properties')}}
           v-list.py-0(two-line, dense)
             v-list-item
               v-list-item-content
-                v-list-item-title: .overline.grey--text Title
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageTitle')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.title }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title: .overline.grey--text Description
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageDescription')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.description || '-' }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title: .overline.grey--text Locale
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageLocale')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.locale }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title: .overline.grey--text Path
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pagePath')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.path }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title: .overline.grey--text Editor
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageEditor')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.editor || '?' }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title: .overline.grey--text Content Type
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageContentType')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.contentType || '?' }}
             v-divider
             v-list-item
               v-list-item-content
-                v-list-item-title: .overline.grey--text Page Hash
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageContentHash')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.hash }}
 
       v-flex(xs12, lg6)
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, dark, flat)
             v-icon.mr-2 mdi-account-multiple
-            span Users
+            span {{$t('admin:pages.pageUser')}}
           v-list.py-0(two-line, dense)
             v-list-item
               v-list-item-avatar(size='24')
                 v-btn(icon, :to='`/users/` + page.creatorId')
                   v-icon(color='grey') mdi-account
               v-list-item-content
-                v-list-item-title: .overline.grey--text Creator
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageCreator')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.creatorName }} #[em.caption ({{ page.creatorEmail }})]
               v-list-item-action
                 v-list-item-action-text {{ page.createdAt | moment('calendar') }}
@@ -150,7 +150,7 @@
                 v-btn(icon, :to='`/users/` + page.authorId')
                   v-icon(color='grey') mdi-account
               v-list-item-content
-                v-list-item-title: .overline.grey--text Last Editor
+                v-list-item-title: .overline.grey--text {{$t('admin:pages.pageLastEditor')}}
                 v-list-item-subtitle.body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-3`') {{ page.authorName }} #[em.caption ({{ page.authorEmail }})]
               v-list-item-action
                 v-list-item-action-text {{ page.updatedAt | moment('calendar') }}
@@ -192,7 +192,7 @@ export default {
         if (_.get(resp, 'data.pages.delete.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
             style: 'green',
-            message: `Page deleted successfully.`,
+            message: this.$t('admin:pages.pageDeleteSuccess'),
             icon: 'check'
           })
           this.$router.replace('/pages')
@@ -207,7 +207,7 @@ export default {
     async rerenderPage() {
       this.$store.commit('showNotification', {
         style: 'indigo',
-        message: `Coming soon...`,
+        message: this.$t('common:commingSoon'),
         icon: 'directions_boat'
       })
     }
