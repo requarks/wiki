@@ -106,8 +106,14 @@ module.exports = {
 
         if (_.isPlainObject(dbConfig)) {
           dbConfig.appName = 'Wiki.js'
+          _.set(dbConfig, 'options.appName', 'Wiki.js')
+
+          dbConfig.enableArithAbort = true
+          _.set(dbConfig, 'options.enableArithAbort', true)
+
           if (dbUseSSL) {
             dbConfig.encrypt = true
+            _.set(dbConfig, 'options.encrypt', true)
           }
         }
         break
