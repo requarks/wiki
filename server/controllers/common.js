@@ -493,6 +493,9 @@ router.get('/*', async (req, res, next) => {
           body: WIKI.config.theming.injectBody
         }
 
+        // Handle missing extra field
+        page.extra = page.extra || { css: '', js: '' }
+
         if (!_.isEmpty(page.extra.css)) {
           injectCode.css = `${injectCode.css}\n${page.extra.css}`
         }
