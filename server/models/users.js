@@ -177,6 +177,8 @@ module.exports = class User extends Model {
     if (_.isArray(profile.emails)) {
       const e = _.find(profile.emails, ['primary', true])
       primaryEmail = (e) ? e.value : _.first(profile.emails).value
+    } else if (_.isArray(profile.email)) {
+      primaryEmail = _.first(_.flattenDeep([profile.email]));
     } else if (_.isString(profile.email) && profile.email.length > 5) {
       primaryEmail = profile.email
     } else if (_.isString(profile.mail) && profile.mail.length > 5) {
