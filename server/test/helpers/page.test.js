@@ -7,7 +7,7 @@ describe('helpers/page/injectPageMetadata', () => {
     isPublished: true,
     updatedAt: new Date(),
     content: 'TEST CONTENT',
-    createdAt: new Date('2019-01-01'),
+    createdAt: new Date('2019-01-01')
   }
 
   it('returns the page content by default when content type is unknown', () => {
@@ -20,7 +20,7 @@ describe('helpers/page/injectPageMetadata', () => {
     const markdownPage = {
       ...page,
       contentType: 'markdown',
-      editorKey: 'markdown',
+      editorKey: 'markdown'
     }
 
     const expected = `---
@@ -42,7 +42,7 @@ TEST CONTENT`
     const htmlPage = {
       ...page,
       contentType: 'html',
-      editorKey: 'html',
+      editorKey: 'html'
     }
 
     const expected = `<!--

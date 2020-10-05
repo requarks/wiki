@@ -104,7 +104,7 @@ module.exports = {
                       },
                       {
                         query_string: {
-                          query: "*" + q + "*"
+                          query: `*${q}*`
                         }
                       }
                     ],
