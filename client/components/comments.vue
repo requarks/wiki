@@ -109,7 +109,7 @@
                   outlined
                   )
                   v-icon(left) mdi-close
-                  span.text-none {{$t('common:action.cancel')}}
+                  span.text-none {{$t('common:actions.cancel')}}
                 v-btn(
                   dark
                   color='blue-grey darken-2'
