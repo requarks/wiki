@@ -58,7 +58,7 @@ module.exports = {
               content: { type: 'text', boost: 1.0 },
               locale: { type: 'keyword' },
               path: { type: 'text' },
-              createdAt: { type: 'text' }
+              createdAt: { type: 'date', boost: 2.0 }
             }
           }
           await this.client.indices.create({
@@ -319,7 +319,7 @@ module.exports = {
       bytes = 0
     }
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render').select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', 'createdAt').select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
