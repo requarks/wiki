@@ -2,9 +2,7 @@ const _ = require('lodash')
 const stream = require('stream')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
-
 /* global WIKI */
-
 module.exports = {
   async activate() {
     // not used
@@ -39,10 +37,8 @@ module.exports = {
       default:
         throw new Error('Unsupported version of elasticsearch! Update your settings in the Administration Area.')
     }
-
     // -> Create Search Index
     await this.createIndex()
-
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initialization completed.`)
   },
   /**
@@ -61,7 +57,8 @@ module.exports = {
               description: { type: 'text', boost: 3.0 },
               content: { type: 'text', boost: 1.0 },
               locale: { type: 'keyword' },
-              path: { type: 'text' }
+              path: { type: 'text' },
+              createdAt: { type: 'date', boost: 2.0 }
             }
           }
           await this.client.indices.create({
@@ -87,63 +84,156 @@ module.exports = {
    * @param {Object} opts Additional options
    */
   async query(q, opts) {
-    try {
-      const results = await this.client.search({
-        index: this.config.indexName,
-        body: {
-          query: {
-            bool: {
-              filter: [
-                {
-                  bool: {
-                    should: [
-                      {
-                        simple_query_string: {
-                          query: q
-                        }
-                      },
-                      {
-                        query_string: {
-                          query: "*" + q + "*"
-                        }
-                      }
-                    ],
-                    minimum_should_match: 1
+    if(q.search("date:")==0){
+      // get the date range
+      if (q.length == 26){
+        var start_date = q.substr(5,10);
+        var stop_date = q.substr(16,10);
+        try {
+          const results = await this.client.search({
+            index: this.config.indexName,
+            body: {
+              query: {
+                range: {
+                  createdAt: {
+                    gte: start_date,
+                    lte: stop_date
                   }
                 }
-              ]
+              },
+              suggest: {
+                suggestions: {
+                  text: q,
+                  completion: {
+                    field: 'suggest',
+                    size: 5,
+                    skip_duplicates: true,
+                    fuzzy: true
+                  }
+                }
+              }
             }
-          },
-          from: 0,
-          size: 50,
-          _source: ['title', 'description', 'path', 'locale'],
-          suggest: {
-            suggestions: {
-              text: q,
-              completion: {
-                field: 'suggest',
-                size: 5,
-                skip_duplicates: true,
-                fuzzy: true
+          })
+          return {
+            results: _.get(results, 'body.hits.hits', []).map(r => ({
+              id: r._id,
+              locale: r._source.locale,
+              path: r._source.path,
+              title: r._source.title,
+              description: r._source.description,
+              createdAt: r._source.createdAt
+            })),
+            suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+            totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+          }
+        } catch (err) {
+          WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
+        }
+      }else if (q.length ==15){
+        var exact_date = q.substr(5,10);
+        try {
+          const results = await this.client.search({
+            index: this.config.indexName,
+            body: {
+              query: {
+                range: {
+                  createdAt: {
+                    gte: exact_date,
+                    lte: exact_date
+                  }
+                }
+              },
+              suggest: {
+                suggestions: {
+                  text: q,
+                  completion: {
+                    field: 'suggest',
+                    size: 5,
+                    skip_duplicates: true,
+                    fuzzy: true
+                  }
+                }
+              }
+            }
+          })
+          return {
+            results: _.get(results, 'body.hits.hits', []).map(r => ({
+              id: r._id,
+              locale: r._source.locale,
+              path: r._source.path,
+              title: r._source.title,
+              description: r._source.description,
+              createdAt: r._source.createdAt
+            })),
+            suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+            totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+          }
+        } catch (err) {
+          WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
+        }
+      }
+
+    }else{
+      try {
+        const results = await this.client.search({
+          index: this.config.indexName,
+          body: {
+            query: {
+              bool: {
+                filter: [
+                  {
+                    bool: {
+                      should: [
+                        {
+                          simple_query_string: {
+                            query: q
+                          }
+                        },
+                        {
+                          query_string: {
+                            query: "*" + q + "*"
+                          }
+                        }
+                      ],
+                      minimum_should_match: 1
+                    }
+                  }
+                ]
+              }
+            },
+            from: 0,
+            size: 50,
+            _source: ['title', 'description', 'path', 'locale', 'createdAt'],
+            suggest: {
+              suggestions: {
+                text: q,
+                completion: {
+                  field: 'suggest',
+                  size: 5,
+                  skip_duplicates: true,
+                  fuzzy: true
+                }
               }
             }
           }
+        })
+        return {
+          results: _.get(results, 'body.hits.hits', []).map(r => ({
+            id: r._id,
+            locale: r._source.locale,
+            path: r._source.path,
+            title: r._source.title,
+            description: r._source.description,
+            createdAt: r._source.createdAt
+          })),
+          suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+          totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
         }
-      })
-      return {
-        results: _.get(results, 'body.hits.hits', []).map(r => ({
-          id: r._id,
-          locale: r._source.locale,
-          path: r._source.path,
-          title: r._source.title,
-          description: r._source.description
-        })),
-        suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
-        totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+      } catch (err) {
+        WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
       }
-    } catch (err) {
-      WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
     }
+
   },
   /**
    * Build suggest field
@@ -180,6 +270,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
+        createdAt: page.createdAt,
         content: page.safeContent
       },
       refresh: true
@@ -201,6 +292,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
+        createdAt: page.createdAt,
         content: page.safeContent
       },
       refresh: true
@@ -241,6 +333,7 @@ module.exports = {
         path: page.destinationPath,
         title: page.title,
         description: page.description,
+        createdAt: page.createdAt,
         content: page.safeContent
       },
       refresh: true
@@ -253,30 +346,24 @@ module.exports = {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Rebuilding Index...`)
     await this.client.indices.delete({ index: this.config.indexName })
     await this.createIndex()
-
     const MAX_INDEXING_BYTES = 10 * Math.pow(2, 20) - Buffer.from('[').byteLength - Buffer.from(']').byteLength // 10 MB
     const MAX_INDEXING_COUNT = 1000
     const COMMA_BYTES = Buffer.from(',').byteLength
-
     let chunks = []
     let bytes = 0
-
     const processDocument = async (cb, doc) => {
       try {
         if (doc) {
           const docBytes = Buffer.from(JSON.stringify(doc)).byteLength
-
           // -> Current batch exceeds size limit, flush
           if (docBytes + COMMA_BYTES + bytes >= MAX_INDEXING_BYTES) {
             await flushBuffer()
           }
-
           if (chunks.length > 0) {
             bytes += COMMA_BYTES
           }
           bytes += docBytes
           chunks.push(doc)
-
           // -> Current batch exceeds count limit, flush
           if (chunks.length >= MAX_INDEXING_COUNT) {
             await flushBuffer()
@@ -290,7 +377,6 @@ module.exports = {
         cb(err)
       }
     }
-
     const flushBuffer = async () => {
       WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Sending batch of ${chunks.length}...`)
       try {
@@ -311,6 +397,7 @@ module.exports = {
               path: doc.path,
               title: doc.title,
               description: doc.description,
+              createdAt: doc.createdAt,
               content: doc.safeContent
             })
             return result
@@ -323,9 +410,8 @@ module.exports = {
       chunks.length = 0
       bytes = 0
     }
-
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render').select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', 'createdAt').select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
