@@ -84,64 +84,128 @@ module.exports = {
    * @param {Object} opts Additional options
    */
   async query(q, opts) {
-    try {
-      const results = await this.client.search({
-        index: this.config.indexName,
-        body: {
-          query: {
-            bool: {
-              filter: [
-                {
-                  bool: {
-                    should: [
-                      {
-                        simple_query_string: {
-                          query: q
+    if(q.search("date:")==0){
+      // get the date range
+      
+      try {
+        const results = await this.client.search({
+          index: this.config.indexName,
+          body: {
+            query: {
+              bool: {
+                filter: [
+                  {
+                    bool: {
+                      should: [
+                        {
+                          simple_query_string: {
+                            query: q
+                          }
+                        },
+                        {
+                          query_string: {
+                            query: "*" + q + "*"
+                          }
                         }
-                      },
-                      {
-                        query_string: {
-                          query: "*" + q + "*"
-                        }
-                      }
-                    ],
-                    minimum_should_match: 1
+                      ],
+                      minimum_should_match: 1
+                    }
                   }
+                ]
+              }
+            },
+            from: 0,
+            size: 50,
+            _source: ['title', 'description', 'path', 'locale', 'createdAt'],
+            suggest: {
+              suggestions: {
+                text: q,
+                completion: {
+                  field: 'suggest',
+                  size: 5,
+                  skip_duplicates: true,
+                  fuzzy: true
                 }
-              ]
-            }
-          },
-          from: 0,
-          size: 50,
-          _source: ['title', 'description', 'path', 'locale', 'createdAt'],
-          suggest: {
-            suggestions: {
-              text: q,
-              completion: {
-                field: 'suggest',
-                size: 5,
-                skip_duplicates: true,
-                fuzzy: true
               }
             }
           }
+        })
+        return {
+          results: _.get(results, 'body.hits.hits', []).map(r => ({
+            id: r._id,
+            locale: r._source.locale,
+            path: r._source.path,
+            title: r._source.title,
+            description: r._source.description,
+            createdAt: r._source.createdAt
+          })),
+          suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+          totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
         }
-      })
-      return {
-        results: _.get(results, 'body.hits.hits', []).map(r => ({
-          id: r._id,
-          locale: r._source.locale,
-          path: r._source.path,
-          title: r._source.title,
-          description: r._source.description,
-          createdAt: r._source.createdAt
-        })),
-        suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
-        totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+      } catch (err) {
+        WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
       }
-    } catch (err) {
-      WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
+    }else{
+      try {
+        const results = await this.client.search({
+          index: this.config.indexName,
+          body: {
+            query: {
+              bool: {
+                filter: [
+                  {
+                    bool: {
+                      should: [
+                        {
+                          simple_query_string: {
+                            query: q
+                          }
+                        },
+                        {
+                          query_string: {
+                            query: "*" + q + "*"
+                          }
+                        }
+                      ],
+                      minimum_should_match: 1
+                    }
+                  }
+                ]
+              }
+            },
+            from: 0,
+            size: 50,
+            _source: ['title', 'description', 'path', 'locale', 'createdAt'],
+            suggest: {
+              suggestions: {
+                text: q,
+                completion: {
+                  field: 'suggest',
+                  size: 5,
+                  skip_duplicates: true,
+                  fuzzy: true
+                }
+              }
+            }
+          }
+        })
+        return {
+          results: _.get(results, 'body.hits.hits', []).map(r => ({
+            id: r._id,
+            locale: r._source.locale,
+            path: r._source.path,
+            title: r._source.title,
+            description: r._source.description,
+            createdAt: r._source.createdAt
+          })),
+          suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+          totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+        }
+      } catch (err) {
+        WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
+      }
     }
+
   },
   /**
    * Build suggest field
