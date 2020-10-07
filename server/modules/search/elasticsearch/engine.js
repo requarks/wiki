@@ -86,65 +86,93 @@ module.exports = {
   async query(q, opts) {
     if(q.search("date:")==0){
       // get the date range
-      
-      try {
-        const results = await this.client.search({
-          index: this.config.indexName,
-          body: {
-            query: {
-              bool: {
-                filter: [
-                  {
-                    bool: {
-                      should: [
-                        {
-                          simple_query_string: {
-                            query: q
-                          }
-                        },
-                        {
-                          query_string: {
-                            query: "*" + q + "*"
-                          }
-                        }
-                      ],
-                      minimum_should_match: 1
-                    }
+      if (q.length == 26){
+        var start_date = q.substr(5,10);
+        var stop_date = q.substr(16,10);
+        try {
+          const results = await this.client.search({
+            index: this.config.indexName,
+            body: {
+              query: {
+                range: {
+                  createdAt: {
+                    gte: start_date,
+                    lte: stop_date
                   }
-                ]
-              }
-            },
-            from: 0,
-            size: 50,
-            _source: ['title', 'description', 'path', 'locale', 'createdAt'],
-            suggest: {
-              suggestions: {
-                text: q,
-                completion: {
-                  field: 'suggest',
-                  size: 5,
-                  skip_duplicates: true,
-                  fuzzy: true
+                }
+              },
+              suggest: {
+                suggestions: {
+                  text: q,
+                  completion: {
+                    field: 'suggest',
+                    size: 5,
+                    skip_duplicates: true,
+                    fuzzy: true
+                  }
                 }
               }
             }
+          })
+          return {
+            results: _.get(results, 'body.hits.hits', []).map(r => ({
+              id: r._id,
+              locale: r._source.locale,
+              path: r._source.path,
+              title: r._source.title,
+              description: r._source.description,
+              createdAt: r._source.createdAt
+            })),
+            suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+            totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
           }
-        })
-        return {
-          results: _.get(results, 'body.hits.hits', []).map(r => ({
-            id: r._id,
-            locale: r._source.locale,
-            path: r._source.path,
-            title: r._source.title,
-            description: r._source.description,
-            createdAt: r._source.createdAt
-          })),
-          suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
-          totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+        } catch (err) {
+          WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
         }
-      } catch (err) {
-        WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
+      }else if (q.length ==15){
+        var exact_date = q.substr(5,10);
+        try {
+          const results = await this.client.search({
+            index: this.config.indexName,
+            body: {
+              query: {
+                range: {
+                  createdAt: {
+                    gte: exact_date,
+                    lte: exact_date
+                  }
+                }
+              },
+              suggest: {
+                suggestions: {
+                  text: q,
+                  completion: {
+                    field: 'suggest',
+                    size: 5,
+                    skip_duplicates: true,
+                    fuzzy: true
+                  }
+                }
+              }
+            }
+          })
+          return {
+            results: _.get(results, 'body.hits.hits', []).map(r => ({
+              id: r._id,
+              locale: r._source.locale,
+              path: r._source.path,
+              title: r._source.title,
+              description: r._source.description,
+              createdAt: r._source.createdAt
+            })),
+            suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+            totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+          }
+        } catch (err) {
+          WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
+        }
       }
+
     }else{
       try {
         const results = await this.client.search({
