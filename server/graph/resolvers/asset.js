@@ -39,7 +39,7 @@ module.exports = {
       const parentPath = parentHierarchy.map(h => h.slug).join('/')
       return _.filter(results, r => {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
-        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path });
+        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
       })
     }
   },
