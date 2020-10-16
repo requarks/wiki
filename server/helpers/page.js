@@ -73,8 +73,8 @@ module.exports = {
    */
   injectPageMetadata(page) {
     let meta = [
-      ['title', page.title],
-      ['description', page.description],
+      ['title', '"' + page.title + '"'],
+      ['description', '"' + page.description + '"'],
       ['published', page.isPublished.toString()],
       ['date', page.updatedAt],
       ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : ''],
