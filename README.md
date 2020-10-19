@@ -262,9 +262,6 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 ![Browserstack](https://wiki.js.org/legacy/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-![Bugsnag](https://wiki.js.org/legacy/logo-bugsnag.png)  
-[Bugsnag](https://www.bugsnag.com/) for providing error monitoring solutions.
-
 ![Cloudflare](https://wiki.js.org/legacy/logo_cloudflare.png)  
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
@@ -273,6 +270,9 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 ![Icons8](https://static.requarks.io/logo/icons8.svg)  
 [Icons8](https://icons8.com/) for providing beautiful icon sets.
+
+![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
+[Lokalise](https://lokalise.com/) for providing access to their great localization tool.
 
 ![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
