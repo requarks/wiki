@@ -110,6 +110,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
+- Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
