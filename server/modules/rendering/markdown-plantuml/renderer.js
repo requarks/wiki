@@ -74,8 +74,13 @@ module.exports = {
             continue
           }
 
-          const i = closeMarker.findIndex(item => item !== state.src[start + i])
-          const closeMarkerMatched = i !== -1
+          let closeMarkerMatched = true
+          for (i = 0; i < closeMarker.length; ++i) {
+            if (closeMarker[i] !== state.src[start + i]) {
+              closeMarkerMatched = false
+              break
+            }
+          }
 
           if (!closeMarkerMatched) {
             continue
