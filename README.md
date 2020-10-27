@@ -102,6 +102,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Elijah Zobenko ([@he110](https://github.com/he110))
 - Ernie ([@iamernie](https://github.com/iamernie))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
+- HeavenBay ([@HeavenBay](https://github.com/heavenbay))
 - Kelly Wardrop ([@dropcoded](https://github.com/dropcoded))
 - Loki ([@binaryloki](https://github.com/binaryloki))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
@@ -109,6 +110,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
+- Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
@@ -165,7 +167,7 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
         <a href="https://opencollective.com/wikijs/sponsor/11/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/11/avatar.svg"></a>
       </td>
     </tr>
-        <tr>
+    <tr>
       <td align="center" valign="middle" width="192">
         <a href="https://opencollective.com/wikijs/sponsor/12/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/12/avatar.svg"></a>
       </td>
@@ -177,6 +179,34 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
       </td>
       <td align="center" valign="middle" width="192">
         <a href="https://opencollective.com/wikijs/sponsor/15/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/15/avatar.svg"></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/16/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/16/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/17/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/17/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/18/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/18/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/19/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/19/avatar.svg"></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/20/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/20/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/21/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/21/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/22/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/22/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/23/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/23/avatar.svg"></a>
       </td>
     </tr>
   </tbody>
@@ -234,9 +264,6 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 ![Browserstack](https://wiki.js.org/legacy/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-![Bugsnag](https://wiki.js.org/legacy/logo-bugsnag.png)  
-[Bugsnag](https://www.bugsnag.com/) for providing error monitoring solutions.
-
 ![Cloudflare](https://wiki.js.org/legacy/logo_cloudflare.png)  
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
@@ -245,6 +272,9 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 ![Icons8](https://static.requarks.io/logo/icons8.svg)  
 [Icons8](https://icons8.com/) for providing beautiful icon sets.
+
+![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
+[Lokalise](https://lokalise.com/) for providing access to their great localization tool.
 
 ![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.

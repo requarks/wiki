@@ -73,7 +73,7 @@ module.exports = {
             continue
           }
 
-          var closeMarkerMatched = true
+          let closeMarkerMatched = true
           for (i = 0; i < closeMarker.length; ++i) {
             if (closeMarker[i] !== state.src[start + i]) {
               closeMarkerMatched = false
