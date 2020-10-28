@@ -62,7 +62,7 @@ module.exports = {
               content: {type: 'text', boost: 1.0},
               locale: {type: 'keyword'},
               path: {type: 'text'},
-              tags: {boost: 8.0}
+              tags: {type: 'text', boost: 8.0}
             }
           }
           await this.client.indices.create({
@@ -95,7 +95,7 @@ module.exports = {
           query: {
             simple_query_string: {
               query: `*${q}*`,
-              fields: ['title^10', 'description^3', 'tags^8', 'content^1'],
+              fields: ['title^20', 'description^3', 'tags^8', 'content^1'],
               default_operator: 'and',
               analyze_wildcard: true
             }
