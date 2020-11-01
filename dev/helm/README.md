@@ -100,7 +100,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `tolerations`                    | Toleration labels for wiki.jsk pod assignment    | `[]`                                                       |
 | `ingress.enabled`                    | Enable ingress controller resource          | `false`                                                    |
 | `ingress.annotations`                | Ingress annotations                         | `{}`                                                       |
-| `ingress.hostname`                   | URL to address your Wiki.js installation     | `wiki.local`                                             |
+| `ingress.hosts`                      | List of ingress rules                        | `[{"host": "wiki.local", "paths": ["/"]}]`                |
 | `ingress.tls`                        | Ingress TLS configuration                   | `[]`                                                       |
 | `postgresql.enabled`                 | Deploy postgres server (see below)          | `true`                                                     |
 | `postgresql.postgresqlDatabase`        | Postgres database name                      | `wiki`                                                   |
