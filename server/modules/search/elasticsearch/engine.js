@@ -19,7 +19,7 @@ module.exports = {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
     switch (this.config.apiVersion) {
       case '7.x':
-        const {Client: Client7} = require('elasticsearch7')
+        const { Client: Client7 } = require('elasticsearch7')
         this.client = new Client7({
           nodes: this.config.hosts.split(',').map(_.trim),
           sniffOnStart: this.config.sniffOnStart,
@@ -28,7 +28,7 @@ module.exports = {
         })
         break
       case '6.x':
-        const {Client: Client6} = require('elasticsearch6')
+        const { Client: Client6 } = require('elasticsearch6')
         this.client = new Client6({
           nodes: this.config.hosts.split(',').map(_.trim),
           sniffOnStart: this.config.sniffOnStart,
@@ -50,19 +50,19 @@ module.exports = {
    */
   async createIndex() {
     try {
-      const indexExists = await this.client.indices.exists({index: this.config.indexName})
+      const indexExists = await this.client.indices.exists({ index: this.config.indexName })
       if (!indexExists.body) {
         WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
         try {
           const idxBody = {
             properties: {
-              suggest: {type: 'completion'},
-              title: {type: 'text', boost: 10.0},
-              description: {type: 'text', boost: 3.0},
-              content: {type: 'text', boost: 1.0},
-              locale: {type: 'keyword'},
-              path: {type: 'text'},
-              tags: {type: 'text', boost: 8.0}
+              suggest: { type: 'completion' },
+              title: { type: 'text', boost: 10.0 },
+              description: { type: 'text', boost: 3.0 },
+              content: { type: 'text', boost: 1.0 },
+              locale: { type: 'keyword' },
+              path: { type: 'text' },
+              tags: { type: 'text', boost: 8.0 }
             }
           }
           await this.client.indices.create({
@@ -102,7 +102,6 @@ module.exports = {
           },
           from: 0,
           size: 50,
-          explain: true,
           _source: ['title', 'description', 'path', 'locale'],
           suggest: {
             suggestions: {
@@ -253,7 +252,7 @@ module.exports = {
    */
   async rebuild() {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Rebuilding Index...`)
-    await this.client.indices.delete({index: this.config.indexName})
+    await this.client.indices.delete({ index: this.config.indexName })
     await this.createIndex()
 
     const MAX_INDEXING_BYTES = 10 * Math.pow(2, 20) - Buffer.from('[').byteLength - Buffer.from(']').byteLength // 10 MB
@@ -330,7 +329,7 @@ module.exports = {
 
     // Added real id in order to fetch page tags from the query
     await pipeline(
-      WIKI.models.knex.column({id: 'hash'}, 'path', {locale: 'localeCode'}, 'title', 'description', 'render', {realId: 'id'}).select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', { realId: 'id' }).select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
