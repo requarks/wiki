@@ -583,6 +583,9 @@
 
   .diagram {
     margin-top: 1rem;
+    svg:first-child {
+      direction: ltr;
+    }
   }
 
   // ---------------------------------
