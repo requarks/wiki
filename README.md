@@ -114,6 +114,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
+- Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - magicpotato ([@fortheday](https://github.com/fortheday))
