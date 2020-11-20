@@ -60,11 +60,11 @@ export default {
     padding-left: 0;
     margin: 0;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     background: linear-gradient(to bottom, #FFF, #FAFAFA);
     box-shadow: inset 0 -1px 0 0 #DDD;
     border-radius: 5px 5px 0 0;
-    overflow: hidden;
+    overflow: auto;
 
     @at-root .theme--dark & {
       background: linear-gradient(to bottom, #424242, #333);

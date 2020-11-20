@@ -8,7 +8,9 @@
             .headline.primary--text.animated.fadeInLeft {{$t('navigation.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('navigation.subtitle')}}
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s.mr-3(icon, outlined, color='grey', @click='refresh')
+          v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/navigation', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.mx-3.animated.fadeInDown.wait-p2s.mr-3(icon, outlined, color='grey', @click='refresh')
             v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
             v-icon(left) mdi-check
@@ -30,15 +32,6 @@
                       v-list-item-avatar
                         v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `TREE` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
                         v-icon(v-else, :color='config.mode === `TREE` ? `teal` : `grey lighten-3`') mdi-check-circle
-                    v-list-item(value='MIXED')
-                      v-list-item-avatar
-                        img(src='/_assets/svg/icon-user-menu-male-dotted.svg', alt='Custom Navigation')
-                      v-list-item-content
-                        v-list-item-title {{$t('admin:navigation.modeCustom.title')}}
-                        v-list-item-subtitle {{$t('admin:navigation.modeCustom.description')}}
-                      v-list-item-avatar
-                        v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `MIXED` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
-                        v-icon(v-else, :color='config.mode === `MIXED` ? `teal` : `grey lighten-3`') mdi-check-circle
                     v-list-item(value='STATIC')
                       v-list-item-avatar
                         img(src='/_assets/svg/icon-features-list.svg', alt='Static Navigation')
@@ -48,6 +41,15 @@
                       v-list-item-avatar
                         v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `STATIC` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
                         v-icon(v-else, :color='config.mode === `STATIC` ? `teal` : `grey lighten-3`') mdi-check-circle
+                    v-list-item(value='MIXED')
+                      v-list-item-avatar
+                        img(src='/_assets/svg/icon-user-menu-male-dotted.svg', alt='Custom Navigation')
+                      v-list-item-content
+                        v-list-item-title {{$t('admin:navigation.modeCustom.title')}}
+                        v-list-item-subtitle {{$t('admin:navigation.modeCustom.description')}}
+                      v-list-item-avatar
+                        v-icon(v-if='$vuetify.theme.dark', :color='config.mode === `MIXED` ? `teal lighten-3` : `grey darken-2`') mdi-check-circle
+                        v-icon(v-else, :color='config.mode === `MIXED` ? `teal` : `grey lighten-3`') mdi-check-circle
                     v-list-item(value='NONE')
                       v-list-item-avatar
                         img(src='/_assets/svg/icon-cancel-dotted.svg', alt='None')
@@ -421,7 +423,7 @@ export default {
             icon: 'check'
           })
         } else {
-          throw new Error(_.get(resp, 'data.navigation.updateTree.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.navigation.updateTree.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)

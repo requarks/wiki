@@ -81,7 +81,14 @@ export default {
     if (!silent) {
       token = state.push('katex_inline', 'math', 0)
       token.markup = '$'
-      token.content = state.src.slice(start, match)
+      token.content = state.src
+        // Extract the math part without the $
+        .slice(start, match)
+        // Escape the curly braces since they will be interpreted as
+        // attributes by markdown-it-attrs (the "curly_attributes"
+        // core rule)
+        .replaceAll("{", "{{")
+        .replaceAll("}", "}}")
     }
 
     state.pos = match + 1

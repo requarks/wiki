@@ -1,4 +1,4 @@
-case $TEST_MATRIX in
+case $MATRIXENV in
 postgres)
   echo "Using PostgreSQL..."
   docker run -d -p 5432:5432 --name db --network="host" -e "POSTGRES_PASSWORD=Password123!" -e "POSTGRES_USER=wiki" -e "POSTGRES_DB=wiki" postgres:11

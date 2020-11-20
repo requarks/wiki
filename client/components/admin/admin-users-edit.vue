@@ -125,9 +125,7 @@
                 v-icon mdi-domain
               v-list-item-content
                 v-list-item-title {{$t('admin:users.authProvider')}}
-                v-list-item-subtitle {{ user.providerKey }}
-              //- v-list-item-action
-              //-   v-img(src='https://static.requarks.io/logo/wikijs.svg', alt='', contain, max-height='32', position='center right')
+                v-list-item-subtitle {{ user.providerName }} #[em.caption ({{ user.providerKey }})]
             template(v-if='user.providerKey === `local`')
               v-divider
               v-list-item
@@ -168,17 +166,19 @@
                       v-btn(icon, color='grey', x-small, v-on='on', disabled)
                         v-icon mdi-email
                     span Send Password Reset Email
+            template(v-if='user.providerIs2FACapable')
               v-divider
               v-list-item
                 v-list-item-avatar(size='32')
                   v-icon mdi-two-factor-authentication
                 v-list-item-content
                   v-list-item-title {{$t('admin:users.tfa')}}
-                  v-list-item-subtitle.red--text Inactive
+                  v-list-item-subtitle.green--text(v-if='user.tfaIsActive') Active
+                  v-list-item-subtitle.red--text(v-else) Inactive
                 v-list-item-action
                   v-tooltip(top)
                     template(v-slot:activator='{ on }')
-                      v-btn(icon, color='grey', x-small, v-on='on', disabled)
+                      v-btn(icon, color='grey', x-small, v-on='on', @click='toggle2FA')
                         v-icon mdi-power
                     span {{$t('admin:users.toggle2FA')}}
             template(v-if='user.providerId')
@@ -709,7 +709,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -749,7 +749,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -798,7 +798,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.delete.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.delete.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -864,7 +864,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.update.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.update.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -935,11 +935,87 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
       this.$store.commit(`loadingStop`, 'admin-users-verify')
+    },
+    /**
+     * Toggle 2FA State
+     */
+    async toggle2FA () {
+      this.$store.commit(`loadingStart`, 'admin-users-toggle2fa')
+      if (this.user.tfaIsActive) {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($id: Int!) {
+              users {
+                disableTFA(id: $id) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.user.id
+          }
+        })
+        if (_.get(resp, 'data.users.disableTFA.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('admin:users.userTFADisableSuccess'),
+            icon: 'check'
+          })
+          this.user.tfaIsActive = false
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.users.disableTFA.responseResult.message', 'An unexpected error occurred.'),
+            icon: 'warning'
+          })
+        }
+      } else {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($id: Int!) {
+              users {
+                enableTFA(id: $id) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.user.id
+          }
+        })
+        if (_.get(resp, 'data.users.enableTFA.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('admin:users.userTFAEnableSuccess'),
+            icon: 'check'
+          })
+          this.user.tfaIsActive = true
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.users.enableTFA.responseResult.message', 'An unexpected error occurred.'),
+            icon: 'warning'
+          })
+        }
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-toggle2fa')
     }
   },
   apollo: {
@@ -952,7 +1028,9 @@ export default {
               name
               email
               providerKey
+              providerName
               providerId
+              providerIs2FACapable
               location
               jobTitle
               timezone
@@ -962,6 +1040,7 @@ export default {
               createdAt
               updatedAt
               lastLoginAt
+              tfaIsActive
               groups {
                 id
                 name

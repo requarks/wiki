@@ -43,8 +43,7 @@ module.exports = {
     let sslOptions = null
     if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(WIKI.config.db, 'sslOptions.auto', null) === false) {
       sslOptions = WIKI.config.db.sslOptions
-      // eslint-disable-next-line no-unneeded-ternary
-      sslOptions.rejectUnauthorized = sslOptions.rejectUnauthorized === false ? false : true
+      sslOptions.rejectUnauthorized = sslOptions.rejectUnauthorized !== false
       if (sslOptions.ca && sslOptions.ca.indexOf('-----') !== 0) {
         sslOptions.ca = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.ca))
       }
@@ -106,8 +105,14 @@ module.exports = {
 
         if (_.isPlainObject(dbConfig)) {
           dbConfig.appName = 'Wiki.js'
+          _.set(dbConfig, 'options.appName', 'Wiki.js')
+
+          dbConfig.enableArithAbort = true
+          _.set(dbConfig, 'options.enableArithAbort', true)
+
           if (dbUseSSL) {
             dbConfig.encrypt = true
+            _.set(dbConfig, 'options.encrypt', true)
           }
         }
         break

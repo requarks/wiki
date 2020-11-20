@@ -2,20 +2,30 @@
   v-app
     .login(:style='`background-image: url(` + bgUrl + `);`')
       .login-sd
-        .d-flex
+        .d-flex.mb-5
           .login-logo
             v-avatar(tile, size='34')
               v-img(:src='logoUrl')
           .login-title
-            .text-h6 {{ siteTitle }}
+            .text-h6.grey--text.text--darken-4 {{ siteTitle }}
+        v-alert.mb-0(
+          v-model='errorShown'
+          transition='slide-y-reverse-transition'
+          color='red darken-2'
+          tile
+          dark
+          dense
+          icon='mdi-alert'
+          )
+          .body-2 {{errorMessage}}
         //-------------------------------------------------
         //- PROVIDERS LIST
         //-------------------------------------------------
         template(v-if='screen === `login` && strategies.length > 1')
-          .login-subtitle.mt-5
-            .text-subtitle-1 Select Authentication Provider
+          .login-subtitle
+            .text-subtitle-1 {{$t('auth:selectAuthProvider')}}
           .login-list
-            v-list.elevation-1.radius-7(nav)
+            v-list.elevation-1.radius-7(nav, light)
               v-list-item-group(v-model='selectedStrategyKey')
                 v-list-item(
                   v-for='(stg, idx) of filteredStrategies'
@@ -30,23 +40,28 @@
         //-------------------------------------------------
         template(v-if='screen === `login` && selectedStrategy.strategy.useForm')
           .login-subtitle
-            .text-subtitle-1 Enter your credentials
+            .text-subtitle-1 {{$t('auth:enterCredentials')}}
           .login-form
             v-text-field(
               solo
               flat
               prepend-inner-icon='mdi-clipboard-account'
               background-color='white'
+              color='blue darken-2'
               hide-details
               ref='iptEmail'
               v-model='username'
-              :placeholder='$t("auth:fields.emailUser")'
+              :placeholder='isUsernameEmail ? $t(`auth:fields.email`) : $t(`auth:fields.username`)'
+              :type='isUsernameEmail ? `email` : `text`'
+              :autocomplete='isUsernameEmail ? `email` : `username`'
+              light
               )
             v-text-field.mt-2(
               solo
               flat
               prepend-inner-icon='mdi-form-textbox-password'
               background-color='white'
+              color='blue darken-2'
               hide-details
               ref='iptPassword'
               v-model='password'
@@ -54,18 +69,19 @@
               @click:append='() => (hidePassword = !hidePassword)'
               :type='hidePassword ? "password" : "text"'
               :placeholder='$t("auth:fields.password")'
+              autocomplete='current-password'
               @keyup.enter='login'
+              light
             )
             v-btn.mt-2.text-none(
               width='100%'
-              v-if='screen === "login"'
               large
-              color='primary'
+              color='blue darken-2'
               dark
               @click='login'
               :loading='isLoading'
               ) {{ $t('auth:actions.login') }}
-            .text-center.mt-5(v-if='screen === "login"')
+            .text-center.mt-5
               v-btn.text-none(
                 text
                 rounded
@@ -74,156 +90,161 @@
                 href='#forgot'
                 ): .caption {{ $t('auth:forgotPasswordLink') }}
               v-btn.text-none(
-                v-if='screen === "login" && selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
+                v-if='selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
                 color='indigo darken-2'
                 text
                 rounded
                 href='/register'
                 ): .caption {{ $t('auth:switchToRegister.link') }}
-      //- .login-main
-      //- v-container(grid-list-lg, fluid)
-      //-   v-row(no-gutters)
-      //-     v-col(cols='12', xl='4')
-            //- transition(name='fadeUp')
-            //-   v-card.elevation-5(v-show='isShown', light)
-            //-     v-toolbar(color='indigo', flat, dense, dark)
-            //-       v-spacer
-            //-       .subheading(v-if='screen === "tfa"') {{ $t('auth:tfa.subtitle') }}
-            //-       .subheading(v-if='screen === "changePwd"') {{ $t('auth:changePwd.subtitle') }}
-            //-       .subheading(v-else-if='selectedStrategy.key !== "local"') {{ $t('auth:loginUsingStrategy', { strategy: selectedStrategy.title, interpolation: { escapeValue: false } }) }}
-            //-       .subheading(v-else) {{ $t('auth:loginRequired') }}
-            //-       v-spacer
-            //-     v-card-text.text-center
-            //-       h1.display-1.indigo--text.py-2 {{ siteTitle }}
-            //-       template(v-if='screen === "login"')
-            //-         v-text-field.mt-3(
-            //-           solo
-            //-           flat
-            //-           prepend-icon='mdi-clipboard-account'
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptEmail'
-            //-           v-model='username'
-            //-           :placeholder='$t("auth:fields.emailUser")'
-            //-           )
-            //-         v-text-field.mt-2(
-            //-           solo
-            //-           flat
-            //-           prepend-icon='mdi-textbox-password'
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptPassword'
-            //-           v-model='password'
-            //-           :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
-            //-           @click:append='() => (hidePassword = !hidePassword)'
-            //-           :type='hidePassword ? "password" : "text"'
-            //-           :placeholder='$t("auth:fields.password")'
-            //-           @keyup.enter='login'
-            //-         )
-            //-       template(v-else-if='screen === "tfa"')
-            //-         .body-2 Enter the security code generated from your trusted device:
-            //-         v-text-field.centered.mt-2(
-            //-           solo
-            //-           flat
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptTFA'
-            //-           v-model='securityCode'
-            //-           :placeholder='$t("auth:tfa.placeholder")'
-            //-           @keyup.enter='verifySecurityCode'
-            //-         )
-            //-       template(v-else-if='screen === "changePwd"')
-            //-         .body-2 {{$t('auth:changePwd.instructions')}}
-            //-         v-text-field.mt-2(
-            //-           type='password'
-            //-           solo
-            //-           flat
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptNewPassword'
-            //-           v-model='newPassword'
-            //-           :placeholder='$t(`auth:changePwd.newPasswordPlaceholder`)'
-            //-         )
-            //-         v-text-field.mt-2(
-            //-           type='password'
-            //-           solo
-            //-           flat
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           v-model='newPasswordVerify'
-            //-           :placeholder='$t(`auth:changePwd.newPasswordVerifyPlaceholder`)'
-            //-           @keyup.enter='changePassword'
-            //-         )
-            //-       template(v-else-if='screen === "forgot"')
-            //-         .body-2 {{ $t('auth:forgotPasswordSubtitle') }}
-            //-         v-text-field.mt-3(
-            //-           solo
-            //-           flat
-            //-           prepend-icon='mdi-email'
-            //-           background-color='grey lighten-4'
-            //-           hide-details
-            //-           ref='iptEmailForgot'
-            //-           v-model='username'
-            //-           :placeholder='$t("auth:fields.email")'
-            //-           )
-            //-     v-card-actions.pb-4
-            //-       v-spacer
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-if='screen === "login"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='login'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:actions.login') }}
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-else-if='screen === "tfa"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='verifySecurityCode'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:tfa.verifyToken') }}
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-else-if='screen === "changePwd"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='changePassword'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:changePwd.proceed') }}
-            //-       v-btn(
-            //-         width='100%'
-            //-         max-width='250px'
-            //-         v-else-if='screen === "forgot"'
-            //-         large
-            //-         color='primary'
-            //-         dark
-            //-         @click='forgotPasswordSubmit'
-            //-         rounded
-            //-         :loading='isLoading'
-            //-         ) {{ $t('auth:sendResetPassword') }}
-            //-       v-spacer
-            //-     v-card-actions.pb-3(v-if='screen === "login" && selectedStrategy.key === "local"')
-            //-       v-spacer
-            //-       a.caption(@click.stop.prevent='forgotPassword', href='#forgot') {{ $t('auth:forgotPasswordLink') }}
-            //-       v-spacer
-            //-     v-card-actions.pb-3(v-else-if='screen === "forgot"')
-            //-       v-spacer
-            //-       a.caption(@click.stop.prevent='screen = `login`', href='#cancelforgot') {{ $t('auth:forgotPasswordCancel') }}
-            //-       v-spacer
+        //-------------------------------------------------
+        //- FORGOT PASSWORD FORM
+        //-------------------------------------------------
+        template(v-if='screen === `forgot`')
+          .login-subtitle
+            .text-subtitle-1 {{$t('auth:forgotPasswordTitle')}}
+          .login-info {{ $t('auth:forgotPasswordSubtitle') }}
+          .login-form
+            v-text-field(
+              solo
+              flat
+              prepend-inner-icon='mdi-clipboard-account'
+              background-color='white'
+              color='blue darken-2'
+              hide-details
+              ref='iptForgotPwdEmail'
+              v-model='username'
+              :placeholder='$t(`auth:fields.email`)'
+              type='email'
+              autocomplete='email'
+              light
+              )
+            v-btn.mt-2.text-none(
+              width='100%'
+              large
+              color='blue darken-2'
+              dark
+              @click='forgotPasswordSubmit'
+              :loading='isLoading'
+              ) {{ $t('auth:sendResetPassword') }}
+            .text-center.mt-5
+              v-btn.text-none(
+                text
+                rounded
+                color='grey darken-3'
+                @click.stop.prevent='screen = `login`'
+                href='#forgot'
+                ): .caption {{ $t('auth:forgotPasswordCancel') }}
+        //-------------------------------------------------
+        //- CHANGE PASSWORD FORM
+        //-------------------------------------------------
+        template(v-if='screen === `changePwd`')
+          .login-subtitle
+            .text-subtitle-1 {{ $t('auth:changePwd.subtitle') }}
+          .login-form
+            v-text-field.mt-2(
+              type='password'
+              solo
+              flat
+              prepend-inner-icon='mdi-form-textbox-password'
+              background-color='white'
+              color='blue darken-2'
+              hide-details
+              ref='iptNewPassword'
+              v-model='newPassword'
+              :placeholder='$t(`auth:changePwd.newPasswordPlaceholder`)'
+              autocomplete='new-password'
+              light
+              )
+              password-strength(slot='progress', v-model='newPassword')
+            v-text-field.mt-2(
+              type='password'
+              solo
+              flat
+              prepend-inner-icon='mdi-form-textbox-password'
+              background-color='white'
+              color='blue darken-2'
+              hide-details
+              v-model='newPasswordVerify'
+              :placeholder='$t(`auth:changePwd.newPasswordVerifyPlaceholder`)'
+              autocomplete='new-password'
+              @keyup.enter='changePassword'
+              light
+            )
+            v-btn.mt-2.text-none(
+              width='100%'
+              large
+              color='blue darken-2'
+              dark
+              @click='changePassword'
+              :loading='isLoading'
+              ) {{ $t('auth:changePwd.proceed') }}
+
+    //-------------------------------------------------
+    //- TFA FORM
+    //-------------------------------------------------
+    v-dialog(v-model='isTFAShown', max-width='500', persistent)
+      v-card
+        .login-tfa.text-center.pa-5.grey--text.text--darken-3
+          img(src='_assets/svg/icon-pin-pad.svg')
+          .subtitle-2 {{$t('auth:tfaFormTitle')}}
+          v-text-field.login-tfa-field.mt-2(
+            solo
+            flat
+            background-color='white'
+            color='blue darken-2'
+            hide-details
+            ref='iptTFA'
+            v-model='securityCode'
+            :placeholder='$t("auth:tfa.placeholder")'
+            autocomplete='one-time-code'
+            @keyup.enter='verifySecurityCode(false)'
+            light
+          )
+          v-btn.mt-2.text-none(
+            width='100%'
+            large
+            color='blue darken-2'
+            dark
+            @click='verifySecurityCode(false)'
+            :loading='isLoading'
+            ) {{ $t('auth:tfa.verifyToken') }}
+
+    //-------------------------------------------------
+    //- SETUP TFA FORM
+    //-------------------------------------------------
+    v-dialog(v-model='isTFASetupShown', max-width='600', persistent)
+      v-card
+        .login-tfa.text-center.pa-5.grey--text.text--darken-3
+          .subtitle-1.primary--text {{$t('auth:tfaSetupTitle')}}
+          v-divider.my-5
+          .subtitle-2 {{$t('auth:tfaSetupInstrFirst')}}
+          .caption (#[a(href='https://authy.com/', target='_blank', noopener) Authy], #[a(href='https://support.google.com/accounts/answer/1066447', target='_blank', noopener) Google Authenticator], #[a(href='https://www.microsoft.com/en-us/account/authenticator', target='_blank', noopener) Microsoft Authenticator], etc.)
+          .login-tfa-qr.mt-5(v-if='isTFASetupShown', v-html='tfaQRImage')
+          .subtitle-2.mt-5 {{$t('auth:tfaSetupInstrSecond')}}
+          v-text-field.login-tfa-field.mt-2(
+            solo
+            flat
+            background-color='white'
+            color='blue darken-2'
+            hide-details
+            ref='iptTFASetup'
+            v-model='securityCode'
+            :placeholder='$t("auth:tfa.placeholder")'
+            autocomplete='one-time-code'
+            @keyup.enter='verifySecurityCode(true)'
+            light
+          )
+          v-btn.mt-2.text-none(
+            width='100%'
+            large
+            color='blue darken-2'
+            dark
+            @click='verifySecurityCode(true)'
+            :loading='isLoading'
+            ) {{ $t('auth:tfa.verifyToken') }}
 
     loader(v-model='isLoading', :color='loaderColor', :title='loaderTitle', :subtitle='$t(`auth:pleaseWait`)')
-    notify
+    notify(style='padding-top: 64px;')
 </template>
 
 <script>
@@ -246,6 +267,10 @@ export default {
     hideLocal: {
       type: Boolean,
       default: false
+    },
+    changePwdContinuationToken: {
+      type: String,
+      default: null
     }
   },
   data () {
@@ -253,7 +278,7 @@ export default {
       error: false,
       strategies: [],
       selectedStrategyKey: 'unselected',
-      selectedStrategy: { key: 'unselected', strategy: { useForm: false } },
+      selectedStrategy: { key: 'unselected', strategy: { useForm: false, usernameType: 'email' } },
       screen: 'login',
       username: '',
       password: '',
@@ -265,7 +290,12 @@ export default {
       loaderTitle: 'Working...',
       isShown: false,
       newPassword: '',
-      newPasswordVerify: ''
+      newPasswordVerify: '',
+      isTFAShown: false,
+      isTFASetupShown: false,
+      tfaQRImage: '',
+      errorShown: false,
+      errorMessage: ''
     }
   },
   computed: {
@@ -284,6 +314,9 @@ export default {
       } else {
         return this.strategies
       }
+    },
+    isUsernameEmail () {
+      return this.selectedStrategy.strategy.usernameType === `email`
     }
   },
   watch: {
@@ -294,6 +327,9 @@ export default {
     },
     selectedStrategyKey (newValue, oldValue) {
       this.selectedStrategy = _.find(this.strategies, ['key', newValue])
+      if (this.screen === 'changePwd') {
+        return
+      }
       this.screen = 'login'
       if (!this.selectedStrategy.strategy.useForm) {
         this.isLoading = true
@@ -307,35 +343,31 @@ export default {
   },
   mounted () {
     this.isShown = true
-    this.$nextTick(() => {
-      // this.$refs.iptEmail.focus()
-    })
+    if (this.changePwdContinuationToken) {
+      this.screen = 'changePwd'
+      this.continuationToken = this.changePwdContinuationToken
+    }
   },
   methods: {
     /**
      * LOGIN
      */
     async login () {
+      this.errorShown = false
       if (this.username.length < 2) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: this.$t('auth:invalidEmailUsername'),
-          icon: 'alert'
-        })
+        this.errorMessage = this.$t('auth:invalidEmailUsername')
+        this.errorShown = true
         this.$refs.iptEmail.focus()
       } else if (this.password.length < 2) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: this.$t('auth:invalidPassword'),
-          icon: 'alert'
-        })
+        this.errorMessage = this.$t('auth:invalidPassword')
+        this.errorShown = true
         this.$refs.iptPassword.focus()
       } else {
         this.loaderColor = 'grey darken-4'
         this.loaderTitle = this.$t('auth:signingIn')
         this.isLoading = true
         try {
-          let resp = await this.$apollo.mutate({
+          const resp = await this.$apollo.mutate({
             mutation: gql`
               mutation($username: String!, $password: String!, $strategy: String!) {
                 authentication {
@@ -349,7 +381,10 @@ export default {
                     jwt
                     mustChangePwd
                     mustProvideTFA
+                    mustSetupTFA
                     continuationToken
+                    redirect
+                    tfaQRImage
                   }
                 }
               }
@@ -361,36 +396,9 @@ export default {
             }
           })
           if (_.has(resp, 'data.authentication.login')) {
-            let respObj = _.get(resp, 'data.authentication.login', {})
+            const respObj = _.get(resp, 'data.authentication.login', {})
             if (respObj.responseResult.succeeded === true) {
-              this.continuationToken = respObj.continuationToken
-              if (respObj.mustChangePwd === true) {
-                this.screen = 'changePwd'
-                this.$nextTick(() => {
-                  this.$refs.iptNewPassword.focus()
-                })
-                this.isLoading = false
-              } else if (respObj.mustProvideTFA === true) {
-                this.screen = 'tfa'
-                this.securityCode = ''
-                this.$nextTick(() => {
-                  this.$refs.iptTFA.focus()
-                })
-                this.isLoading = false
-              } else {
-                this.loaderColor = 'green darken-1'
-                this.loaderTitle = this.$t('auth:loginSuccess')
-                Cookies.set('jwt', respObj.jwt, { expires: 365 })
-                _.delay(() => {
-                  const loginRedirect = Cookies.get('loginRedirect')
-                  if (loginRedirect) {
-                    Cookies.remove('loginRedirect')
-                    window.location.replace(loginRedirect)
-                  } else {
-                    window.location.replace('/')
-                  }
-                }, 1000)
-              }
+              this.handleLoginResponse(respObj)
             } else {
               throw new Error(respObj.responseResult.message)
             }
@@ -411,50 +419,70 @@ export default {
     /**
      * VERIFY TFA CODE
      */
-    verifySecurityCode () {
+    async verifySecurityCode (setup = false) {
       if (this.securityCode.length !== 6) {
         this.$store.commit('showNotification', {
           style: 'red',
           message: 'Enter a valid security code.',
-          icon: 'warning'
+          icon: 'alert'
         })
-        this.$refs.iptTFA.focus()
+        if (setup) {
+          this.$refs.iptTFASetup.focus()
+        } else {
+          this.$refs.iptTFA.focus()
+        }
       } else {
+        this.loaderColor = 'grey darken-4'
+        this.loaderTitle = this.$t('auth:signingIn')
         this.isLoading = true
-        this.$apollo.mutate({
-          mutation: gql`
-            {
-              authentication {
-                activeStrategies {
-                  key
+        try {
+          const resp = await this.$apollo.mutate({
+            mutation: gql`
+              mutation(
+                $continuationToken: String!
+                $securityCode: String!
+                $setup: Boolean
+                ) {
+                authentication {
+                  loginTFA(
+                    continuationToken: $continuationToken
+                    securityCode: $securityCode
+                    setup: $setup
+                    ) {
+                    responseResult {
+                      succeeded
+                      errorCode
+                      slug
+                      message
+                    }
+                    jwt
+                    mustChangePwd
+                    continuationToken
+                    redirect
+                  }
                 }
               }
+            `,
+            variables: {
+              continuationToken: this.continuationToken,
+              securityCode: this.securityCode,
+              setup
             }
-          `,
-          variables: {
-            continuationToken: this.continuationToken,
-            securityCode: this.securityCode
-          }
-        }).then(resp => {
+          })
           if (_.has(resp, 'data.authentication.loginTFA')) {
             let respObj = _.get(resp, 'data.authentication.loginTFA', {})
             if (respObj.responseResult.succeeded === true) {
-              this.$store.commit('showNotification', {
-                message: 'Login successful!',
-                style: 'success',
-                icon: 'check'
-              })
-              _.delay(() => {
-                window.location.replace('/') // TEMPORARY - USE RETURNURL
-              }, 1000)
-              this.isLoading = false
+              this.handleLoginResponse(respObj)
             } else {
+              if (!setup) {
+                this.isTFAShown = false
+              }
               throw new Error(respObj.responseResult.message)
             }
           } else {
             throw new Error(this.$t('auth:genericError'))
           }
-        }).catch(err => {
+        } catch (err) {
           console.error(err)
           this.$store.commit('showNotification', {
             style: 'red',
@@ -462,7 +490,7 @@ export default {
             icon: 'alert'
           })
           this.isLoading = false
-        })
+        }
       }
     },
     /**
@@ -472,32 +500,51 @@ export default {
       this.loaderColor = 'grey darken-4'
       this.loaderTitle = this.$t('auth:changePwd.loading')
       this.isLoading = true
-      const resp = await this.$apollo.mutate({
-        mutation: gql`
-          {
-            authentication {
-              activeStrategies {
-                key
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $continuationToken: String!
+              $newPassword: String!
+            ) {
+              authentication {
+                loginChangePassword (
+                  continuationToken: $continuationToken
+                  newPassword: $newPassword
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                  jwt
+                  continuationToken
+                  redirect
+                }
               }
             }
+          `,
+          variables: {
+            continuationToken: this.continuationToken,
+            newPassword: this.newPassword
           }
-        `,
-        variables: {
-          continuationToken: this.continuationToken,
-          newPassword: this.newPassword
+        })
+        if (_.has(resp, 'data.authentication.loginChangePassword')) {
+          let respObj = _.get(resp, 'data.authentication.loginChangePassword', {})
+          if (respObj.responseResult.succeeded === true) {
+            this.handleLoginResponse(respObj)
+          } else {
+            throw new Error(respObj.responseResult.message)
+          }
+        } else {
+          throw new Error(this.$t('auth:genericError'))
         }
-      })
-      if (_.get(resp, 'data.authentication.loginChangePassword.responseResult.succeeded', false) === true) {
-        this.loaderColor = 'green darken-1'
-        this.loaderTitle = this.$t('auth:loginSuccess')
-        Cookies.set('jwt', _.get(resp, 'data.authentication.loginChangePassword.jwt', ''), { expires: 365 })
-        _.delay(() => {
-          window.location.replace('/') // TEMPORARY - USE RETURNURL
-        }, 1000)
-      } else {
+      } catch (err) {
+        console.error(err)
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.authentication.loginChangePassword.responseResult.message', false),
+          message: err.message,
           icon: 'alert'
         })
         this.isLoading = false
@@ -509,18 +556,107 @@ export default {
     forgotPassword () {
       this.screen = 'forgot'
       this.$nextTick(() => {
-        this.$refs.iptEmailForgot.focus()
+        this.$refs.iptForgotPwdEmail.focus()
       })
     },
     /**
      * FORGOT PASSWORD SUBMIT
      */
     async forgotPasswordSubmit () {
-      this.$store.commit('showNotification', {
-        style: 'pink',
-        message: 'Coming soon!',
-        icon: 'ferry'
-      })
+      this.loaderColor = 'grey darken-4'
+      this.loaderTitle = this.$t('auth:forgotPasswordLoading')
+      this.isLoading = true
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation (
+              $email: String!
+            ) {
+              authentication {
+                forgotPassword (
+                  email: $email
+                ) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            email: this.username
+          }
+        })
+        if (_.has(resp, 'data.authentication.forgotPassword.responseResult')) {
+          let respObj = _.get(resp, 'data.authentication.forgotPassword.responseResult', {})
+          if (respObj.succeeded === true) {
+            this.$store.commit('showNotification', {
+              style: 'success',
+              message: this.$t('auth:forgotPasswordSuccess'),
+              icon: 'email'
+            })
+            this.screen = 'login'
+          } else {
+            throw new Error(respObj.message)
+          }
+        } else {
+          throw new Error(this.$t('auth:genericError'))
+        }
+      } catch (err) {
+        console.error(err)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: err.message,
+          icon: 'alert'
+        })
+      }
+      this.isLoading = false
+    },
+    handleLoginResponse (respObj) {
+      this.continuationToken = respObj.continuationToken
+      if (respObj.mustChangePwd === true) {
+        this.screen = 'changePwd'
+        this.$nextTick(() => {
+          this.$refs.iptNewPassword.focus()
+        })
+        this.isLoading = false
+      } else if (respObj.mustProvideTFA === true) {
+        this.securityCode = ''
+        this.isTFAShown = true
+        setTimeout(() => {
+          this.$refs.iptTFA.focus()
+        }, 500)
+        this.isLoading = false
+      } else if (respObj.mustSetupTFA === true) {
+        this.securityCode = ''
+        this.isTFASetupShown = true
+        this.tfaQRImage = respObj.tfaQRImage
+        setTimeout(() => {
+          this.$refs.iptTFASetup.focus()
+        }, 500)
+        this.isLoading = false
+      } else {
+        this.loaderColor = 'green darken-1'
+        this.loaderTitle = this.$t('auth:loginSuccess')
+        Cookies.set('jwt', respObj.jwt, { expires: 365 })
+        _.delay(() => {
+          const loginRedirect = Cookies.get('loginRedirect')
+          if (loginRedirect === '/' && respObj.redirect) {
+            Cookies.remove('loginRedirect')
+            window.location.replace(respObj.redirect)
+          } else if (loginRedirect) {
+            Cookies.remove('loginRedirect')
+            window.location.replace(loginRedirect)
+          } else if (respObj.redirect) {
+            window.location.replace(respObj.redirect)
+          } else {
+            window.location.replace('/')
+          }
+        }, 1000)
+      }
     }
   },
   apollo: {
@@ -528,7 +664,7 @@ export default {
       query: gql`
         {
           authentication {
-            activeStrategies {
+            activeStrategies(enabledOnly: true) {
               key
               strategy {
                 key
@@ -536,6 +672,7 @@ export default {
                 color
                 icon
                 useForm
+                usernameType
               }
               displayName
               order
@@ -610,6 +747,16 @@ export default {
       border-bottom: 1px solid rgba(0,0,0,.3);
     }
 
+    &-info {
+      border-top: 1px solid rgba(255,255,255,.85);
+      background-color: rgba(255,255,255,.15);
+      border-bottom: 1px solid rgba(0,0,0,.15);
+      padding: 12px;
+      font-size: 13px;
+      text-align: center;
+      color: mc('grey', '900');
+    }
+
     &-list {
       border-top: 1px solid rgba(255,255,255,.85);
       padding: 12px;
@@ -623,6 +770,24 @@ export default {
     &-main {
       flex: 1 0 100vw;
       height: 100vh;
+    }
+
+    &-tfa {
+      background-color: #EEE;
+      border: 7px solid #FFF;
+
+      &-field input {
+        text-align: center;
+      }
+
+      &-qr {
+        background-color: #FFF;
+        padding: 5px;
+        border-radius: 5px;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+      }
     }
   }
 </style>

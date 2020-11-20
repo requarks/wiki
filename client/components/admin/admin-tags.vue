@@ -153,7 +153,7 @@ export default {
           })
           this.refresh()
         } else {
-          throw new Error(_.get(resp, 'data.pages.deleteTag.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.pages.deleteTag.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -193,7 +193,7 @@ export default {
           })
           this.current.updatedAt = new Date()
         } else {
-          throw new Error(_.get(resp, 'data.pages.updateTag.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.pages.updateTag.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)

@@ -36,6 +36,20 @@ router.get('/healthz', (req, res, next) => {
  * Administration
  */
 router.get(['/a', '/a/*'], (req, res, next) => {
+  if (!WIKI.auth.checkAccess(req.user, [
+    'manage:system',
+    'write:users',
+    'manage:users',
+    'write:groups',
+    'manage:groups',
+    'manage:navigation',
+    'manage:theme',
+    'manage:api'
+  ])) {
+    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+    return res.status(403).render('unauthorized', { action: 'view' })
+  }
+
   _.set(res.locals, 'pageMeta.title', 'Admin')
   res.render('admin')
 })
@@ -93,6 +107,8 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     return res.redirect(`/e/${pageArgs.locale}/${pageArgs.path}`)
   }
 
+  req.i18n.changeLanguage(pageArgs.locale)
+
   // -> Set Editor Lang
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
@@ -131,6 +147,9 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     // -> Get page tags
     await page.$relatedQuery('tags')
     page.tags = _.map(page.tags, 'tag')
+
+    // Handle missing extra field
+    page.extra = page.extra || { css: '', js: '' }
 
     // -> Beautify Script CSS
     if (!_.isEmpty(page.extra.css)) {
@@ -223,6 +242,8 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/h/${pageArgs.locale}/${pageArgs.path}`)
   }
+
+  req.i18n.changeLanguage(pageArgs.locale)
 
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
@@ -373,6 +394,22 @@ router.get(['/t', '/t/*'], (req, res, next) => {
 })
 
 /**
+ * User Avatar
+ */
+router.get('/_userav/:uid', async (req, res, next) => {
+  if (!WIKI.auth.checkAccess(req.user, ['read:pages'])) {
+    return res.sendStatus(403)
+  }
+  const av = await WIKI.models.users.getUserAvatarData(req.params.uid)
+  if (av) {
+    res.set('Content-Type', 'image/jpeg')
+    res.send(av)
+  }
+
+  return res.sendStatus(404)
+})
+
+/**
  * View document / asset
  */
 router.get('/*', async (req, res, next) => {
@@ -455,6 +492,9 @@ router.get('/*', async (req, res, next) => {
           head: WIKI.config.theming.injectHead,
           body: WIKI.config.theming.injectBody
         }
+
+        // Handle missing extra field
+        page.extra = page.extra || { css: '', js: '' }
 
         if (!_.isEmpty(page.extra.css)) {
           injectCode.css = `${injectCode.css}\n${page.extra.css}`

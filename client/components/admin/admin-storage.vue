@@ -92,12 +92,15 @@
               hide-details
               inset
               )
+          v-card-info(color='blue')
+            div
+              div {{target.description}}
+              span.caption: a(:href='target.website') {{target.website}}
+            v-spacer
+            .admin-providerlogo
+              img(:src='target.logo', :alt='target.title')
           v-card-text
             v-form
-              .targetlogo
-                img(:src='target.logo', :alt='target.title')
-              .body-2.pt-3 {{target.description}}
-              .body-2.pt-3.pb-5: a(:href='target.website') {{target.website}}
               i18next.body-2(path='admin:storage.targetState', tag='div', v-if='target.isEnabled')
                 v-chip(color='green', small, dark, label, place='state') {{$t('admin:storage.targetStateActive')}}
               i18next.body-2(path='admin:storage.targetState', tag='div', v-else)

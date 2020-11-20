@@ -13,15 +13,16 @@ module.exports = {
       new GoogleStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL
-      }, async (accessToken, refreshToken, profile, cb) => {
+        callbackURL: conf.callbackURL,
+        passReqToCallback: true
+      }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               ...profile,
               picture: _.get(profile, 'photos[0].value', '')
-            },
-            providerKey: 'google'
+            }
           })
           cb(null, user)
         } catch (err) {
@@ -29,5 +30,8 @@ module.exports = {
         }
       })
     )
+  },
+  logout (conf) {
+    return '/'
   }
 }

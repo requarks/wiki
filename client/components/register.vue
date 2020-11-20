@@ -33,7 +33,7 @@
                   v-text-field.md2.mt-2(
                     solo
                     flat
-                    prepend-icon='mdi-textbox-password'
+                    prepend-icon='mdi-form-textbox-password'
                     :background-color='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-4`'
                     ref='iptPassword'
                     v-model='password'
@@ -49,7 +49,7 @@
                   v-text-field.md2.mt-2(
                     solo
                     flat
-                    prepend-icon='mdi-textbox-password'
+                    prepend-icon='mdi-form-textbox-password'
                     :background-color='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-4`'
                     hide-details
                     ref='iptVerifyPassword'
@@ -93,7 +93,7 @@
 
     loader(v-model='isLoading', :mode='loaderMode', :icon='loaderIcon', :color='loaderColor', :title='loaderTitle', :subtitle='loaderSubtitle')
     nav-footer(color='grey darken-5', dark-color='grey darken-5')
-    notify
+    notify(style='padding-top: 64px;')
 </template>
 
 <script>

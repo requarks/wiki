@@ -122,7 +122,7 @@ module.exports = {
       }
 
       // Check if user / group is in revocation list
-      if (user && !mustRevalidate) {
+      if (user && !user.api && !mustRevalidate) {
         const uRevalidate = WIKI.auth.revocationList.get(`u${_.toString(user.id)}`)
         if (uRevalidate && user.iat < uRevalidate) {
           mustRevalidate = true
@@ -226,8 +226,13 @@ module.exports = {
       return false
     }
 
+    // Skip if no page rule to check
+    if (!page) {
+      return true
+    }
+
     // Check Page Rules
-    if (page && user.groups) {
+    if (user.groups) {
       let checkState = {
         deny: false,
         match: false,
@@ -279,6 +284,29 @@ module.exports = {
     }
 
     return false
+  },
+
+  /**
+   * Check for exclusive permissions (contain any X permission(s) but not any Y permission(s))
+   *
+   * @param {User} user
+   * @param {Array<String>} includePermissions
+   * @param {Array<String>} excludePermissions
+   */
+  checkExclusiveAccess(user, includePermissions = [], excludePermissions = []) {
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+
+    // Check Inclusion Permissions
+    if (_.intersection(userPermissions, includePermissions).length < 1) {
+      return false
+    }
+
+    // Check Exclusion Permissions
+    if (_.intersection(userPermissions, excludePermissions).length > 0) {
+      return false
+    }
+
+    return true
   },
 
   /**

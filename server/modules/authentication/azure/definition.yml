@@ -22,4 +22,8 @@ props:
     title: Client ID
     hint: The client ID of your application in AAD (Azure Active Directory)
     order: 2
-
+  cookieEncryptionKeyString:
+    type: String
+    title: Cookie Encryption Key String
+    hint: Random string with 44-character length.  Setting this enables workaround for Chrome's SameSite cookies.
+    order: 3

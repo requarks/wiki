@@ -20,7 +20,10 @@ type AuthenticationQuery {
   apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
 
   strategies: [AuthenticationStrategy] @auth(requires: ["manage:system"])
-  activeStrategies: [AuthenticationActiveStrategy]
+
+  activeStrategies(
+    enabledOnly: Boolean
+  ): [AuthenticationActiveStrategy]
 }
 
 # -----------------------------------------------
@@ -44,12 +47,17 @@ type AuthenticationMutation {
   loginTFA(
     continuationToken: String!
     securityCode: String!
+    setup: Boolean
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   loginChangePassword(
     continuationToken: String!
     newPassword: String!
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+
+  forgotPassword(
+    email: String!
+  ): DefaultResponse @rateLimit(limit: 3, duration: 60)
 
   register(
     email: String!
@@ -85,6 +93,7 @@ type AuthenticationStrategy {
   description: String
   isAvailable: Boolean
   useForm: Boolean!
+  usernameType: String
   logo: String
   color: String
   website: String
@@ -96,6 +105,7 @@ type AuthenticationActiveStrategy {
   strategy: AuthenticationStrategy!
   displayName: String!
   order: Int!
+  isEnabled: Boolean!
   config: [KeyValuePair] @auth(requires: ["manage:system"])
   selfRegistration: Boolean!
   domainWhitelist: [String]! @auth(requires: ["manage:system"])
@@ -107,7 +117,10 @@ type AuthenticationLoginResponse {
   jwt: String
   mustChangePwd: Boolean
   mustProvideTFA: Boolean
+  mustSetupTFA: Boolean
   continuationToken: String
+  redirect: String
+  tfaQRImage: String
 }
 
 type AuthenticationRegisterResponse {
@@ -121,6 +134,7 @@ input AuthenticationStrategyInput {
   config: [KeyValuePairInput]
   displayName: String!
   order: Int!
+  isEnabled: Boolean!
   selfRegistration: Boolean!
   domainWhitelist: [String]!
   autoEnrollGroups: [Int]!

@@ -4,7 +4,7 @@
 
 First, thank you for considering contributing to Wiki.js! It's people like you that make the open source community such a great community! 😊
 
-We welcome any type of contribution, not only code. You can help with 
+We welcome any type of contribution, not only code. You can help with
 - **QA**: file bug reports, the more details you can give the better (e.g. screenshots with the console open)
 - **Marketing**: writing blog posts, howto's, printing stickers, ...
 - **Community**: presenting the project at meetups, organizing a dedicated meetup for the local community, ...
@@ -47,7 +47,7 @@ You can also reach us at hello@wikijs.opencollective.com.
 ### Contributors
 
 Thank you to all the people who have already contributed to Wiki.js!
-<a href="graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
+<a href="https://github.com/Requarks/wiki/graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
 
 
 ### Backers

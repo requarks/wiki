@@ -138,11 +138,6 @@ groups:
         - 'write:comments'
       path: ''
       locales: []
-telemetry:
-  BUGSNAG_ID: 'bb4b324d0675bcbba10025617fd2cec8'
-  BUGSNAG_REMOTE: 'https://notify.bugsnag.com'
-  GA_ID: 'UA-9094100-7'
-  GA_REMOTE: 'https://www.google-analytics.com/batch'
 reservedPaths:
   - login
   - logout

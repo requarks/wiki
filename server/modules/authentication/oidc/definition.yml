@@ -1,17 +1,56 @@
 key: oidc
-title: Generic OpenID Connect
+title: Generic OpenID Connect / OAuth2
 description: OpenID Connect 1.0 is a simple identity layer on top of the OAuth 2.0 protocol.
 author: requarks.io
 logo: https://static.requarks.io/logo/oidc.svg
 color: blue-grey darken-2
 website: http://openid.net/connect/
+isAvailable: true
 useForm: false
+scopes:
+  - openid
+  - profile
+  - email
 props:
-  clientId: String
-  clientSecret: String
-  authorizationURL: String
-  tokenURL: String
-  issuer: String
-  userInfoUrl: String
-  emailClaim: String
-  usernameClaim: String
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
+  authorizationURL:
+    type: String
+    title: Authorization Endpoint URL
+    hint: Application Authorization Endpoint URL
+    order: 3
+  tokenURL:
+    type: String
+    title: Token Endpoint URL
+    hint: Application Token Endpoint URL
+    order: 4
+  userInfoURL:
+    type: String
+    title: User Info Endpoint URL
+    hint: User Info Endpoint URL
+    order: 5
+  issuer:
+    type: String
+    title: Issuer
+    hint: Issuer URL
+    order: 6
+  emailClaim:
+    type: String
+    title: Email Claim
+    hint: Field containing the email address
+    default: email
+    maxWidth: 500
+    order: 7
+  logoutURL:
+    type: String
+    title: Logout URL
+    hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
+    order: 8

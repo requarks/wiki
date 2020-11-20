@@ -21,7 +21,11 @@ module.exports = {
    */
   async query(q, opts) {
     const results = await WIKI.models.pages.query()
-      .column('id', 'title', 'description', 'path', 'localeCode as locale')
+      .column('pages.id', 'title', 'description', 'path', 'localeCode as locale')
+      .withGraphJoined('tags') // Adding page tags since they can be used to check resource access permissions
+      .modifyGraph('tags', builder => {
+        builder.select('tag')
+      })
       .where(builder => {
         builder.where('isPublished', true)
         if (opts.locale) {

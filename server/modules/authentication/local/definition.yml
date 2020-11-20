@@ -7,4 +7,5 @@ color: primary
 website: https://wiki.js.org
 isAvailable: true
 useForm: true
+usernameType: email
 props: {}

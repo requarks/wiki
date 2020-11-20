@@ -85,18 +85,12 @@
               hide-details
               inset
               )
-          v-card-text.py-2.pl-4
-            .body-2.pt-3 {{currentRenderer.description}}
-            .body-2.pt-1.pb-5: a(href='https://docs.requarks.io/en/rendering', target='_blank') Documentation
-            i18next.body-2(path='admin:auth.strategyState', tag='div', v-if='currentRenderer.isEnabled')
-              v-chip(color='green', small, dark, label, place='state') {{$t('admin:auth.strategyStateActive')}}
-              span(v-if='selectedCore === `local`', place='locked') {{$t('admin:auth.strategyStateLocked')}}
-              span(v-else, place='locked', v-text='')
-            i18next.body-2(path='admin:auth.strategyState', tag='div', v-else)
-              v-chip(color='red', small, dark, label, place='state') {{$t('admin:auth.strategyStateInactive')}}
-          v-divider.mt-3
-          v-card-text.pb-4.pt-2.pl-4
-            .overline.my-5 Rendering Module Configuration
+          v-card-info(color='blue')
+            div
+              div {{currentRenderer.description}}
+              span.caption: a(href='https://docs.requarks.io/en/rendering', target='_blank') Documentation
+          v-card-text.pb-4.pl-4
+            .overline.mb-5 Rendering Module Configuration
             .body-2.ml-3(v-if='!currentRenderer.config || currentRenderer.config.length < 1'): em This rendering module has no configuration options you can modify.
             template(v-else, v-for='(cfg, idx) in currentRenderer.config')
               v-select(

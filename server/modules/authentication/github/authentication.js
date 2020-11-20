@@ -13,7 +13,8 @@ module.exports = {
       clientID: conf.clientId,
       clientSecret: conf.clientSecret,
       callbackURL: conf.callbackURL,
-      scope: ['user:email']
+      scope: ['user:email'],
+      passReqToCallback: true
     }
 
     if (conf.useEnterprise) {
@@ -24,14 +25,14 @@ module.exports = {
     }
 
     passport.use('github',
-      new GitHubStrategy(githubConfig, async (accessToken, refreshToken, profile, cb) => {
+      new GitHubStrategy(githubConfig, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               ...profile,
               picture: _.get(profile, 'photos[0].value', '')
-            },
-            providerKey: 'github'
+            }
           })
           cb(null, user)
         } catch (err) {

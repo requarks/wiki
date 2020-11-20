@@ -22,7 +22,8 @@ module.exports = {
       forceAuthn: conf.forceAuthn,
       providerName: conf.providerName,
       skipRequestCompression: conf.skipRequestCompression,
-      authnRequestBinding: conf.authnRequestBinding
+      authnRequestBinding: conf.authnRequestBinding,
+      passReqToCallback: true
     }
     if (!_.isEmpty(conf.audience)) {
       samlConfig.audience = conf.audience
@@ -37,7 +38,7 @@ module.exports = {
       samlConfig.decryptionPvk = conf.decryptionPvk
     }
     passport.use('saml',
-      new SAMLStrategy(samlConfig, async (profile, cb) => {
+      new SAMLStrategy(samlConfig, async (req, profile, cb) => {
         try {
           const userId = _.get(profile, [conf.mappingUID], null) || _.get(profile, 'nameID', null)
           if (!userId) {
@@ -45,13 +46,13 @@ module.exports = {
           }
 
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               id: userId,
               email: _.get(profile, conf.mappingEmail, ''),
               displayName: _.get(profile, conf.mappingDisplayName, '???'),
               picture: _.get(profile, conf.mappingPicture, '')
-            },
-            providerKey: 'saml'
+            }
           })
           cb(null, user)
         } catch (err) {

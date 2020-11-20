@@ -57,7 +57,7 @@
                 td {{ props.item.id }}
                 td: strong {{ props.item.name }}
                 td {{ props.item.email }}
-                td {{ props.item.providerKey }}
+                td {{ getStrategyName(props.item.providerKey) }}
                 td {{ props.item.createdAt | moment('from') }}
                 td
                   span(v-if='props.item.lastLoginAt') {{ props.item.lastLoginAt | moment('from') }}
@@ -131,6 +131,9 @@ export default {
           icon: 'cached'
         })
       }
+    },
+    getStrategyName(key) {
+      return (_.find(this.strategies, ['key', key]) || {}).displayName || key
     }
   },
   apollo: {

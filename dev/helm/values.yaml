@@ -35,6 +35,11 @@ securityContext: {}
 service:
   type: ClusterIP
   port: 80
+  # Annotations applied for services such as externalDNS or
+  # service type LoadBalancer
+  # type: LoadBalancer
+  # httpsPort: 443
+  # annotations: {}
 
 ingress:
   enabled: false
@@ -75,7 +80,11 @@ postgresql:
   ## Set to false if bringing your own PostgreSQL, and set secret value postgresql-uri.
   ##
   enabled: true
-  ### PostgreSQL User to create.
+  ## PostgreSQL fullname Override
+  ## Default to wiki-postgresql unless fullname override is set for Chart
+  ##
+  fullnameOverride: ""
+  ## PostgreSQL User to create.
   ##
   postgresqlUser: postgres
   ## PostgreSQL Database to create.
@@ -84,6 +93,10 @@ postgresql:
   ## Persistent Volume Storage configuration.
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
   ##
+  replication:
+    ## Enable PostgreSQL replication (primary/secondary)
+    ##
+    enabled: false
   persistence:
     ## Enable PostgreSQL persistence using Persistent Volume Claims.
     ##

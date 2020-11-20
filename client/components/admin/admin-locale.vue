@@ -15,7 +15,7 @@
             span {{$t('common:actions.apply')}}
         v-form.pt-3
           v-layout(row wrap)
-            v-flex(lg6 xs12)
+            v-flex(xl6 lg5 xs12)
               v-card.wiki-form.animated.fadeInUp
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{ $t('admin:locale.settings') }}
@@ -98,7 +98,7 @@
                           v-list-item-subtitle(v-html='data.item.nativeName')
                         v-list-item-action
                           v-checkbox(:input-value='data.attrs.inputValue', color='primary', value)
-            v-flex(lg6 xs12)
+            v-flex(xl6 lg7 xs12)
               v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='teal', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{ $t('admin:locale.downloadTitle') }}

@@ -26,6 +26,12 @@ module.exports = {
       let usr = await WIKI.models.users.query().findById(args.id)
       usr.password = ''
       usr.tfaSecret = ''
+
+      const str = _.get(WIKI.auth.strategies, usr.providerKey)
+      str.strategy = _.find(WIKI.data.authentication, ['key', str.strategyKey])
+      usr.providerName = str.displayName
+      usr.providerIs2FACapable = _.get(str, 'strategy.useForm', false)
+
       return usr
     },
     async profile (obj, args, context, info) {
@@ -37,9 +43,9 @@ module.exports = {
         throw new WIKI.Error.AuthAccountBanned()
       }
 
-      const providerInfo = _.find(WIKI.data.authentication, ['key', usr.providerKey])
+      const providerInfo = _.get(WIKI.auth.strategies, usr.providerKey, {})
 
-      usr.providerName = _.get(providerInfo, 'title', 'Unknown')
+      usr.providerName = providerInfo.displayName || 'Unknown'
       usr.lastLoginAt = usr.lastLoginAt || usr.updatedAt
       usr.password = ''
       usr.providerId = ''
@@ -133,6 +139,28 @@ module.exports = {
 
         return {
           responseResult: graphHelper.generateSuccess('User deactivated successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async enableTFA (obj, args) {
+      try {
+        await WIKI.models.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User 2FA enabled successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async disableTFA (obj, args) {
+      try {
+        await WIKI.models.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
+
+        return {
+          responseResult: graphHelper.generateSuccess('User 2FA disabled successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)

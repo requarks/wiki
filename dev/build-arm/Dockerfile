@@ -1,7 +1,7 @@
 # =========================
 # --- BUILD NPM MODULES ---
 # =========================
-FROM node:12-alpine AS build
+FROM node:14-alpine AS build
 
 RUN apk add yarn g++ make python --no-cache
 
@@ -14,7 +14,7 @@ RUN yarn --production --frozen-lockfile --non-interactive --network-timeout 1000
 # ===============
 # --- Release ---
 # ===============
-FROM node:12-alpine
+FROM node:14-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \

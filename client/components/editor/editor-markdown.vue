@@ -272,21 +272,6 @@ Prism.plugins.NormalizeWhitespace.setDefaults({
 // Inject line numbers for preview scroll sync
 let linesMap = []
 
-const quoteStyles = {
-  Chinese: '””‘’',
-  English: '“”‘’',
-  French: ['«\xA0', '\xA0»', '‹\xA0', '\xA0›'],
-  German: '„“‚‘',
-  Greek: '«»‘’',
-  Japanese: '「」「」',
-  Hungarian: '„”’’',
-  Polish: '„”‚‘',
-  Portuguese: '«»‘’',
-  Russian: '«»„“',
-  Spanish: '«»‘’',
-  Swedish: '””’’'
-}
-
 function initMD(renderers) {
   const rendererSetting = (section, key, _default) => {
     if (renderers && renderers[section] && renderers[section].config[key]) {
@@ -303,8 +288,6 @@ function initMD(renderers) {
     html: rendererSetting('markdownCore', 'allowHTML', true),
     breaks: rendererSetting('markdownCore', 'linebreaks', true),
     linkify: rendererSetting('markdownCore', 'linkify', true),
-    typographer: rendererSetting('markdownCore', 'typographer', true),
-    quotes: _.get(quoteStyles, rendererSetting('markdownCore', 'quotes'), quoteStyles.English),
     typography: true,
     highlight(str, lang) {
       if (lang === 'diagram') {
@@ -531,7 +514,9 @@ export default {
       linesMap = []
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
-      this.previewHTML = DOMPurify.sanitize(this.md.render(newContent))
+      this.previewHTML = DOMPurify.sanitize(this.md.render(newContent), {
+        ADD_TAGS: ['foreignObject']
+      })
       this.$nextTick(() => {
         tabsetHelper.format()
         this.renderMermaidDiagrams()
@@ -681,6 +666,8 @@ export default {
           cm.showHint({
             hint: async (cm, options) => {
               const cur = cm.getCursor()
+              const curLine = cm.getLine(cur.line).substring(0, cur.ch)
+              const queryString = curLine.substring(curLine.lastIndexOf('[')+1,curLine.length-2)
               const token = cm.getTokenAt(cur)
               try {
                 const respRaw = await this.$apollo.query({
@@ -699,7 +686,7 @@ export default {
                     }
                   `,
                   variables: {
-                    query: token.string,
+                    query: queryString,
                     locale: this.locale
                   },
                   fetchPolicy: 'cache-first'
@@ -708,7 +695,7 @@ export default {
                 if (resp && resp.totalHits > 0) {
                   return {
                     list: resp.results.map(r => ({
-                      text: (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
+                      text: '(' + (siteLangs.length > 0 ? `/${r.locale}/${r.path}` : `/${r.path}`) + ')',
                       displayText: siteLangs.length > 0 ? `/${r.locale}/${r.path} - ${r.title}` : `/${r.path} - ${r.title}`
                     })),
                     from: CodeMirror.Pos(cur.line, token.start),

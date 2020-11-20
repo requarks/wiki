@@ -57,11 +57,12 @@ module.exports = {
           const idxBody = {
             properties: {
               suggest: { type: 'completion' },
-              title: { type: 'text', boost: 4.0 },
+              title: { type: 'text', boost: 10.0 },
               description: { type: 'text', boost: 3.0 },
               content: { type: 'text', boost: 1.0 },
               locale: { type: 'keyword' },
-              path: { type: 'text' }
+              path: { type: 'text' },
+              tags: { type: 'text', boost: 8.0 }
             }
           }
           await this.client.indices.create({
@@ -92,26 +93,11 @@ module.exports = {
         index: this.config.indexName,
         body: {
           query: {
-            bool: {
-              filter: [
-                {
-                  bool: {
-                    should: [
-                      {
-                        simple_query_string: {
-                          query: q
-                        }
-                      },
-                      {
-                        query_string: {
-                          query: "*" + q + "*"
-                        }
-                      }
-                    ],
-                    minimum_should_match: 1
-                  }
-                }
-              ]
+            simple_query_string: {
+              query: `*${q}*`,
+              fields: ['title^20', 'description^3', 'tags^8', 'content^1'],
+              default_operator: 'and',
+              analyze_wildcard: true
             }
           },
           from: 0,
@@ -145,14 +131,26 @@ module.exports = {
       WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
     }
   },
+
+  /**
+   * Build tags field
+   * @param id
+   * @returns {Promise<*|*[]>}
+   */
+  async buildTags(id) {
+    const tags = await WIKI.models.pages.query().findById(id).select('*').withGraphJoined('tags')
+    return (tags.tags && tags.tags.length > 0) ? tags.tags.map(function (tag) {
+      return tag.title
+    }) : []
+  },
   /**
    * Build suggest field
    */
   buildSuggest(page) {
-    return _.uniq(_.concat(
+    return _.reject(_.uniq(_.concat(
       page.title.split(' ').map(s => ({
         input: s,
-        weight: 4
+        weight: 10
       })),
       page.description.split(' ').map(s => ({
         input: s,
@@ -162,7 +160,7 @@ module.exports = {
         input: s,
         weight: 1
       }))
-    ))
+    )), ['input', ''])
   },
   /**
    * CREATE
@@ -180,7 +178,8 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.safeContent
+        content: page.safeContent,
+        tags: await this.buildTags(page.id)
       },
       refresh: true
     })
@@ -201,7 +200,8 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.safeContent
+        content: page.safeContent,
+        tags: await this.buildTags(page.id)
       },
       refresh: true
     })
@@ -241,7 +241,8 @@ module.exports = {
         path: page.destinationPath,
         title: page.title,
         description: page.description,
-        content: page.safeContent
+        content: page.safeContent,
+        tags: await this.buildTags(page.id)
       },
       refresh: true
     })
@@ -266,6 +267,7 @@ module.exports = {
         if (doc) {
           const docBytes = Buffer.from(JSON.stringify(doc)).byteLength
 
+          doc['tags'] = await this.buildTags(doc.realId)
           // -> Current batch exceeds size limit, flush
           if (docBytes + COMMA_BYTES + bytes >= MAX_INDEXING_BYTES) {
             await flushBuffer()
@@ -307,6 +309,7 @@ module.exports = {
             doc.safeContent = WIKI.models.pages.cleanHTML(doc.render)
             result.push({
               suggest: this.buildSuggest(doc),
+              tags: doc.tags,
               locale: doc.locale,
               path: doc.path,
               title: doc.title,
@@ -324,8 +327,9 @@ module.exports = {
       bytes = 0
     }
 
+    // Added real id in order to fetch page tags from the query
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render').select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', { realId: 'id' }).select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),

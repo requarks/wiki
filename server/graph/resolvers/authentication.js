@@ -70,7 +70,7 @@ module.exports = {
           }, []), 'key')
         }
       })
-      return strategies
+      return args.enabledOnly ? _.filter(strategies, 'isEnabled') : strategies
     }
   },
   AuthenticationMutation: {
@@ -138,6 +138,19 @@ module.exports = {
       }
     },
     /**
+     * Perform Mandatory Password Change after Login
+     */
+    async forgotPassword (obj, args, context) {
+      try {
+        await WIKI.models.users.loginForgotPassword(args, context)
+        return {
+          responseResult: graphHelper.generateSuccess('Password reset request processed.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
      * Register a new account
      */
     async register (obj, args, context) {
@@ -186,18 +199,12 @@ module.exports = {
      */
     async updateStrategies (obj, args, context) {
       try {
-        // WIKI.config.auth = {
-        //   audience: _.get(args, 'config.audience', WIKI.config.auth.audience),
-        //   tokenExpiration: _.get(args, 'config.tokenExpiration', WIKI.config.auth.tokenExpiration),
-        //   tokenRenewal: _.get(args, 'config.tokenRenewal', WIKI.config.auth.tokenRenewal)
-        // }
-        // await WIKI.configSvc.saveToDb(['auth'])
-
         const previousStrategies = await WIKI.models.authentication.getStrategies()
         for (const str of args.strategies) {
           const newStr = {
             displayName: str.displayName,
             order: str.order,
+            isEnabled: str.isEnabled,
             config: _.reduce(str.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result

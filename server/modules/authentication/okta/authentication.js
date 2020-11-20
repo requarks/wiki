@@ -16,15 +16,16 @@ module.exports = {
         clientSecret: conf.clientSecret,
         idp: conf.idp,
         callbackURL: conf.callbackURL,
-        response_type: 'code'
-      }, async (accessToken, refreshToken, profile, cb) => {
+        response_type: 'code',
+        passReqToCallback: true
+      }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
             profile: {
               ...profile,
               picture: _.get(profile, '_json.profile', '')
-            },
-            providerKey: 'okta'
+            }
           })
           cb(null, user)
         } catch (err) {

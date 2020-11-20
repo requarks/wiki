@@ -258,6 +258,7 @@ module.exports = () => {
         key: 'local',
         config: {},
         selfRegistration: false,
+        isEnabled: true,
         domainWhitelist: {v: []},
         autoEnrollGroups: {v: []},
         order: 0,
@@ -377,7 +378,7 @@ module.exports = () => {
   // ----------------------------------------
 
   app.use(function (req, res, next) {
-    var err = new Error('Not Found')
+    const err = new Error('Not Found')
     err.status = 404
     next(err)
   })
@@ -442,7 +443,7 @@ module.exports = () => {
     WIKI.logger.info('HTTP Server: [ RUNNING ]')
     WIKI.logger.info('🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻🔻')
     WIKI.logger.info('')
-    WIKI.logger.info(`Browse to http://localhost:${WIKI.config.port}/ to complete setup!`)
+    WIKI.logger.info(`Browse to http://YOUR-SERVER-IP:${WIKI.config.port}/ to complete setup!`)
     WIKI.logger.info('')
     WIKI.logger.info('🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺')
   })

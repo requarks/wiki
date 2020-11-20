@@ -49,7 +49,7 @@
           rounded
           single-line
           height='40'
-          prepend-icon='mdi-file-document-box-search-outline'
+          prepend-icon='mdi-text-box-search-outline'
           append-icon='mdi-arrow-right'
           clearable
         )

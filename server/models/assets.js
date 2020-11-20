@@ -185,7 +185,7 @@ module.exports = class Asset extends Model {
   static async getAssetFromStorage(assetPath, res) {
     const localLocations = await WIKI.models.storage.getLocalLocations({
       asset: {
-        path: assetPath,
+        path: assetPath
       }
     })
     for (let location of _.filter(localLocations, location => Boolean(location.path))) {

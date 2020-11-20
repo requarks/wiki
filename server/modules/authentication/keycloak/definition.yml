@@ -8,10 +8,49 @@ website: https://www.keycloak.org/
 useForm: false
 isAvailable: true
 props:
-  host: String
-  realm: String
-  clientId: String
-  clientSecret: String
-  authorizationURL: String
-  userInfoURL: String
-  tokenURL: String
+  host:
+    type: String
+    title: Host
+    hint: e.g. https://your.keycloak-host.com
+    order: 1
+  realm:
+    type: String
+    title: Realm
+    hint: The realm this application belongs to.
+    order: 2
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 3
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 4
+  authorizationURL:
+    type: String
+    title: Authorization Endpoint URL
+    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/auth
+    order: 5
+  tokenURL:
+    type: String
+    title: Token Endpoint URL
+    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/token
+    order: 6
+  userInfoURL:
+    type: String
+    title: User Info Endpoint URL
+    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/userinfo
+    order: 7
+  logoutUpstream:
+    type: Boolean
+    title: Logout from Keycloak on Logout
+    hint: Should the user be redirected to Keycloak logout mechanism upon logout
+    order: 8
+  logoutURL:
+    type: String
+    title: Logout Endpoint URL
+    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/logout
+    order: 9
+
