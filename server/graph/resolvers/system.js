@@ -9,7 +9,7 @@ const moment = require('moment')
 const graphHelper = require('../../helpers/graph')
 const request = require('request-promise')
 const crypto = require('crypto')
-const nanoid = require('nanoid/non-secure/generate')
+const nanoid = require('nanoid/non-secure').customAlphabet('1234567890abcdef', 10)
 
 /* global WIKI */
 
@@ -34,7 +34,14 @@ module.exports = {
         result.push({ key, value })
       }, [])
     },
-    async info() { return {} }
+    async info () { return {} },
+    async extensions () {
+      const exts = Object.values(WIKI.extensions.ext).map(ext => _.pick(ext, ['key', 'title', 'description', 'isInstalled']))
+      for (let ext of exts) {
+        ext.isCompatible = await WIKI.extensions.ext[ext.key].isCompatible()
+      }
+      return exts
+    }
   },
   SystemMutation: {
     async updateFlags (obj, args, context) {
@@ -150,7 +157,7 @@ module.exports = {
                       roles = _.concat(roles, ['write:pages', 'manage:pages', 'read:source', 'read:history', 'write:assets', 'manage:assets'])
                     }
                     return {
-                      id: nanoid('1234567890abcdef', 10),
+                      id: nanoid(),
                       roles: roles,
                       match: r.exact ? 'EXACT' : 'START',
                       deny: r.deny,
@@ -205,6 +212,7 @@ module.exports = {
 
           if (args.groupMode !== `NONE`) {
             await WIKI.auth.reloadGroups()
+            WIKI.events.outbound.emit('reloadGroups')
           }
 
           client.close()

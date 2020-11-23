@@ -1,0 +1,8 @@
+key: htmlDiagram
+title: Diagrams Post-Processor
+description: HTML Processing for diagrams (draw.io)
+author: requarks.io
+icon: mdi-chart-multiline
+enabledDefault: true
+dependsOn: htmlCore
+props: {}

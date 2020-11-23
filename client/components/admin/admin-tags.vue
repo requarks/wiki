@@ -3,12 +3,12 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-tags.svg', alt='Tags', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-tags.svg', alt='Tags', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('tags.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('tags.subtitle')}}
           v-spacer
-          v-btn.animated.fadeInDown(outlined, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown(outlined, color='grey', @click='refresh', icon)
             v-icon mdi-refresh
         v-container.pa-0.mt-3(fluid, grid-list-lg)
           v-layout(row)
@@ -153,7 +153,7 @@ export default {
           })
           this.refresh()
         } else {
-          throw new Error(_.get(resp, 'data.pages.deleteTag.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.pages.deleteTag.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -193,7 +193,7 @@ export default {
           })
           this.current.updatedAt = new Date()
         } else {
-          throw new Error(_.get(resp, 'data.pages.updateTag.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.pages.updateTag.responseResult.message', 'An unexpected error occurred.'))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)

@@ -1,0 +1,98 @@
+# ===============================================
+# COMMENT
+# ===============================================
+
+extend type Query {
+  comments: CommentQuery
+}
+
+extend type Mutation {
+  comments: CommentMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type CommentQuery {
+  providers: [CommentProvider] @auth(requires: ["manage:system"])
+
+  list(
+    locale: String!
+    path: String!
+  ): [CommentPost]! @auth(requires: ["read:comments", "manage:system"])
+
+  single(
+    id: Int!
+  ): CommentPost @auth(requires: ["read:comments", "manage:system"])
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type CommentMutation {
+  updateProviders(
+    providers: [CommentProviderInput]
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  create(
+    pageId: Int!
+    replyTo: Int
+    content: String!
+    guestName: String
+    guestEmail: String
+  ): CommentCreateResponse @auth(requires: ["write:comments", "manage:system"]) @rateLimit(limit: 1, duration: 15)
+
+  update(
+    id: Int!
+    content: String!
+  ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:comments", "manage:system"])
+
+  delete(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:comments", "manage:system"])
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type CommentProvider {
+  isEnabled: Boolean!
+  key: String!
+  title: String!
+  description: String
+  logo: String
+  website: String
+  isAvailable: Boolean
+  config: [KeyValuePair]
+}
+
+input CommentProviderInput {
+  isEnabled: Boolean!
+  key: String!
+  config: [KeyValuePairInput]
+}
+
+type CommentPost {
+  id: Int!
+  content: String! @auth(requires: ["write:comments", "manage:comments", "manage:system"])
+  render: String!
+  authorId: Int!
+  authorName: String!
+  authorEmail: String! @auth(requires: ["manage:system"])
+  authorIP: String! @auth(requires: ["manage:system"])
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+type CommentCreateResponse {
+  responseResult: ResponseStatus
+  id: Int
+}
+
+type CommentUpdateResponse {
+  responseResult: ResponseStatus
+  render: String
+}

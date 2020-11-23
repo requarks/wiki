@@ -1,0 +1,16 @@
+key: commento
+title: Commento
+description: A fast, privacy-focused commenting platform.
+author: requarks.io
+logo: https://static.requarks.io/logo/commento.svg
+website: https://commento.io/
+codeTemplate: true
+isAvailable: true
+props:
+  instanceUrl:
+    type: String
+    title: Instance URL
+    default: 'https://cdn.commento.io'
+    hint: The URL (without a trailing slash) to the Commento instance. Leave the default https://cdn.commento.io if using the cloud-hosted version.
+    order: 1
+

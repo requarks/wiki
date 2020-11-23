@@ -8,7 +8,7 @@ const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
-const SriWebpackPlugin = require('webpack-subresource-integrity')
+const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
 const WebpackBarPlugin = require('webpackbar')
@@ -30,7 +30,7 @@ module.exports = {
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
-    publicPath: '/',
+    publicPath: '/_assets/',
     filename: 'js/[name].js',
     chunkFilename: 'js/[name].js',
     globalObject: 'this',
@@ -162,10 +162,7 @@ module.exports = {
         ]
       },
       {
-        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
-        exclude: [
-          path.join(process.cwd(), 'client')
-        ],
+        test: /\.(woff2|woff|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
         use: [{
           loader: 'file-loader',
           options: {
@@ -173,16 +170,26 @@ module.exports = {
             outputPath: 'fonts/'
           }
         }]
+      },
+      {
+        loader: 'webpack-modernizr-loader',
+        test: /\.modernizrrc\.js$/
       }
     ]
   },
   plugins: [
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
-    new CopyWebpackPlugin([
-      { from: 'client/static' },
-      { from: './node_modules/prismjs/components', to: 'js/prism' }
-    ], {}),
+    new MomentTimezoneDataPlugin({
+      startYear: 2017,
+      endYear: (new Date().getFullYear()) + 5
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'client/static' },
+        { from: './node_modules/prismjs/components', to: 'js/prism' }
+      ]
+    }),
     new HtmlWebpackPlugin({
       template: 'dev/templates/master.pug',
       filename: '../server/views/master.pug',
@@ -205,10 +212,6 @@ module.exports = {
       excludeChunks: ['app', 'legacy']
     }),
     new HtmlWebpackPugPlugin(),
-    new SriWebpackPlugin({
-      hashFuncNames: ['sha256', 'sha512'],
-      enabled: false
-    }),
     new WebpackBarPlugin({
       name: 'Client Assets'
     }),
@@ -251,7 +254,8 @@ module.exports = {
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
       'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),
-      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro')
+      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
+      'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
     },
     extensions: [
       '.js',

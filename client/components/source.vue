@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app(:dark='darkMode').source
+  v-app(:dark='$vuetify.theme.dark').source
     nav-header
     v-content
       v-toolbar(color='primary', dark)
@@ -17,7 +17,7 @@
           v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') {{$t('common:page.returnNormalView')}}
       v-card(tile)
         v-card-text
-          v-card.grey.radius-7(flat, :class='darkMode ? `darken-4` : `lighten-4`')
+          v-card.grey.radius-7(flat, :class='$vuetify.theme.dark ? `darken-4` : `lighten-4`')
             v-card-text
               pre
                 code
@@ -29,8 +29,6 @@
 </template>
 
 <script>
-import { get } from 'vuex-pathify'
-
 export default {
   props: {
     pageId: {
@@ -52,20 +50,25 @@ export default {
     versionDate: {
       type: String,
       default: ''
+    },
+    effectivePermissions: {
+      type: String,
+      default: ''
     }
   },
   data() {
     return {}
-  },
-  computed: {
-    darkMode: get('site/dark')
   },
   created () {
     this.$store.commit('page/SET_ID', this.id)
     this.$store.commit('page/SET_LOCALE', this.locale)
     this.$store.commit('page/SET_PATH', this.path)
 
-    this.$store.commit('page/SET_MODE', 'history')
+    this.$store.commit('page/SET_MODE', 'source')
+
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
   },
   methods: {
     goLive() {

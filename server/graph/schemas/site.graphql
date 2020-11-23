@@ -24,26 +24,37 @@ type SiteQuery {
 
 type SiteMutation {
   updateConfig(
-    host: String!
-    title: String!
-    description: String!
-    robots: [String]!
-    analyticsService: String!
-    analyticsId: String!
-    company: String!
-    contentLicense: String!
-    logoUrl: String!
-    featurePageRatings: Boolean!
-    featurePageComments: Boolean!
-    featurePersonalWikis: Boolean!
-    securityIframe: Boolean!
-    securityReferrerPolicy: Boolean!
-    securityTrustProxy: Boolean!
-    securitySRI: Boolean!
-    securityHSTS: Boolean!
-    securityHSTSDuration: Int!
-    securityCSP: Boolean!
-    securityCSPDirectives: String!
+    host: String
+    title: String
+    description: String
+    robots: [String]
+    analyticsService: String
+    analyticsId: String
+    company: String
+    contentLicense: String
+    logoUrl: String
+    authAutoLogin: Boolean
+    authEnforce2FA: Boolean
+    authHideLocal: Boolean
+    authLoginBgUrl: String
+    authJwtAudience: String
+    authJwtExpiration: String
+    authJwtRenewablePeriod: String
+    featurePageRatings: Boolean
+    featurePageComments: Boolean
+    featurePersonalWikis: Boolean
+    securityOpenRedirect: Boolean
+    securityIframe: Boolean
+    securityReferrerPolicy: Boolean
+    securityTrustProxy: Boolean
+    securitySRI: Boolean
+    securityHSTS: Boolean
+    securityHSTSDuration: Int
+    securityCSP: Boolean
+    securityCSPDirectives: String
+    uploadMaxFileSize: Int
+    uploadMaxFiles: Int
+
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
@@ -61,9 +72,17 @@ type SiteConfig {
   company: String!
   contentLicense: String!
   logoUrl: String!
+  authAutoLogin: Boolean
+  authEnforce2FA: Boolean
+  authHideLocal: Boolean
+  authLoginBgUrl: String
+  authJwtAudience: String
+  authJwtExpiration: String
+  authJwtRenewablePeriod: String
   featurePageRatings: Boolean!
   featurePageComments: Boolean!
   featurePersonalWikis: Boolean!
+  securityOpenRedirect: Boolean!
   securityIframe: Boolean!
   securityReferrerPolicy: Boolean!
   securityTrustProxy: Boolean!
@@ -72,4 +91,6 @@ type SiteConfig {
   securityHSTSDuration: Int!
   securityCSP: Boolean!
   securityCSPDirectives: String!
+  uploadMaxFileSize: Int!
+  uploadMaxFiles: Int!
 }

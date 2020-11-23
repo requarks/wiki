@@ -13,10 +13,14 @@ module.exports = {
         domain: conf.domain,
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL
-      }, async (accessToken, refreshToken, extraParams, profile, cb) => {
+        callbackURL: conf.callbackURL,
+        passReqToCallback: true
+      }, async (req, accessToken, refreshToken, extraParams, profile, cb) => {
         try {
-          const user = await WIKI.models.users.processProfile({ profile, providerKey: 'auth0' })
+          const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
+            profile
+          })
           cb(null, user)
         } catch (err) {
           cb(err, null)

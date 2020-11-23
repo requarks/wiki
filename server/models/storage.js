@@ -152,11 +152,11 @@ module.exports = class Storage extends Model {
           }
 
           // -> Set internal recurring sync job
-          if (targetDef.intervalSchedule && targetDef.intervalSchedule !== `P0D`) {
+          if (targetDef.internalSchedule && targetDef.internalSchedule !== `P0D`) {
             WIKI.scheduler.registerJob({
               name: `sync-storage`,
               immediate: false,
-              schedule: target.intervalSchedule,
+              schedule: target.internalSchedule,
               repeat: true
             }, target.key)
           }
@@ -199,11 +199,28 @@ module.exports = class Storage extends Model {
     }
   }
 
+  static async getLocalLocations({ asset }) {
+    const locations = []
+    const promises = this.targets.map(async (target) => {
+      try {
+        const path = await target.fn.getLocalLocation(asset)
+        locations.push({
+          path,
+          key: target.key
+        })
+      } catch (err) {
+        WIKI.logger.warn(err)
+      }
+    })
+    await Promise.all(promises)
+    return locations
+  }
+
   static async executeAction(targetKey, handler) {
     try {
       const target = _.find(this.targets, ['key', targetKey])
       if (target) {
-        if (_.has(target.fn, handler)) {
+        if (_.hasIn(target.fn, handler)) {
           await target.fn[handler]()
         } else {
           throw new Error('Invalid Handler for Storage Target')

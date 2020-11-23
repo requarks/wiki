@@ -8,7 +8,7 @@
           :size='60'
           color='#FFF'
           )
-        img(v-else-if='mode === `icon`', :src='`/svg/icon-` + icon + `.svg`', :alt='icon')
+        img(v-else-if='mode === `icon`', :src='`/_assets/svg/icon-` + icon + `.svg`', :alt='icon')
         .subtitle-1.white--text {{ title }}
         .caption {{ subtitle }}
 </template>

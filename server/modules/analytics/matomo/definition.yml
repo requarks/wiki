@@ -18,9 +18,3 @@ props:
     hint: Including https:// and optionally the port. Without trailing slash. (e.g. https://example.matomo.cloud)
     default: https://example.matomo.cloud
     order: 2
-  scriptUrl:
-    type: String
-    title: Tracking Script URL
-    hint: The full URL of the Matomo tracking script.
-    default: //cdn.matomo.cloud/EXAMPLE.matomo.cloud/matomo.js
-    order: 3

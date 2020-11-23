@@ -3,12 +3,14 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-cloud-storage.svg', alt='Storage', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('admin:storage.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('admin:storage.subtitle')}}
           v-spacer
-          v-btn.mx-3.animated.fadeInDown.wait-p2s(outlined, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/storage', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.mx-3.animated.fadeInDown.wait-p2s(icon, outlined, color='grey', @click='refresh')
             v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) mdi-check
@@ -90,12 +92,15 @@
               hide-details
               inset
               )
+          v-card-info(color='blue')
+            div
+              div {{target.description}}
+              span.caption: a(:href='target.website') {{target.website}}
+            v-spacer
+            .admin-providerlogo
+              img(:src='target.logo', :alt='target.title')
           v-card-text
             v-form
-              .targetlogo
-                img(:src='target.logo', :alt='target.title')
-              .body-2.pt-3 {{target.description}}
-              .body-2.pt-3.pb-5: a(:href='target.website') {{target.website}}
               i18next.body-2(path='admin:storage.targetState', tag='div', v-if='target.isEnabled')
                 v-chip(color='green', small, dark, label, place='state') {{$t('admin:storage.targetStateActive')}}
               i18next.body-2(path='admin:storage.targetState', tag='div', v-else)
@@ -111,7 +116,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -122,7 +127,7 @@
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
                   color='primary'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   inset
@@ -133,7 +138,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -144,7 +149,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'

@@ -23,7 +23,7 @@
                     solo
                     flat
                     prepend-icon='mdi-email'
-                    background-color='grey lighten-4'
+                    :background-color='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-4`'
                     hide-details
                     ref='iptEmail'
                     v-model='email'
@@ -33,8 +33,8 @@
                   v-text-field.md2.mt-2(
                     solo
                     flat
-                    prepend-icon='mdi-textbox-password'
-                    background-color='grey lighten-4'
+                    prepend-icon='mdi-form-textbox-password'
+                    :background-color='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-4`'
                     ref='iptPassword'
                     v-model='password'
                     :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
@@ -49,8 +49,8 @@
                   v-text-field.md2.mt-2(
                     solo
                     flat
-                    prepend-icon='mdi-textbox-password'
-                    background-color='grey lighten-4'
+                    prepend-icon='mdi-form-textbox-password'
+                    :background-color='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-4`'
                     hide-details
                     ref='iptVerifyPassword'
                     v-model='verifyPassword'
@@ -63,7 +63,7 @@
                     solo
                     flat
                     prepend-icon='mdi-account'
-                    background-color='grey lighten-4'
+                    :background-color='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-4`'
                     ref='iptName'
                     v-model='name'
                     :placeholder='$t("auth:fields.name")'
@@ -85,15 +85,15 @@
                     ) {{ $t('auth:actions.register') }}
                   v-spacer
                 v-divider
-                v-card-actions.py-3.grey.lighten-4
+                v-card-actions.py-3.grey(:class='$vuetify.theme.dark ? `darken-4-l1` : `lighten-4`')
                   v-spacer
                   i18next.caption(path='auth:switchToLogin.text', tag='div')
                     a.caption(href='/login', place='link') {{ $t('auth:switchToLogin.link') }}
                   v-spacer
 
     loader(v-model='isLoading', :mode='loaderMode', :icon='loaderIcon', :color='loaderColor', :title='loaderTitle', :subtitle='loaderSubtitle')
-    nav-footer(color='grey darken-4', dark-color='grey darken-4')
-    notify
+    nav-footer(color='grey darken-5', dark-color='grey darken-5')
+    notify(style='padding-top: 64px;')
 </template>
 
 <script>

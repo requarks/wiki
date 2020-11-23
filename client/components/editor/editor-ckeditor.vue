@@ -11,13 +11,18 @@
         v-spacer
         .caption {{$t('editor:ckeditor.stats', { chars: stats.characters, words: stats.words })}}
     editor-conflict(v-model='isConflict', v-if='isConflict')
+    page-selector(mode='select', v-model='insertLinkDialog', :open-handler='insertLinkHandler', :path='path', :locale='locale')
 </template>
 
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import DecoupledEditor from '@requarks/ckeditor5'
+// import DecoupledEditor from '../../../../wiki-ckeditor5/build/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
+import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
+
+/* global siteLangs */
 
 export default {
   components: {
@@ -37,7 +42,8 @@ export default {
         words: 0
       },
       content: '',
-      isConflict: false
+      isConflict: false,
+      insertLinkDialog: false
     }
   },
   computed: {
@@ -49,12 +55,31 @@ export default {
     activeModal: sync('editor/activeModal')
   },
   methods: {
+    insertLink () {
+      this.insertLinkDialog = true
+    },
+    insertLinkHandler ({ locale, path }) {
+      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
+    }
   },
   async mounted () {
     this.$store.set('editor/editorKey', 'ckeditor')
 
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
+      language: this.locale,
       placeholder: 'Type the page content here',
+      disableNativeSpellChecker: false,
+      // TODO: Mention autocomplete
+      //
+      // mention: {
+      //   feeds: [
+      //     {
+      //       marker: '@',
+      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
+      //       minimumCharacters: 1
+      //     }
+      //   ]
+      // },
       wordCount: {
         onUpdate: stats => {
           this.stats = {
@@ -71,7 +96,7 @@ export default {
     }
 
     this.editor.model.document.on('change:data', _.debounce(evt => {
-      this.$store.set('editor/content', this.editor.getData())
+      this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
     }, 300))
 
     this.$root.$on('editorInsert', opts => {
@@ -86,7 +111,16 @@ export default {
             linkIsDownloadable: true
           })
           break
+        case 'DIAGRAM':
+          this.editor.execute('imageInsert', {
+            source: `data:image/svg+xml;base64,${opts.text}`
+          })
+          break
       }
+    })
+
+    this.$root.$on('editorLinkToPage', opts => {
+      this.insertLink()
     })
 
     // Handle save conflict
@@ -143,11 +177,26 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
   }
 
+  .contents {
+    table {
+      margin: inherit;
+    }
+    pre > code {
+      background-color: unset;
+      color: unset;
+      padding: .15em;
+    }
+  }
+
   .ck.ck-toolbar {
     border: none;
     justify-content: center;
     background-color: mc('grey', '300');
     color: #FFF;
+  }
+
+  .ck.ck-toolbar__items {
+    justify-content: center;
   }
 
   > .ck-editor__editable {

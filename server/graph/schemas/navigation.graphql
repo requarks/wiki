@@ -15,7 +15,8 @@ extend type Mutation {
 # -----------------------------------------------
 
 type NavigationQuery {
-  tree: [NavigationItem]!
+  tree: [NavigationTree]! @auth(requires: ["manage:navigation", "manage:system"])
+  config: NavigationConfig! @auth(requires: ["manage:navigation", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -24,13 +25,26 @@ type NavigationQuery {
 
 type NavigationMutation {
   updateTree(
-    tree: [NavigationItemInput]!
+    tree: [NavigationTreeInput]!
+  ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
+  updateConfig(
+    mode: NavigationMode!
   ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
 }
 
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
+
+type NavigationTree {
+  locale: String!
+  items: [NavigationItem]!
+}
+
+input NavigationTreeInput {
+  locale: String!
+  items: [NavigationItemInput]!
+}
 
 type NavigationItem {
   id: String!
@@ -39,6 +53,8 @@ type NavigationItem {
   icon: String
   targetType: String
   target: String
+  visibilityMode: String
+  visibilityGroups: [Int]
 }
 
 input NavigationItemInput {
@@ -48,4 +64,17 @@ input NavigationItemInput {
   icon: String
   targetType: String
   target: String
+  visibilityMode: String
+  visibilityGroups: [Int]
+}
+
+type NavigationConfig {
+  mode: NavigationMode!
+}
+
+enum NavigationMode {
+  NONE
+  TREE
+  MIXED
+  STATIC
 }

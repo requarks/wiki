@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-card
+  v-card(flat)
     v-card-title.pb-4(:class='$vuetify.theme.dark ? `grey darken-3-d3` : `grey lighten-5`')
       v-text-field(
         outlined
@@ -8,6 +8,8 @@
         v-model='search'
         label='Search Group Users...'
         hide-details
+        dense
+        style='max-width: 450px;'
       )
       v-spacer
       v-btn(color='primary', depressed, @click='searchUserDialog = true', :disabled='group.id === 2')
@@ -65,7 +67,7 @@ export default {
   data() {
     return {
       headers: [
-        { text: 'ID', value: 'id', width: 50 },
+        { text: 'ID', value: 'id', width: 70 },
         { text: 'Name', value: 'name' },
         { text: 'Email', value: 'email' },
         { text: 'Actions', value: 'actions', sortable: false, width: 50 }
@@ -90,7 +92,7 @@ export default {
     }
   },
   methods: {
-    async assignUser(id) {
+    async assignUser({ id, email, name }) {
       try {
         await this.$apollo.mutate({
           mutation: assignUserMutation,

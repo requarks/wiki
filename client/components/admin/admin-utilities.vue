@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/svg/icon-maintenance.svg', alt='Utilities', style='width: 80px;')
+          img(src='/_assets/svg/icon-maintenance.svg', alt='Utilities', style='width: 80px;')
           .admin-header-title
             .headline.primary--text {{$t('admin:utilities.title')}}
             .subtitle-1.grey--text {{$t('admin:utilities.subtitle')}}
@@ -62,12 +62,12 @@ export default {
           i18nKey: 'cache',
           isAvailable: true
         },
-        {
-          key: 'UtilityGraphEndpoint',
-          icon: 'mdi-graphql',
-          i18nKey: 'graphEndpoint',
-          isAvailable: false
-        },
+        // {
+        //   key: 'UtilityGraphEndpoint',
+        //   icon: 'mdi-graphql',
+        //   i18nKey: 'graphEndpoint',
+        //   isAvailable: false
+        // },
         {
           key: 'UtilityImportv1',
           icon: 'mdi-database-import',

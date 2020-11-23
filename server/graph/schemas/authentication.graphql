@@ -19,9 +19,11 @@ type AuthenticationQuery {
 
   apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
 
-  strategies(
-    isEnabled: Boolean
-  ): [AuthenticationStrategy]
+  strategies: [AuthenticationStrategy] @auth(requires: ["manage:system"])
+
+  activeStrategies(
+    enabledOnly: Boolean
+  ): [AuthenticationActiveStrategy]
 }
 
 # -----------------------------------------------
@@ -45,12 +47,17 @@ type AuthenticationMutation {
   loginTFA(
     continuationToken: String!
     securityCode: String!
+    setup: Boolean
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   loginChangePassword(
     continuationToken: String!
     newPassword: String!
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+
+  forgotPassword(
+    email: String!
+  ): DefaultResponse @rateLimit(limit: 3, duration: 60)
 
   register(
     email: String!
@@ -68,7 +75,6 @@ type AuthenticationMutation {
 
   updateStrategies(
     strategies: [AuthenticationStrategyInput]!
-    config: AuthenticationConfigInput
   ): DefaultResponse @auth(requires: ["manage:system"])
 
   regenerateCertificates: DefaultResponse @auth(requires: ["manage:system"])
@@ -81,17 +87,25 @@ type AuthenticationMutation {
 # -----------------------------------------------
 
 type AuthenticationStrategy {
-  isEnabled: Boolean!
   key: String!
-  props: [String]
+  props: [KeyValuePair] @auth(requires: ["manage:system"])
   title: String!
   description: String
   isAvailable: Boolean
   useForm: Boolean!
+  usernameType: String
   logo: String
   color: String
   website: String
   icon: String
+}
+
+type AuthenticationActiveStrategy {
+  key: String!
+  strategy: AuthenticationStrategy!
+  displayName: String!
+  order: Int!
+  isEnabled: Boolean!
   config: [KeyValuePair] @auth(requires: ["manage:system"])
   selfRegistration: Boolean!
   domainWhitelist: [String]! @auth(requires: ["manage:system"])
@@ -103,7 +117,10 @@ type AuthenticationLoginResponse {
   jwt: String
   mustChangePwd: Boolean
   mustProvideTFA: Boolean
+  mustSetupTFA: Boolean
   continuationToken: String
+  redirect: String
+  tfaQRImage: String
 }
 
 type AuthenticationRegisterResponse {
@@ -112,18 +129,15 @@ type AuthenticationRegisterResponse {
 }
 
 input AuthenticationStrategyInput {
-  isEnabled: Boolean!
   key: String!
+  strategyKey: String!
   config: [KeyValuePairInput]
+  displayName: String!
+  order: Int!
+  isEnabled: Boolean!
   selfRegistration: Boolean!
   domainWhitelist: [String]!
   autoEnrollGroups: [Int]!
-}
-
-input AuthenticationConfigInput {
-  audience: String!
-  tokenExpiration: String!
-  tokenRenewal: String!
 }
 
 type AuthenticationApiKey {

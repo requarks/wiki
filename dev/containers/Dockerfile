@@ -1,11 +1,11 @@
 # -- DEV DOCKERFILE --
 # -- DO NOT USE IN PRODUCTION! --
 
-FROM node:12-alpine
+FROM node:14
 LABEL maintainer "requarks.io"
 
-RUN apk update && \
-    apk add bash curl git python make g++ nano openssh gnupg --no-cache && \
+RUN apt-get update && \
+    apt-get install -y bash curl git python make g++ nano openssh-server gnupg && \
     mkdir -p /wiki
 
 WORKDIR /wiki

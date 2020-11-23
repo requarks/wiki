@@ -57,7 +57,8 @@ module.exports = {
           results: _.filter(resp.results, r => {
             return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
               path: r.path,
-              locale: r.locale
+              locale: r.locale,
+              tags: r.tags // Tags are needed since access permissions can be limited by page tags too
             })
           })
         }
@@ -97,8 +98,20 @@ module.exports = {
           if (args.locale) {
             queryBuilder.where('localeCode', args.locale)
           }
+          if (args.creatorId && args.authorId && args.creatorId > 0 && args.authorId > 0) {
+            queryBuilder.where(function () {
+              this.where('creatorId', args.creatorId).orWhere('authorId', args.authorId)
+            })
+          } else {
+            if (args.creatorId && args.creatorId > 0) {
+              queryBuilder.where('creatorId', args.creatorId)
+            }
+            if (args.authorId && args.authorId > 0) {
+              queryBuilder.where('authorId', args.authorId)
+            }
+          }
           if (args.tags && args.tags.length > 0) {
-            queryBuilder.whereIn('tags.tag', args.tags)
+            queryBuilder.whereIn('tags.tag', args.tags.map(t => _.trim(t).toLowerCase()))
           }
           const orderDir = args.orderByDirection === 'DESC' ? 'desc' : 'asc'
           switch (args.orderBy) {
@@ -159,51 +172,90 @@ module.exports = {
      * FETCH TAGS
      */
     async tags (obj, args, context, info) {
-      return WIKI.models.tags.query().orderBy('tag', 'asc')
+      const pages = await WIKI.models.pages.query()
+        .column([
+          'path',
+          { locale: 'localeCode' }
+        ])
+        .withGraphJoined('tags')
+      const allTags = _.filter(pages, r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: r.path,
+          locale: r.locale
+        })
+      }).flatMap(r => r.tags)
+      return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
     },
     /**
      * SEARCH TAGS
      */
     async searchTags (obj, args, context, info) {
-      const results = await WIKI.models.tags.query()
-        .column('tag')
-        .where(builder => {
-          builder.andWhere(builderSub => {
+      const query = _.trim(args.query)
+      const pages = await WIKI.models.pages.query()
+        .column([
+          'path',
+          { locale: 'localeCode' }
+        ])
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag')
+        })
+        .modify(queryBuilder => {
+          queryBuilder.andWhere(builderSub => {
             if (WIKI.config.db.type === 'postgres') {
-              builderSub.where('tag', 'ILIKE', `%${args.query}%`)
+              builderSub.where('tags.tag', 'ILIKE', `%${query}%`)
             } else {
-              builderSub.where('tag', 'LIKE', `%${args.query}%`)
+              builderSub.where('tags.tag', 'LIKE', `%${query}%`)
             }
           })
         })
-        .limit(5)
-      return results.map(r => r.tag)
+      const allTags = _.filter(pages, r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: r.path,
+          locale: r.locale
+        })
+      }).flatMap(r => r.tags).map(t => t.tag)
+      return _.uniq(allTags).slice(0, 5)
     },
     /**
      * FETCH PAGE TREE
      */
     async tree (obj, args, context, info) {
-      let results = []
-      let conds = {
-        localeCode: args.locale
+      let curPage = null
+
+      if (!args.locale) { args.locale = WIKI.config.lang.code }
+
+      if (args.path && !args.parent) {
+        curPage = await WIKI.models.knex('pageTree').first('parent', 'ancestors').where({
+          path: args.path,
+          localeCode: args.locale
+        })
+        if (curPage) {
+          args.parent = curPage.parent || 0
+        } else {
+          return []
+        }
       }
-      if (args.parent) {
-        conds.parent = (args.parent < 1) ? null : args.parent
-      } else if (args.path) {
-        // conds.parent = (args.parent < 1) ? null : args.parent
-      }
-      switch (args.mode) {
-        case 'FOLDERS':
-          conds.isFolder = true
-          results = await WIKI.models.knex('pageTree').where(conds)
-          break
-        case 'PAGES':
-          await WIKI.models.knex('pageTree').where(conds).andWhereNotNull('pageId')
-          break
-        default:
-          results = await WIKI.models.knex('pageTree').where(conds)
-          break
-      }
+
+      const results = await WIKI.models.knex('pageTree').where(builder => {
+        builder.where('localeCode', args.locale)
+        switch (args.mode) {
+          case 'FOLDERS':
+            builder.andWhere('isFolder', true)
+            break
+          case 'PAGES':
+            builder.andWhereNotNull('pageId')
+            break
+        }
+        if (!args.parent || args.parent < 1) {
+          builder.whereNull('parent')
+        } else {
+          builder.where('parent', args.parent)
+          if (args.includeAncestors && curPage && curPage.ancestors.length > 0) {
+            builder.orWhereIn('id', _.isString(curPage.ancestors) ? JSON.parse(curPage.ancestors) : curPage.ancestors)
+          }
+        }
+      }).orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
       return results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
@@ -219,14 +271,31 @@ module.exports = {
      * FETCH PAGE LINKS
      */
     async links (obj, args, context, info) {
-      let results = []
+      let results
 
-      results = await WIKI.models.knex('pages')
-        .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
-        .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
-        .where({
-          'pages.localeCode': args.locale
-        })
+      if (WIKI.config.db.type === 'mysql' || WIKI.config.db.type === 'mariadb' || WIKI.config.db.type === 'sqlite') {
+        results = await WIKI.models.knex('pages')
+          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+          .leftJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
+          .where({
+            'pages.localeCode': args.locale
+          })
+          .unionAll(
+            WIKI.models.knex('pageLinks')
+              .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+              .leftJoin('pages', 'pageLinks.pageId', 'pages.id')
+              .where({
+                'pages.localeCode': args.locale
+              })
+          )
+      } else {
+        results = await WIKI.models.knex('pages')
+          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+          .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
+          .where({
+            'pages.localeCode': args.locale
+          })
+      }
 
       return _.reduce(results, (result, val) => {
         // -> Check if user has access to source and linked page
@@ -388,8 +457,8 @@ module.exports = {
         const affectedRows = await WIKI.models.tags.query()
           .findById(args.id)
           .patch({
-            tag: args.tag,
-            title: args.title
+            tag: _.trim(args.tag).toLowerCase(),
+            title: _.trim(args.title)
           })
         if (affectedRows < 1) {
           throw new Error('This tag does not exist.')
@@ -407,6 +476,7 @@ module.exports = {
     async flushCache(obj, args, context) {
       try {
         await WIKI.models.pages.flushCache()
+        WIKI.events.outbound.emit('flushCache')
         return {
           responseResult: graphHelper.generateSuccess('Pages Cache has been flushed successfully.')
         }
@@ -493,9 +563,25 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * Purge history
+     */
+    async purgeHistory (obj, args, context) {
+      try {
+        await WIKI.models.pageHistory.purge(args.olderThan)
+        return {
+          responseResult: graphHelper.generateSuccess('Page history purged successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   Page: {
+    async tags (obj) {
+      return WIKI.models.pages.relatedQuery('tags').for(obj.id)
+    }
     // comments(pg) {
     //   return pg.$relatedQuery('comments')
     // }

@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app(:dark='darkMode').history
+  v-app(:dark='$vuetify.theme.dark').history
     nav-header
     v-content
       v-toolbar(color='primary', dark)
@@ -15,8 +15,8 @@
             v-chip.my-0.ml-6(
               label
               small
-              :color='darkMode ? `grey darken-2` : `grey lighten-2`'
-              :class='darkMode ? `grey--text text--lighten-2` : `grey--text text--darken-2`'
+              :color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-2`'
+              :class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-2`'
               )
               span Live
             v-timeline(
@@ -92,14 +92,14 @@
               v-else
               label
               small
-              :color='darkMode ? `grey darken-2` : `grey lighten-2`'
-              :class='darkMode ? `grey--text text--lighten-2` : `grey--text text--darken-2`'
+              :color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-2`'
+              :class='$vuetify.theme.dark ? `grey--text text--lighten-2` : `grey--text text--darken-2`'
               ) End of history trail
 
           v-flex(xs12, md8)
             v-card.radius-7(:class='$vuetify.breakpoint.mdAndUp ? `mt-8` : ``')
               v-card-text
-                v-card.grey.radius-7(flat, :class='darkMode ? `darken-2` : `lighten-4`')
+                v-card.grey.radius-7(flat, :class='$vuetify.theme.dark ? `darken-2` : `lighten-4`')
                   v-row(no-gutters, align='center')
                     v-col
                       v-card-text
@@ -132,7 +132,6 @@
 <script>
 import * as Diff2Html from 'diff2html'
 import { createPatch } from 'diff'
-import { get } from 'vuex-pathify'
 import _ from 'lodash'
 import gql from 'graphql-tag'
 
@@ -186,6 +185,10 @@ export default {
     liveContent: {
       type: String,
       default: ''
+    },
+    effectivePermissions: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -224,7 +227,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     fullTrail () {
       const liveTrailItem = {
         versionId: 0,
@@ -318,6 +320,10 @@ export default {
     })
 
     this.target = this.cache[0]
+
+    if (this.effectivePermissions) {
+      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
   },
   methods: {
     async loadVersion (versionId) {
@@ -412,7 +418,7 @@ export default {
             window.location.assign(`/${this.locale}/${this.path}`)
           }, 1000)
         } else {
-          throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occured'))
+          throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occurred'))
         }
       } catch (err) {
         this.$store.commit('showNotification', {
@@ -501,13 +507,13 @@ export default {
     trailBgColor (actionType) {
       switch (actionType) {
         case 'move':
-          return this.darkMode ? 'purple' : 'purple lighten-5'
+          return this.$vuetify.theme.dark ? 'purple' : 'purple lighten-5'
         case 'initial':
-          return this.darkMode ? 'teal darken-3' : 'teal lighten-5'
+          return this.$vuetify.theme.dark ? 'teal darken-3' : 'teal lighten-5'
         case 'live':
-          return this.darkMode ? 'orange darken-3' : 'orange lighten-5'
+          return this.$vuetify.theme.dark ? 'orange darken-3' : 'orange lighten-5'
         default:
-          return this.darkMode ? 'grey darken-3' : 'grey lighten-4'
+          return this.$vuetify.theme.dark ? 'grey darken-3' : 'grey lighten-4'
       }
     }
   },

@@ -19,6 +19,7 @@ module.exports = async (pageId) => {
       let currentPath = ''
       let depth = 0
       let parentId = null
+      let ancestors = []
       for (const part of pagePaths) {
         depth++
         const isFolder = (depth < pagePaths.length)
@@ -39,7 +40,8 @@ module.exports = async (pageId) => {
             isPrivate: !isFolder && page.isPrivate,
             privateNS: !isFolder ? page.privateNS : null,
             parent: parentId,
-            pageId: isFolder ? null : page.id
+            pageId: isFolder ? null : page.id,
+            ancestors: JSON.stringify(ancestors)
           })
           parentId = pik
         } else if (isFolder && !found.isFolder) {
@@ -48,6 +50,7 @@ module.exports = async (pageId) => {
         } else {
           parentId = found.id
         }
+        ancestors.push(parentId)
       }
     }
 

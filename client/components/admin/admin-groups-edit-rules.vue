@@ -1,7 +1,7 @@
 <template lang="pug">
-  v-card
+  v-card(flat)
     v-card-text(v-if='group.id === 1')
-      v-alert.radius-7(
+      v-alert.radius-7.mb-0(
         :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
         color='orange darken-2'
         outlined
@@ -118,6 +118,8 @@
               :items='locales'
               v-model='rule.locales'
               placeholder='Any Locale'
+              item-value='code'
+              item-text='name'
               multiple
               hide-details
               height='48px'
@@ -126,7 +128,7 @@
               style='flex: 0 1 150px;'
               )
               template(slot='selection', slot-scope='{ item, index }')
-                v-chip.white--text.ml-0(v-if='rule.locales.length === 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value.toUpperCase() }}
+                v-chip.white--text.ml-0(v-if='rule.locales.length === 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.code.toUpperCase() }}
                 v-chip.white--text.ml-0(v-else-if='index === 0', small, label, :color='rule.deny ? `red` : `green`').caption {{ rule.locales.length }} locales
               v-list-item(slot='prepend-item', @click='rule.locales = []')
                 v-list-item-action(style='min-width: 30px;')
@@ -149,8 +151,8 @@
                   )
                 v-icon.mr-2(:color='rule.deny ? `red` : `green`') mdi-web
                 v-list-item-content
-                  v-list-item-title.body-2 {{props.item.text}}
-                v-chip.mr-2.grey--text(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value.toUpperCase()}}
+                  v-list-item-title.body-2 {{props.item.name}}
+                v-chip.mr-2.grey--text(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.code.toUpperCase()}}
 
             //- Path
             v-text-field(
@@ -195,7 +197,11 @@
 
 <script>
 import _ from 'lodash'
-import nanoid from 'nanoid/non-secure/generate'
+import { customAlphabet } from 'nanoid/non-secure'
+
+/* global siteLangs */
+
+const nanoid = customAlphabet('1234567890abcdef', 10)
 
 export default {
   props: {
@@ -207,10 +213,10 @@ export default {
   data() {
     return {
       roles: [
-        { text: 'Read Pages', value: 'read:pages', icon: 'mdi-file-document-box-search-outline' },
-        { text: 'Create Pages', value: 'write:pages', icon: 'mdi-file-document-box-plus-outline' },
+        { text: 'Read Pages', value: 'read:pages', icon: 'mdi-file-eye-outline' },
+        { text: 'Create Pages', value: 'write:pages', icon: 'mdi-file-plus-outline' },
         { text: 'Edit + Move Pages', value: 'manage:pages', icon: 'mdi-file-document-edit-outline' },
-        { text: 'Delete Pages', value: 'delete:pages', icon: 'mdi-file-document-box-remove-outline' },
+        { text: 'Delete Pages', value: 'delete:pages', icon: 'mdi-file-remove-outline' },
         { text: 'View Pages Source', value: 'read:source', icon: 'mdi-code-tags' },
         { text: 'View Pages History', value: 'read:history', icon: 'mdi-history' },
         { text: 'Read / Use Assets', value: 'read:assets', icon: 'mdi-image-search-outline' },
@@ -226,9 +232,6 @@ export default {
         { text: 'Path Ends With...', value: 'END', icon: '.../' },
         { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
         { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
-      ],
-      locales: [
-        { text: 'English', value: 'en' }
       ]
     }
   },
@@ -236,12 +239,13 @@ export default {
     group: {
       get() { return this.value },
       set(val) { this.$set('input', val) }
-    }
+    },
+    locales() { return siteLangs }
   },
   methods: {
     addRule(group) {
       this.group.pageRules.push({
-        id: nanoid('1234567890abcdef', 10),
+        id: nanoid(),
         path: '',
         roles: [],
         match: 'START',

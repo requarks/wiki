@@ -3,11 +3,13 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-male-user.svg', :alt='$t(`admin:users.edit`)', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-male-user.svg', :alt='$t(`admin:users.edit`)', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft {{$t('admin:users.edit')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{user.name}}
           v-spacer
+          i18next.pr-4.caption.grey--text.animated.fadeInDown(path='admin:users.id', tag='div')
+            strong(place='id') {{user.id}}
           template(v-if='user.isActive')
             status-indicator.mr-3(positive, pulse)
             .caption.green--text {{$t('admin:users.active')}}
@@ -21,14 +23,11 @@
             status-indicator.mr-3.ml-4(intermediary, pulse)
             .caption.deep-orange--text {{$t('admin:users.unverified')}}
           v-spacer
-          i18next.caption.grey--text.animated.fadeInRight.wait-p5s(path='admin:users.id', tag='div')
-            strong(place='id') {{user.id}}
-          v-divider.animated.fadeInRight.wait-p4s.ml-3(vertical)
-          v-btn.ml-3.animated.fadeInDown.wait-p3s(color='grey', large, outlined, to='/users')
+          v-btn.ml-3.animated.fadeInDown.wait-p3s(color='grey', icon, outlined, to='/users')
             v-icon mdi-arrow-left
           v-menu(offset-y, origin='top right')
             template(v-slot:activator='{ on }')
-              v-btn.ml-3.animated.fadeInDown.wait-p2s(color='indigo', v-on='on', large, depressed, dark)
+              v-btn.ml-3.animated.fadeInDown.wait-p2s(color='black', v-on='on', depressed, dark)
                 span Actions
                 v-icon(right) mdi-chevron-down
             v-list(dense, nav)
@@ -44,7 +43,7 @@
                 v-list-item-icon
                   v-icon(color='blue') mdi-account-check
                 v-list-item-title Set as Verified
-              v-list-item(@click='deleteUserDialog = true', :disabled='user.id == currentUserId || user.isSystem')
+              v-list-item(@click='deleteUserConfirm', :disabled='user.id == currentUserId || user.isSystem')
                 v-list-item-icon
                   v-icon(color='red') mdi-trash-can-outline
                 v-list-item-title Delete
@@ -126,14 +125,12 @@
                 v-icon mdi-domain
               v-list-item-content
                 v-list-item-title {{$t('admin:users.authProvider')}}
-                v-list-item-subtitle {{ user.providerKey }}
-              //- v-list-item-action
-              //-   v-img(src='https://static.requarks.io/logo/wikijs.svg', alt='', contain, max-height='32', position='center right')
+                v-list-item-subtitle {{ user.providerName }} #[em.caption ({{ user.providerKey }})]
             template(v-if='user.providerKey === `local`')
               v-divider
               v-list-item
                 v-list-item-avatar(size='32')
-                  v-icon mdi-textbox-password
+                  v-icon mdi-form-textbox-password
                 v-list-item-content
                   v-list-item-title {{$t('admin:users.password')}}
                   v-list-item-subtitle &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
@@ -148,7 +145,7 @@
                       v-tooltip(top)
                         template(v-slot:activator='{ on: tooltip }')
                           v-btn(icon, color='grey', x-small, v-on='{ ...menu, ...tooltip }', @click='focusField(`iptNewPassword`)')
-                            v-icon mdi-cached
+                            v-icon mdi-pencil
                         span {{$t('admin:users.changePassword')}}
                     v-card
                       v-text-field(
@@ -169,17 +166,19 @@
                       v-btn(icon, color='grey', x-small, v-on='on', disabled)
                         v-icon mdi-email
                     span Send Password Reset Email
+            template(v-if='user.providerIs2FACapable')
               v-divider
               v-list-item
                 v-list-item-avatar(size='32')
                   v-icon mdi-two-factor-authentication
                 v-list-item-content
                   v-list-item-title {{$t('admin:users.tfa')}}
-                  v-list-item-subtitle.red--text Inactive
+                  v-list-item-subtitle.green--text(v-if='user.tfaIsActive') Active
+                  v-list-item-subtitle.red--text(v-else) Inactive
                 v-list-item-action
                   v-tooltip(top)
                     template(v-slot:activator='{ on }')
-                      v-btn(icon, color='grey', x-small, v-on='on', disabled)
+                      v-btn(icon, color='grey', x-small, v-on='on', @click='toggle2FA')
                         v-icon mdi-power
                     span {{$t('admin:users.toggle2FA')}}
             template(v-if='user.providerId')
@@ -222,8 +221,9 @@
               hide-details
               @keydown.esc='editPop.assignGroup = false'
               style='max-width: 300px;'
+              dense
             )
-            v-btn.ml-2.px-4(depressed, color='primary', height='48', @click='assignGroup', :disabled='newGroup === 0')
+            v-btn.ml-2.px-4(depressed, color='primary', @click='assignGroup', :disabled='newGroup === 0')
               v-icon(left) mdi-clipboard-account-outline
               span {{$t('admin:users.groupAssign')}}
           v-system-bar(window, :color='$vuetify.theme.dark ? `grey darken-4-l3` : `grey lighten-3`')
@@ -267,7 +267,7 @@
             v-divider
             v-list-item
               v-list-item-avatar(size='32')
-                v-icon mdi-account-badge-horizontal-outline
+                v-icon mdi-briefcase
               v-list-item-content
                 v-list-item-title {{$t('admin:users.jobTitle')}}
                 v-list-item-subtitle {{ user.jobTitle }}
@@ -324,8 +324,21 @@
                       @keydown.enter='editPop.timezone = false'
                       @keydown.esc='editPop.timezone = false'
                     )
+
         v-card.mt-3.animated.fadeInUp.wait-p4s
-          v-toolbar(color='primary', dense, dark, flat)
+          v-toolbar(color='teal', dark, dense, flat)
+            v-toolbar-title
+              .subtitle-1 {{$t('profile:activity.title')}}
+          v-card-text.grey--text.text--darken-2
+            .caption.grey--text {{$t('profile:activity.joinedOn')}}
+            .body-2: strong {{ user.createdAt | moment('LLLL') }}
+            .caption.grey--text.mt-3 {{$t('profile:activity.lastUpdatedOn')}}
+            .body-2: strong {{ user.updatedAt | moment('LLLL') }}
+            .caption.grey--text.mt-3 {{$t('profile:activity.lastLoginOn')}}
+            .body-2: strong {{ user.lastLoginAt | moment('LLLL') }}
+
+        v-card.mt-3.animated.fadeInUp.wait-p6s
+          v-toolbar(color='teal', dense, dark, flat)
             v-icon.mr-2 mdi-file-document-box-multiple-outline
             span Content
           v-card-text
@@ -337,30 +350,51 @@
         v-card-text.pt-5
           i18next(path='admin:users.deleteConfirmText', tag='span')
             strong(place='username') {{ user.email }}
-          .caption.mt-3 {{$t('admin:users.deleteConfirmForeignNotice')}}
-        v-card-actions
+          .mt-3 {{$t('admin:users.deleteConfirmReplaceWarn')}}
+          v-divider.my-3
+          .d-flex.align-center.mt-3
+            v-btn.text-none(color='primary', depressed, @click='deleteSearchUserDialog = true')
+              v-icon(left) mdi-clipboard-account
+              | Select User...
+            .caption.pl-3
+              strong ID {{deleteReplaceUser.id}}
+              .caption {{deleteReplaceUser.name}}
+              em {{deleteReplaceUser.email}}
+        v-card-chin
           v-spacer
           v-btn(text, @click='deleteUserDialog = false') {{$t('common:actions.cancel')}}
           v-btn(color='red', dark, @click='deleteUser') {{$t('common:actions.delete')}}
+
+        user-search(v-model='deleteSearchUserDialog', @select='assignDeleteUser')
 
 </template>
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
-
 import { StatusIndicator } from 'vue-status-indicator'
 
-import userQuery from 'gql/admin/users/users-query-single.gql'
+import UserSearch from '../common/user-search.vue'
+
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 export default {
-  components: {
-    StatusIndicator
+  i18nOptions: {
+    namespaces: ['admin', 'profile']
   },
-  data() {
+  components: {
+    StatusIndicator,
+    UserSearch
+  },
+  data () {
     return {
       deleteUserDialog: false,
+      deleteSearchUserDialog: false,
+      deleteReplaceUser: {
+        id: 1,
+        name: '',
+        email: ''
+      },
       editPop: {
         email: false,
         name: false,
@@ -675,7 +709,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -715,7 +749,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -724,13 +758,21 @@ export default {
     /**
      * Delete a user
      */
+    deleteUserConfirm () {
+      this.deleteUserDialog = true
+      this.deleteReplaceUser = {
+        id: this.currentUserId,
+        name: this.$store.get('user/name'),
+        email: this.$store.get('user/email')
+      }
+    },
     async deleteUser () {
       this.$store.commit(`loadingStart`, 'admin-users-delete')
       const resp = await this.$apollo.mutate({
         mutation: gql`
-          mutation ($id: Int!) {
+          mutation ($id: Int!, $replaceId: Int!) {
             users {
-              delete(id: $id) {
+              delete(id: $id, replaceId: $replaceId) {
                 responseResult {
                   succeeded
                   errorCode
@@ -742,7 +784,8 @@ export default {
           }
         `,
         variables: {
-          id: this.user.id
+          id: this.user.id,
+          replaceId: this.deleteReplaceUser.id
         }
       })
       if (_.get(resp, 'data.users.delete.responseResult.succeeded', false)) {
@@ -755,12 +798,29 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.delete.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.delete.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
       this.deleteUserDialog = false
       this.$store.commit(`loadingStop`, 'admin-users-delete')
+    },
+    assignDeleteUser (selUsr) {
+      if (selUsr.id === this.user.id) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'You cannot select the account you\'re about to delete!',
+          icon: 'warning'
+        })
+      } else if (selUsr.id === 2) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'You cannot use the guest account for this operation.',
+          icon: 'warning'
+        })
+      } else {
+        this.deleteReplaceUser = selUsr
+      }
     },
     /**
      * Update a user
@@ -804,7 +864,7 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.update.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.update.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
@@ -875,16 +935,120 @@ export default {
       } else {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occured.'),
+          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occurred.'),
           icon: 'warning'
         })
       }
       this.$store.commit(`loadingStop`, 'admin-users-verify')
+    },
+    /**
+     * Toggle 2FA State
+     */
+    async toggle2FA () {
+      this.$store.commit(`loadingStart`, 'admin-users-toggle2fa')
+      if (this.user.tfaIsActive) {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($id: Int!) {
+              users {
+                disableTFA(id: $id) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.user.id
+          }
+        })
+        if (_.get(resp, 'data.users.disableTFA.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('admin:users.userTFADisableSuccess'),
+            icon: 'check'
+          })
+          this.user.tfaIsActive = false
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.users.disableTFA.responseResult.message', 'An unexpected error occurred.'),
+            icon: 'warning'
+          })
+        }
+      } else {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($id: Int!) {
+              users {
+                enableTFA(id: $id) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    slug
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.user.id
+          }
+        })
+        if (_.get(resp, 'data.users.enableTFA.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: this.$t('admin:users.userTFAEnableSuccess'),
+            icon: 'check'
+          })
+          this.user.tfaIsActive = true
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.users.enableTFA.responseResult.message', 'An unexpected error occurred.'),
+            icon: 'warning'
+          })
+        }
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-toggle2fa')
     }
   },
   apollo: {
     user: {
-      query: userQuery,
+      query: gql`
+        query ($id: Int!) {
+          users {
+            single(id: $id) {
+              id
+              name
+              email
+              providerKey
+              providerName
+              providerId
+              providerIs2FACapable
+              location
+              jobTitle
+              timezone
+              isSystem
+              isActive
+              isVerified
+              createdAt
+              updatedAt
+              lastLoginAt
+              tfaIsActive
+              groups {
+                id
+                name
+              }
+            }
+          }
+        }
+      `,
       variables() {
         return {
           id: _.toSafeInteger(this.$route.params.id)

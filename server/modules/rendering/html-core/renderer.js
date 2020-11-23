@@ -4,6 +4,8 @@ const uslug = require('uslug')
 const pageHelper = require('../../../helpers/page')
 const URL = require('url').URL
 
+const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
+
 /* global WIKI */
 
 module.exports = {
@@ -22,7 +24,7 @@ module.exports = {
 
     for (let child of _.reject(this.children, ['step', 'post'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
-      renderer.init($, child.config)
+      await renderer.init($, child.config)
     }
 
     // --------------------------------
@@ -115,6 +117,7 @@ module.exports = {
         $(elm).addClass(`is-external-link`)
         if (this.config.openExternalLinkNewTab) {
           $(elm).attr('target', '_blank')
+          $(elm).attr('rel', this.config.relAttributeExternalLink)
         }
       }
 
@@ -229,11 +232,40 @@ module.exports = {
       headers.push(headerSlug)
     })
 
-    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
+    // --------------------------------
+    // Wrap root text nodes
+    // --------------------------------
+
+    $('body').contents().toArray().forEach(item => {
+      if (item.type === 'text' && item.parent.name === 'body') {
+        $(item).wrap('<div></div>')
+      }
+    })
+
+    // --------------------------------
+    // Escape mustache expresions
+    // --------------------------------
+
+    function iterateMustacheNode (node) {
+      const list = $(node).contents().toArray()
+      list.forEach(item => {
+        if (item.type === 'text') {
+          const rawText = $(item).text()
+          if (mustacheRegExp.test(rawText)) {
+            $(item).parent().attr('v-pre', true)
+          }
+        } else {
+          iterateMustacheNode(item)
+        }
+      })
+    }
+    iterateMustacheNode($.root())
 
     // --------------------------------
     // STEP: POST
     // --------------------------------
+
+    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
 
     for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)

@@ -17,19 +17,30 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         issuer: conf.issuer,
-        callbackURL: conf.callbackURL
-      }, (iss, sub, profile, jwtClaims, accessToken, refreshToken, params, cb) => {
-        WIKI.models.users.processProfile({
-          id: jwtClaims.sub,
-          provider: 'oidc',
-          email: _.get(jwtClaims, conf.emailClaim),
-          name: _.get(jwtClaims, conf.usernameClaim)
-        }).then((user) => {
-          return cb(null, user) || true
-        }).catch((err) => {
-          return cb(err, null) || true
-        })
+        userInfoURL: conf.userInfoURL,
+        callbackURL: conf.callbackURL,
+        passReqToCallback: true
+      }, async (req, iss, sub, profile, cb) => {
+        try {
+          const user = await WIKI.models.users.processProfile({
+            providerKey: req.params.strategy,
+            profile: {
+              ...profile,
+              email: _.get(profile, '_json.' + conf.emailClaim)
+            }
+          })
+          cb(null, user)
+        } catch (err) {
+          cb(err, null)
+        }
       })
     )
+  },
+  logout (conf) {
+    if (!conf.logoutURL) {
+      return '/'
+    } else {
+      return conf.logoutURL
+    }
   }
 }

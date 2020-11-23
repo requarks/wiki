@@ -5,7 +5,7 @@
         v-spacer
         .overline.grey--text {{$t('admin:adminArea')}}
         v-spacer
-    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
+    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
       vue-scroll(:ops='scrollStyle')
         v-list.radius-0(dense, nav)
           v-list-item(to='/dashboard', color='primary')
@@ -27,13 +27,13 @@
               v-list-item-avatar(size='24', tile): v-icon mdi-file-document-outline
               v-list-item-title {{ $t('admin:pages.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.pagesTotal }}
             v-list-item(to='/tags', v-if='hasPermission([`manage:system`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-tag-multiple
               v-list-item-title {{ $t('admin:tags.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-5`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.tagsTotal }}
             v-list-item(to='/theme', color='primary', v-if='hasPermission([`manage:system`, `manage:theme`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-palette-outline
@@ -45,13 +45,13 @@
               v-list-item-avatar(size='24', tile): v-icon mdi-account-group
               v-list-item-title {{ $t('admin:groups.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.groupsTotal }}
             v-list-item(to='/users', color='primary', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-account-box
               v-list-item-title {{ $t('admin:users.title') }}
               v-list-item-action(style='min-width:auto;')
-                v-chip(x-small, :color='darkMode ? `grey darken-3-d4` : `grey lighten-4`')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.usersTotal }}
           template(v-if='hasPermission(`manage:system`)')
             v-divider.my-2
@@ -62,12 +62,15 @@
             v-list-item(to='/auth', color='primary')
               v-list-item-avatar(size='24', tile): v-icon mdi-lock-outline
               v-list-item-title {{ $t('admin:auth.title') }}
-            v-list-item(to='/comments', disabled)
-              v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-comment-text-outline
+            v-list-item(to='/comments')
+              v-list-item-avatar(size='24', tile): v-icon mdi-comment-text-outline
               v-list-item-title {{ $t('admin:comments.title') }}
             v-list-item(to='/editor', disabled)
               v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-playlist-edit
               v-list-item-title {{ $t('admin:editor.title') }}
+            v-list-item(to='/extensions')
+              v-list-item-avatar(size='24', tile): v-icon mdi-chip
+              v-list-item-title {{ $t('admin:extensions.title') }}
             v-list-item(to='/logging', disabled)
               v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-script-text-outline
               v-list-item-title {{ $t('admin:logging.title') }}
@@ -89,6 +92,9 @@
             v-list-item(to='/mail', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-email-multiple-outline
               v-list-item-title {{ $t('admin:mail.title') }}
+            v-list-item(to='/security', v-if='hasPermission(`manage:system`)')
+              v-list-item-avatar(size='24', tile): v-icon mdi-lock-check
+              v-list-item-title {{ $t('admin:security.title') }}
             v-list-item(to='/ssl', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-cloud-lock-outline
               v-list-item-title {{ $t('admin:ssl.title') }}
@@ -123,7 +129,7 @@
             v-list-item-avatar(size='24', tile): v-icon mdi-heart-outline
             v-list-item-title {{ $t('admin:contribute.title') }}
 
-    v-content(:class='darkMode ? "grey darken-4" : ""')
+    v-main(:class='$vuetify.theme.dark ? "grey darken-5" : "grey lighten-5"')
       transition(name='admin-router')
         router-view
 
@@ -165,13 +171,16 @@ const router = new VueRouter({
     { path: '/users/:id(\\d+)', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-users-edit.vue') },
     { path: '/analytics', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-analytics.vue') },
     { path: '/auth', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-auth.vue') },
+    { path: '/comments', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-comments.vue') },
     { path: '/rendering', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-rendering.vue') },
     { path: '/editor', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-editor.vue') },
+    { path: '/extensions', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-extensions.vue') },
     { path: '/logging', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-logging.vue') },
     { path: '/search', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-search.vue') },
     { path: '/storage', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-storage.vue') },
     { path: '/api', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-api.vue') },
     { path: '/mail', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-mail.vue') },
+    { path: '/security', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-security.vue') },
     { path: '/ssl', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-ssl.vue') },
     { path: '/system', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-system.vue') },
     { path: '/utilities', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-utilities.vue') },
@@ -210,7 +219,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     info: sync('admin/info'),
     permissions: get('user/permissions')
   },
@@ -298,6 +306,21 @@ export default {
 
   &-title {
     margin-left: 1rem;
+  }
+}
+
+.admin-providerlogo {
+  width: 250px;
+  height: 50px;
+  float: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-left: 16px;
+
+  img {
+    max-width: 100%;
+    max-height: 50px;
   }
 }
 

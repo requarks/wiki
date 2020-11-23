@@ -15,7 +15,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px; opacity: .5;')
+                      img(src='/_assets/svg/editor-icon-api.svg', alt='API', style='width: 36px; opacity: .5;')
                       .body-2.blue--text.mt-2.text--lighten-2 API Docs
                       .caption.blue--text.text--lighten-1 REST / GraphQL
                     v-fade-transition
@@ -35,7 +35,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px; opacity: .5;')
+                      img(src='/_assets/svg/editor-icon-wikitext.svg', alt='WikiText', style='width: 36px; opacity: .5;')
                       .body-2.blue--text.mt-2.text--lighten-2 Blog
                       .caption.blue--text.text--lighten-1 Timeline of Posts
                     v-fade-transition
@@ -53,7 +53,7 @@
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("code")')
-                  img(src='/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
+                  img(src='/_assets/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
                   .body-2.primary--text.mt-2 Code
                   .caption.grey--text Raw HTML
             v-flex(xs4)
@@ -63,7 +63,7 @@
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("markdown")')
-                  img(src='/svg/editor-icon-markdown.svg', alt='Markdown', style='width: 36px;')
+                  img(src='/_assets/svg/editor-icon-markdown.svg', alt='Markdown', style='width: 36px;')
                   .body-2.primary--text.mt-2 Markdown
                   .caption.grey--text Plain Text Formatting
             v-flex(xs4)
@@ -75,7 +75,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/editor-icon-tabular.svg', alt='Tabular', style='width: 36px; opacity: .5;')
+                      img(src='/_assets/svg/editor-icon-tabular.svg', alt='Tabular', style='width: 36px; opacity: .5;')
                       .body-2.blue--text.mt-2.text--lighten-2 Tabular
                       .caption.blue--text.text--lighten-1 Excel-like
                     v-fade-transition
@@ -93,7 +93,7 @@
                 ripple
                 )
                 v-card-text.text-center(@click='selectEditor("ckeditor")')
-                  img(src='/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
+                  img(src='/_assets/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
                   .body-2.mt-2.primary--text Visual Editor
                   .caption.grey--text Rich-text WYSIWYG
         .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}
@@ -106,23 +106,15 @@
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
-                  v-card.radius-7.teal.animated.fadeInUp(
+                  v-card.radius-7.animated.fadeInUp(
                     hover
                     light
                     ripple
                     )
-                    v-card-text.text-center(@click='')
-                      img(src='/svg/icon-cube.svg', alt='From Template', style='width: 42px; opacity: .5;')
-                      .body-2.mt-1.teal--text.text--lighten-2 From Template
-                      .caption.teal--text.text--lighten-1 Use an existing page / tree
-                    v-fade-transition
-                      v-overlay(
-                        v-if='hover'
-                        absolute
-                        color='teal'
-                        opacity='.8'
-                        )
-                        .body-2.mt-7 Coming Soon
+                    v-card-text.text-center(@click='fromTemplate')
+                      img(src='/_assets/svg/icon-cube.svg', alt='From Template', style='width: 42px; opacity: .5;')
+                      .body-2.mt-1.teal--text From Template
+                      .caption.grey--text Use an existing page...
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
@@ -131,18 +123,11 @@
                     light
                     ripple
                     )
+                    //- v-card-text.text-center(@click='selectEditor("redirect")')
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-tree-structure.svg', alt='Tree View', style='width: 42px; opacity: .5;')
-                      .body-2.mt-1.teal--text.text--lighten-2 Tree View
-                      .caption.teal--text.text--lighten-1 List children pages
-                    v-fade-transition
-                      v-overlay(
-                        v-if='hover'
-                        absolute
-                        color='teal'
-                        opacity='.8'
-                        )
-                        .body-2.mt-7 Coming Soon
+                      img(src='/_assets/svg/icon-route.svg', alt='Redirection', style='width: 42px; opacity: .5;')
+                      .body-2.mt-1.teal--text.text--lighten-2 Redirection
+                      .caption.teal--text.text--lighten-1 Redirect the user to...
             v-flex(xs4)
               v-hover
                 template(v-slot:default='{ hover }')
@@ -152,7 +137,7 @@
                     ripple
                     )
                     v-card-text.text-center(@click='')
-                      img(src='/svg/icon-sewing-patch.svg', alt='Code', style='width: 42px; opacity: .5;')
+                      img(src='/_assets/svg/icon-sewing-patch.svg', alt='Code', style='width: 42px; opacity: .5;')
                       .body-2.mt-1.teal--text.text--lighten-2 Embed
                       .caption.teal--text.text--lighten-1 Include external pages
                     v-fade-transition
@@ -190,11 +175,13 @@
               opacity='.8'
               )
               .body-2 Coming Soon
+
+    page-selector(mode='select', v-model='templateDialogIsShown', :open-handler='fromTemplateHandle', :path='path', :locale='locale', must-exist)
 </template>
 
 <script>
 import _ from 'lodash'
-import { sync } from 'vuex-pathify'
+import { sync, get } from 'vuex-pathify'
 
 export default {
   props: {
@@ -204,22 +191,36 @@ export default {
     }
   },
   data() {
-    return { }
+    return {
+      templateDialogIsShown: false
+    }
   },
   computed: {
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    currentEditor: sync('editor/editor')
+    currentEditor: sync('editor/editor'),
+    locale: get('page/locale'),
+    path: get('page/path')
   },
   methods: {
-    selectEditor(name) {
+    selectEditor (name) {
       this.currentEditor = `editor${_.startCase(name)}`
       this.isShown = false
     },
-    goBack() {
+    goBack () {
       window.history.go(-1)
+    },
+    fromTemplate () {
+      this.templateDialogIsShown = true
+    },
+    fromTemplateHandle ({ id }) {
+      this.templateDialogIsShown = false
+      this.isShown = false
+      this.$nextTick(() => {
+        window.location.assign(`/e/${this.locale}/${this.path}?from=${id}`)
+      })
     }
   }
 }

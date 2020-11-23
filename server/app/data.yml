@@ -24,10 +24,8 @@ defaults:
       min: 1
     bindIP: 0.0.0.0
     logLevel: info
-    uploads:
-      maxFileSize: 5242880
-      maxFiles: 10
     offline: false
+    ha: false
     # DB defaults
     api:
       isEnabled: false
@@ -45,11 +43,30 @@ defaults:
     company: ''
     contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    mail:
+      host: ''
+      secure: true
+      verifySSL: true
+    nav:
+      mode: 'MIXED'
     theming:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+    auth:
+      autoLogin: false
+      enforce2FA: false
+      hideLocal: false
+      loginBgUrl: ''
+      audience: 'urn:wiki.js'
+      tokenExpiration: '30m'
+      tokenRenewal: '14d'
+    features:
+      featurePageRatings: true
+      featurePageComments: true
+      featurePersonalWikis: true
     security:
+      securityOpenRedirect: true
       securityIframe: true
       securityReferrerPolicy: true
       securityTrustProxy: true
@@ -60,6 +77,9 @@ defaults:
       securityCSPDirectives: ''
     server:
       sslRedir: false
+    uploads:
+      maxFileSize: 5242880
+      maxFiles: 10
     flags:
       ldapdebug: false
       sqllog: false
@@ -118,11 +138,6 @@ groups:
         - 'write:comments'
       path: ''
       locales: []
-telemetry:
-  BUGSNAG_ID: 'bb4b324d0675bcbba10025617fd2cec8'
-  BUGSNAG_REMOTE: 'https://notify.bugsnag.com'
-  GA_ID: 'UA-9094100-7'
-  GA_REMOTE: 'https://www.google-analytics.com/batch'
 reservedPaths:
   - login
   - logout

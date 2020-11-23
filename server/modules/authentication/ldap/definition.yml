@@ -7,6 +7,7 @@ color: blue darken-3
 website: https://www.microsoft.com/windowsserver
 isAvailable: true
 useForm: true
+usernameType: username
 props:
   url:
     title: LDAP URL
@@ -19,11 +20,13 @@ props:
     type: String
     default: cn='root'
     hint: The dstinguished name (dn) of the account used for binding.
+    maxWidth: 600
     order: 2
   bindCredentials:
     title: Admin Bind Credentials
     type: String
     hint: The password of the account used above for binding.
+    maxWidth: 600
     order: 3
   searchBase:
     title: Search Base
@@ -42,32 +45,41 @@ props:
     type: Boolean
     default: false
     order: 6
+  verifyTLSCertificate:
+    title: Verify TLS Certificate
+    type: Boolean
+    default: true
+    order: 7
   tlsCertPath:
     title: TLS Certificate Path
     type: String
     hint: Absolute path to the TLS certificate on the server.
-    order: 7
+    order: 8
   mappingUID:
     title: Unique ID Field Mapping
     type: String
     default: 'uid'
     hint: The field storing the user unique identifier. Usually "uid" or "sAMAccountName".
-    order: 8
+    maxWidth: 500
+    order: 20
   mappingEmail:
     title: Email Field Mapping
     type: String
     default: 'mail'
     hint: The field storing the user email. Usually "mail".
-    order: 9
+    maxWidth: 500
+    order: 21
   mappingDisplayName:
     title: Display Name Field Mapping
     type: String
     default: 'displayName'
     hint: The field storing the user display name. Usually "displayName" or "cn".
-    order: 10
+    maxWidth: 500
+    order: 22
   mappingPicture:
     title: Avatar Picture Field Mapping
     type: String
     default: 'jpegPhoto'
     hint: The field storing the user avatar picture. Usually "jpegPhoto" or "thumbnailPhoto".
-    order: 11
+    maxWidth: 500
+    order: 23

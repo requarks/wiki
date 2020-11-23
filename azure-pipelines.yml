@@ -1,0 +1,158 @@
+name: 2.6.$(Rev:r)
+
+trigger:
+- dev
+- latest
+
+stages:
+- stage: build
+  displayName: Build stage
+  jobs:
+
+  # -------------------------------
+  # BUILD - LINUX
+  # -------------------------------
+
+  - job: buildLinux
+    displayName: Linux Build
+    timeoutInMinutes: 60
+    cancelTimeoutInMinutes: 1
+    pool:
+      name: Azure Pipelines
+      vmImage: ubuntu-latest
+    steps:
+      - task: CmdLine@2
+        displayName: Disable dev flag
+        inputs:
+          script: |
+            sudo apt-get install jq -y
+            mv package.json pkg-temp.json
+            jq -r '.dev |= false' pkg-temp.json > package.json
+            rm pkg-temp.json
+          workingDirectory: '$(Build.SourcesDirectory)'
+
+      - task: CmdLine@2
+        displayName: Set Package Version
+        inputs:
+          script: |
+            mv package.json pkg-temp.json
+            jq -r '.version |= "$(Build.BuildNumber)"' pkg-temp.json > package.json
+            rm pkg-temp.json
+            cat package.json
+          workingDirectory: '$(Build.SourcesDirectory)'
+
+      - task: Docker@2
+        displayName: Build Docker image
+        inputs:
+          containerRegistry: Docker Hub
+          repository: requarks/wiki
+          Dockerfile: dev/build/Dockerfile
+          buildContext: '$(System.DefaultWorkingDirectory)'
+          tags: |
+            canary
+            canary-$(Build.BuildNumber)
+          addPipelineData: false
+
+      - task: CmdLine@2
+        displayName: Extract compiled files
+        inputs:
+          script: |
+            docker create --name wiki requarks/wiki:canary
+            docker cp wiki:/wiki $(Build.StagingDirectory)
+            docker rm wiki
+            rm $(Build.StagingDirectory)/wiki/config.yml
+            cp $(System.DefaultWorkingDirectory)/config.sample.yml $(Build.StagingDirectory)/wiki/config.sample.yml
+            find $(Build.StagingDirectory)/wiki/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C $(Build.StagingDirectory)/wiki/ -T -
+          workingDirectory: '$(Build.SourcesDirectory)'
+
+      - task: PublishBuildArtifacts@1
+        displayName: Publish Build Artifacts
+        inputs:
+          PathtoPublish: 'wiki-js.tar.gz'
+          ArtifactName: 'drop'
+
+  # -------------------------------
+  # TESTS - CYPRESS E2E TESTS
+  # -------------------------------
+
+  - job: testCypress
+    displayName: Cypress E2E Tests
+    dependsOn: buildLinux
+    strategy:
+      maxParallel: 5
+      matrix:
+        MariaDB:
+          MATRIXENV: mariadb
+        MySQL:
+          MATRIXENV: mysql
+        MSSQLServer:
+          MATRIXENV: mssql
+        PostgreSQL:
+          MATRIXENV: postgres
+        SQLite:
+          MATRIXENV: sqlite
+    timeoutInMinutes: 30
+    cancelTimeoutInMinutes: 1
+    pool:
+      name: Azure Pipelines
+      vmImage: ubuntu-latest
+    steps:
+    - task: Bash@3
+      displayName: Setup Environment
+      inputs:
+        targetType: filePath
+        filePath: './dev/cypress/ci-setup.sh'
+        workingDirectory: '$(Build.SourcesDirectory)'
+
+    - script: |
+        docker run --name cypress --ipc=host --shm-size 1G -v $BUILD_SOURCESDIRECTORY:/e2e -w /e2e cypress/included:4.9.0 --record --key "$(CYPRESS_KEY)" --headless --group "$MATRIXENV" --ci-build-id "$BUILD_BUILDNUMBER" --config baseUrl=http://172.17.0.1:3000
+      displayName: 'Run Tests'
+
+  # -------------------------------
+  # BUILD - WINDOWS
+  # -------------------------------
+
+  - job: buildWindows
+    displayName: Windows Build
+    dependsOn: buildLinux
+    pool:
+      name: Azure Pipelines
+      vmImage: windows-latest
+    timeoutInMinutes: 30
+    cancelTimeoutInMinutes: 1
+    steps:
+    - task: NodeTool@0
+      displayName: 'Use Node 14.x'
+      inputs:
+        versionSpec: 14.x
+
+    - task: 'geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3'
+      displayName: 'Use Yarn 1.x'
+
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download Build Artifacts'
+      inputs:
+        artifactName: drop
+
+    - script: |
+        mkdir -p $(Build.SourcesDirectory)\win
+        tar -xzf $(System.ArtifactsDirectory)\drop\wiki-js.tar.gz -C $(Build.SourcesDirectory)\win --exclude=node_modules
+      displayName: 'Extract build'
+    - script: 'yarn --production --frozen-lockfile --non-interactive'
+      workingDirectory: win
+      displayName: 'Install dependencies'
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive app'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)\win'
+        includeRootFolder: false
+        archiveType: tar
+        archiveFile: 'wiki-js-windows.tar.gz'
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Build Artifacts
+      inputs:
+        PathtoPublish: 'wiki-js-windows.tar.gz'
+        ArtifactName: 'drop-win'
+

@@ -1,0 +1,23 @@
+key: markdownMultiTable
+title: MultiMarkdown Table
+description: Add MultiMarkdown table support
+author: requarks.io
+icon: mdi-table
+enabledDefault: false
+dependsOn: markdownCore
+props:
+  multilineEnabled:
+    type: Boolean
+    title: Multiline
+    hint: Enable multiple lines rows
+    default: true
+  headerlessEnabled:
+    type: Boolean
+    title: Headerless
+    hint: Enable ommited table headers
+    default: true
+  rowspanEnabled:
+    type: Boolean
+    title: Rowspan
+    hint: Enable table row spans
+    default: true

@@ -3,12 +3,14 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-people.svg', alt='Groups', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-people.svg', alt='Groups', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Groups
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s.mr-3(color='grey', outlined, @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/groups', target='_blank')
+            v-icon mdi-help-circle
+          v-btn.animated.fadeInDown.wait-p2s.mx-3(color='grey', outlined, @click='refresh', icon)
             v-icon mdi-refresh
           v-dialog(v-model='newGroupDialog', max-width='500')
             template(v-slot:activator='{ on }')

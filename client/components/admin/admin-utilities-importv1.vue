@@ -4,7 +4,7 @@
       .subtitle-1 {{ $t('admin:utilities.importv1Title') }}
     v-card-text
       .text-center
-        img.animated.fadeInUp.wait-p1s(src='/svg/icon-software.svg')
+        img.animated.fadeInUp.wait-p1s(src='/_assets/svg/icon-software.svg')
         .body-2 Import from Wiki.js 1.x
       v-divider.my-4
       .body-2 Data from a Wiki.js 1.x installation can easily be imported using this tool. What do you want to import?
@@ -345,7 +345,7 @@ export default {
             })
             const respObj = _.get(resp, 'data.system.importUsersFromV1', {})
             if (!_.get(respObj, 'responseResult.succeeded', false)) {
-              throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occured'))
+              throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occurred'))
             }
             this.successUsers = _.get(respObj, 'usersCount', 0)
             this.successGroups = _.get(respObj, 'groupsCount', 0)
@@ -429,7 +429,7 @@ export default {
               })
               const respObj = _.get(respSv, 'data.storage.updateTargets', {})
               if (!_.get(respObj, 'responseResult.succeeded', false)) {
-                throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occured'))
+                throw new Error(_.get(respObj, 'responseResult.message', 'An unexpected error occurred'))
               }
 
               this.progress += 10
@@ -480,7 +480,7 @@ export default {
 
               const respImportObj = _.get(respImport, 'data.storage.executeAction', {})
               if (!_.get(respImportObj, 'responseResult.succeeded', false)) {
-                throw new Error(_.get(respImportObj, 'responseResult.message', 'An unexpected error occured'))
+                throw new Error(_.get(respImportObj, 'responseResult.message', 'An unexpected error occurred'))
               }
 
               this.progress += 15

@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-venn-diagram.svg', alt='Visualize Pages', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-venn-diagram.svg', alt='Visualize Pages', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Visualize Pages
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Dendrogram representation of your pages
@@ -29,7 +29,7 @@
             v-btn.px-5(value='rradial')
               v-icon(left, :color='graphMode === `rradial` ? `primary` : `grey darken-3`') mdi-blur-radial
               span.text-none Relational Radial
-        .admin-pages-visualize-svg.pa-10(ref='svgContainer')
+        .admin-pages-visualize-svg(ref='svgContainer', v-show='pages.length >= 1')
         v-alert(v-if='pages.length < 1', outlined, type='warning', style='max-width: 650px; margin: 0 auto;') Looks like there's no data yet to graph!
 </template>
 
@@ -61,8 +61,14 @@ export default {
   },
   methods: {
     goToPage (d) {
-      if (_.get(d, 'data.id', 0) > 0) {
-        this.$router.push(`${d.data.id}`)
+      const id = d.data.id
+      if (id) {
+        if (d3.event.ctrlKey || d3.event.metaKey) {
+          const { href } = this.$router.resolve(String(id))
+          window.open(href, '_blank')
+        } else {
+          this.$router.push(String(id))
+        }
       }
     },
     bilink (root) {
@@ -86,41 +92,36 @@ export default {
       }
       return root
     },
-    hierarchy (data, rootOnly = false) {
-      let result = []
-      let level = { result }
-      const map = new Map(data.map(d => [d.path, d]))
-      data.forEach(d => {
-        const pathParts = d.path.split('/')
-        pathParts.reduce((r, part, i) => {
-          const curPath = _.take(pathParts, i + 1).join('/')
-          if (!r[part]) {
-            r[part] = { result: [] }
-            const page = map.get(curPath)
-            r.result.push(page ? {
-              ...d,
-              children: r[part].result
-            } : {
-              title: part,
-              links: [],
-              path: curPath,
-              children: r[part].result
-            })
-          }
-
-          return r[part]
-        }, level)
-      })
-
-      return rootOnly ? _.head(result) || { children: [] } : {
-        children: result
+    hierarchy (pages) {
+      const map = new Map(pages.map(p => [p.path, p]))
+      const getPage = path => map.get(path) || {
+        path: path,
+        title: path.split('/').slice(-1)[0],
+        links: []
       }
+
+      function recurse (depth, [parent, descendants]) {
+        const truncatePath = path => _.take(path.split('/'), depth).join('/')
+        const descendantsByChild =
+          Object.entries(_.groupBy(descendants, page => truncatePath(page.path)))
+            .map(([childPath, descendantsGroup]) => [getPage(childPath), descendantsGroup])
+            .map(([child, descendantsGroup]) =>
+              [child, _.filter(descendantsGroup, d => d.path !== child.path)])
+        return {
+          ...parent,
+          children: descendantsByChild.map(_.partial(recurse, depth + 1))
+        }
+      }
+      const root = { path: this.currentLocale, title: this.currentLocale, links: [] }
+      // start at depth=2 because we're taking {locale} as the root and
+      // all paths start with {locale}/
+      return recurse(2, [root, pages])
     },
     /**
      * Relational Radial
      */
     drawRelations () {
-      const data = this.hierarchy(this.pages, true)
+      const data = this.hierarchy(this.pages)
 
       const line = d3.lineRadial()
         .curve(d3.curveBundle.beta(0.85))
@@ -136,7 +137,13 @@ export default {
       const svg = d3.create('svg')
         .attr('viewBox', [-this.width / 2, -this.width / 2, this.width, this.width])
 
-      const link = svg.append('g')
+      const g = svg.append('g')
+
+      svg.call(d3.zoom().on('zoom', function() {
+        g.attr('transform', d3.event.transform)
+      }))
+
+      const link = g.append('g')
         .attr('stroke', '#CCC')
         .attr('fill', 'none')
         .selectAll('path')
@@ -146,7 +153,7 @@ export default {
         .attr('d', ([i, o]) => line(i.path(o)))
         .each(function(d) { d.path = this })
 
-      svg.append('g')
+      g.append('g')
         .attr('font-family', 'sans-serif')
         .attr('font-size', 10)
         .selectAll('g')
@@ -195,7 +202,7 @@ export default {
      * Hierarchical Tree
      */
     drawTree () {
-      const data = this.hierarchy(this.pages, true)
+      const data = this.hierarchy(this.pages)
 
       const treeRoot = d3.hierarchy(data)
       treeRoot.dx = 10
@@ -212,7 +219,16 @@ export default {
       const svg = d3.create('svg')
         .attr('viewBox', [0, 0, this.width, x1 - x0 + root.dx * 2])
 
-      const g = svg.append('g')
+      // this extra level is necessary because the element that we
+      // apply the zoom tranform to must be above the element where
+      // we apply the translation (`g`), or else zoom is wonky
+      const gZoom = svg.append('g')
+
+      svg.call(d3.zoom().on('zoom', function() {
+        gZoom.attr('transform', d3.event.transform)
+      }))
+
+      const g = gZoom.append('g')
         .attr('font-family', 'sans-serif')
         .attr('font-size', 10)
         .attr('transform', `translate(${root.dy / 3},${root.dx - x0})`)
@@ -270,7 +286,14 @@ export default {
       const svg = d3.create('svg')
         .style('font', '10px sans-serif')
 
-      svg.append('g')
+      const g = svg.append('g')
+
+      svg.call(d3.zoom().on('zoom', function () {
+        g.attr('transform', d3.event.transform)
+      }))
+
+      // eslint-disable-next-line no-unused-vars
+      const link = g.append('g')
         .attr('fill', 'none')
         .attr('stroke', this.$vuetify.theme.dark ? 'white' : '#555')
         .attr('stroke-opacity', 0.4)
@@ -282,7 +305,7 @@ export default {
           .angle(d => d.x)
           .radius(d => d.y))
 
-      const node = svg.append('g')
+      const node = g.append('g')
         .attr('stroke-linejoin', 'round')
         .attr('stroke-width', 3)
         .selectAll('g')
@@ -371,9 +394,12 @@ export default {
 <style lang='scss'>
 .admin-pages-visualize-svg {
   text-align: center;
+  // 100vh - header - title section - footer - content padding
+  height: calc(100vh - 64px - 92px - 32px - 16px);
 
   > svg {
-    height: 100vh;
+    height: 100%;
+    width: 100%;
   }
 }
 </style>

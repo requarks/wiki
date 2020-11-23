@@ -1,11 +1,38 @@
 @import "global";
 
 @import "./base/icons.scss";
+@import '~katex/dist/katex.min.css';
+@import '~@mdi/font/css/materialdesignicons.css';
+
+.mdi {
+  font-family: 'Material Design Icons', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-flex;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
 
 html {
   box-sizing: border-box;
   background-color: mc('grey', '50');
-  font-size: 14px;
+  font-size: 15px;
 }
 *, *:before, *:after {
   box-sizing: inherit;
@@ -197,7 +224,7 @@ body {
   display: flex;
   align-items: stretch;
   min-height: calc(100vh - 64px);
-  height: 50vh;
+  height: 100%;
 
   &-container {
     flex-grow: 1;
@@ -205,10 +232,12 @@ body {
 }
 
 .sidebar {
-  width: 300px;
+  width: 256px;
   background-color: mc('blue', '700');
   color: #FFF;
   padding: 8px 0;
+  align-self: stretch;
+  flex-shrink: 0;
 
   .sidebar-link {
     height: 40px;
@@ -226,7 +255,7 @@ body {
     }
   }
 
-  i.material-icons {
+  i.mdi {
     width: 56px;
     padding-left: 8px;
   }
@@ -343,4 +372,5 @@ body {
 
 .contents {
   flex-grow: 1;
+  padding: 24px !important;
 }

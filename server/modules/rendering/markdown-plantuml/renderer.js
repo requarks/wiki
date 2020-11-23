@@ -7,12 +7,12 @@ const zlib = require('zlib')
 module.exports = {
   init (mdinst, conf) {
     mdinst.use((md, opts) => {
-      const openMarker = opts.openMarker || '@startuml'
+      const openMarker = opts.openMarker || '```plantuml'
       const openChar = openMarker.charCodeAt(0)
-      const closeMarker = opts.closeMarker || '@enduml'
+      const closeMarker = opts.closeMarker || '```'
       const closeChar = closeMarker.charCodeAt(0)
       const imageFormat = opts.imageFormat || 'svg'
-      const server = opts.server || 'https://www.plantuml.com/plantuml'
+      const server = opts.server || 'https://plantuml.requarks.io'
 
       //attribute that will contain the plantuml
       //that will be copied to the body
@@ -85,7 +85,7 @@ module.exports = {
             continue
           }
 
-          var closeMarkerMatched = true
+          let closeMarkerMatched = true
           for (i = 0; i < closeMarker.length; ++i) {
             if (closeMarker[i] !== state.src[start + i]) {
               closeMarkerMatched = false
@@ -123,13 +123,13 @@ module.exports = {
           altToken
         )
 
-        var zippedCode = encode64(zlib.deflateSync('@startuml\n' + contents + '\n@enduml').toString('binary'))
+        const zippedCode = encode64(zlib.deflateRawSync('@startuml\n' + contents + '\n@enduml').toString('binary'))
 
         if (imageFormat === 'png') {
           // png use the image tag
           token = state.push('uml_diagram', 'img', 0)
           // alt is constructed from children. No point in populating it here.
-          token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'] ]
+          token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram prefetch-candidate'] ]
           token.block = true
           token.children = altToken
           token.info = params
@@ -141,7 +141,7 @@ module.exports = {
           // in html-security so that it is searchable
 
           token = state.push('uml_diagram_obj', 'object', 0)
-          token.attrs = [ [ 'data', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'], ['style', 'max-width:100%;height:auto'], ['type', 'image/svg+xml'], [`${pumlSearchAttribute}`, contents] ]
+          token.attrs = [ [ 'data', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram prefetch-candidate'], ['style', 'max-width:100%;height:auto'], ['type', 'image/svg+xml'], [`${pumlSearchAttribute}`, contents] ]
           token.block = true
           token.children = altToken
           token.info = params

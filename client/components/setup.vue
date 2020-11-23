@@ -7,10 +7,10 @@
             v-card.elevation-20.radius-7.animated.fadeInUp
               v-alert(v-if='isDevMode', tile, dark, color='red darken-3', icon='mdi-alert', prominent)
                 .body-2 You are running an unstable, unreleased development version. This code base is #[strong NOT] for production use!
-                .body-2.mt-3 Cloning the master branch directly from GitHub is #[strong NOT] the proper way to install Wiki.js!
+                .body-2.mt-3 Cloning the dev branch directly from GitHub is #[strong NOT] the proper way to install Wiki.js!
                 .body-2 Read the #[a(href='https://docs.requarks.io/install', style='color: #FFF;') documentation] on correctly installing the latest stable version.
               .text-center
-                img.setup-logo.animated.fadeInUp.wait-p2s(src='/svg/logo-wikijs-full.svg', alt='Wiki.js Logo')
+                img.setup-logo.animated.fadeInUp.wait-p2s(src='/_assets/svg/logo-wikijs-full.svg', alt='Wiki.js Logo')
               v-alert(v-model='error', type='error', icon='mdi-alert', tile, dismissible) {{ errorMessage }}
               v-alert(v-if='!error', tile, color='blue lighten-5', :value='true')
                 v-icon.mr-3(color='blue') mdi-package-variant
@@ -104,6 +104,7 @@
 import _ from 'lodash'
 import validate from 'validate.js'
 import { BreedingRhombusSpinner } from 'epic-spinners'
+import confetti from 'canvas-confetti'
 
 /* global siteConfig */
 
@@ -206,6 +207,11 @@ export default {
 
           if (resp.ok === true) {
             _.delay(() => {
+              confetti({
+                particleCount: 100,
+                spread: 70,
+                zIndex: 100000
+              })
               this.success = true
               _.delay(() => {
                 window.location.assign('/login')
@@ -243,7 +249,7 @@ export default {
       height: 100vh;
       z-index: 0;
       background-color: transparent;
-      background-image: url(/svg/motif-grid.svg) !important;
+      background-image: url(../static/svg/motif-grid.svg) !important;
       background-size: 100px;
       background-repeat: repeat;
       animation: bg-anim 100s linear infinite;

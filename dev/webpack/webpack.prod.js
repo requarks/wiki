@@ -10,11 +10,13 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WebpackBarPlugin = require('webpackbar')
-// const SriWebpackPlugin = require('webpack-subresource-integrity')
+
+const now = Math.round(Date.now() / 1000)
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
@@ -33,9 +35,9 @@ module.exports = {
   },
   output: {
     path: path.join(process.cwd(), 'assets'),
-    publicPath: '/',
-    filename: 'js/[name].[hash].js',
-    chunkFilename: 'js/[name].[chunkhash].js',
+    publicPath: '/_assets/',
+    filename: `js/[name].js?${now}`,
+    chunkFilename: `js/[name].js?${now}`,
     globalObject: 'this',
     crossOriginLoading: 'use-credentials'
   },
@@ -166,10 +168,7 @@ module.exports = {
         ]
       },
       {
-        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
-        exclude: [
-          path.join(process.cwd(), 'client')
-        ],
+        test: /\.(woff2|woff|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
         use: [{
           loader: 'file-loader',
           options: {
@@ -177,6 +176,10 @@ module.exports = {
             outputPath: 'fonts/'
           }
         }]
+      },
+      {
+        loader: 'webpack-modernizr-loader',
+        test: /\.modernizrrc\.js$/
       }
     ]
   },
@@ -184,10 +187,16 @@ module.exports = {
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
-    new CopyWebpackPlugin([
-      { from: 'client/static' },
-      { from: './node_modules/prismjs/components', to: 'js/prism' }
-    ], {}),
+    new MomentTimezoneDataPlugin({
+      startYear: 2017,
+      endYear: (new Date().getFullYear()) + 5
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'client/static' },
+        { from: './node_modules/prismjs/components', to: 'js/prism' }
+      ]
+    }),
     new MiniCssExtractPlugin({
       filename: 'css/bundle.[hash].css',
       chunkFilename: 'css/[name].[chunkhash].css'
@@ -218,10 +227,6 @@ module.exports = {
       sync: 'runtime.js',
       defaultAttribute: 'async'
     }),
-    // new SriWebpackPlugin({
-    //   hashFuncNames: ['sha256', 'sha512'],
-    //   enabled: true
-    // }),
     new WebpackBarPlugin({
       name: 'Client Assets'
     }),
@@ -233,6 +238,9 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production'),
       'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default'))
+    }),
+    new webpack.optimize.MinChunkSizePlugin({
+      minChunkSize: 50000
     })
   ],
   optimization: {
@@ -254,7 +262,8 @@ module.exports = {
       // Duplicates fixes:
       'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
       'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),
-      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro')
+      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
+      'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
     },
     extensions: [
       '.js',

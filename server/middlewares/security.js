@@ -13,7 +13,7 @@ module.exports = function (req, res, next) {
   req.app.disable('x-powered-by')
 
   // -> Disable Frame Embedding
-  if (WIKI.config.securityIframe) {
+  if (WIKI.config.security.securityIframe) {
     res.set('X-Frame-Options', 'deny')
   }
 
@@ -27,13 +27,19 @@ module.exports = function (req, res, next) {
   res.set('X-UA-Compatible', 'IE=edge')
 
   // -> Disables referrer header when navigating to a different origin
-  if (WIKI.config.securityReferrerPolicy) {
+  if (WIKI.config.security.securityReferrerPolicy) {
     res.set('Referrer-Policy', 'same-origin')
   }
 
   // -> Enforce HSTS
-  if (WIKI.config.securityHSTS) {
+  if (WIKI.config.security.securityHSTS) {
     res.set('Strict-Transport-Security', `max-age=${WIKI.config.securityHSTSDuration}; includeSubDomains`)
+  }
+
+  // -> Prevent Open Redirect from user provided URL
+  if (WIKI.config.security.securityOpenRedirect) {
+    // Strips out all repeating / character in the provided URL
+    req.url = req.url.replace(/(\/)(?=\/*\1)/g, '')
   }
 
   return next()

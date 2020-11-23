@@ -3,12 +3,12 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-line-chart.svg', alt='Analytics', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-line-chart.svg', alt='Analytics', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:analytics.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:analytics.subtitle') }}
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', @click='refresh', large)
+          v-btn.animated.fadeInDown.wait-p2s.mr-3(icon, outlined, color='grey', @click='refresh')
             v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='success', @click='save', depressed, large)
             v-icon(left) mdi-check
@@ -46,14 +46,16 @@
               hide-details
               inset
               )
+          v-card-info(color='blue')
+            div
+              div {{provider.description}}
+              span.caption: a(:href='provider.website') {{provider.website}}
+            v-spacer
+            .admin-providerlogo
+              img(:src='provider.logo', :alt='provider.title')
           v-card-text
             v-form
-              .analytic-provider-logo
-                img(:src='provider.logo', :alt='provider.title')
-              .body-2.pt-3 {{provider.description}}
-              .body-2.pt-3: a(:href='provider.website') {{provider.website}}
-              v-divider.mt-5
-              .overline.py-5 {{$t('admin:analytics.providerConfiguration')}}
+              .overline.pb-5 {{$t('admin:analytics.providerConfiguration')}}
               .body-1.ml-3(v-if='!provider.config || provider.config.length < 1'): em {{$t('admin:analytics.providerNoConfiguration')}}
               template(v-else, v-for='cfg in provider.config')
                 v-select(
@@ -63,7 +65,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -74,7 +76,7 @@
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
                   color='primary'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   inset
@@ -85,7 +87,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -96,7 +98,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-settings-box'
+                  prepend-icon='mdi-cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -177,21 +179,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss' scoped>
-
-.analytic-provider-logo {
-  width: 250px;
-  height: 85px;
-  float:right;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-
-  img {
-    max-width: 100%;
-    max-height: 50px;
-  }
-}
-
-</style>

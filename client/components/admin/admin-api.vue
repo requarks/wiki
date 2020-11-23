@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{$t('admin:api.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft {{$t('admin:api.subtitle')}}
@@ -15,9 +15,9 @@
             status-indicator.mr-3(negative, pulse)
             .caption.red--text.animated.fadeInLeft {{$t('admin:api.disabled')}}
           v-spacer
-          v-btn.mr-3.animated.fadeInDown.wait-p2s(outlined, color='grey', large, @click='refresh')
+          v-btn.mr-3.animated.fadeInDown.wait-p2s(outlined, color='grey', icon, @click='refresh')
             v-icon mdi-refresh
-          v-btn.mr-3.animated.fadeInDown.wait-p1s(:color='enabled ? `red` : `green`', depressed, large, @click='globalSwitch', dark, :loading='isToggleLoading')
+          v-btn.mr-3.animated.fadeInDown.wait-p1s(:color='enabled ? `red` : `green`', depressed, @click='globalSwitch', dark, :loading='isToggleLoading')
             v-icon(left) mdi-power
             span(v-if='!enabled') {{$t('admin:api.enableButton')}}
             span(v-else) {{$t('admin:api.disableButton')}}
@@ -131,7 +131,7 @@ export default {
         } else {
           this.$store.commit('showNotification', {
             style: 'red',
-            message: _.get(resp, 'data.authentication.setApiState.responseResult.message', 'An unexpected error occured.'),
+            message: _.get(resp, 'data.authentication.setApiState.responseResult.message', 'An unexpected error occurred.'),
             icon: 'alert'
           })
         }
@@ -182,7 +182,7 @@ export default {
         } else {
           this.$store.commit('showNotification', {
             style: 'red',
-            message: _.get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occured.'),
+            message: _.get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occurred.'),
             icon: 'alert'
           })
         }

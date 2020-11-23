@@ -106,24 +106,21 @@ bindIP: 0.0.0.0
 logLevel: info
 
 # ---------------------------------------------------------------------
-# Upload Limits
-# ---------------------------------------------------------------------
-# If you're using a reverse-proxy in front of Wiki.js, you must also
-# change your proxy upload limits!
-
-uploads:
-  # Maximum upload size in bytes per file (default: 5242880 (5 MB))
-  maxFileSize: 5242880
-  # Maximum file uploads per request (default: 10)
-  maxFiles: 10
-
-# ---------------------------------------------------------------------
 # Offline Mode
 # ---------------------------------------------------------------------
 # If your server cannot access the internet. Set to true and manually
 # download the offline files for sideloading.
 
 offline: false
+
+# ---------------------------------------------------------------------
+# High-Availability
+# ---------------------------------------------------------------------
+# Set to true if you have multiple concurrent instances running off the
+# same DB (e.g. Kubernetes pods / load balanced instances). Leave false
+# otherwise. You MUST be using PostgreSQL to use this feature.
+
+ha: false
 
 # ---------------------------------------------------------------------
 # Data Path

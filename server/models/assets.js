@@ -6,6 +6,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const assetHelper = require('../helpers/asset')
+const Promise = require('bluebird')
 
 /**
  * Users model
@@ -150,32 +151,53 @@ module.exports = class Asset extends Model {
   }
 
   static async getAsset(assetPath, res) {
-    let assetExists = await WIKI.models.assets.getAssetFromCache(assetPath, res)
-    if (!assetExists) {
-      await WIKI.models.assets.getAssetFromDb(assetPath, res)
+    try {
+      const fileHash = assetHelper.generateHash(assetPath)
+      const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
+      if (await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res)) {
+        return
+      }
+      if (await WIKI.models.assets.getAssetFromStorage(assetPath, res)) {
+        return
+      }
+      await WIKI.models.assets.getAssetFromDb(assetPath, fileHash, cachePath, res)
+    } catch (err) {
+      if (err.code === `ECONNABORTED` || err.code === `EPIPE`) {
+        return
+      }
+      WIKI.logger.error(err)
+      res.sendStatus(500)
     }
   }
 
-  static async getAssetFromCache(assetPath, res) {
-    const fileHash = assetHelper.generateHash(assetPath)
-    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
-
-    return new Promise((resolve, reject) => {
-      res.type(path.extname(assetPath))
-      res.sendFile(cachePath, { dotfiles: 'deny' }, err => {
-        if (err) {
-          resolve(false)
-        } else {
-          resolve(true)
-        }
-      })
-    })
+  static async getAssetFromCache(assetPath, cachePath, res) {
+    try {
+      await fs.access(cachePath, fs.constants.R_OK)
+    } catch (err) {
+      return false
+    }
+    const sendFile = Promise.promisify(res.sendFile, {context: res})
+    res.type(path.extname(assetPath))
+    await sendFile(cachePath, { dotfiles: 'deny' })
+    return true
   }
 
-  static async getAssetFromDb(assetPath, res) {
-    const fileHash = assetHelper.generateHash(assetPath)
-    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
+  static async getAssetFromStorage(assetPath, res) {
+    const localLocations = await WIKI.models.storage.getLocalLocations({
+      asset: {
+        path: assetPath
+      }
+    })
+    for (let location of _.filter(localLocations, location => Boolean(location.path))) {
+      const assetExists = await WIKI.models.assets.getAssetFromCache(assetPath, location.path, res)
+      if (assetExists) {
+        return true
+      }
+    }
+    return false
+  }
 
+  static async getAssetFromDb(assetPath, fileHash, cachePath, res) {
     const asset = await WIKI.models.assets.query().where('hash', fileHash).first()
     if (asset) {
       const assetData = await WIKI.models.knex('assetData').where('id', asset.id).first()

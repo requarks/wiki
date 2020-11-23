@@ -1,23 +1,15 @@
 <template lang="pug">
   v-card(flat)
-    v-card-text
-      v-text-field(
-        outlined
-        v-model='group.name'
-        label='Group Name'
-        counter='255'
-        prepend-icon='mdi-account-group'
-        )
-      v-alert.radius-7(
-        v-if='group.isSystem'
-        color='orange darken-2'
-        :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
-        outlined
-        :value='true'
-        icon='mdi-lock-outline'
-        ) This is a system group. Some permissions cannot be modified.
-    v-container.px-3.pb-3.pt-0(fluid, grid-list-md)
+    v-container.px-3.pb-3.pt-3(fluid, grid-list-md)
       v-layout(row, wrap)
+        v-flex(xs12, v-if='group.isSystem')
+          v-alert.radius-7.mb-0(
+            color='orange darken-2'
+            :class='$vuetify.theme.dark ? "grey darken-4" : "orange lighten-5"'
+            outlined
+            :value='true'
+            icon='mdi-lock-outline'
+            ) This is a system group. Some permissions cannot be modified.
         v-flex(xs12, md6, lg4, v-for='pmGroup in permissions', :key='pmGroup.category')
           v-card.md2(flat, :class='$vuetify.theme.dark ? "grey darken-3-d5" : "grey lighten-5"')
             .overline.px-5.pt-5.pb-3.grey--text.text--darken-2 {{pmGroup.category}}
@@ -63,21 +55,35 @@ export default {
               permission: 'write:pages',
               hint: 'Can create / edit pages, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'manage:pages',
               hint: 'Can move existing pages as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'delete:pages',
               hint: 'Can delete existing pages, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'write:styles',
+              hint: 'Can insert CSS styles in pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'write:scripts',
+              hint: 'Can insert JavaScript in pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
@@ -105,14 +111,14 @@ export default {
               permission: 'write:assets',
               hint: 'Can upload new assets (such as images and files), as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'manage:assets',
               hint: 'Can edit and delete existing assets (such as images and files), as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             },
             {
@@ -133,7 +139,7 @@ export default {
               permission: 'manage:comments',
               hint: 'Can edit and delete existing comments, as specified in the Page Rules',
               warning: false,
-              restrictedForSystem: false,
+              restrictedForSystem: true,
               disabled: false
             }
           ]

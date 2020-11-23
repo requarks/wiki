@@ -27,6 +27,10 @@ type UserQuery {
   single(
     id: Int!
   ): User @auth(requires: ["manage:users", "manage:system"])
+
+  profile: UserProfile
+
+  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -53,10 +57,13 @@ type UserMutation {
     location: String
     jobTitle: String
     timezone: String
+    dateFormat: String
+    appearance: String
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
   delete(
     id: Int!
+    replaceId: Int!
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
   verify(
@@ -71,9 +78,31 @@ type UserMutation {
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
+  enableTFA(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+
+  disableTFA(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+
   resetPassword(
     id: Int!
   ): DefaultResponse
+
+  updateProfile(
+    name: String!
+    location: String!
+    jobTitle: String!
+    timezone: String!
+    dateFormat: String!
+    appearance: String!
+  ): UserTokenResponse
+
+  changePassword(
+    current: String!
+    new: String!
+  ): UserTokenResponse
 }
 
 # -----------------------------------------------
@@ -85,13 +114,21 @@ type UserResponse {
   user: User
 }
 
+type UserLastLogin {
+  id: Int!
+  name: String!
+  lastLoginAt: Date!
+}
+
 type UserMinimal {
   id: Int!
   name: String!
   email: String!
   providerKey: String!
   isSystem: Boolean!
+  isActive: Boolean!
   createdAt: Date!
+  lastLoginAt: Date
 }
 
 type User {
@@ -99,14 +136,45 @@ type User {
   name: String!
   email: String!
   providerKey: String!
+  providerName: String
   providerId: String
+  providerIs2FACapable: Boolean
   isSystem: Boolean!
   isActive: Boolean!
   isVerified: Boolean!
   location: String!
   jobTitle: String!
   timezone: String!
+  dateFormat: String!
+  appearance: String!
   createdAt: Date!
   updatedAt: Date!
+  lastLoginAt: Date
+  tfaIsActive: Boolean!
   groups: [Group]!
+}
+
+type UserProfile {
+  id: Int!
+  name: String!
+  email: String!
+  providerKey: String
+  providerName: String
+  isSystem: Boolean!
+  isVerified: Boolean!
+  location: String!
+  jobTitle: String!
+  timezone: String!
+  dateFormat: String!
+  appearance: String!
+  createdAt: Date!
+  updatedAt: Date!
+  lastLoginAt: Date
+  groups: [String]!
+  pagesTotal: Int!
+}
+
+type UserTokenResponse {
+  responseResult: ResponseStatus!
+  jwt: String
 }

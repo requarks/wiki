@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-app(:dark='darkMode').tags
+  v-app(:dark='$vuetify.theme.dark').tags
     nav-header
     v-navigation-drawer.pb-0.elevation-1(app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
       vue-scroll(:ops='scrollStyle')
@@ -49,7 +49,7 @@
           rounded
           single-line
           height='40'
-          prepend-icon='mdi-file-document-box-search-outline'
+          prepend-icon='mdi-text-box-search-outline'
           append-icon='mdi-arrow-right'
           clearable
         )
@@ -89,7 +89,7 @@
           v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-down
       v-divider
       .text-center.pt-10(v-if='selection.length < 1')
-        img(src='/svg/icon-price-tag.svg')
+        img(src='/_assets/svg/icon-price-tag.svg')
         .subtitle-2.grey--text {{$t('tags:selectOneMoreTagsHint')}}
       .px-5.py-2(v-else)
         v-data-iterator(
@@ -112,11 +112,11 @@
               .subtitle-2.grey--text.mt-5 {{$t('tags:retrievingResultsLoading')}}
           template(v-slot:no-data)
             .text-center.pt-10
-              img(src='/svg/icon-info.svg')
+              img(src='/_assets/svg/icon-info.svg')
               .subtitle-2.grey--text {{$t('tags:noResults')}}
           template(v-slot:no-results)
             .text-center.pt-10
-              img(src='/svg/icon-info.svg')
+              img(src='/_assets/svg/icon-info.svg')
               .subtitle-2.grey--text {{$t('tags:noResultsWithFilter')}}
           template(v-slot:default='props')
             v-row(align='stretch')
@@ -151,7 +151,6 @@
 </template>
 
 <script>
-import { get } from 'vuex-pathify'
 import VueRouter from 'vue-router'
 import _ from 'lodash'
 
@@ -209,7 +208,6 @@ export default {
     }
   },
   computed: {
-    darkMode: get('site/dark'),
     tagsGrouped () {
       return _.groupBy(this.tags, t => t.title.charAt(0).toUpperCase())
     },

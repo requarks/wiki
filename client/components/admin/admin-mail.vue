@@ -3,7 +3,7 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/svg/icon-new-post.svg', alt='Mail', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-new-post.svg', alt='Mail', style='width: 80px;')
           .admin-header-title
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:mail.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:mail.subtitle') }}
@@ -26,7 +26,7 @@
                       :label='$t(`admin:mail.senderName`)'
                       required
                       :counter='255'
-                      prepend-icon='mdi-contact-mail'
+                      prepend-icon='mdi-mailbox'
                       )
                     v-text-field(
                       outlined
@@ -34,7 +34,7 @@
                       :label='$t(`admin:mail.senderEmail`)'
                       required
                       :counter='255'
-                      prepend-icon='mdi-at'
+                      prepend-icon='mdi-mailbox'
                       )
                   v-divider
                   .overline.pa-4.grey--text {{ $t('admin:mail.smtp') }}
@@ -66,7 +66,16 @@
                       prepend-icon='mdi-security-network'
                       inset
                       )
-                    v-text-field.mt-3(
+                    v-switch(
+                      v-model='config.verifySSL'
+                      :label='$t(`admin:mail.smtpVerifySSL`)'
+                      color='primary'
+                      persistent-hint
+                      :hint='$t(`admin:mail.smtpVerifySSLHint`)'
+                      prepend-icon='mdi-security-network'
+                      inset
+                      )
+                    v-text-field.mt-8(
                       outlined
                       v-model='config.user'
                       :label='$t(`admin:mail.smtpUser`)'
@@ -79,7 +88,7 @@
                       v-model='config.pass'
                       :label='$t(`admin:mail.smtpPwd`)'
                       required
-                      prepend-icon='mdi-textbox-password'
+                      prepend-icon='mdi-form-textbox-password'
                       type='password'
                       )
 
@@ -88,8 +97,9 @@
                 v-form
                   v-toolbar(color='primary', dark, dense, flat)
                     v-toolbar-title.subtitle-1 {{ $t('admin:mail.dkim') }}
+                  v-card-info
+                    span {{ $t('admin:mail.dkimHint') }}
                   .pa-4
-                    .body-2.grey--text.text--darken-2 {{ $t('admin:mail.dkimHint') }}
                     v-switch(
                       v-model='config.useDKIM'
                       :label='$t(`admin:mail.dkimUse`)'
@@ -147,7 +157,6 @@
 
 <script>
 import _ from 'lodash'
-import { get } from 'vuex-pathify'
 import mailConfigQuery from 'gql/admin/mail/mail-query-config.gql'
 import mailUpdateConfigMutation from 'gql/admin/mail/mail-mutation-save-config.gql'
 import mailTestMutation from 'gql/admin/mail/mail-mutation-sendtest.gql'
@@ -161,6 +170,7 @@ export default {
         host: '',
         port: 0,
         secure: false,
+        verifySSL: false,
         user: '',
         pass: '',
         useDKIM: false,
@@ -171,9 +181,6 @@ export default {
       testEmail: '',
       testLoading: false
     }
-  },
-  computed: {
-    darkMode: get('site/dark')
   },
   methods: {
     async save () {
@@ -186,6 +193,7 @@ export default {
             host: this.config.host || '',
             port: _.toSafeInteger(this.config.port) || 0,
             secure: this.config.secure || false,
+            verifySSL: this.config.verifySSL || false,
             user: this.config.user || '',
             pass: this.config.pass || '',
             useDKIM: this.config.useDKIM || false,
@@ -218,7 +226,7 @@ export default {
           }
         })
         if (!_.get(resp, 'data.mail.sendTest.responseResult.succeeded', false)) {
-          throw new Error(_.get(resp, 'data.mail.sendTest.responseResult.message', 'An unexpected error occured.'))
+          throw new Error(_.get(resp, 'data.mail.sendTest.responseResult.message', 'An unexpected error occurred.'))
         }
 
         this.testEmail = ''

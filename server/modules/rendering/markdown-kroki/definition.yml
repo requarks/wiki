@@ -1,0 +1,29 @@
+key: markdownKroki
+title: Kroki
+description: Kroki Diagrams Parser
+author: rlanyi (based on PlantUML renderer)
+icon: mdi-sitemap
+enabledDefault: false
+dependsOn: markdownCore
+props:
+  server:
+    type: String
+    default: https://kroki.io
+    title: Kroki Server
+    hint: Kroki server used for image generation
+    order: 1
+    public: true
+  openMarker:
+    type: String
+    default: "```kroki"
+    title: Open Marker
+    hint: String to use as opening delimiter. Diagram type must be put in the next line in lowercase.
+    order: 2
+    public: true
+  closeMarker:
+    type: String
+    default: "```"
+    title: Close Marker
+    hint: String to use as closing delimiter
+    order: 3
+    public: true

@@ -57,6 +57,10 @@ module.exports = {
     message: 'Invalid email / username or password.',
     code: 1002
   }),
+  AuthPasswordInvalid: CustomError('AuthPasswordInvalid', {
+    message: 'Password is incorrect.',
+    code: 1020
+  }),
   AuthProviderInvalid: CustomError('AuthProviderInvalid', {
     message: 'Invalid authentication provider.',
     code: 1003
@@ -68,6 +72,10 @@ module.exports = {
   AuthRegistrationDomainUnauthorized: CustomError('AuthRegistrationDomainUnauthorized', {
     message: 'You are not authorized to register. Your domain is not whitelisted.',
     code: 1011
+  }),
+  AuthRequired: CustomError('AuthRequired', {
+    message: 'You must be authenticated to access this resource.',
+    code: 1019
   }),
   AuthTFAFailed: CustomError('AuthTFAFailed', {
     message: 'Incorrect TFA Security Code.',
@@ -88,6 +96,30 @@ module.exports = {
   BruteTooManyAttempts: CustomError('BruteTooManyAttempts', {
     message: 'Too many attempts! Try again later.',
     code: 1008
+  }),
+  CommentContentMissing: CustomError('CommentContentMissing', {
+    message: 'Comment content is missing or too short.',
+    code: 8003
+  }),
+  CommentGenericError: CustomError('CommentGenericError', {
+    message: 'An unexpected error occured.',
+    code: 8001
+  }),
+  CommentManageForbidden: CustomError('CommentManageForbidden', {
+    message: 'You are not authorized to manage comments on this page.',
+    code: 8004
+  }),
+  CommentNotFound: CustomError('CommentNotFound', {
+    message: 'This comment does not exist.',
+    code: 8005
+  }),
+  CommentPostForbidden: CustomError('CommentPostForbidden', {
+    message: 'You are not authorized to post a comment on this page.',
+    code: 8002
+  }),
+  CommentViewForbidden: CustomError('CommentViewForbidden', {
+    message: 'You are not authorized to view comments for this page.',
+    code: 8006
   }),
   InputInvalid: CustomError('InputInvalid', {
     message: 'Input data is invalid.',
@@ -197,7 +229,7 @@ module.exports = {
     message: 'An unexpected error occured during user creation.',
     code: 1009
   }),
-  UserDeleteForeignConstraint: CustomError('UserCreationFailed', {
+  UserDeleteForeignConstraint: CustomError('UserDeleteForeignConstraint', {
     message: 'Cannot delete user because of content relational constraints.',
     code: 1017
   }),
