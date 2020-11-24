@@ -14,16 +14,15 @@ module.exports = {
       const imageFormat = opts.imageFormat || 'svg'
       const server = opts.server || 'https://plantuml.requarks.io'
 
-      //attribute that will contain the plantuml
-      //that will be copied to the body
-      const pumlSearchAttribute = 'puml'
 
       // do not declare so that these variables have a global scope
       // This will be used in html-security to allow <object> tag
       // when trying to load configured plantuml server path only
       pumlImageFormat = imageFormat
       pumlServer = server
-      pumlSearchAttr = pumlSearchAttribute
+      pumlObjectType = 'image/svg+xml'
+      pumlObjectStyle = 'max-width:100%;height:auto'
+      pumlObjectClass = 'uml-diagram prefetch-candidate'
 
       md.block.ruler.before('fence', 'uml_diagram', (state, startLine, endLine, silent) => {
         let nextLine
@@ -129,26 +128,47 @@ module.exports = {
           // png use the image tag
           token = state.push('uml_diagram', 'img', 0)
           // alt is constructed from children. No point in populating it here.
-          token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram prefetch-candidate'] ]
+          token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', `${pumlObjectClass}`] ]
           token.block = true
           token.children = altToken
           token.info = params
           token.map = [ startLine, nextLine ]
           token.markup = markup
-        } else if (imageFormat === 'svg') {
+        }
+        else if (imageFormat === 'svg') {
           // for svg create an <object> tag so that it can be rendered interactively
-          // dump the plantuml src into an attribute so that it can be moved to the body
-          // in html-security so that it is searchable
+          // dump the plantuml src into the node value so that it is searchable
 
+          /* <object data=<plantumlserver>/<format>/plantuml
+                      alt='' class='uml-diagram prefetch-candidate' style='max-width:100%;height:auto'
+                      type='image/svg+xml' >
+          */
           token = state.push('uml_diagram_obj', 'object', 0)
-          token.attrs = [ [ 'data', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram prefetch-candidate'], ['style', 'max-width:100%;height:auto'], ['type', 'image/svg+xml'], [`${pumlSearchAttribute}`, contents] ]
+          token.attrs = [ [ 'data', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', `${pumlObjectClass}`], ['style', `${pumlObjectStyle}`], ['type', `${pumlObjectType}`] ]
           token.block = true
           token.children = altToken
           token.info = params
           token.map = [ startLine, nextLine ]
           token.markup = markup
 
-          //object tags need to be closed
+          //backup image if object is not allowed to be rendered
+          //img node void element so doesn't need to be closed in html
+          /* <img src=data=<plantumlserver>/<format>/plantuml alt=''
+                  class='uml-diagram prefetch-candidate'
+                  type='image/svg+xml'
+              >
+          */
+          token = state.push('uml_diagram_img', 'img', 0)
+          // alt is constructed from children. No point in populating it here.
+          token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', `${pumlObjectClass}`] ]
+
+          //add puml as object node text value for searchability
+          //@startuml...@enduml
+          token = state.push ('text', '', 0)
+          token.content = contents
+
+          //close object tag
+          // </object>
           token = state.push('uml_diagram_close', 'object', -1)
         }
 
