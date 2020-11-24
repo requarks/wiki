@@ -1,6 +1,5 @@
 const { JSDOM } = require('jsdom')
 const createDOMPurify = require('dompurify')
-const { boolean } = require('yargs')
 
 module.exports = {
   async init(input, config) {
