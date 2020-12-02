@@ -1,0 +1,64 @@
+apiVersion: v1
+entries:
+  postgresql:
+  - apiVersion: v1
+    appVersion: 11.5.0
+    created: "2020-12-02T14:43:24.5465399+01:00"
+    description: Chart for PostgreSQL, an object-relational database management system
+      (ORDBMS) with an emphasis on extensibility and on standards-compliance.
+    digest: c2b1ca44a75b9fd344f3558e0a0c393255e301e3a9ad45a57805648f47b251f6
+    home: https://www.postgresql.org/
+    icon: https://bitnami.com/assets/stacks/postgresql/img/postgresql-stack-110x117.png
+    keywords:
+    - postgresql
+    - postgres
+    - database
+    - sql
+    - replication
+    - cluster
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    - email: cedric@desaintmartin.fr
+      name: desaintmartin
+    name: postgresql
+    sources:
+    - https://github.com/bitnami/bitnami-docker-postgresql
+    urls:
+    - charts/postgresql-6.5.0.tgz
+    version: 6.5.0
+  wiki:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2020-12-02T14:43:24.5455401+01:00"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 8.10.14
+    description: The most powerful and extensible open source Wiki software.
+    digest: 7658a8c48eb21ad33f46780c941f39a747274b0d61dc651dc184417095c3de4b
+    home: https://wiki.js.org
+    icon: https://github.com/Requarks/wiki/raw/master/client/static/favicons/android-chrome-192x192.png
+    keywords:
+    - wiki
+    - documentation
+    - knowledge base
+    - docs
+    - reference
+    - editor
+    maintainers:
+    - email: github@ngpixel.com
+      name: Nicolas Giard
+      url: https://github.com/NGPixel
+    - email: james@fuziontech.net
+      name: James Greenhill
+      url: https://github.com/fuziontech
+    name: wiki
+    sources:
+    - https://github.com/Requarks/wiki
+    type: application
+    urls:
+    - wiki-2.1.0.tgz
+    version: 2.1.0
+generated: "2020-12-02T14:43:24.539537+01:00"
