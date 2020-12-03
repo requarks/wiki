@@ -231,6 +231,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ernie Reid
 - Etienne
 - Flemis Jurgenheimer
+- Florent
 - Günter Pavlas
 - hong
 - Ian
