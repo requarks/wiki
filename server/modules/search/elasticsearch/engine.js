@@ -57,12 +57,12 @@ module.exports = {
           const idxBody = {
             properties: {
               suggest: { type: 'completion' },
-              title: { type: 'text', boost: 10.0 },
-              description: { type: 'text', boost: 3.0 },
-              content: { type: 'text', boost: 1.0 },
+              title: { type: 'text', boost: 10.0, analyzer: this.config.analyzer },
+              description: { type: 'text', boost: 3.0, analyzer: this.config.analyzer },
+              content: { type: 'text', boost: 1.0, analyzer: this.config.analyzer },
               locale: { type: 'keyword' },
               path: { type: 'text' },
-              tags: { type: 'text', boost: 8.0 }
+              tags: { type: 'text', boost: 8.0, analyzer: this.config.analyzer }
             }
           }
           await this.client.indices.create({
