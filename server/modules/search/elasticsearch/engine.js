@@ -63,7 +63,7 @@ module.exports = {
               locale: { type: 'keyword' },
               path: { type: 'text' },
               tags: { type: 'text', boost: 8.0 }
-            },
+            }
           }
           await this.client.indices.create({
             index: this.config.indexName,
