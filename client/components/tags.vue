@@ -243,7 +243,7 @@ export default {
   router,
   created () {
     this.$store.commit('page/SET_MODE', 'tags')
-    this.selection = _.compact(this.$route.path.split('/'))
+    this.selection = _.compact(decodeURI(this.$route.path).split('/'))
   },
   mounted () {
     this.locales = _.concat(
