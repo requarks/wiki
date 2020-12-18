@@ -48,11 +48,12 @@
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
         v-divider
-      v-container.grey.pa-0(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
-        v-row(no-gutters, align-content='center', style='height: 90px;')
-          v-col.page-col-content.is-page-header(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')
-            .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
-            .caption.grey--text.text--darken-1 {{description}}
+      v-container.grey.pa-0.pl-5(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
+        v-row(align-content='center', style='height: 90px;')
+          v-col.page-col-content.is-page-header.pl-0(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;')
+            .ty-max-width.px-12
+              .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
+              .caption.grey--text.text--darken-1 {{description}}
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
@@ -185,7 +186,7 @@
                   span {{$t('common:page.printFormat')}}
                 v-spacer
 
-          v-flex.page-col-content(xs12, lg9, xl10)
+          v-flex.page-col-content.ty-max-width.px-12(xs12, lg9, xl10)
             v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
@@ -563,11 +564,39 @@ export default {
           ev.preventDefault()
           ev.stopPropagation()
           this.$vuetify.goTo(decodeURIComponent(ev.target.hash), this.scrollOpts)
+          this.copyToClipboard(decodeURIComponent(ev.target.hash))
         }
       })
+
+      this.hydratePageContent()
     })
   },
   methods: {
+    hydratePageContent() {
+      const c = this.$refs.container
+
+      // get code language from pre's class
+      c.querySelectorAll('pre.prismjs').forEach(el => {
+        const langClass = Array.from(el.classList).find(str => str.startsWith('language-'))
+        if (langClass) {
+          el.dataset.lang = langClass.split('language-')[1]
+        }
+      })
+
+      // remove empty divs
+      c.querySelectorAll('div:not([class]):not([id])').forEach(el => {
+        if (el.innerHTML === '') el.remove()
+      })
+
+      // add click listerers for images
+      c.querySelectorAll('p > img').forEach(el => el.addEventListener('click', () => {
+        window.open(el.src, '_blank')
+      }))
+    },
+    copyToClipboard(hash) {
+      const url = window.location.origin + window.location.pathname + hash
+      navigator.clipboard.writeText(url)
+    },
     goHome () {
       window.location.assign('/')
     },
