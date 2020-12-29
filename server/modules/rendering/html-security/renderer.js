@@ -35,12 +35,14 @@ module.exports = {
       //Changes to keep interactive plantuml object tag
 
       //only allow specific attributes for plantuml object node
-      allowedTags.push('object')
-      allowedAttrs.push('data')
-      allowedAttrs.push('type')
-      allowedAttrs.push('style')
-      allowedAttrs.push('class')
-      allowedAttrs.push('alt')
+      if (`${pumlImageFormat}` == 'svg') {
+        allowedTags.push('object')
+        allowedAttrs.push('data')
+        allowedAttrs.push('type')
+        allowedAttrs.push('style')
+        allowedAttrs.push('class')
+        allowedAttrs.push('alt')
+      }
 
       DOMPurify.addHook('uponSanitizeElement',  (node, data) => {
         // keep object node only if it is

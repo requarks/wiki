@@ -172,15 +172,19 @@ module.exports = {
           token.map = [ startLine, nextLine ]
           token.markup = markup
 
-          //add puml source in object node for wikijs search index
-          //as wikijs will not index svg content from object tag
-          //i.e. like <object ...>@startuml...@enduml</object>
-          token = state.push ('text', '', 0)
-          token.content = contents
-
           //close object tag - </object>
           token = state.push('uml_diagram_close', 'object', -1)
         }
+
+        //Create hidden text inside html for wikijs search index
+        // text won't be visible or occupy any space but will be searchable
+        //i.e. <p style='display:none'>@startuml...@enduml</p>
+        token = state.push ('hidden', 'p', 0)
+        token.attrs = [ [ 'style', 'display:none'] ]
+        token = state.push ('text', '', 0)
+        token.content = contents
+        token = state.push('hidden_close', 'p', -1)
+
         //Interactive plantuml changes end here
 
         state.line = nextLine + (autoClosed ? 1 : 0)
