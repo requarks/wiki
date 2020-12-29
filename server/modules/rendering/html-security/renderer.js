@@ -35,7 +35,9 @@ module.exports = {
       //Changes to keep interactive plantuml object tag
 
       //only allow specific attributes for plantuml object node
-      if (`${pumlImageFormat}` == 'svg') {
+      if (typeof pumlImageFormat !== 'undefined' &&
+          pumlImageFormat &&
+          pumlImageFormat  == 'svg') {
         allowedTags.push('object')
         allowedAttrs.push('data')
         allowedAttrs.push('type')
@@ -51,7 +53,12 @@ module.exports = {
         // insert the plantuml inside the object as text for search
         let isPumlNode=false
 
-        if (data.tagName === 'object') {
+        if (data.tagName === 'object' &&
+            typeof pumlServer !== 'undefined' && pumlServer &&
+            typeof pumlObjectStyle !== 'undefined' && pumlObjectStyle &&
+            typeof pumlObjectType !== 'undefined' && pumlObjectType &&
+            typeof pumlObjectClass !== 'undefined' && pumlObjectClass
+        ) {
           //console.log ("Found object node - validating")
           //remove node if it doesn't conform to plantuml structure
           if (!( 'data' in node.attributes
@@ -72,9 +79,9 @@ module.exports = {
           ) {
             //console.log ("Plantuml node found - setting atribute values")
             isPumlNode=true
-            node.setAttribute ('type', `${pumlObjectType}`)
-            node.setAttribute ('style', `${pumlObjectStyle}`)
-            node.setAttribute ('class', `${pumlObjectClass}`)
+            node.setAttribute ('type', pumlObjectType)
+            node.setAttribute ('style', pumlObjectStyle)
+            node.setAttribute ('class', pumlObjectClass)
             node.setAttribute ('alt', '')
           }
 

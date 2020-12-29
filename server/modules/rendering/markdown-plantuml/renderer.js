@@ -129,7 +129,7 @@ module.exports = {
           // alt is constructed from children. No point in populating it here.
           token.attrs = [ [ 'src' , `${server}/${imageFormat}/${zippedCode}` ],
                           [ 'alt' , '' ],
-                          ['class', `${pumlObjectClass}` ]
+                          ['class', pumlObjectClass ]
                         ]
           token.block = true
           token.children = altToken
@@ -145,9 +145,9 @@ module.exports = {
           token = state.push('uml_diagram_obj', 'object', 0)
           token.attrs = [ [ 'data' , `${server}/${imageFormat}/${zippedCode}`],
                           [ 'alt'  ,  '' ],
-                          [ 'class', `${pumlObjectClass}` ],
-                          [ 'style', `${pumlObjectStyle}` ],
-                          [ 'type',  `${pumlObjectType}`  ]
+                          [ 'class', pumlObjectClass ],
+                          [ 'style', pumlObjectStyle ],
+                          [ 'type',  pumlObjectType  ]
                         ]
           token.block = true
           token.children = altToken
@@ -164,7 +164,7 @@ module.exports = {
           // alt is constructed from children. No point in populating it here.
           token.attrs = [ [ 'src' , `${server}/${imageFormat}/${zippedCode}` ],
                           [ 'alt' , '' ],
-                          ['class', `${pumlObjectClass}`]
+                          ['class', pumlObjectClass]
                         ]
           token.block = true
           token.children = altToken
