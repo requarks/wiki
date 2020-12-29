@@ -96,6 +96,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
+- Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
@@ -115,6 +116,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
+- Victor Bilgin ([@vbilgin](https://github.com/vbilgin))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - magicpotato ([@fortheday](https://github.com/fortheday))
@@ -230,6 +232,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ernie Reid
 - Etienne
 - Flemis Jurgenheimer
+- Florent
 - Günter Pavlas
 - hong
 - Ian

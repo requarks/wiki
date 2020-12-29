@@ -70,7 +70,16 @@ module.exports = {
             body: {
               mappings: (this.config.apiVersion === '6.x') ? {
                 _doc: idxBody
-              } : idxBody
+              } : idxBody,
+              settings: {
+                analysis: {
+                  analyzer: {
+                    default: {
+                      type: this.config.analyzer
+                    }
+                  }
+                }
+              }
             }
           })
         } catch (err) {

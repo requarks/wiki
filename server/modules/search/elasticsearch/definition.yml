@@ -26,16 +26,22 @@ props:
     hint: The index name to use during creation
     default: wiki
     order: 3
+  analyzer:
+    type: String
+    title: Analyzer
+    hint: 'The token analyzer in elasticsearch'
+    default: simple
+    order: 4
   sniffOnStart:
     type: Boolean
     title: Sniff on start
     hint: 'Should Wiki.js attempt to detect the rest of the cluster on first connect? (Default: off)'
     default: false
-    order: 4
+    order: 5
   sniffInterval:
     type: Number
     title: Sniff Interval
     hint: '0 = disabled, Interval in seconds to check for updated list of nodes in cluster. (Default: 0)'
     default: 0
-    order: 5
+    order: 6
 
