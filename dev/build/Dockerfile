@@ -7,12 +7,15 @@ RUN apk add yarn g++ make python --no-cache
 
 WORKDIR /wiki
 
-COPY ./client ./client
-COPY ./dev ./dev
-COPY ./package.json ./package.json
-COPY ./.babelrc ./.babelrc
-COPY ./.eslintignore ./.eslintignore
-COPY ./.eslintrc.yml ./.eslintrc.yml
+COPY ./wiki/client ./client
+COPY ./wiki/dev ./dev
+COPY ./wiki/package.json ./package.json
+COPY ./wiki/.babelrc ./.babelrc
+COPY ./wiki/.eslintignore ./.eslintignore
+COPY ./wiki/.eslintrc.yml ./.eslintrc.yml
+
+RUN mkdir -p /wiki-ckeditor5
+COPY ./wiki-ckeditor5 /wiki-ckeditor5
 
 RUN yarn cache clean
 RUN yarn --frozen-lockfile --non-interactive
@@ -36,11 +39,11 @@ WORKDIR /wiki
 
 COPY --chown=node:node --from=assets /wiki/assets ./assets
 COPY --chown=node:node --from=assets /wiki/node_modules ./node_modules
-COPY --chown=node:node ./server ./server
+COPY --chown=node:node ./wiki/server ./server
 COPY --chown=node:node --from=assets /wiki/server/views ./server/views
-COPY --chown=node:node ./dev/build/config.yml ./config.yml
-COPY --chown=node:node ./package.json ./package.json
-COPY --chown=node:node ./LICENSE ./LICENSE
+COPY --chown=node:node ./wiki/dev/build/config.yml ./config.yml
+COPY --chown=node:node ./wiki/package.json ./package.json
+COPY --chown=node:node ./wiki/LICENSE ./LICENSE
 
 USER node
 

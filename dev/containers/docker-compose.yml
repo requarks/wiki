@@ -50,6 +50,7 @@ services:
       - "3000:3000"
     volumes:
       - ../..:/wiki
+      - ../../../wiki-ckeditor5:/wiki-ckeditor5
       - /wiki/node_modules
       - /wiki/.git
 
