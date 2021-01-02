@@ -892,11 +892,11 @@
 
 
 .container .layout.row .flex.page-col-content {
-  padding: 100px;
+  padding: 10%;
 }
 
 .editor-ckeditor > .ck-editor__editable {
-  padding: 100px !important
+  padding: 10% !important
 }
 
 .editor-markdown-preview-content {
@@ -925,13 +925,35 @@ span.cm-comment {
 .v-main .contents blockquote {
   border-left: none;
   margin: 1rem 2rem;
+  font-style: normal;
   ::before {
     display: none;
   }
 }
 
-p, ol, ul, li {
-  font-size: 1.2rem;
+
+.v-main .contents {
+  p, ol, ul, li {
+    font-size: 1.2rem;
+  }
+  h1 {
+    border-bottom: 1px solid white;
+    margin-bottom: 2rem;
+    padding-bottom: 20px;
+  }
+  h2 {
+    border-bottom: 1px solid rgb(146, 146, 146);
+    border-top: 1px solid rgb(146, 146, 146);
+    margin-bottom: 1rem;
+    padding-bottom: 10px;
+    padding-top: 10px;
+  }
+  h3 {
+    font-size: 1.3rem;
+    margin-top: 1.4rem;
+    padding: 5px;
+    border-radius: 3px;
+  }
 }
 
 .theme--dark {
@@ -941,13 +963,18 @@ p, ol, ul, li {
     color: $tibColorDark;
   }
 
-  h2, h3, h4, h5, h6, h7 {
-    color: rgb(236, 236, 236) !important;
+  h1, h2, h3, h4, h5, h6 {
+    color: #fff3d4 !important;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  }
+
+  h3 {
+    background-color: #3b3e3f;
   }
 
   blockquote {
     background-color: #3b3e3f !important;
-    color: $tibColorDark;
+    //color: $tibColorDark;
   }
 
 }
