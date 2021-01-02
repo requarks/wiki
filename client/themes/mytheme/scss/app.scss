@@ -461,13 +461,15 @@
     > li::before {
       position: absolute;
       left: -1.1rem;
-      content: '\25b8';
+      top: 1.4rem;
+      content: '\2b24';
       color: mc('grey', '600');
       width: 1.35rem;
+      font-size: 0.5rem;
 
       @at-root .is-rtl & {
         right: -1.1rem;
-        content: '\25C3';
+        content: '\2b24';
       }
     }
   }
