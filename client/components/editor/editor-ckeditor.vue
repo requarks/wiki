@@ -19,6 +19,7 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 //import DecoupledEditor from '@requarks/ckeditor5'
 import DecoupledEditor from '../../../../wiki-ckeditor5'
+//import DecoupledEditor from '../../../../ckeditor5/build/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
 import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
 
@@ -68,26 +69,7 @@ export default {
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
       language: this.locale,
       placeholder: 'Type the page content here',
-      disableNativeSpellChecker: false,
-      // TODO: Mention autocomplete
-      //
-      // mention: {
-      //   feeds: [
-      //     {
-      //       marker: '@',
-      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
-      //       minimumCharacters: 1
-      //     }
-      //   ]
-      // },
-      wordCount: {
-        onUpdate: stats => {
-          this.stats = {
-            characters: stats.characters,
-            words: stats.words
-          }
-        }
-      }
+      disableNativeSpellChecker: true,
     })
     this.$refs.toolbarContainer.appendChild(this.editor.ui.view.toolbar.element)
 
@@ -95,8 +77,9 @@ export default {
       this.editor.setData(this.$store.get('editor/content'))
     }
 
+
     this.editor.model.document.on('change:data', _.debounce(evt => {
-      this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
+        this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
     }, 300))
 
     this.$root.$on('editorInsert', opts => {

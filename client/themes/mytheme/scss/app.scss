@@ -191,7 +191,6 @@
   blockquote {
     padding: 0 1rem 1rem 1rem;
     background-color: mc('blue-grey', '50');
-    border-left: 55px solid mc('blue-grey', '500');
     border-radius: .5rem;
     margin: 1rem 0;
     position: relative;
@@ -963,4 +962,34 @@
   .comments-container {
     display: none;
   }
+}
+
+.page-col-content {
+  padding: 100px!important
+}
+
+.editor-ckeditor > .ck-editor__editable {
+  padding: 100px!important
+}
+
+.tib,
+.tibetan {
+  font-size: 160%
+}
+code {
+  background-color: inherit!important;
+  color: #283593;
+  font-size: 180%!important;
+}
+span.cm-comment {
+  color: #69c!important;
+  font-size: 160%;
+}
+
+blockquote {
+  border-left: none !important;
+}
+
+.editor-markdown-preview-content {
+  padding: 50px!important
 }

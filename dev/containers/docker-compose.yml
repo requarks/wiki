@@ -51,6 +51,7 @@ services:
     volumes:
       - ../..:/wiki
       - ../../../wiki-ckeditor5:/wiki-ckeditor5
+      - ../../../ckeditor5:/ckeditor5
       - /wiki/node_modules
       - /wiki/.git
 
