@@ -199,17 +199,6 @@
       background-color: mc('blue-grey', '900');
     }
 
-    &::before {
-      display: inline-block;
-      font: normal normal normal 24px/1 "Material Design Icons", sans-serif;
-      position: absolute;
-      margin-top: -12px;
-      top: 50%;
-      left: -38px;
-      color: rgba(255, 255, 255, .7);
-      content: "\F0757";
-    }
-
     > p:first-child .emoji {
       margin-right: .5rem;
     }
@@ -896,6 +885,92 @@
 }
 
 // ---------------
+// CUSTOM OVERRIDES
+// ---------------
+
+
+.container .layout.row .flex.page-col-content {
+  padding: 100px;
+}
+
+.editor-ckeditor > .ck-editor__editable {
+  padding: 100px !important
+}
+
+.editor-markdown-preview-content {
+  padding: 50px !important
+}
+
+$tibColorLight: #283593;
+$tibColorDark: #d4d9ff;
+
+$tibFontSize: 180%;
+
+.tib,
+.tibetan {
+  font-size: $tibFontSize;
+}
+
+
+.v-main .contents code {
+  font-size: $tibFontSize;
+}
+
+span.cm-comment {
+  font-size: $tibFontSize;
+}
+
+.v-main .contents blockquote {
+  border-left: none;
+  margin: 1rem 2rem;
+  ::before {
+    display: none;
+  }
+}
+
+p, ol, ul, li {
+  font-size: 1.2rem;
+}
+
+.theme--dark {
+
+  .tib,
+  .tibetan {
+    color: $tibColorDark;
+  }
+
+  h2, h3, h4, h5, h6, h7 {
+    color: rgb(236, 236, 236) !important;
+  }
+
+  blockquote {
+    background-color: #3b3e3f !important;
+    color: $tibColorDark;
+  }
+
+}
+
+.theme--light {
+
+  .tib,
+  .tibetan {
+    color: $tibColorLight;
+  }
+
+  code {
+    background-color: inherit!important;
+    color: $tibColorLight;
+  }
+
+  span.cm-comment {
+    color: #69c!important;
+  }
+
+}
+
+
+
+// ---------------
 // PRINT OVERRIDES
 // ---------------
 
@@ -962,34 +1037,4 @@
   .comments-container {
     display: none;
   }
-}
-
-.page-col-content {
-  padding: 100px!important
-}
-
-.editor-ckeditor > .ck-editor__editable {
-  padding: 100px!important
-}
-
-.tib,
-.tibetan {
-  font-size: 160%
-}
-code {
-  background-color: inherit!important;
-  color: #283593;
-  font-size: 180%!important;
-}
-span.cm-comment {
-  color: #69c!important;
-  font-size: 160%;
-}
-
-blockquote {
-  border-left: none !important;
-}
-
-.editor-markdown-preview-content {
-  padding: 50px!important
 }
