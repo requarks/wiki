@@ -911,6 +911,7 @@ $tibFontSize: 180%;
 .tib,
 .tibetan {
   font-size: $tibFontSize;
+  font-weight: 500 !important;
 }
 
 
@@ -947,12 +948,18 @@ span.cm-comment {
     margin-bottom: 1rem;
     padding-bottom: 10px;
     padding-top: 10px;
+    margin-top: 4rem;
   }
   h3 {
     font-size: 1.3rem;
     margin-top: 1.4rem;
     padding: 5px;
     border-radius: 3px;
+    margin-top: 3rem;
+  }
+  h4 {
+    font-size: 1.2rem;
+    border-bottom: 1px solid rgb(146, 146, 146);
   }
 }
 
