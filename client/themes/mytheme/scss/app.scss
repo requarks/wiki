@@ -295,6 +295,7 @@
   // LISTS
   // ---------------------------------
 
+
   ol, ul:not(.tabset-tabs) {
     padding-top: 1rem;
     width: 100%;
@@ -461,15 +462,13 @@
     > li::before {
       position: absolute;
       left: -1.1rem;
-      top: 1.4rem;
-      content: '\2b24';
+      content: '\25b8';
       color: mc('grey', '600');
       width: 1.35rem;
-      font-size: 0.5rem;
 
       @at-root .is-rtl & {
         right: -1.1rem;
-        content: '\2b24';
+        content: '\25C3';
       }
     }
   }
@@ -483,6 +482,63 @@
       }
     }
   }
+
+  // ---------------------------------
+  // CODE
+  // ---------------------------------
+
+  code {
+    background-color: mc('indigo', '50');
+    padding: 0 5px;
+    color: mc('indigo', '800');
+    font-family: 'Roboto Mono', monospace;
+    font-weight: normal;
+    font-size: 1rem;
+    box-shadow: none;
+
+    &::before, &::after {
+      display: none;
+    }
+
+    @at-root .theme--dark & {
+      background-color: darken(mc('grey', '900'), 5%);
+      color: mc('indigo', '100');
+    }
+  }
+
+  .prismjs{
+    border: none;
+    border-radius: 5px;
+    box-shadow: initial;
+    background-color: mc('grey', '900');
+    padding: 1rem 1rem 1rem 3rem;
+    margin: 1rem 0;
+
+    @at-root .theme--dark & {
+      background-color: darken(mc('grey', '900'), 5%);
+    }
+
+    > code {
+      background-color: transparent;
+      padding: 0;
+      color: #FFF;
+      box-shadow: initial;
+      display: block;
+      font-size: .85rem;
+      font-family: 'Roboto Mono', monospace;
+
+      &:after, &:before {
+        content: initial;
+        letter-spacing: initial;
+      }
+    }
+  }
+
+  .diagram {
+    margin-top: 1rem;
+  }
+
+
 
   // ---------------------------------
   // CODE
@@ -896,7 +952,7 @@
 }
 
 .editor-ckeditor > .ck-editor__editable {
-  padding: 10% !important
+  padding: 5% !important
 }
 
 .editor-markdown-preview-content {
@@ -914,7 +970,7 @@ $tibFontSize: 180%;
   font-weight: 500 !important;
 }
 
-
+/*
 .v-main .contents code {
   font-size: $tibFontSize;
 }
@@ -922,6 +978,7 @@ $tibFontSize: 180%;
 span.cm-comment {
   font-size: $tibFontSize;
 }
+*/
 
 .v-main .contents blockquote {
   border-left: none;
@@ -931,7 +988,6 @@ span.cm-comment {
     display: none;
   }
 }
-
 
 .v-main .contents {
   p, ol, ul, li {
@@ -958,10 +1014,41 @@ span.cm-comment {
     margin-top: 3rem;
   }
   h4 {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    margin-top: 1.0rem;
     border-bottom: 1px solid rgb(146, 146, 146);
   }
+  h5 {
+    font-size: 1.2rem;
+    margin-top: 1.0rem;
+  }
+
 }
+
+.v-application .v-main .contents {
+  ol, ul {
+    padding-left: 4rem !important;
+  }
+  //line-height: 1.5;
+  ul:not(.tabset-tabs) {
+    list-style: none;
+    > li::before {
+      position: absolute;
+      left: -1.5rem;
+      top: 0.7rem;
+      font-size: 1.8rem;
+      content: '\1F784';
+      color: white;
+      width: 1.35rem;
+
+      @at-root .is-rtl & {
+        right: -1.1rem;
+        content: '\25C3';
+      }
+    }
+  }
+}
+
 
 .theme--dark {
 
