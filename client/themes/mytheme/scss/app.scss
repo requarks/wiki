@@ -962,12 +962,13 @@
 $tibColorLight: #283593;
 $tibColorDark: #d4d9ff;
 
-$tibFontSize: 180%;
+$tibFontSize: 160%;
 
 .tib,
 .tibetan {
   font-size: $tibFontSize;
   font-weight: 500 !important;
+  line-height: 1.0;
 }
 
 /*
@@ -1037,26 +1038,16 @@ v-main .contents {
 
 }
 
-.v-application .v-main .contents {
+.v-main .contents {
   ol, ul {
     padding-left: 4rem !important;
   }
-  //line-height: 1.5;
+  line-height: 2.0;
   ul:not(.tabset-tabs) {
-    list-style: none;
+    list-style: disc;
+    color: white;
     > li::before {
-      position: absolute;
-      left: -1.5rem;
-      top: 0.7rem;
-      font-size: 1.8rem;
-      content: '\1F784';
-      color: white;
-      width: 1.35rem;
-
-      @at-root .is-rtl & {
-        right: -1.1rem;
-        content: '\25C3';
-      }
+      display: none;
     }
   }
 }
