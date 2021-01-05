@@ -990,7 +990,7 @@ span.cm-comment {
   }
 }
 
-v-main .contents {
+.v-main .contents {
   padding: .5rem 0 200px;
 }
 
@@ -999,6 +999,9 @@ v-main .contents {
     font-size: 1.2rem;
   }
   p {
+    padding: 1.5rem 0 0;
+  }
+  p.tighter {
     padding: 0.8rem 0 0;
   }
   h1 {
@@ -1034,6 +1037,22 @@ v-main .contents {
   h5 + p, h4 + p {
     margin-top: 0;
     padding-top: 0;
+  }
+
+  .ck-content .text-tiny {
+    font-size: 0.7em;
+  }
+
+  .ck-content .text-small {
+      font-size: 0.85em;
+  }
+
+  .ck-content .text-big {
+      font-size: 1.4em;
+  }
+
+  .ck-content .text-huge {
+      font-size: 1.8em;
   }
 
 }
