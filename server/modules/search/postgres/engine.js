@@ -86,12 +86,12 @@ module.exports = {
       }
 
       //let regex = new RegExp('(.{0,20})'+q+'(.{0,20})', 'ig');
-      let regex = new RegExp("(\\S+[-\\s]+\\n?){0,5}("+q+")\\s?(\\S+[-\\s]+\\n?){0,5}", "ig")
+      let regex = new RegExp("(\\S+[-\\s]+\\n?){0,4}("+q+")\\s?(\\S+[-\\s]+\\n?){0,4}", "ig")
       for (let i=0;i<results.rows.length;i++) {
         let row = results.rows[i];
         let content = row.content;
         let matches = content.match(regex);
-        results.rows[i].matches = matches;
+        results.rows[i].matches = matches.slice(0,10);
         results.rows[i].numMatches = matches.length;
       }
 
