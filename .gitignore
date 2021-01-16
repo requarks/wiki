@@ -5,6 +5,9 @@ logs
 
 backups
 
+*.pem
+*.pem.pub
+
 # Deployment builds
 dist
 
