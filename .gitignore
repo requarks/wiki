@@ -3,6 +3,8 @@ logs
 *.log
 /logs
 
+backups
+
 # Deployment builds
 dist
 

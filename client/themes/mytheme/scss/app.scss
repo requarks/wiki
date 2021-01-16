@@ -1004,6 +1004,9 @@ span.cm-comment {
   p.tighter {
     padding: 0 0 0;
   }
+	p.less-tighter {
+		padding: 5px 0 0;
+	}
   h1 {
     border-bottom: 1px solid white;
     margin-bottom: 2rem;
@@ -1028,10 +1031,12 @@ span.cm-comment {
     font-size: 1.3rem;
     margin-top: 2.0rem;
     border-bottom: 1px solid rgb(146, 146, 146);
+		margin-bottom: 1rem;
   }
   h5 {
     font-size: 1.2rem;
     margin-top: 1.8rem;
+		margin-bottom: 1rem;
   }
 
   h5 + p, h4 + p {
@@ -1039,21 +1044,34 @@ span.cm-comment {
     padding-top: 0;
   }
 
-  .ck-content .text-tiny {
+  .text-tiny {
     font-size: 0.7em;
   }
 
-  .ck-content .text-small {
+  .text-small {
       font-size: 0.85em;
   }
 
-  .ck-content .text-big {
+  .text-big {
       font-size: 1.4em;
   }
 
-  .ck-content .text-huge {
+  .text-huge {
       font-size: 1.8em;
   }
+
+	mark {
+		&.marker-outline-yellow {
+			border-color: rgba(#fff3d4, 90%);
+			background-color: transparent;
+			border-radius: 3px;
+			border-width: 3px;
+			border-style: solid;
+			padding: 5px 4px;
+			margin: 0px 4px;
+			color:inherit;
+		}
+	}
 
 }
 

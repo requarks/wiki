@@ -1,0 +1,10 @@
+port: 3000
+bindIP: 0.0.0.0
+db:
+  type: postgres
+  host: db
+  port: 5432
+  user: wikijs
+  pass: wikijsrocks
+  db: wiki
+logLevel: info

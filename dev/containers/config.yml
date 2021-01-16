@@ -5,6 +5,13 @@ db:
   host: db
   port: 5432
   user: wikijs
-  pass: wikijsrocks
+  pass: alksjlfwiersalkdflkaj
   db: wiki
 logLevel: info
+ssl:
+  enabled: true
+  port: 3443
+  provider: letsencrypt
+  domain: wiki.learntibetanlanguage.org
+  subscriberEmail: andrewcarterhughes@gmail.com
+
