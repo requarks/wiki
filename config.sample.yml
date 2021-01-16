@@ -24,10 +24,10 @@ db:
   type: postgres
 
   # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
-  host: localhost
-  port: 5432
+  host: wiki.learntibetanlanguage.org
+  port: 15432
   user: wikijs
-  pass: wikijsrocks
+  pass: alksjlfwiersalkdflkaj
   db: wiki
   ssl: false
 

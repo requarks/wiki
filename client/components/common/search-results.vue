@@ -20,10 +20,11 @@
           template(v-for='(item, idx) of results')
             v-list-item(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
               v-list-item-avatar(tile)
-                img(src='/_assets/svg/icon-selective-highlighting.svg')
+                <span>{{item.numMatches}}</span>
               v-list-item-content
                 v-list-item-title(v-text='item.title')
-                v-list-item-subtitle.caption(v-text='item.description')
+                template(v-for='(match, idx) of item.matches')
+                  v-list-item-subtitle.caption(v-text='"..."+match+"..."')
                 .caption.grey--text(v-text='item.path')
               v-list-item-action
                 v-chip(label, outlined) {{item.locale.toUpperCase()}}
@@ -136,6 +137,14 @@ export default {
     },
     goToPage(item) {
       window.location.assign(`/${item.locale}/${item.path}`)
+    },
+    getItemDescription(item) {
+      if (item.matches != null && Array.isArray(item.matches)) {
+        return "\"" + item.matches.join('", "') + "\"";
+      }
+      else {
+        return '';
+      }
     }
   },
   apollo: {

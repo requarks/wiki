@@ -48,6 +48,7 @@ services:
       - db
     ports:
       - "3000:3000"
+      - "9229:9229"
     volumes:
       - ../..:/wiki
       - ../../../wiki-ckeditor5:/wiki-ckeditor5
