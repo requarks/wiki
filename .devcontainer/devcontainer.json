@@ -7,7 +7,7 @@
   "dockerComposeFile": [
     "../dev/containers/docker-compose.yml"
   ],
-  "forwardPorts": [3000, 3001],
+  "forwardPorts": [3000, 3001,9229],
   "service": "wiki",
   "workspaceFolder": "/wiki",
   "settings": {

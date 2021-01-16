@@ -7,6 +7,8 @@ query ($query: String!) {
         description
         path
         locale
+        matches
+        numMatches
       }
       suggestions
       totalHits

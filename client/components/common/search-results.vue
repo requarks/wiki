@@ -19,14 +19,14 @@
         v-list.search-results-items.radius-7.py-0(two-line, dense)
           template(v-for='(item, idx) of results')
             v-list-item(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
-              v-list-item-avatar(tile)
-                img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
                 v-list-item-title(v-text='item.title')
-                v-list-item-subtitle.caption(v-text='item.description')
+                template(v-for='(match, idx) of item.matches')
+                  v-list-item-subtitle.caption(v-text='"..."+match.trim()+"..."')
+                v-list-item-subtitle.caption(v-if='item.numMatches > item.matches.length' v-text='(item.numMatches - item.matches.length) + " results not shown"')
                 .caption.grey--text(v-text='item.path')
               v-list-item-action
-                v-chip(label, outlined) {{item.locale.toUpperCase()}}
+                v-chip(label, outlined) {{item.numMatches}}
             v-divider(v-if='idx < results.length - 1')
         v-pagination.mt-3(
           v-if='paginationLength > 1'
@@ -136,6 +136,14 @@ export default {
     },
     goToPage(item) {
       window.location.assign(`/${item.locale}/${item.path}`)
+    },
+    getItemDescription(item) {
+      if (item.matches != null && Array.isArray(item.matches)) {
+        return "\"" + item.matches.join('", "') + "\"";
+      }
+      else {
+        return '';
+      }
     }
   },
   apollo: {

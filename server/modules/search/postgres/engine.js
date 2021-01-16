@@ -61,7 +61,7 @@ module.exports = {
     try {
       let suggestions = []
       let qry = `
-        SELECT id, path, locale, title, description
+        SELECT id, path, locale, title, description, content
         FROM "pagesVector", to_tsquery(?,?) query
         WHERE (query @@ "tokens" OR path ILIKE ?)
       `
@@ -84,6 +84,17 @@ module.exports = {
         const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 ORDER BY rank LIMIT 5;`, [q, q])
         suggestions = suggestResults.rows.map(r => r.word)
       }
+
+      //let regex = new RegExp('(.{0,20})'+q+'(.{0,20})', 'ig');
+      let regex = new RegExp("(\\S+[-\\s]+\\n?){0,4}("+q+")\\s?(\\S+[-\\s]+\\n?){0,4}", "ig")
+      for (let i=0;i<results.rows.length;i++) {
+        let row = results.rows[i];
+        let content = row.content;
+        let matches = content.match(regex);
+        results.rows[i].matches = matches.slice(0,10);
+        results.rows[i].numMatches = matches.length;
+      }
+
       return {
         results: results.rows,
         suggestions,

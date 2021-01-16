@@ -7,7 +7,7 @@
   "dev": false,
   "scripts": {
     "start": "node server",
-    "dev": "node dev",
+    "dev": "node dev --inspect",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",

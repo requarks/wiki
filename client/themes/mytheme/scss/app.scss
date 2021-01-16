@@ -1075,6 +1075,26 @@ span.cm-comment {
 
 }
 
+.search-results .search-results-container {
+  .v-list-item__content {
+    .v-list-item__title {
+      font-size: 1.2rem !important;
+      margin-bottom: 10px;
+    }
+    .v-list-item__subtitle {
+      padding-left: 10px;
+      margin-left: 20px;
+      margin-bottom: 0;
+      border-left: 1px solid lightgray;
+      font-size: 1.0rem !important;
+      line-height: 1.5rem !important;
+    }
+    .caption {
+
+    }
+  }
+}
+
 .v-main .contents {
   ol, ul {
     padding-left: 4rem !important;

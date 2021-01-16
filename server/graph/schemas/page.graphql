@@ -256,6 +256,8 @@ type PageSearchResult {
   description: String!
   path: String!
   locale: String!
+  matches: [String!]
+  numMatches: Int!
 }
 
 type PageListItem {
