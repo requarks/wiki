@@ -22,7 +22,7 @@
               v-list-item-content
                 v-list-item-title(v-text='item.title')
                 template(v-for='(match, idx) of item.matches')
-                  v-list-item-subtitle.caption(v-text='"..."+match.trim()+"..."')
+                  v-list-item-subtitle.caption(v-html='makeTibetanLarger(underlineQueryText("..."+match.trim()+"...", search))')
                 v-list-item-subtitle.caption(v-if='item.numMatches > item.matches.length' v-text='(item.numMatches - item.matches.length) + " results not shown"')
                 .caption.grey--text(v-text='item.path')
               v-list-item-action
@@ -144,6 +144,16 @@ export default {
       else {
         return '';
       }
+    },
+    makeTibetanLarger(text) {
+      return text.replace(/([\u0F00-\u0FFF]+)/g, function (match) {
+        return '<span class="tibetan">'+match+'</span>';
+      });
+    },
+    underlineQueryText(text, query) {
+      return text.replace(new RegExp(query, 'g'), function (match) {
+        return '<span style="text-decoration: underline;">'+match+'</span>';
+      });
     }
   },
   apollo: {
