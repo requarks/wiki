@@ -2692,6 +2692,11 @@
   resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-3.1.0.tgz#8ff71d51053cd5ee4981e5a501d80a536244f7fd"
   integrity sha512-GcIY79elgB+azP74j8vqkiXz8xLFfIzbQJdlwOPisgbKT00tviJQuEghOXSMVxJ00HoYJbGswr4kcllUc4xCcg==
 
+"@ckeditor/ckeditor5-build-decoupled-document@24.0.0":
+  version "24.0.0"
+  resolved "https://registry.yarnpkg.com/@ckeditor/ckeditor5-build-decoupled-document/-/ckeditor5-build-decoupled-document-24.0.0.tgz#3686020a973a59083bb041e201e673ec3dba1a80"
+  integrity sha512-BkxFSDq41ZbqATUqLnzj01KYPWJ3wru6s+QNEJY7+jdyzqLukqkpc429u6ZlRepoj6VB/lZsqLndYs3EkHtpww==
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.3.tgz#099139eaec7ebf07a27c1786a3ff64f39464d2ef"
@@ -3365,11 +3370,6 @@
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
-
-"@requarks/ckeditor5@19.0.1-wiki.2":
-  version "19.0.1-wiki.2"
-  resolved "https://registry.yarnpkg.com/@requarks/ckeditor5/-/ckeditor5-19.0.1-wiki.2.tgz#d601d868522680095ba50ded08094d72d74c4ca4"
-  integrity sha512-l2B7VB7SmX318IAwx9EdYmDujCEBQB7b+v5ySfLyK42eyKarWBuK76R0o2TudRn2z/17dvmR5zaQBEW3fDIPsg==
 
 "@root/acme@^3.0.2":
   version "3.0.9"

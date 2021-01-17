@@ -38,6 +38,7 @@
   "dependencies": {
     "@aoberoi/passport-slack": "1.0.5",
     "@azure/storage-blob": "12.2.1",
+    "@ckeditor/ckeditor5-build-decoupled-document": "24.0.0",
     "@exlinc/keycloak-passport": "1.0.2",
     "@root/csr": "0.8.1",
     "@root/keypairs": "0.10.1",
@@ -200,7 +201,6 @@
     "@babel/preset-env": "^7.12.1",
     "@mdi/font": "5.8.55",
     "@panter/vue-i18next": "0.15.2",
-    "@requarks/ckeditor5": "19.0.1-wiki.2",
     "@vue/babel-preset-app": "4.5.8",
     "animate-sass": "0.8.2",
     "animated-number-vue": "1.0.0",
