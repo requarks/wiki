@@ -48,7 +48,8 @@
       template(v-if='currentParent.id > 0')
         v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='routeNavLink(item)', style='min-height: 30px;', :input-value='path === item.path')
           v-list-item-avatar(size='18', :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`')
-            v-icon(small) mdi-folder-open
+            v-icon(v-if='item.id === 0' small) mdi-home
+            v-icon(v-else small) mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
         v-subheader.pl-4(v-if='currentItems.length') {{$t('common:sidebar.currentDirectory')}}
@@ -95,7 +96,7 @@ export default {
       currentItems: [],
       currentParent: {
         id: 0,
-        title: '/ (root)'
+        title: 'Home'
       },
       parents: [],
       loadedCache: []
@@ -117,6 +118,8 @@ export default {
     async routeNavLink(item) {
       if (item.pageId === null) {
         return this.fetchBrowseItems(item)
+      } else if (item.id === 0) {
+        return this.goHome()
       } else {
         window.location.href = '/' + item.locale + '/' + item.path
       }
@@ -218,6 +221,11 @@ export default {
       }
 
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
+
+      if (this.currentParent.id === 0) {
+        this.currentParent.title = 'Home'
+      }
+
       this.currentParent = _.last(this.parents)
 
       this.loadedCache = [curPage.parent]
