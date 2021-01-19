@@ -3,9 +3,12 @@
 @import "../../default/scss/app";
 
 .ty-max-width {
-  max-width: 840px !important;
   margin-left: auto !important;
   margin-right: auto !important;
+
+  @media screen and (min-width: 1500px) {
+    max-width: 840px !important;
+  }
 }
 
 .v-main .contents {
@@ -86,6 +89,29 @@
     }
   }
 
+  h3 {
+    font-size: 1.4rem;
+    font-weight: 500;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+  }
+
+  h5 {
+    font-size: 1.1rem;
+  }
+
+  h6 {
+    font-size: 1rem;
+  }
+
+  h4, h5, h6 {
+    & + p {
+      padding-top: 8px;
+    }
+  }
+
   // ---------------------------------
   // CODE
   // ---------------------------------
@@ -102,9 +128,37 @@
   .code-toolbar .toolbar {
     top: 4px;
     right: 8px;
+    z-index: 1;
 
     button {
       padding: .25em .5em;
+    }
+  }
+
+  .code-toolbar[data-lang] {
+    position: relative;
+
+    &::after {
+      content: attr(data-lang);
+      position: absolute;
+      top: 0;
+      left: 0;
+      text-shadow: none;
+      width: 100%;
+      height: 2rem;
+      background: rgba(mc('grey', '800'), .5);
+      color: mc('grey', '200');
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-family: "Roboto", sans-serif;
+      font-size: .8rem;
+      padding: 7px 16px;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    .prismjs {
+      padding-top: 3rem;
     }
   }
 
@@ -122,27 +176,6 @@
 
     * {
       text-shadow: none !important;
-    }
-
-    &[data-lang] {
-      position: relative;
-      padding-top: 3rem;
-
-      &::before {
-        content: attr(data-lang);
-        position: absolute;
-        top: 0;
-        left: 0;
-        text-shadow: none;
-        width: 100%;
-        height: 2rem;
-        background: rgba(mc('grey', '800'), .5);
-        text-transform: uppercase;
-        letter-spacing: .1em;
-        font-family: "Roboto", sans-serif;
-        font-size: .8rem;
-        padding: 7px 16px;
-      }
     }
   }
 

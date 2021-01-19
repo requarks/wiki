@@ -51,7 +51,7 @@
       v-container.grey.pa-0.pl-5(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
         v-row(align-content='center', style='height: 90px;')
           v-col.page-col-content.is-page-header.pl-0(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;')
-            .ty-max-width.px-12
+            .ty-max-width.px-3.px-md-6.px-lg-12
               .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
               .caption.grey--text.text--darken-1 {{description}}
       v-divider
@@ -186,7 +186,7 @@
                   span {{$t('common:page.printFormat')}}
                 v-spacer
 
-          v-flex.page-col-content.ty-max-width.px-12(xs12, lg9, xl10)
+          v-flex.page-col-content.ty-max-width.px-md-6.px-lg-12(xs12, lg9, xl10)
             v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
@@ -579,7 +579,7 @@ export default {
       c.querySelectorAll('pre.prismjs').forEach(el => {
         const langClass = Array.from(el.classList).find(str => str.startsWith('language-'))
         if (langClass) {
-          el.dataset.lang = langClass.split('language-')[1]
+          el.parentElement.dataset.lang = langClass.split('language-')[1]
         }
       })
 
