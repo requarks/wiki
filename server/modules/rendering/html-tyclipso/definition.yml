@@ -1,0 +1,10 @@
+key: htmlTyclipso
+title: Post-Processor for tyclipso theme
+description: Prepares html for the tyclipso theme
+author: tyclipso
+icon: mdi-auto-fix
+enabledDefault: true
+dependsOn: htmlCore
+step: post
+order: 100
+props: {}
