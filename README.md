@@ -277,7 +277,7 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 ![DigitalOcean](https://wiki.js.org/legacy/logo_digitalocean.png)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
-![Icons8](https://static.requarks.io/logo/icons8.svg)  
+![Icons8](https://static.requarks.io/logo/icons8-text.svg)  
 [Icons8](https://icons8.com/) for providing beautiful icon sets.
 
 ![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
