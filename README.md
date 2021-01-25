@@ -249,6 +249,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Richeir
 - SmartNET.works
 - Stepan Sokolovskyi
+- Zach Maynard
 - 张白驹
 <!--5 end-->
 
