@@ -18,12 +18,7 @@ module.exports = {
           bindCredentials: conf.bindCredentials,
           searchBase: conf.searchBase,
           searchFilter: conf.searchFilter,
-          tlsOptions: (conf.tlsEnabled) ? {
-            rejectUnauthorized: conf.verifyTLSCertificate,
-            ca: [
-              fs.readFileSync(conf.tlsCertPath)
-            ]
-          } : {},
+          tlsOptions: getTlsOptions(conf),
           includeRaw: true
         },
         usernameField: 'email',
@@ -54,5 +49,27 @@ module.exports = {
         }
       }
       ))
+  }
+}
+
+function getTlsOptions(conf) {
+  if (!conf.tlsEnabled) {
+    return {}
+  }
+
+  if (!conf.tlsCertPath) {
+    return {
+      rejectUnauthorized: conf.verifyTLSCertificate,
+    }
+  }
+
+  const caList = []
+  if (conf.verifyTLSCertificate) {
+    caList.push(fs.readFileSync(conf.tlsCertPath))
+  }
+
+  return {
+    rejectUnauthorized: conf.verifyTLSCertificate,
+    ca: caList
   }
 }
