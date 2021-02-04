@@ -110,6 +110,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
+- Nick Halase ([@nhalase](https://github.com/nhalase))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
