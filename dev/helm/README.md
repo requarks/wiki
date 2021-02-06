@@ -131,7 +131,22 @@ $ helm install --name my-release -f values.yaml .
 
 ## PostgresSQL
 
-By default, PostgreSQL is installed as part of the chart. To use an external PostgreSQL server set `postgresql.enabled` to `false` and then set `postgresql.postgresqlHost` and `postgresql.postgresqlPassword`. The other options (`postgresql.postgresqlDatabase`, `postgresql.postgresqlUser` and `postgresql.postgresqlPort`) may also want changing from their default values.
+By default, PostgreSQL is installed as part of the chart.
+
+### Using an external PostgreSQL server
+
+To use an external PostgreSQL server, set `postgresql.enabled` to `false` and then set `postgresql.postgresqlHost` and `postgresql.postgresqlPassword`. The other options (`postgresql.postgresqlDatabase`, `postgresql.postgresqlUser` and `postgresql.postgresqlPort`) may also want changing from their default values.
+
+You also need to add the follow Helm template to your deployment:
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: {{ template "wiki.postgresql.secret" . }}
+data:
+  {{ template "wiki.postgresql.secretKey" . }}: "{{ .Values.postgresql.postgresqlPassword | b64enc }}"
+```
 
 ## Persistence
 
