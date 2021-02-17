@@ -34,8 +34,11 @@ router.get('/login', async (req, res, next) => {
     })
   } else {
     // -> Bypass Login
-    if (WIKI.config.auth.autoLogin && !req.query.all) {
-      const stg = await WIKI.models.authentication.query().orderBy('order').first()
+    if (WIKI.config.auth.autoLogin && !req.query.hasOwnProperty('all')) {
+      const query = await WIKI.models.authentication.query().where('isEnabled', true)
+      const stg = _.first(query).key == 'local' && WIKI.config.auth.hideLocal && query.length > 1 ?
+                  _.nth(query, 1) : _.nth(query, 0)
+
       const stgInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey])
       if (!stgInfo.useForm) {
         return res.redirect(`/login/${stg.key}`)
