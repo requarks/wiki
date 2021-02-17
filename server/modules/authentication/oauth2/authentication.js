@@ -33,29 +33,22 @@ module.exports = {
       } catch (err) {
         cb(err, null)
       }
-    });
+    })
 
     client.userProfile = function (accesstoken, done) {
       this._oauth2._useAuthorizationHeaderForGET = true;
       this._oauth2.get(conf.userInfoURL, accesstoken, (err, data) => {
         if (err) {
-          return done(err);
+          return done(err)
         }
         try {
-          data = JSON.parse( data );
+          data = JSON.parse(data)
         } catch(e) {
-          return done(e);
+          return done(e)
         }
-        done(null, data);
-      });
-    };
-    passport.use('oauth2', client)
-  },
-  logout (conf) {
-    if (!conf.logoutURL) {
-      return '/'
-    } else {
-      return conf.logoutURL
+        done(null, data)
+      })
     }
+    passport.use('oauth2', client)
   }
 }
