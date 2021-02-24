@@ -231,7 +231,7 @@ module.exports = class Page extends Model {
    */
   static async createPage(opts) {
     // -> Validate path
-    if (opts.path.indexOf('.') >= 0 || opts.path.indexOf(' ') >= 0 || opts.path.indexOf('\\') >= 0 || opts.path.indexOf('//') >= 0) {
+    if (opts.path.includes('.') || opts.path.includes(' ') || opts.path.includes('\\') || opts.path.includes('//')) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
@@ -484,7 +484,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Validate path
-    if (opts.destinationPath.indexOf('.') >= 0 || opts.destinationPath.indexOf(' ') >= 0 || opts.destinationPath.indexOf('\\') >= 0 || opts.destinationPath.indexOf('//') >= 0) {
+    if (opts.destinationPath.includes('.') || opts.destinationPath.includes(' ') || opts.destinationPath.includes('\\') || opts.destinationPath.includes('//')) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
@@ -514,7 +514,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for existing page at destination path
-    const destPage = await await WIKI.models.pages.query().findOne({
+    const destPage = await WIKI.models.pages.query().findOne({
       path: opts.destinationPath,
       localeCode: opts.destinationLocale
     })
@@ -544,6 +544,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.rebuildTree()
 
     // -> Rename in Search Index
+    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.renamed({
       ...page,
       destinationPath: opts.destinationPath,
@@ -575,7 +577,7 @@ module.exports = class Page extends Model {
       path: opts.destinationPath,
       mode: 'move'
     })
-   
+
     // -> Reconnect Links : Validate invalid links to the new path
     await WIKI.models.pages.reconnectLinks({
       locale: opts.destinationLocale,
@@ -595,7 +597,7 @@ module.exports = class Page extends Model {
     if (_.has(opts, 'id')) {
       page = await WIKI.models.pages.query().findById(opts.id)
     } else {
-      page = await await WIKI.models.pages.query().findOne({
+      page = await WIKI.models.pages.query().findOne({
         path: opts.path,
         localeCode: opts.locale
       })

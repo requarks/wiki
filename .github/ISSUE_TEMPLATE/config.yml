@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Help / Questions
+    url: https://github.com/Requarks/wiki/discussions?discussions_q=category%3A%22Help+%2F+Questions%22
+    about: Please ask and answer questions here.
+  - name: Request a new feature / improvement
+    url: https://requarks.canny.io/wiki
+    about: Submit ideas for new features or improvements.

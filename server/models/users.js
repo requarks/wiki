@@ -177,6 +177,8 @@ module.exports = class User extends Model {
     if (_.isArray(profile.emails)) {
       const e = _.find(profile.emails, ['primary', true])
       primaryEmail = (e) ? e.value : _.first(profile.emails).value
+    } else if (_.isArray(profile.email)) {
+      primaryEmail = _.first(_.flattenDeep([profile.email]))
     } else if (_.isString(profile.email) && profile.email.length > 5) {
       primaryEmail = profile.email
     } else if (_.isString(profile.mail) && profile.mail.length > 5) {
@@ -337,8 +339,14 @@ module.exports = class User extends Model {
     user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
     let redirect = '/'
     if (user.groups && user.groups.length > 0) {
-      redirect = user.groups[0].redirectOnLogin
+      for (const grp of user.groups) {
+        if (!_.isEmpty(grp.redirectOnLogin) && grp.redirectOnLogin !== '/') {
+          redirect = grp.redirectOnLogin
+          break
+        }
+      }
     }
+    console.info(redirect)
 
     // Is 2FA required?
     if (!skipTFA) {

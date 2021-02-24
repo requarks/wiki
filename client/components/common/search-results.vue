@@ -18,13 +18,13 @@
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
         v-list.search-results-items.radius-7.py-0(two-line, dense)
           template(v-for='(item, idx) of results')
-            v-list-item(@click='goToPage(item)', :key='item.id', :class='idx === cursor ? `highlighted` : ``')
+            v-list-item(@click='goToPage(item)', @click.middle="goToPageInNewTab(item)", :key='item.id', :class='idx === cursor ? `highlighted` : ``')
               v-list-item-avatar(tile)
                 img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
-                v-list-item-title(v-html='item.title')
-                v-list-item-subtitle.caption(v-html='item.description')
-                .caption.grey--text(v-html='item.path')
+                v-list-item-title(v-text='item.title')
+                v-list-item-subtitle.caption(v-text='item.description')
+                .caption.grey--text(v-text='item.path')
               v-list-item-action
                 v-chip(label, outlined) {{item.locale.toUpperCase()}}
             v-divider(v-if='idx < results.length - 1')
@@ -43,7 +43,7 @@
               v-list-item-avatar
                 v-icon mdi-magnify
               v-list-item-content
-                v-list-item-title(v-html='term')
+                v-list-item-title(v-text='term')
             v-divider(v-if='idx < suggestions.length - 1')
       .text-xs-center.pt-5(v-if='search && search.length > 1')
         //- v-btn.mx-2(outlined, color='orange', @click='search = ``', v-if='results.length > 0')
@@ -136,6 +136,9 @@ export default {
     },
     goToPage(item) {
       window.location.assign(`/${item.locale}/${item.path}`)
+    },
+    goToPageInNewTab(item) {
+      window.open(`/${item.locale}/${item.path}`, '_blank')
     }
   },
   apollo: {

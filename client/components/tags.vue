@@ -49,7 +49,7 @@
           rounded
           single-line
           height='40'
-          prepend-icon='mdi-file-document-box-search-outline'
+          prepend-icon='mdi-text-box-search-outline'
           append-icon='mdi-arrow-right'
           clearable
         )
@@ -243,7 +243,7 @@ export default {
   router,
   created () {
     this.$store.commit('page/SET_MODE', 'tags')
-    this.selection = _.compact(this.$route.path.split('/'))
+    this.selection = _.compact(decodeURI(this.$route.path).split('/'))
   },
   mounted () {
     this.locales = _.concat(

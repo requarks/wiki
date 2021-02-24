@@ -1,6 +1,5 @@
 const _ = require('lodash')
 const { createApolloFetch } = require('apollo-fetch')
-const Bugsnag = require('@bugsnag/js')
 const { v4: uuid } = require('uuid')
 const os = require('os')
 const fs = require('fs-extra')
@@ -10,21 +9,6 @@ const fs = require('fs-extra')
 module.exports = {
   enabled: false,
   init() {
-    Bugsnag.start({
-      apiKey: WIKI.data.telemetry.BUGSNAG_ID,
-      appType: 'server',
-      appVersion: WIKI.version,
-      autoDetectErrors: false,
-      autoTrackSessions: false,
-      hostname: _.get(WIKI.config, 'telemetry.clientId', uuid()),
-      enabledReleaseStages: ['production'],
-      releaseStage: WIKI.IS_DEBUG ? 'development' : 'production',
-      projectRoot: WIKI.ROOTPATH,
-      logger: null,
-      onError: (report) => {
-        if (!WIKI.telemetry.enabled) { return false }
-      }
-    })
     WIKI.telemetry = this
 
     if (_.get(WIKI.config, 'telemetry.isEnabled', false) === true && WIKI.config.offline !== true) {
@@ -33,13 +17,13 @@ module.exports = {
     }
   },
   sendError(err) {
-    Bugsnag.notify(err)
+    // TODO
   },
   sendEvent(eventCategory, eventAction, eventLabel) {
     // TODO
   },
   async sendInstanceEvent(eventType) {
-    if (WIKI.devMode) { return }
+    if (WIKI.devMode || !this.enabled) { return }
 
     try {
       const apollo = createApolloFetch({

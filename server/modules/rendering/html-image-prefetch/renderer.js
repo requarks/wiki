@@ -17,7 +17,7 @@ const prefetch = async (element) => {
   const contentType = response.headers[`content-type`]
   const image = Buffer.from(response.body).toString('base64')
   element.attr('src', `data:${contentType};base64,${image}`)
-  element.removeClass('prefetch-candidate');
+  element.removeClass('prefetch-candidate')
 }
 
 module.exports = {

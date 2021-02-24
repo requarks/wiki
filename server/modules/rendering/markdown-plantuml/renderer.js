@@ -74,7 +74,7 @@ module.exports = {
             continue
           }
 
-          var closeMarkerMatched = true
+          let closeMarkerMatched = true
           for (i = 0; i < closeMarker.length; ++i) {
             if (closeMarker[i] !== state.src[start + i]) {
               closeMarkerMatched = false
@@ -112,7 +112,7 @@ module.exports = {
           altToken
         )
 
-        var zippedCode = encode64(zlib.deflateRawSync('@startuml\n' + contents + '\n@enduml').toString('binary'))
+        const zippedCode = encode64(zlib.deflateRawSync('@startuml\n' + contents + '\n@enduml').toString('binary'))
 
         token = state.push('uml_diagram', 'img', 0)
         // alt is constructed from children. No point in populating it here.

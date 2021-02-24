@@ -644,7 +644,10 @@ export default {
         Cookies.set('jwt', respObj.jwt, { expires: 365 })
         _.delay(() => {
           const loginRedirect = Cookies.get('loginRedirect')
-          if (loginRedirect) {
+          if (loginRedirect === '/' && respObj.redirect) {
+            Cookies.remove('loginRedirect')
+            window.location.replace(respObj.redirect)
+          } else if (loginRedirect) {
             Cookies.remove('loginRedirect')
             window.location.replace(loginRedirect)
           } else if (respObj.redirect) {
