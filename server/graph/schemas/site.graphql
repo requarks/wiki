@@ -54,6 +54,7 @@ type SiteMutation {
     securityCSPDirectives: String
     uploadMaxFileSize: Int
     uploadMaxFiles: Int
+    bodyParserSize: Int
 
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -93,4 +94,5 @@ type SiteConfig {
   securityCSPDirectives: String!
   uploadMaxFileSize: Int!
   uploadMaxFiles: Int!
+  bodyParserSize: Int!
 }

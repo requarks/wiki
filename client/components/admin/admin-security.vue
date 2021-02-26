@@ -116,6 +116,23 @@
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
+                v-toolbar-title.subtitle-1 {{ $t('admin:security.bodyParser') }}
+                v-card-info(color='blue')
+                  span {{$t('admin:security.bodyParserInfo')}}
+                v-card-text
+                  v-text-field.mt-3(
+                    outlined
+                    :label='$t(`admin:security.bodyParserSize`)'
+                    required
+                    v-model='config.bodyParserSize'
+                    prepend-icon='mdi-page-next-outline'
+                    :hint='$t(`admin:security.bodyParserSizeHint`)'
+                    persistent-hint
+                    :suffix='$t(`admin:security.bodyParserSizeSuffix`)'
+                    style='max-width: 450px;'
+                    )
+              v-card.mt-3.animated.fadeInUp.wait-p2s
+                v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{ $t('admin:security.uploads') }}
                 v-card-info(color='blue')
                   span {{$t('admin:security.uploadsInfo')}}
@@ -242,6 +259,7 @@ export default {
       config: {
         uploadMaxFileSize: 0,
         uploadMaxFiles: 0,
+        bodyParserSize: 0,
         securityOpenRedirect: true,
         securityIframe: true,
         securityReferrerPolicy: true,
@@ -286,6 +304,7 @@ export default {
               $authJwtRenewablePeriod: String
               $uploadMaxFileSize: Int
               $uploadMaxFiles: Int
+              $bodyParserSize: Int
               $securityOpenRedirect: Boolean
               $securityIframe: Boolean
               $securityReferrerPolicy: Boolean
@@ -307,6 +326,7 @@ export default {
                   authJwtRenewablePeriod: $authJwtRenewablePeriod,
                   uploadMaxFileSize: $uploadMaxFileSize,
                   uploadMaxFiles: $uploadMaxFiles,
+                  bodyParserSize: $bodyParserSize,
                   securityOpenRedirect: $securityOpenRedirect,
                   securityIframe: $securityIframe,
                   securityReferrerPolicy: $securityReferrerPolicy,
@@ -337,6 +357,7 @@ export default {
             authJwtRenewablePeriod: _.get(this.config, 'authJwtRenewablePeriod', ''),
             uploadMaxFileSize: _.toSafeInteger(_.get(this.config, 'uploadMaxFileSize', 0)),
             uploadMaxFiles: _.toSafeInteger(_.get(this.config, 'uploadMaxFiles', 0)),
+            bodyParserSize: _.toSafeInteger(_.get(this.config, 'bodyParserSize', 0)),
             securityOpenRedirect: _.get(this.config, 'securityOpenRedirect', false),
             securityIframe: _.get(this.config, 'securityIframe', false),
             securityReferrerPolicy: _.get(this.config, 'securityReferrerPolicy', false),
@@ -388,6 +409,7 @@ export default {
               authJwtRenewablePeriod
               uploadMaxFileSize
               uploadMaxFiles
+              bodyParserSize
               securityOpenRedirect
               securityIframe
               securityReferrerPolicy

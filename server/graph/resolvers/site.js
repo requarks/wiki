@@ -29,7 +29,8 @@ module.exports = {
         authJwtExpiration: WIKI.config.auth.tokenExpiration,
         authJwtRenewablePeriod: WIKI.config.auth.tokenRenewal,
         uploadMaxFileSize: WIKI.config.uploads.maxFileSize,
-        uploadMaxFiles: WIKI.config.uploads.maxFiles
+        uploadMaxFiles: WIKI.config.uploads.maxFiles,
+        bodyParserSize: WIKI.config.bodyParserSize
       }
     }
   },
@@ -100,7 +101,11 @@ module.exports = {
           maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles)
         }
 
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'auth', 'features', 'security', 'uploads'])
+        if (args.bodyParserSize) {
+          WIKI.config.bodyParserSize = args.bodyParserSize
+        }
+
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'auth', 'features', 'security', 'uploads', 'bodyParserSize'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')
