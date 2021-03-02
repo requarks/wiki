@@ -66,7 +66,7 @@ module.exports = {
    * Generate unique hash from page
    */
   generateHash(opts) {
-    return crypto.createHash('sha1').update(`${opts.locale}|${opts.path}|${opts.privateNS}`).digest('hex')
+    return crypto.createHash("sha256").update(`${opts.locale}|${opts.path}|${opts.privateNS}`).digest('hex')
   },
   /**
    * Inject Page Metadata

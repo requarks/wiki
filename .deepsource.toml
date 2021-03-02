@@ -1,0 +1,19 @@
+version = 1
+
+[[analyzers]]
+name = "go"
+enabled = true
+
+  [analyzers.meta]
+  import_paths = ["github.com/ankitdobhal/wiki"]
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+
+  [analyzers.meta]
+  environment = [
+    "browser",
+    "nodejs"
+  ]
+  plugins = ["vue"]

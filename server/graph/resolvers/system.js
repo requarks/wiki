@@ -144,7 +144,7 @@ module.exports = {
                 // -> Check if identical group already exists
 
                 const currentRights = _.sortBy(_.map(usr.rights, r => _.pick(r, ['role', 'path', 'exact', 'deny'])), ['role', 'path', 'exact', 'deny'])
-                const ruleSetId = crypto.createHash('sha1').update(JSON.stringify(currentRights)).digest('base64')
+                const ruleSetId = crypto.createHash("sha256").update(JSON.stringify(currentRights)).digest('base64')
                 const existingGroup = _.find(reuseGroups, ['hash', ruleSetId])
                 if (existingGroup) {
                   usrGroup.push(existingGroup.groupId)

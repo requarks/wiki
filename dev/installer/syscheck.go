@@ -22,7 +22,7 @@ func CheckNodeJs() bool {
 	}
 
 	validRange := semver.MustParseRange(nodejsSemverRange)
-	nodeVersion, err := semver.ParseTolerant(string(cmdOutput[:]))
+	nodeVersion, err := semver.ParseTolerant(string(cmdOutput))
 	if !validRange(nodeVersion) {
 		panic(fmt.Errorf(color.RedString("Error: Installed Node.js version %s is not supported! %s\n"), nodeVersion, nodejsSemverRange))
 	}
