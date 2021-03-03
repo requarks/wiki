@@ -379,6 +379,14 @@ export default {
           icon: 'warning'
         })
       }
+      const conflictingFiles = _.intersectionWith(files, this.assets, (f, a) => f.filename === a.filename)
+      if (conflictingFiles.length > 0) {
+        return this.$store.commit('showNotification', {
+            message: this.$t('editor:assets.conflictingFileNames'),
+            style: 'error',
+            icon: 'error'
+          })
+      }
       for (let file of files) {
         file.setMetadata({
           folderId: this.currentFolderId
