@@ -228,6 +228,18 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
         page.description = pageOriginal.description
       }
     }
+
+    // -> From (IPython) File
+    if (req.query.file && req.query.filename) {
+        page.content = '<span>Could not read IPython file.</span>'
+        const asset = await WIKI.models.knex('assetData').where('id', req.query.file).first()
+        if (asset) {
+            page.content = Buffer.from(asset.data).toString('base64')
+        }
+        page.title = req.query.filename
+        page.contentType = 'ipynb'
+        page.editorKey = 'code'
+    }
   }
 
   res.render('editor', { page, injectCode, effectivePermissions })

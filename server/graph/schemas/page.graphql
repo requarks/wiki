@@ -81,6 +81,7 @@ type PageQuery {
 type PageMutation {
   create(
     content: String!
+    contentType: String!
     description: String!
     editor: String!
     isPublished: Boolean!

@@ -5,6 +5,7 @@ const state = {
   authorId: 0,
   authorName: 'Unknown',
   createdAt: '',
+  contentType: '',
   description: '',
   isPublished: true,
   locale: 'en',

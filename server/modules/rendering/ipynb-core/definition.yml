@@ -1,0 +1,15 @@
+key: ipynbCore
+title: Core
+description: Basic Jupyter Notebook Parser
+author: Temigo
+input: ipynb
+output: html
+icon: mdi-language-markdown
+props:
+  allowHTML:
+    type: Boolean
+    default: true
+    title: Allow HTML
+    hint: Enable HTML tags in content.
+    order: 1
+    public: true

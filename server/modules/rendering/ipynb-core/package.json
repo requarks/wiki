@@ -1,0 +1,14 @@
+{
+  "name": "ipynb-core",
+  "version": "1.0.0",
+  "description": "Basic Jupyter Notebook Parser",
+  "main": "renderer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Temigo",
+  "license": "ISC",
+  "dependencies": {
+    "notebookjs": "^0.6.3"
+  }
+}

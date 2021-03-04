@@ -166,15 +166,18 @@
             v-btn.mx-1.animated.fadeInUp.wait-p3s(depressed, color='light-green darken-2', @click='', disabled)
               v-icon(left) mdi-alpha-w-circle
               .body-2.text-none WikiText
+            v-btn.mx-1.animated.fadeInUp.wait-p3s(depressed, color='light-green darken-2', @click='toggleModal(`editorModalMedia`)')
+              v-icon(left) mdi-alpha-j-circle
+              .body-2.text-none Jupyter
             v-spacer
-          v-fade-transition
+          <!-- v-fade-transition
             v-overlay(
               v-if='hover'
               absolute
               color='light-green darken-3'
               opacity='.8'
               )
-              .body-2 Coming Soon
+              .body-2 Coming Soon -->
 
     page-selector(mode='select', v-model='templateDialogIsShown', :open-handler='fromTemplateHandle', :path='path', :locale='locale', must-exist)
 </template>
@@ -192,7 +195,7 @@ export default {
   },
   data() {
     return {
-      templateDialogIsShown: false
+      templateDialogIsShown: false,
     }
   },
   computed: {
@@ -202,7 +205,8 @@ export default {
     },
     currentEditor: sync('editor/editor'),
     locale: get('page/locale'),
-    path: get('page/path')
+    path: get('page/path'),
+    activeModal: sync('editor/activeModal')
   },
   methods: {
     selectEditor (name) {
@@ -221,7 +225,29 @@ export default {
       this.$nextTick(() => {
         window.location.assign(`/e/${this.locale}/${this.path}?from=${id}`)
       })
-    }
+    },
+    toggleModal(key) {
+      this.activeModal = (this.activeModal === key) ? '' : key
+      this.isShown = false
+    },
+  },
+  mounted () {
+    this.$root.$on('editorInsert', opts => {
+      switch (opts.kind) {
+        case 'BINARY':
+          this.activeModal = ''
+          const ext = _.last(opts.path.split('.'))
+          if (ext == 'ipynb') {
+            this.$nextTick(() => {
+              window.location.assign(`/e/${this.locale}/${this.path}?file=${opts.id}&filename=${opts.text}`)
+            })
+          }
+          break
+      }
+    })
+  },
+  beforeDestroy() {
+    this.$root.$off('editorInsert')
   }
 }
 </script>

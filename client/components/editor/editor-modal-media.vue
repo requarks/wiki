@@ -363,7 +363,8 @@ export default {
         kind: asset.kind,
         path: this.currentFolderId > 0 ? `/${assetPath}/${asset.filename}` : `/${asset.filename}`,
         text: asset.filename,
-        align: this.imageAlignment
+        align: this.imageAlignment,
+        id: asset.id
       })
       this.activeModal = ''
     },

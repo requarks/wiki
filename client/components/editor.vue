@@ -100,6 +100,10 @@ export default {
       type: String,
       default: 'Untitled Page'
     },
+    contentType: {
+      type: String,
+      default: ''
+    },
     description: {
       type: String,
       default: ''
@@ -188,6 +192,7 @@ export default {
         this.initContentParsed !== this.$store.get('editor/content'),
         this.locale !== this.$store.get('page/locale'),
         this.path !== this.$store.get('page/path'),
+        this.contentType !== this.$store.get('page/contentType'),
         this.savedState.title !== this.$store.get('page/title'),
         this.savedState.description !== this.$store.get('page/description'),
         this.savedState.tags !== this.$store.get('page/tags'),
@@ -221,6 +226,7 @@ export default {
     this.$store.set('page/path', this.path)
     this.$store.set('page/tags', this.tags)
     this.$store.set('page/title', this.title)
+    this.$store.set('page/contentType', this.contentType)
     this.$store.set('page/scriptCss', this.scriptCss)
     this.$store.set('page/scriptJs', this.scriptJs)
 
@@ -293,6 +299,7 @@ export default {
             mutation: gql`
               mutation (
                 $content: String!
+                $contentType: String!
                 $description: String!
                 $editor: String!
                 $isPrivate: Boolean!
@@ -309,6 +316,7 @@ export default {
                 pages {
                   create(
                     content: $content
+                    contentType: $contentType
                     description: $description
                     editor: $editor
                     isPrivate: $isPrivate
@@ -338,6 +346,7 @@ export default {
             `,
             variables: {
               content: this.$store.get('editor/content'),
+              contentType: this.$store.get('page/contentType'),
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
