@@ -188,6 +188,22 @@
                 placeholder='None'
               )
 
+    //- OVERRIDE DIALOG
+
+    v-dialog(v-model='overrideDialog', max-width='550', persistent)
+      v-card
+        .dialog-header.is-short.is-red
+          v-icon.mr-2(color='white') mdi-trash-can-outline
+          span {{$t('editor:assets.overrideAssets')}}
+        v-card-text.pt-5
+          .body-2 {{$t('editor:assets.overrideAssetsConfirm')}}
+          .body-2.red--text.text--darken-2 {{overrideFileNames.join(", ")}}?
+          .caption.mt-3 {{$t('editor:assets.overrideAssetsWarn')}}
+        v-card-chin
+          v-spacer
+          v-btn(text, @click='refuseToOverride()') {{$t('common:actions.cancel')}}
+          v-btn.px-3(color='red darken-2', @click='agreeToOverride()').white--text {{$t('editor:assets.actions.override')}}
+
     //- RENAME DIALOG
 
     v-dialog(v-model='renameDialog', max-width='550', persistent)
@@ -230,6 +246,7 @@
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
+import sanitize from "sanitize-filename";
 import vueFilePond from 'vue-filepond'
 import 'filepond/dist/filepond.min.css'
 
@@ -269,6 +286,8 @@ export default {
       ],
       imageAlignment: '',
       loading: false,
+      overrideDialog: false,
+      overrideFileNames: [],
       newFolderDialog: false,
       newFolderName: '',
       newFolderLoading: false,
@@ -370,6 +389,23 @@ export default {
     browse () {
       this.$refs.pond.browse()
     },
+    openOverrideDialog(conflictingFileNames) {
+      this.overrideDialog = true
+      this.overrideFileNames = conflictingFileNames
+
+      return new Promise((resolve, reject) => {
+        this.resolveOverrideDialog = resolve
+        this.rejectOverrideDialog = reject
+      })
+    },
+    agreeToOverride() {
+      this.resolveOverrideDialog(true)
+      this.overrideDialog = false
+    },
+    refuseToOverride() {
+      this.resolveOverrideDialog(false)
+      this.overrideDialog = false
+    },
     async upload () {
       const files = this.$refs.pond.getFiles()
       if (files.length < 1) {
@@ -378,6 +414,17 @@ export default {
           style: 'warning',
           icon: 'warning'
         })
+      }
+
+      const conflictingFileNames = _.intersection(
+        files.map(f => sanitize(f.filename.toLowerCase().replace(/[\s,;]+/g, '_'))),
+        this.assets.map(a => a.filename)
+      )
+      if (conflictingFileNames.length > 0) {
+        const overrideAssets = await this.openOverrideDialog(conflictingFileNames);
+        if (!overrideAssets) {
+          return
+        }
       }
       for (let file of files) {
         file.setMetadata({
