@@ -71,7 +71,19 @@ router.all('/login/:strategy/callback', async (req, res, next) => {
       strategy: req.params.strategy
     }, { req, res })
     res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
-    res.redirect(authResult.redirect)
+
+    const loginRedirect = req.cookies['loginRedirect']
+    if (loginRedirect === '/' && authResult.redirect) {
+      res.clearCookie('loginRedirect')
+      res.redirect(authResult.redirect)
+    } else if (loginRedirect) {
+      res.clearCookie('loginRedirect')
+      res.redirect(loginRedirect)
+    } else if (authResult.redirect) {
+      res.redirect(authResult.redirect)
+    } else {
+      res.redirect('/')
+    }
   } catch (err) {
     next(err)
   }
