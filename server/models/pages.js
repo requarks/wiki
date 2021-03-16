@@ -544,6 +544,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.rebuildTree()
 
     // -> Rename in Search Index
+    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.renamed({
       ...page,
       destinationPath: opts.destinationPath,

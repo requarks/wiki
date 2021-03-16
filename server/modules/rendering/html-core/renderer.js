@@ -261,6 +261,10 @@ module.exports = {
     }
     iterateMustacheNode($.root())
 
+    $('pre').each((idx, elm) => {
+      $(elm).attr('v-pre', true)
+    })
+
     // --------------------------------
     // STEP: POST
     // --------------------------------

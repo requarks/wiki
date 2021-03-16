@@ -14,7 +14,7 @@
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  
 [![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat&logo=twitter)](https://twitter.com/requarks)
-[![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp)](https://wiki.js.org/newsletter)
+[![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp)](https://blog.js.wiki/subscribe)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS
 
@@ -96,6 +96,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
+- Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
@@ -109,15 +110,19 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
+- Nick Halase ([@nhalase](https://github.com/nhalase))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
+- Victor Bilgin ([@vbilgin](https://github.com/vbilgin))
+- VMO Solutions ([@vmosolutions](https://github.com/vmosolutions))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - magicpotato ([@fortheday](https://github.com/fortheday))
+- scorpion ([@scorpion](https://github.com/scorpion))
 - valantien ([@valantien](https://github.com/valantien))
 
 <h2 align="center">OpenCollective Sponsors</h2>
@@ -230,11 +235,13 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ernie Reid
 - Etienne
 - Flemis Jurgenheimer
+- Florent
 - Günter Pavlas
 - hong
 - Ian
 - Iskander Callos
 - Josh Stewart
+- Justin Dunsworth
 - Keir
 - Loïc CRAMPON
 - Ludgeir Ibanez
@@ -244,6 +251,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Richeir
 - SmartNET.works
 - Stepan Sokolovskyi
+- Zach Maynard
 - 张白驹
 <!--5 end-->
 
@@ -272,7 +280,7 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 ![DigitalOcean](https://wiki.js.org/legacy/logo_digitalocean.png)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
-![Icons8](https://static.requarks.io/logo/icons8.svg)  
+![Icons8](https://static.requarks.io/logo/icons8-text-h40.png)  
 [Icons8](https://icons8.com/) for providing beautiful icon sets.
 
 ![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
@@ -280,3 +288,6 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 ![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
+
+![Porkbun](https://static.requarks.io/logo/porkbun.png)  
+[Porkbun](https://www.porkbun.com) for providing domain registration services.

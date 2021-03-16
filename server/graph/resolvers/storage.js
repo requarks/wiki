@@ -19,7 +19,7 @@ module.exports = {
           ...targetInfo,
           ...tgt,
           hasSchedule: (targetInfo.schedule !== false),
-          syncInterval: targetInfo.syncInterval || targetInfo.schedule || 'P0D',
+          syncInterval: tgt.syncInterval || targetInfo.schedule || 'P0D',
           syncIntervalDefault: targetInfo.schedule,
           config: _.sortBy(_.transform(tgt.config, (res, value, key) => {
             const configData = _.get(targetInfo.props, key, false)
