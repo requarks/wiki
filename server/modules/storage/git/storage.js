@@ -250,7 +250,7 @@ module.exports = {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.repoPath, fileName)
-    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
+    await fs.outputFile(filePath, page.storageContent(), 'utf8')
 
     await this.git.add(`./${fileName}`)
     await this.git.commit(`docs: create ${page.path}`, fileName, {
@@ -269,7 +269,7 @@ module.exports = {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.repoPath, fileName)
-    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
+    await fs.outputFile(filePath, page.storageContent(), 'utf8')
 
     await this.git.add(`./${fileName}`)
     await this.git.commit(`docs: update ${page.path}`, fileName, {
@@ -426,7 +426,7 @@ module.exports = {
           }
           WIKI.logger.info(`(STORAGE/GIT) Adding page ${fileName}...`)
           const filePath = path.join(this.repoPath, fileName)
-          await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
+          await fs.outputFile(filePath, page.storageContent(), 'utf8')
           await this.git.add(`./${fileName}`)
           cb()
         }
