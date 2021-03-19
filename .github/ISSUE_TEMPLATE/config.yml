@@ -1,8 +1,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: Help / Questions
-    url: https://github.com/Requarks/wiki/discussions?discussions_q=category%3A%22Help+%2F+Questions%22
-    about: Please ask and answer questions here.
+    url: https://github.com/Requarks/wiki/discussions/categories/help-questions
+    about: Ask the community for help on using or setting up Wiki.js
+  - name: Report a Security Issue
+    url: https://github.com/Requarks/wiki/security/policy
+    about: Privately report security issues so they can be addressed quickly.
+  - name: Errors / Bug Reports
+    url: https://github.com/Requarks/wiki/discussions/categories/error-bug-report
+    about: Create a discussion around the bug / error you're getting. If validated, a proper GitHub issue will be created so that it can be worked on.
   - name: Request a new feature / improvement
-    url: https://requarks.canny.io/wiki
+    url: https://feedback.js.wiki/wiki
     about: Submit ideas for new features or improvements.
