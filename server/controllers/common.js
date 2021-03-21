@@ -477,14 +477,18 @@ router.get('/*', async (req, res, next) => {
 
         // -> Build sidebar navigation
         let sdi = 1
-        const sidebar = (await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({
-          i: `sdi-${sdi++}`,
-          k: n.kind,
-          l: n.label,
-          c: n.icon,
-          y: n.targetType,
-          t: n.target
-        }))
+        const mapItem = (item) => {
+          return {
+            i: `sdi-${sdi++}`,
+            k: item.kind,
+            l: item.label,
+            c: item.icon,
+            y: item.targetType,
+            t: item.targetб,
+            n: item.items && item.items.length ? item.items.map(mapItem) : []
+          }
+        }
+        const sidebar = (await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(mapItem)
 
         // -> Build theme code injection
         const injectCode = {

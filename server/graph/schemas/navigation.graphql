@@ -55,6 +55,7 @@ type NavigationItem {
   target: String
   visibilityMode: String
   visibilityGroups: [Int]
+  items: [NavigationItem]
 }
 
 input NavigationItemInput {
@@ -66,6 +67,7 @@ input NavigationItemInput {
   target: String
   visibilityMode: String
   visibilityGroups: [Int]
+  items: [NavigationItemInput]
 }
 
 type NavigationConfig {

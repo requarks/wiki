@@ -84,36 +84,16 @@
                             v-btn.ml-2(icon, tile, color='white', v-on='on', @click='copyFromLocaleDialogIsShown = true')
                               v-icon mdi-arrange-send-backward
                           span {{$t('admin:navigation.copyFromLocale')}}
-                      v-list.py-2(dense, nav, dark, class='blue darken-2', style='border-radius: 0;')
-                        v-list-item(v-if='currentTree.length < 1')
-                          v-list-item-avatar(size='24'): v-icon(color='blue lighten-3') mdi-alert
-                          v-list-item-content
-                            em.caption.blue--text.text--lighten-4 {{$t('navigation.emptyList')}}
-                        draggable(v-model='currentTree')
-                          template(v-for='navItem in currentTree')
-                            v-list-item(
-                              v-if='navItem.kind === "link"'
-                              :key='navItem.id'
-                              :class='(navItem === current) ? "blue" : ""'
-                              @click='selectItem(navItem)'
-                              )
-                              v-list-item-avatar(size='24', tile)
-                                v-icon(v-if='navItem.icon.match(/fa[a-z] fa-/)', size='19') {{ navItem.icon }}
-                                v-icon(v-else) {{ navItem.icon }}
-                              v-list-item-title {{navItem.label}}
-                            .py-2.clickable(
-                              v-else-if='navItem.kind === "divider"'
-                              :key='navItem.id'
-                              :class='(navItem === current) ? "blue" : ""'
-                              @click='selectItem(navItem)'
-                              )
-                              v-divider
-                            v-subheader.pl-4.clickable(
-                              v-else-if='navItem.kind === "header"'
-                              :key='navItem.id'
-                              :class='(navItem === current) ? "blue" : ""'
-                              @click='selectItem(navItem)'
-                              ) {{navItem.label}}
+
+                      div(v-if='currentTree.length < 1')
+                        em.caption.blue--text.text--lighten-4 {{$t('navigation.emptyList')}}
+                      admin-navigation-tree(
+                        v-else
+                        :list="currentTree"
+                        :current="current"
+                        @select-item="selectItem"
+                      )
+
                       v-card-chin
                         v-menu(offset-y, bottom, min-width='200px', style='flex: 1 1;')
                           template(v-slot:activator='{ on }')
@@ -130,6 +110,9 @@
                             v-list-item(@click='addItem("divider")')
                               v-list-item-avatar(size='24'): v-icon mdi-minus
                               v-list-item-title {{$t('navigation.divider')}}
+                            v-list-item(@click='addItem("group")')
+                              v-list-item-avatar(size='24'): v-icon mdi-file-tree
+                              v-list-item-title Group // TODO: add translation
                   v-col
                     v-card(flat, style='border-radius: 0 4px 4px 0;')
                       template(v-if='current.kind === "link"')
@@ -221,6 +204,37 @@
                             v-icon(left) mdi-delete
                             span {{$t('navigation.delete', { kind: $t('navigation.divider') })}}
 
+                      template(v-if='current.kind === "group"')
+                        v-toolbar(height='56', color='teal lighten-1', flat, dark)
+                          .subtitle-1 {{$t('navigation.edit', { kind: $t('navigation.link') })}}
+                          v-spacer
+                          v-btn.px-5(color='white', outlined, @click='deleteItem(current)')
+                            v-icon(left) mdi-delete
+                            span {{$t('navigation.delete', { kind: $t('navigation.link') })}}
+                        v-card-text
+                          v-text-field(
+                            outlined
+                            :label='$t("navigation.label")'
+                            prepend-icon='mdi-format-title'
+                            v-model='current.label'
+                            counter='255'
+                          )
+                          v-text-field(
+                            outlined
+                            :label='$t("navigation.icon")'
+                            prepend-icon='mdi-dice-5'
+                            v-model='current.icon'
+                            hide-details
+                          )
+                          .caption.pt-3.pl-5 The default icon set is #[strong Material Design Icons]. In order to use another icon set, you must first select it in the Theme administration section.
+                          .caption.pt-3.pl-5: strong Material Design Icons
+                          .caption.pl-5 Refer to the #[a(href='https://materialdesignicons.com/', target='_blank') Material Design Icons Reference] for the list of all possible values. You must prefix all values with #[code mdi-], e.g. #[code mdi-home]
+                          .caption.pt-3.pl-5: strong Font Awesome 5
+                          .caption.pl-5 Refer to the #[a(href='https://fontawesome.com/icons?d=gallery&m=free', target='_blank') Font Awesome 5 Reference] for the list of all possible values. You must prefix all values with #[code fas fa-], e.g. #[code fas fa-home]. Note that some icons use different prefixes (e.g. #[code fab], #[code fad], #[code fal], #[code far]).
+                          .caption.pt-3.pl-5: strong Font Awesome 4
+                          .caption.pl-5 Refer to the #[a(href='https://fontawesome.com/v4.7.0/icons/', target='_blank') Font Awesome 4 Reference] for the list of all possible values. You must prefix all values with #[code fa fa-], e.g. #[code fa fa-home]
+                        v-divider
+
                       v-card-text(v-if='current.kind')
                         v-radio-group.pl-8(v-model='current.visibilityMode', mandatory, hide-details)
                           v-radio(:label='$t("admin:navigation.visibilityMode.all")', value='all', color='primary')
@@ -278,15 +292,9 @@ import gql from 'graphql-tag'
 import { v4 as uuid } from 'uuid'
 
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
-
-import draggable from 'vuedraggable'
-
 /* global siteConfig, siteLangs */
 
 export default {
-  components: {
-    draggable
-  },
   data() {
     return {
       selectPageModal: false,
@@ -364,6 +372,10 @@ export default {
         case 'header':
           newItem.label = this.$t('navigation.untitled', { kind: this.$t(`navigation.header`) })
           break
+        case 'group':
+          newItem.icon = 'mdi-file-tree'
+          newItem.label = 'Group' // TODO: add translation
+          newItem.items = []
       }
       this.currentTree = [...this.currentTree, newItem]
       this.current = newItem
@@ -472,6 +484,16 @@ export default {
                 target
                 visibilityMode
                 visibilityGroups
+                items {
+                  id
+                  kind
+                  label
+                  icon
+                  targetType
+                  target
+                  visibilityMode
+                  visibilityGroups
+                }
               }
             }
           }

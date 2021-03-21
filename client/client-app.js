@@ -149,6 +149,7 @@ Vue.prototype.Velocity = Velocity
 // ====================================
 
 Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
+Vue.component('admin-navigation-tree', () => import(/* webpackChunkName: "admin" */ './components/admin/admin-navigation-tree.vue'))
 Vue.component('comments', () => import(/* webpackChunkName: "comments" */ './components/comments.vue'))
 Vue.component('editor', () => import(/* webpackPrefetch: -100, webpackChunkName: "editor" */ './components/editor.vue'))
 Vue.component('history', () => import(/* webpackChunkName: "history" */ './components/history.vue'))

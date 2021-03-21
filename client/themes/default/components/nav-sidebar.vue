@@ -30,6 +30,7 @@
     v-divider
     //-> Custom Navigation
     v-list.py-2(v-if='currentMode === `custom`', dense, :class='color', :dark='dark')
+      // TODO: implement tree dislpay
       template(v-for='item of items')
         v-list-item(
           v-if='item.k === `link`'
