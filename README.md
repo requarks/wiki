@@ -26,7 +26,7 @@
 - [Installation](https://docs.requarks.io/install)
 - [Demo](https://docs.requarks.io/demo)
 - [Change Log](https://docs.requarks.io/releases)
-- [Feature Requests](https://wiki.js.org/feedback)
+- [Feature Requests](https://feedback.js.wiki/wiki)
 - [Chat with us on Slack](https://wiki.requarks.io/slack)
 - [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
 - [E2E Testing Results](https://dashboard.cypress.io/projects/r7qxah/runs)
