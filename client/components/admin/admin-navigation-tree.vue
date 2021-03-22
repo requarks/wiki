@@ -3,8 +3,7 @@
     draggable(
         :list="list"
         :group="{ name: 'g1' }"
-        :class="{'empty-draggable': !list.length, 'dragging': dragging}"
-        @dragover="dragging=true" @drop="dragging=false" @dragleave="dragging=false"
+        :class="{'empty-draggable': !list.length}"
       )
       template(v-for="navItem in list")
         v-list-item(
@@ -65,11 +64,6 @@ export default {
   components: {
     draggable
   },
-  data() {
-    return {
-      dragging: false
-    }
-  },
   methods: {
     selectItem(navItem) {
       this.$emit('select-item', navItem)
@@ -83,10 +77,5 @@ export default {
   min-height: 38px;
   border: 1px dashed #7b9cde;
   transition: all 0.5s;
-
-  .dragging {
-    border: 1px dashed #4064b2;
-    background-color: #61a3c6;
-  }
 }
 </style>
