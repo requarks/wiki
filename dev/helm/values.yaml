@@ -98,7 +98,7 @@ postgresql:
   # postgresqlPort: 5432
   ## PostgreSQL fullname Override
   ## Default to wiki-postgresql unless fullname override is set for Chart
-  ##  
+  ##
   fullnameOverride: ""
   ## PostgreSQL User to create.
   ##
