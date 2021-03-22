@@ -44,6 +44,29 @@
           v-list-item-title {{ item.l }}
         v-divider.my-2(v-else-if='item.k === `divider`')
         v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
+        v-list-group(
+          v-if='item.k === `group`'
+          v-model='item.active'
+          active-class="white--text"
+          )
+            template(v-slot:activator)
+              v-list-item-avatar(size='24', tile)
+                v-icon(v-if='item.c.match(/fa[a-z] fa-/)', size='19') {{ item.c }}
+                v-icon(v-else) {{ item.c }}
+              v-list-item-title {{ item.l }}
+            template(v-for='i of item.n')
+              v-list-item.pl-4(
+                v-if='i.k === `link`'
+                :href='i.t'
+                :target='i.y === `externalblank` ? `_blank` : `_self`'
+                :rel='i.y === `externalblank` ? `noopener` : ``'
+              )
+                v-list-item-avatar(size='24', tile)
+                  v-icon(v-if='i.c.match(/fa[a-z] fa-/)', size='19') {{ i.c }}
+                  v-icon(v-else) {{ i.c }}
+                v-list-item-title {{ i.l }}
+              v-divider.pl-4.my-2(v-else-if='i.k === `divider`')
+              v-subheader.pl-8(v-else-if='i.k === `header`') {{ i.l }}
     //-> Browse
     v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
       template(v-if='currentParent.id > 0')
