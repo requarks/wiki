@@ -22,7 +22,7 @@ const getFilePath = (page, pathKey) => {
 module.exports = class S3CompatibleStorage {
   constructor(storageName) {
     this.storageName = storageName
-    this.bucketName;
+    this.bucketName
   }
   async activated() {
     // not used
@@ -33,7 +33,6 @@ module.exports = class S3CompatibleStorage {
   async init() {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Initializing...`)
     const { accessKeyId, secretAccessKey, bucket } = this.config
-    this.bucketName = bucket;
     const s3Config = {
       accessKeyId,
       secretAccessKey,
@@ -58,6 +57,7 @@ module.exports = class S3CompatibleStorage {
     }
 
     this.s3 = new S3(s3Config)
+    this.bucketName = bucket
 
     // determine if a bucket exists and you have permission to access it
     await this.s3.headBucket().promise()
