@@ -22,7 +22,7 @@ const getFilePath = (page, pathKey) => {
 module.exports = class S3CompatibleStorage {
   constructor(storageName) {
     this.storageName = storageName
-    this.bucketName
+    this.bucketName = ""
   }
   async activated() {
     // not used
