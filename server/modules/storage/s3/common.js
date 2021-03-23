@@ -22,6 +22,7 @@ const getFilePath = (page, pathKey) => {
 module.exports = class S3CompatibleStorage {
   constructor(storageName) {
     this.storageName = storageName
+    this.bucketName = ""
   }
   async activated() {
     // not used
@@ -56,6 +57,7 @@ module.exports = class S3CompatibleStorage {
     }
 
     this.s3 = new S3(s3Config)
+    this.bucketName = bucket
 
     // determine if a bucket exists and you have permission to access it
     await this.s3.headBucket().promise()
@@ -89,7 +91,7 @@ module.exports = class S3CompatibleStorage {
         destinationFilePath = `${page.destinationLocaleCode}/${destinationFilePath}`
       }
     }
-    await this.s3.copyObject({ CopySource: sourceFilePath, Key: destinationFilePath }).promise()
+    await this.s3.copyObject({ CopySource: `${this.bucketName}/${sourceFilePath}`, Key: destinationFilePath }).promise()
     await this.s3.deleteObject({ Key: sourceFilePath }).promise()
   }
   /**
@@ -117,7 +119,7 @@ module.exports = class S3CompatibleStorage {
    */
   async assetRenamed (asset) {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Renaming file from ${asset.path} to ${asset.destinationPath}...`)
-    await this.s3.copyObject({ CopySource: asset.path, Key: asset.destinationPath }).promise()
+    await this.s3.copyObject({ CopySource: `${this.bucketName}/${asset.path}`, Key: asset.destinationPath }).promise()
     await this.s3.deleteObject({ Key: asset.path }).promise()
   }
   async getLocalLocation () {
