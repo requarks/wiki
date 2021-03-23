@@ -91,7 +91,6 @@ module.exports = class S3CompatibleStorage {
         destinationFilePath = `${page.destinationLocaleCode}/${destinationFilePath}`
       }
     }
-
     await this.s3.copyObject({ CopySource: `${this.bucketName}/${sourceFilePath}`, Key: destinationFilePath }).promise()
     await this.s3.deleteObject({ Key: sourceFilePath }).promise()
   }
