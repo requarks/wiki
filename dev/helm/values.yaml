@@ -80,6 +80,22 @@ postgresql:
   ## Set to false if bringing your own PostgreSQL, and set secret value postgresql-uri.
   ##
   enabled: true
+  ## ssl enforce SSL communication with PostgresSQL
+  ## Default to false
+  ##  
+  # ssl: false
+  ## ca Certificate of Authority
+  ## Default to empty, point to location of CA
+  ##
+  # ca: "path to ca"
+  ## postgresqlHost override postgres database host
+  ## Default to postgres
+  ##
+  # postgresqlHost: postgres
+  ## postgresqlPort port for postgres 
+  ## Default to 5432
+  ##
+  # postgresqlPort: 5432
   ## PostgreSQL fullname Override
   ## Default to wiki-postgresql unless fullname override is set for Chart
   ##
