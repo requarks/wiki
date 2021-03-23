@@ -139,7 +139,7 @@ By default, PostgreSQL is installed as part of the chart.
 
 To use an external PostgreSQL server, set `postgresql.enabled` to `false` and then set `postgresql.postgresqlHost` and `postgresql.postgresqlPassword`. The other options (`postgresql.postgresqlDatabase`, `postgresql.postgresqlUser` and `postgresql.postgresqlPort`) may also want changing from their default values.
 
-To use an SSL connection you can set `postgres.ssl` to `true` and if needed the path to a Certificate of Authority can be set using `postgres:ca` to `/path/to/ca`. Default `postgres.ssl` value is `false`.
+To use an SSL connection you can set `postgresql.ssl` to `true` and if needed the path to a Certificate of Authority can be set using `postgres:ca` to `/path/to/ca`. Default `postgresql.ssl` value is `false`.
 
 You also need to add the follow Helm template to your deployment:
 
