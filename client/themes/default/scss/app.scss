@@ -89,6 +89,11 @@
       font-size: 1.25rem;
       text-decoration: none;
       color: mc('grey', '500');
+
+      @at-root .is-rtl & {
+        right: unset;
+        left: 1rem;
+      }
     }
 
     & + h2, & + h3, & + h4, & + h5, & + h6 {
