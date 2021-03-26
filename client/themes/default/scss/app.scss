@@ -1,5 +1,17 @@
 /* THEME SPECIFIC STYLES */
-
+  // ---------------------------------
+  // FIX VUETIFY BROKEN RTL MARGIN
+  // ---------------------------------
+@for $i from 1 through 8 {
+  .is-rtl .ml-#{$i} {
+    margin-left: 0px !important;
+    margin-right: ($i * 4px) !important;
+  }
+  .is-rtl .mr-#{$i} {
+    margin-left: ($i * 4px) !important;
+    margin-right: 0px !important;
+  }
+}
 .v-main .contents {
   color: mc('grey', '800');
   padding: .5rem 0 50px;
@@ -191,7 +203,7 @@
   h5 {
     &::after {
       background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 50%);
-      
+
       @at-root .is-rtl & {
         background: linear-gradient(to left, mc('grey', '500'), rgba(mc('grey', '500'), 0) 50%);
       }
