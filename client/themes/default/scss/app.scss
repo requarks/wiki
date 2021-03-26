@@ -2,14 +2,16 @@
   // ---------------------------------
   // FIX VUETIFY BROKEN RTL MARGIN
   // ---------------------------------
-@for $i from 1 through 8 {
-  .is-rtl .ml-#{$i} {
-    margin-left: 0px !important;
-    margin-right: ($i * 4px) !important;
-  }
-  .is-rtl .mr-#{$i} {
-    margin-left: ($i * 4px) !important;
-    margin-right: 0px !important;
+.is-rtl {
+  @for $i from 1 through 8 {
+    .ml-#{$i} {
+      margin-left: 0px !important;
+      margin-right: ($i * 4px) !important;
+    }
+    .mr-#{$i} {
+      margin-left: ($i * 4px) !important;
+      margin-right: 0px !important;
+    }
   }
 }
 .v-main .contents {
