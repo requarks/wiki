@@ -130,7 +130,7 @@ module.exports = {
         path: '/graphql-subscriptions'
       }
     })
-    this.servers.graph.applyMiddleware({ app: WIKI.app, cors: false })
+    this.servers.graph.applyMiddleware({ app: WIKI.app })
   },
   /**
    * Close all active connections

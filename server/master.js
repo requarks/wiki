@@ -42,8 +42,8 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(mw.security)
-  app.use(cors({ origin: false }))
-  app.options('*', cors({ origin: false }))
+  app.use(cors(WIKI.config.cors))
+  app.options('*', cors(WIKI.config.cors))
   if (WIKI.config.security.securityTrustProxy) {
     app.enable('trust proxy')
   }
