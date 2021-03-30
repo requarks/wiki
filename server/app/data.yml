@@ -55,6 +55,7 @@ defaults:
       darkMode: false
     auth:
       autoLogin: false
+      bypassUnauthorized: false
       enforce2FA: false
       hideLocal: false
       loginBgUrl: ''
