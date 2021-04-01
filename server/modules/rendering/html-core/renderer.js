@@ -250,7 +250,7 @@ module.exports = {
       const list = $(node).contents().toArray()
       list.forEach(item => {
         if (item.type === 'text') {
-          const rawText = $(item).text()
+          const rawText = $(item).text().replace(/\r?\n|\r/g, '')
           if (mustacheRegExp.test(rawText)) {
             $(item).parent().attr('v-pre', true)
           }
@@ -260,6 +260,10 @@ module.exports = {
       })
     }
     iterateMustacheNode($.root())
+
+    $('pre').each((idx, elm) => {
+      $(elm).attr('v-pre', true)
+    })
 
     // --------------------------------
     // STEP: POST

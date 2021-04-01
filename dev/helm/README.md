@@ -100,7 +100,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `tolerations`                    | Toleration labels for wiki.jsk pod assignment    | `[]`                                                       |
 | `ingress.enabled`                    | Enable ingress controller resource          | `false`                                                    |
 | `ingress.annotations`                | Ingress annotations                         | `{}`                                                       |
-| `ingress.hostname`                   | URL to address your Wiki.js installation     | `wiki.local`                                             |
+| `ingress.hosts`                      | List of ingress rules                        | `[{"host": "wiki.local", "paths": ["/"]}]`                |
 | `ingress.tls`                        | Ingress TLS configuration                   | `[]`                                                       |
 | `postgresql.enabled`                 | Deploy postgres server (see below)          | `true`                                                     |
 | `postgresql.postgresqlDatabase`        | Postgres database name                      | `wiki`                                                   |
@@ -108,6 +108,8 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `postgresql.postgresqlHost`            | External postgres host                      | `nil`                                                      |
 | `postgresql.postgresqlPassword`        | External postgres password                  | `nil`                                                      |
 | `postgresql.postgresqlPort`            | External postgres port                      | `5432`                                                     |
+| `postgresql.ssl`                       | Enable external postgres SSL connection     | `false`                                                   |
+| `postgresql.ca`                        | Certificate of Authority path for postgres  | `nil`                                                     |
 | `postgresql.persistence.enabled`                | Enable postgres persistence using PVC                | `true`                                                     |
 | `postgresql.persistence.existingClaim`          | Provide an existing `PersistentVolumeClaim` for postgres | `nil`                                                      |
 | `postgresql.persistence.storageClass`           | Postgres PVC Storage Class (example: `nfs`)                           | `nil`                 |
@@ -131,7 +133,24 @@ $ helm install --name my-release -f values.yaml .
 
 ## PostgresSQL
 
-By default, PostgreSQL is installed as part of the chart. To use an external PostgreSQL server set `postgresql.enabled` to `false` and then set `postgresql.postgresqlHost` and `postgresql.postgresqlPassword`. The other options (`postgresql.postgresqlDatabase`, `postgresql.postgresqlUser` and `postgresql.postgresqlPort`) may also want changing from their default values.
+By default, PostgreSQL is installed as part of the chart.
+
+### Using an external PostgreSQL server
+
+To use an external PostgreSQL server, set `postgresql.enabled` to `false` and then set `postgresql.postgresqlHost` and `postgresql.postgresqlPassword`. The other options (`postgresql.postgresqlDatabase`, `postgresql.postgresqlUser` and `postgresql.postgresqlPort`) may also want changing from their default values.
+
+To use an SSL connection you can set `postgresql.ssl` to `true` and if needed the path to a Certificate of Authority can be set using `postgresql.ca` to `/path/to/ca`. Default `postgresql.ssl` value is `false`.
+
+You also need to add the follow Helm template to your deployment:
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: {{ template "wiki.postgresql.secret" . }}
+data:
+  {{ template "wiki.postgresql.secretKey" . }}: "{{ .Values.postgresql.postgresqlPassword | b64enc }}"
+```
 
 ## Persistence
 

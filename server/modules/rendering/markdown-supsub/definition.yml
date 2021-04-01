@@ -13,6 +13,6 @@ props:
     default: true
   supEnabled:
     type: Boolean
-    title: Supercript
-    hint: Enable supercript tags
+    title: Superscript
+    hint: Enable superscript tags
     default: true

@@ -154,6 +154,8 @@ export default {
       return text.replace(new RegExp(query, 'g'), function (match) {
         return '<span style="text-decoration: underline;">'+match+'</span>';
       });
+    goToPageInNewTab(item) {
+      window.open(`/${item.locale}/${item.path}`, '_blank')
     }
   },
   apollo: {

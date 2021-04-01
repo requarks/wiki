@@ -140,6 +140,10 @@ module.exports = {
               await conn.query(`set application_name = 'Wiki.js'`)
               done()
               break
+            case 'mysql':
+              await conn.promise().query(`set autocommit = 1`)
+              done()
+              break
             default:
               done()
               break

@@ -583,6 +583,9 @@
 
   .diagram {
     margin-top: 1rem;
+    svg:first-child {
+      direction: ltr;
+    }
   }
 
   // ---------------------------------
@@ -966,13 +969,13 @@
     }
   }
 
-  .v-content {
+  .v-main {
     padding: 0 !important;
     font-size: 14px;
     background-color: #FFF;
   }
 
-  .v-content .contents {
+  .v-main .contents {
     color: #000;
     background-color: #FFF;
 

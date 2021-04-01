@@ -38,6 +38,10 @@ spec:
               value: {{ default "wiki" .Values.postgresql.postgresqlDatabase }}
             - name: DB_USER
               value: {{ default "wiki" .Values.postgresql.postgresqlUser }}
+            - name: DB_SSL
+              value: "{{ default "false" .Values.postgresql.ssl }}"    
+            - name: DB_SSL_CA
+              value: "{{ default "" .Values.postgresql.ca }}"   
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
