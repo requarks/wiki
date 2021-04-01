@@ -1,0 +1,20 @@
+key: markdownHtml5Embed
+title: HTML5 Embed
+description: HTML5 Audio/Video Embed for Markdown
+author: silviu@lorent.ro
+icon: mdi-language-markdown
+enabledDefault: true
+dependsOn: markdownCore
+props:
+  useImageSyntax:
+    type: Boolean
+    default: true
+    title: Use Image Syntax
+    hint: Enables video/audio embed with ![]() syntax
+    order: 1
+  useLinkSyntax:
+    type: Boolean
+    default: false
+    title: Use Link Syntax
+    hint: Enables video/audio embed with []() syntax
+    order: 2
