@@ -242,6 +242,18 @@
                         color='white'
                         light
                         v-on='on'
+                        @click='pageConvert'
+                        )
+                        v-icon(size='20') mdi-lightning-bolt
+                    span {{$t('common:header.convert')}}
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        small
+                        color='white'
+                        light
+                        v-on='on'
                         @click='pageDuplicate'
                         )
                         v-icon(size='20') mdi-content-duplicate
@@ -314,7 +326,7 @@ import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
 
-Vue.component('tabset', Tabset)
+Vue.component('Tabset', Tabset)
 
 Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
@@ -396,6 +408,10 @@ export default {
     authorId: {
       type: Number,
       default: 0
+    },
+    editor: {
+      type: String,
+      default: ''
     },
     isPublished: {
       type: Boolean,
@@ -516,6 +532,7 @@ export default {
     this.$store.set('page/path', this.path)
     this.$store.set('page/tags', this.tags)
     this.$store.set('page/title', this.title)
+    this.$store.set('page/editor', this.editor)
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
       this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
@@ -596,6 +613,9 @@ export default {
     },
     pageSource () {
       this.$root.$emit('pageSource')
+    },
+    pageConvert () {
+      this.$root.$emit('pageConvert')
     },
     pageDuplicate () {
       this.$root.$emit('pageDuplicate')
