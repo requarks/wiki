@@ -488,6 +488,10 @@ module.exports = class Page extends Model {
       throw new Error('Invalid Page Id')
     }
 
+    if (ogPage.editorKey === opts.editor) {
+      throw new Error('Page is already using this editor. Nothing to convert.')
+    }
+
     // -> Check for page access
     if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
       locale: ogPage.localeCode,
@@ -559,6 +563,15 @@ module.exports = class Page extends Model {
         td.addRule('underline', {
           filter: ['u'],
           replacement: c => `_${c}_`
+        })
+
+        td.addRule('taskList', {
+          filter: (n, o) => {
+            return n.nodeName === 'INPUT' && n.getAttribute('type') === 'checkbox'
+          },
+          replacement: (c, n) => {
+            return n.getAttribute('checked') ? '[x] ' : '[ ] '
+          }
         })
 
         td.addRule('removeTocAnchors', {

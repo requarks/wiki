@@ -100,9 +100,7 @@ export default {
           })
           if (_.get(resp, 'data.pages.convert.responseResult.succeeded', false)) {
             this.isShown = false
-            _.delay(() => {
-              window.location.assign(`/e/${this.pageLocale}/${this.pagePath}`)
-            }, 400)
+            window.location.assign(`/e/${this.pageLocale}/${this.pagePath}`)
           } else {
             throw new Error(_.get(resp, 'data.pages.convert.responseResult.message', this.$t('common:error.unexpected')))
           }
