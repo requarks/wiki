@@ -20,6 +20,7 @@ block body
       updated-at=page.updatedAt
       author-name=page.authorName
       :author-id=page.authorId
+      editor=page.editorKey
       :is-published=page.isPublished.toString()
       toc=Buffer.from(page.toc).toString('base64')
       :page-id=page.id

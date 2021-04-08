@@ -14,6 +14,7 @@ const state = {
   tags: [],
   title: '',
   updatedAt: '',
+  editor: '',
   mode: '',
   scriptJs: '',
   scriptCss: '',
