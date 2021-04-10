@@ -33,7 +33,7 @@ module.exports = function (req, res, next) {
 
   // -> Enforce HSTS
   if (WIKI.config.security.securityHSTS) {
-    res.set('Strict-Transport-Security', `max-age=${WIKI.config.securityHSTSDuration}; includeSubDomains`)
+    res.set('Strict-Transport-Security', `max-age=${WIKI.config.security.securityHSTSDuration}; includeSubDomains`)
   }
 
   // -> Prevent Open Redirect from user provided URL

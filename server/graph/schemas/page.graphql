@@ -112,6 +112,11 @@ type PageMutation {
     title: String
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
+  convert(
+    id: Int!
+    editor: String!
+  ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
   move(
     id: Int!
     destinationPath: String!

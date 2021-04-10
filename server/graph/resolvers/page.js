@@ -399,6 +399,22 @@ module.exports = {
       }
     },
     /**
+     * CONVERT PAGE
+     */
+    async convert(obj, args, context) {
+      try {
+        await WIKI.models.pages.convertPage({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page has been converted.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
      * MOVE PAGE
      */
     async move(obj, args, context) {
