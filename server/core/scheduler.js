@@ -55,14 +55,22 @@ class Job {
           `--job=${this.name}`,
           `--data=${data}`
         ], {
-          cwd: WIKI.ROOTPATH
+          cwd: WIKI.ROOTPATH,
+          stdio: ['inherit', 'inherit', 'pipe', 'ipc']
         })
+        const stderr = [];
+        proc.stderr.on('data', chunk => stderr.push(chunk))
         this.finished = new Promise((resolve, reject) => {
           proc.on('exit', (code, signal) => {
+            const data = Buffer.concat(stderr).toString()
             if (code === 0) {
-              resolve()
+              resolve(data)
             } else {
-              reject(signal)
+              const err = new Error(`Error when running job ${this.name}: ${data}`)
+              err.exitSignal = signal
+              err.exitCode = code
+              err.stderr = data
+              reject(err)
             }
             proc.kill()
           })
