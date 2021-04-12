@@ -237,7 +237,7 @@ module.exports = {
     // --------------------------------
 
     $('body').contents().toArray().forEach(item => {
-      if (item.type === 'text' && item.parent.name === 'body') {
+      if (item && item.type === 'text' && item.parent.name === 'body') {
         $(item).wrap('<div></div>')
       }
     })
@@ -249,7 +249,7 @@ module.exports = {
     function iterateMustacheNode (node) {
       const list = $(node).contents().toArray()
       list.forEach(item => {
-        if (item.type === 'text') {
+        if (item && item.type === 'text') {
           const rawText = $(item).text().replace(/\r?\n|\r/g, '')
           if (mustacheRegExp.test(rawText)) {
             $(item).parent().attr('v-pre', true)
