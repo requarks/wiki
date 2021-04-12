@@ -40,11 +40,11 @@ module.exports = {
     }
   },
   async unload () {
-    if (this.fdCache) {
+    const fds = Object.values(this.fdCache)
+    if (fds.length > 0) {
       WIKI.logger.info('Closing ASAR file descriptors...')
-      for (const fdItem in this.fdCache) {
-        fs.closeSync(this.fdCache[fdItem].fd)
-      }
+      const closeAsync = require('util').promisify(fs.close)
+      await Promise.all(fds.map(x => closeAsync(x.fd)))
       this.fdCache = {}
     }
   },

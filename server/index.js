@@ -33,3 +33,16 @@ WIKI.logger = require('./core/logger').init('MASTER')
 // ----------------------------------------
 
 WIKI.kernel.init()
+
+// ----------------------------------------
+// Register exit handler
+// ----------------------------------------
+
+process.on('SIGINT', () => {
+  WIKI.kernel.shutdown()
+})
+process.on('message', (msg) => {
+  if (msg === 'shutdown') {
+    WIKI.kernel.shutdown()
+  }
+})
