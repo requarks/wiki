@@ -20,7 +20,7 @@
 
 </div>
 
-- **[Official Website](https://wiki.js.org/)**
+- **[Official Website](https://js.wiki/)**
 - **[Documentation](https://docs.requarks.io/)**
 - [Requirements](https://docs.requarks.io/install/requirements)
 - [Installation](https://docs.requarks.io/install)
