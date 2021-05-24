@@ -22,3 +22,8 @@ props:
     title: Client Secret
     hint: Application Client Secret
     order: 2
+  hostedDomain:
+    type: String
+    title: Hosted domain
+    hint: hd Authentication URI parameter - streamlines the login process for G Suite hosted domain
+    order: 3
