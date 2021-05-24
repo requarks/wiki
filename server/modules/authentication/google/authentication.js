@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    var strategy = new GoogleStrategy({
+    const strategy = new GoogleStrategy({
       clientID: conf.clientId,
       clientSecret: conf.clientSecret,
       callbackURL: conf.callbackURL,
@@ -30,14 +30,14 @@ module.exports = {
       } catch (err) {
         cb(err, null)
       }
-    });
+    })
 
     if (conf.hostedDomain) {
       strategy.authorizationParams = function(options) {
         return {
-          'hd' : conf.hostedDomain
-        };
-      };
+          hd: conf.hostedDomain
+        }
+      }
     }
 
     passport.use('google', strategy)
