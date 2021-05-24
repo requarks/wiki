@@ -24,6 +24,6 @@ props:
     order: 2
   hostedDomain:
     type: String
-    title: Hosted domain
-    hint: hd Authentication URI parameter - streamlines the login process for G Suite hosted domain
+    title: Hosted Domain
+    hint: (optional) Only for G Suite hosted domain. Leave empty otherwise.
     order: 3
