@@ -232,6 +232,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Alex Zen
 - Arti Zirk
 - Brandon Curtis
+- Dave 'Sri' Seah
 - djagoo
 - Douglas Lassance
 - Ernie Reid
