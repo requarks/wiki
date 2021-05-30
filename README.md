@@ -14,13 +14,14 @@
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  
 [![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat&logo=twitter)](https://twitter.com/requarks)
+[![Reddit](https://img.shields.io/badge/reddit-%2Fr%2Fwikijs-orange?logo=reddit&logoColor=white)](https://www.reddit.com/r/wikijs/)
 [![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp)](https://blog.js.wiki/subscribe)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS
 
 </div>
 
-- **[Official Website](https://wiki.js.org/)**
+- **[Official Website](https://js.wiki/)**
 - **[Documentation](https://docs.requarks.io/)**
 - [Requirements](https://docs.requarks.io/install/requirements)
 - [Installation](https://docs.requarks.io/install)
@@ -107,6 +108,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Jay Lee ([@polyglotm](https://github.com/polyglotm))
 - Kelly Wardrop ([@dropcoded](https://github.com/dropcoded))
 - Loki ([@binaryloki](https://github.com/binaryloki))
+- Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
@@ -230,6 +232,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Alex Zen
 - Arti Zirk
 - Brandon Curtis
+- Dave 'Sri' Seah
 - djagoo
 - Douglas Lassance
 - Ernie Reid
@@ -248,6 +251,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Matt Gedigian
 - Patryk
 - Philipp Schürch
+- Tracey Duffy
 - Richeir
 - SmartNET.works
 - Stepan Sokolovskyi

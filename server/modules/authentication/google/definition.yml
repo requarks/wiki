@@ -22,3 +22,8 @@ props:
     title: Client Secret
     hint: Application Client Secret
     order: 2
+  hostedDomain:
+    type: String
+    title: Hosted Domain
+    hint: (optional) Only for G Suite hosted domain. Leave empty otherwise.
+    order: 3
