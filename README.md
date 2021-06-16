@@ -96,6 +96,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 </div>
 
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
+- Arnaud Marchand ([@snuids](https://github.com/snuids))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
@@ -241,6 +242,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Florent
 - Günter Pavlas
 - hong
+- Hope
 - Ian
 - Iskander Callos
 - Josh Stewart
