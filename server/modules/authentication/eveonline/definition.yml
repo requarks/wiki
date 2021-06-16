@@ -1,0 +1,20 @@
+key: eveonline
+title: EveOnline
+description: Login with Eveonline's SSO
+author: fuzzysteve
+logo: https://image.eveonline.com/Corporation/98072480_64.png
+color: red accent-3
+website: https://www.eveonline.com/
+isAvailable: true
+useForm: false
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
