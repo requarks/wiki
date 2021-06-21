@@ -21,6 +21,16 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name:
 
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
 podSecurityContext: {}
   # fsGroup: 2000
 
