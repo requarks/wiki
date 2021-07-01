@@ -800,7 +800,7 @@
       padding-left: 0;
     }
 
-    summary {
+    > summary {
       border-radius: 7px;
       background-color: mc('grey', '50');
       cursor: pointer;
@@ -819,7 +819,7 @@
     &[open] {
       padding: 1rem;
 
-      summary {
+      > summary {
         background-color: mc('grey', '100');
         border-bottom: 1px solid mc('grey', '300');
         border-bottom-left-radius: 0;
@@ -832,12 +832,12 @@
       background-color: mc('grey', '900');
       border-color: mc('grey', '700');
 
-      summary {
+      > summary {
         background-color: mc('grey', '900');
         border-color: mc('grey', '700');
       }
 
-      &[open] summary {
+      &[open] > summary {
         background-color: lighten(mc('grey', '900'), 5%);
       }
     }
