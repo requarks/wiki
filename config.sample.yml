@@ -29,6 +29,7 @@ db:
   user: wikijs
   pass: wikijsrocks
   db: wiki
+  schema: public # Only for choice a PostgreSQL Schema other than public
   ssl: false
 
   # Optional - PostgreSQL / MySQL / MariaDB only:
