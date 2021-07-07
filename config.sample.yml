@@ -29,7 +29,6 @@ db:
   user: wikijs
   pass: wikijsrocks
   db: wiki
-  schema: public # Only for choice a PostgreSQL Schema other than public
   ssl: false
 
   # Optional - PostgreSQL / MySQL / MariaDB only:
@@ -43,6 +42,9 @@ db:
     # key: path/to/key.pem
     # pfx: path/to/cert.pfx
     # passphrase: xyz123
+
+  # Optional - PostgreSQL only:
+  schema: public
 
   # SQLite only:
   storage: path/to/database.sqlite

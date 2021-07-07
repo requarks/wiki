@@ -37,10 +37,6 @@ module.exports = {
       port: WIKI.config.db.port
     }
 
-    // Fetch DB Pgsql schema
-
-    let database_schema = WIKI.config.db.schema.toString()
-
     // Handle SSL Options
 
     let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
@@ -143,8 +139,8 @@ module.exports = {
             case 'postgres':
               await conn.query(`set application_name = 'Wiki.js'`)
                   // -> Set schema if it's not public             
-                  if (database_schema != 'public') {
-                      await conn.query(`set search_path TO ${database_schema}, public;`)
+                  if (WIKI.config.db.schema && WIKI.config.db.schema !== 'public') {
+                      await conn.query(`set search_path TO ${WIKI.config.db.schema}, public;`)
                   }
               done()
               break
