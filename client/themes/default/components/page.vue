@@ -579,7 +579,7 @@ export default {
         el.onclick = ev => {
           ev.preventDefault()
           ev.stopPropagation()
-          this.$vuetify.goTo(decodeURIComponent(ev.target.hash), this.scrollOpts)
+          this.$vuetify.goTo(decodeURIComponent(ev.currentTarget.hash), this.scrollOpts)
         }
       })
     })
