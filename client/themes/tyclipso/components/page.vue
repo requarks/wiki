@@ -352,6 +352,8 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
   }
 })
 
+
+
 export default {
   components: {
     NavSidebar,
@@ -584,14 +586,7 @@ export default {
       })
 
       // remove empty divs
-      c.querySelectorAll('div:not([class]):not([id])').forEach(el => {
-        if (el.innerHTML === '') el.remove()
-      })
-
-      // add click listerers for images
-      c.querySelectorAll('p > img').forEach(el => el.addEventListener('click', () => {
-        window.open(el.src, '_blank')
-      }))
+      c.querySelectorAll('div:not([class]):not([id]):empty').forEach(el => el.remove())
     },
     copyToClipboard(hash) {
       const url = window.location.origin + window.location.pathname + hash

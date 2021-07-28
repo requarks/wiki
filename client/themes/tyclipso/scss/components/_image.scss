@@ -1,0 +1,41 @@
+.ty-image-wrapper {
+  @include elevation(2);
+  display: block;
+  overflow: hidden;
+  margin: 12px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  color: currentColor;
+}
+
+.ty-image-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(mc('theme', 'primary'), .7);
+  transition-property: opacity, visibility;
+  transition-timing-function: ease;
+  transition-duration: .3s;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+
+  .v-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    color: currentColor;
+  }
+}
+
+.ty-image-wrapper:hover .ty-image-overlay {
+  opacity: 1;
+  visibility: visible;
+}

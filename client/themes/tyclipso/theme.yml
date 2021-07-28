@@ -27,16 +27,6 @@ props:
     default: true
     title: Display the Page Tags
     order: 3
-  showTags:
-    type: Boolean
-    default: true
-    title: Display the Page Author and Date
-    order: 4
-  showTags:
-    type: Boolean
-    default: true
-    title: Display the Page Rating
-    order: 5
   showSocialBar:
     type: Boolean
     default: true

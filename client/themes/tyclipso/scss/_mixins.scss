@@ -1,0 +1,3 @@
+@mixin elevation($z, $important: false) {
+  box-shadow: map-get($shadow-key-umbra, $z), map-get($shadow-key-penumbra, $z), map-get($shadow-key-ambient, $z) if($important, !important, null);
+}
