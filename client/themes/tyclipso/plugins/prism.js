@@ -57,34 +57,49 @@ function expandButton() {
     const codeBlock = env.element.closest('.code-toolbar')
     const container = env.element.closest('.page-col-content.ty-max-width')
 
-    const codeBlockWidth = codeBlock.style.width = `${codeBlock.offsetWidth}px`;
     const applyInlineStyles = (marginLeft, width) => {
-      codeBlock.style.marginLeft = expanded ? `${marginLeft}px` : '0px'
-      codeBlock.style.width = expanded ? `${width}px` : codeBlockWidth
+      codeBlock.style.width = `${codeBlock.closest('.contents').offsetWidth}px`
+      codeBlock.style.marginLeft = '0px'
+
+      if (expanded) {
+        window.requestAnimationFrame(() => {
+          codeBlock.style.marginLeft = `${marginLeft}px`
+          codeBlock.style.width = `${width}px`
+        })
+      } else {
+        setTimeout(() => {
+          codeBlock.style.marginLeft = codeBlock.style.width = null
+        }, 500)
+      }
     }
 
-    applyInlineStyles()
-    const expandButton = document.createElement('button')
-
-    expandButton.innerHTML = expandIcon
-
-    expandButton.addEventListener('click', () => {
+    const recalculateWidth = () => {
       const containerMargin = parseFloat(window.getComputedStyle(container).marginLeft)
       const containerPadding = parseFloat(window.getComputedStyle(container).paddingLeft)
-
-      expanded = !expanded
-
-      // switch icon
-      expandButton.innerHTML = expanded ? collapseIcon : expandIcon
 
       // compute expanded size
       const expandedWidth = container.offsetWidth - containerPadding * 2 + containerMargin * 2;
 
       // apply inline styles to code block
       applyInlineStyles(-containerMargin, expandedWidth)
+    }
+
+    const expandButton = document.createElement('button')
+
+    expandButton.innerHTML = expandIcon
+
+    expandButton.addEventListener('click', () => {
+      expanded = !expanded
+
+      recalculateWidth()
+
+      // switch icon
+      expandButton.innerHTML = expanded ? collapseIcon : expandIcon
 
       document.activeElement.blur()
     })
+
+    window.addEventListener('resize', recalculateWidth)
 
     return expandButton
   })
