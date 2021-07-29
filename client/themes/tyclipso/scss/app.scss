@@ -128,6 +128,12 @@
     color: mc('grey', '800');
   }
 
+  .code-toolbar {
+    transition-property: margin, width;
+    transition-duration: .3s;
+    transition-timing-function: ease;
+  }
+
   .code-toolbar .toolbar {
     top: 4px;
     right: 8px;
@@ -135,10 +141,30 @@
 
     button {
       padding: .25em .5em;
+      background: mc('grey', '700');
+      color: mc('grey', '200');
+
+      &:hover {
+        background: mc('grey', '600');
+        color: mc('grey', '200');
+      }
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  .code-toolbar .toolbar-item {
+    padding-left: 4px;
+
+    &:first-child {
+      display: none;
     }
   }
 
   .code-toolbar[data-lang] {
+    $header-height: 2.15rem;
     position: relative;
 
     &::after {
@@ -146,9 +172,11 @@
       position: absolute;
       top: 0;
       left: 0;
+      display: flex;
+      align-items: center;
       text-shadow: none;
       width: 100%;
-      height: 2rem;
+      height: $header-height;
       background: rgba(mc('grey', '800'), .5);
       color: mc('grey', '200');
       text-transform: uppercase;
@@ -161,7 +189,7 @@
     }
 
     .prismjs {
-      padding-top: 3rem;
+      padding-top: #{$header-height + 1rem};
     }
   }
 

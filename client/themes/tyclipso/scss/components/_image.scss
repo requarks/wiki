@@ -4,7 +4,6 @@
   overflow: hidden;
   margin: 12px 0;
   border-radius: 4px;
-  cursor: pointer;
   position: relative;
   text-decoration: none;
   color: currentColor;
@@ -16,22 +15,19 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(mc('theme', 'primary'), .7);
   transition-property: opacity, visibility;
   transition-timing-function: ease;
   transition-duration: .3s;
   color: #fff;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-end;
   opacity: 0;
   visibility: hidden;
+  padding: 1rem;
+  pointer-events: none;
 
-  .v-icon {
-    font-size: 36px;
-    margin-bottom: 8px;
-    color: currentColor;
+  a, button {
+    pointer-events: all;
   }
 }
 

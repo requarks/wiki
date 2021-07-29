@@ -6,8 +6,8 @@ module.exports = {
     // wrap images
     $('p > img').each((i, element) => {
       const src = $(element).attr('src');
-      $(element).wrap(`<a class="ty-image-wrapper" href="${src}" target="_blank"></a>`)
-      $(element).parent().append(ImageOverlay)
+      $(element).wrap(`<div class="ty-image-wrapper"></div>`)
+      $(element).parent().append(ImageOverlay(src))
     })
   }
 }

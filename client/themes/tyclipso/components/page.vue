@@ -312,47 +312,11 @@ import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
-import ClipboardJS from 'clipboard'
 import Vue from 'vue'
+import initializePrism from '../plugins/prism'
 
 Vue.component('tabset', Tabset)
-
-Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
-Prism.plugins.NormalizeWhitespace.setDefaults({
-  'remove-trailing': true,
-  'remove-indent': true,
-  'left-trim': true,
-  'right-trim': true,
-  'remove-initial-line-feed': true,
-  'tabs-to-spaces': 2
-})
-Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
-  let linkCopy = document.createElement('button')
-  linkCopy.textContent = 'Copy'
-
-  const clip = new ClipboardJS(linkCopy, {
-    text: () => { return env.code }
-  })
-
-  clip.on('success', () => {
-    linkCopy.textContent = 'Copied!'
-    resetClipboardText()
-  })
-  clip.on('error', () => {
-    linkCopy.textContent = 'Press Ctrl+C to copy'
-    resetClipboardText()
-  })
-
-  return linkCopy
-
-  function resetClipboardText() {
-    setTimeout(() => {
-      linkCopy.textContent = 'Copy'
-    }, 5000)
-  }
-})
-
-
+initializePrism()
 
 export default {
   components: {
