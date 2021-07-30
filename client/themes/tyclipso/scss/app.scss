@@ -209,4 +209,32 @@
       text-shadow: none !important;
     }
   }
+
+
+  // ---------------------------------
+  // TABLES
+  // ---------------------------------
+  table {
+    $br: 8px;
+    margin: 1rem 0;
+    display: block;
+    border-collapse: collapse;
+
+    th,
+    tr td {
+      border: 1px solid mc('grey', '200');
+    }
+
+    th {
+      background: mc('grey', '200');
+      color: mc('grey', '700');
+      font-size: .8em;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: mc('grey', '50');
+    }
+  }
 }
