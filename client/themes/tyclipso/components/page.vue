@@ -551,6 +551,24 @@ export default {
 
       // remove empty divs
       c.querySelectorAll('div:not([class]):not([id]):empty').forEach(el => el.remove())
+
+      // copy header links
+      c.querySelectorAll('.toc-header').forEach(header => {
+        const button = header.querySelector('.ty-anchor-button')
+        const link = header.querySelector('.toc-anchor').href
+        const icons = button.querySelectorAll('.v-icon')
+
+        button.addEventListener('click', () => {
+          navigator.clipboard.writeText(link)
+
+          icons[0].style.display = 'none'
+          icons[1].style.display = null
+          setTimeout(() => {
+            icons[0].style.display = null
+            icons[1].style.display = 'none'
+          }, 1000)
+        })
+      })
     },
     copyToClipboard(hash) {
       const url = window.location.origin + window.location.pathname + hash

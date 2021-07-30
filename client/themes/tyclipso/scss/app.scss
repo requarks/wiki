@@ -21,23 +21,14 @@
 
   h1, h2, h3, h4, h5, h6 {
     color: mc('grey', '800');
-
-    .toc-anchor {
-      top: 0;
-      font-size: inherit;
-      overflow: hidden;
-      left: -1em;
-      right: 0;
-      color: transparent;
-
-      &::before {
-        content: '#';
-        color: mc('theme', 'primary');
-      }
-    }
+    padding-right: 2rem;
 
     &:not(:first-child) {
       margin-top: 1.25em;
+    }
+
+    .toc-anchor {
+      display: none !important;
     }
   }
 

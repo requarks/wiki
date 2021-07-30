@@ -1,0 +1,15 @@
+.ty-anchor-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility .1s ease, opacity .1s ease;
+  color: mc('grey', '700');
+}
+
+.toc-header:hover .ty-anchor-button {
+  opacity: 1;
+  visibility: visible;
+}
