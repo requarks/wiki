@@ -30,6 +30,10 @@
     .toc-anchor {
       display: none !important;
     }
+
+    @at-root .theme--dark & {
+      color: mc('grey', '200');
+    }
   }
 
   // remove underline
@@ -44,7 +48,7 @@
       background: mc('grey', '300');
 
       @at-root .theme--dark & {
-        background: mc('grey', '300');
+        background: mc('grey', '800');
       }
     }
   }
@@ -104,19 +108,28 @@
     & + p {
       padding-top: 8px;
     }
+
+    @at-root .theme--dark & {
+      color: mc('grey', '300');
+    }
   }
 
   // ---------------------------------
   // CODE
   // ---------------------------------
 
-  code {
+  code:not([class]) {
     background: mc('grey', '200');
     padding: .1em .5em;
     border-radius: 4px;
     font-size: 85%;
     text-shadow: none;
     color: mc('grey', '800');
+
+    @at-root .theme--dark & {
+      background: rgba(mc('grey', '800'), .5);
+      color: mc('grey', '400');
+    }
   }
 
   .code-toolbar {
@@ -177,6 +190,10 @@
       padding: 7px 16px;
       border-top-left-radius: 4px;
       border-top-right-radius: 4px;
+
+      @at-root .theme--dark & {
+        background: rgba(#000, .2);
+      }
     }
 
     .prismjs {
@@ -201,6 +218,15 @@
     }
   }
 
+  // ---------------------------------
+  // KEY BINDINGS
+  // ---------------------------------
+  kbd {
+    @at-root .theme--dark & {
+      color: mc('grey', '800');
+      background-color: mc('grey', '100');
+    }
+  }
 
   // ---------------------------------
   // TABLES
@@ -214,6 +240,10 @@
     th,
     tr td {
       border: 1px solid mc('grey', '200');
+
+      @at-root .theme--dark & {
+        border: 1px solid mc('grey', '800');
+      }
     }
 
     th {
@@ -222,10 +252,19 @@
       font-size: .8em;
       letter-spacing: .05em;
       text-transform: uppercase;
+
+      @at-root .theme--dark & {
+        background: mc('grey', '800');
+        color: mc('grey', '400');
+      }
     }
 
     tbody tr:nth-child(even) td {
       background: mc('grey', '50');
+
+      @at-root .theme--dark & {
+        background: rgba(mc('grey', '800'), .25);
+      }
     }
   }
 }

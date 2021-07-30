@@ -13,3 +13,7 @@
   opacity: 1;
   visibility: visible;
 }
+
+.theme--dark .ty-anchor-button {
+  color: mc('grey', '400');
+}
