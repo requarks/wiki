@@ -26,8 +26,12 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ default "latest" .Values.image.tag }}"
-          imagePullPolicy: {{ default "IfNotPresent" .Values.image.imagePullPolicy }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.image.pullPolicy }}
           env:
+            {{- range $key, $value := $.Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
             - name: DB_TYPE
               value: postgres
             - name: DB_HOST
