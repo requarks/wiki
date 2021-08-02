@@ -11,7 +11,16 @@
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
-    "cypress:open": "cypress open"
+    "cypress:open": "cypress open",
+    "prepare": "husky install",
+    "lintfix": "lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "pretty-quick --staged",
+      "git update-index",
+      "eslint --fix"
+    ]
   },
   "repository": {
     "type": "git",
@@ -187,6 +196,10 @@
     "yargs": "16.1.0"
   },
   "devDependencies": {
+    "husky": "7.0.1",
+    "pretty-quick": "^2.0.1",
+    "prettier": "^2.0.5",
+    "lint-staged": "^10.2.6",
     "@babel/cli": "^7.12.1",
     "@babel/core": "^7.12.3",
     "@babel/plugin-proposal-class-properties": "^7.12.1",
