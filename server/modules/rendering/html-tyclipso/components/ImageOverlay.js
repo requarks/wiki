@@ -5,10 +5,11 @@
 function ImageOverlay(src) {
   return `
     <div class="ty-image-overlay">
-      <a href="${src}" target="_blank" class="v-btn v-btn--contained v-size--default primary" aria-label="In neuem Tab öffnen">
+      <a href="${src}" target="_blank"
+         class="v-btn v-btn--icon v-btn--round v-size--default elevation-2 white grey--text text--darken-3"
+         aria-label="In neuem Tab öffnen">
         <span class="v-btn__content">
-            <i aria-hidden="true" class="v-icon v-icon--left notranslate mdi mdi-open-in-new"></i>
-            In neuem Tab öffnen
+            <i aria-hidden="true" class="v-icon notranslate mdi mdi-open-in-new"></i>
         </span>
       </a>
     </div>

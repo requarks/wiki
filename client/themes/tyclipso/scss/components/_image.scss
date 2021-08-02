@@ -1,12 +1,21 @@
 .ty-image-wrapper {
   @include elevation(2);
-  display: block;
+  display: inline-block;
   overflow: hidden;
   margin: 12px 0;
   border-radius: 4px;
   position: relative;
   text-decoration: none;
   color: currentColor;
+
+  img {
+    display: block;
+  }
+
+  ol &,
+  ul & {
+    margin: 0;
+  }
 }
 
 .ty-image-overlay {
