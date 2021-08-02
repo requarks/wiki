@@ -14,6 +14,14 @@ const semver = require('semver')
 
 /* global WIKI */
 
+async function autoInstall() {
+  const got = require('got')
+
+  await got.post(`http://localhost:${WIKI.config.port}/finalize`, {
+    json: JSON.parse(process.env.AUTO_CONFIG)
+  })
+}
+
 module.exports = () => {
   WIKI.config.site = {
     path: '',
@@ -265,6 +273,16 @@ module.exports = () => {
         strategyKey: 'local',
         displayName: 'Local'
       })
+      
+      // only on auto install right now, should add some
+      // param validation before opening as general api
+      if (req.body.authenticationProvider && process.env.AUTO_INSTALL) {
+        // adds an authentication provider from the start
+        await WIKI.models.authentication.query().insert({
+          ...req.body.authenticationProvider,
+          order: 1
+        })
+      }
 
       // Load editors + enable default
       await WIKI.models.editors.refreshEditorsFromDisk()
@@ -446,5 +464,7 @@ module.exports = () => {
     WIKI.logger.info(`Browse to http://YOUR-SERVER-IP:${WIKI.config.port}/ to complete setup!`)
     WIKI.logger.info('')
     WIKI.logger.info('🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺🔺')
+
+    if (process.env.AUTO_INSTALL) autoInstall()
   })
 }
