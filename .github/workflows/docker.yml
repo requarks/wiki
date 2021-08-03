@@ -61,9 +61,9 @@ jobs:
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           # Set Docker rolling tags bleeding/latest
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION_ROLLING=latest
-          [ "$VERSION" == "main" ] && VERSION_ROLLING=bleeding
+          [ "$VERSION" == "tyclipso" ] && VERSION_ROLLING=bleeding
           # Set Commit Short SHA (first seven char) as VERSION for bleeding builds
-          [ "$VERSION" == "main" ] && VERSION=${GITHUB_SHA:0:7}
+          [ "$VERSION" == "tyclipso" ] && VERSION=${GITHUB_SHA:0:7}
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
           echo VERSION_ROLLING=$VERSION_ROLLING
