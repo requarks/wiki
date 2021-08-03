@@ -19,7 +19,6 @@ jobs:
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
 
   test:
-    needs: lint
     runs-on: ubuntu-latest
 
     steps:
