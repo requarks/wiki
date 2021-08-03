@@ -1,0 +1,78 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - tyclipso
+
+    tags:
+      - "*.*.*.*"
+
+  # Run tests for any PRs.
+  pull_request:
+
+env:
+  IMAGE_NAME: wiki
+
+jobs:
+  # Run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: |
+          if [ -f docker-compose.test.yml ]; then
+            docker-compose --file docker-compose.test.yml build
+            docker-compose --file docker-compose.test.yml run sut
+          else
+            docker build . --file dev/build/Dockerfile
+          fi
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    # Ensure test job passes before pushing image.
+    needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file dev/build/Dockerfile --tag $IMAGE_NAME
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image to GitHub Container Registry
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          IMAGE_ID_LONG=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME/$IMAGE_NAME
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          IMAGE_ID_LONG=$(echo $IMAGE_ID_LONG | tr '[A-Z]' '[a-z]')
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Set Docker rolling tags bleeding/latest
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION_ROLLING=latest
+          [ "$VERSION" == "main" ] && VERSION_ROLLING=bleeding
+          # Set Commit Short SHA (first seven char) as VERSION for bleeding builds
+          [ "$VERSION" == "main" ] && VERSION=${GITHUB_SHA:0:7}
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          echo VERSION_ROLLING=$VERSION_ROLLING
+          docker tag $IMAGE_NAME $IMAGE_ID_LONG:$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID_LONG:$VERSION_ROLLING
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION_ROLLING
+          docker push $IMAGE_ID_LONG:$VERSION
+          docker push $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID_LONG:$VERSION_ROLLING
+          docker push $IMAGE_ID:$VERSION_ROLLING
