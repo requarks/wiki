@@ -250,6 +250,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Keir
 - Loïc CRAMPON
 - Ludgeir Ibanez
+- Mark Mansur
 - Matt Gedigian
 - Patryk
 - Philipp Schürch
