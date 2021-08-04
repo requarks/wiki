@@ -89,4 +89,4 @@ jobs:
           push: true
           context: .
           file: dev/build/Dockerfile
-          tags: ${{ steps.meta_bleeding.outputs.tags }}
+          tags: bleeding,${{ steps.meta_bleeding.outputs.tags }}
