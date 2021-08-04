@@ -30,7 +30,7 @@ jobs:
         with:
           push: false
           context: .
-          file: { context }/dev/build/Dockerfile
+          file: dev/build/Dockerfile
 
 
 
@@ -79,7 +79,7 @@ jobs:
         with:
           push: true
           context: .
-          file: {context}/dev/build/Dockerfile
+          file: dev/build/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: Build and push Docker image (bleeding)
@@ -88,5 +88,5 @@ jobs:
         with:
           push: true
           context: .
-          file: { context }/dev/build/Dockerfile
+          file: dev/build/Dockerfile
           tags: bleeding,${{ steps.meta.outputs.tags }}
