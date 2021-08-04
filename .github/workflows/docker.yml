@@ -1,4 +1,4 @@
-name: Docker
+name: docker-build
 
 on:
   push:
@@ -6,56 +6,87 @@ on:
       - tyclipso
 
     tags:
-      - "*.*.*.*"
+      - v*
 
   # Run tests for any PRs.
   pull_request:
 
 env:
-  IMAGE_NAME: wiki
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Test building the docker image on pull requests
+  test-build:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+
+      - name: Build image
+        uses: docker/build-push-action@v2
+        with:
+          push: false
+          context: .
+          file: { context }/dev/build/Dockerfile
+
+
+
   # Build image and push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
-  push:
+  build-and-push-image:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'push' }}
 
     permissions:
       contents: read
       packages: write
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Build image
-        run: docker build . --file dev/build/Dockerfile --tag $IMAGE_NAME
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log into GitHub Container Registry
-        run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Extract metadata for Docker (tag)
+        id: meta_tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
 
-      - name: Push image to GitHub Container Registry
-        run: |
-          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-          IMAGE_ID_LONG=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME/$IMAGE_NAME
-          # Change all uppercase to lowercase
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          IMAGE_ID_LONG=$(echo $IMAGE_ID_LONG | tr '[A-Z]' '[a-z]')
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          # Set Docker rolling tags bleeding/latest
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION_ROLLING=latest
-          [ "$VERSION" == "tyclipso" ] && VERSION_ROLLING=bleeding
-          # Set Commit Short SHA (first seven char) as VERSION for bleeding builds
-          [ "$VERSION" == "tyclipso" ] && VERSION=${GITHUB_SHA:0:7}
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-          echo VERSION_ROLLING=$VERSION_ROLLING
-          docker tag $IMAGE_NAME $IMAGE_ID_LONG:$VERSION
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker tag $IMAGE_NAME $IMAGE_ID_LONG:$VERSION_ROLLING
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION_ROLLING
-          docker push $IMAGE_ID_LONG:$VERSION
-          docker push $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID_LONG:$VERSION_ROLLING
-          docker push $IMAGE_ID:$VERSION_ROLLING
+      - name: Extract metadata for Docker (bleeding)
+        id: meta_bleeding
+        if: false == startsWith(github.ref, 'refs/tags/v')
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+
+      - name: Build and push Docker image (tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: .
+          file: {context}/dev/build/Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Build and push Docker image (bleeding)
+        if: false == startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: .
+          file: { context }/dev/build/Dockerfile
+          tags: bleeding,${{ steps.meta.outputs.tags }}
