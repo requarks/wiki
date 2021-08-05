@@ -19,7 +19,7 @@ jobs:
   # Test building the docker image on pull requests
   test-build:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }}
+    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
   # See also https://docs.docker.com/docker-hub/builds/
   build-and-push-image:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
+    if: github.event_name == 'push'
 
     permissions:
       contents: read
