@@ -73,6 +73,21 @@ jobs:
           tags: |
             type=sha
 
+      - name: Disable dev flag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          sudo apt-get install jq -y
+          mv package.json pkg-temp.json
+          jq -r '.dev |= false' pkg-temp.json > package.json
+          rm pkg-temp.json
+
+      - name: Set Package Version
+        run: |
+          mv package.json pkg-temp.json
+          jq -r '.version |= "${{ steps.meta_tag.outputs.version:-steps.meta_bleeding.outputs.version }}"' pkg-temp.json > package.json
+          rm pkg-temp.json
+          cat package.json
+
       - name: Build and push Docker image (tag)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v2
