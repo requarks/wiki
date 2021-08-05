@@ -81,10 +81,19 @@ jobs:
           jq -r '.dev |= false' pkg-temp.json > package.json
           rm pkg-temp.json
 
-      - name: Set Package Version
+      - name: Set Package Version (tag)
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           mv package.json pkg-temp.json
-          jq -r '.version |= "${{ steps.meta_tag.outputs.version:-steps.meta_bleeding.outputs.version }}"' pkg-temp.json > package.json
+          jq -r '.version |= "${{ steps.meta_tag.outputs.version }}"' pkg-temp.json > package.json
+          rm pkg-temp.json
+          cat package.json
+
+      - name: Set Package Version (bleeding)
+        if: false == startsWith(github.ref, 'refs/tags/v')
+        run: |
+          mv package.json pkg-temp.json
+          jq -r '.version |= "${{ steps.meta_bleeding.outputs.version }}"' pkg-temp.json > package.json
           rm pkg-temp.json
           cat package.json
 
