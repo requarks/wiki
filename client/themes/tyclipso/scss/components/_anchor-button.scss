@@ -1,4 +1,4 @@
-.ty-anchor-button {
+.v-btn.ty-anchor-button {
   position: absolute;
   right: 0;
   top: 50%;
@@ -9,11 +9,11 @@
   color: mc('grey', '700');
 }
 
-.toc-header:hover .ty-anchor-button {
+.toc-header:hover .v-btn.ty-anchor-button {
   opacity: 1;
   visibility: visible;
 }
 
-.theme--dark .ty-anchor-button {
+.theme--dark .v-btn.ty-anchor-button {
   color: mc('grey', '400');
 }
