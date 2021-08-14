@@ -148,6 +148,7 @@
                     persistent-hint
                     :class='cfg.value.hint ? "mb-2" : ""'
                     :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
+                    :type='cfg.value.sensitive ? "password" : "text"'
                     )
             v-divider
             .overline.my-5 {{$t('admin:auth.registration')}}
