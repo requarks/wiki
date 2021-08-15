@@ -650,7 +650,15 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async movePage(opts) {
-    const page = await WIKI.models.pages.query().findById(opts.id)
+    let page
+    if (_.has(opts, 'id')) {
+      page = await WIKI.models.pages.query().findById(opts.id)
+    } else {
+      page = await WIKI.models.pages.query().findOne({
+        path: opts.path,
+        localeCode: opts.locale
+      })
+    }
     if (!page) {
       throw new WIKI.Error.PageNotFound()
     }
@@ -704,9 +712,11 @@ module.exports = class Page extends Model {
     const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
 
     // -> Move page
+    const destinationTitle = (page.title === page.path ? opts.destinationPath : page.title)
     await WIKI.models.pages.query().patch({
       path: opts.destinationPath,
       localeCode: opts.destinationLocale,
+      title: destinationTitle,
       hash: destinationHash
     }).findById(page.id)
     await WIKI.models.pages.deletePageFromCache(page.hash)
@@ -775,7 +785,7 @@ module.exports = class Page extends Model {
       })
     }
     if (!page) {
-      throw new Error('Invalid Page Id')
+      throw new WIKI.Error.PageNotFound()
     }
 
     // -> Check for page access
