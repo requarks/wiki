@@ -21,6 +21,16 @@ spec:
       serviceAccountName: {{ include "wiki.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.sideload.enabled }}
+      initContainers:
+        - name: {{ .Chart.Name }}-sideload
+          image: "{{ .Values.image.repository }}:{{ default "latest" .Values.image.tag }}"
+          imagePullPolicy: {{ default "IfNotPresent" .Values.image.imagePullPolicy }}
+          env:
+            {{- toYaml .Values.sideload.env | nindent 12 }}
+          command: [ "sh", "-c" ]
+          args: [ "mkdir -p /wiki/data/sideload && git clone --depth=1 {{ .Values.sideload.repoURL }} /wiki/data/sideload/" ]
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -39,9 +49,9 @@ spec:
             - name: DB_USER
               value: {{ default "wiki" .Values.postgresql.postgresqlUser }}
             - name: DB_SSL
-              value: "{{ default "false" .Values.postgresql.ssl }}"    
+              value: "{{ default "false" .Values.postgresql.ssl }}"
             - name: DB_SSL_CA
-              value: "{{ default "" .Values.postgresql.ca }}"   
+              value: "{{ default "" .Values.postgresql.ca }}"
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:

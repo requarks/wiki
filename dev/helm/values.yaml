@@ -82,6 +82,17 @@ tolerations: []
 
 affinity: {}
 
+# This will allow us to install locales even without internet access using a initContainer & wikjs "sideloading"
+sideload:
+  enabled: false
+  # Git-Repo containing all locales.json-files you need:
+  repoURL: https://github.com/Requarks/wiki-localization
+
+  ## This can be helpfull if you have internet access over a http proxy:
+  env: []
+  #  - name: HTTPS_PROXY
+  #    value: http://my.proxy.com:3128
+
 ## Configuration values for the postgresql dependency.
 ## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
 ##
@@ -92,7 +103,7 @@ postgresql:
   enabled: true
   ## ssl enforce SSL communication with PostgresSQL
   ## Default to false
-  ##  
+  ##
   # ssl: false
   ## ca Certificate of Authority
   ## Default to empty, point to location of CA
@@ -102,7 +113,7 @@ postgresql:
   ## Default to postgres
   ##
   # postgresqlHost: postgres
-  ## postgresqlPort port for postgres 
+  ## postgresqlPort port for postgres
   ## Default to 5432
   ##
   # postgresqlPort: 5432
