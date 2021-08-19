@@ -36,6 +36,8 @@ module.exports = async () => {
   const app = express()
   WIKI.app = app
   app.use(compression())
+  app.use(express.urlencoded({limit: '1024mb'}))
+  app.use(express.json({limit: '1024mb'}))
 
   // ----------------------------------------
   // Security
