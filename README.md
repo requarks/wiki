@@ -76,6 +76,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="148">
+        <a href="https://github.com/JayDaley" target="_blank">
+          Jay Daley<br />(@JayDaley)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
         <a href="https://github.com/idokka" target="_blank">
           Oleksii<br />(@idokka)
         </a>
@@ -85,11 +90,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           Theodore Chu<br />(@TheodoreChu)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <!--<td align="center" valign="middle" width="148">
         <a href="https://github.com/sponsors/NGPixel" target="_blank">
           <img src="https://static.requarks.io/sponsors/become-148x72.png">
         </a>
-      </td>
+      </td>-->
     </tr>
   </tbody>
 </table>
@@ -125,6 +130,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - magicpotato ([@fortheday](https://github.com/fortheday))
+- motoacs ([@motoacs](https://github.com/motoacs))
 - scorpion ([@scorpion](https://github.com/scorpion))
 - valantien ([@valantien](https://github.com/valantien))
 
