@@ -1,0 +1,20 @@
+key: reverseproxy
+title: Reverse Proxy
+description: Reverse proxy trusted header strategy, to use with SSO authentication providers like authelia or vouch.
+author: Igor Rzegocki
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+color: blue-grey darken-2
+isAvailable: true
+useForm: false
+usernameType: email
+props:
+  userEmailHeader:
+    type: String
+    title: Email Header
+    hint: HTTP Header name containing authenticated user email (usually X-Remote-Email or Remote-Email)
+    order: 1
+  ipWhitelist:
+    type: String
+    title: Whitelisted IP
+    hint: The IP address of the reverse proxy in CIDR format
+    order: 2

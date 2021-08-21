@@ -425,6 +425,18 @@ router.get('/*', async (req, res, next) => {
     req.i18n.changeLanguage(pageArgs.locale)
 
     try {
+      if (!req.user || req.user.id < 1 || req.user.id === 2) {
+        const reverseproxyStrategy = _.find(WIKI.auth.strategies, { strategyKey: 'reverseproxy' })
+        if (reverseproxyStrategy) {
+          if (reverseproxyStrategy.isEnabled) {
+            const authResult = await WIKI.models.users.login({
+              strategy: reverseproxyStrategy.key
+            }, { req, res })
+            res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
+          }
+        }
+      }
+
       // -> Get Page from cache
       const page = await WIKI.models.pages.getPage({
         path: pageArgs.path,
