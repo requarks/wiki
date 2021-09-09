@@ -112,6 +112,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Ernie ([@iamernie](https://github.com/iamernie))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
+- Jaimyn Mayer ([@jabelone](https://github.com/jabelone))
 - Jay Lee ([@polyglotm](https://github.com/polyglotm))
 - Kelly Wardrop ([@dropcoded](https://github.com/dropcoded))
 - Loki ([@binaryloki](https://github.com/binaryloki))
