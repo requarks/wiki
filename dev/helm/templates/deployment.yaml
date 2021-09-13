@@ -52,11 +52,7 @@ spec:
                 {{- end }}
                   key: {{ template "wiki.postgresql.secretKey" . }}
             - name: HA
-              {{- if le .Values.replicaCount 1 }}
-              value: "false"
-              {{- else }}
-              value: "true"
-              {{- end }}
+              value: {{ .Values.replicaCount | int | le 2 | quote }}
           ports:
             - name: http
               containerPort: 3000
