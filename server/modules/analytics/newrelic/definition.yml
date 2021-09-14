@@ -16,13 +16,13 @@ props:
     title: Application ID
     hint: Found at the very end of the code snippet provided by New Relic Browser
     order: 2
-  baecon:
+  beacon:
     type: String
-    title: Baecon
+    title: Beacon
     hint: Found at the very end of the code snippet provided by New Relic Browser
     order: 3
-  errorBaecon:
+  errorBeacon:
     type: String
-    title: Error Baecon
+    title: Error Beacon
     hint: Found at the very end of the code snippet provided by New Relic Browser
     order: 4
