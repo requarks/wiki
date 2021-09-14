@@ -19,10 +19,12 @@ props:
   beacon:
     type: String
     title: Beacon
-    hint: Found at the very end of the code snippet provided by New Relic Browser
+    default: bam.nr-data.net
+    hint: Found at the very end of the code snippet provided by New Relic Browser. Differs for US and EU servers.
     order: 3
   errorBeacon:
     type: String
     title: Error Beacon
-    hint: Found at the very end of the code snippet provided by New Relic Browser
+    default: bam.nr-data.net
+    hint: Found at the very end of the code snippet provided by New Relic Browser. Differs for US and EU servers.
     order: 4
