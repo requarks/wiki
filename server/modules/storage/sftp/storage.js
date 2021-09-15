@@ -155,7 +155,12 @@ module.exports = {
         const folderPaths = _.dropRight(filePath.split('/'))
         for (let i = 1; i <= folderPaths.length; i++) {
           const folderSection = _.take(folderPaths, i).join('/')
-          await this.sftp.mkdir(path.posix.join(this.config.basePath, folderSection))
+          const folderDir = path.posix.join(this.config.basePath, folderSection)
+          try {
+            await this.sftp.readdir(folderDir)
+          } catch (err) {
+            await this.sftp.mkdir(folderDir)
+          }
         }
       } catch (err) {}
     }
