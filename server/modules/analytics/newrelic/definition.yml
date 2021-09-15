@@ -16,3 +16,15 @@ props:
     title: Application ID
     hint: Found at the very end of the code snippet provided by New Relic Browser
     order: 2
+  beacon:
+    type: String
+    title: Beacon
+    default: bam.nr-data.net
+    hint: Found at the very end of the code snippet provided by New Relic Browser. Differs for US and EU servers.
+    order: 3
+  errorBeacon:
+    type: String
+    title: Error Beacon
+    default: bam.nr-data.net
+    hint: Found at the very end of the code snippet provided by New Relic Browser. Differs for US and EU servers.
+    order: 4
