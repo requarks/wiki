@@ -32,7 +32,7 @@ class Job {
     if (this.immediate) {
       this.invoke(data)
     } else {
-      this.queue(data)
+      this.enqueue(data)
     }
   }
 
@@ -41,7 +41,7 @@ class Job {
    *
    * @param {Object} data Job Data
    */
-  queue(data) {
+  enqueue(data) {
     this.timeout = setTimeout(this.invoke.bind(this), this.schedule.asMilliseconds(), data)
   }
 
@@ -85,7 +85,7 @@ class Job {
       WIKI.logger.warn(err)
     }
     if (this.repeat && this.queue.jobs.includes(this)) {
-      this.queue(data)
+      this.enqueue(data)
     } else {
       this.stop().catch(() => {})
     }
