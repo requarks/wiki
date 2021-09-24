@@ -3,6 +3,7 @@
 const express = require('express')
 const ExpressBrute = require('express-brute')
 const BruteKnex = require('../helpers/brute-knex')
+const pageHelper = require('../helpers/page')
 const router = express.Router()
 const moment = require('moment')
 const _ = require('lodash')
@@ -37,20 +38,29 @@ function findBestLocale(req, res) {
   return locale ?? res.locals.siteConfig.lang
 }
 
+const localePart = '(/[a-zA-Z]{2}(?:-[a-zA-Z]{2})?)?'
+
 /**
  * Login form
  */
-router.get('/login', async (req, res, next) => {
+router.get(`${localePart}/login`, async (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Login')
+  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+
+  if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
+    return res.redirect(`/${findBestLocale(req, res)}/${pageArgs.path}`)
+  }
 
   // setting site config
-  _.set(res, 'locals.siteConfig.lang', findBestLocale(req, res))
+  req.i18n.changeLanguage(pageArgs.locale)
+  _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
   if (req.query.legacy || (req.get('user-agent') && req.get('user-agent').indexOf('Trident') >= 0)) {
     const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
     res.render('legacy/login', {
       err: false,
+      localePart: pageArgs.explicitLocale ? '/' + pageArgs.locale : '',
       formStrategies,
       socialStrategies
     })
@@ -114,8 +124,9 @@ router.all('/login/:strategy/callback', async (req, res, next) => {
 /**
  * LEGACY - Login form handling
  */
-router.post('/login', bruteforce.prevent, async (req, res, next) => {
+router.post(`${localePart}/login`, bruteforce.prevent, async (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Login')
+  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
     try {
@@ -131,6 +142,7 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
       const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
       res.render('legacy/login', {
         err,
+        localePart: pageArgs.explicitLocale ? '/' + pageArgs.locale : '',
         formStrategies,
         socialStrategies
       })
