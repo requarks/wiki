@@ -4,10 +4,33 @@ const pageHelper = require('../helpers/page')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
+const acceptLanguageParser = require('accept-language-parser')
 
 /* global WIKI */
 
 const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
+
+/**
+ * Calculates the best language by `Accept-Language` header of request and
+ * available locales of pages with specified path.
+ * @param {express.Request} req
+ * @param {*} pageArgs
+ * @returns
+ */
+async function findBestLocaleFor(req, pageArgs) {
+  const acceptLanguage = req.headers['accept-language']
+  let locale = null
+  if (acceptLanguage != null) {
+    const locales = await WIKI.models.pages.getLocalesOfPage({
+      path: pageArgs.path,
+      userId: req.user.id,
+      isPrivate: false
+    })
+    locale = acceptLanguageParser.pick(locales, acceptLanguage, {loose: true})
+    WIKI.logger.info(`locales: [${locales}], accept: ${acceptLanguage}, choosen: ${locale}`)
+  }
+  return locale ?? pageArgs.locale
+}
 
 /**
  * Robots.txt
@@ -104,7 +127,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/e/${pageArgs.locale}/${pageArgs.path}`)
+    return res.redirect(`/e/${await findBestLocaleFor(req, pageArgs)}/${pageArgs.path}`)
   }
 
   req.i18n.changeLanguage(pageArgs.locale)
@@ -240,7 +263,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/h/${pageArgs.locale}/${pageArgs.path}`)
+    return res.redirect(`/h/${await findBestLocaleFor(req, pageArgs)}/${pageArgs.path}`)
   }
 
   req.i18n.changeLanguage(pageArgs.locale)
@@ -342,7 +365,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   pageArgs.tags = _.get(page, 'tags', [])
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/s/${pageArgs.locale}/${pageArgs.path}`)
+    return res.redirect(`/s/${await findBestLocaleFor(req, pageArgs)}/${pageArgs.path}`)
   }
 
   // -> Effective Permissions
@@ -419,7 +442,7 @@ router.get('/*', async (req, res, next) => {
 
   if (isPage) {
     if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-      return res.redirect(`/${pageArgs.locale}/${pageArgs.path}`)
+      return res.redirect(`/${await findBestLocaleFor(req, pageArgs)}/${pageArgs.path}`)
     }
 
     req.i18n.changeLanguage(pageArgs.locale)

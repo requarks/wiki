@@ -939,6 +939,49 @@ module.exports = class Page extends Model {
 
   /**
    * Fetch an Existing Page from Cache if possible, from DB otherwise and save render to Cache
+   * Fetch list of available locales pf [age]
+   *
+   * @param {Object} opts Page Properties
+   * @param {string} opts.path Page Properties
+   * @returns {Promise} Promise of the list of locales of the Pages with specified path
+   */
+  static async getLocalesOfPage(opts) {
+    try {
+      const rows = await WIKI.models.pages.query()
+        .column(['pages.localeCode'])
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag', 'title')
+        })
+        .where({
+          'pages.path': opts.path
+        })
+        // .andWhere(builder => {
+        //   if (queryModeID) return
+        //   builder.where({
+        //     'pages.isPublished': true
+        //   }).orWhere({
+        //     'pages.isPublished': false,
+        //     'pages.authorId': opts.userId
+        //   })
+        // })
+        // .andWhere(builder => {
+        //   if (queryModeID) return
+        //   if (opts.isPrivate) {
+        //     builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
+        //   } else {
+        //     builder.where({ 'pages.isPrivate': false })
+        //   }
+        // })
+      return rows.map(row => row.localeCode).sort((a, b) => b.length - a.length)
+    } catch (err) {
+      WIKI.logger.warn(err)
+      throw err
+    }
+  }
+
+  /**
+   * Fetch an Existing Page from Cache if possible, from DB otherwise and save render to Cache
    *
    * @param {Object} opts Page Properties
    * @returns {Promise} Promise of the Page Model Instance
