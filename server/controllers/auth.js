@@ -6,6 +6,7 @@ const BruteKnex = require('../helpers/brute-knex')
 const router = express.Router()
 const moment = require('moment')
 const _ = require('lodash')
+const acceptLanguageParser = require('accept-language-parser')
 
 const bruteforce = new ExpressBrute(new BruteKnex({
   createTable: true,
@@ -20,10 +21,31 @@ const bruteforce = new ExpressBrute(new BruteKnex({
 })
 
 /**
+ * Calculates the best language by `Accept-Language` header of request and available locales.
+ * @param {express.Request} req
+ * @param {express.Response} res
+ * @returns
+ */
+function findBestLocale(req, res) {
+  const acceptLanguage = req.headers['accept-language']
+  let locale = null
+  if (acceptLanguage != null) {
+    const locales = res.locals.langs.map(v => v.code).sort((a, b) => b.length - a.length)
+    locale = acceptLanguageParser.pick(locales, acceptLanguage, {loose: true})
+    WIKI.logger.info(`locales: [${locales}], accept: ${acceptLanguage}, choosen: ${locale}`)
+  }
+  return locale ?? res.locals.siteConfig.lang
+}
+
+/**
  * Login form
  */
 router.get('/login', async (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Login')
+
+  // setting site config
+  _.set(res, 'locals.siteConfig.lang', findBestLocale(req, res))
+  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
   if (req.query.legacy || (req.get('user-agent') && req.get('user-agent').indexOf('Trident') >= 0)) {
     const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()

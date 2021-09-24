@@ -42,6 +42,7 @@
     "@root/csr": "0.8.1",
     "@root/keypairs": "0.10.1",
     "@root/pem": "1.0.4",
+    "accept-language-parser": "1.5.0",
     "acme": "3.0.3",
     "akismet-api": "5.1.0",
     "algoliasearch": "4.5.1",
