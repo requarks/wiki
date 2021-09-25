@@ -138,6 +138,10 @@ module.exports = {
           switch (WIKI.config.db.type) {
             case 'postgres':
               await conn.query(`set application_name = 'Wiki.js'`)
+              // -> Set schema if it's not public             
+              if (WIKI.config.db.schema && WIKI.config.db.schema !== 'public') {
+                await conn.query(`set search_path TO ${WIKI.config.db.schema}, public;`)
+              }
               done()
               break
             case 'mysql':
