@@ -51,7 +51,7 @@ spec:
                   name: {{ template "wiki.postgresql.secret" . }}
                 {{- end }}
                   key: {{ template "wiki.postgresql.secretKey" . }}
-            - name: HA
+            - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
           ports:
             - name: http
