@@ -820,7 +820,7 @@
         width: 100%;
         
         &::after {
-          background: none !important;
+          display: none;
         }
       }
     }
