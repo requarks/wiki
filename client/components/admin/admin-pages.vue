@@ -61,6 +61,7 @@
             sort-by='updatedAt',
             sort-desc,
             hide-default-footer
+            @page-count="pageTotal = $event"
           )
             template(slot='item', slot-scope='props')
               tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
@@ -89,6 +90,7 @@ export default {
       selectedPage: {},
       pagination: 1,
       pages: [],
+      pageTotal: 0,
       headers: [
         { text: 'ID', value: 'id', width: 80, sortable: true },
         { text: 'Title', value: 'title' },
@@ -108,9 +110,6 @@ export default {
     }
   },
   computed: {
-    pageTotal () {
-      return Math.ceil(this.filteredPages.length / 15)
-    },
     filteredPages () {
       return _.filter(this.pages, pg => {
         if (this.selectedLang !== null && this.selectedLang !== pg.locale) {

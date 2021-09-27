@@ -21,6 +21,16 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name:
 
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
 podSecurityContext: {}
   # fsGroup: 2000
 
@@ -42,13 +52,16 @@ service:
   # annotations: {}
 
 ingress:
-  enabled: false
+  enabled: true
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: wiki.local
-      paths: ["/"]
+    - host: wiki.minikube.local
+      paths:
+        - path: "/"
+          pathType: Prefix
+
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
@@ -82,7 +95,7 @@ postgresql:
   enabled: true
   ## ssl enforce SSL communication with PostgresSQL
   ## Default to false
-  ##  
+  ##
   # ssl: false
   ## ca Certificate of Authority
   ## Default to empty, point to location of CA
@@ -92,7 +105,7 @@ postgresql:
   ## Default to postgres
   ##
   # postgresqlHost: postgres
-  ## postgresqlPort port for postgres 
+  ## postgresqlPort port for postgres
   ## Default to 5432
   ##
   # postgresqlPort: 5432

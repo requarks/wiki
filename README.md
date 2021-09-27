@@ -14,13 +14,14 @@
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  
 [![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat&logo=twitter)](https://twitter.com/requarks)
+[![Reddit](https://img.shields.io/badge/reddit-%2Fr%2Fwikijs-orange?logo=reddit&logoColor=white)](https://www.reddit.com/r/wikijs/)
 [![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp)](https://blog.js.wiki/subscribe)
 
 ##### A modern, lightweight and powerful wiki app built on NodeJS
 
 </div>
 
-- **[Official Website](https://wiki.js.org/)**
+- **[Official Website](https://js.wiki/)**
 - **[Documentation](https://docs.requarks.io/)**
 - [Requirements](https://docs.requarks.io/install/requirements)
 - [Installation](https://docs.requarks.io/install)
@@ -75,6 +76,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="148">
+        <a href="https://github.com/JayDaley" target="_blank">
+          Jay Daley<br />(@JayDaley)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
         <a href="https://github.com/idokka" target="_blank">
           Oleksii<br />(@idokka)
         </a>
@@ -84,18 +90,20 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           Theodore Chu<br />(@TheodoreChu)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <!--<td align="center" valign="middle" width="148">
         <a href="https://github.com/sponsors/NGPixel" target="_blank">
           <img src="https://static.requarks.io/sponsors/become-148x72.png">
         </a>
-      </td>
+      </td>-->
     </tr>
   </tbody>
 </table>
 </div>
 
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
+- Arnaud Marchand ([@snuids](https://github.com/snuids))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
+- Cameron Steele ([@ATechAdventurer](https://github.com/ATechAdventurer))
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
@@ -104,9 +112,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Ernie ([@iamernie](https://github.com/iamernie))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
+- Jaimyn Mayer ([@jabelone](https://github.com/jabelone))
 - Jay Lee ([@polyglotm](https://github.com/polyglotm))
 - Kelly Wardrop ([@dropcoded](https://github.com/dropcoded))
 - Loki ([@binaryloki](https://github.com/binaryloki))
+- Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
@@ -122,6 +132,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - magicpotato ([@fortheday](https://github.com/fortheday))
+- motoacs ([@motoacs](https://github.com/motoacs))
 - scorpion ([@scorpion](https://github.com/scorpion))
 - valantien ([@valantien](https://github.com/valantien))
 
@@ -230,6 +241,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Alex Zen
 - Arti Zirk
 - Brandon Curtis
+- Dave 'Sri' Seah
 - djagoo
 - Douglas Lassance
 - Ernie Reid
@@ -238,6 +250,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Florent
 - Günter Pavlas
 - hong
+- Hope
 - Ian
 - Iskander Callos
 - Josh Stewart
@@ -245,9 +258,11 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Keir
 - Loïc CRAMPON
 - Ludgeir Ibanez
+- Mark Mansur
 - Matt Gedigian
 - Patryk
 - Philipp Schürch
+- Tracey Duffy
 - Richeir
 - SmartNET.works
 - Stepan Sokolovskyi

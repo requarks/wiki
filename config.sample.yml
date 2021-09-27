@@ -43,6 +43,9 @@ db:
     # pfx: path/to/cert.pfx
     # passphrase: xyz123
 
+  # Optional - PostgreSQL only:
+  schema: public
+
   # SQLite only:
   storage: path/to/database.sqlite
 

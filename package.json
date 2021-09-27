@@ -36,7 +36,6 @@
     "node": ">=10.12"
   },
   "dependencies": {
-    "@aoberoi/passport-slack": "1.0.5",
     "@azure/storage-blob": "12.2.1",
     "@exlinc/keycloak-passport": "1.0.2",
     "@joplin/turndown-plugin-gfm": "1.0.27",
@@ -151,6 +150,7 @@
     "passport-okta-oauth": "0.0.1",
     "passport-openidconnect": "0.0.2",
     "passport-saml": "1.3.5",
+    "passport-slack-oauth2": "1.1.1",
     "passport-twitch-oauth": "1.0.0",
     "pem-jwk": "2.0.0",
     "pg": "8.4.1",

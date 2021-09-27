@@ -564,11 +564,11 @@ export default {
     if (window.location.hash && window.location.hash.length > 1) {
       if (document.readyState === 'complete') {
         this.$nextTick(() => {
-          this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+          this.$vuetify.goTo(decodeURIComponent(window.location.hash), this.scrollOpts)
         })
       } else {
         window.addEventListener('load', () => {
-          this.$vuetify.goTo(window.location.hash, this.scrollOpts)
+          this.$vuetify.goTo(decodeURIComponent(window.location.hash), this.scrollOpts)
         })
       }
     }
@@ -579,7 +579,7 @@ export default {
         el.onclick = ev => {
           ev.preventDefault()
           ev.stopPropagation()
-          this.$vuetify.goTo(decodeURIComponent(ev.target.hash), this.scrollOpts)
+          this.$vuetify.goTo(decodeURIComponent(ev.currentTarget.hash), this.scrollOpts)
         }
       })
     })

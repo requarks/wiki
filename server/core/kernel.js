@@ -107,19 +107,21 @@ module.exports = {
    * Graceful shutdown
    */
   async shutdown () {
-    if (WIKI.models) {
-      await WIKI.models.unsubscribeToNotifications()
-      await WIKI.models.knex.client.pool.destroy()
-      await WIKI.models.knex.destroy()
+    if (WIKI.servers) {
+      await WIKI.servers.stopServers()
     }
     if (WIKI.scheduler) {
-      WIKI.scheduler.stop()
+      await WIKI.scheduler.stop()
+    }
+    if (WIKI.models) {
+      await WIKI.models.unsubscribeToNotifications()
+      if (WIKI.models.knex) {
+        await WIKI.models.knex.destroy()
+      }
     }
     if (WIKI.asar) {
       await WIKI.asar.unload()
     }
-    if (WIKI.servers) {
-      await WIKI.servers.stopServers()
-    }
+    process.exit(0)
   }
 }
