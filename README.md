@@ -110,6 +110,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
 - Ernie ([@iamernie](https://github.com/iamernie))
+- Fabio Ferrari ([@devxops](https://github.com/devxops))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
 - Jaimyn Mayer ([@jabelone](https://github.com/jabelone))
