@@ -288,7 +288,7 @@ module.exports = () => {
       // Create root administrator
       WIKI.logger.info('Creating root administrator...')
       const adminUser = await WIKI.models.users.query().insert({
-        email: req.body.adminEmail,
+        email: req.body.adminEmail.toLowerCase(),
         provider: 'local',
         password: req.body.adminPassword,
         name: 'Administrator',
