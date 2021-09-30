@@ -66,6 +66,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="148">
+        <a href="https://github.com/broxen" target="_blank">
+          Broxen<br />(@broxen)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="148">
         <a href="https://github.com/xDacon" target="_blank">
           Dacon<br />(@xDacon)
         </a>
@@ -83,11 +88,6 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
       <td align="center" valign="middle" width="148">
         <a href="https://github.com/idokka" target="_blank">
           Oleksii<br />(@idokka)
-        </a>
-      </td>
-      <td align="center" valign="middle" width="148">
-        <a href="https://github.com/TheodoreChu" target="_blank">
-          Theodore Chu<br />(@TheodoreChu)
         </a>
       </td>
       <!--<td align="center" valign="middle" width="148">
@@ -128,6 +128,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
+- Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - Victor Bilgin ([@vbilgin](https://github.com/vbilgin))
 - VMO Solutions ([@vmosolutions](https://github.com/vmosolutions))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
