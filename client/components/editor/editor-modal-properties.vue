@@ -64,6 +64,7 @@
                     :hint='$t(`editor:props.pathHint`)'
                     persistent-hint
                     @click:append='showPathSelector'
+                    :rules="[rules.required, rules.path]"
                     )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
@@ -272,7 +273,13 @@ export default {
       newTagSuggestions: [],
       newTagSearch: '',
       currentTab: 0,
-      cm: null
+      cm: null,
+      rules: {
+          required: value => !!value || 'Path required.',
+          path: value => {
+            const pattern = /^(?![#\/.]).*(?<![#\/.])$/
+            return pattern.test(value) || 'Invalid path. Please ensure it does not end in a slash or hashtag string.'
+      },
     }
   },
   computed: {
@@ -285,10 +292,7 @@ export default {
     description: sync('page/description'),
     locale: sync('page/locale'),
     tags: sync('page/tags'),
-    path: {
-      path.replace(/\/$/, "")
-      sync('page/path')
-    },
+    path: sync('page/path'),
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
