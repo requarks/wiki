@@ -233,16 +233,6 @@ module.exports = {
     })
 
     // --------------------------------
-    // Wrap root text nodes
-    // --------------------------------
-
-    $('body').contents().toArray().forEach(item => {
-      if (item && item.type === 'text' && item.parent.name === 'body') {
-        $(item).wrap('<div></div>')
-      }
-    })
-
-    // --------------------------------
     // Escape mustache expresions
     // --------------------------------
 
