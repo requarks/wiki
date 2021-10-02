@@ -804,10 +804,9 @@
       border-radius: 7px;
       background-color: mc('grey', '50');
       cursor: pointer;
-      height: 40px;
-      display: flex;
+      display: list-item;
       align-items: center;
-      padding: 0 1rem;
+      padding: 0.4rem 1rem;
       transition: background-color .4s ease;
 
       &:focus {
