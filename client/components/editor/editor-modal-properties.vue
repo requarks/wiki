@@ -277,8 +277,8 @@ export default {
       rules: {
           required: value => !!value || 'This field is required.',
           path: value => {
-            const pattern = /^(?![#\/.]).*(?<![#\/.])$/
-            return pattern.test(value) || 'Invalid path. Please ensure it does not begin or end in a slash or hashtag string.'
+            const pattern = /^(?![\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s])(?!.*[\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]$)[^\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
+            return pattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
           }
       }
     }
