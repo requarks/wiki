@@ -64,7 +64,7 @@
                     :hint='$t(`editor:props.pathHint`)'
                     persistent-hint
                     @click:append='showPathSelector'
-                    :rules="[rules.required, rules.path]"
+                    :rules='[rules.required, rules.path]'
                     )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
@@ -275,11 +275,12 @@ export default {
       currentTab: 0,
       cm: null,
       rules: {
-          required: value => !!value || 'Path required.',
+          required: value => !!value || 'This field is required.',
           path: value => {
             const pattern = /^(?![#\/.]).*(?<![#\/.])$/
-            return pattern.test(value) || 'Invalid path. Please ensure it does not end in a slash or hashtag string.'
-      },
+            return pattern.test(value) || 'Invalid path. Please ensure it does not begin or end in a slash or hashtag string.'
+          }
+      }
     }
   },
   computed: {
