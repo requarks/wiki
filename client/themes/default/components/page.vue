@@ -19,14 +19,14 @@
       v-btn(
         fab
         color='primary'
+        class="burger-menu"
+        :class="{burgerOpen: navShown, burgerClosed: !navShown}"
         fixed
         bottom
         :right='$vuetify.rtl'
         :left='!$vuetify.rtl'
         small
         @click='navShown = !navShown'
-        v-if='$vuetify.breakpoint.mdAndDown'
-        v-show='!navShown'
         )
         v-icon mdi-menu
 
@@ -546,7 +546,7 @@ export default {
     }
 
     // -> Check side navigation visibility
-    this.handleSideNavVisibility()
+    //this.handleSideNavVisibility()
     window.addEventListener('resize', _.debounce(() => {
       this.handleSideNavVisibility()
     }, 500))
@@ -675,5 +675,13 @@ export default {
 .page-col-sd::-webkit-scrollbar {
   display: none;
 }
-
+.burger-menu {
+  top: 115px;
+}
+.burgerClosed{
+    left: 10px;
+}
+.burgerOpen{
+  left: 236px !important;
+}
 </style>
