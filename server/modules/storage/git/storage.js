@@ -181,7 +181,7 @@ module.exports = {
       if (!item.binary && contentType) {
         // -> Page
 
-        if (fileExists && item.relPath !== item.oldPath) {
+        if (fileExists && !item.importAll && item.relPath !== item.oldPath) {
           // Page was renamed by git, so rename in DB
           WIKI.logger.info(`(STORAGE/GIT) Page marked as renamed: from ${item.oldPath} to ${item.relPath}`)
 
@@ -195,7 +195,7 @@ module.exports = {
             destinationLocale: contentPath.locale,
             skipStorage: true
           })
-        } else if (!fileExists && item.deletions > 0 && item.insertions === 0) {
+        } else if (!fileExists && !item.importAll && item.deletions > 0 && item.insertions === 0) {
           // Page was deleted by git, can safely mark as deleted in DB
           WIKI.logger.info(`(STORAGE/GIT) Page marked as deleted: ${item.relPath}`)
 
@@ -224,7 +224,7 @@ module.exports = {
       } else {
         // -> Asset
 
-        if (fileExists && ((item.before === item.after) || (item.deletions === 0 && item.insertions === 0))) {
+        if (fileExists && !item.importAll && ((item.before === item.after) || (item.deletions === 0 && item.insertions === 0))) {
           // Asset was renamed by git, so rename in DB
           WIKI.logger.info(`(STORAGE/GIT) Asset marked as renamed: from ${item.oldPath} to ${item.relPath}`)
 
@@ -240,7 +240,7 @@ module.exports = {
             WIKI.logger.info(`(STORAGE/GIT) Asset was not found in the DB, nothing to rename: ${item.relPath}`)
           }
           continue
-        } else if (!fileExists && ((item.before > 0 && item.after === 0) || (item.deletions > 0 && item.insertions === 0))) {
+        } else if (!fileExists && !item.importAll && ((item.before > 0 && item.after === 0) || (item.deletions > 0 && item.insertions === 0))) {
           // Asset was deleted by git, can safely mark as deleted in DB
           WIKI.logger.info(`(STORAGE/GIT) Asset marked as deleted: ${item.relPath}`)
 
@@ -427,7 +427,8 @@ module.exports = {
               relPath,
               file,
               deletions: 0,
-              insertions: 0
+              insertions: 0,
+              importAll: true
             }], rootUser)
           }
           cb()
