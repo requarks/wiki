@@ -238,7 +238,7 @@ module.exports = {
 
     $('body').contents().toArray().forEach(item => {
       if (item && item.type === 'text' && item.parent.name === 'body' && item.data !== `\n` && item.data !== `\r`) {
-         $(item).wrap('<div></div>')
+        $(item).wrap('<div></div>')
       }
     })
 
