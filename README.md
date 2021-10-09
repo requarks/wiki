@@ -129,6 +129,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Sam Martin ([@winkelement](https://github.com/ABitMoreDepth))
 - Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
+- Tyler Denman ([@tylerguy](https://github.com/tylerguy))
 - Victor Bilgin ([@vbilgin](https://github.com/vbilgin))
 - VMO Solutions ([@vmosolutions](https://github.com/vmosolutions))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
@@ -146,101 +147,105 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/0/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/1/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/2/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/2/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/3/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/3/avatar.svg"></a>
       </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/4/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/4/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/5/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/5/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/6/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/6/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/7/avatar.svg"></a>
       </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/8/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/9/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/10/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/10/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/11/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/11/avatar.svg"></a>
       </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/12/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/12/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/13/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/13/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/14/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/14/avatar.svg"></a>
-      </td>
-      <td align="center" valign="middle" width="192">
-        <a href="https://opencollective.com/wikijs/sponsor/15/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/15/avatar.svg"></a>
       </td>
     </tr>
     <tr>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/15/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/15/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/16/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/16/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/17/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/17/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/18/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/18/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/19/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/19/avatar.svg"></a>
       </td>
     </tr>
     <tr>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/20/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/20/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/21/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/21/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/22/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/22/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/23/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/23/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/24/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/24/avatar.svg"></a>
       </td>
     </tr>
     <tr>
-      <td align="center" valign="middle" width="192">
-        <a href="https://opencollective.com/wikijs/sponsor/24/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/24/avatar.svg"></a>
-      </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/25/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/25/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/26/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/26/avatar.svg"></a>
       </td>
-      <td align="center" valign="middle" width="192">
+      <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/27/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/27/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/28/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/28/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/29/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/29/avatar.svg"></a>
       </td>
     </tr>
   </tbody>
