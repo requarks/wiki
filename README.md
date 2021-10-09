@@ -229,6 +229,20 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
         <a href="https://opencollective.com/wikijs/sponsor/23/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/23/avatar.svg"></a>
       </td>
     </tr>
+    <tr>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/24/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/24/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/25/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/25/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/26/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/26/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle" width="192">
+        <a href="https://opencollective.com/wikijs/sponsor/27/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/27/avatar.svg"></a>
+      </td>
+    </tr>
   </tbody>
 </table>
 </div>
