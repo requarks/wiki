@@ -241,7 +241,7 @@ module.exports = {
          $(item).wrap('<div></div>')
       }
     })
-    
+
     // --------------------------------
     // Escape mustache expresions
     // --------------------------------
