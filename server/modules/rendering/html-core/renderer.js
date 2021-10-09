@@ -234,11 +234,11 @@ module.exports = {
     })
 
     // --------------------------------
-    // Wrap root text nodes
+    // Wrap non-empty root text nodes
     // --------------------------------
 
     $('body').contents().toArray().forEach(item => {
-      if (item && item.type === 'text' && item.parent.name === 'body') {
+      if (item && item.type === 'text' && item.parent.name === 'body' && item.data !== `\n` && item.data !== `\r`) {
         $(item).wrap('<div></div>')
       }
     })
