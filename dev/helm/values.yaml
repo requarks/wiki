@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: requarks/wiki
-  pullPolicy: IfNotPresent
+  imagePullPolicy: IfNotPresent
 
 imagePullSecrets: []
 nameOverride: ""
