@@ -247,7 +247,6 @@
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.0.2",
     "eslint-plugin-vue": "7.1.0",
-    "fibers": "5.0.0",
     "file-loader": "6.1.1",
     "filepond": "4.21.1",
     "filepond-plugin-file-validate-type": "1.2.5",

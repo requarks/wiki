@@ -84,7 +84,10 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               implementation: require('sass'),
-              sourceMap: false
+              sourceMap: false,
+              sassOptions: {
+                fiber: false
+              }
             }
           }
         ]
@@ -105,7 +108,10 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               implementation: require('sass'),
-              sourceMap: false
+              sourceMap: false,
+              sassOptions: {
+                fiber: false
+              }
             }
           },
           {
