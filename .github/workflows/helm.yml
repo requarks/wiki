@@ -1,0 +1,30 @@
+name: Helm CI
+
+on:
+  # Triggers the workflow on push or pull request events but only for the dev branch
+  push:
+    branches: [ dev ]
+    paths: [ dev/helm/** ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Generate Chart Archive
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/charts
+          helm package . -d $GITHUB_WORKSPACE/charts
+        working-directory: $GITHUB_WORKSPACE/dev/helm
+
+      - name: Generate Index
+        run: |
+          helm repo index .
+          ls -l
+        working-directory: $GITHUB_WORKSPACE/charts
