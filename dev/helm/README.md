@@ -51,8 +51,8 @@ It also optionally packages the [PostgreSQL](https://github.com/kubernetes/chart
 
 ## Adding the Wiki.js Helm Repository
 
-```bash
-helm repo add requarks https://charts.js.wiki
+```console
+$ helm repo add requarks https://charts.js.wiki
 ```
 
 ## Installing the Chart
@@ -61,11 +61,11 @@ To install the chart with the release name `my-release` run the following:
 
 ### Using Helm 3:
 ```console
-helm install my-release requarks/wiki
+$ helm install my-release requarks/wiki
 ```
 ### Using Helm 2:
 ```console
-helm install --name my-release requarks/wiki
+$ helm install --name my-release requarks/wiki
 ```
 
 The command deploys Wiki.js on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
