@@ -11,21 +11,24 @@ on:
 
 jobs:
   build:
+    name: Publish Chart
     runs-on: ubuntu-latest
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
-      - name: Generate Chart Archive
+      
+      - name: Package and Push Chart
         run: |
-          ls -l $GITHUB_WORKSPACE
-          mkdir -p $GITHUB_WORKSPACE/charts
-          helm package . -d $GITHUB_WORKSPACE/charts
-        working-directory: ./dev/helm
+          helm plugin install https://github.com/chartmuseum/helm-push.git
+          helm repo add chartmuseum https://charts.js.wiki
+          helm cm-push dev/helm/ chartmuseum
 
-      - name: Generate Index
-        run: |
-          helm repo index .
-          ls -l
-        working-directory: $GITHUB_WORKSPACE/charts
+#       - name: Generate and Push Chart Archive
+#         run: |
+#           mkdir -p $GITHUB_WORKSPACE/charts
+#           helm package . -d $GITHUB_WORKSPACE/charts
+#           cd $GITHUB_WORKSPACE/charts
+#           curl --data-binary "@wiki-2.2.0.tgz" -u $HELM_MUSEUM_USER:$HELM_MUSEUM_PASS https://charts.js.wiki/api/charts
+#         working-directory: ./dev/helm
+
