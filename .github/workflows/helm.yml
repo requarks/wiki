@@ -24,12 +24,3 @@ jobs:
           helm repo add chartmuseum https://charts.js.wiki
           helm cm-push --version="2.2.${{github.run_number}}" --username="${{secrets.HELM_REPO_USERNAME}}" --password="${{secrets.HELM_REPO_PASSWORD}}" dev/helm/ chartmuseum
           helm repo remove chartmuseum
-
-#       - name: Generate and Push Chart Archive
-#         run: |
-#           mkdir -p $GITHUB_WORKSPACE/charts
-#           helm package . -d $GITHUB_WORKSPACE/charts
-#           cd $GITHUB_WORKSPACE/charts
-#           curl --data-binary "@wiki-2.2.0.tgz" -u $HELM_MUSEUM_USER:$HELM_MUSEUM_PASS https://charts.js.wiki/api/charts
-#         working-directory: ./dev/helm
-
