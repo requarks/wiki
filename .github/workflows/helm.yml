@@ -19,9 +19,10 @@ jobs:
 
       - name: Generate Chart Archive
         run: |
+          ls -l $GITHUB_WORKSPACE
           mkdir -p $GITHUB_WORKSPACE/charts
           helm package . -d $GITHUB_WORKSPACE/charts
-        working-directory: $GITHUB_WORKSPACE/dev/helm
+        working-directory: ./dev/helm
 
       - name: Generate Index
         run: |
