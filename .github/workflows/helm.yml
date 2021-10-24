@@ -21,8 +21,9 @@ jobs:
       - name: Package and Push Chart
         run: |
           helm plugin install https://github.com/chartmuseum/helm-push.git
-          helm repo add chartmuseum https://charts.js.wiki
-          helm cm-push --username="$HELM_REPO_USERNAME" --password="$HELM_REPO_PASSWORD" dev/helm/ chartmuseum
+          helm repo add chartmuseum https://charts.js.wiki --username ${{env.HELM_REPO_USERNAME}} --password ${{env.HELM_REPO_PASSWORD}}
+          helm cm-push dev/helm/ chartmuseum
+          helm repo remove chartmuseum
 
 #       - name: Generate and Push Chart Archive
 #         run: |
