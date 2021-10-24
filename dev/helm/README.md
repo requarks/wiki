@@ -49,17 +49,23 @@ It also optionally packages the [PostgreSQL](https://github.com/kubernetes/chart
 
 - PV provisioner support in the underlying infrastructure (with persistence storage enabled) if you want data persistance
 
+## Adding the Wiki.js Helm Repository
+
+```bash
+helm repo add requarks https://charts.js.wiki
+```
+
 ## Installing the Chart
 
-To install the chart with the release name `my-release` run the following from this (`helm`) directory:
+To install the chart with the release name `my-release` run the following:
 
 ### Using Helm 3:
 ```console
-$ helm install my-release .
+helm install my-release requarks/wiki
 ```
 ### Using Helm 2:
 ```console
-$ helm install --name my-release . 
+helm install --name my-release requarks/wiki
 ```
 
 The command deploys Wiki.js on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -122,13 +128,13 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 $ helm install --name my-release \
   --set postgresql.persistence.enabled=false \
-   . 
+   requarks/wiki
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install --name my-release -f values.yaml . 
+$ helm install --name my-release -f values.yaml requarks/wiki
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
