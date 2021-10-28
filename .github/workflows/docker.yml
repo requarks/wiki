@@ -51,22 +51,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Docker for tag
-        id: meta_tag
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Extract metadata for Docker
+        id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
-            type=ref,event=tag
-
-      - name: Extract metadata for Docker on branch
-        id: meta_edge
-        if: false == startsWith(github.ref, 'refs/tags/v')
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
-          tags: |
+            type=ref,event=tag,priority=400
             type=sha,prefix=,priority=200
             type=edge,priority=100
 
@@ -79,38 +70,11 @@ jobs:
         with:
           files: "package.json"
         env:
+          version: ${{ steps.meta.outputs.version }}
           releaseDate: ${{ steps.build_time.outputs.time }}
           repository.url: "git+${{ github.server_url }}/${{ github.repository }}.git"
           bugs.url: "${{ github.server_url }}/${{ github.repository }}/issues"
           homepage: "${{ github.server_url }}/${{ github.repository }}#readme"
-
-      - name: Disable dev flag and set package version for tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: microsoft/variable-substitution@v1
-        with:
-          files: "package.json"
-        env:
-          dev: "false"
-          version: ${{ steps.meta_tag.outputs.version }}
-
-      - name: Set package version for branch
-        if: false == startsWith(github.ref, 'refs/tags/v')
-        uses: microsoft/variable-substitution@v1
-        with:
-          files: "package.json"
-        env:
-          version: ${{ steps.meta_edge.outputs.version }}
-
-      - name: Build and push Docker image for tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: docker/build-push-action@v2
-        with:
-          push: true
-          context: .
-          file: dev/build/Dockerfile
-          tags: ${{ steps.meta_tag.outputs.tags }}
-          labels: ${{ steps.meta_tag.outputs.labels }}
-
 
       - name: Build and push Docker image on branch
         if: false == startsWith(github.ref, 'refs/tags/v')
@@ -119,5 +83,32 @@ jobs:
           push: true
           context: .
           file: dev/build/Dockerfile
-          tags: ${{ steps.meta_edge.outputs.tags }}
-          labels: ${{ steps.meta_edge.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Extract metadata for Docker for tag
+        id: metatag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          tags: |
+            type=ref,event=tag
+
+      - name: Set dev flag to false in package.json for tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "package.json"
+        env:
+          dev: "false"
+
+      - name: Build and push Docker image for tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: .
+          file: dev/build/Dockerfile
+          tags: ${{ steps.metatag.outputs.tags }}
+          labels: ${{ steps.metatag.outputs.labels }}
