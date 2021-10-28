@@ -70,11 +70,16 @@ jobs:
           tags: |
             type=sha,prefix=
 
+      - name: Get build time
+        uses: gerred/actions/current-time@master
+        id: build_time
+
       - name: Rewrite entries in package.json to repository
         uses: microsoft/variable-substitution@v1
         with:
           files: "package.json"
         env:
+          releaseDate: ${{ steps.build_time.outputs.time }}
           repository.url: "git+${{ github.server_url }}/${{ github.repository }}.git"
           bugs.url: "${{ github.server_url }}/${{ github.repository }}/issues"
           homepage: "${{ github.server_url }}/${{ github.repository }}#readme"
