@@ -13,7 +13,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # Test building the docker image on pull requests
@@ -57,7 +56,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
             type=ref,event=tag
 
@@ -66,7 +65,7 @@ jobs:
         if: false == startsWith(github.ref, 'refs/tags/v')
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
             type=sha,prefix=,priority=200
             type=raw,value=bleeding,priority=100
