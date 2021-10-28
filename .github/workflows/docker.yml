@@ -110,6 +110,8 @@ jobs:
           context: .
           file: dev/build/Dockerfile
           tags: ${{ steps.meta_tag.outputs.tags }}
+          labels: ${{ steps.meta_tag.outputs.labels }}
+
 
       - name: Build and push Docker image (bleeding)
         if: false == startsWith(github.ref, 'refs/tags/v')
@@ -119,3 +121,4 @@ jobs:
           context: .
           file: dev/build/Dockerfile
           tags: ${{ steps.meta_bleeding.outputs.tags }}
+          labels: ${{ steps.meta_bleeding.outputs.labels }}
