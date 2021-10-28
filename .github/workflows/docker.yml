@@ -70,29 +70,31 @@ jobs:
           tags: |
             type=sha,prefix=
 
-      - name: Disable dev flag
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          sudo apt-get install jq -y
-          mv package.json pkg-temp.json
-          jq -r '.dev |= false' pkg-temp.json > package.json
-          rm pkg-temp.json
+      - name: Rewrite entries in package.json to repository
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "package.json"
+        env:
+          repository.url: "git+${{ github.server_url }}/${{ github.repository }}.git"
+          bugs.url: "${{ github.server_url }}/${{ github.repository }}/issues"
+          homepage: "${{ github.server_url }}/${{ github.repository }}#readme"
 
-      - name: Set Package Version (tag)
+      - name: Disable dev flag and set package version (tag)
         if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          mv package.json pkg-temp.json
-          jq -r '.version |= "${{ steps.meta_tag.outputs.version }}"' pkg-temp.json > package.json
-          rm pkg-temp.json
-          cat package.json
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "package.json"
+        env:
+          dev: "false"
+          version: ${{ steps.meta_tag.outputs.version }}
 
-      - name: Set Package Version (bleeding)
+      - name: Set package version (bleeding)
         if: false == startsWith(github.ref, 'refs/tags/v')
-        run: |
-          mv package.json pkg-temp.json
-          jq -r '.version |= "${{ steps.meta_bleeding.outputs.version }}"' pkg-temp.json > package.json
-          rm pkg-temp.json
-          cat package.json
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "package.json"
+        env:
+          version: ${{ steps.meta_bleeding.outputs.version }}
 
       - name: Build and push Docker image (tag)
         if: startsWith(github.ref, 'refs/tags/v')
