@@ -68,7 +68,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=
+            type=sha,prefix=,priority=200
+            type=raw,value=bleeding,priority=100
 
       - name: Get build time
         uses: gerred/actions/current-time@master
@@ -117,4 +118,4 @@ jobs:
           push: true
           context: .
           file: dev/build/Dockerfile
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:bleeding,${{ steps.meta_bleeding.outputs.tags }}
+          tags: ${{ steps.meta_bleeding.outputs.tags }}
