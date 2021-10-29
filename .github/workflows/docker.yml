@@ -13,7 +13,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # Test building the docker image on pull requests
@@ -24,15 +23,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-
       - name: Build image
         uses: docker/build-push-action@v2
         with:
           push: false
           context: .
           file: dev/build/Dockerfile
-
-
 
   # Build image and push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
@@ -55,62 +51,64 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Docker (tag)
-        id: meta_tag
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          tags: |
+            type=ref,event=tag,priority=400
+            type=sha,prefix=,priority=200
+            type=edge,priority=100
+
+      - name: Get build time
+        uses: gerred/actions/current-time@master
+        id: build_time
+
+      - name: Rewrite entries in package.json to match repository
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "package.json"
+        env:
+          version: ${{ steps.meta.outputs.version }}
+          releaseDate: ${{ steps.build_time.outputs.time }}
+          repository.url: "git+${{ github.server_url }}/${{ github.repository }}.git"
+          bugs.url: "${{ github.server_url }}/${{ github.repository }}/issues"
+          homepage: "${{ github.server_url }}/${{ github.repository }}#readme"
+
+      - name: Build and push Docker image on branch
+        if: false == startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: .
+          file: dev/build/Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Extract metadata for Docker for tag
+        id: metatag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
             type=ref,event=tag
 
-      - name: Extract metadata for Docker (bleeding)
-        id: meta_bleeding
-        if: false == startsWith(github.ref, 'refs/tags/v')
-        uses: docker/metadata-action@v3
+      - name: Set dev flag to false in package.json for tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: microsoft/variable-substitution@v1
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha
+          files: "package.json"
+        env:
+          dev: "false"
 
-      - name: Disable dev flag
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          sudo apt-get install jq -y
-          mv package.json pkg-temp.json
-          jq -r '.dev |= false' pkg-temp.json > package.json
-          rm pkg-temp.json
-
-      - name: Set Package Version (tag)
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          mv package.json pkg-temp.json
-          jq -r '.version |= "${{ steps.meta_tag.outputs.version }}"' pkg-temp.json > package.json
-          rm pkg-temp.json
-          cat package.json
-
-      - name: Set Package Version (bleeding)
-        if: false == startsWith(github.ref, 'refs/tags/v')
-        run: |
-          mv package.json pkg-temp.json
-          jq -r '.version |= "${{ steps.meta_bleeding.outputs.version }}"' pkg-temp.json > package.json
-          rm pkg-temp.json
-          cat package.json
-
-      - name: Build and push Docker image (tag)
+      - name: Build and push Docker image for tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v2
         with:
           push: true
           context: .
           file: dev/build/Dockerfile
-          tags: ${{ steps.meta_tag.outputs.tags }}
-
-      - name: Build and push Docker image (bleeding)
-        if: false == startsWith(github.ref, 'refs/tags/v')
-        uses: docker/build-push-action@v2
-        with:
-          push: true
-          context: .
-          file: dev/build/Dockerfile
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:bleeding,${{ steps.meta_bleeding.outputs.tags }}
+          tags: ${{ steps.metatag.outputs.tags }}
+          labels: ${{ steps.metatag.outputs.labels }}
