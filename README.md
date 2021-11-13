@@ -61,7 +61,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
   <tbody>
     <tr>
       <td align="center" valign="middle" width="444">
-        <a href="https://github.com/alexksso" target="_blank">
+        <a href="https://www.stellarhosted.com/" target="_blank">
           <img src="https://cdn.js.wiki/images/sponsors/stellarhosted.png">
         </a>
       </td>
