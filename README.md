@@ -66,8 +66,8 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="444">
-        <a href="https://github.com/sponsors/NGPixel" target="_blank">
-          <img src="https://static.requarks.io/sponsors/become-148x72.png">
+        <a href="https://www.hostwiki.com/" target="_blank">
+          <img src="https://cdn.js.wiki/images/sponsors/hostwiki.png">
         </a>
       </td>
     </tr>
