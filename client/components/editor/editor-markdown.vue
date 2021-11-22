@@ -269,118 +269,166 @@ Prism.plugins.NormalizeWhitespace.setDefaults({
   'tabs-to-spaces': 2
 })
 
-// Markdown Instance
-const md = new MarkdownIt({
-  html: true,
-  breaks: true,
-  linkify: true,
-  typography: true,
-  highlight(str, lang) {
-    if (lang === 'diagram') {
-      return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
-    } else if (['mermaid', 'plantuml'].includes(lang)) {
-      return `<pre class="codeblock-${lang}"><code>${_.escape(str)}</code></pre>`
-    } else {
-      return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+// Inject line numbers for preview scroll sync
+let linesMap = []
+
+function initMD(renderers) {
+  const rendererSetting = (section, key, _default) => {
+    if (renderers && renderers[section] && renderers[section].config[key]) {
+      return renderers[section].config[key].value
+    }
+    return _default
+  }
+  const rendererEnabled = (section) => {
+    return renderers && renderers[section] && renderers[section].isEnabled
+  }
+
+  // Markdown Instance
+  const md = new MarkdownIt({
+    html: rendererSetting('markdownCore', 'allowHTML', true),
+    breaks: rendererSetting('markdownCore', 'linebreaks', true),
+    linkify: rendererSetting('markdownCore', 'linkify', true),
+    typography: true,
+    highlight(str, lang) {
+      if (lang === 'diagram') {
+        return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
+      } else if (['mermaid', 'plantuml'].includes(lang)) {
+        return `<pre class="codeblock-${lang}"><code>${_.escape(str)}</code></pre>`
+      } else {
+        return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
+      }
+    }
+  })
+    .use(mdAttrs, {
+      allowedAttributes: ['id', 'class', 'target']
+    })
+    .use(mdMark)
+  if (rendererSetting('markdownCore', 'underline')) {
+    md.use(underline)
+  }
+  if (rendererEnabled('markdownAbbr')) {
+    md.use(mdAbbr)
+  }
+  if (rendererEnabled('markdownExpandtabs')) {
+    md.use(mdExpandTabs, {
+      tabWidth: _.toInteger(rendererSetting('markdownExpandtabs', 'tabWidth') || 4)
+    })
+  }
+  if (rendererEnabled('markdownFootnotes')) {
+    md.use(mdFootnote)
+  }
+  if (rendererEnabled('markdownImsize')) {
+    md.use(mdImsize)
+  }
+  if (rendererEnabled('markdownMultiTable')) {
+    md.use(mdMultiTable, {
+      multiline: rendererSetting('markdownMultiTable', 'multilineEnabled', true),
+      rowspan: rendererSetting('markdownMultiTable', 'rowspanEnabled', true),
+      headerless: rendererSetting('markdownMultiTable', 'headerlessEnabled', true)
+    })
+  }
+  if (rendererEnabled('markdownSupsub')) {
+    if (rendererSetting('markdownSupsub', 'supEnabled')) {
+      md.use(mdSup)
+    }
+    if (rendererSetting('markdownSupsub', 'subEnabled')) {
+      md.use(mdSub)
     }
   }
-})
-  .use(mdAttrs, {
-    allowedAttributes: ['id', 'class', 'target']
-  })
-  .use(underline)
-  .use(mdEmoji)
-  .use(mdTaskLists, {label: true, labelAfter: true})
-  .use(mdExpandTabs)
-  .use(mdAbbr)
-  .use(mdSup)
-  .use(mdSub)
-  .use(mdMultiTable, {multiline: true, rowspan: true, headerless: true})
-  .use(mdMark)
-  .use(mdFootnote)
-  .use(mdImsize)
+  if (rendererEnabled('markdownTasklists')) {
+    md.use(mdTaskLists, {label: true, labelAfter: true})
+  }
 
-// DOMPurify fix for draw.io
-DOMPurify.addHook('uponSanitizeElement', (elm) => {
-  if (elm.querySelectorAll) {
-    const breaks = elm.querySelectorAll('foreignObject br, foreignObject p')
-    if (breaks && breaks.length) {
-      for (let i = 0; i < breaks.length; i++) {
-        breaks[i].parentNode.replaceChild(
-          document.createElement('div'),
-          breaks[i]
-        )
+  // DOMPurify fix for draw.io
+  DOMPurify.addHook('uponSanitizeElement', (elm) => {
+    if (elm.querySelectorAll) {
+      const breaks = elm.querySelectorAll('foreignObject br, foreignObject p')
+      if (breaks && breaks.length) {
+        for (let i = 0; i < breaks.length; i++) {
+          breaks[i].parentNode.replaceChild(
+            document.createElement('div'),
+            breaks[i]
+          )
+        }
+      }
+    }
+  })
+  // ========================================
+  // HELPER FUNCTIONS
+  // ========================================
+
+  function injectLineNumbers (tokens, idx, options, env, slf) {
+    let line
+    if (tokens[idx].map && tokens[idx].level === 0) {
+      line = tokens[idx].map[0]
+      tokens[idx].attrJoin('class', 'line')
+      tokens[idx].attrSet('data-line', String(line))
+      linesMap.push(line)
+    }
+    return slf.renderToken(tokens, idx, options, env, slf)
+  }
+  md.renderer.rules.paragraph_open = injectLineNumbers
+  md.renderer.rules.heading_open = injectLineNumbers
+  md.renderer.rules.blockquote_open = injectLineNumbers
+
+  // ========================================
+  // PLANTUML
+  // ========================================
+  if (rendererEnabled('markdownPlantuml')) {
+    plantuml.init(md, {
+      openMarker: rendererSetting('markdownPlantuml', 'openMarker'),
+      closeMarker: rendererSetting('markdownPlantuml', 'closeMarker'),
+      imageFormat: rendererSetting('markdownPlantuml', 'imageFormat'),
+      server: rendererSetting('markdownPlantuml', 'server')
+    })
+  }
+  // ========================================
+  // KATEX
+  // ========================================
+  if (rendererEnabled('markdownKatex')) {
+    if (rendererSetting('markdownKatex', 'useInline')) {
+      md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
+      md.renderer.rules.katex_inline = (tokens, idx) => {
+        try {
+          return katex.renderToString(tokens[idx].content, {
+            displayMode: false
+          })
+        } catch (err) {
+          console.warn(err)
+          return tokens[idx].content
+        }
+      }
+    }
+    if (rendererSetting('markdownKatex', 'useBlocks')) {
+      md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
+        alt: [ 'paragraph', 'reference', 'blockquote', 'list' ]
+      })
+      md.renderer.rules.katex_block = (tokens, idx) => {
+        try {
+          return `<p>` + katex.renderToString(tokens[idx].content, {
+            displayMode: true
+          }) + `</p>`
+        } catch (err) {
+          console.warn(err)
+          return tokens[idx].content
+        }
       }
     }
   }
-})
-
-// ========================================
-// HELPER FUNCTIONS
-// ========================================
-
-// Inject line numbers for preview scroll sync
-let linesMap = []
-function injectLineNumbers (tokens, idx, options, env, slf) {
-  let line
-  if (tokens[idx].map && tokens[idx].level === 0) {
-    line = tokens[idx].map[0]
-    tokens[idx].attrJoin('class', 'line')
-    tokens[idx].attrSet('data-line', String(line))
-    linesMap.push(line)
-  }
-  return slf.renderToken(tokens, idx, options, env, slf)
-}
-md.renderer.rules.paragraph_open = injectLineNumbers
-md.renderer.rules.heading_open = injectLineNumbers
-md.renderer.rules.blockquote_open = injectLineNumbers
-
-// ========================================
-// PLANTUML
-// ========================================
-
-// TODO: Use same options as defined in backend
-plantuml.init(md, {})
-
-// ========================================
-// KATEX
-// ========================================
-
-md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
-md.renderer.rules.katex_inline = (tokens, idx) => {
-  try {
-    return katex.renderToString(tokens[idx].content, {
-      displayMode: false
-    })
-  } catch (err) {
-    console.warn(err)
-    return tokens[idx].content
-  }
-}
-md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
-  alt: [ 'paragraph', 'reference', 'blockquote', 'list' ]
-})
-md.renderer.rules.katex_block = (tokens, idx) => {
-  try {
-    return `<p>` + katex.renderToString(tokens[idx].content, {
-      displayMode: true
-    }) + `</p>`
-  } catch (err) {
-    console.warn(err)
-    return tokens[idx].content
-  }
-}
-
-// ========================================
-// TWEMOJI
-// ========================================
-
-md.renderer.rules.emoji = (token, idx) => {
-  return twemoji.parse(token[idx].content, {
-    callback (icon, opts) {
-      return `/_assets/svg/twemoji/${icon}.svg`
+  // ========================================
+  // TWEMOJI
+  // ========================================
+  if (rendererEnabled('markdownEmoji')) {
+    md.use(mdEmoji)
+    md.renderer.rules.emoji = (token, idx) => {
+      return twemoji.parse(token[idx].content, {
+        callback (icon, opts) {
+          return `/_assets/svg/twemoji/${icon}.svg`
+        }
+      })
     }
-  })
+  }
+  return md
 }
 
 // ========================================
@@ -396,6 +444,10 @@ export default {
   props: {
     save: {
       type: Function,
+      default: () => {}
+    },
+    renderers: {
+      type: Object,
       default: () => {}
     }
   },
@@ -421,7 +473,10 @@ export default {
     locale: get('page/locale'),
     path: get('page/path'),
     mode: get('editor/mode'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    md() {
+      return initMD(this.renderers)
+    }
   },
   watch: {
     previewShown (newValue, oldValue) {
@@ -474,7 +529,7 @@ export default {
       linesMap = []
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
-      this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
+      this.previewHTML = DOMPurify.sanitize(this.md.render(newContent), {
         ADD_TAGS: ['foreignObject']
       })
       this.$nextTick(() => {

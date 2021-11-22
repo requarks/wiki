@@ -18,7 +18,7 @@ type RenderingQuery {
   renderers(
     filter: String
     orderBy: String
-  ): [Renderer] @auth(requires: ["manage:system"])
+  ): [Renderer] @auth(requires: ["manage:system", "write:pages"])
 }
 
 # -----------------------------------------------

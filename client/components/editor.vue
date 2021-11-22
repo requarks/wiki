@@ -45,7 +45,7 @@
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
     v-main
-      component(:is='currentEditor', :save='save')
+      component(:is='currentEditor', :save='save', :renderers='renderers' v-if='renderers')
       editor-modal-properties(v-model='dialogProps')
       editor-modal-editorselect(v-model='dialogEditorSelector')
       editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
@@ -172,7 +172,8 @@ export default {
         title: '',
         css: '',
         js: ''
-      }
+      },
+      renderers: null
     }
   },
   computed: {
@@ -572,6 +573,36 @@ export default {
       update: (data) => _.cloneDeep(data.pages.checkConflicts),
       skip () {
         return this.mode === 'create' || this.isSaving || !this.isDirty
+      }
+    },
+    renderers: {
+      query: gql`
+      query {
+        rendering {
+          renderers {
+            isEnabled
+            key
+            config {
+              key
+              value
+            }
+          }
+        }
+      }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => {
+        let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({
+          ...str,
+          config: _.keyBy(str.config.map(cfg => ({
+            ...cfg,
+            value: JSON.parse(cfg.value).value
+          })), 'key')
+        }))
+        return _.keyBy(renderers, 'key')
+      },
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-rendering-refresh')
       }
     }
   }
