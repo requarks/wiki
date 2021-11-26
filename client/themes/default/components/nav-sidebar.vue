@@ -109,6 +109,11 @@ export default {
     path: get('page/path'),
     locale: get('page/locale')
   },
+  watch: {
+    currentParent (newValue, oldValue) {
+      this.$store.set('site/currentDir', newValue.path)
+    }
+  },
   methods: {
     switchMode (mode) {
       this.currentMode = mode

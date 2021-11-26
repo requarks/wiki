@@ -114,8 +114,7 @@ export default {
       default: false
     },
     path: {
-      type: String,
-      default: 'new-page'
+      type: String
     },
     locale: {
       type: String,
@@ -207,7 +206,14 @@ export default {
   watch: {
     isShown (newValue, oldValue) {
       if (newValue && !oldValue) {
-        this.currentPath = this.path
+        let path
+        if (this.path === undefined) {
+          const currentDir = this.$store.get('site/currentDir')
+          path = currentDir === undefined ? 'new-page' : currentDir + '/new-page'
+        } else {
+          path = this.path
+        }
+        this.currentPath = path
         this.currentLocale = this.locale
         _.delay(() => {
           this.$refs.pathIpt.focus()
