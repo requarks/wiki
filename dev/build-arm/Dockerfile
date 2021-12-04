@@ -1,9 +1,9 @@
 # =========================
 # --- BUILD NPM MODULES ---
 # =========================
-FROM node:14-alpine AS build
+FROM node:16-alpine AS build
 
-RUN apk add yarn g++ make python --no-cache
+RUN apk add yarn g++ make --no-cache
 
 WORKDIR /wiki
 
