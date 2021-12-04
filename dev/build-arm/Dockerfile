@@ -14,7 +14,7 @@ RUN yarn --production --frozen-lockfile --non-interactive --network-timeout 1000
 # ===============
 # --- Release ---
 # ===============
-FROM node:14-alpine
+FROM node:16-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
