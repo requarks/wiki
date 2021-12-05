@@ -3,7 +3,7 @@
 # =========================
 FROM node:16-alpine AS build
 
-RUN apk add yarn g++ make --no-cache
+RUN apk add yarn g++ make python3 --no-cache
 
 WORKDIR /wiki
 
