@@ -35,7 +35,7 @@ module.exports = {
     rawPath = rawPath.replace(unsafeCharsRegex, '')
     if (rawPath === '') { rawPath = 'home' }
 
-    rawPath = rawPath.replaceAll('\\', '').replaceAll('//', '').replaceAll(/\.\.+/ig, '')
+    rawPath = rawPath.replace(/\\/g, '').replace(/\/\//g, '').replace(/\.\.+/ig, '')
 
     // Extract Info
     let pathParts = _.filter(_.split(rawPath, '/'), p => {
