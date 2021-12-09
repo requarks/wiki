@@ -77,7 +77,7 @@
     & + h2, & + h3, & + h4, & + h5, & + h6 {
       margin-top: 8px;
     }
-    
+
     & + hr.footnotes-sep {
       display: none;
     }
@@ -508,7 +508,7 @@
     }
   }
 
-  ul:not(.tabset-tabs) {
+  ul:not(.tabset-tabs):not(.contains-task-list) {
     list-style: none;
     > li::before {
       position: absolute;
@@ -596,21 +596,25 @@
   // TASK LISTS
   // ---------------------------------
 
+  .contains-task-list {
+    padding-left: 0;
+  }
+
   .task-list-item {
     position: relative;
     list-style-type: none;
 
     &-checkbox[disabled] {
-      display: none;
+      width: 1.1rem;
+      height: 1.1rem;
+      top: 2px;
+      position: relative;
+      margin-right: 2px;
 
-      & + label {
-        padding-left: 1.5rem;
-      }
-
-      & + label::before {
+      &::after {
         position: absolute;
         left: 0;
-        top: 2px;
+        top: 0;
         content: ' ';
         display: block;
         width: 1.1rem;
@@ -629,7 +633,7 @@
         }
       }
 
-      &[checked] + label::before  {
+      &[checked]::after  {
         content: '✓';
       }
     }
@@ -817,15 +821,15 @@
         outline: none;
         background-color: mc('grey', '100');
       }
-      
+
       > h1, h2, h3, h4, h5, h6 {
         width: 95%;
         display: inline-block;
-        
+
         &:first-child {
           margin-top: 0;
         }
-        
+
         &:only-child::after {
           display: none;
         }

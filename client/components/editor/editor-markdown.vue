@@ -290,7 +290,7 @@ const md = new MarkdownIt({
   })
   .use(underline)
   .use(mdEmoji)
-  .use(mdTaskLists, {label: true, labelAfter: true})
+  .use(mdTaskLists, {label: false, labelAfter: false})
   .use(mdExpandTabs)
   .use(mdAbbr)
   .use(mdSup)
@@ -627,7 +627,7 @@ export default {
             hint: async (cm, options) => {
               const cur = cm.getCursor()
               const curLine = cm.getLine(cur.line).substring(0, cur.ch)
-              const queryString = curLine.substring(curLine.lastIndexOf('[')+1,curLine.length-2)
+              const queryString = curLine.substring(curLine.lastIndexOf('[') + 1, curLine.length - 2)
               const token = cm.getTokenAt(cur)
               try {
                 const respRaw = await this.$apollo.query({
