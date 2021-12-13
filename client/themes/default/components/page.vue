@@ -1,6 +1,6 @@
 <template lang="pug">
   v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
-    nav-header(v-if='!printView')
+    nav-header(v-if='!printView', :currentFolder='currentFolder')
     v-navigation-drawer(
       v-if='navMode !== `NONE` && !printView'
       :class='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`'
@@ -13,7 +13,7 @@
       :right='$vuetify.rtl'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`', :items='sidebarDecoded', :nav-mode='navMode')
+        nav-sidebar(:color='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`', :items='sidebarDecoded', :nav-mode='navMode', @relay='currentFolder=$event')
 
     v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
@@ -471,7 +471,8 @@ export default {
           }
         }
       },
-      winWidth: 0
+      winWidth: 0,
+      currentFolder: []
     }
   },
   computed: {

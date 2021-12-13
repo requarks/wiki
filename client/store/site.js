@@ -14,8 +14,7 @@ const state = {
   searchIsLoading: false,
   searchRestrictLocale: false,
   searchRestrictPath: false,
-  printView: false,
-  currentDir: undefined
+  printView: false
 }
 
 export default {

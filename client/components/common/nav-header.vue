@@ -236,9 +236,9 @@
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
-    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
-    page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
-    page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
+    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :folder='currentFolder', :locale='locale')
+    page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :folder='currentFolder', :path='path', :locale='locale')
+    page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :folder='currentFolder', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
     page-delete(v-model='deletePageModal', v-if='path && path.length')
     page-convert(v-model='convertPageModal', v-if='path && path.length')
 
@@ -270,6 +270,9 @@ export default {
     hideSearch: {
       type: Boolean,
       default: false
+    },
+    currentFolder: {
+      type: Array
     }
   },
   data() {

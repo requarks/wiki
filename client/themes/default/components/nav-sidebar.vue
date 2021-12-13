@@ -109,9 +109,10 @@ export default {
     path: get('page/path'),
     locale: get('page/locale')
   },
+  emits: ['relay'],
   watch: {
-    currentParent (newValue, oldValue) {
-      this.$store.set('site/currentDir', newValue.path)
+    parents (newValue, oldValue) {
+      this.$emit('relay', newValue.map(x => x.id))
     }
   },
   methods: {

@@ -30,7 +30,8 @@
             vue-scroll(:ops='scrollStyle')
               v-treeview(
                 :key='`pageTree-` + treeViewCacheId'
-                :active.sync='currentNode'
+                :active='currentNode'
+                @update:active='updateActive'
                 :open.sync='openNodes'
                 :items='tree'
                 :load-children='fetchFolders'
@@ -113,8 +114,12 @@ export default {
       type: Boolean,
       default: false
     },
+    folder: {
+      type: Array
+    },
     path: {
-      type: String
+      type: String,
+      default: 'new-page'
     },
     locale: {
       type: String,
@@ -206,42 +211,14 @@ export default {
   watch: {
     isShown (newValue, oldValue) {
       if (newValue && !oldValue) {
-        let path
-        if (this.path === undefined) {
-          const currentDir = this.$store.get('site/currentDir')
-          path = currentDir === undefined ? 'new-page' : currentDir + '/new-page'
-        } else {
-          path = this.path
-        }
-        this.currentPath = path
+        this.currentPath = this.path
         this.currentLocale = this.locale
+        if (this.folder !== undefined) {
+          this.selectPath(this.folder)
+        }
         _.delay(() => {
           this.$refs.pathIpt.focus()
         })
-      }
-    },
-    currentNode (newValue, oldValue) {
-      if (newValue.length < 1) { // force a selection
-        this.$nextTick(() => {
-          this.currentNode = oldValue
-        })
-      } else {
-        const current = _.find(this.all, ['id', newValue[0]])
-
-        if (this.openNodes.indexOf(newValue[0]) < 0) { // auto open and load children
-          if (current) {
-            if (this.openNodes.indexOf(current.parent) < 0) {
-              this.$nextTick(() => {
-                this.openNodes.push(current.parent)
-              })
-            }
-          }
-          this.$nextTick(() => {
-            this.openNodes.push(newValue[0])
-          })
-        }
-
-        this.currentPath = _.compact([_.get(current, 'path', ''), _.last(this.currentPath.split('/'))]).join('/')
       }
     },
     currentPage (newValue, oldValue) {
@@ -316,6 +293,49 @@ export default {
       this.all = _.unionBy(this.all, items, 'id')
 
       this.searchLoading = false
+    },
+    updateActive (items) {
+      let currentNode
+      if (items.length > 0) {
+        currentNode = items
+        const current = _.find(this.all, ['id', items[0]])
+        if (this.openNodes.indexOf(items[0]) < 0) { // auto open and load children
+          if (current) {
+            if (this.openNodes.indexOf(current.parent) < 0) {
+              this.$nextTick(() => {
+                this.openNodes.push(current.parent)
+              })
+            }
+          }
+          this.$nextTick(() => {
+            this.openNodes.push(items[0])
+          })
+        }
+        this.currentPath = _.compact([_.get(current, 'path', ''), _.last(this.currentPath.split('/'))]).join('/')
+      } else {
+        // force a selection
+        currentNode = [this.currentNode[0]]
+      }
+      this.$nextTick(() => {
+        this.currentNode = currentNode
+      })
+    },
+    async selectPath(ids) {
+      let id = 0
+      if (ids.length > 0) {
+        const root = this.tree.pop()
+        let current = [root]
+        for (id of ids) {
+          const item = _.filter(current, ['id', id])[0]
+          await this.fetchFolders(item)
+          current = item.children
+        }
+        this.tree.push(root)
+        this.openNodes.push.apply(this.openNodes, ids)
+      } else {
+        this.openNodes = [0]
+      }
+      this.currentNode = [id]
     }
   }
 }
