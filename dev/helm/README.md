@@ -120,7 +120,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `postgresql.existingSecretKey`          | The postgres password key in the existing `Secret`   | `postgresql-password`                              |
 | `postgresql.postgresqlPort`            | External postgres port                      | `5432`                                                     |
 | `postgresql.ssl`                       | Enable external postgres SSL connection     | `false`                                                   |
-| `postgresql.ca`                        | Certificate of Authority path for postgres  | `nil`                                                     |
+| `postgresql.ca`                        | Certificate of Authority content for postgres  | `nil`                                                     |
 | `postgresql.persistence.enabled`                | Enable postgres persistence using PVC                | `true`                                                     |
 | `postgresql.persistence.existingClaim`          | Provide an existing `PersistentVolumeClaim` for postgres | `nil`                                                      |
 | `postgresql.persistence.storageClass`           | Postgres PVC Storage Class (example: `nfs`)                           | `nil`                 |
