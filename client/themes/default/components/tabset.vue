@@ -37,7 +37,22 @@ export default {
     }
   },
   mounted () {
+    // Handle scroll to header on load within hidden tab content
+    if (window.location.hash && window.location.hash.length > 1) {
+      const headerId = decodeURIComponent(window.location.hash)
+      let foundIdx = -1
+      this.$refs.content.childNodes.forEach((node, idx) => {
+        if (node.querySelector(headerId)) {
+          foundIdx = idx
+        }
+      })
+      if (foundIdx >= 0) {
+        this.currentTab = foundIdx
+      }
+    }
+
     this.setActiveTab()
+
     this.$refs.tabs.childNodes.forEach((node, idx) => {
       node.addEventListener('click', ev => {
         this.currentTab = [].indexOf.call(ev.target.parentNode.children, ev.target)
