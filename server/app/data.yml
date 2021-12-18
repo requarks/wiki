@@ -80,6 +80,7 @@ defaults:
     uploads:
       maxFileSize: 5242880
       maxFiles: 10
+      scanSVG: true
     flags:
       ldapdebug: false
       sqllog: false

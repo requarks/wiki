@@ -99,6 +99,16 @@ module.exports = class Asset extends Model {
       folderId: opts.folderId
     }
 
+    // Sanitize SVG contents
+    if (WIKI.config.uploads.scanSVG && opts.mimetype === 'image/svg+xml') {
+      const svgSanitizeJob = await WIKI.scheduler.registerJob({
+        name: 'sanitize-svg',
+        immediate: true,
+        worker: true
+      }, opts.path)
+      await svgSanitizeJob.finished
+    }
+
     // Save asset data
     try {
       const fileBuffer = await fs.readFile(opts.path)

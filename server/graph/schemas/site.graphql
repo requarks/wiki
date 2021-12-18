@@ -54,6 +54,7 @@ type SiteMutation {
     securityCSPDirectives: String
     uploadMaxFileSize: Int
     uploadMaxFiles: Int
+    uploadScanSVG: Boolean
 
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -63,15 +64,15 @@ type SiteMutation {
 # -----------------------------------------------
 
 type SiteConfig {
-  host: String!
-  title: String!
-  description: String!
-  robots: [String]!
-  analyticsService: String!
-  analyticsId: String!
-  company: String!
-  contentLicense: String!
-  logoUrl: String!
+  host: String
+  title: String
+  description: String
+  robots: [String]
+  analyticsService: String
+  analyticsId: String
+  company: String
+  contentLicense: String
+  logoUrl: String
   authAutoLogin: Boolean
   authEnforce2FA: Boolean
   authHideLocal: Boolean
@@ -79,18 +80,19 @@ type SiteConfig {
   authJwtAudience: String
   authJwtExpiration: String
   authJwtRenewablePeriod: String
-  featurePageRatings: Boolean!
-  featurePageComments: Boolean!
-  featurePersonalWikis: Boolean!
-  securityOpenRedirect: Boolean!
-  securityIframe: Boolean!
-  securityReferrerPolicy: Boolean!
-  securityTrustProxy: Boolean!
-  securitySRI: Boolean!
-  securityHSTS: Boolean!
-  securityHSTSDuration: Int!
-  securityCSP: Boolean!
-  securityCSPDirectives: String!
-  uploadMaxFileSize: Int!
-  uploadMaxFiles: Int!
+  featurePageRatings: Boolean
+  featurePageComments: Boolean
+  featurePersonalWikis: Boolean
+  securityOpenRedirect: Boolean
+  securityIframe: Boolean
+  securityReferrerPolicy: Boolean
+  securityTrustProxy: Boolean
+  securitySRI: Boolean
+  securityHSTS: Boolean
+  securityHSTSDuration: Int
+  securityCSP: Boolean
+  securityCSPDirectives: String
+  uploadMaxFileSize: Int
+  uploadMaxFiles: Int
+  uploadScanSVG: Boolean
 }

@@ -142,6 +142,15 @@
                     :suffix='$t(`admin:security.maxUploadBatchSuffix`)'
                     style='max-width: 450px;'
                     )
+                  v-divider.mt-3
+                  v-switch(
+                    inset
+                    label='Scan and Sanitize SVG Uploads'
+                    color='primary'
+                    v-model='config.uploadScanSVG'
+                    persistent-hint
+                    hint='Should SVG uploads be scanned for vulnerabilities and stripped of any potentially unsafe content.'
+                    )
 
               v-card.mt-3.animated.fadeInUp.wait-p2s
                 v-toolbar(flat, color='primary', dark, dense)
@@ -242,6 +251,7 @@ export default {
       config: {
         uploadMaxFileSize: 0,
         uploadMaxFiles: 0,
+        uploadScanSVG: true,
         securityOpenRedirect: true,
         securityIframe: true,
         securityReferrerPolicy: true,
@@ -286,6 +296,7 @@ export default {
               $authJwtRenewablePeriod: String
               $uploadMaxFileSize: Int
               $uploadMaxFiles: Int
+              $uploadScanSVG: Boolean
               $securityOpenRedirect: Boolean
               $securityIframe: Boolean
               $securityReferrerPolicy: Boolean
@@ -307,6 +318,7 @@ export default {
                   authJwtRenewablePeriod: $authJwtRenewablePeriod,
                   uploadMaxFileSize: $uploadMaxFileSize,
                   uploadMaxFiles: $uploadMaxFiles,
+                  uploadScanSVG: $uploadScanSVG
                   securityOpenRedirect: $securityOpenRedirect,
                   securityIframe: $securityIframe,
                   securityReferrerPolicy: $securityReferrerPolicy,
@@ -337,6 +349,7 @@ export default {
             authJwtRenewablePeriod: _.get(this.config, 'authJwtRenewablePeriod', ''),
             uploadMaxFileSize: _.toSafeInteger(_.get(this.config, 'uploadMaxFileSize', 0)),
             uploadMaxFiles: _.toSafeInteger(_.get(this.config, 'uploadMaxFiles', 0)),
+            uploadScanSVG: _.get(this.config, 'uploadScanSVG', false),
             securityOpenRedirect: _.get(this.config, 'securityOpenRedirect', false),
             securityIframe: _.get(this.config, 'securityIframe', false),
             securityReferrerPolicy: _.get(this.config, 'securityReferrerPolicy', false),
@@ -388,6 +401,7 @@ export default {
               authJwtRenewablePeriod
               uploadMaxFileSize
               uploadMaxFiles
+              uploadScanSVG
               securityOpenRedirect
               securityIframe
               securityReferrerPolicy
