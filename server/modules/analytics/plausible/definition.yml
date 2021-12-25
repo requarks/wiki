@@ -11,3 +11,9 @@ props:
     title: Domain
     hint: The value of the data-domain property
     order: 1
+  plausibleJsSrc:
+    type: String
+    default: https://plausible.io/js/plausible.js
+    title: Plausible JS Script source
+    hint: The URL of Plausbile Script (only needed when using a self hosted installation)
+    order: 2
