@@ -81,6 +81,7 @@ defaults:
       maxFileSize: 5242880
       maxFiles: 10
       scanSVG: true
+      forceDownload: true
     flags:
       ldapdebug: false
       sqllog: false

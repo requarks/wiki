@@ -55,6 +55,7 @@ type SiteMutation {
     uploadMaxFileSize: Int
     uploadMaxFiles: Int
     uploadScanSVG: Boolean
+    uploadForceDownload: Boolean
 
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -95,4 +96,5 @@ type SiteConfig {
   uploadMaxFileSize: Int
   uploadMaxFiles: Int
   uploadScanSVG: Boolean
+  uploadForceDownload: Boolean
 }
