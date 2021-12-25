@@ -100,7 +100,13 @@ module.exports = class Asset extends Model {
     }
 
     // Sanitize SVG contents
-    if (WIKI.config.uploads.scanSVG && opts.mimetype === 'image/svg+xml') {
+    if (
+      WIKI.config.uploads.scanSVG &&
+      (
+        opts.mimetype.toLowerCase().startsWith('image/svg') ||
+        opts.ext.toLowerCase() === 'svg'
+      )
+    ) {
       const svgSanitizeJob = await WIKI.scheduler.registerJob({
         name: 'sanitize-svg',
         immediate: true,
