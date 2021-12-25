@@ -228,6 +228,19 @@
     margin: 0 1px -4px;
   }
 
+  .text-huge {
+    font-size: 1.8em;
+  }
+  .text-big {
+    font-size: 1.4em;
+  }
+  .text-small {
+    font-size: .85em;
+  }
+  .text-tiny {
+    font-size: .7em;
+  }
+
   blockquote {
     padding: 0 1rem 1rem 1rem;
     background-color: mc('blue-grey', '50');
