@@ -1,2 +1,2 @@
 head: |
-  <script defer data-domain="{{domain}}" src="https://plausible.io/js/plausible.js"></script>
+  <script defer data-domain="{{domain}}" src="{{plausibleJsSrc}}"></script>
