@@ -104,7 +104,7 @@ module.exports = class Asset extends Model {
       WIKI.config.uploads.scanSVG &&
       (
         opts.mimetype.toLowerCase().startsWith('image/svg') ||
-        opts.ext.toLowerCase() === 'svg'
+        fileInfo.ext.toLowerCase() === '.svg'
       )
     ) {
       const svgSanitizeJob = await WIKI.scheduler.registerJob({
