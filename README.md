@@ -122,6 +122,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Arnaud Marchand ([@snuids](https://github.com/snuids))
+- Brian Douglass ([@bhdouglass](https://github.com/bhdouglass))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - Cameron Steele ([@ATechAdventurer](https://github.com/ATechAdventurer))
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
