@@ -53,6 +53,22 @@ Wiki.js is an open source project that has been made possible due to the generou
 
 </div>
 
+<h2 align="center">Gold Tier Sponsors</h2>
+
+<div align="center">
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle" width="444">
+        <a href="https://trans-zero.com/" target="_blank">
+          <img src="https://cdn.js.wiki/images/sponsors/transzero.png">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
 <h2 align="center">GitHub Sponsors</h2>
 
 Support this project by becoming a sponsor. Your name will show up in the Contribute page of all Wiki.js installations as well as here with a link to your website! [[Become a sponsor](https://github.com/users/NGPixel/sponsorship)]
