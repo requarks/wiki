@@ -372,7 +372,8 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
         page: {
           ...page,
           ...pageVersion
-        }
+        },
+        effectivePermissions
       })
     } else {
       _.set(res.locals, 'pageMeta.title', page.title)
