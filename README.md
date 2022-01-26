@@ -383,7 +383,7 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
 
 ![ngrok](https://static.requarks.io/logo/ngrok-h40.png)  
-[ngrok](https://ngrok.com) for providing haccess to their great HTTP tunneling services.
+[ngrok](https://ngrok.com) for providing access to their great HTTP tunneling services.
 
 ![Porkbun](https://static.requarks.io/logo/porkbun.png)  
 [Porkbun](https://www.porkbun.com) for providing domain registration services.
