@@ -361,16 +361,16 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 <h2 align="center">Special Thanks</h2>
 
-![Algolia](https://wiki.js.org/legacy/logo_algolia.png)  
+![Algolia](https://js.wiki/legacy/logo_algolia.png)  
 [Algolia](https://www.algolia.com/) for providing access to their incredible search engine.
 
-![Browserstack](https://wiki.js.org/legacy/logo_browserstack.png)  
+![Browserstack](https://js.wiki/legacy/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-![Cloudflare](https://wiki.js.org/legacy/logo_cloudflare.png)  
+![Cloudflare](https://js.wiki/legacy/logo_cloudflare.png)  
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
-![DigitalOcean](https://wiki.js.org/legacy/logo_digitalocean.png)  
+![DigitalOcean](https://js.wiki/legacy/logo_digitalocean.png)  
 [DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
 
 ![Icons8](https://static.requarks.io/logo/icons8-text-h40.png)  
@@ -379,7 +379,7 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 ![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
 [Lokalise](https://lokalise.com/) for providing access to their great localization tool.
 
-![Netlify](https://wiki.js.org/legacy/logo_netlify.png)  
+![Netlify](https://js.wiki/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
 
 ![ngrok](https://static.requarks.io/logo/ngrok-h40.png)  
