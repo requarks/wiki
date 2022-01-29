@@ -32,7 +32,7 @@ module.exports = {
         token = req.cookies['jwt']
       }
       // Force uploads to use Auth headers
-      if (req.path === '/u') {
+      if (req.path.toLowerCase() === '/u') {
         return null
       }
       return token
