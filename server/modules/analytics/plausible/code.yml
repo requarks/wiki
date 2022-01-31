@@ -1,0 +1,2 @@
+head: |
+  <script defer data-domain="{{domain}}" src="{{plausibleJsSrc}}"></script>

@@ -1,0 +1,26 @@
+name: Helm Chart CI
+
+on:
+  # Triggers the workflow on push or pull request events but only for the dev branch
+  push:
+    branches: [ dev ]
+    paths: [ dev/helm/** ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Update Chart
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      
+      - name: Package and Push Chart
+        run: |
+          helm plugin install https://github.com/chartmuseum/helm-push.git
+          helm repo add chartmuseum https://charts.js.wiki
+          helm cm-push --version="2.2.${{github.run_number}}" --username="${{secrets.HELM_REPO_USERNAME}}" --password="${{secrets.HELM_REPO_PASSWORD}}" dev/helm/ chartmuseum
+          helm repo remove chartmuseum

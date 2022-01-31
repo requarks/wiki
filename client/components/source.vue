@@ -67,7 +67,7 @@ export default {
     this.$store.commit('page/SET_MODE', 'source')
 
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
   },
   methods: {
@@ -86,6 +86,7 @@ export default {
 .source {
   pre > code {
     box-shadow: none;
+    background-color: transparent;
     color: mc('grey', '800');
     font-family: 'Roboto Mono', sans-serif;
     font-weight: 400;

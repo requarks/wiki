@@ -29,7 +29,7 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
 home: https://wiki.js.org
-icon: https://github.com/Requarks/wiki/raw/master/client/static/favicons/android-chrome-192x192.png
+icon: https://cdn.js.wiki/images/wikijs-butterfly.svg
 sources:
   - https://github.com/Requarks/wiki
 maintainers:

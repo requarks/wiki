@@ -1,0 +1,61 @@
+key: oauth2
+title: Generic OAuth2
+description: OAuth 2.0 is the industry-standard protocol for authorization.
+author: requarks.io
+logo: https://static.requarks.io/logo/oauth2.svg
+color: blue-grey darken-2
+website: https://oauth.net/2/
+isAvailable: true
+useForm: false
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
+  authorizationURL:
+    type: String
+    title: Authorization Endpoint URL
+    hint: Application Authorization Endpoint URL
+    order: 3
+  tokenURL:
+    type: String
+    title: Token Endpoint URL
+    hint: Application Token Endpoint URL
+    order: 4
+  userInfoURL:
+    type: String
+    title: User Info Endpoint URL
+    hint: User Info Endpoint URL
+    order: 5
+  userIdClaim:
+    type: String
+    title: ID Claim
+    hint: Field containing the user ID
+    default: id
+    maxWidth: 500
+    order: 6
+  displayNameClaim:
+    type: String
+    title: Display Name Claim
+    hint: Field containing user display name
+    default: displayName
+    maxWidth: 500
+    order: 7
+  emailClaim:
+    type: String
+    title: Email Claim
+    hint: Field containing the user email address
+    default: email
+    maxWidth: 500
+    order: 8
+  logoutURL:
+    type: String
+    title: Logout URL
+    hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
+    order: 9

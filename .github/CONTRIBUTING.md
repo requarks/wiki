@@ -13,7 +13,7 @@ We welcome any type of contribution, not only code. You can help with
 
 ## Your First Contribution
 
-Working on your first Pull Request? You can learn how from this *free* series, [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
+Working on your first Pull Request? You can learn how from this *free* course, [How to Contribute to an Open Source Project on GitHub](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github).
 
 ## Submitting code
 
@@ -39,8 +39,8 @@ Anyone can file an expense. If the expense makes sense for the development of th
 
 ## Questions
 
-If you have any questions, create an [issue](issue) (protip: do a quick search first to see if someone else didn't ask the same question before!).
-You can also reach us at hello@wikijs.opencollective.com.
+If you have any questions, create an [issue](https://github.com/Requarks/wiki/issues/new/choose) (protip: do a quick search first to see if someone else didn't ask the same question before!).
+You can also reach us at <hello@wikijs.opencollective.com>.
 
 ## Credits
 

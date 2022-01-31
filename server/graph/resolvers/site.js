@@ -29,7 +29,9 @@ module.exports = {
         authJwtExpiration: WIKI.config.auth.tokenExpiration,
         authJwtRenewablePeriod: WIKI.config.auth.tokenRenewal,
         uploadMaxFileSize: WIKI.config.uploads.maxFileSize,
-        uploadMaxFiles: WIKI.config.uploads.maxFiles
+        uploadMaxFiles: WIKI.config.uploads.maxFiles,
+        uploadScanSVG: WIKI.config.uploads.scanSVG,
+        uploadForceDownload: WIKI.config.uploads.forceDownload
       }
     }
   },
@@ -97,7 +99,9 @@ module.exports = {
 
         WIKI.config.uploads = {
           maxFileSize: _.get(args, 'uploadMaxFileSize', WIKI.config.uploads.maxFileSize),
-          maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles)
+          maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles),
+          scanSVG: _.get(args, 'uploadScanSVG', WIKI.config.uploads.scanSVG),
+          forceDownload: _.get(args, 'uploadForceDownload', WIKI.config.uploads.forceDownload)
         }
 
         await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'auth', 'features', 'security', 'uploads'])

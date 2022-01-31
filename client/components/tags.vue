@@ -250,6 +250,22 @@ export default {
       [{name: this.$t('tags:localeAny'), code: 'any'}],
       (siteLangs.length > 0 ? siteLangs : [])
     )
+    if (this.$route.query.lang) {
+      this.locale = this.$route.query.lang
+    }
+    if (this.$route.query.sort) {
+      this.orderBy = this.$route.query.sort.toLowerCase()
+      switch (this.orderBy) {
+        case 'updatedat':
+          this.orderBy = 'updatedAt'
+          break
+      }
+      this.pagination.sortBy = [this.orderBy]
+    }
+    if (this.$route.query.dir) {
+      this.orderByDirection = this.$route.query.dir === 'asc' ? 0 : 1
+      this.pagination.sortDesc = [this.orderByDirection === 1]
+    }
   },
   methods: {
     toggleTag (tag) {

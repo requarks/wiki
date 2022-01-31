@@ -64,6 +64,7 @@
                     :hint='$t(`editor:props.pathHint`)'
                     persistent-hint
                     @click:append='showPathSelector'
+                    :rules='[rules.required, rules.path]'
                     )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
@@ -254,6 +255,7 @@ import 'codemirror/mode/htmlmixed/htmlmixed.js'
 import 'codemirror/mode/css/css.js'
 
 /* global siteLangs, siteConfig */
+const filenamePattern = /^(?![\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s])(?!.*[\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]$)[^\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
 
 export default {
   props: {
@@ -272,7 +274,13 @@ export default {
       newTagSuggestions: [],
       newTagSearch: '',
       currentTab: 0,
-      cm: null
+      cm: null,
+      rules: {
+          required: value => !!value || 'This field is required.',
+          path: value => {
+            return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
+          }
+      }
     }
   },
   computed: {
