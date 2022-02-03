@@ -108,6 +108,7 @@ jobs:
         MATRIXENV: ${{ matrix.dbtype }}
         CYPRESS_KEY: ${{ secrets.CYPRESS_KEY }}
       run: |
+        chmod u+x dev/cypress/ci-setup.sh
         dev/cypress/ci-setup.sh
         docker run --name cypress --ipc=host --shm-size 1G -v $GITHUB_WORKSPACE:/e2e -w /e2e cypress/included:4.9.0 --record --key "$(CYPRESS_KEY)" --headless --group "$MATRIXENV" --ci-build-id "$REL_VERSION_STRICT" --config baseUrl=http://172.17.0.1:3000
           
