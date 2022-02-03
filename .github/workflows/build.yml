@@ -1,0 +1,143 @@
+name: Build + Publish
+
+on:
+  push:
+    branches:
+      - dev
+    tags:
+      - 'v*'
+      
+env:
+  BASE_DEV_VERSION: 2.5.0
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set Build Variables
+      run: |
+        if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+          echo "Using TAG mode: $GITHUB_REF_NAME"
+          echo "REL_VERSION=$GITHUB_REF_NAME" >> $GITHUB_ENV
+          echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+        else
+          echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+          echo "REL_VERSION=v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+          echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        fi
+    
+    - name: Disable DEV Flag + Set Version
+      run: |
+        sudo apt-get install jq -y
+        mv package.json pkg-temp.json
+        jq -r '. + {dev:false, version:"$REL_VERSION_STRICT"}' pkg-temp.json > package.json
+        rm pkg-temp.json
+        
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1 
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v2.9.0
+      with:
+        context: .
+        file: dev/build/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          requarks/wiki:canary
+          requarks/wiki:canary-${{ env.REL_VERSION_STRICT }}
+          ghcr.io/requarks/wiki:canary
+          ghcr.io/requarks/wiki:canary-${{ env.REL_VERSION_STRICT }}
+          
+    - name: Extract compiled files
+      run: |
+        mkdir -p _dist
+        docker create --name wiki ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT
+        docker cp wiki:/wiki _dist
+        docker rm wiki
+        rm _dist/wiki/config.yml
+        cp ./config.sample.yml _dist/wiki/config.sample.yml
+        find _dist/wiki/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C _dist/wiki/ -T -
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: drop
+        path: wiki-js.tar.gz
+        
+  cypress:
+    name: Run Cypress Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    
+    strategy:
+      matrix:
+        dbtype: [postgres, mysql, mariadb, mssql, sqlite]
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set Test Variables
+        run: |
+          if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+            echo "Using TAG mode: $GITHUB_REF_NAME"
+            echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+          else
+            echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+            echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+          fi
+      
+      - name: Run Tests
+        env:
+          MATRIXENV: ${{ matrix.dbtype }}
+          CYPRESS_KEY: ${{ secrets.CYPRESS_KEY }}
+        run: |
+          dev/cypress/ci-setup.sh
+          docker run --name cypress --ipc=host --shm-size 1G -v $GITHUB_WORKSPACE:/e2e -w /e2e cypress/included:4.9.0 --record --key "$(CYPRESS_KEY)" --headless --group "$MATRIXENV" --ci-build-id "$REL_VERSION_STRICT" --config baseUrl=http://172.17.0.1:3000
+          
+  windows:
+    name: Windows Build
+    runs-on: windows-latest
+    needs: [build]
+    
+    steps:
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.5.1
+        with:
+          node-version: 12.x
+          
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.1.0
+        with:
+          name: drop
+          path: drop
+          
+      - name: Extract Build
+        run: |
+          mkdir -p win
+          tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=node_modules
+          
+      - name: Install Dependencies
+        run: yarn --production --frozen-lockfile --non-interactive
+    
