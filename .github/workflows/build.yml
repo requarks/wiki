@@ -122,6 +122,16 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Set Version Variables
+      run: |
+        if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+          echo "Using TAG mode: $GITHUB_REF_NAME"
+          echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+        else
+          echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+          echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        fi
+    
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
       
@@ -189,4 +199,133 @@ jobs:
 
     - name: Install Dependencies
       run: yarn --production --frozen-lockfile --non-interactive
+      working-directory: win
+      
+    - name: Create Bundle
+      run: tar -czf wiki-js-windows.tar.gz -C $env:GITHUB_WORKSPACE\win .
+      
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: drop-win
+        path: wiki-js-windows.tar.gz
+    
+  beta:
+    name: Publish Beta Images
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, arm, windows]
+    permissions:
+      packages: write
+      
+    steps:
+    - name: Set Version Variables
+      run: |
+        if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+          echo "Using TAG mode: $GITHUB_REF_NAME"
+          echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+        else
+          echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+          echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        fi
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1 
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Tag Images
+      run: |
+        docker pull ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT
+        docker pull ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
+
+        echo "Creating the manifests..."
+
+        docker manifest create requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:beta ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:beta ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
+
+        echo "Pushing the manifests..."
+
+        docker manifest push -p requarks/wiki:beta-$REL_VERSION_STRICT
+        docker manifest push -p requarks/wiki:beta
+        docker manifest push -p ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT
+        docker manifest push -p ghcr.io/requarks/wiki:beta
+        
+  release:
+    name: Publish Release Images
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: prod
+    needs: [beta]
+    permissions:
+      packages: write
+      
+    steps:
+    - name: Set Version Variables
+      run: |
+        if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+          echo "Using TAG mode: $GITHUB_REF_NAME"
+          echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+        else
+          echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+          echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        fi
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1 
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Tag Images
+      run: |
+        docker pull ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT
+        
+        echo "Fetching semver tool..."
+        curl -LJO https://static.requarks.io/semver
+        chmod +x semver
+
+        MAJOR=`./semver get major $REL_VERSION_STRICT`
+        MINOR=`./semver get minor $REL_VERSION_STRICT`
+        MAJORMINOR="$MAJOR.$MINOR"
+
+        echo "Using major $MAJOR and minor $MINOR..."
+        echo "Tagging images..."
+
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$REL_VERSION_STRICT
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJOR
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJORMINOR
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:latest
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$REL_VERSION_STRICT
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$MAJOR
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$MAJORMINOR
+        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:latest
+
+        echo "Pushing images..."
+
+        docker push requarks/wiki:$REL_VERSION_STRICT
+        docker push requarks/wiki:$MAJOR
+        docker push requarks/wiki:$MAJORMINOR
+        docker push requarks/wiki:latest
+        docker push ghcr.io/requarks/wiki:$REL_VERSION_STRICT
+        docker push ghcr.io/requarks/wiki:$MAJOR
+        docker push ghcr.io/requarks/wiki:$MAJORMINOR
+        docker push ghcr.io/requarks/wiki:latest
     
