@@ -3,7 +3,7 @@ name: Build + Publish
 on:
   push:
     branches:
-      - dev
+      - main
     tags:
       - 'v*'
       
