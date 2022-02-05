@@ -85,6 +85,10 @@ tolerations: []
 
 affinity: {}
 
+volumeMounts: []
+
+volumes: []
+
 # This will allow us to install locales even without internet access using a initContainer & wikjs "sideloading"
 sideload:
   enabled: false

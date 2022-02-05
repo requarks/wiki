@@ -104,6 +104,8 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `affinity`                       | Affinity settings for wiki.js pod assignment    | `{}`                                                       |
 | `schedulerName`                  | Name of an alternate scheduler for wiki.js pod  | `nil`                                                      |
 | `tolerations`                    | Toleration labels for wiki.jsk pod assignment    | `[]`                                                       |
+| `volumeMounts`                   | Volume mounts for Wiki.js container              | `[]`                                                       |
+| `volumes`                        | Volumes for Wiki.js Pod                          | `[]`                                                       |
 | `ingress.enabled`                    | Enable ingress controller resource          | `false`                                                    |
 | `ingress.annotations`                | Ingress annotations                         | `{}`                                                       |
 | `ingress.hosts`                      | List of ingress rules                        | `[{"host": "wiki.local", "paths": ["/"]}]`                |
