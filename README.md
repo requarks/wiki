@@ -150,6 +150,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Fabio Ferrari ([@devxops](https://github.com/devxops))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
+- Ian Hyzy ([@ianhyzy](https://github.com/ianhyzy))
 - Jaimyn Mayer ([@jabelone](https://github.com/jabelone))
 - Jay Lee ([@polyglotm](https://github.com/polyglotm))
 - Kelly Wardrop ([@dropcoded](https://github.com/dropcoded))
