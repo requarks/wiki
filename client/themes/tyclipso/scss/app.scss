@@ -71,7 +71,7 @@
     font-weight: 500;
   }
 
-  ul:not(.tabset-tabs) {
+  ul:not(.tabset-tabs):not(.contains-task-list) {
     list-style: disc;
 
     ul {
