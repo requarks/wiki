@@ -134,7 +134,9 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
     </tr>
   </tbody>
 </table>
-</div>
+
+<table><tbody><tr><td>
+<img width="441" height="1" />
 
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
 - Arnaud Marchand ([@snuids](https://github.com/snuids))
@@ -149,6 +151,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Ernie ([@iamernie](https://github.com/iamernie))
 - Fabio Ferrari ([@devxops](https://github.com/devxops))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
+- GoodCorporateCitizen ([@GoodCorporateCitizen](https://github.com/GoodCorporateCitizen))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
 - Ian Hyzy ([@ianhyzy](https://github.com/ianhyzy))
 - Jaimyn Mayer ([@jabelone](https://github.com/jabelone))
@@ -158,6 +161,10 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - MaFarine ([@MaFarine](https://github.com/MaFarine))
 - Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
+        
+</td><td>
+<img width="441" height="1" />
+        
 - Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
@@ -180,6 +187,9 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - rburckner ([@rburckner](https://github.com/rburckner))
 - scorpion ([@scorpion](https://github.com/scorpion))
 - valantien ([@valantien](https://github.com/valantien))
+        
+</td></tr></tbody></table>
+</div>
 
 <h2 align="center">OpenCollective Sponsors</h2>
 
@@ -315,7 +325,10 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
 
 Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/requarks)]
 
-<!--5 start-->
+<div align="center">
+<table><tbody><tr><td>
+<img width="441" height="1" />
+
 - Al Romano
 - Alex Balabanov
 - Alex Zen
@@ -332,6 +345,10 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - hong
 - Hope
 - Ian
+  
+</td><td>
+<img width="441" height="1" />
+
 - Iskander Callos
 - Josh Stewart
 - Justin Dunsworth
@@ -348,7 +365,9 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Stepan Sokolovskyi
 - Zach Maynard
 - 张白驹
-<!--5 end-->
+
+</td></tr></tbody></table>
+</div>
 
 <h2 align="center">OpenCollective Backers</h2>
 
