@@ -91,9 +91,7 @@ module.exports = async () => {
   // GraphQL Server
   // ----------------------------------------
 
-  let bodyParserLimitSize = process.env.BODY_PARSER_LIMIT || '1mb'
-
-  app.use(bodyParser.json({ limit: bodyParserLimitSize }))
+  app.use(bodyParser.json({ limit: WIKI.config.bodyParserLimit || '1mb' }))
   await WIKI.servers.startGraphQL()
 
   // ----------------------------------------
