@@ -9,7 +9,7 @@
           v-btn.mt-5.mx-3.animated.fadeInUp.wait-p2s(color='primary', :href='`/e/` + locale + `/home`', x-large)
             v-icon(left) mdi-plus
             span {{ $t('welcome.createhome') }}
-          v-btn.mt-5.mx-3.animated.fadeInUp.wait-p3s(color='primary', :href='`/a/`', x-large)
+          v-btn.mt-5.mx-3.animated.fadeInUp.wait-p3s(color='primary', :href='`/a`', x-large)
             v-icon(left) mdi-view-dashboard
             span {{ $t('welcome.goadmin') }}
 
