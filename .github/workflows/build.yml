@@ -328,4 +328,21 @@ jobs:
         docker push ghcr.io/requarks/wiki:$MAJOR
         docker push ghcr.io/requarks/wiki:$MAJORMINOR
         docker push ghcr.io/requarks/wiki:latest
+        
+    - name: Generate Changelog
+      id: changelog
+      uses: Requarks/changelog-action@v1
+      with:
+        token: ${{ github.token }}
+        tag: ${{ github.ref_name }}
+        writeToFile: false
+
+    - name: Update GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        draft: false
+        name: ${{ github.ref_name }}
+        body: ${{ steps.changelog.outputs.changes }}
+        token: ${{ github.token }}
     
