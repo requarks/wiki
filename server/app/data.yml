@@ -26,6 +26,7 @@ defaults:
     logLevel: info
     offline: false
     ha: false
+    bodyParserLimit: 5mb
     # DB defaults
     api:
       isEnabled: false

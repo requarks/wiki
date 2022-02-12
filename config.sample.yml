@@ -130,3 +130,11 @@ ha: false
 # ---------------------------------------------------------------------
 # Writeable data path used for cache and temporary user uploads.
 dataPath: ./data
+
+# ---------------------------------------------------------------------
+# Body Parser Limit
+# ---------------------------------------------------------------------
+# Maximum size of API requests body that can be parsed. Does not affect
+# file uploads.
+
+bodyParserLimit: 5mb
