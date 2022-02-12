@@ -150,6 +150,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Elijah Zobenko ([@he110](https://github.com/he110))
 - Ernie ([@iamernie](https://github.com/iamernie))
 - Fabio Ferrari ([@devxops](https://github.com/devxops))
+- Finsa S.p.A. ([@finsaspa](https://github.com/finsaspa))
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - GoodCorporateCitizen ([@GoodCorporateCitizen](https://github.com/GoodCorporateCitizen))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
@@ -160,11 +161,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Loki ([@binaryloki](https://github.com/binaryloki))
 - MaFarine ([@MaFarine](https://github.com/MaFarine))
 - Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
-- Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
         
 </td><td>
 <img width="441" height="1" />
         
+- Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
