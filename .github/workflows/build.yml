@@ -37,8 +37,9 @@ jobs:
       run: |
         sudo apt-get install jq -y
         mv package.json pkg-temp.json
-        jq -r '. + {dev:false, version:"$REL_VERSION_STRICT"}' pkg-temp.json > package.json
+        jq --arg vs "$REL_VERSION_STRICT" -r '. + {dev:false, version:$vs}' pkg-temp.json > package.json
         rm pkg-temp.json
+        cat package.json
     
     - name: Login to DockerHub
       uses: docker/login-action@v1 
