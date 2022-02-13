@@ -249,7 +249,7 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Tag Images
+    - name: Create and Push Manifests
       run: |
         echo "Creating the manifests..."
 
@@ -269,6 +269,7 @@ jobs:
     needs: [beta]
     permissions:
       packages: write
+      contents: write
       
     steps:
     - name: Set Version Variables
@@ -293,12 +294,9 @@ jobs:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Tag Images
-      run: |
-        docker pull requarks/wiki:beta-$REL_VERSION_STRICT
-        docker pull ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT
         
+    - name: Create and Push Manifests
+      run: |
         echo "Fetching semver tool..."
         curl -LJO https://static.requarks.io/semver
         chmod +x semver
@@ -308,27 +306,27 @@ jobs:
         MAJORMINOR="$MAJOR.$MINOR"
 
         echo "Using major $MAJOR and minor $MINOR..."
-        echo "Tagging images..."
+        echo "Creating the manifests..."
 
-        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$REL_VERSION_STRICT
-        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJOR
-        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJORMINOR
-        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:latest
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$REL_VERSION_STRICT
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$MAJOR
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$MAJORMINOR
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:latest
+        docker manifest create requarks/wiki:$REL_VERSION_STRICT requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:$MAJOR requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:$MAJORMINOR requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:$latest requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:$MAJOR ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:$MAJORMINOR ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:$latest ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
 
-        echo "Pushing images..."
+        echo "Pushing the manifests..."
 
-        docker push requarks/wiki:$REL_VERSION_STRICT
-        docker push requarks/wiki:$MAJOR
-        docker push requarks/wiki:$MAJORMINOR
-        docker push requarks/wiki:latest
-        docker push ghcr.io/requarks/wiki:$REL_VERSION_STRICT
-        docker push ghcr.io/requarks/wiki:$MAJOR
-        docker push ghcr.io/requarks/wiki:$MAJORMINOR
-        docker push ghcr.io/requarks/wiki:latest
+        docker manifest push -p requarks/wiki:$REL_VERSION_STRICT
+        docker manifest push -p requarks/wiki:$MAJOR
+        docker manifest push -p requarks/wiki:$MAJORMINOR
+        docker manifest push -p requarks/wiki:$latest
+        docker manifest push -p ghcr.io/requarks/wiki:$REL_VERSION_STRICT
+        docker manifest push -p ghcr.io/requarks/wiki:$MAJOR
+        docker manifest push -p ghcr.io/requarks/wiki:$MAJORMINOR
+        docker manifest push -p ghcr.io/requarks/wiki:$latest
         
     - name: Download Linux Build
       uses: actions/download-artifact@v2.1.0
