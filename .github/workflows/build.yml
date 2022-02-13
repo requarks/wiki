@@ -118,6 +118,14 @@ jobs:
     needs: [cypress]
     permissions:
       packages: write
+      
+    strategy:
+      matrix:
+        include:
+          - platform: linux/arm64
+            docker: arm64
+          - platform: linux/arm/v7
+            docker: armv7
     
     steps:
     - uses: actions/checkout@v2
@@ -167,13 +175,11 @@ jobs:
       with:
         context: .
         file: dev/build-arm/Dockerfile
-        platforms: linux/arm64,linux/arm/v7
+        platforms: ${{ matrix.platform }}
         push: true
         tags: |
-          requarks/wiki:canary-arm
-          requarks/wiki:canary-arm-${{ env.REL_VERSION_STRICT }}
-          ghcr.io/requarks/wiki:canary-arm
-          ghcr.io/requarks/wiki:canary-arm-${{ env.REL_VERSION_STRICT }}
+          requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
+          ghcr.io/requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
           
   windows:
     name: Windows Build
@@ -244,22 +250,15 @@ jobs:
     
     - name: Tag Images
       run: |
-        docker pull ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT
-        docker pull ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
-
         echo "Creating the manifests..."
 
-        docker manifest create requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
-        docker manifest create requarks/wiki:beta ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
-        docker manifest create ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
-        docker manifest create ghcr.io/requarks/wiki:beta ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
 
         echo "Pushing the manifests..."
 
         docker manifest push -p requarks/wiki:beta-$REL_VERSION_STRICT
-        docker manifest push -p requarks/wiki:beta
         docker manifest push -p ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT
-        docker manifest push -p ghcr.io/requarks/wiki:beta
         
   release:
     name: Publish Release Images
@@ -309,10 +308,10 @@ jobs:
         echo "Using major $MAJOR and minor $MINOR..."
         echo "Tagging images..."
 
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$REL_VERSION_STRICT
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJOR
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJORMINOR
-        docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:latest
+        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$REL_VERSION_STRICT
+        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJOR
+        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:$MAJORMINOR
+        docker tag requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:latest
         docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$REL_VERSION_STRICT
         docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$MAJOR
         docker tag ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:$MAJORMINOR
