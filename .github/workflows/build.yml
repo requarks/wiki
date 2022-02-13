@@ -296,6 +296,7 @@ jobs:
     
     - name: Tag Images
       run: |
+        docker pull requarks/wiki:beta-$REL_VERSION_STRICT
         docker pull ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT
         
         echo "Fetching semver tool..."
@@ -329,6 +330,18 @@ jobs:
         docker push ghcr.io/requarks/wiki:$MAJORMINOR
         docker push ghcr.io/requarks/wiki:latest
         
+    - name: Download Linux Build
+      uses: actions/download-artifact@v2.1.0
+      with:
+        name: drop
+        path: drop
+        
+    - name: Download Windows Build
+      uses: actions/download-artifact@v2.1.0
+      with:
+        name: drop-win
+        path: drop-win
+        
     - name: Generate Changelog
       id: changelog
       uses: Requarks/changelog-action@v1
@@ -345,4 +358,5 @@ jobs:
         name: ${{ github.ref_name }}
         body: ${{ steps.changelog.outputs.changes }}
         token: ${{ github.token }}
+        artifacts: 'drop/wiki-js.tar.gz,drop-win/wiki-js-windows.tar.gz'
     
