@@ -73,7 +73,7 @@ module.exports = {
               mode: 0o600
             })
           } catch (err) {
-            console.error(err)
+            WIKI.logger.error(err)
             throw err
           }
         }
