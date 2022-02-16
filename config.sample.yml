@@ -109,6 +109,14 @@ bindIP: 0.0.0.0
 logLevel: info
 
 # ---------------------------------------------------------------------
+# JSON logs
+# ---------------------------------------------------------------------
+# Set to true if you want logs in JSON format instead of the default
+# colored logs
+
+jsonLogs: false
+
+# ---------------------------------------------------------------------
 # Offline Mode
 # ---------------------------------------------------------------------
 # If your server cannot access the internet. Set to true and manually
