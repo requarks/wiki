@@ -40,6 +40,13 @@
     },
     {
       "type": "shell",
+      "inline": [
+        "chmod +x /var/lib/cloud/scripts/per-instance/001-onboot.sh",
+        "chmod +x /etc/update-motd.d/099-one-click"
+      ]
+    },
+    {
+      "type": "shell",
       "environment_vars": [
         "DEBIAN_FRONTEND=noninteractive",
         "LC_ALL=C",
