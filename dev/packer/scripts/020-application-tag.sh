@@ -11,8 +11,7 @@ distro_release="$(lsb_release -s  -r)"
 distro_codename="$(lsb_release -s -c)"
 distro_arch="$(uname -m)"
 
-mkdip -p /var/lib/digitalocean
-touch /var/lib/digitalocean/application.info
+mkdir -p /var/lib/digitalocean
 
 cat >> /var/lib/digitalocean/application.info <<EOM
 application_name="${application_name}"
