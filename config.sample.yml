@@ -109,6 +109,13 @@ bindIP: 0.0.0.0
 logLevel: info
 
 # ---------------------------------------------------------------------
+# Log Format
+# ---------------------------------------------------------------------
+# Output format for logging, possible values: default, json
+
+logFormat: default
+
+# ---------------------------------------------------------------------
 # Offline Mode
 # ---------------------------------------------------------------------
 # If your server cannot access the internet. Set to true and manually

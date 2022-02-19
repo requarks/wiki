@@ -19,7 +19,7 @@ module.exports = {
     } catch (err) {
       WIKI.logger.error('Database Initialization Error: ' + err.message)
       if (WIKI.IS_DEBUG) {
-        console.error(err)
+        WIKI.logger.error(err)
       }
       process.exit(1)
     }
