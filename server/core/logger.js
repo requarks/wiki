@@ -6,21 +6,19 @@ const winston = require('winston')
 module.exports = {
   loggers: {},
   init(uid) {
-    let loggerFormats = [
+    const loggerFormats = [
       winston.format.label({ label: uid }),
       winston.format.timestamp()
     ]
 
-    if (WIKI.config.jsonLogs === true) {
+    if (WIKI.config.logFormat === 'json') {
       loggerFormats.push(winston.format.json())
     } else {
-      loggerFormats.push(...[
-        winston.format.colorize(),
-        winston.format.printf(info => `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`)
-      ])
+      loggerFormats.push(winston.format.colorize())
+      loggerFormats.push(winston.format.printf(info => `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`))
     }
 
-    let logger = winston.createLogger({
+    const logger = winston.createLogger({
       level: WIKI.config.logLevel,
       format: winston.format.combine(...loggerFormats)
     })
