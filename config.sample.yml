@@ -106,7 +106,7 @@ bindIP: 0.0.0.0
 # ---------------------------------------------------------------------
 # Possible values: error, warn, info (default), verbose, debug, silly
 
-logLevel: $(LOG_LEVEL:info)
+logLevel: info
 
 # ---------------------------------------------------------------------
 # Log Format
