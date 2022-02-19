@@ -8,14 +8,18 @@ module.exports = {
   /**
    * Parse configuration value for environment vars
    *
+   * Replaces `$(ENV_VAR_NAME)` with value of `ENV_VAR_NAME` environment variable.
+   *
+   * Also supports defaults by if provided as `$(ENV_VAR_NAME:default)`
+   *
    * @param {any} cfg Configuration value
    * @returns Parse configuration value
    */
   parseConfigValue (cfg) {
     return _.replace(
       cfg,
-      /\$\(([A-Z0-9_]+)\)/g,
-      (fm, m) => { return process.env[m] }
+      /\$\(([A-Z0-9_]+)(?::(.+))?\)/g,
+      (fm, m, d) => { return process.env[m] || d }
     )
   },
 
