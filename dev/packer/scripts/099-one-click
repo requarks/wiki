@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Configured as part of the DigitalOcean 1-Click Image build process
+
+myip=$(hostname -I | awk '{print$1}')
+cat <<EOF
+********************************************************************************
+Welcome to Wiki.js's 1-Click DigitalOcean Droplet.
+To keep this Droplet secure, the UFW firewall is enabled.
+All ports are BLOCKED except 22 (SSH), 80 (Docker) and 443 (Docker).
+* The Wiki.js 1-Click DigitalOcean Quickstart guide is available at:
+  https://docs.requarks.io/install/digitalocean
+* You can SSH to this Droplet in a terminal as root: ssh root@$myip
+* Docker is installed and configured per Docker's recommendations:
+  https://docs.docker.com/install/linux/docker-ce/ubuntu/
+* Docker Compose is installed and configured per Docker's recommendations:
+  https://docs.docker.com/compose/install/#install-compose
+For more information, visit https://docs.requarks.io/install/digitalocean
+********************************************************************************
+To delete this message of the day: rm -rf $(readlink -f ${0})
+EOF
