@@ -18,8 +18,8 @@ module.exports = {
   parseConfigValue (cfg) {
     return _.replace(
       cfg,
-      /\$\(([A-Z0-9_]+)(:(.+))?\)/g,
-      (fm, m, _, d) => { return process.env[m] || d }
+      /\$\(([A-Z0-9_]+)(?::(.+))?\)/g,
+      (fm, m, d) => { return process.env[m] || d }
     )
   },
 
