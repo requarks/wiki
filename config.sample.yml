@@ -109,12 +109,11 @@ bindIP: 0.0.0.0
 logLevel: info
 
 # ---------------------------------------------------------------------
-# JSON logs
+# Log Format
 # ---------------------------------------------------------------------
-# Set to true if you want logs in JSON format instead of the default
-# colored logs
+# Output format for logging, possible values: default, json
 
-jsonLogs: false
+logFormat: default
 
 # ---------------------------------------------------------------------
 # Offline Mode
