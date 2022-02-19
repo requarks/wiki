@@ -24,6 +24,7 @@ defaults:
       min: 1
     bindIP: 0.0.0.0
     logLevel: info
+    logFormat: default
     offline: false
     ha: false
     bodyParserLimit: 5mb
