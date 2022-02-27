@@ -79,13 +79,13 @@
         )
       v-card-chin
         v-spacer
-        v-btn(text, @click='isShown = false') Cancel
         v-btn.px-3(depressed, color='primary', @click='newUser(false)')
           v-icon(left) mdi-chevron-right
-          span Create
+          span {{ $t('common:create') }}
         v-btn.px-3(depressed, color='primary', @click='newUser(true)')
           v-icon(left) mdi-chevron-double-right
-          span Create and Close
+          span {{ $t('common:create_close') }}
+        v-btn(text, @click='isShown = false') {{ $t('common:cancel') }}
 </template>
 
 <script>

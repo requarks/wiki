@@ -5,8 +5,8 @@
         .admin-header
           img.animated.fadeInUp(src='/_assets/svg/icon-file.svg', alt='Page', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Pages
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage pages
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{ $t('admin:pages.title') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin:pages.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p1s(icon, color='grey', outlined, @click='refresh')
             v-icon.grey--text mdi-refresh

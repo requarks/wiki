@@ -11,14 +11,14 @@
           v-layout(row wrap)
             v-flex(xl6 lg8 xs12)
               v-alert.mb-4(outlined, color='error', icon='mdi-alert')
-                span New extensions cannot be installed at the moment. This feature is coming in a future release.
+                span {{ $t('admin:extensions.note') }}
               v-expansion-panels.admin-extensions-exp(hover, popout)
                 v-expansion-panel(v-for='ext of extensions', :key='`ext-` + ext.key')
                   v-expansion-panel-header(disable-icon-rotate)
                     span {{ext.title}}
                     template(v-slot:actions)
-                      v-chip(label, color='success', small, v-if='ext.isInstalled') Installed
-                      v-chip(label, color='warning', small, v-else) Not Installed
+                      v-chip(label, color='success', small, v-if='ext.isInstalled') {{ $t('admin:installed') }}
+                      v-chip(label, color='warning', small, v-else) {{ $t('admin:not_installed') }}
                   v-expansion-panel-content.pa-0
                     v-card(flat, :class='$vuetify.theme.dark ? `grey darken-3` : `grey lighten-5`', tile)
                       v-card-text

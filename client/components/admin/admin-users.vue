@@ -5,14 +5,14 @@
         .admin-header
           img.animated.fadeInUp(src='/_assets/svg/icon-customer.svg', alt='Users', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Users
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage users
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{ $t('admin:users.title') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin:users.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s.mr-3(outlined, color='grey', icon, @click='refresh')
             v-icon mdi-refresh
           v-btn.animated.fadeInDown(color='primary', large, depressed, @click='createUser')
             v-icon(left) mdi-plus
-            span New User
+            span {{ $t('admin:users.new') }}
         v-card.mt-3.animated.fadeInUp
           .pa-2.d-flex.align-center(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
             v-text-field(
@@ -20,7 +20,7 @@
               flat
               v-model='search'
               prepend-inner-icon='mdi-account-search-outline'
-              label='Search Users...'
+              label='Search User'
               hide-details
               style='max-width: 400px;'
               dense

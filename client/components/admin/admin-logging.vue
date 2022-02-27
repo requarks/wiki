@@ -5,27 +5,30 @@
         .admin-header
           img(src='/_assets/svg/icon-registry-editor.svg', alt='Logging', style='width: 80px;')
           .admin-header-title
-            .headline.primary--text Logging
-            .subtitle-1.grey--text Configure the system logger(s) #[v-chip(label, color='primary', small).white--text coming soon]
+            .headline.primary--text {{ $t('admin:logging.title') }}
+            .subtitle-1.grey--text {{ $t('admin:logging.subtitle') }} #[v-chip(label, color='primary', small).white--text {{ $t('admin:comming_soon') }}]
           v-spacer
-          v-btn(outline, color='grey', @click='refresh', large)
-            v-icon refresh
+          v-btn.animated.fadeInDown.wait-p2s.mx-3(color='grey', outlined, @click='refresh', icon)
+            v-icon mdi-refresh
           v-btn(color='black', disabled, depressed, @click='toggleConsole', large)
-            v-icon check
+            v-icon mdi-check
             span Live Trail
-          v-btn(color='success', @click='save', depressed, large)
-            v-icon(left) check
+          v-btn(color='success',disabled, depressed, @click='save', large)
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
         v-card.mt-3
           v-tabs(color='grey darken-2', fixed-tabs, slider-color='white', show-arrows, dark)
-            v-tab(key='settings'): v-icon settings
+            v-tab(key='settings')
+              v-btn()
+                v-icon(left) mdi-cog-outline
+                span {{ $t('admin:settings') }}
             v-tab(v-for='logger in activeLoggers', :key='logger.key') {{ logger.title }}
 
             v-tab-item(key='settings', :transition='false', :reverse-transition='false')
               v-card.pa-3(flat, tile)
-                .body-2.grey--text.text--darken-1 Select which logging service to enable:
-                .caption.grey--text.pb-2 Some loggers require additional configuration in their dedicated tab (when selected).
+                .body-2.grey--text.text--darken-1 {{ $t('admin:logging.which_logging_services.title') }}
+                .caption.grey--text.pb-2 {{ $t('admin:logging.which_logging_services.subtitle') }}
                 v-form
                   v-checkbox.my-0(
                     v-for='(logger, n) in loggers'
