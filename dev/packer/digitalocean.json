@@ -1,0 +1,85 @@
+{
+  "variables": {
+    "do_api_token": "{{env `DIGITALOCEAN_API_TOKEN`}}",
+    "image_name": "wikijs-snapshot-{{timestamp}}",
+    "apt_packages": "apt-transport-https ca-certificates curl jq linux-image-extra-virtual software-properties-common gnupg-agent openssl ",
+    "application_name": "Wiki.js",
+    "application_version": "{{env `WIKI_APP_VERSION`}}",
+    "docker_compose_version": "1.29.2"
+  },
+  "sensitive-variables": [
+    "do_api_token"
+  ],
+  "builders": [
+    {
+      "type": "digitalocean",
+      "api_token": "{{user `do_api_token`}}",
+      "image": "ubuntu-20-04-x64",
+      "region": "tor1",
+      "size": "s-1vcpu-1gb",
+      "ssh_username": "root",
+      "snapshot_name": "{{user `image_name`}}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "cloud-init status --wait"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "scripts/001-onboot.sh",
+      "destination": "/var/lib/cloud/scripts/per-instance/001-onboot.sh"
+    },
+    {
+      "type": "file",
+      "source": "scripts/099-one-click",
+      "destination": "/etc/update-motd.d/099-one-click"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "chmod +x /var/lib/cloud/scripts/per-instance/001-onboot.sh",
+        "chmod +x /etc/update-motd.d/099-one-click"
+      ]
+    },
+    {
+      "type": "shell",
+      "environment_vars": [
+        "DEBIAN_FRONTEND=noninteractive",
+        "LC_ALL=C",
+        "LANG=en_US.UTF-8",
+        "LC_CTYPE=en_US.UTF-8"
+      ],
+      "inline": [
+        "apt -qqy update",
+        "apt -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' full-upgrade",
+        "apt -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' install {{user `apt_packages`}}",
+        "apt-get -qqy clean"
+      ]
+    },
+    {
+      "type": "shell",
+      "environment_vars": [
+        "application_name={{user `application_name`}}",
+        "application_version={{user `application_version`}}",
+        "docker_compose_version={{user `docker_compose_version`}}",
+        "DEBIAN_FRONTEND=noninteractive",
+        "LC_ALL=C",
+        "LANG=en_US.UTF-8",
+        "LC_CTYPE=en_US.UTF-8"
+      ],
+      "scripts": [
+        "scripts/010-docker.sh",
+        "scripts/011-docker-compose.sh",
+        "scripts/012-grub-opts.sh",
+        "scripts/013-docker-dns.sh",
+        "scripts/014-ufw-docker.sh",
+        "scripts/020-application-tag.sh",
+        "scripts/900-cleanup.sh"
+      ]
+    }
+  ]
+}

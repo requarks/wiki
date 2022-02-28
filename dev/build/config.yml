@@ -15,5 +15,6 @@ ssl:
   provider: letsencrypt
   domain: $(LETSENCRYPT_DOMAIN)
   subscriberEmail: $(LETSENCRYPT_EMAIL)
-logLevel: info
+logLevel: $(LOG_LEVEL:info)
+logFormat: $(LOG_FORMAT:default)
 ha: $(HA_ACTIVE)

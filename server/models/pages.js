@@ -371,8 +371,8 @@ module.exports = class Page extends Model {
 
     // -> Check for page access
     if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-      locale: opts.locale,
-      path: opts.path
+      locale: ogPage.localeCode,
+      path: ogPage.path
     })) {
       throw new WIKI.Error.PageUpdateForbidden()
     }
@@ -456,6 +456,14 @@ module.exports = class Page extends Model {
 
     // -> Perform move?
     if ((opts.locale && opts.locale !== page.localeCode) || (opts.path && opts.path !== page.path)) {
+      // -> Check target path access
+      if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+        locale: opts.locale,
+        path: opts.path
+      })) {
+        throw new WIKI.Error.PageMoveForbidden()
+      }
+
       await WIKI.models.pages.movePage({
         id: page.id,
         destinationLocale: opts.locale,

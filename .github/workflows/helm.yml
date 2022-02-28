@@ -3,7 +3,7 @@ name: Helm Chart CI
 on:
   # Triggers the workflow on push or pull request events but only for the dev branch
   push:
-    branches: [ dev ]
+    branches: [ main ]
     paths: [ dev/helm/** ]
 
   # Allows you to run this workflow manually from the Actions tab

@@ -1,0 +1,31 @@
+name: Build DigitalOcean Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'App Version'
+        required: true
+        type: string
+
+jobs:
+  build-do-image:
+    name: Build DigitalOcean Image
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Packer
+      run: |
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update && sudo apt-get install packer
+
+    - name: Build Droplet Image
+      env:
+        DIGITALOCEAN_API_TOKEN: ${{ secrets.DO_TOKEN }}
+        WIKI_APP_VERSION: ${{ github.event.inputs.version }}
+      working-directory: dev/packer
+      run: |
+        packer build digitalocean.json

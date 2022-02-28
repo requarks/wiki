@@ -63,6 +63,10 @@ spec:
                   key: {{ template "wiki.postgresql.secretKey" . }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
+    {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+    {{- end }}
           ports:
             - name: http
               containerPort: 3000
@@ -83,5 +87,9 @@ spec:
     {{- end }}
     {{- with .Values.tolerations }}
       tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.volumes }}
+      volumes:
         {{- toYaml . | nindent 8 }}
     {{- end }}
