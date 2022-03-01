@@ -19,7 +19,7 @@ props:
     title: Admin Bind DN
     type: String
     default: cn='root'
-    hint: The dstinguished name (dn) of the account used for binding.
+    hint: The distinguished name (dn) of the account used for binding.
     maxWidth: 600
     order: 2
   bindCredentials:
