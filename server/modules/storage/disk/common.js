@@ -92,6 +92,7 @@ module.exports = {
         isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
         isPrivate: false,
         content: pageData.content,
+        minTocLevel: pageData.minTocLevel,
         tocLevel: pageData.tocLevel,
         tocCollapseLevel: pageData.tocCollapseLevel,
         user: user,

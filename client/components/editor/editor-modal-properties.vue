@@ -68,43 +68,14 @@
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             .overline.pb-5 Theme Options
-            v-radio-group(
-              row
-              outlined
-              persistent-hint
+            v-range-slider(
               prepend-icon='mdi-serial-port'
-              v-model='tocLevel'
-              label='Max Heading Level'
-              hint='The table of contents will show headings up to the selected level. By default, only heading levels up to H2 are shown.'
-            )
-              v-spacer
-              v-radio(
-                label='Global'
-                v-bind:value='0'
-              )
-              v-radio(
-                label='H1'
-                v-bind:value='1'
-              )
-              v-radio(
-                label='H2'
-                v-bind:value='2'
-              )
-              v-radio(
-                label='H3'
-                v-bind:value='3'
-              )
-              v-radio(
-                label='H4'
-                v-bind:value='4'
-              )
-              v-radio(
-                label='H5'
-                v-bind:value='5'
-              )
-              v-radio(
-                label='H6'
-                v-bind:value='6'
+              label='Heading Levels in ToC'
+              hint='The table of contents will show headings from and up to the selected levels.'
+              v-model='tocRange'
+              :min='0'
+              :max='6'
+              :tick-labels='["Global","H1", "H2", "H3", "H4", "H5", "H6"]'
               )
             v-radio-group(
               row
@@ -368,7 +339,17 @@ export default {
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
-    tocLevel: sync('page/tocLevel'),
+    tocRange: {
+      get() {
+        var range = [this.$store.get('page/minTocLevel'), this.$store.get('page/tocLevel')]
+        return range
+        // return [get('page/minTocLevel'), get('page/tocLevel')]
+      },
+      set(value) {
+        this.$store.set('page/minTocLevel', value[0])
+        this.$store.set('page/tocLevel', value[1])
+      }
+    },
     tocCollapseLevel: sync('page/tocCollapseLevel'),
     scriptJs: sync('page/scriptJs'),
     scriptCss: sync('page/scriptCss'),

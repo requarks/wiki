@@ -144,9 +144,13 @@ export default {
       type: Number,
       default: 0
     },
-    tocLevel: {
+    minTocLevel: {
       type: Number,
       default: 0
+    },
+    tocLevel: {
+      type: Number,
+      default: 1
     },
     tocCollapseLevel: {
       type: Number,
@@ -198,6 +202,7 @@ export default {
         this.path !== this.$store.get('page/path'),
         this.savedState.title !== this.$store.get('page/title'),
         this.savedState.description !== this.$store.get('page/description'),
+        this.savedState.minTocLevel !== this.$store.get('page/minTocLevel'),
         this.savedState.tocLevel !== this.$store.get('page/tocLevel'),
         this.savedState.tocCollapseLevel !== this.$store.get('page/tocCollapseLevel'),
         this.savedState.tags !== this.$store.get('page/tags'),
@@ -233,6 +238,7 @@ export default {
     this.$store.set('page/title', this.title)
     this.$store.set('page/scriptCss', this.scriptCss)
     this.$store.set('page/scriptJs', this.scriptJs)
+    this.$store.set('page/minTocLevel', this.minTocLevel)
     this.$store.set('page/tocLevel', this.tocLevel)
     this.$store.set('page/tocCollapseLevel', this.tocCollapseLevel)
 
@@ -315,6 +321,7 @@ export default {
                 $publishStartDate: Date
                 $scriptCss: String
                 $scriptJs: String
+                $minTocLevel: Int!
                 $tocLevel: Int!
                 $tocCollapseLevel: Int!
                 $tags: [String]!
@@ -333,6 +340,7 @@ export default {
                     publishStartDate: $publishStartDate
                     scriptCss: $scriptCss
                     scriptJs: $scriptJs
+                    minTocLevel: $minTocLevel
                     tocLevel: $tocLevel
                     tocCollapseLevel: $tocCollapseLevel
                     tags: $tags
@@ -364,6 +372,7 @@ export default {
               publishStartDate: this.$store.get('page/publishStartDate') || '',
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
+              minTocLevel: this.$store.get('page/minTocLevel'),
               tocLevel: this.$store.get('page/tocLevel'),
               tocCollapseLevel: this.$store.get('page/tocCollapseLevel'),
               tags: this.$store.get('page/tags'),
@@ -425,6 +434,7 @@ export default {
                 $publishStartDate: Date
                 $scriptCss: String
                 $scriptJs: String
+                $minTocLevel: Int
                 $tocLevel: Int
                 $tocCollapseLevel: Int
                 $tags: [String]
@@ -444,6 +454,7 @@ export default {
                     publishStartDate: $publishStartDate
                     scriptCss: $scriptCss
                     scriptJs: $scriptJs
+                    minTocLevel: $minTocLevel
                     tocLevel: $tocLevel
                     tocCollapseLevel: $tocCollapseLevel
                     tags: $tags
@@ -475,6 +486,7 @@ export default {
               publishStartDate: this.$store.get('page/publishStartDate') || '',
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
+              minTocLevel: this.$store.get('page/minTocLevel'),
               tocLevel: this.$store.get('page/tocLevel'),
               tocCollapseLevel: this.$store.get('page/tocCollapseLevel'),
               tags: this.$store.get('page/tags'),
@@ -560,6 +572,7 @@ export default {
         title: this.$store.get('page/title'),
         css: this.$store.get('page/scriptCss'),
         js: this.$store.get('page/scriptJs'),
+        minTocLevel: this.$store.get('page/minTocLevel'),
         tocLevel: this.$store.get('page/tocLevel'),
         tocCollapseLevel: this.$store.get('page/tocCollapseLevel')
       }

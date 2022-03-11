@@ -61,7 +61,7 @@
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.py-0(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
                 template(v-for='item in tocDecoded')
-                  page-toc-item(:item='item', :tocLevel='tocLevel', :tocCollapseLevel='tocCollapseLevel')
+                  page-toc-item(:item='item', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
             v-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
@@ -418,6 +418,10 @@ export default {
       type: Boolean,
       default: false
     },
+    minTocLevel: {
+      type: Number,
+      default: 0
+    },
     tocLevel: {
       type: Number,
       default: 2
@@ -500,6 +504,7 @@ export default {
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
+
     hasAnyPagePermissions () {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission

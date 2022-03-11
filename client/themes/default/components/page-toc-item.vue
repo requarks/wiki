@@ -1,27 +1,34 @@
 <template lang="pug">
   div
-    v-list-item(@click='click(item.anchor)', v-if='(item.children.length === 0 || tocLevel === level) || tocCollapseLevel > level',
-      :key='item.anchor', :class='isNestedLevel ? `pl-9` : `pl-6`')
-      v-icon.pl-0(small, color='grey lighten-1') {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-      v-list-item-title.pl-4(v-bind:class='titleClasses') {{item.title}}
-    v-list-group(sub-group, v-else, v-bind:class='{"pl-3": isNestedLevel}')
-      template(v-slot:activator)
-        v-list-item.pl-0(@click='click(item.anchor)', :key='item.anchor')
-          v-list-item-title(v-bind:class='titleClasses') {{item.title}}
-      template(v-if='tocLevel > level', v-for='subItem in item.children')
-        page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :tocCollapseLevel='tocCollapseLevel')
-    template(v-if='tocCollapseLevel > level', v-for='subItem in item.children')
-      page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :tocCollapseLevel='tocCollapseLevel')
+    template(v-if='level >= minTocLevel && tocLevel >= level')
+      v-list-item(@click='click(item.anchor)', v-if='(item.children.length === 0 || tocLevel === level) || tocCollapseLevel > level',
+        :key='item.anchor', :class='isNestedLevel ? `pl-9` : `pl-6`')
+        v-icon.pl-0(small, color='grey lighten-1') {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+        v-list-item-title.pl-4(v-bind:class='titleClasses') {{item.title}}
+      v-list-group(sub-group, v-else, v-bind:class='{"pl-3": isNestedLevel}')
+        template(v-slot:activator)
+          v-list-item.pl-0(@click='click(item.anchor)', :key='item.anchor')
+            v-list-item-title(v-bind:class='titleClasses') {{item.title}}
+        template(v-if='tocLevel > level', v-for='subItem in item.children')
+          page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
+      template(v-if='tocCollapseLevel > level', v-for='subItem in item.children')
+        page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
+    template(v-else, v-for='subItem in item.children')
+      page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
 </template>
 
 <script>
 
 export default {
-  name: "pageTocItem",
+  name: 'PageTocItem',
   props: {
     item: {
       type: Object,
       default: () => {}
+    },
+    minTocLevel: {
+      type: Number,
+      default: 0
     },
     tocLevel: {
       type: Number,
@@ -47,16 +54,16 @@ export default {
   },
   computed: {
     isNestedLevel() {
-      return this.level > 1
+      return this.level > this.minTocLevel
     },
     titleClasses() {
       return {
-        "caption": this.isNestedLevel,
-        "grey--text": this.isNestedLevel,
-        "text--lighten-1": this.$vuetify.theme.dark && this.isNestedLevel,
-        "text--darken-1": !this.$vuetify.theme.dark && this.isNestedLevel
+        'caption': this.isNestedLevel,
+        'grey--text': this.isNestedLevel,
+        'text--lighten-1': this.$vuetify.theme.dark && this.isNestedLevel,
+        'text--darken-1': !this.$vuetify.theme.dark && this.isNestedLevel
       }
-    },
+    }
   },
   methods: {
     click (anchor) {

@@ -16,6 +16,7 @@ const state = {
   updatedAt: '',
   mode: '',
   scriptJs: '',
+  minTocLevel: 0,
   tocLevel: 2,
   tocCollapseLevel: 2,
   scriptCss: '',

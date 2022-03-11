@@ -464,6 +464,7 @@ router.get('/*', async (req, res, next) => {
           injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
 
+        const minTocLevel = page.minTocLevel || WIKI.config.theming.minTocLevel
         const tocLevel = page.tocLevel || WIKI.config.theming.tocLevel
         const tocCollapseLevel = page.tocCollapseLevel || WIKI.config.theming.tocCollapseLevel
 
@@ -477,6 +478,7 @@ router.get('/*', async (req, res, next) => {
           res.render('legacy/page', {
             page,
             sidebar,
+            minTocLevel,
             tocLevel,
             tocCollapseLevel,
             injectCode,
@@ -504,6 +506,7 @@ router.get('/*', async (req, res, next) => {
           res.render('page', {
             page,
             sidebar,
+            minTocLevel,
             tocLevel,
             tocCollapseLevel,
             injectCode,

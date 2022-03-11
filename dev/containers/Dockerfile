@@ -5,7 +5,7 @@ FROM node:12
 LABEL maintainer "requarks.io"
 
 RUN apt-get update && \
-    apt-get install -y bash curl git python make g++ nano openssh-server gnupg && \
+    apt-get install -y bash curl git python make g++ nano openssh-server gnupg cmake && \
     mkdir -p /wiki
 
 WORKDIR /wiki

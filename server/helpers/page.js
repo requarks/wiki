@@ -74,6 +74,9 @@ module.exports = {
       ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : ''],
       ['editor', page.editorKey]
     ]
+    if (page.minTocLevel) {
+      meta.push(['minTocLevel', page.minTocLevel])
+    }
     if (page.tocLevel) {
       meta.push(['tocLevel', page.tocLevel])
     }
