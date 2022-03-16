@@ -83,6 +83,15 @@ module.exports = {
       ['editor', page.editorKey],
       ['dateCreated', page.createdAt]
     ]
+    if (page.minTocLevel) {
+      meta.push(['minTocLevel', page.minTocLevel])
+    }
+    if (page.tocLevel) {
+      meta.push(['tocLevel', page.tocLevel])
+    }
+    if (page.tocCollapseLevel) {
+      meta.push(['tocCollapseLevel', page.tocCollapseLevel])
+    }
     switch (page.contentType) {
       case 'markdown':
         return '---\n' + meta.map(mt => `${mt[0]}: ${mt[1]}`).join('\n') + '\n---\n\n' + page.content

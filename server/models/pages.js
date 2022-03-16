@@ -47,7 +47,9 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
         contentType: {type: 'string'},
-
+        minTocLevel: {type: 'integer'},
+        tocLevel: {type: 'integer'},
+        tocCollapseLevel: {type: 'integer'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -161,6 +163,9 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
+      minTocLevel: 'uint',
+      tocLevel: 'uint',
+      tocCollapseLevel: 'uint',
       updatedAt: 'string'
     })
   }
@@ -307,6 +312,9 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       toc: '[]',
+      minTocLevel: opts.minTocLevel || 0,
+      tocLevel: opts.tocLevel || 1,
+      tocCollapseLevel: opts.tocCollapseLevel || 0,
       extra: JSON.stringify({
         js: scriptJs,
         css: scriptCss
@@ -426,6 +434,9 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
+      minTocLevel: opts.minTocLevel || 0,
+      tocLevel: opts.tocLevel || 0,
+      tocCollapseLevel: opts.tocCollapseLevel || 0,
       extra: JSON.stringify({
         ...ogPage.extra,
         js: scriptJs,
@@ -995,6 +1006,9 @@ module.exports = class Page extends Model {
           'pages.content',
           'pages.render',
           'pages.toc',
+          'pages.minTocLevel',
+          'pages.tocLevel',
+          'pages.tocCollapseLevel',
           'pages.contentType',
           'pages.createdAt',
           'pages.updatedAt',
@@ -1075,6 +1089,9 @@ module.exports = class Page extends Model {
       tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
+      minTocLevel: page.minTocLevel,
+      tocLevel: page.tocLevel,
+      tocCollapseLevel: page.tocCollapseLevel,
       updatedAt: page.updatedAt
     }))
   }
