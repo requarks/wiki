@@ -10,7 +10,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('ldap',
+    passport.use(conf.key,
       new LdapStrategy({
         server: {
           url: conf.url,
