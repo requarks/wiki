@@ -50,6 +50,7 @@ module.exports = class Page extends Model {
         minTocLevel: {type: 'integer'},
         tocLevel: {type: 'integer'},
         tocCollapseLevel: {type: 'integer'},
+        doUseTocDefault: {type: 'boolean'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -166,6 +167,7 @@ module.exports = class Page extends Model {
       minTocLevel: 'uint',
       tocLevel: 'uint',
       tocCollapseLevel: 'uint',
+      doUseTocDefault: 'boolean',
       updatedAt: 'string'
     })
   }
@@ -315,6 +317,7 @@ module.exports = class Page extends Model {
       minTocLevel: opts.minTocLevel || 0,
       tocLevel: opts.tocLevel || 1,
       tocCollapseLevel: opts.tocCollapseLevel || 0,
+      doUseTocDefault: opts.doUseTocDefault || true,
       extra: JSON.stringify({
         js: scriptJs,
         css: scriptCss
@@ -435,8 +438,9 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       minTocLevel: opts.minTocLevel || 0,
-      tocLevel: opts.tocLevel || 0,
+      tocLevel: opts.tocLevel || 1,
       tocCollapseLevel: opts.tocCollapseLevel || 0,
+      doUseTocDefault: opts.doUseTocDefault === true || opts.doUseTocDefault === 1,
       extra: JSON.stringify({
         ...ogPage.extra,
         js: scriptJs,
@@ -1009,6 +1013,7 @@ module.exports = class Page extends Model {
           'pages.minTocLevel',
           'pages.tocLevel',
           'pages.tocCollapseLevel',
+          'pages.doUseTocDefault',
           'pages.contentType',
           'pages.createdAt',
           'pages.updatedAt',
@@ -1092,6 +1097,7 @@ module.exports = class Page extends Model {
       minTocLevel: page.minTocLevel,
       tocLevel: page.tocLevel,
       tocCollapseLevel: page.tocCollapseLevel,
+      doUseTocDefault: page.doUseTocDefault,
       updatedAt: page.updatedAt
     }))
   }

@@ -95,6 +95,7 @@ module.exports = {
         minTocLevel: pageData.minTocLevel,
         tocLevel: pageData.tocLevel,
         tocCollapseLevel: pageData.tocCollapseLevel,
+        doUseTocDefault: pageData.doUseTocDefault,
         user: user,
         skipStorage: true
       })
@@ -115,7 +116,8 @@ module.exports = {
         editor: pageEditor,
         skipStorage: true,
         tocLevel: pageData.tocLevel,
-        tocCollapseLevel: pageData.tocCollapseLevel
+        tocCollapseLevel: pageData.tocCollapseLevel,
+        doUseTocDefault: pageData.doUseTocDefault
       })
     }
   },

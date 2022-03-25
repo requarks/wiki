@@ -96,6 +96,7 @@ type PageMutation {
     minTocLevel: Int
     tocLevel: Int
     tocCollapseLevel: Int
+    doUseTocDefault: Boolean
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   update(
@@ -116,6 +117,7 @@ type PageMutation {
     minTocLevel: Int
     tocLevel: Int
     tocCollapseLevel: Int
+    doUseTocDefault: Boolean
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   convert(
@@ -198,6 +200,7 @@ type Page {
   minTocLevel: Int!
   tocLevel: Int!
   tocCollapseLevel: Int!
+  doUseTocDefault: Boolean!
   contentType: String!
   createdAt: Date!
   updatedAt: Date!

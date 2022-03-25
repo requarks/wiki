@@ -81,7 +81,8 @@ module.exports = {
       ['date', page.updatedAt],
       ['tags', page.tags ? page.tags.map(t => t.tag).join(', ') : ''],
       ['editor', page.editorKey],
-      ['dateCreated', page.createdAt]
+      ['dateCreated', page.createdAt],
+      ['doUseTocDefault', page.doUseTocDefault]
     ]
     if (page.minTocLevel) {
       meta.push(['minTocLevel', page.minTocLevel])

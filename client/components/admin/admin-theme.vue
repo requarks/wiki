@@ -72,9 +72,9 @@ v-container(fluid, grid-list-lg)
                     label='Heading Levels in ToC'
                     hint='The table of contents will show headings from and up to the selected levels.'
                     v-model='tocRange'
-                    :min='0'
+                    :min='1'
                     :max='6'
-                    :tick-labels='["Global","H1", "H2", "H3", "H4", "H5", "H6"]'
+                    :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
                   )
             v-flex(lg6 xs12)
               //- v-card.animated.fadeInUp.wait-p2s

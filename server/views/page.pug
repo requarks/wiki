@@ -32,6 +32,7 @@ block body
       :min-toc-level=minTocLevel
       :toc-level=tocLevel
       :toc-collapse-level=tocCollapseLevel
+      :do-use-toc-default=doUseTocDefault.toString()
       )
       template(slot='contents')
         div!= page.render

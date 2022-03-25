@@ -69,14 +69,19 @@ v-dialog(
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
             .overline.pb-5 Theme Options
+            v-switch(
+              label='Use Site Defaults'
+              v-model='doUseTocDefault'
+            )
             v-range-slider(
+              :disabled='doUseTocDefault'
               prepend-icon='mdi-serial-port'
               label='Heading Levels in ToC'
               hint='The table of contents will show headings from and up to the selected levels.'
               v-model='tocRange'
-              :min='0'
+              :min='1'
               :max='6'
-              :tick-labels='["Global","H1", "H2", "H3", "H4", "H5", "H6"]'
+              :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
               )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
@@ -322,6 +327,7 @@ export default {
         this.$store.set('page/tocCollapseLevel', value[1])
       }
     },
+    doUseTocDefault: sync('page/doUseTocDefault'),
     scriptJs: sync('page/scriptJs'),
     scriptCss: sync('page/scriptCss'),
     hasScriptPermission: get('page/effectivePermissions@pages.script'),

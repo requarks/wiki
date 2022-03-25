@@ -504,10 +504,19 @@ router.get('/*', async (req, res, next) => {
         if (!_.isEmpty(page.extra.js)) {
           injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
-
-        const minTocLevel = page.minTocLevel || WIKI.config.theming.minTocLevel
-        const tocLevel = page.tocLevel || WIKI.config.theming.tocLevel
-        const tocCollapseLevel = page.tocCollapseLevel || WIKI.config.theming.tocCollapseLevel
+        const doUseTocDefault = page.doUseTocDefault === true || page.doUseTocDefault === 1
+        var tocLevel
+        var tocCollapseLevel
+        var minTocLevel
+        if (doUseTocDefault) {
+          minTocLevel = WIKI.config.theming.minTocLevel
+          tocLevel = WIKI.config.theming.tocLevel
+          tocCollapseLevel = WIKI.config.theming.tocCollapseLevel
+        } else {
+          minTocLevel = page.minTocLevel || WIKI.config.theming.minTocLevel
+          tocLevel = page.tocLevel || WIKI.config.theming.tocLevel
+          tocCollapseLevel = page.tocCollapseLevel || WIKI.config.theming.tocCollapseLevel
+        }
 
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
           // -> Convert page TOC
@@ -522,6 +531,7 @@ router.get('/*', async (req, res, next) => {
             minTocLevel,
             tocLevel,
             tocCollapseLevel,
+            doUseTocDefault,
             injectCode,
             isAuthenticated: req.user && req.user.id !== 2
           })
@@ -550,6 +560,7 @@ router.get('/*', async (req, res, next) => {
             minTocLevel,
             tocLevel,
             tocCollapseLevel,
+            doUseTocDefault,
             injectCode,
             comments: WIKI.data.commentProvider,
             effectivePermissions

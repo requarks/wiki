@@ -20,6 +20,7 @@ const state = {
   minTocLevel: 0,
   tocLevel: 2,
   tocCollapseLevel: 2,
+  doUseTocDefault: true,
   scriptCss: '',
   effectivePermissions: {
     comments: {

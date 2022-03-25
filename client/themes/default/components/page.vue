@@ -445,6 +445,10 @@ export default {
     tocCollapseLevel: {
       type: Number,
       default: 2
+    },
+    doUseTocDefault: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
