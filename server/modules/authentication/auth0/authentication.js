@@ -8,7 +8,7 @@ const Auth0Strategy = require('passport-auth0').Strategy
 
 module.exports = {
   init (passport, conf) {
-    passport.use('auth0',
+    passport.use(conf.key,
       new Auth0Strategy({
         domain: conf.domain,
         clientID: conf.clientId,

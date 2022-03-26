@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('twitch',
+    passport.use(conf.key,
       new TwitchStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

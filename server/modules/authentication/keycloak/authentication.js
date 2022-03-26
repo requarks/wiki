@@ -10,7 +10,7 @@ const KeycloakStrategy = require('@exlinc/keycloak-passport')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('keycloak',
+    passport.use(conf.key,
       new KeycloakStrategy({
         authorizationURL: conf.authorizationURL,
         userInfoURL: conf.userInfoURL,

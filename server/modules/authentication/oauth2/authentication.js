@@ -49,7 +49,7 @@ module.exports = {
         done(null, data)
       })
     }
-    passport.use('oauth2', client)
+    passport.use(conf.key, client)
   },
   logout (conf) {
     if (!conf.logoutURL) {

@@ -37,7 +37,7 @@ module.exports = {
     if (!_.isEmpty(conf.decryptionPvk)) {
       samlConfig.decryptionPvk = conf.decryptionPvk
     }
-    passport.use('saml',
+    passport.use(conf.key,
       new SAMLStrategy(samlConfig, async (req, profile, cb) => {
         try {
           const userId = _.get(profile, [conf.mappingUID], null) || _.get(profile, 'nameID', null)
