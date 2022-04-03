@@ -192,35 +192,39 @@ module.exports = class Page extends Model {
    */
   static parseMetadata (raw, contentType) {
     let result
-    switch (contentType) {
-      case 'markdown':
-        result = frontmatterRegex.markdown.exec(raw)
-        if (result[2]) {
-          return {
-            ...yaml.safeLoad(result[2]),
-            content: result[3]
-          }
-        } else {
-          // Attempt legacy v1 format
-          result = frontmatterRegex.legacy.exec(raw)
+    try {
+      switch (contentType) {
+        case 'markdown':
+          result = frontmatterRegex.markdown.exec(raw)
           if (result[2]) {
             return {
-              title: result[2],
-              description: result[4],
-              content: result[5]
+              ...yaml.safeLoad(result[2]),
+              content: result[3]
+            }
+          } else {
+            // Attempt legacy v1 format
+            result = frontmatterRegex.legacy.exec(raw)
+            if (result[2]) {
+              return {
+                title: result[2],
+                description: result[4],
+                content: result[5]
+              }
             }
           }
-        }
-        break
-      case 'html':
-        result = frontmatterRegex.html.exec(raw)
-        if (result[2]) {
-          return {
-            ...yaml.safeLoad(result[2]),
-            content: result[3]
+          break
+        case 'html':
+          result = frontmatterRegex.html.exec(raw)
+          if (result[2]) {
+            return {
+              ...yaml.safeLoad(result[2]),
+              content: result[3]
+            }
           }
-        }
-        break
+          break
+      }
+    } catch (err) {
+      WIKI.logger.warn('Failed to parse page metadata. Invalid syntax.')
     }
     return {
       content: raw
