@@ -50,7 +50,7 @@ module.exports = {
       }
 
       // -> Strip host from local links
-      if (isHostSet && href.indexOf(WIKI.config.host) === 0) {
+      if (isHostSet && href.indexOf(`${WIKI.config.host}/`) === 0) {
         href = href.replace(WIKI.config.host, '')
       }
 
