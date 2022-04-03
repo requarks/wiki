@@ -1,12 +1,16 @@
 <template lang="pug">
   .tabset.elevation-2
-    ul.tabset-tabs(ref='tabs')
+    ul.tabset-tabs(ref='tabs', role='tablist')
       slot(name='tabs')
     .tabset-content(ref='content')
       slot(name='content')
 </template>
 
 <script>
+import { customAlphabet } from 'nanoid/non-secure'
+
+const nanoid = customAlphabet('1234567890abcdef', 10)
+
 export default {
   data() {
     return {
@@ -23,15 +27,19 @@ export default {
       this.$refs.tabs.childNodes.forEach((node, idx) => {
         if (idx === this.currentTab) {
           node.className = 'is-active'
+          node.setAttribute('aria-selected', 'true')
         } else {
           node.className = ''
+          node.setAttribute('aria-selected', 'false')
         }
       })
       this.$refs.content.childNodes.forEach((node, idx) => {
         if (idx === this.currentTab) {
           node.className = 'tabset-panel is-active'
+          node.removeAttribute('hidden')
         } else {
           node.className = 'tabset-panel'
+          node.setAttribute('hidden', '')
         }
       })
     }
@@ -53,10 +61,43 @@ export default {
 
     this.setActiveTab()
 
+    const tabRefId = nanoid()
+
     this.$refs.tabs.childNodes.forEach((node, idx) => {
+      node.setAttribute('id', `${tabRefId}-${idx}`)
+      node.setAttribute('role', 'tab')
+      node.setAttribute('aria-controls', `${tabRefId}-${idx}-tab`)
+      node.setAttribute('tabindex', '0')
       node.addEventListener('click', ev => {
         this.currentTab = [].indexOf.call(ev.target.parentNode.children, ev.target)
       })
+      node.addEventListener('keydown', ev => {
+        if (ev.key === 'ArrowLeft' && idx > 0) {
+          this.currentTab = idx - 1
+          this.$refs.tabs.childNodes[idx - 1].focus()
+        } else if (ev.key === 'ArrowRight' && idx < this.$refs.tabs.childNodes.length - 1) {
+          this.currentTab = idx + 1
+          this.$refs.tabs.childNodes[idx + 1].focus()
+        } else if (ev.key === 'Enter' || ev.key === ' ') {
+          this.currentTab = idx
+          node.focus()
+        } else if (ev.key === 'Home') {
+          this.currentTab = 0
+          ev.preventDefault()
+          ev.target.parentNode.children[0].focus()
+        } else if (ev.key === 'End') {
+          this.currentTab = this.$refs.tabs.childNodes.length - 1
+          ev.preventDefault()
+          ev.target.parentNode.children[this.$refs.tabs.childNodes.length - 1].focus()
+        }
+      })
+    })
+
+    this.$refs.content.childNodes.forEach((node, idx) => {
+      node.setAttribute('id', `${tabRefId}-${idx}-tab`)
+      node.setAttribute('role', 'tabpanel')
+      node.setAttribute('aria-labelledby', `${tabRefId}-${idx}`)
+      node.setAttribute('tabindex', '0')
     })
   }
 }
@@ -106,7 +147,9 @@ export default {
         background-color: #FFF;
         margin-bottom: 0;
         padding-bottom: 17px;
+        padding-top: 13px;
         color: mc('blue', '700');
+        border-top: 3px solid mc('blue', '700');
 
         @at-root .theme--dark & {
           background-color: #292929;
