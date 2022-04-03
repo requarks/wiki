@@ -174,7 +174,7 @@ module.exports = class Asset extends Model {
 
       // Force unsafe extensions to download
       if (WIKI.config.uploads.forceDownload && !['.png', '.apng', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(fileInfo.ext)) {
-        res.set('Content-disposition', 'attachment; filename=' + fileInfo.base)
+        res.set('Content-disposition', 'attachment; filename=' + encodeURIComponent(fileInfo.base))
       }
 
       if (await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res)) {
