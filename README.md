@@ -377,6 +377,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Philipp Schürch
 - Tracey Duffy
 - Richeir
+- Shad Narcher
 - SmartNET.works
 - Stepan Sokolovskyi
 - Zach Maynard
