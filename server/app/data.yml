@@ -55,6 +55,10 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+      minTocLevel: 0
+      tocLevel: 2
+      tocCollapseLevel: 2
+      doUseTocDefault: true
     auth:
       autoLogin: false
       enforce2FA: false

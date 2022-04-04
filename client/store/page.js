@@ -17,6 +17,10 @@ const state = {
   editor: '',
   mode: '',
   scriptJs: '',
+  minTocLevel: 0,
+  tocLevel: 2,
+  tocCollapseLevel: 2,
+  doUseTocDefault: true,
   scriptCss: '',
   effectivePermissions: {
     comments: {

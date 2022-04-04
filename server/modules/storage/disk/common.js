@@ -92,6 +92,10 @@ module.exports = {
         isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
         isPrivate: false,
         content: pageData.content,
+        minTocLevel: pageData.minTocLevel,
+        tocLevel: pageData.tocLevel,
+        tocCollapseLevel: pageData.tocCollapseLevel,
+        doUseTocDefault: pageData.doUseTocDefault,
         user: user,
         skipStorage: true
       })
@@ -110,7 +114,10 @@ module.exports = {
         content: pageData.content,
         user: user,
         editor: pageEditor,
-        skipStorage: true
+        skipStorage: true,
+        tocLevel: pageData.tocLevel,
+        tocCollapseLevel: pageData.tocCollapseLevel,
+        doUseTocDefault: pageData.doUseTocDefault
       })
     }
   },

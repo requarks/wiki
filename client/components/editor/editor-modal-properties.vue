@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-dialog(
+v-dialog(
     v-model='isShown'
     persistent
     width='1000'
@@ -66,6 +66,23 @@
                     @click:append='showPathSelector'
                     :rules='[rules.required, rules.path]'
                     )
+          v-divider
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
+            .overline.pb-5 Theme Options
+            v-switch(
+              label='Use Site Defaults'
+              v-model='doUseTocDefault'
+            )
+            v-range-slider(
+              :disabled='doUseTocDefault'
+              prepend-icon='mdi-serial-port'
+              label='Heading Levels in ToC'
+              hint='The table of contents will show headings from and up to the selected levels.'
+              v-model='tocRange'
+              :min='1'
+              :max='6'
+              :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
+              )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5 {{$t('editor:props.categorization')}}
@@ -255,6 +272,7 @@ import 'codemirror/mode/htmlmixed/htmlmixed.js'
 import 'codemirror/mode/css/css.js'
 
 /* global siteLangs, siteConfig */
+// eslint-disable-next-line no-useless-escape
 const filenamePattern = /^(?![\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s])(?!.*[\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]$)[^\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
 
 export default {
@@ -276,10 +294,10 @@ export default {
       currentTab: 0,
       cm: null,
       rules: {
-          required: value => !!value || 'This field is required.',
-          path: value => {
-            return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
-          }
+        required: value => !!value || 'This field is required.',
+        path: value => {
+          return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
+        }
       }
     }
   },
@@ -297,6 +315,19 @@ export default {
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
+    tocRange: {
+      get() {
+        var range = [this.$store.get('page/minTocLevel'), this.$store.get('page/tocLevel')]
+        return range
+        // return [get('page/minTocLevel'), get('page/tocLevel')]
+      },
+      set(value) {
+        this.$store.set('page/minTocLevel', value[0])
+        this.$store.set('page/tocLevel', value[1])
+        this.$store.set('page/tocCollapseLevel', value[1])
+      }
+    },
+    doUseTocDefault: sync('page/doUseTocDefault'),
     scriptJs: sync('page/scriptJs'),
     scriptCss: sync('page/scriptCss'),
     hasScriptPermission: get('page/effectivePermissions@pages.script'),

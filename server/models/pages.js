@@ -47,7 +47,10 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
         contentType: {type: 'string'},
-
+        minTocLevel: {type: 'integer'},
+        tocLevel: {type: 'integer'},
+        tocCollapseLevel: {type: 'integer'},
+        doUseTocDefault: {type: 'boolean'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -161,6 +164,10 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
+      minTocLevel: 'uint',
+      tocLevel: 'uint',
+      tocCollapseLevel: 'uint',
+      doUseTocDefault: 'boolean',
       updatedAt: 'string'
     })
   }
@@ -311,6 +318,10 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       toc: '[]',
+      minTocLevel: opts.minTocLevel || 0,
+      tocLevel: opts.tocLevel || 1,
+      tocCollapseLevel: opts.tocCollapseLevel || 0,
+      doUseTocDefault: opts.doUseTocDefault || true,
       extra: JSON.stringify({
         js: scriptJs,
         css: scriptCss
@@ -430,6 +441,10 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
+      minTocLevel: opts.minTocLevel || 0,
+      tocLevel: opts.tocLevel || 1,
+      tocCollapseLevel: opts.tocCollapseLevel || 0,
+      doUseTocDefault: opts.doUseTocDefault === true || opts.doUseTocDefault === 1,
       extra: JSON.stringify({
         ...ogPage.extra,
         js: scriptJs,
@@ -991,6 +1006,10 @@ module.exports = class Page extends Model {
           'pages.content',
           'pages.render',
           'pages.toc',
+          'pages.minTocLevel',
+          'pages.tocLevel',
+          'pages.tocCollapseLevel',
+          'pages.doUseTocDefault',
           'pages.contentType',
           'pages.createdAt',
           'pages.updatedAt',
@@ -1071,6 +1090,10 @@ module.exports = class Page extends Model {
       tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
+      minTocLevel: page.minTocLevel,
+      tocLevel: page.tocLevel,
+      tocCollapseLevel: page.tocCollapseLevel,
+      doUseTocDefault: page.doUseTocDefault,
       updatedAt: page.updatedAt
     }))
   }

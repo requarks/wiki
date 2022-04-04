@@ -93,6 +93,10 @@ type PageMutation {
     scriptJs: String
     tags: [String]!
     title: String!
+    minTocLevel: Int
+    tocLevel: Int
+    tocCollapseLevel: Int
+    doUseTocDefault: Boolean
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   update(
@@ -110,6 +114,10 @@ type PageMutation {
     scriptJs: String
     tags: [String]
     title: String
+    minTocLevel: Int
+    tocLevel: Int
+    tocCollapseLevel: Int
+    doUseTocDefault: Boolean
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   convert(
@@ -189,6 +197,10 @@ type Page {
   content: String! @auth(requires: ["read:source", "write:pages", "manage:system"])
   render: String
   toc: String
+  minTocLevel: Int!
+  tocLevel: Int!
+  tocCollapseLevel: Int!
+  doUseTocDefault: Boolean!
   contentType: String!
   createdAt: Date!
   updatedAt: Date!

@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-container(fluid, grid-list-lg)
+v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
@@ -51,7 +51,6 @@
                     persistent-hint
                     :hint='$t(`admin:theme.darkModeHint`)'
                     )
-
               v-card.mt-3.animated.fadeInUp.wait-p1s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t(`admin:theme.options`)}}
@@ -68,7 +67,15 @@
                     hint='Select whether the table of contents is shown on the left, right or not at all.'
                     disabled
                     )
-
+                  v-range-slider(
+                    prepend-icon='mdi-serial-port'
+                    label='Heading Levels in ToC'
+                    hint='The table of contents will show headings from and up to the selected levels.'
+                    v-model='tocRange'
+                    :min='1'
+                    :max='6'
+                    :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
+                  )
             v-flex(lg6 xs12)
               //- v-card.animated.fadeInUp.wait-p2s
               //-   v-toolbar(color='teal', dark, dense, flat)
@@ -154,6 +161,9 @@ export default {
       config: {
         theme: 'default',
         darkMode: false,
+        minTocLevel: 0,
+        tocLevel: 2,
+        tocCollapseLevel: 2,
         iconset: '',
         injectCSS: '',
         injectHead: '',
@@ -163,6 +173,17 @@ export default {
     }
   },
   computed: {
+    tocRange: {
+      get() {
+        var range = [this.config.minTocLevel, this.config.tocLevel]
+        return range
+      },
+      set(value) {
+        this.config.minTocLevel = value[0]
+        this.config.tocLevel = value[1]
+        this.config.tocCollapseLevel = value[1]
+      }
+    },
     darkMode: sync('site/dark'),
     headers() {
       return [
@@ -209,6 +230,9 @@ export default {
             theme: this.config.theme,
             iconset: this.config.iconset,
             darkMode: this.darkMode,
+            minTocLevel: parseInt(this.config.minTocLevel, 10),
+            tocLevel: parseInt(this.config.tocLevel, 10),
+            tocCollapseLevel: parseInt(this.config.tocCollapseLevel, 10),
             injectCSS: this.config.injectCSS,
             injectHead: this.config.injectHead,
             injectBody: this.config.injectBody
