@@ -45,18 +45,23 @@ module.exports = {
           }
           WIKI.config.host = siteHost
         }
+
         if (args.hasOwnProperty('title')) {
           WIKI.config.title = _.trim(args.title)
         }
+
         if (args.hasOwnProperty('company')) {
           WIKI.config.company = _.trim(args.company)
         }
+
         if (args.hasOwnProperty('contentLicense')) {
           WIKI.config.contentLicense = args.contentLicense
         }
+
         if (args.hasOwnProperty('logoUrl')) {
           WIKI.config.logoUrl = _.trim(args.logoUrl)
         }
+
         WIKI.config.seo = {
           description: _.get(args, 'description', WIKI.config.seo.description),
           robots: _.get(args, 'robots', WIKI.config.seo.robots),
