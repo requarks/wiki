@@ -1,15 +1,13 @@
 {
   "name": "wiki",
-  "version": "2.0.0",
-  "releaseDate": "2019-01-01T01:01:01.000Z",
-  "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
+  "version": "3.0.0",
+  "releaseDate": "2022-01-01T01:01:01.000Z",
+  "description": "The most powerful and extensible open source Wiki software",
   "main": "wiki.js",
   "dev": true,
   "scripts": {
     "start": "node server",
     "dev": "node dev",
-    "build": "webpack --profile --config dev/webpack/webpack.prod.js",
-    "watch": "webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open"
   },
@@ -33,7 +31,7 @@
   },
   "homepage": "https://github.com/Requarks/wiki#readme",
   "engines": {
-    "node": ">=10.12"
+    "node": ">=16.0"
   },
   "dependencies": {
     "@azure/storage-blob": "12.2.1",

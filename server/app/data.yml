@@ -8,16 +8,17 @@ defaults:
     # File defaults
     port: 80
     db:
-      type: postgres
       host: localhost
       port: 5432
       user: wikijs
       pass: wikijsrocks
       db: wiki
       ssl: false
-      storage: ./db.sqlite
       sslOptions:
         auto: true
+      schemas:
+        wiki: wiki
+        scheduler: scheduler
     ssl:
       enabled: false
     pool:
@@ -26,7 +27,6 @@ defaults:
     logLevel: info
     logFormat: default
     offline: false
-    ha: false
     bodyParserLimit: 5mb
     # DB defaults
     api:
@@ -88,7 +88,7 @@ defaults:
       ldapdebug: false
       sqllog: false
     # System defaults
-    channel: STABLE
+    channel: NEXT
     setup: false
     dataPath: ./data
     cors:

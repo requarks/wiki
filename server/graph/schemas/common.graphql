@@ -34,6 +34,11 @@ type ResponseStatus {
   message: String
 }
 
+enum OrderByDirection {
+  asc
+  desc
+}
+
 # ROOT
 # ----
 

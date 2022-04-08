@@ -7,7 +7,7 @@ const fs = require('fs')
 const Objection = require('objection')
 
 const migrationSource = require('../db/migrator-source')
-const migrateFromBeta = require('../db/beta')
+const migrateFromLegacy = require('../db/legacy')
 
 /* global WIKI */
 
@@ -20,15 +20,12 @@ module.exports = {
   listener: null,
   /**
    * Initialize DB
-   *
-   * @return     {Object}  DB instance
    */
   init() {
     let self = this
 
     // Fetch DB Config
 
-    let dbClient = null
     let dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
       host: WIKI.config.db.host.toString(),
       user: WIKI.config.db.user.toString(),
@@ -74,84 +71,22 @@ module.exports = {
       }
     }
 
-    // Engine-specific config
-    switch (WIKI.config.db.type) {
-      case 'postgres':
-        dbClient = 'pg'
-
-        if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
-        }
-        break
-      case 'mariadb':
-      case 'mysql':
-        dbClient = 'mysql2'
-
-        if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = sslOptions
-        }
-
-        // Fix mysql boolean handling...
-        dbConfig.typeCast = (field, next) => {
-          if (field.type === 'TINY' && field.length === 1) {
-            let value = field.string()
-            return value ? (value === '1') : null
-          }
-          return next()
-        }
-        break
-      case 'mssql':
-        dbClient = 'mssql'
-
-        if (_.isPlainObject(dbConfig)) {
-          dbConfig.appName = 'Wiki.js'
-          _.set(dbConfig, 'options.appName', 'Wiki.js')
-
-          dbConfig.enableArithAbort = true
-          _.set(dbConfig, 'options.enableArithAbort', true)
-
-          if (dbUseSSL) {
-            dbConfig.encrypt = true
-            _.set(dbConfig, 'options.encrypt', true)
-          }
-        }
-        break
-      case 'sqlite':
-        dbClient = 'sqlite3'
-        dbConfig = { filename: WIKI.config.db.storage }
-        break
-      default:
-        WIKI.logger.error('Invalid DB Type')
-        process.exit(1)
+    if (dbUseSSL && _.isPlainObject(dbConfig)) {
+      dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
     }
 
     // Initialize Knex
     this.knex = Knex({
-      client: dbClient,
+      client: 'pg',
       useNullAsDefault: true,
       asyncStackTraces: WIKI.IS_DEBUG,
       connection: dbConfig,
+      searchPath: [WIKI.config.db.schemas.wiki],
       pool: {
         ...WIKI.config.pool,
         async afterCreate(conn, done) {
           // -> Set Connection App Name
-          switch (WIKI.config.db.type) {
-            case 'postgres':
-              await conn.query(`set application_name = 'Wiki.js'`)
-              // -> Set schema if it's not public             
-              if (WIKI.config.db.schema && WIKI.config.db.schema !== 'public') {
-                await conn.query(`set search_path TO ${WIKI.config.db.schema}, public;`)
-              }
-              done()
-              break
-            case 'mysql':
-              await conn.promise().query(`set autocommit = 1`)
-              done()
-              break
-            default:
-              done()
-              break
-          }
+          await conn.query(`set application_name = 'Wiki.js'`)
         }
       },
       debug: WIKI.IS_DEBUG
@@ -191,18 +126,19 @@ module.exports = {
       async syncSchemas () {
         return self.knex.migrate.latest({
           tableName: 'migrations',
-          migrationSource
+          migrationSource,
+          schemaName: WIKI.config.db.schemas.wiki
         })
       },
-      // -> Migrate DB Schemas from beta
-      async migrateFromBeta () {
-        return migrateFromBeta.migrate(self.knex)
+      // -> Migrate DB Schemas from 2.x
+      async migrateFromLegacy () {
+        return migrateFromLegacy.migrate(self.knex)
       }
     }
 
     let initTasksQueue = (WIKI.IS_MASTER) ? [
       initTasks.connect,
-      initTasks.migrateFromBeta,
+      initTasks.migrateFromLegacy,
       initTasks.syncSchemas
     ] : [
       () => { return Promise.resolve() }
@@ -210,7 +146,6 @@ module.exports = {
 
     // Perform init tasks
 
-    WIKI.logger.info(`Using database driver ${dbClient} for ${WIKI.config.db.type} [ OK ]`)
     this.onReady = Promise.each(initTasksQueue, t => t()).return(true)
 
     return {
@@ -222,14 +157,6 @@ module.exports = {
    * Subscribe to database LISTEN / NOTIFY for multi-instances events
    */
   async subscribeToNotifications () {
-    const useHA = (WIKI.config.ha === true || WIKI.config.ha === 'true' || WIKI.config.ha === 1 || WIKI.config.ha === '1')
-    if (!useHA) {
-      return
-    } else if (WIKI.config.db.type !== 'postgres') {
-      WIKI.logger.warn(`Database engine doesn't support pub/sub. Will not handle concurrent instances: [ DISABLED ]`)
-      return
-    }
-
     const PGPubSub = require('pg-pubsub')
 
     this.listener = new PGPubSub(this.knex.client.connectionSettings, {
@@ -254,7 +181,7 @@ module.exports = {
     WIKI.configSvc.subscribeToEvents()
     WIKI.models.pages.subscribeToEvents()
 
-    WIKI.logger.info(`High-Availability Listener initialized successfully: [ OK ]`)
+    WIKI.logger.info(`PG PubSub Listener initialized successfully: [ OK ]`)
   },
   /**
    * Unsubscribe from database LISTEN / NOTIFY

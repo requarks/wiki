@@ -2,7 +2,7 @@
 # Wiki.js - CONFIGURATION                                             #
 #######################################################################
 # Full documentation + examples:
-# https://docs.requarks.io/install
+# https://docs.js.wiki/install
 
 # ---------------------------------------------------------------------
 # Port the server should listen to
@@ -13,25 +13,20 @@ port: 3000
 # ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
-# Supported Database Engines:
-# - postgres = PostgreSQL 9.5 or later
-# - mysql = MySQL 8.0 or later (5.7.8 partially supported, refer to docs)
-# - mariadb = MariaDB 10.2.7 or later
-# - mssql = MS SQL Server 2012 or later
-# - sqlite = SQLite 3.9 or later
+# PostgreSQL 9.6 or later required
 
 db:
-  type: postgres
-
-  # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
   host: localhost
   port: 5432
   user: wikijs
   pass: wikijsrocks
   db: wiki
+  schemas:
+    wiki: wiki
+    scheduler: scheduler
   ssl: false
 
-  # Optional - PostgreSQL / MySQL / MariaDB only:
+  # Optional
   # -> Uncomment lines you need below and set `auto` to false
   # -> Full list of accepted options: https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options
   sslOptions:
@@ -42,12 +37,6 @@ db:
     # key: path/to/key.pem
     # pfx: path/to/cert.pfx
     # passphrase: xyz123
-
-  # Optional - PostgreSQL only:
-  schema: public
-
-  # SQLite only:
-  storage: path/to/database.sqlite
 
 #######################################################################
 # ADVANCED OPTIONS                                                    #
@@ -102,15 +91,12 @@ pool:
 bindIP: 0.0.0.0
 
 # ---------------------------------------------------------------------
-# Log Level
+# Logging
 # ---------------------------------------------------------------------
 # Possible values: error, warn, info (default), verbose, debug, silly
 
 logLevel: info
 
-# ---------------------------------------------------------------------
-# Log Format
-# ---------------------------------------------------------------------
 # Output format for logging, possible values: default, json
 
 logFormat: default
@@ -122,15 +108,6 @@ logFormat: default
 # download the offline files for sideloading.
 
 offline: false
-
-# ---------------------------------------------------------------------
-# High-Availability
-# ---------------------------------------------------------------------
-# Set to true if you have multiple concurrent instances running off the
-# same DB (e.g. Kubernetes pods / load balanced instances). Leave false
-# otherwise. You MUST be using PostgreSQL to use this feature.
-
-ha: false
 
 # ---------------------------------------------------------------------
 # Data Path

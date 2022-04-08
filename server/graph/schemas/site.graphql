@@ -1,12 +1,49 @@
 # ===============================================
-# SITE
+# SITES
 # ===============================================
 
 extend type Query {
+  sites: [Site] @auth(requires: ["manage:system"])
+
+  siteById (
+    id: UUID!
+  ): Site @auth(requires: ["manage:system"])
+
+  siteByHostname (
+    hostname: String!
+    exact: Boolean!
+  ): Site @auth(requires: ["manage:system"])
+
+  # Legacy
   site: SiteQuery
 }
 
 extend type Mutation {
+  createSite (
+    hostname: String!
+    title: String!
+  ): SiteCreateResponse @auth(requires: ["manage:system"])
+
+  updateSite (
+    id: UUID!
+    patch: SiteUpdateInput!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  uploadSiteLogo (
+    id: UUID!
+    image: Upload!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  uploadSiteFavicon (
+    id: UUID!
+    image: Upload!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  deleteSite (
+    id: UUID!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  # Legacy
   site: SiteMutation
 }
 
@@ -63,6 +100,135 @@ type SiteMutation {
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
+
+type Site {
+  id: UUID
+  hostname: String
+  isEnabled: Boolean
+  title: String
+  description: String
+  company: String
+  contentLicense: String
+  logoText: Boolean
+  robots: SiteRobots
+  features: SiteFeatures
+  defaults: SiteDefaults
+  locale: String
+  localeNamespaces: [String]
+  localeNamespacing: Boolean
+  theme: SiteTheme
+}
+
+type SiteRobots {
+  index: Boolean
+  follow: Boolean
+}
+
+type SiteFeatures {
+  ratings: Boolean
+  ratingsMode: SitePageRatingModes
+  comments: Boolean
+  contributions: Boolean
+  profile: Boolean
+  search: Boolean
+}
+
+type SiteDefaults {
+  timezone: String
+  dateFormat: String
+  timeFormat: String
+}
+
+type SiteLocale {
+  locale: String
+  autoUpdate: Boolean
+  namespacing: Boolean
+  namespaces: [String]
+}
+
+type SiteTheme {
+  dark: Boolean
+  colorPrimary: String
+  colorSecondary: String
+  colorAccent: String
+  colorHeader: String
+  colorSidebar: String
+  injectCSS: String
+  injectHead: String
+  injectBody: String
+  sidebarPosition: SiteThemePosition
+  tocPosition: SiteThemePosition
+  showSharingMenu: Boolean
+  showPrintBtn: Boolean
+}
+
+enum SiteThemePosition {
+  left
+  right
+}
+
+enum SitePageRatingModes {
+  off
+  thumbs
+  stars
+}
+
+type SiteCreateResponse {
+  status: ResponseStatus
+  site: Site
+}
+
+input SiteUpdateInput {
+  hostname: String
+  isEnabled: Boolean
+  title: String
+  description: String
+  company: String
+  contentLicense: String
+  logoText: Boolean
+  robots: SiteRobotsInput
+  features: SiteFeaturesInput
+  defaults: SiteDefaultsInput
+  theme: SiteThemeInput
+}
+
+input SiteRobotsInput {
+  index: Boolean
+  follow: Boolean
+}
+
+input SiteFeaturesInput {
+  ratings: Boolean
+  ratingsMode: SitePageRatingModes
+  comments: Boolean
+  contributions: Boolean
+  profile: Boolean
+  search: Boolean
+}
+
+input SiteDefaultsInput {
+  timezone: String
+  dateFormat: String
+  timeFormat: String
+}
+
+input SiteThemeInput {
+  dark: Boolean
+  colorPrimary: String
+  colorSecondary: String
+  colorAccent: String
+  colorHeader: String
+  colorSidebar: String
+  injectCSS: String
+  injectHead: String
+  injectBody: String
+  sidebarPosition: SiteThemePosition
+  tocPosition: SiteThemePosition
+  showSharingMenu: Boolean
+  showPrintBtn: Boolean
+}
+
+# LEGACY
 
 type SiteConfig {
   host: String

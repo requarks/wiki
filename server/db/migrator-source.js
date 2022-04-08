@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const semver = require('semver')
 
-const baseMigrationPath = path.join(WIKI.SERVERPATH, (WIKI.config.db.type !== 'sqlite') ? 'db/migrations' : 'db/migrations-sqlite')
+const baseMigrationPath = path.join(WIKI.SERVERPATH, 'db/migrations')
 
 /* global WIKI */
 
