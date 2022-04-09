@@ -352,6 +352,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Brandon Curtis
 - Dave 'Sri' Seah
 - djagoo
+- dz
 - Douglas Lassance
 - Ernie Reid
 - Etienne
