@@ -328,12 +328,6 @@ exports.up = async knex => {
 
   await knex('settings').insert([
     {
-      key: 'update',
-      value: {
-        locales: true
-      }
-    },
-    {
       key: 'mail',
       value: {
         senderName: '',
@@ -371,6 +365,18 @@ exports.up = async knex => {
         uploadMaxFileSize: 10485760,
         uploadMaxFiles: 20,
         uploadScanSVG: true
+      }
+    },
+    {
+      key: 'system',
+      value: {
+        sessionSecret: crypto.randomBytes(32).toString('hex')
+      }
+    },
+    {
+      key: 'update',
+      value: {
+        locales: true
       }
     }
   ])

@@ -6,6 +6,12 @@
 const path = require('path')
 const { nanoid } = require('nanoid')
 const { DateTime } = require('luxon')
+const semver = require('semver')
+
+if (!semver.satisfies(process.version, '>=16')) {
+  console.error('ERROR: Node.js 16.x or later required!')
+  process.exit(1)
+}
 
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
@@ -26,7 +32,7 @@ WIKI.configSvc.init()
 // Init Logger
 // ----------------------------------------
 
-WIKI.logger = require('./core/logger').init('MASTER')
+WIKI.logger = require('./core/logger').init()
 
 // ----------------------------------------
 // Start Kernel

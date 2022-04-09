@@ -21,7 +21,6 @@ module.exports = {
   async startHTTP () {
     WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
     this.servers.http = http.createServer(WIKI.app)
-    this.servers.graph.installSubscriptionHandlers(this.servers.http)
 
     this.servers.http.listen(WIKI.config.port, WIKI.config.bindIP)
     this.servers.http.on('error', (error) => {
@@ -83,7 +82,6 @@ module.exports = {
       return process.exit(1)
     }
     this.servers.https = https.createServer(tlsOpts, WIKI.app)
-    this.servers.graph.installSubscriptionHandlers(this.servers.https)
 
     this.servers.https.listen(WIKI.config.ssl.port, WIKI.config.bindIP)
     this.servers.https.on('error', (error) => {
@@ -121,15 +119,15 @@ module.exports = {
   async startGraphQL () {
     const graphqlSchema = require('../graph')
     this.servers.graph = new ApolloServer({
-      ...graphqlSchema,
+      schema: graphqlSchema,
+      uploads: false,
       context: ({ req, res }) => ({ req, res }),
-      subscriptions: {
-        onConnect: (connectionParams, webSocket) => {
-
-        },
-        path: '/graphql-subscriptions'
-      }
+      plugins: [
+        // ApolloServerPluginDrainHttpServer({ httpServer: this.servers.http })
+        // ...(this.servers.https && ApolloServerPluginDrainHttpServer({ httpServer: this.servers.https }))
+      ]
     })
+    await this.servers.graph.start()
     this.servers.graph.applyMiddleware({ app: WIKI.app, cors: false })
   },
   /**

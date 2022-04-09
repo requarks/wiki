@@ -2,5 +2,5 @@
 
 scalar Date
 scalar JSON
-# scalar Upload
+scalar Upload
 scalar UUID

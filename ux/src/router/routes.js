@@ -28,11 +28,11 @@ const routes = [
     component: () => import('../layouts/AdminLayout.vue'),
     children: [
       { path: '', redirect: '/_admin/dashboard' },
-      { path: 'dashboard', component: () => import('../pages/AdminDashboard.vue') }
+      { path: 'dashboard', component: () => import('../pages/AdminDashboard.vue') },
       // { path: 'sites', component: () => import('../pages/AdminSites.vue') },
       // // -> Site
       // { path: ':siteid/general', component: () => import('../pages/AdminGeneral.vue') },
-      // { path: ':siteid/editors', component: () => import('../pages/AdminEditors.vue') },
+      { path: ':siteid/editors', component: () => import('../pages/AdminEditors.vue') },
       // { path: ':siteid/locale', component: () => import('../pages/AdminLocale.vue') },
       // { path: ':siteid/login', component: () => import('../pages/AdminLogin.vue') },
       // { path: ':siteid/navigation', component: () => import('../pages/AdminNavigation.vue') },
@@ -51,7 +51,7 @@ const routes = [
       // { path: 'system', component: () => import('../pages/AdminSystem.vue') },
       // { path: 'utilities', component: () => import('../pages/AdminUtilities.vue') },
       // { path: 'webhooks', component: () => import('../pages/AdminWebhooks.vue') },
-      // { path: 'flags', component: () => import('../pages/AdminFlags.vue') }
+      { path: 'flags', component: () => import('../pages/AdminFlags.vue') }
     ]
   },
   // {

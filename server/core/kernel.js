@@ -52,14 +52,9 @@ module.exports = {
    */
   async bootMaster() {
     try {
-      if (WIKI.config.setup) {
-        WIKI.logger.info('Starting setup wizard...')
-        require('../setup')()
-      } else {
-        await this.preBootMaster()
-        await require('../master')()
-        this.postBootMaster()
-      }
+      await this.preBootMaster()
+      await require('../master')()
+      this.postBootMaster()
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
@@ -73,16 +68,13 @@ module.exports = {
     await WIKI.models.authentication.refreshStrategiesFromDisk()
     await WIKI.models.commentProviders.refreshProvidersFromDisk()
     await WIKI.models.editors.refreshEditorsFromDisk()
-    await WIKI.models.loggers.refreshLoggersFromDisk()
     await WIKI.models.renderers.refreshRenderersFromDisk()
-    await WIKI.models.searchEngines.refreshSearchEnginesFromDisk()
     await WIKI.models.storage.refreshTargetsFromDisk()
 
     await WIKI.extensions.init()
 
     await WIKI.auth.activateStrategies()
     await WIKI.models.commentProviders.initProvider()
-    await WIKI.models.searchEngines.initEngine()
     await WIKI.models.storage.initTargets()
     WIKI.scheduler.start()
 

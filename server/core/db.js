@@ -128,6 +128,8 @@ module.exports = {
       },
       // -> Migrate DB Schemas
       async syncSchemas () {
+        WIKI.logger.info('Ensuring DB schema exists...')
+        await self.knex.raw(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schemas.wiki}`)
         WIKI.logger.info('Ensuring DB migrations have been applied...')
         return self.knex.migrate.latest({
           tableName: 'migrations',

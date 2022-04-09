@@ -9,6 +9,11 @@ q-layout.admin(view='hHh Lpr lff')
         q-toolbar-title.text-h6.font-poppins Wiki.js
       q-toolbar.gt-sm.justify-center(style='height: 64px;', dark)
         .text-overline.text-uppercase.text-grey {{t('admin.adminArea')}}
+        q-badge.q-ml-sm(
+          label='v3 Preview'
+          color='pink'
+          outline
+          )
       q-toolbar(style='height: 64px;', dark)
         q-space
         q-spinner-tail(
