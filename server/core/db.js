@@ -24,9 +24,11 @@ module.exports = {
   init() {
     let self = this
 
+    WIKI.logger.info('Checking DB configuration...')
+
     // Fetch DB Config
 
-    let dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
+    const dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
       host: WIKI.config.db.host.toString(),
       user: WIKI.config.db.user.toString(),
       password: WIKI.config.db.pass.toString(),
@@ -87,6 +89,7 @@ module.exports = {
         async afterCreate(conn, done) {
           // -> Set Connection App Name
           await conn.query(`set application_name = 'Wiki.js'`)
+          done()
         }
       },
       debug: WIKI.IS_DEBUG
@@ -96,6 +99,7 @@ module.exports = {
 
     // Load DB Models
 
+    WIKI.logger.info('Loading DB models...')
     const models = autoload(path.join(WIKI.SERVERPATH, 'models'))
 
     // Set init tasks
@@ -124,6 +128,7 @@ module.exports = {
       },
       // -> Migrate DB Schemas
       async syncSchemas () {
+        WIKI.logger.info('Ensuring DB migrations have been applied...')
         return self.knex.migrate.latest({
           tableName: 'migrations',
           migrationSource,
