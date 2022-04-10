@@ -41,7 +41,7 @@ module.exports = class Page extends Model {
         hash: {type: 'string'},
         title: {type: 'string'},
         description: {type: 'string'},
-        isPublished: {type: 'boolean'},
+        publishState: {type: 'string'},
         privateNS: {type: 'string'},
         publishStartDate: {type: 'string'},
         publishEndDate: {type: 'string'},
@@ -96,14 +96,6 @@ module.exports = class Page extends Model {
           to: 'users.id'
         }
       },
-      editor: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: require('./editors'),
-        join: {
-          from: 'pages.editorKey',
-          to: 'editors.key'
-        }
-      },
       locale: {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./locales'),
@@ -143,16 +135,14 @@ module.exports = class Page extends Model {
       creatorId: 'uint',
       creatorName: 'string',
       description: 'string',
-      editorKey: 'string',
-      isPrivate: 'boolean',
-      isPublished: 'boolean',
+      editor: 'string',
+      publishState: 'string',
       publishEndDate: 'string',
       publishStartDate: 'string',
       render: 'string',
       tags: [
         {
-          tag: 'string',
-          title: 'string'
+          tag: 'string'
         }
       ],
       extra: {
@@ -301,10 +291,9 @@ module.exports = class Page extends Model {
       creatorId: opts.user.id,
       contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
       description: opts.description,
-      editorKey: opts.editor,
-      hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' }),
-      isPrivate: opts.isPrivate,
-      isPublished: opts.isPublished,
+      editor: opts.editor,
+      hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale }),
+      publishState: opts.publishState,
       localeCode: opts.locale,
       path: opts.path,
       publishEndDate: opts.publishEndDate || '',
@@ -319,8 +308,7 @@ module.exports = class Page extends Model {
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
       locale: opts.locale,
-      userId: opts.user.id,
-      isPrivate: opts.isPrivate
+      userId: opts.user.id
     })
 
     // -> Save Tags
@@ -389,7 +377,6 @@ module.exports = class Page extends Model {
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
-      isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
       action: opts.action ? opts.action : 'updated',
       versionDate: ogPage.updatedAt
     })
@@ -426,7 +413,7 @@ module.exports = class Page extends Model {
       authorId: opts.user.id,
       content: opts.content,
       description: opts.description,
-      isPublished: opts.isPublished === true || opts.isPublished === 1,
+      publishState: opts.publishState,
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
@@ -500,7 +487,7 @@ module.exports = class Page extends Model {
       throw new Error('Invalid Page Id')
     }
 
-    if (ogPage.editorKey === opts.editor) {
+    if (ogPage.editor === opts.editor) {
       throw new Error('Page is already using this editor. Nothing to convert.')
     }
 
@@ -631,7 +618,6 @@ module.exports = class Page extends Model {
     if (shouldConvert) {
       await WIKI.models.pageHistory.addVersion({
         ...ogPage,
-        isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
         action: 'updated',
         versionDate: ogPage.updatedAt
       })
@@ -640,7 +626,7 @@ module.exports = class Page extends Model {
     // -> Update page
     await WIKI.models.pages.query().patch({
       contentType: targetContentType,
-      editorKey: opts.editor,
+      editor: opts.editor,
       ...(convertedContent ? { content: convertedContent } : {})
     }).where('id', ogPage.id)
     const page = await WIKI.models.pages.getPageFromDb(ogPage.id)
@@ -721,7 +707,7 @@ module.exports = class Page extends Model {
       versionDate: page.updatedAt
     })
 
-    const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale })
 
     // -> Move page
     const destinationTitle = (page.title === page.path ? opts.destinationPath : page.title)
@@ -991,9 +977,7 @@ module.exports = class Page extends Model {
           'pages.hash',
           'pages.title',
           'pages.description',
-          'pages.isPrivate',
-          'pages.isPublished',
-          'pages.privateNS',
+          'pages.publishState',
           'pages.publishStartDate',
           'pages.publishEndDate',
           'pages.content',
@@ -1002,7 +986,7 @@ module.exports = class Page extends Model {
           'pages.contentType',
           'pages.createdAt',
           'pages.updatedAt',
-          'pages.editorKey',
+          'pages.editor',
           'pages.localeCode',
           'pages.authorId',
           'pages.creatorId',
@@ -1018,7 +1002,7 @@ module.exports = class Page extends Model {
         .joinRelated('creator')
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
-          builder.select('tag', 'title')
+          builder.select('tag')
         })
         .where(queryModeID ? {
           'pages.id': opts
@@ -1066,17 +1050,16 @@ module.exports = class Page extends Model {
       creatorId: page.creatorId,
       creatorName: page.creatorName,
       description: page.description,
-      editorKey: page.editorKey,
+      editor: page.editor,
       extra: {
         css: _.get(page, 'extra.css', ''),
         js: _.get(page, 'extra.js', '')
       },
-      isPrivate: page.isPrivate === 1 || page.isPrivate === true,
-      isPublished: page.isPublished === 1 || page.isPublished === true,
+      publishState: page.publishState,
       publishEndDate: page.publishEndDate,
       publishStartDate: page.publishStartDate,
       render: page.render,
-      tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
+      tags: page.tags.map(t => _.pick(t, ['tag'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
       updatedAt: page.updatedAt
@@ -1090,7 +1073,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async getPageFromCache(opts) {
-    const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale })
     const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${pageHash}.bin`)
 
     try {

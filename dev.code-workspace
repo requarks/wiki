@@ -1,10 +1,12 @@
 {
 	"folders": [
 		{
-			"path": "ux"
+			"name": "server",
+			"path": "server"
 		},
 		{
-			"path": "server"
+			"name": "ux",
+			"path": "ux"
 		}
 	],
 	"settings": {

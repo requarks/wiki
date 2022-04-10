@@ -1,34 +1,46 @@
-key: disk
 title: Local File System
-description: Local storage on disk or network shares.
-author: requarks.io
-logo: https://static.requarks.io/logo/local-fs.svg
-website: https://wiki.js.org
-isAvailable: true
-supportedModes:
-  - push
-defaultMode: push
-schedule: false
+icon: '/_assets/icons/ultraviolet-hdd.svg'
+banner: '/_assets/storage/disk.jpg'
+description: Store files on the local file system or over network attached storage. Note that you must use replicated storage if using high-availability instances.
+vendor: Wiki.js
+website: 'https://js.wiki'
+assetDelivery:
+  isStreamingSupported: true
+  isDirectAccessSupported: false
+  defaultStreamingEnabled: true
+  defaultDirectAccessEnabled: false
+contentTypes:
+  defaultTypesEnabled: ['images', 'documents', 'others', 'large']
+  defaultLargeThreshold: '5MB'
+versioning:
+  isSupported: false
+  defaultEnabled: false
+sync: false
 internalSchedule: P1D
 props:
   path:
     type: String
     title: Path
     hint: Absolute path without a trailing slash (e.g. /home/wiki/backup, C:\wiki\backup)
+    icon: symlink-directory
     order: 1
   createDailyBackups:
     type: Boolean
     default: false
     title: Create Daily Backups
     hint: A tar.gz archive containing all content will be created daily in subfolder named _daily. Archives are kept for a month.
+    icon: archive-folder
     order: 2
 actions:
   - handler: dump
     label: Dump all content to disk
     hint: Output all content from the DB to the local disk. If you enabled this module after content was created or you temporarily disabled this module, you'll want to execute this action to add the missing files.
+    icon: downloads
   - handler: backup
     label: Create Backup
     hint: Will create a manual backup archive at this point in time, in a subfolder named _manual, from the contents currently on disk.
+    icon: archive-folder
   - handler: importAll
     label: Import Everything
     hint: Will import all content currently in the local disk folder.
+    icon: database-daily-import

@@ -1,108 +1,151 @@
-key: git
 title: Git
-description: Git is a version control system for tracking changes in computer files and coordinating work on those files among multiple people.
-author: requarks.io
-logo: https://static.requarks.io/logo/git-alt.svg
-website: https://git-scm.com/
-isAvailable: true
-supportedModes:
-  - sync
-  - push
-  - pull
-defaultMode: sync
-schedule: PT5M
+icon: '/_assets/icons/ultraviolet-git.svg'
+banner: '/_assets/storage/git.jpg'
+description: Git is a version control system for tracking changes in computer files and coordinating work on those files among multiple people. If using GitHub, use the GitHub module instead!
+vendor: Software Freedom Conservancy, Inc.
+website: 'https://git-scm.com'
+assetDelivery:
+  isStreamingSupported: true
+  isDirectAccessSupported: false
+  defaultStreamingEnabled: true
+  defaultDirectAccessEnabled: false
+contentTypes:
+  defaultTypesEnabled: ['pages', 'images', 'documents', 'others', 'large']
+  defaultLargeThreshold: '5MB'
+versioning:
+  isSupported: true
+  defaultEnabled: true
+  isForceEnabled: true
+sync:
+  supportedModes:
+    - sync
+    - push
+    - pull
+  defaultMode: sync
+  schedule: PT5M
 props:
   authType:
     type: String
     default: 'ssh'
     title: Authentication Type
     hint: Use SSH for maximum security.
+    icon: security-configuration
     enum:
-      - 'basic'
-      - 'ssh'
+      - basic|Basic
+      - ssh|SSH
+    enumDisplay: buttons
     order: 1
   repoUrl:
     type: String
     title: Repository URI
-    hint: Git-compliant URI (e.g. git@github.com:org/repo.git for ssh, https://github.com/org/repo.git for basic)
+    hint: Git-compliant URI (e.g. git@server.com:org/repo.git for ssh, https://server.com/org/repo.git for basic)
+    icon: dns
     order: 2
   branch:
     type: String
-    default: 'master'
+    default: 'main'
+    title: Branch
     hint: The branch to use during pull / push
+    icon: code-fork
     order: 3
   sshPrivateKeyMode:
     type: String
     title: SSH Private Key Mode
-    hint: SSH Authentication Only - The mode to use to load the private key. Fill in the corresponding field below.
+    hint: The mode to use to load the private key. Fill in the corresponding field below.
+    icon: grand-master-key
     order: 11
-    default: 'path'
+    default: inline
     enum:
-        - 'path'
-        - 'contents'
+        - path|File Path
+        - inline|Inline Contents
+    enumDisplay: buttons
+    if:
+      - { key: 'authType', eq: 'ssh' }
   sshPrivateKeyPath:
     type: String
-    title: A - SSH Private Key Path
-    hint: SSH Authentication Only - Absolute path to the key. The key must NOT be passphrase-protected. Mode must be set to path to use this option.
+    title: SSH Private Key Path
+    hint: Absolute path to the key. The key must NOT be passphrase-protected.
+    icon: key
     order: 12
+    if:
+      - { key: 'authType', eq: 'ssh' }
+      - { key: 'sshPrivateKeyMode', eq: 'path' }
   sshPrivateKeyContent:
     type: String
-    title: B - SSH Private Key Contents
-    hint: SSH Authentication Only - Paste the contents of the private key. The key must NOT be passphrase-protected. Mode must be set to contents to use this option.
+    title: SSH Private Key Contents
+    hint: Paste the contents of the private key. The key must NOT be passphrase-protected.
+    icon: key
     multiline: true
     sensitive: true
     order: 13
+    if:
+      - { key: 'sshPrivateKeyMode', eq: 'inline' }
   verifySSL:
     type: Boolean
     default: true
     title: Verify SSL Certificate
     hint: Some hosts requires SSL certificate checking to be disabled. Leave enabled for proper security.
+    icon: security-ssl
     order: 14
   basicUsername:
     type: String
     title: Username
     hint: Basic Authentication Only
+    icon: test-account
     order: 20
+    if:
+      - { key: 'authType', eq: 'basic' }
   basicPassword:
     type: String
     title: Password / PAT
     hint: Basic Authentication Only
+    icon: password
     sensitive: true
     order: 21
+    if:
+      - { key: 'authType', eq: 'basic' }
   defaultEmail:
     type: String
     title: Default Author Email
     default: 'name@company.com'
     hint: 'Used as fallback in case the author of the change is not present.'
-    order: 22
+    icon: email
+    order: 30
   defaultName:
     type: String
     title: Default Author Name
     default: 'John Smith'
     hint: 'Used as fallback in case the author of the change is not present.'
-    order: 23
+    icon: customer
+    order: 31
   localRepoPath:
     type: String
     title: Local Repository Path
     default: './data/repo'
     hint: 'Path where the local git repository will be created.'
-    order: 30
+    icon: symlink-directory
+    order: 32
   gitBinaryPath:
     type: String
     title: Git Binary Path
     default: ''
     hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
+    icon: run-command
     order: 50
 actions:
   - handler: syncUntracked
     label: Add Untracked Changes
     hint: Output all content from the DB to the local Git repository to ensure all untracked content is saved. If you enabled Git after content was created or you temporarily disabled Git, you'll want to execute this action to add the missing untracked changes.
+    icon: database-daily-export
   - handler: sync
     label: Force Sync
     hint: Will trigger an immediate sync operation, regardless of the current sync schedule. The sync direction is respected.
+    icon: synchronize
   - handler: importAll
     label: Import Everything
     hint: Will import all content currently in the local Git repository, regardless of the latest commit state. Useful for importing content from the remote repository created before git was enabled.
+    icon: database-daily-import
   - handler: purge
     label: Purge Local Repository
     hint: If you have unrelated merge histories, clearing the local repository can resolve this issue. This will not affect the remote repository or perform any commit.
+    icon: trash

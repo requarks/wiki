@@ -12,15 +12,15 @@ const commonHelper = require('../helpers/common')
  */
 module.exports = class Authentication extends Model {
   static get tableName() { return 'authentication' }
-  static get idColumn() { return 'key' }
 
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['key'],
+      required: ['module'],
 
       properties: {
-        key: {type: 'string'},
+        id: { type: 'string' },
+        module: { type: 'string' },
         selfRegistration: {type: 'boolean'}
       }
     }
@@ -43,79 +43,23 @@ module.exports = class Authentication extends Model {
     }))
   }
 
-  static async getStrategiesForLegacyClient() {
-    const strategies = await WIKI.models.authentication.query().select('key', 'selfRegistration')
-    let formStrategies = []
-    let socialStrategies = []
-
-    for (let stg of strategies) {
-      const stgInfo = _.find(WIKI.data.authentication, ['key', stg.key]) || {}
-      if (stgInfo.useForm) {
-        formStrategies.push({
-          key: stg.key,
-          title: stgInfo.title
-        })
-      } else {
-        socialStrategies.push({
-          ...stgInfo,
-          ...stg,
-          icon: await fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${stg.key}.svg`), 'utf8').catch(err => {
-            if (err.code === 'ENOENT') {
-              return null
-            }
-            throw err
-          })
-        })
-      }
-    }
-
-    return {
-      formStrategies,
-      socialStrategies
-    }
-  }
-
   static async refreshStrategiesFromDisk() {
     try {
-      const dbStrategies = await WIKI.models.authentication.query()
-
       // -> Fetch definitions from disk
-      const authDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/authentication'))
+      const authenticationDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/authentication'))
       WIKI.data.authentication = []
-      for (let dir of authDirs) {
-        const defRaw = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/authentication', dir, 'definition.yml'), 'utf8')
-        const def = yaml.safeLoad(defRaw)
-        WIKI.data.authentication.push({
-          ...def,
-          props: commonHelper.parseModuleProps(def.props)
-        })
+      for (const dir of authenticationDirs) {
+        const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/authentication', dir, 'definition.yml'), 'utf8')
+        const defParsed = yaml.load(def)
+        defParsed.key = dir
+        defParsed.props = commonHelper.parseModuleProps(defParsed.props)
+        WIKI.data.analytics.push(defParsed)
+        WIKI.logger.debug(`Loaded authentication module definition ${dir}: [ OK ]`)
       }
 
-      for (const strategy of dbStrategies) {
-        const strategyDef = _.find(WIKI.data.authentication, ['key', strategy.strategyKey])
-        if (!strategyDef) {
-          await WIKI.models.authentication.query().delete().where('key', strategy.key)
-          WIKI.logger.info(`Authentication strategy ${strategy.strategyKey} was removed from disk: [ REMOVED ]`)
-          continue
-        }
-        strategy.config = _.transform(strategyDef.props, (result, value, key) => {
-          if (!_.has(result, key)) {
-            _.set(result, key, value.default)
-          }
-          return result
-        }, strategy.config)
-
-        // Fix pre-2.5 strategies displayName
-        if (!strategy.displayName) {
-          await WIKI.models.authentication.query().patch({
-            displayName: strategyDef.title
-          }).where('key', strategy.key)
-        }
-      }
-
-      WIKI.logger.info(`Loaded ${WIKI.data.authentication.length} authentication strategies: [ OK ]`)
+      WIKI.logger.info(`Loaded ${WIKI.data.analytics.length} authentication module definitions: [ OK ]`)
     } catch (err) {
-      WIKI.logger.error(`Failed to scan or load new authentication providers: [ FAILED ]`)
+      WIKI.logger.error(`Failed to scan or load authentication providers: [ FAILED ]`)
       WIKI.logger.error(err)
     }
   }

@@ -4,6 +4,7 @@ const https = require('https')
 const { ApolloServer } = require('apollo-server-express')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const { ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageProductionDefault } = require('apollo-server-core')
 
 /* global WIKI */
 
@@ -123,6 +124,11 @@ module.exports = {
       uploads: false,
       context: ({ req, res }) => ({ req, res }),
       plugins: [
+        process.env.NODE_ENV === 'development' ? ApolloServerPluginLandingPageGraphQLPlayground({
+          footer: false
+        }) : ApolloServerPluginLandingPageProductionDefault({
+          footer: false
+        })
         // ApolloServerPluginDrainHttpServer({ httpServer: this.servers.http })
         // ...(this.servers.https && ApolloServerPluginDrainHttpServer({ httpServer: this.servers.https }))
       ]

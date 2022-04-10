@@ -12,7 +12,6 @@ const commonHelper = require('../helpers/common')
  */
 module.exports = class Analytics extends Model {
   static get tableName() { return 'analytics' }
-  static get idColumn() { return 'key' }
 
   static get jsonSchema () {
     return {
@@ -52,7 +51,7 @@ module.exports = class Analytics extends Model {
 
       WIKI.logger.info(`Loaded ${WIKI.data.analytics.length} analytics module definitions: [ OK ]`)
     } catch (err) {
-      WIKI.logger.error(`Failed to scan or load new analytics providers: [ FAILED ]`)
+      WIKI.logger.error(`Failed to scan or load analytics providers: [ FAILED ]`)
       WIKI.logger.error(err)
     }
   }

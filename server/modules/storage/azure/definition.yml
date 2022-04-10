@@ -1,44 +1,56 @@
-key: azure
 title: Azure Blob Storage
-description: Azure Blob Storage by Microsoft provides massively scalable object storage for unstructured data.
-author: requarks.io
-logo: https://static.requarks.io/logo/azure.svg
-website: https://azure.microsoft.com/services/storage/blobs/
-isAvailable: true
-supportedModes:
-  - push
-defaultMode: push
-schedule: false
+icon: '/_assets/icons/ultraviolet-azure.svg'
+banner: '/_assets/storage/azure.jpg'
+description: Azure Blob Storage is Microsoft's object storage solution for the cloud. Blob storage is optimized for storing massive amounts of unstructured data.
+vendor: Microsoft Corporation
+website: 'https://azure.microsoft.com'
+assetDelivery:
+  isStreamingSupported: true
+  isDirectAccessSupported: true
+  defaultStreamingEnabled: true
+  defaultDirectAccessEnabled: true
+contentTypes:
+  defaultTypesEnabled: ['images', 'documents', 'others', 'large']
+  defaultLargeThreshold: '5MB'
+versioning:
+  isSupported: false
+  defaultEnabled: false
+sync: false
 props:
   accountName:
     type: String
     title: Account Name
     default: ''
     hint: Your unique account name.
+    icon: 3d-touch
     order: 1
   accountKey:
     type: String
     title: Account Access Key
     default: ''
     hint: Either key 1 or key 2.
+    icon: key
     sensitive: true
     order: 2
   containerName:
     type: String
     title: Container Name
-    default: 'wiki'
+    default: wiki
     hint: Will automatically be created if it doesn't exist yet.
+    icon: shipping-container
     order: 3
   storageTier:
     type: String
     title: Storage Tier
     hint: Represents the access tier on a blob. Use Cool for lower storage costs but at higher retrieval costs.
+    icon: scan-stock
     order: 4
-    default: 'Cool'
+    default: cool
     enum:
-        - 'Hot'
-        - 'Cool'
+        - hot|Hot
+        - cool|Cool
 actions:
   - handler: exportAll
-    label: Export All
+    label: Export All DB Assets to Azure
     hint: Output all content from the DB to Azure Blog Storage, overwriting any existing data. If you enabled Azure Blog Storage after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
+    icon: this-way-up

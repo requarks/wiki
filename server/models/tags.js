@@ -17,7 +17,6 @@ module.exports = class Tag extends Model {
       properties: {
         id: {type: 'integer'},
         tag: {type: 'string'},
-        title: {type: 'string'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -59,10 +58,7 @@ module.exports = class Tag extends Model {
 
     // Create missing tags
 
-    const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({
-      tag: t,
-      title: t
-    }))
+    const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({ tag: t }))
     if (newTags.length > 0) {
       if (WIKI.config.db.type === 'postgres') {
         const createdTags = await WIKI.models.tags.query().insert(newTags)

@@ -1,9 +1,0 @@
-key: dropbox
-title: Dropbox
-description: Dropbox is a file hosting service that offers cloud storage, file synchronization, personal cloud, and client software.
-author: requarks.io
-logo: https://static.requarks.io/logo/dropbox.svg
-website: https://dropbox.com
-props:
-  appKey: String
-  appSecret: String

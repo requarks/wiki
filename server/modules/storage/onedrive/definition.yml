@@ -1,9 +1,0 @@
-key: onedrive
-title: OneDrive
-description: OneDrive is a file hosting service operated by Microsoft as part of its suite of Office Online services.
-author: requarks.io
-logo: https://static.requarks.io/logo/onedrive.svg
-website: https://onedrive.live.com/about/
-props:
-  clientId: String
-  clientSecret: String

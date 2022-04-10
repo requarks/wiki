@@ -36,65 +36,27 @@ module.exports = class CommentProvider extends Model {
 
   static async getProviders(isEnabled) {
     const providers = await WIKI.models.commentProviders.query().where(_.isBoolean(isEnabled) ? { isEnabled } : {})
-    return _.sortBy(providers, ['key'])
+    return _.sortBy(providers, ['module'])
   }
 
   static async refreshProvidersFromDisk() {
-    let trx
     try {
-      const dbProviders = await WIKI.models.commentProviders.query()
-
       // -> Fetch definitions from disk
-      const commentDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/comments'))
-      let diskProviders = []
-      for (let dir of commentDirs) {
+      const commentsDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/comments'))
+      WIKI.data.commentProviders = []
+      for (const dir of commentsDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/comments', dir, 'definition.yml'), 'utf8')
-        diskProviders.push(yaml.safeLoad(def))
+        const defParsed = yaml.load(def)
+        defParsed.key = dir
+        defParsed.props = commonHelper.parseModuleProps(defParsed.props)
+        WIKI.data.commentProviders.push(defParsed)
+        WIKI.logger.debug(`Loaded comments provider module definition ${dir}: [ OK ]`)
       }
-      WIKI.data.commentProviders = diskProviders.map(provider => ({
-        ...provider,
-        props: commonHelper.parseModuleProps(provider.props)
-      }))
 
-      let newProviders = []
-      for (let provider of WIKI.data.commentProviders) {
-        if (!_.some(dbProviders, ['key', provider.key])) {
-          newProviders.push({
-            key: provider.key,
-            isEnabled: provider.key === 'default',
-            config: _.transform(provider.props, (result, value, key) => {
-              _.set(result, key, value.default)
-              return result
-            }, {})
-          })
-        } else {
-          const providerConfig = _.get(_.find(dbProviders, ['key', provider.key]), 'config', {})
-          await WIKI.models.commentProviders.query().patch({
-            config: _.transform(provider.props, (result, value, key) => {
-              if (!_.has(result, key)) {
-                _.set(result, key, value.default)
-              }
-              return result
-            }, providerConfig)
-          }).where('key', provider.key)
-        }
-      }
-      if (newProviders.length > 0) {
-        trx = await WIKI.models.Objection.transaction.start(WIKI.models.knex)
-        for (let provider of newProviders) {
-          await WIKI.models.commentProviders.query(trx).insert(provider)
-        }
-        await trx.commit()
-        WIKI.logger.info(`Loaded ${newProviders.length} new comment providers: [ OK ]`)
-      } else {
-        WIKI.logger.info(`No new comment providers found: [ SKIPPED ]`)
-      }
+      WIKI.logger.info(`Loaded ${WIKI.data.commentProviders.length} comments providers module definitions: [ OK ]`)
     } catch (err) {
-      WIKI.logger.error(`Failed to scan or load new comment providers: [ FAILED ]`)
+      WIKI.logger.error(`Failed to scan or load comments providers: [ FAILED ]`)
       WIKI.logger.error(err)
-      if (trx) {
-        trx.rollback()
-      }
     }
   }
 
@@ -102,7 +64,7 @@ module.exports = class CommentProvider extends Model {
     const commentProvider = await WIKI.models.commentProviders.query().findOne('isEnabled', true)
     if (commentProvider) {
       WIKI.data.commentProvider = {
-        ..._.find(WIKI.data.commentProviders, ['key', commentProvider.key]),
+        ..._.find(WIKI.data.commentProviders, ['key', commentProvider.module]),
         head: '',
         bodyStart: '',
         bodyEnd: '',

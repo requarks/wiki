@@ -861,7 +861,7 @@ module.exports = class User extends Model {
    * Logout the current user
    */
   static async logout (context) {
-    if (!context.req.user || context.req.user.id === 2) {
+    if (!context.req.user || context.req.user.id === WIKI.config.auth.guestUserId) {
       return '/'
     }
     const usr = await WIKI.models.users.query().findById(context.req.user.id).select('providerKey')
@@ -870,7 +870,7 @@ module.exports = class User extends Model {
   }
 
   static async getGuestUser () {
-    const user = await WIKI.models.users.query().findById(2).withGraphJoined('groups').modifyGraph('groups', builder => {
+    const user = await WIKI.models.users.query().findById(WIKI.config.auth.guestUserId).withGraphJoined('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions')
     })
     if (!user) {
@@ -882,7 +882,7 @@ module.exports = class User extends Model {
   }
 
   static async getRootUser () {
-    let user = await WIKI.models.users.query().findById(1)
+    let user = await WIKI.models.users.query().findById(WIKI.config.auth.rootAdminUserId)
     if (!user) {
       WIKI.logger.error('CRITICAL ERROR: Root Administrator user is missing!')
       process.exit(1)

@@ -71,6 +71,12 @@ exports.up = async knex => {
       table.jsonb('autoEnrollGroups').notNullable().defaultTo('[]')
       table.jsonb('hideOnSites').notNullable().defaultTo('[]')
     })
+    .createTable('commentProviders', table => {
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.string('module').notNullable()
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.json('config').notNullable()
+    })
     // COMMENTS ----------------------------
     .createTable('comments', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
@@ -140,6 +146,7 @@ exports.up = async knex => {
       table.timestamp('publishEndDate')
       table.string('action').defaultTo('updated')
       table.text('content')
+      table.string('editor').notNullable()
       table.string('contentType').notNullable()
       table.jsonb('extra').notNullable().defaultTo('{}')
       table.jsonb('tags').defaultTo('[]')
@@ -166,6 +173,7 @@ exports.up = async knex => {
       table.text('content')
       table.text('render')
       table.jsonb('toc')
+      table.string('editor').notNullable()
       table.string('contentType').notNullable()
       table.jsonb('extra').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
@@ -279,6 +287,9 @@ exports.up = async knex => {
     .table('assetFolders', table => {
       table.uuid('parentId').references('id').inTable('assetFolders').index()
     })
+    .table('commentProviders', table => {
+      table.uuid('siteId').notNullable().references('id').inTable('sites')
+    })
     .table('comments', table => {
       table.uuid('pageId').notNullable().references('id').inTable('pages').index()
       table.uuid('authorId').notNullable().references('id').inTable('users').index()
@@ -306,6 +317,9 @@ exports.up = async knex => {
       table.uuid('pageId').notNullable().references('id').inTable('pages').onDelete('CASCADE')
       table.string('localeCode', 5).references('code').inTable('locales')
     })
+    .table('renderers', table => {
+      table.uuid('siteId').notNullable().references('id').inTable('sites')
+    })
     .table('storage', table => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
@@ -324,9 +338,50 @@ exports.up = async knex => {
   // DEFAULT DATA
   // =====================================
 
+  // -> GENERATE IDS
+
+  const groupAdminId = uuid()
+  const groupGuestId = '10000000-0000-4000-0000-000000000001'
+  const siteId = uuid()
+  const authModuleId = uuid()
+  const userAdminId = uuid()
+  const userGuestId = uuid()
+
   // -> SYSTEM CONFIG
 
+  WIKI.logger.info('Generating certificates...')
+  const secret = crypto.randomBytes(32).toString('hex')
+  const certs = crypto.generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: {
+      type: 'pkcs1',
+      format: 'pem'
+    },
+    privateKeyEncoding: {
+      type: 'pkcs1',
+      format: 'pem',
+      cipher: 'aes-256-cbc',
+      passphrase: secret
+    }
+  })
+
   await knex('settings').insert([
+    {
+      key: 'auth',
+      value: {
+        audience: 'urn:wiki.js',
+        tokenExpiration: '30m',
+        tokenRenewal: '14d',
+        certs: {
+          jwk: pem2jwk(certs.publicKey),
+          public: certs.publicKey,
+          private: certs.privateKey
+        },
+        secret,
+        rootAdminUserId: userAdminId,
+        guestUserId: userGuestId
+      }
+    },
     {
       key: 'mail',
       value: {
@@ -368,12 +423,6 @@ exports.up = async knex => {
       }
     },
     {
-      key: 'system',
-      value: {
-        sessionSecret: crypto.randomBytes(32).toString('hex')
-      }
-    },
-    {
       key: 'update',
       value: {
         locales: true
@@ -393,39 +442,11 @@ exports.up = async knex => {
 
   // -> DEFAULT SITE
 
-  WIKI.logger.info('Generating certificates...')
-  const secret = crypto.randomBytes(32).toString('hex')
-  const certs = crypto.generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-    publicKeyEncoding: {
-      type: 'pkcs1',
-      format: 'pem'
-    },
-    privateKeyEncoding: {
-      type: 'pkcs1',
-      format: 'pem',
-      cipher: 'aes-256-cbc',
-      passphrase: secret
-    }
-  })
-
-  const siteId = uuid()
   await knex('sites').insert({
     id: siteId,
     hostname: '*',
     isEnabled: true,
     config: {
-      auth: {
-        audience: 'urn:wiki.js',
-        tokenExpiration: '30m',
-        tokenRenewal: '14d',
-        certs: {
-          jwk: pem2jwk(certs.publicKey),
-          public: certs.publicKey,
-          private: certs.privateKey
-        },
-        secret
-      },
       title: 'My Wiki Site',
       description: '',
       company: '',
@@ -471,8 +492,6 @@ exports.up = async knex => {
 
   // -> DEFAULT GROUPS
 
-  const groupAdminId = uuid()
-  const groupGuestId = '10000000-0000-4000-0000-000000000001'
   await knex('groups').insert([
     {
       id: groupAdminId,
@@ -503,7 +522,6 @@ exports.up = async knex => {
 
   // -> AUTHENTICATION MODULE
 
-  const authModuleId = uuid()
   await knex('authentication').insert({
     id: authModuleId,
     module: 'local',
@@ -513,8 +531,6 @@ exports.up = async knex => {
 
   // -> USERS
 
-  const userAdminId = uuid()
-  const userGuestId = uuid()
   await knex('users').insert([
     {
       id: userAdminId,

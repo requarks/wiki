@@ -1,37 +1,159 @@
-key: s3
-title: Amazon S3
-description: Amazon S3 is a cloud computing web service offered by Amazon Web Services which provides object storage.
-author: andrewsim
-logo: https://static.requarks.io/logo/aws-s3.svg
-website: https://aws.amazon.com/s3/
-isAvailable: true
-supportedModes:
-  - push
-defaultMode: push
-schedule: false
+title: AWS S3 / DigitalOcean Spaces
+icon: '/_assets/icons/ultraviolet-amazon-web-services.svg'
+banner: '/_assets/storage/s3.jpg'
+description: Amazon Simple Storage Service (Amazon S3) is an object storage service offering industry-leading scalability, data availability, security, and performance.
+vendor: Amazon.com, Inc.
+website: 'https://aws.amazon.com'
+assetDelivery:
+  isStreamingSupported: true
+  isDirectAccessSupported: true
+  defaultStreamingEnabled: true
+  defaultDirectAccessEnabled: true
+contentTypes:
+  defaultTypesEnabled: ['images', 'documents', 'others', 'large']
+  defaultLargeThreshold: '5MB'
+versioning:
+  isSupported: false
+  defaultEnabled: false
+sync: false
 props:
-  region:
+  mode:
+    type: String
+    title: Mode
+    hint: Select a preset configuration mode or define a custom one.
+    icon: tune
+    default: aws
+    order: 1
+    enum:
+      - aws|AWS S3
+      - do|DigitalOcean Spaces
+      - custom|Custom
+  awsRegion:
     type: String
     title: Region
     hint: The AWS datacenter region where the bucket will be created.
-    order: 1
+    icon: geography
+    default: us-east-1
+    enum:
+      - af-south-1|af-south-1 - Africa (Cape Town)
+      - ap-east-1|ap-east-1 - Asia Pacific (Hong Kong)
+      - ap-southeast-3|ap-southeast-3 - Asia Pacific (Jakarta)
+      - ap-south-1|ap-south-1 - 	Asia Pacific (Mumbai)
+      - ap-northeast-3|ap-northeast-3 - Asia Pacific (Osaka)
+      - ap-northeast-2|ap-northeast-2 - Asia Pacific (Seoul)
+      - ap-southeast-1|ap-southeast-1 - Asia Pacific (Singapore)
+      - ap-southeast-2|ap-southeast-2 - Asia Pacific (Sydney)
+      - ap-northeast-1|ap-northeast-1 - Asia Pacific (Tokyo)
+      - ca-central-1|ca-central-1 - Canada (Central)
+      - cn-north-1|cn-north-1 - China (Beijing)
+      - cn-northwest-1|cn-northwest-1 - China (Ningxia)
+      - eu-central-1|eu-central-1 - Europe (Frankfurt)
+      - eu-west-1|eu-west-1 - Europe (Ireland)
+      - eu-west-2|eu-west-2 - Europe (London)
+      - eu-south-1|eu-south-1 - Europe (Milan)
+      - eu-west-3|eu-west-3 - Europe (Paris)
+      - eu-north-1|eu-north-1 - Europe (Stockholm)
+      - me-south-1|me-south-1 - Middle East (Bahrain)
+      - sa-east-1|sa-east-1 - South America (São Paulo)
+      - us-east-1|us-east-1 - US East (N. Virginia)
+      - us-east-2|us-east-2 - US East (Ohio)
+      - us-west-1|us-west-1 - US West (N. California)
+      - us-west-2|us-west-2 - US West (Oregon)
+    order: 2
+    if:
+      - { key: 'mode', eq: 'aws' }
+  doRegion:
+    type: String
+    title: Region
+    hint: The DigitalOcean Spaces region
+    icon: geography
+    default: nyc3
+    enum:
+      - ams3|Amsterdam
+      - fra1|Frankfurt
+      - nyc3|New York
+      - sfo2|San Francisco 2
+      - sfo3|San Francisco 3
+      - sgp1|Singapore
+    order: 2
+    if:
+      - { key: 'mode', eq: 'do' }
+  endpoint:
+    type: String
+    title: Endpoint URI
+    hint: The full S3-compliant endpoint URI.
+    icon: dns
+    default: https://service.region.example.com
+    order: 2
+    if:
+      - { key: 'mode', eq: 'custom' }
   bucket:
     type: String
     title: Unique bucket name
     hint: The unique bucket name to create (e.g. wiki-johndoe).
-    order: 2
+    icon: open-box
+    order: 3
   accessKeyId:
     type: String
     title: Access Key ID
     hint: The Access Key.
-    order: 3
+    icon: 3d-touch
+    order: 4
   secretAccessKey:
     type: String
     title: Secret Access Key
     hint: The Secret Access Key for the Access Key ID you created above.
+    icon: key
     sensitive: true
-    order: 4
+    order: 5
+  storageTier:
+    type: String
+    title: Storage Tier
+    hint: The storage tier to use when adding files.
+    icon: scan-stock
+    order: 6
+    default: STANDARD
+    enum:
+      - STANDARD|Standard
+      - STANDARD_IA|Standard Infrequent Access
+      - INTELLIGENT_TIERING|Intelligent Tiering
+      - ONEZONE_IA|One Zone Infrequent Access
+      - REDUCED_REDUNDANCY|Reduced Redundancy
+      - GLACIER_IR|Glacier Instant Retrieval
+      - GLACIER|Glacier Flexible Retrieval
+      - DEEP_ARCHIVE|Glacier Deep Archive
+      - OUTPOSTS|Outposts
+    if:
+      - { key: 'mode', eq: 'aws' }
+  sslEnabled:
+    type: Boolean
+    title: Use SSL
+    hint: Whether to enable SSL for requests
+    icon: secure
+    default: true
+    order: 10
+    if:
+      - { key: 'mode', eq: 'custom' }
+  s3ForcePathStyle:
+    type: Boolean
+    title: Force Path Style for S3 objects
+    hint: Whether to force path style URLs for S3 objects.
+    icon: filtration
+    default: false
+    order: 11
+    if:
+      - { key: 'mode', eq: 'custom' }
+  s3BucketEndpoint:
+    type: Boolean
+    title: Single Bucket Endpoint
+    hint: Whether the provided endpoint addresses an individual bucket.
+    icon: swipe-right
+    default: false
+    order: 12
+    if:
+      - { key: 'mode', eq: 'custom' }
 actions:
   - handler: exportAll
-    label: Export All
+    label: Export All DB Assets to S3
     hint: Output all content from the DB to S3, overwriting any existing data. If you enabled S3 after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
+    icon: this-way-up

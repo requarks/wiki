@@ -17,93 +17,45 @@ module.exports = class Storage extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['key', 'isEnabled'],
+      required: ['module', 'isEnabled', 'siteId'],
 
       properties: {
-        key: {type: 'string'},
+        module: {type: 'string'},
         isEnabled: {type: 'boolean'},
-        mode: {type: 'string'}
+        SVGAnimatedInteger: {type: 'string'}
       }
     }
   }
 
   static get jsonAttributes() {
-    return ['config', 'state']
+    return ['contentTypes', 'assetDelivery', 'versioning', 'schedule', 'config', 'state']
   }
 
-  static async getTargets() {
-    return WIKI.models.storage.query()
+  static async getTargets ({ siteId }) {
+    return WIKI.models.storage.query().where(builder => {
+      if (siteId) {
+        builder.where('siteId', siteId)
+      }
+    })
   }
 
-  static async refreshTargetsFromDisk() {
+  static async refreshTargetsFromDisk () {
     let trx
     try {
-      const dbTargets = await WIKI.models.storage.query()
-
       // -> Fetch definitions from disk
       const storageDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/storage'))
-      let diskTargets = []
-      for (let dir of storageDirs) {
+      WIKI.storage.defs = []
+      for (const dir of storageDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/storage', dir, 'definition.yml'), 'utf8')
-        diskTargets.push(yaml.safeLoad(def))
+        const defParsed = yaml.load(def)
+        defParsed.key = dir
+        defParsed.isLoaded = false
+        WIKI.storage.defs.push(defParsed)
+        WIKI.logger.debug(`Loaded storage module definition ${dir}: [ OK ]`)
       }
-      WIKI.data.storage = diskTargets.map(target => ({
-        ...target,
-        isAvailable: _.get(target, 'isAvailable', false),
-        props: commonHelper.parseModuleProps(target.props)
-      }))
-
-      // -> Insert new targets
-      let newTargets = []
-      for (let target of WIKI.data.storage) {
-        if (!_.some(dbTargets, ['key', target.key])) {
-          newTargets.push({
-            key: target.key,
-            isEnabled: false,
-            mode: target.defaultMode || 'push',
-            syncInterval: target.schedule || 'P0D',
-            config: _.transform(target.props, (result, value, key) => {
-              _.set(result, key, value.default)
-              return result
-            }, {}),
-            state: {
-              status: 'pending',
-              message: '',
-              lastAttempt: null
-            }
-          })
-        } else {
-          const targetConfig = _.get(_.find(dbTargets, ['key', target.key]), 'config', {})
-          await WIKI.models.storage.query().patch({
-            config: _.transform(target.props, (result, value, key) => {
-              if (!_.has(result, key)) {
-                _.set(result, key, value.default)
-              }
-              return result
-            }, targetConfig)
-          }).where('key', target.key)
-        }
-      }
-      if (newTargets.length > 0) {
-        trx = await WIKI.models.Objection.transaction.start(WIKI.models.knex)
-        for (let target of newTargets) {
-          await WIKI.models.storage.query(trx).insert(target)
-        }
-        await trx.commit()
-        WIKI.logger.info(`Loaded ${newTargets.length} new storage targets: [ OK ]`)
-      } else {
-        WIKI.logger.info(`No new storage targets found: [ SKIPPED ]`)
-      }
-
-      // -> Delete removed targets
-      for (const target of dbTargets) {
-        if (!_.some(WIKI.data.storage, ['key', target.key])) {
-          await WIKI.models.storage.query().where('key', target.key).del()
-          WIKI.logger.info(`Removed target ${target.key} because it is no longer present in the modules folder: [ OK ]`)
-        }
-      }
+      WIKI.logger.info(`Loaded ${WIKI.storage.defs.length} storage module definitions: [ OK ]`)
     } catch (err) {
-      WIKI.logger.error(`Failed to scan or load new storage providers: [ FAILED ]`)
+      WIKI.logger.error('Failed to scan or load new storage providers: [ FAILED ]')
       WIKI.logger.error(err)
       if (trx) {
         trx.rollback()
@@ -112,65 +64,90 @@ module.exports = class Storage extends Model {
   }
 
   /**
+ * Ensure a storage module is loaded
+ */
+  static async ensureModule (moduleName) {
+    if (!_.has(WIKI.storage.modules, moduleName)) {
+      try {
+        WIKI.storage.modules[moduleName] = require(`../modules/storage/${moduleName}/storage`)
+        WIKI.logger.debug(`Activated storage module ${moduleName}: [ OK ]`)
+        return true
+      } catch (err) {
+        WIKI.logger.warn(`Failed to load storage module ${moduleName}: [ FAILED ]`)
+        WIKI.logger.warn(err)
+        return false
+      }
+    } else {
+      return true
+    }
+  }
+
+  /**
    * Initialize active storage targets
    */
-  static async initTargets() {
-    this.targets = await WIKI.models.storage.query().where('isEnabled', true).orderBy('key')
+  static async initTargets () {
+    const dbTargets = await WIKI.models.storage.query().where('isEnabled', true)
+    const activeModules = _.uniq(dbTargets.map(t => t.module))
     try {
       // -> Stop and delete existing jobs
-      const prevjobs = _.remove(WIKI.scheduler.jobs, job => job.name === `sync-storage`)
-      if (prevjobs.length > 0) {
-        prevjobs.forEach(job => job.stop())
+      // const prevjobs = _.remove(WIKI.scheduler.jobs, job => job.name === 'sync-storage')
+      // if (prevjobs.length > 0) {
+      //   prevjobs.forEach(job => job.stop())
+      // }
+
+      // -> Load active modules
+      for (const md of activeModules) {
+        this.ensureModule(md)
       }
 
       // -> Initialize targets
-      for (let target of this.targets) {
-        const targetDef = _.find(WIKI.data.storage, ['key', target.key])
-        target.fn = require(`../modules/storage/${target.key}/storage`)
-        target.fn.config = target.config
-        target.fn.mode = target.mode
-        try {
-          await target.fn.init()
+      // for (const target of this.targets) {
+      //   const targetDef = _.find(WIKI.data.storage, ['key', target.key])
+      //   target.fn = require(`../modules/storage/${target.key}/storage`)
+      //   target.fn.config = target.config
+      //   target.fn.mode = target.mode
+      //   try {
+      //     await target.fn.init()
 
-          // -> Save succeeded init state
-          await WIKI.models.storage.query().patch({
-            state: {
-              status: 'operational',
-              message: '',
-              lastAttempt: new Date().toISOString()
-            }
-          }).where('key', target.key)
+      //     // -> Save succeeded init state
+      //     await WIKI.models.storage.query().patch({
+      //       state: {
+      //         status: 'operational',
+      //         message: '',
+      //         lastAttempt: new Date().toISOString()
+      //       }
+      //     }).where('key', target.key)
 
-          // -> Set recurring sync job
-          if (targetDef.schedule && target.syncInterval !== `P0D`) {
-            WIKI.scheduler.registerJob({
-              name: `sync-storage`,
-              immediate: false,
-              schedule: target.syncInterval,
-              repeat: true
-            }, target.key)
-          }
+      //     // -> Set recurring sync job
+      //     if (targetDef.schedule && target.syncInterval !== 'P0D') {
+      //       WIKI.scheduler.registerJob({
+      //         name: 'sync-storage',
+      //         immediate: false,
+      //         schedule: target.syncInterval,
+      //         repeat: true
+      //       }, target.key)
+      //     }
 
-          // -> Set internal recurring sync job
-          if (targetDef.internalSchedule && targetDef.internalSchedule !== `P0D`) {
-            WIKI.scheduler.registerJob({
-              name: `sync-storage`,
-              immediate: false,
-              schedule: target.internalSchedule,
-              repeat: true
-            }, target.key)
-          }
-        } catch (err) {
-          // -> Save initialization error
-          await WIKI.models.storage.query().patch({
-            state: {
-              status: 'error',
-              message: err.message,
-              lastAttempt: new Date().toISOString()
-            }
-          }).where('key', target.key)
-        }
-      }
+      //     // -> Set internal recurring sync job
+      //     if (targetDef.internalSchedule && targetDef.internalSchedule !== 'P0D') {
+      //       WIKI.scheduler.registerJob({
+      //         name: 'sync-storage',
+      //         immediate: false,
+      //         schedule: target.internalSchedule,
+      //         repeat: true
+      //       }, target.key)
+      //     }
+      //   } catch (err) {
+      //     // -> Save initialization error
+      //     await WIKI.models.storage.query().patch({
+      //       state: {
+      //         status: 'error',
+      //         message: err.message,
+      //         lastAttempt: new Date().toISOString()
+      //       }
+      //     }).where('key', target.key)
+      //   }
+      // }
     } catch (err) {
       WIKI.logger.warn(err)
       throw err

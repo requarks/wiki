@@ -77,7 +77,7 @@ module.exports = async () => {
 
   app.use(cookieParser())
   app.use(session({
-    secret: WIKI.config.system.sessionSecret,
+    secret: WIKI.config.auth.secret,
     resave: false,
     saveUninitialized: false,
     store: new KnexSessionStore({

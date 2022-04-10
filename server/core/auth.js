@@ -66,7 +66,7 @@ module.exports = {
       // Load JWT
       passport.use('jwt', new passportJWT.Strategy({
         jwtFromRequest: securityHelper.extractJWT,
-        secretOrKey: WIKI.config.certs.public,
+        secretOrKey: WIKI.config.auth.certs.public,
         audience: WIKI.config.auth.audience,
         issuer: 'urn:wiki.js',
         algorithms: ['RS256']
@@ -76,13 +76,13 @@ module.exports = {
 
       // Load enabled strategies
       const enabledStrategies = await WIKI.models.authentication.getStrategies()
-      for (let idx in enabledStrategies) {
+      for (const idx in enabledStrategies) {
         const stg = enabledStrategies[idx]
         try {
-          const strategy = require(`../modules/authentication/${stg.strategyKey}/authentication.js`)
+          const strategy = require(`../modules/authentication/${stg.module}/authentication.js`)
 
-          stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
-          stg.config.key = stg.key;
+          stg.config.callbackURL = `${WIKI.config.host}/login/${stg.id}/callback`
+          stg.config.key = stg.id
           strategy.init(passport, stg.config)
           strategy.config = stg.config
 
@@ -92,7 +92,7 @@ module.exports = {
           }
           WIKI.logger.info(`Authentication Strategy ${stg.displayName}: [ OK ]`)
         } catch (err) {
-          WIKI.logger.error(`Authentication Strategy ${stg.displayName} (${stg.key}): [ FAILED ]`)
+          WIKI.logger.error(`Authentication Strategy ${stg.displayName} (${stg.id}): [ FAILED ]`)
           WIKI.logger.error(err)
         }
       }

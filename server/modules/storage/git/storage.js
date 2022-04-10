@@ -73,7 +73,7 @@ module.exports = {
               mode: 0o600
             })
           } catch (err) {
-            WIKI.logger.error(err)
+            console.error(err)
             throw err
           }
         }
@@ -142,9 +142,7 @@ module.exports = {
       if (_.get(diff, 'files', []).length > 0) {
         let filesToProcess = []
         for (const f of diff.files) {
-          const fMoved = f.file.split(' => ')
-          const fName = fMoved.length === 2 ? fMoved[1] : fMoved[0]
-          const fPath = path.join(this.repoPath, fName)
+          const fPath = path.join(this.repoPath, f.file)
           let fStats = { size: 0 }
           try {
             fStats = await fs.stat(fPath)
@@ -161,8 +159,7 @@ module.exports = {
               path: fPath,
               stats: fStats
             },
-            oldPath: fMoved[0],
-            relPath: fName
+            relPath: f.file
           })
         }
         await this.processFiles(filesToProcess, rootUser)
@@ -177,25 +174,11 @@ module.exports = {
   async processFiles(files, user) {
     for (const item of files) {
       const contentType = pageHelper.getContentType(item.relPath)
-      const fileExists = await fs.pathExists(item.file.path)
+      const fileExists = await fs.pathExists(item.file)
       if (!item.binary && contentType) {
         // -> Page
 
-        if (fileExists && !item.importAll && item.relPath !== item.oldPath) {
-          // Page was renamed by git, so rename in DB
-          WIKI.logger.info(`(STORAGE/GIT) Page marked as renamed: from ${item.oldPath} to ${item.relPath}`)
-
-          const contentPath = pageHelper.getPagePath(item.oldPath)
-          const contentDestinationPath = pageHelper.getPagePath(item.relPath)
-          await WIKI.models.pages.movePage({
-            user: user,
-            path: contentPath.path,
-            destinationPath: contentDestinationPath.path,
-            locale: contentPath.locale,
-            destinationLocale: contentPath.locale,
-            skipStorage: true
-          })
-        } else if (!fileExists && !item.importAll && item.deletions > 0 && item.insertions === 0) {
+        if (!fileExists && item.deletions > 0 && item.insertions === 0) {
           // Page was deleted by git, can safely mark as deleted in DB
           WIKI.logger.info(`(STORAGE/GIT) Page marked as deleted: ${item.relPath}`)
 
@@ -224,23 +207,7 @@ module.exports = {
       } else {
         // -> Asset
 
-        if (fileExists && !item.importAll && ((item.before === item.after) || (item.deletions === 0 && item.insertions === 0))) {
-          // Asset was renamed by git, so rename in DB
-          WIKI.logger.info(`(STORAGE/GIT) Asset marked as renamed: from ${item.oldPath} to ${item.relPath}`)
-
-          const fileHash = assetHelper.generateHash(item.relPath)
-          const assetToRename = await WIKI.models.assets.query().findOne({ hash: fileHash })
-          if (assetToRename) {
-            await WIKI.models.assets.query().patch({
-              filename: item.relPath,
-              hash: fileHash
-            }).findById(assetToRename.id)
-            await assetToRename.deleteAssetCache()
-          } else {
-            WIKI.logger.info(`(STORAGE/GIT) Asset was not found in the DB, nothing to rename: ${item.relPath}`)
-          }
-          continue
-        } else if (!fileExists && !item.importAll && ((item.before > 0 && item.after === 0) || (item.deletions > 0 && item.insertions === 0))) {
+        if (!fileExists && ((item.before > 0 && item.after === 0) || (item.deletions > 0 && item.insertions === 0))) {
           // Asset was deleted by git, can safely mark as deleted in DB
           WIKI.logger.info(`(STORAGE/GIT) Asset marked as deleted: ${item.relPath}`)
 
@@ -427,8 +394,7 @@ module.exports = {
               relPath,
               file,
               deletions: 0,
-              insertions: 0,
-              importAll: true
+              insertions: 0
             }], rootUser)
           }
           cb()
@@ -445,15 +411,12 @@ module.exports = {
 
     // -> Pages
     await pipeline(
-      WIKI.models.knex.column('id', 'path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt', 'editorKey').select().from('pages').where({
+      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
         isPrivate: false
       }).stream(),
       new stream.Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {
-          const pageObject = await WIKI.models.pages.query().findById(page.id)
-          page.tags = await pageObject.$relatedQuery('tags')
-
           let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
           if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
             fileName = `${page.localeCode}/${fileName}`

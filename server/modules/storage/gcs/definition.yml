@@ -1,0 +1,65 @@
+title: Google Cloud Storage
+icon: '/_assets/icons/ultraviolet-google.svg'
+banner: '/_assets/storage/gcs.jpg'
+description: Google Cloud Storage is an online file storage web service for storing and accessing data on Google Cloud Platform infrastructure.
+vendor: Alphabet Inc.
+website: 'https://cloud.google.com'
+assetDelivery:
+  isStreamingSupported: true
+  isDirectAccessSupported: true
+  defaultStreamingEnabled: true
+  defaultDirectAccessEnabled: true
+contentTypes:
+  defaultTypesEnabled: ['images', 'documents', 'others', 'large']
+  defaultLargeThreshold: '5MB'
+versioning:
+  isSupported: false
+  defaultEnabled: false
+sync: false
+props:
+  accountName:
+    type: String
+    title: Project ID
+    hint: The project ID from the Google Developer's Console (e.g. grape-spaceship-123).
+    icon: 3d-touch
+    default: ''
+    order: 1
+  credentialsJSON:
+    type: String
+    title: JSON Credentials
+    hint: Contents of the JSON credentials file for the service account having Cloud Storage permissions.
+    icon: key
+    default: ''
+    multiline: true
+    sensitive: true
+    order: 2
+  bucket:
+    type: String
+    title: Unique bucket name
+    hint: The unique bucket name to create (e.g. wiki-johndoe).
+    icon: open-box
+    order: 3
+  storageTier:
+    type: String
+    title: Storage Tier
+    hint: Select the storage class to use when uploading new assets.
+    icon: scan-stock
+    order: 4
+    default: STANDARD
+    enum:
+      - STANDARD|Standard
+      - NEARLINE|Nearline
+      - COLDLINE|Coldline
+      - ARCHIVE|Archive
+  apiEndpoint:
+    type: String
+    title: API Endpoint
+    hint: The API endpoint of the service used to make requests.
+    icon: api
+    default: storage.google.com
+    order: 5
+actions:
+  - handler: exportAll
+    label: Export All DB Assets to GCS
+    hint: Output all content from the DB to Google Cloud Storage, overwriting any existing data. If you enabled Google Cloud Storage after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
+    icon: this-way-up

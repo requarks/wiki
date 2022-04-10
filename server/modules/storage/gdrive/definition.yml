@@ -1,9 +1,0 @@
-key: gdrive
-title: Google Drive
-description: Google Drive is a file storage and synchronization service developed by Google.
-author: requarks.io
-logo: https://static.requarks.io/logo/google-drive.svg
-website: https://www.google.com/drive/
-props:
-  clientId: String
-  clientSecret: String
