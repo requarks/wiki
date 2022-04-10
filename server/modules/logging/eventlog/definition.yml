@@ -1,8 +1,0 @@
-key: eventlog
-title: Windows Event Log
-description: Report logs to the Windows Event Log
-author: requarks.io
-logo: https://static.requarks.io/logo/windows-server.svg
-website: https://wiki.js.org
-defaultLevel: warn
-props: {}

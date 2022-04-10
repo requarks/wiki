@@ -38,6 +38,9 @@ export const useAdminStore = defineStore('admin', {
         fetchPolicy: 'network-only'
       })
       this.sites = cloneDeep(resp?.data?.sites ?? [])
+      if (!this.currentSiteId) {
+        this.currentSiteId = this.sites[0].id
+      }
     }
   }
 })

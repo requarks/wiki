@@ -29,7 +29,7 @@ const routes = [
     children: [
       { path: '', redirect: '/_admin/dashboard' },
       { path: 'dashboard', component: () => import('../pages/AdminDashboard.vue') },
-      // { path: 'sites', component: () => import('../pages/AdminSites.vue') },
+      { path: 'sites', component: () => import('../pages/AdminSites.vue') },
       // // -> Site
       // { path: ':siteid/general', component: () => import('../pages/AdminGeneral.vue') },
       { path: ':siteid/editors', component: () => import('../pages/AdminEditors.vue') },
