@@ -167,8 +167,7 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section {{ t('admin.dev.flags.title') }}
   q-page-container.admin-container
     router-view(v-slot='{ Component }')
-      transition(name='fade')
-        component(:is='Component')
+      component(:is='Component')
   q-dialog.admin-overlay(
     v-model='overlayIsShown'
     persistent

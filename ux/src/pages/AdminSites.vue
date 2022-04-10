@@ -4,8 +4,8 @@ q-page.admin-locale
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-change-theme.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.sites.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.sites.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.sites.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.sites.subtitle') }}
     .col-auto
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-question-circle'
@@ -16,7 +16,7 @@ q-page.admin-locale
         target='_blank'
         )
       q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-redo-alt'
+        icon='fa-solid fa-rotate'
         flat
         color='secondary'
         @click='refresh'
@@ -24,7 +24,7 @@ q-page.admin-locale
       q-btn(
         unelevated
         icon='las la-plus'
-        :label='$t(`admin.sites.new`)'
+        :label='t(`admin.sites.new`)'
         color='primary'
         @click='createSite'
         )
@@ -34,7 +34,7 @@ q-page.admin-locale
       q-card.shadow-1
         q-list(separator)
           q-item(
-            v-for='site of sites'
+            v-for='site of adminStore.sites'
             :key='site.id'
             )
             q-item-section(side)
@@ -75,8 +75,8 @@ q-page.admin-locale
                 color='primary'
                 checked-icon='las la-check'
                 unchecked-icon='las la-times'
-                :label='$t(`admin.sites.isActive`)'
-                :aria-label='$t(`admin.sites.isActive`)'
+                :label='t(`admin.sites.isActive`)'
+                :aria-label='t(`admin.sites.isActive`)'
                 @update:model-value ='(val) => { toggleSiteState(site, val) }'
                 )
             q-separator.q-ml-md(vertical)
@@ -86,7 +86,7 @@ q-page.admin-locale
                 @click='editSite(site)'
                 icon='las la-pen'
                 color='indigo'
-                :label='$t(`common.actions.edit`)'
+                :label='t(`common.actions.edit`)'
                 no-caps
                 )
               q-btn.acrylic-btn(
@@ -97,82 +97,89 @@ q-page.admin-locale
                 )
 </template>
 
-<script>
-import { get } from 'vuex-pathify'
-import { copyToClipboard, createMetaMixin } from 'quasar'
+<script setup>
+import { useMeta, useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
+import { defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+
+import { useAdminStore } from '../stores/admin'
+
+// COMPONENTS
 
 import SiteActivateDialog from '../components/SiteActivateDialog.vue'
 import SiteCreateDialog from '../components/SiteCreateDialog.vue'
 import SiteDeleteDialog from '../components/SiteDeleteDialog.vue'
 
-export default {
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.sites.title')
-      }
-    })
-  ],
-  data () {
-    return {
-      loading: false
-    }
-  },
-  computed: {
-    sites: get('admin/sites', false)
-  },
-  methods: {
-    copyID (uid) {
-      copyToClipboard(uid).then(() => {
-        this.$q.notify({
-          type: 'positive',
-          message: this.$t('common.clipboard.uuidSuccess')
-        })
-      }).catch(() => {
-        this.$q.notify({
-          type: 'negative',
-          message: this.$t('common.clipboard.uuidFailure')
-        })
-      })
-    },
-    async refresh () {
-      await this.$store.dispatch('admin/fetchSites')
-      this.$q.notify({
-        type: 'positive',
-        message: this.$t('admin.sites.refreshSuccess')
-      })
-    },
-    createSite () {
-      this.$q.dialog({
-        component: SiteCreateDialog
-      })
-    },
-    editSite (st) {
-      this.$store.set('admin/currentSiteId', st.id)
-      this.$nextTick(() => {
-        this.$router.push(`/_admin/${st.id}/general`)
-      })
-    },
-    toggleSiteState (st, newState) {
-      this.$q.dialog({
-        component: SiteActivateDialog,
-        componentProps: {
-          site: st,
-          value: newState
-        }
-      })
-    },
-    deleteSite (st) {
-      this.$q.dialog({
-        component: SiteDeleteDialog,
-        componentProps: {
-          site: st
-        }
-      })
-    }
-  },
-  mounted () {
-    this.$store.dispatch('admin/fetchSites')
-  }
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+
+// ROUTER
+
+const router = useRouter()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.sites.title')
+})
+
+// DATA
+
+const loading = ref(false)
+
+// METHODS
+
+async function refresh () {
+  await adminStore.fetchSites()
+  $q.notify({
+    type: 'positive',
+    message: t('admin.sites.refreshSuccess')
+  })
 }
+function createSite () {
+  $q.dialog({
+    component: SiteCreateDialog
+  })
+}
+function editSite (st) {
+  adminStore.$patch({
+    currentSiteId: st.id
+  })
+  nextTick(() => {
+    router.push(`/_admin/${st.id}/general`)
+  })
+}
+function toggleSiteState (st, newState) {
+  $q.dialog({
+    component: SiteActivateDialog,
+    componentProps: {
+      site: st,
+      value: newState
+    }
+  })
+}
+function deleteSite (st) {
+  $q.dialog({
+    component: SiteDeleteDialog,
+    componentProps: {
+      site: st
+    }
+  })
+}
+
+// MOUNTED
+
+onMounted(async () => {
+  await adminStore.fetchSites()
+})
 </script>
