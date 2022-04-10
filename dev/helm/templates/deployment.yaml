@@ -6,6 +6,7 @@ metadata:
     {{- include "wiki.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
       {{- include "wiki.selectorLabels" . | nindent 6 }}

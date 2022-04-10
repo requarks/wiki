@@ -98,6 +98,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `image.tag`                          | Wiki.js image tag                            | `latest`                                                      |
 | `imagePullPolicy`                    | Image pull policy                           | `IfNotPresent`                                             |
 | `replicacount`                   | Amount of wiki.js service pods to run                   | `1`                                                        |
+| `revisionHistoryLimit`                   | Total amount of revision history points                   | `10`                                        |
 | `resources.limits`               | wiki.js service resource limits                         | `nil`                               |
 | `resources.requests`             | wiki.js service resource requests                       | `nil`                               |
 | `nodeSelector`                   | Node labels for wiki.js pod assignment          | `{}`                                                       |
