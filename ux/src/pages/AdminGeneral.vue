@@ -589,8 +589,8 @@ async function save () {
       type: 'positive',
       message: t('admin.general.saveSuccess')
     })
+    await adminStore.fetchSites()
     if (adminStore.currentSiteId === siteStore.id) {
-      await adminStore.fetchSites()
       siteStore.$patch({
         title: state.config.title,
         description: state.config.description,
