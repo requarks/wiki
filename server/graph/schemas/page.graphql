@@ -3,36 +3,24 @@
 # ===============================================
 
 extend type Query {
-  pages: PageQuery
-}
-
-extend type Mutation {
-  pages: PageMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type PageQuery {
-  history(
+  pageHistoryById(
     id: Int!
     offsetPage: Int
     offsetSize: Int
-  ): PageHistoryResult @auth(requires: ["manage:system", "read:history"])
+  ): PageHistoryResult
 
-  version(
+  pageVersionById(
     pageId: Int!
     versionId: Int!
-  ): PageVersion @auth(requires: ["manage:system", "read:history"])
+  ): PageVersion
 
-  search(
+  searchPages(
     query: String!
     path: String
     locale: String
-  ): PageSearchResponse! @auth(requires: ["manage:system", "read:pages"])
+  ): PageSearchResponse!
 
-  list(
+  pages(
     limit: Int
     orderBy: PageOrderBy
     orderByDirection: PageOrderByDirection
@@ -40,46 +28,42 @@ type PageQuery {
     locale: String
     creatorId: Int
     authorId: Int
-  ): [PageListItem!]! @auth(requires: ["manage:system", "read:pages"])
+  ): [PageListItem!]!
 
-  single(
+  pageById(
     id: Int!
-  ): Page @auth(requires: ["read:pages", "manage:system"])
+  ): Page
 
-  tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
+  tags: [PageTag]!
 
   searchTags(
     query: String!
-  ): [String]! @auth(requires: ["manage:system", "read:pages"])
+  ): [String]!
 
-  tree(
+  pageTree(
     path: String
     parent: Int
     mode: PageTreeMode!
     locale: String!
     includeAncestors: Boolean
-  ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
+  ): [PageTreeItem]
 
-  links(
+  pageLinks(
     locale: String!
-  ): [PageLinkItem] @auth(requires: ["manage:system", "read:pages"])
+  ): [PageLinkItem]
 
   checkConflicts(
     id: Int!
     checkoutDate: Date!
-  ): Boolean! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): Boolean!
 
-  conflictLatest(
+  checkConflictsLatest(
     id: Int!
-  ): PageConflictLatest! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): PageConflictLatest!
 }
 
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type PageMutation {
-  create(
+extend type Mutation {
+  createPage(
     content: String!
     description: String!
     editor: String!
@@ -93,9 +77,9 @@ type PageMutation {
     scriptJs: String
     tags: [String]!
     title: String!
-  ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): PageResponse
 
-  update(
+  updatePage(
     id: Int!
     content: String
     description: String
@@ -110,54 +94,54 @@ type PageMutation {
     scriptJs: String
     tags: [String]
     title: String
-  ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): PageResponse
 
-  convert(
+  convertPage(
     id: Int!
     editor: String!
-  ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): DefaultResponse
 
-  move(
+  renamePage(
     id: Int!
     destinationPath: String!
     destinationLocale: String!
-  ): DefaultResponse @auth(requires: ["manage:pages", "manage:system"])
+  ): DefaultResponse
 
-  delete(
+  deletePage(
     id: Int!
-  ): DefaultResponse @auth(requires: ["delete:pages", "manage:system"])
+  ): DefaultResponse
 
   deleteTag(
     id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
   updateTag(
     id: Int!
     tag: String!
     title: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
-  flushCache: DefaultResponse @auth(requires: ["manage:system"])
+  flushCache: DefaultResponse
 
   migrateToLocale(
     sourceLocale: String!
     targetLocale: String!
-  ): PageMigrationResponse @auth(requires: ["manage:system"])
+  ): PageMigrationResponse
 
-  rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
+  rebuildPageTree: DefaultResponse
 
-  render(
+  renderPage(
     id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
-  restore(
+  restorePage(
     pageId: Int!
     versionId: Int!
-  ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): DefaultResponse
 
-  purgeHistory (
+  purgePagesHistory (
     olderThan: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -165,152 +149,152 @@ type PageMutation {
 # -----------------------------------------------
 
 type PageResponse {
-  responseResult: ResponseStatus!
+  operation: Operation
   page: Page
 }
 
 type PageMigrationResponse {
-  responseResult: ResponseStatus!
+  operation: Operation
   count: Int
 }
 
 type Page {
-  id: Int!
-  path: String!
-  hash: String!
-  title: String!
-  description: String!
-  isPrivate: Boolean! @auth(requires: ["write:pages", "manage:system"])
-  isPublished: Boolean! @auth(requires: ["write:pages", "manage:system"])
-  privateNS: String @auth(requires: ["write:pages", "manage:system"])
-  publishStartDate: Date! @auth(requires: ["write:pages", "manage:system"])
-  publishEndDate: Date! @auth(requires: ["write:pages", "manage:system"])
-  tags: [PageTag]!
-  content: String! @auth(requires: ["read:source", "write:pages", "manage:system"])
+  id: Int
+  path: String
+  hash: String
+  title: String
+  description: String
+  isPrivate: Boolean
+  isPublished: Boolean
+  privateNS: String
+  publishStartDate: Date
+  publishEndDate: Date
+  tags: [PageTag]
+  content: String
   render: String
   toc: String
-  contentType: String!
-  createdAt: Date!
-  updatedAt: Date!
-  editor: String! @auth(requires: ["write:pages", "manage:system"])
-  locale: String!
+  contentType: String
+  createdAt: Date
+  updatedAt: Date
+  editor: String
+  locale: String
   scriptCss: String
   scriptJs: String
-  authorId: Int! @auth(requires: ["write:pages", "manage:system"])
-  authorName: String! @auth(requires: ["write:pages", "manage:system"])
-  authorEmail: String! @auth(requires: ["write:pages", "manage:system"])
-  creatorId: Int! @auth(requires: ["write:pages", "manage:system"])
-  creatorName: String! @auth(requires: ["write:pages", "manage:system"])
-  creatorEmail: String! @auth(requires: ["write:pages", "manage:system"])
+  authorId: Int
+  authorName: String
+  authorEmail: String
+  creatorId: Int
+  creatorName: String
+  creatorEmail: String
 }
 
 type PageTag {
-  id: Int!
-  tag: String!
+  id: Int
+  tag: String
   title: String
-  createdAt: Date!
-  updatedAt: Date!
+  createdAt: Date
+  updatedAt: Date
 }
 
 type PageHistory {
-  versionId: Int!
-  versionDate: Date!
-  authorId: Int!
-  authorName: String!
-  actionType: String!
+  versionId: Int
+  versionDate: Date
+  authorId: Int
+  authorName: String
+  actionType: String
   valueBefore: String
   valueAfter: String
 }
 
 type PageVersion {
-  action: String!
-  authorId: String!
-  authorName: String!
-  content: String!
-  contentType: String!
-  createdAt: Date!
-  versionDate: Date!
-  description: String!
-  editor: String!
-  isPrivate: Boolean!
-  isPublished: Boolean!
-  locale: String!
-  pageId: Int!
-  path: String!
-  publishEndDate: Date!
-  publishStartDate: Date!
-  tags: [String]!
-  title: String!
-  versionId: Int!
+  action: String
+  authorId: String
+  authorName: String
+  content: String
+  contentType: String
+  createdAt: Date
+  versionDate: Date
+  description: String
+  editor: String
+  isPrivate: Boolean
+  isPublished: Boolean
+  locale: String
+  pageId: Int
+  path: String
+  publishEndDate: Date
+  publishStartDate: Date
+  tags: [String]
+  title: String
+  versionId: Int
 }
 
 type PageHistoryResult {
   trail: [PageHistory]
-  total: Int!
+  total: Int
 }
 
 type PageSearchResponse {
-  results: [PageSearchResult]!
-  suggestions: [String]!
-  totalHits: Int!
+  results: [PageSearchResult]
+  suggestions: [String]
+  totalHits: Int
 }
 
 type PageSearchResult {
-  id: String!
-  title: String!
-  description: String!
-  path: String!
-  locale: String!
+  id: String
+  title: String
+  description: String
+  path: String
+  locale: String
 }
 
 type PageListItem {
-  id: Int!
-  path: String!
-  locale: String!
+  id: Int
+  path: String
+  locale: String
   title: String
   description: String
-  contentType: String!
-  isPublished: Boolean!
-  isPrivate: Boolean!
+  contentType: String
+  isPublished: Boolean
+  isPrivate: Boolean
   privateNS: String
-  createdAt: Date!
-  updatedAt: Date!
+  createdAt: Date
+  updatedAt: Date
   tags: [String]
 }
 
 type PageTreeItem {
-  id: Int!
-  path: String!
-  depth: Int!
-  title: String!
-  isPrivate: Boolean!
-  isFolder: Boolean!
+  id: Int
+  path: String
+  depth: Int
+  title: String
+  isPrivate: Boolean
+  isFolder: Boolean
   privateNS: String
   parent: Int
   pageId: Int
-  locale: String!
+  locale: String
 }
 
 type PageLinkItem {
-  id: Int!
-  path: String!
-  title: String!
-  links: [String]!
+  id: Int
+  path: String
+  title: String
+  links: [String]
 }
 
 type PageConflictLatest {
-  id: Int!
-  authorId: String!
-  authorName: String!
-  content: String!
-  createdAt: Date!
-  description: String!
-  isPublished: Boolean!
-  locale: String!
-  path: String!
+  id: Int
+  authorId: String
+  authorName: String
+  content: String
+  createdAt: Date
+  description: String
+  isPublished: Boolean
+  locale: String
+  path: String
   tags: [String]
-  title: String!
-  updatedAt: Date!
+  title: String
+  updatedAt: Date
 }
 
 enum PageOrderBy {

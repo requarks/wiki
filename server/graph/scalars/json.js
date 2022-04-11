@@ -39,21 +39,19 @@ function parseObject (typeName, ast, variables) {
   return value
 }
 
-module.exports = {
-  JSON: new GraphQLScalarType({
-    name: 'JSON',
-    description:
-      'The `JSON` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).',
-    specifiedByUrl:
-      'http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf',
-    serialize: ensureObject,
-    parseValue: ensureObject,
-    parseLiteral: (ast, variables) => {
-      if (ast.kind !== Kind.OBJECT) {
-        throw new TypeError(`JSONObject cannot represent non-object value: ${ast}`)
-      }
-
-      return parseObject('JSONObject', ast, variables)
+module.exports = new GraphQLScalarType({
+  name: 'JSON',
+  description:
+    'The `JSON` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).',
+  specifiedByUrl:
+    'http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf',
+  serialize: ensureObject,
+  parseValue: ensureObject,
+  parseLiteral: (ast, variables) => {
+    if (ast.kind !== Kind.OBJECT) {
+      throw new TypeError(`JSONObject cannot represent non-object value: ${ast}`)
     }
-  })
-}
+
+    return parseObject('JSONObject', ast, variables)
+  }
+})

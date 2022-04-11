@@ -5,32 +5,54 @@ const _ = require('lodash')
 
 module.exports = {
   Query: {
-    async users() { return {} }
-  },
-  Mutation: {
-    async users() { return {} }
-  },
-  UserQuery: {
-    async list(obj, args, context, info) {
-      return WIKI.models.users.query()
-        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'isActive', 'createdAt', 'lastLoginAt')
-    },
-    async search(obj, args, context, info) {
-      return WIKI.models.users.query()
-        .where('email', 'like', `%${args.query}%`)
-        .orWhere('name', 'like', `%${args.query}%`)
-        .limit(10)
-        .select('id', 'email', 'name', 'providerKey', 'createdAt')
-    },
-    async single(obj, args, context, info) {
-      let usr = await WIKI.models.users.query().findById(args.id)
-      usr.password = ''
-      usr.tfaSecret = ''
+    /**
+     * FETCH ALL USERS
+     */
+    async users (obj, args, context, info) {
+      // -> Sanitize limit
+      let limit = args.pageSize ?? 20
+      if (limit < 1 || limit > 1000) {
+        limit = 1000
+      }
 
-      const str = _.get(WIKI.auth.strategies, usr.providerKey)
-      str.strategy = _.find(WIKI.data.authentication, ['key', str.strategyKey])
-      usr.providerName = str.displayName
-      usr.providerIs2FACapable = _.get(str, 'strategy.useForm', false)
+      // -> Sanitize offset
+      let offset = args.page ?? 1
+      if (offset < 1) {
+        offset = 1
+      }
+
+      // -> Fetch Users
+      return WIKI.models.users.query()
+        .select('id', 'email', 'name', 'isSystem', 'isActive', 'createdAt', 'lastLoginAt')
+        .where(builder => {
+          if (args.filter) {
+            builder.where('email', 'like', `%${args.filter}%`)
+              .orWhere('name', 'like', `%${args.filter}%`)
+          }
+        })
+        .orderBy(args.orderBy ?? 'name', args.orderByDirection ?? 'asc')
+        .offset((offset - 1) * limit)
+        .limit(limit)
+    },
+    /**
+     * FETCH A SINGLE USER
+     */
+    async userById (obj, args, context, info) {
+      const usr = await WIKI.models.users.query().findById(args.id)
+
+      // const str = _.get(WIKI.auth.strategies, usr.providerKey)
+      // str.strategy = _.find(WIKI.data.authentication, ['key', str.strategyKey])
+      // usr.providerName = str.displayName
+      // usr.providerIs2FACapable = _.get(str, 'strategy.useForm', false)
+
+      usr.auth = _.mapValues(usr.auth, (auth, providerKey) => {
+        if (auth.password) {
+          auth.password = '***'
+        }
+        auth.module = providerKey === '00910749-8ab6-498a-9be0-f4ca28ea5e52' ? 'google' : 'local'
+        auth._moduleName = providerKey === '00910749-8ab6-498a-9be0-f4ca28ea5e52' ? 'Google' : 'Local'
+        return auth
+      })
 
       return usr
     },
@@ -61,19 +83,19 @@ module.exports = {
         .limit(10)
     }
   },
-  UserMutation: {
-    async create (obj, args) {
+  Mutation: {
+    async createUser (obj, args) {
       try {
-        await WIKI.models.users.createNewUser(args)
+        await WIKI.models.users.createNewUser({ ...args, passwordRaw: args.password, isVerified: true })
 
         return {
-          responseResult: graphHelper.generateSuccess('User created successfully')
+          status: graphHelper.generateSuccess('User created successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
       }
     },
-    async delete (obj, args) {
+    async deleteUser (obj, args) {
       try {
         if (args.id <= 2) {
           throw new WIKI.Error.UserDeleteProtected()
@@ -84,7 +106,7 @@ module.exports = {
         WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
 
         return {
-          responseResult: graphHelper.generateSuccess('User deleted successfully')
+          status: graphHelper.generateSuccess('User deleted successfully')
         }
       } catch (err) {
         if (err.message.indexOf('foreign') >= 0) {
@@ -94,40 +116,40 @@ module.exports = {
         }
       }
     },
-    async update (obj, args) {
+    async updateUser (obj, args) {
       try {
-        await WIKI.models.users.updateUser(args)
+        await WIKI.models.users.updateUser(args.id, args.patch)
 
         return {
-          responseResult: graphHelper.generateSuccess('User created successfully')
+          status: graphHelper.generateSuccess('User updated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
       }
     },
-    async verify (obj, args) {
+    async verifyUser (obj, args) {
       try {
         await WIKI.models.users.query().patch({ isVerified: true }).findById(args.id)
 
         return {
-          responseResult: graphHelper.generateSuccess('User verified successfully')
+          status: graphHelper.generateSuccess('User verified successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
       }
     },
-    async activate (obj, args) {
+    async activateUser (obj, args) {
       try {
         await WIKI.models.users.query().patch({ isActive: true }).findById(args.id)
 
         return {
-          responseResult: graphHelper.generateSuccess('User activated successfully')
+          status: graphHelper.generateSuccess('User activated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
       }
     },
-    async deactivate (obj, args) {
+    async deactivateUser (obj, args) {
       try {
         if (args.id <= 2) {
           throw new Error('Cannot deactivate system accounts.')
@@ -138,35 +160,35 @@ module.exports = {
         WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
 
         return {
-          responseResult: graphHelper.generateSuccess('User deactivated successfully')
+          status: graphHelper.generateSuccess('User deactivated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
       }
     },
-    async enableTFA (obj, args) {
+    async enableUserTFA (obj, args) {
       try {
         await WIKI.models.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
 
         return {
-          responseResult: graphHelper.generateSuccess('User 2FA enabled successfully')
+          status: graphHelper.generateSuccess('User 2FA enabled successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
       }
     },
-    async disableTFA (obj, args) {
+    async disableUserTFA (obj, args) {
       try {
         await WIKI.models.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
 
         return {
-          responseResult: graphHelper.generateSuccess('User 2FA disabled successfully')
+          status: graphHelper.generateSuccess('User 2FA disabled successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
       }
     },
-    resetPassword (obj, args) {
+    resetUserPassword (obj, args) {
       return false
     },
     async updateProfile (obj, args, context) {
@@ -203,7 +225,7 @@ module.exports = {
         const newToken = await WIKI.models.users.refreshToken(usr.id)
 
         return {
-          responseResult: graphHelper.generateSuccess('User profile updated successfully'),
+          status: graphHelper.generateSuccess('User profile updated successfully'),
           jwt: newToken.token
         }
       } catch (err) {

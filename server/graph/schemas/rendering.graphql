@@ -3,32 +3,16 @@
 # ===============================================
 
 extend type Query {
-  rendering: RenderingQuery
-}
-
-extend type Mutation {
-  rendering: RenderingMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type RenderingQuery {
   renderers(
     filter: String
     orderBy: String
-  ): [Renderer] @auth(requires: ["manage:system"])
+  ): [Renderer]
 }
 
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type RenderingMutation {
+extend type Mutation {
   updateRenderers(
-    renderers: [RendererInput]
-  ): DefaultResponse @auth(requires: ["manage:system"])
+    renderers: [RendererInput]!
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -36,9 +20,9 @@ type RenderingMutation {
 # -----------------------------------------------
 
 type Renderer {
-  isEnabled: Boolean!
-  key: String!
-  title: String!
+  isEnabled: Boolean
+  key: String
+  title: String
   description: String
   icon: String
   dependsOn: String

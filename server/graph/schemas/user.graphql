@@ -3,90 +3,65 @@
 # ===============================================
 
 extend type Query {
-  users: UserQuery
-}
-
-extend type Mutation {
-  users: UserMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type UserQuery {
-  list(
+  users (
+    page: Int
+    pageSize: Int
+    orderBy: UserOrderBy
+    orderByDirection: OrderByDirection
+    # Filter by name / email
     filter: String
-    orderBy: String
-  ): [UserMinimal] @auth(requires: ["write:users", "manage:users", "manage:system"])
+  ): [UserMinimal]
 
-  search(
-    query: String!
-  ): [UserMinimal] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
-
-  single(
-    id: Int!
-  ): User @auth(requires: ["manage:users", "manage:system"])
+  userById(
+    id: UUID!
+  ): User
 
   profile: UserProfile
 
-  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
+  lastLogins: [UserLastLogin]
 }
 
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type UserMutation {
-  create(
+extend type Mutation {
+  createUser(
     email: String!
     name: String!
-    passwordRaw: String
-    providerKey: String!
-    groups: [Int]!
-    mustChangePassword: Boolean
-    sendWelcomeEmail: Boolean
-  ): UserResponse @auth(requires: ["write:users", "manage:users", "manage:system"])
+    password: String!
+    groups: [UUID]!
+    mustChangePassword: Boolean!
+    sendWelcomeEmail: Boolean!
+  ): UserResponse
 
-  update(
-    id: Int!
-    email: String
-    name: String
-    newPassword: String
-    groups: [Int]
-    location: String
-    jobTitle: String
-    timezone: String
-    dateFormat: String
-    appearance: String
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  updateUser(
+    id: UUID!
+    patch: UserUpdateInput!
+  ): DefaultResponse
 
-  delete(
-    id: Int!
-    replaceId: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  deleteUser(
+    id: UUID!
+    replaceId: UUID!
+  ): DefaultResponse
 
-  verify(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  verifyUser(
+    id: UUID!
+  ): DefaultResponse
 
-  activate(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  activateUser(
+    id: UUID!
+  ): DefaultResponse
 
-  deactivate(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  deactivateUser(
+    id: UUID!
+  ): DefaultResponse
 
-  enableTFA(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  enableUserTFA(
+    id: UUID!
+  ): DefaultResponse
 
-  disableTFA(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  disableUserTFA(
+    id: UUID!
+  ): DefaultResponse
 
-  resetPassword(
+  resetUserPassword(
     id: Int!
   ): DefaultResponse
 
@@ -110,71 +85,83 @@ type UserMutation {
 # -----------------------------------------------
 
 type UserResponse {
-  responseResult: ResponseStatus!
+  operation: Operation
   user: User
 }
 
 type UserLastLogin {
-  id: Int!
-  name: String!
-  lastLoginAt: Date!
+  id: UUID
+  name: String
+  lastLoginAt: Date
 }
 
 type UserMinimal {
-  id: Int!
-  name: String!
-  email: String!
-  providerKey: String!
-  isSystem: Boolean!
-  isActive: Boolean!
-  createdAt: Date!
+  id: UUID
+  name: String
+  email: String
+  isSystem: Boolean
+  isActive: Boolean
+  createdAt: Date
   lastLoginAt: Date
 }
 
 type User {
-  id: Int!
-  name: String!
-  email: String!
-  providerKey: String!
-  providerName: String
-  providerId: String
-  providerIs2FACapable: Boolean
-  isSystem: Boolean!
-  isActive: Boolean!
-  isVerified: Boolean!
-  location: String!
-  jobTitle: String!
-  timezone: String!
-  dateFormat: String!
-  appearance: String!
-  createdAt: Date!
-  updatedAt: Date!
+  id: UUID
+  name: String
+  email: String
+  auth: JSON
+  isSystem: Boolean
+  isActive: Boolean
+  isVerified: Boolean
+  meta: JSON
+  prefs: JSON
+  createdAt: Date
+  updatedAt: Date
   lastLoginAt: Date
-  tfaIsActive: Boolean!
-  groups: [Group]!
+  groups: [Group]
 }
 
 type UserProfile {
-  id: Int!
-  name: String!
-  email: String!
+  id: Int
+  name: String
+  email: String
   providerKey: String
   providerName: String
-  isSystem: Boolean!
-  isVerified: Boolean!
-  location: String!
-  jobTitle: String!
-  timezone: String!
-  dateFormat: String!
-  appearance: String!
-  createdAt: Date!
-  updatedAt: Date!
+  isSystem: Boolean
+  isVerified: Boolean
+  location: String
+  jobTitle: String
+  timezone: String
+  dateFormat: String
+  appearance: String
+  createdAt: Date
+  updatedAt: Date
   lastLoginAt: Date
-  groups: [String]!
-  pagesTotal: Int!
+  groups: [String]
+  pagesTotal: Int
 }
 
 type UserTokenResponse {
-  responseResult: ResponseStatus!
+  operation: Operation
   jwt: String
+}
+
+enum UserOrderBy {
+  id
+  email
+  name
+  createdAt
+  updatedAt
+  lastLoginAt
+}
+
+input UserUpdateInput {
+  email: String
+  name: String
+  newPassword: String
+  groups: [UUID!]
+  isActive: Boolean
+  isVerified: Boolean
+  meta: JSON
+  prefs: JSON
 }

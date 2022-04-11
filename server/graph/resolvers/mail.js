@@ -5,21 +5,15 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async mail() { return {} }
-  },
-  Mutation: {
-    async mail() { return {} }
-  },
-  MailQuery: {
-    async config(obj, args, context, info) {
+    async mailConfig(obj, args, context, info) {
       return {
         ...WIKI.config.mail,
         pass: WIKI.config.mail.pass.length > 0 ? '********' : ''
       }
     }
   },
-  MailMutation: {
-    async sendTest(obj, args, context) {
+  Mutation: {
+    async sendMailTest(obj, args, context) {
       try {
         if (_.isEmpty(args.recipientEmail) || args.recipientEmail.length < 6) {
           throw new WIKI.Error.MailInvalidRecipient()
@@ -42,7 +36,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async updateConfig(obj, args, context) {
+    async updateMailConfig(obj, args, context) {
       try {
         WIKI.config.mail = {
           senderName: args.senderName,

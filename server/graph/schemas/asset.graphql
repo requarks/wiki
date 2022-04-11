@@ -3,49 +3,33 @@
 # ===============================================
 
 extend type Query {
-  assets: AssetQuery
+  assets(
+    folderId: Int!
+    kind: AssetKind!
+  ): [AssetItem]
+
+  assetsFolders(
+    parentFolderId: Int!
+  ): [AssetFolder]
 }
 
 extend type Mutation {
-  assets: AssetMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type AssetQuery {
-  list(
-    folderId: Int!
-    kind: AssetKind!
-  ): [AssetItem] @auth(requires: ["manage:system", "read:assets"])
-
-  folders(
-    parentFolderId: Int!
-  ): [AssetFolder] @auth(requires: ["manage:system", "read:assets"])
-}
-
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type AssetMutation {
-  createFolder(
+  createAssetsFolder(
     parentFolderId: Int!
     slug: String!
     name: String
-  ): DefaultResponse @auth(requires: ["manage:system", "write:assets"])
+  ): DefaultResponse
 
   renameAsset(
     id: Int!
     filename: String!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+  ): DefaultResponse
 
   deleteAsset(
     id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+  ): DefaultResponse
 
-  flushTempUploads: DefaultResponse @auth(requires: ["manage:system"])
+  flushTempUploads: DefaultResponse
 }
 
 # -----------------------------------------------

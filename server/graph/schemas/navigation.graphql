@@ -3,33 +3,21 @@
 # ===============================================
 
 extend type Query {
-  navigation: NavigationQuery
-}
-
-extend type Mutation {
-  navigation: NavigationMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type NavigationQuery {
-  tree: [NavigationTree]! @auth(requires: ["manage:navigation", "manage:system"])
-  config: NavigationConfig! @auth(requires: ["manage:navigation", "manage:system"])
+  navigationTree: [NavigationTree]
+  navigationConfig: NavigationConfig
 }
 
 # -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
-type NavigationMutation {
-  updateTree(
+extend type Mutation {
+  updateNavigationTree(
     tree: [NavigationTreeInput]!
-  ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
-  updateConfig(
+  ): DefaultResponse
+  updateNavigationConfig(
     mode: NavigationMode!
-  ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -37,8 +25,8 @@ type NavigationMutation {
 # -----------------------------------------------
 
 type NavigationTree {
-  locale: String!
-  items: [NavigationItem]!
+  locale: String
+  items: [NavigationItem]
 }
 
 input NavigationTreeInput {
@@ -47,8 +35,8 @@ input NavigationTreeInput {
 }
 
 type NavigationItem {
-  id: String!
-  kind: String!
+  id: String
+  kind: String
   label: String
   icon: String
   targetType: String
@@ -69,7 +57,7 @@ input NavigationItemInput {
 }
 
 type NavigationConfig {
-  mode: NavigationMode!
+  mode: NavigationMode
 }
 
 enum NavigationMode {

@@ -7,13 +7,7 @@ const assetHelper = require('../../helpers/asset')
 
 module.exports = {
   Query: {
-    async assets() { return {} }
-  },
-  Mutation: {
-    async assets() { return {} }
-  },
-  AssetQuery: {
-    async list(obj, args, context) {
+    async assets(obj, args, context) {
       let cond = {
         folderId: args.folderId === 0 ? null : args.folderId
       }
@@ -31,7 +25,7 @@ module.exports = {
         kind: a.kind.toUpperCase()
       }))
     },
-    async folders(obj, args, context) {
+    async assetsFolders(obj, args, context) {
       const results = await WIKI.models.assetFolders.query().where({
         parentId: args.parentFolderId === 0 ? null : args.parentFolderId
       })
@@ -43,11 +37,11 @@ module.exports = {
       })
     }
   },
-  AssetMutation: {
+  Mutation: {
     /**
      * Create New Asset Folder
      */
-    async createFolder(obj, args, context) {
+    async createAssetsFolder(obj, args, context) {
       try {
         const folderSlug = sanitize(args.slug).toLowerCase()
         const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId

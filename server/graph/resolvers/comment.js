@@ -5,16 +5,10 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async comments() { return {} }
-  },
-  Mutation: {
-    async comments() { return {} }
-  },
-  CommentQuery: {
     /**
      * Fetch list of Comments Providers
      */
-    async providers(obj, args, context, info) {
+    async commentsProviders(obj, args, context, info) {
       const providers = await WIKI.models.commentProviders.getProviders()
       return providers.map(provider => {
         const providerInfo = _.find(WIKI.data.commentProviders, ['key', provider.key]) || {}
@@ -39,7 +33,7 @@ module.exports = {
     /**
      * Fetch list of comments for a page
      */
-    async list (obj, args, context) {
+    async comments (obj, args, context) {
       const page = await WIKI.models.pages.query().select('id').findOne({ localeCode: args.locale, path: args.path })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], args)) {
@@ -60,7 +54,7 @@ module.exports = {
     /**
      * Fetch a single comment
      */
-    async single (obj, args, context) {
+    async commentById (obj, args, context) {
       const cm = await WIKI.data.commentProvider.getCommentById(args.id)
       if (!cm || !cm.pageId) {
         throw new WIKI.Error.CommentNotFound()
@@ -86,11 +80,11 @@ module.exports = {
       }
     }
   },
-  CommentMutation: {
+  Mutation: {
     /**
      * Create New Comment
      */
-    async create (obj, args, context) {
+    async createComment (obj, args, context) {
       try {
         const cmId = await WIKI.models.comments.postNewComment({
           ...args,
@@ -108,7 +102,7 @@ module.exports = {
     /**
      * Update an Existing Comment
      */
-    async update (obj, args, context) {
+    async updateComment (obj, args, context) {
       try {
         const cmRender = await WIKI.models.comments.updateComment({
           ...args,
@@ -126,7 +120,7 @@ module.exports = {
     /**
      * Delete an Existing Comment
      */
-    async delete (obj, args, context) {
+    async deleteComment (obj, args, context) {
       try {
         await WIKI.models.comments.deleteComment({
           id: args.id,
@@ -143,7 +137,7 @@ module.exports = {
     /**
      * Update Comments Providers
      */
-    async updateProviders(obj, args, context) {
+    async updateCommentsProviders(obj, args, context) {
       try {
         for (let provider of args.providers) {
           await WIKI.models.commentProviders.query().patch({

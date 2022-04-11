@@ -5,12 +5,6 @@ const _ = require('lodash')
 
 module.exports = {
   Query: {
-    async localization() { return {} }
-  },
-  Mutation: {
-    async localization() { return {} }
-  },
-  LocalizationQuery: {
     async locales(obj, args, context, info) {
       let remoteLocales = await WIKI.cache.get('locales')
       let localLocales = await WIKI.models.locales.query().select('code', 'isRTL', 'name', 'nativeName', 'createdAt', 'updatedAt', 'availability')
@@ -24,19 +18,11 @@ module.exports = {
         }
       })
     },
-    async config(obj, args, context, info) {
-      return {
-        locale: WIKI.config.lang.code,
-        autoUpdate: WIKI.config.lang.autoUpdate,
-        namespacing: WIKI.config.lang.namespacing,
-        namespaces: WIKI.config.lang.namespaces
-      }
-    },
     translations (obj, args, context, info) {
       return WIKI.lang.getByNamespace(args.locale, args.namespace)
     }
   },
-  LocalizationMutation: {
+  Mutation: {
     async downloadLocale(obj, args, context) {
       try {
         const job = await WIKI.scheduler.registerJob({

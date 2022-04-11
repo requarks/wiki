@@ -3,45 +3,23 @@
 # ===============================================
 
 extend type Query {
-  analytics: AnalyticsQuery
-}
-
-extend type Mutation {
-  analytics: AnalyticsMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-"""
-Queries for Analytics
-"""
-type AnalyticsQuery {
   """
   Fetch list of Analytics providers and their configuration
   """
-  providers(
+  analyticsProviders(
     "Return only active providers"
     isEnabled: Boolean
-  ): [AnalyticsProvider] @auth(requires: ["manage:system"])
+  ): [AnalyticsProvider]
 }
 
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-"""
-Mutations for Analytics
-"""
-type AnalyticsMutation {
+extend type Mutation {
   """
   Update a list of Analytics providers and their configuration
   """
-  updateProviders(
+  updateAnalyticsProviders(
     "List of providers"
     providers: [AnalyticsProviderInput]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 }
 
 # -----------------------------------------------

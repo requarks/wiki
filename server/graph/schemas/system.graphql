@@ -3,50 +3,41 @@
 # ===============================================
 
 extend type Query {
-  system: SystemQuery
+  systemExtensions: [SystemExtension]
+  systemFlags: [SystemFlag]
+  systemInfo: SystemInfo
+  systemSecurity: SystemSecurity
 }
 
 extend type Mutation {
-  system: SystemMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type SystemQuery {
-  flags: [SystemFlag] @auth(requires: ["manage:system"])
-  info: SystemInfo
-  extensions: [SystemExtension]! @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type SystemMutation {
-  updateFlags(
+  updateSystemFlags(
     flags: [SystemFlagInput]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
-  resetTelemetryClientId: DefaultResponse @auth(requires: ["manage:system"])
+  updateSystemSecurity(
+    authJwtAudience: String
+    authJwtExpiration: String
+    authJwtRenewablePeriod: String
+    corsConfig: String
+    corsMode: SystemSecurityCorsMode
+    cspDirectives: String
+    disallowFloc: Boolean
+    disallowIframe: Boolean
+    disallowOpenRedirect: Boolean
+    enforceCsp: Boolean
+    enforceHsts: Boolean
+    enforceSameOriginReferrerPolicy: Boolean
+    forceAssetDownload: Boolean
+    hstsDuration: Int
+    trustProxy: Boolean
+    uploadMaxFiles: Int
+    uploadMaxFileSize: Int
+    uploadScanSVG: Boolean
+  ): DefaultResponse
 
-  setTelemetry(
-    enabled: Boolean!
-  ): DefaultResponse @auth(requires: ["manage:system"])
-
-  performUpgrade: DefaultResponse @auth(requires: ["manage:system"])
-
-  importUsersFromV1(
-    mongoDbConnString: String!
-    groupMode: SystemImportUsersGroupMode!
-  ): SystemImportUsersResponse @auth(requires:  ["manage:system"])
-
-  setHTTPSRedirection(
-    enabled: Boolean!
-  ): DefaultResponse @auth(requires: ["manage:system"])
-
-  renewHTTPSCertificate: DefaultResponse @auth(requires: ["manage:system"])
+  installExtension(
+    key: String!
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -54,8 +45,8 @@ type SystemMutation {
 # -----------------------------------------------
 
 type SystemFlag {
-  key: String!
-  value: Boolean!
+  key: String
+  value: Boolean
 }
 
 input SystemFlagInput {
@@ -64,35 +55,35 @@ input SystemFlagInput {
 }
 
 type SystemInfo {
-  configFile: String @auth(requires: ["manage:system"])
-  cpuCores: Int @auth(requires: ["manage:system"])
-  currentVersion: String @auth(requires: ["manage:system"])
-  dbHost: String @auth(requires: ["manage:system"])
-  dbType: String @auth(requires: ["manage:system"])
-  dbVersion: String @auth(requires: ["manage:system"])
-  groupsTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
-  hostname: String @auth(requires: ["manage:system"])
-  httpPort: Int @auth(requires: ["manage:system"])
-  httpRedirection: Boolean @auth(requires: ["manage:system"])
-  httpsPort: Int @auth(requires: ["manage:system"])
-  latestVersion: String @auth(requires: ["manage:system"])
-  latestVersionReleaseDate: Date @auth(requires: ["manage:system"])
-  nodeVersion: String @auth(requires: ["manage:system"])
-  operatingSystem: String @auth(requires: ["manage:system"])
-  pagesTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:pages", "delete:pages"])
-  platform: String @auth(requires: ["manage:system"])
-  ramTotal: String @auth(requires: ["manage:system"])
-  sslDomain: String @auth(requires: ["manage:system"])
-  sslExpirationDate: Date @auth(requires: ["manage:system"])
-  sslProvider: String @auth(requires: ["manage:system"])
-  sslStatus: String @auth(requires: ["manage:system"])
-  sslSubscriberEmail: String @auth(requires: ["manage:system"])
-  tagsTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:pages", "delete:pages"])
-  telemetry: Boolean @auth(requires: ["manage:system"])
-  telemetryClientId: String @auth(requires: ["manage:system"])
-  upgradeCapable: Boolean @auth(requires: ["manage:system"])
-  usersTotal: Int @auth(requires: ["manage:system", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
-  workingDirectory: String @auth(requires: ["manage:system"])
+  configFile: String
+  cpuCores: Int
+  currentVersion: String
+  dbHost: String
+  dbType: String
+  dbVersion: String
+  groupsTotal: Int
+  hostname: String
+  httpPort: Int
+  httpRedirection: Boolean
+  httpsPort: Int
+  latestVersion: String
+  latestVersionReleaseDate: Date
+  nodeVersion: String
+  operatingSystem: String
+  pagesTotal: Int
+  platform: String
+  ramTotal: String
+  sslDomain: String
+  sslExpirationDate: Date
+  sslProvider: String
+  sslStatus: String
+  sslSubscriberEmail: String
+  tagsTotal: Int
+  telemetry: Boolean
+  telemetryClientId: String
+  upgradeCapable: Boolean
+  usersTotal: Int
+  workingDirectory: String
 }
 
 enum SystemImportUsersGroupMode {
@@ -102,7 +93,7 @@ enum SystemImportUsersGroupMode {
 }
 
 type SystemImportUsersResponse {
-  responseResult: ResponseStatus
+  operation: Operation
   usersCount: Int
   groupsCount: Int
   failed: [SystemImportUsersResponseFailed]
@@ -115,9 +106,38 @@ type SystemImportUsersResponseFailed {
 }
 
 type SystemExtension {
-  key: String!
-  title: String!
-  description: String!
-  isInstalled: Boolean!
-  isCompatible: Boolean!
+  key: String
+  title: String
+  description: String
+  isInstalled: Boolean
+  isInstallable: Boolean
+  isCompatible: Boolean
+}
+
+type SystemSecurity {
+  authJwtAudience: String
+  authJwtExpiration: String
+  authJwtRenewablePeriod: String
+  corsConfig: String
+  corsMode: SystemSecurityCorsMode
+  cspDirectives: String
+  disallowFloc: Boolean
+  disallowIframe: Boolean
+  disallowOpenRedirect: Boolean
+  enforceCsp: Boolean
+  enforceHsts: Boolean
+  enforceSameOriginReferrerPolicy: Boolean
+  forceAssetDownload: Boolean
+  hstsDuration: Int
+  trustProxy: Boolean
+  uploadMaxFiles: Int
+  uploadMaxFileSize: Int
+  uploadScanSVG: Boolean
+}
+
+enum SystemSecurityCorsMode {
+  OFF
+  REFLECT
+  HOSTNAMES
+  REGEX
 }

@@ -3,35 +3,30 @@
 # ===============================================
 
 extend type Query {
-  storage: StorageQuery
+  storageTargets(
+    siteId: UUID!
+    ): [StorageTarget]
 }
 
 extend type Mutation {
-  storage: StorageMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type StorageQuery {
-  targets: [StorageTarget] @auth(requires: ["manage:system"])
-  status: [StorageStatus] @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type StorageMutation {
-  updateTargets(
+  updateStorageTargets(
+    siteId: UUID!
     targets: [StorageTargetInput]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
-  executeAction(
-    targetKey: String!
+  setupStorageTarget(
+    targetId: UUID!
+    state: JSON!
+  ): StorageTargetSetupResponse
+
+  destroyStorageTargetSetup(
+    targetId: UUID!
+  ): DefaultResponse
+
+  executeStorageAction(
+    targetId: UUID!
     handler: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -39,40 +34,46 @@ type StorageMutation {
 # -----------------------------------------------
 
 type StorageTarget {
-  isAvailable: Boolean!
-  isEnabled: Boolean!
-  key: String!
-  title: String!
+  id: UUID
+  isEnabled: Boolean
+  module: String
+  title: String
   description: String
-  logo: String
+  icon: String
+  banner: String
+  vendor: String
   website: String
-  supportedModes: [String]
-  mode: String
-  hasSchedule: Boolean!
-  syncInterval: String
-  syncIntervalDefault: String
-  config: [KeyValuePair]
-  actions: [StorageTargetAction]
+  contentTypes: JSON
+  assetDelivery: JSON
+  versioning: JSON
+  sync: JSON
+  status: JSON
+  setup: JSON
+  config: JSON
+  actions: JSON
+}
+
+type StorageTargetSetupResponse {
+  operation: Operation
+  state: JSON
 }
 
 input StorageTargetInput {
-  isEnabled: Boolean!
-  key: String!
-  mode: String!
+  id: UUID!
+  module: String!
+  isEnabled: Boolean
+  contentTypes: [String!]
+  largeThreshold: String
+  assetDeliveryFileStreaming: Boolean
+  assetDeliveryDirectAccess: Boolean
+  syncMode: StorageTargetSyncMode
   syncInterval: String
-  config: [KeyValuePairInput]
+  useVersioning: Boolean
+  config: JSON
 }
 
-type StorageStatus {
-  key: String!
-  title: String!
-  status: String!
-  message: String!
-  lastAttempt: String!
-}
-
-type StorageTargetAction {
-  handler: String!
-  label: String!
-  hint: String!
+enum StorageTargetSyncMode {
+  PULL
+  PUSH
+  SYNC
 }

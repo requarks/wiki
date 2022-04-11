@@ -66,6 +66,8 @@ import { reactive, ref } from 'vue'
 
 import { useAdminStore } from '../stores/admin'
 
+// EMITS
+
 defineEmits([
   ...useDialogPluginComponent.emits
 ])
@@ -114,7 +116,7 @@ async function create () {
             hostname: $hostname
             title: $title
             ) {
-            status {
+            operation {
               succeeded
               message
             }
@@ -126,7 +128,7 @@ async function create () {
         title: state.siteName
       }
     })
-    if (resp?.data?.createSite?.status?.succeeded) {
+    if (resp?.data?.createSite?.operation?.succeeded) {
       $q.notify({
         type: 'positive',
         message: t('admin.sites.createSuccess')
@@ -134,7 +136,7 @@ async function create () {
       await adminStore.fetchSites()
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.createSite?.status?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.createSite?.operation?.message || 'An unexpected error occured.')
     }
   } catch (err) {
     $q.notify({

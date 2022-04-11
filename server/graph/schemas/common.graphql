@@ -2,7 +2,7 @@
 # Wiki.js GraphQL Schema #
 # ====================== #
 
-# DIRECTIVES
+# DIRECTIVES (deprecated)
 # ----------
 
 directive @auth(requires: [String]) on QUERY | FIELD_DEFINITION | ARGUMENT_DEFINITION
@@ -12,8 +12,8 @@ directive @auth(requires: [String]) on QUERY | FIELD_DEFINITION | ARGUMENT_DEFIN
 
 # Generic Key Value Pair
 type KeyValuePair {
-  key: String!
-  value: String!
+  key: String
+  value: String
 }
 # General Key Value Pair Input
 input KeyValuePairInput {
@@ -23,14 +23,13 @@ input KeyValuePairInput {
 
 # Generic Mutation Response
 type DefaultResponse {
-  responseResult: ResponseStatus
+  operation: Operation
 }
 
-# Mutation Status
-type ResponseStatus {
-  succeeded: Boolean!
-  errorCode: Int!
-  slug: String!
+# Mutation Operation
+type Operation {
+  succeeded: Boolean
+  slug: String
   message: String
 }
 
@@ -47,6 +46,3 @@ type Query
 
 # Mutations (Create, Update, Delete)
 type Mutation
-
-# Subscriptions (Push, Real-time)
-type Subscription

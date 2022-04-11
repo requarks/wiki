@@ -7,12 +7,6 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async authentication () { return {} }
-  },
-  Mutation: {
-    async authentication () { return {} }
-  },
-  AuthenticationQuery: {
     /**
      * List of API Keys
      */
@@ -34,7 +28,7 @@ module.exports = {
     apiState () {
       return WIKI.config.api.isEnabled
     },
-    async strategies () {
+    async authStrategies () {
       return WIKI.data.authentication.map(stg => ({
         ...stg,
         isAvailable: stg.isAvailable === true,
@@ -45,35 +39,35 @@ module.exports = {
           })
         }, []), 'key')
       }))
-    },
-    /**
-     * Fetch active authentication strategies
-     */
-    async activeStrategies (obj, args, context, info) {
-      let strategies = await WIKI.models.authentication.getStrategies()
-      strategies = strategies.map(stg => {
-        const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey]) || {}
-        return {
-          ...stg,
-          strategy: strategyInfo,
-          config: _.sortBy(_.transform(stg.config, (res, value, key) => {
-            const configData = _.get(strategyInfo.props, key, false)
-            if (configData) {
-              res.push({
-                key,
-                value: JSON.stringify({
-                  ...configData,
-                  value
-                })
-              })
-            }
-          }, []), 'key')
-        }
-      })
-      return args.enabledOnly ? _.filter(strategies, 'isEnabled') : strategies
     }
+    // /**
+    //  * Fetch active authentication strategies
+    //  */
+    // async activeStrategies (obj, args, context, info) {
+    //   let strategies = await WIKI.models.authentication.getStrategies()
+    //   strategies = strategies.map(stg => {
+    //     const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey]) || {}
+    //     return {
+    //       ...stg,
+    //       strategy: strategyInfo,
+    //       config: _.sortBy(_.transform(stg.config, (res, value, key) => {
+    //         const configData = _.get(strategyInfo.props, key, false)
+    //         if (configData) {
+    //           res.push({
+    //             key,
+    //             value: JSON.stringify({
+    //               ...configData,
+    //               value
+    //             })
+    //           })
+    //         }
+    //       }, []), 'key')
+    //     }
+    //   })
+    //   return args.enabledOnly ? _.filter(strategies, 'isEnabled') : strategies
+    // }
   },
-  AuthenticationMutation: {
+  Mutation: {
     /**
      * Create New API Key
      */
@@ -197,7 +191,7 @@ module.exports = {
     /**
      * Update Authentication Strategies
      */
-    async updateStrategies (obj, args, context) {
+    async updateAuthStrategies (obj, args, context) {
       try {
         const previousStrategies = await WIKI.models.authentication.getStrategies()
         for (const str of args.strategies) {

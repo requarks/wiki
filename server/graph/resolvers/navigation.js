@@ -4,21 +4,15 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async navigation () { return {} }
-  },
-  Mutation: {
-    async navigation () { return {} }
-  },
-  NavigationQuery: {
-    async tree (obj, args, context, info) {
+    async navigationTree (obj, args, context, info) {
       return WIKI.models.navigation.getTree({ cache: false, locale: 'all', bypassAuth: true })
     },
-    config (obj, args, context, info) {
+    navigationConfig (obj, args, context, info) {
       return WIKI.config.nav
     }
   },
-  NavigationMutation: {
-    async updateTree (obj, args, context) {
+  Mutation: {
+    async updateNavigationTree (obj, args, context) {
       try {
         await WIKI.models.navigation.query().patch({
           config: args.tree
@@ -34,7 +28,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async updateConfig (obj, args, context) {
+    async updateNavigationConfig (obj, args, context) {
       try {
         WIKI.config.nav = {
           mode: args.mode

@@ -3,40 +3,22 @@
 # ===============================================
 
 extend type Query {
-  authentication: AuthenticationQuery
+  apiKeys: [AuthenticationApiKey]
+
+  apiState: Boolean
+
+  authStrategies(
+    enabledOnly: Boolean
+  ): [AuthenticationStrategy]
 }
 
 extend type Mutation {
-  authentication: AuthenticationMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type AuthenticationQuery {
-  apiKeys: [AuthenticationApiKey] @auth(requires: ["manage:system", "manage:api"])
-
-  apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
-
-  strategies: [AuthenticationStrategy] @auth(requires: ["manage:system"])
-
-  activeStrategies(
-    enabledOnly: Boolean
-  ): [AuthenticationActiveStrategy]
-}
-
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type AuthenticationMutation {
   createApiKey(
     name: String!
     expiration: String!
     fullAccess: Boolean!
     group: Int
-  ): AuthenticationCreateApiKeyResponse @auth(requires: ["manage:system", "manage:api"])
+  ): AuthenticationCreateApiKeyResponse
 
   login(
     username: String!
@@ -67,19 +49,19 @@ type AuthenticationMutation {
 
   revokeApiKey(
     id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
+  ): DefaultResponse
 
   setApiState(
     enabled: Boolean!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
+  ): DefaultResponse
 
-  updateStrategies(
+  updateAuthStrategies(
     strategies: [AuthenticationStrategyInput]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
-  regenerateCertificates: DefaultResponse @auth(requires: ["manage:system"])
+  regenerateCertificates: DefaultResponse
 
-  resetGuestUser: DefaultResponse @auth(requires: ["manage:system"])
+  resetGuestUser: DefaultResponse
 }
 
 # -----------------------------------------------
@@ -113,7 +95,7 @@ type AuthenticationActiveStrategy {
 }
 
 type AuthenticationLoginResponse {
-  responseResult: ResponseStatus
+  operation: Operation
   jwt: String
   mustChangePwd: Boolean
   mustProvideTFA: Boolean
@@ -124,7 +106,7 @@ type AuthenticationLoginResponse {
 }
 
 type AuthenticationRegisterResponse {
-  responseResult: ResponseStatus
+  operation: Operation
   jwt: String
 }
 
@@ -151,6 +133,6 @@ type AuthenticationApiKey {
 }
 
 type AuthenticationCreateApiKeyResponse {
-  responseResult: ResponseStatus
+  operation: Operation
   key: String
 }

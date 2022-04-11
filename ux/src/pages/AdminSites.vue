@@ -133,10 +133,6 @@ useMeta({
   title: t('admin.sites.title')
 })
 
-// DATA
-
-const loading = ref(false)
-
 // METHODS
 
 async function refresh () {

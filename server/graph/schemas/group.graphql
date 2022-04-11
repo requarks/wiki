@@ -3,58 +3,39 @@
 # ===============================================
 
 extend type Query {
-  groups: GroupQuery
+  groups(
+    filter: String
+    orderBy: String
+  ): [Group]
+
+  groupById(
+    id: Int!
+  ): Group
 }
 
 extend type Mutation {
-  groups: GroupMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type GroupQuery {
-  list(
-    filter: String
-    orderBy: String
-  ): [GroupMinimal] @auth(requires: ["write:groups", "manage:groups", "manage:system"])
-
-  single(
-    id: Int!
-  ): Group @auth(requires: ["write:groups", "manage:groups", "manage:system"])
-}
-
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type GroupMutation {
-  create(
+  createGroup(
     name: String!
-  ): GroupResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): GroupResponse
 
-  update(
+  updateGroup(
     id: Int!
-    name: String!
-    redirectOnLogin: String!
-    permissions: [String]!
-    pageRules: [PageRuleInput]!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+    patch: GroupUpdateInput!
+  ): DefaultResponse
 
-  delete(
+  deleteGroup(
     id: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse
 
-  assignUser(
+  assignUserToGroup(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse
 
-  unassignUser(
+  unassignUserFromGroup(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -62,38 +43,36 @@ type GroupMutation {
 # -----------------------------------------------
 
 type GroupResponse {
-  responseResult: ResponseStatus!
+  operation: Operation
   group: Group
 }
 
-type GroupMinimal {
-  id: Int!
-  name: String!
-  isSystem: Boolean!
-  userCount: Int
-  createdAt: Date!
-  updatedAt: Date!
-}
-
 type Group {
-  id: Int!
-  name: String!
-  isSystem: Boolean!
+  id: Int
+  name: String
+  isSystem: Boolean
   redirectOnLogin: String
-  permissions: [String]!
+  permissions: [String]
   pageRules: [PageRule]
   users: [UserMinimal]
-  createdAt: Date!
-  updatedAt: Date!
+  createdAt: Date
+  updatedAt: Date
 }
 
 type PageRule {
-  id: String!
-  deny: Boolean!
-  match: PageRuleMatch!
-  roles: [String]!
-  path: String!
-  locales: [String]!
+  id: String
+  deny: Boolean
+  match: PageRuleMatch
+  roles: [String]
+  path: String
+  locales: [String]
+}
+
+input GroupUpdateInput {
+  name: String!
+  redirectOnLogin: String!
+  permissions: [String]!
+  pageRules: [PageRuleInput]!
 }
 
 input PageRuleInput {

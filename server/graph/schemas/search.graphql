@@ -2,54 +2,10 @@
 # SEARCH
 # ===============================================
 
-extend type Query {
-  search: SearchQuery
-}
-
 extend type Mutation {
-  search: SearchMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type SearchQuery {
-  searchEngines(
-    filter: String
-    orderBy: String
-  ): [SearchEngine] @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type SearchMutation {
-  updateSearchEngines(
-    engines: [SearchEngineInput]
-  ): DefaultResponse @auth(requires: ["manage:system"])
-
-  rebuildIndex: DefaultResponse @auth(requires: ["manage:system"])
+  rebuildSearchIndex: DefaultResponse
 }
 
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
-
-type SearchEngine {
-  isEnabled: Boolean!
-  key: String!
-  title: String!
-  description: String
-  logo: String
-  website: String
-  isAvailable: Boolean
-  config: [KeyValuePair]
-}
-
-input SearchEngineInput {
-  isEnabled: Boolean!
-  key: String!
-  config: [KeyValuePairInput]
-}

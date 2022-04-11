@@ -3,38 +3,21 @@
 # ===============================================
 
 extend type Query {
-  localization: LocalizationQuery
-}
-
-extend type Mutation {
-  localization: LocalizationMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type LocalizationQuery {
   locales: [LocalizationLocale]
-  config: LocalizationConfig
   translations(locale: String!, namespace: String!): [Translation]
 }
 
-# -----------------------------------------------
-# MUTATIONS
-# -----------------------------------------------
-
-type LocalizationMutation {
+extend type Mutation {
   downloadLocale(
     locale: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
   updateLocale(
     locale: String!
     autoUpdate: Boolean!
     namespacing: Boolean!
     namespaces: [String]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -42,25 +25,18 @@ type LocalizationMutation {
 # -----------------------------------------------
 
 type LocalizationLocale {
-  availability: Int!
-  code: String!
-  createdAt: Date!
+  availability: Int
+  code: String
+  createdAt: Date
   installDate: Date
-  isInstalled: Boolean!
-  isRTL: Boolean!
-  name: String!
-  nativeName: String!
-  updatedAt: Date!
-}
-
-type LocalizationConfig {
-  locale: String!
-  autoUpdate: Boolean!
-  namespacing: Boolean!
-  namespaces: [String]!
+  isInstalled: Boolean
+  isRTL: Boolean
+  name: String
+  nativeName: String
+  updatedAt: Date
 }
 
 type Translation {
-  key: String!
-  value: String!
+  key: String
+  value: String
 }

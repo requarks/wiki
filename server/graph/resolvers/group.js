@@ -7,16 +7,10 @@ const gql = require('graphql')
 
 module.exports = {
   Query: {
-    async groups () { return {} }
-  },
-  Mutation: {
-    async groups () { return {} }
-  },
-  GroupQuery: {
     /**
      * FETCH ALL GROUPS
      */
-    async list () {
+    async groups () {
       return WIKI.models.groups.query().select(
         'groups.*',
         WIKI.models.groups.relatedQuery('users').count().as('userCount')
@@ -25,15 +19,15 @@ module.exports = {
     /**
      * FETCH A SINGLE GROUP
      */
-    async single(obj, args) {
+    async groupById(obj, args) {
       return WIKI.models.groups.query().findById(args.id)
     }
   },
-  GroupMutation: {
+  Mutation: {
     /**
      * ASSIGN USER TO GROUP
      */
-    async assignUser (obj, args, { req }) {
+    async assignUserToGroup (obj, args, { req }) {
       // Check for guest user
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot assign the Guest user to a group.')
@@ -85,7 +79,7 @@ module.exports = {
     /**
      * CREATE NEW GROUP
      */
-    async create (obj, args, { req }) {
+    async createGroup (obj, args, { req }) {
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
@@ -102,7 +96,7 @@ module.exports = {
     /**
      * DELETE GROUP
      */
-    async delete (obj, args) {
+    async deleteGroup (obj, args) {
       if (args.id === 1 || args.id === 2) {
         throw new gql.GraphQLError('Cannot delete this group.')
       }
@@ -122,7 +116,7 @@ module.exports = {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUser (obj, args) {
+    async unassignUserFromGroup (obj, args) {
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot unassign Guest user')
       }
@@ -149,7 +143,7 @@ module.exports = {
     /**
      * UPDATE GROUP
      */
-    async update (obj, args, { req }) {
+    async updateGroup (obj, args, { req }) {
       // Check for unsafe regex page rules
       if (_.some(args.pageRules, pr => {
         return pr.match === 'REGEX' && !safeRegex(pr.path)
