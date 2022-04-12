@@ -17,7 +17,8 @@ module.exports = {
       clientSecret: conf.clientSecret,
       userInfoURL: conf.userInfoURL,
       callbackURL: conf.callbackURL,
-      passReqToCallback: true
+      passReqToCallback: true,
+      scope: conf.scope
     }, async (req, accessToken, refreshToken, profile, cb) => {
       try {
         const user = await WIKI.models.users.processProfile({
