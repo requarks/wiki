@@ -38,7 +38,7 @@ module.exports = {
   SiteMutation: {
     async updateConfig(obj, args, context) {
       try {
-        if (args.host) {
+        if (args.hasOwnProperty('host')) {
           let siteHost = _.trim(args.host)
           if (siteHost.endsWith('/')) {
             siteHost = siteHost.slice(0, -1)
@@ -46,19 +46,19 @@ module.exports = {
           WIKI.config.host = siteHost
         }
 
-        if (args.title) {
+        if (args.hasOwnProperty('title')) {
           WIKI.config.title = _.trim(args.title)
         }
 
-        if (args.company) {
+        if (args.hasOwnProperty('company')) {
           WIKI.config.company = _.trim(args.company)
         }
 
-        if (args.contentLicense) {
+        if (args.hasOwnProperty('contentLicense')) {
           WIKI.config.contentLicense = args.contentLicense
         }
 
-        if (args.logoUrl) {
+        if (args.hasOwnProperty('logoUrl')) {
           WIKI.config.logoUrl = _.trim(args.logoUrl)
         }
 
