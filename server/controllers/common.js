@@ -525,14 +525,26 @@ router.get('/*', async (req, res, next) => {
           }
 
           // -> Inject comments variables
-          if (WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
+          const shouldDisplayComments = WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate
+          const commentTmpl = shouldDisplayComments ? {
+            codeTemplate: WIKI.data.commentProvider.codeTemplate,
+            head: WIKI.data.commentProvider.head,
+            body: WIKI.data.commentProvider.body,
+            main: WIKI.data.commentProvider.main
+          } : {
+            codeTemplate: false,
+            head: null,
+            body: null,
+            main: ''
+          }
+          if (shouldDisplayComments) {
             [
               { key: 'pageUrl', value: `${WIKI.config.host}/i/${page.id}` },
               { key: 'pageId', value: page.id }
             ].forEach((cfg) => {
-              WIKI.data.commentProvider.head = _.replace(WIKI.data.commentProvider.head, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-              WIKI.data.commentProvider.body = _.replace(WIKI.data.commentProvider.body, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-              WIKI.data.commentProvider.main = _.replace(WIKI.data.commentProvider.main, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+              commentTmpl.head = _.replace(commentTmpl.head, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+              commentTmpl.body = _.replace(commentTmpl.body, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+              commentTmpl.main = _.replace(commentTmpl.main, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
             })
           }
 
@@ -541,7 +553,7 @@ router.get('/*', async (req, res, next) => {
             page,
             sidebar,
             injectCode,
-            comments: WIKI.data.commentProvider,
+            comments: commentTmpl,
             effectivePermissions
           })
         }
