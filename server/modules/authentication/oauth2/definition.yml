@@ -64,3 +64,9 @@ props:
     title: Scope
     hint: (optional) Application Client permission scopes.
     order: 10
+  useAuthorizationHeader:
+    type: Boolean
+    default: false
+    title: Pass access token via Authorization header to User Info Endpoint
+    hint: (optional) Pass the access token in the Authorization header to your authorization server at the User Info Endpoint URL. Otherwise an `access_token` parameter will be attached to the GET query string with the token.
+    order: 11
