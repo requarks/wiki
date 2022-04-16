@@ -37,13 +37,7 @@ module.exports = {
     })
 
     client.userProfile = function (accesstoken, done) {
-      const url = new URL(conf.userInfoURL)
-      if (conf.useAuthorizationHeader) {
-        this._oauth2._useAuthorizationHeaderForGET = true
-      } else {
-        this._oauth2._useAuthorizationHeaderForGET = false
-        url.searchParams.set('access_token', accesstoken)
-      }
+      this._oauth2._useAuthorizationHeaderForGET = !conf.useQueryStringForAccessToken
       this._oauth2.get(conf.userInfoURL, accesstoken, (err, data) => {
         if (err) {
           return done(err)
