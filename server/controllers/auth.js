@@ -122,6 +122,7 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
  * Logout
  */
 router.get('/logout', async (req, res) => {
+  await WIKI.auth.invalidateToken({ token: req.cookies['jwt'], reason: 'logout' })
   const redirURL = await WIKI.models.users.logout({ req, res })
   req.logout()
   res.clearCookie('jwt')

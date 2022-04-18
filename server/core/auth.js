@@ -20,7 +20,7 @@ module.exports = {
   groups: {},
   validApiKeys: [],
   revocationList: require('./cache').init(),
-
+  invalidateList: require('./cache').init(),
   /**
    * Initialize the authentication module
    */
@@ -112,6 +112,16 @@ module.exports = {
   authenticate (req, res, next) {
     WIKI.auth.passport.authenticate('jwt', {session: false}, async (err, user, info) => {
       if (err) { return next() }
+      // Check if token is in revocation list
+      const token = securityHelper.extractJWT(req)
+      if (WIKI.auth.invalidateList.has(token)){
+        if (WIKI.auth.guest.cacheExpiration <= DateTime.utc()) {
+          WIKI.auth.guest = await WIKI.models.users.getGuestUser()
+          WIKI.auth.guest.cacheExpiration = DateTime.utc().plus({ minutes: 1 })
+        }
+        req.user = WIKI.auth.guest
+        return next()
+      }
       let mustRevalidate = false
 
       // Expired but still valid within N days, just renew
@@ -478,5 +488,12 @@ module.exports = {
    */
   revokeUserTokens ({ id, kind = 'u' }) {
     WIKI.auth.revocationList.set(`${kind}${_.toString(id)}`, Math.round(DateTime.utc().minus({ seconds: 5 }).toSeconds()), Math.ceil(ms(WIKI.config.auth.tokenExpiration) / 1000))
+  },
+
+  /**
+   * Add jwt to invalidate list, invalidate to jwt token for logout...
+   */
+  invalidateToken({token, reason = ""}) {
+    WIKI.auth.invalidateList.set(token, {time:  new Date().toISOString(), reason}, Math.ceil(ms(WIKI.config.auth.tokenExpiration) / 1000))
   }
 }
