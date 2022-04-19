@@ -92,6 +92,7 @@
 import _ from 'lodash'
 import validate from 'validate.js'
 import gql from 'graphql-tag'
+import crypto from 'crypto-browserify'
 
 import createUserMutation from 'gql/admin/users/users-mutation-create.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
@@ -177,12 +178,17 @@ export default {
       }
 
       try {
+        let password = this.password
+        if (password) {
+          const publicKey = await fetch("/.well-known/jwk.pem").then(resp => resp.text())
+          password = crypto.publicEncrypt(publicKey, Buffer.from(password)).toString("hex")
+        }
         const resp = await this.$apollo.mutate({
           mutation: createUserMutation,
           variables: {
             providerKey: this.provider,
             email: this.email,
-            passwordRaw: this.password,
+            passwordRaw: password,
             name: this.name,
             groups: this.group,
             mustChangePassword: this.mustChangePwd,

@@ -372,6 +372,7 @@
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
+import crypto from 'crypto-browserify'
 import { StatusIndicator } from 'vue-status-indicator'
 
 import UserSearch from '../common/user-search.vue'
@@ -826,6 +827,11 @@ export default {
      * Update a user
      */
     async updateUser() {
+      let newPassword = this.newPassword
+      if(newPassword){
+          const publicKey = await fetch("/.well-known/jwk.pem").then(resp => resp.text())
+          newPassword = crypto.publicEncrypt(publicKey, Buffer.from(newPassword)).toString("hex")
+      }
       this.$store.commit(`loadingStart`, 'admin-users-update')
       const resp = await this.$apollo.mutate({
         mutation: gql`
@@ -846,7 +852,7 @@ export default {
           id: this.user.id,
           email: this.user.email,
           name: this.user.name,
-          newPassword: this.newPassword,
+          newPassword: newPassword,
           groups: _.map(this.user.groups, 'id'),
           location: this.user.location,
           jobTitle: this.user.jobTitle,

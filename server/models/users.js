@@ -1,6 +1,7 @@
 /* global WIKI */
 
 const bcrypt = require('bcryptjs-then')
+const crypto = require('crypto')
 const _ = require('lodash')
 const tfa = require('node-2fa')
 const jwt = require('jsonwebtoken')
@@ -291,6 +292,8 @@ module.exports = class User extends Model {
    * Login a user
    */
   static async login (opts, context) {
+    const priKey = { key: WIKI.config.certs.private, passphrase: WIKI.config.sessionSecret }
+    const password = crypto.privateDecrypt(priKey, Buffer.from(opts.password, "hex")).toString()
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
       const selStrategy = _.get(WIKI.auth.strategies, opts.strategy)
       if (!selStrategy.isEnabled) {
@@ -302,7 +305,7 @@ module.exports = class User extends Model {
       // Inject form user/pass
       if (strInfo.useForm) {
         _.set(context.req, 'body.email', opts.username)
-        _.set(context.req, 'body.password', opts.password)
+        _.set(context.req, 'body.password', password)
         _.set(context.req.params, 'strategy', opts.strategy)
       }
 
@@ -493,6 +496,8 @@ module.exports = class User extends Model {
     if (!newPassword || newPassword.length < 6) {
       throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
     }
+    const priKey = { key: WIKI.config.certs.private, passphrase: WIKI.config.sessionSecret }
+    newPassword = crypto.privateDecrypt(priKey, Buffer.from(newPassword, "hex")).toString()
     const usr = await WIKI.models.userKeys.validateToken({
       kind: 'changePwd',
       token: continuationToken
@@ -555,6 +560,8 @@ module.exports = class User extends Model {
    */
   static async createNewUser ({ providerKey, email, passwordRaw, name, groups, mustChangePassword, sendWelcomeEmail }) {
     // Input sanitization
+    const priKey = { key: WIKI.config.certs.private, passphrase: WIKI.config.sessionSecret }
+    passwordRaw = crypto.privateDecrypt(priKey, Buffer.from(passwordRaw, "hex")).toString()
     email = _.toLower(email)
 
     // Input validation
@@ -692,6 +699,8 @@ module.exports = class User extends Model {
         if (newPassword.length < 6) {
           throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
         }
+        const priKey = { key: WIKI.config.certs.private, passphrase: WIKI.config.sessionSecret }
+        newPassword = crypto.privateDecrypt(priKey, Buffer.from(newPassword, "hex")).toString()
         usrData.password = newPassword
       }
       if (_.isArray(groups)) {

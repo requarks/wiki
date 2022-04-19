@@ -254,6 +254,7 @@
 
 import _ from 'lodash'
 import Cookies from 'js-cookie'
+import crypto from 'crypto-browserify'
 import gql from 'graphql-tag'
 import { sync } from 'vuex-pathify'
 
@@ -367,6 +368,9 @@ export default {
         this.loaderTitle = this.$t('auth:signingIn')
         this.isLoading = true
         try {
+          let password = this.password
+          const publicKey = await fetch("/.well-known/jwk.pem").then(resp=> resp.text() )
+          password = crypto.publicEncrypt(publicKey, Buffer.from(password)).toString("hex")
           const resp = await this.$apollo.mutate({
             mutation: gql`
               mutation($username: String!, $password: String!, $strategy: String!) {
@@ -391,7 +395,7 @@ export default {
             `,
             variables: {
               username: this.username,
-              password: this.password,
+              password: password,
               strategy: this.selectedStrategy.key
             }
           })
@@ -501,6 +505,11 @@ export default {
       this.loaderTitle = this.$t('auth:changePwd.loading')
       this.isLoading = true
       try {
+        let newPassword = this.newPassword
+        if (newPassword) {
+          const publicKey = await fetch("/.well-known/jwk.pem").then(resp => resp.text())
+          newPassword = crypto.publicEncrypt(publicKey, Buffer.from(newPassword)).toString("hex")
+        }
         const resp = await this.$apollo.mutate({
           mutation: gql`
             mutation (
@@ -527,7 +536,7 @@ export default {
           `,
           variables: {
             continuationToken: this.continuationToken,
-            newPassword: this.newPassword
+            newPassword: newPassword
           }
         })
         if (_.has(resp, 'data.authentication.loginChangePassword')) {
