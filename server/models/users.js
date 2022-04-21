@@ -186,7 +186,8 @@ module.exports = class User extends Model {
     } else if (profile.user && profile.user.email && profile.user.email.length > 5) {
       primaryEmail = profile.user.email
     } else {
-      throw new Error('Missing or invalid email address from profile.')
+      const message = WIKI.config.lang.code=='zh'?'请前往 https://account.deepin.org/ 绑定邮箱':'Please go to https://account.deepin.org/ to bind your email.'
+      throw new Error(message)
     }
     primaryEmail = _.toLower(primaryEmail)
 
