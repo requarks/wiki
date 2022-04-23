@@ -31,7 +31,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
     jq \
     less \
     git \
-    gnupg \
     gnupg2 \
     nano \
     pandoc \

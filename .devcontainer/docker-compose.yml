@@ -12,7 +12,7 @@ services:
         VARIANT: 16-bullseye
 
     volumes:
-      - ..:/workspace:cached
+      - ..:/workspace
       - wiki-vscode-ext:/root/.vscode-server/extensions
 
     # Overrides default command so things don't shut down after the process ends.
@@ -46,8 +46,8 @@ services:
       - PGADMIN_LISTEN_PORT=8000
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
     network_mode: service:db
-    volumes:
-      - ./pgadmin-servers.json:/pgadmin4/servers.json
+    # volumes:
+      # - ./pgadmin-servers.json:/pgadmin4/servers.json
 
 volumes:
   postgres-data:

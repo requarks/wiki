@@ -29,6 +29,7 @@
 
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
+    "arcanis.vscode-zipfs",
 		"dbaeumer.vscode-eslint",
 		"eamodio.gitlens",
 		"johnsoncodehk.volar",
@@ -36,6 +37,7 @@
 		"redhat.vscode-yaml",
 		"visualstudioexptteam.vscodeintellicode",
     "editorconfig.editorconfig",
+    "lokalise.i18n-ally",
     "mrmlnc.vscode-duplicate",
     "mtxr.sqltools-driver-pg",
     "mutantdino.resourcemonitor",
