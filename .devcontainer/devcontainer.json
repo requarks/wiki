@@ -1,33 +1,77 @@
-// How to get remote container development working with VSCode:
-// 1. Install "Remote Development" extension pack (ms-vscode-remote.vscode-remote-extensionpack)
-// 2. Select "Remote Containers - Reopen in container"
-
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/javascript-node-postgres
+// Update the VARIANT arg in docker-compose.yml to pick a Node.js version
 {
-  "name": "Wiki.js",
-  "dockerComposeFile": [
-    "../dev/containers/docker-compose.yml"
-  ],
-  "forwardPorts": [3000, 3001],
-  "service": "wiki",
-  "workspaceFolder": "/wiki",
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
+	"name": "Wiki.js Dev",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+
+	// Set *default* container specific settings.json values on container create.
+	"settings": {
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "sqltools.connections": [
+      // Default connection to dev DB container
+      {
+          "name": "Local Dev",
+          "server": "db",
+          "port": 5432,
+          "database": "postgres",
+          "username": "postgres",
+          "password": "postgres",
+          "driver": "PostgreSQL",
+          "askForPassword": false,
+          "connectionTimeout": 60
+      }
+    ]
   },
-  "extensions": [
-	"EditorConfig.editorconfig",
-	"dbaeumer.vscode-eslint",
-	"christian-kohler.path-intellisense",
-	"mrmlnc.vscode-puglint",
-	"octref.vetur",
-	"dzannotti.vscode-babel-coloring",
-	"wayou.vscode-todo-highlight",
-	"visualstudioexptteam.vscodeintellicode",
-	"lukas-tr.materialdesignicons-intellisense",
-	"codezombiech.gitignore",
-	"kumar-harsh.graphql-for-vscode",
-	"mrmlnc.vscode-duplicate",
-	"oderwat.indent-rainbow",
-	"christian-kohler.npm-intellisense"
-],
-  "postCreateCommand": ["yarn", "install"]
+
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"dbaeumer.vscode-eslint",
+		"eamodio.gitlens",
+		"johnsoncodehk.volar",
+		"oderwat.indent-rainbow",
+		"redhat.vscode-yaml",
+		"visualstudioexptteam.vscodeintellicode",
+    "editorconfig.editorconfig",
+    "mrmlnc.vscode-duplicate",
+    "mtxr.sqltools-driver-pg",
+    "mutantdino.resourcemonitor",
+    "wayou.vscode-todo-highlight"
+	],
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// This can be used to network with other containers or with the host.
+	"forwardPorts": [3000, 5432, 8000],
+
+  "portsAttributes": {
+    "3000": {
+      "label": "Wiki.js",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    },
+    "8000": {
+      "label": "PGAdmin",
+      "onAutoForward": "silent"
+    }
+  },
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "/docker-init.sh",
+
+	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	// "remoteUser": "node",
+	"features": {
+    "common": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true
+    },
+		"github-cli": "latest"
+	}
 }

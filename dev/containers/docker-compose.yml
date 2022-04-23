@@ -1,59 +1,44 @@
 # -- DEV DOCKER-COMPOSE --
 # -- DO NOT USE IN PRODUCTION! --
 
-version: "3"
+version: "3.8"
 services:
   db:
-    container_name: wiki-db
-    image: postgres:9-alpine
+    image: postgres:11-alpine
     environment:
       POSTGRES_DB: wiki
       POSTGRES_PASSWORD: wikijsrocks
       POSTGRES_USER: wikijs
     logging:
       driver: "none"
+    restart: unless-stopped
     volumes:
       - db-data:/var/lib/postgresql/data
-    ports:
-      - "15432:5432"
 
-  adminer:
-    container_name: wiki-adminer
-    image: adminer:latest
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@js.wiki
+      PGADMIN_DEFAULT_PASSWORD: "123123"
+      PGADMIN_DISABLE_POSTFIX: true
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: False
+    network_mode: service:db
     logging:
       driver: "none"
-    ports:
-      - "3001:8080"
-
-  # solr:
-  #   container_name: wiki-solr
-  #   image: solr:7-alpine
-  #   logging:
-  #     driver: "none"
-  #   ports:
-  #     - "8983:8983"
-  #   volumes:
-  #     - solr-data:/opt/solr/server/solr/mycores
-  #   entrypoint:
-  #     - docker-entrypoint.sh
-  #     - solr-precreate
-  #     - wiki
 
   wiki:
-    container_name: wiki-app
     build:
       context: ../..
       dockerfile: dev/containers/Dockerfile
+    command: sleep infinity
     depends_on:
       - db
-    ports:
-      - "3000:3000"
     volumes:
-      - ../..:/wiki
-      - /wiki/node_modules
-      - /wiki/.git
+      - ../..:/workspace
+    network_mode: service:db
+    ipc: host
+    init: true
 
 
 volumes:
   db-data:
-  # solr-data:
