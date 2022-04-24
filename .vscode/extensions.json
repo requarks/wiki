@@ -1,7 +1,6 @@
 {
   "recommendations": [
     "EditorConfig.editorconfig",
-    "dbaeumer.vscode-eslint",
-    "mrmlnc.vscode-puglint",
+    "dbaeumer.vscode-eslint"
   ]
 }
