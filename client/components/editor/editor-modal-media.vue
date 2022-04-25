@@ -188,6 +188,18 @@
                 placeholder='None'
               )
 
+          v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark')
+            v-card-text.pb-0
+              v-toolbar.radius-7(:color='$vuetify.theme.dark ? `teal` : `teal lighten-5`', dense, flat)
+                .body-2(:class='$vuetify.theme.dark ? `white--text` : `teal--text`') Custom class name
+              v-text-field.mt-3(
+                v-model='imageClass'
+                outlined
+                single-line
+                color='teal'
+                placeholder='None'
+              )
+
     //- RENAME DIALOG
 
     v-dialog(v-model='renameDialog', max-width='550', persistent)
@@ -269,6 +281,7 @@ export default {
         { text: 'Absolute Top Right', value: 'abstopright' }
       ],
       imageAlignment: '',
+      imageClass: '',
       loading: false,
       newFolderDialog: false,
       newFolderName: '',
@@ -375,7 +388,8 @@ export default {
         kind: asset.kind,
         path: this.currentFolderId > 0 ? `/${assetPath}/${asset.filename}` : `/${asset.filename}`,
         text: asset.filename,
-        align: this.imageAlignment
+        align: this.imageAlignment,
+        className: this.imageClass
       })
       this.activeModal = ''
     },

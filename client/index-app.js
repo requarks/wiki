@@ -22,5 +22,6 @@ import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/scss/a
 import(/* webpackChunkName: "mdi" */ '@mdi/font/css/materialdesignicons.css')
 
 require('./helpers/compatibility.js')
+require('./helpers/modal.js')
 require('./client-app.js')
 import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/js/app.js')
