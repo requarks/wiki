@@ -525,19 +525,13 @@ router.get('/*', async (req, res, next) => {
           }
 
           // -> Inject comments variables
-          const shouldDisplayComments = WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate
-          const commentTmpl = shouldDisplayComments ? {
+          const commentTmpl = {
             codeTemplate: WIKI.data.commentProvider.codeTemplate,
             head: WIKI.data.commentProvider.head,
             body: WIKI.data.commentProvider.body,
             main: WIKI.data.commentProvider.main
-          } : {
-            codeTemplate: false,
-            head: null,
-            body: null,
-            main: ''
           }
-          if (shouldDisplayComments) {
+          if (WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
             [
               { key: 'pageUrl', value: `${WIKI.config.host}/i/${page.id}` },
               { key: 'pageId', value: page.id }
