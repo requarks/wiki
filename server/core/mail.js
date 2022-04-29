@@ -51,6 +51,9 @@ module.exports = {
     }
     await this.loadTemplate(opts.template)
     return this.transport.sendMail({
+      headers: {
+        'x-mailer': 'Wiki.js'
+      },
       from: `"${WIKI.config.mail.senderName}" <${WIKI.config.mail.senderEmail}>`,
       to: opts.to,
       subject: `${opts.subject} - ${WIKI.config.title}`,
