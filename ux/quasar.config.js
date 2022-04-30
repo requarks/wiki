@@ -94,6 +94,7 @@ module.exports = configure(function (/* ctx */) {
     devServer: {
       // https: true
       open: false, // opens browser window automatically
+      port: 3001,
       proxy: {
         '/_graphql': 'http://localhost:3000/graphql'
       }

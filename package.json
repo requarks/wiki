@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node server",
     "dev": "nodemon server",
-    "dev-legacy": "node dev",
+    "legacy:dev": "node dev",
+    "legacy:build": "webpack --profile --config dev/webpack/webpack.prod.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open"
   },

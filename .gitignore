@@ -14,7 +14,7 @@ npm/node_modules
 .npm
 .node_repl_history
 npm-debug.log*
-.yarn
+/.yarn
 
 # Generated assets
 /assets
