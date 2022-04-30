@@ -7,7 +7,7 @@ block body
       .login-dialog
         if err
           .login-error= err.message
-        form(method='post', action='/login')
+        form(method='post', action=localePart + '/login')
           h1= config.title
           select(name='strategy')
             each str in formStrategies
