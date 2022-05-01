@@ -21,12 +21,12 @@ props:
   audience:
     type: String
     title: Audience
-    hint: (Optional) - Expected SAML response Audience (if not provided, Audience won't be verified)
+    hint: Expected SAML response Audience (if not provided, audience won't be verified)
     order: 3
   cert:
     type: String
     title: Certificate
-    hint: (Optional) - Public PEM-encoded X.509 signing certificate. If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
+    hint: Public PEM-encoded X.509 signing certificate. If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
     multiline: true
     order: 4
   privateCert:
