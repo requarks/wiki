@@ -1,7 +1,7 @@
 # =========================
 # --- BUILD NPM MODULES ---
 # =========================
-FROM node:16 AS build
+FROM node:16-alpine AS build
 
 RUN apk add yarn g++ make cmake python3 --no-cache
 
