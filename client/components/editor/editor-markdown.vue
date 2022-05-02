@@ -164,10 +164,11 @@
               v-btn.mt-3.animated.fadeInLeft.wait-p9s(icon, tile, v-on='on', dark, @click='toggleHelp').mx-0
                 v-icon(:color='helpShown ? `teal` : ``') mdi-help-circle
             span {{$t('editor:markup.markdownFormattingHelp')}}
-      .editor-markdown-editor
+      .editor-markdown-editor(v-bind:style="{ flex: editorFlexStyle }")
         textarea(ref='cm')
+      .editor-markdown-resizable(@mousedown.prevent="onMouseDown")
       transition(name='editor-markdown-preview')
-        .editor-markdown-preview(v-if='previewShown')
+        .editor-markdown-preview(v-if='previewShown', v-bind:style="{ flex: previewFlexStyle }")
           .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
             div(
               ref='editorPreview'
@@ -408,7 +409,8 @@ export default {
       previewHTML: '',
       helpShown: false,
       spellModeActive: false,
-      insertLinkDialog: false
+      insertLinkDialog: false,
+      flexBasisEditor: 0.5
     }
   },
   computed: {
@@ -417,6 +419,12 @@ export default {
     },
     isModalShown() {
       return this.helpShown || this.activeModal !== ''
+    },
+    editorFlexStyle() {
+      return `1 1 ${this.flexBasisEditor * 100}%`
+    },
+    previewFlexStyle() {
+      return `1 1 ${(1 - this.flexBasisEditor) * 100}%`
     },
     locale: get('page/locale'),
     path: get('page/path'),
@@ -469,6 +477,43 @@ export default {
       //     reader.readAsDataURL(file)
       //   }
       // }
+    },
+    onMouseDown ({ target: resizer, pageX: initialPageX, pageY: initialPageY }) {
+      if (resizer.className && resizer.className.match('editor-markdown-resizable')) {
+        const self = this
+        const editor = resizer.previousElementSibling
+        const sidebar = editor.previousElementSibling
+        const preview = resizer.nextElementSibling
+        const { addEventListener, removeEventListener } = window
+        const onMouseMove = function({ pageX }) {
+          const ratio = (pageX - sidebar.offsetWidth) / (editor.offsetWidth + preview.offsetWidth)
+          if (ratio >= 0.85) {
+            self.flexBasisEditor = 0.90
+          } else if (ratio >= 0.75 && ratio < 0.85) {
+            self.flexBasisEditor = 0.80
+          } else if (ratio >= 0.65 && ratio < 0.75) {
+            self.flexBasisEditor = 0.70
+          } else if (ratio >= 0.55 && ratio < 0.65) {
+            self.flexBasisEditor = 0.60
+          } else if (ratio > 0.35 && ratio <= 0.45) {
+            self.flexBasisEditor = 0.40
+          } else if (ratio > 0.25 && ratio <= 0.35) {
+            self.flexBasisEditor = 0.30
+          } else if (ratio > 0.15 && ratio <= 0.25) {
+            self.flexBasisEditor = 0.20
+          } else if (ratio <= 0.15) {
+            self.flexBasisEditor = 0.10
+          } else {
+            self.flexBasisEditor = 0.5
+          }
+        }
+        const onMouseUp = function() {
+          removeEventListener('mousemove', onMouseMove)
+          removeEventListener('mouseup', onMouseUp)
+        }
+        addEventListener('mousemove', onMouseMove)
+        addEventListener('mouseup', onMouseUp)
+      }
     },
     processContent (newContent) {
       linesMap = []
@@ -1045,6 +1090,12 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       justify-content: center;
       align-items: center;
     }
+  }
+
+  &-resizable {
+    width: 8px;
+    cursor: col-resize;
+    background: #f5f5f5;
   }
 
   // ==========================================
