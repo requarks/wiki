@@ -106,7 +106,7 @@ module.exports = {
   /**
    * Graceful shutdown
    */
-  async shutdown () {
+  async shutdown (devMode = false) {
     if (WIKI.servers) {
       await WIKI.servers.stopServers()
     }
@@ -122,6 +122,8 @@ module.exports = {
     if (WIKI.asar) {
       await WIKI.asar.unload()
     }
-    process.exit(0)
+    if (!devMode) {
+      process.exit(0)
+    }
   }
 }

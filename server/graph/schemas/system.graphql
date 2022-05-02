@@ -47,6 +47,11 @@ type SystemMutation {
   ): DefaultResponse @auth(requires: ["manage:system"])
 
   renewHTTPSCertificate: DefaultResponse @auth(requires: ["manage:system"])
+
+  export(
+    entities: [String]!
+    path: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
