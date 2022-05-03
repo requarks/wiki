@@ -46,18 +46,15 @@
     //-> Browse
     v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
       template(v-if='currentParent.id > 0')
-        v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='fetchBrowseItems(item)', style='min-height: 30px;')
+        v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='routeNavLink(item)', style='min-height: 30px;', :input-value='path === item.path')
           v-list-item-avatar(size='18', :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`')
-            v-icon(small) mdi-folder-open
+            v-icon(v-if='item.id === 0' small) mdi-home
+            v-icon(v-else small) mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
-          v-list-item-avatar(size='24')
-            v-icon mdi-text-box
-          v-list-item-title {{ currentParent.title }}
-        v-subheader.pl-4 {{$t('common:sidebar.currentDirectory')}}
+        v-subheader.pl-4(v-if='currentItems.length') {{$t('common:sidebar.currentDirectory')}}
       template(v-for='item of currentItems')
-        v-list-item(v-if='item.isFolder', :key='`childfolder-` + item.id', @click='fetchBrowseItems(item)')
+        v-list-item(v-if='item.isFolder', :key='`childfolder-` + item.id', @click='routeNavLink(item)', :input-value='path === item.path')
           v-list-item-avatar(size='24')
             v-icon mdi-folder
           v-list-item-title {{ item.title }}
@@ -99,7 +96,7 @@ export default {
       currentItems: [],
       currentParent: {
         id: 0,
-        title: '/ (root)'
+        title: 'Home'
       },
       parents: [],
       loadedCache: []
@@ -117,6 +114,17 @@ export default {
         this.loadFromCurrentPath()
       }
     },
+
+    async routeNavLink(item) {
+      if (item.pageId === null) {
+        return this.fetchBrowseItems(item)
+      } else if (item.id === 0) {
+        return this.goHome()
+      } else {
+        window.location.href = '/' + item.locale + '/' + item.path
+      }
+    },
+
     async fetchBrowseItems (item) {
       this.$store.commit(`loadingStart`, 'browse-load')
       if (!item) {
@@ -166,6 +174,7 @@ export default {
       })
       this.loadedCache = _.union(this.loadedCache, [item.id])
       this.currentItems = _.get(resp, 'data.pages.tree', [])
+
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     async loadFromCurrentPath() {
@@ -206,16 +215,26 @@ export default {
         if (!curParent) {
           break
         }
+
         invertedAncestors.push(curParent)
         curParentId = curParent.parent
       }
 
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
+
+      if (this.currentParent.id === 0) {
+        this.currentParent.title = 'Home'
+      }
+
       this.currentParent = _.last(this.parents)
 
       this.loadedCache = [curPage.parent]
       this.currentItems = _.filter(items, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
+
+      if (curPage.isFolder) {
+        this.fetchBrowseItems(curPage)
+      }
     },
     goHome () {
       window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
