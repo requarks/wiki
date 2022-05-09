@@ -108,6 +108,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `volumeMounts`                   | Volume mounts for Wiki.js container              | `[]`                                                       |
 | `volumes`                        | Volumes for Wiki.js Pod                          | `[]`                                                       |
 | `ingress.enabled`                    | Enable ingress controller resource          | `false`                                                    |
+| `ingress.className`                  | Ingress class name                          | `""`                                                       |
 | `ingress.annotations`                | Ingress annotations                         | `{}`                                                       |
 | `ingress.hosts`                      | List of ingress rules                        | `[{"host": "wiki.local", "paths": ["/"]}]`                |
 | `ingress.tls`                        | Ingress TLS configuration                   | `[]`                                                       |
