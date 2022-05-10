@@ -45,6 +45,10 @@ module.exports = {
       await this.git.init()
     }
 
+    // Disable quotePath
+    // Link https://git-scm.com/docs/git-config#Documentation/git-config.txt-corequotePath
+    await this.git.raw(['config', '--local', 'core.quotepath', false])
+
     // Set default author
     await this.git.raw(['config', '--local', 'user.email', this.config.defaultEmail])
     await this.git.raw(['config', '--local', 'user.name', this.config.defaultName])
