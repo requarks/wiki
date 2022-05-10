@@ -14,7 +14,7 @@ module.exports = {
       callbackUrl: conf.callbackURL,
       entryPoint: conf.entryPoint,
       issuer: conf.issuer,
-      cert = _.split(conf.cert, '|'),
+      cert: _.split(conf.cert || '', '|'),
       signatureAlgorithm: conf.signatureAlgorithm,
       digestAlgorithm: conf.digestAlgorithm,
       identifierFormat: conf.identifierFormat,
