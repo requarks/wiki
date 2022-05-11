@@ -141,6 +141,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Brian Douglass ([@bhdouglass](https://github.com/bhdouglass))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - Cameron Steele ([@ATechAdventurer](https://github.com/ATechAdventurer))
+- Charlie Schliesser ([@charlie-s](https://github.com/charlie-s))
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
