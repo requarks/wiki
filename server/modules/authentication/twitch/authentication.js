@@ -4,7 +4,7 @@
 // Twitch Account
 // ------------------------------------
 
-const TwitchStrategy = require('passport-twitch-oauth').Strategy
+const TwitchStrategy = require('passport-twitch-strategy').Strategy
 const _ = require('lodash')
 
 module.exports = {
@@ -21,7 +21,7 @@ module.exports = {
             providerKey: req.params.strategy,
             profile: {
               ...profile,
-              picture: _.get(profile, 'avatar', '')
+              picture: _.get(profile, 'profile_image_url', '')
             }
           })
           cb(null, user)

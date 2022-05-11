@@ -14697,7 +14697,7 @@ passport-oauth2@1.6.1, passport-oauth2@^1.6.0:
     uid2 "0.0.x"
     utils-merge "1.x.x"
 
-passport-oauth2@1.x.x, passport-oauth2@^1.2.0, passport-oauth2@^1.4.0, passport-oauth2@^1.5.0:
+passport-oauth2@1.x.x, passport-oauth2@^1.4.0, passport-oauth2@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/passport-oauth2/-/passport-oauth2-1.5.0.tgz#64babbb54ac46a4dcab35e7f266ed5294e3c4108"
   integrity sha512-kqBt6vR/5VlCK8iCx1/KpY42kQ+NEHZwsSyt4Y6STiNjU+wWICG1i8ucc1FapXDGO15C5O5VZz7+7vRzrDPXXQ==
@@ -14761,12 +14761,13 @@ passport-strategy@1.x.x, passport-strategy@^1.0.0:
   resolved "https://registry.yarnpkg.com/passport-strategy/-/passport-strategy-1.0.0.tgz#b5539aa8fc225a3d1ad179476ddf236b440f52e4"
   integrity sha1-tVOaqPwiWj0a0XlHbd8ja0QPUuQ=
 
-passport-twitch-oauth@1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/passport-twitch-oauth/-/passport-twitch-oauth-1.0.0.tgz#8ba20658ffe18dbeab2201547e0a2e6a459adaf1"
-  integrity sha512-sX/HZgRP320CICi+ZQn0MpKV8PiVcxuEOaLywOE2EiXQkkUm4glTgBbz9bsr7Ws7985fFmP+LgLIe0/HtMGucw==
+passport-twitch-strategy@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/passport-twitch-strategy/-/passport-twitch-strategy-2.2.0.tgz#8a9d78ef478de92d1164fa8d194ee76ff551e0f1"
+  integrity sha512-PjESpFVnJk6GIX2EOtkuyk01K81ACDG8IiLJu6yOtOyaMti24/afMtqBcqDrsKqz0RHrx206AfWcI6Q4Tvy4OQ==
   dependencies:
-    passport-oauth2 "^1.2.0"
+    node-fetch "^2.6.1"
+    passport-oauth2 "^1.5.0"
 
 passport@0.4.1, passport@^0.4.1:
   version "0.4.1"
