@@ -165,6 +165,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 <img width="441" height="1" />
         
 - Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
+- Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nick Halase ([@nhalase](https://github.com/nhalase))
