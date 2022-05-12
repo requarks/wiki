@@ -8,8 +8,8 @@
             .headline.primary--text.animated.fadeInLeft {{ $t('admin:webhooks.title') }}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:webhooks.subtitle') }}
           v-spacer
-          v-btn.animated.fadeInDown(color='success', depressed, @click='save', large, disabled)
-            v-icon(left) check
+          v-btn.animated.fadeInDown(color='success', disabled, depressed, @click='save', large)
+            v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
 
       v-flex(lg3, xs12)

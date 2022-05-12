@@ -5,8 +5,8 @@
         .admin-header
           img.animated.fadeInUp(src='/_assets/svg/icon-people.svg', alt='Groups', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Groups
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage groups and their permissions
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{ $t('admin:groups.title') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{ $t('admin:groups.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/groups', target='_blank')
             v-icon mdi-help-circle
@@ -16,9 +16,9 @@
             template(v-slot:activator='{ on }')
               v-btn.animated.fadeInDown(color='primary', depressed, v-on='on', large)
                 v-icon(left) mdi-plus
-                span New Group
+                span {{ $t('admin:groups.new') }}
             v-card
-              .dialog-header.is-short New Group
+              .dialog-header.is-short {{ $t('admin:groups.new') }}
               v-card-text.pt-5
                 v-text-field.md2(
                   outlined
@@ -32,8 +32,8 @@
                   )
               v-card-chin
                 v-spacer
-                v-btn(text, @click='newGroupDialog = false') Cancel
-                v-btn(color='primary', @click='createGroup') Create
+                v-btn(color='primary', @click='createGroup') {{ $t('common:create') }}
+                v-btn(text, @click='newGroupDialog = false') {{ $t('common:cancel') }}
         v-card.mt-3.animated.fadeInUp
           v-data-table(
             :items='groups'
