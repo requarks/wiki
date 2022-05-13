@@ -558,7 +558,7 @@ export default {
         { text: '(GMT+02:00) Jerusalem', value: 'Asia/Jerusalem' },
         { text: '(GMT+02:00) Johannesburg', value: 'Africa/Johannesburg' },
         { text: '(GMT+02:00) Khartoum', value: 'Africa/Khartoum' },
-        { text: '(GMT+02:00) Kiev', value: 'Europe/Kiev' },
+        { text: '(GMT+02:00) Kyiv', value: 'Europe/Kyiv' },
         { text: '(GMT+02:00) Maputo', value: 'Africa/Maputo' },
         { text: '(GMT+02:00) Moscow-01 - Kaliningrad', value: 'Europe/Kaliningrad' },
         { text: '(GMT+02:00) Nicosia', value: 'Asia/Nicosia' },
