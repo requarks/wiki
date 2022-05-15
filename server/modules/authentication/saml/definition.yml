@@ -89,7 +89,7 @@ props:
   authnContext:
     type: String
     title: Auth Context
-    hint: Name identifier format to request auth context.
+    hint: Name identifier format to request auth context. For multiple values, join them together using the | pipe symbol.
     default: urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport
     order: 24
   racComparison:
