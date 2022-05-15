@@ -21,7 +21,7 @@ module.exports = {
       wantAssertionsSigned: conf.wantAssertionsSigned,
       acceptedClockSkewMs: _.toSafeInteger(conf.acceptedClockSkewMs),
       disableRequestedAuthnContext: conf.disableRequestedAuthnContext,
-      authnContext: [conf.authnContext],
+      authnContext: _.split(conf.authnContext, '|'),
       racComparison: conf.racComparison,
       forceAuthn: conf.forceAuthn,
       passive: conf.passive,
