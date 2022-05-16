@@ -17,7 +17,8 @@ extend type Mutation {
 type SystemQuery {
   flags: [SystemFlag] @auth(requires: ["manage:system"])
   info: SystemInfo
-  extensions: [SystemExtension]! @auth(requires: ["manage:system"])
+  extensions: [SystemExtension] @auth(requires: ["manage:system"])
+  exportStatus: SystemExportStatus @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -47,6 +48,11 @@ type SystemMutation {
   ): DefaultResponse @auth(requires: ["manage:system"])
 
   renewHTTPSCertificate: DefaultResponse @auth(requires: ["manage:system"])
+
+  export(
+    entities: [String]!
+    path: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -120,4 +126,11 @@ type SystemExtension {
   description: String!
   isInstalled: Boolean!
   isCompatible: Boolean!
+}
+
+type SystemExportStatus {
+  status: String
+  progress: Int
+  message: String
+  startedAt: Date
 }
