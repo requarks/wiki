@@ -486,25 +486,10 @@ export default {
         const preview = resizer.nextElementSibling
         const { addEventListener, removeEventListener } = window
         const onMouseMove = function({ pageX }) {
-          const ratio = (pageX - sidebar.offsetWidth) / (editor.offsetWidth + preview.offsetWidth)
-          if (ratio >= 0.85) {
-            self.flexBasisEditor = 0.90
-          } else if (ratio >= 0.75 && ratio < 0.85) {
-            self.flexBasisEditor = 0.80
-          } else if (ratio >= 0.65 && ratio < 0.75) {
-            self.flexBasisEditor = 0.70
-          } else if (ratio >= 0.55 && ratio < 0.65) {
-            self.flexBasisEditor = 0.60
-          } else if (ratio > 0.35 && ratio <= 0.45) {
-            self.flexBasisEditor = 0.40
-          } else if (ratio > 0.25 && ratio <= 0.35) {
-            self.flexBasisEditor = 0.30
-          } else if (ratio > 0.15 && ratio <= 0.25) {
-            self.flexBasisEditor = 0.20
-          } else if (ratio <= 0.15) {
-            self.flexBasisEditor = 0.10
-          } else {
-            self.flexBasisEditor = 0.5
+          // const ratio = Number(((pageX - sidebar.offsetWidth) / (editor.offsetWidth + preview.offsetWidth)).toFixed(2))
+          const ratio = Number(((pageX - sidebar.offsetWidth) / (editor.offsetWidth + preview.offsetWidth) * 5).toFixed(1)) / 5
+          if (ratio >= 0.10 && ratio <= 0.90) {
+            self.flexBasisEditor = ratio
           }
         }
         const onMouseUp = function() {
@@ -939,7 +924,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
   &-editor {
     background-color: darken(mc('grey', '900'), 4.5%);
-    flex: 1 1 50%;
     display: block;
     height: $editor-height;
     position: relative;
@@ -950,7 +934,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-preview {
-    flex: 1 1 50%;
     background-color: mc('grey', '100');
     position: relative;
     height: $editor-height;
@@ -967,10 +950,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
     &-enter-active, &-leave-active {
       transition: max-width .5s ease;
-      max-width: 50vw;
+      max-width: 100vw;
 
       .editor-code-preview-content {
-        width: 50vw;
+        width: 100vw;
         overflow:hidden;
       }
     }
