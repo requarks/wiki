@@ -45,7 +45,7 @@ module.exports = {
     async exportStatus () {
       return {
         status: WIKI.system.exportStatus.status,
-        progress: WIKI.system.exportStatus.progress,
+        progress: Math.ceil(WIKI.system.exportStatus.progress),
         message: WIKI.system.exportStatus.message,
         startedAt: WIKI.system.exportStatus.startedAt
       }
