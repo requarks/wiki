@@ -285,7 +285,7 @@ module.exports = {
           throw new Error('Must specify at least 1 entity to export.')
         }
         // -> Check target path
-        await fs.emptyDir(desiredPath) // TODO: replace with ensureDir()
+        await fs.ensureDir(desiredPath)
         const existingFiles = await fs.readdir(desiredPath)
         if (existingFiles.length) {
           throw new Error('Target directory must be empty!')

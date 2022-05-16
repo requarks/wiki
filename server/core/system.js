@@ -105,6 +105,37 @@ module.exports = {
       for (const entity of opts.entities) {
         switch (entity) {
           // -----------------------------------------
+          // ASSETS
+          // -----------------------------------------
+          case 'assets': {
+            WIKI.logger.info('Exporting assets...')
+            const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+            const assetsCountRaw = await WIKI.models.assets.query().count('* as total').first()
+            const assetsCount = parseInt(assetsCountRaw.total)
+            if (assetsCount < 1) {
+              WIKI.logger.warn('There are no assets to export! Skipping...')
+              break
+            }
+            const assetsProgressMultiplier = progressMultiplier / Math.ceil(assetsCount / 50)
+            WIKI.logger.info(`Found ${assetsCount} assets to export. Streaming to disk...`)
+
+            await pipeline(
+              WIKI.models.knex.select('filename', 'folderId', 'data').from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+              new stream.Transform({
+                objectMode: true,
+                transform: async (asset, enc, cb) => {
+                  const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
+                  WIKI.logger.info(`Exporting asset ${filename}...`)
+                  await fs.outputFile(path.join(opts.path, 'assets', filename), asset.data)
+                  this.exportStatus.progress += assetsProgressMultiplier * 100
+                  cb()
+                }
+              })
+            )
+            WIKI.logger.info('Export: assets saved to disk successfully.')
+            break
+          }
+          // -----------------------------------------
           // COMMENTS
           // -----------------------------------------
           case 'comments': {
