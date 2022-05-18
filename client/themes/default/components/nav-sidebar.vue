@@ -51,7 +51,7 @@
             v-icon(small) mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + item.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
+        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ currentParent.title }}
