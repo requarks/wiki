@@ -161,11 +161,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - MaFarine ([@MaFarine](https://github.com/MaFarine))
 - Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
+- Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
         
 </td><td>
 <img width="441" height="1" />
         
-- Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
 - Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
@@ -173,6 +173,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Nick Price ([@DominoTree](https://github.com/DominoTree))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
+- Oleksandr Koltsov ([@crambo](https://github.com/crambo))
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@ABitMoreDepth](https://github.com/ABitMoreDepth))
@@ -379,6 +380,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ludgeir Ibanez
 - Mark Mansur
 - Matt Gedigian
+- Nate Figz
 - Patryk
 - Philipp Schürch
 - Tracey Duffy
