@@ -145,7 +145,7 @@
     "passport-openidconnect": "0.1.1",
     "passport-saml": "3.2.1",
     "passport-slack-oauth2": "1.1.1",
-    "passport-twitch-oauth": "1.0.0",
+    "passport-twitch-strategy": "2.2.0",
     "pem-jwk": "2.0.0",
     "pg": "8.7.3",
     "pg-hstore": "2.3.4",
