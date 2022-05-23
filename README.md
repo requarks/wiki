@@ -25,7 +25,7 @@
 - [Requirements](https://docs.requarks.io/install/requirements)
 - [Installation](https://docs.requarks.io/install)
 - [Demo](https://docs.requarks.io/demo)
-- [Changelog](https://docs.requarks.io/releases)
+- [Changelog](https://github.com/requarks/wiki/releases)
 - [Feature Requests](https://feedback.js.wiki/wiki)
 - [Chat with us on Slack](https://wiki.requarks.io/slack)
 - [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
