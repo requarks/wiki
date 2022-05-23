@@ -16,7 +16,7 @@ q-page.admin-locale
         target='_blank'
         )
       q-btn.q-mr-sm.acrylic-btn(
-        icon='fa-solid fa-rotate'
+        icon='las la-redo-alt'
         flat
         color='secondary'
         @click='refresh'
@@ -100,7 +100,7 @@ q-page.admin-locale
 <script setup>
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAdminStore } from '../stores/admin'

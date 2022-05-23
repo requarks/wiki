@@ -16,7 +16,7 @@ q-page.admin-system
         type='a'
         )
       q-btn.q-mr-sm.acrylic-btn(
-        icon='fa-solid fa-rotate'
+        icon='las la-redo-alt'
         flat
         color='secondary'
         :loading='state.loading > 0'
@@ -234,25 +234,9 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import ClipboardJS from 'clipboard'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useSiteStore } from 'src/stores/site'
-import { useDataStore } from 'src/stores/data'
-import { useRoute, useRouter } from 'vue-router'
-
 // QUASAR
 
 const $q = useQuasar()
-
-// STORES
-
-const adminStore = useAdminStore()
-const siteStore = useSiteStore()
-const dataStore = useDataStore()
-
-// ROUTER
-
-const router = useRouter()
-const route = useRoute()
 
 // I18N
 

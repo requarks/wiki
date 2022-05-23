@@ -30,20 +30,20 @@ const routes = [
       { path: '', redirect: '/_admin/dashboard' },
       { path: 'dashboard', component: () => import('../pages/AdminDashboard.vue') },
       { path: 'sites', component: () => import('../pages/AdminSites.vue') },
-      // // -> Site
+      // -> Site
       { path: ':siteid/general', component: () => import('../pages/AdminGeneral.vue') },
       { path: ':siteid/editors', component: () => import('../pages/AdminEditors.vue') },
-      // { path: ':siteid/locale', component: () => import('../pages/AdminLocale.vue') },
-      // { path: ':siteid/login', component: () => import('../pages/AdminLogin.vue') },
+      { path: ':siteid/locale', component: () => import('../pages/AdminLocale.vue') },
+      { path: ':siteid/login', component: () => import('../pages/AdminLogin.vue') },
       // { path: ':siteid/navigation', component: () => import('../pages/AdminNavigation.vue') },
-      // { path: ':siteid/storage/:id?', component: () => import('../pages/AdminStorage.vue') },
+      { path: ':siteid/storage/:id?', component: () => import('../pages/AdminStorage.vue') },
       // { path: ':siteid/rendering', component: () => import('../pages/AdminRendering.vue') },
       // { path: ':siteid/theme', component: () => import('../pages/AdminTheme.vue') },
-      // // -> Users
+      // -> Users
       // { path: 'auth', component: () => import('../pages/AdminAuth.vue') },
       // { path: 'groups/:id?/:section?', component: () => import('../pages/AdminGroups.vue') },
       // { path: 'users/:id?/:section?', component: () => import('../pages/AdminUsers.vue') },
-      // // -> System
+      // -> System
       // { path: 'api', component: () => import('../pages/AdminApi.vue') },
       // { path: 'extensions', component: () => import('../pages/AdminExtensions.vue') },
       // { path: 'mail', component: () => import('../pages/AdminMail.vue') },

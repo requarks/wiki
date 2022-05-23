@@ -8,8 +8,8 @@ const { nanoid } = require('nanoid')
 const { DateTime } = require('luxon')
 const semver = require('semver')
 
-if (!semver.satisfies(process.version, '>=16')) {
-  console.error('ERROR: Node.js 16.x or later required!')
+if (!semver.satisfies(process.version, '>=18')) {
+  console.error('ERROR: Node.js 18.x or later required!')
   process.exit(1)
 }
 

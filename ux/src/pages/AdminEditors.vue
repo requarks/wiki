@@ -16,7 +16,7 @@ q-page.admin-flags
         type='a'
         )
       q-btn.q-mr-sm.acrylic-btn(
-        icon='fa-solid fa-rotate'
+        icon='las la-redo-alt'
         flat
         color='secondary'
         :loading='loading > 0'

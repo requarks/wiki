@@ -4,8 +4,8 @@ q-page.admin-login
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-bunch-of-keys.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.login.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.login.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.login.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.login.subtitle') }}
     .col-auto
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-question-circle'
@@ -19,16 +19,16 @@ q-page.admin-login
         icon='las la-redo-alt'
         flat
         color='secondary'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         @click='load'
         )
       q-btn(
         unelevated
-        icon='mdi-check'
-        :label='$t(`common.actions.apply`)'
+        icon='fa-solid fa-check'
+        :label='t(`common.actions.apply`)'
         color='secondary'
         @click='save'
-        :disabled='loading > 0'
+        :disabled='state.loading > 0'
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
@@ -38,12 +38,12 @@ q-page.admin-login
       //- -----------------------
       q-card.shadow-1.q-pb-sm
         q-card-section
-          .text-subtitle1 {{$t('admin.login.experience')}}
+          .text-subtitle1 {{t('admin.login.experience')}}
         q-item(tag='label', v-ripple)
-          blueprint-icon(icon='full-image', indicator, :indicator-text='$t(`admin.extensions.requiresSharp`)')
+          blueprint-icon(icon='full-image', indicator, :indicator-text='t(`admin.extensions.requiresSharp`)')
           q-item-section
-            q-item-label {{$t(`admin.login.background`)}}
-            q-item-label(caption) {{$t(`admin.login.backgroundHint`)}}
+            q-item-label {{t(`admin.login.background`)}}
+            q-item-label(caption) {{t(`admin.login.backgroundHint`)}}
           q-item-section.col-auto
             q-btn(
               label='Upload'
@@ -56,80 +56,80 @@ q-page.admin-login
         q-item(tag='label', v-ripple)
           blueprint-icon(icon='close-pane')
           q-item-section
-            q-item-label {{$t(`admin.login.bypassScreen`)}}
-            q-item-label(caption) {{$t(`admin.login.bypassScreenHint`)}}
+            q-item-label {{t(`admin.login.bypassScreen`)}}
+            q-item-label(caption) {{t(`admin.login.bypassScreenHint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='config.authAutoLogin'
+              v-model='state.config.authAutoLogin'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
-              :aria-label='$t(`admin.login.bypassScreen`)'
+              :aria-label='t(`admin.login.bypassScreen`)'
               )
         q-separator.q-my-sm(inset)
         q-item(tag='label', v-ripple)
           blueprint-icon(icon='no-access')
           q-item-section
-            q-item-label {{$t(`admin.login.bypassUnauthorized`)}}
-            q-item-label(caption) {{$t(`admin.login.bypassUnauthorizedHint`)}}
+            q-item-label {{t(`admin.login.bypassUnauthorized`)}}
+            q-item-label(caption) {{t(`admin.login.bypassUnauthorizedHint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='config.authBypassUnauthorized'
+              v-model='state.config.authBypassUnauthorized'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
-              :aria-label='$t(`admin.login.bypassUnauthorized`)'
+              :aria-label='t(`admin.login.bypassUnauthorized`)'
               )
         q-separator.q-my-sm(inset)
         q-item
           blueprint-icon(icon='double-right')
           q-item-section
-            q-item-label {{$t(`admin.login.loginRedirect`)}}
-            q-item-label(caption) {{$t(`admin.login.loginRedirectHint`)}}
+            q-item-label {{t(`admin.login.loginRedirect`)}}
+            q-item-label(caption) {{t(`admin.login.loginRedirectHint`)}}
           q-item-section
             q-input(
               outlined
-              v-model='config.loginRedirect'
+              v-model='state.config.loginRedirect'
               dense
               :rules=`[
-                val => invalidCharsRegex.test(val) || $t('admin.login.loginRedirectInvalidChars')
+                val => state.invalidCharsRegex.test(val) || t('admin.login.loginRedirectInvalidChars')
               ]`
               hide-bottom-space
-              :aria-label='$t(`admin.login.loginRedirect`)'
+              :aria-label='t(`admin.login.loginRedirect`)'
               )
         q-separator.q-my-sm(inset)
         q-item
           blueprint-icon(icon='chevron-right')
           q-item-section
-            q-item-label {{$t(`admin.login.welcomeRedirect`)}}
-            q-item-label(caption) {{$t(`admin.login.welcomeRedirectHint`)}}
+            q-item-label {{t(`admin.login.welcomeRedirect`)}}
+            q-item-label(caption) {{t(`admin.login.welcomeRedirectHint`)}}
           q-item-section
             q-input(
               outlined
-              v-model='config.welcomeRedirect'
+              v-model='state.config.welcomeRedirect'
               dense
               :rules=`[
-                val => invalidCharsRegex.test(val) || $t('admin.login.welcomeRedirectInvalidChars')
+                val => state.invalidCharsRegex.test(val) || t('admin.login.welcomeRedirectInvalidChars')
               ]`
               hide-bottom-space
-              :aria-label='$t(`admin.login.welcomeRedirect`)'
+              :aria-label='t(`admin.login.welcomeRedirect`)'
               )
         q-separator.q-my-sm(inset)
         q-item
           blueprint-icon(icon='exit')
           q-item-section
-            q-item-label {{$t(`admin.login.logoutRedirect`)}}
-            q-item-label(caption) {{$t(`admin.login.logoutRedirectHint`)}}
+            q-item-label {{t(`admin.login.logoutRedirect`)}}
+            q-item-label(caption) {{t(`admin.login.logoutRedirectHint`)}}
           q-item-section
             q-input(
               outlined
-              v-model='config.logoutRedirect'
+              v-model='state.config.logoutRedirect'
               dense
               :rules=`[
-                val => invalidCharsRegex.test(val) || $t('admin.login.logoutRedirectInvalidChars')
+                val => state.invalidCharsRegex.test(val) || t('admin.login.logoutRedirectInvalidChars')
               ]`
               hide-bottom-space
-              :aria-label='$t(`admin.login.logoutRedirect`)'
+              :aria-label='t(`admin.login.logoutRedirect`)'
               )
 
     .col-12.col-lg-6
@@ -138,11 +138,11 @@ q-page.admin-login
       //- -----------------------
       q-card.shadow-1.q-pb-sm
         q-card-section
-          .text-subtitle1 {{$t('admin.login.providers')}}
+          .text-subtitle1 {{t('admin.login.providers')}}
         q-card-section.admin-login-providers.q-pt-none
           draggable(
             class='q-list rounded-borders'
-            :list='providers'
+            :list='state.providers'
             :animation='150'
             handle='.handle'
             @end='dragStarted = false'
@@ -171,117 +171,137 @@ q-page.admin-login
               q-card-section.items-center(horizontal)
                 q-card-section.col-auto.q-pr-none
                   q-icon(name='las la-info-circle', size='sm')
-                q-card-section.text-caption {{ $t('admin.login.providersVisbleWarning') }}
+                q-card-section.text-caption {{ t('admin.login.providersVisbleWarning') }}
 
 </template>
 
-<script>
+<script setup>
 import { get } from 'vuex-pathify'
 import cloneDeep from 'lodash/cloneDeep'
 import gql from 'graphql-tag'
 import draggable from 'vuedraggable'
-import { createMetaMixin } from 'quasar'
 
-export default {
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.login.title')
-      }
-    })
-  ],
-  components: {
-    draggable
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { computed, onMounted, reactive, watch } from 'vue'
+
+import { useAdminStore } from 'src/stores/admin'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.login.title')
+})
+
+// DATA
+
+const state = reactive({
+  invalidCharsRegex: /^[^<>"]+$/,
+  loading: 0,
+  config: {
+    authAutoLogin: false,
+    authHideLocal: false,
+    authBypassUnauthorized: false,
+    loginRedirect: '/',
+    welcomeRedirect: '/',
+    logoutRedirect: '/'
   },
-  data () {
-    return {
-      invalidCharsRegex: /^[^<>"]+$/,
-      loading: 0,
-      config: {
-        authAutoLogin: false,
-        authHideLocal: false,
-        authBypassUnauthorized: false,
-        loginRedirect: '/',
-        welcomeRedirect: '/',
-        logoutRedirect: '/'
-      },
-      providers: [
-        { id: 'local', label: 'Local Authentication', provider: 'Username-Password', icon: 'database', isActive: true },
-        { id: 'google', label: 'Google', provider: 'Google', icon: 'google', isActive: true },
-        { id: 'slack', label: 'Slack', provider: 'Slack', icon: 'slack', isActive: false }
-      ]
-    }
-  },
-  computed: {
-    currentSiteId: get('admin/currentSiteId', false)
-  },
-  methods: {
-    async load () {
-      this.loading++
-      this.$q.loading.show()
-      // const resp = await this.$apollo.query({
-      //   query: gql`
-      //     query getSite (
-      //       $id: UUID!
-      //     ) {
-      //       siteById(
-      //         id: $id
-      //       ) {
-      //         id
-      //       }
-      //     }
-      //   `,
-      //   variables: {
-      //     id: this.currentSiteId
-      //   },
-      //   fetchPolicy: 'network-only'
-      // })
-      // this.config = cloneDeep(resp?.data?.siteById)
-      this.$q.loading.hide()
-      this.loading--
-    },
-    async save () {
-      try {
-        await this.$apollo.mutate({
-          mutation: gql`
-            mutation saveLoginSettings (
-              $authAutoLogin: Boolean
-              $authEnforce2FA: Boolean
+  providers: [
+    { id: 'local', label: 'Local Authentication', provider: 'Username-Password', icon: 'database', isActive: true },
+    { id: 'google', label: 'Google', provider: 'Google', icon: 'google', isActive: true },
+    { id: 'slack', label: 'Slack', provider: 'Slack', icon: 'slack', isActive: false }
+  ]
+})
+
+// METHODS
+
+async function load () {
+  state.loading++
+  $q.loading.show()
+  // const resp = await APOLLO_CLIENT.query({
+  //   query: gql`
+  //     query getSite (
+  //       $id: UUID!
+  //     ) {
+  //       siteById(
+  //         id: $id
+  //       ) {
+  //         id
+  //       }
+  //     }
+  //   `,
+  //   variables: {
+  //     id: adminStore.currentSiteId
+  //   },
+  //   fetchPolicy: 'network-only'
+  // })
+  // this.config = cloneDeep(resp?.data?.siteById)
+  $q.loading.hide()
+  state.loading--
+}
+
+async function save () {
+  try {
+    await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation saveLoginSettings (
+          $authAutoLogin: Boolean
+          $authEnforce2FA: Boolean
+        ) {
+          site {
+            updateConfig(
+              authAutoLogin: $authAutoLogin,
+              authEnforce2FA: $authEnforce2FA
             ) {
-              site {
-                updateConfig(
-                  authAutoLogin: $authAutoLogin,
-                  authEnforce2FA: $authEnforce2FA
-                ) {
-                  responseResult {
-                    succeeded
-                    errorCode
-                    slug
-                    message
-                  }
-                }
+              responseResult {
+                succeeded
+                errorCode
+                slug
+                message
               }
             }
-          `,
-          variables: {
-            authAutoLogin: this.config.authAutoLogin ?? false,
-            authEnforce2FA: this.config.authEnforce2FA ?? false
-          },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
           }
-        })
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'Configuration saved successfully.',
-          icon: 'check'
-        })
-      } catch (err) {
-        this.$store.commit('pushGraphError', err)
+        }
+      `,
+      variables: {
+        authAutoLogin: state.config.authAutoLogin ?? false,
+        authEnforce2FA: state.config.authEnforce2FA ?? false
+      },
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
       }
-    }
+    })
+    $q.notify({
+      type: 'positive',
+      message: 'Configuration saved successfully.'
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
   }
 }
+
+// MOUNTED
+
+onMounted(() => {
+  if (adminStore.currentSiteId) {
+    load()
+  }
+})
 </script>
 
 <style lang='scss'>

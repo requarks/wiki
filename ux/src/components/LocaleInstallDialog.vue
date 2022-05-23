@@ -1,18 +1,18 @@
 <template lang="pug">
-q-dialog(ref='dialog', @hide='onDialogHide')
+q-dialog(ref='dialogRef', @hide='onDialogHide')
   q-card(style='min-width: 850px;')
     q-card-section.card-header
       q-icon(name='img:/_assets/icons/fluent-down.svg', left, size='sm')
-      span {{$t(`admin.locale.downloadTitle`)}}
+      span {{t(`admin.locale.downloadTitle`)}}
     q-card-section.q-pa-none
       q-table.no-border-radius(
-        :data='locales'
+        :data='state.locales'
         :columns='headers'
         row-name='code'
         flat
         hide-bottom
         :rows-per-page-options='[0]'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         )
         template(v-slot:body-cell-code='props')
           q-td(:props='props')
@@ -81,90 +81,101 @@ q-dialog(ref='dialog', @hide='onDialogHide')
       q-space
       q-btn.acrylic-btn(
         flat
-        :label='$t(`common.actions.close`)'
+        :label='t(`common.actions.close`)'
         color='grey'
         padding='xs md'
-        @click='hide'
+        @click='onDialogCancel'
         )
 
-    q-inner-loading(:showing='loading')
+    q-inner-loading(:showing='state.loading > 0')
       q-spinner(color='accent', size='lg')
 </template>
 
-<script>
-// import gql from 'graphql-tag'
-// import cloneDeep from 'lodash/cloneDeep'
+<script setup>
+import { useI18n } from 'vue-i18n'
+import { useDialogPluginComponent, useQuasar } from 'quasar'
+import { reactive, ref } from 'vue'
 
-export default {
-  emits: ['ok', 'hide'],
-  data () {
-    return {
-      locales: [],
-      loading: 0
-    }
+import { useAdminStore } from '../stores/admin'
+
+// EMITS
+
+defineEmits([
+  ...useDialogPluginComponent.emits
+])
+
+// QUASAR
+
+const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  locales: [],
+  loading: 0
+})
+
+const headers = [
+  {
+    label: t('admin.locale.code'),
+    align: 'left',
+    field: 'code',
+    name: 'code',
+    sortable: true,
+    style: 'width: 90px'
   },
-  computed: {
-    headers () {
-      return [
-        {
-          label: this.$t('admin.locale.code'),
-          align: 'left',
-          field: 'code',
-          name: 'code',
-          sortable: true,
-          style: 'width: 90px'
-        },
-        {
-          label: this.$t('admin.locale.name'),
-          align: 'left',
-          field: 'name',
-          name: 'name',
-          sortable: true
-        },
-        {
-          label: this.$t('admin.locale.nativeName'),
-          align: 'left',
-          field: 'nativeName',
-          name: 'nativeName',
-          sortable: true
-        },
-        {
-          label: this.$t('admin.locale.rtl'),
-          align: 'center',
-          field: 'isRTL',
-          name: 'isRTL',
-          sortable: false,
-          style: 'width: 10px'
-        },
-        {
-          label: this.$t('admin.locale.availability'),
-          align: 'center',
-          field: 'availability',
-          name: 'availability',
-          sortable: false,
-          style: 'width: 120px'
-        },
-        {
-          label: this.$t('admin.locale.download'),
-          align: 'center',
-          field: 'isInstalled',
-          name: 'isInstalled',
-          sortable: false,
-          style: 'width: 100px'
-        }
-      ]
-    }
+  {
+    label: t('admin.locale.name'),
+    align: 'left',
+    field: 'name',
+    name: 'name',
+    sortable: true
   },
-  methods: {
-    show () {
-      this.$refs.dialog.show()
-    },
-    hide () {
-      this.$refs.dialog.hide()
-    },
-    onDialogHide () {
-      this.$emit('hide')
-    }
+  {
+    label: t('admin.locale.nativeName'),
+    align: 'left',
+    field: 'nativeName',
+    name: 'nativeName',
+    sortable: true
+  },
+  {
+    label: t('admin.locale.rtl'),
+    align: 'center',
+    field: 'isRTL',
+    name: 'isRTL',
+    sortable: false,
+    style: 'width: 10px'
+  },
+  {
+    label: t('admin.locale.availability'),
+    align: 'center',
+    field: 'availability',
+    name: 'availability',
+    sortable: false,
+    style: 'width: 120px'
+  },
+  {
+    label: t('admin.locale.download'),
+    align: 'center',
+    field: 'isInstalled',
+    name: 'isInstalled',
+    sortable: false,
+    style: 'width: 100px'
   }
+]
+
+// METHODS
+
+async function download (lc) {
+
 }
 </script>

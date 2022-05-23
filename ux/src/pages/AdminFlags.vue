@@ -11,7 +11,7 @@ q-page.admin-flags
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.requarks.io/admin/flags'
+        href='https://docs.js.wiki/admin/flags'
         target='_blank'
         type='a'
         )
