@@ -941,7 +941,7 @@ module.exports = class Page extends Model {
     const base = `${WIKI.config.host}/${WIKI.config.lang.code}`
 
     pages.forEach(page => {
-      const date = moment(new Date(page.updatedAt)).format('YYYY-MM-DDThh:mm:ssZ')
+      const date = moment(page.updatedAt).format('YYYY-MM-DDThh:mm:ssZ')
       xmlTree.push(`<url><loc>${base}/${page.path}</loc><lastmod>${date}</lastmod></url>`)
     })
 
