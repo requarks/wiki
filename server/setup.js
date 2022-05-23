@@ -115,6 +115,7 @@ module.exports = () => {
       _.set(WIKI.config, 'seo', {
         description: '',
         robots: ['index', 'follow'],
+        sitemap: false,
         analyticsService: '',
         analyticsId: ''
       })

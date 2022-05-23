@@ -85,7 +85,7 @@
                       )
                   v-divider
                   .overline.grey--text.pa-4 SEO
-                  .px-3.pb-3
+                  .px-3.pb-4
                     v-text-field(
                       outlined
                       :label='$t(`admin:general.siteDescription`)'
@@ -106,6 +106,14 @@
                       :hint='$t(`admin:general.metaRobotsHint`)'
                       persistent-hint
                       )
+                    v-switch(
+                      inset
+                      label='XML Sitemap'
+                      color='indigo'
+                      v-model='config.sitemap'
+                      persistent-hint
+                      prepend-icon='mdi-compass'
+                    )
 
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p4s
@@ -193,6 +201,7 @@ export default {
         title: '',
         description: '',
         robots: [],
+        sitemap: false,
         analyticsService: '',
         analyticsId: '',
         company: '',
@@ -251,6 +260,7 @@ export default {
               $title: String!
               $description: String!
               $robots: [String]!
+              $sitemap: Boolean!
               $analyticsService: String!
               $analyticsId: String!
               $company: String!
@@ -266,6 +276,7 @@ export default {
                   title: $title,
                   description: $description,
                   robots: $robots,
+                  sitemap: $sitemap,
                   analyticsService: $analyticsService,
                   analyticsId: $analyticsId,
                   company: $company,
@@ -290,6 +301,7 @@ export default {
             title: _.get(this.config, 'title', ''),
             description: _.get(this.config, 'description', ''),
             robots: _.get(this.config, 'robots', []),
+            sitemap: _.get(this.config, 'sitemap', false),
             analyticsService: _.get(this.config, 'analyticsService', ''),
             analyticsId: _.get(this.config, 'analyticsId', ''),
             company: _.get(this.config, 'company', ''),
@@ -342,6 +354,7 @@ export default {
               title
               description
               robots
+              sitemap
               analyticsService
               analyticsId
               company

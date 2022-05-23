@@ -65,6 +65,7 @@ module.exports = {
         WIKI.config.seo = {
           description: _.get(args, 'description', WIKI.config.seo.description),
           robots: _.get(args, 'robots', WIKI.config.seo.robots),
+          sitemap: _.get(args, 'sitemap', WIKI.config.seo.sitemap),
           analyticsService: _.get(args, 'analyticsService', WIKI.config.seo.analyticsService),
           analyticsId: _.get(args, 'analyticsId', WIKI.config.seo.analyticsId)
         }

@@ -12,6 +12,7 @@ const CleanCSS = require('clean-css')
 const TurndownService = require('turndown')
 const turndownPluginGfm = require('@joplin/turndown-plugin-gfm').gfm
 const cheerio = require('cheerio')
+const moment = require('moment')
 
 /* global WIKI */
 
@@ -787,7 +788,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async deletePage(opts) {
-    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts);
+    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
     if (!page) {
       throw new WIKI.Error.PageNotFound()
     }
@@ -924,6 +925,29 @@ module.exports = class Page extends Model {
       worker: true
     })
     return rebuildJob.finished
+  }
+
+  /**
+   *
+   * @returns
+   */
+  static async buildXMLSitemap() {
+    const xmlTree = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    ]
+
+    const pages = await WIKI.models.pages.query().select(['path', 'updatedAt']).where('isPublished', '=', true)
+    const base = `${WIKI.config.host}/${WIKI.config.lang.code}`
+
+    pages.forEach(page => {
+      const date = moment(new Date(page.updatedAt)).format('YYYY-MM-DDThh:mm:ssZ')
+      xmlTree.push(`<url><loc>${base}/${page.path}</loc><lastmod>${date}</lastmod></url>`)
+    })
+
+    xmlTree.push('</urlset>')
+
+    return xmlTree.join('')
   }
 
   /**
