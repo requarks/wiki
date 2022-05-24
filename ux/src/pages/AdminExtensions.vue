@@ -4,8 +4,8 @@ q-page.admin-extensions
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-module.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.extensions.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.extensions.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.extensions.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.extensions.subtitle') }}
     .col-auto
       q-btn.acrylic-btn.q-mr-sm(
         icon='las la-question-circle'
@@ -19,7 +19,7 @@ q-page.admin-extensions
         icon='las la-redo-alt'
         flat
         color='secondary'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         @click='load'
         )
   q-separator(inset)
@@ -28,7 +28,7 @@ q-page.admin-extensions
       q-card.shadow-1
         q-list(separator)
           q-item(
-            v-for='(ext, idx) of extensions'
+            v-for='(ext, idx) of state.extensions'
             :key='`ext-` + ext.key'
             )
             blueprint-icon(icon='module')
@@ -49,9 +49,9 @@ q-page.admin-extensions
                     q-tooltip(
                       anchor='center left'
                       self='center right'
-                      ) {{$t('admin.extensions.installed')}}
+                      ) {{t('admin.extensions.installed')}}
                   q-btn(
-                    :label='$t(`admin.extensions.install`)'
+                    :label='t(`admin.extensions.install`)'
                     color='blue-7'
                     v-if='ext.isCompatible && !ext.isInstalled && ext.isInstallable'
                     @click='install(ext)'
@@ -59,21 +59,21 @@ q-page.admin-extensions
                   )
                   q-btn(
                     v-else-if='ext.isCompatible && ext.isInstalled && ext.isInstallable'
-                    :label='$t(`admin.extensions.reinstall`)'
+                    :label='t(`admin.extensions.reinstall`)'
                     color='blue-7'
                     @click='install(ext)'
                     no-caps
                   )
                   q-btn(
                     v-else-if='ext.isCompatible && ext.isInstalled && !ext.isInstallable'
-                    :label='$t(`admin.extensions.installed`)'
+                    :label='t(`admin.extensions.installed`)'
                     color='positive'
                     no-caps
                     :ripple='false'
                   )
                   q-btn(
                     v-else-if='ext.isCompatible'
-                    :label='$t(`admin.extensions.instructions`)'
+                    :label='t(`admin.extensions.instructions`)'
                     icon='las la-info-circle'
                     color='indigo'
                     outline
@@ -85,109 +85,132 @@ q-page.admin-extensions
                     q-tooltip(
                       anchor='center left'
                       self='center right'
-                      ) {{$t('admin.extensions.instructionsHint')}}
+                      ) {{t('admin.extensions.instructionsHint')}}
                   q-btn(
                     v-else
                     color='negative'
                     outline
-                    :label='$t(`admin.extensions.incompatible`)'
+                    :label='t(`admin.extensions.incompatible`)'
                     no-caps
                     :ripple='false'
                   )
 
 </template>
 
-<script>
+<script setup>
 import gql from 'graphql-tag'
 import cloneDeep from 'lodash/cloneDeep'
-import { createMetaMixin } from 'quasar'
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { computed, onMounted, reactive, watch } from 'vue'
 
-export default {
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.extensions.title')
+import { useAdminStore } from 'src/stores/admin'
+import { useSiteStore } from 'src/stores/site'
+import { useDataStore } from 'src/stores/data'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+const siteStore = useSiteStore()
+const dataStore = useDataStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.extensions.title')
+})
+
+// DATA
+
+const state = reactive({
+  loading: false,
+  extensions: []
+})
+
+// METHODS
+
+async function load () {
+  state.loading++
+  $q.loading.show()
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query fetchExtensions {
+        systemExtensions {
+          key
+          title
+          description
+          isInstalled
+          isInstallable
+          isCompatible
+        }
+      }
+    `,
+    fetchPolicy: 'network-only'
+  })
+  state.extensions = cloneDeep(resp?.data?.systemExtensions)
+  $q.loading.hide()
+  state.loading--
+}
+
+async function install (ext) {
+  $q.loading.show({
+    message: t('admin.extensions.installing') + '<br>' + t('admin.extensions.installingHint'),
+    html: true
+  })
+  try {
+    const respRaw = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation installExtension (
+          $key: String!
+        ) {
+          installExtension (
+            key: $key
+          ) {
+            status {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        key: ext.key
       }
     })
-  ],
-  data () {
-    return {
-      loading: false,
-      extensions: []
-    }
-  },
-  mounted () {
-    this.load()
-  },
-  methods: {
-    async load () {
-      this.loading++
-      this.$q.loading.show()
-      const resp = await this.$apollo.query({
-        query: gql`
-          query fetchExtensions {
-            systemExtensions {
-              key
-              title
-              description
-              isInstalled
-              isInstallable
-              isCompatible
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
+    if (respRaw.data?.installExtension?.status?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.extensions.installSuccess')
       })
-      this.extensions = cloneDeep(resp?.data?.systemExtensions)
-      this.$q.loading.hide()
-      this.loading--
-    },
-    async install (ext) {
-      this.$q.loading.show({
-        message: this.$t('admin.extensions.installing') + '<br>' + this.$t('admin.extensions.installingHint'),
-        html: true
-      })
-      try {
-        const respRaw = await this.$apollo.mutate({
-          mutation: gql`
-            mutation installExtension (
-              $key: String!
-            ) {
-              installExtension (
-                key: $key
-              ) {
-                status {
-                  succeeded
-                  message
-                }
-              }
-            }
-          `,
-          variables: {
-            key: ext.key
-          }
-        })
-        if (respRaw.data?.installExtension?.status?.succeeded) {
-          this.$q.notify({
-            type: 'positive',
-            message: this.$t('admin.extensions.installSuccess')
-          })
-          ext.isInstalled = true
-          this.$forceUpdate()
-        } else {
-          throw new Error(respRaw.data?.installExtension?.status?.message || 'An unexpected error occured')
-        }
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: this.$t('admin.extensions.installFailed'),
-          caption: err.message
-        })
-      }
-      this.$q.loading.hide()
+      ext.isInstalled = true
+      // this.$forceUpdate()
+    } else {
+      throw new Error(respRaw.data?.installExtension?.status?.message || 'An unexpected error occured')
     }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.extensions.installFailed'),
+      caption: err.message
+    })
   }
+  $q.loading.hide()
 }
+
+// MOUNTED
+
+onMounted(() => {
+  load()
+})
+
 </script>
 
 <style lang='scss'>
