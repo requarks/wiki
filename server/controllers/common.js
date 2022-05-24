@@ -25,11 +25,34 @@ router.get('/robots.txt', (req, res, next) => {
  * Sitemap.xml
  */
 router.get('/sitemap.xml', async function (req, res) {
+  // End if sitemap is enabled
   !WIKI.config.seo.sitemap && res.status(404).end()
 
+  const host = WIKI.config.host
+  const xmlTree = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  ]
+
   try {
-    const xml = await WIKI.models.pages.buildXMLSitemap()
-    res.header('Content-Type', 'application/xml').send(xml)
+    const pages = await WIKI.models.pages.query()
+      .select(['path', 'localeCode', 'updatedAt'])
+      .where('isPublished', '=', true)
+      .where('isPrivate', '=', false)
+
+    pages.forEach(page => {
+      // Fix checkAccess attr
+      page.locale = page.localeCode
+
+      if (!WIKI.auth.checkAccess(req.user, ['read:pages'], page)) return
+
+      const date = moment(page.updatedAt).format()
+      xmlTree.push(`<url><loc>${host}/${page.localeCode}/${page.path}</loc><lastmod>${date}</lastmod></url>`)
+    })
+
+    xmlTree.push('</urlset>')
+
+    res.header('Content-Type', 'application/xml').send(xmlTree.join(''))
   } catch (e) {
     res.status(404).end()
   }
