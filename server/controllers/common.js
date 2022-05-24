@@ -43,7 +43,7 @@ router.get('/sitemap.xml', async function (req, res) {
       // Fix checkAccess attr
       page.locale = page.localeCode
 
-      if (!WIKI.auth.checkAccess(req.user, ['read:pages'], page)) return
+      if (!WIKI.auth.checkAccess(WIKI.auth.guest, ['read:pages'], page)) return
 
       const date = moment(page.updatedAt).format()
       xmlTree.push(`<url><loc>${host}/${page.localeCode}/${page.path}</loc><lastmod>${date}</lastmod></url>`)
