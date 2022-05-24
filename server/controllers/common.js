@@ -25,7 +25,6 @@ router.get('/robots.txt', (req, res, next) => {
  * Sitemap.xml
  */
 router.get('/sitemap.xml', async function (req, res) {
-  // End if sitemap is enabled
   !WIKI.config.seo.sitemap && res.status(404).end()
 
   const host = WIKI.config.host
