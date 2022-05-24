@@ -46,7 +46,7 @@ const routes = [
       // -> System
       // { path: 'api', component: () => import('../pages/AdminApi.vue') },
       // { path: 'extensions', component: () => import('../pages/AdminExtensions.vue') },
-      // { path: 'mail', component: () => import('../pages/AdminMail.vue') },
+      { path: 'mail', component: () => import('../pages/AdminMail.vue') },
       // { path: 'security', component: () => import('../pages/AdminSecurity.vue') },
       { path: 'system', component: () => import('../pages/AdminSystem.vue') },
       // { path: 'utilities', component: () => import('../pages/AdminUtilities.vue') },

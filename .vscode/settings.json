@@ -11,6 +11,6 @@
     "source.fixAll.eslint": true
   },
   "i18n-ally.localesPaths": [
-    "server/locales"
+    "ux/src/i18n/locales"
   ]
 }
