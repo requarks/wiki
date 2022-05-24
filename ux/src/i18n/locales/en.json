@@ -199,6 +199,7 @@
   "admin.general.siteHostnameHint": "Hostname this site should respond to. Set * for catch-all / fallback domain.",
   "admin.general.siteHostnameInvalid": "Invalid Hostname",
   "admin.general.siteInfo": "Site Info",
+  "admin.general.sitemap": "Allow Sitemap",
   "admin.general.siteTitle": "Site Title",
   "admin.general.siteTitleHint": "Displayed in the top bar and appended to all pages meta title.",
   "admin.general.siteTitleInvalidChars": "Site Title contains invalid characters.",
@@ -1419,5 +1420,6 @@
   "tags.retrievingResultsLoading": "Retrieving page results...",
   "tags.searchWithinResultsPlaceholder": "Search within results...",
   "tags.selectOneMoreTags": "Select one or more tags",
-  "tags.selectOneMoreTagsHint": "Select one or more tags on the left."
+  "tags.selectOneMoreTagsHint": "Select one or more tags on the left.",
+  "admin.general.sitemapHint": "Make a sitemap.xml available to search engines with all pages accessible to guests."
 }

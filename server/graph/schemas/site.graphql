@@ -54,6 +54,7 @@ type Site {
   company: String
   contentLicense: String
   logoText: Boolean
+  sitemap: Boolean
   robots: SiteRobots
   features: SiteFeatures
   defaults: SiteDefaults
@@ -130,6 +131,7 @@ input SiteUpdateInput {
   company: String
   contentLicense: String
   logoText: Boolean
+  sitemap: Boolean
   robots: SiteRobotsInput
   features: SiteFeaturesInput
   defaults: SiteDefaultsInput

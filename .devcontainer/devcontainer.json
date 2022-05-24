@@ -41,7 +41,8 @@
     "mrmlnc.vscode-duplicate",
     "mtxr.sqltools-driver-pg",
     "mutantdino.resourcemonitor",
-    "wayou.vscode-todo-highlight"
+    "wayou.vscode-todo-highlight",
+    "GraphQL.vscode-graphql"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

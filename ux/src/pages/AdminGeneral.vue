@@ -372,6 +372,20 @@ q-page.admin-general
               unchecked-icon='las la-times'
               :aria-label='t(`admin.general.searchAllowFollow`)'
               )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
+          blueprint-icon(icon='genealogy')
+          q-item-section
+            q-item-label {{t(`admin.general.sitemap`)}}
+            q-item-label(caption) {{t(`admin.general.sitemapHint`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.config.sitemap'
+              color='primary'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.general.sitemap`)'
+              )
 
 </template>
 
@@ -432,7 +446,12 @@ const state = reactive({
       timezone: '',
       dateFormat: '',
       timeFormat: ''
-    }
+    },
+    robots: {
+      index: false,
+      follow: false
+    },
+    sitemap: false
   }
 })
 
@@ -499,6 +518,7 @@ async function load () {
           company
           contentLicense
           logoText
+          sitemap
           robots {
             index
             follow
@@ -559,6 +579,7 @@ async function save () {
           company: state.config.company ?? '',
           contentLicense: state.config.contentLicense ?? '',
           logoText: state.config.logoText ?? false,
+          sitemap: state.config.sitemap ?? false,
           robots: {
             index: state.config.robots?.index ?? false,
             follow: state.config.robots?.follow ?? false

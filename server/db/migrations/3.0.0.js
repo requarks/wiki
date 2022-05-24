@@ -465,6 +465,7 @@ exports.up = async knex => {
         search: true
       },
       logoText: true,
+      sitemap: true,
       robots: {
         index: true,
         follow: true

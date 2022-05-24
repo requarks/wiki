@@ -52,6 +52,7 @@ module.exports = class Site extends Model {
         },
         logoUrl: '',
         logoText: true,
+        sitemap: true,
         robots: {
           index: true,
           follow: true
