@@ -4,12 +4,12 @@ q-page.admin-groups
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-people.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.groups.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.groups.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.groups.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.groups.subtitle') }}
     .col-auto.flex.items-center
       q-input.denser.q-mr-sm(
         outlined
-        v-model='search'
+        v-model='state.search'
         dense
         :class='$q.dark.isActive ? `bg-dark` : `bg-white`'
         )
@@ -28,12 +28,12 @@ q-page.admin-groups
         flat
         color='secondary'
         @click='load'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         )
       q-btn(
         unelevated
         icon='las la-plus'
-        :label='$t(`admin.groups.create`)'
+        :label='t(`admin.groups.create`)'
         color='primary'
         @click='createGroup'
         )
@@ -42,15 +42,15 @@ q-page.admin-groups
     .col-12
       q-card.shadow-1
         q-table(
-          :rows='groups'
+          :rows='state.groups'
           :columns='headers'
           row-key='id'
           flat
           hide-header
           hide-bottom
           :rows-per-page-options='[0]'
-          :loading='loading > 0'
-          :filter='search'
+          :loading='state.loading > 0'
+          :filter='state.search'
           )
           template(v-slot:body-cell-id='props')
             q-td(:props='props')
@@ -71,7 +71,7 @@ q-page.admin-groups
                 :color='$q.dark.isActive ? `dark-6` : `grey-2`'
                 :text-color='$q.dark.isActive ? `white` : `grey-8`'
                 dense
-              ) {{$t('admin.groups.usersCount', { count: props.value })}}
+              ) {{t('admin.groups.usersCount', { count: props.value })}}
           template(v-slot:body-cell-edit='props')
             q-td(:props='props')
               q-btn.acrylic-btn.q-mr-sm(
@@ -79,7 +79,7 @@ q-page.admin-groups
                 :to='`/_admin/groups/` + props.row.id'
                 icon='las la-pen'
                 color='indigo'
-                :label='$t(`common.actions.edit`)'
+                :label='t(`common.actions.edit`)'
                 no-caps
                 )
               q-btn.acrylic-btn(
@@ -91,136 +91,178 @@ q-page.admin-groups
                 )
 </template>
 
-<script>
+<script setup>
 import gql from 'graphql-tag'
 import cloneDeep from 'lodash/cloneDeep'
-import { createMetaMixin } from 'quasar'
-import { sync } from 'vuex-pathify'
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+
+import { useAdminStore } from 'src/stores/admin'
 
 import GroupCreateDialog from '../components/GroupCreateDialog.vue'
 import GroupDeleteDialog from '../components/GroupDeleteDialog.vue'
 
-export default {
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.groups.title')
-      }
-    })
-  ],
-  data () {
-    return {
-      groups: [],
-      loading: 0,
-      search: ''
-    }
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.groups.title')
+})
+
+// DATA
+
+const state = reactive({
+  groups: [],
+  loading: 0,
+  search: ''
+})
+
+const headers = [
+  {
+    align: 'center',
+    field: 'id',
+    name: 'id',
+    sortable: false,
+    style: 'width: 20px'
   },
-  computed: {
-    overlay: sync('admin/overlay', false),
-    headers () {
-      return [
-        {
-          align: 'center',
-          field: 'id',
-          name: 'id',
-          sortable: false,
-          style: 'width: 20px'
-        },
-        {
-          label: this.$t('common.field.name'),
-          align: 'left',
-          field: 'name',
-          name: 'name',
-          sortable: true
-        },
-        {
-          label: this.$t('admin.groups.userCount'),
-          align: 'center',
-          field: 'userCount',
-          name: 'usercount',
-          sortable: false,
-          style: 'width: 150px'
-        },
-        {
-          label: '',
-          align: 'right',
-          field: 'edit',
-          name: 'edit',
-          sortable: false,
-          style: 'width: 250px'
-        }
-      ]
-    }
+  {
+    label: t('common.field.name'),
+    align: 'left',
+    field: 'name',
+    name: 'name',
+    sortable: true
   },
-  watch: {
-    overlay (newValue, oldValue) {
-      if (newValue === '' && oldValue === 'GroupEditOverlay') {
-        this.$router.push('/_admin/groups')
-        this.load()
-      }
-    },
-    $route: 'checkOverlay'
+  {
+    label: t('admin.groups.userCount'),
+    align: 'center',
+    field: 'userCount',
+    name: 'usercount',
+    sortable: false,
+    style: 'width: 150px'
   },
-  mounted () {
-    this.checkOverlay()
-    this.load()
-  },
-  beforeUnmount () {
-    this.overlay = ''
-  },
-  methods: {
-    async load () {
-      this.loading++
-      this.$q.loading.show()
-      const resp = await this.$apollo.query({
-        query: gql`
-          query getGroups {
-            groups {
-              id
-              name
-              isSystem
-              userCount
-              createdAt
-              updatedAt
-            }
+  {
+    label: '',
+    align: 'right',
+    field: 'edit',
+    name: 'edit',
+    sortable: false,
+    style: 'width: 250px'
+  }
+]
+
+watch(() => adminStore.overlay, (newValue, oldValue) => {
+  if (newValue === '' && oldValue === 'GroupEditOverlay') {
+    router.push('/_admin/groups')
+    load()
+  }
+})
+
+watch(() => route, () => {
+  checkOverlay()
+})
+
+// METHODS
+
+async function load () {
+  state.loading++
+  $q.loading.show()
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query getGroups {
+          groups {
+            id
+            name
+            isSystem
+            userCount
+            createdAt
+            updatedAt
           }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      this.groups = cloneDeep(resp?.data?.groups)
-      this.$q.loading.hide()
-      this.loading--
-    },
-    checkOverlay () {
-      if (this.$route.params && this.$route.params.id) {
-        this.$store.set('admin/overlayOpts', { id: this.$route.params.id })
-        this.$store.set('admin/overlay', 'GroupEditOverlay')
-      } else {
-        this.$store.set('admin/overlay', '')
-      }
-    },
-    createGroup () {
-      this.$q.dialog({
-        component: GroupCreateDialog
-      }).onOk(() => {
-        this.load()
-      })
-    },
-    editGroup (gr) {
-      this.$router.push(`/_admin/groups/${gr.id}`)
-    },
-    deleteGroup (gr) {
-      this.$q.dialog({
-        component: GroupDeleteDialog,
-        componentProps: {
-          group: gr
         }
-      }).onOk(() => {
-        this.load()
-      })
-    }
+      `,
+      fetchPolicy: 'network-only'
+    })
+    state.groups = cloneDeep(resp?.data?.groups)
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to load groups.',
+      caption: err.message
+    })
+  }
+  $q.loading.hide()
+  state.loading--
+}
+
+function checkOverlay () {
+  if (route.params && route.params.id) {
+    adminStore.$patch({
+      overlayOpts: { id: route.params.id },
+      overlay: 'GroupEditOverlay'
+    })
+  } else {
+    adminStore.$patch({
+      overlay: ''
+    })
   }
 }
+
+function createGroup () {
+  $q.dialog({
+    component: GroupCreateDialog
+  }).onOk(() => {
+    load()
+  })
+}
+
+function editGroup (gr) {
+  router.push(`/_admin/groups/${gr.id}`)
+}
+
+function deleteGroup (gr) {
+  $q.dialog({
+    component: GroupDeleteDialog,
+    componentProps: {
+      group: gr
+    }
+  }).onOk(() => {
+    load()
+  })
+}
+
+// MOUNTED
+
+onMounted(() => {
+  checkOverlay()
+  load()
+})
+
+// BEFORE UNMOUNT
+
+onBeforeUnmount(() => {
+  adminStore.$patch({
+    overlay: ''
+  })
+})
+
 </script>
 
 <style lang='scss'>

@@ -9,7 +9,7 @@ extend type Query {
   ): [Group]
 
   groupById(
-    id: Int!
+    id: UUID!
   ): Group
 }
 
@@ -19,22 +19,25 @@ extend type Mutation {
   ): GroupResponse
 
   updateGroup(
-    id: Int!
-    patch: GroupUpdateInput!
+    id: UUID!
+    name: String!
+    redirectOnLogin: String!
+    permissions: [String]!
+    rules: [GroupRuleInput]!
   ): DefaultResponse
 
   deleteGroup(
-    id: Int!
+    id: UUID!
   ): DefaultResponse
 
   assignUserToGroup(
-    groupId: Int!
-    userId: Int!
+    groupId: UUID!
+    userId: UUID!
   ): DefaultResponse
 
   unassignUserFromGroup(
-    groupId: Int!
-    userId: Int!
+    groupId: UUID!
+    userId: UUID!
   ): DefaultResponse
 }
 
@@ -48,46 +51,60 @@ type GroupResponse {
 }
 
 type Group {
-  id: Int
+  id: UUID
   name: String
   isSystem: Boolean
   redirectOnLogin: String
+  redirectOnFirstLogin: String
+  redirectOnLogout: String
   permissions: [String]
-  pageRules: [PageRule]
-  users: [UserMinimal]
+  rules: [GroupRule]
+  users(
+    page: Int
+    pageSize: Int
+    orderBy: UserOrderBy
+    orderByDirection: OrderByDirection
+    # Filter by name / email
+    filter: String
+    ): [UserMinimal]
+  userCount: Int
   createdAt: Date
   updatedAt: Date
 }
 
-type PageRule {
-  id: String
-  deny: Boolean
-  match: PageRuleMatch
+type GroupRule {
+  id: UUID
+  name: String
+  mode: GroupRuleMode
+  match: GroupRuleMatch
   roles: [String]
   path: String
   locales: [String]
+  sites: [UUID]
 }
 
-input GroupUpdateInput {
+input GroupRuleInput {
+  id: UUID!
   name: String!
-  redirectOnLogin: String!
-  permissions: [String]!
-  pageRules: [PageRuleInput]!
-}
-
-input PageRuleInput {
-  id: String!
-  deny: Boolean!
-  match: PageRuleMatch!
+  mode: GroupRuleMode!
+  match: GroupRuleMatch!
   roles: [String]!
   path: String!
   locales: [String]!
+  sites: [UUID]
 }
 
-enum PageRuleMatch {
+enum GroupRuleMode {
+  ALLOW
+  DENY
+  FORCEALLOW
+}
+
+enum GroupRuleMatch {
   START
   EXACT
   END
   REGEX
   TAG
+  TAGALL
 }
