@@ -289,10 +289,13 @@ module.exports = {
     const filePath = path.join(this.repoPath, fileName)
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
-    await this.git.add(`./${fileName}`)
-    await this.git.commit(`docs: create ${page.path}`, fileName, {
-      '--author': `"${page.authorName} <${page.authorEmail}>"`
-    })
+    const gitPath = `./${fileName}`
+    if ((await this.git.checkIgnore(gitPath)).length === 0) {
+      await this.git.add(gitPath)
+      await this.git.commit(`docs: create ${page.path}`, fileName, {
+        '--author': `"${page.authorName} <${page.authorEmail}>"`
+      })
+    }
   },
   /**
    * UPDATE
@@ -308,10 +311,13 @@ module.exports = {
     const filePath = path.join(this.repoPath, fileName)
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
-    await this.git.add(`./${fileName}`)
-    await this.git.commit(`docs: update ${page.path}`, fileName, {
-      '--author': `"${page.authorName} <${page.authorEmail}>"`
-    })
+    const gitPath = `./${fileName}`
+    if ((await this.git.checkIgnore(gitPath)).length === 0) {
+      await this.git.add(gitPath)
+      await this.git.commit(`docs: create ${page.path}`, fileName, {
+        '--author': `"${page.authorName} <${page.authorEmail}>"`
+      })
+    }
   },
   /**
    * DELETE
@@ -325,10 +331,13 @@ module.exports = {
       fileName = `${page.localeCode}/${fileName}`
     }
 
-    await this.git.rm(`./${fileName}`)
-    await this.git.commit(`docs: delete ${page.path}`, fileName, {
-      '--author': `"${page.authorName} <${page.authorEmail}>"`
-    })
+    const gitPath = `./${fileName}`
+    if ((await this.git.checkIgnore(gitPath)).length === 0) {
+      await this.git.rm(gitPath)
+      await this.git.commit(`docs: delete ${page.path}`, fileName, {
+        '--author': `"${page.authorName} <${page.authorEmail}>"`
+      })
+    }
   },
   /**
    * RENAME
