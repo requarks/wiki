@@ -60,17 +60,13 @@ module.exports = {
       sslOptions = true
     }
 
-    // Handle inline SSL CA Certificate mode
+    // Handle self-signed CA file
+    // https://node-postgres.com/features/ssl
     if (!_.isEmpty(process.env.DB_SSL_CA)) {
-      const chunks = []
-      for (let i = 0, charsLength = process.env.DB_SSL_CA.length; i < charsLength; i += 64) {
-        chunks.push(process.env.DB_SSL_CA.substring(i, i + 64))
-      }
-
       dbUseSSL = true
       sslOptions = {
-        rejectUnauthorized: true,
-        ca: '-----BEGIN CERTIFICATE-----\n' + chunks.join('\n') + '\n-----END CERTIFICATE-----\n'
+        rejectUnauthorized: false,
+        ca: fs.readFileSync(process.env.DB_SSL_CA).toString(),
       }
     }
 
