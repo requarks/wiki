@@ -222,7 +222,6 @@ export default {
     }
   },
   mounted () {
-    this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
     if (this.navMode === 'TREE') {
       this.currentMode = 'browse'
     } else if (this.navMode === 'STATIC') {
