@@ -433,6 +433,18 @@ router.get('/*', async (req, res, next) => {
         userId: req.user.id,
         isPrivate: false
       })
+      // -> Try to find home if page not found
+      if (!page) {
+        // -> If page found
+        if (await WIKI.models.pages.getPage({
+          path: `${pageArgs.path}/home`,
+          locale: pageArgs.locale,
+          userId: req.user.id,
+          isPrivate: false
+        })) {
+          return res.redirect(`${pageArgs.path}/home`)
+        }
+      }
       pageArgs.tags = _.get(page, 'tags', [])
 
       // -> Effective Permissions
