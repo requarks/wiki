@@ -314,7 +314,7 @@ module.exports = {
     const gitFilePath = `./${fileName}`
     if ((await this.git.checkIgnore(gitFilePath)).length === 0) {
       await this.git.add(gitFilePath)
-      await this.git.commit(`docs: create ${page.path}`, fileName, {
+      await this.git.commit(`docs: update ${page.path}`, fileName, {
         '--author': `"${page.authorName} <${page.authorEmail}>"`
       })
     }
