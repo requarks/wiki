@@ -1,24 +1,21 @@
 <template lang="pug">
-q-dialog(ref='dialog', @hide='onDialogHide')
+q-dialog(ref='dialogRef', @hide='onDialogHide')
   q-card(style='min-width: 450px;')
     q-card-section.card-header
       q-icon(name='img:/_assets/icons/fluent-plus-plus.svg', left, size='sm')
-      span {{$t(`admin.groups.create`)}}
+      span {{t(`admin.groups.create`)}}
     q-form.q-py-sm(ref='createGroupForm', @submit='create')
       q-item
         blueprint-icon(icon='team')
         q-item-section
           q-input(
             outlined
-            v-model='groupName'
+            v-model='state.groupName'
             dense
-            :rules=`[
-              val => val.length > 0 || $t('admin.groups.nameMissing'),
-              val => /^[^<>"]+$/.test(val) || $t('admin.groups.nameInvalidChars')
-            ]`
+            :rules='groupNameValidation'
             hide-bottom-space
-            :label='$t(`common.field.name`)'
-            :aria-label='$t(`common.field.name`)'
+            :label='t(`common.field.name`)'
+            :aria-label='t(`common.field.name`)'
             lazy-rules='ondemand'
             autofocus
             )
@@ -26,86 +23,103 @@ q-dialog(ref='dialog', @hide='onDialogHide')
       q-space
       q-btn.acrylic-btn(
         flat
-        :label='$t(`common.actions.cancel`)'
+        :label='t(`common.actions.cancel`)'
         color='grey'
         padding='xs md'
-        @click='hide'
+        @click='onDialogCancel'
         )
       q-btn(
         unelevated
-        :label='$t(`common.actions.create`)'
+        :label='t(`common.actions.create`)'
         color='primary'
         padding='xs md'
         @click='create'
-        :loading='isLoading'
+        :loading='state.isLoading'
         )
 </template>
 
-<script>
+<script setup>
 import gql from 'graphql-tag'
+import { useI18n } from 'vue-i18n'
+import { useDialogPluginComponent, useQuasar } from 'quasar'
+import { reactive, ref } from 'vue'
 
-export default {
-  emits: ['ok', 'hide'],
-  data () {
-    return {
-      groupName: '',
-      isLoading: false
+// EMITS
+
+defineEmits([
+  ...useDialogPluginComponent.emits
+])
+
+// QUASAR
+
+const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
+const $q = useQuasar()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  groupName: '',
+  isLoading: false
+})
+
+// REFS
+
+const createGroupForm = ref(null)
+
+// VALIDATION RULES
+
+const groupNameValidation = [
+  val => val.length > 0 || t('admin.groups.nameMissing'),
+  val => /^[^<>"]+$/.test(val) || t('admin.groups.nameInvalidChars')
+]
+
+// METHODS
+
+async function create () {
+  state.isLoading = true
+  try {
+    const isFormValid = await createGroupForm.value.validate(true)
+    if (!isFormValid) {
+      throw new Error(t('admin.groups.createInvalidData'))
     }
-  },
-  methods: {
-    show () {
-      this.$refs.dialog.show()
-    },
-    hide () {
-      this.$refs.dialog.hide()
-    },
-    onDialogHide () {
-      this.$emit('hide')
-    },
-    async create () {
-      this.isLoading = true
-      try {
-        const isFormValid = await this.$refs.createGroupForm.validate(true)
-        if (!isFormValid) {
-          throw new Error(this.$t('admin.groups.createInvalidData'))
-        }
-        const resp = await this.$apollo.mutate({
-          mutation: gql`
-            mutation createGroup (
-              $name: String!
-              ) {
-              createGroup(
-                name: $name
-                ) {
-                status {
-                  succeeded
-                  message
-                }
-              }
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation createGroup (
+          $name: String!
+          ) {
+          createGroup(
+            name: $name
+            ) {
+            operation {
+              succeeded
+              message
             }
-          `,
-          variables: {
-            name: this.groupName
           }
-        })
-        if (resp?.data?.createGroup?.status?.succeeded) {
-          this.$q.notify({
-            type: 'positive',
-            message: this.$t('admin.groups.createSuccess')
-          })
-          this.$emit('ok')
-          this.hide()
-        } else {
-          throw new Error(resp?.data?.createGroup?.status?.message || 'An unexpected error occured.')
         }
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: err.message
-        })
+      `,
+      variables: {
+        name: state.groupName
       }
-      this.isLoading = false
+    })
+    if (resp?.data?.createGroup?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.groups.createSuccess')
+      })
+      onDialogOK()
+    } else {
+      throw new Error(resp?.data?.createGroup?.operation?.message || 'An unexpected error occured.')
     }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
   }
+  state.isLoading = false
 }
 </script>

@@ -1,7 +1,7 @@
 const graphHelper = require('../../helpers/graph')
 const safeRegex = require('safe-regex')
 const _ = require('lodash')
-const gql = require('graphql')
+const { v4: uuid } = require('uuid')
 
 /* global WIKI */
 
@@ -30,13 +30,13 @@ module.exports = {
     async assignUserToGroup (obj, args, { req }) {
       // Check for guest user
       if (args.userId === 2) {
-        throw new gql.GraphQLError('Cannot assign the Guest user to a group.')
+        throw new Error('Cannot assign the Guest user to a group.')
       }
 
       // Check for valid group
       const grp = await WIKI.models.groups.query().findById(args.groupId)
       if (!grp) {
-        throw new gql.GraphQLError('Invalid Group ID')
+        throw new Error('Invalid Group ID')
       }
 
       // Check assigned permissions for write:groups
@@ -47,13 +47,13 @@ module.exports = {
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
         })
       ) {
-        throw new gql.GraphQLError('You are not authorized to assign a user to this elevated group.')
+        throw new Error('You are not authorized to assign a user to this elevated group.')
       }
 
       // Check for valid user
       const usr = await WIKI.models.users.query().findById(args.userId)
       if (!usr) {
-        throw new gql.GraphQLError('Invalid User ID')
+        throw new Error('Invalid User ID')
       }
 
       // Check for existing relation
@@ -62,7 +62,7 @@ module.exports = {
         groupId: args.groupId
       }).first()
       if (relExist) {
-        throw new gql.GraphQLError('User is already assigned to group.')
+        throw new Error('User is already assigned to group.')
       }
 
       // Assign user to group
@@ -73,7 +73,7 @@ module.exports = {
       WIKI.events.outbound.emit('addAuthRevoke', { id: usr.id, kind: 'u' })
 
       return {
-        responseResult: graphHelper.generateSuccess('User has been assigned to group.')
+        operation: graphHelper.generateSuccess('User has been assigned to group.')
       }
     },
     /**
@@ -83,13 +83,16 @@ module.exports = {
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-        pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules),
+        rules: JSON.stringify(WIKI.data.groups.defaultRules.map(r => ({
+          id: uuid(),
+          ...r
+        }))),
         isSystem: false
       })
       await WIKI.auth.reloadGroups()
       WIKI.events.outbound.emit('reloadGroups')
       return {
-        responseResult: graphHelper.generateSuccess('Group created successfully.'),
+        operation: graphHelper.generateSuccess('Group created successfully.'),
         group
       }
     },
@@ -98,7 +101,7 @@ module.exports = {
      */
     async deleteGroup (obj, args) {
       if (args.id === 1 || args.id === 2) {
-        throw new gql.GraphQLError('Cannot delete this group.')
+        throw new Error('Cannot delete this group.')
       }
 
       await WIKI.models.groups.query().deleteById(args.id)
@@ -110,7 +113,7 @@ module.exports = {
       WIKI.events.outbound.emit('reloadGroups')
 
       return {
-        responseResult: graphHelper.generateSuccess('Group has been deleted.')
+        operation: graphHelper.generateSuccess('Group has been deleted.')
       }
     },
     /**
@@ -118,18 +121,18 @@ module.exports = {
      */
     async unassignUserFromGroup (obj, args) {
       if (args.userId === 2) {
-        throw new gql.GraphQLError('Cannot unassign Guest user')
+        throw new Error('Cannot unassign Guest user')
       }
       if (args.userId === 1 && args.groupId === 1) {
-        throw new gql.GraphQLError('Cannot unassign Administrator user from Administrators group.')
+        throw new Error('Cannot unassign Administrator user from Administrators group.')
       }
       const grp = await WIKI.models.groups.query().findById(args.groupId)
       if (!grp) {
-        throw new gql.GraphQLError('Invalid Group ID')
+        throw new Error('Invalid Group ID')
       }
       const usr = await WIKI.models.users.query().findById(args.userId)
       if (!usr) {
-        throw new gql.GraphQLError('Invalid User ID')
+        throw new Error('Invalid User ID')
       }
       await grp.$relatedQuery('users').unrelate().where('userId', usr.id)
 
@@ -137,7 +140,7 @@ module.exports = {
       WIKI.events.outbound.emit('addAuthRevoke', { id: usr.id, kind: 'u' })
 
       return {
-        responseResult: graphHelper.generateSuccess('User has been unassigned from group.')
+        operation: graphHelper.generateSuccess('User has been unassigned from group.')
       }
     },
     /**
@@ -148,7 +151,7 @@ module.exports = {
       if (_.some(args.pageRules, pr => {
         return pr.match === 'REGEX' && !safeRegex(pr.path)
       })) {
-        throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')
+        throw new Error('Some Page Rules contains unsafe or exponential time regex.')
       }
 
       // Set default redirect on login value
@@ -164,7 +167,7 @@ module.exports = {
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
         })
       ) {
-        throw new gql.GraphQLError('You are not authorized to manage this group or assign these permissions.')
+        throw new Error('You are not authorized to manage this group or assign these permissions.')
       }
 
       // Check assigned permissions for manage:groups
@@ -172,7 +175,7 @@ module.exports = {
         WIKI.auth.checkExclusiveAccess(req.user, ['manage:groups'], ['manage:system']) &&
         args.permissions.some(p => _.last(p.split(':')) === 'system')
       ) {
-        throw new gql.GraphQLError('You are not authorized to manage this group or assign the manage:system permissions.')
+        throw new Error('You are not authorized to manage this group or assign the manage:system permissions.')
       }
 
       // Update group
@@ -192,7 +195,7 @@ module.exports = {
       WIKI.events.outbound.emit('reloadGroups')
 
       return {
-        responseResult: graphHelper.generateSuccess('Group has been updated.')
+        operation: graphHelper.generateSuccess('Group has been updated.')
       }
     }
   },

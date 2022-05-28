@@ -175,7 +175,7 @@ watch(() => adminStore.overlay, (newValue, oldValue) => {
   }
 })
 
-watch(() => route, () => {
+watch(() => route.params.id, () => {
   checkOverlay()
 })
 
@@ -213,7 +213,7 @@ async function load () {
 }
 
 function checkOverlay () {
-  if (route.params && route.params.id) {
+  if (route.params?.id) {
     adminStore.$patch({
       overlayOpts: { id: route.params.id },
       overlay: 'GroupEditOverlay'

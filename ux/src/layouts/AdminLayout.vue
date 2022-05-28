@@ -177,7 +177,7 @@ q-layout.admin(view='hHh Lpr lff')
     transition-show='jump-up'
     transition-hide='jump-down'
     )
-    component(:is='adminStore.overlay')
+    component(:is='overlays[adminStore.overlay]')
   q-footer.admin-footer
     q-bar.justify-center(dense)
       span(style='font-size: 11px;') Powered by #[a(href='https://js.wiki', target='_blank'): strong Wiki.js], an open source project.
@@ -195,8 +195,10 @@ import { useSiteStore } from '../stores/site'
 // COMPONENTS
 
 import AccountMenu from '../components/AccountMenu.vue'
-const GroupEditOverlay = defineAsyncComponent(() => import('../components/GroupEditOverlay.vue'))
-const UserEditOverlay = defineAsyncComponent(() => import('../components/UserEditOverlay.vue'))
+const overlays = {
+  GroupEditOverlay: defineAsyncComponent(() => import('../components/GroupEditOverlay.vue')),
+  UserEditOverlay: defineAsyncComponent(() => import('../components/UserEditOverlay.vue'))
+}
 
 // STORES
 

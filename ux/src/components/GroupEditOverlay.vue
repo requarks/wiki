@@ -3,24 +3,24 @@ q-layout(view='hHh lpR fFf', container)
   q-header.card-header.q-px-md.q-py-sm
     q-icon(name='img:/_assets/icons/fluent-people.svg', left, size='md')
     div
-      span {{$t(`admin.groups.edit`)}}
-      .text-caption {{group.name}}
+      span {{t(`admin.groups.edit`)}}
+      .text-caption {{state.group.name}}
     q-space
     q-btn-group(push)
       q-btn(
         push
         color='grey-6'
         text-color='white'
-        :aria-label='$t(`common.actions.refresh`)'
+        :aria-label='t(`common.actions.refresh`)'
         icon='las la-redo-alt'
         @click='refresh'
         )
-        q-tooltip(anchor='center left', self='center right') {{$t(`common.actions.refresh`)}}
+        q-tooltip(anchor='center left', self='center right') {{t(`common.actions.refresh`)}}
       q-btn(
         push
         color='white'
         text-color='grey-7'
-        :label='$t(`common.actions.close`)'
+        :label='t(`common.actions.close`)'
         icon='las la-times'
         @click='close'
       )
@@ -28,11 +28,11 @@ q-layout(view='hHh lpR fFf', container)
         push
         color='positive'
         text-color='white'
-        :label='$t(`common.actions.save`)'
+        :label='t(`common.actions.save`)'
         icon='las la-check'
       )
   q-drawer.bg-dark-6(:model-value='true', :width='250', dark)
-    q-list(padding, v-show='!isLoading')
+    q-list(padding, v-show='!state.isLoading')
       q-item(
         v-for='sc of sections'
         :key='`section-` + sc.key'
@@ -45,109 +45,107 @@ q-layout(view='hHh lpR fFf', container)
           q-icon(:name='sc.icon', color='white')
         q-item-section {{sc.text}}
         q-item-section(side, v-if='sc.usersTotal')
-          q-badge(color='dark-3', :label='usersTotal')
-        q-item-section(side, v-if='sc.rulesTotal && group.rules')
-          q-badge(color='dark-3', :label='group.rules.length')
+          q-badge(color='dark-3', :label='state.usersTotal')
+        q-item-section(side, v-if='sc.rulesTotal && state.group.rules')
+          q-badge(color='dark-3', :label='state.group.rules.length')
   q-page-container
-    q-page(v-if='isLoading')
+    q-page(v-if='state.isLoading')
     //- -----------------------------------------------------------------------
     //- OVERVIEW
     //- -----------------------------------------------------------------------
-    q-page(v-else-if='$route.params.section === `overview`')
+    q-page(v-else-if='route.params.section === `overview`')
       .q-pa-md
         .row.q-col-gutter-md
           .col-12.col-lg-8
             q-card.shadow-1.q-pb-sm
               q-card-section
-                .text-subtitle1 {{$t('admin.groups.general')}}
+                .text-subtitle1 {{t('admin.groups.general')}}
               q-item
                 blueprint-icon(icon='team')
                 q-item-section
-                  q-item-label {{$t(`admin.groups.name`)}}
-                  q-item-label(caption) {{$t(`admin.groups.nameHint`)}}
+                  q-item-label {{t(`admin.groups.name`)}}
+                  q-item-label(caption) {{t(`admin.groups.nameHint`)}}
                 q-item-section
                   q-input(
                     outlined
-                    v-model='group.name'
+                    v-model='state.group.name'
                     dense
-                    :rules=`[
-                      val => /^[^<>"]+$/.test(val) || $t('admin.groups.nameInvalidChars')
-                    ]`
+                    :rules='groupNameValidation'
                     hide-bottom-space
-                    :aria-label='$t(`admin.groups.name`)'
+                    :aria-label='t(`admin.groups.name`)'
                     )
 
             q-card.shadow-1.q-pb-sm.q-mt-md
               q-card-section
-                .text-subtitle1 {{$t('admin.groups.authBehaviors')}}
+                .text-subtitle1 {{t('admin.groups.authBehaviors')}}
               q-item
                 blueprint-icon(icon='double-right')
                 q-item-section
-                  q-item-label {{$t(`admin.groups.redirectOnLogin`)}}
-                  q-item-label(caption) {{$t(`admin.groups.redirectOnLoginHint`)}}
+                  q-item-label {{t(`admin.groups.redirectOnLogin`)}}
+                  q-item-label(caption) {{t(`admin.groups.redirectOnLoginHint`)}}
                 q-item-section
                   q-input(
                     outlined
-                    v-model='group.redirectOnLogin'
+                    v-model='state.group.redirectOnLogin'
                     dense
-                    :aria-label='$t(`admin.groups.redirectOnLogin`)'
+                    :aria-label='t(`admin.groups.redirectOnLogin`)'
                     )
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='chevron-right')
                 q-item-section
-                  q-item-label {{$t(`admin.groups.redirectOnFirstLogin`)}}
-                  q-item-label(caption) {{$t(`admin.groups.redirectOnFirstLoginHint`)}}
+                  q-item-label {{t(`admin.groups.redirectOnFirstLogin`)}}
+                  q-item-label(caption) {{t(`admin.groups.redirectOnFirstLoginHint`)}}
                 q-item-section
                   q-input(
                     outlined
-                    v-model='group.redirectOnFirstLogin'
+                    v-model='state.group.redirectOnFirstLogin'
                     dense
-                    :aria-label='$t(`admin.groups.redirectOnLogin`)'
+                    :aria-label='t(`admin.groups.redirectOnLogin`)'
                     )
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='exit')
                 q-item-section
-                  q-item-label {{$t(`admin.groups.redirectOnLogout`)}}
-                  q-item-label(caption) {{$t(`admin.groups.redirectOnLogoutHint`)}}
+                  q-item-label {{t(`admin.groups.redirectOnLogout`)}}
+                  q-item-label(caption) {{t(`admin.groups.redirectOnLogoutHint`)}}
                 q-item-section
                   q-input(
                     outlined
-                    v-model='group.redirectOnLogout'
+                    v-model='state.group.redirectOnLogout'
                     dense
-                    :aria-label='$t(`admin.groups.redirectOnLogout`)'
+                    :aria-label='t(`admin.groups.redirectOnLogout`)'
                     )
 
           .col-12.col-lg-4
             q-card.shadow-1.q-pb-sm
               q-card-section
-                .text-subtitle1 {{$t('admin.groups.info')}}
+                .text-subtitle1 {{t('admin.groups.info')}}
               q-item
                 blueprint-icon(icon='team', :hue-rotate='-45')
                 q-item-section
-                  q-item-label {{$t(`common.field.id`)}}
-                  q-item-label: strong {{groupId}}
+                  q-item-label {{t(`common.field.id`)}}
+                  q-item-label: strong {{state.group.id}}
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='calendar-plus', :hue-rotate='-45')
                 q-item-section
-                  q-item-label {{$t(`common.field.createdOn`)}}
-                  q-item-label: strong {{humanizeDate(group.createdAt)}}
+                  q-item-label {{t(`common.field.createdOn`)}}
+                  q-item-label: strong {{humanizeDate(state.group.createdAt)}}
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='summertime', :hue-rotate='-45')
                 q-item-section
-                  q-item-label {{$t(`common.field.lastUpdated`)}}
-                  q-item-label: strong {{humanizeDate(group.updatedAt)}}
+                  q-item-label {{t(`common.field.lastUpdated`)}}
+                  q-item-label: strong {{humanizeDate(state.group.updatedAt)}}
     //- -----------------------------------------------------------------------
     //- RULES
     //- -----------------------------------------------------------------------
-    q-page(v-else-if='$route.params.section === `rules`')
+    q-page(v-else-if='route.params.section === `rules`')
       q-toolbar.q-pl-md(
         :class='$q.dark.isActive ? `bg-dark-3` : `bg-white`'
         )
-        .text-subtitle1 {{$t('admin.groups.rules')}}
+        .text-subtitle1 {{t('admin.groups.rules')}}
         q-space
         q-btn.acrylic-btn.q-mr-sm(
           icon='las la-question-circle'
@@ -163,14 +161,14 @@ q-layout(view='hHh lpR fFf', container)
           icon='las la-file-export'
           @click='exportRules'
           )
-          q-tooltip {{$t('admin.groups.exportRules')}}
+          q-tooltip {{t('admin.groups.exportRules')}}
         q-btn.acrylic-btn.q-mr-sm(
           flat
           color='indigo'
           icon='las la-file-import'
           @click='importRules'
           )
-          q-tooltip {{$t('admin.groups.importRules')}}
+          q-tooltip {{t('admin.groups.importRules')}}
         q-btn(
           unelevated
           color='primary'
@@ -181,14 +179,14 @@ q-layout(view='hHh lpR fFf', container)
       q-separator
       .q-pa-md
         q-banner(
-          v-if='!group.rules || group.rules.length < 1'
+          v-if='!state.group.rules || state.group.rules.length < 1'
           rounded
           :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`'
-          ) {{$t('admin.groups.rulesNone')}}
+          ) {{t('admin.groups.rulesNone')}}
         q-card.shadow-1.q-pb-sm(v-else)
           q-card-section
             .admin-groups-rule(
-              v-for='(rule, idx) of group.rules'
+              v-for='(rule, idx) of state.group.rules'
               :key='rule.id'
               )
               .admin-groups-rule-icon(:class='getRuleModeColor(rule.mode)')
@@ -213,7 +211,7 @@ q-layout(view='hHh lpR fFf', container)
                     emit-value
                     map-options
                     dense
-                    :aria-label='$t(`admin.groups.ruleSites`)'
+                    :aria-label='t(`admin.groups.ruleSites`)'
                     :options='rules'
                     placeholder='Select permissions...'
                     option-value='permission'
@@ -261,13 +259,13 @@ q-layout(view='hHh lpR fFf', container)
                       emit-value
                       map-options
                       dense
-                      :aria-label='$t(`admin.groups.ruleSites`)'
-                      :options='sites'
+                      :aria-label='t(`admin.groups.ruleSites`)'
+                      :options='adminStore.sites'
                       option-value='id'
                       option-label='title'
                       multiple
                       behavior='dialog'
-                      :display-value='$tc(`admin.groups.selectedSites`, rule.sites.length, { count: rule.sites.length })'
+                      :display-value='t(`admin.groups.selectedSites`, rule.sites.length, { count: rule.sites.length })'
                       )
                       template(v-slot:option='{ itemProps, itemEvents, opt, selected, toggleOption }')
                         q-item(v-bind='itemProps', v-on='itemEvents')
@@ -288,13 +286,13 @@ q-layout(view='hHh lpR fFf', container)
                       emit-value
                       map-options
                       dense
-                      :aria-label='$t(`admin.groups.ruleLocales`)'
-                      :options='locales'
+                      :aria-label='t(`admin.groups.ruleLocales`)'
+                      :options='adminStore.locales'
                       option-value='code'
                       option-label='name'
                       multiple
                       behavior='dialog'
-                      :display-value='$tc(`admin.groups.selectedLocales`, rule.locales.length, { count: rule.locales.length, locale: rule.locales.length === 1 ? rule.locales[0].toUpperCase() : `` })'
+                      :display-value='t(`admin.groups.selectedLocales`, rule.locales.length, { count: rule.locales.length, locale: rule.locales.length === 1 ? rule.locales[0].toUpperCase() : `` })'
                       )
                       template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
                         q-item(v-bind='itemProps')
@@ -317,14 +315,14 @@ q-layout(view='hHh lpR fFf', container)
                       emit-value
                       map-options
                       dense
-                      :aria-label='$t(`admin.groups.ruleMatch`)'
+                      :aria-label='t(`admin.groups.ruleMatch`)'
                       :options=`[
-                        { label: $t('admin.groups.ruleMatchStart'), value: 'START' },
-                        { label: $t('admin.groups.ruleMatchEnd'), value: 'END' },
-                        { label: $t('admin.groups.ruleMatchRegex'), value: 'REGEX' },
-                        { label: $t('admin.groups.ruleMatchTag'), value: 'TAG' },
-                        { label: $t('admin.groups.ruleMatchTagAll'), value: 'TAGALL' },
-                        { label: $t('admin.groups.ruleMatchExact'), value: 'EXACT' }
+                        { label: t('admin.groups.ruleMatchStart'), value: 'START' },
+                        { label: t('admin.groups.ruleMatchEnd'), value: 'END' },
+                        { label: t('admin.groups.ruleMatchRegex'), value: 'REGEX' },
+                        { label: t('admin.groups.ruleMatchTag'), value: 'TAG' },
+                        { label: t('admin.groups.ruleMatchTagAll'), value: 'TAGALL' },
+                        { label: t('admin.groups.ruleMatchExact'), value: 'EXACT' }
                       ]`
                     )
                     q-input.q-mt-sm(
@@ -333,19 +331,19 @@ q-layout(view='hHh lpR fFf', container)
                       dense
                       :prefix='[`START`, `REGEX`, `EXACT`].includes(rule.match) ? `/` : null'
                       :suffix='rule.match === `REGEX` ? `/` : null'
-                      :aria-label='$t(`admin.groups.rulePath`)'
+                      :aria-label='t(`admin.groups.rulePath`)'
                     )
     //- -----------------------------------------------------------------------
     //- PERMISSIONS
     //- -----------------------------------------------------------------------
-    q-page(v-else-if='$route.params.section === `permissions`')
+    q-page(v-else-if='route.params.section === `permissions`')
       .q-pa-md
         .row.q-col-gutter-md
           .col-12.col-lg-6
             q-card.shadow-1.q-pb-sm
               .flex.justify-between
                 q-card-section
-                  .text-subtitle1 {{$t(`admin.groups.permissions`)}}
+                  .text-subtitle1 {{t(`admin.groups.permissions`)}}
                 q-card-section
                   q-btn.acrylic-btn(
                     icon='las la-question-circle'
@@ -368,22 +366,22 @@ q-layout(view='hHh lpR fFf', container)
                     q-item-label(caption) {{perm.hint}}
                   q-item-section(avatar)
                     q-toggle(
-                      v-model='group.permissions'
+                      v-model='state.group.permissions'
                       :val='perm.permission'
                       color='primary'
                       checked-icon='las la-check'
                       unchecked-icon='las la-times'
-                      :aria-label='$t(`admin.general.allowComments`)'
+                      :aria-label='t(`admin.general.allowComments`)'
                       )
                 q-separator.q-my-sm(inset, v-if='idx < permissions.length - 1')
     //- -----------------------------------------------------------------------
     //- USERS
     //- -----------------------------------------------------------------------
-    q-page(v-else-if='$route.params.section === `users`')
+    q-page(v-else-if='route.params.section === `users`')
       q-toolbar(
         :class='$q.dark.isActive ? `bg-dark-3` : `bg-white`'
         )
-        .text-subtitle1 {{$t('admin.groups.users')}}
+        .text-subtitle1 {{t('admin.groups.users')}}
         q-space
         q-btn.acrylic-btn.q-mr-sm(
           icon='las la-question-circle'
@@ -395,8 +393,8 @@ q-layout(view='hHh lpR fFf', container)
           )
         q-input.denser.fill-outline.q-mr-sm(
           outlined
-          v-model='usersFilter'
-          :placeholder='$t(`admin.groups.filterUsers`)'
+          v-model='state.usersFilter'
+          :placeholder='t(`admin.groups.filterUsers`)'
           dense
           )
           template(#prepend)
@@ -410,22 +408,27 @@ q-layout(view='hHh lpR fFf', container)
         q-btn.q-mr-xs(
           unelevated
           icon='las la-user-plus'
-          :label='$t(`admin.groups.assignUser`)'
+          :label='t(`admin.groups.assignUser`)'
           color='primary'
           @click='assignUser'
           )
       q-separator
       .q-pa-md
+        q-banner(
+          v-if='!state.users || state.users.length < 1'
+          rounded
+          :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`'
+          ) {{t('admin.groups.usersNone')}}
         q-card.shadow-1
           q-table(
-            :rows='users'
+            :rows='state.users'
             :columns='usersHeaders'
             row-key='id'
             flat
             hide-header
             hide-bottom
             :rows-per-page-options='[0]'
-            :loading='isLoadingUsers'
+            :loading='state.isLoadingUsers'
             )
             template(v-slot:body-cell-id='props')
               q-td(:props='props')
@@ -467,7 +470,7 @@ q-layout(view='hHh lpR fFf', container)
                   :to='`/_admin/users/` + props.row.id'
                   icon='las la-pen'
                   color='indigo'
-                  :label='$t(`common.actions.edit`)'
+                  :label='t(`common.actions.edit`)'
                   no-caps
                   )
                 q-btn.acrylic-btn(
@@ -480,7 +483,7 @@ q-layout(view='hHh lpR fFf', container)
 
         .flex.flex-center.q-mt-md(v-if='usersTotalPages > 1')
           q-pagination(
-            v-model='usersPage'
+            v-model='state.usersPage'
             :max='usersTotalPages'
             :max-pages='9'
             boundary-numbers
@@ -488,517 +491,565 @@ q-layout(view='hHh lpR fFf', container)
           )
 </template>
 
-<script>
+<script setup>
 import gql from 'graphql-tag'
-import { get } from 'vuex-pathify'
 import { DateTime } from 'luxon'
 import cloneDeep from 'lodash/cloneDeep'
 import some from 'lodash/some'
 import { v4 as uuid } from 'uuid'
-import { exportFile } from 'quasar'
 import { fileOpen } from 'browser-fs-access'
 
-export default {
-  data () {
-    return {
-      sections: [
-        { key: 'overview', text: this.$t('admin.groups.overview'), icon: 'las la-users' },
-        { key: 'rules', text: this.$t('admin.groups.rules'), icon: 'las la-file-invoice', rulesTotal: true },
-        { key: 'permissions', text: this.$t('admin.groups.permissions'), icon: 'las la-list-alt' },
-        { key: 'users', text: this.$t('admin.groups.users'), icon: 'las la-user', usersTotal: true }
-      ],
-      group: {
-        rules: []
-      },
-      isLoading: false,
-      // RULES
-      rules: [
-        {
-          permission: 'read:pages',
-          title: 'Read Pages',
-          hint: 'Can view and search pages.',
-          warning: false,
-          restrictedForSystem: false,
-          disabled: false
-        },
-        {
-          permission: 'write:pages',
-          title: 'Write Pages',
-          hint: 'Can create and edit pages.',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'review:pages',
-          title: 'Review Pages',
-          hint: 'Can review and approve edits submitted by users.',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:pages',
-          title: 'Manage Pages',
-          hint: 'Can move existing pages to other locations the user has write access to.',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'delete:pages',
-          title: 'Delete Pages',
-          hint: 'Can delete existing pages.',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'write:styles',
-          title: 'Use CSS',
-          hint: 'Can insert CSS styles in pages.',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'write:scripts',
-          title: 'Use JavaScript',
-          hint: 'Can insert JavaScript in pages.',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'read:source',
-          title: 'View Pages Source',
-          hint: 'Can view pages source.',
-          warning: false,
-          restrictedForSystem: false,
-          disabled: false
-        },
-        {
-          permission: 'read:history',
-          title: 'View Page History',
-          hint: 'Can view previous versions of pages.',
-          warning: false,
-          restrictedForSystem: false,
-          disabled: false
-        },
-        {
-          permission: 'read:assets',
-          title: 'View Assets',
-          hint: 'Can view / use assets (such as images and files) in pages.',
-          warning: false,
-          restrictedForSystem: false,
-          disabled: false
-        },
-        {
-          permission: 'write:assets',
-          title: 'Upload Assets',
-          hint: 'Can upload new assets (such as images and files).',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:assets',
-          title: 'Manage Assets',
-          hint: 'Can edit and delete existing assets (such as images and files).',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'read:comments',
-          title: 'Read Comments',
-          hint: 'Can view page comments.',
-          warning: false,
-          restrictedForSystem: false,
-          disabled: false
-        },
-        {
-          permission: 'write:comments',
-          title: 'Write Comments',
-          hint: 'Can post new comments on pages.',
-          warning: false,
-          restrictedForSystem: false,
-          disabled: false
-        },
-        {
-          permission: 'manage:comments',
-          title: 'Manage Comments',
-          hint: 'Can edit and delete existing page comments.',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        }
-      ],
-      // PERMISSIONS
-      permissions: [
-        {
-          permission: 'write:users',
-          hint: 'Can create or authorize new users, but not modify existing ones',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:users',
-          hint: 'Can manage all users (but not users with administrative permissions)',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'write:groups',
-          hint: 'Can manage groups and assign CONTENT permissions / page rules',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:groups',
-          hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
-          warning: true,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:navigation',
-          hint: 'Can manage the site navigation',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:theme',
-          hint: 'Can manage and modify themes',
-          warning: false,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:api',
-          hint: 'Can generate and revoke API keys',
-          warning: true,
-          restrictedForSystem: true,
-          disabled: false
-        },
-        {
-          permission: 'manage:system',
-          hint: 'Can manage and access everything. Root administrator.',
-          warning: true,
-          restrictedForSystem: true,
-          disabled: true
+import { useI18n } from 'vue-i18n'
+import { exportFile, useQuasar } from 'quasar'
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
-        }
-      ],
-      // USERS
-      users: [],
-      isLoadingUsers: false,
-      usersFilter: '',
-      usersPage: 1,
-      usersPageSize: 15,
-      usersTotal: 0,
-      usersHeaders: [
-        {
-          align: 'center',
-          field: 'id',
-          name: 'id',
-          sortable: false,
-          style: 'width: 20px'
-        },
-        {
-          label: this.$t('common.field.name'),
-          align: 'left',
-          field: 'name',
-          name: 'name',
-          sortable: true
-        },
-        {
-          label: this.$t('admin.users.email'),
-          align: 'left',
-          field: 'email',
-          name: 'email',
-          sortable: false
-        },
-        {
-          align: 'left',
-          field: 'createdAt',
-          name: 'date',
-          sortable: false
-        },
-        {
-          label: '',
-          align: 'right',
-          field: 'edit',
-          name: 'edit',
-          sortable: false,
-          style: 'width: 250px'
-        }
-      ]
-    }
-  },
-  computed: {
-    groupId: get('admin/overlayOpts@id', false),
-    sites: get('admin/sites', false),
-    locales: get('admin/locales', false),
-    usersTotalPages () {
-      if (this.usersTotal < 1) { return 0 }
-      return Math.ceil(this.usersTotal / this.usersPageSize)
-    }
-  },
-  watch: {
-    $route: 'checkRoute',
-    usersPage () {
-      this.refreshUsers()
-    },
-    usersFilter () {
-      this.refreshUsers()
-    }
-  },
-  mounted () {
-    this.checkRoute()
-    this.fetchGroup()
-  },
-  methods: {
-    close () {
-      this.$store.set('admin/overlay', '')
-    },
-    checkRoute () {
-      if (!this.$route.params.section) {
-        this.$router.replace({ params: { section: 'overview' } })
-      } else if (this.$route.params.section === 'users') {
-        this.refreshUsers()
-      }
-    },
-    humanizeDate (val) {
-      if (!val) { return '---' }
-      return DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_FULL)
-    },
-    getRuleModeColor: (mode) => ({
-      DENY: 'text-negative',
-      ALLOW: 'text-positive',
-      FORCEALLOW: 'text-blue'
-    })[mode],
-    getRuleModeClass (mode) {
-      return 'is-' + mode.toLowerCase()
-    },
-    getRuleModeIcon: (mode) => ({
-      DENY: 'las la-ban',
-      ALLOW: 'las la-check',
-      FORCEALLOW: 'las la-check-double'
-    })[mode] || 'las la-frog',
-    getNextRuleMode: (mode) => ({
-      DENY: 'FORCEALLOW',
-      ALLOW: 'DENY',
-      FORCEALLOW: 'ALLOW'
-    })[mode] || 'ALLOW',
-    getRuleModeName (mode) {
-      switch (mode) {
-        case 'ALLOW': return this.$t('admin.groups.ruleAllow')
-        case 'DENY': return this.$t('admin.groups.ruleDeny')
-        case 'FORCEALLOW': return this.$t('admin.groups.ruleForceAllow')
-        default: return '???'
-      }
-    },
-    refresh () {
-      this.fetchGroup()
-    },
-    async fetchGroup () {
-      this.isLoading = true
-      try {
-        const resp = await this.$apollo.query({
-          query: gql`
-            query adminFetchGroup (
-              $id: UUID!
-              ) {
-              groupById(
-                id: $id
-              ) {
-                id
-                name
-                redirectOnLogin
-                redirectOnFirstLogin
-                redirectOnLogout
-                isSystem
-                permissions
-                rules {
-                  id
-                  name
-                  path
-                  roles
-                  match
-                  mode
-                  locales
-                  sites
-                }
-                userCount
-                createdAt
-                updatedAt
-              }
-            }
-          `,
-          variables: {
-            id: this.groupId
-          },
-          fetchPolicy: 'network-only'
-        })
-        if (resp?.data?.groupById) {
-          this.group = cloneDeep(resp.data.groupById)
-          this.usersTotal = this.group.userCount ?? 0
-        } else {
-          throw new Error('An unexpected error occured while fetching group details.')
-        }
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: err.message
-        })
-      }
-      this.isLoading = false
-    },
-    newRule () {
-      this.group.rules.push({
-        id: uuid(),
-        name: this.$t('admin.groups.ruleUntitled'),
-        mode: 'ALLOW',
-        match: 'START',
-        roles: [],
-        path: '',
-        locales: [],
-        sites: []
-      })
-    },
-    deleteRule (id) {
-      this.group.rules = this.group.rules.filter(r => r.id !== id)
-    },
-    exportRules () {
-      if (this.group.rules.length < 1) {
-        return this.$q.notify({
-          type: 'negative',
-          message: this.$t('admin.groups.exportRulesNoneError')
-        })
-      }
-      exportFile('rules.json', JSON.stringify(this.group.rules, null, 2), { mimeType: 'application/json;charset=UTF-8' })
-    },
-    async importRules () {
-      try {
-        const blob = await fileOpen({
-          mimeTypes: ['application/json'],
-          extensions: ['.json'],
-          startIn: 'downloads',
-          excludeAcceptAllOption: true
-        })
-        const rulesRaw = await blob.text()
-        const rules = JSON.parse(rulesRaw)
-        if (!Array.isArray(rules) || rules.length < 1) {
-          throw new Error('Invalid Rules Format')
-        }
-        this.$q.dialog({
-          title: this.$t('admin.groups.importModeTitle'),
-          message: this.$t('admin.groups.importModeText'),
-          options: {
-            model: 'replace',
-            type: 'radio',
-            items: [
-              { label: this.$t('admin.groups.importModeReplace'), value: 'replace' },
-              { label: this.$t('admin.groups.importModeAdd'), value: 'add' }
-            ]
-          },
-          persistent: true
-        }).onOk(choice => {
-          if (choice === 'replace') {
-            this.group.rules = []
-          }
-          this.group.rules = [
-            ...this.group.rules,
-            ...rules.map(r => ({
-              id: uuid(),
-              name: r.name || this.$t('admin.groups.ruleUntitled'),
-              mode: ['ALLOW', 'DENY', 'FORCEALLOW'].includes(r.mode) ? r.mode : 'DENY',
-              match: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT'].includes(r.match) ? r.match : 'START',
-              roles: r.roles || [],
-              path: r.path || '',
-              locales: r.locales.filter(l => some(this.locales, ['code', l])),
-              sites: r.sites.filter(s => some(this.sites, ['id', s]))
-            }))
-          ]
-          this.$q.notify({
-            type: 'positive',
-            message: this.$t('admin.groups.importSuccess')
-          })
-        })
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: this.$t('admin.groups.importFailed') + ` [${err.message}]`
-        })
-      }
-    },
-    async refreshUsers () {
-      this.isLoadingUsers = true
-      try {
-        const resp = await this.$apollo.query({
-          query: gql`
-            query adminFetchGroupUsers (
-              $filter: String
-              $page: Int
-              $pageSize: Int
-              $groupId: UUID!
-              ) {
-              groupById (
-                id: $groupId
-              ) {
-                id
-                userCount
-                users (
-                  filter: $filter
-                  page: $page
-                  pageSize: $pageSize
-                ) {
-                  id
-                  name
-                  email
-                  isSystem
-                  isActive
-                  createdAt
-                  lastLoginAt
-                }
-              }
-            }
-          `,
-          variables: {
-            filter: this.usersFilter,
-            page: this.usersPage,
-            pageSize: this.usersPageSize,
-            groupId: this.groupId
-          },
-          fetchPolicy: 'network-only'
-        })
-        if (resp?.data?.groupById?.users) {
-          this.usersTotal = resp.data.groupById.userCount ?? 0
-          this.users = cloneDeep(resp.data.groupById.users)
-        } else {
-          throw new Error('An unexpected error occured while fetching group users.')
-        }
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: err.message
-        })
-      }
-      this.isLoadingUsers = false
-    },
-    assignUser () {
+import { useAdminStore } from 'src/stores/admin'
 
-    },
-    unassignUser () {
+// QUASAR
 
-    }
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  group: {
+    rules: []
+  },
+  isLoading: false,
+  users: [],
+  isLoadingUsers: false,
+  usersFilter: '',
+  usersPage: 1,
+  usersPageSize: 15,
+  usersTotal: 0
+})
+
+const sections = [
+  { key: 'overview', text: t('admin.groups.overview'), icon: 'las la-users' },
+  { key: 'rules', text: t('admin.groups.rules'), icon: 'las la-file-invoice', rulesTotal: true },
+  { key: 'permissions', text: t('admin.groups.permissions'), icon: 'las la-list-alt' },
+  { key: 'users', text: t('admin.groups.users'), icon: 'las la-user', usersTotal: true }
+]
+
+const usersHeaders = [
+  {
+    align: 'center',
+    field: 'id',
+    name: 'id',
+    sortable: false,
+    style: 'width: 20px'
+  },
+  {
+    label: t('common.field.name'),
+    align: 'left',
+    field: 'name',
+    name: 'name',
+    sortable: true
+  },
+  {
+    label: t('admin.users.email'),
+    align: 'left',
+    field: 'email',
+    name: 'email',
+    sortable: false
+  },
+  {
+    align: 'left',
+    field: 'createdAt',
+    name: 'date',
+    sortable: false
+  },
+  {
+    label: '',
+    align: 'right',
+    field: 'edit',
+    name: 'edit',
+    sortable: false,
+    style: 'width: 250px'
+  }
+]
+
+const permissions = [
+  {
+    permission: 'write:users',
+    hint: 'Can create or authorize new users, but not modify existing ones',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:users',
+    hint: 'Can manage all users (but not users with administrative permissions)',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'write:groups',
+    hint: 'Can manage groups and assign CONTENT permissions / page rules',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:groups',
+    hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
+    warning: true,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:navigation',
+    hint: 'Can manage the site navigation',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:theme',
+    hint: 'Can manage and modify themes',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:api',
+    hint: 'Can generate and revoke API keys',
+    warning: true,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:system',
+    hint: 'Can manage and access everything. Root administrator.',
+    warning: true,
+    restrictedForSystem: true,
+    disabled: true
+
+  }
+]
+
+const rules = [
+  {
+    permission: 'read:pages',
+    title: 'Read Pages',
+    hint: 'Can view and search pages.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'write:pages',
+    title: 'Write Pages',
+    hint: 'Can create and edit pages.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'review:pages',
+    title: 'Review Pages',
+    hint: 'Can review and approve edits submitted by users.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:pages',
+    title: 'Manage Pages',
+    hint: 'Can move existing pages to other locations the user has write access to.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'delete:pages',
+    title: 'Delete Pages',
+    hint: 'Can delete existing pages.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'write:styles',
+    title: 'Use CSS',
+    hint: 'Can insert CSS styles in pages.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'write:scripts',
+    title: 'Use JavaScript',
+    hint: 'Can insert JavaScript in pages.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'read:source',
+    title: 'View Pages Source',
+    hint: 'Can view pages source.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'read:history',
+    title: 'View Page History',
+    hint: 'Can view previous versions of pages.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'read:assets',
+    title: 'View Assets',
+    hint: 'Can view / use assets (such as images and files) in pages.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'write:assets',
+    title: 'Upload Assets',
+    hint: 'Can upload new assets (such as images and files).',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'manage:assets',
+    title: 'Manage Assets',
+    hint: 'Can edit and delete existing assets (such as images and files).',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'read:comments',
+    title: 'Read Comments',
+    hint: 'Can view page comments.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'write:comments',
+    title: 'Write Comments',
+    hint: 'Can post new comments on pages.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'manage:comments',
+    title: 'Manage Comments',
+    hint: 'Can edit and delete existing page comments.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  }
+]
+
+// VALIDATION RULES
+
+const groupNameValidation = [
+  val => /^[^<>"]+$/.test(val) || t('admin.groups.nameInvalidChars')
+]
+
+// COMPUTED
+
+const usersTotalPages = computed(() => {
+  if (state.usersTotal < 1) { return 0 }
+  return Math.ceil(state.usersTotal / state.usersPageSize)
+})
+
+// WATCHERS
+
+watch(() => route.params.section, checkRoute)
+watch([() => state.usersPage, () => state.usersFilter], refreshUsers)
+
+// METHODS
+
+function close () {
+  adminStore.$patch({ overlay: '' })
+}
+
+function checkRoute () {
+  if (!route.params.section) {
+    router.replace({ params: { section: 'overview' } })
+  } else if (route.params.section === 'users') {
+    refreshUsers()
   }
 }
+
+function humanizeDate (val) {
+  if (!val) { return '---' }
+  return DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_FULL)
+}
+
+function getRuleModeColor (mode) {
+  return ({
+    DENY: 'text-negative',
+    ALLOW: 'text-positive',
+    FORCEALLOW: 'text-blue'
+  })[mode]
+}
+
+function getRuleModeClass (mode) {
+  return 'is-' + mode.toLowerCase()
+}
+
+function getRuleModeIcon (mode) {
+  return ({
+    DENY: 'las la-ban',
+    ALLOW: 'las la-check',
+    FORCEALLOW: 'las la-check-double'
+  })[mode] || 'las la-frog'
+}
+
+function getNextRuleMode (mode) {
+  return ({
+    DENY: 'FORCEALLOW',
+    ALLOW: 'DENY',
+    FORCEALLOW: 'ALLOW'
+  })[mode] || 'ALLOW'
+}
+
+function getRuleModeName (mode) {
+  switch (mode) {
+    case 'ALLOW': return t('admin.groups.ruleAllow')
+    case 'DENY': return t('admin.groups.ruleDeny')
+    case 'FORCEALLOW': return t('admin.groups.ruleForceAllow')
+    default: return '???'
+  }
+}
+
+function refresh () {
+  fetchGroup()
+}
+
+async function fetchGroup () {
+  state.isLoading = true
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query adminFetchGroup (
+          $id: UUID!
+          ) {
+          groupById(
+            id: $id
+          ) {
+            id
+            name
+            redirectOnLogin
+            redirectOnFirstLogin
+            redirectOnLogout
+            isSystem
+            permissions
+            rules {
+              id
+              name
+              path
+              roles
+              match
+              mode
+              locales
+              sites
+            }
+            userCount
+            createdAt
+            updatedAt
+          }
+        }
+      `,
+      variables: {
+        id: adminStore.overlayOpts.id
+      },
+      fetchPolicy: 'network-only'
+    })
+    if (resp?.data?.groupById) {
+      state.group = cloneDeep(resp.data.groupById)
+      state.usersTotal = state.group.userCount ?? 0
+    } else {
+      throw new Error('An unexpected error occured while fetching group details.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+  state.isLoading = false
+}
+
+function newRule () {
+  state.group.rules.push({
+    id: uuid(),
+    name: t('admin.groups.ruleUntitled'),
+    mode: 'ALLOW',
+    match: 'START',
+    roles: [],
+    path: '',
+    locales: [],
+    sites: []
+  })
+}
+
+function deleteRule (id) {
+  state.group.rules = state.group.rules.filter(r => r.id !== id)
+}
+
+function exportRules () {
+  if (state.group.rules.length < 1) {
+    return $q.notify({
+      type: 'negative',
+      message: t('admin.groups.exportRulesNoneError')
+    })
+  }
+  exportFile('rules.json', JSON.stringify(state.group.rules, null, 2), { mimeType: 'application/json;charset=UTF-8' })
+}
+
+async function importRules () {
+  try {
+    const blob = await fileOpen({
+      mimeTypes: ['application/json'],
+      extensions: ['.json'],
+      startIn: 'downloads',
+      excludeAcceptAllOption: true
+    })
+    const rulesRaw = await blob.text()
+    const rules = JSON.parse(rulesRaw)
+    if (!Array.isArray(rules) || rules.length < 1) {
+      throw new Error('Invalid Rules Format')
+    }
+    $q.dialog({
+      title: t('admin.groups.importModeTitle'),
+      message: t('admin.groups.importModeText'),
+      options: {
+        model: 'replace',
+        type: 'radio',
+        items: [
+          { label: t('admin.groups.importModeReplace'), value: 'replace' },
+          { label: t('admin.groups.importModeAdd'), value: 'add' }
+        ]
+      },
+      persistent: true
+    }).onOk(choice => {
+      if (choice === 'replace') {
+        state.group.rules = []
+      }
+      state.group.rules = [
+        ...state.group.rules,
+        ...rules.map(r => ({
+          id: uuid(),
+          name: r.name || t('admin.groups.ruleUntitled'),
+          mode: ['ALLOW', 'DENY', 'FORCEALLOW'].includes(r.mode) ? r.mode : 'DENY',
+          match: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT'].includes(r.match) ? r.match : 'START',
+          roles: r.roles || [],
+          path: r.path || '',
+          locales: r.locales.filter(l => some(adminStore.locales, ['code', l])),
+          sites: r.sites.filter(s => some(adminStore.sites, ['id', s]))
+        }))
+      ]
+      $q.notify({
+        type: 'positive',
+        message: t('admin.groups.importSuccess')
+      })
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.groups.importFailed') + ` [${err.message}]`
+    })
+  }
+}
+
+async function refreshUsers () {
+  state.isLoadingUsers = true
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query adminFetchGroupUsers (
+          $filter: String
+          $page: Int
+          $pageSize: Int
+          $groupId: UUID!
+          ) {
+          groupById (
+            id: $groupId
+          ) {
+            id
+            userCount
+            users (
+              filter: $filter
+              page: $page
+              pageSize: $pageSize
+            ) {
+              id
+              name
+              email
+              isSystem
+              isActive
+              createdAt
+              lastLoginAt
+            }
+          }
+        }
+      `,
+      variables: {
+        filter: state.usersFilter,
+        page: state.usersPage,
+        pageSize: state.usersPageSize,
+        groupId: adminStore.overlayOpts.id
+      },
+      fetchPolicy: 'network-only'
+    })
+    if (resp?.data?.groupById?.users) {
+      state.usersTotal = resp.data.groupById.userCount ?? 0
+      state.users = cloneDeep(resp.data.groupById.users)
+    } else {
+      throw new Error('An unexpected error occured while fetching group users.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+  state.isLoadingUsers = false
+}
+
+function assignUser () {
+
+}
+
+function unassignUser () {
+
+}
+
+// MOUNTED
+
+onMounted(() => {
+  checkRoute()
+  fetchGroup()
+})
+
 </script>
 
 <style lang="scss">

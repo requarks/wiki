@@ -12,10 +12,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             outlined
             v-model='state.siteName'
             dense
-            :rules=`[
-              val => val.length > 0 || t('admin.sites.nameMissing'),
-              val => /^[^<>"]+$/.test(val) || t('admin.sites.nameInvalidChars')
-            ]`
+            :rules='siteNameValidation'
             hide-bottom-space
             :label='t(`common.field.name`)'
             :aria-label='t(`common.field.name`)'
@@ -29,10 +26,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             outlined
             v-model='state.siteHostname'
             dense
-            :rules=`[
-              val => val.length > 0 || t('admin.sites.hostnameMissing'),
-              val => /^(\\*)|([a-z0-9\-.:]+)$/.test(val) || t('admin.sites.hostnameInvalidChars')
-            ]`
+            :rules='siteHostnameValidation'
             :hint='t(`admin.sites.hostnameHint`)'
             hide-bottom-space
             :label='t(`admin.sites.hostname`)'
@@ -96,6 +90,17 @@ const state = reactive({
 // REFS
 
 const createSiteForm = ref(null)
+
+// VALIDATION RULES
+
+const siteNameValidation = [
+  val => val.length > 0 || t('admin.sites.nameMissing'),
+  val => /^[^<>"]+$/.test(val) || t('admin.sites.nameInvalidChars')
+]
+const siteHostnameValidation = [
+  val => val.length > 0 || t('admin.sites.hostnameMissing'),
+  val => /^(\\*)|([a-z0-9\-.:]+)$/.test(val) || t('admin.sites.hostnameInvalidChars')
+]
 
 // METHODS
 

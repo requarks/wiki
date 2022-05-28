@@ -81,7 +81,7 @@ async function confirm () {
       mutation: gql`
         mutation deleteSite ($id: UUID!) {
           deleteSite(id: $id) {
-            status {
+            operation {
               succeeded
               message
             }
@@ -92,7 +92,7 @@ async function confirm () {
         id: props.site.id
       }
     })
-    if (resp?.data?.deleteSite?.status?.succeeded) {
+    if (resp?.data?.deleteSite?.operation?.succeeded) {
       $q.notify({
         type: 'positive',
         message: t('admin.sites.deleteSuccess')
@@ -102,7 +102,7 @@ async function confirm () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.deleteSite?.status?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.deleteSite?.operation?.message || 'An unexpected error occured.')
     }
   } catch (err) {
     $q.notify({

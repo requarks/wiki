@@ -737,7 +737,7 @@ watch(() => state.targets, (newValue) => {
     handleSetupCallback()
   }
 })
-watch(() => route, (to, from) => {
+watch(() => route.params.id, (to, from) => {
   if (!to.params.id) {
     return
   }

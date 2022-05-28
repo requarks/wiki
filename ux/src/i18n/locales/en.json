@@ -1421,5 +1421,6 @@
   "tags.searchWithinResultsPlaceholder": "Search within results...",
   "tags.selectOneMoreTags": "Select one or more tags",
   "tags.selectOneMoreTagsHint": "Select one or more tags on the left.",
-  "admin.general.sitemapHint": "Make a sitemap.xml available to search engines with all pages accessible to guests."
+  "admin.general.sitemapHint": "Make a sitemap.xml available to search engines with all pages accessible to guests.",
+  "admin.groups.usersNone": "This group doesn't have any user yet."
 }
