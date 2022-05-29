@@ -97,7 +97,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/basic-setup@npm:0.20.0":
+"@codemirror/basic-setup@npm:0.20.0, @codemirror/basic-setup@npm:^0.20.0":
   version: 0.20.0
   resolution: "@codemirror/basic-setup@npm:0.20.0"
   dependencies:
@@ -6717,6 +6717,7 @@ __metadata:
     uuid: 8.3.2
     v-network-graph: 0.5.16
     vue: 3.2.31
+    vue-codemirror: 5.0.1
     vue-i18n: 9.1.10
     vue-router: 4.0.15
     vuedraggable: 4.1.0
@@ -6813,6 +6814,22 @@ __metadata:
   version: 3.1.0
   resolution: "void-elements@npm:3.1.0"
   checksum: 0390f818107fa8fce55bb0a5c3f661056001c1d5a2a48c28d582d4d847347c2ab5b7f8272314cac58acf62345126b6b09bea623a185935f6b1c3bbce0dfd7f7f
+  languageName: node
+  linkType: hard
+
+"vue-codemirror@npm:5.0.1":
+  version: 5.0.1
+  resolution: "vue-codemirror@npm:5.0.1"
+  dependencies:
+    "@codemirror/basic-setup": ^0.20.0
+    "@codemirror/commands": ^0.20.0
+    "@codemirror/language": ^0.20.0
+    "@codemirror/state": ^0.20.0
+    "@codemirror/view": ^0.20.0
+    csstype: ^2.6.8
+  peerDependencies:
+    vue: 3.x
+  checksum: 5d96312123d109e619ecec56e8ddb1b2bdf294738a1ac796d6d35deefba9bfa25e1a311a29aa79315ba2ef48c0a6df33597a8e062f64b93166801dbed632f599
   languageName: node
   linkType: hard
 

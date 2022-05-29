@@ -1,24 +1,21 @@
 <template lang="pug">
-q-dialog(ref='dialog', @hide='onDialogHide')
+q-dialog(ref='dialogRef', @hide='onDialogHide')
   q-card(style='min-width: 650px;')
     q-card-section.card-header
       q-icon(name='img:/_assets/icons/fluent-password-reset.svg', left, size='sm')
-      span {{$t(`admin.users.changePassword`)}}
+      span {{t(`admin.users.changePassword`)}}
     q-form.q-py-sm(ref='changeUserPwdForm', @submit='save')
       q-item
         blueprint-icon(icon='password')
         q-item-section
           q-input(
             outlined
-            v-model='userPassword'
+            v-model='state.userPassword'
             dense
-            :rules=`[
-              val => val.length > 0 || $t('admin.users.passwordMissing'),
-              val => val.length >= 8 || $t('admin.users.passwordTooShort')
-            ]`
+            :rules='userPasswordValidation'
             hide-bottom-space
-            :label='$t(`admin.users.password`)'
-            :aria-label='$t(`admin.users.password`)'
+            :label='t(`admin.users.password`)'
+            :aria-label='t(`admin.users.password`)'
             lazy-rules='ondemand'
             autofocus
             )
@@ -41,159 +38,182 @@ q-dialog(ref='dialog', @hide='onDialogHide')
       q-item(tag='label', v-ripple)
         blueprint-icon(icon='password-reset')
         q-item-section
-          q-item-label {{$t(`admin.users.mustChangePwd`)}}
-          q-item-label(caption) {{$t(`admin.users.mustChangePwdHint`)}}
+          q-item-label {{t(`admin.users.mustChangePwd`)}}
+          q-item-label(caption) {{t(`admin.users.mustChangePwdHint`)}}
         q-item-section(avatar)
           q-toggle(
-            v-model='userMustChangePassword'
+            v-model='state.userMustChangePassword'
             color='primary'
             checked-icon='las la-check'
             unchecked-icon='las la-times'
-            :aria-label='$t(`admin.users.mustChangePwd`)'
+            :aria-label='t(`admin.users.mustChangePwd`)'
             )
     q-card-actions.card-actions
       q-space
       q-btn.acrylic-btn(
         flat
-        :label='$t(`common.actions.cancel`)'
+        :label='t(`common.actions.cancel`)'
         color='grey'
         padding='xs md'
-        @click='hide'
+        @click='onDialogCancel'
         )
       q-btn(
         unelevated
-        :label='$t(`common.actions.update`)'
+        :label='t(`common.actions.update`)'
         color='primary'
         padding='xs md'
         @click='save'
-        :loading='isLoading'
+        :loading='state.isLoading'
         )
 </template>
 
-<script>
+<script setup>
 import gql from 'graphql-tag'
 import sampleSize from 'lodash/sampleSize'
 import zxcvbn from 'zxcvbn'
 
-export default {
-  props: {
-    userId: {
-      type: String,
-      required: true
-    }
-  },
-  emits: ['ok', 'hide'],
-  data () {
+import { useI18n } from 'vue-i18n'
+import { useDialogPluginComponent, useQuasar } from 'quasar'
+import { computed, reactive, ref } from 'vue'
+
+// PROPS
+
+const props = defineProps({
+  userId: {
+    type: String,
+    required: true
+  }
+})
+
+// EMITS
+
+defineEmits([
+  ...useDialogPluginComponent.emits
+])
+
+// QUASAR
+
+const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
+const $q = useQuasar()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  userPassword: '',
+  userMustChangePassword: false,
+  isLoading: false
+})
+
+// REFS
+
+const changeUserPwdForm = ref(null)
+
+// COMPUTED
+
+const passwordStrength = computed(() => {
+  if (state.userPassword.length < 8) {
     return {
-      userPassword: '',
-      userMustChangePassword: false,
-      isLoading: false
+      color: 'negative',
+      label: t('admin.users.pwdStrengthWeak')
     }
-  },
-  computed: {
-    passwordStrength () {
-      if (this.userPassword.length < 8) {
+  } else {
+    switch (zxcvbn(state.userPassword).score) {
+      case 1:
+        return {
+          color: 'deep-orange-7',
+          label: t('admin.users.pwdStrengthPoor')
+        }
+      case 2:
+        return {
+          color: 'purple-7',
+          label: t('admin.users.pwdStrengthMedium')
+        }
+      case 3:
+        return {
+          color: 'blue-7',
+          label: t('admin.users.pwdStrengthGood')
+        }
+      case 4:
+        return {
+          color: 'green-7',
+          label: t('admin.users.pwdStrengthStrong')
+        }
+      default:
         return {
           color: 'negative',
-          label: this.$t('admin.users.pwdStrengthWeak')
+          label: t('admin.users.pwdStrengthWeak')
         }
-      } else {
-        switch (zxcvbn(this.userPassword).score) {
-          case 1:
-            return {
-              color: 'deep-orange-7',
-              label: this.$t('admin.users.pwdStrengthPoor')
-            }
-          case 2:
-            return {
-              color: 'purple-7',
-              label: this.$t('admin.users.pwdStrengthMedium')
-            }
-          case 3:
-            return {
-              color: 'blue-7',
-              label: this.$t('admin.users.pwdStrengthGood')
-            }
-          case 4:
-            return {
-              color: 'green-7',
-              label: this.$t('admin.users.pwdStrengthStrong')
-            }
-          default:
-            return {
-              color: 'negative',
-              label: this.$t('admin.users.pwdStrengthWeak')
-            }
-        }
-      }
-    }
-  },
-  methods: {
-    show () {
-      this.$refs.dialog.show()
-    },
-    hide () {
-      this.$refs.dialog.hide()
-    },
-    onDialogHide () {
-      this.$emit('hide')
-    },
-    randomizePassword () {
-      const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
-      this.userPassword = sampleSize(pwdChars, 16).join('')
-    },
-    async save () {
-      this.isLoading = true
-      try {
-        const isFormValid = await this.$refs.changeUserPwdForm.validate(true)
-        if (!isFormValid) {
-          throw new Error(this.$t('admin.users.createInvalidData'))
-        }
-        const resp = await this.$apollo.mutate({
-          mutation: gql`
-            mutation adminUpdateUserPwd (
-              $id: UUID!
-              $patch: UserUpdateInput!
-              ) {
-              updateUser (
-                id: $id
-                patch: $patch
-                ) {
-                status {
-                  succeeded
-                  message
-                }
-              }
-            }
-          `,
-          variables: {
-            id: this.userId,
-            patch: {
-              newPassword: this.userPassword,
-              mustChangePassword: this.userMustChangePassword
-            }
-          }
-        })
-        if (resp?.data?.updateUser?.status?.succeeded) {
-          this.$q.notify({
-            type: 'positive',
-            message: this.$t('admin.users.createSuccess')
-          })
-          this.$emit('ok', {
-            mustChangePassword: this.userMustChangePassword
-          })
-          this.hide()
-        } else {
-          throw new Error(resp?.data?.updateUser?.status?.message || 'An unexpected error occured.')
-        }
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: err.message
-        })
-      }
-      this.isLoading = false
     }
   }
+})
+
+// VALIDATION RULES
+
+const userPasswordValidation = [
+  val => val.length > 0 || t('admin.users.passwordMissing'),
+  val => val.length >= 8 || t('admin.users.passwordTooShort')
+]
+
+// METHODS
+
+function randomizePassword () {
+  const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
+  state.userPassword = sampleSize(pwdChars, 16).join('')
+}
+
+async function save () {
+  state.isLoading = true
+  try {
+    const isFormValid = await changeUserPwdForm.value.validate(true)
+    if (!isFormValid) {
+      throw new Error(t('admin.users.createInvalidData'))
+    }
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation adminUpdateUserPwd (
+          $id: UUID!
+          $patch: UserUpdateInput!
+          ) {
+          updateUser (
+            id: $id
+            patch: $patch
+            ) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        id: props.userId,
+        patch: {
+          newPassword: state.userPassword,
+          mustChangePassword: state.userMustChangePassword
+        }
+      }
+    })
+    if (resp?.data?.updateUser?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.users.createSuccess')
+      })
+      onDialogOK({
+        mustChangePassword: state.userMustChangePassword
+      })
+    } else {
+      throw new Error(resp?.data?.updateUser?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+  state.isLoading = false
 }
 </script>

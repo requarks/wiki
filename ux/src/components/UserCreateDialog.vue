@@ -1,24 +1,21 @@
 <template lang="pug">
-q-dialog(ref='dialog', @hide='onDialogHide')
+q-dialog(ref='dialogRef', @hide='onDialogHide')
   q-card(style='min-width: 650px;')
     q-card-section.card-header
       q-icon(name='img:/_assets/icons/fluent-plus-plus.svg', left, size='sm')
-      span {{$t(`admin.users.create`)}}
+      span {{t(`admin.users.create`)}}
     q-form.q-py-sm(ref='createUserForm', @submit='create')
       q-item
         blueprint-icon(icon='person')
         q-item-section
           q-input(
             outlined
-            v-model='userName'
+            v-model='state.userName'
             dense
-            :rules=`[
-              val => val.length > 0 || $t('admin.users.nameMissing'),
-              val => /^[^<>"]+$/.test(val) || $t('admin.users.nameInvalidChars')
-            ]`
+            :rules='userNameValidation'
             hide-bottom-space
-            :label='$t(`common.field.name`)'
-            :aria-label='$t(`common.field.name`)'
+            :label='t(`common.field.name`)'
+            :aria-label='t(`common.field.name`)'
             lazy-rules='ondemand'
             autofocus
             ref='iptName'
@@ -28,16 +25,13 @@ q-dialog(ref='dialog', @hide='onDialogHide')
         q-item-section
           q-input(
             outlined
-            v-model='userEmail'
+            v-model='state.userEmail'
             dense
             type='email'
-            :rules=`[
-              val => val.length > 0 || $t('admin.users.emailMissing'),
-              val => /^.+\@.+\..+$/.test(val) || $t('admin.users.emailInvalid')
-            ]`
+            :rules='userEmailValidation'
             hide-bottom-space
-            :label='$t(`admin.users.email`)'
-            :aria-label='$t(`admin.users.email`)'
+            :label='t(`admin.users.email`)'
+            :aria-label='t(`admin.users.email`)'
             lazy-rules='ondemand'
             autofocus
             )
@@ -46,15 +40,12 @@ q-dialog(ref='dialog', @hide='onDialogHide')
         q-item-section
           q-input(
             outlined
-            v-model='userPassword'
+            v-model='state.userPassword'
             dense
-            :rules=`[
-              val => val.length > 0 || $t('admin.users.passwordMissing'),
-              val => val.length >= 8 || $t('admin.users.passwordTooShort')
-            ]`
+            :rules='userPasswordValidation'
             hide-bottom-space
-            :label='$t(`admin.users.password`)'
-            :aria-label='$t(`admin.users.password`)'
+            :label='t(`admin.users.password`)'
+            :aria-label='t(`admin.users.password`)'
             lazy-rules='ondemand'
             autofocus
             )
@@ -79,8 +70,8 @@ q-dialog(ref='dialog', @hide='onDialogHide')
         q-item-section
           q-select(
             outlined
-            :options='groups'
-            v-model='userGroups'
+            :options='state.groups'
+            v-model='state.userGroups'
             multiple
             map-options
             emit-value
@@ -88,29 +79,26 @@ q-dialog(ref='dialog', @hide='onDialogHide')
             option-label='name'
             options-dense
             dense
-            :rules=`[
-              val => val.length > 0 || $t('admin.users.groupsMissing')
-            ]`
+            :rules='userGroupsValidation'
             hide-bottom-space
-            :label='$t(`admin.users.groups`)'
-            :aria-label='$t(`admin.users.groups`)'
+            :label='t(`admin.users.groups`)'
+            :aria-label='t(`admin.users.groups`)'
             lazy-rules='ondemand'
-            :loading='loadingGroups'
+            :loading='state.loadingGroups'
             )
             template(v-slot:selected)
-              .text-caption(v-if='userGroups.length > 1')
+              .text-caption(v-if='state.userGroups.length > 1')
                 i18n-t(keypath='admin.users.groupsSelected')
                   template(#count)
-                    strong {{ userGroups.length }}
-              .text-caption(v-else-if='userGroups.length === 1')
+                    strong {{ state.userGroups.length }}
+              .text-caption(v-else-if='state.userGroups.length === 1')
                 i18n-t(keypath='admin.users.groupSelected')
                   template(#group)
                     strong {{ selectedGroupName }}
               span(v-else)
-            template(v-slot:option='{ itemProps, itemEvents, opt, selected, toggleOption }')
+            template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
               q-item(
                 v-bind='itemProps'
-                v-on='itemEvents'
                 )
                 q-item-section(side)
                   q-checkbox(
@@ -123,214 +111,254 @@ q-dialog(ref='dialog', @hide='onDialogHide')
       q-item(tag='label', v-ripple)
         blueprint-icon(icon='password-reset')
         q-item-section
-          q-item-label {{$t(`admin.users.mustChangePwd`)}}
-          q-item-label(caption) {{$t(`admin.users.mustChangePwdHint`)}}
+          q-item-label {{t(`admin.users.mustChangePwd`)}}
+          q-item-label(caption) {{t(`admin.users.mustChangePwdHint`)}}
         q-item-section(avatar)
           q-toggle(
-            v-model='userMustChangePassword'
+            v-model='state.userMustChangePassword'
             color='primary'
             checked-icon='las la-check'
             unchecked-icon='las la-times'
-            :aria-label='$t(`admin.users.mustChangePwd`)'
+            :aria-label='t(`admin.users.mustChangePwd`)'
             )
       q-item(tag='label', v-ripple)
         blueprint-icon(icon='email-open')
         q-item-section
-          q-item-label {{$t(`admin.users.sendWelcomeEmail`)}}
-          q-item-label(caption) {{$t(`admin.users.sendWelcomeEmailHint`)}}
+          q-item-label {{t(`admin.users.sendWelcomeEmail`)}}
+          q-item-label(caption) {{t(`admin.users.sendWelcomeEmailHint`)}}
         q-item-section(avatar)
           q-toggle(
-            v-model='userSendWelcomeEmail'
+            v-model='state.userSendWelcomeEmail'
             color='primary'
             checked-icon='las la-check'
             unchecked-icon='las la-times'
-            :aria-label='$t(`admin.users.sendWelcomeEmail`)'
+            :aria-label='t(`admin.users.sendWelcomeEmail`)'
             )
     q-card-actions.card-actions
       q-checkbox(
-        v-model='keepOpened'
+        v-model='state.keepOpened'
         color='primary'
-        :label='$t(`admin.users.createKeepOpened`)'
+        :label='t(`admin.users.createKeepOpened`)'
         size='sm'
       )
       q-space
       q-btn.acrylic-btn(
         flat
-        :label='$t(`common.actions.cancel`)'
+        :label='t(`common.actions.cancel`)'
         color='grey'
         padding='xs md'
-        @click='hide'
+        @click='onDialogCancel'
         )
       q-btn(
         unelevated
-        :label='$t(`common.actions.create`)'
+        :label='t(`common.actions.create`)'
         color='primary'
         padding='xs md'
         @click='create'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         )
 </template>
 
-<script>
+<script setup>
 import gql from 'graphql-tag'
 import sampleSize from 'lodash/sampleSize'
 import zxcvbn from 'zxcvbn'
 import cloneDeep from 'lodash/cloneDeep'
+import { useI18n } from 'vue-i18n'
+import { useDialogPluginComponent, useQuasar } from 'quasar'
+import { computed, onMounted, reactive, ref } from 'vue'
 
-export default {
-  emits: ['ok', 'hide'],
-  data () {
+// EMITS
+
+defineEmits([
+  ...useDialogPluginComponent.emits
+])
+
+// QUASAR
+
+const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
+const $q = useQuasar()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  userName: '',
+  userEmail: '',
+  userPassword: '',
+  userGroups: [],
+  userMustChangePassword: false,
+  userSendWelcomeEmail: false,
+  keepOpened: false,
+  groups: [],
+  loadingGroups: false,
+  loading: false
+})
+
+// REFS
+
+const createUserForm = ref(null)
+const iptName = ref(null)
+
+// COMPUTED
+
+const passwordStrength = computed(() => {
+  if (state.userPassword.length < 8) {
     return {
-      userName: '',
-      userEmail: '',
-      userPassword: '',
-      userGroups: [],
-      userMustChangePassword: false,
-      userSendWelcomeEmail: false,
-      keepOpened: false,
-      groups: [],
-      loadingGroups: false,
-      loading: false
+      color: 'negative',
+      label: t('admin.users.pwdStrengthWeak')
     }
-  },
-  computed: {
-    passwordStrength () {
-      if (this.userPassword.length < 8) {
+  } else {
+    switch (zxcvbn(state.userPassword).score) {
+      case 1:
+        return {
+          color: 'deep-orange-7',
+          label: t('admin.users.pwdStrengthPoor')
+        }
+      case 2:
+        return {
+          color: 'purple-7',
+          label: t('admin.users.pwdStrengthMedium')
+        }
+      case 3:
+        return {
+          color: 'blue-7',
+          label: t('admin.users.pwdStrengthGood')
+        }
+      case 4:
+        return {
+          color: 'green-7',
+          label: t('admin.users.pwdStrengthStrong')
+        }
+      default:
         return {
           color: 'negative',
-          label: this.$t('admin.users.pwdStrengthWeak')
+          label: t('admin.users.pwdStrengthWeak')
         }
-      } else {
-        switch (zxcvbn(this.userPassword).score) {
-          case 1:
-            return {
-              color: 'deep-orange-7',
-              label: this.$t('admin.users.pwdStrengthPoor')
-            }
-          case 2:
-            return {
-              color: 'purple-7',
-              label: this.$t('admin.users.pwdStrengthMedium')
-            }
-          case 3:
-            return {
-              color: 'blue-7',
-              label: this.$t('admin.users.pwdStrengthGood')
-            }
-          case 4:
-            return {
-              color: 'green-7',
-              label: this.$t('admin.users.pwdStrengthStrong')
-            }
-          default:
-            return {
-              color: 'negative',
-              label: this.$t('admin.users.pwdStrengthWeak')
-            }
-        }
-      }
-    },
-    selectedGroupName () {
-      return this.groups.filter(g => g.id === this.userGroups[0])[0]?.name
-    }
-  },
-  methods: {
-    async show () {
-      this.$refs.dialog.show()
-
-      this.loading++
-      this.loadingGroups = true
-      const resp = await this.$apollo.query({
-        query: gql`
-          query getGroupsForCreateUser {
-            groups {
-              id
-              name
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      this.groups = cloneDeep(resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-0000-000000000001') ?? [])
-      this.loadingGroups = false
-      this.loading--
-    },
-    hide () {
-      this.$refs.dialog.hide()
-    },
-    onDialogHide () {
-      this.$emit('hide')
-    },
-    randomizePassword () {
-      const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
-      this.userPassword = sampleSize(pwdChars, 16).join('')
-    },
-    async create () {
-      this.loading++
-      try {
-        const isFormValid = await this.$refs.createUserForm.validate(true)
-        if (!isFormValid) {
-          throw new Error(this.$t('admin.users.createInvalidData'))
-        }
-        const resp = await this.$apollo.mutate({
-          mutation: gql`
-            mutation createUser (
-              $name: String!
-              $email: String!
-              $password: String!
-              $groups: [UUID]!
-              $mustChangePassword: Boolean!
-              $sendWelcomeEmail: Boolean!
-              ) {
-              createUser (
-                name: $name
-                email: $email
-                password: $password
-                groups: $groups
-                mustChangePassword: $mustChangePassword
-                sendWelcomeEmail: $sendWelcomeEmail
-                ) {
-                status {
-                  succeeded
-                  message
-                }
-              }
-            }
-          `,
-          variables: {
-            name: this.userName,
-            email: this.userEmail,
-            password: this.userPassword,
-            groups: this.userGroups,
-            mustChangePassword: this.userMustChangePassword,
-            sendWelcomeEmail: this.userSendWelcomeEmail
-          }
-        })
-        if (resp?.data?.createUser?.status?.succeeded) {
-          this.$q.notify({
-            type: 'positive',
-            message: this.$t('admin.users.createSuccess')
-          })
-          if (this.keepOpened) {
-            this.userName = ''
-            this.userEmail = ''
-            this.userPassword = ''
-            this.$refs.iptName.focus()
-          } else {
-            this.$emit('ok')
-            this.hide()
-          }
-        } else {
-          throw new Error(resp?.data?.createUser?.status?.message || 'An unexpected error occured.')
-        }
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: err.message
-        })
-      }
-      this.loading--
     }
   }
+})
+const selectedGroupName = computed(() => {
+  return state.groups.filter(g => g.id === state.userGroups[0])[0]?.name
+})
+
+// VALIDATION RULES
+
+const userNameValidation = [
+  val => val.length > 0 || t('admin.users.nameMissing'),
+  val => /^[^<>"]+$/.test(val) || t('admin.users.nameInvalidChars')
+]
+
+const userEmailValidation = [
+  val => val.length > 0 || t('admin.users.emailMissing'),
+  val => /^.+@.+\..+$/.test(val) || t('admin.users.emailInvalid')
+]
+
+const userPasswordValidation = [
+  val => val.length > 0 || t('admin.users.passwordMissing'),
+  val => val.length >= 8 || t('admin.users.passwordTooShort')
+]
+
+const userGroupsValidation = [
+  val => val.length > 0 || t('admin.users.groupsMissing')
+]
+
+// METHODS
+
+async function loadGroups () {
+  state.loading++
+  state.loadingGroups = true
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query getGroupsForCreateUser {
+        groups {
+          id
+          name
+        }
+      }
+    `,
+    fetchPolicy: 'network-only'
+  })
+  state.groups = cloneDeep(resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-8000-000000000001') ?? [])
+  state.loadingGroups = false
+  state.loading--
 }
+
+function randomizePassword () {
+  const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
+  state.userPassword = sampleSize(pwdChars, 16).join('')
+}
+
+async function create () {
+  state.loading++
+  try {
+    const isFormValid = await createUserForm.value.validate(true)
+    if (!isFormValid) {
+      throw new Error(t('admin.users.createInvalidData'))
+    }
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation createUser (
+          $name: String!
+          $email: String!
+          $password: String!
+          $groups: [UUID]!
+          $mustChangePassword: Boolean!
+          $sendWelcomeEmail: Boolean!
+          ) {
+          createUser (
+            name: $name
+            email: $email
+            password: $password
+            groups: $groups
+            mustChangePassword: $mustChangePassword
+            sendWelcomeEmail: $sendWelcomeEmail
+            ) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        name: state.userName,
+        email: state.userEmail,
+        password: state.userPassword,
+        groups: state.userGroups,
+        mustChangePassword: state.userMustChangePassword,
+        sendWelcomeEmail: state.userSendWelcomeEmail
+      }
+    })
+    if (resp?.data?.createUser?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.users.createSuccess')
+      })
+      if (state.keepOpened) {
+        state.userName = ''
+        state.userEmail = ''
+        state.userPassword = ''
+        iptName.value.focus()
+      } else {
+        onDialogOK()
+      }
+    } else {
+      throw new Error(resp?.data?.createUser?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+  state.loading--
+}
+
+// MOUNTED
+
+onMounted(loadGroups)
 </script>

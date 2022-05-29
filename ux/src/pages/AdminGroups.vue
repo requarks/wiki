@@ -168,6 +168,8 @@ const headers = [
   }
 ]
 
+// WATCHERS
+
 watch(() => adminStore.overlay, (newValue, oldValue) => {
   if (newValue === '' && oldValue === 'GroupEditOverlay') {
     router.push('/_admin/groups')
@@ -175,9 +177,7 @@ watch(() => adminStore.overlay, (newValue, oldValue) => {
   }
 })
 
-watch(() => route.params.id, () => {
-  checkOverlay()
-})
+watch(() => route.params.id, checkOverlay)
 
 // METHODS
 

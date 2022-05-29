@@ -4,12 +4,12 @@ q-page.admin-groups
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-account.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.users.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.users.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.users.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.users.subtitle') }}
     .col-auto.flex.items-center
       q-input.denser.q-mr-sm(
         outlined
-        v-model='search'
+        v-model='state.search'
         dense
         :class='$q.dark.isActive ? `bg-dark` : `bg-white`'
         )
@@ -28,29 +28,29 @@ q-page.admin-groups
         flat
         color='secondary'
         @click='load'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         )
       q-btn(
         unelevated
         icon='las la-plus'
-        :label='$t(`admin.users.create`)'
+        :label='t(`admin.users.create`)'
         color='primary'
         @click='createUser'
-        :disabled='loading > 0'
+        :disabled='state.loading > 0'
         )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
     .col-12
       q-card.shadow-1
         q-table(
-          :rows='users'
+          :rows='state.users'
           :columns='headers'
           row-key='id'
           flat
           hide-header
           hide-bottom
           :rows-per-page-options='[0]'
-          :loading='loading > 0'
+          :loading='state.loading > 0'
           )
           template(v-slot:body-cell-id='props')
             q-td(:props='props')
@@ -92,7 +92,7 @@ q-page.admin-groups
                 :to='`/_admin/users/` + props.row.id'
                 icon='las la-pen'
                 color='indigo'
-                :label='$t(`common.actions.edit`)'
+                :label='t(`common.actions.edit`)'
                 no-caps
                 )
               q-btn.acrylic-btn(
@@ -100,146 +100,178 @@ q-page.admin-groups
                 flat
                 icon='las la-trash'
                 color='accent'
-                @click='deleteGroup(props.row)'
+                @click='deleteUser(props.row)'
                 )
 </template>
 
-<script>
+<script setup>
 import gql from 'graphql-tag'
 import cloneDeep from 'lodash/cloneDeep'
 import { DateTime } from 'luxon'
-import { sync } from 'vuex-pathify'
-import { createMetaMixin } from 'quasar'
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+
+import { useAdminStore } from 'src/stores/admin'
 
 import UserCreateDialog from '../components/UserCreateDialog.vue'
 
-export default {
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.users.title')
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.users.title')
+})
+
+// DATA
+
+const state = reactive({
+  users: [],
+  loading: 0,
+  search: ''
+})
+
+const headers = [
+  {
+    align: 'center',
+    field: 'id',
+    name: 'id',
+    sortable: false,
+    style: 'width: 20px'
+  },
+  {
+    label: t('common.field.name'),
+    align: 'left',
+    field: 'name',
+    name: 'name',
+    sortable: true
+  },
+  {
+    label: t('admin.users.email'),
+    align: 'left',
+    field: 'email',
+    name: 'email',
+    sortable: false
+  },
+  {
+    align: 'left',
+    field: 'createdAt',
+    name: 'date',
+    sortable: false
+  },
+  {
+    label: '',
+    align: 'right',
+    field: 'edit',
+    name: 'edit',
+    sortable: false,
+    style: 'width: 250px'
+  }
+]
+
+// WATCHERS
+
+watch(() => adminStore.overlay, (newValue, oldValue) => {
+  if (newValue === '' && oldValue === 'UserEditOverlay') {
+    router.push('/_admin/users')
+    load()
+  }
+})
+
+watch(() => route.params.id, checkOverlay)
+
+// METHODS
+
+async function load () {
+  state.loading++
+  $q.loading.show()
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query getUsers {
+        users {
+          id
+          name
+          email
+          isSystem
+          isActive
+          createdAt
+          lastLoginAt
+        }
       }
+    `,
+    fetchPolicy: 'network-only'
+  })
+  state.users = cloneDeep(resp?.data?.users)
+  $q.loading.hide()
+  state.loading--
+}
+
+function humanizeDate (val) {
+  return DateTime.fromISO(val).toRelative()
+}
+
+function checkOverlay () {
+  if (route.params?.id) {
+    adminStore.$patch({
+      overlayOpts: { id: route.params.id },
+      overlay: 'UserEditOverlay'
     })
-  ],
-  data () {
-    return {
-      users: [],
-      loading: 0,
-      search: ''
-    }
-  },
-  computed: {
-    overlay: sync('admin/overlay', false),
-    headers () {
-      return [
-        {
-          align: 'center',
-          field: 'id',
-          name: 'id',
-          sortable: false,
-          style: 'width: 20px'
-        },
-        {
-          label: this.$t('common.field.name'),
-          align: 'left',
-          field: 'name',
-          name: 'name',
-          sortable: true
-        },
-        {
-          label: this.$t('admin.users.email'),
-          align: 'left',
-          field: 'email',
-          name: 'email',
-          sortable: false
-        },
-        {
-          align: 'left',
-          field: 'createdAt',
-          name: 'date',
-          sortable: false
-        },
-        {
-          label: '',
-          align: 'right',
-          field: 'edit',
-          name: 'edit',
-          sortable: false,
-          style: 'width: 250px'
-        }
-      ]
-    }
-  },
-  watch: {
-    overlay (newValue, oldValue) {
-      if (newValue === '' && oldValue === 'UserEditOverlay') {
-        this.$router.push('/_admin/users')
-        this.load()
-      }
-    },
-    $route: 'checkOverlay'
-  },
-  mounted () {
-    this.checkOverlay()
-    this.load()
-  },
-  beforeUnmount () {
-    this.overlay = ''
-  },
-  methods: {
-    async load () {
-      this.loading++
-      this.$q.loading.show()
-      const resp = await this.$apollo.query({
-        query: gql`
-          query getUsers {
-            users {
-              id
-              name
-              email
-              isSystem
-              isActive
-              createdAt
-              lastLoginAt
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      this.users = cloneDeep(resp?.data?.users)
-      this.$q.loading.hide()
-      this.loading--
-    },
-    humanizeDate (val) {
-      return DateTime.fromISO(val).toRelative()
-    },
-    checkOverlay () {
-      if (this.$route.params && this.$route.params.id) {
-        this.$store.set('admin/overlayOpts', { id: this.$route.params.id })
-        this.$store.set('admin/overlay', 'UserEditOverlay')
-      } else {
-        this.$store.set('admin/overlay', '')
-      }
-    },
-    createUser () {
-      this.$q.dialog({
-        component: UserCreateDialog
-      }).onOk(() => {
-        this.load()
-      })
-    },
-    deleteUser (gr) {
-      this.$q.dialog({
-        // component: UserDeleteDialog,
-        componentProps: {
-          group: gr
-        }
-      }).onOk(() => {
-        this.load()
-      })
-    }
+  } else {
+    adminStore.$patch({
+      overlay: ''
+    })
   }
 }
+
+function createUser () {
+  $q.dialog({
+    component: UserCreateDialog
+  }).onOk(() => {
+    this.load()
+  })
+}
+
+function deleteUser (usr) {
+  $q.dialog({
+    // component: UserDeleteDialog,
+    componentProps: {
+      user: usr
+    }
+  }).onOk(load)
+}
+
+// MOUNTED
+
+onMounted(() => {
+  checkOverlay()
+  load()
+})
+
+// BEFORE UNMOUNT
+
+onBeforeUnmount(() => {
+  adminStore.$patch({
+    overlay: ''
+  })
+})
+
 </script>
 
 <style lang='scss'>

@@ -76,6 +76,7 @@
     "uuid": "8.3.2",
     "v-network-graph": "0.5.16",
     "vue": "3.2.31",
+    "vue-codemirror": "5.0.1",
     "vue-i18n": "9.1.10",
     "vue-router": "4.0.15",
     "vuedraggable": "4.1.0",

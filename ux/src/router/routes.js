@@ -42,7 +42,7 @@ const routes = [
       // -> Users
       // { path: 'auth', component: () => import('../pages/AdminAuth.vue') },
       { path: 'groups/:id?/:section?', component: () => import('../pages/AdminGroups.vue') },
-      // { path: 'users/:id?/:section?', component: () => import('../pages/AdminUsers.vue') },
+      { path: 'users/:id?/:section?', component: () => import('../pages/AdminUsers.vue') },
       // -> System
       // { path: 'api', component: () => import('../pages/AdminApi.vue') },
       { path: 'extensions', component: () => import('../pages/AdminExtensions.vue') },

@@ -501,7 +501,7 @@ import { fileOpen } from 'browser-fs-access'
 
 import { useI18n } from 'vue-i18n'
 import { exportFile, useQuasar } from 'quasar'
-import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'

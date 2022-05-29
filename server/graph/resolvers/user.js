@@ -89,7 +89,7 @@ module.exports = {
         await WIKI.models.users.createNewUser({ ...args, passwordRaw: args.password, isVerified: true })
 
         return {
-          status: graphHelper.generateSuccess('User created successfully')
+          operation: graphHelper.generateSuccess('User created successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -106,7 +106,7 @@ module.exports = {
         WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
 
         return {
-          status: graphHelper.generateSuccess('User deleted successfully')
+          operation: graphHelper.generateSuccess('User deleted successfully')
         }
       } catch (err) {
         if (err.message.indexOf('foreign') >= 0) {
@@ -121,7 +121,7 @@ module.exports = {
         await WIKI.models.users.updateUser(args.id, args.patch)
 
         return {
-          status: graphHelper.generateSuccess('User updated successfully')
+          operation: graphHelper.generateSuccess('User updated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -132,7 +132,7 @@ module.exports = {
         await WIKI.models.users.query().patch({ isVerified: true }).findById(args.id)
 
         return {
-          status: graphHelper.generateSuccess('User verified successfully')
+          operation: graphHelper.generateSuccess('User verified successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -143,7 +143,7 @@ module.exports = {
         await WIKI.models.users.query().patch({ isActive: true }).findById(args.id)
 
         return {
-          status: graphHelper.generateSuccess('User activated successfully')
+          operation: graphHelper.generateSuccess('User activated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -160,7 +160,7 @@ module.exports = {
         WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
 
         return {
-          status: graphHelper.generateSuccess('User deactivated successfully')
+          operation: graphHelper.generateSuccess('User deactivated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -171,7 +171,7 @@ module.exports = {
         await WIKI.models.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
 
         return {
-          status: graphHelper.generateSuccess('User 2FA enabled successfully')
+          operation: graphHelper.generateSuccess('User 2FA enabled successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -182,7 +182,7 @@ module.exports = {
         await WIKI.models.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
 
         return {
-          status: graphHelper.generateSuccess('User 2FA disabled successfully')
+          operation: graphHelper.generateSuccess('User 2FA disabled successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -225,7 +225,7 @@ module.exports = {
         const newToken = await WIKI.models.users.refreshToken(usr.id)
 
         return {
-          status: graphHelper.generateSuccess('User profile updated successfully'),
+          operation: graphHelper.generateSuccess('User profile updated successfully'),
           jwt: newToken.token
         }
       } catch (err) {
