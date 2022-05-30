@@ -414,9 +414,10 @@ q-layout(view='hHh lpR fFf', container)
               q-item
                 q-item-section
                   q-no-ssr(:placeholder='t(`common.loading`)')
-                    codemirror.metadata-codemirror(
+                    util-code-editor.admin-theme-cm(
                       v-model='metadata'
-                      :extensions='[json()]'
+                      language='json'
+                      :min-height='500'
                     )
 
     q-page(v-else-if='route.params.section === `operations`')
@@ -504,9 +505,7 @@ import { useAdminStore } from 'src/stores/admin'
 import { useDataStore } from 'src/stores/data'
 
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
-import { Codemirror } from 'vue-codemirror'
-import { json } from '@codemirror/lang-json'
-// import { oneDark } from '@codemirror/theme-one-dark'
+import UtilCodeEditor from './UtilCodeEditor.vue'
 
 // QUASAR
 
@@ -822,8 +821,7 @@ onMounted(() => {
 <style lang="scss" scoped>
 .metadata-codemirror {
   &:deep(.cm-editor) {
-    height: 150px;
-    min-height: 100px;
+    min-height: 150px;
     border-radius: 5px;
     border: 1px solid #CCC;
   }

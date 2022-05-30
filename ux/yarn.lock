@@ -5,9 +5,9 @@ __metadata:
   version: 6
   cacheKey: 8
 
-"@apollo/client@npm:3.6.4":
-  version: 3.6.4
-  resolution: "@apollo/client@npm:3.6.4"
+"@apollo/client@npm:3.6.5":
+  version: 3.6.5
+  resolution: "@apollo/client@npm:3.6.5"
   dependencies:
     "@graphql-typed-document-node/core": ^3.1.1
     "@wry/context": ^0.6.0
@@ -33,7 +33,7 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 87afb1fc0669ac60b439e19d327c1d7dcf80ecf5cd8ff86a8361cfadd5a6b7261ed4165907ce88316cd36d8764aeb1e121fa1db7bf328410472517634ca1c58f
+  checksum: f4afbb311e4c599aafe384a4a2766546c5dfcdac320afc4ab336accbf9b43cae790d782284e21ff23a2cdf7670a3999b8d3098413e0638d8b6190c32b2b34bdd
   languageName: node
   linkType: hard
 
@@ -73,15 +73,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/autocomplete@npm:0.20.1":
-  version: 0.20.1
-  resolution: "@codemirror/autocomplete@npm:0.20.1"
+"@codemirror/autocomplete@npm:0.20.2":
+  version: 0.20.2
+  resolution: "@codemirror/autocomplete@npm:0.20.2"
   dependencies:
     "@codemirror/language": ^0.20.0
     "@codemirror/state": ^0.20.0
     "@codemirror/view": ^0.20.0
     "@lezer/common": ^0.16.0
-  checksum: 44db56c288a26d33734fc0462ccd74cd86fa584d3a3f63ab979f967c2089243fd66cfda1ee71a04fcc06f532835eb51706101756f1e3d51a7d799cbc27dbece6
+  checksum: 31733986536645afdb3b2f4f31d594b9838379e9882e85ebe48909cdda0ac0c5c286954eea0d7ee5b3246e7b871be56b9fc0bf9a68bd74ae0b8202dbe7c9cdf8
   languageName: node
   linkType: hard
 
@@ -744,9 +744,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@quasar/app-vite@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@quasar/app-vite@npm:1.0.0"
+"@quasar/app-vite@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@quasar/app-vite@npm:1.0.1"
   dependencies:
     "@quasar/fastclick": 1.1.5
     "@quasar/vite-plugin": ^1.0.9
@@ -795,7 +795,7 @@ __metadata:
       optional: true
   bin:
     quasar: bin/quasar
-  checksum: e5306e58f371acfb8b91f57b9f4936ab9eedf4acce0ba0b828966445d6523a4fa6a4162fcf44e79e307a7e52077aa420ad9d6bfb7310e806bba969ff844b6f4f
+  checksum: d8c5be6c6d63458877883caaa1a2ae1753a3c6dc5a6ff62d2eda547f4d4c84452478dcd0daba2f2c69b1ef07dc0ad148885eef93ef7bc0e0fb6d3d7ccce49ac6
   languageName: node
   linkType: hard
 
@@ -1690,7 +1690,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn-jsx@npm:^5.2.0, acorn-jsx@npm:^5.3.1, acorn-jsx@npm:^5.3.2":
+"acorn-jsx@npm:^5.2.0, acorn-jsx@npm:^5.3.2":
   version: 5.3.2
   resolution: "acorn-jsx@npm:5.3.2"
   peerDependencies:
@@ -1705,15 +1705,6 @@ __metadata:
   bin:
     acorn: bin/acorn
   checksum: 1860f23c2107c910c6177b7b7be71be350db9e1080d814493fae143ae37605189504152d1ba8743ba3178d0b37269ce1ffc42b101547fdc1827078f82671e407
-  languageName: node
-  linkType: hard
-
-"acorn@npm:^8.7.0":
-  version: 8.7.0
-  resolution: "acorn@npm:8.7.0"
-  bin:
-    acorn: bin/acorn
-  checksum: e0f79409d68923fbf1aa6d4166f3eedc47955320d25c89a20cc822e6ba7c48c5963d5bc657bc242d68f7a4ac9faf96eef033e8f73656da6c640d4219935fdfd0
   languageName: node
   linkType: hard
 
@@ -2545,7 +2536,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3":
+"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3, debug@npm:^4.3.4":
   version: 4.3.4
   resolution: "debug@npm:4.3.4"
   dependencies:
@@ -3319,23 +3310,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-vue@npm:8.7.1":
-  version: 8.7.1
-  resolution: "eslint-plugin-vue@npm:8.7.1"
+"eslint-plugin-vue@npm:9.0.1":
+  version: 9.0.1
+  resolution: "eslint-plugin-vue@npm:9.0.1"
   dependencies:
     eslint-utils: ^3.0.0
     natural-compare: ^1.4.0
     nth-check: ^2.0.1
     postcss-selector-parser: ^6.0.9
     semver: ^7.3.5
-    vue-eslint-parser: ^8.0.1
+    vue-eslint-parser: ^9.0.1
+    xml-name-validator: ^4.0.0
   peerDependencies:
     eslint: ^6.2.0 || ^7.0.0 || ^8.0.0
-  checksum: c3aefb226dea126db32cab4c570f17f4b4047d609f4f5748e8dc410e929fbbfacdc07af1421c0f7773398513e9363de4480694714bc85fa2188ca50d1d19cfbc
+  checksum: d132fb5c630cb9ccb5b467460f5d904297ca9ec93cfb238cb0db1850061d32147521ac94ad356f1005b978bce3b30df6320a05aacd3120ea6d60735040046932
   languageName: node
   linkType: hard
 
-"eslint-scope@npm:^7.0.0, eslint-scope@npm:^7.1.1":
+"eslint-scope@npm:^7.1.1":
   version: 7.1.1
   resolution: "eslint-scope@npm:7.1.1"
   dependencies:
@@ -3379,7 +3371,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-visitor-keys@npm:^3.1.0, eslint-visitor-keys@npm:^3.3.0":
+"eslint-visitor-keys@npm:^3.3.0":
   version: 3.3.0
   resolution: "eslint-visitor-keys@npm:3.3.0"
   checksum: d59e68a7c5a6d0146526b0eec16ce87fbf97fe46b8281e0d41384224375c4e52f5ffb9e16d48f4ea50785cde93f766b0c898e31ab89978d88b0e1720fbfb7808
@@ -3442,18 +3434,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"espree@npm:^9.0.0":
-  version: 9.3.1
-  resolution: "espree@npm:9.3.1"
-  dependencies:
-    acorn: ^8.7.0
-    acorn-jsx: ^5.3.1
-    eslint-visitor-keys: ^3.3.0
-  checksum: d7161db30b65427e0799383699ac4c441533a38faee005153694b68b933ba7a24666680edfc490fa77e3a84a22dbd955768034a6f811af5049774eead83063a5
-  languageName: node
-  linkType: hard
-
-"espree@npm:^9.3.2":
+"espree@npm:^9.3.1, espree@npm:^9.3.2":
   version: 9.3.2
   resolution: "espree@npm:9.3.2"
   dependencies:
@@ -3643,10 +3624,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"filesize@npm:8.0.7":
-  version: 8.0.7
-  resolution: "filesize@npm:8.0.7"
-  checksum: 8603d27c5287b984cb100733640645e078f5f5ad65c6d913173e01fb99e09b0747828498fd86647685ccecb69be31f3587b9739ab1e50732116b2374aff4cbf9
+"filesize@npm:9.0.0":
+  version: 9.0.0
+  resolution: "filesize@npm:9.0.0"
+  checksum: b219da2a58de0921f34940da1c24739293ee8af5dcf8a40a12510cc08ebb6fc6b8f2349c914433d278ab477fca63a2d5c1616afe96123c94870b8c0d73a1bb03
   languageName: node
   linkType: hard
 
@@ -4715,6 +4696,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lru-cache@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "lru-cache@npm:6.0.0"
+  dependencies:
+    yallist: ^4.0.0
+  checksum: f97f499f898f23e4585742138a22f22526254fdba6d75d41a1c2526b3b6cc5747ef59c5612ba7375f42aca4f8461950e925ba08c991ead0651b4918b7c978297
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^7.4.0":
   version: 7.8.0
   resolution: "lru-cache@npm:7.8.0"
@@ -5740,10 +5730,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"quasar@npm:2.7.0":
-  version: 2.7.0
-  resolution: "quasar@npm:2.7.0"
-  checksum: 7b78c4fe8be56494c6286b300c755b146a315fc7561db4a2ff1ac9f9bae6f098aa90f21f2bb63108d110bc0917e2f20e09155d8de73699ceda001d8b98d1fde3
+"quasar@npm:2.7.1":
+  version: 2.7.1
+  resolution: "quasar@npm:2.7.1"
+  checksum: c87a96f3e69c7d80ccbd07acb3b637b6aa35ea876ba224edaa97ea108e0e17aa0e997ac9f31800ee3d5345ded5ab5877ba4e5a9b3b9bc28bfa383a2d369c78b4
   languageName: node
   linkType: hard
 
@@ -6075,6 +6065,17 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 9845f96b22268190b30025e02feca391451f2bd49b2c51920c27cc56744f64cbe397df089018fdb347d4b4fd800eabbd85661870eb63eb28055d2b72e457f759
+  languageName: node
+  linkType: hard
+
+"semver@npm:^7.3.6":
+  version: 7.3.7
+  resolution: "semver@npm:7.3.7"
+  dependencies:
+    lru-cache: ^6.0.0
+  bin:
+    semver: bin/semver.js
+  checksum: 2fa3e877568cd6ce769c75c211beaed1f9fce80b28338cadd9d0b6c40f2e2862bafd62c19a6cff42f3d54292b7c623277bcab8816a2b5521cf15210d43e75232
   languageName: node
   linkType: hard
 
@@ -6642,8 +6643,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ux@workspace:."
   dependencies:
-    "@apollo/client": 3.6.4
-    "@codemirror/autocomplete": 0.20.1
+    "@apollo/client": 3.6.5
+    "@codemirror/autocomplete": 0.20.2
     "@codemirror/basic-setup": 0.20.0
     "@codemirror/closebrackets": 0.19.2
     "@codemirror/commands": 0.20.0
@@ -6664,7 +6665,7 @@ __metadata:
     "@codemirror/view": 0.20.6
     "@intlify/vite-plugin-vue-i18n": 3.4.0
     "@lezer/common": 0.16.0
-    "@quasar/app-vite": 1.0.0
+    "@quasar/app-vite": 1.0.1
     "@quasar/extras": 1.14.0
     "@tiptap/core": 2.0.0-beta.176
     "@tiptap/extension-code-block": 2.0.0-beta.37
@@ -6701,8 +6702,8 @@ __metadata:
     eslint-plugin-import: 2.26.0
     eslint-plugin-n: 15.2.0
     eslint-plugin-promise: 6.0.0
-    eslint-plugin-vue: 8.7.1
-    filesize: 8.0.7
+    eslint-plugin-vue: 9.0.1
+    filesize: 9.0.0
     filesize-parser: 1.5.0
     graphql: 16.5.0
     graphql-tag: 2.12.6
@@ -6712,10 +6713,10 @@ __metadata:
     luxon: 2.4.0
     pinia: 2.0.14
     pug: 3.0.2
-    quasar: 2.7.0
+    quasar: 2.7.1
     tippy.js: 6.3.7
     uuid: 8.3.2
-    v-network-graph: 0.5.16
+    v-network-graph: 0.5.17
     vue: 3.2.31
     vue-codemirror: 5.0.1
     vue-i18n: 9.1.10
@@ -6725,16 +6726,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"v-network-graph@npm:0.5.16":
-  version: 0.5.16
-  resolution: "v-network-graph@npm:0.5.16"
+"v-network-graph@npm:0.5.17":
+  version: 0.5.17
+  resolution: "v-network-graph@npm:0.5.17"
   dependencies:
     "@dash14/svg-pan-zoom": ^3.6.8
     mitt: ^3.0.0
   peerDependencies:
     d3-force: ^3.0.0
     vue: ^3.2.31
-  checksum: 8a59f4af41fef885c46c817c2784582612fe9776e862c074ad69f80a15ccb079424009fe06a1eb3149a9f571c44af6d4a657531004eda030887d70eadf8ab343
+  checksum: 4334d5ef813fe08dbde9fdc5e922b05b6ee85c34fa7e59c12229d2c32568dddade7376473df8359385eb84d46e23f30447f8a5f78e1fd8d1b032d4e28e1726d2
   languageName: node
   linkType: hard
 
@@ -6849,20 +6850,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-eslint-parser@npm:^8.0.1":
-  version: 8.3.0
-  resolution: "vue-eslint-parser@npm:8.3.0"
+"vue-eslint-parser@npm:^9.0.1":
+  version: 9.0.2
+  resolution: "vue-eslint-parser@npm:9.0.2"
   dependencies:
-    debug: ^4.3.2
-    eslint-scope: ^7.0.0
-    eslint-visitor-keys: ^3.1.0
-    espree: ^9.0.0
+    debug: ^4.3.4
+    eslint-scope: ^7.1.1
+    eslint-visitor-keys: ^3.3.0
+    espree: ^9.3.1
     esquery: ^1.4.0
     lodash: ^4.17.21
-    semver: ^7.3.5
+    semver: ^7.3.6
   peerDependencies:
     eslint: ">=6.0.0"
-  checksum: 8cc751e9fc2bfba93664ad8945732ab1c97791f9123e703de8669b65670d1e01906d80436bf4932d7ee6fa6174ed4545e8abb059206c88f4bd71957ca6cf7ba8
+  checksum: 0160bb4dc742f3fea410223074d813969eae87825afe536a4b7de7a9d3ca35169cdee2d821494805e1c5dd337aae3178e1485d945a26432a69a281180887fb4d
   languageName: node
   linkType: hard
 
@@ -7015,6 +7016,13 @@ __metadata:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 159da4805f7e84a3d003d8841557196034155008f817172d4e986bd591f74aa82aa7db55929a54222309e01079a65a92a9e6414da5a6aa4b01ee44a511ac3ee5
+  languageName: node
+  linkType: hard
+
+"xml-name-validator@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "xml-name-validator@npm:4.0.0"
+  checksum: af100b79c29804f05fa35aa3683e29a321db9b9685d5e5febda3fa1e40f13f85abc40f45a6b2bf7bee33f68a1dc5e8eaef4cec100a304a9db565e6061d4cb5ad
   languageName: node
   linkType: hard
 

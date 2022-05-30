@@ -11,8 +11,8 @@
     "lint": "eslint --ext .js,.vue ./"
   },
   "dependencies": {
-    "@apollo/client": "3.6.4",
-    "@codemirror/autocomplete": "0.20.1",
+    "@apollo/client": "3.6.5",
+    "@codemirror/autocomplete": "0.20.2",
     "@codemirror/basic-setup": "0.20.0",
     "@codemirror/closebrackets": "0.19.2",
     "@codemirror/commands": "0.20.0",
@@ -61,7 +61,7 @@
     "apollo-upload-client": "17.0.0",
     "browser-fs-access": "0.29.5",
     "clipboard": "2.0.11",
-    "filesize": "8.0.7",
+    "filesize": "9.0.0",
     "filesize-parser": "1.5.0",
     "graphql": "16.5.0",
     "graphql-tag": "2.12.6",
@@ -71,10 +71,10 @@
     "luxon": "2.4.0",
     "pinia": "2.0.14",
     "pug": "3.0.2",
-    "quasar": "2.7.0",
+    "quasar": "2.7.1",
     "tippy.js": "6.3.7",
     "uuid": "8.3.2",
-    "v-network-graph": "0.5.16",
+    "v-network-graph": "0.5.17",
     "vue": "3.2.31",
     "vue-codemirror": "5.0.1",
     "vue-i18n": "9.1.10",
@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "@intlify/vite-plugin-vue-i18n": "3.4.0",
-    "@quasar/app-vite": "1.0.0",
+    "@quasar/app-vite": "1.0.1",
     "@types/lodash": "4.14.182",
     "autoprefixer": "10.4.7",
     "eslint": "8.16.0",
@@ -92,7 +92,7 @@
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-n": "15.2.0",
     "eslint-plugin-promise": "6.0.0",
-    "eslint-plugin-vue": "8.7.1"
+    "eslint-plugin-vue": "9.0.1"
   },
   "engines": {
     "node": "^18 || ^16",
