@@ -50,7 +50,7 @@ module.exports = {
           WIKI.config.title = _.trim(args.title)
         }
 
-        if (args.hasOwnProperty('title')) {
+        if (args.hasOwnProperty('company')) {
           WIKI.config.company = _.trim(args.company)
         }
 
