@@ -3,6 +3,8 @@ extends master.pug
 block head
   if injectCode.css
     style(type='text/css')!= injectCode.css
+  if injectCode.head
+    != injectCode.head
 
 block body
   #root
@@ -24,3 +26,5 @@ block body
       checkout-date=page.updatedAt
       effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
       )
+  if injectCode.body
+    != injectCode.body
