@@ -153,6 +153,9 @@ export default {
       skip() {
         return !this.search || this.search.length < 2
       },
+      result() {
+        this.pagination = 1
+      },
       update: (data) => _.get(data, 'pages.search', {}),
       watchLoading (isLoading) {
         this.searchIsLoading = isLoading
