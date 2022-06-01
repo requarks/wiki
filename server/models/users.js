@@ -538,11 +538,16 @@ module.exports = class User extends Model {
       to: email,
       subject: `Password Reset Request`,
       data: {
+        user: _.startCase(_.toLower(email.split('@')[0].split('.')[0])),
         preheadertext: `A password reset was requested for ${WIKI.config.title}`,
-        title: `A password reset was requested for ${WIKI.config.title}`,
+        title: `You have received this email because a password reset request has been made from your account.`,
         content: `Click the button below to reset your password. If you didn't request this password reset, simply discard this email.`,
         buttonLink: `${WIKI.config.host}/login-reset/${resetToken}`,
-        buttonText: 'Reset Password'
+        buttonText: 'Reset Password',
+        footertext: `This link will expire in twenty four hours.`,
+        footercontent: `If you did not request a password reset, no further action is required.`,
+        regards: `Sincerely,`,
+        regardsfrom: `Yokogawa Digital Platform`
       },
       text: `A password reset was requested for wiki ${WIKI.config.title}. Open the following link to proceed: ${WIKI.config.host}/login-reset/${resetToken}`
     })
@@ -839,11 +844,16 @@ module.exports = class User extends Model {
             to: email,
             subject: 'Verify your account',
             data: {
+              user: _.startCase(_.toLower(email.split('@')[0].split('.')[0])),
               preheadertext: 'Verify your account in order to gain access to the wiki.',
-              title: 'Verify your account',
-              content: 'Click the button below in order to verify your account and gain access to the wiki.',
+              title: 'You have been invited to join Yokogawa Digital Platform.',
+              content: 'Click the button below to access Yokogawa Cloud Documentation.',
               buttonLink: `${WIKI.config.host}/verify/${verificationToken}`,
-              buttonText: 'Verify'
+              buttonText: 'Verify',
+              footertext: `This link will expire in twenty four hours.`,
+              footercontent: ``,
+              regards: `Sincerely,`,
+              regardsfrom: `Yokogawa Digital Platform`
             },
             text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.host}/verify/${verificationToken}`
           })
