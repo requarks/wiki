@@ -64,6 +64,8 @@
                       required
                       :counter='255'
                       prepend-icon='mdi-server'
+                      persistent-hint
+                      :hint='$t(`admin:mail.smtpNameHint`)'
                       )
                     v-switch(
                       v-model='config.secure'
