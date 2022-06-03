@@ -57,6 +57,14 @@
                       :hint='$t(`admin:mail.smtpPortHint`)'
                       style='max-width: 300px;'
                       )
+                    v-text-field(
+                      outlined
+                      v-model='config.name'
+                      :label='$t(`admin:mail.smtpName`)'
+                      required
+                      :counter='255'
+                      prepend-icon='mdi-server'
+                      )
                     v-switch(
                       v-model='config.secure'
                       :label='$t(`admin:mail.smtpTLS`)'
