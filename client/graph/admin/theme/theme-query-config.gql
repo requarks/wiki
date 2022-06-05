@@ -4,9 +4,10 @@ query {
       theme
       iconset
       darkMode
-      minTocLevel
-      tocLevel
-      tocCollapseLevel
+      tocDepth {
+        min
+        max
+      }
       injectCSS
       injectHead
       injectBody

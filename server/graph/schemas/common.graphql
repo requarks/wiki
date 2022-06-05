@@ -21,6 +21,17 @@ input KeyValuePairInput {
   value: String!
 }
 
+# Generic Range Value
+type Range {
+  min: Int
+  max: Int
+}
+
+input RangeInput {
+  min: Int!
+  max: Int!
+}
+
 # Generic Mutation Response
 type DefaultResponse {
   responseResult: ResponseStatus

@@ -60,8 +60,13 @@
             v-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.py-0(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
-                template(v-for='item in tocDecoded')
-                  page-toc-item(:item='item', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
+                page-toc-item(
+                  v-for='(item, idx) in tocDecoded'
+                  :key='`tocitem-` + idx'
+                  :item='item'
+                  :min='tocOptionsDecoded.min'
+                  :max='tocOptionsDecoded.max'
+                  )
             v-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
@@ -434,21 +439,9 @@ export default {
       type: Boolean,
       default: false
     },
-    minTocLevel: {
-      type: Number,
-      default: 0
-    },
-    tocLevel: {
-      type: Number,
-      default: 2
-    },
-    tocCollapseLevel: {
-      type: Number,
-      default: 2
-    },
-    doUseTocDefault: {
-      type: Boolean,
-      default: true
+    tocOptions: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -517,6 +510,9 @@ export default {
     },
     tocDecoded () {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
+    },
+    tocOptionsDecoded () {
+      return JSON.parse(Buffer.from(this.tocOptions, 'base64').toString())
     },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),

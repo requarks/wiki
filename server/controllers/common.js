@@ -178,6 +178,11 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
       title: null,
       description: null,
       updatedAt: new Date().toISOString(),
+      tocOptions: {
+        min: 1,
+        max: 2,
+        useDefault: true
+      },
       extra: {
         css: '',
         js: ''
@@ -504,19 +509,12 @@ router.get('/*', async (req, res, next) => {
         if (!_.isEmpty(page.extra.js)) {
           injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
-        const doUseTocDefault = page.doUseTocDefault === true || page.doUseTocDefault === 1
-        var tocLevel
-        var tocCollapseLevel
-        var minTocLevel
-        if (doUseTocDefault) {
-          minTocLevel = WIKI.config.theming.minTocLevel
-          tocLevel = WIKI.config.theming.tocLevel
-          tocCollapseLevel = WIKI.config.theming.tocCollapseLevel
-        } else {
-          minTocLevel = page.minTocLevel || WIKI.config.theming.minTocLevel
-          tocLevel = page.tocLevel || WIKI.config.theming.tocLevel
-          tocCollapseLevel = page.tocCollapseLevel || WIKI.config.theming.tocCollapseLevel
-        }
+
+        // -> Set TOC display options
+        const tocOptions = _.get(page, 'tocOptions.useDefault', true) ? {
+          min: page.tocOptions.min,
+          max: page.tocOptions.max
+        } : WIKI.config.theming.tocDepth
 
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
           // -> Convert page TOC
@@ -528,10 +526,6 @@ router.get('/*', async (req, res, next) => {
           res.render('legacy/page', {
             page,
             sidebar,
-            minTocLevel,
-            tocLevel,
-            tocCollapseLevel,
-            doUseTocDefault,
             injectCode,
             isAuthenticated: req.user && req.user.id !== 2
           })
@@ -563,10 +557,7 @@ router.get('/*', async (req, res, next) => {
           res.render('page', {
             page,
             sidebar,
-            minTocLevel,
-            tocLevel,
-            tocCollapseLevel,
-            doUseTocDefault,
+            tocOptions,
             injectCode,
             comments: commentTmpl,
             effectivePermissions

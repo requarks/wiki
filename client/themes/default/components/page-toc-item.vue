@@ -1,7 +1,7 @@
 <template lang="pug">
-  div
-    template(v-if='level >= minTocLevel')
-      v-list-item(@click='click(item.anchor)', v-if='(item.children.length === 0 && tocCollapseLevel > level) || tocCollapseLevel > level',
+  .page-toc-item
+    template(v-if='level >= min')
+      v-list-item(@click='click(item.anchor)', v-if='(item.children.length === 0 && max > level) || max > level',
         :key='item.anchor', :class='isNestedLevel ? `pl-9` : `pl-6`')
         v-icon.pl-0(small, color='grey lighten-1') {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
         v-list-item-title.pl-4(v-bind:class='titleClasses') {{item.title}}
@@ -10,11 +10,11 @@
           v-list-item.pl-0(@click='click(item.anchor)', :key='item.anchor')
             v-list-item-title(v-bind:class='titleClasses') {{item.title}}
         template(v-if='item.children.length !== 0', v-for='subItem in item.children')
-          page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
-      template(v-if='tocCollapseLevel > level', v-for='subItem in item.children')
-        page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
+          page-toc-item(:item='subItem', :level='level + 1', :min='min', :max='max')
+      template(v-if='max > level', v-for='subItem in item.children')
+        page-toc-item(:item='subItem', :level='level + 1', :min='min', :max='max')
     template(v-else, v-for='subItem in item.children')
-      page-toc-item(:item='subItem', :level='level + 1', :tocLevel='tocLevel', :minTocLevel='minTocLevel', :tocCollapseLevel='tocCollapseLevel')
+      page-toc-item(:item='subItem', :level='level + 1', :min='min', :max='max')
 </template>
 
 <script>
@@ -26,15 +26,11 @@ export default {
       type: Object,
       default: () => {}
     },
-    minTocLevel: {
+    min: {
       type: Number,
-      default: 0
+      default: 1
     },
-    tocLevel: {
-      type: Number,
-      default: 2
-    },
-    tocCollapseLevel: {
+    max: {
       type: Number,
       default: 2
     },
@@ -54,7 +50,7 @@ export default {
   },
   computed: {
     isNestedLevel() {
-      return this.level > this.minTocLevel
+      return this.level > this.min
     },
     titleClasses() {
       return {
@@ -75,7 +71,7 @@ export default {
 
 <style lang='scss'>
 // Hack to fix animations of multi level nesting v-list-group
-.v-list-group--sub-group.v-list-group--active .v-list-item:not(.v-list-item--active) .v-list-item__icon.v-list-group__header__prepend-icon .v-icon {
+.page-toc-item .v-list-group--sub-group.v-list-group--active .v-list-item:not(.v-list-item--active) .v-list-item__icon.v-list-group__header__prepend-icon .v-icon {
   transform: rotate(0deg)!important;
 }
 </style>

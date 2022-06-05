@@ -126,11 +126,11 @@ module.exports = () => {
       _.set(WIKI.config, 'theming', {
         theme: 'default',
         darkMode: false,
-        minTocLevel: 0,
-        tocLevel: 2,
-        tocCollapseLevel: 2,
-        doUseTocDefault: true,
         iconset: 'mdi',
+        tocDepth: {
+          min: 1,
+          max: 2
+        },
         injectCSS: '',
         injectHead: '',
         injectBody: ''

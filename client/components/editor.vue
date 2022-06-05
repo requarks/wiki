@@ -144,21 +144,9 @@ export default {
       type: Number,
       default: 0
     },
-    minTocLevel: {
-      type: Number,
-      default: 0
-    },
-    tocLevel: {
-      type: Number,
-      default: 1
-    },
-    tocCollapseLevel: {
-      type: Number,
-      default: 0
-    },
-    doUseTocDefault: {
-      type: Boolean,
-      default: true
+    tocOptions: {
+      type: String,
+      default: ''
     },
     checkoutDate: {
       type: String,
@@ -187,7 +175,9 @@ export default {
         tags: '',
         title: '',
         css: '',
-        js: ''
+        js: '',
+        tocDepth: 0,
+        useDefaultTocDepth: false
       }
     }
   },
@@ -206,10 +196,8 @@ export default {
         this.path !== this.$store.get('page/path'),
         this.savedState.title !== this.$store.get('page/title'),
         this.savedState.description !== this.$store.get('page/description'),
-        this.savedState.minTocLevel !== this.$store.get('page/minTocLevel'),
-        this.savedState.tocLevel !== this.$store.get('page/tocLevel'),
-        this.savedState.tocCollapseLevel !== this.$store.get('page/tocCollapseLevel'),
-        this.savedState.doUseTocDefault !== this.$store.get('page/doUseTocDefault'),
+        this.savedState.tocDepth !== this.$store.get('page/tocDepth@min') + (this.$store.get('page/tocDepth@max') * 10),
+        this.savedState.useDefaultTocDepth !== this.$store.get('page/useDefaultTocDepth'),
         this.savedState.tags !== this.$store.get('page/tags'),
         this.savedState.isPublished !== this.$store.get('page/isPublished'),
         this.savedState.publishStartDate !== this.$store.get('page/publishStartDate'),
@@ -243,11 +231,14 @@ export default {
     this.$store.set('page/title', this.title)
     this.$store.set('page/scriptCss', this.scriptCss)
     this.$store.set('page/scriptJs', this.scriptJs)
-    this.$store.set('page/minTocLevel', this.minTocLevel)
-    this.$store.set('page/tocLevel', this.tocLevel)
-    this.$store.set('page/tocCollapseLevel', this.tocCollapseLevel)
-    this.$store.set('page/doUseTocDefault', this.doUseTocDefault)
     this.$store.set('page/mode', 'edit')
+
+    const tocOptions = JSON.parse(Buffer.from(this.tocOptions, 'base64').toString())
+    this.$store.set('page/tocDepth', {
+      min: tocOptions.min,
+      max: tocOptions.max
+    })
+    this.$store.set('page/useDefaultTocDepth', tocOptions.useDefault)
 
     this.setCurrentSavedState()
 
@@ -326,10 +317,8 @@ export default {
                 $publishStartDate: Date
                 $scriptCss: String
                 $scriptJs: String
-                $minTocLevel: Int!
-                $tocLevel: Int!
-                $tocCollapseLevel: Int!
-                $doUseTocDefault: Boolean!
+                $tocDepth: RangeInput
+                $useDefaultTocDepth: Boolean
                 $tags: [String]!
                 $title: String!
               ) {
@@ -346,10 +335,8 @@ export default {
                     publishStartDate: $publishStartDate
                     scriptCss: $scriptCss
                     scriptJs: $scriptJs
-                    minTocLevel: $minTocLevel
-                    tocLevel: $tocLevel
-                    tocCollapseLevel: $tocCollapseLevel
-                    doUseTocDefault: $doUseTocDefault
+                    tocDepth: $tocDepth
+                    useDefaultTocDepth: $useDefaultTocDepth
                     tags: $tags
                     title: $title
                   ) {
@@ -379,10 +366,8 @@ export default {
               publishStartDate: this.$store.get('page/publishStartDate') || '',
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
-              minTocLevel: this.$store.get('page/minTocLevel'),
-              tocLevel: this.$store.get('page/tocLevel'),
-              tocCollapseLevel: this.$store.get('page/tocCollapseLevel'),
-              doUseTocDefault: this.$store.get('page/doUseTocDefault'),
+              tocDepth: this.$store.get('page/tocDepth'),
+              useDefaultTocDepth: this.$store.get('page/useDefaultTocDepth'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -441,10 +426,8 @@ export default {
                 $publishStartDate: Date
                 $scriptCss: String
                 $scriptJs: String
-                $minTocLevel: Int
-                $tocLevel: Int
-                $tocCollapseLevel: Int
-                $doUseTocDefault: Boolean
+                $tocDepth: RangeInput
+                $useDefaultTocDepth: Boolean
                 $tags: [String]
                 $title: String
               ) {
@@ -462,10 +445,8 @@ export default {
                     publishStartDate: $publishStartDate
                     scriptCss: $scriptCss
                     scriptJs: $scriptJs
-                    minTocLevel: $minTocLevel
-                    tocLevel: $tocLevel
-                    tocCollapseLevel: $tocCollapseLevel
-                    doUseTocDefault: $doUseTocDefault
+                    tocDepth: $tocDepth
+                    useDefaultTocDepth: $useDefaultTocDepth
                     tags: $tags
                     title: $title
                   ) {
@@ -495,10 +476,8 @@ export default {
               publishStartDate: this.$store.get('page/publishStartDate') || '',
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
-              minTocLevel: this.$store.get('page/minTocLevel'),
-              tocLevel: this.$store.get('page/tocLevel'),
-              tocCollapseLevel: this.$store.get('page/tocCollapseLevel'),
-              doUseTocDefault: this.$store.get('page/doUseTocDefault'),
+              tocDepth: this.$store.get('page/tocDepth'),
+              useDefaultTocDepth: this.$store.get('page/useDefaultTocDepth'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
@@ -582,10 +561,8 @@ export default {
         title: this.$store.get('page/title'),
         css: this.$store.get('page/scriptCss'),
         js: this.$store.get('page/scriptJs'),
-        minTocLevel: this.$store.get('page/minTocLevel'),
-        tocLevel: this.$store.get('page/tocLevel'),
-        tocCollapseLevel: this.$store.get('page/tocCollapseLevel'),
-        doUseTocDefault: this.$store.get('page/doUseTocDefault')
+        tocDepth: this.$store.get('page/tocDepth@min') + (this.$store.get('page/tocDepth@max') * 10),
+        useDefaultTocDepth: this.$store.get('page/useDefaultTocDepth')
       }
     },
     injectCustomCss: _.debounce(css => {

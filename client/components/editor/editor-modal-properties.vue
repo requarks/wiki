@@ -19,9 +19,9 @@ v-dialog(
     v-card(tile)
       v-tabs(color='white', background-color='blue darken-1', dark, centered, v-model='currentTab')
         v-tab {{$t('editor:props.info')}}
+        v-tab {{$t('editor:props.toc')}}
         v-tab {{$t('editor:props.scheduling')}}
         v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
-        v-tab(disabled) {{$t('editor:props.social')}}
         v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.pt-5
@@ -67,23 +67,6 @@ v-dialog(
                     :rules='[rules.required, rules.path]'
                     )
           v-divider
-          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
-            .overline.pb-5 Theme Options
-            v-switch(
-              label='Use Site Defaults'
-              v-model='doUseTocDefault'
-            )
-            v-range-slider(
-              :disabled='doUseTocDefault'
-              prepend-icon='mdi-serial-port'
-              label='Heading Levels in ToC'
-              hint='The table of contents will show headings from and up to the selected levels.'
-              v-model='tocRange'
-              :min='1'
-              :max='6'
-              :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
-              )
-          v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5 {{$t('editor:props.categorization')}}
             v-chip-group.radius-5.mb-5(column, v-if='tags && tags.length > 0')
@@ -107,6 +90,24 @@ v-dialog(
               hide-no-data
               :search-input.sync='newTagSearch'
               )
+        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
+          v-card-text
+            .overline {{$t('editor:props.tocTitle')}}
+            v-switch(
+              :label='$t(`editor:props.tocUseDefault`)'
+              v-model='useDefaultTocDepth'
+            )
+            v-range-slider(
+              :disabled='useDefaultTocDepth'
+              prepend-icon='mdi-menu-open'
+              :label='$t(`editor:props.tocHeadingLevels`)'
+              v-model='tocDepth'
+              :min='1'
+              :max='6'
+              :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
+              )
+            .text-caption.pl-8.grey--text {{$t('editor:props.tocHeadingLevelsHint')}}
+
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
             .overline {{$t('editor:props.publishState')}}
@@ -213,43 +214,6 @@ v-dialog(
           .editor-props-codeeditor-hint
             .caption {{$t('editor:props.htmlHint')}}
 
-        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
-          v-card-text
-            .overline {{$t('editor:props.socialFeatures')}}
-            v-switch(
-              :label='$t(`editor:props.allowComments`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowCommentsHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.allowRatings`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowRatingsHint`)'
-              persistent-hint
-              disabled
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displayAuthor`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displayAuthorHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displaySharingBar`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displaySharingBarHint`)'
-              persistent-hint
-              inset
-              )
-
         v-tab-item(:transition='false', :reverse-transition='false')
           .editor-props-codeeditor-title
             .overline {{$t('editor:props.css')}}
@@ -315,19 +279,19 @@ export default {
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
-    tocRange: {
+    tocDepth: {
       get() {
-        var range = [this.$store.get('page/minTocLevel'), this.$store.get('page/tocLevel')]
-        return range
-        // return [get('page/minTocLevel'), get('page/tocLevel')]
+        const tocDepth = this.$store.get('page/tocDepth')
+        return [tocDepth.min, tocDepth.max]
       },
       set(value) {
-        this.$store.set('page/minTocLevel', value[0])
-        this.$store.set('page/tocLevel', value[1])
-        this.$store.set('page/tocCollapseLevel', value[1])
+        this.$store.set('page/tocDepth', {
+          min: parseInt(value[0]),
+          max: parseInt(value[1])
+        })
       }
     },
-    doUseTocDefault: sync('page/doUseTocDefault'),
+    useDefaultTocDepth: sync('page/useDefaultTocDepth'),
     scriptJs: sync('page/scriptJs'),
     scriptCss: sync('page/scriptCss'),
     hasScriptPermission: get('page/effectivePermissions@pages.script'),
@@ -359,7 +323,7 @@ export default {
       if (this.cm) {
         this.cm.toTextArea()
       }
-      if (newValue === 2) {
+      if (newValue === 3) {
         this.$nextTick(() => {
           setTimeout(() => {
             this.loadEditor(this.$refs.codejs, 'html')
