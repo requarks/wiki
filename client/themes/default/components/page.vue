@@ -59,7 +59,7 @@
           v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp')
             v-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
-              v-list.py-0(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
+              v-list.py-2(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
                 page-toc-item(
                   v-for='(item, idx) in tocDecoded'
                   :key='`tocitem-` + idx'
