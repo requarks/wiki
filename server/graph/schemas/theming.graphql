@@ -31,6 +31,7 @@ type ThemingMutation {
     injectCSS: String
     injectHead: String
     injectBody: String
+    injectInEditor: Boolean!
   ): DefaultResponse @auth(requires: ["manage:theme", "manage:system"])
 }
 
@@ -45,6 +46,7 @@ type ThemingConfig {
   injectCSS: String
   injectHead: String
   injectBody: String
+  injectInEditor: Boolean!
 }
 
 type ThemingTheme {

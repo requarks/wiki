@@ -55,6 +55,7 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+      injectInEditor: false
     auth:
       autoLogin: false
       enforce2FA: false

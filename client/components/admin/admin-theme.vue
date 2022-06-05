@@ -130,6 +130,17 @@
                     :hint='$t(`admin:theme.bodyHtmlInjectionHint`)'
                     auto-grow
                     )
+                  v-divider.mt-3
+                  v-switch(
+                    inset
+                    v-model='injectInEditor'
+                    :label='$t(`admin:theme.injectInEditor`)'
+                    color='primary'
+                    persistent-hint
+                    :hint='$t(`admin:theme.injectInEditorHint`)'
+                    )
+                  i18next.caption.mt-1(path='admin:theme.injectInEditorWarning', tag='div')
+                    strong.red--text(place='caution') {{$t('admin:theme.injectInEditorWarningCaution')}}
 </template>
 
 <script>
@@ -157,13 +168,16 @@ export default {
         iconset: '',
         injectCSS: '',
         injectHead: '',
-        injectBody: ''
+        injectBody: '',
+        injectInEditor: false
       },
-      darkModeInitial: false
+      darkModeInitial: false,
+      injectInEditorInitial: false
     }
   },
   computed: {
     darkMode: sync('site/dark'),
+    injectInEditor: sync('site/injectEditor'),
     headers() {
       return [
         {
@@ -193,9 +207,11 @@ export default {
   },
   mounted() {
     this.darkModeInitial = this.darkMode
+    this.injectInEditorInitial = this.injectInEditor
   },
   beforeDestroy() {
     this.darkMode = this.darkModeInitial
+    this.injectInEditor = this.injectInEditorInitial
     this.$vuetify.theme.dark = this.darkModeInitial
   },
   methods: {
@@ -211,12 +227,14 @@ export default {
             darkMode: this.darkMode,
             injectCSS: this.config.injectCSS,
             injectHead: this.config.injectHead,
-            injectBody: this.config.injectBody
+            injectBody: this.config.injectBody,
+            injectInEditor: this.injectInEditor
           }
         })
         const resp = _.get(respRaw, 'data.theming.setConfig.responseResult', {})
         if (resp.succeeded) {
           this.darkModeInitial = this.darkMode
+          this.injectInEditorInitial = this.injectInEditor
           this.$store.commit('showNotification', {
             message: 'Theme settings updated successfully.',
             style: 'success',
