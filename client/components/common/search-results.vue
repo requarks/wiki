@@ -105,6 +105,9 @@ export default {
       } else {
         this.searchIsLoading = true
       }
+    },
+    results() {
+      this.cursor = 0
     }
   },
   mounted() {
