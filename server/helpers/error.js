@@ -169,6 +169,10 @@ module.exports = {
     message: 'Page content cannot be empty.',
     code: 6004
   }),
+  PageEmptyTitle: CustomError('PageEmptyTitle', {
+    message: 'Page title cannot be empty.',
+    code: 6015
+  }),
   PageHistoryForbidden: CustomError('PageHistoryForbidden', {
     message: 'You are not authorized to view the history of this page.',
     code: 6012

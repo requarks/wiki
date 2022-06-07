@@ -272,6 +272,11 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageEmptyContent()
     }
 
+    // - Check for empty page title
+    if (!opts.title || opts.title.length < 1) {
+      throw new WIKI.Error.PageEmptyTitle()
+    }
+
     // -> Format CSS Scripts
     let scriptCss = ''
     if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
@@ -384,6 +389,11 @@ module.exports = class Page extends Model {
     // -> Check for empty content
     if (!opts.content || _.trim(opts.content).length < 1) {
       throw new WIKI.Error.PageEmptyContent()
+    }
+
+    // - Check for empty page title
+    if (!opts.title || opts.title.length < 1) {
+      throw new WIKI.Error.PageEmptyTitle()
     }
 
     // -> Create version snapshot
