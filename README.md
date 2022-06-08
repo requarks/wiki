@@ -25,7 +25,7 @@
 - [Requirements](https://docs.requarks.io/install/requirements)
 - [Installation](https://docs.requarks.io/install)
 - [Demo](https://docs.requarks.io/demo)
-- [Changelog](https://docs.requarks.io/releases)
+- [Changelog](https://github.com/requarks/wiki/releases)
 - [Feature Requests](https://feedback.js.wiki/wiki)
 - [Chat with us on Slack](https://wiki.requarks.io/slack)
 - [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
@@ -141,6 +141,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Brian Douglass ([@bhdouglass](https://github.com/bhdouglass))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
 - Cameron Steele ([@ATechAdventurer](https://github.com/ATechAdventurer))
+- Charlie Schliesser ([@charlie-s](https://github.com/charlie-s))
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
@@ -159,17 +160,20 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Loki ([@binaryloki](https://github.com/binaryloki))
 - MaFarine ([@MaFarine](https://github.com/MaFarine))
 - Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
+- Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
+- Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
         
 </td><td>
 <img width="441" height="1" />
         
-- Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
-- Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
+- Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nick Halase ([@nhalase](https://github.com/nhalase))
+- Nick Price ([@DominoTree](https://github.com/DominoTree))
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
+- Oleksandr Koltsov ([@crambo](https://github.com/crambo))
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Sam Martin ([@ABitMoreDepth](https://github.com/ABitMoreDepth))
@@ -181,6 +185,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - VMO Solutions ([@vmosolutions](https://github.com/vmosolutions))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
+- chaee ([@chaee](https://github.com/chaee))
 - magicpotato ([@fortheday](https://github.com/fortheday))
 - motoacs ([@motoacs](https://github.com/motoacs))
 - rburckner ([@rburckner](https://github.com/rburckner))
@@ -316,6 +321,23 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
         <a href="https://opencollective.com/wikijs/sponsor/34/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/34/avatar.svg"></a>
       </td>
     </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/35/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/35/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/36/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/36/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/37/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/37/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/38/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/38/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/39/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/39/avatar.svg"></a>
+      </td>
+    </tr>
   </tbody>
 </table>
 </div>
@@ -335,6 +357,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Brandon Curtis
 - Dave 'Sri' Seah
 - djagoo
+- dz
 - Douglas Lassance
 - Ernie Reid
 - Etienne
@@ -344,6 +367,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - hong
 - Hope
 - Ian
+- Imari Childress
   
 </td><td>
 <img width="441" height="1" />
@@ -356,10 +380,12 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ludgeir Ibanez
 - Mark Mansur
 - Matt Gedigian
+- Nate Figz
 - Patryk
 - Philipp Schürch
 - Tracey Duffy
 - Richeir
+- Shad Narcher
 - SmartNET.works
 - Stepan Sokolovskyi
 - Zach Maynard

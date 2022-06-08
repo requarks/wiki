@@ -33,7 +33,7 @@ module.exports = {
       })
     }
 
-    passport.use('rocketchat',
+    passport.use(conf.key,
       new OAuth2Strategy({
         authorizationURL: `${siteURL}/oauth/authorize`,
         tokenURL: `${siteURL}/oauth/token`,

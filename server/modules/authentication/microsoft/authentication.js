@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('microsoft',
+    passport.use(conf.key,
       new WindowsLiveStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

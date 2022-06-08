@@ -24,7 +24,7 @@ module.exports = {
       githubConfig.userEmailURL = `${conf.enterpriseUserEndpoint}/emails`
     }
 
-    passport.use('github',
+    passport.use(conf.key,
       new GitHubStrategy(githubConfig, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({

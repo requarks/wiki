@@ -17,7 +17,8 @@ module.exports = {
       clientSecret: conf.clientSecret,
       userInfoURL: conf.userInfoURL,
       callbackURL: conf.callbackURL,
-      passReqToCallback: true
+      passReqToCallback: true,
+      scope: conf.scope
     }, async (req, accessToken, refreshToken, profile, cb) => {
       try {
         const user = await WIKI.models.users.processProfile({
@@ -36,7 +37,7 @@ module.exports = {
     })
 
     client.userProfile = function (accesstoken, done) {
-      this._oauth2._useAuthorizationHeaderForGET = true
+      this._oauth2._useAuthorizationHeaderForGET = !conf.useQueryStringForAccessToken
       this._oauth2.get(conf.userInfoURL, accesstoken, (err, data) => {
         if (err) {
           return done(err)
@@ -49,7 +50,7 @@ module.exports = {
         done(null, data)
       })
     }
-    passport.use('oauth2', client)
+    passport.use(conf.key, client)
   },
   logout (conf) {
     if (!conf.logoutURL) {

@@ -45,6 +45,10 @@ module.exports = {
       await this.git.init()
     }
 
+    // Disable quotePath
+    // Link https://git-scm.com/docs/git-config#Documentation/git-config.txt-corequotePath
+    await this.git.raw(['config', '--local', 'core.quotepath', false])
+
     // Set default author
     await this.git.raw(['config', '--local', 'user.email', this.config.defaultEmail])
     await this.git.raw(['config', '--local', 'user.name', this.config.defaultName])
@@ -285,10 +289,13 @@ module.exports = {
     const filePath = path.join(this.repoPath, fileName)
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
-    await this.git.add(`./${fileName}`)
-    await this.git.commit(`docs: create ${page.path}`, fileName, {
-      '--author': `"${page.authorName} <${page.authorEmail}>"`
-    })
+    const gitFilePath = `./${fileName}`
+    if ((await this.git.checkIgnore(gitFilePath)).length === 0) {
+      await this.git.add(gitFilePath)
+      await this.git.commit(`docs: create ${page.path}`, fileName, {
+        '--author': `"${page.authorName} <${page.authorEmail}>"`
+      })
+    }
   },
   /**
    * UPDATE
@@ -304,10 +311,13 @@ module.exports = {
     const filePath = path.join(this.repoPath, fileName)
     await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
-    await this.git.add(`./${fileName}`)
-    await this.git.commit(`docs: update ${page.path}`, fileName, {
-      '--author': `"${page.authorName} <${page.authorEmail}>"`
-    })
+    const gitFilePath = `./${fileName}`
+    if ((await this.git.checkIgnore(gitFilePath)).length === 0) {
+      await this.git.add(gitFilePath)
+      await this.git.commit(`docs: update ${page.path}`, fileName, {
+        '--author': `"${page.authorName} <${page.authorEmail}>"`
+      })
+    }
   },
   /**
    * DELETE
@@ -321,10 +331,13 @@ module.exports = {
       fileName = `${page.localeCode}/${fileName}`
     }
 
-    await this.git.rm(`./${fileName}`)
-    await this.git.commit(`docs: delete ${page.path}`, fileName, {
-      '--author': `"${page.authorName} <${page.authorEmail}>"`
-    })
+    const gitFilePath = `./${fileName}`
+    if ((await this.git.checkIgnore(gitFilePath)).length === 0) {
+      await this.git.rm(gitFilePath)
+      await this.git.commit(`docs: delete ${page.path}`, fileName, {
+        '--author': `"${page.authorName} <${page.authorEmail}>"`
+      })
+    }
   },
   /**
    * RENAME

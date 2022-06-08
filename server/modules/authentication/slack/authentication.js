@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('slack',
+    passport.use(conf.key,
       new SlackStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

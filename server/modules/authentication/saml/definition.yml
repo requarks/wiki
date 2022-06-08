@@ -21,18 +21,18 @@ props:
   audience:
     type: String
     title: Audience
-    hint: (Optional) - Expected SAML response Audience (if not provided, Audience won't be verified)
+    hint: Expected SAML response Audience (if not provided, audience won't be verified)
     order: 3
   cert:
     type: String
     title: Certificate
-    hint: (Optional) - Public PEM-encoded X.509 signing certificate. If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
+    hint: Public PEM-encoded X.509 signing certificate. If the provider has multiple certificates that are valid, join them together using the | pipe symbol.
     multiline: true
     order: 4
-  privateCert:
+  privateKey:
     type: String
-    title: Private Certificate
-    hint: (Optional) - PEM formatted key used to sign the certificate.
+    title: Private Key
+    hint: PEM formatted key used to sign the certificate.
     multiline: true
     order: 5
   decryptionPvk:
@@ -52,53 +52,88 @@ props:
       - sha1
       - sha256
       - sha512
+  digestAlgorithm:
+    type: String
+    title: Digest Algorithm
+    hint: Digest algorithm used to provide a digest for the signed data object
+    maxWidth: 400
+    order: 8
+    default: sha1
+    enum:
+      - sha1
+      - sha256
+      - sha512
   identifierFormat:
     type: String
     title: Name Identifier format
     default: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'
-    order: 8
+    order: 20
+  wantAssertionsSigned:
+    type: Boolean
+    title: Always sign assertions
+    hint: If enabled, add WantAssertionsSigned="true" to the metadata, to specify that the IdP should always sign the assertions.
+    default: false
+    order: 21
   acceptedClockSkewMs:
     type: Number
     title: Accepted Clock Skew Milleseconds
     hint: Time in milliseconds of skew that is acceptable between client and server when checking OnBefore and NotOnOrAfter assertion condition validity timestamps. Setting to -1 will disable checking these conditions entirely.
-    default: -1
-    order: 9
+    default: 0
+    order: 22
   disableRequestedAuthnContext:
     type: Boolean
     title: Disable Requested Auth Context
     hint: If enabled, do not request a specific authentication context. This is known to help when authenticating against Active Directory (AD FS) servers.
     default: false
-    order: 10
+    order: 23
   authnContext:
     type: String
     title: Auth Context
-    hint: Name identifier format to request auth context.
+    hint: Name identifier format to request auth context. For multiple values, join them together using the | pipe symbol.
     default: urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport
-    order: 11
+    order: 24
+  racComparison:
+    type: String
+    title: RAC Comparison Type
+    hint: Requested Authentication Context comparison type.
+    maxWidth: 400
+    order: 25
+    default: exact
+    enum:
+      - exact
+      - minimum
+      - maximum
+      - better
   forceAuthn:
     type: Boolean
     title: Force Initial Re-authentication
     hint: If enabled, the initial SAML request from the service provider specifies that the IdP should force re-authentication of the user, even if they possess a valid session.
     default: false
-    order: 12
+    order: 26
+  passive:
+    type: Boolean
+    title: Passive
+    hint: If enabled, the initial SAML request from the service provider specifies that the IdP should prevent visible user interaction.
+    default: false
+    order: 27
   providerName:
     type: String
     title: Provider Name
     hint: Optional human-readable name of the requester for use by the presenter's user agent or the identity provider.
     default: wiki.js
-    order: 13
+    order: 28
   skipRequestCompression:
     type: Boolean
     title: Skip Request Compression
     hint: If enabled, the SAML request from the service provider won't be compressed.
     default: false
-    order: 14
+    order: 29
   authnRequestBinding:
     type: String
     title: Request Binding
     hint: Binding used for request authentication from IDP.
     maxWidth: 400
-    order: 15
+    order: 30
     default: 'HTTP-POST'
     enum:
       - HTTP-Redirect
@@ -108,22 +143,22 @@ props:
     type: String
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
     hint: The field storing the user unique identifier. Can be a variable name or a URI-formatted string.
-    order: 16
+    order: 40
   mappingEmail:
     title: Email Field Mapping
     type: String
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
     hint: The field storing the user email. Can be a variable name or a URI-formatted string.
-    order: 17
+    order: 41
   mappingDisplayName:
     title: Display Name Field Mapping
     type: String
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
     hint: The field storing the user display name. Can be a variable name or a URI-formatted string.
-    order: 18
+    order: 42
   mappingPicture:
     title: Avatar Picture Field Mapping
     type: String
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/picture'
     hint: The field storing the user avatar picture. Can be a variable name or a URI-formatted string.
-    order: 19
+    order: 43

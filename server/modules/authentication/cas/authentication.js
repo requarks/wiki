@@ -8,7 +8,7 @@ const CASStrategy = require('passport-cas').Strategy
 
 module.exports = {
   init (passport, conf) {
-    passport.use('cas',
+    passport.use(conf.key,
       new CASStrategy({
         ssoBaseURL: conf.ssoBaseURL,
         serverBaseURL: conf.serverBaseURL,

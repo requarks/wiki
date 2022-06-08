@@ -173,6 +173,14 @@ module.exports = {
         throw new gql.GraphQLError('You are not authorized to manage this group or assign these permissions.')
       }
 
+      // Check assigned permissions for manage:groups
+      if (
+        WIKI.auth.checkExclusiveAccess(req.user, ['manage:groups'], ['manage:system']) &&
+        args.permissions.some(p => _.last(p.split(':')) === 'system')
+      ) {
+        throw new gql.GraphQLError('You are not authorized to manage this group or assign the manage:system permissions.')
+      }
+
       // Update group
       await WIKI.models.groups.query().patch({
         name: args.name,

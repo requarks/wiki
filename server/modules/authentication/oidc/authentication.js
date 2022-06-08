@@ -10,7 +10,7 @@ const OpenIDConnectStrategy = require('passport-openidconnect').Strategy
 
 module.exports = {
   init (passport, conf) {
-    passport.use('oidc',
+    passport.use(conf.key,
       new OpenIDConnectStrategy({
         authorizationURL: conf.authorizationURL,
         tokenURL: conf.tokenURL,

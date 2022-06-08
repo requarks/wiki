@@ -10,16 +10,21 @@ const SAMLStrategy = require('passport-saml').Strategy
 
 module.exports = {
   init (passport, conf) {
-    let samlConfig = {
+    const samlConfig = {
       callbackUrl: conf.callbackURL,
       entryPoint: conf.entryPoint,
       issuer: conf.issuer,
+      cert: _.split(conf.cert || '', '|'),
       signatureAlgorithm: conf.signatureAlgorithm,
+      digestAlgorithm: conf.digestAlgorithm,
       identifierFormat: conf.identifierFormat,
+      wantAssertionsSigned: conf.wantAssertionsSigned,
       acceptedClockSkewMs: _.toSafeInteger(conf.acceptedClockSkewMs),
       disableRequestedAuthnContext: conf.disableRequestedAuthnContext,
-      authnContext: conf.authnContext,
+      authnContext: _.split(conf.authnContext, '|'),
+      racComparison: conf.racComparison,
       forceAuthn: conf.forceAuthn,
+      passive: conf.passive,
       providerName: conf.providerName,
       skipRequestCompression: conf.skipRequestCompression,
       authnRequestBinding: conf.authnRequestBinding,
@@ -28,16 +33,13 @@ module.exports = {
     if (!_.isEmpty(conf.audience)) {
       samlConfig.audience = conf.audience
     }
-    if (!_.isEmpty(conf.cert)) {
-      samlConfig.cert = _.split(conf.cert, '|')
-    }
-    if (!_.isEmpty(conf.privateCert)) {
-      samlConfig.privateCert = conf.privateCert
+    if (!_.isEmpty(conf.privateKey)) {
+      samlConfig.privateKey = conf.privateKey
     }
     if (!_.isEmpty(conf.decryptionPvk)) {
       samlConfig.decryptionPvk = conf.decryptionPvk
     }
-    passport.use('saml',
+    passport.use(conf.key,
       new SAMLStrategy(samlConfig, async (req, profile, cb) => {
         try {
           const userId = _.get(profile, [conf.mappingUID], null) || _.get(profile, 'nameID', null)

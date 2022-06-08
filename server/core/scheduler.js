@@ -60,7 +60,7 @@ class Job {
           cwd: WIKI.ROOTPATH,
           stdio: ['inherit', 'inherit', 'pipe', 'ipc']
         })
-        const stderr = [];
+        const stderr = []
         proc.stderr.on('data', chunk => stderr.push(chunk))
         this.finished = new Promise((resolve, reject) => {
           proc.on('exit', (code, signal) => {

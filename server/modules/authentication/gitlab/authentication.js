@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('gitlab',
+    passport.use(conf.key,
       new GitLabStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

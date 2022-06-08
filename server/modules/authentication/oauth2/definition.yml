@@ -59,3 +59,14 @@ props:
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
     order: 9
+  scope:
+    type: String
+    title: Scope
+    hint: (optional) Application Client permission scopes.
+    order: 10
+  useQueryStringForAccessToken:
+    type: Boolean
+    default: false
+    title: Pass access token via GET query string to User Info Endpoint
+    hint: (optional) Pass the access token in an `access_token` parameter attached to the GET query string of the User Info Endpoint URL. Otherwise the access token will be passed in the Authorization header.
+    order: 11

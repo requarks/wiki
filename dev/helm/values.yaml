@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
+revisionHistoryLimit: 10
 
 image:
   repository: requarks/wiki
@@ -53,6 +54,7 @@ service:
 
 ingress:
   enabled: true
+  className: ""
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"

@@ -23,7 +23,7 @@ module.exports = {
         keyString = keyString.substring(44);
       }
     }
-    passport.use('azure',
+    passport.use(conf.key,
       new OIDCStrategy({
         identityMetadata: conf.entryPoint,
         clientID: conf.clientId,

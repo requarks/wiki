@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('discord',
+    passport.use(conf.key,
       new DiscordStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('facebook',
+    passport.use(conf.key,
       new FacebookStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('dropbox',
+    passport.use(conf.key,
       new DropboxStrategy({
         apiVersion: '2',
         clientID: conf.clientId,
