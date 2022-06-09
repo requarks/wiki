@@ -136,7 +136,7 @@
                 v-model='currentPass'
                 outlined
                 :label='$t(`profile:auth.currentPassword`)'
-                type='password'
+                type='text'
                 prepend-inner-icon='mdi-form-textbox-password'
                 )
               v-text-field(
@@ -144,7 +144,7 @@
                 v-model='newPass'
                 outlined
                 :label='$t(`profile:auth.newPassword`)'
-                type='password'
+                type='text'
                 prepend-inner-icon='mdi-form-textbox-password'
                 autocomplete='off'
                 counter='255'
@@ -156,7 +156,7 @@
                 v-model='verifyPass'
                 outlined
                 :label='$t(`profile:auth.verifyPassword`)'
-                type='password'
+                type='text'
                 prepend-inner-icon='mdi-form-textbox-password'
                 autocomplete='off'
                 hide-details
