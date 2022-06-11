@@ -203,7 +203,7 @@ export default {
             senderEmail: this.config.senderEmail || '',
             host: this.config.host || '',
             port: _.toSafeInteger(this.config.port) || 0,
-            namer: this.config.name || '',
+            name: this.config.name || '',
             secure: this.config.secure || false,
             verifySSL: this.config.verifySSL || false,
             user: this.config.user || '',
