@@ -49,6 +49,7 @@ module.exports = {
           senderEmail: args.senderEmail,
           host: args.host,
           port: args.port,
+          name: args.name,
           secure: args.secure,
           verifySSL: args.verifySSL,
           user: args.user,

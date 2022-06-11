@@ -18,6 +18,7 @@ mutation (
       senderEmail: $senderEmail,
       host: $host,
       port: $port,
+      name: $name,
       secure: $secure,
       verifySSL: $verifySSL,
       user: $user,
