@@ -5,6 +5,7 @@
       senderEmail
       host
       port
+      name
       secure
       verifySSL
       user
