@@ -32,6 +32,7 @@ type MailMutation {
     senderEmail: String!
     host: String!
     port: Int!
+    name: String!
     secure: Boolean!
     verifySSL: Boolean!
     user: String!
@@ -48,16 +49,17 @@ type MailMutation {
 # -----------------------------------------------
 
 type MailConfig {
-  senderName: String!
-  senderEmail: String!
-  host: String!
-  port: Int!
-  secure: Boolean!
-  verifySSL: Boolean!
-  user: String!
-  pass: String!
-  useDKIM: Boolean!
-  dkimDomainName: String!
-  dkimKeySelector: String!
-  dkimPrivateKey: String!
+  senderName: String
+  senderEmail: String
+  host: String
+  port: Int
+  name: String
+  secure: Boolean
+  verifySSL: Boolean
+  user: String
+  pass: String
+  useDKIM: Boolean
+  dkimDomainName: String
+  dkimKeySelector: String
+  dkimPrivateKey: String
 }
