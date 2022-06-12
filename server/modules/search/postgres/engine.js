@@ -65,7 +65,7 @@ module.exports = {
         FROM "pagesVector", to_tsquery(?,?) query
         WHERE (query @@ "tokens" OR path ILIKE ?)
       `
-      let qryEnd = `ORDER BY ts_rank(tokens, query) DESC`
+      let qryEnd = `ORDER BY ts_rank(tokens, query) DESC LIMIT ${this.config.maxHits}`
       let qryParams = [this.config.dictLanguage, tsquery(q), `%${q.toLowerCase()}%`]
 
       if (opts.locale) {

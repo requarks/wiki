@@ -98,7 +98,7 @@ module.exports = {
         search: q,
         select: 'id, locale, path, title, description',
         queryType: QueryType.simple,
-        top: 50
+        top: this.config.maxHits
       })
       if (results.result.value.length < 5) {
         // Using plain request, not yet available in library...

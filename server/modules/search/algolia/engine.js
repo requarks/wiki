@@ -48,7 +48,7 @@ module.exports = {
   async query(q, opts) {
     try {
       const results = await this.index.search(q, {
-        hitsPerPage: 50
+        hitsPerPage: this.config.maxHits
       })
       return {
         results: _.map(results.hits, r => ({

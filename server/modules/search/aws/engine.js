@@ -156,7 +156,7 @@ module.exports = {
       const results = await this.clientDomain.search({
         query: q,
         partial: true,
-        size: 50
+        size: this.config.maxHits
       }).promise()
       if (results.hits.found < 5) {
         const suggestResults = await this.clientDomain.suggest({

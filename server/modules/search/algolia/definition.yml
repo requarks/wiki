@@ -22,3 +22,9 @@ props:
     hint: The name of the index you created under Indices.
     default: wiki
     order: 3
+  maxHits:
+    type: Number
+    title: Max Hits
+    hint: The maximum number of results returned by the search engine.
+    default: 100
+    order: 4

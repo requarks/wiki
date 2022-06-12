@@ -22,3 +22,9 @@ props:
     hint: 'Name to use when creating the index. (default: wiki)'
     default: wiki
     order: 3
+  maxHits:
+    type: Number
+    title: Max Hits
+    hint: The maximum number of results returned by the search engine.
+    default: 100
+    order: 4

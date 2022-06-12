@@ -110,7 +110,7 @@ module.exports = {
             }
           },
           from: 0,
-          size: 50,
+          size: this.config.maxHits,
           _source: ['title', 'description', 'path', 'locale'],
           suggest: {
             suggestions: {
