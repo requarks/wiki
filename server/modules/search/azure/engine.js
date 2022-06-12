@@ -128,7 +128,7 @@ module.exports = {
       return {
         results: results.result.value,
         suggestions,
-        totalHits: results.result['@odata.count']
+        totalHits: Math.min(results.result['@odata.count'], this.config.maxHits)
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')

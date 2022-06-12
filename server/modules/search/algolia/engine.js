@@ -59,7 +59,7 @@ module.exports = {
           description: r.description
         })),
         suggestions: [],
-        totalHits: results.nbHits
+        totalHits: Math.min(results.nbHits, this.config.maxHits)
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')

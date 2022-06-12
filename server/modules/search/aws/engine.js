@@ -175,7 +175,7 @@ module.exports = {
           description: _.head(r.fields.description) || ''
         })),
         suggestions: suggestions,
-        totalHits: results.hits.found
+        totalHits: Math.min(results.hits.found, this.config.maxHits)
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')
