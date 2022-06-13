@@ -39,7 +39,12 @@ module.exports = {
 
     // Handle SSL Options
 
-    let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
+    let isTruthy = function(value) {
+      return (value === true || value === 'true' || value === 1 || value === '1')
+    }
+
+    let dbUseSSL = isTruthy(WIKI.config.db.ssl)
+    let rejectUnauthorized = !_.isEmpty(process.env.DB_SSL_REJECTUNAUTHORIZED) ? isTruthy(process.env.DB_SSL_REJECTUNAUTHORIZED) : true;
     let sslOptions = null
     if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(WIKI.config.db, 'sslOptions.auto', null) === false) {
       sslOptions = WIKI.config.db.sslOptions
@@ -75,10 +80,7 @@ module.exports = {
       }
 
       dbUseSSL = true
-      sslOptions = {
-        rejectUnauthorized: [true, 'true', 1, '1'].includes(process.env.DB_SSL_REJECTUNAUTHORIZED),
-        ca,
-      }
+      sslOptions = { rejectUnauthorized, ca }
     }
 
     // Engine-specific config
@@ -87,7 +89,7 @@ module.exports = {
         dbClient = 'pg'
 
         if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
+          dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized } : sslOptions
         }
         break
       case 'mariadb':
