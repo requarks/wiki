@@ -538,16 +538,11 @@ module.exports = class User extends Model {
       to: email,
       subject: `Password Reset Request`,
       data: {
-        user: _.startCase(_.toLower(email.split('@')[0].split('.')[0])),
         preheadertext: `A password reset was requested for ${WIKI.config.title}`,
-        title: `Please click the link below to reset your password.`,
-        content: ``,
+        title: `A password reset was requested for ${WIKI.config.title}`,
+        content: `Click the button below to reset your password. If you didn't request this password reset, simply discard this email.`,
         buttonLink: `${WIKI.config.host}/login-reset/${resetToken}`,
-        buttonText: 'Reset Password',
-        footertext: `Note: The password reset link expires in 24 hours.`,
-        footercontent: `If you do not want to reset your password, please ignore this e-mail.`,
-        regards: `Thanks,`,
-        regardsfrom: `Yokogawa Digital Platform`
+        buttonText: 'Reset Password'
       },
       text: `A password reset was requested for wiki ${WIKI.config.title}. Open the following link to proceed: ${WIKI.config.host}/login-reset/${resetToken}`
     })
@@ -844,16 +839,11 @@ module.exports = class User extends Model {
             to: email,
             subject: 'Verify your account',
             data: {
-              user: _.startCase(_.toLower(email.split('@')[0].split('.')[0])),
               preheadertext: 'Verify your account in order to gain access to the wiki.',
-              title: 'You have been invited to join Yokogawa Digital Platform.',
-              content: 'Please click the link below to verify and access your account.',
+              title: 'Verify your account',
+              content: 'Click the button below in order to verify your account and gain access to the wiki.',
               buttonLink: `${WIKI.config.host}/verify/${verificationToken}`,
-              buttonText: 'Verify',
-              footertext: `Note: The verification link expires in 24 hours.`,
-              footercontent: ``,
-              regards: `Thanks,`,
-              regardsfrom: `Yokogawa Digital Platform`
+              buttonText: 'Verify'
             },
             text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.host}/verify/${verificationToken}`
           })

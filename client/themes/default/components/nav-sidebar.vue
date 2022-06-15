@@ -72,7 +72,7 @@ import _ from 'lodash'
 import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
 
-/* global siteLangs, siteConfig */
+/* global siteLangs */
 
 export default {
   props: {
@@ -99,7 +99,7 @@ export default {
       currentItems: [],
       currentParent: {
         id: 0,
-        title: '/ (' + siteConfig.title + ')'
+        title: '/ (root)'
       },
       parents: [],
       loadedCache: []
