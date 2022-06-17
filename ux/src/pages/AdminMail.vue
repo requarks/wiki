@@ -98,6 +98,20 @@ q-page.admin-mail
               :aria-label='t(`admin.mail.smtpPort`)'
               )
         q-separator.q-my-sm(inset)
+        q-item
+          blueprint-icon(icon='server')
+          q-item-section
+            q-item-label {{t(`admin.mail.smtpName`)}}
+            q-item-label(caption) {{t(`admin.mail.smtpNameHint`)}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='state.config.name'
+              dense
+              hide-bottom-space
+              :aria-label='t(`admin.mail.smtpName`)'
+              )
+        q-separator.q-my-sm(inset)
         q-item(tag='label', v-ripple)
           blueprint-icon(icon='secure')
           q-item-section
@@ -390,6 +404,7 @@ async function save () {
           $senderEmail: String!
           $host: String!
           $port: Int!
+          $name: String!
           $secure: Boolean!
           $verifySSL: Boolean!
           $user: String!
@@ -404,6 +419,7 @@ async function save () {
             senderEmail: $senderEmail
             host: $host
             port: $port
+            name: $name
             secure: $secure
             verifySSL: $verifySSL
             user: $user
@@ -413,7 +429,7 @@ async function save () {
             dkimKeySelector: $dkimKeySelector
             dkimPrivateKey: $dkimPrivateKey
           ) {
-            status {
+            operation {
               succeeded
               slug
               message
@@ -426,6 +442,7 @@ async function save () {
         senderEmail: state.config.senderEmail || '',
         host: state.config.host || '',
         port: toSafeInteger(state.config.port) || 0,
+        name: state.config.name || '',
         secure: state.config.secure ?? false,
         verifySSL: state.config.verifySSL ?? false,
         user: state.config.user || '',

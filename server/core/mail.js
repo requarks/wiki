@@ -13,6 +13,7 @@ module.exports = {
       let conf = {
         host: WIKI.config.mail.host,
         port: WIKI.config.mail.port,
+        name: WIKI.config.mail.name,
         secure: WIKI.config.mail.secure,
         tls: {
           rejectUnauthorized: !(WIKI.config.mail.verifySSL === false)

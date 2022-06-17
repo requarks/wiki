@@ -16,22 +16,13 @@ module.exports = class Setting extends Model {
       required: ['key'],
 
       properties: {
-        key: {type: 'string'},
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        key: {type: 'string'}
       }
     }
   }
 
   static get jsonAttributes() {
     return ['value']
-  }
-
-  $beforeUpdate() {
-    this.updatedAt = new Date().toISOString()
-  }
-  $beforeInsert() {
-    this.updatedAt = new Date().toISOString()
   }
 
   static async getConfig() {

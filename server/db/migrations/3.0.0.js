@@ -389,6 +389,7 @@ exports.up = async knex => {
         senderEmail: '',
         host: '',
         port: 465,
+        name: '',
         secure: true,
         verifySSL: true,
         user: '',

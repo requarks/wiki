@@ -16,6 +16,7 @@ extend type Mutation {
     senderEmail: String!
     host: String!
     port: Int!
+    name: String!
     secure: Boolean!
     verifySSL: Boolean!
     user: String!
@@ -36,6 +37,7 @@ type MailConfig {
   senderEmail: String
   host: String
   port: Int
+  name: String
   secure: Boolean
   verifySSL: Boolean
   user: String
