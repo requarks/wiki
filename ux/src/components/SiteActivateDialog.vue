@@ -3,10 +3,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
   q-card(style='min-width: 350px; max-width: 450px;')
     q-card-section.card-header
       q-icon(name='img:/_assets/icons/fluent-shutdown.svg', left, size='sm')
-      span {{modelValue ? t(`admin.sites.activate`) : t(`admin.sites.deactivate`)}}
+      span {{props.targetState ? t(`admin.sites.activate`) : t(`admin.sites.deactivate`)}}
     q-card-section
       .text-body2
-        i18n-t(:keypath='modelValue ? `admin.sites.activateConfirm` : `admin.sites.deactivateConfirm`')
+        i18n-t(:keypath='props.targetState ? `admin.sites.activateConfirm` : `admin.sites.deactivateConfirm`')
           template(v-slot:siteTitle)
             strong {{props.site.title}}
     q-card-actions.card-actions
@@ -20,8 +20,8 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         )
       q-btn(
         unelevated
-        :label='modelValue ? t(`common.actions.activate`) : t(`common.actions.deactivate`)'
-        :color='modelValue ? `positive` : `negative`'
+        :label='props.targetState ? t(`common.actions.activate`) : t(`common.actions.deactivate`)'
+        :color='props.targetState ? `positive` : `negative`'
         padding='xs md'
         @click='confirm'
         :loading='state.isLoading'
@@ -44,7 +44,7 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  modelValue: {
+  targetState: {
     type: Boolean,
     default: false
   }
@@ -101,19 +101,19 @@ async function confirm () {
       `,
       variables: {
         id: props.site.id,
-        newState: props.modelValue
+        newState: props.targetState
       }
     })
     if (resp?.data?.updateSite?.operation?.succeeded) {
       $q.notify({
         type: 'positive',
-        message: this.$t('admin.sites.updateSuccess')
+        message: t('admin.sites.updateSuccess')
       })
       adminStore.$patch({
         sites: adminStore.sites.map(s => {
           if (s.id === props.site.id) {
             const ns = cloneDeep(s)
-            ns.isEnabled = props.modelValue
+            ns.isEnabled = props.targetState
             return ns
           } else {
             return s

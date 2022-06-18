@@ -8,7 +8,7 @@ const path = require('path')
 module.exports = {
   Query: {
     async sites () {
-      const sites = await WIKI.models.sites.query()
+      const sites = await WIKI.models.sites.query().orderBy('hostname')
       return sites.map(s => ({
         ...s.config,
         id: s.id,
@@ -69,10 +69,11 @@ module.exports = {
           title: args.title
         })
         return {
-          status: graphHelper.generateSuccess('Site created successfully'),
+          operation: graphHelper.generateSuccess('Site created successfully'),
           site: newSite
         }
       } catch (err) {
+        WIKI.logger.warn(err)
         return graphHelper.generateError(err)
       }
     },
@@ -109,7 +110,7 @@ module.exports = {
         })
 
         return {
-          status: graphHelper.generateSuccess('Site updated successfully')
+          operation: graphHelper.generateSuccess('Site updated successfully')
         }
       } catch (err) {
         WIKI.logger.warn(err)
@@ -129,7 +130,7 @@ module.exports = {
         // -> Delete site
         await WIKI.models.sites.deleteSite(args.id)
         return {
-          status: graphHelper.generateSuccess('Site deleted successfully')
+          operation: graphHelper.generateSuccess('Site deleted successfully')
         }
       } catch (err) {
         WIKI.logger.warn(err)
@@ -161,7 +162,7 @@ module.exports = {
         })
         WIKI.logger.info('New site logo processed successfully.')
         return {
-          status: graphHelper.generateSuccess('Site logo uploaded successfully')
+          operation: graphHelper.generateSuccess('Site logo uploaded successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -174,7 +175,7 @@ module.exports = {
       const { filename, mimetype, createReadStream } = await args.image
       console.info(filename, mimetype)
       return {
-        status: graphHelper.generateSuccess('Site favicon uploaded successfully')
+        operation: graphHelper.generateSuccess('Site favicon uploaded successfully')
       }
     }
   }

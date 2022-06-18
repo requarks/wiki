@@ -78,6 +78,8 @@ module.exports = class Site extends Model {
       })
     })
 
+    WIKI.logger.debug(`Creating new DB storage for site ${newSite.id}`)
+
     await WIKI.models.storage.query().insert({
       module: 'db',
       siteId: newSite.id,

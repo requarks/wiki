@@ -12,7 +12,7 @@ const commonHelper = require('../helpers/common')
  */
 module.exports = class Storage extends Model {
   static get tableName() { return 'storage' }
-  static get idColumn() { return 'key' }
+  static get idColumn() { return 'id' }
 
   static get jsonSchema () {
     return {
@@ -21,8 +21,7 @@ module.exports = class Storage extends Model {
 
       properties: {
         module: {type: 'string'},
-        isEnabled: {type: 'boolean'},
-        SVGAnimatedInteger: {type: 'string'}
+        isEnabled: {type: 'boolean'}
       }
     }
   }
