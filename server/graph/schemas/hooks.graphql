@@ -1,0 +1,70 @@
+# ===============================================
+# WEBHOOKS
+# ===============================================
+
+extend type Query {
+  hooks: [Hook]
+
+  hookById(
+    id: UUID!
+  ): Hook
+}
+
+extend type Mutation {
+  createHook(
+    name: String!
+    events: [String]!
+    url: String!
+    includeMetadata: Boolean!
+    includeContent: Boolean!
+    acceptUntrusted: Boolean!
+    authHeader: String
+  ): HookCreateResponse
+
+  updateHook(
+    id: UUID!
+    patch: HookUpdateInput!
+  ): DefaultResponse
+
+  deleteHook (
+    id: UUID!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type Hook {
+  id: UUID
+  name: String
+  events: [String]
+  url: String
+  includeMetadata: Boolean
+  includeContent: Boolean
+  acceptUntrusted: Boolean
+  authHeader: String
+  state: HookState
+  lastErrorMessage: String
+}
+
+input HookUpdateInput {
+  name: String
+  events: [String]
+  url: String
+  includeMetadata: Boolean
+  includeContent: Boolean
+  acceptUntrusted: Boolean
+  authHeader: String
+}
+
+enum HookState {
+  pending
+  error
+  success
+}
+
+type HookCreateResponse {
+  operation: Operation
+  hook: Hook
+}

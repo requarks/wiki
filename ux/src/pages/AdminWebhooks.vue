@@ -4,14 +4,9 @@ q-page.admin-webhooks
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-lightning-bolt.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.webhooks.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.webhooks.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.webhooks.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.webhooks.subtitle') }}
     .col-auto
-      q-spinner-tail.q-mr-md(
-        v-show='loading'
-        color='accent'
-        size='sm'
-      )
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-question-circle'
         flat
@@ -24,19 +19,19 @@ q-page.admin-webhooks
         icon='las la-redo-alt'
         flat
         color='secondary'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         @click='load'
         )
       q-btn(
         unelevated
         icon='las la-plus'
-        :label='$t(`admin.webhooks.new`)'
+        :label='t(`admin.webhooks.new`)'
         color='primary'
         @click='createHook'
         )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
-    .col-12(v-if='hooks.length < 1')
+    .col-12(v-if='state.hooks.length < 1')
       q-card.rounded-borders(
         flat
         :class='$q.dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`'
@@ -44,11 +39,11 @@ q-page.admin-webhooks
         q-card-section.items-center(horizontal)
           q-card-section.col-auto.q-pr-none
             q-icon(name='las la-info-circle', size='sm')
-          q-card-section.text-caption {{ $t('admin.webhooks.none') }}
+          q-card-section.text-caption {{ t('admin.webhooks.none') }}
     .col-12(v-else)
       q-card
         q-list(separator)
-          q-item(v-for='hook of hooks', :key='hook.id')
+          q-item(v-for='hook of state.hooks', :key='hook.id')
             q-item-section(side)
               q-icon(name='las la-bolt', color='primary')
             q-item-section
@@ -60,23 +55,23 @@ q-page.admin-webhooks
                   color='indigo'
                   size='xs'
                 )
-                .text-caption.text-indigo {{$t('admin.webhooks.statePending')}}
-                q-tooltip(anchor='center left', self='center right') {{$t('admin.webhooks.statePendingHint')}}
+                .text-caption.text-indigo {{t('admin.webhooks.statePending')}}
+                q-tooltip(anchor='center left', self='center right') {{t('admin.webhooks.statePendingHint')}}
               template(v-else-if='hook.state === `success`')
                 q-spinner-infinity.q-mr-sm(
                   color='positive'
                   size='xs'
                 )
-                .text-caption.text-positive {{$t('admin.webhooks.stateSuccess')}}
-                q-tooltip(anchor='center left', self='center right') {{$t('admin.webhooks.stateSuccessHint')}}
+                .text-caption.text-positive {{t('admin.webhooks.stateSuccess')}}
+                q-tooltip(anchor='center left', self='center right') {{t('admin.webhooks.stateSuccessHint')}}
               template(v-else-if='hook.state === `error`')
                 q-icon.q-mr-sm(
                   color='negative'
                   size='xs'
                   name='las la-exclamation-triangle'
                 )
-                .text-caption.text-negative {{$t('admin.webhooks.stateError')}}
-                q-tooltip(anchor='center left', self='center right') {{$t('admin.webhooks.stateErrorHint')}}
+                .text-caption.text-negative {{t('admin.webhooks.stateError')}}
+                q-tooltip(anchor='center left', self='center right') {{t('admin.webhooks.stateErrorHint')}}
             q-separator.q-ml-md(vertical)
             q-item-section(side, style='flex-direction: row; align-items: center;')
               q-btn.acrylic-btn.q-mr-sm(
@@ -96,88 +91,100 @@ q-page.admin-webhooks
 
 </template>
 
-<script>
+<script setup>
 import cloneDeep from 'lodash/cloneDeep'
 import gql from 'graphql-tag'
 
-import { createMetaMixin, QSpinnerClock, QSpinnerInfinity } from 'quasar'
-import WebhookDeleteDialog from '../components/WebhookDeleteDialog.vue'
-import WebhookEditDialog from '../components/WebhookEditDialog.vue'
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { onMounted, reactive } from 'vue'
 
-export default {
-  components: {
-    QSpinnerClock,
-    QSpinnerInfinity
-  },
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.webhooks.title')
+import WebhookEditDialog from 'src/components/WebhookEditDialog.vue'
+import WebhookDeleteDialog from 'src/components/WebhookDeleteDialog.vue'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.webhooks.title')
+})
+
+// DATA
+
+const state = reactive({
+  hooks: [],
+  loading: 0
+})
+
+// METHODS
+
+async function load () {
+  state.loading++
+  $q.loading.show()
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query getHooks {
+        hooks {
+          id
+          name
+          url
+          state
+        }
       }
-    })
-  ],
-  data () {
-    return {
-      hooks: [],
-      loading: 0
-    }
-  },
-  mounted () {
-    this.load()
-  },
-  methods: {
-    async load () {
-      this.loading++
-      this.$q.loading.show()
-      const resp = await this.$apollo.query({
-        query: gql`
-          query getHooks {
-            hooks {
-              id
-              name
-              url
-              state
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      this.config = cloneDeep(resp?.data?.hooks) ?? []
-      this.$q.loading.hide()
-      this.loading--
-    },
-    createHook () {
-      this.$q.dialog({
-        component: WebhookEditDialog,
-        componentProps: {
-          hookId: null
-        }
-      }).onOk(() => {
-        this.load()
-      })
-    },
-    editHook (id) {
-      this.$q.dialog({
-        component: WebhookEditDialog,
-        componentProps: {
-          hookId: id
-        }
-      }).onOk(() => {
-        this.load()
-      })
-    },
-    deleteHook (hook) {
-      this.$q.dialog({
-        component: WebhookDeleteDialog,
-        componentProps: {
-          hook
-        }
-      }).onOk(() => {
-        this.load()
-      })
-    }
-  }
+    `,
+    fetchPolicy: 'network-only'
+  })
+  state.hooks = cloneDeep(resp?.data?.hooks) ?? []
+  $q.loading.hide()
+  state.loading--
 }
+
+function createHook () {
+  $q.dialog({
+    component: WebhookEditDialog,
+    componentProps: {
+      hookId: null
+    }
+  }).onOk(() => {
+    load()
+  })
+}
+
+function editHook (id) {
+  $q.dialog({
+    component: WebhookEditDialog,
+    componentProps: {
+      hookId: id
+    }
+  }).onOk(() => {
+    load()
+  })
+}
+
+function deleteHook (hook) {
+  $q.dialog({
+    component: WebhookDeleteDialog,
+    componentProps: {
+      hook
+    }
+  }).onOk(() => {
+    load()
+  })
+}
+
+// MOUNTED
+
+onMounted(() => {
+  load()
+})
+
 </script>
 
 <style lang='scss'>

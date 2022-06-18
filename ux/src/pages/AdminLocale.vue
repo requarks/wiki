@@ -41,7 +41,7 @@ q-page.admin-locale
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
-    .col-7
+    .col-12.col-lg-7
       //- -----------------------
       //- Locale Options
       //- -----------------------
@@ -89,7 +89,7 @@ q-page.admin-locale
                   span {{ t('admin.locale.namespacingPrefixWarning.title', { langCode: state.selectedLocale }) }}
                   .text-caption.text-yellow-1 {{ t('admin.locale.namespacingPrefixWarning.subtitle') }}
 
-    .col-5
+    .col-12.col-lg-5
       //- -----------------------
       //- Namespacing
       //- -----------------------
