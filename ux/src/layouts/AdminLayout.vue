@@ -3,7 +3,7 @@ q-layout.admin(view='hHh Lpr lff')
   q-header.bg-black.text-white
     .row.no-wrap
       q-toolbar(style='height: 64px;', dark)
-        q-btn(dense, flat, to='/')
+        q-btn(dense, flat, href='/')
           q-avatar(size='34px', square)
             img(src='/_assets/logo-wikijs.svg')
         q-toolbar-title.text-h6.font-poppins Wiki.js
@@ -184,7 +184,7 @@ q-layout.admin(view='hHh Lpr lff')
 </template>
 
 <script setup>
-import { useMeta, setCssVar } from 'quasar'
+import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -199,6 +199,11 @@ const overlays = {
   GroupEditOverlay: defineAsyncComponent(() => import('../components/GroupEditOverlay.vue')),
   UserEditOverlay: defineAsyncComponent(() => import('../components/UserEditOverlay.vue'))
 }
+
+// QUASAR
+
+const $q = useQuasar()
+defineExpose({ $q })
 
 // STORES
 

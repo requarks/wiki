@@ -9,7 +9,7 @@
     "start": "node server",
     "dev": "nodemon server",
     "legacy:dev": "node dev",
-    "legacy:build": "webpack --profile --config dev/webpack/webpack.prod.js",
+    "legacy:build": "NODE_OPTIONS=--openssl-legacy-provider webpack --profile --config dev/webpack/webpack.prod.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open"
   },

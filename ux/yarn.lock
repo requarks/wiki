@@ -881,13 +881,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@quasar/app-vite@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@quasar/app-vite@npm:1.0.1"
+"@quasar/app-vite@npm:1.0.2":
+  version: 1.0.2
+  resolution: "@quasar/app-vite@npm:1.0.2"
   dependencies:
     "@quasar/fastclick": 1.1.5
     "@quasar/vite-plugin": ^1.0.9
     "@rollup/pluginutils": ^4.1.2
+    "@types/compression": ^1.7.2
     "@types/cordova": 0.0.34
     "@types/express": ^4.17.13
     "@vitejs/plugin-vue": ^2.2.0
@@ -923,16 +924,29 @@ __metadata:
   peerDependencies:
     electron-builder: ^22.0.0
     electron-packager: ^15.0.0
+    eslint: ^8.11.0
+    pinia: ^2.0.0
+    quasar: ^2.6.0
     vue: ^3.2.29
     vue-router: ^4.0.12
+    vuex: ^4.0.0
+    workbox-build: ^6.5.0
   peerDependenciesMeta:
     electron-builder:
       optional: true
     electron-packager:
       optional: true
+    eslint:
+      optional: true
+    pinia:
+      optional: true
+    vuex:
+      optional: true
+    workbox-build:
+      optional: true
   bin:
     quasar: bin/quasar
-  checksum: d8c5be6c6d63458877883caaa1a2ae1753a3c6dc5a6ff62d2eda547f4d4c84452478dcd0daba2f2c69b1ef07dc0ad148885eef93ef7bc0e0fb6d3d7ccce49ac6
+  checksum: b6fac0061299605f9c77a0ab683298e476c4b606bdafe87ca3db871e88a65017e8079703df0300191b4f7a9b5b067cde7935913041ac546c98b1dc0309d3fec9
   languageName: node
   linkType: hard
 
@@ -1434,6 +1448,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/compression@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "@types/compression@npm:1.7.2"
+  dependencies:
+    "@types/express": "*"
+  checksum: 3457f9d39ed73d58387bccf15bcfe8e140298c5d6e90fe354dfeb24ec7828432658caebee8ab6f4e4ac39a7d03bc0a6a52686d7fb2fe405fbdefede41d6b5834
+  languageName: node
+  linkType: hard
+
 "@types/connect@npm:*":
   version: 3.4.35
   resolution: "@types/connect@npm:3.4.35"
@@ -1461,7 +1484,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:^4.17.13":
+"@types/express@npm:*, @types/express@npm:^4.17.13":
   version: 4.17.13
   resolution: "@types/express@npm:4.17.13"
   dependencies:
@@ -1664,53 +1687,53 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/compiler-core@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/compiler-core@npm:3.2.31"
+"@vue/compiler-core@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/compiler-core@npm:3.2.37"
   dependencies:
     "@babel/parser": ^7.16.4
-    "@vue/shared": 3.2.31
+    "@vue/shared": 3.2.37
     estree-walker: ^2.0.2
     source-map: ^0.6.1
-  checksum: 61ae042cbf2708fbf7374c9b34d005063856224b888a2e8d8520da9cd449f6ccc7a36cfae8c2121f064a3f0ae01a4ab414c471388d27d5258d9d378e72aefb14
+  checksum: 5642e20813352f7ed57ef0eec0fb8a075d6485c91548555b435e8163e62a5e03402c26944bfa2486d6cc4c992f2649478f887478bcd23c8ad9036636f2dcff6a
   languageName: node
   linkType: hard
 
-"@vue/compiler-dom@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/compiler-dom@npm:3.2.31"
+"@vue/compiler-dom@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/compiler-dom@npm:3.2.37"
   dependencies:
-    "@vue/compiler-core": 3.2.31
-    "@vue/shared": 3.2.31
-  checksum: bf08990a67b6ee751fe149c4bbec9b8473b16100c1525c048587a4709c68d1ef787722e2966b14bc5297ba8032e6fad996c604e6074e74070cecad117709a5f6
+    "@vue/compiler-core": 3.2.37
+    "@vue/shared": 3.2.37
+  checksum: 6cfa9d2ee123339549ba005fa61b2cd5ccf079ba8d8d797f0075e7054c2766744029cb0997341bcb6a51e129ae43489263aa7d8500b262ef7b81c63c2b0c4576
   languageName: node
   linkType: hard
 
-"@vue/compiler-sfc@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/compiler-sfc@npm:3.2.31"
+"@vue/compiler-sfc@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/compiler-sfc@npm:3.2.37"
   dependencies:
     "@babel/parser": ^7.16.4
-    "@vue/compiler-core": 3.2.31
-    "@vue/compiler-dom": 3.2.31
-    "@vue/compiler-ssr": 3.2.31
-    "@vue/reactivity-transform": 3.2.31
-    "@vue/shared": 3.2.31
+    "@vue/compiler-core": 3.2.37
+    "@vue/compiler-dom": 3.2.37
+    "@vue/compiler-ssr": 3.2.37
+    "@vue/reactivity-transform": 3.2.37
+    "@vue/shared": 3.2.37
     estree-walker: ^2.0.2
     magic-string: ^0.25.7
     postcss: ^8.1.10
     source-map: ^0.6.1
-  checksum: a99ea2c17eb761926ee164fdbc1c30e959026b237d56faa3c1c2313f0b73efd0cd177c9fea37352d53aa0304af0ac58c35fe9e193f742804f87cd9af64610a39
+  checksum: 9f9067d79f40b0016e4063c180f5417e893f820b970ee291050cad8e19d9258f70a128e5de862e484bfb15572d335c8d5881c95e6b6a3032cb1a94829e8694cb
   languageName: node
   linkType: hard
 
-"@vue/compiler-ssr@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/compiler-ssr@npm:3.2.31"
+"@vue/compiler-ssr@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/compiler-ssr@npm:3.2.37"
   dependencies:
-    "@vue/compiler-dom": 3.2.31
-    "@vue/shared": 3.2.31
-  checksum: 39d07986a269d639c7514a0dac8b750731da48381cdaa844cf12d20e53f8e2d47911bd5da4a5c561e134cd3582717ac497762f758b27977993eb83fbe9cceb1c
+    "@vue/compiler-dom": 3.2.37
+    "@vue/shared": 3.2.37
+  checksum: e137462340c220ef7891d0b40f11124e7d5311e760fdb0de1748c046481505aecd5be8ec8f7b25ac6fc26d2393cbcc267f258d2d26742a50cb9abaf828c28839
   languageName: node
   linkType: hard
 
@@ -1721,65 +1744,65 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/reactivity-transform@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/reactivity-transform@npm:3.2.31"
+"@vue/reactivity-transform@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/reactivity-transform@npm:3.2.37"
   dependencies:
     "@babel/parser": ^7.16.4
-    "@vue/compiler-core": 3.2.31
-    "@vue/shared": 3.2.31
+    "@vue/compiler-core": 3.2.37
+    "@vue/shared": 3.2.37
     estree-walker: ^2.0.2
     magic-string: ^0.25.7
-  checksum: fc3c5390888c7b12622cf98c6873bbcb8a4d717fc1f5888c5e83bd911deb11402e9d5e59aae85edd756406ea9859dfe7c51c759284cd668e38e236b2a89ce997
+  checksum: d9e7c353e2bd3a62a9bbb7498ae231f5194428da003672daadb3e7af50c7839e10fb0ac68252852be353138428d1a36f3b8c7815f9c15499d46e7edaf3730c7e
   languageName: node
   linkType: hard
 
-"@vue/reactivity@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/reactivity@npm:3.2.31"
+"@vue/reactivity@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/reactivity@npm:3.2.37"
   dependencies:
-    "@vue/shared": 3.2.31
-  checksum: acef40b4fff4ca7c1409a2c25a9449f122621d19e0efa5a25dfac2625e420ea899a31dd714c4923868e739318cf2ec8212ed6a80a36c127d84803caa3f72010c
+    "@vue/shared": 3.2.37
+  checksum: 94e353f8b8a9301cae15c9366f2fec6a163efb7293e9fe5d1da3ed647f1859139b7b321451db56fb5e3141192c0f0755f74ca9c4bcd30ec44372e45def61d69f
   languageName: node
   linkType: hard
 
-"@vue/runtime-core@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/runtime-core@npm:3.2.31"
+"@vue/runtime-core@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/runtime-core@npm:3.2.37"
   dependencies:
-    "@vue/reactivity": 3.2.31
-    "@vue/shared": 3.2.31
-  checksum: c3e2a34d7e96fb05921d6af7ad4ad5f5e183eb78ed159f62cecc406b2d2b05a0c35cea680db6ff4f390a589d7e6d295908456a92137546b870e0f35b9219dc3c
+    "@vue/reactivity": 3.2.37
+    "@vue/shared": 3.2.37
+  checksum: 8dbf4e1f973335f5089d6b5965c2756a47589009956f883adb47036315a6d5701ef9d23d52456a6272673bc6f0bcee4f096826b5eae3fec65274e24e9f722a9b
   languageName: node
   linkType: hard
 
-"@vue/runtime-dom@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/runtime-dom@npm:3.2.31"
+"@vue/runtime-dom@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/runtime-dom@npm:3.2.37"
   dependencies:
-    "@vue/runtime-core": 3.2.31
-    "@vue/shared": 3.2.31
+    "@vue/runtime-core": 3.2.37
+    "@vue/shared": 3.2.37
     csstype: ^2.6.8
-  checksum: c4b3b64434221002536b6f1e54a717eeac4bdacfa220909080a9298467810b4280ee1235b6ea0258383d4206fb6352fdb3a60d2848b51d008dc4d6c9bea682ad
+  checksum: 36dddfd56161c94a9a483903a570897e1ee46a95126d54f7948bc184d5d333c9f0c1a9c4cee90ddec63baf4ea2e35be9d0d678108427aba907b0adf0800c75a5
   languageName: node
   linkType: hard
 
-"@vue/server-renderer@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/server-renderer@npm:3.2.31"
+"@vue/server-renderer@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/server-renderer@npm:3.2.37"
   dependencies:
-    "@vue/compiler-ssr": 3.2.31
-    "@vue/shared": 3.2.31
+    "@vue/compiler-ssr": 3.2.37
+    "@vue/shared": 3.2.37
   peerDependencies:
-    vue: 3.2.31
-  checksum: 9ac41a1ae9e004f1500c430b3d4b62552e6ecac7bb4370d9da2b3027d57ac8b9af51dff7ef8cd9aea93c511d2c293fe89960e5dd07d926136ad65efec1921bd2
+    vue: 3.2.37
+  checksum: 634d43cd21ed902ef3d1d710db2065c4d47402c979914325494f73e2cd37545d809e665c3aace1a02b32c3332a9ad7e772a00159f42e63abb8b73b0fef27a102
   languageName: node
   linkType: hard
 
-"@vue/shared@npm:3.2.31":
-  version: 3.2.31
-  resolution: "@vue/shared@npm:3.2.31"
-  checksum: bf614d9d06f7c01fbe3f5f50d8f7621fffd83d2eebd6c2ccf540c59754283d3b659aa93f7d610ed4c16284a4d5208ef5aec12337f2d4d0ab05e9a271cd4a2051
+"@vue/shared@npm:3.2.37":
+  version: 3.2.37
+  resolution: "@vue/shared@npm:3.2.37"
+  checksum: 999ab8baeb13de190d07536e7dd0e74ab9354a864d8d903850a2127ae1a2aa2713a9edc0d957620ebf91165d6603d0cd2b0e8ee0db6cbaf8d57a6a0f912af810
   languageName: node
   linkType: hard
 
@@ -3530,9 +3553,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:8.17.0":
-  version: 8.17.0
-  resolution: "eslint@npm:8.17.0"
+"eslint@npm:8.18.0":
+  version: 8.18.0
+  resolution: "eslint@npm:8.18.0"
   dependencies:
     "@eslint/eslintrc": ^1.3.0
     "@humanwhocodes/config-array": ^0.9.2
@@ -3571,7 +3594,7 @@ __metadata:
     v8-compile-cache: ^2.0.3
   bin:
     eslint: bin/eslint.js
-  checksum: b484c96681c6b19f5b437f664623f1cd310d3ee9be88400d8450e086e664cd968a9dc202f0b0678578fd50e7a445b92586efe8c787de5073ff2f83213b00bb7b
+  checksum: d9b4b7488a9cee97608343cbb5ac652d3f316436f95ef0800cd9497c1c6f877b655a3275817989c02f1ff0d5dfd1959c5092af9251c7e3fcf60659da37752a10
   languageName: node
   linkType: hard
 
@@ -5891,10 +5914,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"quasar@npm:2.7.1":
-  version: 2.7.1
-  resolution: "quasar@npm:2.7.1"
-  checksum: c87a96f3e69c7d80ccbd07acb3b637b6aa35ea876ba224edaa97ea108e0e17aa0e997ac9f31800ee3d5345ded5ab5877ba4e5a9b3b9bc28bfa383a2d369c78b4
+"quasar@npm:2.7.2":
+  version: 2.7.2
+  resolution: "quasar@npm:2.7.2"
+  checksum: 6f1bbed4bf9b5df0067581dd81f1ec751dfed776a6c50394821169825a281d1e9598aa8aa447c48fdae12a9cba8989b1831e72cf8e28128f95cd4c9f2af0c176
   languageName: node
   linkType: hard
 
@@ -6826,7 +6849,7 @@ __metadata:
     "@codemirror/view": 0.20.7
     "@intlify/vite-plugin-vue-i18n": 3.4.0
     "@lezer/common": 0.16.1
-    "@quasar/app-vite": 1.0.1
+    "@quasar/app-vite": 1.0.2
     "@quasar/extras": 1.14.0
     "@tiptap/core": 2.0.0-beta.176
     "@tiptap/extension-code-block": 2.0.0-beta.37
@@ -6858,7 +6881,7 @@ __metadata:
     autoprefixer: 10.4.7
     browser-fs-access: 0.29.6
     clipboard: 2.0.11
-    eslint: 8.17.0
+    eslint: 8.18.0
     eslint-config-standard: 17.0.0
     eslint-plugin-import: 2.26.0
     eslint-plugin-n: 15.2.3
@@ -6874,11 +6897,11 @@ __metadata:
     luxon: 2.4.0
     pinia: 2.0.14
     pug: 3.0.2
-    quasar: 2.7.1
+    quasar: 2.7.2
     tippy.js: 6.3.7
     uuid: 8.3.2
     v-network-graph: 0.5.19
-    vue: 3.2.31
+    vue: 3.2.37
     vue-codemirror: 5.1.0
     vue-i18n: 9.1.10
     vue-router: 4.0.16
@@ -7053,16 +7076,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue@npm:3.2.31":
-  version: 3.2.31
-  resolution: "vue@npm:3.2.31"
+"vue@npm:3.2.37":
+  version: 3.2.37
+  resolution: "vue@npm:3.2.37"
   dependencies:
-    "@vue/compiler-dom": 3.2.31
-    "@vue/compiler-sfc": 3.2.31
-    "@vue/runtime-dom": 3.2.31
-    "@vue/server-renderer": 3.2.31
-    "@vue/shared": 3.2.31
-  checksum: 2d66b563e60ce01ff4872f425b1acaf9a9f9d36f48eb986c89962d9b324c6bf566868503811462317052273b53056bbc58be3ceb06ea39dff174bb0fa62db3a2
+    "@vue/compiler-dom": 3.2.37
+    "@vue/compiler-sfc": 3.2.37
+    "@vue/runtime-dom": 3.2.37
+    "@vue/server-renderer": 3.2.37
+    "@vue/shared": 3.2.37
+  checksum: cd20069c311e1de54b7d9b5d9c6021f1a6a70b0cf05cf7fc36b59c02623cbdc7c0075fb2c9e17859c77c86b15c596a447ee16c70064e9f2feba2df27139260b9
   languageName: node
   linkType: hard
 

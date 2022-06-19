@@ -178,6 +178,7 @@ defineEmits([
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 const $q = useQuasar()
+defineExpose({ $q })
 
 // I18N
 

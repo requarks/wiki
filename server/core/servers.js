@@ -134,7 +134,7 @@ module.exports = {
       ]
     })
     await this.servers.graph.start()
-    this.servers.graph.applyMiddleware({ app: WIKI.app, cors: false })
+    this.servers.graph.applyMiddleware({ app: WIKI.app, cors: false, path: '/_graphql' })
   },
   /**
    * Close all active connections

@@ -57,7 +57,7 @@ module.exports = configure(function (/* ctx */) {
     build: {
       target: {
         browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
-        node: 'node16'
+        node: 'node18'
       },
 
       vueRouterMode: 'history', // available values: 'hash', 'history'
@@ -74,9 +74,11 @@ module.exports = configure(function (/* ctx */) {
       // ignorePublicFolder: true,
       // minify: false,
       // polyfillModulePreload: true,
-      // distDir
+      distDir: '../assets',
 
-      // extendViteConf (viteConf) {},
+      extendViteConf (viteConf) {
+        viteConf.build.assetsDir = '_assets'
+      },
       // viteVuePluginOptions: {},
 
       vitePlugins: [
@@ -96,7 +98,7 @@ module.exports = configure(function (/* ctx */) {
       open: false, // opens browser window automatically
       port: 3001,
       proxy: {
-        '/_graphql': 'http://localhost:3000/graphql'
+        '/_graphql': 'http://localhost:3000/_graphql'
       }
     },
 

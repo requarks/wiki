@@ -510,6 +510,7 @@ import UtilCodeEditor from './UtilCodeEditor.vue'
 // QUASAR
 
 const $q = useQuasar()
+defineExpose({ $q })
 
 // STORES
 

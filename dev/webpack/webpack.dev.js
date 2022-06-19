@@ -19,7 +19,7 @@ const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
 
 process.noDeprecation = true
 
-fs.emptyDirSync(path.join(process.cwd(), 'assets'))
+fs.emptyDirSync(path.join(process.cwd(), 'assets-legacy'))
 
 module.exports = {
   mode: 'development',
@@ -29,8 +29,8 @@ module.exports = {
     setup: ['./client/index-setup.js', 'webpack-hot-middleware/client']
   },
   output: {
-    path: path.join(process.cwd(), 'assets'),
-    publicPath: '/_assets/',
+    path: path.join(process.cwd(), 'assets-legacy'),
+    publicPath: '/_assets-legacy/',
     filename: 'js/[name].js',
     chunkFilename: 'js/[name].js',
     globalObject: 'this',

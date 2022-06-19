@@ -4,6 +4,7 @@ const pageHelper = require('../helpers/page')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
+const path = require('path')
 
 /* global WIKI */
 
@@ -35,24 +36,28 @@ router.get('/healthz', (req, res, next) => {
 /**
  * Administration
  */
-router.get(['/a', '/a/*'], (req, res, next) => {
-  if (!WIKI.auth.checkAccess(req.user, [
-    'manage:system',
-    'write:users',
-    'manage:users',
-    'write:groups',
-    'manage:groups',
-    'manage:navigation',
-    'manage:theme',
-    'manage:api'
-  ])) {
-    _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-    return res.status(403).render('unauthorized', { action: 'view' })
-  }
-
-  _.set(res.locals, 'pageMeta.title', 'Admin')
-  res.render('admin')
+router.get(['/_admin', '/_admin/*'], (req, res, next) => {
+  res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
 })
+// router.get(['/_admin', '/_admin/*'], (req, res, next) => {
+//   if (!WIKI.auth.checkAccess(req.user, [
+//     'manage:system',
+//     'write:users',
+//     'manage:users',
+//     'write:groups',
+//     'manage:groups',
+//     'manage:navigation',
+//     'manage:theme',
+//     'manage:api'
+//   ])) {
+//     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
+//     return res.status(403).render('unauthorized', { action: 'view' })
+//   }
+
+//   _.set(res.locals, 'pageMeta.title', 'Admin')
+//   res.render('admin')
+
+// })
 
 /**
  * Download Page / Version

@@ -51,7 +51,9 @@
       <stop offset="1" stop-color="#1ee446"/>
     </linearGradient>
     <circle cx="11" cy="37" r="2" fill="#666666" />
-    <circle cx="11" cy="37" r="2" fill="url(#71jOKMe3jIEN7vuoamoZEi)" />
+    <circle cx="11" cy="37" r="2" fill="url(#71jOKMe3jIEN7vuoamoZEi)">
+      <animate attributeName="opacity" dur="2s" values="0;1;0" repeatCount="indefinite" begin="0.1" />
+    </circle>
   </g>
   <g>
     <g opacity=".05">

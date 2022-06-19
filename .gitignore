@@ -18,6 +18,7 @@ npm-debug.log*
 
 # Generated assets
 /assets
+/assets-legacy
 server/views/master.pug
 server/views/legacy/master.pug
 server/views/setup.pug
