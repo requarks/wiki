@@ -203,7 +203,6 @@ const overlays = {
 // QUASAR
 
 const $q = useQuasar()
-defineExpose({ $q })
 
 // STORES
 

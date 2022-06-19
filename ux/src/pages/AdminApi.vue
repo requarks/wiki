@@ -4,16 +4,16 @@ q-page.admin-api
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-rest-api.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.api.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.api.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.api.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.api.subtitle') }}
     .col
       .flex.items-center
-        template(v-if='enabled')
+        template(v-if='state.enabled')
           q-spinner-rings.q-mr-sm(color='green')
-          .text-caption.text-green {{$t('admin.api.enabled')}}
+          .text-caption.text-green {{t('admin.api.enabled')}}
         template(v-else)
           q-spinner-rings.q-mr-sm(color='red', size='md')
-          .text-caption.text-red {{$t('admin.api.disabled')}}
+          .text-caption.text-red {{t('admin.api.disabled')}}
     .col-auto
       q-btn.q-mr-sm.q-ml-md.acrylic-btn(
         icon='las la-question-circle'
@@ -27,24 +27,24 @@ q-page.admin-api
         icon='las la-redo-alt'
         flat
         color='secondary'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         @click='load'
         )
       q-btn.q-mr-sm(
         unelevated
         icon='las la-power-off'
-        :label='!enabled ? $t(`admin.api.enableButton`) : $t(`admin.api.disableButton`)'
-        :color='!enabled ? `positive` : `negative`'
+        :label='!state.enabled ? t(`admin.api.enableButton`) : t(`admin.api.disableButton`)'
+        :color='!state.enabled ? `positive` : `negative`'
         @click='globalSwitch'
-        :disabled='loading > 0'
+        :disabled='state.loading > 0'
       )
       q-btn(
         unelevated
         icon='las la-plus'
-        :label='$t(`admin.api.newKeyButton`)'
+        :label='t(`admin.api.newKeyButton`)'
         color='primary'
         @click='newKey'
-        :disabled='loading > 0'
+        :disabled='state.loading > 0'
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
@@ -114,165 +114,166 @@ q-page.admin-api
 //-         v-btn(color='red', dark, @click='revokeConfirm', :loading='revokeLoading') {{$t('admin.api.revoke')}}
 </template>
 
-<script>
-import _get from 'lodash/get'
-import cloneDeep from 'lodash/cloneDeep'
+<script setup>
 import gql from 'graphql-tag'
-import { createMetaMixin } from 'quasar'
-// import { StatusIndicator } from 'vue-status-indicator'
+import cloneDeep from 'lodash/cloneDeep'
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { computed, onMounted, reactive, watch } from 'vue'
 
-// import CreateApiKey from './admin-api-create.vue'
+// QUASAR
 
-export default {
-  components: {
-    // StatusIndicator,
-    // CreateApiKey
-  },
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.api.title')
+const $q = useQuasar()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.api.title')
+})
+
+// DATA
+
+const state = reactive({
+  enabled: false,
+  loading: 0,
+  keys: [],
+  isCreateDialogShown: false,
+  isRevokeConfirmDialogShown: false,
+  revokeLoading: false,
+  current: {}
+})
+
+// METHODS
+
+async function load () {
+  state.loading++
+  $q.loading.show()
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query getHooks {
+        apiKeys {
+          id
+          name
+          keyShort
+          expiration
+          isRevoked
+          createdAt
+          updatedAt
+        }
+        apiState
+      }
+    `,
+    fetchPolicy: 'network-only'
+  })
+  state.keys = cloneDeep(resp?.data?.apiKeys) ?? []
+  state.enabled = resp?.data?.apiState === true
+  $q.loading.hide()
+  state.loading--
+}
+
+async function globalSwitch () {
+  state.isToggleLoading = true
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation ($enabled: Boolean!) {
+          authentication {
+            setApiState (enabled: $enabled) {
+              responseResult {
+                succeeded
+                errorCode
+                slug
+                message
+              }
+            }
+          }
+        }
+      `,
+      variables: {
+        enabled: !state.enabled
       }
     })
-  ],
-  data () {
-    return {
-      enabled: false,
-      loading: 0,
-      keys: [],
-      isCreateDialogShown: false,
-      isRevokeConfirmDialogShown: false,
-      revokeLoading: false,
-      current: {}
-    }
-  },
-  mounted () {
-    this.load()
-  },
-  methods: {
-    async load () {
-      this.loading++
-      this.$q.loading.show()
-      const resp = await this.$apollo.query({
-        query: gql`
-          query getHooks {
-            apiKeys {
-              id
-              name
-              keyShort
-              expiration
-              isRevoked
-              createdAt
-              updatedAt
-            }
-            apiState
-          }
-        `,
-        fetchPolicy: 'network-only'
+    if (resp?.data?.setApiState?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: state.enabled ? t('admin.api.toggleStateDisabledSuccess') : t('admin.api.toggleStateEnabledSuccess')
       })
-      this.keys = cloneDeep(resp?.data?.apiKeys) ?? []
-      this.enabled = resp?.data?.apiState === true
-      this.$q.loading.hide()
-      this.loading--
-    },
-    async globalSwitch () {
-      this.isToggleLoading = true
-      try {
-        const resp = await this.$apollo.mutate({
-          mutation: gql`
-            mutation ($enabled: Boolean!) {
-              authentication {
-                setApiState (enabled: $enabled) {
-                  responseResult {
-                    succeeded
-                    errorCode
-                    slug
-                    message
-                  }
-                }
-              }
-            }
-          `,
-          variables: {
-            enabled: !this.enabled
-          },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-toggle')
-          }
-        })
-        if (_get(resp, 'data.authentication.setApiState.responseResult.succeeded', false)) {
-          this.$store.commit('showNotification', {
-            style: 'success',
-            message: this.enabled ? this.$t('admin.api.toggleStateDisabledSuccess') : this.$t('admin.api.toggleStateEnabledSuccess'),
-            icon: 'check'
-          })
-          await this.load()
-        } else {
-          this.$store.commit('showNotification', {
-            style: 'red',
-            message: _get(resp, 'data.authentication.setApiState.responseResult.message', 'An unexpected error occurred.'),
-            icon: 'alert'
-          })
-        }
-      } catch (err) {
-        this.$store.commit('pushGraphError', err)
-      }
-      this.isToggleLoading = false
-    },
-    async newKey () {
-      this.isCreateDialogShown = true
-    },
-    revoke (key) {
-      this.current = key
-      this.isRevokeConfirmDialogShown = true
-    },
-    async revokeConfirm () {
-      this.revokeLoading = true
-      try {
-        const resp = await this.$apollo.mutate({
-          mutation: gql`
-            mutation ($id: Int!) {
-              authentication {
-                revokeApiKey (id: $id) {
-                  responseResult {
-                    succeeded
-                    errorCode
-                    slug
-                    message
-                  }
-                }
-              }
-            }
-          `,
-          variables: {
-            id: this.current.id
-          },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-revoke')
-          }
-        })
-        if (_get(resp, 'data.authentication.revokeApiKey.responseResult.succeeded', false)) {
-          this.$store.commit('showNotification', {
-            style: 'success',
-            message: this.$t('admin.api.revokeSuccess'),
-            icon: 'check'
-          })
-          this.load()
-        } else {
-          this.$store.commit('showNotification', {
-            style: 'red',
-            message: _get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occurred.'),
-            icon: 'alert'
-          })
-        }
-      } catch (err) {
-        this.$store.commit('pushGraphError', err)
-      }
-      this.isRevokeConfirmDialogShown = false
-      this.revokeLoading = false
+      await load()
+    } else {
+      throw new Error(resp?.data?.setApiState?.operation.message || 'An unexpected error occurred.')
     }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to switch API state.',
+      caption: err.message
+    })
   }
+  state.isToggleLoading = false
 }
+
+async function newKey () {
+  state.isCreateDialogShown = true
+}
+
+function revoke (key) {
+  state.current = key
+  state.isRevokeConfirmDialogShown = true
+}
+
+async function revokeConfirm () {
+  state.revokeLoading = true
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation ($id: Int!) {
+          authentication {
+            revokeApiKey (id: $id) {
+              responseResult {
+                succeeded
+                errorCode
+                slug
+                message
+              }
+            }
+          }
+        }
+      `,
+      variables: {
+        id: state.current.id
+      }
+    })
+    // if (_get(resp, 'data.authentication.revokeApiKey.responseResult.succeeded', false)) {
+    //   this.$store.commit('showNotification', {
+    //     style: 'success',
+    //     message: this.$t('admin.api.revokeSuccess'),
+    //     icon: 'check'
+    //   })
+    //   this.load()
+    // } else {
+    //   this.$store.commit('showNotification', {
+    //     style: 'red',
+    //     message: _get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occurred.'),
+    //     icon: 'alert'
+    //   })
+    // }
+  } catch (err) {
+    // this.$store.commit('pushGraphError', err)
+  }
+  state.isRevokeConfirmDialogShown = false
+  state.revokeLoading = false
+}
+
+// MOUNTED
+
+onMounted(() => {
+  load()
+})
+
 </script>
 
 <style lang='scss'>

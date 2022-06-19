@@ -12,7 +12,6 @@ import { EditorState } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { ref, shallowRef, onBeforeMount, onMounted, watch } from 'vue'
-import { json } from '@codemirror/lang-json'
 
 // PROPS
 

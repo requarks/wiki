@@ -36,20 +36,20 @@ const routes = [
       { path: ':siteid/locale', component: () => import('../pages/AdminLocale.vue') },
       { path: ':siteid/login', component: () => import('../pages/AdminLogin.vue') },
       // { path: ':siteid/navigation', component: () => import('../pages/AdminNavigation.vue') },
-      { path: ':siteid/storage/:id?', component: () => import('../pages/AdminStorage.vue') },
       // { path: ':siteid/rendering', component: () => import('../pages/AdminRendering.vue') },
-      // { path: ':siteid/theme', component: () => import('../pages/AdminTheme.vue') },
+      { path: ':siteid/storage/:id?', component: () => import('../pages/AdminStorage.vue') },
+      { path: ':siteid/theme', component: () => import('../pages/AdminTheme.vue') },
       // -> Users
       // { path: 'auth', component: () => import('../pages/AdminAuth.vue') },
       { path: 'groups/:id?/:section?', component: () => import('../pages/AdminGroups.vue') },
       { path: 'users/:id?/:section?', component: () => import('../pages/AdminUsers.vue') },
       // -> System
-      // { path: 'api', component: () => import('../pages/AdminApi.vue') },
+      { path: 'api', component: () => import('../pages/AdminApi.vue') },
       { path: 'extensions', component: () => import('../pages/AdminExtensions.vue') },
       { path: 'mail', component: () => import('../pages/AdminMail.vue') },
       { path: 'security', component: () => import('../pages/AdminSecurity.vue') },
       { path: 'system', component: () => import('../pages/AdminSystem.vue') },
-      // { path: 'utilities', component: () => import('../pages/AdminUtilities.vue') },
+      { path: 'utilities', component: () => import('../pages/AdminUtilities.vue') },
       { path: 'webhooks', component: () => import('../pages/AdminWebhooks.vue') },
       { path: 'flags', component: () => import('../pages/AdminFlags.vue') }
     ]
