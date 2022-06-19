@@ -69,6 +69,7 @@
     "js-cookie": "3.0.1",
     "jwt-decode": "3.1.2",
     "lodash": "4.17.21",
+    "lodash-es": "4.17.21",
     "luxon": "2.4.0",
     "pinia": "2.0.14",
     "pug": "3.0.2",

@@ -203,8 +203,7 @@ q-page.admin-theme
 
 <script setup>
 import gql from 'graphql-tag'
-import cloneDeep from 'lodash/cloneDeep'
-import startCase from 'lodash/startCase'
+import { cloneDeep, startCase } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'

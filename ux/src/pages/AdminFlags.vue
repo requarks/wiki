@@ -82,7 +82,7 @@ q-page.admin-flags
 <script setup>
 import gql from 'graphql-tag'
 import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
-import _transform from 'lodash/transform'
+import { transform } from 'lodash-es'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 

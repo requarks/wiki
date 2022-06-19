@@ -143,9 +143,7 @@ q-page.admin-locale
 
 <script setup>
 import gql from 'graphql-tag'
-import filter from 'lodash/filter'
-import _get from 'lodash/get'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep, filter } from 'lodash-es'
 
 import LocaleInstallDialog from '../components/LocaleInstallDialog.vue'
 
@@ -278,7 +276,7 @@ async function download (lc) {
       locale: lc.code
     }
   })
-  const resp = _get(respRaw, 'data.localization.downloadLocale.responseResult', {})
+  const resp = respRaw?.data?.localization?.downloadLocale?.responseResult || {}
   if (resp.succeeded) {
     lc.isDownloading = false
     lc.isInstalled = true
@@ -331,7 +329,7 @@ async function save () {
       namespaces: state.namespaces
     }
   })
-  const resp = _get(respRaw, 'data.localization.updateLocale.responseResult', {})
+  const resp = respRaw?.data?.localization?.updateLocale?.responseResult || {}
   if (resp.succeeded) {
     // Change UI language
     this.$i18n.locale = state.selectedLocale

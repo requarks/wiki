@@ -92,7 +92,7 @@ q-page.admin-webhooks
 </template>
 
 <script setup>
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 import gql from 'graphql-tag'
 
 import { useI18n } from 'vue-i18n'

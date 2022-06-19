@@ -227,7 +227,7 @@ q-page.admin-system
 </template>
 
 <script setup>
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 import gql from 'graphql-tag'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'

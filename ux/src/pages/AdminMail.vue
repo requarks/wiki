@@ -298,9 +298,7 @@ q-page.admin-mail
 </template>
 
 <script setup>
-import toSafeInteger from 'lodash/toSafeInteger'
-import _get from 'lodash/get'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep, toSafeInteger } from 'lodash-es'
 import gql from 'graphql-tag'
 
 import { useI18n } from 'vue-i18n'
@@ -477,7 +475,7 @@ async function sendTest () {
           sendMailTest(
             recipientEmail: $recipientEmail
           ) {
-            status {
+            operation {
               succeeded
               slug
               message
@@ -489,8 +487,8 @@ async function sendTest () {
         recipientEmail: state.testEmail
       }
     })
-    if (!_get(resp, 'data.sendMailTest.status.succeeded', false)) {
-      throw new Error(_get(resp, 'data.sendMailTest.status.message', 'An unexpected error occurred.'))
+    if (!resp?.data?.sendMailTest?.operation?.succeeded) {
+      throw new Error(resp?.data?.sendMailTest?.operation?.message || 'An unexpected error occurred.')
     }
 
     state.testEmail = ''

@@ -4,8 +4,8 @@ q-page.admin-mail
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-security-lock.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.auth.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.auth.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.auth.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.auth.subtitle') }}
     .col-auto
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-question-circle'
@@ -17,11 +17,11 @@ q-page.admin-mail
         )
       q-btn(
         unelevated
-        icon='mdi-check'
-        :label='$t(`common.actions.apply`)'
+        icon='fa-solid fa-check'
+        :label='t(`common.actions.apply`)'
         color='secondary'
         @click='save'
-        :loading='loading'
+        :loading='state.loading > 0'
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
@@ -33,11 +33,11 @@ q-page.admin-mail
           dark
           )
           q-item(
-            v-for='str of activeStrategies'
+            v-for='str of state.activeStrategies'
             :key='str.key'
             active-class='bg-primary text-white'
-            :active='selectedStrategy === str.key'
-            @click='selectedStrategy = str.key'
+            :active='state.selectedStrategy === str.key'
+            @click='state.selectedStrategy = str.key'
             clickable
             )
             q-item-section(side)
@@ -52,7 +52,7 @@ q-page.admin-mail
       q-btn.q-mt-sm.full-width(
         color='primary'
         icon='las la-plus'
-        :label='$t(`admin.auth.addStrategy`)'
+        :label='t(`admin.auth.addStrategy`)'
         )
         q-menu(auto-close)
           q-list(style='min-width: 350px;')
@@ -261,275 +261,294 @@ q-page.admin-mail
     //-         .body-2 HTTP-POST
 </template>
 
-<script>
-import _ from 'lodash'
+<script setup>
 import gql from 'graphql-tag'
+import { find, reject } from 'lodash-es'
 import { v4 as uuid } from 'uuid'
-import { createMetaMixin } from 'quasar'
+
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { computed, onMounted, reactive, watch, nextTick } from 'vue'
+
+import { useAdminStore } from 'src/stores/admin'
+import { useSiteStore } from 'src/stores/site'
 
 import draggable from 'vuedraggable'
 
-export default {
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.auth.title')
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+const siteStore = useSiteStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.auth.title')
+})
+
+// DATA
+
+const state = reactive({
+  loading: 0,
+  groups: [],
+  strategies: [],
+  activeStrategies: [
+    {
+      key: 'local',
+      strategy: {
+        key: 'local',
+        title: 'Username-Password Authentication',
+        description: '',
+        useForm: true,
+        icon: '/_assets/icons/ultraviolet-data-protection.svg',
+        website: ''
+      },
+      config: [],
+      isEnabled: true,
+      displayName: 'Local Database',
+      selfRegistration: false,
+      domainWhitelist: '',
+      autoEnrollGroups: []
+    },
+    {
+      key: 'google',
+      strategy: {
+        key: 'google',
+        title: 'Google',
+        description: '',
+        useForm: true,
+        icon: '/_assets/icons/ultraviolet-google.svg',
+        website: ''
+      },
+      config: [],
+      isEnabled: true,
+      displayName: 'Google',
+      selfRegistration: false,
+      domainWhitelist: '',
+      autoEnrollGroups: []
+    },
+    {
+      key: 'slack',
+      strategy: {
+        key: 'slack',
+        title: 'Slack',
+        description: '',
+        useForm: true,
+        icon: '/_assets/icons/ultraviolet-slack.svg',
+        website: ''
+      },
+      config: [],
+      isEnabled: false,
+      displayName: 'Slack',
+      selfRegistration: false,
+      domainWhitelist: '',
+      autoEnrollGroups: []
+    }
+  ],
+  selectedStrategy: '',
+  host: '',
+  strategy: {
+    strategy: {}
+  }
+})
+
+// WATCHERS
+
+watch(() => state.selectedStrategy, (newValue, oldValue) => {
+  state.strategy = find(state.activeStrategies, ['key', newValue]) || {}
+})
+watch(() => state.activeStrategies, (newValue, oldValue) => {
+  state.selectedStrategy = 'local'
+})
+
+// METHODS
+
+async function refresh () {
+  await this.$apollo.queries.strategies.refetch()
+  await this.$apollo.queries.activeStrategies.refetch()
+  this.$store.commit('showNotification', {
+    message: this.$t('admin.auth.refreshSuccess'),
+    style: 'success',
+    icon: 'cached'
+  })
+}
+
+function addStrategy (str) {
+  const newStr = {
+    key: uuid(),
+    strategy: str,
+    config: str.props.map(c => ({
+      key: c.key,
+      value: {
+        ...c,
+        value: c.default
+      }
+    })),
+    order: state.activeStrategies.length,
+    isEnabled: true,
+    displayName: str.title,
+    selfRegistration: false,
+    domainWhitelist: [],
+    autoEnrollGroups: []
+  }
+  state.activeStrategies = [...state.activeStrategies, newStr]
+  nextTick(() => {
+    state.selectedStrategy = newStr.key
+  })
+}
+
+function deleteStrategy () {
+  state.activeStrategies = reject(state.activeStrategies, ['key', state.strategy.key])
+}
+
+async function save () {
+  state.loading++
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation($strategies: [AuthenticationStrategyInput]!) {
+          authentication {
+            updateStrategies(strategies: $strategies) {
+              responseResult {
+                succeeded
+                errorCode
+                slug
+                message
+              }
+            }
+          }
+        }
+      `,
+      variables: {
+        strategies: this.activeStrategies.map((str, idx) => ({
+          key: str.key,
+          strategyKey: str.strategy.key,
+          displayName: str.displayName,
+          order: idx,
+          isEnabled: str.isEnabled,
+          config: str.config.map(cfg => ({ ...cfg, value: JSON.stringify({ v: cfg.value.value }) })),
+          selfRegistration: str.selfRegistration,
+          domainWhitelist: str.domainWhitelist,
+          autoEnrollGroups: str.autoEnrollGroups
+        }))
       }
     })
-  ],
-  components: {
-    draggable
-  },
-  filters: {
-    startCase (val) { return _.startCase(val) }
-  },
-  data () {
-    return {
-      groups: [],
-      strategies: [],
-      activeStrategies: [
-        {
-          key: 'local',
-          strategy: {
-            key: 'local',
-            title: 'Username-Password Authentication',
-            description: '',
-            useForm: true,
-            icon: '/_assets/icons/ultraviolet-data-protection.svg',
-            website: ''
-          },
-          config: [],
-          isEnabled: true,
-          displayName: 'Local Database',
-          selfRegistration: false,
-          domainWhitelist: '',
-          autoEnrollGroups: []
-        },
-        {
-          key: 'google',
-          strategy: {
-            key: 'google',
-            title: 'Google',
-            description: '',
-            useForm: true,
-            icon: '/_assets/icons/ultraviolet-google.svg',
-            website: ''
-          },
-          config: [],
-          isEnabled: true,
-          displayName: 'Google',
-          selfRegistration: false,
-          domainWhitelist: '',
-          autoEnrollGroups: []
-        },
-        {
-          key: 'slack',
-          strategy: {
-            key: 'slack',
-            title: 'Slack',
-            description: '',
-            useForm: true,
-            icon: '/_assets/icons/ultraviolet-slack.svg',
-            website: ''
-          },
-          config: [],
-          isEnabled: false,
-          displayName: 'Slack',
-          selfRegistration: false,
-          domainWhitelist: '',
-          autoEnrollGroups: []
-        }
-      ],
-      selectedStrategy: '',
-      host: '',
-      strategy: {
-        strategy: {}
-      }
-    }
-  },
-  watch: {
-    selectedStrategy (newValue, oldValue) {
-      this.strategy = _.find(this.activeStrategies, ['key', newValue]) || {}
-    },
-    activeStrategies (newValue, oldValue) {
-      this.selectedStrategy = 'local'
-    }
-  },
-  methods: {
-    async refresh () {
-      await this.$apollo.queries.strategies.refetch()
-      await this.$apollo.queries.activeStrategies.refetch()
-      this.$store.commit('showNotification', {
-        message: this.$t('admin.auth.refreshSuccess'),
-        style: 'success',
-        icon: 'cached'
+    if (resp?.data?.authentication?.updateStrategies?.operation.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.auth.saveSuccess')
       })
-    },
-    addStrategy (str) {
-      const newStr = {
-        key: uuid(),
-        strategy: str,
-        config: str.props.map(c => ({
-          key: c.key,
-          value: {
-            ...c,
-            value: c.default
-          }
-        })),
-        order: this.activeStrategies.length,
-        isEnabled: true,
-        displayName: str.title,
-        selfRegistration: false,
-        domainWhitelist: [],
-        autoEnrollGroups: []
-      }
-      this.activeStrategies = [...this.activeStrategies, newStr]
-      this.$nextTick(() => {
-        this.selectedStrategy = newStr.key
-      })
-    },
-    deleteStrategy () {
-      this.activeStrategies = _.reject(this.activeStrategies, ['key', this.strategy.key])
-    },
-    async save () {
-      this.$store.commit('loadingStart', 'admin-auth-savestrategies')
-      try {
-        const resp = await this.$apollo.mutate({
-          mutation: gql`
-            mutation($strategies: [AuthenticationStrategyInput]!) {
-              authentication {
-                updateStrategies(strategies: $strategies) {
-                  responseResult {
-                    succeeded
-                    errorCode
-                    slug
-                    message
-                  }
-                }
-              }
-            }
-          `,
-          variables: {
-            strategies: this.activeStrategies.map((str, idx) => ({
-              key: str.key,
-              strategyKey: str.strategy.key,
-              displayName: str.displayName,
-              order: idx,
-              isEnabled: str.isEnabled,
-              config: str.config.map(cfg => ({ ...cfg, value: JSON.stringify({ v: cfg.value.value }) })),
-              selfRegistration: str.selfRegistration,
-              domainWhitelist: str.domainWhitelist,
-              autoEnrollGroups: str.autoEnrollGroups
-            }))
-          }
-        })
-        if (_.get(resp, 'data.authentication.updateStrategies.responseResult.succeeded', false)) {
-          this.$store.commit('showNotification', {
-            message: this.$t('admin.auth.saveSuccess'),
-            style: 'success',
-            icon: 'check'
-          })
-        } else {
-          throw new Error(_.get(resp, 'data.authentication.updateStrategies.responseResult.message', this.$t('common.error.unexpected')))
-        }
-      } catch (err) {
-        this.$store.commit('pushGraphError', err)
-      }
-      this.$store.commit('loadingStop', 'admin-auth-savestrategies')
+    } else {
+      throw new Error(resp?.data?.authentication?.updateStrategies?.operation?.message || t('common.error.unexpected'))
     }
-  },
-  apollo: {
-    strategies: {
-      query: gql`
-        query {
-          authentication {
-            strategies {
-              key
-              title
-              description
-              isAvailable
-              useForm
-              logo
-              website
-              props {
-                key
-                value
-              }
-            }
-          }
-        }
-      `,
-      skip: true,
-      fetchPolicy: 'network-only',
-      update: (data) => _.get(data, 'authentication.strategies', []).map(str => ({
-        ...str,
-        isDisabled: !str.isAvailable || str.key === 'local',
-        props: _.sortBy(str.props.map(cfg => ({
-          key: cfg.key,
-          ...JSON.parse(cfg.value)
-        })), [t => t.order])
-      })),
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-strategies-refresh')
-      }
-    },
-    activeStrategies: {
-      query: gql`
-        query {
-          authentication {
-            activeStrategies {
-              key
-              strategy {
-                key
-                title
-                description
-                useForm
-                logo
-                website
-              }
-              config {
-                key
-                value
-              }
-              order
-              isEnabled
-              displayName
-              selfRegistration
-              domainWhitelist
-              autoEnrollGroups
-            }
-          }
-        }
-      `,
-      skip: true,
-      fetchPolicy: 'network-only',
-      update: (data) => _.sortBy(_.get(data, 'authentication.activeStrategies', []).map(str => ({
-        ...str,
-        config: _.sortBy(str.config.map(cfg => ({
-          ...cfg,
-          value: JSON.parse(cfg.value)
-        })), [t => t.value.order])
-      })), ['order']),
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-activestrategies-refresh')
-      }
-    },
-    groups: {
-      query: gql`{ test }`,
-      fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-groups-refresh')
-      }
-    },
-    host: {
-      query: gql`{ test }`,
-      fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.site.config.host),
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-host-refresh')
-      }
-    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to save site theme config',
+      caption: err.message
+    })
   }
+  state.loading--
 }
+
+// apollo: {
+//   strategies: {
+//     query: gql`
+//       query {
+//         authentication {
+//           strategies {
+//             key
+//             title
+//             description
+//             isAvailable
+//             useForm
+//             logo
+//             website
+//             props {
+//               key
+//               value
+//             }
+//           }
+//         }
+//       }
+//     `,
+//     skip: true,
+//     fetchPolicy: 'network-only',
+//     update: (data) => _.get(data, 'authentication.strategies', []).map(str => ({
+//       ...str,
+//       isDisabled: !str.isAvailable || str.key === 'local',
+//       props: _.sortBy(str.props.map(cfg => ({
+//         key: cfg.key,
+//         ...JSON.parse(cfg.value)
+//       })), [t => t.order])
+//     })),
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-strategies-refresh')
+//     }
+//   },
+//   activeStrategies: {
+//     query: gql`
+//       query {
+//         authentication {
+//           activeStrategies {
+//             key
+//             strategy {
+//               key
+//               title
+//               description
+//               useForm
+//               logo
+//               website
+//             }
+//             config {
+//               key
+//               value
+//             }
+//             order
+//             isEnabled
+//             displayName
+//             selfRegistration
+//             domainWhitelist
+//             autoEnrollGroups
+//           }
+//         }
+//       }
+//     `,
+//     skip: true,
+//     fetchPolicy: 'network-only',
+//     update: (data) => _.sortBy(_.get(data, 'authentication.activeStrategies', []).map(str => ({
+//       ...str,
+//       config: _.sortBy(str.config.map(cfg => ({
+//         ...cfg,
+//         value: JSON.parse(cfg.value)
+//       })), [t => t.value.order])
+//     })), ['order']),
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-activestrategies-refresh')
+//     }
+//   },
+//   groups: {
+//     query: gql`{ test }`,
+//     fetchPolicy: 'network-only',
+//     update: (data) => data.groups.list,
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-groups-refresh')
+//     }
+//   },
+//   host: {
+//     query: gql`{ test }`,
+//     fetchPolicy: 'network-only',
+//     update: (data) => _.cloneDeep(data.site.config.host),
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-host-refresh')
+//     }
+//   }
 </script>

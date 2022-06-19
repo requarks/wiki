@@ -4702,6 +4702,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash-es@npm:4.17.21":
+  version: 4.17.21
+  resolution: "lodash-es@npm:4.17.21"
+  checksum: 05cbffad6e2adbb331a4e16fbd826e7faee403a1a04873b82b42c0f22090f280839f85b95393f487c1303c8a3d2a010048bf06151a6cbe03eee4d388fb0a12d2
+  languageName: node
+  linkType: hard
+
 "lodash._reinterpolate@npm:^3.0.0":
   version: 3.0.0
   resolution: "lodash._reinterpolate@npm:3.0.0"
@@ -6844,6 +6851,7 @@ __metadata:
     js-cookie: 3.0.1
     jwt-decode: 3.1.2
     lodash: 4.17.21
+    lodash-es: 4.17.21
     luxon: 2.4.0
     pinia: 2.0.14
     pug: 3.0.2

@@ -323,9 +323,8 @@ q-page.admin-mail
 </template>
 
 <script setup>
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 import gql from 'graphql-tag'
-import _get from 'lodash/get'
 import filesize from 'filesize'
 import filesizeParser from 'filesize-parser'
 
@@ -492,7 +491,7 @@ async function save () {
         uploadMaxFileSize: filesizeParser(state.humanUploadMaxFileSize || '0')
       }
     })
-    const resp = _get(respRaw, 'data.updateSystemSecurity.status', {})
+    const resp = respRaw?.data?.updateSystemSecurity?.status || {}
     if (resp.succeeded) {
       $q.notify({
         type: 'positive',

@@ -391,7 +391,7 @@ q-page.admin-general
 
 <script setup>
 import gql from 'graphql-tag'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'

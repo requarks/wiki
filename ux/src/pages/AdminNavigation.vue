@@ -4,8 +4,8 @@ q-page.admin-navigation
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-tree-structure.svg')
     .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ $t('admin.navigation.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ $t('admin.navigation.subtitle') }}
+      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.navigation.title') }}
+      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.navigation.subtitle') }}
     .col-auto
       q-btn.acrylic-btn.q-mr-sm(
         icon='las la-question-circle'
@@ -19,16 +19,16 @@ q-page.admin-navigation
         icon='las la-redo-alt'
         flat
         color='secondary'
-        :loading='loading > 0'
+        :loading='state.loading > 0'
         @click='load'
         )
       q-btn(
         unelevated
-        icon='mdi-check'
-        :label='$t(`common.actions.apply`)'
+        icon='fa-solid fa-check'
+        :label='t(`common.actions.apply`)'
         color='secondary'
         @click='save'
-        :disabled='loading > 0'
+        :disabled='state.loading > 0'
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
@@ -306,278 +306,297 @@ q-page.admin-navigation
 //-   page-selector(mode='select', v-model='selectPageModal', :open-handler='selectPageHandle', path='home', :locale='currentLang')
 </template>
 
-<script>
-import _ from 'lodash'
+<script setup>
 import gql from 'graphql-tag'
+import { find, intersectionBy, pull, unionBy } from 'lodash-es'
 import { v4 as uuid } from 'uuid'
-import { createMetaMixin } from 'quasar'
+
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { computed, onMounted, reactive, watch, nextTick } from 'vue'
+
+import { useAdminStore } from 'src/stores/admin'
+import { useSiteStore } from 'src/stores/site'
 
 import draggable from 'vuedraggable'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+const siteStore = useSiteStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: t('admin.navigation.title')
+})
+
+// DATA
 
 const siteConfig = { lang: 'en' }
 const siteLangs = [{ code: 'en' }]
 
-export default {
-  mixins: [
-    createMetaMixin(function () {
-      return {
-        title: this.$t('admin.navigation.title')
-      }
-    })
-  ],
-  components: {
-    draggable
+const state = reactive({
+  loading: 0,
+  selectPageModal: false,
+  trees: [],
+  current: {},
+  currentLang: siteConfig.lang,
+  groups: [],
+  copyFromLocaleDialogIsShown: false,
+  config: {
+    mode: 'NONE'
   },
-  meta () {
-    return {
-      title: this.$t('admin.navigation.title')
-    }
-  },
-  data () {
-    return {
-      loading: false,
-      selectPageModal: false,
-      trees: [],
-      current: {},
-      currentLang: siteConfig.lang,
-      groups: [],
-      copyFromLocaleDialogIsShown: false,
-      config: {
-        mode: 'NONE'
-      },
-      allLocales: [],
-      copyFromLocaleCode: 'en'
-    }
-  },
-  computed: {
-    navTypes () {
-      return [
-        { text: this.$t('navigation.navType.external'), value: 'external' },
-        { text: this.$t('navigation.navType.externalblank'), value: 'externalblank' },
-        { text: this.$t('navigation.navType.home'), value: 'home' },
-        { text: this.$t('navigation.navType.page'), value: 'page' }
-        // { text: this.$t('navigation.navType.searchQuery'), value: 'search' }
-      ]
-    },
-    locales () {
-      return _.intersectionBy(this.allLocales, _.unionBy(siteLangs, [{ code: 'en' }, { code: siteConfig.lang }], 'code'), 'code')
-    },
-    currentTree: {
-      get () {
-        return _.get(_.find(this.trees, ['locale', this.currentLang]), 'items', null) || []
-      },
-      set (val) {
-        const tree = _.find(this.trees, ['locale', this.currentLang])
-        if (tree) {
-          tree.items = val
-        } else {
-          this.trees = [...this.trees, {
-            locale: this.currentLang,
-            items: val
-          }]
-        }
-      }
-    }
-  },
-  watch: {
-    currentLang (newValue, oldValue) {
-      this.$nextTick(() => {
-        if (this.currentTree.length > 0) {
-          this.current = this.currentTree[0]
-        } else {
-          this.current = {}
-        }
-      })
-    }
-  },
-  methods: {
-    async load () {
+  allLocales: [],
+  copyFromLocaleCode: 'en'
+})
 
-    },
-    addItem (kind) {
-      let newItem = {
-        id: uuid(),
-        kind,
-        visibilityMode: 'all',
-        visibilityGroups: []
-      }
-      switch (kind) {
-        case 'link':
-          newItem = {
-            ...newItem,
-            label: this.$t('navigation.untitled', { kind: this.$t('navigation.link') }),
-            icon: 'mdi-chevron-right',
-            targetType: 'home',
-            target: ''
-          }
-          break
-        case 'header':
-          newItem.label = this.$t('navigation.untitled', { kind: this.$t('navigation.header') })
-          break
-      }
-      this.currentTree = [...this.currentTree, newItem]
-      this.current = newItem
-    },
-    deleteItem (item) {
-      this.currentTree = _.pull(this.currentTree, item)
-      this.current = {}
-    },
-    selectItem (item) {
-      this.current = item
-    },
-    selectPage () {
-      this.selectPageModal = true
-    },
-    selectPageHandle ({ path, locale }) {
-      this.current.target = `/${locale}/${path}`
-    },
-    copyFromLocale () {
-      this.copyFromLocaleDialogIsShown = false
-      this.currentTree = [...this.currentTree, ..._.get(_.find(this.trees, ['locale', this.copyFromLocaleCode]), 'items', null) || []]
-    },
-    async save () {
-      this.$store.commit('loadingStart', 'admin-navigation-save')
-      try {
-        const resp = await this.$apollo.mutate({
-          mutation: gql`
-            mutation ($tree: [NavigationTreeInput]!, $mode: NavigationMode!) {
-              navigation{
-                updateTree(tree: $tree) {
-                  responseResult {
-                    succeeded
-                    errorCode
-                    slug
-                    message
-                  }
-                },
-                updateConfig(mode: $mode) {
-                  responseResult {
-                    succeeded
-                    errorCode
-                    slug
-                    message
-                  }
-                }
-              }
-            }
-          `,
-          variables: {
-            tree: this.trees,
-            mode: this.config.mode
-          }
-        })
-        if (_.get(resp, 'data.navigation.updateTree.responseResult.succeeded', false) && _.get(resp, 'data.navigation.updateConfig.responseResult.succeeded', false)) {
-          this.$store.commit('showNotification', {
-            message: this.$t('navigation.saveSuccess'),
-            style: 'success',
-            icon: 'check'
-          })
-        } else {
-          throw new Error(_.get(resp, 'data.navigation.updateTree.responseResult.message', 'An unexpected error occurred.'))
-        }
-      } catch (err) {
-        this.$store.commit('pushGraphError', err)
-      }
-      this.$store.commit('loadingStop', 'admin-navigation-save')
-    },
-    async refresh () {
-      await this.$apollo.queries.trees.refetch()
-      this.current = {}
-      this.$store.commit('showNotification', {
-        message: 'Navigation has been refreshed.',
-        style: 'success',
-        icon: 'cached'
-      })
+// COMPUTED
+
+const navTypes = computed(() => ([
+  { text: t('navigation.navType.external'), value: 'external' },
+  { text: t('navigation.navType.externalblank'), value: 'externalblank' },
+  { text: t('navigation.navType.home'), value: 'home' },
+  { text: t('navigation.navType.page'), value: 'page' }
+  // { text: t('navigation.navType.searchQuery'), value: 'search' }
+]))
+
+const locales = computed(() => {
+  return intersectionBy(state.allLocales, unionBy(siteLangs, [{ code: 'en' }, { code: siteConfig.lang }], 'code'), 'code')
+})
+
+const currentTree = computed({
+  get () {
+    return find(state.trees, ['locale', state.currentLang])?.items || []
+  },
+  set (val) {
+    const tree = find(state.trees, ['locale', state.currentLang])
+    if (tree) {
+      tree.items = val
+    } else {
+      state.trees = [...state.trees, {
+        locale: state.currentLang,
+        items: val
+      }]
     }
   }
-  // apollo: {
-  //   config: {
-  //     query: gql`
-  //       {
-  //         navigation {
-  //           config {
-  //             mode
-  //           }
-  //         }
-  //       }
-  //     `,
-  //     fetchPolicy: 'network-only',
-  //     update: (data) => _.cloneDeep(data.navigation.config),
-  //     watchLoading (isLoading) {
-  //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-config')
-  //     }
-  //   },
-  //   trees: {
-  //     query: gql`
-  //       {
-  //         navigation {
-  //           tree {
-  //             locale
-  //             items {
-  //               id
-  //               kind
-  //               label
-  //               icon
-  //               targetType
-  //               target
-  //               visibilityMode
-  //               visibilityGroups
-  //             }
-  //           }
-  //         }
-  //       }
-  //     `,
-  //     fetchPolicy: 'network-only',
-  //     update: (data) => _.cloneDeep(data.navigation.tree),
-  //     watchLoading (isLoading) {
-  //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-tree')
-  //     }
-  //   },
-  //   groups: {
-  //     query: gql`
-  //       query {
-  //         groups {
-  //           list {
-  //             id
-  //             name
-  //             isSystem
-  //             userCount
-  //             createdAt
-  //             updatedAt
-  //           }
-  //         }
-  //       }
-  //     `,
-  //     fetchPolicy: 'network-only',
-  //     update: (data) => data.groups.list,
-  //     watchLoading (isLoading) {
-  //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-groups')
-  //     }
-  //   },
-  //   allLocales: {
-  //     query: gql`
-  //       {
-  //         localization {
-  //           locales {
-  //             code
-  //             name
-  //             nativeName
-  //           }
-  //         }
-  //       }
-  //     `,
-  //     fetchPolicy: 'network-only',
-  //     update: (data) => data.localization.locales,
-  //     watchLoading (isLoading) {
-  //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-locales')
-  //     }
-  //   }
-  // }
+})
+
+// WATCHERS
+
+watch(() => state.currentLang, (newValue, oldValue) => {
+  nextTick(() => {
+    if (state.currentTree.length > 0) {
+      state.current = state.currentTree[0]
+    } else {
+      state.current = {}
+    }
+  })
+})
+
+// METHODS
+
+async function load () {
+
 }
+
+function addItem (kind) {
+  let newItem = {
+    id: uuid(),
+    kind,
+    visibilityMode: 'all',
+    visibilityGroups: []
+  }
+  switch (kind) {
+    case 'link':
+      newItem = {
+        ...newItem,
+        label: t('navigation.untitled', { kind: t('navigation.link') }),
+        icon: 'mdi-chevron-right',
+        targetType: 'home',
+        target: ''
+      }
+      break
+    case 'header':
+      newItem.label = t('navigation.untitled', { kind: t('navigation.header') })
+      break
+  }
+  state.currentTree = [...state.currentTree, newItem]
+  state.current = newItem
+}
+
+function deleteItem (item) {
+  state.currentTree = pull(state.currentTree, item)
+  state.current = {}
+}
+
+function selectItem (item) {
+  state.current = item
+}
+
+function selectPage () {
+  state.selectPageModal = true
+}
+
+function selectPageHandle ({ path, locale }) {
+  state.current.target = `/${locale}/${path}`
+}
+
+function copyFromLocale () {
+  state.copyFromLocaleDialogIsShown = false
+  state.currentTree = [...state.currentTree, ...find(state.trees, ['locale', state.copyFromLocaleCode])?.items || []]
+}
+
+async function save () {
+  this.$store.commit('loadingStart', 'admin-navigation-save')
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation ($tree: [NavigationTreeInput]!, $mode: NavigationMode!) {
+          navigation{
+            updateTree(tree: $tree) {
+              responseResult {
+                succeeded
+                errorCode
+                slug
+                message
+              }
+            },
+            updateConfig(mode: $mode) {
+              responseResult {
+                succeeded
+                errorCode
+                slug
+                message
+              }
+            }
+          }
+        }
+      `,
+      variables: {
+        tree: state.trees,
+        mode: state.config.mode
+      }
+    })
+    if (resp?.data.navigation.updateTree.responseResult.succeeded && resp?.data.navigation.updateConfig.responseResult.succeeded) {
+      this.$store.commit('showNotification', {
+        message: t('navigation.saveSuccess'),
+        style: 'success',
+        icon: 'check'
+      })
+    } else {
+      throw new Error(resp?.data.navigation.updateTree.operation.message || 'An unexpected error occurred.')
+    }
+  } catch (err) {
+    this.$store.commit('pushGraphError', err)
+  }
+  this.$store.commit('loadingStop', 'admin-navigation-save')
+}
+
+async function refresh () {
+  load()
+  state.current = {}
+  this.$store.commit('showNotification', {
+    message: 'Navigation has been refreshed.',
+    style: 'success',
+    icon: 'cached'
+  })
+}
+
+// apollo: {
+//   config: {
+//     query: gql`
+//       {
+//         navigation {
+//           config {
+//             mode
+//           }
+//         }
+//       }
+//     `,
+//     fetchPolicy: 'network-only',
+//     update: (data) => _.cloneDeep(data.navigation.config),
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-config')
+//     }
+//   },
+//   trees: {
+//     query: gql`
+//       {
+//         navigation {
+//           tree {
+//             locale
+//             items {
+//               id
+//               kind
+//               label
+//               icon
+//               targetType
+//               target
+//               visibilityMode
+//               visibilityGroups
+//             }
+//           }
+//         }
+//       }
+//     `,
+//     fetchPolicy: 'network-only',
+//     update: (data) => _.cloneDeep(data.navigation.tree),
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-tree')
+//     }
+//   },
+//   groups: {
+//     query: gql`
+//       query {
+//         groups {
+//           list {
+//             id
+//             name
+//             isSystem
+//             userCount
+//             createdAt
+//             updatedAt
+//           }
+//         }
+//       }
+//     `,
+//     fetchPolicy: 'network-only',
+//     update: (data) => data.groups.list,
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-groups')
+//     }
+//   },
+//   allLocales: {
+//     query: gql`
+//       {
+//         localization {
+//           locales {
+//             code
+//             name
+//             nativeName
+//           }
+//         }
+//       }
+//     `,
+//     fetchPolicy: 'network-only',
+//     update: (data) => data.localization.locales,
+//     watchLoading (isLoading) {
+//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-locales')
+//     }
+//   }
+// }
 </script>
 
 <style lang='scss' scoped>
-
 .clickable {
   cursor: pointer;
 

@@ -95,7 +95,7 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-tree-structure.svg')
           q-item-section {{ t('admin.navigation.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/rendering`', v-ripple, active-class='bg-primary text-white')
+        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/rendering`', v-ripple, active-class='bg-primary text-white', disabled)
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')
           q-item-section {{ t('admin.rendering.title') }}

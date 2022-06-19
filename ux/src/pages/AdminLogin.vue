@@ -176,8 +176,7 @@ q-page.admin-login
 </template>
 
 <script setup>
-import { get } from 'vuex-pathify'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 import gql from 'graphql-tag'
 import draggable from 'vuedraggable'
 

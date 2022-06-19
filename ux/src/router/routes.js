@@ -35,12 +35,12 @@ const routes = [
       { path: ':siteid/editors', component: () => import('../pages/AdminEditors.vue') },
       { path: ':siteid/locale', component: () => import('../pages/AdminLocale.vue') },
       { path: ':siteid/login', component: () => import('../pages/AdminLogin.vue') },
-      // { path: ':siteid/navigation', component: () => import('../pages/AdminNavigation.vue') },
+      { path: ':siteid/navigation', component: () => import('../pages/AdminNavigation.vue') },
       // { path: ':siteid/rendering', component: () => import('../pages/AdminRendering.vue') },
       { path: ':siteid/storage/:id?', component: () => import('../pages/AdminStorage.vue') },
       { path: ':siteid/theme', component: () => import('../pages/AdminTheme.vue') },
       // -> Users
-      // { path: 'auth', component: () => import('../pages/AdminAuth.vue') },
+      { path: 'auth', component: () => import('../pages/AdminAuth.vue') },
       { path: 'groups/:id?/:section?', component: () => import('../pages/AdminGroups.vue') },
       { path: 'users/:id?/:section?', component: () => import('../pages/AdminUsers.vue') },
       // -> System

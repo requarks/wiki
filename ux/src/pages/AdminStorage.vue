@@ -583,10 +583,8 @@ q-page.admin-storage
 </template>
 
 <script setup>
-import find from 'lodash/find'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep, find, transform } from 'lodash-es'
 import gql from 'graphql-tag'
-import transform from 'lodash/transform'
 import * as VNetworkGraph from 'v-network-graph'
 
 import { useI18n } from 'vue-i18n'
