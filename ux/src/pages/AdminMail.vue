@@ -112,7 +112,7 @@ q-page.admin-mail
               :aria-label='t(`admin.mail.smtpName`)'
               )
         q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='secure')
           q-item-section
             q-item-label {{t(`admin.mail.smtpTLS`)}}
@@ -126,7 +126,7 @@ q-page.admin-mail
               :aria-label='t(`admin.mail.smtpTLS`)'
               )
         q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='security-ssl')
           q-item-section
             q-item-label {{t(`admin.mail.smtpVerifySSL`)}}
@@ -178,7 +178,7 @@ q-page.admin-mail
                 q-card-section.col-auto.q-pr-none
                   q-icon(name='las la-info-circle', size='sm')
                 q-card-section.text-caption {{ t('admin.mail.dkimHint') }}
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='received')
           q-item-section
             q-item-label {{t(`admin.mail.dkimUse`)}}

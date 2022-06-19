@@ -36,7 +36,7 @@ q-page.admin-flags
                 q-card-section
                   span {{ t('admin.flags.warn.label') }}
                   .text-caption.text-red-1 {{ t('admin.flags.warn.hint') }}
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='flag-filled')
           q-item-section
             q-item-label {{t(`admin.flags.ldapdebug.label`)}}
@@ -50,7 +50,7 @@ q-page.admin-flags
               :aria-label='t(`admin.flags.ldapdebug.label`)'
               )
         q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='flag-filled')
           q-item-section
             q-item-label {{t(`admin.flags.sqllog.label`)}}
@@ -64,7 +64,7 @@ q-page.admin-flags
               :aria-label='t(`admin.flags.sqllog.label`)'
               )
       q-card.shadow-1.q-py-sm.q-mt-md
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='heart-outline')
           q-item-section
             q-item-label {{t(`admin.flags.hidedonatebtn.label`)}}
@@ -83,8 +83,12 @@ q-page.admin-flags
 import gql from 'graphql-tag'
 import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import _transform from 'lodash/transform'
-import { useMeta } from 'quasar'
+import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+
+// QUASAR
+
+const $q = useQuasar()
 
 // STORES / ROUTERS / i18n
 

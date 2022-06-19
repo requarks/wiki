@@ -66,7 +66,7 @@ q-page.admin-locale
               :aria-label='t(`admin.locale.base.label`)'
               )
         q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='unit')
           q-item-section
             q-item-label {{t(`admin.locale.namespaces.label`)}}
