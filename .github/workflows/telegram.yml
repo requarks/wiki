@@ -7,7 +7,7 @@ jobs:
     steps:
     
       - name: Notify Telegram Channel
-        uses: appleboy/telegram-action@0.0.3
+        uses: appleboy/telegram-action@v0.1.1
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
