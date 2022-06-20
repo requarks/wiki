@@ -39,7 +39,7 @@ q-page.admin-login
       q-card.shadow-1.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.login.experience')}}
-        q-item(tag='label')
+        q-item
           blueprint-icon(icon='full-image', indicator, :indicator-text='t(`admin.extensions.requiresSharp`)')
           q-item-section
             q-item-label {{t(`admin.login.background`)}}

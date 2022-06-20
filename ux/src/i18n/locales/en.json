@@ -1424,5 +1424,7 @@
   "admin.general.sitemapHint": "Make a sitemap.xml available to search engines with all pages accessible to guests.",
   "admin.groups.usersNone": "This group doesn't have any user yet.",
   "admin.mail.smtpName": "Client Identifying Name",
-  "admin.mail.smtpNameHint": "An optional name to send to the SMTP server to identify your mailer. Leave empty to use server hostname. For Google Workspace customers, this should be your main domain name."
+  "admin.mail.smtpNameHint": "An optional name to send to the SMTP server to identify your mailer. Leave empty to use server hostname. For Google Workspace customers, this should be your main domain name.",
+  "admin.general.footerExtra": "Additional Footer Text",
+  "admin.general.footerExtraHint": "Optionally add more content to the footer, such as additional copyright terms or mandatory regulatory info."
 }

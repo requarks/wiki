@@ -37,6 +37,7 @@ module.exports = class Site extends Model {
         description: '',
         company: '',
         contentLicense: '',
+        footerExtra: '',
         defaults: {
           timezone: 'America/New_York',
           dateFormat: 'YYYY-MM-DD',

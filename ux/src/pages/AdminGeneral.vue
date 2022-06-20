@@ -118,6 +118,19 @@ q-page.admin-general
               dense
               :aria-label='t(`admin.general.contentLicense`)'
               )
+        q-separator.q-my-sm(inset)
+        q-item
+          blueprint-icon(icon='subtitles')
+          q-item-section
+            q-item-label {{t(`admin.general.footerExtra`)}}
+            q-item-label(caption) {{t(`admin.general.footerExtraHint`)}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='state.config.footerExtra'
+              dense
+              :aria-label='t(`admin.general.footerExtra`)'
+              )
 
       //- -----------------------
       //- FEATURES
@@ -430,6 +443,7 @@ const state = reactive({
     description: '',
     company: '',
     contentLicense: '',
+    footerExtra: '',
     logoText: false,
     ratings: {
       index: false,
@@ -517,6 +531,7 @@ async function load () {
           description
           company
           contentLicense
+          footerExtra
           logoText
           sitemap
           robots {
@@ -578,6 +593,7 @@ async function save () {
           description: state.config.description ?? '',
           company: state.config.company ?? '',
           contentLicense: state.config.contentLicense ?? '',
+          footerExtra: state.config.footerExtra ?? '',
           logoText: state.config.logoText ?? false,
           sitemap: state.config.sitemap ?? false,
           robots: {
