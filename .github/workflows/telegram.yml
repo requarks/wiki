@@ -14,5 +14,4 @@ jobs:
           format: markdown
           message: |
             Wiki.js **2.5.284** has been released!
-
             See [release notes](https://github.com/requarks/wiki/releases) for details.
