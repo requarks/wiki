@@ -358,6 +358,18 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        
+    - name: Notify Telegram Channel
+      uses: appleboy/telegram-action@0.0.3
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        format: markdown
+        message: |
+          Wiki.js **${{ github.ref_name }}** has been released!
+          
+          See [release notes](https://github.com/requarks/wiki/releases) for details.
+        
 
   build-do-image:
     name: Build DigitalOcean Image
