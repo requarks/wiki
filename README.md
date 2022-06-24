@@ -41,7 +41,7 @@
 
 <div align="center">
 
-Wiki.js is an open source project that has been made possible due to the generous contributions by community [backers](https://wiki.js.org/about). If you are interested in supporting this project, please consider [becoming a sponsor](https://github.com/users/NGPixel/sponsorship), [becoming a patron](https://www.patreon.com/requarks), donating to our [OpenCollective](https://opencollective.com/wikijs), via [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FLV5X255Z9CJU&source=url) or via Ethereum (`0xe1d55c19ae86f6bcbfb17e7f06ace96bdbb22cb5`).
+Wiki.js is an open source project that has been made possible due to the generous contributions by community [backers](https://js.wiki/about). If you are interested in supporting this project, please consider [becoming a sponsor](https://github.com/users/NGPixel/sponsorship), [becoming a patron](https://www.patreon.com/requarks), donating to our [OpenCollective](https://opencollective.com/wikijs), via [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FLV5X255Z9CJU&source=url) or via Ethereum (`0xe1d55c19ae86f6bcbfb17e7f06ace96bdbb22cb5`).
   
   [![Become a Sponsor](https://img.shields.io/badge/donate-github-ea4aaa.svg?style=popout&logo=github)](https://github.com/users/NGPixel/sponsorship)
   [![Become a Patron](https://img.shields.io/badge/donate-patreon-orange.svg?style=popout&logo=patreon)](https://www.patreon.com/requarks)
@@ -409,9 +409,6 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 <h2 align="center">Special Thanks</h2>
 
-![Algolia](https://js.wiki/legacy/logo_algolia.png)  
-[Algolia](https://www.algolia.com/) for providing access to their incredible search engine.
-
 ![Browserstack](https://js.wiki/legacy/logo_browserstack.png)  
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
@@ -419,16 +416,16 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
 ![DigitalOcean](https://js.wiki/legacy/logo_digitalocean.png)  
-[DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site.
+[DigitalOcean](https://m.do.co/c/5f7445bfa4d0) for providing hosting of the Wiki.js documentation site and APIs.
 
 ![Icons8](https://static.requarks.io/logo/icons8-text-h40.png)  
-[Icons8](https://icons8.com/) for providing beautiful icon sets.
+[Icons8](https://icons8.com/) for providing access to their beautiful icon sets.
 
 ![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
 [Lokalise](https://lokalise.com/) for providing access to their great localization tool.
 
 ![Netlify](https://js.wiki/legacy/logo_netlify.png)  
-[Netlify](https://www.netlify.com) for providing hosting for landings and blog websites.
+[Netlify](https://www.netlify.com) for providing hosting for our website.
 
 ![ngrok](https://static.requarks.io/logo/ngrok-h40.png)  
 [ngrok](https://ngrok.com) for providing access to their great HTTP tunneling services.
