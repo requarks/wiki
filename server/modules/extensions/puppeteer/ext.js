@@ -1,4 +1,3 @@
-const cmdExists = require('command-exists')
 const os = require('os')
 
 module.exports = {
@@ -11,7 +10,7 @@ module.exports = {
   isInstalled: false,
   async check () {
     try {
-      await cmdExists('pandoc')
+      require.resolve('puppeteer')
       this.isInstalled = true
     } catch (err) {
       this.isInstalled = false
