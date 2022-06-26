@@ -453,6 +453,7 @@ exports.up = async knex => {
       company: '',
       contentLicense: '',
       footerExtra: '',
+      pageExtensions: ['md', 'html', 'txt'],
       defaults: {
         timezone: 'America/New_York',
         dateFormat: 'YYYY-MM-DD',

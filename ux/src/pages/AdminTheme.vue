@@ -2,7 +2,7 @@
 q-page.admin-theme
   .row.q-pa-md.items-center
     .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-paint-roller.svg')
+      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-paint-roller-animated.svg')
     .col.q-pl-md
       .text-h5.text-primary.animated.fadeInLeft {{ t('admin.theme.title') }}
       .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.theme.subtitle') }}
@@ -48,7 +48,7 @@ q-page.admin-theme
             color='pink'
             @click='resetColors'
           )
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='light-on')
           q-item-section
             q-item-label {{t(`admin.theme.darkMode`)}}
@@ -123,7 +123,7 @@ q-page.admin-theme
               :options='rightLeftOptions'
             )
         q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='share')
           q-item-section
             q-item-label {{t(`admin.theme.showSharingMenu`)}}
@@ -137,7 +137,7 @@ q-page.admin-theme
               :aria-label='t(`admin.theme.showSharingMenu`)'
               )
         q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
+        q-item(tag='label')
           blueprint-icon(icon='print')
           q-item-section
             q-item-label {{t(`admin.theme.showPrintBtn`)}}

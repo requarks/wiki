@@ -209,6 +209,25 @@ q-page.admin-general
               :aria-label='t(`admin.general.allowSearch`)'
               )
 
+      //- -----------------------
+      //- URL Handling
+      //- -----------------------
+      q-card.shadow-1.q-pb-sm.q-mt-md
+        q-card-section
+          .text-subtitle1 {{t('admin.general.urlHandling')}}
+        q-item
+          blueprint-icon(icon='sort-by-follow-up-date')
+          q-item-section
+            q-item-label {{t(`admin.general.pageExtensions`)}}
+            q-item-label(caption) {{t(`admin.general.pageExtensionsHint`)}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='state.config.pageExtensions'
+              dense
+              :aria-label='t(`admin.general.pageExtensions`)'
+              )
+
     .col-12.col-lg-5
       //- -----------------------
       //- Logo
@@ -444,6 +463,7 @@ const state = reactive({
     company: '',
     contentLicense: '',
     footerExtra: '',
+    pageExtensions: '',
     logoText: false,
     ratings: {
       index: false,
@@ -532,6 +552,7 @@ async function load () {
           company
           contentLicense
           footerExtra
+          pageExtensions
           logoText
           sitemap
           robots {
@@ -594,6 +615,7 @@ async function save () {
           company: state.config.company ?? '',
           contentLicense: state.config.contentLicense ?? '',
           footerExtra: state.config.footerExtra ?? '',
+          pageExtensions: state.config.pageExtensions ?? '',
           logoText: state.config.logoText ?? false,
           sitemap: state.config.sitemap ?? false,
           robots: {

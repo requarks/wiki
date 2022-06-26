@@ -1426,5 +1426,8 @@
   "admin.mail.smtpName": "Client Identifying Name",
   "admin.mail.smtpNameHint": "An optional name to send to the SMTP server to identify your mailer. Leave empty to use server hostname. For Google Workspace customers, this should be your main domain name.",
   "admin.general.footerExtra": "Additional Footer Text",
-  "admin.general.footerExtraHint": "Optionally add more content to the footer, such as additional copyright terms or mandatory regulatory info."
+  "admin.general.footerExtraHint": "Optionally add more content to the footer, such as additional copyright terms or mandatory regulatory info.",
+  "admin.general.urlHandling": "URL Handling",
+  "admin.general.pageExtensions": "Page Extensions",
+  "admin.general.pageExtensionsHint": "A comma-separated list of URL extensions that will be treated as pages. For example, adding md will treat /foobar.md the same as /foobar."
 }

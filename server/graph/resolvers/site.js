@@ -13,7 +13,8 @@ module.exports = {
         ...s.config,
         id: s.id,
         hostname: s.hostname,
-        isEnabled: s.isEnabled
+        isEnabled: s.isEnabled,
+        pageExtensions: s.config.pageExtensions.join(', ')
       }))
     },
     async siteById (obj, args) {
@@ -22,7 +23,8 @@ module.exports = {
         ...site.config,
         id: site.id,
         hostname: site.hostname,
-        isEnabled: site.isEnabled
+        isEnabled: site.isEnabled,
+        pageExtensions: site.config.pageExtensions.join(', ')
       } : null
     },
     async siteByHostname (obj, args) {
@@ -38,7 +40,8 @@ module.exports = {
         ...site.config,
         id: site.id,
         hostname: site.hostname,
-        isEnabled: site.isEnabled
+        isEnabled: site.isEnabled,
+        pageExtensions: site.config.pageExtensions.join(', ')
       } : null
     }
   },
@@ -101,6 +104,10 @@ module.exports = {
         // -> Format Code
         if (args.patch?.theme?.injectCSS) {
           args.patch.theme.injectCSS = new CleanCSS({ inline: false }).minify(args.patch.theme.injectCSS).styles
+        }
+        // -> Format Page Extensions
+        if (args.patch?.pageExtensions) {
+          args.patch.pageExtensions = args.patch.pageExtensions.split(',').map(ext => ext.trim().toLowerCase()).filter(ext => ext.length > 0)
         }
         // -> Update site
         await WIKI.models.sites.updateSite(args.id, {
