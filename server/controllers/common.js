@@ -555,6 +555,14 @@ router.get('/*', async (req, res, next) => {
         _.set(res.locals, 'pageMeta.title', 'Welcome')
         res.render('welcome', { locale: pageArgs.locale })
       } else {
+        const pages = await WIKI.models.pages.getPageIDWithTitle(pageArgs.path)
+        if (pages.length === 1) {
+          return res.redirect(`/${pageArgs.locale}/${pages[0].path}`)
+        } else if (pages.length > 1) {
+          _.set(res.locals, 'pageMeta.title', 'Disambiguate')
+          res.status(404).render('disambiguate', { pages })
+          return
+        }
         _.set(res.locals, 'pageMeta.title', 'Page Not Found')
         if (effectivePermissions.pages.write) {
           res.status(404).render('new', { path: pageArgs.path, locale: pageArgs.locale })
