@@ -32,23 +32,30 @@ q-page.admin-navigation
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
-    .col-6
-//- v-container(fluid, grid-list-lg)
-//-   v-layout(row wrap)
-//-     v-flex(xs12)
-//-       .admin-header
-//-         img.animated.fadeInUp(src='/_assets/svg/icon-triangle-arrow.svg', alt='Navigation', style='width: 80px;')
-//-         .admin-header-title
-//-           .headline.primary--text.animated.fadeInLeft {{$t('navigation.title')}}
-//-           .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s {{$t('navigation.subtitle')}}
-//-         v-spacer
-//-         v-btn.animated.fadeInDown.wait-p3s(icon, outlined, color='grey', href='https://docs.requarks.io/navigation', target='_blank')
-//-           v-icon mdi-help-circle
-//-         v-btn.mx-3.animated.fadeInDown.wait-p2s.mr-3(icon, outlined, color='grey', @click='refresh')
-//-           v-icon mdi-refresh
-//-         v-btn.animated.fadeInDown(color='success', depressed, @click='save', large)
-//-           v-icon(left) mdi-check
-//-           span {{$t('common.actions.apply')}}
+    .col-auto
+      q-card.q-mt-sm {{t('admin.navigation.mode')}}
+
+      q-card.bg-dark.q-mt-sm
+        q-list(
+          style='min-width: 350px;'
+          padding
+          dark
+          )
+          q-item
+            q-item-section
+              q-select(
+                dark
+                outlined
+                option-value='value'
+                option-label='text'
+                emit-value
+                map-options
+                dense
+                options-dense
+                :label='t(`admin.navigation.mode`)'
+                :aria-label='t(`admin.navigation.mode`)'
+                )
+
 //-       v-container.pa-0.mt-3(fluid, grid-list-lg)
 //-         v-row(dense)
 //-           v-col(cols='3')

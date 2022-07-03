@@ -4,45 +4,78 @@ q-layout(view='hHh lpr lff')
     router-view
 </template>
 
-<script>
+<script setup>
 
-export default {
-  name: 'AuthLayout',
-  data () {
-    return {
-      bgUrl: '_assets/bg/login-v3.jpg'
-      // bgUrl: 'https://docs.requarks.io/_assets/img/splash/1.jpg'
-    }
-  }
-}
 </script>
 
 <style lang="scss">
   .auth {
     background-color: #FFF;
-    background-size: cover;
-    background-position: center center;
-    height: 100vh;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    font-family: 'Rubik', sans-serif;
 
-    &-box {
-      background-color: rgba(255,255,255,.25);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      padding: 32px;
-      border-radius: 8px;
-      width: 500px;
-      max-width: 95vw;
+    @at-root .body--dark & {
+      background-color: $dark-6;
+    }
 
-      @at-root .no-backdropfilter & {
-        background-color: rgba(255,255,255,.95);
+    &-content {
+      flex: 1 0 100%;
+      width: 100%;
+      max-width: 500px;
+      padding: 3rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+
+      @media (max-width: $breakpoint-xs-max) {
+        padding: 1rem 2rem;
+        max-width: 100vw;
       }
+    }
 
-      @media (max-width: $breakpoint-md-max) {
-        margin-left: 0;
+    &-logo {
+      img {
+        height: 72px;
+      }
+    }
+
+    &-site-title {
+      font-size: 1.875rem;
+      line-height: 2.25rem;
+      font-weight: 700;
+      margin: 0;
+      color: $blue-grey-9;
+
+      @at-root .body--dark & {
+        color: $blue-grey-1;
+      }
+    }
+
+    &-strategies {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
+      gap: 10px;
+    }
+
+    &-bg {
+      flex: 1;
+      flex-basis: 0;
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+
+      img {
+        position: relative;
         width: 100%;
+        height: 100%;
+        object-fit: cover;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: 0;
       }
     }
   }

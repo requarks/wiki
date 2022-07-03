@@ -29,9 +29,7 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets-legacy'))
 module.exports = {
   mode: 'production',
   entry: {
-    app: './client/index-app.js',
-    legacy: './client/index-legacy.js',
-    setup: './client/index-setup.js'
+    app: './client/index-app.js'
   },
   output: {
     path: path.join(process.cwd(), 'assets-legacy'),
@@ -208,25 +206,10 @@ module.exports = {
       chunkFilename: 'css/[name].[chunkhash].css'
     }),
     new HtmlWebpackPlugin({
-      template: 'dev/templates/master.pug',
-      filename: '../server/views/master.pug',
+      template: 'dev/templates/base.pug',
+      filename: '../server/views/base.pug',
       hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'legacy']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/legacy.pug',
-      filename: '../server/views/legacy/master.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'app']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/setup.pug',
-      filename: '../server/views/setup.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['app', 'legacy']
+      inject: false
     }),
     new HtmlWebpackPugPlugin(),
     new ScriptExtHtmlWebpackPlugin({

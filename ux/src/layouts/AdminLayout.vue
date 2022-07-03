@@ -79,7 +79,7 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-comments.svg')
           q-item-section {{ t('admin.comments.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/editors`', v-ripple, active-class='bg-primary text-white')
+        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/editors`', v-ripple, active-class='bg-primary text-white', disabled)
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-cashbook.svg')
           q-item-section {{ t('admin.editors.title') }}

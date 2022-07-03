@@ -165,14 +165,7 @@ q-page.admin-mail
 </template>
 
 <script>
-import cloneDeep from 'lodash/cloneDeep'
-import concat from 'lodash/concat'
-import filter from 'lodash/filter'
-import find from 'lodash/find'
-import findIndex from 'lodash/findIndex'
-import reduce from 'lodash/reduce'
-import reverse from 'lodash/reverse'
-import sortBy from 'lodash/sortBy'
+import { cloneDeep, concat, filter, find, findIndex, reduce, reverse, sortBy } from 'lodash-es'
 import { DepGraph } from 'dependency-graph'
 import gql from 'graphql-tag'
 

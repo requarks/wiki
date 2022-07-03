@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
-import clone from 'lodash/clone'
+import { clone } from 'lodash-es'
 
 export const useSiteStore = defineStore('site', {
   state: () => ({

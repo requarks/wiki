@@ -1,18 +1,33 @@
-<template>
-  <router-view />
+<template lang="pug">
+router-view
 </template>
 
-<script>
-import { defineComponent, nextTick, onMounted } from 'vue'
+<script setup>
+import { nextTick, onMounted } from 'vue'
+import { useSiteStore } from 'src/stores/site'
 
-export default defineComponent({
-  name: 'App',
-  setup () {
-    onMounted(() => {
-      nextTick(() => {
-        document.querySelector('.init-loading').remove()
-      })
-    })
-  }
+/* global siteConfig */
+
+// STORES
+
+const siteStore = useSiteStore()
+
+// INIT SITE STORE
+
+if (typeof siteConfig !== 'undefined') {
+  siteStore.$patch({
+    id: siteConfig.id,
+    title: siteConfig.title
+  })
+} else {
+  siteStore.loadSite(window.location.hostname)
+}
+
+// MOUNTED
+
+onMounted(async () => {
+  nextTick(() => {
+    document.querySelector('.init-loading').remove()
+  })
 })
 </script>

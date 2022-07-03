@@ -28,6 +28,28 @@ module.exports = class Site extends Model {
     return ['config']
   }
 
+  static async getSiteByHostname ({ hostname, forceReload = false }) {
+    if (forceReload) {
+      await WIKI.models.sites.reloadCache()
+    }
+    const siteId = WIKI.sitesMappings[hostname] || WIKI.sitesMappings['*']
+    if (siteId) {
+      return WIKI.sites[siteId]
+    }
+    return null
+  }
+
+  static async reloadCache () {
+    WIKI.logger.info('Reloading site configurations...')
+    const sites = await WIKI.models.sites.query().orderBy('id')
+    WIKI.sites = _.keyBy(sites, 'id')
+    WIKI.sitesMappings = {}
+    for (const site of sites) {
+      WIKI.sitesMappings[site.hostname] = site.id
+    }
+    WIKI.logger.info(`Loaded ${sites.length} site configurations [ OK ]`)
+  }
+
   static async createSite (hostname, config) {
     const newSite = await WIKI.models.sites.query().insertAndFetch({
       hostname,

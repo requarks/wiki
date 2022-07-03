@@ -8,6 +8,7 @@ extend type Query {
   apiState: Boolean
 
   authStrategies(
+    siteId: UUID
     enabledOnly: Boolean
   ): [AuthenticationStrategy]
 }

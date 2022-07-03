@@ -119,7 +119,7 @@ q-card.icon-picker(flat, style='width: 400px;')
 </template>
 
 <script>
-import find from 'lodash/find'
+import { find } from 'lodash-es'
 
 export default {
   props: {

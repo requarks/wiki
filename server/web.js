@@ -149,15 +149,20 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(async (req, res, next) => {
+    const currentSite = await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
+    if (!currentSite) {
+      return res.status(404).send('Site Not Found')
+    }
+
     res.locals.siteConfig = {
-      title: WIKI.config.title,
-      theme: WIKI.config.theming.theme,
-      darkMode: WIKI.config.theming.darkMode,
-      lang: WIKI.config.lang.code,
-      rtl: WIKI.config.lang.rtl,
-      company: WIKI.config.company,
-      contentLicense: WIKI.config.contentLicense,
-      logoUrl: WIKI.config.logoUrl
+      id: currentSite.id,
+      title: currentSite.config.title,
+      darkMode: currentSite.config.theme.dark,
+      lang: currentSite.config.locale,
+      rtl: false, // TODO: handle RTL
+      company: currentSite.config.company,
+      contentLicense: currentSite.config.contentLicense,
+      logoUrl: currentSite.config.logoUrl
     }
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
     res.locals.analyticsCode = await WIKI.models.analytics.getCode({ cache: true })

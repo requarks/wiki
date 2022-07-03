@@ -32,6 +32,7 @@ module.exports = {
       // }), ['title', 'key'])
       return _.sortBy(WIKI.storage.defs.map(md => {
         const dbTarget = dbTargets.find(tg => tg.module === md.key)
+        console.info(md.actions)
         return {
           id: dbTarget?.id ?? uuid(),
           isEnabled: dbTarget?.isEnabled ?? false,
@@ -62,12 +63,12 @@ module.exports = {
           setup: {
             handler: md?.setup?.handler,
             state: dbTarget?.state?.setup ?? 'notconfigured',
-            values: md.setup?.handler
-              ? _.transform(md.setup.defaultValues,
+            values: md.setup?.handler ?
+              _.transform(md.setup.defaultValues,
                 (r, v, k) => {
                   r[k] = dbTarget?.config?.[k] ?? v
-                }, {})
-              : {}
+                }, {}) :
+              {}
           },
           config: _.transform(md.props, (r, v, k) => {
             const cfValue = dbTarget?.config?.[k] ?? v.default

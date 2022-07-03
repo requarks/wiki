@@ -69,7 +69,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 import gql from 'graphql-tag'
-import sampleSize from 'lodash/sampleSize'
+import { sampleSize } from 'lodash-es'
 import zxcvbn from 'zxcvbn'
 
 import { useI18n } from 'vue-i18n'

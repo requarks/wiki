@@ -8,13 +8,13 @@ const routes = [
   //     { path: 'n/:editor?', component: () => import('../pages/Index.vue') }
   //   ]
   // },
-  // {
-  //   path: '/login',
-  //   component: () => import('../layouts/AuthLayout.vue'),
-  //   children: [
-  //     { path: '', component: () => import('../pages/Login.vue') }
-  //   ]
-  // },
+  {
+    path: '/login',
+    component: () => import('../layouts/AuthLayout.vue'),
+    children: [
+      { path: '', component: () => import('../pages/Login.vue') }
+    ]
+  },
   // {
   //   path: '/p',
   //   component: () => import('../layouts/ProfileLayout.vue'),

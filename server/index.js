@@ -22,6 +22,8 @@ let WIKI = {
   Error: require('./helpers/error'),
   configSvc: require('./core/config'),
   kernel: require('./core/kernel'),
+  sites: {},
+  sitesMappings: {},
   startedAt: DateTime.utc(),
   storage: {
     defs: [],

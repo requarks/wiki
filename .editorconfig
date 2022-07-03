@@ -8,7 +8,7 @@ trim_trailing_whitespace = true
 end_of_line = lf
 insert_final_newline = true
 
-[*.{jade,pug,md}]
+[*.{pug,md}]
 trim_trailing_whitespace = false
 
 [Makefile]

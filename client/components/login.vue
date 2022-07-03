@@ -662,26 +662,34 @@ export default {
   apollo: {
     strategies: {
       query: gql`
-        {
-          authentication {
-            activeStrategies(enabledOnly: true) {
+        query loginFetchSiteStrategies(
+          $siteId: UUID
+        ) {
+          authStrategies(
+            siteId: $siteId
+            enabledOnly: true
+            ) {
+            key
+            strategy {
               key
-              strategy {
-                key
-                logo
-                color
-                icon
-                useForm
-                usernameType
-              }
-              displayName
-              order
-              selfRegistration
+              logo
+              color
+              icon
+              useForm
+              usernameType
             }
+            displayName
+            order
+            selfRegistration
           }
         }
       `,
-      update: (data) => _.sortBy(data.authentication.activeStrategies, ['order']),
+      variables () {
+        return {
+          siteId: siteConfig.id
+        }
+      },
+      update: (data) => _.sortBy(data.authStrategies, ['order']),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'login-strategies-refresh')
       }

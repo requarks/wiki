@@ -114,8 +114,7 @@ q-card.page-relation-dialog(style='width: 500px;')
 
 <script>
 import { v4 as uuid } from 'uuid'
-import find from 'lodash/find'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep, find } from 'lodash-es'
 
 import IconPickerDialog from './IconPickerDialog.vue'
 

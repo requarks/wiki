@@ -494,9 +494,8 @@ q-layout(view='hHh lpR fFf', container)
 <script setup>
 import gql from 'graphql-tag'
 import { DateTime } from 'luxon'
-import cloneDeep from 'lodash/cloneDeep'
-import some from 'lodash/some'
 import { v4 as uuid } from 'uuid'
+import { cloneDeep, some } from 'lodash-es'
 import { fileOpen } from 'browser-fs-access'
 
 import { useI18n } from 'vue-i18n'

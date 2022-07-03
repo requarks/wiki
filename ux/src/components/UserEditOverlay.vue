@@ -488,12 +488,7 @@ q-layout(view='hHh lpR fFf', container)
 
 <script setup>
 import gql from 'graphql-tag'
-import cloneDeep from 'lodash/cloneDeep'
-import some from 'lodash/some'
-import find from 'lodash/find'
-import findKey from 'lodash/findKey'
-import _get from 'lodash/get'
-import map from 'lodash/map'
+import { cloneDeep, find, findKey, map, some } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 import { useI18n } from 'vue-i18n'

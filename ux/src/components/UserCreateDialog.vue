@@ -161,9 +161,8 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 import gql from 'graphql-tag'
-import sampleSize from 'lodash/sampleSize'
+import { cloneDeep, sampleSize } from 'lodash-es'
 import zxcvbn from 'zxcvbn'
-import cloneDeep from 'lodash/cloneDeep'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref } from 'vue'

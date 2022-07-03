@@ -11,7 +11,7 @@ module.exports = {
     minimumVersionRequired: '3.0.0-beta.0',
     minimumNodeRequired: '18.0.0'
   },
-  init() {
+  init () {
     // Clear content cache
     fs.emptyDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'cache'))
 

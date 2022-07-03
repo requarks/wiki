@@ -24,14 +24,13 @@ module.exports = {
       process.exit(1)
     }
 
-    this.bootMaster()
+    this.bootWeb()
   },
   /**
-   * Pre-Master Boot Sequence
+   * Pre-Web Boot Sequence
    */
-  async preBootMaster() {
+  async preBootWeb() {
     try {
-      await this.initTelemetry()
       WIKI.sideloader = await require('./sideloader').init()
       WIKI.cache = require('./cache').init()
       WIKI.scheduler = require('./scheduler').init()
@@ -48,22 +47,22 @@ module.exports = {
     }
   },
   /**
-   * Boot Master Process
+   * Boot Web Process
    */
-  async bootMaster() {
+  async bootWeb() {
     try {
-      await this.preBootMaster()
-      await require('../master')()
-      this.postBootMaster()
+      await this.preBootWeb()
+      await require('../web')()
+      this.postBootWeb()
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
     }
   },
   /**
-   * Post-Master Boot Sequence
+   * Post-Web Boot Sequence
    */
-  async postBootMaster() {
+  async postBootWeb() {
     await WIKI.models.analytics.refreshProvidersFromDisk()
     await WIKI.models.authentication.refreshStrategiesFromDisk()
     await WIKI.models.commentProviders.refreshProvidersFromDisk()
@@ -74,30 +73,16 @@ module.exports = {
 
     await WIKI.auth.activateStrategies()
     await WIKI.models.commentProviders.initProvider()
+    await WIKI.models.sites.reloadCache()
     await WIKI.models.storage.initTargets()
     // WIKI.scheduler.start()
 
     await WIKI.models.subscribeToNotifications()
   },
   /**
-   * Init Telemetry
-   */
-  async initTelemetry() {
-    require('./telemetry').init()
-
-    process.on('unhandledRejection', (err) => {
-      WIKI.logger.warn(err)
-      WIKI.telemetry.sendError(err)
-    })
-    process.on('uncaughtException', (err) => {
-      WIKI.logger.warn(err)
-      WIKI.telemetry.sendError(err)
-    })
-  },
-  /**
    * Graceful shutdown
    */
-  async shutdown () {
+  async shutdown (devMode = false) {
     if (WIKI.servers) {
       await WIKI.servers.stopServers()
     }
@@ -113,6 +98,8 @@ module.exports = {
     if (WIKI.asar) {
       await WIKI.asar.unload()
     }
-    process.exit(0)
+    if (!devMode) {
+      process.exit(0)
+    }
   }
 }

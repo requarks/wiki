@@ -24,9 +24,7 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets-legacy'))
 module.exports = {
   mode: 'development',
   entry: {
-    app: ['./client/index-app.js', 'webpack-hot-middleware/client'],
-    legacy: ['./client/index-legacy.js', 'webpack-hot-middleware/client'],
-    setup: ['./client/index-setup.js', 'webpack-hot-middleware/client']
+    app: ['./client/index-app.js', 'webpack-hot-middleware/client']
   },
   output: {
     path: path.join(process.cwd(), 'assets-legacy'),
@@ -197,25 +195,10 @@ module.exports = {
       ]
     }),
     new HtmlWebpackPlugin({
-      template: 'dev/templates/master.pug',
-      filename: '../server/views/master.pug',
+      template: 'dev/templates/base.pug',
+      filename: '../server/views/base.pug',
       hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'legacy']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/legacy.pug',
-      filename: '../server/views/legacy/master.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'app']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/setup.pug',
-      filename: '../server/views/setup.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['app', 'legacy']
+      inject: false
     }),
     new HtmlWebpackPugPlugin(),
     new WebpackBarPlugin({
