@@ -102,6 +102,10 @@ sideload:
   #  - name: HTTPS_PROXY
   #    value: http://my.proxy.com:3128
 
+## This will override the postgresql chart values
+# externalPostgresql:
+#   databaseURL: postgresql://postgres:postgres@postgres:5432/wiki?sslmode=require
+
 ## Configuration values for the postgresql dependency.
 ## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
 ##
