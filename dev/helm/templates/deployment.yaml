@@ -41,6 +41,10 @@ spec:
           env:
             - name: DB_TYPE
               value: postgres
+            {{- if .Values.externalPostgresql.databaseURL }}
+            - name: DATABASE_URL
+              value: {{ .Values.externalPostgresql.databaseURL }}
+            {{- else }}
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
             - name: DB_PORT
@@ -62,6 +66,7 @@ spec:
                   name: {{ template "wiki.postgresql.secret" . }}
                 {{- end }}
                   key: {{ template "wiki.postgresql.secretKey" . }}
+            {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
     {{- with .Values.volumeMounts }}
