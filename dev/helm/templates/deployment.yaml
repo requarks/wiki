@@ -41,9 +41,11 @@ spec:
           env:
             - name: DB_TYPE
               value: postgres
-            {{- if .Values.externalPostgresql.databaseURL }}
+            {{- if (.Values.externalPostgresql).databaseURL }}
             - name: DATABASE_URL
               value: {{ .Values.externalPostgresql.databaseURL }}
+            - name: NODE_TLS_REJECT_UNAUTHORIZED
+              value: {{ default "1" .Values.externalPostgresql.NODE_TLS_REJECT_UNAUTHORIZED | quote }}
             {{- else }}
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
@@ -81,6 +83,8 @@ spec:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
