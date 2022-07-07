@@ -11,8 +11,8 @@ module.exports = {
     passport.use(conf.key,
       new CASStrategy({
         version: 'CAS3.0',
-        ssoBaseURL: conf.ssoBaseURL,
-        serverBaseURL: conf.serverBaseURL,
+        ssoBaseURL: conf.casUrl,
+        serverBaseURL: conf.baseUrl,
         passReqToCallback: true
       }, async (req, profile, cb) => {
         try {

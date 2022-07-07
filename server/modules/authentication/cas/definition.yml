@@ -8,8 +8,22 @@ website: https://apereo.github.io/cas/
 useForm: false
 isAvailable: true
 props:
-  ssoBaseURL: String
-  serverBaseURL: String
-
-  emailAttribute: String
-  displayNameAttribute: String
+  baseUrl:
+    type: String
+    title: Base URL
+    hint: 'Base-URL of your WikiJS (for example: https://wiki.example.com)'
+    order: 1
+  casUrl:
+    type: String
+    title: URL to the CAS Server
+    hint: 'Base-URL of the CAS server, including context path. (for example: https://login.company.com/cas)'
+    order: 2
+  emailAttribute:
+    type: String
+    title: Attribute key which contains the users email
+    default: email
+    order: 3
+  displayNameAttribute:
+    type: String
+    title: Attribute key which contains the users display name (leave empty if there is none)
+    order: 4
