@@ -10,34 +10,25 @@ module.exports = {
   init (passport, conf) {
     passport.use(conf.key,
       new CASStrategy({
-        version: 'CAS3.0',
+        version: conf.casVersion,
         ssoBaseURL: conf.casUrl,
         serverBaseURL: conf.baseUrl,
         passReqToCallback: true
       }, async (req, profile, cb) => {
         try {
-          let userEmail = null
-          let displayName = null
-
-          if (conf.emailAttribute) {
-            userEmail = profile.attributes[ conf.emailAttribute ]
-          }
-
-          if (conf.displayNameAttribute) {
-            displayName = profile.attributes[ conf.displayNameAttribute ]
-          } else {
-            displayName = profile.user
-          }
-
+          console.log(profile)
           const user = await WIKI.models.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               ...profile,
-              id: profile.user,
-              email: userEmail,
-              name: displayName
+              id: _.get(profile.attributes, conf.uniqueIdAttribute, profile.user),
+              email: _.get(profile.attributes, conf.emailAttribute),
+              name: _.get(profile.attributes, conf.displayNameAttribute, profile.user)
             }
           })
+
+          console.log(user)
+
           cb(null, user)
         } catch (err) {
           cb(err, null)
