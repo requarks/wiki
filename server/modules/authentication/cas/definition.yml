@@ -6,6 +6,10 @@ logo: https://static.requarks.io/logo/cas.svg
 color: green darken-2
 website: https://apereo.github.io/cas/
 useForm: false
+isAvailable: true
 props:
   ssoBaseURL: String
   serverBaseURL: String
+
+  emailAttribute: String
+  displayNameAttribute: String
