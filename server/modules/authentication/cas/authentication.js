@@ -1,3 +1,4 @@
+const _ = require('lodash')
 /* global WIKI */
 
 // ------------------------------------
@@ -14,24 +15,22 @@ module.exports = {
         ssoBaseURL: conf.casUrl,
         serverBaseURL: conf.baseUrl,
         passReqToCallback: true
-      }, async (req, profile, cb) => {
+      }, async (req, profile, done) => {
         try {
-          console.log(profile)
           const user = await WIKI.models.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               ...profile,
               id: _.get(profile.attributes, conf.uniqueIdAttribute, profile.user),
               email: _.get(profile.attributes, conf.emailAttribute),
-              name: _.get(profile.attributes, conf.displayNameAttribute, profile.user)
+              name: _.get(profile.attributes, conf.displayNameAttribute, profile.user),
+              picture: ''
             }
           })
 
-          console.log(user)
-
-          cb(null, user)
+          done(null, user)
         } catch (err) {
-          cb(err, null)
+          done(err, null)
         }
       })
     )
