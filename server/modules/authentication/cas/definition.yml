@@ -1,5 +1,5 @@
 key: cas
-displayName: CAS
+title: CAS
 description: The Central Authentication Service (CAS) is a single sign-on protocol for the web.
 author: requarks.io
 logo: https://static.requarks.io/logo/cas.svg
