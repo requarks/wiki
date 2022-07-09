@@ -13,7 +13,8 @@ module.exports = {
       new CASStrategy({
         version: conf.casVersion,
         ssoBaseURL: conf.casUrl,
-        serverBaseURL: _.get(conf, 'baseUrl', conf.callbackURL),
+        serverBaseURL: conf.baseUrl,
+        serviceURL: conf.callbackURL,
         passReqToCallback: true
       }, async (req, profile, cb) => {
         try {
