@@ -13,9 +13,9 @@ module.exports = {
       new CASStrategy({
         version: conf.casVersion,
         ssoBaseURL: conf.casUrl,
-        serverBaseURL: conf.baseUrl,
+        serverBaseURL: _.get(conf, 'baseUrl', conf.callbackURL),
         passReqToCallback: true
-      }, async (req, profile, done) => {
+      }, async (req, profile, cb) => {
         try {
           const user = await WIKI.models.users.processProfile({
             providerKey: req.params.strategy,
@@ -28,9 +28,9 @@ module.exports = {
             }
           })
 
-          done(null, user)
+          cb(null, user)
         } catch (err) {
-          done(err, null)
+          cb(err, null)
         }
       })
     )
