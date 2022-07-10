@@ -55,7 +55,7 @@ q-page.column
       q-input.no-height(
         borderless
         v-model='title'
-        input-class='font-poppins text-h4 text-grey-9'
+        input-class='text-h4 text-grey-9'
         input-style='padding: 0;'
         placeholder='Untitled Page'
         hide-hint
@@ -63,12 +63,12 @@ q-page.column
       q-input.no-height(
         borderless
         v-model='description'
-        input-class='font-poppins text-subtitle2 text-grey-7'
+        input-class='text-subtitle2 text-grey-7'
         input-style='padding: 0;'
         placeholder='Enter a short description'
         hide-hint
         )
-    .col.q-pa-md.font-poppins(v-else)
+    .col.q-pa-md(v-else)
       .text-h4.page-header-title {{title}}
       .text-subtitle2.page-header-subtitle {{description}}
 

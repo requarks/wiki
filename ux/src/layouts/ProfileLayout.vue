@@ -9,7 +9,7 @@ q-layout(view='hHh Lpr lff')
             v-for='navItem of sidenav'
             :key='navItem.key'
             clickable
-            :to='`/p/` + navItem.key'
+            :to='`/_profile/` + navItem.key'
             active-class='is-active'
             v-ripple
             )
@@ -21,7 +21,7 @@ q-layout(view='hHh Lpr lff')
           q-item(
             clickable
             v-ripple
-            to='/p/me'
+            to='/_profile/me'
             )
             q-item-section(side)
               q-icon(name='las la-id-card')
@@ -42,67 +42,79 @@ q-layout(view='hHh Lpr lff')
       span(style='font-size: 11px;') &copy; Cyberdyne Systems Corp. 2020 | Powered by #[strong Wiki.js]
 </template>
 
-<script>
+<script setup>
+import gql from 'graphql-tag'
+
+import { useI18n } from 'vue-i18n'
+import { useMeta, useQuasar } from 'quasar'
+import { onMounted, reactive, watch } from 'vue'
+
+import { useSiteStore } from 'src/stores/site'
+
 import HeaderNav from '../components/HeaderNav.vue'
 
-export default {
-  name: 'ProfileLayout',
-  components: {
-    HeaderNav
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const siteStore = useSiteStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const sidenav = [
+  {
+    key: 'info',
+    label: 'Profile',
+    icon: 'las la-user-circle'
   },
-  data () {
-    return {
-      sidenav: [
-        {
-          key: 'profile',
-          label: 'Profile',
-          icon: 'las la-user-circle'
-        },
-        {
-          key: 'avatar',
-          label: 'Avatar',
-          icon: 'las la-otter'
-        },
-        {
-          key: 'password',
-          label: 'Password',
-          icon: 'las la-key'
-        },
-        {
-          key: 'groups',
-          label: 'Groups',
-          icon: 'las la-users'
-        },
-        {
-          key: 'notifications',
-          label: 'Notifications',
-          icon: 'las la-bell'
-        },
-        {
-          key: 'pages',
-          label: 'My Pages',
-          icon: 'las la-file-alt'
-        },
-        {
-          key: 'activity',
-          label: 'Activity',
-          icon: 'las la-history'
-        }
-      ],
-      thumbStyle: {
-        right: '2px',
-        borderRadius: '5px',
-        backgroundColor: '#FFF',
-        width: '5px',
-        opacity: 0.5
-      },
-      barStyle: {
-        backgroundColor: '#000',
-        width: '9px',
-        opacity: 0.1
-      }
-    }
+  {
+    key: 'avatar',
+    label: 'Avatar',
+    icon: 'las la-otter'
+  },
+  {
+    key: 'password',
+    label: 'Password',
+    icon: 'las la-key'
+  },
+  {
+    key: 'groups',
+    label: 'Groups',
+    icon: 'las la-users'
+  },
+  {
+    key: 'notifications',
+    label: 'Notifications',
+    icon: 'las la-bell'
+  },
+  {
+    key: 'pages',
+    label: 'My Pages',
+    icon: 'las la-file-alt'
+  },
+  {
+    key: 'activity',
+    label: 'Activity',
+    icon: 'las la-history'
   }
+]
+const thumbStyle = {
+  right: '2px',
+  borderRadius: '5px',
+  backgroundColor: '#FFF',
+  width: '5px',
+  opacity: 0.5
+}
+const barStyle = {
+  backgroundColor: '#000',
+  width: '9px',
+  opacity: 0.1
 }
 </script>
 

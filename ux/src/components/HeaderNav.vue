@@ -17,14 +17,14 @@ q-header.bg-header.text-white.site-header(
           square
           )
           img(src='/_assets/logo-wikijs.svg')
-      q-toolbar-title.text-h6.font-poppins {{siteTitle}}
+      q-toolbar-title.text-h6 {{siteStore.title}}
     q-toolbar.gt-sm(
       style='height: 64px;'
       dark
       )
       q-input(
         dark
-        v-model='search'
+        v-model='state.search'
         standout='bg-white text-dark'
         dense
         rounded
@@ -37,8 +37,8 @@ q-header.bg-header.text-white.site-header(
         template(v-slot:append)
           q-icon.cursor-pointer(
             name='las la-times'
-            @click='search=``'
-            v-if='search.length > 0'
+            @click='state.search=``'
+            v-if='state.search.length > 0'
             :color='$q.dark.isActive ? `blue` : `grey-4`'
             )
       q-btn.q-ml-md(
@@ -47,7 +47,7 @@ q-header.bg-header.text-white.site-header(
         dense
         icon='las la-tags'
         color='grey'
-        to='/t'
+        to='/_tags'
         )
     q-toolbar(
       style='height: 64px;'
@@ -56,7 +56,7 @@ q-header.bg-header.text-white.site-header(
       q-space
       transition(name='syncing')
         q-spinner-rings.q-mr-sm(
-          v-show='isSyncing'
+          v-show='siteStore.routerLoading'
           color='orange'
           size='34px'
         )
@@ -83,26 +83,33 @@ q-header.bg-header.text-white.site-header(
       account-menu
 </template>
 
-<script>
-import { get } from 'vuex-pathify'
+<script setup>
 import AccountMenu from './AccountMenu.vue'
 import NewMenu from './PageNewMenu.vue'
 
-export default {
-  components: {
-    AccountMenu,
-    NewMenu
-  },
-  data () {
-    return {
-      search: ''
-    }
-  },
-  computed: {
-    isSyncing: get('isLoading', false),
-    siteTitle: get('site/title', false)
-  }
-}
+import { useI18n } from 'vue-i18n'
+import { useQuasar } from 'quasar'
+import { reactive } from 'vue'
+
+import { useSiteStore } from 'src/stores/site'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const siteStore = useSiteStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  search: ''
+})
 </script>
 
 <style lang="scss">

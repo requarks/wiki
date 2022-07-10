@@ -267,7 +267,7 @@ q-page.admin-general
                   src='https://m.media-amazon.com/images/G/01/audibleweb/arya/navigation/audible_logo._V517446980_.svg'
                   style='height: 34px;'
                   )
-              q-toolbar-title.text-h6.font-poppins(v-if='state.config.logoText') {{state.config.title}}
+              q-toolbar-title.text-h6(v-if='state.config.logoText') {{state.config.title}}
         q-separator.q-my-sm(inset)
         q-item(tag='label')
           blueprint-icon(icon='information')

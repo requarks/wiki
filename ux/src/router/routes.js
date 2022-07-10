@@ -15,14 +15,14 @@ const routes = [
       { path: '', component: () => import('../pages/Login.vue') }
     ]
   },
-  // {
-  //   path: '/p',
-  //   component: () => import('../layouts/ProfileLayout.vue'),
-  //   children: [
-  //     { path: '', redirect: '/p/profile' },
-  //     { path: 'profile', component: () => import('../pages/Profile.vue') }
-  //   ]
-  // },
+  {
+    path: '/_profile',
+    component: () => import('../layouts/ProfileLayout.vue'),
+    children: [
+      { path: '', redirect: '/_profile/info' },
+      { path: 'info', component: () => import('../pages/Profile.vue') }
+    ]
+  },
   {
     path: '/_admin',
     component: () => import('../layouts/AdminLayout.vue'),

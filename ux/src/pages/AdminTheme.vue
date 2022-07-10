@@ -38,7 +38,7 @@ q-page.admin-theme
       //- -----------------------
       q-card.shadow-1.q-pb-sm
         q-card-section.flex.items-center
-          .text-subtitle1 {{t('admin.theme.options')}}
+          .text-subtitle1 {{t('admin.theme.appearance')}}
           q-space
           q-btn.acrylic-btn(
             icon='las la-redo-alt'
@@ -93,6 +93,21 @@ q-page.admin-theme
       q-card.shadow-1.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.theme.layout')}}
+        q-item
+          blueprint-icon(icon='width')
+          q-item-section
+            q-item-label {{t(`admin.theme.contentWidth`)}}
+            q-item-label(caption) {{t(`admin.theme.contentWidthHint`)}}
+          q-item-section.col-auto
+            q-btn-toggle(
+              v-model='state.config.contentWidth'
+              push
+              glossy
+              no-caps
+              toggle-color='primary'
+              :options='widthOptions'
+            )
+        q-separator.q-my-sm(inset)
         q-item
           blueprint-icon(icon='right-navigation-toolbar')
           q-item-section
@@ -153,9 +168,55 @@ q-page.admin-theme
 
     .col-6
       //- -----------------------
-      //- Code Injection
+      //- Fonts
       //- -----------------------
       q-card.shadow-1.q-pb-sm
+        q-card-section.flex.items-center
+          .text-subtitle1 {{t('admin.theme.fonts')}}
+          q-space
+          q-btn.acrylic-btn(
+            icon='las la-redo-alt'
+            :label='t(`admin.theme.resetDefaults`)'
+            flat
+            size='sm'
+            color='pink'
+            @click='resetFonts'
+          )
+        q-item
+          blueprint-icon(icon='fonts-app')
+          q-item-section
+            q-item-label {{t(`admin.theme.baseFont`)}}
+            q-item-label(caption) {{t(`admin.theme.baseFontHint`)}}
+          q-item-section
+            q-select(
+              outlined
+              v-model='state.config.baseFont'
+              :options='fonts'
+              emit-value
+              map-options
+              dense
+              :aria-label='t(`admin.theme.baseFont`)'
+              )
+        q-item
+          blueprint-icon(icon='fonts-app')
+          q-item-section
+            q-item-label {{t(`admin.theme.contentFont`)}}
+            q-item-label(caption) {{t(`admin.theme.contentFontHint`)}}
+          q-item-section
+            q-select(
+              outlined
+              v-model='state.config.contentFont'
+              :options='fonts'
+              emit-value
+              map-options
+              dense
+              :aria-label='t(`admin.theme.contentFont`)'
+              )
+
+      //- -----------------------
+      //- Code Injection
+      //- -----------------------
+      q-card.shadow-1.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.theme.codeInjection')}}
         q-item
@@ -205,7 +266,7 @@ q-page.admin-theme
 import gql from 'graphql-tag'
 import { cloneDeep, startCase } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
+import { setCssVar, useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from 'src/stores/admin'
@@ -246,10 +307,13 @@ const state = reactive({
     colorAccent: '#f03a47',
     colorHeader: '#000',
     colorSidebar: '#1976D2',
+    contentWidth: 'full',
     sidebarPosition: 'left',
     tocPosition: 'right',
     showSharingMenu: true,
-    showPrintBtn: true
+    showPrintBtn: true,
+    baseFont: '',
+    contentFont: ''
   }
 })
 
@@ -261,9 +325,25 @@ const colorKeys = [
   'sidebar'
 ]
 
+const widthOptions = [
+  { label: 'Full Width', value: 'full' },
+  { label: 'Centered', value: 'centered' }
+]
+
 const rightLeftOptions = [
+  { label: 'Hide', value: 'off' },
   { label: 'Left', value: 'left' },
   { label: 'Right', value: 'right' }
+]
+
+const fonts = [
+  { label: 'Inter', value: 'inter' },
+  { label: 'Open Sans', value: 'opensans' },
+  { label: 'Montserrat', value: 'montserrat' },
+  { label: 'Roboto', value: 'roboto' },
+  { label: 'Rubik', value: 'rubik' },
+  { label: 'Tajawal', value: 'tajawal' },
+  { label: 'User System Defaults', value: 'user' }
 ]
 
 // WATCHERS
@@ -283,6 +363,11 @@ function resetColors () {
   state.config.colorSidebar = '#1976D2'
 }
 
+function resetFonts () {
+  state.config.baseFont = 'roboto'
+  state.config.contentFont = 'roboto'
+}
+
 async function load () {
   state.loading++
   $q.loading.show()
@@ -296,15 +381,18 @@ async function load () {
             id: $id
           ) {
             theme {
-              dark
+              baseFont
+              contentFont
               colorPrimary
               colorSecondary
               colorAccent
               colorHeader
               colorSidebar
+              dark
               injectCSS
               injectHead
               injectBody
+              contentWidth
               sidebarPosition
               tocPosition
               showSharingMenu
@@ -345,10 +433,13 @@ async function save () {
       injectCSS: state.config.injectCSS,
       injectHead: state.config.injectHead,
       injectBody: state.config.injectBody,
+      contentWidth: state.config.contentWidth,
       sidebarPosition: state.config.sidebarPosition,
       tocPosition: state.config.tocPosition,
       showSharingMenu: state.config.showSharingMenu,
-      showPrintBtn: state.config.showPrintBtn
+      showPrintBtn: state.config.showPrintBtn,
+      baseFont: state.config.baseFont,
+      contentFont: state.config.contentFont
     }
     const respRaw = await APOLLO_CLIENT.mutate({
       mutation: gql`
@@ -381,6 +472,11 @@ async function save () {
           theme: patchTheme
         })
         $q.dark.set(state.config.dark)
+        setCssVar('primary', state.config.colorPrimary)
+        setCssVar('secondary', state.config.colorSecondary)
+        setCssVar('accent', state.config.colorAccent)
+        setCssVar('header', state.config.colorHeader)
+        setCssVar('sidebar', state.config.colorSidebar)
       }
       $q.notify({
         type: 'positive',

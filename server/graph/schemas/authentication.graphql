@@ -7,10 +7,12 @@ extend type Query {
 
   apiState: Boolean
 
-  authStrategies(
-    siteId: UUID
+  authStrategies: [AuthenticationStrategy]
+
+  authSiteStrategies(
+    siteId: UUID!
     enabledOnly: Boolean
-  ): [AuthenticationStrategy]
+  ): [AuthenticationSiteStrategy]
 }
 
 extend type Mutation {
@@ -70,12 +72,12 @@ extend type Mutation {
 # -----------------------------------------------
 
 type AuthenticationStrategy {
-  key: String!
-  props: [KeyValuePair] @auth(requires: ["manage:system"])
-  title: String!
+  key: String
+  props: [KeyValuePair]
+  title: String
   description: String
   isAvailable: Boolean
-  useForm: Boolean!
+  useForm: Boolean
   usernameType: String
   logo: String
   color: String
@@ -83,16 +85,16 @@ type AuthenticationStrategy {
   icon: String
 }
 
-type AuthenticationActiveStrategy {
-  key: String!
-  strategy: AuthenticationStrategy!
-  displayName: String!
-  order: Int!
-  isEnabled: Boolean!
-  config: [KeyValuePair] @auth(requires: ["manage:system"])
-  selfRegistration: Boolean!
-  domainWhitelist: [String]! @auth(requires: ["manage:system"])
-  autoEnrollGroups: [Int]! @auth(requires: ["manage:system"])
+type AuthenticationSiteStrategy {
+  key: String
+  strategy: AuthenticationStrategy
+  displayName: String
+  order: Int
+  isEnabled: Boolean
+  config: [KeyValuePair]
+  selfRegistration: Boolean
+  domainWhitelist: [String]
+  autoEnrollGroups: [Int]
 }
 
 type AuthenticationLoginResponse {

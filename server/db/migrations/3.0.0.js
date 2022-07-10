@@ -486,10 +486,13 @@ exports.up = async knex => {
         injectCSS: '',
         injectHead: '',
         injectBody: '',
+        contentWidth: 'full',
         sidebarPosition: 'left',
         tocPosition: 'right',
         showSharingMenu: true,
-        showPrintBtn: true
+        showPrintBtn: true,
+        baseFont: 'roboto',
+        contentFont: 'roboto'
       }
     }
   })

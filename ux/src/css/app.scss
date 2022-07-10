@@ -28,17 +28,8 @@ body::-webkit-scrollbar-thumb {
 // ------------------------------------------------------------------
 
 @font-face {
-  font-family: 'Poppins';
-  src: url(./fonts/poppins-medium.woff2);
-}
-
-.font-poppins {
-  font-family: $font-poppins;
-}
-
-@font-face {
   font-family: 'Roboto Mono';
-  src: url(./fonts/roboto-mono.woff2);
+  src: url(/_assets/fonts/roboto-mono/roboto-mono.woff2);
 }
 
 .font-robotomono {

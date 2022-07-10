@@ -12,7 +12,6 @@ q-layout(view='hHh lpr lff')
   .auth {
     background-color: #FFF;
     display: flex;
-    font-family: 'Rubik', sans-serif;
 
     @at-root .body--dark & {
       background-color: $dark-6;

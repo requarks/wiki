@@ -97,7 +97,9 @@ module.exports = class Site extends Model {
           sidebarPosition: 'left',
           tocPosition: 'right',
           showSharingMenu: true,
-          showPrintBtn: true
+          showPrintBtn: true,
+          baseFont: 'roboto',
+          contentFont: 'roboto'
         }
       })
     })

@@ -24,20 +24,32 @@ q-menu(
       blueprint-icon(icon='advance')
       q-item-section.q-pr-sm New Redirection
     q-separator.q-my-sm(inset)
-    q-item(clickable, to='/f')
+    q-item(clickable, to='/_assets')
       blueprint-icon(icon='add-image')
       q-item-section.q-pr-sm Upload Media Asset
 </template>
 
-<script>
-export default {
-  data () {
-    return { }
-  },
-  methods: {
-    create (editor) {
-      this.$store.dispatch('page/pageCreate', { editor })
-    }
-  }
+<script setup>
+import { useI18n } from 'vue-i18n'
+import { useQuasar } from 'quasar'
+
+import { usePageStore } from 'src/stores/page'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const pageStore = usePageStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// METHODS
+
+function create (editor) {
+  pageStore.pageCreate({ editor })
 }
 </script>

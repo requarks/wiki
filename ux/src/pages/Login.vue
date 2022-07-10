@@ -5,40 +5,40 @@
       img(src='/_assets/logo-wikijs.svg' :alt='siteStore.title')
     h2.auth-site-title {{ siteStore.title }}
     p.text-grey-7 Login to continue
-    template(v-if='state.strategies?.length > 1')
-    p Sign in with
-    .auth-strategies
-      q-btn(
-        label='GitHub'
-        icon='lab la-github'
-        push
-        no-caps
-        :color='$q.dark.isActive ? `blue-grey-9` : `grey-1`'
-        :text-color='$q.dark.isActive ? `white` : `blue-grey-9`'
-        )
-      q-btn(
-        label='Google'
-        icon='lab la-google-plus'
-        push
-        no-caps
-        :color='$q.dark.isActive ? `blue-grey-9` : `grey-1`'
-        :text-color='$q.dark.isActive ? `white` : `blue-grey-9`'
-        )
-      q-btn(
-        label='Twitter'
-        icon='lab la-twitter'
-        push
-        no-caps
-        :color='$q.dark.isActive ? `blue-grey-9` : `grey-1`'
-        :text-color='$q.dark.isActive ? `white` : `blue-grey-9`'
-        )
-      q-btn(
-        label='Local'
-        icon='las la-seedling'
-        push
-        color='primary'
-        no-caps
-        )
+    template(v-if='state.strategies?.length > 1 || true')
+      p Sign in with
+      .auth-strategies
+        q-btn(
+          label='GitHub'
+          icon='lab la-github'
+          push
+          no-caps
+          :color='$q.dark.isActive ? `blue-grey-9` : `grey-1`'
+          :text-color='$q.dark.isActive ? `white` : `blue-grey-9`'
+          )
+        q-btn(
+          label='Google'
+          icon='lab la-google-plus'
+          push
+          no-caps
+          :color='$q.dark.isActive ? `blue-grey-9` : `grey-1`'
+          :text-color='$q.dark.isActive ? `white` : `blue-grey-9`'
+          )
+        q-btn(
+          label='Twitter'
+          icon='lab la-twitter'
+          push
+          no-caps
+          :color='$q.dark.isActive ? `blue-grey-9` : `grey-1`'
+          :text-color='$q.dark.isActive ? `white` : `blue-grey-9`'
+          )
+        q-btn(
+          label='Local'
+          icon='las la-seedling'
+          push
+          color='primary'
+          no-caps
+          )
     q-form.q-mt-md
       q-input(
         outlined
@@ -62,21 +62,22 @@
         no-caps
         icon='las la-sign-in-alt'
       )
-    q-separator.q-my-md
-    q-btn.acrylic-btn.full-width(
-      flat
-      color='primary'
-      label='Create an Account'
-      no-caps
-      icon='las la-user-plus'
-    )
-    q-btn.acrylic-btn.full-width.q-mt-sm(
-      flat
-      color='primary'
-      label='Forgot Password'
-      no-caps
-      icon='las la-life-ring'
-    )
+    template(v-if='true')
+      q-separator.q-my-md
+      q-btn.acrylic-btn.full-width(
+        flat
+        color='primary'
+        label='Create an Account'
+        no-caps
+        icon='las la-user-plus'
+      )
+      q-btn.acrylic-btn.full-width.q-mt-sm(
+        flat
+        color='primary'
+        label='Forgot Password'
+        no-caps
+        icon='las la-life-ring'
+      )
   .auth-bg(aria-hidden="true")
     img(src='https://docs.requarks.io/_assets/img/splash/1.jpg' alt='')
 </template>
@@ -189,9 +190,9 @@ async function fetchStrategies () {
   const resp = await APOLLO_CLIENT.query({
     query: gql`
       query loginFetchSiteStrategies(
-        $siteId: UUID
+        $siteId: UUID!
       ) {
-        authStrategies(
+        authSiteStrategies(
           siteId: $siteId
           enabledOnly: true
           ) {

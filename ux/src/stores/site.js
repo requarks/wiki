@@ -70,6 +70,20 @@ export const useSiteStore = defineStore('site', {
                 logoText
                 company
                 contentLicense
+                theme {
+                  dark
+                  colorPrimary
+                  colorSecondary
+                  colorAccent
+                  colorHeader
+                  colorSidebar
+                  sidebarPosition
+                  tocPosition
+                  showSharingMenu
+                  showPrintBtn
+                  baseFont
+                  contentFont
+                }
               }
             }
           `,
@@ -86,6 +100,10 @@ export const useSiteStore = defineStore('site', {
           this.logoUrl = clone(siteInfo.logoUrl)
           this.company = clone(siteInfo.company)
           this.contentLicense = clone(siteInfo.contentLicense)
+          this.theme = {
+            ...this.theme,
+            ...clone(siteInfo.theme)
+          }
         } else {
           throw new Error('Invalid Site')
         }

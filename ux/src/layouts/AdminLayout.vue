@@ -6,7 +6,7 @@ q-layout.admin(view='hHh Lpr lff')
         q-btn(dense, flat, href='/')
           q-avatar(size='34px', square)
             img(src='/_assets/logo-wikijs.svg')
-        q-toolbar-title.text-h6.font-poppins Wiki.js
+        q-toolbar-title.text-h6 Wiki.js
       q-toolbar.gt-sm.justify-center(style='height: 64px;', dark)
         .text-overline.text-uppercase.text-grey {{t('admin.adminArea')}}
         q-badge.q-ml-sm(
@@ -266,10 +266,6 @@ watch(() => adminStore.currentSiteId, (newValue) => {
     router.push({ params: { siteid: newValue } })
   }
 })
-
-setCssVar('primary', '#1976D2')
-setCssVar('secondary', '#02C39A')
-setCssVar('accent', '#f03a47')
 
 // MOUNTED
 

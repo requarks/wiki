@@ -3,42 +3,42 @@
 # ===============================================
 
 extend type Query {
-  sites: [Site] @auth(requires: ["manage:system"])
+  sites: [Site]
 
   siteById (
     id: UUID!
-  ): Site @auth(requires: ["manage:system"])
+  ): Site
 
   siteByHostname (
     hostname: String!
     exact: Boolean!
-  ): Site @auth(requires: ["manage:system"])
+  ): Site
 }
 
 extend type Mutation {
   createSite (
     hostname: String!
     title: String!
-  ): SiteCreateResponse @auth(requires: ["manage:system"])
+  ): SiteCreateResponse
 
   updateSite (
     id: UUID!
     patch: SiteUpdateInput!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
   uploadSiteLogo (
     id: UUID!
     image: Upload!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
   uploadSiteFavicon (
     id: UUID!
     image: Upload!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 
   deleteSite (
     id: UUID!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -103,13 +103,22 @@ type SiteTheme {
   injectCSS: String
   injectHead: String
   injectBody: String
+  contentWidth: SiteThemeWidth
   sidebarPosition: SiteThemePosition
   tocPosition: SiteThemePosition
   showSharingMenu: Boolean
   showPrintBtn: Boolean
+  baseFont: String
+  contentFont: String
+}
+
+enum SiteThemeWidth {
+  full
+  centered
 }
 
 enum SiteThemePosition {
+  off
   left
   right
 }
@@ -172,8 +181,11 @@ input SiteThemeInput {
   injectCSS: String
   injectHead: String
   injectBody: String
+  contentWidth: SiteThemeWidth
   sidebarPosition: SiteThemePosition
   tocPosition: SiteThemePosition
   showSharingMenu: Boolean
   showPrintBtn: Boolean
+  baseFont: String
+  contentFont: String
 }
