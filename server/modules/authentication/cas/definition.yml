@@ -21,8 +21,11 @@ props:
   casVersion:
     type: String
     title: CAS Version
-    hint: 'This provider is only tested with CAS3.0, CAS1.0 is supported by the library but we dont know if that works or not'
+    hint: 'The version of CAS to use'
     order: 3
+    enum:
+      - CAS3.0
+      - CAS1.0
     default: 'CAS3.0'
   emailAttribute:
     type: String
