@@ -16,10 +16,11 @@ q-layout.admin(view='hHh Lpr lff')
           )
       q-toolbar(style='height: 64px;', dark)
         q-space
-        q-spinner-tail(
-          v-show='siteStore.routerLoading'
-          color='blue'
-          size='sm'
+        transition(name='syncing')
+          q-spinner-rings(
+            v-show='siteStore.routerLoading'
+            color='accent'
+            size='34px'
           )
         q-btn.q-ml-md(flat, dense, icon='las la-times-circle', label='Exit' color='pink', to='/')
         account-menu

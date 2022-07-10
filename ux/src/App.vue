@@ -50,6 +50,7 @@ if (typeof siteConfig !== 'undefined') {
 }
 
 router.beforeEach(async (to, from) => {
+  siteStore.routerLoading = true
   if (!siteStore.id) {
     console.info('No pre-cached site config. Loading site info...')
     await siteStore.loadSite(window.location.hostname)
@@ -62,5 +63,6 @@ router.afterEach(() => {
     state.isInitialized = true
     document.querySelector('.init-loading').remove()
   }
+  siteStore.routerLoading = false
 })
 </script>

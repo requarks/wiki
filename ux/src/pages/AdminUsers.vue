@@ -99,7 +99,7 @@ q-page.admin-groups
                 v-if='!props.row.isSystem'
                 flat
                 icon='las la-trash'
-                color='accent'
+                color='negative'
                 @click='deleteUser(props.row)'
                 )
 </template>

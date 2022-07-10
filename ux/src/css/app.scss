@@ -108,7 +108,7 @@ body::-webkit-scrollbar-thumb {
 // BUTTONS
 // ------------------------------------------------------------------
 
-#app .acrylic-btn {
+.q-btn.acrylic-btn {
   .q-focus-helper {
     background-color: currentColor;
     opacity: .1;
@@ -165,6 +165,25 @@ body::-webkit-scrollbar-thumb {
     background-image: radial-gradient(at top left, $dark-3, $dark-5);
     border-top: 1px solid #000;
     box-shadow: 0 -1px 0 0 lighten($dark-3, 2%);
+  }
+}
+
+// ------------------------------------------------------------------
+// LOADING ANIMATIONS
+// ------------------------------------------------------------------
+
+.syncing-enter-active {
+  animation: syncing-anim .1s;
+}
+.syncing-leave-active {
+  animation: syncing-anim 1s reverse;
+}
+@keyframes syncing-anim {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }
 

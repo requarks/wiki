@@ -55,9 +55,9 @@ q-header.bg-header.text-white.site-header(
       )
       q-space
       transition(name='syncing')
-        q-spinner-rings.q-mr-sm(
+        q-spinner-rings(
           v-show='siteStore.routerLoading'
-          color='orange'
+          color='accent'
           size='34px'
         )
       q-btn.q-ml-md(
@@ -113,18 +113,5 @@ const state = reactive({
 </script>
 
 <style lang="scss">
-.syncing-enter-active {
-  animation: syncing-anim .1s;
-}
-.syncing-leave-active {
-  animation: syncing-anim 1s reverse;
-}
-@keyframes syncing-anim {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
+
 </style>

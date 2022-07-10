@@ -358,7 +358,7 @@ function resetColors () {
   state.config.dark = false
   state.config.colorPrimary = '#1976D2'
   state.config.colorSecondary = '#02C39A'
-  state.config.colorAccent = '#f03a47'
+  state.config.colorAccent = '#FF9800'
   state.config.colorHeader = '#000'
   state.config.colorSidebar = '#1976D2'
 }

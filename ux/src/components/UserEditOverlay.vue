@@ -564,7 +564,7 @@ const localAuthId = computed(() => {
 
 const localAuth = computed({
   get () {
-    return localAuthId.value ? _get(state.user.auth, localAuthId.value, {}) : {}
+    return localAuthId.value ? state.user.auth?.[localAuthId.value] || {} : {}
   },
   set (val) {
     if (localAuthId.value) {

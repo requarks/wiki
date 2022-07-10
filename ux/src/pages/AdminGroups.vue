@@ -85,7 +85,7 @@ q-page.admin-groups
               q-btn.acrylic-btn(
                 flat
                 icon='las la-trash'
-                :color='props.row.isSystem ? `grey` : `accent`'
+                :color='props.row.isSystem ? `grey` : `negative`'
                 :disabled='props.row.isSystem'
                 @click='deleteGroup(props.row)'
                 )

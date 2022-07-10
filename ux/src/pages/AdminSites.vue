@@ -92,7 +92,7 @@ q-page.admin-locale
               q-btn.acrylic-btn(
                 flat
                 icon='las la-trash'
-                color='accent'
+                color='negative'
                 @click='deleteSite(site)'
                 )
 </template>

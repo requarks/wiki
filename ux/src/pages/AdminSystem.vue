@@ -400,6 +400,7 @@ Total RAM: ${state.info.ramTotal}`
 
   clip.on('success', () => {
     $q.notify({
+      type: 'positive',
       message: 'Info copied successfully',
       icon: 'las la-clipboard'
     })
