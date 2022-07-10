@@ -20,6 +20,45 @@ q-page.admin-utilities
     q-card.shadow-1
       q-list(separator)
         q-item
+          blueprint-icon(icon='database-export', :hue-rotate='45')
+          q-item-section
+            q-item-label {{t(`admin.utilities.export`)}}
+            q-item-label(caption) {{t(`admin.utilities.exportHint`)}}
+          q-item-section(side)
+            q-btn.acrylic-btn(
+              flat
+              icon='las la-arrow-circle-right'
+              color='primary'
+              @click=''
+              :label='t(`common.actions.proceed`)'
+            )
+        q-item
+          blueprint-icon(icon='datalake', :hue-rotate='45')
+          q-item-section
+            q-item-label {{t(`admin.utilities.flushCache`)}}
+            q-item-label(caption) {{t(`admin.utilities.flushCacheHint`)}}
+          q-item-section(side)
+            q-btn.acrylic-btn(
+              flat
+              icon='las la-arrow-circle-right'
+              color='primary'
+              @click=''
+              :label='t(`common.actions.proceed`)'
+            )
+        q-item
+          blueprint-icon(icon='database-restore', :hue-rotate='45')
+          q-item-section
+            q-item-label {{t(`admin.utilities.import`)}}
+            q-item-label(caption) {{t(`admin.utilities.importHint`)}}
+          q-item-section(side)
+            q-btn.acrylic-btn(
+              flat
+              icon='las la-arrow-circle-right'
+              color='primary'
+              @click=''
+              :label='t(`common.actions.proceed`)'
+            )
+        q-item
           blueprint-icon(icon='matches', :hue-rotate='45')
           q-item-section
             q-item-label {{t(`admin.utilities.invalidAuthCertificates`)}}

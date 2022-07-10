@@ -7,7 +7,23 @@ q-page.admin-dashboard
       .text-h5.text-primary.animated.fadeInLeft {{ t('admin.dashboard.title') }}
       .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.dashboard.subtitle') }}
   .row.q-px-md.q-col-gutter-md
-    .col-12 ---
+    .col-12
+      q-banner.bg-positive.text-white(
+        inline-actions
+        rounded
+        )
+        i.las.la-check.q-mr-sm
+        span.text-weight-medium Your Wiki.js server is running the latest version! (3.0.0)
+        template(#action)
+          q-btn(
+            flat
+            label='Check'
+            )
+          q-btn(
+            flat
+            label='System Info'
+            to='/_admin/system'
+            )
 
 //- v-container(fluid, grid-list-lg)
 //-   v-layout(row, wrap)

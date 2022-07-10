@@ -1437,5 +1437,11 @@
   "admin.theme.contentFont": "Content Font",
   "admin.theme.contentFontHint": "The font used specifically for page content.",
   "admin.theme.contentWidth": "Content Width",
-  "admin.theme.contentWidthHint": "Should the content use all available viewport space or stay centered."
+  "admin.theme.contentWidthHint": "Should the content use all available viewport space or stay centered.",
+  "admin.utilities.export": "Export",
+  "admin.utilities.import": "Import",
+  "admin.utilities.exportHint": "Export content to tarball for backup / migration.",
+  "admin.utilities.importHint": "Import content from a tarball backup or a 2.X backup.",
+  "admin.utilities.flushCache": "Flush Cache",
+  "admin.utilities.flushCacheHint": "Pages and Assets are cached to disk for better performance. You can flush the cache to force all content to be fetched from the DB again."
 }

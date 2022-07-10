@@ -883,13 +883,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@quasar/app-vite@npm:1.0.4":
-  version: 1.0.4
-  resolution: "@quasar/app-vite@npm:1.0.4"
+"@quasar/app-vite@npm:1.0.5":
+  version: 1.0.5
+  resolution: "@quasar/app-vite@npm:1.0.5"
   dependencies:
     "@quasar/fastclick": 1.1.5
     "@quasar/vite-plugin": ^1.0.9
     "@rollup/pluginutils": ^4.1.2
+    "@types/chrome": ^0.0.191
     "@types/compression": ^1.7.2
     "@types/cordova": 0.0.34
     "@types/express": ^4.17.13
@@ -909,8 +910,7 @@ __metadata:
     inquirer: ^8.2.1
     isbinaryfile: ^4.0.8
     kolorist: ^1.5.1
-    lodash.debounce: ^4.0.8
-    lodash.template: ^4.5.0
+    lodash: ^4.17.21
     minimist: ^1.2.6
     open: ^8.4.0
     ouch: ^2.0.0
@@ -948,7 +948,7 @@ __metadata:
       optional: true
   bin:
     quasar: bin/quasar
-  checksum: 531e1a640602f71947caa10595076c10a1ff2b80b676c641f088399245b66cd2851d8c365fc7cdeda71bf214b33fa14600fdfb22cf40d37be7ab7a7622052744
+  checksum: 15b5afdadb0668aa9bc7a89c5aed3d92e31c16296fab52a09f15959f60745d2d380d40414f4a8a9f843eec3bfa994bf9cd5d530db0a130054210bb441e5ab3d7
   languageName: node
   linkType: hard
 
@@ -1450,6 +1450,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/chrome@npm:^0.0.191":
+  version: 0.0.191
+  resolution: "@types/chrome@npm:0.0.191"
+  dependencies:
+    "@types/filesystem": "*"
+    "@types/har-format": "*"
+  checksum: 2c0abc3b3b9d54db3c07a3faf121b208b98b5605942f90d7977814a02fb2a438645b209fd75461aead2276e42e4e089da3f3ec228bc266ff41d466aa031702b6
+  languageName: node
+  linkType: hard
+
 "@types/compression@npm:^1.7.2":
   version: 1.7.2
   resolution: "@types/compression@npm:1.7.2"
@@ -1495,6 +1505,29 @@ __metadata:
     "@types/qs": "*"
     "@types/serve-static": "*"
   checksum: 12a2a0e6c4b993fc0854bec665906788aea0d8ee4392389d7a98a5de1eefdd33c9e1e40a91f3afd274011119c506f7b4126acb97fae62ae20b654974d44cba12
+  languageName: node
+  linkType: hard
+
+"@types/filesystem@npm:*":
+  version: 0.0.32
+  resolution: "@types/filesystem@npm:0.0.32"
+  dependencies:
+    "@types/filewriter": "*"
+  checksum: 4b9079d200a3b241722b90e1c5806c4b32c4dac87d42a1c7ef76a2c0dafdbe7d5f1a379b873ad5de73622b44de6599e1522908f67b938d54e785bd1c36e302a0
+  languageName: node
+  linkType: hard
+
+"@types/filewriter@npm:*":
+  version: 0.0.29
+  resolution: "@types/filewriter@npm:0.0.29"
+  checksum: 0c58aa875c2c245be7dbc42b20212f3203e13d11ec013a4a5cd0febf0e8b87214be5882c05ff9d7bdf0398f145a4fdbc24b7e6cf7b094e134a3b4c7a0598502f
+  languageName: node
+  linkType: hard
+
+"@types/har-format@npm:*":
+  version: 1.2.8
+  resolution: "@types/har-format@npm:1.2.8"
+  checksum: a14c6f31fb7c39be383638e00b3beaf693acfa6a2d8a10d9333f3d5cb70d3f2fc4d369a781775451012adc52faef08ff476e40a34fc6a1d6a557dd02ad984c0c
   languageName: node
   linkType: hard
 
@@ -1739,7 +1772,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/devtools-api@npm:^6.0.0, @vue/devtools-api@npm:^6.0.0-beta.7, @vue/devtools-api@npm:^6.1.4":
+"@vue/devtools-api@npm:^6.0.0-beta.7, @vue/devtools-api@npm:^6.1.4":
   version: 6.1.4
   resolution: "@vue/devtools-api@npm:6.1.4"
   checksum: 027bb138b03ec7147dd15e5d0ef28d5b72c822530396cc8a86bc6fdb049dc6850314b9e897e497064e3ed47fad229a18141f56b8b8ca3d41092a576dc5b6538d
@@ -3453,9 +3486,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-n@npm:15.2.3":
-  version: 15.2.3
-  resolution: "eslint-plugin-n@npm:15.2.3"
+"eslint-plugin-n@npm:15.2.4":
+  version: 15.2.4
+  resolution: "eslint-plugin-n@npm:15.2.4"
   dependencies:
     builtins: ^5.0.1
     eslint-plugin-es: ^4.1.0
@@ -3467,7 +3500,7 @@ __metadata:
     semver: ^7.3.7
   peerDependencies:
     eslint: ">=7.0.0"
-  checksum: da02bbf3152c49f9a09ab253f70e85f9d62af0f40f3d1882cf8a5fc9b9e07465c7f9632feae002ee97bce0598b408f017a4bb6c6f152b0870bad6f50aa430820
+  checksum: dd651651ab76120e45707ee968d846e3ffffb42d1035792fdef6d3b0dcfddf3673bc6a09cb2fac8c5f1d081f14f2a67fc52295d5ed1d2edfb5beead93284eaac
   languageName: node
   linkType: hard
 
@@ -3480,9 +3513,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-vue@npm:9.1.1":
-  version: 9.1.1
-  resolution: "eslint-plugin-vue@npm:9.1.1"
+"eslint-plugin-vue@npm:9.2.0":
+  version: 9.2.0
+  resolution: "eslint-plugin-vue@npm:9.2.0"
   dependencies:
     eslint-utils: ^3.0.0
     natural-compare: ^1.4.0
@@ -3493,7 +3526,7 @@ __metadata:
     xml-name-validator: ^4.0.0
   peerDependencies:
     eslint: ^6.2.0 || ^7.0.0 || ^8.0.0
-  checksum: 6095e2f1c7ca43a7923d52423b7263fbf947680f628cb86a606ad2cc1e0abcbff67971b2d6bb028f6e710fff9c8b1289d5bda27e3ad253c683ce74c9d520580f
+  checksum: 008819b12ad50ed62bfdc7f93e9e610575fa16dcccfb62ad9bb4ad27e69b1245419bf76752285742434fa6b9cf076f6fc173324084639e10209b2af2992630df
   languageName: node
   linkType: hard
 
@@ -4755,20 +4788,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash._reinterpolate@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "lodash._reinterpolate@npm:3.0.0"
-  checksum: 06d2d5f33169604fa5e9f27b6067ed9fb85d51a84202a656901e5ffb63b426781a601508466f039c720af111b0c685d12f1a5c14ff8df5d5f27e491e562784b2
-  languageName: node
-  linkType: hard
-
-"lodash.debounce@npm:^4.0.8":
-  version: 4.0.8
-  resolution: "lodash.debounce@npm:4.0.8"
-  checksum: a3f527d22c548f43ae31c861ada88b2637eb48ac6aa3eb56e82d44917971b8aa96fbb37aa60efea674dc4ee8c42074f90f7b1f772e9db375435f6c83a19b3bc6
-  languageName: node
-  linkType: hard
-
 "lodash.defaults@npm:^4.2.0":
   version: 4.2.0
   resolution: "lodash.defaults@npm:4.2.0"
@@ -4801,25 +4820,6 @@ __metadata:
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
   checksum: ad580b4bdbb7ca1f7abf7e1bce63a9a0b98e370cf40194b03380a46b4ed799c9573029599caebc1b14e3f24b111aef72b96674a56cfa105e0f5ac70546cdc005
-  languageName: node
-  linkType: hard
-
-"lodash.template@npm:^4.5.0":
-  version: 4.5.0
-  resolution: "lodash.template@npm:4.5.0"
-  dependencies:
-    lodash._reinterpolate: ^3.0.0
-    lodash.templatesettings: ^4.0.0
-  checksum: ca64e5f07b6646c9d3dbc0fe3aaa995cb227c4918abd1cef7a9024cd9c924f2fa389a0ec4296aa6634667e029bc81d4bbdb8efbfde11df76d66085e6c529b450
-  languageName: node
-  linkType: hard
-
-"lodash.templatesettings@npm:^4.0.0":
-  version: 4.2.0
-  resolution: "lodash.templatesettings@npm:4.2.0"
-  dependencies:
-    lodash._reinterpolate: ^3.0.0
-  checksum: 863e025478b092997e11a04e9d9e735875eeff1ffcd6c61742aa8272e3c2cddc89ce795eb9726c4e74cef5991f722897ff37df7738a125895f23fc7d12a7bb59
   languageName: node
   linkType: hard
 
@@ -4905,10 +4905,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"luxon@npm:2.4.0":
-  version: 2.4.0
-  resolution: "luxon@npm:2.4.0"
-  checksum: 6071028d65cc3d3bdab5e6a3995dd97411c92bb3b3163a02deb7b7014318ad3a6fd750ae77131c42141b717c14aef8880d3130f265281d500ef2365f7265b3f3
+"luxon@npm:2.5.0":
+  version: 2.5.0
+  resolution: "luxon@npm:2.5.0"
+  checksum: 2fccce6bbdfc8f13c5a8c148ff045ab3b10f4f80cac28dd92575588fffce9b2d7197096d7fedcc61a6245b59f4233507797f530e63f22b9ae4c425dff2909ae3
   languageName: node
   linkType: hard
 
@@ -5895,10 +5895,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"quasar@npm:2.7.4":
-  version: 2.7.4
-  resolution: "quasar@npm:2.7.4"
-  checksum: f527377c1f789f013a37aa9db023aa5c1680ed31c13eb05baa07f13c74ee2ddf97e5d1dac996cce4ecb9b8e5b4fd3101d115b458f10dede1776b7fc0c7adf7bf
+"quasar@npm:2.7.5":
+  version: 2.7.5
+  resolution: "quasar@npm:2.7.5"
+  checksum: 0ed975f2051ffbb7dd4180a6a9c3b2da7b4696df1896407ea4ec71da3168b9fcde3d43f96323caf7f4fea8cd7d89f03b6426e628c4b718b2b238d330a5f5054d
   languageName: node
   linkType: hard
 
@@ -6839,7 +6839,7 @@ __metadata:
     "@codemirror/view": 6.0.2
     "@intlify/vite-plugin-vue-i18n": 3.4.0
     "@lezer/common": 1.0.0
-    "@quasar/app-vite": 1.0.4
+    "@quasar/app-vite": 1.0.5
     "@quasar/extras": 1.14.2
     "@tiptap/core": 2.0.0-beta.176
     "@tiptap/extension-code-block": 2.0.0-beta.37
@@ -6875,9 +6875,9 @@ __metadata:
     eslint: 8.19.0
     eslint-config-standard: 17.0.0
     eslint-plugin-import: 2.26.0
-    eslint-plugin-n: 15.2.3
+    eslint-plugin-n: 15.2.4
     eslint-plugin-promise: 6.0.0
-    eslint-plugin-vue: 9.1.1
+    eslint-plugin-vue: 9.2.0
     filesize: 9.0.11
     filesize-parser: 1.5.0
     graphql: 16.5.0
@@ -6885,17 +6885,17 @@ __metadata:
     js-cookie: 3.0.1
     jwt-decode: 3.1.2
     lodash-es: 4.17.21
-    luxon: 2.4.0
+    luxon: 2.5.0
     pinia: 2.0.14
     pug: 3.0.2
-    quasar: 2.7.4
+    quasar: 2.7.5
     tippy.js: 6.3.7
     uuid: 8.3.2
     v-network-graph: 0.6.3
     vue: 3.2.37
     vue-codemirror: 6.0.0
     vue-i18n: 9.1.10
-    vue-router: 4.0.16
+    vue-router: 4.1.1
     vuedraggable: 4.1.0
     zxcvbn: 4.4.2
   languageName: unknown
@@ -7056,14 +7056,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-router@npm:4.0.16":
-  version: 4.0.16
-  resolution: "vue-router@npm:4.0.16"
+"vue-router@npm:4.1.1":
+  version: 4.1.1
+  resolution: "vue-router@npm:4.1.1"
   dependencies:
-    "@vue/devtools-api": ^6.0.0
+    "@vue/devtools-api": ^6.1.4
   peerDependencies:
     vue: ^3.2.0
-  checksum: 4b8e417c96404d4f4c69539112dfafc52f3b2427db3663d5129413a9b65aafdb95889d756af4c6d08a84d7f9e80cc0ae4667383f2c090f27c27ea4b5d83c4cec
+  checksum: a521d9c8e225497ba3f0759b00fdb48fdbf5ed7a81b7f05558733aaecbc539e94180c0bbf336063c65b1c2cf5e3e93fced2ec79718dbadac082fa8150bbfb924
   languageName: node
   linkType: hard
 
