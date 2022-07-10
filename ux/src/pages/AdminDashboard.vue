@@ -7,6 +7,82 @@ q-page.admin-dashboard
       .text-h5.text-primary.animated.fadeInLeft {{ t('admin.dashboard.title') }}
       .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.dashboard.subtitle') }}
   .row.q-px-md.q-col-gutter-md
+    .col-3
+      q-card.shadow-1
+        q-card-section.admin-dashboard-card
+          img(src='/_assets/icons/fluent-change-theme.svg')
+          div
+            strong Sites
+            span 4
+        q-separator
+        q-card-actions(align='right')
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-plus'
+            label='New'
+            )
+          q-separator.q-mx-sm(vertical)
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-sitemap'
+            label='Manage'
+            to='/_admin/sites'
+            )
+    .col-3
+      q-card.shadow-1
+        q-card-section.admin-dashboard-card
+          img(src='/_assets/icons/fluent-account.svg')
+          div
+            strong Users
+            span 123
+        q-separator
+        q-card-actions(align='right')
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-plus'
+            label='New'
+            )
+          q-separator.q-mx-sm(vertical)
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-users'
+            label='Manage'
+            to='/_admin/users'
+            )
+    .col-3
+      q-card.shadow-1
+        q-card-section.admin-dashboard-card
+          img(src='/_assets/icons/fluent-female-working-with-a-laptop.svg')
+          div
+            strong Logins
+            small 45 / last 24h
+        q-separator
+        q-card-actions(align='right')
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-chart-area'
+            label='Analytics'
+            )
+    .col-3
+      q-card.shadow-1
+        q-card-section.admin-dashboard-card
+          img(src='/_assets/icons/fluent-ssd-animated.svg')
+          div
+            strong Storage
+            small Operational
+        q-separator
+        q-card-actions(align='right')
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-server'
+            label='Manage'
+            )
     .col-12
       q-banner.bg-positive.text-white(
         inline-actions
@@ -24,6 +100,9 @@ q-page.admin-dashboard
             label='System Info'
             to='/_admin/system'
             )
+    .col-12
+      q-card.shadow-1
+        q-card-section ---
 
 //- v-container(fluid, grid-list-lg)
 //-   v-layout(row, wrap)
@@ -149,48 +228,39 @@ useMeta({
 
 <style lang='scss'>
 
-.dashboard-card {
-  display: flex;
-  width: 100%;
-  border-radius: 7px;
-
-  .v-card__text {
-    overflow: hidden;
-    position: relative;
-  }
-}
-
-.dashboard-contribute {
-  background-color: #FFF;
-  background-image: linear-gradient(to bottom, #FFF 0%, lighten($indigo-1, 3%) 100%);
-  border-radius: 7px;
-
-  @at-root .theme--dark & {
-    background-color: $grey-8;
-    background-image: linear-gradient(to bottom, $grey-8 0%, darken($grey-8, 6%) 100%);
-  }
-
-  .v-card__text {
+.admin-dashboard {
+  &-card {
     display: flex;
     align-items: center;
-    color: $indigo !important;
 
-    @at-root .theme--dark & {
-      color: $grey-4 !important;
+    img {
+      width: 64px;
+      margin-right: 12px;
     }
-  }
-}
 
-.v-icon.dashboard-icon {
-  position: absolute !important;
-  right: 0;
-  top: 12px;
-  font-size: 100px !important;
-  opacity: .25;
+    strong {
+      font-size: 1.1rem;
+      font-weight: 300;
+      display: block;
+      line-height: 1.2rem;
+      padding-left: 2px;
+    }
 
-  @at-root .v-application--is-rtl & {
-    left: 0;
-    right: initial;
+    span {
+      font-size: 2rem;
+      line-height: 2rem;
+      font-weight: 500;
+      color: $secondary;
+      display: block;
+    }
+
+    small {
+      font-size: 1.4rem;
+      line-height: 2rem;
+      font-weight: 400;
+      color: $positive;
+      display: block;
+    }
   }
 }
 

@@ -55,10 +55,10 @@ q-header.bg-header.text-white.site-header(
       )
       q-space
       transition(name='syncing')
-        q-spinner-rings(
+        q-spinner-tail(
           v-show='siteStore.routerLoading'
           color='accent'
-          size='34px'
+          size='24px'
         )
       q-btn.q-ml-md(
         flat
