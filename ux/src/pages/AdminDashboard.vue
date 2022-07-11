@@ -7,81 +7,85 @@ q-page.admin-dashboard
       .text-h5.text-primary.animated.fadeInLeft {{ t('admin.dashboard.title') }}
       .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.dashboard.subtitle') }}
   .row.q-px-md.q-col-gutter-md
-    .col-3
+    .col-12.col-sm-6.col-lg-3
       q-card.shadow-1
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-change-theme.svg')
           div
-            strong Sites
-            span 4
+            strong {{ t('admin.sites.title') }}
+            span {{adminStore.sites.length}}
         q-separator
         q-card-actions(align='right')
           q-btn(
             flat
             color='primary'
-            icon='las la-plus'
-            label='New'
+            icon='las la-plus-circle'
+            :label='t(`common.actions.new`)'
+            @click='newSite'
             )
           q-separator.q-mx-sm(vertical)
           q-btn(
             flat
             color='primary'
             icon='las la-sitemap'
-            label='Manage'
+            :label='t(`common.actions.manage`)'
             to='/_admin/sites'
             )
-    .col-3
+    .col-12.col-sm-6.col-lg-3
       q-card.shadow-1
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-account.svg')
           div
-            strong Users
-            span 123
+            strong {{ t('admin.users.title') }}
+            span {{adminStore.info.usersTotal}}
         q-separator
         q-card-actions(align='right')
           q-btn(
             flat
             color='primary'
-            icon='las la-plus'
-            label='New'
+            icon='las la-user-plus'
+            :label='t(`common.actions.new`)'
+            @click='newUser'
             )
           q-separator.q-mx-sm(vertical)
           q-btn(
             flat
             color='primary'
             icon='las la-users'
-            label='Manage'
+            :label='t(`common.actions.manage`)'
             to='/_admin/users'
             )
-    .col-3
+    .col-12.col-sm-6.col-lg-3
       q-card.shadow-1
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-female-working-with-a-laptop.svg')
           div
             strong Logins
-            small 45 / last 24h
+            small {{adminStore.info.loginsPastDay}} #[i / last 24h]
         q-separator
         q-card-actions(align='right')
           q-btn(
             flat
             color='primary'
             icon='las la-chart-area'
-            label='Analytics'
+            :label='t(`admin.analytics.title`)'
+            :to='`/_admin/` + adminStore.currentSiteId + `/analytics`'
             )
-    .col-3
+    .col-12.col-sm-6.col-lg-3
       q-card.shadow-1
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-ssd-animated.svg')
           div
-            strong Storage
-            small Operational
+            strong {{ t('admin.storage.title') }}
+            small.text-positive Operational
         q-separator
         q-card-actions(align='right')
           q-btn(
             flat
             color='primary'
             icon='las la-server'
-            label='Manage'
+            :label='t(`common.actions.manage`)'
+            :to='`/_admin/` + adminStore.currentSiteId + `/storage`'
             )
     .col-12
       q-banner.bg-positive.text-white(
@@ -89,12 +93,13 @@ q-page.admin-dashboard
         rounded
         )
         i.las.la-check.q-mr-sm
-        span.text-weight-medium Your Wiki.js server is running the latest version! (3.0.0)
+        span.text-weight-medium Your Wiki.js server is running the latest version!
         template(#action)
           q-btn(
             flat
             label='Check'
             )
+          q-separator.q-mx-sm(vertical, dark)
           q-btn(
             flat
             label='System Info'
@@ -211,10 +216,30 @@ q-page.admin-dashboard
 </template>
 
 <script setup>
-import { useMeta } from 'quasar'
+import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
-// STORES / ROUTERS / i18n
+import { useAdminStore } from '../stores/admin'
+
+// COMPONENTS
+
+import SiteCreateDialog from '../components/SiteCreateDialog.vue'
+import UserCreateDialog from '../components/UserCreateDialog.vue'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+
+// ROUTER
+
+const router = useRouter()
+
+// I18N
 
 const { t } = useI18n()
 
@@ -223,6 +248,23 @@ const { t } = useI18n()
 useMeta({
   title: t('admin.dashboard.title')
 })
+
+// METHODS
+
+function newSite () {
+  $q.dialog({
+    component: SiteCreateDialog
+  }).onOk(() => {
+    router.push('/_admin/sites')
+  })
+}
+function newUser () {
+  $q.dialog({
+    component: UserCreateDialog
+  }).onOk(() => {
+    router.push('/_admin/users')
+  })
+}
 
 </script>
 
@@ -250,7 +292,7 @@ useMeta({
       font-size: 2rem;
       line-height: 2rem;
       font-weight: 500;
-      color: $secondary;
+      color: var(--q-secondary);
       display: block;
     }
 
@@ -258,8 +300,13 @@ useMeta({
       font-size: 1.4rem;
       line-height: 2rem;
       font-weight: 400;
-      color: $positive;
+      color: var(--q-secondary);
       display: block;
+
+      i {
+        font-size: 1rem;
+        font-style: normal;
+      }
     }
   }
 }

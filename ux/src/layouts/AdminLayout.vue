@@ -50,6 +50,8 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-change-theme.svg')
           q-item-section {{ t('admin.sites.title') }}
+          q-item-section(side)
+            q-badge(color='dark-3', :label='adminStore.sites.length')
         q-item-label.q-mt-sm(header).text-caption.text-blue-grey-4 {{ t('admin.nav.site') }}
         q-item.q-mb-md
           q-item-section
@@ -118,13 +120,13 @@ q-layout.admin(view='hHh Lpr lff')
             q-icon(name='img:/_assets/icons/fluent-people.svg')
           q-item-section {{ t('admin.groups.title') }}
           q-item-section(side)
-            q-badge(color='dark-3', :label='info.groupsTotal')
+            q-badge(color='dark-3', :label='adminStore.info.groupsTotal')
         q-item(to='/_admin/users', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-account.svg')
           q-item-section {{ t('admin.users.title') }}
           q-item-section(side)
-            q-badge(color='dark-3', :label='info.usersTotal')
+            q-badge(color='dark-3', :label='adminStore.info.usersTotal')
         q-item-label.q-mt-sm(header).text-caption.text-blue-grey-4 {{ t('admin.nav.system') }}
         q-item(to='/_admin/api', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
@@ -235,10 +237,6 @@ const user = reactive({
   email: 'test@example.com',
   picture: null
 })
-const info = reactive({
-  groupsTotal: 3,
-  usersTotal: 2
-})
 const thumbStyle = {
   right: '1px',
   borderRadius: '5px',
@@ -277,6 +275,7 @@ onMounted(async () => {
       currentSiteId: route.params.siteid
     })
   }
+  adminStore.fetchInfo()
 })
 
 </script>
