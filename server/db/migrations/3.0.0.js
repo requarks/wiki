@@ -63,13 +63,11 @@ exports.up = async knex => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('module').notNullable()
       table.boolean('isEnabled').notNullable().defaultTo(false)
-      table.integer('order').unsigned().notNullable().defaultTo(0)
       table.string('displayName').notNullable().defaultTo('')
       table.jsonb('config').notNullable().defaultTo('{}')
       table.boolean('selfRegistration').notNullable().defaultTo(false)
       table.jsonb('domainWhitelist').notNullable().defaultTo('[]')
       table.jsonb('autoEnrollGroups').notNullable().defaultTo('[]')
-      table.jsonb('hideOnSites').notNullable().defaultTo('[]')
     })
     .createTable('commentProviders', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))

@@ -3,6 +3,7 @@ title: Generic OpenID Connect / OAuth2
 description: OpenID Connect 1.0 is a simple identity layer on top of the OAuth 2.0 protocol.
 author: requarks.io
 logo: https://static.requarks.io/logo/oidc.svg
+icon: /_assets/icons/ultraviolet-openid.svg
 color: blue-grey darken-2
 website: http://openid.net/connect/
 isAvailable: true

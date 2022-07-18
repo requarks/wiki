@@ -9,9 +9,11 @@ extend type Query {
 
   authStrategies: [AuthenticationStrategy]
 
+  authActiveStrategies: [AuthenticationActiveStrategy]
+
   authSiteStrategies(
     siteId: UUID!
-    enabledOnly: Boolean
+    visibleOnly: Boolean
   ): [AuthenticationSiteStrategy]
 }
 
@@ -73,7 +75,7 @@ extend type Mutation {
 
 type AuthenticationStrategy {
   key: String
-  props: [KeyValuePair]
+  props: JSON
   title: String
   description: String
   isAvailable: Boolean
@@ -81,20 +83,27 @@ type AuthenticationStrategy {
   usernameType: String
   logo: String
   color: String
+  vendor: String
   website: String
   icon: String
 }
 
-type AuthenticationSiteStrategy {
-  key: String
+type AuthenticationActiveStrategy {
+  id: UUID
   strategy: AuthenticationStrategy
   displayName: String
-  order: Int
   isEnabled: Boolean
-  config: [KeyValuePair]
+  config: JSON
   selfRegistration: Boolean
   domainWhitelist: [String]
   autoEnrollGroups: [Int]
+}
+
+type AuthenticationSiteStrategy {
+  id: UUID
+  activeStrategy: AuthenticationActiveStrategy
+  order: Int
+  isVisible: Boolean
 }
 
 type AuthenticationLoginResponse {

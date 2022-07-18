@@ -3,8 +3,10 @@ title: Local Database
 description: Built-in authentication for Wiki.js
 author: requarks.io
 logo: https://static.requarks.io/logo/wikijs.svg
+icon: /_assets/icons/ultraviolet-data-protection.svg
 color: primary
-website: https://wiki.js.org
+vendor: 'Wiki.js'
+website: 'https://js.wiki'
 isAvailable: true
 useForm: true
 usernameType: email

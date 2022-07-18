@@ -33,11 +33,11 @@ q-page.admin-mail
           dark
           )
           q-item(
-            v-for='str of state.activeStrategies'
+            v-for='str of combinedActiveStrategies'
             :key='str.key'
             active-class='bg-primary text-white'
-            :active='state.selectedStrategy === str.key'
-            @click='state.selectedStrategy = str.key'
+            :active='state.selectedStrategy === str.id'
+            @click='state.selectedStrategy = str.id'
             clickable
             )
             q-item-section(side)
@@ -54,54 +54,159 @@ q-page.admin-mail
         icon='las la-plus'
         :label='t(`admin.auth.addStrategy`)'
         )
-        q-menu(auto-close)
-          q-list(style='min-width: 350px;')
-            q-item(clickable)
-    .col Doude
+        q-menu(auto-close, fit, max-width='300px')
+          q-list(separator)
+            q-item(
+              v-for='str of availableStrategies'
+              :key='str.key'
+              clickable
+              @click='addStrategy(str)'
+              )
+              q-item-section(avatar)
+                q-avatar(
+                  rounded
+                  color='dark'
+                  text-color='white'
+                  )
+                  q-icon(
+                    :name='`img:` + str.icon'
+                  )
+              q-item-section
+                q-item-label: strong {{str.title}}
+                q-item-label(caption, lines='2') {{str.description}}
+    .col
+      q-card.shadow-1.q-pb-sm
+        q-card-section
+          .text-subtitle1 {{t('admin.storage.contentTypes')}}
+          .text-body2.text-grey {{ t('admin.storage.contentTypesHint') }}
 
-    //- v-flex(lg3, xs12)
-    //-   v-card.animated.fadeInUp
-    //-     v-toolbar(flat, color='teal', dark, dense)
-    //-       .subtitle-1 {{$t('admin.auth.activeStrategies')}}
-    //-     v-list(two-line, dense).py-0
-    //-       draggable(
-    //-         v-model='activeStrategies'
-    //-         handle='.is-handle'
-    //-         direction='vertical'
-    //-         )
-    //-         transition-group
-    //-           v-list-item(
-    //-             v-for='(str, idx) in activeStrategies'
-    //-             :key='str.key'
-    //-             @click='selectedStrategy = str.key'
-    //-             :class='selectedStrategy === str.key ? ($vuetify.theme.dark ? `grey darken-5` : `teal lighten-5`) : ``'
-    //-             )
-    //-             v-list-item-avatar.is-handle(size='24')
-    //-               v-icon(:color='selectedStrategy === str.key ? `teal` : `grey`') mdi-drag-horizontal
-    //-             v-list-item-content
-    //-               v-list-item-title.body-2(:class='selectedStrategy === str.key ? `teal--text` : ``') {{ str.displayName }}
-    //-               v-list-item-subtitle: .caption(:class='selectedStrategy === str.key ? `teal--text ` : ``') {{ str.strategy.title }}
-    //-             v-list-item-avatar(v-if='selectedStrategy === str.key', size='24')
-    //-               v-icon.animated.fadeInLeft(color='teal', large) mdi-chevron-right
-    //-     v-card-chin
-    //-       v-menu(offset-y, bottom, min-width='250px', max-width='550px', max-height='50vh', style='flex: 1 1;', center)
-    //-         template(v-slot:activator='{ on }')
-    //-           v-btn(v-on='on', color='primary', depressed, block)
-    //-             v-icon(left) mdi-plus
-    //-             span {{$t('admin.auth.addStrategy')}}
-    //-         v-list(dense)
-    //-           template(v-for='(str, idx) of strategies')
-    //-             v-list-item(
-    //-               :key='str.key'
-    //-               :disabled='str.isDisabled'
-    //-               @click='addStrategy(str)'
-    //-               )
-    //-               v-list-item-avatar(height='24', width='48', tile)
-    //-                 v-img(:src='str.logo', width='48px', height='24px', contain, :style='str.isDisabled ? `opacity: .25;` : ``')
-    //-               v-list-item-content
-    //-                 v-list-item-title {{str.title}}
-    //-                 v-list-item-subtitle: .caption(:style='str.isDisabled ? `opacity: .4;` : ``') {{str.description}}
-    //-             v-divider(v-if='idx < strategies.length - 1')
+      //- -----------------------
+      //- Configuration
+      //- -----------------------
+      q-card.shadow-1.q-pb-sm.q-mt-md
+        q-card-section
+          .text-subtitle1 {{t('admin.storage.config')}}
+          q-banner.q-mt-md(
+            v-if='!state.strategy.config || Object.keys(state.strategy.config).length < 1'
+            rounded
+            :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
+            ) {{t('admin.storage.noConfigOption')}}
+        template(
+          v-for='(cfg, cfgKey, idx) in state.strategy.config'
+          )
+          template(
+            v-if='configIfCheck(cfg.if)'
+            )
+            q-separator.q-my-sm(inset, v-if='idx > 0')
+            q-item(v-if='cfg.type === `boolean`', tag='label')
+              blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
+              q-item-section
+                q-item-label {{cfg.title}}
+                q-item-label(caption) {{cfg.hint}}
+              q-item-section(avatar)
+                q-toggle(
+                  v-model='cfg.value'
+                  color='primary'
+                  checked-icon='las la-check'
+                  unchecked-icon='las la-times'
+                  :aria-label='t(`admin.general.allowComments`)'
+                  :disable='cfg.readOnly'
+                  )
+            q-item(v-else)
+              blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
+              q-item-section
+                q-item-label {{cfg.title}}
+                q-item-label(caption) {{cfg.hint}}
+              q-item-section(
+                :style='cfg.type === `number` ? `flex: 0 0 150px;` : ``'
+                :class='{ "col-auto": cfg.enum && cfg.enumDisplay === `buttons` }'
+                )
+                q-btn-toggle(
+                  v-if='cfg.enum && cfg.enumDisplay === `buttons`'
+                  v-model='cfg.value'
+                  push
+                  glossy
+                  no-caps
+                  toggle-color='primary'
+                  :options='cfg.enum'
+                  :disable='cfg.readOnly'
+                )
+                q-select(
+                  v-else-if='cfg.enum'
+                  outlined
+                  v-model='cfg.value'
+                  :options='cfg.enum'
+                  emit-value
+                  map-options
+                  dense
+                  options-dense
+                  :aria-label='cfg.title'
+                  :disable='cfg.readOnly'
+                )
+                q-input(
+                  v-else
+                  outlined
+                  v-model='cfg.value'
+                  dense
+                  :type='cfg.multiline ? `textarea` : `input`'
+                  :aria-label='cfg.title'
+                  :disable='cfg.readOnly'
+                  )
+
+    .col-auto(v-if='state.selectedStrategy && state.strategy')
+      //- -----------------------
+      //- Infobox
+      //- -----------------------
+      q-card.rounded-borders.q-pb-md(style='width: 350px;')
+        q-card-section
+          .text-subtitle1 {{state.strategy.strategy.title}}
+          q-img.q-mt-sm.rounded-borders(
+            :src='state.strategy.strategy.logo'
+            fit='cover'
+            no-spinner
+          )
+          .text-body2.q-mt-md {{state.strategy.strategy.description}}
+        q-separator.q-mb-sm(inset)
+        q-item
+          q-item-section
+            q-item-label.text-grey {{t(`admin.auth.vendor`)}}
+            q-item-label {{state.strategy.strategy.vendor}}
+        q-separator.q-my-sm(inset)
+        q-item
+          q-item-section
+            q-item-label.text-grey {{t(`admin.auth.vendorWebsite`)}}
+            q-item-label: a(:href='state.strategy.strategy.website', target='_blank', rel='noreferrer') {{state.strategy.strategy.website}}
+
+      //- -----------------------
+      //- Status
+      //- -----------------------
+      q-card.rounded-borders.q-pb-md.q-mt-md(style='width: 350px;')
+        q-card-section
+          .text-subtitle1 {{t(`admin.auth.status`)}}
+        q-item(tag='label')
+          q-item-section
+            q-item-label {{t(`admin.auth.enabled`)}}
+            q-item-label(caption) {{t(`admin.auth.enabledHint`)}}
+            q-item-label.text-deep-orange(v-if='state.strategy.strategy.key === `local`', caption) {{t(`admin.auth.enabledForced`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.strategy.isEnabled'
+              :disable='state.strategy.strategy.key === `local`'
+              color='primary'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.auth.enabled`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item
+          q-item-section
+            q-btn.acrylic-btn(
+              icon='las la-trash-alt'
+              flat
+              color='negative'
+              :disable='state.strategy.strategy.key === `local`'
+              label='Delete Strategy'
+              )
 
     //- v-flex(xs12, lg9)
     //-   v-card.animated.fadeInUp.wait-p2s
@@ -263,7 +368,7 @@ q-page.admin-mail
 
 <script setup>
 import gql from 'graphql-tag'
-import { find, reject } from 'lodash-es'
+import { find, reject, transform } from 'lodash-es'
 import { v4 as uuid } from 'uuid'
 
 import { useI18n } from 'vue-i18n'
@@ -272,8 +377,6 @@ import { computed, onMounted, reactive, watch, nextTick } from 'vue'
 
 import { useAdminStore } from 'src/stores/admin'
 import { useSiteStore } from 'src/stores/site'
-
-import draggable from 'vuedraggable'
 
 // QUASAR
 
@@ -300,59 +403,7 @@ const state = reactive({
   loading: 0,
   groups: [],
   strategies: [],
-  activeStrategies: [
-    {
-      key: 'local',
-      strategy: {
-        key: 'local',
-        title: 'Username-Password Authentication',
-        description: '',
-        useForm: true,
-        icon: '/_assets/icons/ultraviolet-data-protection.svg',
-        website: ''
-      },
-      config: [],
-      isEnabled: true,
-      displayName: 'Local Database',
-      selfRegistration: false,
-      domainWhitelist: '',
-      autoEnrollGroups: []
-    },
-    {
-      key: 'google',
-      strategy: {
-        key: 'google',
-        title: 'Google',
-        description: '',
-        useForm: true,
-        icon: '/_assets/icons/ultraviolet-google.svg',
-        website: ''
-      },
-      config: [],
-      isEnabled: true,
-      displayName: 'Google',
-      selfRegistration: false,
-      domainWhitelist: '',
-      autoEnrollGroups: []
-    },
-    {
-      key: 'slack',
-      strategy: {
-        key: 'slack',
-        title: 'Slack',
-        description: '',
-        useForm: true,
-        icon: '/_assets/icons/ultraviolet-slack.svg',
-        website: ''
-      },
-      config: [],
-      isEnabled: false,
-      displayName: 'Slack',
-      selfRegistration: false,
-      domainWhitelist: '',
-      autoEnrollGroups: []
-    }
-  ],
+  activeStrategies: [],
   selectedStrategy: '',
   host: '',
   strategy: {
@@ -360,39 +411,93 @@ const state = reactive({
   }
 })
 
+// COMPUTED
+
+const availableStrategies = computed(() => {
+  return state.strategies.filter(str => str.key !== 'local')
+})
+
+const combinedActiveStrategies = computed(() => {
+  return state.activeStrategies.map(str => ({
+    ...str,
+    strategy: find(state.strategies, ['key', str.strategy?.key]) || {}
+  }))
+})
+
 // WATCHERS
 
 watch(() => state.selectedStrategy, (newValue, oldValue) => {
-  state.strategy = find(state.activeStrategies, ['key', newValue]) || {}
+  const str = find(combinedActiveStrategies.value, ['id', newValue]) || {}
+  str.config = transform(str.strategy.props, (cfg, v, k) => {
+    cfg[k] = {
+      ...v,
+      value: str.config[k]
+    }
+  }, {})
+  state.strategy = str
 })
 watch(() => state.activeStrategies, (newValue, oldValue) => {
-  state.selectedStrategy = 'local'
+  state.selectedStrategy = newValue[0]?.id
 })
 
 // METHODS
 
-async function refresh () {
-  await this.$apollo.queries.strategies.refetch()
-  await this.$apollo.queries.activeStrategies.refetch()
-  this.$store.commit('showNotification', {
-    message: this.$t('admin.auth.refreshSuccess'),
-    style: 'success',
-    icon: 'cached'
+async function load () {
+  state.loading++
+  $q.loading.show()
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query adminFetchAuthStrategies {
+        authStrategies {
+          key
+          props
+          title
+          description
+          isAvailable
+          useForm
+          usernameType
+          logo
+          color
+          vendor
+          website
+          icon
+        }
+        authActiveStrategies {
+          id
+          strategy {
+            key
+          }
+          displayName
+          isEnabled
+          config
+          selfRegistration
+          domainWhitelist
+          autoEnrollGroups
+        }
+      }
+    `,
+    fetchPolicy: 'network-only'
   })
+  state.strategies = resp?.data?.authStrategies || []
+  state.activeStrategies = resp?.data?.authActiveStrategies || []
+  $q.loading.hide()
+  state.loading--
+}
+
+function configIfCheck (ifs) {
+  if (!ifs || ifs.length < 1) { return true }
+  return ifs.every(s => state.strategy.config[s.key]?.value === s.eq)
 }
 
 function addStrategy (str) {
   const newStr = {
-    key: uuid(),
-    strategy: str,
-    config: str.props.map(c => ({
-      key: c.key,
-      value: {
-        ...c,
-        value: c.default
-      }
-    })),
-    order: state.activeStrategies.length,
+    id: uuid(),
+    strategy: {
+      key: str.key
+    },
+    config: transform(str.props, (cfg, v, k) => {
+      cfg[k] = v.default
+    }, {}),
     isEnabled: true,
     displayName: str.title,
     selfRegistration: false,
@@ -401,12 +506,12 @@ function addStrategy (str) {
   }
   state.activeStrategies = [...state.activeStrategies, newStr]
   nextTick(() => {
-    state.selectedStrategy = newStr.key
+    state.selectedStrategy = newStr.id
   })
 }
 
-function deleteStrategy () {
-  state.activeStrategies = reject(state.activeStrategies, ['key', state.strategy.key])
+function deleteStrategy (id) {
+  state.activeStrategies = reject(state.activeStrategies, ['id', id])
 }
 
 async function save () {
@@ -551,4 +656,8 @@ async function save () {
 //       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-host-refresh')
 //     }
 //   }
+
+onMounted(() => {
+  load()
+})
 </script>

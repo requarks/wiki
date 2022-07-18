@@ -1443,5 +1443,11 @@
   "admin.utilities.exportHint": "Export content to tarball for backup / migration.",
   "admin.utilities.importHint": "Import content from a tarball backup or a 2.X backup.",
   "admin.utilities.flushCache": "Flush Cache",
-  "admin.utilities.flushCacheHint": "Pages and Assets are cached to disk for better performance. You can flush the cache to force all content to be fetched from the DB again."
+  "admin.utilities.flushCacheHint": "Pages and Assets are cached to disk for better performance. You can flush the cache to force all content to be fetched from the DB again.",
+  "admin.auth.enabledForced": "This strategy cannot be disabled.",
+  "admin.auth.enabled": "Enabled",
+  "admin.auth.enabledHint": "Should this strategy be available to sites for login.",
+  "admin.auth.vendor": "Vendor",
+  "admin.auth.vendorWebsite": "Website",
+  "admin.auth.status": "Status"
 }

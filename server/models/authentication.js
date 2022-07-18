@@ -51,13 +51,14 @@ module.exports = class Authentication extends Model {
       for (const dir of authenticationDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/authentication', dir, 'definition.yml'), 'utf8')
         const defParsed = yaml.load(def)
+        if (!defParsed.isAvailable) { continue }
         defParsed.key = dir
         defParsed.props = commonHelper.parseModuleProps(defParsed.props)
-        WIKI.data.analytics.push(defParsed)
+        WIKI.data.authentication.push(defParsed)
         WIKI.logger.debug(`Loaded authentication module definition ${dir}: [ OK ]`)
       }
 
-      WIKI.logger.info(`Loaded ${WIKI.data.analytics.length} authentication module definitions: [ OK ]`)
+      WIKI.logger.info(`Loaded ${WIKI.data.authentication.length} authentication module definitions: [ OK ]`)
     } catch (err) {
       WIKI.logger.error(`Failed to scan or load authentication providers: [ FAILED ]`)
       WIKI.logger.error(err)

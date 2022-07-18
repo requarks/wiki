@@ -438,7 +438,7 @@ q-page.admin-storage
       //- -----------------------
       q-card.rounded-borders.q-pb-md.q-mt-md(style='width: 350px;')
         q-card-section
-          .text-subtitle1 Status
+          .text-subtitle1 {{ t('admin.storage.status') }}
         template(v-if='state.target.module !== `db` && !(state.target.setup && state.target.setup.handler && state.target.setup.state !== `configured`)')
           q-item(tag='label')
             q-item-section
@@ -452,7 +452,7 @@ q-page.admin-storage
                 color='primary'
                 checked-icon='las la-check'
                 unchecked-icon='las la-times'
-                :aria-label='t(`admin.general.allowSearch`)'
+                :aria-label='t(`admin.storage.enabled`)'
                 )
           q-separator.q-my-sm(inset)
         q-item

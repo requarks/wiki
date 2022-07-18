@@ -3,6 +3,7 @@ title: Google
 description: Google specializes in Internet-related services and products, which include online advertising technologies, search engine, cloud computing, software, and hardware.
 author: requarks.io
 logo: https://static.requarks.io/logo/google.svg
+icon: /_assets/icons/ultraviolet-google.svg
 color: red darken-1
 website: https://console.developers.google.com/
 isAvailable: true

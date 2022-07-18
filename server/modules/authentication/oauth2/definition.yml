@@ -3,6 +3,7 @@ title: Generic OAuth2
 description: OAuth 2.0 is the industry-standard protocol for authorization.
 author: requarks.io
 logo: https://static.requarks.io/logo/oauth2.svg
+icon: /_assets/icons/ultraviolet-oauth2.svg
 color: blue-grey darken-2
 website: https://oauth.net/2/
 isAvailable: true

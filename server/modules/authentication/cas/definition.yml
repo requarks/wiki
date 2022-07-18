@@ -3,6 +3,7 @@ title: CAS
 description: The Central Authentication Service (CAS) is a single sign-on protocol for the web.
 author: requarks.io
 logo: https://static.requarks.io/logo/cas.svg
+icon: /_assets/icons/ultraviolet-cas.svg
 color: green darken-2
 website: https://apereo.github.io/cas/
 useForm: false

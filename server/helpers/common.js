@@ -29,11 +29,12 @@ module.exports = {
         default: defaultValue,
         type: (value.type || value).toLowerCase(),
         title: value.title || _.startCase(key),
-        hint: value.hint || false,
+        hint: value.hint || '',
         enum: value.enum || false,
+        enumDisplay: value.enumDisplay || 'select',
         multiline: value.multiline || false,
         sensitive: value.sensitive || false,
-        maxWidth: value.maxWidth || 0,
+        icon: value.icon || 'rename',
         order: value.order || 100
       })
       return result

@@ -31,17 +31,17 @@ module.exports = {
     async authStrategies () {
       return WIKI.data.authentication.map(stg => ({
         ...stg,
-        isAvailable: stg.isAvailable === true,
-        props: _.sortBy(_.transform(stg.props, (res, value, key) => {
-          res.push({
-            key,
-            value: JSON.stringify(value)
-          })
-        }, []), 'key')
+        isAvailable: stg.isAvailable === true
       }))
     },
     /**
      * Fetch active authentication strategies
+     */
+    async authActiveStrategies (obj, args, context) {
+      return WIKI.models.authentication.getStrategies()
+    },
+    /**
+     * Fetch site authentication strategies
      */
     async authSiteStrategies (obj, args, context, info) {
       let strategies = await WIKI.models.authentication.getStrategies()
@@ -268,14 +268,9 @@ module.exports = {
       }
     }
   },
-  AuthenticationStrategy: {
-    icon (ap, args) {
-      return fs.readFile(path.join(WIKI.ROOTPATH, `assets/svg/auth-icon-${ap.key}.svg`), 'utf8').catch(err => {
-        if (err.code === 'ENOENT') {
-          return null
-        }
-        throw err
-      })
+  AuthenticationActiveStrategy: {
+    strategy (obj, args, context) {
+      return _.find(WIKI.data.authentication, ['key', obj.module])
     }
   }
 }

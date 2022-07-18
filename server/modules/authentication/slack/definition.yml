@@ -3,6 +3,7 @@ title: Slack
 description: Slack is a cloud-based set of proprietary team collaboration tools and services.
 author: requarks.io
 logo: https://static.requarks.io/logo/slack.svg
+icon: /_assets/icons/ultraviolet-slack.svg
 color: green
 website: https://api.slack.com/docs/oauth
 isAvailable: true
