@@ -6,9 +6,9 @@ version: "3"
 x-uffizzi:
   ingress:
     service: wiki
-    port: 80
+    port: 3000
 
-services: 
+services:
   db:
     image: postgres:11-alpine
     environment:
@@ -16,26 +16,27 @@ services:
       POSTGRES_PASSWORD: wikijsrocks
       POSTGRES_USER: wikijs
     restart: unless-stopped
-    volumes:
-      - db-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 500M
 
   wiki:
-    build:
-      context: https://github.com/waveywaves/requarks-wiki
-      dockerfile: Dockerfile
+    image: "${WIKI_IMAGE}"
     depends_on:
       - db
     environment:
       DB_TYPE: postgres
-      DB_HOST: db
+      DB_HOST: localhost
       DB_PORT: 5432
       DB_USER: wikijs
       DB_PASS: wikijsrocks
       DB_NAME: wiki
     restart: unless-stopped
     ports:
-      - "80:3000"
-
-volumes:
-  db-data:
+      - "3000"
+    deploy:
+      resources:
+        limits:
+          memory: 500M
 
