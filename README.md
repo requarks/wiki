@@ -139,6 +139,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 <img width="441" height="1" />
 
 - Akira Suenami ([@a-suenami](https://github.com/a-suenami))
+- Armin Reiter ([@arminreiter](https://github.com/arminreiter))
 - Arnaud Marchand ([@snuids](https://github.com/snuids))
 - Brian Douglass ([@bhdouglass](https://github.com/bhdouglass))
 - Bryon Vandiver ([@asterick](https://github.com/asterick))
