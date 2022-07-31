@@ -162,8 +162,9 @@ q-page.admin-mail
           .text-subtitle1 {{state.strategy.strategy.title}}
           q-img.q-mt-sm.rounded-borders(
             :src='state.strategy.strategy.logo'
-            fit='cover'
+            fit='contain'
             no-spinner
+            style='height: 100px;'
           )
           .text-body2.q-mt-md {{state.strategy.strategy.description}}
         q-separator.q-mb-sm(inset)

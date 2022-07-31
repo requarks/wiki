@@ -35,7 +35,7 @@ module.exports = class Authentication extends Model {
   }
 
   static async getStrategies() {
-    const strategies = await WIKI.models.authentication.query().orderBy('order')
+    const strategies = await WIKI.models.authentication.query()
     return strategies.map(str => ({
       ...str,
       domainWhitelist: _.get(str.domainWhitelist, 'v', []),

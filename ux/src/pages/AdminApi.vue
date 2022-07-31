@@ -9,7 +9,7 @@ q-page.admin-api
     .col
       .flex.items-center
         template(v-if='state.enabled')
-          q-spinner-rings.q-mr-sm(color='green')
+          q-spinner-rings.q-mr-sm(color='green', size='md')
           .text-caption.text-green {{t('admin.api.enabled')}}
         template(v-else)
           q-spinner-rings.q-mr-sm(color='red', size='md')
@@ -28,7 +28,7 @@ q-page.admin-api
         flat
         color='secondary'
         :loading='state.loading > 0'
-        @click='load'
+        @click='refresh'
         )
       q-btn.q-mr-sm(
         unelevated
@@ -36,6 +36,7 @@ q-page.admin-api
         :label='!state.enabled ? t(`admin.api.enableButton`) : t(`admin.api.disableButton`)'
         :color='!state.enabled ? `positive` : `negative`'
         @click='globalSwitch'
+        :loading='state.isToggleLoading'
         :disabled='state.loading > 0'
       )
       q-btn(
@@ -48,70 +49,47 @@ q-page.admin-api
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
-    .col-12.col-lg-7
-      q-card.shadow-1
-
-//- v-container(fluid, grid-list-lg)
-//-   v-layout(row, wrap)
-//-     v-flex(xs12)
-//-       .admin-header
-//-         img.animated.fadeInUp(src='/_assets/svg/icon-rest-api.svg', alt='API', style='width: 80px;')
-//-         .admin-header-title
-//-           .headline.primary--text.animated.fadeInLeft {{$t('admin.api.title')}}
-//-           .subtitle-1.grey--text.animated.fadeInLeft {{$t('admin.api.subtitle')}}
-//-         v-spacer
-//-         template(v-if='enabled')
-//-           status-indicator.mr-3(positive, pulse)
-//-           .caption.green--text.animated.fadeInLeft {{$t('admin.api.enabled')}}
-//-         template(v-else)
-//-           status-indicator.mr-3(negative, pulse)
-//-           .caption.red--text.animated.fadeInLeft {{$t('admin.api.disabled')}}
-//-         v-spacer
-//-         v-btn.mr-3.animated.fadeInDown.wait-p2s(outlined, color='grey', icon, @click='refresh')
-//-           v-icon mdi-refresh
-//-         v-btn.mr-3.animated.fadeInDown.wait-p1s(:color='enabled ? `red` : `green`', depressed, @click='globalSwitch', dark, :loading='isToggleLoading')
-//-           v-icon(left) mdi-power
-//-           span(v-if='!enabled') {{$t('admin.api.enableButton')}}
-//-           span(v-else) {{$t('admin.api.disableButton')}}
-//-         v-btn.animated.fadeInDown(color='primary', depressed, large, @click='newKey', dark)
-//-           v-icon(left) mdi-plus
-//-           span {{$t('admin.api.newKeyButton')}}
-//-       v-card.mt-3.animated.fadeInUp
-//-         v-simple-table(v-if='keys && keys.length > 0')
-//-           template(v-slot:default)
-//-             thead
-//-               tr.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-5`')
-//-                 th {{$t('admin.api.headerName')}}
-//-                 th {{$t('admin.api.headerKeyEnding')}}
-//-                 th {{$t('admin.api.headerExpiration')}}
-//-                 th {{$t('admin.api.headerCreated')}}
-//-                 th {{$t('admin.api.headerLastUpdated')}}
-//-                 th(width='100') {{$t('admin.api.headerRevoke')}}
-//-             tbody
-//-               tr(v-for='key of keys', :key='`key-` + key.id')
-//-                 td
-//-                   strong(:class='key.isRevoked ? `red--text` : ``') {{ key.name }}
-//-                   em.caption.ml-1.red--text(v-if='key.isRevoked') (revoked)
-//-                 td.caption {{ key.keyShort }}
-//-                 td(:style='key.isRevoked ? `text-decoration: line-through;` : ``') {{ key.expiration | moment('LL') }}
-//-                 td {{ key.createdAt | moment('calendar') }}
-//-                 td {{ key.updatedAt | moment('calendar') }}
-//-                 td: v-btn(icon, @click='revoke(key)', :disabled='key.isRevoked'): v-icon(color='error') mdi-cancel
-//-         v-card-text(v-else)
-//-           v-alert.mb-0(icon='mdi-information', :value='true', outlined, color='info') {{$t('admin.api.noKeyInfo')}}
-
-//-   create-api-key(v-model='isCreateDialogShown', @refresh='refresh(false)')
-
-//-   v-dialog(v-model='isRevokeConfirmDialogShown', max-width='500', persistent)
-//-     v-card
-//-       .dialog-header.is-red {{$t('admin.api.revokeConfirm')}}
-//-       v-card-text.pa-4
-//-         i18next(tag='span', path='admin.api.revokeConfirmText')
-//-           strong(place='name') {{ current.name }}
-//-       v-card-actions
-//-         v-spacer
-//-         v-btn(text, @click='isRevokeConfirmDialogShown = false', :disabled='revokeLoading') {{$t('common.actions.cancel')}}
-//-         v-btn(color='red', dark, @click='revokeConfirm', :loading='revokeLoading') {{$t('admin.api.revoke')}}
+    .col-12(v-if='state.keys.length < 1')
+      q-card.rounded-borders(
+        flat
+        :class='$q.dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`'
+        )
+        q-card-section.items-center(horizontal)
+          q-card-section.col-auto.q-pr-none
+            q-icon(name='las la-info-circle', size='sm')
+          q-card-section.text-caption {{ t('admin.api.none') }}
+    .col-12(v-else)
+      q-card
+        q-list(separator)
+          q-item(v-for='key of state.keys', :key='key.id')
+            q-item-section(side)
+              q-icon(name='las la-key', :color='key.isRevoked ? `negative` : `positive`')
+            q-item-section
+              q-item-label {{key.name}}
+              q-item-label(caption) Ending in {{key.keyShort}}
+              q-item-label(caption) Created On: #[strong {{DateTime.fromISO(key.createdAt).toFormat('fff')}}]
+              q-item-label(caption) Expiration: #[strong(:style='key.isRevoked ? `text-decoration: line-through;` : ``') {{DateTime.fromISO(key.expiration).toFormat('fff')}}]
+            q-item-section(
+              v-if='key.isRevoked'
+              side
+              style='flex-direction: row; align-items: center;'
+              )
+              q-icon.q-mr-sm(
+                color='negative'
+                size='xs'
+                name='las la-exclamation-triangle'
+              )
+              .text-caption.text-negative {{t('admin.api.revoked')}}
+              q-tooltip(anchor='center left', self='center right') {{t('admin.api.revokedHint')}}
+            q-separator.q-ml-md(vertical)
+            q-item-section(side, style='flex-direction: row; align-items: center;')
+              q-btn.acrylic-btn(
+                :color='key.isRevoked ? `gray` : `red`'
+                icon='las la-ban'
+                flat
+                @click='revoke(key)'
+                :disable='key.isRevoked'
+              )
 </template>
 
 <script setup>
@@ -120,6 +98,10 @@ import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
+import { DateTime } from 'luxon'
+
+import ApiKeyCreateDialog from '../components/ApiKeyCreateDialog.vue'
+import ApiKeyRevokeDialog from '../components/ApiKeyRevokeDialog.vue'
 
 // QUASAR
 
@@ -140,6 +122,7 @@ useMeta({
 const state = reactive({
   enabled: false,
   loading: 0,
+  isToggleLoading: false,
   keys: [],
   isCreateDialogShown: false,
   isRevokeConfirmDialogShown: false,
@@ -154,7 +137,7 @@ async function load () {
   $q.loading.show()
   const resp = await APOLLO_CLIENT.query({
     query: gql`
-      query getHooks {
+      query getApiKeys {
         apiKeys {
           id
           name
@@ -175,20 +158,24 @@ async function load () {
   state.loading--
 }
 
+async function refresh () {
+  await load()
+  $q.notify({
+    type: 'positive',
+    message: t('admin.api.refreshSuccess')
+  })
+}
+
 async function globalSwitch () {
   state.isToggleLoading = true
   try {
     const resp = await APOLLO_CLIENT.mutate({
       mutation: gql`
         mutation ($enabled: Boolean!) {
-          authentication {
-            setApiState (enabled: $enabled) {
-              responseResult {
-                succeeded
-                errorCode
-                slug
-                message
-              }
+          setApiState (enabled: $enabled) {
+            operation {
+              succeeded
+              message
             }
           }
         }
@@ -204,7 +191,7 @@ async function globalSwitch () {
       })
       await load()
     } else {
-      throw new Error(resp?.data?.setApiState?.operation.message || 'An unexpected error occurred.')
+      throw new Error(resp?.data?.setApiState?.operation?.message || 'An unexpected error occurred.')
     }
   } catch (err) {
     $q.notify({
@@ -217,62 +204,27 @@ async function globalSwitch () {
 }
 
 async function newKey () {
-  state.isCreateDialogShown = true
+  $q.dialog({
+    component: ApiKeyCreateDialog
+  }).onOk(() => {
+    load()
+  })
 }
 
 function revoke (key) {
-  state.current = key
-  state.isRevokeConfirmDialogShown = true
-}
-
-async function revokeConfirm () {
-  state.revokeLoading = true
-  try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: gql`
-        mutation ($id: Int!) {
-          authentication {
-            revokeApiKey (id: $id) {
-              responseResult {
-                succeeded
-                errorCode
-                slug
-                message
-              }
-            }
-          }
-        }
-      `,
-      variables: {
-        id: state.current.id
-      }
-    })
-    // if (_get(resp, 'data.authentication.revokeApiKey.responseResult.succeeded', false)) {
-    //   this.$store.commit('showNotification', {
-    //     style: 'success',
-    //     message: this.$t('admin.api.revokeSuccess'),
-    //     icon: 'check'
-    //   })
-    //   this.load()
-    // } else {
-    //   this.$store.commit('showNotification', {
-    //     style: 'red',
-    //     message: _get(resp, 'data.authentication.revokeApiKey.responseResult.message', 'An unexpected error occurred.'),
-    //     icon: 'alert'
-    //   })
-    // }
-  } catch (err) {
-    // this.$store.commit('pushGraphError', err)
-  }
-  state.isRevokeConfirmDialogShown = false
-  state.revokeLoading = false
+  $q.dialog({
+    component: ApiKeyRevokeDialog,
+    componentProps: {
+      apiKey: key
+    }
+  }).onOk(() => {
+    load()
+  })
 }
 
 // MOUNTED
 
-onMounted(() => {
-  load()
-})
+onMounted(load)
 
 </script>
 

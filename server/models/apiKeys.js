@@ -1,7 +1,7 @@
 /* global WIKI */
 
 const Model = require('objection').Model
-const moment = require('moment')
+const { DateTime } = require('luxon')
 const ms = require('ms')
 const jwt = require('jsonwebtoken')
 
@@ -17,7 +17,7 @@ module.exports = class ApiKey extends Model {
       required: ['name', 'key'],
 
       properties: {
-        id: {type: 'integer'},
+        id: {type: 'string'},
         name: {type: 'string'},
         key: {type: 'string'},
         expiration: {type: 'string'},
@@ -31,29 +31,33 @@ module.exports = class ApiKey extends Model {
   async $beforeUpdate(opt, context) {
     await super.$beforeUpdate(opt, context)
 
-    this.updatedAt = moment.utc().toISOString()
+    this.updatedAt = new Date().toISOString()
   }
   async $beforeInsert(context) {
     await super.$beforeInsert(context)
 
-    this.createdAt = moment.utc().toISOString()
-    this.updatedAt = moment.utc().toISOString()
+    this.createdAt = new Date().toISOString()
+    this.updatedAt = new Date().toISOString()
   }
 
-  static async createNewKey ({ name, expiration, fullAccess, group }) {
+  static async createNewKey ({ name, expiration, groups }) {
+    console.info(DateTime.utc().plus(ms(expiration)).toISO())
+
     const entry = await WIKI.models.apiKeys.query().insert({
       name,
       key: 'pending',
-      expiration: moment.utc().add(ms(expiration), 'ms').toISOString(),
+      expiration: DateTime.utc().plus(ms(expiration)).toISO(),
       isRevoked: true
     })
 
+    console.info(entry)
+
     const key = jwt.sign({
       api: entry.id,
-      grp: fullAccess ? 1 : group
+      grp: groups
     }, {
-      key: WIKI.config.certs.private,
-      passphrase: WIKI.config.sessionSecret
+      key: WIKI.config.auth.certs.private,
+      passphrase: WIKI.config.auth.secret
     }, {
       algorithm: 'RS256',
       expiresIn: expiration,

@@ -152,6 +152,27 @@ body::-webkit-scrollbar-thumb {
   }
 }
 
+.card-negative {
+  display: flex;
+  align-items: center;
+  font-size: .9rem;
+
+  @at-root .body--light & {
+    background-color: $red-1;
+    background-image: radial-gradient(at bottom center, lighten($red-1, 2%), lighten($red-2, 2%));
+    border-bottom: 1px solid $red-3;
+    text-shadow: 0 0 4px #FFF;
+    color: $red-9;
+  }
+  @at-root .body--dark & {
+    background-color: $red-9;
+    background-image: radial-gradient(at bottom center, $red-7, $red-9);
+    border-bottom: 1px solid $red-7;
+    text-shadow: 0 0 4px darken($red-9, 10%);
+    color: #FFF;
+  }
+}
+
 .card-actions {
   @at-root .body--light & {
     background-color: #FAFAFA;

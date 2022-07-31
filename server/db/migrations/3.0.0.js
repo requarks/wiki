@@ -29,7 +29,7 @@ exports.up = async knex => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('name').notNullable()
       table.text('key').notNullable()
-      table.string('expiration').notNullable()
+      table.timestamp('expiration').notNullable().defaultTo(knex.fn.now())
       table.boolean('isRevoked').notNullable().defaultTo(false)
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())

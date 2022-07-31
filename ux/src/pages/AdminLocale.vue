@@ -117,6 +117,9 @@ q-page.admin-locale
               :aria-label='lc.name'
               )
 
+      .q-pa-md.text-center.gt-md(v-else)
+        img(src='/_assets/illustrations/undraw_world.svg', style='width: 80%;')
+
         //- q-separator.q-my-sm(inset)
         //- q-item
         //-   blueprint-icon(icon='test-passed')

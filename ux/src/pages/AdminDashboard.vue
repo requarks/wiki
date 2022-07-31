@@ -97,12 +97,13 @@ q-page.admin-dashboard
         template(#action)
           q-btn(
             flat
-            label='Check'
+            :label='t(`admin.system.checkForUpdates`)'
+            @click='checkForUpdates'
             )
           q-separator.q-mx-sm(vertical, dark)
           q-btn(
             flat
-            label='System Info'
+            :label='t(`admin.system.title`)'
             to='/_admin/system'
             )
     .col-12
@@ -224,6 +225,7 @@ import { useAdminStore } from '../stores/admin'
 
 // COMPONENTS
 
+import CheckUpdateDialog from '../components/CheckUpdateDialog.vue'
 import SiteCreateDialog from '../components/SiteCreateDialog.vue'
 import UserCreateDialog from '../components/UserCreateDialog.vue'
 
@@ -263,6 +265,11 @@ function newUser () {
     component: UserCreateDialog
   }).onOk(() => {
     router.push('/_admin/users')
+  })
+}
+function checkForUpdates () {
+  $q.dialog({
+    component: CheckUpdateDialog
   })
 }
 

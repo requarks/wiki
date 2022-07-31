@@ -77,6 +77,10 @@ q-page.admin-flags
               unchecked-icon='las la-times'
               :aria-label='t(`admin.flags.hidedonatebtn.label`)'
               )
+
+    .col-12.col-lg-5.gt-md
+      .q-pa-md.text-center
+        img(src='/_assets/illustrations/undraw_settings.svg', style='width: 80%;')
 </template>
 
 <script setup>

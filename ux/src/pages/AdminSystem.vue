@@ -54,7 +54,16 @@ q-page.admin-system
             q-item-label {{ t('admin.system.latestVersion') }}
             q-item-label(caption) {{t('admin.system.latestVersionHint')}}
           q-item-section
-            q-item-label.dark-value(caption) {{ state.info.latestVersion }}
+            .row.q-col-gutter-sm
+              .col
+                .dark-value(caption) {{ state.info.latestVersion }}
+              .col-auto
+                q-btn.acrylic-btn(
+                  flat
+                  color='purple'
+                  @click='checkForUpdates'
+                  :label='t(`admin.system.checkUpdate`)'
+                )
 
       //- -----------------------
       //- CLIENT
@@ -234,6 +243,8 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import ClipboardJS from 'clipboard'
 
+import CheckUpdateDialog from '../components/CheckUpdateDialog.vue'
+
 // QUASAR
 
 const $q = useQuasar()
@@ -338,6 +349,12 @@ async function load () {
   state.info = cloneDeep(resp?.data?.systemInfo)
   $q.loading.hide()
   state.loading--
+}
+
+function checkForUpdates () {
+  $q.dialog({
+    component: CheckUpdateDialog
+  })
 }
 
 // async function performUpgrade () {

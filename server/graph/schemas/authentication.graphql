@@ -21,8 +21,7 @@ extend type Mutation {
   createApiKey(
     name: String!
     expiration: String!
-    fullAccess: Boolean!
-    group: Int
+    groups: [UUID]!
   ): AuthenticationCreateApiKeyResponse
 
   login(
@@ -53,7 +52,7 @@ extend type Mutation {
   ): AuthenticationRegisterResponse
 
   revokeApiKey(
-    id: Int!
+    id: UUID!
   ): DefaultResponse
 
   setApiState(
@@ -135,13 +134,13 @@ input AuthenticationStrategyInput {
 }
 
 type AuthenticationApiKey {
-  id: Int!
-  name: String!
-  keyShort: String!
-  expiration: Date!
-  createdAt: Date!
-  updatedAt: Date!
-  isRevoked: Boolean!
+  id: UUID
+  name: String
+  keyShort: String
+  expiration: Date
+  createdAt: Date
+  updatedAt: Date
+  isRevoked: Boolean
 }
 
 type AuthenticationCreateApiKeyResponse {

@@ -1,5 +1,4 @@
 import { boot } from 'quasar/wrappers'
-import { createApolloProvider } from '@vue/apollo-option'
 import { ApolloClient, InMemoryCache } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { createUploadLink } from 'apollo-upload-client'
@@ -41,16 +40,9 @@ export default boot(({ app }) => {
     ssrForceFetchDelay: 100
   })
 
-  // Init Vue Apollo
-  const apolloProvider = createApolloProvider({
-    defaultClient: client
-  })
-
   if (import.meta.env.SSR) {
     global.APOLLO_CLIENT = client
   } else {
     window.APOLLO_CLIENT = client
   }
-
-  app.use(apolloProvider)
 })
