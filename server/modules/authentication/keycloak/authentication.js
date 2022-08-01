@@ -47,7 +47,8 @@ module.exports = {
     if (!conf.logoutUpstream) {
       return '/'
     } else if (conf.logoutURL && conf.logoutURL.length > 5) {
-      return `${conf.logoutURL}?redirect_uri=${encodeURIComponent(WIKI.config.host)}`
+      // TODO: Implement new logout mechanism from keycloak 18: https://www.keycloak.org/docs/latest/upgrading/index.html#openid-connect-logout
+      return `${conf.logoutURL}`
     } else {
       WIKI.logger.warn('Keycloak logout URL is not configured!')
       return '/'
