@@ -417,7 +417,7 @@ q-page.admin-storage
         q-card-section
           .text-subtitle1 {{state.target.title}}
           q-img.q-mt-sm.rounded-borders(
-            :src='target.banner'
+            :src='state.target.banner'
             fit='cover'
             no-spinner
           )
@@ -585,7 +585,7 @@ q-page.admin-storage
 <script setup>
 import { cloneDeep, find, transform } from 'lodash-es'
 import gql from 'graphql-tag'
-import * as VNetworkGraph from 'v-network-graph'
+import * as VNG from 'v-network-graph'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
@@ -645,9 +645,9 @@ const state = reactive({
     nodes: {}
   },
   deliveryPaths: [],
-  deliveryConfig: VNetworkGraph.defineConfigs({
+  deliveryConfig: VNG.defineConfigs({
     view: {
-      layoutHandler: new VNetworkGraph.GridLayout({ grid: 15 }),
+      layoutHandler: new VNG.GridLayout({ grid: 15 }),
       fit: true,
       mouseWheelZoomEnabled: false,
       grid: {
@@ -736,13 +736,13 @@ watch(() => state.targets, (newValue) => {
   }
 })
 watch(() => route.params.id, (to, from) => {
-  if (!to.params.id) {
+  if (!to) {
     return
   }
   if (state.targets.length < 1) {
-    state.desiredTarget = to.params.id
+    state.desiredTarget = to
   } else {
-    state.selectedTarget = to.params.id
+    state.selectedTarget = to
   }
 })
 
@@ -1165,7 +1165,7 @@ function generateGraph () {
 
   for (const [i, tp] of types.entries()) {
     state.deliveryNodes[tp.key] = { name: tp.label, color: '#3f51b5', icon: tp.icon, iconText: tp.iconText }
-    state.deliveryEdges[`user_${tp.key}`] = { source: 'user', target: t.key }
+    state.deliveryEdges[`user_${tp.key}`] = { source: 'user', target: tp.key }
     state.deliveryLayouts.nodes[tp.key] = { x: 0, y: (i + 1) * 15 }
 
     // -> Find target with direct access
@@ -1218,6 +1218,8 @@ function generateGraph () {
       state.deliveryPaths.push({ edges: [`${tp.key}_db_in`], color: '#f03a4755' })
     }
   }
+
+  console.info(state.deliveryEdges)
 }
 
 // MOUNTED

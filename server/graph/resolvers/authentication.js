@@ -12,7 +12,6 @@ module.exports = {
      */
     async apiKeys (obj, args, context) {
       const keys = await WIKI.models.apiKeys.query().orderBy(['isRevoked', 'name'])
-      console.info(keys)
       return keys.map(k => ({
         id: k.id,
         name: k.name,

@@ -32,7 +32,6 @@ module.exports = {
       // }), ['title', 'key'])
       return _.sortBy(WIKI.storage.defs.map(md => {
         const dbTarget = dbTargets.find(tg => tg.module === md.key)
-        console.info(md.actions)
         return {
           id: dbTarget?.id ?? uuid(),
           isEnabled: dbTarget?.isEnabled ?? false,
@@ -93,7 +92,8 @@ module.exports = {
               }
             }
           }, {}),
-          actions: md.actions
+          actions: {}
+          // actions: md.actions
         }
       }), ['title'])
     }

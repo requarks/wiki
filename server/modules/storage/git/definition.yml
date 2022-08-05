@@ -79,6 +79,7 @@ props:
     sensitive: true
     order: 13
     if:
+      - { key: 'authType', eq: 'ssh' }
       - { key: 'sshPrivateKeyMode', eq: 'inline' }
   verifySSL:
     type: Boolean
