@@ -358,7 +358,7 @@ module.exports = {
 function getTlsOptions(conf) {
   if (!conf.tlsCertPath) {
     return {
-      rejectUnauthorized: conf.verifyTLSCertificate,
+      rejectUnauthorized: conf.verifyTLSCertificate
     }
   }
 
