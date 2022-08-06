@@ -134,19 +134,19 @@ props:
     icon: run-command
     order: 50
 actions:
-  - handler: syncUntracked
+  syncUntracked:
     label: Add Untracked Changes
     hint: Output all content from the DB to the local Git repository to ensure all untracked content is saved. If you enabled Git after content was created or you temporarily disabled Git, you'll want to execute this action to add the missing untracked changes.
     icon: database-daily-export
-  - handler: sync
+  sync:
     label: Force Sync
     hint: Will trigger an immediate sync operation, regardless of the current sync schedule. The sync direction is respected.
     icon: synchronize
-  - handler: importAll
+  importAll:
     label: Import Everything
     hint: Will import all content currently in the local Git repository, regardless of the latest commit state. Useful for importing content from the remote repository created before git was enabled.
     icon: database-daily-import
-  - handler: purge
+  purge:
     label: Purge Local Repository
     hint: If you have unrelated merge histories, clearing the local repository can resolve this issue. This will not affect the remote repository or perform any commit.
     icon: trash

@@ -68,6 +68,7 @@ type SystemInfo {
   httpsPort: Int
   latestVersion: String
   latestVersionReleaseDate: Date
+  mailConfigured: Boolean
   nodeVersion: String
   operatingSystem: String
   pagesTotal: Int

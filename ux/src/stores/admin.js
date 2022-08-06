@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
-import { cloneDeep } from 'lodash-es'
+import { clone, cloneDeep } from 'lodash-es'
+import semverGte from 'semver/functions/gte'
 
 /* global APOLLO_CLIENT */
 
@@ -13,7 +14,9 @@ export const useAdminStore = defineStore('admin', {
       groupsTotal: 0,
       pagesTotal: 0,
       usersTotal: 0,
-      loginsPastDay: 0
+      loginsPastDay: 0,
+      isApiEnabled: false,
+      isMailConfigured: false
     },
     overlay: null,
     overlayOpts: {},
@@ -22,7 +25,14 @@ export const useAdminStore = defineStore('admin', {
       { code: 'en', name: 'English' }
     ]
   }),
-  getters: {},
+  getters: {
+    isVersionLatest: (state) => {
+      if (!state.info.currentVersion || !state.info.latestVersion || state.info.currentVersion === 'n/a' || state.info.latestVersion === 'n/a') {
+        return false
+      }
+      return semverGte(state.info.currentVersion, state.info.latestVersion)
+    }
+  },
   actions: {
     async fetchSites () {
       const resp = await APOLLO_CLIENT.query({
@@ -47,16 +57,24 @@ export const useAdminStore = defineStore('admin', {
       const resp = await APOLLO_CLIENT.query({
         query: gql`
           query getAdminInfo {
+            apiState
             systemInfo {
               groupsTotal
               usersTotal
+              currentVersion
+              latestVersion
+              mailConfigured
             }
           }
         `,
         fetchPolicy: 'network-only'
       })
-      this.info.groupsTotal = cloneDeep(resp?.data?.systemInfo.groupsTotal ?? 0)
-      this.info.usersTotal = cloneDeep(resp?.data?.systemInfo.usersTotal ?? 0)
+      this.info.groupsTotal = clone(resp?.data?.systemInfo?.groupsTotal ?? 0)
+      this.info.usersTotal = clone(resp?.data?.systemInfo?.usersTotal ?? 0)
+      this.info.currentVersion = clone(resp?.data?.systemInfo?.currentVersion ?? 'n/a')
+      this.info.latestVersion = clone(resp?.data?.systemInfo?.latestVersion ?? 'n/a')
+      this.info.isApiEnabled = clone(resp?.data?.apiState ?? false)
+      this.info.isMailConfigured = clone(resp?.data?.systemInfo?.mailConfigured ?? false)
     }
   }
 })

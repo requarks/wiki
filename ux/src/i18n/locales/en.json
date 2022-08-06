@@ -1466,5 +1466,6 @@
   "admin.api.key": "API Key",
   "admin.api.createSuccess": "API Key created successfully.",
   "admin.api.revoked": "Revoked",
-  "admin.api.revokedHint": "This key has been revoked and can no longer be used."
+  "admin.api.revokedHint": "This key has been revoked and can no longer be used.",
+  "admin.storage.setupRequired": "Setup required"
 }

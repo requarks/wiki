@@ -94,6 +94,9 @@ module.exports = {
     latestVersionReleaseDate () {
       return DateTime.fromISO(WIKI.system.updates.releaseDate).toJSDate()
     },
+    mailConfigured () {
+      return false // TODO: return true if mail is setup
+    },
     nodeVersion () {
       return process.version.substr(1)
     },

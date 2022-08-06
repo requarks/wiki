@@ -92,8 +92,7 @@ module.exports = {
               }
             }
           }, {}),
-          actions: {}
-          // actions: md.actions
+          actions: md.actions
         }
       }), ['title'])
     }

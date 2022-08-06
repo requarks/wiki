@@ -41,14 +41,12 @@ q-page.admin-mail
             clickable
             )
             q-item-section(side)
-              q-icon(
-                :name='`img:` + str.strategy.icon'
-              )
+              q-icon(:name='`img:` + str.strategy.icon')
             q-item-section
               q-item-label {{str.displayName}}
               q-item-label(caption) {{str.strategy.title}}
             q-item-section(side)
-              q-spinner-rings(:color='str.isEnabled ? `positive` : `negative`', size='sm')
+              status-light(:color='str.isEnabled ? `positive` : `negative`', :pulse='str.isEnabled')
       q-btn.q-mt-sm.full-width(
         color='primary'
         icon='las la-plus'
@@ -499,7 +497,7 @@ function addStrategy (str) {
     config: transform(str.props, (cfg, v, k) => {
       cfg[k] = v.default
     }, {}),
-    isEnabled: true,
+    isEnabled: false,
     displayName: str.title,
     selfRegistration: false,
     domainWhitelist: [],

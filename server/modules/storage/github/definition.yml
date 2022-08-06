@@ -43,7 +43,7 @@ props:
     hint: The repository default branch.
     icon: code-fork
 actions:
-  - handler: exportAll
+  exportAll:
     label: Export All DB Assets to GitHub
     hint: Output all content from the DB to GitHub, overwriting any existing data. If you enabled GitHub after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
     icon: this-way-up

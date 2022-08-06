@@ -49,7 +49,7 @@ q-page.admin-storage
     .col-auto
       q-card.rounded-borders.bg-dark
         q-list(
-          style='min-width: 350px;'
+          style='min-width: 300px;'
           padding
           dark
           )
@@ -62,426 +62,429 @@ q-page.admin-storage
             clickable
             )
             q-item-section(side)
-              q-icon(
-                :name='`img:` + tgt.icon'
-              )
+              q-icon(:name='`img:` + tgt.icon')
             q-item-section
               q-item-label {{tgt.title}}
               q-item-label(caption, :class='getTargetSubtitleColor(tgt)') {{getTargetSubtitle(tgt)}}
             q-item-section(side)
-              q-spinner-rings(:color='tgt.isEnabled ? `positive` : `negative`', size='sm')
+              status-light(:color='tgt.isEnabled ? `positive` : `negative`', :pulse='tgt.isEnabled')
     .col(v-if='state.target')
-      //- -----------------------
-      //- Content Types
-      //- -----------------------
-      q-card.shadow-1.q-pb-sm
-        q-card-section
-          .text-subtitle1 {{t('admin.storage.contentTypes')}}
-          .text-body2.text-grey {{ t('admin.storage.contentTypesHint') }}
-        q-item(tag='label')
-          q-item-section(avatar)
-            q-checkbox(
-              v-model='state.target.contentTypes.activeTypes'
-              :color='state.target.module === `db` ? `grey` : `primary`'
-              val='pages'
-              :aria-label='t(`admin.storage.contentTypePages`)'
-              :disable='state.target.module === `db`'
-              )
-          q-item-section
-            q-item-label {{t(`admin.storage.contentTypePages`)}}
-            q-item-label(caption) {{t(`admin.storage.contentTypePagesHint`)}}
-        q-item(tag='label')
-          q-item-section(avatar)
-            q-checkbox(
-              v-model='state.target.contentTypes.activeTypes'
-              color='primary'
-              val='images'
-              :aria-label='t(`admin.storage.contentTypeImages`)'
-              )
-          q-item-section
-            q-item-label {{t(`admin.storage.contentTypeImages`)}}
-            q-item-label(caption) {{t(`admin.storage.contentTypeImagesHint`)}}
-        q-item(tag='label')
-          q-item-section(avatar)
-            q-checkbox(
-              v-model='state.target.contentTypes.activeTypes'
-              color='primary'
-              val='documents'
-              :aria-label='t(`admin.storage.contentTypeDocuments`)'
-              )
-          q-item-section
-            q-item-label {{t(`admin.storage.contentTypeDocuments`)}}
-            q-item-label(caption) {{t(`admin.storage.contentTypeDocumentsHint`)}}
-        q-item(tag='label')
-          q-item-section(avatar)
-            q-checkbox(
-              v-model='state.target.contentTypes.activeTypes'
-              color='primary'
-              val='others'
-              :aria-label='t(`admin.storage.contentTypeOthers`)'
-              )
-          q-item-section
-            q-item-label {{t(`admin.storage.contentTypeOthers`)}}
-            q-item-label(caption) {{t(`admin.storage.contentTypeOthersHint`)}}
-        q-item(tag='label')
-          q-item-section(avatar)
-            q-checkbox(
-              v-model='state.target.contentTypes.activeTypes'
-              color='primary'
-              val='large'
-              :aria-label='t(`admin.storage.contentTypeLargeFiles`)'
-              )
-          q-item-section
-            q-item-label {{t(`admin.storage.contentTypeLargeFiles`)}}
-            q-item-label(caption) {{t(`admin.storage.contentTypeLargeFilesHint`)}}
-            q-item-label.text-deep-orange(v-if='state.target.module === `db`', caption) {{t(`admin.storage.contentTypeLargeFilesDBWarn`)}}
-          q-item-section(side)
-            q-input(
-              outlined
-              :label='t(`admin.storage.contentTypeLargeFilesThreshold`)'
-              v-model='state.target.contentTypes.largeThreshold'
-              style='min-width: 150px;'
-              dense
-            )
-
-      //- -----------------------
-      //- Content Delivery
-      //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.storage.assetDelivery')}}
-          .text-body2.text-grey {{ t('admin.storage.assetDeliveryHint') }}
-        q-item(:tag='state.target.assetDelivery.isStreamingSupported ? `label` : null')
-          q-item-section(avatar)
-            q-checkbox(
-              v-model='state.target.assetDelivery.streaming'
-              :color='state.target.module === `db` || !state.target.assetDelivery.isStreamingSupported ? `grey` : `primary`'
-              :aria-label='t(`admin.storage.contentTypePages`)'
-              :disable='state.target.module === `db` || !state.target.assetDelivery.isStreamingSupported'
-              )
-          q-item-section
-            q-item-label {{t(`admin.storage.assetStreaming`)}}
-            q-item-label(caption) {{t(`admin.storage.assetStreamingHint`)}}
-            q-item-label.text-deep-orange(v-if='!state.target.assetDelivery.isStreamingSupported', caption) {{t(`admin.storage.assetStreamingNotSupported`)}}
-        q-item(:tag='state.target.assetDelivery.isDirectAccessSupported ? `label` : null')
-          q-item-section(avatar)
-            q-checkbox(
-              v-model='state.target.assetDelivery.directAccess'
-              :color='!state.target.assetDelivery.isDirectAccessSupported ? `grey` : `primary`'
-              :aria-label='t(`admin.storage.contentTypePages`)'
-              :disable='!state.target.assetDelivery.isDirectAccessSupported'
-              )
-          q-item-section
-            q-item-label {{t(`admin.storage.assetDirectAccess`)}}
-            q-item-label(caption) {{t(`admin.storage.assetDirectAccessHint`)}}
-            q-item-label.text-deep-orange(v-if='!state.target.assetDelivery.isDirectAccessSupported', caption) {{t(`admin.storage.assetDirectAccessNotSupported`)}}
-
-      //- -----------------------
-      //- Setup
-      //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state !== `configured`')
-        q-card-section
-          .text-subtitle1 {{t('admin.storage.setup')}}
-          .text-body2.text-grey {{ t('admin.storage.setupHint') }}
-        template(v-if='state.target.setup.handler === `github` && state.target.setup.state === `notconfigured`')
-          q-item
-            blueprint-icon(icon='test-account')
-            q-item-section
-              q-item-label GitHub Account Type
-              q-item-label(caption) Whether to use an organization or personal GitHub account during setup.
-            q-item-section.col-auto
-              q-btn-toggle(
-                v-model='state.target.setup.values.accountType'
-                push
-                glossy
-                no-caps
-                toggle-color='primary'
-                :options=`[
-                  { label: t('admin.storage.githubAccTypeOrg'), value: 'org' },
-                  { label: t('admin.storage.githubAccTypePersonal'), value: 'personal' }
-                ]`
-              )
-          q-separator.q-my-sm(inset)
-          template(v-if='state.target.setup.values.accountType === `org`')
+      .row.q-col-gutter-md
+        .col-12.col-lg
+          //- -----------------------
+          //- Setup
+          //- -----------------------
+          q-card.shadow-1.q-pb-sm.q-mb-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state !== `configured`')
+            q-card-section
+              .text-subtitle1 {{t('admin.storage.setup')}}
+              .text-body2.text-grey {{ t('admin.storage.setupHint') }}
+            template(v-if='state.target.setup.handler === `github` && state.target.setup.state === `notconfigured`')
+              q-item
+                blueprint-icon(icon='test-account')
+                q-item-section
+                  q-item-label GitHub Account Type
+                  q-item-label(caption) Whether to use an organization or personal GitHub account during setup.
+                q-item-section.col-auto
+                  q-btn-toggle(
+                    v-model='state.target.setup.values.accountType'
+                    push
+                    glossy
+                    no-caps
+                    toggle-color='primary'
+                    :options=`[
+                      { label: t('admin.storage.githubAccTypeOrg'), value: 'org' },
+                      { label: t('admin.storage.githubAccTypePersonal'), value: 'personal' }
+                    ]`
+                  )
+              q-separator.q-my-sm(inset)
+              template(v-if='state.target.setup.values.accountType === `org`')
+                q-item
+                  blueprint-icon(icon='github')
+                  q-item-section
+                    q-item-label {{ t('admin.storage.githubOrg') }}
+                    q-item-label(caption) {{ t('admin.storage.githubOrgHint') }}
+                  q-item-section
+                    q-input(
+                      outlined
+                      v-model='state.target.setup.values.org'
+                      dense
+                      :aria-label='t(`admin.storage.githubOrg`)'
+                      )
+                q-separator.q-my-sm(inset)
+              q-item
+                blueprint-icon(icon='dns')
+                q-item-section
+                  q-item-label {{ t('admin.storage.githubPublicUrl') }}
+                  q-item-label(caption) {{ t('admin.storage.githubPublicUrlHint') }}
+                q-item-section
+                  q-input(
+                    outlined
+                    v-model='state.target.setup.values.publicUrl'
+                    dense
+                    :aria-label='t(`admin.storage.githubPublicUrl`)'
+                    )
+              q-card-section.q-pt-sm.text-right
+                form(
+                  ref='githubSetupForm'
+                  method='POST'
+                  :action='state.setupCfg.action'
+                  )
+                  input(
+                    type='hidden'
+                    name='manifest'
+                    :value='state.setupCfg.manifest'
+                  )
+                  q-btn(
+                    unelevated
+                    icon='las la-angle-double-right'
+                    :label='t(`admin.storage.startSetup`)'
+                    color='secondary'
+                    @click='setupGitHub'
+                    :loading='state.setupCfg.loading'
+                  )
+            template(v-else-if='state.target.setup.handler === `github` && state.target.setup.state === `pendinginstall`')
+              q-card-section.q-py-none
+                q-banner(
+                  rounded
+                  :class='$q.dark.isActive ? `bg-teal-9 text-white` : `bg-teal-1 text-teal-9`'
+                  ) {{t('admin.storage.githubFinish')}}
+              q-card-section.q-pt-sm.text-right
+                q-btn.q-mr-sm(
+                  unelevated
+                  icon='las la-times-circle'
+                  :label='t(`admin.storage.cancelSetup`)'
+                  color='negative'
+                  @click='setupDestroy'
+                )
+                q-btn(
+                  unelevated
+                  icon='las la-angle-double-right'
+                  :label='t(`admin.storage.finishSetup`)'
+                  color='secondary'
+                  @click='setupGitHubStep(`verify`)'
+                  :loading='state.setupCfg.loading'
+                )
+          q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state === `configured`')
+            q-card-section
+              .text-subtitle1 {{t('admin.storage.setup')}}
+              .text-body2.text-grey {{ t('admin.storage.setupConfiguredHint') }}
             q-item
-              blueprint-icon(icon='github')
+              blueprint-icon.self-start(icon='matches', :hue-rotate='140')
               q-item-section
-                q-item-label {{ t('admin.storage.githubOrg') }}
-                q-item-label(caption) {{ t('admin.storage.githubOrgHint') }}
+                q-item-label Uninstall
+                q-item-label(caption) Delete the active configuration and start over the setup process.
+                q-item-label.text-red(caption): strong This action cannot be undone!
+              q-item-section(side)
+                q-btn.acrylic-btn(
+                  flat
+                  icon='las la-arrow-circle-right'
+                  color='negative'
+                  @click='setupDestroy'
+                  :label='t(`admin.storage.uninstall`)'
+                )
+
+          //- -----------------------
+          //- Content Types
+          //- -----------------------
+          q-card.shadow-1.q-pb-sm
+            q-card-section
+              .text-subtitle1 {{t('admin.storage.contentTypes')}}
+              .text-body2.text-grey {{ t('admin.storage.contentTypesHint') }}
+            q-item(tag='label')
+              q-item-section(avatar)
+                q-checkbox(
+                  v-model='state.target.contentTypes.activeTypes'
+                  :color='state.target.module === `db` ? `grey` : `primary`'
+                  val='pages'
+                  :aria-label='t(`admin.storage.contentTypePages`)'
+                  :disable='state.target.module === `db`'
+                  )
               q-item-section
+                q-item-label {{t(`admin.storage.contentTypePages`)}}
+                q-item-label(caption) {{t(`admin.storage.contentTypePagesHint`)}}
+            q-item(tag='label')
+              q-item-section(avatar)
+                q-checkbox(
+                  v-model='state.target.contentTypes.activeTypes'
+                  color='primary'
+                  val='images'
+                  :aria-label='t(`admin.storage.contentTypeImages`)'
+                  )
+              q-item-section
+                q-item-label {{t(`admin.storage.contentTypeImages`)}}
+                q-item-label(caption) {{t(`admin.storage.contentTypeImagesHint`)}}
+            q-item(tag='label')
+              q-item-section(avatar)
+                q-checkbox(
+                  v-model='state.target.contentTypes.activeTypes'
+                  color='primary'
+                  val='documents'
+                  :aria-label='t(`admin.storage.contentTypeDocuments`)'
+                  )
+              q-item-section
+                q-item-label {{t(`admin.storage.contentTypeDocuments`)}}
+                q-item-label(caption) {{t(`admin.storage.contentTypeDocumentsHint`)}}
+            q-item(tag='label')
+              q-item-section(avatar)
+                q-checkbox(
+                  v-model='state.target.contentTypes.activeTypes'
+                  color='primary'
+                  val='others'
+                  :aria-label='t(`admin.storage.contentTypeOthers`)'
+                  )
+              q-item-section
+                q-item-label {{t(`admin.storage.contentTypeOthers`)}}
+                q-item-label(caption) {{t(`admin.storage.contentTypeOthersHint`)}}
+            q-item(tag='label')
+              q-item-section(avatar)
+                q-checkbox(
+                  v-model='state.target.contentTypes.activeTypes'
+                  color='primary'
+                  val='large'
+                  :aria-label='t(`admin.storage.contentTypeLargeFiles`)'
+                  )
+              q-item-section
+                q-item-label {{t(`admin.storage.contentTypeLargeFiles`)}}
+                q-item-label(caption) {{t(`admin.storage.contentTypeLargeFilesHint`)}}
+                q-item-label.text-deep-orange(v-if='state.target.module === `db`', caption) {{t(`admin.storage.contentTypeLargeFilesDBWarn`)}}
+              q-item-section(side)
                 q-input(
                   outlined
-                  v-model='state.target.setup.values.org'
+                  :label='t(`admin.storage.contentTypeLargeFilesThreshold`)'
+                  v-model='state.target.contentTypes.largeThreshold'
+                  style='min-width: 150px;'
                   dense
-                  :aria-label='t(`admin.storage.githubOrg`)'
-                  )
-            q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='dns')
-            q-item-section
-              q-item-label {{ t('admin.storage.githubPublicUrl') }}
-              q-item-label(caption) {{ t('admin.storage.githubPublicUrlHint') }}
-            q-item-section
-              q-input(
-                outlined
-                v-model='state.target.setup.values.publicUrl'
-                dense
-                :aria-label='t(`admin.storage.githubPublicUrl`)'
                 )
-          q-card-section.q-pt-sm.text-right
-            form(
-              ref='githubSetupForm'
-              method='POST'
-              :action='setupCfg.action'
-              )
-              input(
-                type='hidden'
-                name='manifest'
-                :value='setupCfg.manifest'
-              )
-              q-btn(
-                unelevated
-                icon='las la-angle-double-right'
-                :label='t(`admin.storage.startSetup`)'
-                color='secondary'
-                @click='setupGitHub'
-                :loading='setupCfg.loading'
-              )
-        template(v-else-if='state.target.setup.handler === `github` && state.target.setup.state === `pendinginstall`')
-          q-card-section.q-py-none
-            q-banner(
-              rounded
-              :class='$q.dark.isActive ? `bg-teal-9 text-white` : `bg-teal-1 text-teal-9`'
-              ) {{t('admin.storage.githubFinish')}}
-          q-card-section.q-pt-sm.text-right
-            q-btn.q-mr-sm(
-              unelevated
-              icon='las la-times-circle'
-              :label='t(`admin.storage.cancelSetup`)'
-              color='negative'
-              @click='setupDestroy'
-            )
-            q-btn(
-              unelevated
-              icon='las la-angle-double-right'
-              :label='t(`admin.storage.finishSetup`)'
-              color='secondary'
-              @click='setupGitHubStep(`verify`)'
-              :loading='setupCfg.loading'
-            )
-      q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state === `configured`')
-        q-card-section
-          .text-subtitle1 {{t('admin.storage.setup')}}
-          .text-body2.text-grey {{ t('admin.storage.setupConfiguredHint') }}
-        q-item
-          blueprint-icon.self-start(icon='matches', :hue-rotate='140')
-          q-item-section
-            q-item-label Uninstall
-            q-item-label(caption) Delete the active configuration and start over the setup process.
-            q-item-label.text-red(caption): strong This action cannot be undone!
-          q-item-section(side)
-            q-btn.acrylic-btn(
-              flat
-              icon='las la-arrow-circle-right'
-              color='negative'
-              @click='setupDestroy'
-              :label='t(`admin.storage.uninstall`)'
-            )
 
-      //- -----------------------
-      //- Configuration
-      //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.storage.config')}}
-          q-banner.q-mt-md(
-            v-if='!state.target.config || Object.keys(state.target.config).length < 1'
-            rounded
-            :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
-            ) {{t('admin.storage.noConfigOption')}}
-        template(
-          v-for='(cfg, cfgKey, idx) in state.target.config'
-          )
-          template(
-            v-if='configIfCheck(cfg.if)'
-            )
-            q-separator.q-my-sm(inset, v-if='idx > 0')
-            q-item(v-if='cfg.type === `Boolean`', tag='label')
-              blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
+          //- -----------------------
+          //- Content Delivery
+          //- -----------------------
+          q-card.shadow-1.q-pb-sm.q-mt-md
+            q-card-section
+              .text-subtitle1 {{t('admin.storage.assetDelivery')}}
+              .text-body2.text-grey {{ t('admin.storage.assetDeliveryHint') }}
+            q-item(:tag='state.target.assetDelivery.isStreamingSupported ? `label` : null')
+              q-item-section(avatar)
+                q-checkbox(
+                  v-model='state.target.assetDelivery.streaming'
+                  :color='state.target.module === `db` || !state.target.assetDelivery.isStreamingSupported ? `grey` : `primary`'
+                  :aria-label='t(`admin.storage.contentTypePages`)'
+                  :disable='state.target.module === `db` || !state.target.assetDelivery.isStreamingSupported'
+                  )
               q-item-section
-                q-item-label {{cfg.title}}
-                q-item-label(caption) {{cfg.hint}}
+                q-item-label {{t(`admin.storage.assetStreaming`)}}
+                q-item-label(caption) {{t(`admin.storage.assetStreamingHint`)}}
+                q-item-label.text-deep-orange(v-if='!state.target.assetDelivery.isStreamingSupported', caption) {{t(`admin.storage.assetStreamingNotSupported`)}}
+            q-item(:tag='state.target.assetDelivery.isDirectAccessSupported ? `label` : null')
+              q-item-section(avatar)
+                q-checkbox(
+                  v-model='state.target.assetDelivery.directAccess'
+                  :color='!state.target.assetDelivery.isDirectAccessSupported ? `grey` : `primary`'
+                  :aria-label='t(`admin.storage.contentTypePages`)'
+                  :disable='!state.target.assetDelivery.isDirectAccessSupported'
+                  )
+              q-item-section
+                q-item-label {{t(`admin.storage.assetDirectAccess`)}}
+                q-item-label(caption) {{t(`admin.storage.assetDirectAccessHint`)}}
+                q-item-label.text-deep-orange(v-if='!state.target.assetDelivery.isDirectAccessSupported', caption) {{t(`admin.storage.assetDirectAccessNotSupported`)}}
+
+          //- -----------------------
+          //- Configuration
+          //- -----------------------
+          q-card.shadow-1.q-pb-sm.q-mt-md
+            q-card-section
+              .text-subtitle1 {{t('admin.storage.config')}}
+              q-banner.q-mt-md(
+                v-if='!state.target.config || Object.keys(state.target.config).length < 1'
+                rounded
+                :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
+                ) {{t('admin.storage.noConfigOption')}}
+            template(
+              v-for='(cfg, cfgKey, idx) in state.target.config'
+              )
+              template(
+                v-if='configIfCheck(cfg.if)'
+                )
+                q-separator.q-my-sm(inset, v-if='idx > 0')
+                q-item(v-if='cfg.type === `Boolean`', tag='label')
+                  blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
+                  q-item-section
+                    q-item-label {{cfg.title}}
+                    q-item-label(caption) {{cfg.hint}}
+                  q-item-section(avatar)
+                    q-toggle(
+                      v-model='cfg.value'
+                      color='primary'
+                      checked-icon='las la-check'
+                      unchecked-icon='las la-times'
+                      :aria-label='t(`admin.general.allowComments`)'
+                      :disable='cfg.readOnly'
+                      )
+                q-item(v-else)
+                  blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
+                  q-item-section
+                    q-item-label {{cfg.title}}
+                    q-item-label(caption) {{cfg.hint}}
+                  q-item-section(
+                    :style='cfg.type === `Number` ? `flex: 0 0 150px;` : ``'
+                    :class='{ "col-auto": cfg.enum && cfg.enumDisplay === `buttons` }'
+                    )
+                    q-btn-toggle(
+                      v-if='cfg.enum && cfg.enumDisplay === `buttons`'
+                      v-model='cfg.value'
+                      push
+                      glossy
+                      no-caps
+                      toggle-color='primary'
+                      :options=`cfg.enum`
+                      :disable='cfg.readOnly'
+                    )
+                    q-select(
+                      v-else-if='cfg.enum'
+                      outlined
+                      v-model='cfg.value'
+                      :options='cfg.enum'
+                      emit-value
+                      map-options
+                      dense
+                      options-dense
+                      :aria-label='cfg.title'
+                      :disable='cfg.readOnly'
+                    )
+                    q-input(
+                      v-else
+                      outlined
+                      v-model='cfg.value'
+                      dense
+                      :type='cfg.multiline ? `textarea` : `input`'
+                      :aria-label='cfg.title'
+                      :disable='cfg.readOnly'
+                      )
+
+          //- -----------------------
+          //- Sync
+          //- -----------------------
+          q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.target.sync && Object.keys(state.target.sync).length > 0')
+            q-card-section
+              .text-subtitle1 {{t('admin.storage.sync')}}
+              q-banner.q-mt-md(
+                rounded
+                :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
+                ) {{t('admin.storage.noSyncModes')}}
+
+          //- -----------------------
+          //- Actions
+          //- -----------------------
+          q-card.shadow-1.q-pb-sm.q-mt-md
+            q-card-section
+              .text-subtitle1 {{t('admin.storage.actions')}}
+              q-banner.q-mt-md(
+                v-if='!state.target.actions || state.target.actions.length < 1'
+                rounded
+                :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
+                ) {{t('admin.storage.noActions')}}
+              q-banner.q-mt-md(
+                v-else-if='!state.target.isEnabled'
+                rounded
+                :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
+                ) {{t('admin.storage.actionsInactiveWarn')}}
+
+            template(
+              v-if='state.target.isEnabled'
+              v-for='(act, idx) in state.target.actions'
+              )
+              q-separator.q-my-sm(inset, v-if='idx > 0')
+              q-item
+                blueprint-icon.self-start(:icon='act.icon', :hue-rotate='45')
+                q-item-section
+                  q-item-label {{act.label}}
+                  q-item-label(caption) {{act.hint}}
+                  q-item-label.text-red(v-if='act.warn', caption): strong {{act.warn}}
+                q-item-section(side)
+                  q-btn.acrylic-btn(
+                    flat
+                    icon='las la-arrow-circle-right'
+                    color='primary'
+                    @click=''
+                    :label='t(`common.actions.proceed`)'
+                  )
+
+        .col-12.col-lg-auto
+          //- -----------------------
+          //- Infobox
+          //- -----------------------
+          q-card.rounded-borders.q-pb-md(style='width: 300px;')
+            q-card-section
+              .text-subtitle1 {{state.target.title}}
+              q-img.q-mt-sm.rounded-borders(
+                :src='state.target.banner'
+                fit='cover'
+                no-spinner
+              )
+              .text-body2.q-mt-md {{state.target.description}}
+            q-separator.q-mb-sm(inset)
+            q-item
+              q-item-section
+                q-item-label.text-grey {{t(`admin.storage.vendor`)}}
+                q-item-label {{state.target.vendor}}
+            q-separator.q-my-sm(inset)
+            q-item
+              q-item-section
+                q-item-label.text-grey {{t(`admin.storage.vendorWebsite`)}}
+                q-item-label: a(:href='state.target.website', target='_blank', rel='noreferrer') {{state.target.website}}
+
+          //- -----------------------
+          //- Status
+          //- -----------------------
+          q-card.rounded-borders.q-pb-md.q-mt-md(style='width: 300px;')
+            q-card-section
+              .text-subtitle1 {{ t('admin.storage.status') }}
+            template(v-if='state.target.module !== `db`')
+              q-item(tag='label')
+                q-item-section
+                  q-item-label {{t(`admin.storage.enabled`)}}
+                  q-item-label(caption) {{t(`admin.storage.enabledHint`)}}
+                  q-item-label.text-deep-orange(v-if='state.target.module === `db`', caption) {{t(`admin.storage.enabledForced`)}}
+                q-item-section(avatar)
+                  q-toggle(
+                    v-model='state.target.isEnabled'
+                    :disable='state.target.module === `db` || isSetupNeeded'
+                    color='primary'
+                    checked-icon='las la-check'
+                    unchecked-icon='las la-times'
+                    :aria-label='t(`admin.storage.enabled`)'
+                    )
+                q-inner-loading(:showing='isSetupNeeded')
+                  q-icon(name='las la-exclamation-triangle', size='sm', color='negative')
+                  .text-body2.text-negative {{ t('admin.storage.setupRequired') }}
+              q-separator.q-my-sm(inset)
+            q-item
+              q-item-section
+                q-item-label.text-grey {{t(`admin.storage.currentState`)}}
+                q-item-label.text-positive No issues detected.
+
+          //- -----------------------
+          //- Versioning
+          //- -----------------------
+          q-card.rounded-borders.q-pb-md.q-mt-md(style='width: 300px;')
+            q-card-section
+              .text-subtitle1 {{t(`admin.storage.versioning`)}}
+              .text-body2.text-grey {{t(`admin.storage.versioningHint`)}}
+            q-item(:tag='state.target.versioning.isSupported ? `label` : null')
+              q-item-section
+                q-item-label {{t(`admin.storage.useVersioning`)}}
+                q-item-label(caption) {{t(`admin.storage.useVersioningHint`)}}
+                q-item-label.text-deep-orange(v-if='!state.target.versioning.isSupported', caption) {{t(`admin.storage.versioningNotSupported`)}}
+                q-item-label.text-deep-orange(v-if='state.target.versioning.isForceEnabled', caption) {{t(`admin.storage.versioningForceEnabled`)}}
               q-item-section(avatar)
                 q-toggle(
-                  v-model='cfg.value'
+                  v-model='state.target.versioning.enabled'
+                  :disable='!state.target.versioning.isSupported || state.target.versioning.isForceEnabled'
                   color='primary'
                   checked-icon='las la-check'
                   unchecked-icon='las la-times'
-                  :aria-label='t(`admin.general.allowComments`)'
-                  :disable='cfg.readOnly'
+                  :aria-label='t(`admin.storage.useVersioning`)'
                   )
-            q-item(v-else)
-              blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
-              q-item-section
-                q-item-label {{cfg.title}}
-                q-item-label(caption) {{cfg.hint}}
-              q-item-section(
-                :style='cfg.type === `Number` ? `flex: 0 0 150px;` : ``'
-                :class='{ "col-auto": cfg.enum && cfg.enumDisplay === `buttons` }'
-                )
-                q-btn-toggle(
-                  v-if='cfg.enum && cfg.enumDisplay === `buttons`'
-                  v-model='cfg.value'
-                  push
-                  glossy
-                  no-caps
-                  toggle-color='primary'
-                  :options=`cfg.enum`
-                  :disable='cfg.readOnly'
-                )
-                q-select(
-                  v-else-if='cfg.enum'
-                  outlined
-                  v-model='cfg.value'
-                  :options='cfg.enum'
-                  emit-value
-                  map-options
-                  dense
-                  options-dense
-                  :aria-label='cfg.title'
-                  :disable='cfg.readOnly'
-                )
-                q-input(
-                  v-else
-                  outlined
-                  v-model='cfg.value'
-                  dense
-                  :type='cfg.multiline ? `textarea` : `input`'
-                  :aria-label='cfg.title'
-                  :disable='cfg.readOnly'
-                  )
-
-      //- -----------------------
-      //- Sync
-      //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.target.sync && Object.keys(state.target.sync).length > 0')
-        q-card-section
-          .text-subtitle1 {{t('admin.storage.sync')}}
-          q-banner.q-mt-md(
-            rounded
-            :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
-            ) {{t('admin.storage.noSyncModes')}}
-
-      //- -----------------------
-      //- Actions
-      //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.storage.actions')}}
-          q-banner.q-mt-md(
-            v-if='!state.target.actions || state.target.actions.length < 1'
-            rounded
-            :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
-            ) {{t('admin.storage.noActions')}}
-          q-banner.q-mt-md(
-            v-else-if='!state.target.isEnabled'
-            rounded
-            :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
-            ) {{t('admin.storage.actionsInactiveWarn')}}
-
-        template(
-          v-if='state.target.isEnabled'
-          v-for='(act, idx) in state.target.actions'
-          )
-          q-separator.q-my-sm(inset, v-if='idx > 0')
-          q-item
-            blueprint-icon.self-start(:icon='act.icon', :hue-rotate='45')
-            q-item-section
-              q-item-label {{act.label}}
-              q-item-label(caption) {{act.hint}}
-              q-item-label.text-red(v-if='act.warn', caption): strong {{act.warn}}
-            q-item-section(side)
-              q-btn.acrylic-btn(
-                flat
-                icon='las la-arrow-circle-right'
-                color='primary'
-                @click=''
-                :label='t(`common.actions.proceed`)'
-              )
-
-    .col-auto(v-if='state.target')
-      //- -----------------------
-      //- Infobox
-      //- -----------------------
-      q-card.rounded-borders.q-pb-md(style='width: 350px;')
-        q-card-section
-          .text-subtitle1 {{state.target.title}}
-          q-img.q-mt-sm.rounded-borders(
-            :src='state.target.banner'
-            fit='cover'
-            no-spinner
-          )
-          .text-body2.q-mt-md {{state.target.description}}
-        q-separator.q-mb-sm(inset)
-        q-item
-          q-item-section
-            q-item-label.text-grey {{t(`admin.storage.vendor`)}}
-            q-item-label {{state.target.vendor}}
-        q-separator.q-my-sm(inset)
-        q-item
-          q-item-section
-            q-item-label.text-grey {{t(`admin.storage.vendorWebsite`)}}
-            q-item-label: a(:href='state.target.website', target='_blank', rel='noreferrer') {{state.target.website}}
-
-      //- -----------------------
-      //- Status
-      //- -----------------------
-      q-card.rounded-borders.q-pb-md.q-mt-md(style='width: 350px;')
-        q-card-section
-          .text-subtitle1 {{ t('admin.storage.status') }}
-        template(v-if='state.target.module !== `db` && !(state.target.setup && state.target.setup.handler && state.target.setup.state !== `configured`)')
-          q-item(tag='label')
-            q-item-section
-              q-item-label {{t(`admin.storage.enabled`)}}
-              q-item-label(caption) {{t(`admin.storage.enabledHint`)}}
-              q-item-label.text-deep-orange(v-if='state.target.module === `db`', caption) {{t(`admin.storage.enabledForced`)}}
-            q-item-section(avatar)
-              q-toggle(
-                v-model='state.target.isEnabled'
-                :disable='state.target.module === `db` || (state.target.setup && state.target.setup.handler && state.target.setup.state !== `configured`)'
-                color='primary'
-                checked-icon='las la-check'
-                unchecked-icon='las la-times'
-                :aria-label='t(`admin.storage.enabled`)'
-                )
-          q-separator.q-my-sm(inset)
-        q-item
-          q-item-section
-            q-item-label.text-grey {{t(`admin.storage.currentState`)}}
-            q-item-label.text-positive No issues detected.
-
-      //- -----------------------
-      //- Versioning
-      //- -----------------------
-      q-card.rounded-borders.q-pb-md.q-mt-md(style='width: 350px;')
-        q-card-section
-          .text-subtitle1 {{t(`admin.storage.versioning`)}}
-          .text-body2.text-grey {{t(`admin.storage.versioningHint`)}}
-        q-item(:tag='state.target.versioning.isSupported ? `label` : null')
-          q-item-section
-            q-item-label {{t(`admin.storage.useVersioning`)}}
-            q-item-label(caption) {{t(`admin.storage.useVersioningHint`)}}
-            q-item-label.text-deep-orange(v-if='!state.target.versioning.isSupported', caption) {{t(`admin.storage.versioningNotSupported`)}}
-            q-item-label.text-deep-orange(v-if='state.target.versioning.isForceEnabled', caption) {{t(`admin.storage.versioningForceEnabled`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.target.versioning.enabled'
-              :disable='!state.target.versioning.isSupported || state.target.versioning.isForceEnabled'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.storage.useVersioning`)'
-              )
 
   //- ==========================================
   //- DELIVERY PATHS
@@ -704,6 +707,15 @@ const state = reactive({
 // REFS
 
 const githubSetupForm = ref(null)
+
+// COMPUTED
+
+const isSetupNeeded = computed(() => {
+  return state.target?.setup?.handler && state.target.setup.state !== 'configured'
+})
+const isSetupCompleted = computed(() => {
+  return state.target?.setup?.handler && state.target.setup.state !== 'configured'
+})
 
 // WATCHERS
 

@@ -18,7 +18,7 @@ versioning:
 sync: false
 props: {}
 actions:
-  - handler: purge
+  purge:
     label: Purge All Assets
     hint: Delete all asset data from the database (not the metadata). Useful if you moved assets to another storage target and want to reduce the size of the database.
     warn: This is a destructive action! Make sure all asset files are properly stored on another storage module! This action cannot be undone!

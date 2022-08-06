@@ -89,11 +89,13 @@ q-page.admin-dashboard
             )
     .col-12
       q-banner.bg-positive.text-white(
+        :class='adminStore.isVersionLatest ? `bg-positive` : `bg-warning`'
         inline-actions
         rounded
         )
         i.las.la-check.q-mr-sm
-        span.text-weight-medium Your Wiki.js server is running the latest version!
+        span.text-weight-medium(v-if='adminStore.isVersionLatest') Your Wiki.js server is running the latest version!
+        span.text-weight-medium(v-else) A new version of Wiki.js is available. Please update to the latest version.
         template(#action)
           q-btn(
             flat

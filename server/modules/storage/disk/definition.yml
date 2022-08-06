@@ -32,15 +32,15 @@ props:
     icon: archive-folder
     order: 2
 actions:
-  - handler: dump
+  dump:
     label: Dump all content to disk
     hint: Output all content from the DB to the local disk. If you enabled this module after content was created or you temporarily disabled this module, you'll want to execute this action to add the missing files.
     icon: downloads
-  - handler: backup
+  backup:
     label: Create Backup
     hint: Will create a manual backup archive at this point in time, in a subfolder named _manual, from the contents currently on disk.
     icon: archive-folder
-  - handler: importAll
+  importAll:
     label: Import Everything
     hint: Will import all content currently in the local disk folder.
     icon: database-daily-import

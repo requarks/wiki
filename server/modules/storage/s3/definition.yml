@@ -153,7 +153,7 @@ props:
     if:
       - { key: 'mode', eq: 'custom' }
 actions:
-  - handler: exportAll
+  exportAll:
     label: Export All DB Assets to S3
     hint: Output all content from the DB to S3, overwriting any existing data. If you enabled S3 after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
     icon: this-way-up
