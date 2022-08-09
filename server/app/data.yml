@@ -45,6 +45,10 @@ defaults:
     company: ''
     contentLicense: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    pageExtensions:
+      - md
+      - html
+      - txt
     mail:
       host: ''
       secure: true
@@ -152,8 +156,4 @@ reservedPaths:
   - img
   - js
   - svg
-pageExtensions:
-  - md
-  - html
-  - txt
 # ---------------------------------
