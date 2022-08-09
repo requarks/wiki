@@ -164,6 +164,19 @@
                   //-   disabled
                   //-   )
 
+              v-card.mt-5.animated.fadeInUp.wait-p6s
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title.subtitle-1 URL Handling
+                v-card-text
+                  v-text-field(
+                    outlined
+                    :label='$t(`admin:general.pageExtensions`)'
+                    v-model='config.pageExtensions'
+                    prepend-icon='mdi-format-text-wrapping-overflow'
+                    :hint='$t(`admin:general.pageExtensionsHint`)'
+                    persistent-hint
+                    )
+
     component(:is='activeModal')
 
 </template>
@@ -202,7 +215,8 @@ export default {
         featurePageRatings: false,
         featurePageComments: false,
         featurePersonalWikis: false,
-        featureTinyPNG: false
+        featureTinyPNG: false,
+        pageExtensions: ''
       },
       metaRobots: [
         { text: 'Index', value: 'index' },
@@ -247,32 +261,34 @@ export default {
         await this.$apollo.mutate({
           mutation: gql`
             mutation (
-              $host: String!
-              $title: String!
-              $description: String!
-              $robots: [String]!
-              $analyticsService: String!
-              $analyticsId: String!
-              $company: String!
-              $contentLicense: String!
-              $logoUrl: String!
-              $featurePageRatings: Boolean!
-              $featurePageComments: Boolean!
-              $featurePersonalWikis: Boolean!
+              $host: String
+              $title: String
+              $description: String
+              $robots: [String]
+              $analyticsService: String
+              $analyticsId: String
+              $company: String
+              $contentLicense: String
+              $logoUrl: String
+              $pageExtensions: String
+              $featurePageRatings: Boolean
+              $featurePageComments: Boolean
+              $featurePersonalWikis: Boolean
             ) {
               site {
                 updateConfig(
-                  host: $host,
-                  title: $title,
-                  description: $description,
-                  robots: $robots,
-                  analyticsService: $analyticsService,
-                  analyticsId: $analyticsId,
-                  company: $company,
-                  contentLicense: $contentLicense,
-                  logoUrl: $logoUrl,
-                  featurePageRatings: $featurePageRatings,
-                  featurePageComments: $featurePageComments,
+                  host: $host
+                  title: $title
+                  description: $description
+                  robots: $robots
+                  analyticsService: $analyticsService
+                  analyticsId: $analyticsId
+                  company: $company
+                  contentLicense: $contentLicense
+                  logoUrl: $logoUrl
+                  pageExtensions: $pageExtensions
+                  featurePageRatings: $featurePageRatings
+                  featurePageComments: $featurePageComments
                   featurePersonalWikis: $featurePersonalWikis
                 ) {
                   responseResult {
@@ -295,6 +311,7 @@ export default {
             company: _.get(this.config, 'company', ''),
             contentLicense: _.get(this.config, 'contentLicense', ''),
             logoUrl: _.get(this.config, 'logoUrl', ''),
+            pageExtensions: _.get(this.config, 'pageExtensions', ''),
             featurePageRatings: _.get(this.config, 'featurePageRatings', false),
             featurePageComments: _.get(this.config, 'featurePageComments', false),
             featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false)
@@ -347,6 +364,7 @@ export default {
               company
               contentLicense
               logoUrl
+              pageExtensions
               featurePageRatings
               featurePageComments
               featurePersonalWikis

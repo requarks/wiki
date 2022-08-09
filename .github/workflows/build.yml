@@ -369,6 +369,12 @@ jobs:
         message: |
           Wiki.js *${{ github.ref_name }}* has been released!
           See [release notes](https://github.com/requarks/wiki/releases) for details.
+          
+    - name: Notify Discord Channel
+      uses: sebastianpopp/discord-action@v1.0
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        message: Wiki.js ${{ github.ref_name }} has been released! See https://github.com/requarks/wiki/releases for details.
 
   build-do-image:
     name: Build DigitalOcean Image
