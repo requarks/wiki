@@ -414,7 +414,7 @@ router.get('/_userav/:uid', async (req, res, next) => {
  * View document / asset
  */
 router.get('/*', async (req, res, next) => {
-  const stripExt = _.some(WIKI.data.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
+  const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
   const pageArgs = pageHelper.parsePath(req.path, { stripExt })
   const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
 

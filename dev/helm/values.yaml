@@ -32,6 +32,16 @@ readinessProbe:
     path: /healthz
     port: http
 
+startupProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 5
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 60
+  httpGet:
+    path: /healthz
+    port: http
+
 podSecurityContext: {}
   # fsGroup: 2000
 
@@ -101,6 +111,13 @@ sideload:
   env: []
   #  - name: HTTPS_PROXY
   #    value: http://my.proxy.com:3128
+
+## This will override the postgresql chart values
+# externalPostgresql:
+#   # note: ?sslmode=require => ?ssl=true
+#   databaseURL: postgresql://postgres:postgres@postgres:5432/wiki?ssl=true
+#   # For self signed CAs, like DigitalOcean
+#   NODE_TLS_REJECT_UNAUTHORIZED: "0"
 
 ## Configuration values for the postgresql dependency.
 ## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md

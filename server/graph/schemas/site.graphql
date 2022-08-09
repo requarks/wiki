@@ -33,6 +33,7 @@ type SiteMutation {
     company: String
     contentLicense: String
     logoUrl: String
+    pageExtensions: String
     authAutoLogin: Boolean
     authEnforce2FA: Boolean
     authHideLocal: Boolean
@@ -74,6 +75,7 @@ type SiteConfig {
   company: String
   contentLicense: String
   logoUrl: String
+  pageExtensions: String
   authAutoLogin: Boolean
   authEnforce2FA: Boolean
   authHideLocal: Boolean
