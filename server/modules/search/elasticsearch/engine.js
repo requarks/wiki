@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const stream = require('stream')
 const Promise = require('bluebird')
+const fs = require('fs')
 const pipeline = Promise.promisify(stream.pipeline)
 
 /* global WIKI */
@@ -24,6 +25,7 @@ module.exports = {
           nodes: this.config.hosts.split(',').map(_.trim),
           sniffOnStart: this.config.sniffOnStart,
           sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          ssl: getTlsOptions(this.config),
           name: 'wiki-js'
         })
         break
@@ -33,6 +35,7 @@ module.exports = {
           nodes: this.config.hosts.split(',').map(_.trim),
           sniffOnStart: this.config.sniffOnStart,
           sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          ssl: getTlsOptions(this.config),
           name: 'wiki-js'
         })
         break
@@ -349,5 +352,23 @@ module.exports = {
       })
     )
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Index rebuilt successfully.`)
+  }
+}
+
+function getTlsOptions(conf) {
+  if (!conf.tlsCertPath) {
+    return {
+      rejectUnauthorized: conf.verifyTLSCertificate
+    }
+  }
+
+  const caList = []
+  if (conf.verifyTLSCertificate) {
+    caList.push(fs.readFileSync(conf.tlsCertPath))
+  }
+
+  return {
+    rejectUnauthorized: conf.verifyTLSCertificate,
+    ca: caList
   }
 }
