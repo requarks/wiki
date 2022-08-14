@@ -136,7 +136,7 @@ module.exports = {
           title: r._source.title,
           description: r._source.description
         })),
-        suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
+        suggestions: (_.get(results, 'body.hits.hits.length', _.get(results, 'body.hits.hits', 0)) < 5) ? _.get(results, 'body.suggest.suggestions[0].options', []).map(s => s.text) : [],
         totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
       }
     } catch (err) {
