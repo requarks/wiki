@@ -35,7 +35,7 @@
           :length='paginationLength'
           circle
         )
-      template(v-if='suggestions && suggestions.length > 0')
+      template(v-if='search && search.length >= 2 && suggestions && suggestions.length > 0')
         v-subheader.white--text.mt-3 {{$t('common:header.searchDidYouMean')}}
         v-list.search-results-suggestions.radius-7(dense, dark)
           template(v-for='(term, idx) of suggestions')
