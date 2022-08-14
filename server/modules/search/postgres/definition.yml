@@ -29,3 +29,9 @@ props:
       - swedish
       - turkish
     order: 1
+  maxHits:
+    type: Number
+    title: Max Hits
+    hint: The maximum number of results returned by the search engine.
+    default: 100
+    order: 2

@@ -48,7 +48,7 @@ module.exports = {
   async query(q, opts) {
     try {
       const results = await this.index.search(q, {
-        hitsPerPage: 50
+        hitsPerPage: this.config.maxHits
       })
       return {
         results: _.map(results.hits, r => ({
@@ -59,7 +59,7 @@ module.exports = {
           description: r.description
         })),
         suggestions: [],
-        totalHits: results.nbHits
+        totalHits: Math.min(results.nbHits, this.config.maxHits)
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')

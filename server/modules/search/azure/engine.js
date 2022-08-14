@@ -98,7 +98,7 @@ module.exports = {
         search: q,
         select: 'id, locale, path, title, description',
         queryType: QueryType.simple,
-        top: 50
+        top: this.config.maxHits
       })
       if (results.result.value.length < 5) {
         // Using plain request, not yet available in library...
@@ -128,7 +128,7 @@ module.exports = {
       return {
         results: results.result.value,
         suggestions,
-        totalHits: results.result['@odata.count']
+        totalHits: Math.min(results.result['@odata.count'], this.config.maxHits)
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')

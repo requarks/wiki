@@ -54,3 +54,9 @@ props:
     hint: '0 = disabled, Interval in seconds to check for updated list of nodes in cluster. (Default: 0)'
     default: 0
     order: 8
+  maxHits:
+    type: Number
+    title: Max Hits
+    hint: The maximum number of results returned by the search engine.
+    default: 100
+    order: 9

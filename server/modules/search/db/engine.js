@@ -46,7 +46,7 @@ module.exports = {
           }
         })
       })
-      .limit(WIKI.config.search.maxHits)
+      .limit(this.config.maxHits)
     return {
       results,
       suggestions: [],

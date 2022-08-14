@@ -113,7 +113,7 @@ module.exports = {
             }
           },
           from: 0,
-          size: 50,
+          size: this.config.maxHits,
           _source: ['title', 'description', 'path', 'locale'],
           suggest: {
             suggestions: {
@@ -137,7 +137,7 @@ module.exports = {
           description: r._source.description
         })),
         suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
-        totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+        totalHits: _.get(results, 'body.hits.hits.length', _.get(results, 'body.hits.hits', 0))
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))

@@ -156,7 +156,7 @@ module.exports = {
       const results = await this.clientDomain.search({
         query: q,
         partial: true,
-        size: 50
+        size: this.config.maxHits
       }).promise()
       if (results.hits.found < 5) {
         const suggestResults = await this.clientDomain.suggest({
@@ -175,7 +175,7 @@ module.exports = {
           description: _.head(r.fields.description) || ''
         })),
         suggestions: suggestions,
-        totalHits: results.hits.found
+        totalHits: Math.min(results.hits.found, this.config.maxHits)
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')

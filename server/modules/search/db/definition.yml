@@ -5,4 +5,10 @@ author: requarks.io
 logo: https://static.requarks.io/logo/database.svg
 website: https://www.requarks.io/
 isAvailable: true
-props: {}
+props:
+  maxHits:
+    type: Number
+    title: Max Hits
+    hint: The maximum number of results returned by the search engine.
+    default: 100
+    order: 1
