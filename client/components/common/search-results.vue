@@ -117,14 +117,12 @@ export default {
       }
     })
     this.$root.$on('searchEnter', () => {
-      if (!this.results) {
-        return
-      }
-
-      if (this.cursor >= 0 && this.cursor < this.results.length) {
-        this.goToPage(_.nth(this.results, this.cursor))
-      } else if (this.cursor >= 0) {
-        this.setSearchTerm(_.nth(this.suggestions, this.cursor - this.results.length))
+      if (!this.searchIsLoading && this.cursor >= 0) {
+        if (this.cursor < this.results.length) {
+          this.goToPage(_.nth(this.results, this.cursor))
+        } else if (this.suggestions.length > 0) {
+          this.setSearchTerm(_.nth(this.suggestions, this.cursor - this.results.length))
+        }
       }
     })
   },
