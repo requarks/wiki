@@ -179,6 +179,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Oleksandr Koltsov ([@crambo](https://github.com/crambo))
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
+- Ruizhe Li ([@liruizhe1995](https://github.com/liruizhe1995))
 - Sam Martin ([@ABitMoreDepth](https://github.com/ABitMoreDepth))
 - Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
 - Stephan Kristyn ([@stevek-pro](https://github.com/stevek-pro))
