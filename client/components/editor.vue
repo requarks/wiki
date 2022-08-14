@@ -24,8 +24,8 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
-          span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+          span.white--text(v-if='$vuetify.breakpoint.lgAndUp && isDirty && currentPageTitle && currentPageTitle.length > 0') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+          span.grey--text(v-else-if='$vuetify.breakpoint.lgAndUp && mode !== `create`') {{ $t('editor:save.saved') }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
