@@ -3,14 +3,28 @@
     nav-header(dense)
       template(slot='mid')
         v-text-field.editor-title-input(
+          v-model='currentPageTitle'
+          placeholder='Title'
+          class="mr-5"
+          background-color='#1e1e1e'
+          style="width: 40%;"
           dark
           solo
           flat
-          v-model='currentPageTitle'
           hide-details
-          background-color='black'
           dense
-          full-width
+        )
+        v-text-field.editor-description-input(
+          v-model='currentPageDescription'
+          placeholder='Short Description'
+          class="mr-10"
+          background-color='#1e1e1e'
+          style="width: 50%;"
+          dark
+          solo
+          flat
+          hide-details
+          dense
         )
       template(slot='actions')
         v-btn.mr-3.animated.fadeIn(color='amber', outlined, small, v-if='isConflict', @click='openConflict')
@@ -181,6 +195,7 @@ export default {
     mode: get('editor/mode'),
     welcomeMode() { return this.mode === `create` && this.path === `home` },
     currentPageTitle: sync('page/title'),
+    currentPageDescription: sync('page/description'),
     checkoutDateActive: sync('editor/checkoutDateActive'),
     currentStyling: get('page/scriptCss'),
     isDirty () {
@@ -586,10 +601,6 @@ export default {
 
     .application--wrap {
       background-color: mc('grey', '900');
-    }
-
-    &-title-input input {
-      text-align: center;
     }
   }
 

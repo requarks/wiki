@@ -18,7 +18,7 @@
         autocomplete='none'
       )
     v-layout(row)
-      v-flex(xs5, md4)
+      v-flex(xs5, md2)
         v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
@@ -45,7 +45,7 @@
           //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
-      v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
+      v-flex(md6, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
           slot(name='mid')
             transition(name='navHeaderSearch', v-if='searchIsShown')
@@ -59,7 +59,9 @@
                 solo
                 flat
                 rounded
-                hide-details,
+                hide-details
+                class="shrink ml-auto"
+                style="width: 60%;",
                 prepend-inner-icon='mdi-magnify',
                 :loading='searchIsLoading',
                 @keyup.enter='searchEnter'
