@@ -11,7 +11,7 @@ q-page.admin-mail
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/auth'
+        :href='siteStore.docsBase + `/admin/auth`'
         target='_blank'
         type='a'
         )

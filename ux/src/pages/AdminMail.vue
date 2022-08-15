@@ -11,7 +11,7 @@ q-page.admin-mail
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/mail'
+        :href='siteStore.docsBase + `/system/mail`'
         target='_blank'
         type='a'
         )
@@ -380,6 +380,7 @@ async function load () {
       throw new Error('Failed to fetch mail config.')
     }
     state.config = cloneDeep(resp.data.mailConfig)
+    adminStore.info.isMailConfigured = state.config?.host?.length > 2
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -455,6 +456,7 @@ async function save () {
       type: 'positive',
       message: t('admin.mail.saveSuccess')
     })
+    adminStore.info.isMailConfigured = state.config?.host?.length > 2
   } catch (err) {
     $q.notify({
       type: 'negative',

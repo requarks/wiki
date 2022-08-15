@@ -11,7 +11,7 @@ q-page.admin-utilities
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/utilities'
+        :href='siteStore.docsBase + `/admin/utilities`'
         target='_blank'
         type='a'
         )
@@ -104,11 +104,17 @@ import { computed, reactive } from 'vue'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
+import { useSiteStore } from 'src/stores/site'
+
 // QUASAR
 
 const $q = useQuasar()
 
-// STORES / ROUTERS / i18n
+// STORES
+
+const siteStore = useSiteStore()
+
+// I18N
 
 const { t } = useI18n()
 

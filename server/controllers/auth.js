@@ -6,6 +6,7 @@ const BruteKnex = require('../helpers/brute-knex')
 const router = express.Router()
 const moment = require('moment')
 const _ = require('lodash')
+const path = require('path')
 
 const bruteforce = new ExpressBrute(new BruteKnex({
   createTable: true,
@@ -23,28 +24,16 @@ const bruteforce = new ExpressBrute(new BruteKnex({
  * Login form
  */
 router.get('/login', async (req, res, next) => {
-  _.set(res.locals, 'pageMeta.title', 'Login')
-
-  if (req.query.legacy || (req.get('user-agent') && req.get('user-agent').indexOf('Trident') >= 0)) {
-    const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
-    res.render('legacy/login', {
-      err: false,
-      formStrategies,
-      socialStrategies
-    })
-  } else {
-    // -> Bypass Login
-    if (WIKI.config.auth.autoLogin && !req.query.all) {
-      const stg = await WIKI.models.authentication.query().orderBy('order').first()
-      const stgInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey])
-      if (!stgInfo.useForm) {
-        return res.redirect(`/login/${stg.key}`)
-      }
+  // -> Bypass Login
+  if (WIKI.config.auth.autoLogin && !req.query.all) {
+    const stg = await WIKI.models.authentication.query().orderBy('order').first()
+    const stgInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey])
+    if (!stgInfo.useForm) {
+      return res.redirect(`/login/${stg.key}`)
     }
-    // -> Show Login
-    const bgUrl = !_.isEmpty(WIKI.config.auth.loginBgUrl) ? WIKI.config.auth.loginBgUrl : '/_assets/img/splash/1.jpg'
-    res.render('login', { bgUrl, hideLocal: WIKI.config.auth.hideLocal })
   }
+  // -> Show Login
+  res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
 })
 
 /**
@@ -90,35 +79,6 @@ router.all('/login/:strategy/callback', async (req, res, next) => {
 })
 
 /**
- * LEGACY - Login form handling
- */
-router.post('/login', bruteforce.prevent, async (req, res, next) => {
-  _.set(res.locals, 'pageMeta.title', 'Login')
-
-  if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
-    try {
-      const authResult = await WIKI.models.users.login({
-        strategy: req.body.strategy,
-        username: req.body.user,
-        password: req.body.pass
-      }, { req, res })
-      req.brute.reset()
-      res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
-      res.redirect('/')
-    } catch (err) {
-      const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
-      res.render('legacy/login', {
-        err,
-        formStrategies,
-        socialStrategies
-      })
-    }
-  } else {
-    res.redirect('/login')
-  }
-})
-
-/**
  * Logout
  */
 router.get('/logout', async (req, res) => {
@@ -135,7 +95,7 @@ router.get('/register', async (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Register')
   const localStrg = await WIKI.models.authentication.getStrategy('local')
   if (localStrg.selfRegistration) {
-    res.render('register')
+    res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
   } else {
     next(new WIKI.Error.AuthRegistrationDisabled())
   }

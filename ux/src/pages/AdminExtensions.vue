@@ -11,7 +11,7 @@ q-page.admin-extensions
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/extensions'
+        :href='siteStore.docsBase + `/system/extensions`'
         target='_blank'
         type='a'
         )

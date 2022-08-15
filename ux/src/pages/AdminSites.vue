@@ -12,7 +12,7 @@ q-page.admin-locale
         flat
         color='grey'
         type='a'
-        href='https://docs.js.wiki/admin/sites'
+        :href='siteStore.docsBase + `/admin/sites`'
         target='_blank'
         )
       q-btn.q-mr-sm.acrylic-btn(
@@ -104,6 +104,7 @@ import { nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAdminStore } from '../stores/admin'
+import { useSiteStore } from 'src/stores/site'
 
 // COMPONENTS
 
@@ -118,6 +119,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const siteStore = useSiteStore()
 
 // ROUTER
 

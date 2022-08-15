@@ -11,7 +11,7 @@ q-page.admin-webhooks
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/webhooks'
+        :href='siteStore.docsBase + `/system/webhooks`'
         target='_blank'
         type='a'
         )
@@ -99,12 +99,18 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
+import { useSiteStore } from 'src/stores/site'
+
 import WebhookEditDialog from 'src/components/WebhookEditDialog.vue'
 import WebhookDeleteDialog from 'src/components/WebhookDeleteDialog.vue'
 
 // QUASAR
 
 const $q = useQuasar()
+
+// STORES
+
+const siteStore = useSiteStore()
 
 // I18N
 

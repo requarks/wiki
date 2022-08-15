@@ -50,7 +50,8 @@ export const useSiteStore = defineStore('site', {
       backgroundColor: '#FAFAFA',
       width: '9px',
       opacity: 1
-    }
+    },
+    docsBase: 'https://next.js.wiki/docs'
   }),
   getters: {},
   actions: {

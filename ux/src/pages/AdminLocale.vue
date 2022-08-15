@@ -20,7 +20,7 @@ q-page.admin-locale
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/locale'
+        :href='siteStore.docsBase + `/admin/locale`'
         target='_blank'
         type='a'
         )

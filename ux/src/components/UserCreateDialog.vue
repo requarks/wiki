@@ -161,7 +161,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 import gql from 'graphql-tag'
-import { cloneDeep, sampleSize } from 'lodash-es'
+import { cloneDeep, sample, sampleSize } from 'lodash-es'
 import zxcvbn from 'zxcvbn'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
@@ -287,8 +287,9 @@ async function loadGroups () {
 }
 
 function randomizePassword () {
-  const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
-  state.userPassword = sampleSize(pwdChars, 16).join('')
+  const pwdChars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789' // omit easily confused chars like O,0 or I,1,l
+  const withSymbols = `${pwdChars}_*=?#!()+-$%&.`
+  state.userPassword = `${sample(pwdChars)}${sampleSize(withSymbols, 15).join('')}`
 }
 
 async function create () {

@@ -95,7 +95,7 @@ module.exports = {
       return DateTime.fromISO(WIKI.system.updates.releaseDate).toJSDate()
     },
     mailConfigured () {
-      return false // TODO: return true if mail is setup
+      return WIKI.config?.mail?.host?.length > 2
     },
     nodeVersion () {
       return process.version.substr(1)

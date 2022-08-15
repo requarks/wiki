@@ -16,7 +16,10 @@ q-page.admin-storage
         v-model='state.displayMode'
         push
         no-caps
-        toggle-color='black'
+        :toggle-color='$q.dark.isActive ? `white` : `black`'
+        :toggle-text-color='$q.dark.isActive ? `black` : `white`'
+        :text-color='$q.dark.isActive ? `white` : `black`'
+        :color='$q.dark.isActive ? `dark-1` : `white`'
         :options=`[
           { label: t('admin.storage.targets'), value: 'targets' },
           { label: t('admin.storage.deliveryPaths'), value: 'delivery' }
@@ -27,7 +30,7 @@ q-page.admin-storage
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/storage'
+        :href='siteStore.docsBase + `/admin/storage`'
         target='_blank'
         type='a'
         )
@@ -512,7 +515,7 @@ q-page.admin-storage
           :edges='state.deliveryEdges'
           :paths='state.deliveryPaths'
           :layouts='state.deliveryLayouts'
-          style='height: 600px;'
+          style='height: 600px; background-color: #FFF;'
           )
           template(#override-node='{ nodeId, scale, config, ...slotProps }')
             rect(

@@ -11,7 +11,7 @@ q-page.admin-navigation
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.requarks.io/admin/navigation'
+        :href='siteStore.docsBase + `/admin/navigation`'
         target='_blank'
         type='a'
         )

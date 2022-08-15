@@ -20,7 +20,7 @@ q-page.admin-groups
         flat
         color='grey'
         type='a'
-        href='https://docs.js.wiki/admin/users'
+        :href='siteStore.docsBase + `/admin/groups`'
         target='_blank'
         )
       q-btn.q-mr-sm.acrylic-btn(
@@ -114,6 +114,7 @@ import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'
+import { useSiteStore } from 'src/stores/site'
 
 import UserCreateDialog from '../components/UserCreateDialog.vue'
 
@@ -124,6 +125,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const siteStore = useSiteStore()
 
 // ROUTER
 

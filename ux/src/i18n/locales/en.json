@@ -498,7 +498,7 @@
   "admin.storage.actionsInactiveWarn": "You must enable this storage target and apply changes before you can run actions.",
   "admin.storage.addTarget": "Add Storage Target",
   "admin.storage.assetDelivery": "Asset Delivery",
-  "admin.storage.assetDeliveryHint": "Select how uploaded assets should be delivered to the user. Note that not all storage origins support asset delivery and can only be used for backup purposes.",
+  "admin.storage.assetDeliveryHint": "Select how uploaded assets should be delivered to the user. Note that not all storage origins support asset delivery and some can only be used for backup purposes.",
   "admin.storage.assetDirectAccess": "Direct Access",
   "admin.storage.assetDirectAccessHint": "Assets are accessed directly by the user using a secure / signed link. When enabled, takes priority over file streaming.",
   "admin.storage.assetDirectAccessNotSupported": "Not supported by this storage target.",
@@ -1467,5 +1467,13 @@
   "admin.api.createSuccess": "API Key created successfully.",
   "admin.api.revoked": "Revoked",
   "admin.api.revokedHint": "This key has been revoked and can no longer be used.",
-  "admin.storage.setupRequired": "Setup required"
+  "admin.storage.setupRequired": "Setup required",
+  "admin.blocks.title": "Content Blocks",
+  "common.error.title": "Error",
+  "common.error.unauthorized.title": "Unauthorized",
+  "common.error.unauthorized.hint": "You don't have the required permissions to access this page.",
+  "common.error.generic.title": "Unexpected Error",
+  "common.error.generic.hint": "Oops, something went wrong...",
+  "common.error.notfound.title": "Not Found",
+  "common.error.notfound.hint": "That page doesn't exist or is not available."
 }

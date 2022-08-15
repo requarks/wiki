@@ -11,7 +11,7 @@ q-page.admin-login
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/login'
+        :href='siteStore.docsBase + `/admin/auth`'
         target='_blank'
         type='a'
         )
@@ -185,6 +185,7 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from 'src/stores/admin'
+import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
 
@@ -193,6 +194,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const siteStore = useSiteStore()
 
 // I18N
 

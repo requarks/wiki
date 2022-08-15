@@ -11,7 +11,7 @@ q-page.admin-general
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/general'
+        :href='siteStore.docsBase + `/admin/sites`'
         target='_blank'
         type='a'
         )
@@ -770,9 +770,16 @@ onMounted(() => {
   &-favicontabs {
     overflow: hidden;
     border-radius: 5px;
-    background-color: rgba(0,0,0,.1);
     display: flex;
     padding: 5px 5px 0 12px;
+
+    @at-root .body--light & {
+      background-color: rgba(0,0,0,.1);
+    }
+
+    @at-root .body--dark & {
+      background-color: rgba(255,255,255,.1);
+    }
 
     > div {
       display: flex;

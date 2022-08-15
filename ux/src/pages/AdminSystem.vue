@@ -11,7 +11,7 @@ q-page.admin-system
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/system'
+        :href='siteStore.docsBase + `/system/`'
         target='_blank'
         type='a'
         )
@@ -243,11 +243,17 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import ClipboardJS from 'clipboard'
 
+import { useSiteStore } from 'src/stores/site'
+
 import CheckUpdateDialog from '../components/CheckUpdateDialog.vue'
 
 // QUASAR
 
 const $q = useQuasar()
+
+// STORES
+
+const siteStore = useSiteStore()
 
 // I18N
 

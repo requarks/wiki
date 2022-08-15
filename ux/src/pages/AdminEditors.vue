@@ -11,7 +11,7 @@ q-page.admin-flags
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/editors'
+        :href='siteStore.docsBase + `/admin/editors`'
         target='_blank'
         type='a'
         )
@@ -70,7 +70,13 @@ import { useMeta } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 
-// STORES / ROUTERS / i18n
+import { useSiteStore } from 'src/stores/site'
+
+// STORES
+
+const siteStore = useSiteStore()
+
+// I18N
 
 const { t } = useI18n()
 

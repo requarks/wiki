@@ -12,7 +12,7 @@ q-page.admin-theme
         flat
         color='grey'
         type='a'
-        href='https://docs.js.wiki/admin/theme'
+        :href='siteStore.docsBase + `/admin/theme`'
         target='_blank'
         )
       q-btn.q-mr-sm.acrylic-btn(

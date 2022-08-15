@@ -19,7 +19,7 @@ q-page.admin-api
         icon='las la-question-circle'
         flat
         color='grey'
-        href='https://docs.js.wiki/admin/api'
+        :href='siteStore.docsBase + `/dev/api`'
         target='_blank'
         type='a'
         )
@@ -103,9 +103,17 @@ import { DateTime } from 'luxon'
 import ApiKeyCreateDialog from '../components/ApiKeyCreateDialog.vue'
 import ApiKeyRevokeDialog from '../components/ApiKeyRevokeDialog.vue'
 
+import { useAdminStore } from 'src/stores/admin'
+import { useSiteStore } from 'src/stores/site'
+
 // QUASAR
 
 const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
+const siteStore = useSiteStore()
 
 // I18N
 
@@ -154,6 +162,7 @@ async function load () {
   })
   state.keys = cloneDeep(resp?.data?.apiKeys) ?? []
   state.enabled = resp?.data?.apiState === true
+  adminStore.info.isApiEnabled = state.enabled
   $q.loading.hide()
   state.loading--
 }

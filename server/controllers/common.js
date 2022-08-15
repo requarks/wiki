@@ -34,9 +34,16 @@ router.get('/healthz', (req, res, next) => {
 })
 
 /**
- * Administration
+ * New v3 vue app
  */
-router.get(['/_admin', '/_admin/*'], (req, res, next) => {
+router.get([
+  '/_admin',
+  '/_admin/*',
+  '/_profile',
+  '/_profile/*',
+  '/_error',
+  '/_error/*'
+], (req, res, next) => {
   res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
 })
 // router.get(['/_admin', '/_admin/*'], (req, res, next) => {
@@ -319,18 +326,6 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
 })
 
 /**
- * Profile
- */
-router.get(['/p', '/p/*'], (req, res, next) => {
-  if (!req.user || req.user.id < 1 || req.user.id === 2) {
-    return res.render('unauthorized', { action: 'view' })
-  }
-
-  _.set(res.locals, 'pageMeta.title', 'User Profile')
-  res.render('profile')
-})
-
-/**
  * Source
  */
 router.get(['/s', '/s/*'], async (req, res, next) => {
@@ -453,10 +448,7 @@ router.get('/*', async (req, res, next) => {
         if (pageArgs.path === 'home' && req.user.id === 2) {
           return res.redirect('/login')
         }
-        _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-        return res.status(403).render('unauthorized', {
-          action: 'view'
-        })
+        return res.redirect(`/_error/unauthorized?from=${req.path}`)
       }
 
       _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
@@ -510,52 +502,37 @@ router.get('/*', async (req, res, next) => {
           injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
 
-        if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
-          // -> Convert page TOC
-          if (_.isString(page.toc)) {
-            page.toc = JSON.parse(page.toc)
-          }
+        // -> Convert page TOC
+        if (!_.isString(page.toc)) {
+          page.toc = JSON.stringify(page.toc)
+        }
 
-          // -> Render legacy view
-          res.render('legacy/page', {
-            page,
-            sidebar,
-            injectCode,
-            isAuthenticated: req.user && req.user.id !== 2
-          })
-        } else {
-          // -> Convert page TOC
-          if (!_.isString(page.toc)) {
-            page.toc = JSON.stringify(page.toc)
-          }
-
-          // -> Inject comments variables
-          const commentTmpl = {
-            codeTemplate: WIKI.data.commentProvider.codeTemplate,
-            head: WIKI.data.commentProvider.head,
-            body: WIKI.data.commentProvider.body,
-            main: WIKI.data.commentProvider.main
-          }
-          if (WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
-            [
-              { key: 'pageUrl', value: `${WIKI.config.host}/i/${page.id}` },
-              { key: 'pageId', value: page.id }
-            ].forEach((cfg) => {
-              commentTmpl.head = _.replace(commentTmpl.head, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-              commentTmpl.body = _.replace(commentTmpl.body, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-              commentTmpl.main = _.replace(commentTmpl.main, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-            })
-          }
-
-          // -> Render view
-          res.render('page', {
-            page,
-            sidebar,
-            injectCode,
-            comments: commentTmpl,
-            effectivePermissions
+        // -> Inject comments variables
+        const commentTmpl = {
+          codeTemplate: WIKI.data.commentProvider.codeTemplate,
+          head: WIKI.data.commentProvider.head,
+          body: WIKI.data.commentProvider.body,
+          main: WIKI.data.commentProvider.main
+        }
+        if (WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
+          [
+            { key: 'pageUrl', value: `${WIKI.config.host}/i/${page.id}` },
+            { key: 'pageId', value: page.id }
+          ].forEach((cfg) => {
+            commentTmpl.head = _.replace(commentTmpl.head, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+            commentTmpl.body = _.replace(commentTmpl.body, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
+            commentTmpl.main = _.replace(commentTmpl.main, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
           })
         }
+
+        // -> Render view
+        res.render('page', {
+          page,
+          sidebar,
+          injectCode,
+          comments: commentTmpl,
+          effectivePermissions
+        })
       } else if (pageArgs.path === 'home') {
         _.set(res.locals, 'pageMeta.title', 'Welcome')
         res.render('welcome', { locale: pageArgs.locale })

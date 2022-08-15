@@ -638,7 +638,6 @@ const permissions = [
     warning: true,
     restrictedForSystem: true,
     disabled: true
-
   }
 ]
 
