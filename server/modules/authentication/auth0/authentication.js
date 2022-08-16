@@ -27,5 +27,8 @@ module.exports = {
         }
       }
       ))
+  },
+  logout (conf) {
+    return `https://${conf.domain}/v2/logout?${new URLSearchParams({ client_id: conf.clientId, returnTo: WIKI.config.host }).toString()}`
   }
 }
