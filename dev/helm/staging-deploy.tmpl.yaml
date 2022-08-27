@@ -2,16 +2,21 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+fullnameOverride: "test-staging-playbook"
+
 replicaCount: 1
-revisionHistoryLimit: 10
+# revisionHistoryLimit: 10
 
 image:
-  repository: requarks/wiki
+  # repository: # requarks/wiki # ToDo April once in gitlab need to hook up.
+  # tag: is set in the helm_deploy script `--set image.tag="$DEPLOY_TAG"`
   imagePullPolicy: IfNotPresent
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+imagePullSecrets:
+  - name: gitlab-registry
+
+nameOverride: "test-staging-playbook"
+fullnameOverride: "test-staging-playbook"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -21,26 +26,6 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
-
-livenessProbe:
-  httpGet:
-    path: /healthz
-    port: http
-
-readinessProbe:
-  httpGet:
-    path: /healthz
-    port: http
-
-startupProbe:
-  initialDelaySeconds: 15
-  periodSeconds: 5
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 60
-  httpGet:
-    path: /healthz
-    port: http
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -64,20 +49,20 @@ service:
 
 ingress:
   enabled: true
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+  className: "nginx"
+  annotations: {
+    nginx.ingress.kubernetes.io/proxy-body-size: "0",
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  }
   hosts:
-    - host: wiki.minikube.local
+    - host: test-staging-playbook.notch8.com
       paths:
         - path: "/"
           pathType: Prefix
-
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls:
+    - hosts:
+        - test-staging-playbook.notch8.com
+      secretName: test-staging-playbook-tls
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -101,6 +86,7 @@ volumeMounts: []
 
 volumes: []
 
+
 # This will allow us to install locales even without internet access using a initContainer & wikjs "sideloading"
 sideload:
   enabled: false
@@ -113,11 +99,15 @@ sideload:
   #    value: http://my.proxy.com:3128
 
 ## This will override the postgresql chart values
-# externalPostgresql:
-#   # note: ?sslmode=require => ?ssl=true
-#   databaseURL: postgresql://postgres:postgres@postgres:5432/wiki?ssl=true
-#   # For self signed CAs, like DigitalOcean
-#   NODE_TLS_REJECT_UNAUTHORIZED: "0"
+externalPostgresql:
+  # note: ?sslmode=require => ?ssl=true
+  databaseURL: postgresql://postgres:$STAGING_POSTGRES_PASSWORD@pg-postgresql.staging-postgres.svc.cluster.local/test-staging-playbook?ssl=true
+  # For self signed CAs, like DigitalOcean
+  # NODE_TLS_REJECT_UNAUTHORIZED: "0"
+  host: pg-postgresql.staging-postgres.svc.cluster.local
+  username: postgres
+  # this value diverges on deploy only to a prefix of "STAGING_"  for a CI/CD set variable.
+  password: $STAGING_POSTGRES_PASSWORD
 
 ## Configuration values for the postgresql dependency.
 ## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
@@ -126,11 +116,11 @@ postgresql:
   ## Use the PostgreSQL chart dependency.
   ## Set to false if bringing your own PostgreSQL, and set secret value postgresql-uri.
   ##
-  enabled: true
+  enabled: false
   ## ssl enforce SSL communication with PostgresSQL
   ## Default to false
   ##
-  # ssl: false
+  ssl: true
   ## ca Certificate of Authority
   ## Default to empty, point to location of CA
   ##
@@ -146,13 +136,13 @@ postgresql:
   ## PostgreSQL fullname Override
   ## Default to wiki-postgresql unless fullname override is set for Chart
   ##
-  fullnameOverride: ""
+  fullnameOverride: "test-staging-playbook"
   ## PostgreSQL User to create.
   ##
   postgresqlUser: postgres
   ## PostgreSQL Database to create.
   ##
-  postgresqlDatabase: wiki
+  postgresqlDatabase: test-staging-playbook
   ## Persistent Volume Storage configuration.
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
   ##
@@ -171,10 +161,20 @@ postgresql:
     ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
     ##   GKE, AWS & OpenStack)
     ##
-    # storageClass: "-"
+    storageClass: ebs
     ## Persistent Volume Access Mode.
     ##
     accessMode: ReadWriteOnce
     ## Persistent Volume Storage Size.
     ##
-    size: 8Gi
+    size: 10Gi
+
+env:
+  config:
+    DB_HOST: postgres-staging-postgresql.database.svc.cluster.local
+    DB_NAME: test_staging_playbook
+    DB_PORT: 5432
+    DB_TYPE: postgres
+    DB_USER: postgres
+  secret:
+    DB_PASS: $STAGING_POSTGRES_PASSWORD

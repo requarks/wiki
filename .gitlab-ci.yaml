@@ -1,0 +1,90 @@
+---
+stages:
+  - build
+  - go
+
+before_script:
+  - export TAG=${CI_COMMIT_SHORT_SHA}
+  - export BRANCH=${CI_COMMIT_REF_NAME}
+  - export REGISTRY_HOST=${CI_REGISTRY}
+  - export REGISTRY_URI="/${CI_PROJECT_PATH}"
+
+build:
+  stage: build
+  script:
+    - cd dev/containers/
+    - docker login -u "gitlab-ci-token" -p "$CI_JOB_TOKEN" $CI_REGISTRY
+    - docker-compose build wiki
+    - docker login -u "gitlab-ci-token" -p "$CI_JOB_TOKEN" $CI_REGISTRY
+    - docker-compose push wiki
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  tags:
+    - local
+
+# lint:
+#   stage: go
+#   image: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+#   variables:
+#     PRONTO_GITLAB_API_ENDPOINT: "https://gitlab.com/api/v4"
+#   before_script:
+#     - export PRONTO_GITLAB_API_PRIVATE_TOKEN=$GITLAB_API_TOKEN
+#   allow_failure: true
+#   script:
+#     - git fetch && git checkout main && git checkout ${CI_COMMIT_SHORT_SHA}
+#     - bundle check || bundle
+#     - bundle exec pronto run -f gitlab -c origin/main
+#     - cd /app/samvera/hyrax-webapp && bundle exec rubocop -P # Todo change to actual app path
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#   tags:
+#     - docker
+
+staging:
+  stage: go
+  extends:
+    - .deploy
+  variables:
+    DEPLOY_IMAGE: $CI_REGISTRY_IMAGE
+    DEPLOY_TAG: $CI_COMMIT_SHORT_SHA
+    HELM_EXTRA_ARGS: >
+      --values dev/helm/staging-deploy.yaml
+  script:
+    - DOLLAR=$ envsubst < dev/helm/staging-deploy.tmpl.yaml > dev/helm/staging-deploy.yaml
+    - ./bin/helm_deploy test-staging-playbook test-staging-playbook
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+  allow_failure: true
+  tags:
+    - local
+
+# production:
+#   stage: go
+#   extends:
+#     - .deploy
+#   variables:
+#     DEPLOY_IMAGE: $CI_REGISTRY_IMAGE
+#     DEPLOY_TAG: $CI_COMMIT_SHORT_SHA
+#     HELM_EXPERIMENTAL_OCI: 1
+#     HELM_EXTRA_ARGS: >
+#       --values ops/production-deploy.yaml
+#   script:
+#     # - export KUBECONFIG=$ # ToDo add the right cluster config issue
+#     - DOLLAR=$ envsubst < ops/production-deploy.tmpl.yaml > ops/production-deploy.yaml
+#     - ./bin/helm_deploy production-playbook production-playbook
+#   # after_script:
+#   #   - rm -f ./chart/*-deploy.yaml
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main"
+#       when: manual
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#       when: manual
+#   allow_failure: true
+#   tags:
+#     - local
+
+.deploy:
+  image: dtzar/helm-kubectl:3.8.0

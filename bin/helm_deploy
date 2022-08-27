@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# This script wraps up helm deployment. It is meant as a clear starting point for
+# commandline deployment or CI based deployment. It requires the following ENV vars be set
+#
+# DEPLOY_IMAGE: this is the build image that runs the rails application. Typically this would run puma or passenger.
+# DEPLOY_TAG: name of of the tag you want to deploy for deploy image. eg: "latest" or "v3.0.1" or "f123asdf1". Defaults to latest
+# HELM_EXTRA_ARGS: any additional arguments you'd like passed to helm upgrade directly, can be blank. 
+# We set our values file with this variable in gitlab-ci.yaml file. `--values ops/staging-deploy.yaml``
+# RELEASE_NAME is set in the gitlab-ci.yaml deploy script `./bin/helm_deploy release_name namespace`
+# NAMESPACE aisre set in the gitlab-ci.yaml deploy script `./bin/helm_deploy release_name namespace`
+
+if [ -z "$1" ] || [ -z "$2" ]
+then
+    echo './bin/deploy RELEASE_NAME NAMESPACE'
+    exit 1
+fi
+
+release_name="${1}"
+namespace="${2}"
+
+DEPLOY_IMAGE="${DEPLOY_IMAGE}"
+DEPLOY_TAG="${DEPLOY_TAG}"
+
+helm repo update
+
+helm upgrade \
+    --install \
+    --atomic \
+    --timeout 15m0s \
+    --set image.repository="$DEPLOY_IMAGE" \
+    --set image.tag="$DEPLOY_TAG" \
+    $HELM_EXTRA_ARGS \
+    --namespace="$namespace" \
+    --create-namespace \
+    "$release_name" \
+
+    # https://docs.requarks.io/install/kubernetes
+    # helm repo add requarks https://charts.js.wiki
+    # helm install my-release requarks/wiki
+
+    # Uninstalling 
+    # Warning: Persistant Volume Claims for the database are 
+    # not deleted automatically. They need to be manually deleted
+    
+    # helm delete my-release
+    # kubectl delete pvc/data-wiki-postgresql-0
