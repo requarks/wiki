@@ -17,6 +17,13 @@ exports.up = async knex => {
     // =====================================
     // MODEL TABLES
     // =====================================
+    // ACTIVITY LOGS -----------------------
+    .createTable('activityLogs', table => {
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.timestamp('ts').notNullable().defaultTo(knex.fn.now())
+      table.string('action').notNullable()
+      table.jsonb('meta').notNullable()
+    })
     // ANALYTICS ---------------------------
     .createTable('analytics', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
@@ -236,6 +243,7 @@ exports.up = async knex => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('kind').notNullable()
       table.string('token').notNullable()
+      table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('validUntil').notNullable()
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
     })
@@ -244,10 +252,9 @@ exports.up = async knex => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('email').notNullable()
       table.string('name').notNullable()
-      table.jsonb('auth')
-      table.jsonb('tfa')
-      table.jsonb('meta')
-      table.jsonb('prefs')
+      table.jsonb('auth').notNullable().defaultTo('{}')
+      table.jsonb('meta').notNullable().defaultTo('{}')
+      table.jsonb('prefs').notNullable().defaultTo('{}')
       table.string('pictureUrl')
       table.boolean('isSystem').notNullable().defaultTo(false)
       table.boolean('isActive').notNullable().defaultTo(false)
@@ -274,6 +281,9 @@ exports.up = async knex => {
     // =====================================
     // REFERENCES
     // =====================================
+    .table('activityLogs', table => {
+      table.uuid('userId').notNullable().references('id').inTable('users')
+    })
     .table('analytics', table => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
@@ -471,6 +481,7 @@ exports.up = async knex => {
         index: true,
         follow: true
       },
+      authStrategies: [{ id: authModuleId, order: 0, isVisible: true }],
       locale: 'en',
       localeNamespacing: false,
       localeNamespaces: [],

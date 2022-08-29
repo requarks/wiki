@@ -73,11 +73,6 @@ extend type Mutation {
     dateFormat: String!
     appearance: String!
   ): UserTokenResponse
-
-  changePassword(
-    current: String!
-    new: String!
-  ): UserTokenResponse
 }
 
 # -----------------------------------------------

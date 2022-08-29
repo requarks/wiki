@@ -75,9 +75,8 @@ module.exports = {
       }))
 
       // Load enabled strategies
-      const enabledStrategies = await WIKI.models.authentication.getStrategies()
-      for (const idx in enabledStrategies) {
-        const stg = enabledStrategies[idx]
+      const enabledStrategies = await WIKI.models.authentication.getStrategies({ enabledOnly: true })
+      for (const stg of enabledStrategies) {
         try {
           const strategy = require(`../modules/authentication/${stg.module}/authentication.js`)
 
@@ -146,7 +145,7 @@ module.exports = {
         try {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
           user = newToken.user
-          user.permissions = user.getGlobalPermissions()
+          user.permissions = user.getPermissions()
           user.groups = user.getGroups()
           req.user = user
 
@@ -186,7 +185,7 @@ module.exports = {
             localeCode: 'en',
             permissions: _.get(WIKI.auth.groups, `${user.grp}.permissions`, []),
             groups: [user.grp],
-            getGlobalPermissions () {
+            getPermissions () {
               return req.user.permissions
             },
             getGroups () {
@@ -215,7 +214,7 @@ module.exports = {
    * @param {String|Boolean} path
    */
   checkAccess(user, permissions = [], page = false) {
-    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+    const userPermissions = user.permissions ? user.permissions : user.getPermissions()
 
     // System Admin
     if (_.includes(userPermissions, 'manage:system')) {
@@ -298,7 +297,7 @@ module.exports = {
    * @param {Array<String>} excludePermissions
    */
   checkExclusiveAccess(user, includePermissions = [], excludePermissions = []) {
-    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+    const userPermissions = user.permissions ? user.permissions : user.getPermissions()
 
     // Check Inclusion Permissions
     if (_.intersection(userPermissions, includePermissions).length < 1) {

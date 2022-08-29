@@ -112,7 +112,8 @@ module.exports = configure(function (/* ctx */) {
           delay: 500,
           spinner: 'QSpinnerGrid',
           spinnerSize: 32,
-          spinnerColor: 'white'
+          spinnerColor: 'white',
+          customClass: 'loading-darker'
         },
         loadingBar: {
           color: 'primary',

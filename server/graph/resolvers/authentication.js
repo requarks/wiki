@@ -1,6 +1,4 @@
 const _ = require('lodash')
-const fs = require('fs-extra')
-const path = require('path')
 const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
@@ -28,6 +26,9 @@ module.exports = {
     apiState () {
       return WIKI.config.api.isEnabled
     },
+    /**
+     * Fetch authentication strategies
+     */
     async authStrategies () {
       return WIKI.data.authentication.map(stg => ({
         ...stg,
@@ -38,33 +39,23 @@ module.exports = {
      * Fetch active authentication strategies
      */
     async authActiveStrategies (obj, args, context) {
-      return WIKI.models.authentication.getStrategies()
+      return WIKI.models.authentication.getStrategies({ enabledOnly: args.enabledOnly })
     },
     /**
      * Fetch site authentication strategies
      */
     async authSiteStrategies (obj, args, context, info) {
-      let strategies = await WIKI.models.authentication.getStrategies()
-      strategies = strategies.map(stg => {
-        const strategyInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey]) || {}
+      const site = await WIKI.models.sites.query().findById(args.siteId)
+      const activeStrategies = await WIKI.models.authentication.getStrategies({ enabledOnly: true })
+      return activeStrategies.map(str => {
+        const siteAuth = _.find(site.config.authStrategies, ['id', str.id]) || {}
         return {
-          ...stg,
-          strategy: strategyInfo,
-          config: _.sortBy(_.transform(stg.config, (res, value, key) => {
-            const configData = _.get(strategyInfo.props, key, false)
-            if (configData) {
-              res.push({
-                key,
-                value: JSON.stringify({
-                  ...configData,
-                  value
-                })
-              })
-            }
-          }, []), 'key')
+          id: str.id,
+          activeStrategy: str,
+          order: siteAuth.order ?? 0,
+          isVisible: siteAuth.isVisible ?? false
         }
       })
-      return args.enabledOnly ? _.filter(strategies, 'isEnabled') : strategies
     }
   },
   Mutation: {
@@ -93,13 +84,14 @@ module.exports = {
         const authResult = await WIKI.models.users.login(args, context)
         return {
           ...authResult,
-          responseResult: graphHelper.generateSuccess('Login success')
+          operation: graphHelper.generateSuccess('Login success')
         }
       } catch (err) {
         // LDAP Debug Flag
         if (args.strategy === 'ldap' && WIKI.config.flags.ldapdebug) {
           WIKI.logger.warn('LDAP LOGIN ERROR (c1): ', err)
         }
+        console.error(err)
 
         return graphHelper.generateError(err)
       }
@@ -119,9 +111,9 @@ module.exports = {
       }
     },
     /**
-     * Perform Mandatory Password Change after Login
+     * Perform Password Change
      */
-    async loginChangePassword (obj, args, context) {
+    async changePassword (obj, args, context) {
       try {
         const authResult = await WIKI.models.users.loginChangePassword(args, context)
         return {
@@ -133,7 +125,7 @@ module.exports = {
       }
     },
     /**
-     * Perform Mandatory Password Change after Login
+     * Perform Forget Password
      */
     async forgotPassword (obj, args, context) {
       try {

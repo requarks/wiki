@@ -1,4 +1,5 @@
 /* global WIKI */
+const bcrypt = require('bcryptjs-then')
 
 // ------------------------------------
 // Local Account
@@ -8,27 +9,30 @@ const LocalStrategy = require('passport-local').Strategy
 
 module.exports = {
   init (passport, conf) {
-    passport.use('local',
+    passport.use(conf.key,
       new LocalStrategy({
         usernameField: 'email',
         passwordField: 'password'
       }, async (uEmail, uPassword, done) => {
         try {
           const user = await WIKI.models.users.query().findOne({
-            email: uEmail.toLowerCase(),
-            providerKey: 'local'
+            email: uEmail.toLowerCase()
           })
           if (user) {
-            await user.verifyPassword(uPassword)
-            if (!user.isActive) {
-              done(new WIKI.Error.AuthAccountBanned(), null)
+            const authStrategyData = user.auth[conf.key]
+            if (!authStrategyData) {
+              throw new WIKI.Error.AuthLoginFailed()
+            } else if (await bcrypt.compare(uPassword, authStrategyData.password) !== true) {
+              throw new WIKI.Error.AuthLoginFailed()
+            } else if (!user.isActive) {
+              throw new WIKI.Error.AuthAccountBanned()
             } else if (!user.isVerified) {
-              done(new WIKI.Error.AuthAccountNotVerified(), null)
+              throw new WIKI.Error.AuthAccountNotVerified()
             } else {
               done(null, user)
             }
           } else {
-            done(new WIKI.Error.AuthLoginFailed(), null)
+            throw new WIKI.Error.AuthLoginFailed()
           }
         } catch (err) {
           done(err, null)

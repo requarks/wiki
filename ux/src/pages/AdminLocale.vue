@@ -20,7 +20,7 @@ q-page.admin-locale
         icon='las la-question-circle'
         flat
         color='grey'
-        :href='siteStore.docsBase + `/admin/locale`'
+        :href='siteStore.docsBase + `/admin/localisation`'
         target='_blank'
         type='a'
         )

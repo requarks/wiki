@@ -430,8 +430,7 @@ router.get('/*', async (req, res, next) => {
       const page = await WIKI.models.pages.getPage({
         path: pageArgs.path,
         locale: pageArgs.locale,
-        userId: req.user.id,
-        isPrivate: false
+        userId: req.user.id
       })
       pageArgs.tags = _.get(page, 'tags', [])
 
@@ -440,12 +439,12 @@ router.get('/*', async (req, res, next) => {
 
       // -> Check User Access
       if (!effectivePermissions.pages.read) {
-        if (req.user.id === 2) {
+        if (req.user.id === WIKI.auth.guest.id) {
           res.cookie('loginRedirect', req.path, {
             maxAge: 15 * 60 * 1000
           })
         }
-        if (pageArgs.path === 'home' && req.user.id === 2) {
+        if (pageArgs.path === 'home' && req.user.id === WIKI.auth.guest.id) {
           return res.redirect('/login')
         }
         return res.redirect(`/_error/unauthorized?from=${req.path}`)

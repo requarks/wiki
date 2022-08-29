@@ -21,6 +21,7 @@ module.exports = class Authentication extends Model {
       properties: {
         id: { type: 'string' },
         module: { type: 'string' },
+        isEnabled: { type: 'boolean' },
         selfRegistration: {type: 'boolean'}
       }
     }
@@ -34,8 +35,8 @@ module.exports = class Authentication extends Model {
     return WIKI.models.authentication.query().findOne({ key })
   }
 
-  static async getStrategies() {
-    const strategies = await WIKI.models.authentication.query()
+  static async getStrategies({ enabledOnly = false } = {}) {
+    const strategies = await WIKI.models.authentication.query().where(enabledOnly ? { isEnabled: true } : {})
     return strategies.map(str => ({
       ...str,
       domainWhitelist: _.get(str.domainWhitelist, 'v', []),

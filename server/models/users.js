@@ -1,6 +1,5 @@
 /* global WIKI */
 
-const bcrypt = require('bcryptjs-then')
 const _ = require('lodash')
 const tfa = require('node-2fa')
 const jwt = require('jsonwebtoken')
@@ -22,15 +21,9 @@ module.exports = class User extends Model {
       required: ['email'],
 
       properties: {
-        id: {type: 'integer'},
+        id: {type: 'string'},
         email: {type: 'string', format: 'email'},
         name: {type: 'string', minLength: 1, maxLength: 255},
-        providerId: {type: 'string'},
-        password: {type: 'string'},
-        tfaIsActive: {type: 'boolean', default: false},
-        tfaSecret: {type: ['string', null]},
-        jobTitle: {type: 'string'},
-        location: {type: 'string'},
         pictureUrl: {type: 'string'},
         isSystem: {type: 'boolean'},
         isActive: {type: 'boolean'},
@@ -39,6 +32,10 @@ module.exports = class User extends Model {
         updatedAt: {type: 'string'}
       }
     }
+  }
+
+  static get jsonAttributes() {
+    return ['auth', 'meta', 'prefs']
   }
 
   static get relationMappings() {
@@ -53,22 +50,6 @@ module.exports = class User extends Model {
             to: 'userGroups.groupId'
           },
           to: 'groups.id'
-        }
-      },
-      provider: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: require('./authentication'),
-        join: {
-          from: 'users.providerKey',
-          to: 'authentication.key'
-        }
-      },
-      defaultEditor: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: require('./editors'),
-        join: {
-          from: 'users.editorKey',
-          to: 'editors.key'
         }
       },
       locale: {
@@ -104,21 +85,6 @@ module.exports = class User extends Model {
   // Instance Methods
   // ------------------------------------------------
 
-  async generateHash() {
-    if (this.password) {
-      if (bcryptRegexp.test(this.password)) { return }
-      this.password = await bcrypt.hash(this.password, 12)
-    }
-  }
-
-  async verifyPassword(pwd) {
-    if (await bcrypt.compare(pwd, this.password) === true) {
-      return true
-    } else {
-      throw new WIKI.Error.AuthLoginFailed()
-    }
-  }
-
   async generateTFA() {
     let tfaInfo = tfa.generateSecret({
       name: WIKI.config.title,
@@ -150,7 +116,7 @@ module.exports = class User extends Model {
     return (result && _.has(result, 'delta') && result.delta === 0)
   }
 
-  getGlobalPermissions() {
+  getPermissions() {
     return _.uniq(_.flatten(_.map(this.groups, 'permissions')))
   }
 
@@ -297,7 +263,7 @@ module.exports = class User extends Model {
         throw new WIKI.Error.AuthProviderInvalid()
       }
 
-      const strInfo = _.find(WIKI.data.authentication, ['key', selStrategy.strategyKey])
+      const strInfo = _.find(WIKI.data.authentication, ['key', selStrategy.module])
 
       // Inject form user/pass
       if (strInfo.useForm) {
@@ -308,7 +274,7 @@ module.exports = class User extends Model {
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate(selStrategy.key, {
+        WIKI.auth.passport.authenticate(selStrategy.id, {
           session: !strInfo.useForm,
           scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
@@ -316,7 +282,7 @@ module.exports = class User extends Model {
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
           try {
-            const resp = await WIKI.models.users.afterLoginChecks(user, context, {
+            const resp = await WIKI.models.users.afterLoginChecks(user, selStrategy.id, context, {
               skipTFA: !strInfo.useForm,
               skipChangePwd: !strInfo.useForm
             })
@@ -334,7 +300,7 @@ module.exports = class User extends Model {
   /**
    * Perform post-login checks
    */
-  static async afterLoginChecks (user, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
+  static async afterLoginChecks (user, strategyId, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
     // Get redirect target
     user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
     let redirect = '/'
@@ -347,9 +313,12 @@ module.exports = class User extends Model {
       }
     }
 
+    // Get auth strategy flags
+    const authStr = user.auth[strategyId] || {}
+
     // Is 2FA required?
     if (!skipTFA) {
-      if (user.tfaIsActive && user.tfaSecret) {
+      if (authStr.tfaRequired && authStr.tfaSecret) {
         try {
           const tfaToken = await WIKI.models.userKeys.generateToken({
             kind: 'tfa',
@@ -364,7 +333,7 @@ module.exports = class User extends Model {
           WIKI.logger.warn(errc)
           throw new WIKI.Error.AuthGenericError()
         }
-      } else if (WIKI.config.auth.enforce2FA || (user.tfaIsActive && !user.tfaSecret)) {
+      } else if (WIKI.config.auth.enforce2FA || (authStr.tfaIsActive && !authStr.tfaSecret)) {
         try {
           const tfaQRImage = await user.generateTFA()
           const tfaToken = await WIKI.models.userKeys.generateToken({
@@ -385,7 +354,7 @@ module.exports = class User extends Model {
     }
 
     // Must Change Password?
-    if (!skipChangePwd && user.mustChangePwd) {
+    if (!skipChangePwd && authStr.mustChangePwd) {
       try {
         const pwdChangeToken = await WIKI.models.userKeys.generateToken({
           kind: 'changePwd',
@@ -440,18 +409,10 @@ module.exports = class User extends Model {
       token: jwt.sign({
         id: user.id,
         email: user.email,
-        name: user.name,
-        av: user.pictureUrl,
-        tz: user.timezone,
-        lc: user.localeCode,
-        df: user.dateFormat,
-        ap: user.appearance,
-        // defaultEditor: user.defaultEditor,
-        permissions: user.getGlobalPermissions(),
         groups: user.getGroups()
       }, {
-        key: WIKI.config.certs.private,
-        passphrase: WIKI.config.sessionSecret
+        key: WIKI.config.auth.certs.private,
+        passphrase: WIKI.config.auth.secret
       }, {
         algorithm: 'RS256',
         expiresIn: WIKI.config.auth.tokenExpiration,
@@ -877,7 +838,7 @@ module.exports = class User extends Model {
       WIKI.logger.error('CRITICAL ERROR: Guest user is missing!')
       process.exit(1)
     }
-    user.permissions = user.getGlobalPermissions()
+    user.permissions = user.getPermissions()
     return user
   }
 

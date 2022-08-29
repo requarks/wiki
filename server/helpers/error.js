@@ -2,243 +2,183 @@ const CustomError = require('custom-error-instance')
 
 module.exports = {
   AssetDeleteForbidden: CustomError('AssetDeleteForbidden', {
-    message: 'You are not authorized to delete this asset.',
-    code: 2003
+    message: 'You are not authorized to delete this asset.'
   }),
   AssetFolderExists: CustomError('AssetFolderExists', {
-    message: 'An asset folder with the same name already exists.',
-    code: 2002
+    message: 'An asset folder with the same name already exists.'
   }),
   AssetGenericError: CustomError('AssetGenericError', {
-    message: 'An unexpected error occured during asset operation.',
-    code: 2001
+    message: 'An unexpected error occured during asset operation.'
   }),
   AssetInvalid: CustomError('AssetInvalid', {
-    message: 'This asset does not exist or is invalid.',
-    code: 2004
+    message: 'This asset does not exist or is invalid.'
   }),
   AssetRenameCollision: CustomError('AssetRenameCollision', {
-    message: 'An asset with the same filename in the same folder already exists.',
-    code: 2005
+    message: 'An asset with the same filename in the same folder already exists.'
   }),
   AssetRenameForbidden: CustomError('AssetRenameForbidden', {
-    message: 'You are not authorized to rename this asset.',
-    code: 2006
+    message: 'You are not authorized to rename this asset.'
   }),
   AssetRenameInvalid: CustomError('AssetRenameInvalid', {
-    message: 'The new asset filename is invalid.',
-    code: 2007
+    message: 'The new asset filename is invalid.'
   }),
   AssetRenameInvalidExt: CustomError('AssetRenameInvalidExt', {
-    message: 'The file extension cannot be changed on an existing asset.',
-    code: 2008
+    message: 'The file extension cannot be changed on an existing asset.'
   }),
   AssetRenameTargetForbidden: CustomError('AssetRenameTargetForbidden', {
-    message: 'You are not authorized to rename this asset to the requested name.',
-    code: 2009
+    message: 'You are not authorized to rename this asset to the requested name.'
   }),
   AuthAccountBanned: CustomError('AuthAccountBanned', {
-    message: 'Your account has been disabled.',
-    code: 1013
+    message: 'Your account has been disabled.'
   }),
   AuthAccountAlreadyExists: CustomError('AuthAccountAlreadyExists', {
-    message: 'An account already exists using this email address.',
-    code: 1004
+    message: 'An account already exists using this email address.'
   }),
   AuthAccountNotVerified: CustomError('AuthAccountNotVerified', {
-    message: 'You must verify your account before your can login.',
-    code: 1014
+    message: 'You must verify your account before your can login.'
   }),
   AuthGenericError: CustomError('AuthGenericError', {
-    message: 'An unexpected error occured during login.',
-    code: 1001
+    message: 'An unexpected error occured during login.'
   }),
   AuthLoginFailed: CustomError('AuthLoginFailed', {
-    message: 'Invalid email / username or password.',
-    code: 1002
+    message: 'Invalid email / username or password.'
   }),
   AuthPasswordInvalid: CustomError('AuthPasswordInvalid', {
-    message: 'Password is incorrect.',
-    code: 1020
+    message: 'Password is incorrect.'
   }),
   AuthProviderInvalid: CustomError('AuthProviderInvalid', {
-    message: 'Invalid authentication provider.',
-    code: 1003
+    message: 'Invalid authentication provider.'
   }),
   AuthRegistrationDisabled: CustomError('AuthRegistrationDisabled', {
-    message: 'Registration is disabled. Contact your system administrator.',
-    code: 1010
+    message: 'Registration is disabled. Contact your system administrator.'
   }),
   AuthRegistrationDomainUnauthorized: CustomError('AuthRegistrationDomainUnauthorized', {
-    message: 'You are not authorized to register. Your domain is not whitelisted.',
-    code: 1011
+    message: 'You are not authorized to register. Your domain is not whitelisted.'
   }),
   AuthRequired: CustomError('AuthRequired', {
-    message: 'You must be authenticated to access this resource.',
-    code: 1019
+    message: 'You must be authenticated to access this resource.'
   }),
   AuthTFAFailed: CustomError('AuthTFAFailed', {
-    message: 'Incorrect TFA Security Code.',
-    code: 1005
+    message: 'Incorrect TFA Security Code.'
   }),
   AuthTFAInvalid: CustomError('AuthTFAInvalid', {
-    message: 'Invalid TFA Security Code or Login Token.',
-    code: 1006
+    message: 'Invalid TFA Security Code or Login Token.'
   }),
   AuthValidationTokenInvalid: CustomError('AuthValidationTokenInvalid', {
-    message: 'Invalid validation token.',
-    code: 1015
+    message: 'Invalid validation token.'
   }),
   BruteInstanceIsInvalid: CustomError('BruteInstanceIsInvalid', {
-    message: 'Invalid Brute Force Instance.',
-    code: 1007
+    message: 'Invalid Brute Force Instance.'
   }),
   BruteTooManyAttempts: CustomError('BruteTooManyAttempts', {
-    message: 'Too many attempts! Try again later.',
-    code: 1008
+    message: 'Too many attempts! Try again later.'
   }),
   CommentContentMissing: CustomError('CommentContentMissing', {
-    message: 'Comment content is missing or too short.',
-    code: 8003
+    message: 'Comment content is missing or too short.'
   }),
   CommentGenericError: CustomError('CommentGenericError', {
-    message: 'An unexpected error occured.',
-    code: 8001
+    message: 'An unexpected error occured.'
   }),
   CommentManageForbidden: CustomError('CommentManageForbidden', {
-    message: 'You are not authorized to manage comments on this page.',
-    code: 8004
+    message: 'You are not authorized to manage comments on this page.'
   }),
   CommentNotFound: CustomError('CommentNotFound', {
-    message: 'This comment does not exist.',
-    code: 8005
+    message: 'This comment does not exist.'
   }),
   CommentPostForbidden: CustomError('CommentPostForbidden', {
-    message: 'You are not authorized to post a comment on this page.',
-    code: 8002
+    message: 'You are not authorized to post a comment on this page.'
   }),
   CommentViewForbidden: CustomError('CommentViewForbidden', {
-    message: 'You are not authorized to view comments for this page.',
-    code: 8006
+    message: 'You are not authorized to view comments for this page.'
   }),
   InputInvalid: CustomError('InputInvalid', {
-    message: 'Input data is invalid.',
-    code: 1012
+    message: 'Input data is invalid.'
   }),
   LocaleGenericError: CustomError('LocaleGenericError', {
-    message: 'An unexpected error occured during locale operation.',
-    code: 5001
+    message: 'An unexpected error occured during locale operation.'
   }),
   LocaleInvalidNamespace: CustomError('LocaleInvalidNamespace', {
-    message: 'Invalid locale or namespace.',
-    code: 5002
+    message: 'Invalid locale or namespace.'
   }),
   MailGenericError: CustomError('MailGenericError', {
-    message: 'An unexpected error occured during mail operation.',
-    code: 3001
+    message: 'An unexpected error occured during mail operation.'
   }),
   MailInvalidRecipient: CustomError('MailInvalidRecipient', {
-    message: 'The recipient email address is invalid.',
-    code: 3004
+    message: 'The recipient email address is invalid.'
   }),
   MailNotConfigured: CustomError('MailNotConfigured', {
-    message: 'The mail configuration is incomplete or invalid.',
-    code: 3002
+    message: 'The mail configuration is incomplete or invalid.'
   }),
   MailTemplateFailed: CustomError('MailTemplateFailed', {
-    message: 'Mail template failed to load.',
-    code: 3003
+    message: 'Mail template failed to load.'
   }),
   PageCreateForbidden: CustomError('PageCreateForbidden', {
-    message: 'You are not authorized to create this page.',
-    code: 6008
+    message: 'You are not authorized to create this page.'
   }),
   PageDeleteForbidden: CustomError('PageDeleteForbidden', {
-    message: 'You are not authorized to delete this page.',
-    code: 6010
+    message: 'You are not authorized to delete this page.'
   }),
   PageGenericError: CustomError('PageGenericError', {
-    message: 'An unexpected error occured during a page operation.',
-    code: 6001
+    message: 'An unexpected error occured during a page operation.'
   }),
   PageDuplicateCreate: CustomError('PageDuplicateCreate', {
-    message: 'Cannot create this page because an entry already exists at the same path.',
-    code: 6002
+    message: 'Cannot create this page because an entry already exists at the same path.'
   }),
   PageEmptyContent: CustomError('PageEmptyContent', {
-    message: 'Page content cannot be empty.',
-    code: 6004
+    message: 'Page content cannot be empty.'
   }),
   PageHistoryForbidden: CustomError('PageHistoryForbidden', {
-    message: 'You are not authorized to view the history of this page.',
-    code: 6012
+    message: 'You are not authorized to view the history of this page.'
   }),
   PageIllegalPath: CustomError('PageIllegalPath', {
-    message: 'Page path cannot contains illegal characters.',
-    code: 6005
+    message: 'Page path cannot contains illegal characters.'
   }),
   PageMoveForbidden: CustomError('PageMoveForbidden', {
-    message: 'You are not authorized to move this page.',
-    code: 6007
+    message: 'You are not authorized to move this page.'
   }),
   PageNotFound: CustomError('PageNotFound', {
-    message: 'This page does not exist.',
-    code: 6003
+    message: 'This page does not exist.'
   }),
   PagePathCollision: CustomError('PagePathCollision', {
-    message: 'Destination page path already exists.',
-    code: 6006
+    message: 'Destination page path already exists.'
   }),
   PageRestoreForbidden: CustomError('PageRestoreForbidden', {
-    message: 'You are not authorized to restore this page version.',
-    code: 6011
+    message: 'You are not authorized to restore this page version.'
   }),
   PageUpdateForbidden: CustomError('PageUpdateForbidden', {
-    message: 'You are not authorized to update this page.',
-    code: 6009
+    message: 'You are not authorized to update this page.'
   }),
   PageViewForbidden: CustomError('PageViewForbidden', {
-    message: 'You are not authorized to view this page.',
-    code: 6013
+    message: 'You are not authorized to view this page.'
   }),
   SearchActivationFailed: CustomError('SearchActivationFailed', {
-    message: 'Search Engine activation failed.',
-    code: 4002
+    message: 'Search Engine activation failed.'
   }),
   SearchGenericError: CustomError('SearchGenericError', {
-    message: 'An unexpected error occured during search operation.',
-    code: 4001
+    message: 'An unexpected error occured during search operation.'
   }),
   SystemGenericError: CustomError('SystemGenericError', {
-    message: 'An unexpected error occured.',
-    code: 7001
+    message: 'An unexpected error occured.'
   }),
   SystemSSLDisabled: CustomError('SystemSSLDisabled', {
-    message: 'SSL is not enabled.',
-    code: 7002
+    message: 'SSL is not enabled.'
   }),
   SystemSSLLEUnavailable: CustomError('SystemSSLLEUnavailable', {
-    message: 'Let\'s Encrypt is not initialized.',
-    code: 7004
+    message: 'Let\'s Encrypt is not initialized.'
   }),
   SystemSSLRenewInvalidProvider: CustomError('SystemSSLRenewInvalidProvider', {
-    message: 'Current provider does not support SSL certificate renewal.',
-    code: 7003
+    message: 'Current provider does not support SSL certificate renewal.'
   }),
   UserCreationFailed: CustomError('UserCreationFailed', {
-    message: 'An unexpected error occured during user creation.',
-    code: 1009
+    message: 'An unexpected error occured during user creation.'
   }),
   UserDeleteForeignConstraint: CustomError('UserDeleteForeignConstraint', {
-    message: 'Cannot delete user because of content relational constraints.',
-    code: 1017
+    message: 'Cannot delete user because of content relational constraints.'
   }),
   UserDeleteProtected: CustomError('UserDeleteProtected', {
-    message: 'Cannot delete a protected system account.',
-    code: 1018
+    message: 'Cannot delete a protected system account.'
   }),
   UserNotFound: CustomError('UserNotFound', {
-    message: 'This user does not exist.',
-    code: 1016
+    message: 'This user does not exist.'
   })
 }

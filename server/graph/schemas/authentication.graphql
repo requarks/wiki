@@ -9,7 +9,9 @@ extend type Query {
 
   authStrategies: [AuthenticationStrategy]
 
-  authActiveStrategies: [AuthenticationActiveStrategy]
+  authActiveStrategies(
+    enabledOnly: Boolean
+  ): [AuthenticationActiveStrategy]
 
   authSiteStrategies(
     siteId: UUID!
@@ -27,7 +29,8 @@ extend type Mutation {
   login(
     username: String!
     password: String!
-    strategy: String!
+    strategyId: UUID!
+    siteId: UUID
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   loginTFA(
@@ -36,9 +39,13 @@ extend type Mutation {
     setup: Boolean
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
-  loginChangePassword(
-    continuationToken: String!
+  changePassword(
+    userId: UUID
+    continuationToken: String
+    currentPassword: String
     newPassword: String!
+    strategyId: UUID!
+    siteId: UUID
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
   forgotPassword(

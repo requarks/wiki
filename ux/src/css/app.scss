@@ -117,7 +117,7 @@ body::-webkit-scrollbar-thumb {
   }
 
   &:hover .q-focus-helper {
-    opacity: .3;
+    opacity: .3 !important;
   }
 }
 
@@ -207,6 +207,12 @@ body::-webkit-scrollbar-thumb {
   }
   100% {
     opacity: 1;
+  }
+}
+
+.loading-darker {
+  .q-loading__backdrop {
+    opacity: .75;
   }
 }
 

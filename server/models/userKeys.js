@@ -16,7 +16,7 @@ module.exports = class UserKey extends Model {
       required: ['kind', 'token', 'validUntil'],
 
       properties: {
-        id: {type: 'integer'},
+        id: {type: 'string'},
         kind: {type: 'string'},
         token: {type: 'string'},
         createdAt: {type: 'string'},
@@ -44,11 +44,12 @@ module.exports = class UserKey extends Model {
     this.createdAt = DateTime.utc().toISO()
   }
 
-  static async generateToken ({ userId, kind }, context) {
+  static async generateToken ({ userId, kind, meta }, context) {
     const token = await nanoid()
     await WIKI.models.userKeys.query().insert({
       kind,
       token,
+      meta,
       validUntil: DateTime.utc().plus({ days: 1 }).toISO(),
       userId
     })
@@ -64,7 +65,10 @@ module.exports = class UserKey extends Model {
       if (DateTime.utc() > DateTime.fromISO(res.validUntil)) {
         throw new WIKI.Error.AuthValidationTokenInvalid()
       }
-      return res.user
+      return {
+        ...res.meta,
+        user: res.user
+      }
     } else {
       throw new WIKI.Error.AuthValidationTokenInvalid()
     }

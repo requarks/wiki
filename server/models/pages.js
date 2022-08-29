@@ -42,7 +42,6 @@ module.exports = class Page extends Model {
         title: {type: 'string'},
         description: {type: 'string'},
         publishState: {type: 'string'},
-        privateNS: {type: 'string'},
         publishStartDate: {type: 'string'},
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
@@ -773,7 +772,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async deletePage(opts) {
-    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts);
+    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
     if (!page) {
       throw new WIKI.Error.PageNotFound()
     }
@@ -1011,14 +1010,6 @@ module.exports = class Page extends Model {
         //     'pages.authorId': opts.userId
         //   })
         // })
-        // .andWhere(builder => {
-        //   if (queryModeID) return
-        //   if (opts.isPrivate) {
-        //     builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
-        //   } else {
-        //     builder.where({ 'pages.isPrivate': false })
-        //   }
-        // })
         .first()
     } catch (err) {
       WIKI.logger.warn(err)
@@ -1074,8 +1065,7 @@ module.exports = class Page extends Model {
       return {
         ...page,
         path: opts.path,
-        localeCode: opts.locale,
-        isPrivate: opts.isPrivate
+        localeCode: opts.locale
       }
     } catch (err) {
       if (err.code === 'ENOENT') {
