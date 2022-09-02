@@ -55,6 +55,10 @@ const routes = [
     ]
   },
   {
+    path: '/_welcome',
+    component: () => import('pages/Welcome.vue')
+  },
+  {
     path: '/_error/:action?',
     component: () => import('pages/ErrorGeneric.vue')
   },

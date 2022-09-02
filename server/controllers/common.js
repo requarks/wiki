@@ -42,7 +42,8 @@ router.get([
   '/_profile',
   '/_profile/*',
   '/_error',
-  '/_error/*'
+  '/_error/*',
+  '/_welcome'
 ], (req, res, next) => {
   res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
 })
@@ -533,8 +534,7 @@ router.get('/*', async (req, res, next) => {
           effectivePermissions
         })
       } else if (pageArgs.path === 'home') {
-        _.set(res.locals, 'pageMeta.title', 'Welcome')
-        res.render('welcome', { locale: pageArgs.locale })
+        res.redirect('/_welcome')
       } else {
         _.set(res.locals, 'pageMeta.title', 'Page Not Found')
         if (effectivePermissions.pages.write) {

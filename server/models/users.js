@@ -116,7 +116,7 @@ module.exports = class User extends Model {
     return (result && _.has(result, 'delta') && result.delta === 0)
   }
 
-  getPermissions() {
+  getPermissions () {
     return _.uniq(_.flatten(_.map(this.groups, 'permissions')))
   }
 
@@ -127,6 +127,12 @@ module.exports = class User extends Model {
   // ------------------------------------------------
   // Model Methods
   // ------------------------------------------------
+
+  static async getById(id) {
+    return WIKI.models.users.query().findById(id).withGraphFetched('groups').modifyGraph('groups', builder => {
+      builder.select('groups.id', 'permissions')
+    })
+  }
 
   static async processProfile({ profile, providerKey }) {
     const provider = _.get(WIKI.auth.strategies, providerKey, {})
@@ -385,7 +391,7 @@ module.exports = class User extends Model {
    * Generate a new token for a user
    */
   static async refreshToken(user) {
-    if (_.isSafeInteger(user)) {
+    if (_.isString(user)) {
       user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
         builder.select('groups.id', 'permissions')
       })

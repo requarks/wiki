@@ -159,10 +159,13 @@ module.exports = {
           WIKI.logger.warn(errc)
           return next()
         }
-      }
-
-      // JWT is NOT valid, set as guest
-      if (!user) {
+      } else if (user) {
+        user = await WIKI.models.users.getById(user.id)
+        user.permissions = user.getPermissions()
+        user.groups = user.getGroups()
+        req.user = user
+      } else {
+        // JWT is NOT valid, set as guest
         if (WIKI.auth.guest.cacheExpiration <= DateTime.utc()) {
           WIKI.auth.guest = await WIKI.models.users.getGuestUser()
           WIKI.auth.guest.cacheExpiration = DateTime.utc().plus({ minutes: 1 })
