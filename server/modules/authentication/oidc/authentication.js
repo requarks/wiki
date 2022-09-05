@@ -29,6 +29,17 @@ module.exports = {
               email: _.get(profile, '_json.' + conf.emailClaim)
             }
           })
+          if (conf.mapGroups) {
+            const groups = _.get(profile, '_json.' + conf.groupsClaim)
+            if (groups) {
+              const groupIDs = Object.values(WIKI.auth.groups)
+                .filter(g => groups.includes(g.name))
+                .map(g => g.id)
+              for (let groupID of groupIDs) {
+                await user.$relatedQuery('groups').relate(groupID)
+              }
+            }
+          }
           cb(null, user)
         } catch (err) {
           cb(err, null)

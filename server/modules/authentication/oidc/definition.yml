@@ -49,8 +49,21 @@ props:
     default: email
     maxWidth: 500
     order: 7
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Map groups matching names from the groups claim value
+    default: false
+    order: 8
+  groupsClaim:
+    type: String
+    title: Groups Claim
+    hint: Field containing the group names
+    default: groups
+    maxWidth: 500
+    order: 9
   logoutURL:
     type: String
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
-    order: 8
+    order: 10
