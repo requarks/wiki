@@ -146,6 +146,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Cameron Steele ([@ATechAdventurer](https://github.com/ATechAdventurer))
 - Charlie Schliesser ([@charlie-s](https://github.com/charlie-s))
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
+- Cole Manning ([@RVRX](https://github.com/RVRX))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
