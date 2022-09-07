@@ -623,7 +623,7 @@ export default {
         query: query,
         variables: {
           path: currentPagePath,
-          locale: 'en'
+          locale: this.locale
         }
       }).then(resp => {
         const pageIds = resp.data.pages.tree.filter(item => item.path === currentPagePath)
@@ -638,7 +638,7 @@ export default {
     getChildPages (currentPageID) {
       const variables = {
         parent: currentPageID,
-        locale: 'en'
+        locale: this.locale
       }
       const query = gql`
         query Page($locale: String!, $parent: Int!) {
