@@ -64,11 +64,11 @@ extend type Query {
 
 extend type Mutation {
   createPage(
+    siteId: UUID!
     content: String!
     description: String!
     editor: String!
     isPublished: Boolean!
-    isPrivate: Boolean!
     locale: String!
     path: String!
     publishEndDate: Date
@@ -84,7 +84,6 @@ extend type Mutation {
     content: String
     description: String
     editor: String
-    isPrivate: Boolean
     isPublished: Boolean
     locale: String
     path: String
@@ -164,9 +163,7 @@ type Page {
   hash: String
   title: String
   description: String
-  isPrivate: Boolean
   isPublished: Boolean
-  privateNS: String
   publishStartDate: Date
   publishEndDate: Date
   tags: [PageTag]

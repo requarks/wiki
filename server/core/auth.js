@@ -112,6 +112,7 @@ module.exports = {
     WIKI.auth.passport.authenticate('jwt', {session: false}, async (err, user, info) => {
       if (err) { return next() }
       let mustRevalidate = false
+      const strategyId = user.pvd
 
       // Expired but still valid within N days, just renew
       if (info instanceof Error && info.name === 'TokenExpiredError') {
@@ -143,10 +144,11 @@ module.exports = {
       if (mustRevalidate) {
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
-          const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
+          const newToken = await WIKI.models.users.refreshToken(jwtPayload.id, jwtPayload.pvd)
           user = newToken.user
           user.permissions = user.getPermissions()
           user.groups = user.getGroups()
+          user.strategyId = strategyId
           req.user = user
 
           // Try headers, otherwise cookies for response
@@ -163,6 +165,7 @@ module.exports = {
         user = await WIKI.models.users.getById(user.id)
         user.permissions = user.getPermissions()
         user.groups = user.getGroups()
+        user.strategyId = strategyId
         req.user = user
       } else {
         // JWT is NOT valid, set as guest

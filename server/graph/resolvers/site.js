@@ -53,10 +53,10 @@ module.exports = {
       try {
         // -> Validate inputs
         if (!args.hostname || args.hostname.length < 1 || !/^(\\*)|([a-z0-9\-.:]+)$/.test(args.hostname)) {
-          throw WIKI.ERROR(new Error('Invalid Site Hostname'), 'SiteCreateInvalidHostname')
+          throw new WIKI.Error.Custom('SiteCreateInvalidHostname', 'Invalid Site Hostname')
         }
         if (!args.title || args.title.length < 1 || !/^[^<>"]+$/.test(args.title)) {
-          throw WIKI.ERROR(new Error('Invalid Site Title'), 'SiteCreateInvalidTitle')
+          throw new WIKI.Error.Custom('SiteCreateInvalidTitle', 'Invalid Site Title')
         }
         // -> Check for duplicate catch-all
         if (args.hostname === '*') {
@@ -64,7 +64,7 @@ module.exports = {
             hostname: args.hostname
           }).first()
           if (site) {
-            throw WIKI.ERROR(new Error('A site with a catch-all hostname already exists! Cannot have 2 catch-all hostnames.'), 'SiteCreateDuplicateCatchAll')
+            throw new WIKI.Error.Custom('SiteCreateDuplicateCatchAll', 'A site with a catch-all hostname already exists! Cannot have 2 catch-all hostnames.')
           }
         }
         // -> Create site
@@ -88,17 +88,17 @@ module.exports = {
         // -> Load site
         const site = await WIKI.models.sites.query().findById(args.id)
         if (!site) {
-          throw WIKI.ERROR(new Error('Invalid Site ID'), 'SiteInvalidId')
+          throw new WIKI.Error.Custom('SiteInvalidId', 'Invalid Site ID')
         }
         // -> Check for bad input
         if (_.has(args.patch, 'hostname') && _.trim(args.patch.hostname).length < 1) {
-          throw WIKI.ERROR(new Error('Hostname is invalid.'), 'SiteInvalidHostname')
+          throw new WIKI.Error.Custom('SiteInvalidHostname', 'Hostname is invalid.')
         }
         // -> Check for duplicate catch-all
         if (args.patch.hostname === '*' && site.hostname !== '*') {
           const dupSite = await WIKI.models.sites.query().where({ hostname: '*' }).first()
           if (dupSite) {
-            throw WIKI.ERROR(new Error(`Site ${dupSite.config.title} with a catch-all hostname already exists! Cannot have 2 catch-all hostnames.`), 'SiteUpdateDuplicateCatchAll')
+            throw new WIKI.Error.Custom('SiteUpdateDuplicateCatchAll', `Site ${dupSite.config.title} with a catch-all hostname already exists! Cannot have 2 catch-all hostnames.`)
           }
         }
         // -> Format Code
@@ -132,7 +132,7 @@ module.exports = {
         // -> Ensure site isn't last one
         const sitesCount = await WIKI.models.sites.query().count('id').first()
         if (sitesCount?.count && _.toNumber(sitesCount?.count) <= 1) {
-          throw WIKI.ERROR(new Error('Cannot delete the last site. At least 1 site must exists at all times.'), 'SiteDeleteLastSite')
+          throw new WIKI.Error.Custom('SiteDeleteLastSite', 'Cannot delete the last site. At least 1 site must exists at all times.')
         }
         // -> Delete site
         await WIKI.models.sites.deleteSite(args.id)

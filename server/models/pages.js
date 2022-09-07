@@ -227,6 +227,11 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async createPage(opts) {
+    // -> Validate site
+    if (!WIKI.sites[opts.siteId]) {
+      throw new WIKI.Error.Custom('InvalidSiteId', 'Site ID is invalid.')
+    }
+
     // -> Validate path
     if (opts.path.includes('.') || opts.path.includes(' ') || opts.path.includes('\\') || opts.path.includes('//')) {
       throw new WIKI.Error.PageIllegalPath()
@@ -295,8 +300,9 @@ module.exports = class Page extends Model {
       publishState: opts.publishState,
       localeCode: opts.locale,
       path: opts.path,
-      publishEndDate: opts.publishEndDate || '',
-      publishStartDate: opts.publishStartDate || '',
+      publishEndDate: opts.publishEndDate?.toISO(),
+      publishStartDate: opts.publishStartDate?.toISO(),
+      siteId: opts.siteId,
       title: opts.title,
       toc: '[]',
       extra: JSON.stringify({

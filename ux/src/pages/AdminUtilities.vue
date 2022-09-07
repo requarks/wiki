@@ -20,6 +20,19 @@ q-page.admin-utilities
     q-card.shadow-1
       q-list(separator)
         q-item
+          blueprint-icon(icon='disconnected', :hue-rotate='45')
+          q-item-section
+            q-item-label {{t(`admin.utilities.disconnectWS`)}}
+            q-item-label(caption) {{t(`admin.utilities.disconnectWSHint`)}}
+          q-item-section(side)
+            q-btn.acrylic-btn(
+              flat
+              icon='las la-arrow-circle-right'
+              color='primary'
+              @click='disconnectWS'
+              :label='t(`common.actions.proceed`)'
+            )
+        q-item
           blueprint-icon(icon='database-export', :hue-rotate='45')
           q-item-section
             q-item-label {{t(`admin.utilities.export`)}}
@@ -103,6 +116,7 @@ q-page.admin-utilities
 import { computed, reactive } from 'vue'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+import gql from 'graphql-tag'
 
 import { useSiteStore } from 'src/stores/site'
 
@@ -140,6 +154,42 @@ const purgeHistoryTimeframes = computed(() => ([
   { value: '1y', label: t('admin.utitilies.purgeHistoryYear', 1, { count: 1 }) },
   { value: '2y', label: t('admin.utitilies.purgeHistoryYear', 2, { count: 2 }) }
 ]))
+
+// METHODS
+
+async function disconnectWS () {
+  $q.loading.show()
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation disconnectWS {
+          disconnectWS {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only'
+    })
+    if (resp?.data?.disconnectWS?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.utilities.disconnectWSSuccess')
+      })
+    } else {
+      throw new Error(resp?.data?.disconnectWS?.operation?.succeeded)
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to disconnect WS connections.',
+      caption: err.message
+    })
+  }
+  $q.loading.hide()
+}
 </script>
 
 <style lang='scss'>

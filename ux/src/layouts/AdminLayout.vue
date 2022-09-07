@@ -166,6 +166,10 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section {{ t('admin.system.title') }}
           q-item-section(side)
             status-light(:color='adminStore.isVersionLatest ? `positive` : `warning`')
+        q-item(to='/_admin/terminal', v-ripple, active-class='bg-primary text-white')
+          q-item-section(avatar)
+            q-icon(name='img:/_assets/icons/fluent-linux-terminal.svg')
+          q-item-section {{ t('admin.terminal.title') }}
         q-item(to='/_admin/utilities', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-swiss-army-knife.svg')

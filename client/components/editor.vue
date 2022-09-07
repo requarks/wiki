@@ -295,7 +295,6 @@ export default {
                 $content: String!
                 $description: String!
                 $editor: String!
-                $isPrivate: Boolean!
                 $isPublished: Boolean!
                 $locale: String!
                 $path: String!
@@ -303,35 +302,32 @@ export default {
                 $publishStartDate: Date
                 $scriptCss: String
                 $scriptJs: String
+                $siteId: UUID!
                 $tags: [String]!
                 $title: String!
               ) {
-                pages {
-                  create(
-                    content: $content
-                    description: $description
-                    editor: $editor
-                    isPrivate: $isPrivate
-                    isPublished: $isPublished
-                    locale: $locale
-                    path: $path
-                    publishEndDate: $publishEndDate
-                    publishStartDate: $publishStartDate
-                    scriptCss: $scriptCss
-                    scriptJs: $scriptJs
-                    tags: $tags
-                    title: $title
-                  ) {
-                    responseResult {
-                      succeeded
-                      errorCode
-                      slug
-                      message
-                    }
-                    page {
-                      id
-                      updatedAt
-                    }
+                createPage(
+                  content: $content
+                  description: $description
+                  editor: $editor
+                  isPublished: $isPublished
+                  locale: $locale
+                  path: $path
+                  publishEndDate: $publishEndDate
+                  publishStartDate: $publishStartDate
+                  scriptCss: $scriptCss
+                  scriptJs: $scriptJs
+                  siteId: $siteId
+                  tags: $tags
+                  title: $title
+                ) {
+                  operation {
+                    succeeded
+                    message
+                  }
+                  page {
+                    id
+                    updatedAt
                   }
                 }
               }
@@ -341,32 +337,32 @@ export default {
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
-              isPrivate: false,
               isPublished: this.$store.get('page/isPublished'),
               path: this.$store.get('page/path'),
               publishEndDate: this.$store.get('page/publishEndDate') || '',
               publishStartDate: this.$store.get('page/publishStartDate') || '',
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
+              siteId: this.$store.get('site/id'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
             }
           })
-          resp = _.get(resp, 'data.pages.create', {})
-          if (_.get(resp, 'responseResult.succeeded')) {
-            this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
+          resp = resp?.data?.createPage || {}
+          if (resp?.operation?.succeeded) {
+            this.checkoutDateActive = resp?.page?.updatedAt ?? this.checkoutDateActive
             this.isConflict = false
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.createSuccess'),
               style: 'success',
               icon: 'check'
             })
-            this.$store.set('editor/id', _.get(resp, 'page.id'))
+            this.$store.set('editor/id', resp?.page?.id)
             this.$store.set('editor/mode', 'update')
             this.exitConfirmed = true
             window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
           } else {
-            throw new Error(_.get(resp, 'responseResult.message'))
+            throw new Error(resp?.operation?.message)
           }
         } else {
           // --------------------------------------------
@@ -427,7 +423,7 @@ export default {
                     tags: $tags
                     title: $title
                   ) {
-                    responseResult {
+                    operation {
                       succeeded
                       errorCode
                       slug
@@ -458,7 +454,7 @@ export default {
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
-          if (_.get(resp, 'responseResult.succeeded')) {
+          if (_.get(resp, 'operation.succeeded')) {
             this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
             this.isConflict = false
             this.$store.commit('showNotification', {
@@ -472,7 +468,7 @@ export default {
               }, 1000)
             }
           } else {
-            throw new Error(_.get(resp, 'responseResult.message'))
+            throw new Error(_.get(resp, 'operation.message'))
           }
         }
 

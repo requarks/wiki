@@ -222,11 +222,11 @@
               //-   v-list-item-content
               //-     v-list-item-title {{$t('common:header.myWiki')}}
               //-     v-list-item-subtitle.overline Coming soon
-              v-list-item(href='/p')
+              v-list-item(href='/_profile')
                 v-list-item-action: v-icon(color='blue-grey') mdi-face-profile
                 v-list-item-content
                   v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.profile')}}
-              v-list-item(@click='logout')
+              v-list-item(href='/logout')
                 v-list-item-action: v-icon(color='red') mdi-logout
                 v-list-item-title.red--text {{$t('common:header.logout')}}
 
@@ -314,7 +314,7 @@ export default {
           url: (this.pictureUrl === 'internal') ? `/_userav/${this.$store.get('user/id')}` : this.pictureUrl
         }
       } else {
-        const nameParts = this.name.toUpperCase().split(' ')
+        const nameParts = ['X', 'X'] // this.name.toUpperCase().split(' ')
         let initials = _.head(nameParts).charAt(0)
         if (nameParts.length > 1) {
           initials += _.last(nameParts).charAt(0)

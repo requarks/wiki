@@ -3,10 +3,10 @@ import { make } from 'vuex-pathify'
 /* global siteConfig */
 
 const state = {
+  id: siteConfig.id,
   company: siteConfig.company,
   contentLicense: siteConfig.contentLicense,
   dark: siteConfig.darkMode,
-  mascot: true,
   title: siteConfig.title,
   logoUrl: siteConfig.logoUrl,
   search: '',

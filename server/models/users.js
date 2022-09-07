@@ -381,7 +381,7 @@ module.exports = class User extends Model {
     return new Promise((resolve, reject) => {
       context.req.login(user, { session: false }, async errc => {
         if (errc) { return reject(errc) }
-        const jwtToken = await WIKI.models.users.refreshToken(user)
+        const jwtToken = await WIKI.models.users.refreshToken(user, strategyId)
         resolve({ jwt: jwtToken.token, redirect })
       })
     })
@@ -390,7 +390,7 @@ module.exports = class User extends Model {
   /**
    * Generate a new token for a user
    */
-  static async refreshToken(user) {
+  static async refreshToken(user, provider) {
     if (_.isString(user)) {
       user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
         builder.select('groups.id', 'permissions')
@@ -415,7 +415,8 @@ module.exports = class User extends Model {
       token: jwt.sign({
         id: user.id,
         email: user.email,
-        groups: user.getGroups()
+        groups: user.getGroups(),
+        ...provider && { pvd: provider }
       }, {
         key: WIKI.config.auth.certs.private,
         passphrase: WIKI.config.auth.secret
@@ -831,9 +832,17 @@ module.exports = class User extends Model {
     if (!context.req.user || context.req.user.id === WIKI.config.auth.guestUserId) {
       return '/'
     }
-    const usr = await WIKI.models.users.query().findById(context.req.user.id).select('providerKey')
-    const provider = _.find(WIKI.auth.strategies, ['key', usr.providerKey])
-    return provider.logout ? provider.logout(provider.config) : '/'
+    if (context.req.user.strategyId && _.has(WIKI.auth.strategies, context.req.user.strategyId)) {
+      const selStrategy = WIKI.auth.strategies[context.req.user.strategyId]
+      if (!selStrategy.isEnabled) {
+        throw new WIKI.Error.AuthProviderInvalid()
+      }
+      const provider = _.find(WIKI.data.authentication, ['key', selStrategy.module])
+      if (provider.logout) {
+        return provider.logout(provider.config)
+      }
+    }
+    return '/'
   }
 
   static async getGuestUser () {

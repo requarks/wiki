@@ -93,7 +93,7 @@ bindIP: 0.0.0.0
 # ---------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------
-# Possible values: error, warn, info (default), verbose, debug, silly
+# Possible values: error, warn, info (default), debug
 
 logLevel: info
 

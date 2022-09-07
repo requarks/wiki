@@ -38,6 +38,26 @@ module.exports = async () => {
   app.use(compression())
 
   // ----------------------------------------
+  // Initialize HTTP/HTTPS Server
+  // ----------------------------------------
+
+  const useHTTPS = WIKI.config.ssl.enabled === true || WIKI.config.ssl.enabled === 'true' || WIKI.config.ssl.enabled === 1 || WIKI.config.ssl.enabled === '1'
+
+  await WIKI.servers.initHTTP()
+
+  if (useHTTPS) {
+    await WIKI.servers.initHTTPS()
+  }
+
+  await WIKI.servers.initWebSocket()
+
+  // ----------------------------------------
+  // Attach WebSocket Server
+  // ----------------------------------------
+
+  ctrl.ws()
+
+  // ----------------------------------------
   // Security
   // ----------------------------------------
 
@@ -208,7 +228,7 @@ module.exports = async () => {
 
   await WIKI.servers.startHTTP()
 
-  if (WIKI.config.ssl.enabled === true || WIKI.config.ssl.enabled === 'true' || WIKI.config.ssl.enabled === 1 || WIKI.config.ssl.enabled === '1') {
+  if (useHTTPS) {
     await WIKI.servers.startHTTPS()
   }
 

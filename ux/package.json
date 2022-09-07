@@ -72,6 +72,7 @@
     "pinia": "2.0.20",
     "pug": "3.0.2",
     "quasar": "2.7.7",
+    "socket.io-client": "4.5.2",
     "tippy.js": "6.3.7",
     "uuid": "8.3.2",
     "v-network-graph": "0.6.6",
@@ -81,6 +82,7 @@
     "vue-router": "4.1.3",
     "vue3-otp-input": "0.3.6",
     "vuedraggable": "4.1.0",
+    "xterm": "4.19.0",
     "zxcvbn": "4.4.2"
   },
   "devDependencies": {

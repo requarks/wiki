@@ -113,11 +113,15 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
 /**
  * Create/Edit document
  */
-router.get(['/e', '/e/*'], async (req, res, next) => {
+router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
+  if (pageArgs.path === '') {
+    return res.redirect(`/_edit/home`)
+  }
+
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/e/${pageArgs.locale}/${pageArgs.path}`)
+    return res.redirect(`/_edit/${pageArgs.locale}/${pageArgs.path}`)
   }
 
   req.i18n.changeLanguage(pageArgs.locale)

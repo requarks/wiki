@@ -1,7 +1,0 @@
-{
-  site {
-    config {
-      host
-    }
-  }
-}

@@ -28,25 +28,27 @@ export default {
               loadPath: '{{lng}}/{{ns}}',
               parse: (data) => data,
               ajax: (url, opts, cb, data) => {
-                let langParams = url.split('/')
-                graphQL.query({
-                  query: localeQuery,
-                  variables: {
-                    locale: langParams[0],
-                    namespace: langParams[1]
-                  }
-                }).then(resp => {
-                  let ns = {}
-                  if (_.get(resp, 'data.localization.translations', []).length > 0) {
-                    resp.data.localization.translations.forEach(entry => {
-                      _.set(ns, entry.key, entry.value)
-                    })
-                  }
-                  return cb(ns, {status: '200'})
-                }).catch(err => {
-                  console.error(err)
-                  return cb(null, {status: '404'})
-                })
+                let ns = {}
+                return cb(ns, {status: '200'})
+                // let langParams = url.split('/')
+                // graphQL.query({
+                //   query: localeQuery,
+                //   variables: {
+                //     locale: langParams[0],
+                //     namespace: langParams[1]
+                //   }
+                // }).then(resp => {
+                //   let ns = {}
+                //   if (_.get(resp, 'data.localization.translations', []).length > 0) {
+                //     resp.data.localization.translations.forEach(entry => {
+                //       _.set(ns, entry.key, entry.value)
+                //     })
+                //   }
+                //   return cb(ns, {status: '200'})
+                // }).catch(err => {
+                //   console.error(err)
+                //   return cb(null, {status: '404'})
+                // })
               }
             }
           ]

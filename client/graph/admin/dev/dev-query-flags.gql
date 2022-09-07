@@ -1,8 +1,0 @@
-{
-  system {
-    flags {
-      key
-      value
-    }
-  }
-}

@@ -30,6 +30,24 @@ module.exports = {
     }
   },
   Mutation: {
+    async disconnectWS (obj, args, context) {
+      WIKI.servers.ws.disconnectSockets(true)
+      WIKI.logger.info('All active websocket connections have been terminated.')
+      return {
+        operation: graphHelper.generateSuccess('All websocket connections closed successfully.')
+      }
+    },
+    async installExtension (obj, args, context) {
+      try {
+        await WIKI.extensions.ext[args.key].install()
+        // TODO: broadcast ext install
+        return {
+          status: graphHelper.generateSuccess('Extension installed successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
     async updateSystemFlags (obj, args, context) {
       WIKI.config.flags = _.transform(args.flags, (result, row) => {
         _.set(result, row.key, row.value)
@@ -46,17 +64,6 @@ module.exports = {
       await WIKI.configSvc.saveToDb(['security'])
       return {
         status: graphHelper.generateSuccess('System Security configuration applied successfully')
-      }
-    },
-    async installExtension (obj, args, context) {
-      try {
-        await WIKI.extensions.ext[args.key].install()
-        // TODO: broadcast ext install
-        return {
-          status: graphHelper.generateSuccess('Extension installed successfully')
-        }
-      } catch (err) {
-        return graphHelper.generateError(err)
       }
     }
   },

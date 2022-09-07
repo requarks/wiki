@@ -1482,5 +1482,19 @@
   "welcome.title": "Welcome to Wiki.js!",
   "welcome.subtitle": "Let's get started...",
   "welcome.createHome": "Create the homepage",
-  "welcome.admin": "Administration Area"
+  "welcome.admin": "Administration Area",
+  "admin.terminal.title": "Terminal",
+  "admin.terminal.subtitle": "View process logs in real-time",
+  "admin.terminal.command": "Command",
+  "admin.terminal.logs": "Logs",
+  "admin.terminal.connect": "Connect",
+  "admin.terminal.disconnect": "Disconnect",
+  "admin.terminal.clear": "Clear",
+  "admin.terminal.connecting": "Connecting to server...",
+  "admin.terminal.connected": "Connected.",
+  "admin.terminal.disconnected": "Disconnected.",
+  "admin.terminal.connectError": "Connection Error:",
+  "admin.utilities.disconnectWS": "Disconnect WebSocket Sessions",
+  "admin.utilities.disconnectWSHint": "Force all active websocket connections to be closed.",
+  "admin.utilities.disconnectWSSuccess": "All active websocket connections have been terminated."
 }

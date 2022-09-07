@@ -30,7 +30,7 @@ module.exports = {
         })
 
         return {
-          responseResult: graphHelper.generateSuccess('Test email sent successfully.')
+          operation: graphHelper.generateSuccess('Test email sent successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -58,7 +58,7 @@ module.exports = {
         WIKI.mail.init()
 
         return {
-          responseResult: graphHelper.generateSuccess('Mail configuration updated successfully.')
+          operation: graphHelper.generateSuccess('Mail configuration updated successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

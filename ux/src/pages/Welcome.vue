@@ -13,7 +13,7 @@
         :label='t(`welcome.createHome`)'
         icon='las la-plus'
         no-caps
-        to='/_new'
+        href='/_edit'
       )
       q-btn(
         push

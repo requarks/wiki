@@ -10,6 +10,12 @@ extend type Query {
 }
 
 extend type Mutation {
+  disconnectWS: DefaultResponse
+
+  installExtension(
+    key: String!
+  ): DefaultResponse
+
   updateSystemFlags(
     flags: [SystemFlagInput]!
   ): DefaultResponse
@@ -33,10 +39,6 @@ extend type Mutation {
     uploadMaxFiles: Int
     uploadMaxFileSize: Int
     uploadScanSVG: Boolean
-  ): DefaultResponse
-
-  installExtension(
-    key: String!
   ): DefaultResponse
 }
 

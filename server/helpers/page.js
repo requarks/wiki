@@ -42,7 +42,7 @@ module.exports = {
       p = _.trim(p)
       return !_.isEmpty(p) && p !== '..' && p !== '.'
     })
-    if (pathParts[0].length === 1) {
+    if (pathParts[0].startsWith('_')) {
       pathParts.shift()
     }
     if (localeSegmentRegex.test(pathParts[0])) {
@@ -102,7 +102,7 @@ module.exports = {
    */
   isReservedPath(rawPath) {
     const firstSection = _.head(rawPath.split('/'))
-    if (firstSection.length <= 1) {
+    if (firstSection.length < 1) {
       return true
     } else if (localeSegmentRegex.test(firstSection)) {
       return true

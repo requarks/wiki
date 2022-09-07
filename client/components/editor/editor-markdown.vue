@@ -259,7 +259,7 @@ import tabsetHelper from './markdown/tabset'
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 
 // Prism Config
-Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
+Prism.plugins.autoloader.languages_path = '/_assets-legacy/js/prism/'
 Prism.plugins.NormalizeWhitespace.setDefaults({
   'remove-trailing': true,
   'remove-indent': true,
@@ -378,7 +378,7 @@ md.renderer.rules.katex_block = (tokens, idx) => {
 md.renderer.rules.emoji = (token, idx) => {
   return twemoji.parse(token[idx].content, {
     callback (icon, opts) {
-      return `/_assets/svg/twemoji/${icon}.svg`
+      return `/_assets-legacy/svg/twemoji/${icon}.svg`
     }
   })
 }

@@ -4,27 +4,26 @@ const https = require('https')
 const { ApolloServer } = require('apollo-server-express')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const io = require('socket.io')
 const { ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageProductionDefault } = require('apollo-server-core')
 
 /* global WIKI */
 
 module.exports = {
-  servers: {
-    graph: null,
-    http: null,
-    https: null
-  },
+  graph: null,
+  http: null,
+  https: null,
+  ws: null,
   connections: new Map(),
   le: null,
   /**
-   * Start HTTP Server
+   * Initialize HTTP Server
    */
-  async startHTTP () {
+  async initHTTP () {
     WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
-    this.servers.http = http.createServer(WIKI.app)
+    this.http = http.createServer(WIKI.app)
 
-    this.servers.http.listen(WIKI.config.port, WIKI.config.bindIP)
-    this.servers.http.on('error', (error) => {
+    this.http.on('error', (error) => {
       if (error.syscall !== 'listen') {
         throw error
       }
@@ -41,11 +40,11 @@ module.exports = {
       }
     })
 
-    this.servers.http.on('listening', () => {
+    this.http.on('listening', () => {
       WIKI.logger.info('HTTP Server: [ RUNNING ]')
     })
 
-    this.servers.http.on('connection', conn => {
+    this.http.on('connection', conn => {
       let connKey = `http:${conn.remoteAddress}:${conn.remotePort}`
       this.connections.set(connKey, conn)
       conn.on('close', () => {
@@ -54,9 +53,15 @@ module.exports = {
     })
   },
   /**
-   * Start HTTPS Server
+   * Start HTTP Server
    */
-  async startHTTPS () {
+  async startHTTP () {
+    this.http.listen(WIKI.config.port, WIKI.config.bindIP)
+  },
+  /**
+   * Initialize HTTPS Server
+   */
+  async initHTTPS () {
     if (WIKI.config.ssl.provider === 'letsencrypt') {
       this.le = require('./letsencrypt')
       await this.le.init()
@@ -82,10 +87,10 @@ module.exports = {
       WIKI.logger.error(err)
       return process.exit(1)
     }
-    this.servers.https = https.createServer(tlsOpts, WIKI.app)
+    this.https = https.createServer(tlsOpts, WIKI.app)
 
-    this.servers.https.listen(WIKI.config.ssl.port, WIKI.config.bindIP)
-    this.servers.https.on('error', (error) => {
+    this.https.listen(WIKI.config.ssl.port, WIKI.config.bindIP)
+    this.https.on('error', (error) => {
       if (error.syscall !== 'listen') {
         throw error
       }
@@ -102,11 +107,11 @@ module.exports = {
       }
     })
 
-    this.servers.https.on('listening', () => {
+    this.https.on('listening', () => {
       WIKI.logger.info('HTTPS Server: [ RUNNING ]')
     })
 
-    this.servers.https.on('connection', conn => {
+    this.https.on('connection', conn => {
       let connKey = `https:${conn.remoteAddress}:${conn.remotePort}`
       this.connections.set(connKey, conn)
       conn.on('close', () => {
@@ -115,11 +120,17 @@ module.exports = {
     })
   },
   /**
+   * Start HTTPS Server
+   */
+  async startHTTPS () {
+    this.https.listen(WIKI.config.ssl.port, WIKI.config.bindIP)
+  },
+  /**
    * Start GraphQL Server
    */
   async startGraphQL () {
     const graphqlSchema = require('../graph')
-    this.servers.graph = new ApolloServer({
+    this.graph = new ApolloServer({
       schema: graphqlSchema,
       uploads: false,
       context: ({ req, res }) => ({ req, res }),
@@ -129,12 +140,31 @@ module.exports = {
         }) : ApolloServerPluginLandingPageProductionDefault({
           footer: false
         })
-        // ApolloServerPluginDrainHttpServer({ httpServer: this.servers.http })
-        // ...(this.servers.https && ApolloServerPluginDrainHttpServer({ httpServer: this.servers.https }))
+        // ApolloServerPluginDrainHttpServer({ httpServer: this.http })
+        // ...(this.https && ApolloServerPluginDrainHttpServer({ httpServer: this.https }))
       ]
     })
-    await this.servers.graph.start()
-    this.servers.graph.applyMiddleware({ app: WIKI.app, cors: false, path: '/_graphql' })
+    await this.graph.start()
+    this.graph.applyMiddleware({ app: WIKI.app, cors: false, path: '/_graphql' })
+  },
+  /**
+   * Start Socket.io WebSocket Server
+   */
+  async initWebSocket() {
+    if (this.https) {
+      this.ws = new io.Server(this.https, {
+        path: '/_ws/',
+        serveClient: false
+      })
+      WIKI.logger.info(`WebSocket Server attached to HTTPS Server [ OK ]`)
+    } else {
+      this.ws = new io.Server(this.http, {
+        path: '/_ws/',
+        serveClient: false,
+        cors: true // TODO: dev only, replace with app settings once stable
+      })
+      WIKI.logger.info(`WebSocket Server attached to HTTP Server [ OK ]`)
+    }
   },
   /**
    * Close all active connections
@@ -156,15 +186,15 @@ module.exports = {
    */
   async stopServers () {
     this.closeConnections()
-    if (this.servers.http) {
-      await Promise.fromCallback(cb => { this.servers.http.close(cb) })
-      this.servers.http = null
+    if (this.http) {
+      await Promise.fromCallback(cb => { this.http.close(cb) })
+      this.http = null
     }
-    if (this.servers.https) {
-      await Promise.fromCallback(cb => { this.servers.https.close(cb) })
-      this.servers.https = null
+    if (this.https) {
+      await Promise.fromCallback(cb => { this.https.close(cb) })
+      this.https = null
     }
-    this.servers.graph = null
+    this.graph = null
   },
   /**
    * Restart Server
@@ -173,17 +203,19 @@ module.exports = {
     this.closeConnections(srv)
     switch (srv) {
       case 'http':
-        if (this.servers.http) {
-          await Promise.fromCallback(cb => { this.servers.http.close(cb) })
-          this.servers.http = null
+        if (this.http) {
+          await Promise.fromCallback(cb => { this.http.close(cb) })
+          this.http = null
         }
+        this.initHTTP()
         this.startHTTP()
         break
       case 'https':
-        if (this.servers.https) {
-          await Promise.fromCallback(cb => { this.servers.https.close(cb) })
-          this.servers.https = null
+        if (this.https) {
+          await Promise.fromCallback(cb => { this.https.close(cb) })
+          this.https = null
         }
+        this.initHTTPS()
         this.startHTTPS()
         break
       default:

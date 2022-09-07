@@ -165,6 +165,7 @@
     "semver": "7.3.7",
     "serve-favicon": "2.5.0",
     "simple-git": "2.21.0",
+    "socket.io": "4.5.2",
     "ssh2": "1.9.0",
     "ssh2-promise": "1.0.2",
     "striptags": "3.2.0",
