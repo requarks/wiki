@@ -586,7 +586,7 @@ export default {
       })
     })
 
-    if (this.containsNavElement()) {
+    if (this.containsNavElement) {
       const currentPagePath = this.$store.get('page/path')
       this.getPageIdFromPath(currentPagePath).then((result) => {
         if (result !== null) {
@@ -597,7 +597,7 @@ export default {
     }
   },
   methods: {
-    containsNavElement() {
+    containsNavElement () {
       const contents = document.getElementsByClassName('contents')
       contents[0].firstChild.childNodes.forEach((child) => {
         if (child.nodeType === 3 && child.nodeValue && child.nodeValue.indexOf('[nav]') !== -1) {
@@ -608,7 +608,7 @@ export default {
       })
       return false
     },
-    getPageIdFromPath(currentPagePath) {
+    getPageIdFromPath (currentPagePath) {
       const query = gql`
         query ($path: String, $locale: String!) {
           pages {
@@ -635,7 +635,7 @@ export default {
         console.error(err)
       })
     },
-    getChildPages(currentPageID) {
+    getChildPages (currentPageID) {
       const variables = {
         parent: currentPageID,
         locale: 'en'
