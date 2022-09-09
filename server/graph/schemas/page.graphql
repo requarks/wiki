@@ -186,6 +186,7 @@ type Page {
   publishStartDate: Date! @auth(requires: ["write:pages", "manage:system"])
   publishEndDate: Date! @auth(requires: ["write:pages", "manage:system"])
   tags: [PageTag]!
+  backLinkPages: [Page]
   content: String! @auth(requires: ["read:source", "write:pages", "manage:system"])
   render: String
   toc: String

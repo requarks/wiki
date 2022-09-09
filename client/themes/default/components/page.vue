@@ -91,6 +91,20 @@
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
+            v-card.mb-5(v-if='backLinkPages&&backLinkPages.length > 0')
+              .pa-5
+                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') BackLinks
+                v-chip.mr-1.mb-1(
+                  label
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+                  v-for='(link, idx) in backLinkPages'
+                  :href='`/` + link.path'
+                  :key='`link-` + link.id'
+                )
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{link.title}}
+
+
             v-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
                 .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
@@ -401,6 +415,10 @@ export default {
       type: Array,
       default: () => ([])
     },
+    backLinkPages: {
+      type: Array,
+      default: () => ([])
+    },
     authorName: {
       type: String,
       default: 'Unknown'
@@ -536,6 +554,9 @@ export default {
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
       this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
+    if (this.backLinkPages) {
+      this.$store.set('page/backLinkPages', this.backLinkPages)
     }
 
     this.$store.set('page/mode', 'view')
