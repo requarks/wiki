@@ -248,6 +248,55 @@ module.exports = {
         WIKI.logger.warn(err)
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * UPLOAD LOGIN BG
+     */
+    async uploadSiteLoginBg (obj, args) {
+      try {
+        const { filename, mimetype, createReadStream } = await args.image
+        WIKI.logger.info(`Processing site login bg ${filename} of type ${mimetype}...`)
+        if (!WIKI.extensions.ext.sharp.isInstalled) {
+          throw new Error('This feature requires the Sharp extension but it is not installed.')
+        }
+        if (!['.png', '.jpg', '.webp'].some(s => filename.endsWith(s))) {
+          throw new Error('Invalid File Extension. Must be png, jpg or webp.')
+        }
+        const destFolder = path.resolve(
+          process.cwd(),
+          WIKI.config.dataPath,
+          `assets`
+        )
+        const destPath = path.join(destFolder, `loginbg-${args.id}.jpg`)
+        await fs.ensureDir(destFolder)
+        // -> Resize
+        await WIKI.extensions.ext.sharp.resize({
+          format: 'jpg',
+          inputStream: createReadStream(),
+          outputPath: destPath,
+          width: 1920
+        })
+        // -> Save login bg meta to DB
+        const site = await WIKI.models.sites.query().findById(args.id)
+        if (!site.config.assets.loginBg) {
+          site.config.assets.loginBg = uuid()
+          await WIKI.models.sites.query().findById(args.id).patch({ config: site.config })
+          await WIKI.models.sites.reloadCache()
+        }
+        // -> Save image data to DB
+        const imgBuffer = await fs.readFile(destPath)
+        await WIKI.models.knex('assetData').insert({
+          id: site.config.assets.loginBg,
+          data: imgBuffer
+        }).onConflict('id').merge()
+        WIKI.logger.info('New site login bg processed successfully.')
+        return {
+          operation: graphHelper.generateSuccess('Site login bg uploaded successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return graphHelper.generateError(err)
+      }
     }
   }
 }

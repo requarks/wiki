@@ -59,6 +59,14 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
       }
       break
     }
+    case 'loginbg': {
+      if (site.config.assets.loginBg) {
+        res.sendFile(path.join(siteAssetsPath, `loginbg-${site.id}.jpg`))
+      } else {
+        res.sendFile(path.join(WIKI.ROOTPATH, 'assets/_assets/bg/login.jpg'))
+      }
+      break
+    }
     default: {
       return res.status(404).send('Invalid Site Resource')
     }

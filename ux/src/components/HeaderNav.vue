@@ -13,11 +13,17 @@ q-header.bg-header.text-white.site-header(
         to='/'
         )
         q-avatar(
+          v-if='siteStore.logoText'
           size='34px'
           square
           )
-          img(src='/_assets/logo-wikijs.svg')
-      q-toolbar-title.text-h6 {{siteStore.title}}
+          img(src='/_site/logo')
+        img(
+          v-else
+          src='/_site/logo'
+          style='height: 34px'
+          )
+      q-toolbar-title.text-h6(v-if='siteStore.logoText') {{siteStore.title}}
     q-toolbar.gt-sm(
       style='height: 64px;'
       dark

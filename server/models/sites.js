@@ -87,7 +87,9 @@ module.exports = class Site extends Model {
         assets: {
           logo: false,
           logoExt: 'svg',
-          favicon: false
+          favicon: false,
+          faviconExt: 'svg',
+          loginBg: false
         },
         theme: {
           dark: false,

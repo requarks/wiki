@@ -51,6 +51,7 @@ q-page.admin-login
               icon='las la-upload'
               color='primary'
               text-color='white'
+              @click='uploadBg'
             )
         q-separator.q-my-sm(inset)
         q-item(tag='label')
@@ -254,46 +255,95 @@ async function load () {
 }
 
 async function save () {
+  state.loading++
   try {
     await APOLLO_CLIENT.mutate({
       mutation: gql`
-        mutation saveLoginSettings (
-          $authAutoLogin: Boolean
-          $authEnforce2FA: Boolean
+        mutation saveLoginConfig (
+          $id: UUID!
+          $patch: SiteUpdateInput!
         ) {
-          site {
-            updateConfig(
-              authAutoLogin: $authAutoLogin,
-              authEnforce2FA: $authEnforce2FA
-            ) {
-              responseResult {
-                succeeded
-                errorCode
-                slug
-                message
-              }
+          updateSite (
+            id: $id
+            patch: $patch
+          ) {
+            operation {
+              succeeded
+              message
             }
           }
         }
       `,
       variables: {
-        authAutoLogin: state.config.authAutoLogin ?? false,
-        authEnforce2FA: state.config.authEnforce2FA ?? false
-      },
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
+        id: adminStore.currentSiteId,
+        patch: {
+          authAutoLogin: state.config.authAutoLogin ?? false,
+          authEnforce2FA: state.config.authEnforce2FA ?? false
+        }
       }
     })
     $q.notify({
       type: 'positive',
-      message: 'Configuration saved successfully.'
+      message: t('admin.login.saveSuccess')
     })
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: 'Failed to save login configuration.',
+      caption: err.message
     })
   }
+  state.loading--
+}
+
+async function uploadBg () {
+  const input = document.createElement('input')
+  input.type = 'file'
+
+  input.onchange = async e => {
+    state.loading++
+    try {
+      const resp = await APOLLO_CLIENT.mutate({
+        mutation: gql`
+          mutation uploadLoginBg (
+            $id: UUID!
+            $image: Upload!
+          ) {
+            uploadSiteLoginBg (
+              id: $id
+              image: $image
+            ) {
+              operation {
+                succeeded
+                message
+              }
+            }
+          }
+        `,
+        variables: {
+          id: adminStore.currentSiteId,
+          image: e.target.files[0]
+        }
+      })
+      if (resp?.data?.uploadSiteLoginBg?.operation?.succeeded) {
+        $q.notify({
+          type: 'positive',
+          message: t('admin.login.bgUploadSuccess')
+        })
+      } else {
+        throw new Error(resp?.data?.uploadSiteLoginBg?.operation?.message || 'An unexpected error occured.')
+      }
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: 'Failed to upload login background image.',
+        caption: err.message
+      })
+    }
+    state.loading--
+  }
+
+  input.click()
 }
 
 // MOUNTED

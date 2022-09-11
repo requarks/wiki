@@ -1496,5 +1496,7 @@
   "admin.terminal.connectError": "Connection Error:",
   "admin.utilities.disconnectWS": "Disconnect WebSocket Sessions",
   "admin.utilities.disconnectWSHint": "Force all active websocket connections to be closed.",
-  "admin.utilities.disconnectWSSuccess": "All active websocket connections have been terminated."
+  "admin.utilities.disconnectWSSuccess": "All active websocket connections have been terminated.",
+  "admin.login.bgUploadSuccess": "Login background image uploaded successfully.",
+  "admin.login.saveSuccess": "Login configuration saved successfully."
 }

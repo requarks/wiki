@@ -36,6 +36,11 @@ extend type Mutation {
     image: Upload!
   ): DefaultResponse
 
+  uploadSiteLoginBg (
+    id: UUID!
+    image: Upload!
+  ): DefaultResponse
+
   deleteSite (
     id: UUID!
   ): DefaultResponse

@@ -7,7 +7,7 @@
     p.text-grey-7 Login to continue
     auth-login-panel
   .auth-bg(aria-hidden="true")
-    img(src='https://docs.requarks.io/_assets/img/splash/1.jpg' alt='')
+    img(src='/_site/loginbg' alt='')
 </template>
 
 <script setup>
