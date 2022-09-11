@@ -156,6 +156,9 @@ module.exports = {
         if (!WIKI.extensions.ext.sharp.isInstalled) {
           throw new Error('This feature requires the Sharp extension but it is not installed.')
         }
+        if (!['.svg', '.png', '.jpg', 'webp', '.gif'].some(s => filename.endsWith(s))) {
+          throw new Error('Invalid File Extension. Must be svg, png, jpg, webp or gif.')
+        }
         const destFormat = mimetype.startsWith('image/svg') ? 'svg' : 'png'
         const destFolder = path.resolve(
           process.cwd(),
@@ -198,10 +201,52 @@ module.exports = {
      * UPLOAD FAVICON
      */
     async uploadSiteFavicon (obj, args) {
-      const { filename, mimetype, createReadStream } = await args.image
-      console.info(filename, mimetype)
-      return {
-        operation: graphHelper.generateSuccess('Site favicon uploaded successfully')
+      try {
+        const { filename, mimetype, createReadStream } = await args.image
+        WIKI.logger.info(`Processing site favicon ${filename} of type ${mimetype}...`)
+        if (!WIKI.extensions.ext.sharp.isInstalled) {
+          throw new Error('This feature requires the Sharp extension but it is not installed.')
+        }
+        if (!['.svg', '.png', '.jpg', '.webp', '.gif'].some(s => filename.endsWith(s))) {
+          throw new Error('Invalid File Extension. Must be svg, png, jpg, webp or gif.')
+        }
+        const destFormat = mimetype.startsWith('image/svg') ? 'svg' : 'png'
+        const destFolder = path.resolve(
+          process.cwd(),
+          WIKI.config.dataPath,
+          `assets`
+        )
+        const destPath = path.join(destFolder, `favicon-${args.id}.${destFormat}`)
+        await fs.ensureDir(destFolder)
+        // -> Resize
+        await WIKI.extensions.ext.sharp.resize({
+          format: destFormat,
+          inputStream: createReadStream(),
+          outputPath: destPath,
+          width: 64,
+          height: 64
+        })
+        // -> Save favicon meta to DB
+        const site = await WIKI.models.sites.query().findById(args.id)
+        if (!site.config.assets.favicon) {
+          site.config.assets.favicon = uuid()
+        }
+        site.config.assets.faviconExt = destFormat
+        await WIKI.models.sites.query().findById(args.id).patch({ config: site.config })
+        await WIKI.models.sites.reloadCache()
+        // -> Save image data to DB
+        const imgBuffer = await fs.readFile(destPath)
+        await WIKI.models.knex('assetData').insert({
+          id: site.config.assets.favicon,
+          data: imgBuffer
+        }).onConflict('id').merge()
+        WIKI.logger.info('New site favicon processed successfully.')
+        return {
+          operation: graphHelper.generateSuccess('Site favicon uploaded successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return graphHelper.generateError(err)
       }
     }
   }

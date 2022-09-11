@@ -119,7 +119,7 @@ onMounted(() => {
   state.connecting = true
 
   // socket = io(window.location.host, {
-  socket = io('localhost:3000', {
+  socket = io(window.location.host, {
     path: '/_ws/',
     auth: {
       token: 'TEST' // TODO: Use active token

@@ -77,6 +77,12 @@ module.exports = configure(function (/* ctx */) {
 
       extendViteConf (viteConf) {
         viteConf.build.assetsDir = '_assets'
+        viteConf.build.rollupOptions = {
+          ...viteConf.build.rollupOptions ?? {},
+          external: [
+            /^\/_site\//
+          ]
+        }
       },
       // viteVuePluginOptions: {},
 

@@ -51,6 +51,14 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
       }
       break
     }
+    case 'favicon': {
+      if (site.config.assets.favicon) {
+        res.sendFile(path.join(siteAssetsPath, `favicon-${site.id}.${site.config.assets.faviconExt}`))
+      } else {
+        res.sendFile(path.join(WIKI.ROOTPATH, 'assets/_assets/logo-wikijs.svg'))
+      }
+      break
+    }
     default: {
       return res.status(404).send('Invalid Site Resource')
     }

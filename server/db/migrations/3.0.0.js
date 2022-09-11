@@ -488,7 +488,8 @@ exports.up = async knex => {
       assets: {
         logo: false,
         logoExt: 'svg',
-        favicon: false
+        favicon: false,
+        faviconExt: 'svg'
       },
       theme: {
         dark: false,

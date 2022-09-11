@@ -302,10 +302,11 @@ q-page.admin-general
             .admin-general-favicontabs.q-mt-md
               div
                 q-avatar(
+                  v-if='adminStore.currentSiteId'
                   size='24px'
                   square
                   )
-                  img(src='/_assets/logo-wikijs.svg')
+                  img(:src='`/_site/` + adminStore.currentSiteId + `/favicon?` + state.assetTimestamp')
                 .text-caption.q-ml-sm {{state.config.title}}
               div
                 q-icon(name='las la-otter', size='24px', color='grey')
@@ -669,7 +670,7 @@ async function uploadLogo () {
   input.onchange = async e => {
     state.loading++
     try {
-      await APOLLO_CLIENT.mutate({
+      const resp = await APOLLO_CLIENT.mutate({
         mutation: gql`
           mutation uploadLogo (
             $id: UUID!
@@ -681,7 +682,6 @@ async function uploadLogo () {
             ) {
               operation {
                 succeeded
-                slug
                 message
               }
             }
@@ -692,11 +692,15 @@ async function uploadLogo () {
           image: e.target.files[0]
         }
       })
-      $q.notify({
-        type: 'positive',
-        message: t('admin.general.logoUploadSuccess')
-      })
-      state.assetTimestamp = (new Date()).toISOString()
+      if (resp?.data?.uploadSiteLogo?.operation?.succeeded) {
+        $q.notify({
+          type: 'positive',
+          message: t('admin.general.logoUploadSuccess')
+        })
+        state.assetTimestamp = (new Date()).toISOString()
+      } else {
+        throw new Error(resp?.data?.uploadSiteLogo?.operation?.message || 'An unexpected error occured.')
+      }
     } catch (err) {
       $q.notify({
         type: 'negative',
@@ -717,7 +721,7 @@ async function uploadFavicon () {
   input.onchange = async e => {
     state.loading++
     try {
-      await APOLLO_CLIENT.mutate({
+      const resp = await APOLLO_CLIENT.mutate({
         mutation: gql`
           mutation uploadFavicon (
             $id: UUID!
@@ -727,9 +731,8 @@ async function uploadFavicon () {
               id: $id
               image: $image
             ) {
-              status {
+              operation {
                 succeeded
-                slug
                 message
               }
             }
@@ -740,10 +743,15 @@ async function uploadFavicon () {
           image: e.target.files[0]
         }
       })
-      $q.notify({
-        type: 'positive',
-        message: t('admin.general.faviconUploadSuccess')
-      })
+      if (resp?.data?.uploadSiteFavicon?.operation?.succeeded) {
+        $q.notify({
+          type: 'positive',
+          message: t('admin.general.faviconUploadSuccess')
+        })
+        state.assetTimestamp = (new Date()).toISOString()
+      } else {
+        throw new Error(resp?.data?.uploadSiteFavicon?.operation?.message || 'An unexpected error occured.')
+      }
     } catch (err) {
       $q.notify({
         type: 'negative',
