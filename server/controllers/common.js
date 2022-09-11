@@ -9,6 +9,7 @@ const path = require('path')
 /* global WIKI */
 
 const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
+const siteAssetsPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'assets')
 
 /**
  * Robots.txt
@@ -30,6 +31,29 @@ router.get('/healthz', (req, res, next) => {
     res.status(503).json({ ok: false }).end()
   } else {
     res.status(200).json({ ok: true }).end()
+  }
+})
+
+/**
+ * Site Asset
+ */
+router.get('/_site/:siteId?/:resource', async (req, res, next) => {
+  const site = req.params.siteId ? WIKI.sites[req.params.siteId] : await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
+  if (!site) {
+    return res.status(404).send('Site Not Found')
+  }
+  switch (req.params.resource) {
+    case 'logo': {
+      if (site.config.assets.logo) {
+        res.sendFile(path.join(siteAssetsPath, `logo-${site.id}.${site.config.assets.logoExt}`))
+      } else {
+        res.sendFile(path.join(WIKI.ROOTPATH, 'assets/_assets/logo-wikijs.svg'))
+      }
+      break
+    }
+    default: {
+      return res.status(404).send('Invalid Site Resource')
+    }
   }
 })
 

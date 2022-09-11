@@ -2,6 +2,8 @@ const graphHelper = require('../../helpers/graph')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const path = require('path')
+const fs = require('fs-extra')
+const { v4: uuid } = require('uuid')
 
 /* global WIKI */
 
@@ -154,24 +156,41 @@ module.exports = {
         if (!WIKI.extensions.ext.sharp.isInstalled) {
           throw new Error('This feature requires the Sharp extension but it is not installed.')
         }
-        console.info(mimetype)
         const destFormat = mimetype.startsWith('image/svg') ? 'svg' : 'png'
-        const destPath = path.resolve(
+        const destFolder = path.resolve(
           process.cwd(),
           WIKI.config.dataPath,
-          `assets/logo.${destFormat}`
+          `assets`
         )
+        const destPath = path.join(destFolder, `logo-${args.id}.${destFormat}`)
+        await fs.ensureDir(destFolder)
+        // -> Resize
         await WIKI.extensions.ext.sharp.resize({
           format: destFormat,
           inputStream: createReadStream(),
           outputPath: destPath,
-          width: 100
+          height: 72
         })
+        // -> Save logo meta to DB
+        const site = await WIKI.models.sites.query().findById(args.id)
+        if (!site.config.assets.logo) {
+          site.config.assets.logo = uuid()
+        }
+        site.config.assets.logoExt = destFormat
+        await WIKI.models.sites.query().findById(args.id).patch({ config: site.config })
+        await WIKI.models.sites.reloadCache()
+        // -> Save image data to DB
+        const imgBuffer = await fs.readFile(destPath)
+        await WIKI.models.knex('assetData').insert({
+          id: site.config.assets.logo,
+          data: imgBuffer
+        }).onConflict('id').merge()
         WIKI.logger.info('New site logo processed successfully.')
         return {
           operation: graphHelper.generateSuccess('Site logo uploaded successfully')
         }
       } catch (err) {
+        WIKI.logger.warn(err)
         return graphHelper.generateError(err)
       }
     },

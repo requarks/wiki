@@ -255,16 +255,16 @@ q-page.admin-general
               dark
               style='height: 64px;'
               )
-              q-btn(dense, flat, to='/')
+              q-btn(dense, flat, v-if='adminStore.currentSiteId')
                 q-avatar(
                   v-if='state.config.logoText'
                   size='34px'
                   square
                   )
-                  img(src='/_assets/logo-wikijs.svg')
+                  img(:src='`/_site/` + adminStore.currentSiteId + `/logo?` + state.assetTimestamp')
                 img(
                   v-else
-                  src='https://m.media-amazon.com/images/G/01/audibleweb/arya/navigation/audible_logo._V517446980_.svg'
+                  :src='`/_site/` + adminStore.currentSiteId + `/logo?` + state.assetTimestamp'
                   style='height: 34px;'
                   )
               q-toolbar-title.text-h6(v-if='state.config.logoText') {{state.config.title}}
@@ -456,6 +456,7 @@ useMeta({
 
 const state = reactive({
   loading: 0,
+  assetTimestamp: (new Date()).toISOString(),
   config: {
     hostname: '',
     title: '',
@@ -678,7 +679,7 @@ async function uploadLogo () {
               id: $id
               image: $image
             ) {
-              status {
+              operation {
                 succeeded
                 slug
                 message
@@ -695,6 +696,7 @@ async function uploadLogo () {
         type: 'positive',
         message: t('admin.general.logoUploadSuccess')
       })
+      state.assetTimestamp = (new Date()).toISOString()
     } catch (err) {
       $q.notify({
         type: 'negative',

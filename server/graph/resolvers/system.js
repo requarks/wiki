@@ -42,7 +42,7 @@ module.exports = {
         await WIKI.extensions.ext[args.key].install()
         // TODO: broadcast ext install
         return {
-          status: graphHelper.generateSuccess('Extension installed successfully')
+          operation: graphHelper.generateSuccess('Extension installed successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -55,7 +55,7 @@ module.exports = {
       await WIKI.configSvc.applyFlags()
       await WIKI.configSvc.saveToDb(['flags'])
       return {
-        status: graphHelper.generateSuccess('System Flags applied successfully')
+        operation: graphHelper.generateSuccess('System Flags applied successfully')
       }
     },
     async updateSystemSecurity (obj, args, context) {

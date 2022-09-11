@@ -84,6 +84,11 @@ module.exports = class Site extends Model {
         locale: 'en',
         localeNamespacing: false,
         localeNamespaces: [],
+        assets: {
+          logo: false,
+          logoExt: 'svg',
+          favicon: false
+        },
         theme: {
           dark: false,
           colorPrimary: '#1976D2',

@@ -174,7 +174,7 @@ async function install (ext) {
           installExtension (
             key: $key
           ) {
-            status {
+            operation {
               succeeded
               message
             }
@@ -185,7 +185,7 @@ async function install (ext) {
         key: ext.key
       }
     })
-    if (respRaw.data?.installExtension?.status?.succeeded) {
+    if (respRaw.data?.installExtension?.operation?.succeeded) {
       $q.notify({
         type: 'positive',
         message: t('admin.extensions.installSuccess')
@@ -193,7 +193,7 @@ async function install (ext) {
       ext.isInstalled = true
       // this.$forceUpdate()
     } else {
-      throw new Error(respRaw.data?.installExtension?.status?.message || 'An unexpected error occured')
+      throw new Error(respRaw.data?.installExtension?.operation?.message || 'An unexpected error occured')
     }
   } catch (err) {
     $q.notify({

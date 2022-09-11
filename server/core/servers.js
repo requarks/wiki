@@ -6,6 +6,7 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const io = require('socket.io')
 const { ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageProductionDefault } = require('apollo-server-core')
+const { graphqlUploadExpress } = require('graphql-upload')
 
 /* global WIKI */
 
@@ -132,7 +133,8 @@ module.exports = {
     const graphqlSchema = require('../graph')
     this.graph = new ApolloServer({
       schema: graphqlSchema,
-      uploads: false,
+      csrfPrevention: true,
+      cache: 'bounded',
       context: ({ req, res }) => ({ req, res }),
       plugins: [
         process.env.NODE_ENV === 'development' ? ApolloServerPluginLandingPageGraphQLPlayground({
@@ -145,6 +147,7 @@ module.exports = {
       ]
     })
     await this.graph.start()
+    WIKI.app.use(graphqlUploadExpress())
     this.graph.applyMiddleware({ app: WIKI.app, cors: false, path: '/_graphql' })
   },
   /**

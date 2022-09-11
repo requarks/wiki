@@ -6,7 +6,6 @@ const _ = require('lodash')
 module.exports = {
   Query: {
     async hooks () {
-      WIKI.logger.warn('Seriously man')
       return WIKI.models.hooks.query().orderBy('name')
     },
     async hookById (obj, args) {

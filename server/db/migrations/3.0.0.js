@@ -56,7 +56,7 @@ exports.up = async knex => {
     })
     // ASSET DATA --------------------------
     .createTable('assetData', table => {
-      table.uuid('id').notNullable().index()
+      table.uuid('id').notNullable().primary()
       table.binary('data').notNullable()
     })
     // ASSET FOLDERS -----------------------
@@ -485,6 +485,11 @@ exports.up = async knex => {
       locale: 'en',
       localeNamespacing: false,
       localeNamespaces: [],
+      assets: {
+        logo: false,
+        logoExt: 'svg',
+        favicon: false
+      },
       theme: {
         dark: false,
         colorPrimary: '#1976D2',
@@ -580,10 +585,18 @@ exports.up = async knex => {
     {
       id: userGuestId,
       email: 'guest@example.com',
+      auth: {},
       name: 'Guest',
       isSystem: true,
       isActive: true,
       isVerified: true,
+      meta: {},
+      prefs: {
+        timezone: 'America/New_York',
+        dateFormat: 'YYYY-MM-DD',
+        timeFormat: '12h',
+        darkMode: false
+      },
       localeCode: 'en'
     }
   ])

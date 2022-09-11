@@ -97,7 +97,8 @@ module.exports = configure(function (/* ctx */) {
       open: false, // opens browser window automatically
       port: 3001,
       proxy: {
-        '/_graphql': 'http://localhost:3000/_graphql'
+        '/_graphql': 'http://localhost:3000/_graphql',
+        '/_site': 'http://localhost:3000'
       }
     },
 

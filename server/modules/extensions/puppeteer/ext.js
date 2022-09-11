@@ -1,5 +1,10 @@
-const cmdExists = require('command-exists')
 const os = require('os')
+const path = require('path')
+const util = require('util')
+const exec = util.promisify(require('child_process').exec)
+const fs = require('fs-extra')
+
+/* global WIKI */
 
 module.exports = {
   key: 'puppeteer',
@@ -9,13 +14,27 @@ module.exports = {
     return os.arch() === 'x64'
   },
   isInstalled: false,
+  isInstallable: true,
   async check () {
     try {
-      await cmdExists('pandoc')
-      this.isInstalled = true
+      this.isInstalled = await fs.pathExists(path.join(process.cwd(), 'node_modules/puppeteer-core/.local-chromium'))
     } catch (err) {
       this.isInstalled = false
     }
     return this.isInstalled
+  },
+  async install () {
+    try {
+      const { stdout, stderr } = await exec('node install.js', {
+        cwd: path.join(process.cwd(), 'node_modules/puppeteer-core'),
+        timeout: 300000,
+        windowsHide: true
+      })
+      this.isInstalled = true
+      WIKI.logger.info(stdout)
+      WIKI.logger.warn(stderr)
+    } catch (err) {
+      WIKI.logger.error(err)
+    }
   }
 }

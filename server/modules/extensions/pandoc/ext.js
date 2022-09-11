@@ -9,6 +9,7 @@ module.exports = {
     return os.arch() === 'x64'
   },
   isInstalled: false,
+  isInstallable: false,
   async check () {
     try {
       await cmdExists('pandoc')

@@ -181,8 +181,7 @@ module.exports = async () => {
       lang: currentSite.config.locale,
       rtl: false, // TODO: handle RTL
       company: currentSite.config.company,
-      contentLicense: currentSite.config.contentLicense,
-      logoUrl: currentSite.config.logoUrl
+      contentLicense: currentSite.config.contentLicense
     }
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
     res.locals.analyticsCode = await WIKI.models.analytics.getCode({ cache: true })

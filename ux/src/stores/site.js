@@ -13,7 +13,7 @@ export const useSiteStore = defineStore('site', {
     dark: false,
     title: '',
     description: '',
-    logoUrl: '',
+    logoText: true,
     search: '',
     searchIsFocused: false,
     searchIsLoading: false,
@@ -98,7 +98,7 @@ export const useSiteStore = defineStore('site', {
           this.hostname = clone(siteInfo.hostname)
           this.title = clone(siteInfo.title)
           this.description = clone(siteInfo.description)
-          this.logoUrl = clone(siteInfo.logoUrl)
+          this.logoText = clone(siteInfo.logoText)
           this.company = clone(siteInfo.company)
           this.contentLicense = clone(siteInfo.contentLicense)
           this.theme = {

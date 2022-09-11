@@ -5,6 +5,7 @@ module.exports = {
   title: 'Git',
   description: 'Distributed version control system. Required for the Git storage module.',
   isInstalled: false,
+  isInstallable: false,
   async isCompatible () {
     return true
   },

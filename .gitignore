@@ -19,7 +19,7 @@ npm-debug.log*
 # Generated assets
 /assets
 /assets-legacy
-server/views/base.pug
+/server/views/base.pug
 
 # Webpack
 .webpack-cache
