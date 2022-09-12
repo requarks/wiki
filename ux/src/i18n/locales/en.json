@@ -1359,7 +1359,7 @@
   "profile.activity.lastUpdatedOn": "Profile last updated on",
   "profile.activity.pagesCreated": "Pages created",
   "profile.activity.title": "Activity",
-  "profile.appearance": "Appearance",
+  "profile.appearance": "Site Appearance",
   "profile.appearanceDark": "Dark",
   "profile.appearanceDefault": "Site Default",
   "profile.appearanceLight": "Light",
@@ -1498,5 +1498,12 @@
   "admin.utilities.disconnectWSHint": "Force all active websocket connections to be closed.",
   "admin.utilities.disconnectWSSuccess": "All active websocket connections have been terminated.",
   "admin.login.bgUploadSuccess": "Login background image uploaded successfully.",
-  "admin.login.saveSuccess": "Login configuration saved successfully."
+  "admin.login.saveSuccess": "Login configuration saved successfully.",
+  "profile.appearanceHint": "Use the light or dark theme.",
+  "profile.saving": "Saving profile...",
+  "profile.saveSuccess": "Profile saved successfully.",
+  "profile.saveFailed": "Failed to save profile changes.",
+  "admin.users.pronouns": "Pronouns",
+  "admin.users.pronounsHint": "The pronouns used to address this user.",
+  "admin.users.appearance": "Site Appearance"
 }

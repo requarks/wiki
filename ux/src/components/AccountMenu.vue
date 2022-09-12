@@ -1,13 +1,13 @@
 <template lang='pug'>
 q-btn.q-ml-md(flat, round, dense, color='grey')
-  q-icon(v-if='!state.user.picture', name='las la-user-circle')
+  q-icon(v-if='!userStore.authenticated || !userStore.pictureUrl', name='las la-user-circle')
   q-avatar(v-else)
-    img(:src='state.user.picture')
+    img(:src='userStore.pictureUrl')
   q-menu(auto-close)
     q-card(flat, style='width: 300px;', :dark='false')
       q-card-section(align='center')
-        .text-subtitle1.text-grey-7 {{state.user.name}}
-        .text-caption.text-grey-8 {{state.user.email}}
+        .text-subtitle1.text-grey-7 {{userStore.name}}
+        .text-caption.text-grey-8 {{userStore.email}}
       q-separator(:dark='false')
       q-card-actions(align='center')
         q-btn(
@@ -15,7 +15,7 @@ q-btn.q-ml-md(flat, round, dense, color='grey')
           label='Profile'
           icon='las la-user-alt'
           color='primary'
-          href='/_profile'
+          to='/_profile'
           no-caps
           )
         q-btn(flat
@@ -29,13 +29,7 @@ q-btn.q-ml-md(flat, round, dense, color='grey')
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { useUserStore } from 'src/stores/user'
 
-const state = reactive({
-  user: {
-    name: 'John Doe',
-    email: 'test@example.com',
-    picture: null
-  }
-})
+const userStore = useUserStore()
 </script>

@@ -31,6 +31,7 @@ q-layout(view='hHh Lpr lff')
           q-item(
             clickable
             v-ripple
+            href='/logout'
             )
             q-item-section(side)
               q-icon(name='las la-sign-out-alt', color='negative')
@@ -80,7 +81,7 @@ const sidenav = [
   },
   {
     key: 'password',
-    label: 'Password',
+    label: 'Authentication',
     icon: 'las la-key'
   },
   {

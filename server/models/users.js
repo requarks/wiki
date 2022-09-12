@@ -22,7 +22,7 @@ module.exports = class User extends Model {
 
       properties: {
         id: {type: 'string'},
-        email: {type: 'string', format: 'email'},
+        email: {type: 'string'},
         name: {type: 'string', minLength: 1, maxLength: 255},
         pictureUrl: {type: 'string'},
         isSystem: {type: 'boolean'},

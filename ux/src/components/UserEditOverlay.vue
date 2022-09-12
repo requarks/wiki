@@ -117,6 +117,19 @@ q-layout(view='hHh lpR fFf', container)
                       dense
                       :aria-label='t(`admin.users.jobTitle`)'
                       )
+                q-separator.q-my-sm(inset)
+                q-item
+                  blueprint-icon(icon='gender')
+                  q-item-section
+                    q-item-label {{t(`admin.users.pronouns`)}}
+                    q-item-label(caption) {{t(`admin.users.pronounsHint`)}}
+                  q-item-section
+                    q-input(
+                      outlined
+                      v-model='state.user.meta.pronouns'
+                      dense
+                      :aria-label='t(`admin.users.pronouns`)'
+                      )
 
             q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.user.meta')
               q-card-section
@@ -181,18 +194,23 @@ q-layout(view='hHh lpR fFf', container)
                     ]`
                   )
               q-separator.q-my-sm(inset)
-              q-item(tag='label', v-ripple)
+              q-item
                 blueprint-icon(icon='light-on')
                 q-item-section
-                  q-item-label {{t(`admin.users.darkMode`)}}
+                  q-item-label {{t(`admin.users.appearance`)}}
                   q-item-label(caption) {{t(`admin.users.darkModeHint`)}}
-                q-item-section(avatar)
-                  q-toggle(
-                    v-model='state.user.prefs.darkMode'
-                    color='primary'
-                    checked-icon='las la-check'
-                    unchecked-icon='las la-times'
-                    :aria-label='t(`admin.users.darkMode`)'
+                q-item-section.col-auto
+                  q-btn-toggle(
+                    v-model='state.user.prefs.appearance'
+                    push
+                    glossy
+                    no-caps
+                    toggle-color='primary'
+                    :options=`[
+                      { label: t('profile.appearanceDefault'), value: 'site' },
+                      { label: t('profile.appearanceLight'), value: 'light' },
+                      { label: t('profile.appearanceDark'), value: 'dark' }
+                    ]`
                   )
 
           .col-12.col-lg-4

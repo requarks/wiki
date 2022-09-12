@@ -2,12 +2,12 @@
 .auth
   .auth-content
     .auth-logo
-      img(src='/_site/logo' :alt='siteStore.title')
+      img(:src='`/_site/logo`' :alt='siteStore.title')
     h2.auth-site-title(v-if='siteStore.logoText') {{ siteStore.title }}
     p.text-grey-7 Login to continue
     auth-login-panel
   .auth-bg(aria-hidden="true")
-    img(src='/_site/loginbg' alt='')
+    img(:src='`/_site/loginbg`' alt='')
 </template>
 
 <script setup>

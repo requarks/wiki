@@ -16,8 +16,6 @@ extend type Query {
     id: UUID!
   ): User
 
-  profile: UserProfile
-
   lastLogins: [UserLastLogin]
 }
 
@@ -66,13 +64,15 @@ extend type Mutation {
   ): DefaultResponse
 
   updateProfile(
-    name: String!
-    location: String!
-    jobTitle: String!
-    timezone: String!
-    dateFormat: String!
-    appearance: String!
-  ): UserTokenResponse
+    name: String
+    location: String
+    jobTitle: String
+    pronouns: String
+    timezone: String
+    dateFormat: String
+    timeFormat: String
+    appearance: UserSiteAppearance
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -110,30 +110,11 @@ type User {
   isVerified: Boolean
   meta: JSON
   prefs: JSON
+  pictureUrl: String
   createdAt: Date
   updatedAt: Date
   lastLoginAt: Date
   groups: [Group]
-}
-
-type UserProfile {
-  id: Int
-  name: String
-  email: String
-  providerKey: String
-  providerName: String
-  isSystem: Boolean
-  isVerified: Boolean
-  location: String
-  jobTitle: String
-  timezone: String
-  dateFormat: String
-  appearance: String
-  createdAt: Date
-  updatedAt: Date
-  lastLoginAt: Date
-  groups: [String]
-  pagesTotal: Int
 }
 
 type UserTokenResponse {
@@ -148,6 +129,12 @@ enum UserOrderBy {
   createdAt
   updatedAt
   lastLoginAt
+}
+
+enum UserSiteAppearance {
+  site
+  light
+  dark
 }
 
 input UserUpdateInput {

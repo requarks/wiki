@@ -121,25 +121,27 @@ q-page.q-py-md(:style-fn='pageStyle')
         :options='timeFormats'
       )
   q-separator.q-my-sm(inset)
-  q-item(tag='label', v-ripple)
+  q-item
     blueprint-icon(icon='light-on')
     q-item-section
-      q-item-label {{t(`profile.darkMode`)}}
-      q-item-label(caption) {{t(`profile.darkModeHint`)}}
-    q-item-section(avatar)
-      q-toggle(
-        v-model='state.config.darkMode'
-        color='primary'
-        checked-icon='las la-check'
-        unchecked-icon='las la-times'
-        :aria-label='t(`profile.darkMode`)'
+      q-item-label {{t(`profile.appearance`)}}
+      q-item-label(caption) {{t(`profile.appearanceHint`)}}
+    q-item-section.col-auto
+      q-btn-toggle(
+        v-model='state.config.appearance'
+        push
+        glossy
+        no-caps
+        toggle-color='primary'
+        :options='appearances'
       )
   .actions-bar.q-mt-lg
     q-btn(
       icon='las la-check'
       unelevated
-      label='Save Changes'
+      :label='t(`common.actions.saveChanges`)'
       color='secondary'
+      @click='save'
     )
 </template>
 
@@ -152,6 +154,7 @@ import { onMounted, reactive, watch } from 'vue'
 
 import { useSiteStore } from 'src/stores/site'
 import { useDataStore } from 'src/stores/data'
+import { useUserStore } from 'src/stores/user'
 
 // QUASAR
 
@@ -161,6 +164,7 @@ const $q = useQuasar()
 
 const siteStore = useSiteStore()
 const dataStore = useDataStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -176,14 +180,15 @@ useMeta({
 
 const state = reactive({
   config: {
-    name: 'John Doe',
-    email: 'john.doe@company.com',
+    name: '',
+    email: '',
     location: '',
     jobTitle: '',
     pronouns: '',
+    timezone: '',
     dateFormat: '',
     timeFormat: '12h',
-    darkMode: false
+    appearance: 'site'
   }
 })
 
@@ -199,6 +204,11 @@ const timeFormats = [
   { value: '12h', label: t('admin.general.defaultTimeFormat12h') },
   { value: '24h', label: t('admin.general.defaultTimeFormat24h') }
 ]
+const appearances = [
+  { value: 'site', label: t('profile.appearanceDefault') },
+  { value: 'light', label: t('profile.appearanceLight') },
+  { value: 'dark', label: t('profile.appearanceDark') }
+]
 
 // METHODS
 
@@ -207,4 +217,73 @@ function pageStyle (offset, height) {
     'min-height': `${height - 100 - offset}px`
   }
 }
+
+async function save () {
+  $q.loading.show({
+    message: t('profile.saving')
+  })
+  try {
+    const respRaw = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation saveProfile (
+          $name: String
+          $location: String
+          $jobTitle: String
+          $pronouns: String
+          $timezone: String
+          $dateFormat: String
+          $timeFormat: String
+          $appearance: UserSiteAppearance
+        ) {
+          updateProfile (
+            name: $name
+            location: $location
+            jobTitle: $jobTitle
+            pronouns: $pronouns
+            timezone: $timezone
+            dateFormat: $dateFormat
+            timeFormat: $timeFormat
+            appearance: $appearance
+          ) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: state.config
+    })
+    if (respRaw.data?.updateProfile?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('profile.saveSuccess')
+      })
+      userStore.$patch(state.config)
+    } else {
+      throw new Error(respRaw.data?.updateProfile?.operation?.message || 'An unexpected error occured')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('profile.saveFailed'),
+      caption: err.message
+    })
+  }
+  $q.loading.hide()
+}
+
+// MOUNTED
+
+onMounted(() => {
+  state.config.name = userStore.name || ''
+  state.config.email = userStore.email
+  state.config.location = userStore.location || ''
+  state.config.jobTitle = userStore.jobTitle || ''
+  state.config.pronouns = userStore.pronouns || ''
+  state.config.timezone = userStore.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+  state.config.dateFormat = userStore.dateFormat || ''
+  state.config.timeFormat = userStore.timeFormat || '12h'
+  state.config.appearance = userStore.appearance || 'site'
+})
 </script>

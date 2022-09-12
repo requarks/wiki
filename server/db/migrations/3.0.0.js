@@ -580,7 +580,7 @@ exports.up = async knex => {
         timezone: 'America/New_York',
         dateFormat: 'YYYY-MM-DD',
         timeFormat: '12h',
-        darkMode: false
+        appearance: 'site'
       },
       localeCode: 'en'
     },
@@ -597,7 +597,7 @@ exports.up = async knex => {
         timezone: 'America/New_York',
         dateFormat: 'YYYY-MM-DD',
         timeFormat: '12h',
-        darkMode: false
+        appearance: 'site'
       },
       localeCode: 'en'
     }

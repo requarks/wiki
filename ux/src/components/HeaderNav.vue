@@ -17,10 +17,10 @@ q-header.bg-header.text-white.site-header(
           size='34px'
           square
           )
-          img(src='/_site/logo')
+          img(:src='`/_site/logo`')
         img(
           v-else
-          src='/_site/logo'
+          :src='`/_site/logo`'
           style='height: 34px'
           )
       q-toolbar-title.text-h6(v-if='siteStore.logoText') {{siteStore.title}}

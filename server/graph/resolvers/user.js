@@ -40,6 +40,10 @@ module.exports = {
     async userById (obj, args, context, info) {
       const usr = await WIKI.models.users.query().findById(args.id)
 
+      if (!usr) {
+        throw new Error('Invalid User')
+      }
+
       // const str = _.get(WIKI.auth.strategies, usr.providerKey)
       // str.strategy = _.find(WIKI.data.authentication, ['key', str.strategyKey])
       // usr.providerName = str.displayName
@@ -56,25 +60,25 @@ module.exports = {
 
       return usr
     },
-    async profile (obj, args, context, info) {
-      if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
-        throw new WIKI.Error.AuthRequired()
-      }
-      const usr = await WIKI.models.users.query().findById(context.req.user.id)
-      if (!usr.isActive) {
-        throw new WIKI.Error.AuthAccountBanned()
-      }
+    // async profile (obj, args, context, info) {
+    //   if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
+    //     throw new WIKI.Error.AuthRequired()
+    //   }
+    //   const usr = await WIKI.models.users.query().findById(context.req.user.id)
+    //   if (!usr.isActive) {
+    //     throw new WIKI.Error.AuthAccountBanned()
+    //   }
 
-      const providerInfo = _.get(WIKI.auth.strategies, usr.providerKey, {})
+    //   const providerInfo = _.get(WIKI.auth.strategies, usr.providerKey, {})
 
-      usr.providerName = providerInfo.displayName || 'Unknown'
-      usr.lastLoginAt = usr.lastLoginAt || usr.updatedAt
-      usr.password = ''
-      usr.providerId = ''
-      usr.tfaSecret = ''
+    //   usr.providerName = providerInfo.displayName || 'Unknown'
+    //   usr.lastLoginAt = usr.lastLoginAt || usr.updatedAt
+    //   usr.password = ''
+    //   usr.providerId = ''
+    //   usr.tfaSecret = ''
 
-      return usr
-    },
+    //   return usr
+    // },
     async lastLogins (obj, args, context, info) {
       return WIKI.models.users.query()
         .select('id', 'name', 'lastLoginAt')
@@ -193,7 +197,7 @@ module.exports = {
     },
     async updateProfile (obj, args, context) {
       try {
-        if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
+        if (!context.req.user || context.req.user.id === WIKI.auth.guest.id) {
           throw new WIKI.Error.AuthRequired()
         }
         const usr = await WIKI.models.users.query().findById(context.req.user.id)
@@ -204,29 +208,33 @@ module.exports = {
           throw new WIKI.Error.AuthAccountNotVerified()
         }
 
-        if (!['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'].includes(args.dateFormat)) {
+        if (args.dateFormat && !['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'].includes(args.dateFormat)) {
           throw new WIKI.Error.InputInvalid()
         }
 
-        if (!['', 'light', 'dark'].includes(args.appearance)) {
+        if (args.appearance && !['site', 'light', 'dark'].includes(args.appearance)) {
           throw new WIKI.Error.InputInvalid()
         }
 
-        await WIKI.models.users.updateUser({
-          id: usr.id,
-          name: _.trim(args.name),
-          jobTitle: _.trim(args.jobTitle),
-          location: _.trim(args.location),
-          timezone: args.timezone,
-          dateFormat: args.dateFormat,
-          appearance: args.appearance
+        await WIKI.models.users.query().findById(usr.id).patch({
+          name: args.name?.trim() ?? usr.name,
+          meta: {
+            ...usr.meta,
+            location: args.location?.trim() ?? usr.meta.location,
+            jobTitle: args.jobTitle?.trim() ?? usr.meta.jobTitle,
+            pronouns: args.pronouns?.trim() ?? usr.meta.pronouns
+          },
+          prefs: {
+            ...usr.prefs,
+            timezone: args.timezone || usr.prefs.timezone,
+            dateFormat: args.dateFormat ?? usr.prefs.dateFormat,
+            timeFormat: args.timeFormat ?? usr.prefs.timeFormat,
+            appearance: args.appearance || usr.prefs.appearance
+          }
         })
 
-        const newToken = await WIKI.models.users.refreshToken(usr.id)
-
         return {
-          operation: graphHelper.generateSuccess('User profile updated successfully'),
-          jwt: newToken.token
+          operation: graphHelper.generateSuccess('User profile updated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -273,15 +281,15 @@ module.exports = {
     groups (usr) {
       return usr.$relatedQuery('groups')
     }
-  },
-  UserProfile: {
-    async groups (usr) {
-      const usrGroups = await usr.$relatedQuery('groups')
-      return usrGroups.map(g => g.name)
-    },
-    async pagesTotal (usr) {
-      const result = await WIKI.models.pages.query().count('* as total').where('creatorId', usr.id).first()
-      return _.toSafeInteger(result.total)
-    }
   }
+  // UserProfile: {
+  //   async groups (usr) {
+  //     const usrGroups = await usr.$relatedQuery('groups')
+  //     return usrGroups.map(g => g.name)
+  //   },
+  //   async pagesTotal (usr) {
+  //     const result = await WIKI.models.pages.query().count('* as total').where('creatorId', usr.id).first()
+  //     return _.toSafeInteger(result.total)
+  //   }
+  // }
 }
