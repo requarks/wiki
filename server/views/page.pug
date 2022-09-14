@@ -29,6 +29,8 @@ block body
       comments-enabled=config.features.featurePageComments
       effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
       comments-external=comments.codeTemplate
+      :toc-level=tocLevel
+      :toc-collapse-level=tocCollapseLevel
       )
       template(slot='contents')
         div!= page.render

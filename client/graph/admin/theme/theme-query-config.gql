@@ -4,6 +4,8 @@ query {
       theme
       iconset
       darkMode
+      tocLevel
+      tocCollapseLevel
       injectCSS
       injectHead
       injectBody

@@ -505,6 +505,9 @@ router.get('/*', async (req, res, next) => {
           injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
 
+        const tocLevel = page.tocLevel || WIKI.config.theming.tocLevel
+        const tocCollapseLevel = page.tocCollapseLevel || WIKI.config.theming.tocCollapseLevel
+
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
           // -> Convert page TOC
           if (_.isString(page.toc)) {
@@ -515,6 +518,8 @@ router.get('/*', async (req, res, next) => {
           res.render('legacy/page', {
             page,
             sidebar,
+            tocLevel,
+            tocCollapseLevel,
             injectCode,
             isAuthenticated: req.user && req.user.id !== 2
           })
@@ -546,6 +551,8 @@ router.get('/*', async (req, res, next) => {
           res.render('page', {
             page,
             sidebar,
+            tocLevel,
+            tocCollapseLevel,
             injectCode,
             comments: commentTmpl,
             effectivePermissions

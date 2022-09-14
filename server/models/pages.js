@@ -47,7 +47,8 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
         contentType: {type: 'string'},
-
+        tocLevel: {type: 'integer'},
+        tocCollapseLevel: {type: 'integer'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -161,6 +162,8 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
+      tocLevel: 'uint',
+      tocCollapseLevel: 'uint',
       updatedAt: 'string'
     })
   }
@@ -311,6 +314,8 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       toc: '[]',
+      tocLevel: opts.tocLevel || 0,
+      tocCollapseLevel: opts.tocCollapseLevel || 0,
       extra: JSON.stringify({
         js: scriptJs,
         css: scriptCss
@@ -430,6 +435,8 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
+      tocLevel: opts.tocLevel || 0,
+      tocCollapseLevel: opts.tocCollapseLevel || 0,
       extra: JSON.stringify({
         ...ogPage.extra,
         js: scriptJs,
@@ -991,6 +998,8 @@ module.exports = class Page extends Model {
           'pages.content',
           'pages.render',
           'pages.toc',
+          'pages.tocLevel',
+          'pages.tocCollapseLevel',
           'pages.contentType',
           'pages.createdAt',
           'pages.updatedAt',
@@ -1071,6 +1080,8 @@ module.exports = class Page extends Model {
       tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
+      tocLevel: page.tocLevel,
+      tocCollapseLevel: page.tocCollapseLevel,
       updatedAt: page.updatedAt
     }))
   }

@@ -68,6 +68,75 @@
                     hint='Select whether the table of contents is shown on the left, right or not at all.'
                     disabled
                     )
+                  v-radio-group(
+                    row
+                    outlined
+                    persistent-hint
+                    prepend-icon='mdi-serial-port'
+                    v-model='config.tocLevel'
+                    label='Max Heading Level'
+                    hint='The table of contents will show headings up to the selected level. By default, only heading levels up to H2 are shown.'
+                  )
+                    v-spacer
+                    v-radio(
+                      label='H1'
+                      v-bind:value='1'
+                    )
+                    v-radio(
+                      label='H2'
+                      v-bind:value='2'
+                    )
+                    v-radio(
+                      label='H3'
+                      v-bind:value='3'
+                    )
+                    v-radio(
+                      label='H4'
+                      v-bind:value='4'
+                    )
+                    v-radio(
+                      label='H5'
+                      v-bind:value='5'
+                    )
+                    v-radio(
+                      label='H6'
+                      v-bind:value='6'
+                    )
+                  v-radio-group(
+                    row
+                    outlined
+                    persistent-hint
+                    prepend-icon='mdi-serial-port'
+                    v-model='config.tocCollapseLevel'
+                    label='Collapse Heading Level'
+                    hint='The table of contents will collapse headings starting from the selected level. By default, only heading levels from H2 are collapsed.'
+                  )
+                    v-spacer
+                    v-radio(
+                      label='H1'
+                      v-bind:value='1'
+                    )
+                    v-radio(
+                      label='H2'
+                      v-bind:value='2'
+                    )
+                    v-radio(
+                      label='H3'
+                      v-bind:value='3'
+                    )
+                    v-radio(
+                      label='H4'
+                      v-bind:value='4'
+                    )
+                    v-radio(
+                      label='H5'
+                      v-bind:value='5'
+                    )
+                    v-radio(
+                      label='H6'
+                      v-bind:value='6'
+                    )
+
 
             v-flex(lg6 xs12)
               //- v-card.animated.fadeInUp.wait-p2s
@@ -154,6 +223,8 @@ export default {
       config: {
         theme: 'default',
         darkMode: false,
+        tocLevel: 2,
+        tocCollapseLevel: 2,
         iconset: '',
         injectCSS: '',
         injectHead: '',
@@ -209,6 +280,8 @@ export default {
             theme: this.config.theme,
             iconset: this.config.iconset,
             darkMode: this.darkMode,
+            tocLevel: parseInt(this.config.tocLevel, 10),
+            tocCollapseLevel: parseInt(this.config.tocCollapseLevel, 10),
             injectCSS: this.config.injectCSS,
             injectHead: this.config.injectHead,
             injectBody: this.config.injectBody
