@@ -43,7 +43,6 @@ module.exports = {
 	  WikiErrorFormat(),
       winston.format.label({ label: uid }),
       winston.format.timestamp()
-     ,winston.format.errors({stack: true })
     ]
 
     if (WIKI.config.logFormat === 'json') {
