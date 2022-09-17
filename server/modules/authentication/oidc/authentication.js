@@ -31,12 +31,14 @@ module.exports = {
           })
           if (conf.mapGroups) {
             const groups = _.get(profile, '_json.' + conf.groupsClaim)
-            if (groups) {
-              const groupIDs = Object.values(WIKI.auth.groups)
-                .filter(g => groups.includes(g.name))
-                .map(g => g.id)
-              for (let groupID of groupIDs) {
-                await user.$relatedQuery('groups').relate(groupID)
+            if (groups && _.isArray(groups)) {
+              const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).groups.map(g => g.id)
+              const expectedGroups = Object.values(WIKI.auth.groups).filter(g => groups.includes(g.name)).map(g => g.id)
+              for (const groupId of _.difference(expectedGroups, currentGroups)) {
+                await user.$relatedQuery('groups').relate(groupId)
+              }
+              for (const groupId of _.difference(currentGroups, expectedGroups)) {
+                await user.$relatedQuery('groups').unrelate(groupId)
               }
             }
           }
