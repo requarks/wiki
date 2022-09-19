@@ -77,6 +77,7 @@ useMeta({
 
       > img {
         height: 200px;
+        user-select: none;
       }
     }
 

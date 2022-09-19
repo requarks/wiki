@@ -148,6 +148,7 @@
     "passport-twitch-strategy": "2.2.0",
     "pem-jwk": "2.0.0",
     "pg": "8.8.0",
+    "pg-boss": "8.0.0",
     "pg-hstore": "2.3.4",
     "pg-pubsub": "0.8.0",
     "pg-query-stream": "4.2.4",

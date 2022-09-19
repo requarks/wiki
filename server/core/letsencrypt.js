@@ -4,8 +4,7 @@ const _ = require('lodash')
 const moment = require('moment')
 const CSR = require('@root/csr')
 const PEM = require('@root/pem')
-// eslint-disable-next-line node/no-deprecated-api
-const punycode = require('punycode')
+const punycode = require('punycode/')
 
 /* global WIKI */
 
