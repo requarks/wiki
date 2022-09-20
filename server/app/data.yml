@@ -67,6 +67,14 @@ defaults:
       audience: 'urn:wiki.js'
       tokenExpiration: '30m'
       tokenRenewal: '14d'
+    editShortcuts:
+      editFab: true
+      editMenuBar: false
+      editMenuBtn: true
+      editMenuExternalBtn: true
+      editMenuExternalName: 'GitHub'
+      editMenuExternalIcon: 'mdi-github'
+      editMenuExternalUrl: 'https://github.com/org/repo/blob/main/{filename}'
     features:
       featurePageRatings: true
       featurePageComments: true
