@@ -128,6 +128,10 @@ module.exports = () => {
         theme: 'default',
         darkMode: false,
         iconset: 'mdi',
+        tocDepth: {
+          min: 1,
+          max: 2
+        },
         injectCSS: '',
         injectHead: '',
         injectBody: ''

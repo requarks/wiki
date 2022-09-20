@@ -178,6 +178,11 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
       title: null,
       description: null,
       updatedAt: new Date().toISOString(),
+      tocOptions: {
+        min: 1,
+        max: 2,
+        useDefault: true
+      },
       extra: {
         css: '',
         js: ''
@@ -505,6 +510,12 @@ router.get('/*', async (req, res, next) => {
           injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
 
+        // -> Set TOC display options
+        const tocOptions = _.get(page, 'tocOptions.useDefault', true) ? {
+          min: page.tocOptions.min,
+          max: page.tocOptions.max
+        } : WIKI.config.theming.tocDepth
+
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
           // -> Convert page TOC
           if (_.isString(page.toc)) {
@@ -546,6 +557,7 @@ router.get('/*', async (req, res, next) => {
           res.render('page', {
             page,
             sidebar,
+            tocOptions,
             injectCode,
             comments: commentTmpl,
             effectivePermissions

@@ -51,50 +51,20 @@
                     persistent-hint
                     :hint='$t(`admin:theme.darkModeHint`)'
                     )
-
               v-card.mt-3.animated.fadeInUp.wait-p1s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t(`admin:theme.options`)}}
-                  v-spacer
-                  v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
-                  v-select(
-                    :items='[]'
-                    outlined
-                    prepend-icon='mdi-border-vertical'
-                    v-model='config.iconset'
-                    label='Table of Contents Position'
-                    persistent-hint
-                    hint='Select whether the table of contents is shown on the left, right or not at all.'
-                    disabled
-                    )
-
+                  v-range-slider(
+                    prepend-icon='mdi-menu-open'
+                    :label='$t(`admin:theme.tocHeadingLevels`)'
+                    v-model='tocRange'
+                    :min='1'
+                    :max='6'
+                    :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
+                  )
+                  .text-caption {{$t('admin:theme.tocHeadingLevelsHint')}}
             v-flex(lg6 xs12)
-              //- v-card.animated.fadeInUp.wait-p2s
-              //-   v-toolbar(color='teal', dark, dense, flat)
-              //-     v-toolbar-title.subtitle-1 {{$t('admin:theme.downloadThemes')}}
-              //-     v-spacer
-              //-     v-chip(label, color='white', small).teal--text coming soon
-              //-   v-data-table(
-              //-     :headers='headers',
-              //-     :items='themes',
-              //-     hide-default-footer,
-              //-     item-key='value',
-              //-     :items-per-page='1000'
-              //-   )
-              //-     template(v-slot:item='thm')
-              //-       td
-              //-         strong {{thm.item.text}}
-              //-       td
-              //-         span {{ thm.item.author }}
-              //-       td.text-xs-center
-              //-         v-progress-circular(v-if='thm.item.isDownloading', indeterminate, color='blue', size='20', :width='2')
-              //-         v-btn(v-else-if='thm.item.isInstalled && thm.item.installDate < thm.item.updatedAt', icon)
-              //-           v-icon.blue--text mdi-cached
-              //-         v-btn(v-else-if='thm.item.isInstalled', icon)
-              //-           v-icon.green--text mdi-check-bold
-              //-         v-btn(v-else, icon)
-              //-           v-icon.grey--text mdi-cloud-download
 
               v-card.animated.fadeInUp.wait-p2s
                 v-toolbar(color='primary', dark, dense, flat)
@@ -154,6 +124,10 @@ export default {
       config: {
         theme: 'default',
         darkMode: false,
+        tocDepth: {
+          min: 1,
+          max: 2
+        },
         iconset: '',
         injectCSS: '',
         injectHead: '',
@@ -163,6 +137,18 @@ export default {
     }
   },
   computed: {
+    tocRange: {
+      get() {
+        var range = [this.config.tocDepth.min, this.config.tocDepth.max]
+        return range
+      },
+      set(value) {
+        this.config.tocDepth = {
+          min: parseInt(value[0]),
+          max: parseInt(value[1])
+        }
+      }
+    },
     darkMode: sync('site/dark'),
     headers() {
       return [
@@ -209,6 +195,7 @@ export default {
             theme: this.config.theme,
             iconset: this.config.iconset,
             darkMode: this.darkMode,
+            tocDepth: this.config.tocDepth,
             injectCSS: this.config.injectCSS,
             injectHead: this.config.injectHead,
             injectBody: this.config.injectBody
