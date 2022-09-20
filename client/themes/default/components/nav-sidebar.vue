@@ -1,5 +1,5 @@
 <template lang="pug">
-div
+  div
       .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
         v-btn(
           depressed
