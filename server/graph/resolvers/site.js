@@ -18,7 +18,9 @@ module.exports = {
         company: WIKI.config.company,
         contentLicense: WIKI.config.contentLicense,
         logoUrl: WIKI.config.logoUrl,
+        pageExtensions: WIKI.config.pageExtensions.join(', '),
         ...WIKI.config.seo,
+        ...WIKI.config.editShortcuts,
         ...WIKI.config.features,
         ...WIKI.config.security,
         authAutoLogin: WIKI.config.auth.autoLogin,
@@ -62,6 +64,10 @@ module.exports = {
           WIKI.config.logoUrl = _.trim(args.logoUrl)
         }
 
+        if (args.hasOwnProperty('pageExtensions')) {
+          WIKI.config.pageExtensions = _.trim(args.pageExtensions).split(',').map(p => p.trim().toLowerCase()).filter(p => p !== '')
+        }
+
         WIKI.config.seo = {
           description: _.get(args, 'description', WIKI.config.seo.description),
           robots: _.get(args, 'robots', WIKI.config.seo.robots),
@@ -77,6 +83,16 @@ module.exports = {
           audience: _.get(args, 'authJwtAudience', WIKI.config.auth.audience),
           tokenExpiration: _.get(args, 'authJwtExpiration', WIKI.config.auth.tokenExpiration),
           tokenRenewal: _.get(args, 'authJwtRenewablePeriod', WIKI.config.auth.tokenRenewal)
+        }
+
+        WIKI.config.editShortcuts = {
+          editFab: _.get(args, 'editFab', WIKI.config.editShortcuts.editFab),
+          editMenuBar: _.get(args, 'editMenuBar', WIKI.config.editShortcuts.editMenuBar),
+          editMenuBtn: _.get(args, 'editMenuBtn', WIKI.config.editShortcuts.editMenuBtn),
+          editMenuExternalBtn: _.get(args, 'editMenuExternalBtn', WIKI.config.editShortcuts.editMenuExternalBtn),
+          editMenuExternalName: _.get(args, 'editMenuExternalName', WIKI.config.editShortcuts.editMenuExternalName),
+          editMenuExternalIcon: _.get(args, 'editMenuExternalIcon', WIKI.config.editShortcuts.editMenuExternalIcon),
+          editMenuExternalUrl: _.get(args, 'editMenuExternalUrl', WIKI.config.editShortcuts.editMenuExternalUrl)
         }
 
         WIKI.config.features = {
@@ -104,7 +120,7 @@ module.exports = {
           forceDownload: _.get(args, 'uploadForceDownload', WIKI.config.uploads.forceDownload)
         }
 
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'auth', 'features', 'security', 'uploads'])
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'pageExtensions', 'auth', 'editShortcuts', 'features', 'security', 'uploads'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')

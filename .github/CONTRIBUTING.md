@@ -28,7 +28,7 @@ It is also always helpful to have some context for your pull request. What was t
 
 Use the feature request board to submit new ideas and vote on which ideas should be integrated first.
 
-:triangular_flag_on_post: [https://wiki.js.org/feedback/](https://wiki.js.org/feedback/)
+:triangular_flag_on_post: [https://js.wiki/feedback/](https://js.wiki/feedback/)
 
 *Do not use GitHub issues to submit new feature ideas, as it will closed and you'll be asked to use the feature request board above. GitHub Issues are limited to bugs / issues / help*.
 
