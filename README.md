@@ -193,7 +193,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - chaee ([@chaee](https://github.com/chaee))
 - magicpotato ([@fortheday](https://github.com/fortheday))
 - motoacs ([@motoacs](https://github.com/motoacs))
-- muzian666 ([@motoacs](https://github.com/muzian666))
+- muzian666 ([@muzian666](https://github.com/muzian666))
 - rburckner ([@rburckner](https://github.com/rburckner))
 - scorpion ([@scorpion](https://github.com/scorpion))
 - valantien ([@valantien](https://github.com/valantien))
