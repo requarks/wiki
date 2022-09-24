@@ -27,34 +27,16 @@ defaults:
     logLevel: info
     logFormat: default
     offline: false
+    dataPath: ./data
     bodyParserLimit: 5mb
+    workers: auto
     # DB defaults
     api:
       isEnabled: false
-    graphEndpoint: 'https://graph.requarks.io'
-    lang:
-      code: en
-      autoUpdate: true
-      namespaces: []
-      namespacing: false
-      rtl: false
-    telemetry:
-      clientId: ''
-      isEnabled: false
-    title: Wiki.js
-    company: ''
-    contentLicense: ''
-    logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
     mail:
       host: ''
       secure: true
       verifySSL: true
-    nav:
-      mode: 'MIXED'
-    theming:
-      theme: 'default'
-      iconset: 'md'
-      darkMode: false
     auth:
       autoLogin: false
       enforce2FA: false
@@ -63,34 +45,30 @@ defaults:
       audience: 'urn:wiki.js'
       tokenExpiration: '30m'
       tokenRenewal: '14d'
-    features:
-      featurePageRatings: true
-      featurePageComments: true
-      featurePersonalWikis: true
     security:
-      securityOpenRedirect: true
-      securityIframe: true
-      securityReferrerPolicy: true
-      securityTrustProxy: true
-      securitySRI: true
-      securityHSTS: false
-      securityHSTSDuration: 300
-      securityCSP: false
-      securityCSPDirectives: ''
-    server:
-      sslRedir: false
-    uploads:
-      maxFileSize: 5242880
-      maxFiles: 10
-      scanSVG: true
-      forceDownload: true
+      corsMode: 'OFF'
+      corsConfig: ''
+      enforceCsp: false
+      trustProxy: false
+      enforceHsts: false
+      disallowFloc: true
+      hstsDuration: 0
+      cspDirectives: ''
+      uploadScanSVG: true
+      disallowIframe: true
+      uploadMaxFiles: 20
+      authJwtAudience: 'urn:wiki.js'
+      authJwtExpiration: '30m'
+      uploadMaxFileSize: 10485760
+      forceAssetDownload: true
+      disallowOpenRedirect: true
+      authJwtRenewablePeriod: '14d'
+      enforceSameOriginReferrerPolicy: true
     flags:
       ldapdebug: false
       sqllog: false
     # System defaults
     channel: NEXT
-    setup: false
-    dataPath: ./data
     cors:
       credentials: true
       maxAge: 600
@@ -99,10 +77,6 @@ defaults:
     search:
       maxHits: 100
     maintainerEmail: security@requarks.io
-localeNamespaces:
-  - admin
-  - auth
-  - common
 jobs:
   purgeUploads:
     onInit: true

@@ -6264,14 +6264,6 @@ cookiejar@^2.1.3:
   resolved "https://registry.yarnpkg.com/cookiejar/-/cookiejar-2.1.3.tgz#fc7a6216e408e74414b90230050842dacda75acc"
   integrity sha512-JxbCBUdrfr6AQjOXrxoTvAMJO4HBTUIlBzslcJPAz+/KT8yk53fXun51u+RenNYvad/+Vc2DIz5o9UxlCDymFQ==
 
-cookies@0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/cookies/-/cookies-0.7.1.tgz#7c8a615f5481c61ab9f16c833731bcb8f663b99b"
-  integrity sha1-fIphX1SBxhq58WyDNzG8uPZjuZs=
-  dependencies:
-    depd "~1.1.1"
-    keygrip "~1.0.2"
-
 copy-concurrently@^1.0.0:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/copy-concurrently/-/copy-concurrently-1.0.5.tgz#92297398cae34937fcafd6ec8139c18051f0b5e0"
@@ -7533,7 +7525,7 @@ depd@2.0.0, depd@~2.0.0:
   resolved "https://registry.yarnpkg.com/depd/-/depd-2.0.0.tgz#b696163cc757560d09cf22cc8fad1571b79e76df"
   integrity sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==
 
-depd@~1.1.1, depd@~1.1.2:
+depd@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/depd/-/depd-1.1.2.tgz#9bcd52e14c097763e749b274c4346ed2e560b5a9"
   integrity sha1-m81S4UwJd2PnSbJ0xDRu0uVgtak=
@@ -10084,13 +10076,6 @@ i18next-chained-backend@2.0.1:
   dependencies:
     "@babel/runtime" "^7.4.5"
 
-i18next-express-middleware@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/i18next-express-middleware/-/i18next-express-middleware-2.0.0.tgz#e6ab3be8d2db3c715dc084880d100d235b6fd62e"
-  integrity sha512-TGlSkYsQHikggv4mIp5B+CiXsZzwbpHaZgmOkRNGStLOdKHABH5cHr136g2PC1+p2VPMf3y3UoQZ1TfPfVOrgg==
-  dependencies:
-    cookies "0.7.1"
-
 i18next-localstorage-backend@3.1.3:
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/i18next-localstorage-backend/-/i18next-localstorage-backend-3.1.3.tgz#5eaad25a515bdadebeb13e1486acfa6fa1686cbe"
@@ -11594,11 +11579,6 @@ katex@0.12.0:
   integrity sha512-y+8btoc/CK70XqcHqjxiGWBOeIL8upbS0peTPXTvgrh21n1RiWWcIpSWM+4uXq+IAgNh9YYQWdc7LVDPDAEEAg==
   dependencies:
     commander "^2.19.0"
-
-keygrip@~1.0.2:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/keygrip/-/keygrip-1.0.3.tgz#399d709f0aed2bab0a059e0cdd3a5023a053e1dc"
-  integrity sha512-/PpesirAIfaklxUzp4Yb7xBper9MwP6hNRA6BGGUFCgbJ+BM5CKBtsoxinNXkLHAr+GXS1/lSlF2rP7cv5Fl+g==
 
 keyv@^3.0.0:
   version "3.1.0"
@@ -14222,6 +14202,11 @@ pony-cause@^2.0.0:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/pony-cause/-/pony-cause-2.1.4.tgz#18ef4799b5207ad0a7bacf5ea4602e6b06c75c8c"
   integrity sha512-6jNyaeEi1I4rGD338qmNmx2yLg8N/JZJZU8JCrqDtfxCEYZttfuN6AnKhBGfMyTydW4t2iBioxDzKeZJC2mJVw==
+
+poolifier@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/poolifier/-/poolifier-2.2.0.tgz#7a8bf0bd6e7a0b3e0633cd54a6ffeb6ed89ec41b"
+  integrity sha512-bzthEM2MRwt4mDVC7sWYBRu7pTpb+aDj+Bw2EhoxtYTSL6wbWTu94gW7wuTwjCPClNRDiCPxV5bHQz5X/M/PnA==
 
 posix-character-classes@^0.1.0:
   version "0.1.1"

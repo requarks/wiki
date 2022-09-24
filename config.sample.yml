@@ -122,3 +122,11 @@ dataPath: ./data
 # file uploads.
 
 bodyParserLimit: 5mb
+
+# ---------------------------------------------------------------------
+# Workers Limit
+# ---------------------------------------------------------------------
+# Maximum number of workers that can run background cpu-intensive jobs.
+# Leave to 'auto' to use CPU cores count as maximum.
+
+workers: auto

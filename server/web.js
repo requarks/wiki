@@ -18,7 +18,6 @@ module.exports = async () => {
   // ----------------------------------------
 
   WIKI.auth = require('./core/auth').init()
-  WIKI.lang = require('./core/localization').init()
   WIKI.mail = require('./core/mail').init()
   WIKI.system = require('./core/system').init()
 
@@ -132,12 +131,6 @@ module.exports = async () => {
   app.set('view engine', 'pug')
 
   app.use(bodyParser.urlencoded({ extended: false, limit: '1mb' }))
-
-  // ----------------------------------------
-  // Localization
-  // ----------------------------------------
-
-  WIKI.lang.attachMiddleware(app)
 
   // ----------------------------------------
   // View accessible data

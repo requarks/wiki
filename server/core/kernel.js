@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const EventEmitter = require('eventemitter2').EventEmitter2
 
+let isShuttingDown = false
+
 /* global WIKI */
 
 module.exports = {
@@ -31,9 +33,8 @@ module.exports = {
    */
   async preBootWeb() {
     try {
-      WIKI.sideloader = await require('./sideloader').init()
       WIKI.cache = require('./cache').init()
-      WIKI.scheduler = require('./scheduler').init()
+      WIKI.scheduler = await require('./scheduler').init()
       WIKI.servers = require('./servers')
       WIKI.events = {
         inbound: new EventEmitter(),
@@ -83,6 +84,8 @@ module.exports = {
    * Graceful shutdown
    */
   async shutdown (devMode = false) {
+    if (isShuttingDown) { return }
+    isShuttingDown = true
     if (WIKI.servers) {
       await WIKI.servers.stopServers()
     }
@@ -99,6 +102,7 @@ module.exports = {
       await WIKI.asar.unload()
     }
     if (!devMode) {
+      WIKI.logger.info('Terminating process...')
       process.exit(0)
     }
   }
