@@ -1505,5 +1505,17 @@
   "profile.saveFailed": "Failed to save profile changes.",
   "admin.users.pronouns": "Pronouns",
   "admin.users.pronounsHint": "The pronouns used to address this user.",
-  "admin.users.appearance": "Site Appearance"
+  "admin.users.appearance": "Site Appearance",
+  "admin.scheduler.title": "Scheduler",
+  "admin.scheduler.subtitle": "View scheduled and completed jobs",
+  "admin.scheduler.active": "Active",
+  "admin.scheduler.completed": "Completed",
+  "admin.scheduler.scheduled": "Scheduled",
+  "admin.scheduler.activeNone": "There are no active jobs at the moment.",
+  "admin.scheduler.completedNone": "There are no recently completed job to display.",
+  "admin.scheduler.scheduledNone": "There are no scheduled jobs at the moment.",
+  "admin.scheduler.cron": "Cron",
+  "admin.scheduler.nextExecutionIn": "Next run {date}",
+  "admin.scheduler.nextExecution": "Next Run",
+  "admin.scheduler.timezone": "Timezone"
 }

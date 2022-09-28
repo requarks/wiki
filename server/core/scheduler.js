@@ -6,10 +6,11 @@ const os = require('node:os')
 
 module.exports = {
   pool: null,
-  scheduler: null,
+  boss: null,
+  maxWorkers: 1,
   async init () {
     WIKI.logger.info('Initializing Scheduler...')
-    this.scheduler = new PgBoss({
+    this.boss = new PgBoss({
       db: {
         close: () => Promise.resolve('ok'),
         executeSql: async (text, values) => {
@@ -27,12 +28,14 @@ module.exports = {
       // ...WIKI.models.knex.client.connectionSettings,
       application_name: 'Wiki.js Scheduler',
       schema: WIKI.config.db.schemas.scheduler,
-      uuid: 'v4'
+      uuid: 'v4',
+      archiveCompletedAfterSeconds: 120,
+      deleteAfterHours: 24
     })
 
-    const maxWorkers = WIKI.config.workers === 'auto' ? os.cpus().length : WIKI.config.workers
-    WIKI.logger.info(`Initializing Worker Pool (Max ${maxWorkers})...`)
-    this.pool = new DynamicThreadPool(1, maxWorkers, './server/worker.js', {
+    this.maxWorkers = WIKI.config.workers === 'auto' ? os.cpus().length : WIKI.config.workers
+    WIKI.logger.info(`Initializing Worker Pool (Limit: ${this.maxWorkers})...`)
+    this.pool = new DynamicThreadPool(1, this.maxWorkers, './server/worker.js', {
       errorHandler: (err) => WIKI.logger.warn(err),
       exitHandler: () => WIKI.logger.debug('A worker has gone offline.'),
       onlineHandler: () => WIKI.logger.debug('New worker is online.')
@@ -41,20 +44,40 @@ module.exports = {
   },
   async start () {
     WIKI.logger.info('Starting Scheduler...')
-    await this.scheduler.start()
-    this.scheduler.work('*', async job => {
-      return this.pool.execute({
-        id: job.id,
-        name: job.name,
-        data: job.data
-      })
+    await this.boss.start()
+    this.boss.work('wk-*', {
+      teamSize: this.maxWorkers,
+      teamConcurrency: this.maxWorkers
+    }, async job => {
+      WIKI.logger.debug(`Starting job ${job.name}:${job.id}...`)
+      try {
+        const result = await this.pool.execute({
+          id: job.id,
+          name: job.name,
+          data: job.data
+        })
+        WIKI.logger.debug(`Completed job ${job.name}:${job.id}.`)
+        job.done(null, result)
+      } catch (err) {
+        WIKI.logger.warn(`Failed job ${job.name}:${job.id}): ${err.message}`)
+        job.done(err)
+      }
+      this.boss.complete(job.id)
     })
     WIKI.logger.info('Scheduler: [ STARTED ]')
   },
   async stop () {
     WIKI.logger.info('Stopping Scheduler...')
-    await this.scheduler.stop()
+    await this.boss.stop({ timeout: 5000 })
     await this.pool.destroy()
     WIKI.logger.info('Scheduler: [ STOPPED ]')
+  },
+  async registerScheduledJobs () {
+    for (const [key, job] of Object.entries(WIKI.data.jobs)) {
+      if (job.schedule) {
+        WIKI.logger.debug(`Scheduling regular job ${key}...`)
+        await this.boss.schedule(`wk-${key}`, job.schedule)
+      }
+    }
   }
 }

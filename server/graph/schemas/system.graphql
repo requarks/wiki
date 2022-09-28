@@ -7,6 +7,10 @@ extend type Query {
   systemFlags: [SystemFlag]
   systemInfo: SystemInfo
   systemSecurity: SystemSecurity
+  systemJobs(
+    type: SystemJobType!
+  ): [SystemJob]
+  systemScheduledJobs: [SystemScheduledJob]
 }
 
 extend type Mutation {
@@ -143,4 +147,26 @@ enum SystemSecurityCorsMode {
   REFLECT
   HOSTNAMES
   REGEX
+}
+
+type SystemJob {
+  id: UUID
+  name: String
+  priority: Int
+  state: String
+}
+
+type SystemScheduledJob {
+  id: String
+  name: String
+  cron: String
+  timezone: String
+  nextExecution: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+enum SystemJobType {
+  ACTIVE
+  COMPLETED
 }

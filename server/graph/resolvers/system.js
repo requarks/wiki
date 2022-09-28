@@ -7,6 +7,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const { DateTime } = require('luxon')
 const graphHelper = require('../../helpers/graph')
+const cronParser = require('cron-parser')
 
 /* global WIKI */
 
@@ -27,6 +28,35 @@ module.exports = {
     },
     systemSecurity () {
       return WIKI.config.security
+    },
+    async systemJobs (obj, args) {
+      switch (args.type) {
+        case 'ACTIVE': {
+          // const result = await WIKI.scheduler.boss.fetch('*', 25, { includeMeta: true })
+          return []
+        }
+        case 'COMPLETED': {
+          const result = await WIKI.scheduler.boss.fetchCompleted('*', 25, { includeMeta: true })
+          console.info(result)
+          return result ?? []
+        }
+        default: {
+          WIKI.logger.warn('Invalid Job Type requested.')
+          return []
+        }
+      }
+    },
+    async systemScheduledJobs (obj, args) {
+      const jobs = await WIKI.scheduler.boss.getSchedules()
+      return jobs.map(job => ({
+        id: job.name,
+        name: job.name,
+        cron: job.cron,
+        timezone: job.timezone,
+        nextExecution: cronParser.parseExpression(job.cron, { tz: job.timezone }).next(),
+        createdAt: job.created_on,
+        updatedAt: job.updated_on
+      }))
     }
   },
   Mutation: {

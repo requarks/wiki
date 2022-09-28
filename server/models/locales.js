@@ -39,25 +39,26 @@ module.exports = class Locale extends Model {
   }
 
   static async getNavLocales({ cache = false } = {}) {
-    if (!WIKI.config.lang.namespacing) {
-      return []
-    }
+    return []
+    // if (!WIKI.config.lang.namespacing) {
+    //   return []
+    // }
 
-    if (cache) {
-      const navLocalesCached = await WIKI.cache.get('nav:locales')
-      if (navLocalesCached) {
-        return navLocalesCached
-      }
-    }
-    const navLocales = await WIKI.models.locales.query().select('code', 'nativeName AS name').whereIn('code', WIKI.config.lang.namespaces).orderBy('code')
-    if (navLocales) {
-      if (cache) {
-        await WIKI.cache.set('nav:locales', navLocales, 300)
-      }
-      return navLocales
-    } else {
-      WIKI.logger.warn('Site Locales for navigation are missing or corrupted.')
-      return []
-    }
+    // if (cache) {
+    //   const navLocalesCached = await WIKI.cache.get('nav:locales')
+    //   if (navLocalesCached) {
+    //     return navLocalesCached
+    //   }
+    // }
+    // const navLocales = await WIKI.models.locales.query().select('code', 'nativeName AS name').whereIn('code', WIKI.config.lang.namespaces).orderBy('code')
+    // if (navLocales) {
+    //   if (cache) {
+    //     await WIKI.cache.set('nav:locales', navLocales, 300)
+    //   }
+    //   return navLocales
+    // } else {
+    //   WIKI.logger.warn('Site Locales for navigation are missing or corrupted.')
+    //   return []
+    // }
   }
 }

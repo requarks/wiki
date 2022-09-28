@@ -26,13 +26,13 @@ router.get('/.well-known/acme-challenge/:token', (req, res, next) => {
 /**
  * Redirect to HTTPS if HTTP Redirection is enabled
  */
-router.all('/*', (req, res, next) => {
-  if (WIKI.config.server.sslRedir && !req.secure && WIKI.servers.servers.https) {
-    let query = (!_.isEmpty(req.query)) ? `?${qs.stringify(req.query)}` : ``
-    return res.redirect(`https://${req.hostname}${req.originalUrl}${query}`)
-  } else {
-    next()
-  }
-})
+// router.all('/*', (req, res, next) => {
+//   if (WIKI.config.server.sslRedir && !req.secure && WIKI.servers.servers.https) {
+//     let query = (!_.isEmpty(req.query)) ? `?${qs.stringify(req.query)}` : ``
+//     return res.redirect(`https://${req.hostname}${req.originalUrl}${query}`)
+//   } else {
+//     next()
+//   }
+// })
 
 module.exports = router

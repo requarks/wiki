@@ -76,7 +76,8 @@ module.exports = {
     await WIKI.models.commentProviders.initProvider()
     await WIKI.models.sites.reloadCache()
     await WIKI.models.storage.initTargets()
-    WIKI.scheduler.start()
+    await WIKI.scheduler.start()
+    await WIKI.scheduler.registerScheduledJobs()
 
     await WIKI.models.subscribeToNotifications()
   },

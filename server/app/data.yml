@@ -80,17 +80,17 @@ defaults:
 jobs:
   purgeUploads:
     onInit: true
-    schedule: PT15M
+    schedule: '*/15 * * * *'
     offlineSkip: false
     repeat: true
   syncGraphLocales:
     onInit: true
-    schedule: P1D
+    schedule: '0 0 * * *'
     offlineSkip: true
     repeat: true
   syncGraphUpdates:
     onInit: true
-    schedule: P1D
+    schedule: '0 0 * * *'
     offlineSkip: true
     repeat: true
   rebuildTree:
