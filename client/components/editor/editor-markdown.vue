@@ -195,6 +195,7 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
 import gql from 'graphql-tag'
+import Cookies from 'js-cookie'
 import DOMPurify from 'dompurify'
 
 /* global siteConfig, siteLangs */
@@ -454,21 +455,36 @@ export default {
       this.processContent(newContent)
     }, 600),
     onCmPaste (cm, ev) {
-      // const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
-      // for (let clipItem of clipItems) {
-      //   if (_.startsWith(clipItem.type, 'image/')) {
-      //     const file = clipItem.getAsFile()
-      //     const reader = new FileReader()
-      //     reader.onload = evt => {
-      //       this.$store.commit(`loadingStart`, 'editor-paste-image')
-      //       this.insertAfter({
-      //         content: `![${file.name}](${evt.target.result})`,
-      //         newLine: true
-      //       })
-      //     }
-      //     reader.readAsDataURL(file)
-      //   }
-      // }
+      const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
+      for (let clipItem of clipItems) {
+        if (_.startsWith(clipItem.type, 'image/')) {
+          const file = clipItem.getAsFile()
+
+          const now = new Date()
+          // file name format yyyy-MM-dd_random.png
+          let filename = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}_${parseInt(Math.random() * (10**5))}`
+          filename += file.name.slice(file.name.lastIndexOf('.'))
+
+          const form = new FormData()
+          form.append('mediaUpload', JSON.stringify({ 'folderId':0 }))
+          form.append('mediaUpload', file, filename)
+          const jwtToken = Cookies.get('jwt')
+          this.$store.commit('showNotification', {
+            message: this.$t('editor:assets.uploading'),
+            style: 'primary',
+            icon: 'primary'
+          })
+          fetch('/u', {
+            method: 'POST',
+            body: form,
+            headers: {
+              'Authorization': `Bearer ${jwtToken}`
+            }
+          }).then(()=>{
+            this.insertAtCursor({content: `![${filename}](/${filename})`})
+          })
+        }
+      }
     },
     processContent (newContent) {
       linesMap = []
