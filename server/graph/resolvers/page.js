@@ -159,7 +159,9 @@ module.exports = {
           return {
             ...page,
             locale: page.localeCode,
-            editor: page.editorKey
+            editor: page.editorKey,
+            scriptJs: page.extra.js,
+            scriptCss: page.extra.css
           }
         } else {
           throw new WIKI.Error.PageViewForbidden()
