@@ -124,9 +124,11 @@ dataPath: ./data
 bodyParserLimit: 5mb
 
 # ---------------------------------------------------------------------
-# Workers Limit
+# Scheduler
 # ---------------------------------------------------------------------
-# Maximum number of workers that can run background cpu-intensive jobs.
-# Leave to 'auto' to use CPU cores count as maximum.
 
-workers: auto
+scheduler:
+  # Maximum number of workers to run background cpu-intensive jobs.
+  # Make sure your PostgreSQL server can handle an extra connection
+  # for each worker!
+  workers: 3

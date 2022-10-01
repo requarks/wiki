@@ -77,7 +77,6 @@ module.exports = {
     await WIKI.models.sites.reloadCache()
     await WIKI.models.storage.initTargets()
     await WIKI.scheduler.start()
-    await WIKI.scheduler.registerScheduledJobs()
 
     await WIKI.models.subscribeToNotifications()
   },
