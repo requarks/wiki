@@ -29,7 +29,8 @@ defaults:
     offline: false
     dataPath: ./data
     bodyParserLimit: 5mb
-    workers: auto
+    scheduler:
+      workers: 3
     # DB defaults
     api:
       isEnabled: false
@@ -78,27 +79,23 @@ defaults:
       maxHits: 100
     maintainerEmail: security@requarks.io
 jobs:
-  purgeUploads:
-    onInit: true
-    schedule: '*/15 * * * *'
-    offlineSkip: false
-    repeat: true
-  syncGraphLocales:
-    onInit: true
-    schedule: '0 0 * * *'
-    offlineSkip: true
-    repeat: true
-  syncGraphUpdates:
-    onInit: true
-    schedule: '0 0 * * *'
-    offlineSkip: true
-    repeat: true
-  rebuildTree:
-    onInit: true
-    offlineSkip: false
-    repeat: false
-    immediate: true
-    worker: true
+  - task: background
+    pattern: '*/15 * * * *'
+    payload:
+      name: purgeUploads
+      data: {}
+  # - task: simple
+  #   identifier: letest
+  #   pattern: '* * * * *'
+  #   payload:
+  #     name: bob
+  #     data: {}
+  # - task: simple
+  #   identifier: letest2
+  #   pattern: '* * * * *'
+  #   payload:
+  #     name: bob
+  #     data: {}
 groups:
   defaultPermissions:
     - 'read:pages'

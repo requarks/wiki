@@ -18,6 +18,7 @@ module.exports = {
   Objection,
   knex: null,
   listener: null,
+  config: null,
   /**
    * Initialize DB
    */
@@ -28,7 +29,7 @@ module.exports = {
 
     // Fetch DB Config
 
-    const dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
+    this.config = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
       host: WIKI.config.db.host.toString(),
       user: WIKI.config.db.user.toString(),
       password: WIKI.config.db.pass.toString(),
@@ -40,7 +41,7 @@ module.exports = {
 
     let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
     let sslOptions = null
-    if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(WIKI.config.db, 'sslOptions.auto', null) === false) {
+    if (dbUseSSL && _.isPlainObject(this.config) && _.get(WIKI.config.db, 'sslOptions.auto', null) === false) {
       sslOptions = WIKI.config.db.sslOptions
       sslOptions.rejectUnauthorized = sslOptions.rejectUnauthorized !== false
       if (sslOptions.ca && sslOptions.ca.indexOf('-----') !== 0) {
@@ -73,8 +74,8 @@ module.exports = {
       }
     }
 
-    if (dbUseSSL && _.isPlainObject(dbConfig)) {
-      dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
+    if (dbUseSSL && _.isPlainObject(this.config)) {
+      this.config.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
     }
 
     // Initialize Knex
@@ -82,7 +83,7 @@ module.exports = {
       client: 'pg',
       useNullAsDefault: true,
       asyncStackTraces: WIKI.IS_DEBUG,
-      connection: dbConfig,
+      connection: this.config,
       searchPath: [WIKI.config.db.schemas.wiki],
       pool: {
         ...WIKI.config.pool,

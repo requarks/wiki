@@ -13,3 +13,4 @@ globals:
   document: false
   navigator: false
   window: false
+  WIKI: true
