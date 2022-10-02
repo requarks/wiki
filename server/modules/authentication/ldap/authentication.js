@@ -31,7 +31,7 @@ module.exports = {
             throw new Error('Invalid Unique ID field mapping!')
           }
 
-          const user = await WIKI.models.users.processProfile({
+          const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               id: userId,

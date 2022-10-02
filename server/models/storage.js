@@ -5,8 +5,6 @@ const _ = require('lodash')
 const yaml = require('js-yaml')
 const commonHelper = require('../helpers/common')
 
-/* global WIKI */
-
 /**
  * Storage model
  */
@@ -31,7 +29,7 @@ module.exports = class Storage extends Model {
   }
 
   static async getTargets ({ siteId }) {
-    return WIKI.models.storage.query().where(builder => {
+    return WIKI.db.storage.query().where(builder => {
       if (siteId) {
         builder.where('siteId', siteId)
       }
@@ -85,7 +83,7 @@ module.exports = class Storage extends Model {
    * Initialize active storage targets
    */
   static async initTargets () {
-    const dbTargets = await WIKI.models.storage.query().where('isEnabled', true)
+    const dbTargets = await WIKI.db.storage.query().where('isEnabled', true)
     const activeModules = _.uniq(dbTargets.map(t => t.module))
     try {
       // -> Stop and delete existing jobs
@@ -109,7 +107,7 @@ module.exports = class Storage extends Model {
       //     await target.fn.init()
 
       //     // -> Save succeeded init state
-      //     await WIKI.models.storage.query().patch({
+      //     await WIKI.db.storage.query().patch({
       //       state: {
       //         status: 'operational',
       //         message: '',
@@ -138,7 +136,7 @@ module.exports = class Storage extends Model {
       //     }
       //   } catch (err) {
       //     // -> Save initialization error
-      //     await WIKI.models.storage.query().patch({
+      //     await WIKI.db.storage.query().patch({
       //       state: {
       //         status: 'error',
       //         message: err.message,

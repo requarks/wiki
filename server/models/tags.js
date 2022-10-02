@@ -1,8 +1,6 @@
 const Model = require('objection').Model
 const _ = require('lodash')
 
-/* global WIKI */
-
 /**
  * Tags model
  */
@@ -50,7 +48,7 @@ module.exports = class Tag extends Model {
   }
 
   static async associateTags ({ tags, page }) {
-    let existingTags = await WIKI.models.tags.query().column('id', 'tag')
+    let existingTags = await WIKI.db.tags.query().column('id', 'tag')
 
     // Format tags
 
@@ -61,11 +59,11 @@ module.exports = class Tag extends Model {
     const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({ tag: t }))
     if (newTags.length > 0) {
       if (WIKI.config.db.type === 'postgres') {
-        const createdTags = await WIKI.models.tags.query().insert(newTags)
+        const createdTags = await WIKI.db.tags.query().insert(newTags)
         existingTags = _.concat(existingTags, createdTags)
       } else {
         for (const newTag of newTags) {
-          const createdTag = await WIKI.models.tags.query().insert(newTag)
+          const createdTag = await WIKI.db.tags.query().insert(newTag)
           existingTags.push(createdTag)
         }
       }

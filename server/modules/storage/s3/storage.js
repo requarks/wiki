@@ -5,8 +5,6 @@ const pipeline = Promise.promisify(stream.pipeline)
 const _ = require('lodash')
 const pageHelper = require('../../../helpers/page.js')
 
-/* global WIKI */
-
 /**
  * Deduce the file path given the `page` object and the object's key to the page's path.
  */
@@ -131,7 +129,7 @@ module.exports = class S3CompatibleStorage {
 
     // -> Pages
     await pipeline(
-      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
+      WIKI.db.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
         isPrivate: false
       }).stream(),
       new stream.Transform({
@@ -146,10 +144,10 @@ module.exports = class S3CompatibleStorage {
     )
 
     // -> Assets
-    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+    const assetFolders = await WIKI.db.assetFolders.getAllPaths()
 
     await pipeline(
-      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+      WIKI.db.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
       new stream.Transform({
         objectMode: true,
         transform: async (asset, enc, cb) => {

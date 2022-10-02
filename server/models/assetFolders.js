@@ -1,8 +1,6 @@
 const Model = require('objection').Model
 const _ = require('lodash')
 
-/* global WIKI */
-
 /**
  * Users model
  */
@@ -42,13 +40,13 @@ module.exports = class AssetFolder extends Model {
   static async getHierarchy (folderId) {
     let hier
     if (WIKI.config.db.type === 'mssql') {
-      hier = await WIKI.models.knex.with('ancestors', qb => {
+      hier = await WIKI.db.knex.with('ancestors', qb => {
         qb.select('id', 'name', 'slug', 'parentId').from('assetFolders').where('id', folderId).unionAll(sqb => {
           sqb.select('a.id', 'a.name', 'a.slug', 'a.parentId').from('assetFolders AS a').join('ancestors', 'ancestors.parentId', 'a.id')
         })
       }).select('*').from('ancestors')
     } else {
-      hier = await WIKI.models.knex.withRecursive('ancestors', qb => {
+      hier = await WIKI.db.knex.withRecursive('ancestors', qb => {
         qb.select('id', 'name', 'slug', 'parentId').from('assetFolders').where('id', folderId).union(sqb => {
           sqb.select('a.id', 'a.name', 'a.slug', 'a.parentId').from('assetFolders AS a').join('ancestors', 'ancestors.parentId', 'a.id')
         })
@@ -62,7 +60,7 @@ module.exports = class AssetFolder extends Model {
    * Get full folder paths
    */
   static async getAllPaths () {
-    const all = await WIKI.models.assetFolders.query()
+    const all = await WIKI.db.assetFolders.query()
     let folders = {}
     all.forEach(fld => {
       _.set(folders, fld.id, fld.slug)

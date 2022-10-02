@@ -4,8 +4,6 @@ const semver = require('semver')
 
 const baseMigrationPath = path.join(WIKI.SERVERPATH, 'db/migrations')
 
-/* global WIKI */
-
 module.exports = {
   /**
    * Gets the migration names

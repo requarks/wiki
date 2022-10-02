@@ -1,15 +1,13 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     /**
      * Fetch list of Comments Providers
      */
     async commentsProviders(obj, args, context, info) {
-      const providers = await WIKI.models.commentProviders.getProviders()
+      const providers = await WIKI.db.commentProviders.getProviders()
       return providers.map(provider => {
         const providerInfo = _.find(WIKI.data.commentProviders, ['key', provider.key]) || {}
         return {
@@ -34,10 +32,10 @@ module.exports = {
      * Fetch list of comments for a page
      */
     async comments (obj, args, context) {
-      const page = await WIKI.models.pages.query().select('id').findOne({ localeCode: args.locale, path: args.path })
+      const page = await WIKI.db.pages.query().select('id').findOne({ localeCode: args.locale, path: args.path })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], args)) {
-          const comments = await WIKI.models.comments.query().where('pageId', page.id).orderBy('createdAt')
+          const comments = await WIKI.db.comments.query().where('pageId', page.id).orderBy('createdAt')
           return comments.map(c => ({
             ...c,
             authorName: c.name,
@@ -59,7 +57,7 @@ module.exports = {
       if (!cm || !cm.pageId) {
         throw new WIKI.Error.CommentNotFound()
       }
-      const page = await WIKI.models.pages.query().select('localeCode', 'path').findById(cm.pageId)
+      const page = await WIKI.db.pages.query().select('localeCode', 'path').findById(cm.pageId)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
           path: page.path,
@@ -86,7 +84,7 @@ module.exports = {
      */
     async createComment (obj, args, context) {
       try {
-        const cmId = await WIKI.models.comments.postNewComment({
+        const cmId = await WIKI.db.comments.postNewComment({
           ...args,
           user: context.req.user,
           ip: context.req.ip
@@ -104,7 +102,7 @@ module.exports = {
      */
     async updateComment (obj, args, context) {
       try {
-        const cmRender = await WIKI.models.comments.updateComment({
+        const cmRender = await WIKI.db.comments.updateComment({
           ...args,
           user: context.req.user,
           ip: context.req.ip
@@ -122,7 +120,7 @@ module.exports = {
      */
     async deleteComment (obj, args, context) {
       try {
-        await WIKI.models.comments.deleteComment({
+        await WIKI.db.comments.deleteComment({
           id: args.id,
           user: context.req.user,
           ip: context.req.ip
@@ -140,7 +138,7 @@ module.exports = {
     async updateCommentsProviders(obj, args, context) {
       try {
         for (let provider of args.providers) {
-          await WIKI.models.commentProviders.query().patch({
+          await WIKI.db.commentProviders.query().patch({
             isEnabled: provider.isEnabled,
             config: _.reduce(provider.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
@@ -148,7 +146,7 @@ module.exports = {
             }, {})
           }).where('key', provider.key)
         }
-        await WIKI.models.commentProviders.initProvider()
+        await WIKI.db.commentProviders.initProvider()
         return {
           responseResult: graphHelper.generateSuccess('Comment Providers updated successfully')
         }

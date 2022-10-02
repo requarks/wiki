@@ -46,7 +46,7 @@ module.exports = class UserKey extends Model {
 
   static async generateToken ({ userId, kind, meta }, context) {
     const token = await nanoid()
-    await WIKI.models.userKeys.query().insert({
+    await WIKI.db.userKeys.query().insert({
       kind,
       token,
       meta,
@@ -57,10 +57,10 @@ module.exports = class UserKey extends Model {
   }
 
   static async validateToken ({ kind, token, skipDelete }, context) {
-    const res = await WIKI.models.userKeys.query().findOne({ kind, token }).withGraphJoined('user')
+    const res = await WIKI.db.userKeys.query().findOne({ kind, token }).withGraphJoined('user')
     if (res) {
       if (skipDelete !== true) {
-        await WIKI.models.userKeys.query().deleteById(res.id)
+        await WIKI.db.userKeys.query().deleteById(res.id)
       }
       if (DateTime.utc() > DateTime.fromISO(res.validUntil)) {
         throw new WIKI.Error.AuthValidationTokenInvalid()
@@ -75,6 +75,6 @@ module.exports = class UserKey extends Model {
   }
 
   static async destroyToken ({ token }) {
-    return WIKI.models.userKeys.query().findOne({ token }).delete()
+    return WIKI.db.userKeys.query().findOne({ token }).delete()
   }
 }

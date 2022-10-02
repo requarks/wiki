@@ -13,8 +13,6 @@ const TurndownService = require('turndown')
 const turndownPluginGfm = require('@joplin/turndown-plugin-gfm').gfm
 const cheerio = require('cheerio')
 
-/* global WIKI */
-
 const frontmatterRegex = {
   html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,
   legacy: /^(<!-- TITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)*([\w\W]*)*/i,
@@ -120,7 +118,7 @@ module.exports = class Page extends Model {
    */
   static async beforeDelete({ asFindQuery }) {
     const page = await asFindQuery().select('id')
-    await WIKI.models.comments.query().delete().where('pageId', page[0].id)
+    await WIKI.db.comments.query().delete().where('pageId', page[0].id)
   }
   /**
    * Cache Schema
@@ -256,7 +254,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for duplicate
-    const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
+    const dupCheck = await WIKI.db.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
     if (dupCheck) {
       throw new WIKI.Error.PageDuplicateCreate()
     }
@@ -289,7 +287,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Create page
-    await WIKI.models.pages.query().insert({
+    await WIKI.db.pages.query().insert({
       authorId: opts.user.id,
       content: opts.content,
       creatorId: opts.user.id,
@@ -310,7 +308,7 @@ module.exports = class Page extends Model {
         css: scriptCss
       })
     })
-    const page = await WIKI.models.pages.getPageFromDb({
+    const page = await WIKI.db.pages.getPageFromDb({
       path: opts.path,
       locale: opts.locale,
       userId: opts.user.id
@@ -318,37 +316,37 @@ module.exports = class Page extends Model {
 
     // -> Save Tags
     if (opts.tags && opts.tags.length > 0) {
-      await WIKI.models.tags.associateTags({ tags: opts.tags, page })
+      await WIKI.db.tags.associateTags({ tags: opts.tags, page })
     }
 
     // -> Render page to HTML
-    await WIKI.models.pages.renderPage(page)
+    await WIKI.db.pages.renderPage(page)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.db.pages.rebuildTree()
 
     // -> Add to Search Index
-    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+    const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
+    page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.created(page)
 
     // -> Add to Storage
     if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
+      await WIKI.db.storage.pageEvent({
         event: 'created',
         page
       })
     }
 
     // -> Reconnect Links
-    await WIKI.models.pages.reconnectLinks({
+    await WIKI.db.pages.reconnectLinks({
       locale: page.localeCode,
       path: page.path,
       mode: 'create'
     })
 
     // -> Get latest updatedAt
-    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
+    page.updatedAt = await WIKI.db.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
 
     return page
   }
@@ -361,7 +359,7 @@ module.exports = class Page extends Model {
    */
   static async updatePage(opts) {
     // -> Fetch original page
-    const ogPage = await WIKI.models.pages.query().findById(opts.id)
+    const ogPage = await WIKI.db.pages.query().findById(opts.id)
     if (!ogPage) {
       throw new Error('Invalid Page Id')
     }
@@ -380,7 +378,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Create version snapshot
-    await WIKI.models.pageHistory.addVersion({
+    await WIKI.db.pageHistory.addVersion({
       ...ogPage,
       action: opts.action ? opts.action : 'updated',
       versionDate: ogPage.updatedAt
@@ -414,7 +412,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Update page
-    await WIKI.models.pages.query().patch({
+    await WIKI.db.pages.query().patch({
       authorId: opts.user.id,
       content: opts.content,
       description: opts.description,
@@ -428,23 +426,23 @@ module.exports = class Page extends Model {
         css: scriptCss
       })
     }).where('id', ogPage.id)
-    let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
+    let page = await WIKI.db.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
-    await WIKI.models.tags.associateTags({ tags: opts.tags, page })
+    await WIKI.db.tags.associateTags({ tags: opts.tags, page })
 
     // -> Render page to HTML
-    await WIKI.models.pages.renderPage(page)
+    await WIKI.db.pages.renderPage(page)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Update Search Index
-    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+    const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
+    page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.updated(page)
 
     // -> Update on Storage
     if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
+      await WIKI.db.storage.pageEvent({
         event: 'updated',
         page
       })
@@ -460,7 +458,7 @@ module.exports = class Page extends Model {
         throw new WIKI.Error.PageMoveForbidden()
       }
 
-      await WIKI.models.pages.movePage({
+      await WIKI.db.pages.movePage({
         id: page.id,
         destinationLocale: opts.locale,
         destinationPath: opts.path,
@@ -468,13 +466,13 @@ module.exports = class Page extends Model {
       })
     } else {
       // -> Update title of page tree entry
-      await WIKI.models.knex.table('pageTree').where({
+      await WIKI.db.knex.table('pageTree').where({
         pageId: page.id
       }).update('title', page.title)
     }
 
     // -> Get latest updatedAt
-    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
+    page.updatedAt = await WIKI.db.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
 
     return page
   }
@@ -487,7 +485,7 @@ module.exports = class Page extends Model {
    */
   static async convertPage(opts) {
     // -> Fetch original page
-    const ogPage = await WIKI.models.pages.query().findById(opts.id)
+    const ogPage = await WIKI.db.pages.query().findById(opts.id)
     if (!ogPage) {
       throw new Error('Invalid Page Id')
     }
@@ -621,7 +619,7 @@ module.exports = class Page extends Model {
 
     // -> Create version snapshot
     if (shouldConvert) {
-      await WIKI.models.pageHistory.addVersion({
+      await WIKI.db.pageHistory.addVersion({
         ...ogPage,
         action: 'updated',
         versionDate: ogPage.updatedAt
@@ -629,18 +627,18 @@ module.exports = class Page extends Model {
     }
 
     // -> Update page
-    await WIKI.models.pages.query().patch({
+    await WIKI.db.pages.query().patch({
       contentType: targetContentType,
       editor: opts.editor,
       ...(convertedContent ? { content: convertedContent } : {})
     }).where('id', ogPage.id)
-    const page = await WIKI.models.pages.getPageFromDb(ogPage.id)
+    const page = await WIKI.db.pages.getPageFromDb(ogPage.id)
 
-    await WIKI.models.pages.deletePageFromCache(page.hash)
+    await WIKI.db.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Update on Storage
-    await WIKI.models.storage.pageEvent({
+    await WIKI.db.storage.pageEvent({
       event: 'updated',
       page
     })
@@ -655,9 +653,9 @@ module.exports = class Page extends Model {
   static async movePage(opts) {
     let page
     if (_.has(opts, 'id')) {
-      page = await WIKI.models.pages.query().findById(opts.id)
+      page = await WIKI.db.pages.query().findById(opts.id)
     } else {
-      page = await WIKI.models.pages.query().findOne({
+      page = await WIKI.db.pages.query().findOne({
         path: opts.path,
         localeCode: opts.locale
       })
@@ -697,7 +695,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for existing page at destination path
-    const destPage = await WIKI.models.pages.query().findOne({
+    const destPage = await WIKI.db.pages.query().findOne({
       path: opts.destinationPath,
       localeCode: opts.destinationLocale
     })
@@ -706,7 +704,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Create version snapshot
-    await WIKI.models.pageHistory.addVersion({
+    await WIKI.db.pageHistory.addVersion({
       ...page,
       action: 'moved',
       versionDate: page.updatedAt
@@ -716,21 +714,21 @@ module.exports = class Page extends Model {
 
     // -> Move page
     const destinationTitle = (page.title === page.path ? opts.destinationPath : page.title)
-    await WIKI.models.pages.query().patch({
+    await WIKI.db.pages.query().patch({
       path: opts.destinationPath,
       localeCode: opts.destinationLocale,
       title: destinationTitle,
       hash: destinationHash
     }).findById(page.id)
-    await WIKI.models.pages.deletePageFromCache(page.hash)
+    await WIKI.db.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.db.pages.rebuildTree()
 
     // -> Rename in Search Index
-    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+    const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
+    page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.renamed({
       ...page,
       destinationPath: opts.destinationPath,
@@ -740,7 +738,7 @@ module.exports = class Page extends Model {
 
     // -> Rename in Storage
     if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
+      await WIKI.db.storage.pageEvent({
         event: 'renamed',
         page: {
           ...page,
@@ -755,7 +753,7 @@ module.exports = class Page extends Model {
     }
 
     // -> Reconnect Links : Changing old links to the new path
-    await WIKI.models.pages.reconnectLinks({
+    await WIKI.db.pages.reconnectLinks({
       sourceLocale: page.localeCode,
       sourcePath: page.path,
       locale: opts.destinationLocale,
@@ -764,7 +762,7 @@ module.exports = class Page extends Model {
     })
 
     // -> Reconnect Links : Validate invalid links to the new path
-    await WIKI.models.pages.reconnectLinks({
+    await WIKI.db.pages.reconnectLinks({
       locale: opts.destinationLocale,
       path: opts.destinationPath,
       mode: 'create'
@@ -778,7 +776,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async deletePage(opts) {
-    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
+    const page = await WIKI.db.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
     if (!page) {
       throw new WIKI.Error.PageNotFound()
     }
@@ -792,33 +790,33 @@ module.exports = class Page extends Model {
     }
 
     // -> Create version snapshot
-    await WIKI.models.pageHistory.addVersion({
+    await WIKI.db.pageHistory.addVersion({
       ...page,
       action: 'deleted',
       versionDate: page.updatedAt
     })
 
     // -> Delete page
-    await WIKI.models.pages.query().delete().where('id', page.id)
-    await WIKI.models.pages.deletePageFromCache(page.hash)
+    await WIKI.db.pages.query().delete().where('id', page.id)
+    await WIKI.db.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.db.pages.rebuildTree()
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
 
     // -> Delete from Storage
     if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
+      await WIKI.db.storage.pageEvent({
         event: 'deleted',
         page
       })
     }
 
     // -> Reconnect Links
-    await WIKI.models.pages.reconnectLinks({
+    await WIKI.db.pages.reconnectLinks({
       locale: page.localeCode,
       path: page.path,
       mode: 'delete'
@@ -863,10 +861,10 @@ module.exports = class Page extends Model {
     let affectedHashes = []
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
-      const qryHashes = await WIKI.models.pages.query()
+      const qryHashes = await WIKI.db.pages.query()
         .returning('hash')
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
+          render: WIKI.db.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
         })
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
@@ -877,9 +875,9 @@ module.exports = class Page extends Model {
       affectedHashes = qryHashes.map(h => h.hash)
     } else {
       // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, MSSQL, SQLITE only)
-      await WIKI.models.pages.query()
+      await WIKI.db.pages.query()
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
+          render: WIKI.db.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
         })
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
@@ -887,7 +885,7 @@ module.exports = class Page extends Model {
             'pageLinks.localeCode': opts.locale
           })
         })
-      const qryHashes = await WIKI.models.pages.query()
+      const qryHashes = await WIKI.db.pages.query()
         .column('hash')
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
@@ -898,7 +896,7 @@ module.exports = class Page extends Model {
       affectedHashes = qryHashes.map(h => h.hash)
     }
     for (const hash of affectedHashes) {
-      await WIKI.models.pages.deletePageFromCache(hash)
+      await WIKI.db.pages.deletePageFromCache(hash)
       WIKI.events.outbound.emit('deletePageFromCache', hash)
     }
   }
@@ -940,14 +938,14 @@ module.exports = class Page extends Model {
    */
   static async getPage(opts) {
     // -> Get from cache first
-    let page = await WIKI.models.pages.getPageFromCache(opts)
+    let page = await WIKI.db.pages.getPageFromCache(opts)
     if (!page) {
       // -> Get from DB
-      page = await WIKI.models.pages.getPageFromDb(opts)
+      page = await WIKI.db.pages.getPageFromDb(opts)
       if (page) {
         if (page.render) {
           // -> Save render to cache
-          await WIKI.models.pages.savePageToCache(page)
+          await WIKI.db.pages.savePageToCache(page)
         } else {
           // -> No render? Possible duplicate issue
           /* TODO: Detect duplicate and delete */
@@ -967,7 +965,7 @@ module.exports = class Page extends Model {
   static async getPageFromDb(opts) {
     const queryModeID = _.isNumber(opts)
     try {
-      return WIKI.models.pages.query()
+      return WIKI.db.pages.query()
         .column([
           'pages.id',
           'pages.path',
@@ -1031,7 +1029,7 @@ module.exports = class Page extends Model {
    */
   static async savePageToCache(page) {
     const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`)
-    await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
+    await fs.outputFile(cachePath, WIKI.db.pages.cacheSchema.encode({
       id: page.id,
       authorId: page.authorId,
       authorName: page.authorName,
@@ -1067,7 +1065,7 @@ module.exports = class Page extends Model {
 
     try {
       const pageBuffer = await fs.readFile(cachePath)
-      let page = WIKI.models.pages.cacheSchema.decode(pageBuffer)
+      let page = WIKI.db.pages.cacheSchema.decode(pageBuffer)
       return {
         ...page,
         path: opts.path,
@@ -1108,7 +1106,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async migrateToLocale({ sourceLocale, targetLocale }) {
-    return WIKI.models.pages.query()
+    return WIKI.db.pages.query()
       .patch({
         localeCode: targetLocale
       })
@@ -1142,10 +1140,10 @@ module.exports = class Page extends Model {
    */
   static subscribeToEvents() {
     WIKI.events.inbound.on('deletePageFromCache', hash => {
-      WIKI.models.pages.deletePageFromCache(hash)
+      WIKI.db.pages.deletePageFromCache(hash)
     })
     WIKI.events.inbound.on('flushCache', () => {
-      WIKI.models.pages.flushCache()
+      WIKI.db.pages.flushCache()
     })
   }
 }

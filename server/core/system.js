@@ -1,8 +1,6 @@
 const fs = require('fs-extra')
 const path = require('path')
 
-/* global WIKI */
-
 module.exports = {
   updates: {
     channel: 'BETA',

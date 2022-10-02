@@ -43,7 +43,7 @@ module.exports = class ApiKey extends Model {
   static async createNewKey ({ name, expiration, groups }) {
     console.info(DateTime.utc().plus(ms(expiration)).toISO())
 
-    const entry = await WIKI.models.apiKeys.query().insert({
+    const entry = await WIKI.db.apiKeys.query().insert({
       name,
       key: 'pending',
       expiration: DateTime.utc().plus(ms(expiration)).toISO(),
@@ -65,7 +65,7 @@ module.exports = class ApiKey extends Model {
       issuer: 'urn:wiki.js'
     })
 
-    await WIKI.models.apiKeys.query().findById(entry.id).patch({
+    await WIKI.db.apiKeys.query().findById(entry.id).patch({
       key,
       isRevoked: false
     })

@@ -9,8 +9,6 @@ const { DateTime } = require('luxon')
 const graphHelper = require('../../helpers/graph')
 const cronParser = require('cron-parser')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     systemFlags () {
@@ -183,19 +181,19 @@ module.exports = {
       return process.cwd()
     },
     async groupsTotal () {
-      const total = await WIKI.models.groups.query().count('* as total').first()
+      const total = await WIKI.db.groups.query().count('* as total').first()
       return _.toSafeInteger(total.total)
     },
     async pagesTotal () {
-      const total = await WIKI.models.pages.query().count('* as total').first()
+      const total = await WIKI.db.pages.query().count('* as total').first()
       return _.toSafeInteger(total.total)
     },
     async usersTotal () {
-      const total = await WIKI.models.users.query().count('* as total').first()
+      const total = await WIKI.db.users.query().count('* as total').first()
       return _.toSafeInteger(total.total)
     },
     async tagsTotal () {
-      const total = await WIKI.models.tags.query().count('* as total').first()
+      const total = await WIKI.db.tags.query().count('* as total').first()
       return _.toSafeInteger(total.total)
     }
   }

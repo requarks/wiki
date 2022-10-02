@@ -1,12 +1,10 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async renderers(obj, args, context, info) {
-      let renderers = await WIKI.models.renderers.getRenderers()
+      let renderers = await WIKI.db.renderers.getRenderers()
       renderers = renderers.map(rdr => {
         const rendererInfo = _.find(WIKI.data.renderers, ['key', rdr.key]) || {}
         return {
@@ -35,7 +33,7 @@ module.exports = {
     async updateRenderers(obj, args, context) {
       try {
         for (let rdr of args.renderers) {
-          await WIKI.models.renderers.query().patch({
+          await WIKI.db.renderers.query().patch({
             isEnabled: rdr.isEnabled,
             config: _.reduce(rdr.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))

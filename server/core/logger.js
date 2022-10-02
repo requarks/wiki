@@ -1,8 +1,6 @@
 const chalk = require('chalk')
 const EventEmitter = require('events')
 
-/* global WIKI */
-
 const LEVELS = ['error', 'warn', 'info', 'debug']
 const LEVELSIGNORED = ['verbose', 'silly']
 const LEVELCOLORS = {

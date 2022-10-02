@@ -69,7 +69,7 @@ module.exports = class Asset extends Model {
   async getAssetPath() {
     let hierarchy = []
     if (this.folderId) {
-      hierarchy = await WIKI.models.assetFolders.getHierarchy(this.folderId)
+      hierarchy = await WIKI.db.assetFolders.getHierarchy(this.folderId)
     }
     return (this.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${this.filename}` : this.filename
   }
@@ -83,7 +83,7 @@ module.exports = class Asset extends Model {
     const fileHash = assetHelper.generateHash(opts.assetPath)
 
     // Check for existing asset
-    let asset = await WIKI.models.assets.query().where({
+    let asset = await WIKI.db.assets.query().where({
       hash: fileHash,
       folderId: opts.folderId
     }).first()
@@ -124,8 +124,8 @@ module.exports = class Asset extends Model {
         if (opts.mode === 'upload') {
           assetRow.authorId = opts.user.id
         }
-        await WIKI.models.assets.query().patch(assetRow).findById(asset.id)
-        await WIKI.models.knex('assetData').where({
+        await WIKI.db.assets.query().patch(assetRow).findById(asset.id)
+        await WIKI.db.knex('assetData').where({
           id: asset.id
         }).update({
           data: fileBuffer
@@ -133,8 +133,8 @@ module.exports = class Asset extends Model {
       } else {
         // Create asset entry
         assetRow.authorId = opts.user.id
-        asset = await WIKI.models.assets.query().insert(assetRow)
-        await WIKI.models.knex('assetData').insert({
+        asset = await WIKI.db.assets.query().insert(assetRow)
+        await WIKI.db.knex('assetData').insert({
           id: asset.id,
           data: fileBuffer
         })
@@ -149,7 +149,7 @@ module.exports = class Asset extends Model {
 
       // Add to Storage
       if (!opts.skipStorage) {
-        await WIKI.models.storage.assetEvent({
+        await WIKI.db.storage.assetEvent({
           event: 'uploaded',
           asset: {
             ...asset,
@@ -177,13 +177,13 @@ module.exports = class Asset extends Model {
         res.set('Content-disposition', 'attachment; filename=' + encodeURIComponent(fileInfo.base))
       }
 
-      if (await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res)) {
+      if (await WIKI.db.assets.getAssetFromCache(assetPath, cachePath, res)) {
         return
       }
-      if (await WIKI.models.assets.getAssetFromStorage(assetPath, res)) {
+      if (await WIKI.db.assets.getAssetFromStorage(assetPath, res)) {
         return
       }
-      await WIKI.models.assets.getAssetFromDb(assetPath, fileHash, cachePath, res)
+      await WIKI.db.assets.getAssetFromDb(assetPath, fileHash, cachePath, res)
     } catch (err) {
       if (err.code === `ECONNABORTED` || err.code === `EPIPE`) {
         return
@@ -206,13 +206,13 @@ module.exports = class Asset extends Model {
   }
 
   static async getAssetFromStorage(assetPath, res) {
-    const localLocations = await WIKI.models.storage.getLocalLocations({
+    const localLocations = await WIKI.db.storage.getLocalLocations({
       asset: {
         path: assetPath
       }
     })
     for (let location of _.filter(localLocations, location => Boolean(location.path))) {
-      const assetExists = await WIKI.models.assets.getAssetFromCache(assetPath, location.path, res)
+      const assetExists = await WIKI.db.assets.getAssetFromCache(assetPath, location.path, res)
       if (assetExists) {
         return true
       }
@@ -221,9 +221,9 @@ module.exports = class Asset extends Model {
   }
 
   static async getAssetFromDb(assetPath, fileHash, cachePath, res) {
-    const asset = await WIKI.models.assets.query().where('hash', fileHash).first()
+    const asset = await WIKI.db.assets.query().where('hash', fileHash).first()
     if (asset) {
-      const assetData = await WIKI.models.knex('assetData').where('id', asset.id).first()
+      const assetData = await WIKI.db.knex('assetData').where('id', asset.id).first()
       res.type(asset.ext)
       res.send(assetData.data)
       await fs.outputFile(cachePath, assetData.data)

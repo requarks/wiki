@@ -3,8 +3,6 @@ const sanitize = require('sanitize-filename')
 const graphHelper = require('../../helpers/graph')
 const assetHelper = require('../../helpers/asset')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async assets(obj, args, context) {
@@ -14,9 +12,9 @@ module.exports = {
       if (args.kind !== 'ALL') {
         cond.kind = args.kind.toLowerCase()
       }
-      const folderHierarchy = await WIKI.models.assetFolders.getHierarchy(args.folderId)
+      const folderHierarchy = await WIKI.db.assetFolders.getHierarchy(args.folderId)
       const folderPath = folderHierarchy.map(h => h.slug).join('/')
-      const results = await WIKI.models.assets.query().where(cond)
+      const results = await WIKI.db.assets.query().where(cond)
       return _.filter(results, r => {
         const path = folderPath ? `${folderPath}/${r.filename}` : r.filename
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
@@ -26,10 +24,10 @@ module.exports = {
       }))
     },
     async assetsFolders(obj, args, context) {
-      const results = await WIKI.models.assetFolders.query().where({
+      const results = await WIKI.db.assetFolders.query().where({
         parentId: args.parentFolderId === 0 ? null : args.parentFolderId
       })
-      const parentHierarchy = await WIKI.models.assetFolders.getHierarchy(args.parentFolderId)
+      const parentHierarchy = await WIKI.db.assetFolders.getHierarchy(args.parentFolderId)
       const parentPath = parentHierarchy.map(h => h.slug).join('/')
       return _.filter(results, r => {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
@@ -45,12 +43,12 @@ module.exports = {
       try {
         const folderSlug = sanitize(args.slug).toLowerCase()
         const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId
-        const result = await WIKI.models.assetFolders.query().where({
+        const result = await WIKI.db.assetFolders.query().where({
           parentId: parentFolderId,
           slug: folderSlug
         }).first()
         if (!result) {
-          await WIKI.models.assetFolders.query().insert({
+          await WIKI.db.assetFolders.query().insert({
             slug: folderSlug,
             name: folderSlug,
             parentId: parentFolderId
@@ -72,7 +70,7 @@ module.exports = {
       try {
         const filename = sanitize(args.filename).toLowerCase()
 
-        const asset = await WIKI.models.assets.query().findById(args.id)
+        const asset = await WIKI.db.assets.query().findById(args.id)
         if (asset) {
           // Check for extension mismatch
           if (!_.endsWith(filename, asset.ext)) {
@@ -85,7 +83,7 @@ module.exports = {
           }
 
           // Check for collision
-          const assetCollision = await WIKI.models.assets.query().where({
+          const assetCollision = await WIKI.db.assets.query().where({
             filename,
             folderId: asset.folderId
           }).first()
@@ -96,7 +94,7 @@ module.exports = {
           // Get asset folder path
           let hierarchy = []
           if (asset.folderId) {
-            hierarchy = await WIKI.models.assetFolders.getHierarchy(asset.folderId)
+            hierarchy = await WIKI.db.assetFolders.getHierarchy(asset.folderId)
           }
 
           // Check source asset permissions
@@ -113,7 +111,7 @@ module.exports = {
 
           // Update filename + hash
           const fileHash = assetHelper.generateHash(assetTargetPath)
-          await WIKI.models.assets.query().patch({
+          await WIKI.db.assets.query().patch({
             filename: filename,
             hash: fileHash
           }).findById(args.id)
@@ -122,7 +120,7 @@ module.exports = {
           await asset.deleteAssetCache()
 
           // Rename in Storage
-          await WIKI.models.storage.assetEvent({
+          await WIKI.db.storage.assetEvent({
             event: 'renamed',
             asset: {
               ...asset,
@@ -149,7 +147,7 @@ module.exports = {
      */
     async deleteAsset(obj, args, context) {
       try {
-        const asset = await WIKI.models.assets.query().findById(args.id)
+        const asset = await WIKI.db.assets.query().findById(args.id)
         if (asset) {
           // Check permissions
           const assetPath = await asset.getAssetPath()
@@ -157,12 +155,12 @@ module.exports = {
             throw new WIKI.Error.AssetDeleteForbidden()
           }
 
-          await WIKI.models.knex('assetData').where('id', args.id).del()
-          await WIKI.models.assets.query().deleteById(args.id)
+          await WIKI.db.knex('assetData').where('id', args.id).del()
+          await WIKI.db.assets.query().deleteById(args.id)
           await asset.deleteAssetCache()
 
           // Delete from Storage
-          await WIKI.models.storage.assetEvent({
+          await WIKI.db.storage.assetEvent({
             event: 'deleted',
             asset: {
               ...asset,
@@ -188,7 +186,7 @@ module.exports = {
      */
     async flushTempUploads(obj, args, context) {
       try {
-        await WIKI.models.assets.flushTempUploads()
+        await WIKI.db.assets.flushTempUploads()
         return {
           responseResult: graphHelper.generateSuccess('Temporary Uploads have been flushed successfully.')
         }

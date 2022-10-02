@@ -3,8 +3,6 @@ const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
 
-/* global WIKI */
-
 module.exports = {
   transport: null,
   templates: {},

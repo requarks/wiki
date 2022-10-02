@@ -1,7 +1,5 @@
 const _ = require('lodash')
 
-/* global WIKI */
-
 // ------------------------------------
 // OAuth2 Account
 // ------------------------------------
@@ -21,7 +19,7 @@ module.exports = {
       scope: conf.scope
     }, async (req, accessToken, refreshToken, profile, cb) => {
       try {
-        const user = await WIKI.models.users.processProfile({
+        const user = await WIKI.db.users.processProfile({
           providerKey: req.params.strategy,
           profile: {
             ...profile,

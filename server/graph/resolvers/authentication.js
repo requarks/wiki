@@ -1,15 +1,13 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     /**
      * List of API Keys
      */
     async apiKeys (obj, args, context) {
-      const keys = await WIKI.models.apiKeys.query().orderBy(['isRevoked', 'name'])
+      const keys = await WIKI.db.apiKeys.query().orderBy(['isRevoked', 'name'])
       return keys.map(k => ({
         id: k.id,
         name: k.name,
@@ -39,14 +37,14 @@ module.exports = {
      * Fetch active authentication strategies
      */
     async authActiveStrategies (obj, args, context) {
-      return WIKI.models.authentication.getStrategies({ enabledOnly: args.enabledOnly })
+      return WIKI.db.authentication.getStrategies({ enabledOnly: args.enabledOnly })
     },
     /**
      * Fetch site authentication strategies
      */
     async authSiteStrategies (obj, args, context, info) {
-      const site = await WIKI.models.sites.query().findById(args.siteId)
-      const activeStrategies = await WIKI.models.authentication.getStrategies({ enabledOnly: true })
+      const site = await WIKI.db.sites.query().findById(args.siteId)
+      const activeStrategies = await WIKI.db.authentication.getStrategies({ enabledOnly: true })
       return activeStrategies.map(str => {
         const siteAuth = _.find(site.config.authStrategies, ['id', str.id]) || {}
         return {
@@ -64,7 +62,7 @@ module.exports = {
      */
     async createApiKey (obj, args, context) {
       try {
-        const key = await WIKI.models.apiKeys.createNewKey(args)
+        const key = await WIKI.db.apiKeys.createNewKey(args)
         await WIKI.auth.reloadApiKeys()
         WIKI.events.outbound.emit('reloadApiKeys')
         return {
@@ -81,7 +79,7 @@ module.exports = {
      */
     async login (obj, args, context) {
       try {
-        const authResult = await WIKI.models.users.login(args, context)
+        const authResult = await WIKI.db.users.login(args, context)
         return {
           ...authResult,
           operation: graphHelper.generateSuccess('Login success')
@@ -101,7 +99,7 @@ module.exports = {
      */
     async loginTFA (obj, args, context) {
       try {
-        const authResult = await WIKI.models.users.loginTFA(args, context)
+        const authResult = await WIKI.db.users.loginTFA(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('TFA success')
@@ -115,7 +113,7 @@ module.exports = {
      */
     async changePassword (obj, args, context) {
       try {
-        const authResult = await WIKI.models.users.loginChangePassword(args, context)
+        const authResult = await WIKI.db.users.loginChangePassword(args, context)
         return {
           ...authResult,
           responseResult: graphHelper.generateSuccess('Password changed successfully')
@@ -129,7 +127,7 @@ module.exports = {
      */
     async forgotPassword (obj, args, context) {
       try {
-        await WIKI.models.users.loginForgotPassword(args, context)
+        await WIKI.db.users.loginForgotPassword(args, context)
         return {
           responseResult: graphHelper.generateSuccess('Password reset request processed.')
         }
@@ -142,7 +140,7 @@ module.exports = {
      */
     async register (obj, args, context) {
       try {
-        await WIKI.models.users.register({ ...args, verify: true }, context)
+        await WIKI.db.users.register({ ...args, verify: true }, context)
         return {
           responseResult: graphHelper.generateSuccess('Registration success')
         }
@@ -169,7 +167,7 @@ module.exports = {
      */
     async revokeApiKey (obj, args, context) {
       try {
-        await WIKI.models.apiKeys.query().findById(args.id).patch({
+        await WIKI.db.apiKeys.query().findById(args.id).patch({
           isRevoked: true
         })
         await WIKI.auth.reloadApiKeys()
@@ -186,7 +184,7 @@ module.exports = {
      */
     async updateAuthStrategies (obj, args, context) {
       try {
-        const previousStrategies = await WIKI.models.authentication.getStrategies()
+        const previousStrategies = await WIKI.db.authentication.getStrategies()
         for (const str of args.strategies) {
           const newStr = {
             displayName: str.displayName,
@@ -202,13 +200,13 @@ module.exports = {
           }
 
           if (_.some(previousStrategies, ['key', str.key])) {
-            await WIKI.models.authentication.query().patch({
+            await WIKI.db.authentication.query().patch({
               key: str.key,
               strategyKey: str.strategyKey,
               ...newStr
             }).where('key', str.key)
           } else {
-            await WIKI.models.authentication.query().insert({
+            await WIKI.db.authentication.query().insert({
               key: str.key,
               strategyKey: str.strategyKey,
               ...newStr
@@ -217,11 +215,11 @@ module.exports = {
         }
 
         for (const str of _.differenceBy(previousStrategies, args.strategies, 'key')) {
-          const hasUsers = await WIKI.models.users.query().count('* as total').where({ providerKey: str.key }).first()
+          const hasUsers = await WIKI.db.users.query().count('* as total').where({ providerKey: str.key }).first()
           if (_.toSafeInteger(hasUsers.total) > 0) {
             throw new Error(`Cannot delete ${str.displayName} as 1 or more users are still using it.`)
           } else {
-            await WIKI.models.authentication.query().delete().where('key', str.key)
+            await WIKI.db.authentication.query().delete().where('key', str.key)
           }
         }
 

@@ -5,8 +5,6 @@ const util = require('util')
 const exec = util.promisify(require('child_process').exec)
 const { pipeline } = require('stream/promises')
 
-/* global WIKI */
-
 module.exports = {
   key: 'sharp',
   title: 'Sharp',

@@ -129,6 +129,5 @@ bodyParserLimit: 5mb
 
 scheduler:
   # Maximum number of workers to run background cpu-intensive jobs.
-  # Make sure your PostgreSQL server can handle an extra connection
-  # for each worker!
-  workers: 3
+  # Leave 'auto' to use number of CPU cores as maximum.
+  workers: auto

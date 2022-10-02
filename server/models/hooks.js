@@ -1,7 +1,5 @@
 const Model = require('objection').Model
 
-/* global WIKI */
-
 /**
  * Hook model
  */
@@ -17,7 +15,7 @@ module.exports = class Hook extends Model {
   }
 
   static async createHook (data) {
-    return WIKI.models.hooks.query().insertAndFetch({
+    return WIKI.db.hooks.query().insertAndFetch({
       name: data.name,
       events: data.events,
       url: data.url,
@@ -31,7 +29,7 @@ module.exports = class Hook extends Model {
   }
 
   static async updateHook (id, patch) {
-    return WIKI.models.hooks.query().findById(id).patch({
+    return WIKI.db.hooks.query().findById(id).patch({
       ...patch,
       state: 'pending',
       lastErrorMessage: null
@@ -39,6 +37,6 @@ module.exports = class Hook extends Model {
   }
 
   static async deleteHook (id) {
-    return WIKI.models.hooks.query().deleteById(id)
+    return WIKI.db.hooks.query().deleteById(id)
   }
 }

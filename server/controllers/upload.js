@@ -5,8 +5,6 @@ const multer = require('multer')
 const path = require('path')
 const sanitize = require('sanitize-filename')
 
-/* global WIKI */
-
 /**
  * Upload files
  */
@@ -66,7 +64,7 @@ router.post('/u', (req, res, next) => {
   let hierarchy = []
   if (folderId) {
     try {
-      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId)
+      hierarchy = await WIKI.db.assetFolders.getHierarchy(folderId)
     } catch (err) {
       return res.status(400).json({
         succeeded: false,
@@ -88,7 +86,7 @@ router.post('/u', (req, res, next) => {
   }
 
   // Process upload file
-  await WIKI.models.assets.upload({
+  await WIKI.db.assets.upload({
     ...fileMeta,
     mode: 'upload',
     folderId: folderId,

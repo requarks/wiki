@@ -3,24 +3,22 @@ const safeRegex = require('safe-regex')
 const _ = require('lodash')
 const { v4: uuid } = require('uuid')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     /**
      * FETCH ALL GROUPS
      */
     async groups () {
-      return WIKI.models.groups.query().select(
+      return WIKI.db.groups.query().select(
         'groups.*',
-        WIKI.models.groups.relatedQuery('users').count().as('userCount')
+        WIKI.db.groups.relatedQuery('users').count().as('userCount')
       )
     },
     /**
      * FETCH A SINGLE GROUP
      */
     async groupById(obj, args) {
-      return WIKI.models.groups.query().findById(args.id)
+      return WIKI.db.groups.query().findById(args.id)
     }
   },
   Mutation: {
@@ -34,7 +32,7 @@ module.exports = {
       }
 
       // Check for valid group
-      const grp = await WIKI.models.groups.query().findById(args.groupId)
+      const grp = await WIKI.db.groups.query().findById(args.groupId)
       if (!grp) {
         throw new Error('Invalid Group ID')
       }
@@ -51,13 +49,13 @@ module.exports = {
       }
 
       // Check for valid user
-      const usr = await WIKI.models.users.query().findById(args.userId)
+      const usr = await WIKI.db.users.query().findById(args.userId)
       if (!usr) {
         throw new Error('Invalid User ID')
       }
 
       // Check for existing relation
-      const relExist = await WIKI.models.knex('userGroups').where({
+      const relExist = await WIKI.db.knex('userGroups').where({
         userId: args.userId,
         groupId: args.groupId
       }).first()
@@ -80,7 +78,7 @@ module.exports = {
      * CREATE NEW GROUP
      */
     async createGroup (obj, args, { req }) {
-      const group = await WIKI.models.groups.query().insertAndFetch({
+      const group = await WIKI.db.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
         rules: JSON.stringify(WIKI.data.groups.defaultRules.map(r => ({
@@ -104,7 +102,7 @@ module.exports = {
         throw new Error('Cannot delete this group.')
       }
 
-      await WIKI.models.groups.query().deleteById(args.id)
+      await WIKI.db.groups.query().deleteById(args.id)
 
       WIKI.auth.revokeUserTokens({ id: args.id, kind: 'g' })
       WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'g' })
@@ -126,11 +124,11 @@ module.exports = {
       if (args.userId === 1 && args.groupId === 1) {
         throw new Error('Cannot unassign Administrator user from Administrators group.')
       }
-      const grp = await WIKI.models.groups.query().findById(args.groupId)
+      const grp = await WIKI.db.groups.query().findById(args.groupId)
       if (!grp) {
         throw new Error('Invalid Group ID')
       }
-      const usr = await WIKI.models.users.query().findById(args.userId)
+      const usr = await WIKI.db.users.query().findById(args.userId)
       if (!usr) {
         throw new Error('Invalid User ID')
       }
@@ -179,7 +177,7 @@ module.exports = {
       }
 
       // Update group
-      await WIKI.models.groups.query().patch({
+      await WIKI.db.groups.query().patch({
         name: args.name,
         redirectOnLogin: args.redirectOnLogin,
         permissions: JSON.stringify(args.permissions),

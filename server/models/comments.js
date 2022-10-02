@@ -2,8 +2,6 @@ const Model = require('objection').Model
 const validate = require('validate.js')
 const _ = require('lodash')
 
-/* global WIKI */
-
 /**
  * Comments model
  */
@@ -95,7 +93,7 @@ module.exports = class Comment extends Model {
     }
 
     // -> Load Page
-    const page = await WIKI.models.pages.getPageFromDb(pageId)
+    const page = await WIKI.db.pages.getPageFromDb(pageId)
     if (page) {
       if (!WIKI.auth.checkAccess(user, ['write:comments'], {
         path: page.path,
@@ -132,7 +130,7 @@ module.exports = class Comment extends Model {
     if (!pageId) {
       throw new WIKI.Error.CommentNotFound()
     }
-    const page = await WIKI.models.pages.getPageFromDb(pageId)
+    const page = await WIKI.db.pages.getPageFromDb(pageId)
     if (page) {
       if (!WIKI.auth.checkAccess(user, ['manage:comments'], {
         path: page.path,
@@ -165,7 +163,7 @@ module.exports = class Comment extends Model {
     if (!pageId) {
       throw new WIKI.Error.CommentNotFound()
     }
-    const page = await WIKI.models.pages.getPageFromDb(pageId)
+    const page = await WIKI.db.pages.getPageFromDb(pageId)
     if (page) {
       if (!WIKI.auth.checkAccess(user, ['manage:comments'], {
         path: page.path,

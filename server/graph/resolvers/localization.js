@@ -1,13 +1,11 @@
 const graphHelper = require('../../helpers/graph')
 const _ = require('lodash')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async locales(obj, args, context, info) {
       let remoteLocales = await WIKI.cache.get('locales')
-      let localLocales = await WIKI.models.locales.query().select('code', 'isRTL', 'name', 'nativeName', 'createdAt', 'updatedAt', 'availability')
+      let localLocales = await WIKI.db.locales.query().select('code', 'isRTL', 'name', 'nativeName', 'createdAt', 'updatedAt', 'availability')
       remoteLocales = remoteLocales || localLocales
       return _.map(remoteLocales, rl => {
         let isInstalled = _.some(localLocales, ['code', rl.code])
@@ -44,7 +42,7 @@ module.exports = {
         WIKI.config.lang.namespacing = args.namespacing
         WIKI.config.lang.namespaces = _.union(args.namespaces, [args.locale])
 
-        const newLocale = await WIKI.models.locales.query().select('isRTL').where('code', args.locale).first()
+        const newLocale = await WIKI.db.locales.query().select('isRTL').where('code', args.locale).first()
         WIKI.config.lang.rtl = newLocale.isRTL
 
         await WIKI.configSvc.saveToDb(['lang'])

@@ -1,7 +1,5 @@
 const { Octokit, App } = require('octokit')
 
-/* global WIKI */
-
 module.exports = {
   async activated () { },
   async deactivated () { },
@@ -24,7 +22,7 @@ module.exports = {
             code: state.code
           })
           if (resp.status > 200 && resp.status < 300) {
-            await WIKI.models.storage.query().patch({
+            await WIKI.db.storage.query().patch({
               config: {
                 appId: resp.data.id,
                 appName: resp.data.name,
@@ -55,7 +53,7 @@ module.exports = {
         // VERIFY APP INSTALLATION
         // -----------------------
         case 'verify': {
-          const tgt = await WIKI.models.storage.query().findById(id)
+          const tgt = await WIKI.db.storage.query().findById(id)
           if (!tgt) {
             throw new Error('Invalid Target ID')
           }
@@ -115,7 +113,7 @@ module.exports = {
 
           // -> Save install/repo info
 
-          await WIKI.models.storage.query().patch({
+          await WIKI.db.storage.query().patch({
             isEnabled: true,
             config: {
               ...tgt.config,
@@ -148,7 +146,7 @@ module.exports = {
   },
   async setupDestroy (id) {
     try {
-      const tgt = await WIKI.models.storage.query().findById(id)
+      const tgt = await WIKI.db.storage.query().findById(id)
       if (!tgt) {
         throw new Error('Invalid Target ID')
       }
@@ -172,7 +170,7 @@ module.exports = {
 
       // -> Reset storage module config
 
-      await WIKI.models.storage.query().patch({
+      await WIKI.db.storage.query().patch({
         isEnabled: false,
         config: {},
         state: {

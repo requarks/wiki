@@ -1,20 +1,18 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     /**
      * PAGE HISTORY
      */
     async pageHistoryById (obj, args, context, info) {
-      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.id)
+      const page = await WIKI.db.pages.query().select('path', 'localeCode').findById(args.id)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
         locale: page.localeCode
       })) {
-        return WIKI.models.pageHistory.getHistory({
+        return WIKI.db.pageHistory.getHistory({
           pageId: args.id,
           offsetPage: args.offsetPage || 0,
           offsetSize: args.offsetSize || 100
@@ -27,12 +25,12 @@ module.exports = {
      * PAGE VERSION
      */
     async pageVersionById (obj, args, context, info) {
-      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+      const page = await WIKI.db.pages.query().select('path', 'localeCode').findById(args.pageId)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
         locale: page.localeCode
       })) {
-        return WIKI.models.pageHistory.getVersion({
+        return WIKI.db.pageHistory.getVersion({
           pageId: args.pageId,
           versionId: args.versionId
         })
@@ -68,7 +66,7 @@ module.exports = {
      * LIST PAGES
      */
     async pages (obj, args, context, info) {
-      let results = await WIKI.models.pages.query().column([
+      let results = await WIKI.db.pages.query().column([
         'pages.id',
         'path',
         { locale: 'localeCode' },
@@ -144,7 +142,7 @@ module.exports = {
      * FETCH SINGLE PAGE
      */
     async pageById (obj, args, context, info) {
-      let page = await WIKI.models.pages.getPageFromDb(args.id)
+      let page = await WIKI.db.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
           path: page.path,
@@ -166,7 +164,7 @@ module.exports = {
      * FETCH TAGS
      */
     async tags (obj, args, context, info) {
-      const pages = await WIKI.models.pages.query()
+      const pages = await WIKI.db.pages.query()
         .column([
           'path',
           { locale: 'localeCode' }
@@ -185,7 +183,7 @@ module.exports = {
      */
     async searchTags (obj, args, context, info) {
       const query = _.trim(args.query)
-      const pages = await WIKI.models.pages.query()
+      const pages = await WIKI.db.pages.query()
         .column([
           'path',
           { locale: 'localeCode' }
@@ -220,7 +218,7 @@ module.exports = {
       if (!args.locale) { args.locale = WIKI.config.lang.code }
 
       if (args.path && !args.parent) {
-        curPage = await WIKI.models.knex('pageTree').first('parent', 'ancestors').where({
+        curPage = await WIKI.db.knex('pageTree').first('parent', 'ancestors').where({
           path: args.path,
           localeCode: args.locale
         })
@@ -231,7 +229,7 @@ module.exports = {
         }
       }
 
-      const results = await WIKI.models.knex('pageTree').where(builder => {
+      const results = await WIKI.db.knex('pageTree').where(builder => {
         builder.where('localeCode', args.locale)
         switch (args.mode) {
           case 'FOLDERS':
@@ -268,14 +266,14 @@ module.exports = {
       let results
 
       if (WIKI.config.db.type === 'mysql' || WIKI.config.db.type === 'mariadb' || WIKI.config.db.type === 'sqlite') {
-        results = await WIKI.models.knex('pages')
+        results = await WIKI.db.knex('pages')
           .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
           .leftJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
           .where({
             'pages.localeCode': args.locale
           })
           .unionAll(
-            WIKI.models.knex('pageLinks')
+            WIKI.db.knex('pageLinks')
               .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
               .leftJoin('pages', 'pageLinks.pageId', 'pages.id')
               .where({
@@ -283,7 +281,7 @@ module.exports = {
               })
           )
       } else {
-        results = await WIKI.models.knex('pages')
+        results = await WIKI.db.knex('pages')
           .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
           .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
           .where({
@@ -320,7 +318,7 @@ module.exports = {
      * CHECK FOR EDITING CONFLICT
      */
     async checkConflicts (obj, args, context, info) {
-      let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
+      let page = await WIKI.db.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
@@ -338,7 +336,7 @@ module.exports = {
      * FETCH LATEST VERSION FOR CONFLICT COMPARISON
      */
     async checkConflictsLatest (obj, args, context, info) {
-      let page = await WIKI.models.pages.getPageFromDb(args.id)
+      let page = await WIKI.db.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
@@ -363,7 +361,7 @@ module.exports = {
      */
     async createPage(obj, args, context) {
       try {
-        const page = await WIKI.models.pages.createPage({
+        const page = await WIKI.db.pages.createPage({
           ...args,
           user: context.req.user
         })
@@ -380,7 +378,7 @@ module.exports = {
      */
     async updatePage(obj, args, context) {
       try {
-        const page = await WIKI.models.pages.updatePage({
+        const page = await WIKI.db.pages.updatePage({
           ...args,
           user: context.req.user
         })
@@ -397,7 +395,7 @@ module.exports = {
      */
     async convertPage(obj, args, context) {
       try {
-        await WIKI.models.pages.convertPage({
+        await WIKI.db.pages.convertPage({
           ...args,
           user: context.req.user
         })
@@ -413,7 +411,7 @@ module.exports = {
      */
     async renamePage(obj, args, context) {
       try {
-        await WIKI.models.pages.movePage({
+        await WIKI.db.pages.movePage({
           ...args,
           user: context.req.user
         })
@@ -429,7 +427,7 @@ module.exports = {
      */
     async deletePage(obj, args, context) {
       try {
-        await WIKI.models.pages.deletePage({
+        await WIKI.db.pages.deletePage({
           ...args,
           user: context.req.user
         })
@@ -445,10 +443,10 @@ module.exports = {
      */
     async deleteTag (obj, args, context) {
       try {
-        const tagToDel = await WIKI.models.tags.query().findById(args.id)
+        const tagToDel = await WIKI.db.tags.query().findById(args.id)
         if (tagToDel) {
           await tagToDel.$relatedQuery('pages').unrelate()
-          await WIKI.models.tags.query().deleteById(args.id)
+          await WIKI.db.tags.query().deleteById(args.id)
         } else {
           throw new Error('This tag does not exist.')
         }
@@ -464,7 +462,7 @@ module.exports = {
      */
     async updateTag (obj, args, context) {
       try {
-        const affectedRows = await WIKI.models.tags.query()
+        const affectedRows = await WIKI.db.tags.query()
           .findById(args.id)
           .patch({
             tag: _.trim(args.tag).toLowerCase(),
@@ -485,7 +483,7 @@ module.exports = {
      */
     async flushCache(obj, args, context) {
       try {
-        await WIKI.models.pages.flushCache()
+        await WIKI.db.pages.flushCache()
         WIKI.events.outbound.emit('flushCache')
         return {
           responseResult: graphHelper.generateSuccess('Pages Cache has been flushed successfully.')
@@ -499,7 +497,7 @@ module.exports = {
      */
     async migrateToLocale(obj, args, context) {
       try {
-        const count = await WIKI.models.pages.migrateToLocale(args)
+        const count = await WIKI.db.pages.migrateToLocale(args)
         return {
           responseResult: graphHelper.generateSuccess('Migrated content to target locale successfully.'),
           count
@@ -513,7 +511,7 @@ module.exports = {
      */
     async rebuildPageTree(obj, args, context) {
       try {
-        await WIKI.models.pages.rebuildTree()
+        await WIKI.db.pages.rebuildTree()
         return {
           responseResult: graphHelper.generateSuccess('Page tree rebuilt successfully.')
         }
@@ -526,11 +524,11 @@ module.exports = {
      */
     async renderPage (obj, args, context) {
       try {
-        const page = await WIKI.models.pages.query().findById(args.id)
+        const page = await WIKI.db.pages.query().findById(args.id)
         if (!page) {
           throw new WIKI.Error.PageNotFound()
         }
-        await WIKI.models.pages.renderPage(page)
+        await WIKI.db.pages.renderPage(page)
         return {
           responseResult: graphHelper.generateSuccess('Page rendered successfully.')
         }
@@ -543,7 +541,7 @@ module.exports = {
      */
     async restorePage (obj, args, context) {
       try {
-        const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+        const page = await WIKI.db.pages.query().select('path', 'localeCode').findById(args.pageId)
         if (!page) {
           throw new WIKI.Error.PageNotFound()
         }
@@ -555,12 +553,12 @@ module.exports = {
           throw new WIKI.Error.PageRestoreForbidden()
         }
 
-        const targetVersion = await WIKI.models.pageHistory.getVersion({ pageId: args.pageId, versionId: args.versionId })
+        const targetVersion = await WIKI.db.pageHistory.getVersion({ pageId: args.pageId, versionId: args.versionId })
         if (!targetVersion) {
           throw new WIKI.Error.PageNotFound()
         }
 
-        await WIKI.models.pages.updatePage({
+        await WIKI.db.pages.updatePage({
           ...targetVersion,
           id: targetVersion.pageId,
           user: context.req.user,
@@ -579,7 +577,7 @@ module.exports = {
      */
     async purgePagesHistory (obj, args, context) {
       try {
-        await WIKI.models.pageHistory.purge(args.olderThan)
+        await WIKI.db.pageHistory.purge(args.olderThan)
         return {
           responseResult: graphHelper.generateSuccess('Page history purged successfully.')
         }
@@ -590,7 +588,7 @@ module.exports = {
   },
   Page: {
     async tags (obj) {
-      return WIKI.models.pages.relatedQuery('tags').for(obj.id)
+      return WIKI.db.pages.relatedQuery('tags').for(obj.id)
     }
     // comments(pg) {
     //   return pg.$relatedQuery('comments')

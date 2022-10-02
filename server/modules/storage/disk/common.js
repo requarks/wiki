@@ -9,12 +9,10 @@ const _ = require('lodash')
 
 const pageHelper = require('../../../helpers/page.js')
 
-/* global WIKI */
-
 module.exports = {
   assetFolders: null,
   async importFromDisk ({ fullPath, moduleName }) {
-    const rootUser = await WIKI.models.users.getRootUser()
+    const rootUser = await WIKI.db.users.getRootUser()
 
     await pipeline(
       klaw(fullPath, {
@@ -75,8 +73,8 @@ module.exports = {
     const normalizedRelPath = relPath.replace(/\\/g, '/')
     const contentPath = pageHelper.getPagePath(normalizedRelPath)
     const itemContents = await fs.readFile(path.join(fullPath, relPath), 'utf8')
-    const pageData = WIKI.models.pages.parseMetadata(itemContents, contentType)
-    const currentPage = await WIKI.models.pages.getPageFromDb({
+    const pageData = WIKI.db.pages.parseMetadata(itemContents, contentType)
+    const currentPage = await WIKI.db.pages.getPageFromDb({
       path: contentPath.path,
       locale: contentPath.locale
     })
@@ -84,7 +82,7 @@ module.exports = {
     if (currentPage) {
       // Already in the DB, can mark as modified
       WIKI.logger.info(`(STORAGE/${moduleName}) Page marked as modified: ${normalizedRelPath}`)
-      await WIKI.models.pages.updatePage({
+      await WIKI.db.pages.updatePage({
         id: currentPage.id,
         title: _.get(pageData, 'title', currentPage.title),
         description: _.get(pageData, 'description', currentPage.description) || '',
@@ -98,8 +96,8 @@ module.exports = {
     } else {
       // Not in the DB, can mark as new
       WIKI.logger.info(`(STORAGE/${moduleName}) Page marked as new: ${normalizedRelPath}`)
-      const pageEditor = await WIKI.models.editors.getDefaultEditor(contentType)
-      await WIKI.models.pages.createPage({
+      const pageEditor = await WIKI.db.editors.getDefaultEditor(contentType)
+      await WIKI.db.pages.createPage({
         path: contentPath.path,
         locale: contentPath.locale,
         title: _.get(pageData, 'title', _.last(contentPath.path.split('/'))),
@@ -120,7 +118,7 @@ module.exports = {
 
     // -> Get all folder paths
     if (!this.assetFolders) {
-      this.assetFolders = await WIKI.models.assetFolders.getAllPaths()
+      this.assetFolders = await WIKI.db.assetFolders.getAllPaths()
     }
 
     // -> Find existing folder
@@ -137,7 +135,7 @@ module.exports = {
         currentFolderPath.push(folderPart)
         const existingFolderId = _.findKey(this.assetFolders, fld => { return fld === currentFolderPath.join('/') })
         if (!existingFolderId) {
-          const newFolderObj = await WIKI.models.assetFolders.query().insert({
+          const newFolderObj = await WIKI.db.assetFolders.query().insert({
             slug: folderPart,
             name: folderPart,
             parentId: currentFolderParentId
@@ -152,7 +150,7 @@ module.exports = {
     }
 
     // -> Import asset
-    await WIKI.models.assets.upload({
+    await WIKI.db.assets.upload({
       mode: 'import',
       originalname: filePathInfo.base,
       ext: filePathInfo.ext,

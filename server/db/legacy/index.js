@@ -1,7 +1,5 @@
 const _ = require('lodash')
 
-/* global WIKI */
-
 module.exports = {
   async migrate (knex) {
     const migrationsTableExists = await knex.schema.hasTable('migrations')

@@ -1,7 +1,5 @@
 const _ = require('lodash')
 
-/* global WIKI */
-
 // ------------------------------------
 // Azure AD Account
 // ------------------------------------
@@ -39,7 +37,7 @@ module.exports = {
       }, async (req, iss, sub, profile, cb) => {
         const usrEmail = _.get(profile, '_json.email', null) || _.get(profile, '_json.preferred_username')
         try {
-          const user = await WIKI.models.users.processProfile({
+          const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               id: profile.oid,

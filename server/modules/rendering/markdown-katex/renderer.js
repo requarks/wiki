@@ -1,8 +1,6 @@
 const katex = require('katex')
 const chemParse = require('./mhchem')
 
-/* global WIKI */
-
 // ------------------------------------
 // Markdown - KaTeX Renderer
 // ------------------------------------

@@ -4,8 +4,6 @@ const util = require('util')
 const exec = util.promisify(require('child_process').exec)
 const fs = require('fs-extra')
 
-/* global WIKI */
-
 module.exports = {
   key: 'puppeteer',
   title: 'Puppeteer',

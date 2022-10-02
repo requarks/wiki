@@ -5,8 +5,6 @@ const fs = require('fs')
 const path = require('path')
 const yaml = require('js-yaml')
 
-/* global WIKI */
-
 module.exports = {
   /**
    * Load root config from disk
@@ -52,9 +50,17 @@ module.exports = {
 
     appconfig = _.defaultsDeep(appconfig, appdata.defaults.config)
 
+    // Override port
+
     if (appconfig.port < 1 || process.env.HEROKU) {
       appconfig.port = process.env.PORT || 80
     }
+
+    if (process.env.WIKI_PORT) {
+      appconfig.port = process.env.WIKI_PORT || 80
+    }
+
+    // Load package info
 
     const packageInfo = require(path.join(WIKI.ROOTPATH, 'package.json'))
 
@@ -81,12 +87,12 @@ module.exports = {
    * Load config from DB
    */
   async loadFromDb() {
-    let conf = await WIKI.models.settings.getConfig()
+    let conf = await WIKI.db.settings.getConfig()
     if (conf) {
       WIKI.config = _.defaultsDeep(conf, WIKI.config)
     } else {
-      WIKI.logger.warn('DB Configuration is empty or incomplete. Switching to Setup mode...')
-      WIKI.config.setup = true
+      WIKI.logger.warn('Missing DB Configuration!')
+      process.exit(1)
     }
   },
   /**
@@ -102,9 +108,9 @@ module.exports = {
         if (!_.isPlainObject(value)) {
           value = { v: value }
         }
-        let affectedRows = await WIKI.models.settings.query().patch({ value }).where('key', key)
+        let affectedRows = await WIKI.db.settings.query().patch({ value }).where('key', key)
         if (affectedRows === 0 && value) {
-          await WIKI.models.settings.query().insert({ key, value })
+          await WIKI.db.settings.query().insert({ key, value })
         }
       }
       if (propagate) {
@@ -121,7 +127,7 @@ module.exports = {
    * Apply Dev Flags
    */
   async applyFlags() {
-    WIKI.models.knex.client.config.debug = WIKI.config.flags.sqllog
+    WIKI.db.knex.client.config.debug = WIKI.config.flags.sqllog
   },
 
   /**

@@ -5,8 +5,6 @@ const _ = require('lodash')
 const yaml = require('js-yaml')
 const commonHelper = require('../helpers/common')
 
-/* global WIKI */
-
 /**
  * Authentication model
  */
@@ -32,11 +30,11 @@ module.exports = class Authentication extends Model {
   }
 
   static async getStrategy(key) {
-    return WIKI.models.authentication.query().findOne({ key })
+    return WIKI.db.authentication.query().findOne({ key })
   }
 
   static async getStrategies({ enabledOnly = false } = {}) {
-    const strategies = await WIKI.models.authentication.query().where(enabledOnly ? { isEnabled: true } : {})
+    const strategies = await WIKI.db.authentication.query().where(enabledOnly ? { isEnabled: true } : {})
     return strategies.map(str => ({
       ...str,
       domainWhitelist: _.get(str.domainWhitelist, 'v', []),

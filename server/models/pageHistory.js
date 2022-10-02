@@ -2,8 +2,6 @@ const Model = require('objection').Model
 const _ = require('lodash')
 const { DateTime, Duration } = require('luxon')
 
-/* global WIKI */
-
 /**
  * Page History model
  */
@@ -89,7 +87,7 @@ module.exports = class PageHistory extends Model {
    * Create Page Version
    */
   static async addVersion(opts) {
-    await WIKI.models.pageHistory.query().insert({
+    await WIKI.db.pageHistory.query().insert({
       pageId: opts.id,
       authorId: opts.authorId,
       content: opts.content,
@@ -113,7 +111,7 @@ module.exports = class PageHistory extends Model {
    * Get Page Version
    */
   static async getVersion({ pageId, versionId }) {
-    const version = await WIKI.models.pageHistory.query()
+    const version = await WIKI.db.pageHistory.query()
       .column([
         'pageHistory.path',
         'pageHistory.title',
@@ -156,7 +154,7 @@ module.exports = class PageHistory extends Model {
    * Get History Trail of a Page
    */
   static async getHistory({ pageId, offsetPage = 0, offsetSize = 100 }) {
-    const history = await WIKI.models.pageHistory.query()
+    const history = await WIKI.db.pageHistory.query()
       .column([
         'pageHistory.id',
         'pageHistory.path',
@@ -178,7 +176,7 @@ module.exports = class PageHistory extends Model {
     const upperLimit = (offsetPage + 1) * offsetSize
 
     if (history.total >= upperLimit) {
-      prevPh = await WIKI.models.pageHistory.query()
+      prevPh = await WIKI.db.pageHistory.query()
         .column([
           'pageHistory.id',
           'pageHistory.path',
@@ -238,6 +236,6 @@ module.exports = class PageHistory extends Model {
   static async purge (olderThan) {
     const dur = Duration.fromISO(olderThan)
     const olderThanISO = DateTime.utc().minus(dur)
-    await WIKI.models.pageHistory.query().where('versionDate', '<', olderThanISO.toISO()).del()
+    await WIKI.db.pageHistory.query().where('versionDate', '<', olderThanISO.toISO()).del()
   }
 }

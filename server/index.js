@@ -15,7 +15,6 @@ if (!semver.satisfies(process.version, '>=18')) {
 
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
-  IS_MASTER: true,
   ROOTPATH: process.cwd(),
   INSTANCE_ID: nanoid(10),
   SERVERPATH: path.join(process.cwd(), 'server'),

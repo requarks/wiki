@@ -5,12 +5,10 @@ const path = require('path')
 const fs = require('fs-extra')
 const { v4: uuid } = require('uuid')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async sites () {
-      const sites = await WIKI.models.sites.query().orderBy('hostname')
+      const sites = await WIKI.db.sites.query().orderBy('hostname')
       return sites.map(s => ({
         ...s.config,
         id: s.id,
@@ -20,7 +18,7 @@ module.exports = {
       }))
     },
     async siteById (obj, args) {
-      const site = await WIKI.models.sites.query().findById(args.id)
+      const site = await WIKI.db.sites.query().findById(args.id)
       return site ? {
         ...site.config,
         id: site.id,
@@ -30,11 +28,11 @@ module.exports = {
       } : null
     },
     async siteByHostname (obj, args) {
-      let site = await WIKI.models.sites.query().where({
+      let site = await WIKI.db.sites.query().where({
         hostname: args.hostname
       }).first()
       if (!site && !args.exact) {
-        site = await WIKI.models.sites.query().where({
+        site = await WIKI.db.sites.query().where({
           hostname: '*'
         }).first()
       }
@@ -62,7 +60,7 @@ module.exports = {
         }
         // -> Check for duplicate catch-all
         if (args.hostname === '*') {
-          const site = await WIKI.models.sites.query().where({
+          const site = await WIKI.db.sites.query().where({
             hostname: args.hostname
           }).first()
           if (site) {
@@ -70,7 +68,7 @@ module.exports = {
           }
         }
         // -> Create site
-        const newSite = await WIKI.models.sites.createSite(args.hostname, {
+        const newSite = await WIKI.db.sites.createSite(args.hostname, {
           title: args.title
         })
         return {
@@ -88,7 +86,7 @@ module.exports = {
     async updateSite (obj, args) {
       try {
         // -> Load site
-        const site = await WIKI.models.sites.query().findById(args.id)
+        const site = await WIKI.db.sites.query().findById(args.id)
         if (!site) {
           throw new WIKI.Error.Custom('SiteInvalidId', 'Invalid Site ID')
         }
@@ -98,7 +96,7 @@ module.exports = {
         }
         // -> Check for duplicate catch-all
         if (args.patch.hostname === '*' && site.hostname !== '*') {
-          const dupSite = await WIKI.models.sites.query().where({ hostname: '*' }).first()
+          const dupSite = await WIKI.db.sites.query().where({ hostname: '*' }).first()
           if (dupSite) {
             throw new WIKI.Error.Custom('SiteUpdateDuplicateCatchAll', `Site ${dupSite.config.title} with a catch-all hostname already exists! Cannot have 2 catch-all hostnames.`)
           }
@@ -112,7 +110,7 @@ module.exports = {
           args.patch.pageExtensions = args.patch.pageExtensions.split(',').map(ext => ext.trim().toLowerCase()).filter(ext => ext.length > 0)
         }
         // -> Update site
-        await WIKI.models.sites.updateSite(args.id, {
+        await WIKI.db.sites.updateSite(args.id, {
           hostname: args.patch.hostname ?? site.hostname,
           isEnabled: args.patch.isEnabled ?? site.isEnabled,
           config: _.defaultsDeep(_.omit(args.patch, ['hostname', 'isEnabled']), site.config)
@@ -132,12 +130,12 @@ module.exports = {
     async deleteSite (obj, args) {
       try {
         // -> Ensure site isn't last one
-        const sitesCount = await WIKI.models.sites.query().count('id').first()
+        const sitesCount = await WIKI.db.sites.query().count('id').first()
         if (sitesCount?.count && _.toNumber(sitesCount?.count) <= 1) {
           throw new WIKI.Error.Custom('SiteDeleteLastSite', 'Cannot delete the last site. At least 1 site must exists at all times.')
         }
         // -> Delete site
-        await WIKI.models.sites.deleteSite(args.id)
+        await WIKI.db.sites.deleteSite(args.id)
         return {
           operation: graphHelper.generateSuccess('Site deleted successfully')
         }
@@ -175,16 +173,16 @@ module.exports = {
           height: 72
         })
         // -> Save logo meta to DB
-        const site = await WIKI.models.sites.query().findById(args.id)
+        const site = await WIKI.db.sites.query().findById(args.id)
         if (!site.config.assets.logo) {
           site.config.assets.logo = uuid()
         }
         site.config.assets.logoExt = destFormat
-        await WIKI.models.sites.query().findById(args.id).patch({ config: site.config })
-        await WIKI.models.sites.reloadCache()
+        await WIKI.db.sites.query().findById(args.id).patch({ config: site.config })
+        await WIKI.db.sites.reloadCache()
         // -> Save image data to DB
         const imgBuffer = await fs.readFile(destPath)
-        await WIKI.models.knex('assetData').insert({
+        await WIKI.db.knex('assetData').insert({
           id: site.config.assets.logo,
           data: imgBuffer
         }).onConflict('id').merge()
@@ -227,16 +225,16 @@ module.exports = {
           height: 64
         })
         // -> Save favicon meta to DB
-        const site = await WIKI.models.sites.query().findById(args.id)
+        const site = await WIKI.db.sites.query().findById(args.id)
         if (!site.config.assets.favicon) {
           site.config.assets.favicon = uuid()
         }
         site.config.assets.faviconExt = destFormat
-        await WIKI.models.sites.query().findById(args.id).patch({ config: site.config })
-        await WIKI.models.sites.reloadCache()
+        await WIKI.db.sites.query().findById(args.id).patch({ config: site.config })
+        await WIKI.db.sites.reloadCache()
         // -> Save image data to DB
         const imgBuffer = await fs.readFile(destPath)
-        await WIKI.models.knex('assetData').insert({
+        await WIKI.db.knex('assetData').insert({
           id: site.config.assets.favicon,
           data: imgBuffer
         }).onConflict('id').merge()
@@ -277,15 +275,15 @@ module.exports = {
           width: 1920
         })
         // -> Save login bg meta to DB
-        const site = await WIKI.models.sites.query().findById(args.id)
+        const site = await WIKI.db.sites.query().findById(args.id)
         if (!site.config.assets.loginBg) {
           site.config.assets.loginBg = uuid()
-          await WIKI.models.sites.query().findById(args.id).patch({ config: site.config })
-          await WIKI.models.sites.reloadCache()
+          await WIKI.db.sites.query().findById(args.id).patch({ config: site.config })
+          await WIKI.db.sites.reloadCache()
         }
         // -> Save image data to DB
         const imgBuffer = await fs.readFile(destPath)
-        await WIKI.models.knex('assetData').insert({
+        await WIKI.db.knex('assetData').insert({
           id: site.config.assets.loginBg,
           data: imgBuffer
         }).onConflict('id').merge()

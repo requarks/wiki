@@ -6,8 +6,6 @@ const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
 const pageHelper = require('../../../helpers/page.js')
 
-/* global WIKI */
-
 const getFilePath = (page, pathKey) => {
   const fileName = `${page[pathKey]}.${pageHelper.getFileExtension(page.contentType)}`
   const withLocaleCode = WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode
@@ -115,7 +113,7 @@ module.exports = {
 
     // -> Pages
     await pipeline(
-      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
+      WIKI.db.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
         isPrivate: false
       }).stream(),
       new stream.Transform({
@@ -131,10 +129,10 @@ module.exports = {
     )
 
     // -> Assets
-    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+    const assetFolders = await WIKI.db.assetFolders.getAllPaths()
 
     await pipeline(
-      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+      WIKI.db.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
       new stream.Transform({
         objectMode: true,
         transform: async (asset, enc, cb) => {

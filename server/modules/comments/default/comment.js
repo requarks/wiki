@@ -6,8 +6,6 @@ const _ = require('lodash')
 const { AkismetClient } = require('akismet-api')
 const moment = require('moment')
 
-/* global WIKI */
-
 const window = new JSDOM('').window
 const DOMPurify = createDOMPurify(window)
 
@@ -108,14 +106,14 @@ module.exports = {
 
     // -> Check for minimum delay between posts
     if (WIKI.data.commentProvider.config.minDelay > 0) {
-      const lastComment = await WIKI.models.comments.query().select('updatedAt').findOne('authorId', user.id).orderBy('updatedAt', 'desc')
+      const lastComment = await WIKI.db.comments.query().select('updatedAt').findOne('authorId', user.id).orderBy('updatedAt', 'desc')
       if (lastComment && moment().subtract(WIKI.data.commentProvider.config.minDelay, 'seconds').isBefore(lastComment.updatedAt)) {
         throw new Error('Your administrator has set a time limit before you can post another comment. Try again later.')
       }
     }
 
     // -> Save Comment to DB
-    const cm = await WIKI.models.comments.query().insert(newComment)
+    const cm = await WIKI.db.comments.query().insert(newComment)
 
     // -> Return Comment ID
     return cm.id
@@ -125,7 +123,7 @@ module.exports = {
    */
   async update ({ id, content, user }) {
     const renderedContent = DOMPurify.sanitize(mkdown.render(content))
-    await WIKI.models.comments.query().findById(id).patch({
+    await WIKI.db.comments.query().findById(id).patch({
       render: renderedContent
     })
     return renderedContent
@@ -134,26 +132,26 @@ module.exports = {
    * Delete an existing comment by ID
    */
   async remove ({ id, user }) {
-    return WIKI.models.comments.query().findById(id).delete()
+    return WIKI.db.comments.query().findById(id).delete()
   },
   /**
    * Get the page ID from a comment ID
    */
   async getPageIdFromCommentId (id) {
-    const result = await WIKI.models.comments.query().select('pageId').findById(id)
+    const result = await WIKI.db.comments.query().select('pageId').findById(id)
     return (result) ? result.pageId : false
   },
   /**
    * Get a comment by ID
    */
   async getCommentById (id) {
-    return WIKI.models.comments.query().findById(id)
+    return WIKI.db.comments.query().findById(id)
   },
   /**
    * Get the total comments count for a page ID
    */
   async count (pageId) {
-    const result = await WIKI.models.comments.query().count('* as total').where('pageId', pageId).first()
+    const result = await WIKI.db.comments.query().count('* as total').where('pageId', pageId).first()
     return _.toSafeInteger(result.total)
   }
 }

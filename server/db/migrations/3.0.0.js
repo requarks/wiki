@@ -3,8 +3,6 @@ const bcrypt = require('bcryptjs-then')
 const crypto = require('crypto')
 const pem2jwk = require('pem-jwk').pem2jwk
 
-/* global WIKI */
-
 exports.up = async knex => {
   WIKI.logger.info('Running 3.0.0 database migration...')
 
@@ -119,6 +117,35 @@ exports.up = async knex => {
       table.string('authHeader')
       table.enum('state', ['pending', 'error', 'success']).notNullable().defaultTo('pending')
       table.string('lastErrorMessage')
+      table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
+      table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
+    })
+    // JOB SCHEDULE ------------------------
+    .createTable('jobSchedule', table => {
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.string('task').notNullable()
+      table.string('cron').notNullable()
+      table.string('type').notNullable().defaultTo('system')
+      table.jsonb('payload')
+      table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
+      table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
+    })
+    // JOB HISTORY -------------------------
+    .createTable('jobHistory', table => {
+      table.uuid('id').notNullable().primary()
+      table.string('task').notNullable()
+      table.string('state').notNullable()
+      table.jsonb('payload')
+      table.string('lastErrorMessage')
+      table.timestamp('createdAt').notNullable()
+      table.timestamp('startedAt').notNullable()
+      table.timestamp('completedAt').notNullable().defaultTo(knex.fn.now())
+    })
+    // JOBS --------------------------------
+    .createTable('jobs', table => {
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.string('task').notNullable()
+      table.jsonb('payload')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })
@@ -635,6 +662,21 @@ exports.up = async knex => {
       current: 'ok'
     }
   })
+
+  // -> SCHEDULED JOBS
+
+  await knex('jobSchedule').insert([
+    {
+      task: 'update-locales',
+      cron: '0 0 * * *',
+      type: 'system'
+    },
+    {
+      task: 'check-version',
+      cron: '0 0 * * *',
+      type: 'system'
+    }
+  ])
 
   WIKI.logger.info('Completed 3.0.0 database migration.')
 }

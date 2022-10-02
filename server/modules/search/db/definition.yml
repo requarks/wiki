@@ -1,8 +1,0 @@
-key: db
-title: Database - Basic
-description: Default basic database-based search engine.
-author: requarks.io
-logo: https://static.requarks.io/logo/database.svg
-website: https://www.requarks.io/
-isAvailable: true
-props: {}

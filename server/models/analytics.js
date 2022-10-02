@@ -5,8 +5,6 @@ const _ = require('lodash')
 const yaml = require('js-yaml')
 const commonHelper = require('../helpers/common')
 
-/* global WIKI */
-
 /**
  * Analytics model
  */
@@ -31,7 +29,7 @@ module.exports = class Analytics extends Model {
   }
 
   static async getProviders(isEnabled) {
-    const providers = await WIKI.models.analytics.query().where(_.isBoolean(isEnabled) ? { isEnabled } : {})
+    const providers = await WIKI.db.analytics.query().where(_.isBoolean(isEnabled) ? { isEnabled } : {})
     return _.sortBy(providers, ['module'])
   }
 
@@ -69,7 +67,7 @@ module.exports = class Analytics extends Model {
         bodyStart: '',
         bodyEnd: ''
       }
-      const providers = await WIKI.models.analytics.getProviders(true)
+      const providers = await WIKI.db.analytics.getProviders(true)
 
       for (let provider of providers) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/analytics', provider.key, 'code.yml'), 'utf8')

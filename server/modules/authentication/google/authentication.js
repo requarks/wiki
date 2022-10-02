@@ -19,7 +19,7 @@ module.exports = {
         if (conf.hostedDomain && conf.hostedDomain != profile._json.hd) {
           throw new Error('Google authentication should have been performed with domain ' + conf.hostedDomain)
         }
-        const user = await WIKI.models.users.processProfile({
+        const user = await WIKI.db.users.processProfile({
           providerKey: req.params.strategy,
           profile: {
             ...profile,
