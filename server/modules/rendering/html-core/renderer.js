@@ -6,8 +6,6 @@ const URL = require('url').URL
 
 const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
 
-/* global WIKI */
-
 module.exports = {
   async render() {
     const $ = cheerio.load(this.input, {
@@ -133,7 +131,7 @@ module.exports = {
 
     if (internalRefs.length > 0) {
       // -> Find matching pages
-      const results = await WIKI.models.pages.query().column('id', 'path', 'localeCode').where(builder => {
+      const results = await WIKI.db.pages.query().column('id', 'path', 'localeCode').where(builder => {
         internalRefs.forEach((ref, idx) => {
           if (idx < 1) {
             builder.where(ref)
@@ -168,14 +166,14 @@ module.exports = {
       })
       if (missingLinks.length > 0) {
         if (WIKI.config.db.type === 'postgres') {
-          await WIKI.models.pageLinks.query().insert(missingLinks.map(lnk => ({
+          await WIKI.db.pageLinks.query().insert(missingLinks.map(lnk => ({
             pageId: this.page.id,
             path: lnk.path,
             localeCode: lnk.localeCode
           })))
         } else {
           for (const lnk of missingLinks) {
-            await WIKI.models.pageLinks.query().insert({
+            await WIKI.db.pageLinks.query().insert({
               pageId: this.page.id,
               path: lnk.path,
               localeCode: lnk.localeCode
@@ -191,7 +189,7 @@ module.exports = {
         return nLink.localeCode === pLink.localeCode && nLink.path === pLink.path
       })
       if (outdatedLinks.length > 0) {
-        await WIKI.models.pageLinks.query().delete().whereIn('id', _.map(outdatedLinks, 'id'))
+        await WIKI.db.pageLinks.query().delete().whereIn('id', _.map(outdatedLinks, 'id'))
       }
     }
 

@@ -6,8 +6,6 @@ const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { defaultKeyGenerator, rateLimitDirective } = require('graphql-rate-limit-directive')
 const { GraphQLUpload } = require('graphql-upload')
 
-/* global WIKI */
-
 // Rate Limiter
 
 const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = rateLimitDirective({

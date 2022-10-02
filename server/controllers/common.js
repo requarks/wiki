@@ -6,8 +6,6 @@ const CleanCSS = require('clean-css')
 const moment = require('moment')
 const path = require('path')
 
-/* global WIKI */
-
 const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
 const siteAssetsPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'assets')
 
@@ -27,7 +25,7 @@ router.get('/robots.txt', (req, res, next) => {
  * Health Endpoint
  */
 router.get('/healthz', (req, res, next) => {
-  if (WIKI.models.knex.client.pool.numFree() < 1 && WIKI.models.knex.client.pool.numUsed() < 1) {
+  if (WIKI.db.knex.client.pool.numFree() < 1 && WIKI.db.knex.client.pool.numUsed() < 1) {
     res.status(503).json({ ok: false }).end()
   } else {
     res.status(200).json({ ok: true }).end()
@@ -38,7 +36,7 @@ router.get('/healthz', (req, res, next) => {
  * Site Asset
  */
 router.get('/_site/:siteId?/:resource', async (req, res, next) => {
-  const site = req.params.siteId ? WIKI.sites[req.params.siteId] : await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
+  const site = req.params.siteId ? WIKI.sites[req.params.siteId] : await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
   if (!site) {
     return res.status(404).send('Site Not Found')
   }
@@ -115,7 +113,7 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
 
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
 
-  const page = await WIKI.models.pages.getPageFromDb({
+  const page = await WIKI.db.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
@@ -140,7 +138,7 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
     const fileName = _.last(page.path.split('/')) + '.' + pageHelper.getFileExtension(page.contentType)
     res.attachment(fileName)
     if (versionId > 0) {
-      const pageVersion = await WIKI.models.pageHistory.getVersion({ pageId: page.id, versionId })
+      const pageVersion = await WIKI.db.pageHistory.getVersion({ pageId: page.id, versionId })
       res.send(pageHelper.injectPageMetadata(pageVersion))
     } else {
       res.send(pageHelper.injectPageMetadata(page))
@@ -176,7 +174,7 @@ router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
   }
 
   // -> Get page data from DB
-  let page = await WIKI.models.pages.getPageFromDb({
+  let page = await WIKI.db.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
@@ -255,7 +253,7 @@ router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
 
       if (tmplVersionId > 0) {
         // -> From Page Version
-        const pageVersion = await WIKI.models.pageHistory.getVersion({ pageId: tmplPageId, versionId: tmplVersionId })
+        const pageVersion = await WIKI.db.pageHistory.getVersion({ pageId: tmplPageId, versionId: tmplVersionId })
         if (!pageVersion) {
           _.set(res.locals, 'pageMeta.title', 'Page Not Found')
           return res.status(404).render('notfound', { action: 'template' })
@@ -270,7 +268,7 @@ router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
         page.description = pageVersion.description
       } else {
         // -> From Page Live
-        const pageOriginal = await WIKI.models.pages.query().findById(tmplPageId)
+        const pageOriginal = await WIKI.db.pages.query().findById(tmplPageId)
         if (!pageOriginal) {
           _.set(res.locals, 'pageMeta.title', 'Page Not Found')
           return res.status(404).render('notfound', { action: 'template' })
@@ -305,7 +303,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
-  const page = await WIKI.models.pages.getPageFromDb({
+  const page = await WIKI.db.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
@@ -345,7 +343,7 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
     return res.redirect('/')
   }
 
-  const page = await WIKI.models.pages.query().column(['path', 'localeCode', 'isPrivate', 'privateNS']).findById(pageId)
+  const page = await WIKI.db.pages.query().column(['path', 'localeCode', 'isPrivate', 'privateNS']).findById(pageId)
   if (!page) {
     _.set(res.locals, 'pageMeta.title', 'Page Not Found')
     return res.status(404).render('notfound', { action: 'view' })
@@ -377,7 +375,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
 
-  const page = await WIKI.models.pages.getPageFromDb({
+  const page = await WIKI.db.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
@@ -410,7 +408,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 
   if (page) {
     if (versionId > 0) {
-      const pageVersion = await WIKI.models.pageHistory.getVersion({ pageId: page.id, versionId })
+      const pageVersion = await WIKI.db.pageHistory.getVersion({ pageId: page.id, versionId })
       _.set(res.locals, 'pageMeta.title', pageVersion.title)
       _.set(res.locals, 'pageMeta.description', pageVersion.description)
       res.render('source', {
@@ -446,7 +444,7 @@ router.get('/_userav/:uid', async (req, res, next) => {
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'])) {
     return res.sendStatus(403)
   }
-  const av = await WIKI.models.users.getUserAvatarData(req.params.uid)
+  const av = await WIKI.db.users.getUserAvatarData(req.params.uid)
   if (av) {
     res.set('Content-Type', 'image/jpeg')
     res.send(av)
@@ -472,7 +470,7 @@ router.get('/*', async (req, res, next) => {
 
     try {
       // -> Get Page from cache
-      const page = await WIKI.models.pages.getPage({
+      const page = await WIKI.db.pages.getPage({
         path: pageArgs.path,
         locale: pageArgs.locale,
         userId: req.user.id
@@ -519,7 +517,7 @@ router.get('/*', async (req, res, next) => {
 
         // -> Build sidebar navigation
         let sdi = 1
-        const sidebar = (await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({
+        const sidebar = (await WIKI.db.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({
           i: `sdi-${sdi++}`,
           k: n.kind,
           l: n.label,
@@ -595,7 +593,7 @@ router.get('/*', async (req, res, next) => {
       return res.sendStatus(403)
     }
 
-    await WIKI.models.assets.getAsset(pageArgs.path, res)
+    await WIKI.db.assets.getAsset(pageArgs.path, res)
   }
 })
 

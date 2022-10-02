@@ -8,8 +8,6 @@ const io = require('socket.io')
 const { ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageProductionDefault } = require('apollo-server-core')
 const { graphqlUploadExpress } = require('graphql-upload')
 
-/* global WIKI */
-
 module.exports = {
   graph: null,
   http: null,

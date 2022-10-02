@@ -1,15 +1,13 @@
 const graphHelper = require('../../helpers/graph')
 const _ = require('lodash')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async hooks () {
-      return WIKI.models.hooks.query().orderBy('name')
+      return WIKI.db.hooks.query().orderBy('name')
     },
     async hookById (obj, args) {
-      return WIKI.models.hooks.query().findById(args.id)
+      return WIKI.db.hooks.query().findById(args.id)
     }
   },
   Mutation: {
@@ -29,7 +27,7 @@ module.exports = {
           throw new WIKI.Error.Custom('HookCreateInvalidURL', 'Invalid Hook URL')
         }
         // -> Create hook
-        const newHook = await WIKI.models.hooks.createHook(args)
+        const newHook = await WIKI.db.hooks.createHook(args)
         WIKI.logger.debug(`New Hook ${newHook.id} created successfully.`)
 
         return {
@@ -46,7 +44,7 @@ module.exports = {
     async updateHook (obj, args) {
       try {
         // -> Load hook
-        const hook = await WIKI.models.hooks.query().findById(args.id)
+        const hook = await WIKI.db.hooks.query().findById(args.id)
         if (!hook) {
           throw new WIKI.Error.Custom('HookInvalidId', 'Invalid Hook ID')
         }
@@ -61,7 +59,7 @@ module.exports = {
           throw new WIKI.Error.Custom('HookInvalidURL', 'URL is invalid.')
         }
         // -> Update hook
-        await WIKI.models.hooks.query().findById(args.id).patch(args.patch)
+        await WIKI.db.hooks.query().findById(args.id).patch(args.patch)
         WIKI.logger.debug(`Hook ${args.id} updated successfully.`)
 
         return {
@@ -76,7 +74,7 @@ module.exports = {
      */
     async deleteHook (obj, args) {
       try {
-        await WIKI.models.hooks.deleteHook(args.id)
+        await WIKI.db.hooks.deleteHook(args.id)
         WIKI.logger.debug(`Hook ${args.id} deleted successfully.`)
         return {
           operation: graphHelper.generateSuccess('Hook deleted successfully')

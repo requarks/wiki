@@ -12,8 +12,6 @@ const pageHelper = require('../../../helpers/page')
 const assetHelper = require('../../../helpers/asset')
 const commonDisk = require('../disk/common')
 
-/* global WIKI */
-
 module.exports = {
   git: null,
   repoPath: path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'repo'),
@@ -120,7 +118,7 @@ module.exports = {
   async sync() {
     const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
 
-    const rootUser = await WIKI.models.users.getRootUser()
+    const rootUser = await WIKI.db.users.getRootUser()
 
     // Pull rebase
     if (_.includes(['sync', 'pull'], this.mode)) {
@@ -187,7 +185,7 @@ module.exports = {
           WIKI.logger.info(`(STORAGE/GIT) Page marked as deleted: ${item.relPath}`)
 
           const contentPath = pageHelper.getPagePath(item.relPath)
-          await WIKI.models.pages.deletePage({
+          await WIKI.db.pages.deletePage({
             user: user,
             path: contentPath.path,
             locale: contentPath.locale,
@@ -216,10 +214,10 @@ module.exports = {
           WIKI.logger.info(`(STORAGE/GIT) Asset marked as deleted: ${item.relPath}`)
 
           const fileHash = assetHelper.generateHash(item.relPath)
-          const assetToDelete = await WIKI.models.assets.query().findOne({ hash: fileHash })
+          const assetToDelete = await WIKI.db.assets.query().findOne({ hash: fileHash })
           if (assetToDelete) {
-            await WIKI.models.knex('assetData').where('id', assetToDelete.id).del()
-            await WIKI.models.assets.query().deleteById(assetToDelete.id)
+            await WIKI.db.knex('assetData').where('id', assetToDelete.id).del()
+            await WIKI.db.assets.query().deleteById(assetToDelete.id)
             await assetToDelete.deleteAssetCache()
           } else {
             WIKI.logger.info(`(STORAGE/GIT) Asset was not found in the DB, nothing to delete: ${item.relPath}`)
@@ -385,7 +383,7 @@ module.exports = {
   async importAll() {
     WIKI.logger.info(`(STORAGE/GIT) Importing all content from local Git repo to the DB...`)
 
-    const rootUser = await WIKI.models.users.getRootUser()
+    const rootUser = await WIKI.db.users.getRootUser()
 
     await pipeline(
       klaw(this.repoPath, {
@@ -424,7 +422,7 @@ module.exports = {
 
     // -> Pages
     await pipeline(
-      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
+      WIKI.db.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
         isPrivate: false
       }).stream(),
       new stream.Transform({
@@ -444,10 +442,10 @@ module.exports = {
     )
 
     // -> Assets
-    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+    const assetFolders = await WIKI.db.assetFolders.getAllPaths()
 
     await pipeline(
-      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+      WIKI.db.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
       new stream.Transform({
         objectMode: true,
         transform: async (asset, enc, cb) => {

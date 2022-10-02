@@ -1,7 +1,5 @@
 const mjax = require('mathjax')
 
-/* global WIKI */
-
 // ------------------------------------
 // Markdown - MathJax Renderer
 // ------------------------------------

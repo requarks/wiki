@@ -1,7 +1,5 @@
 const _ = require('lodash')
 
-/* global WIKI */
-
 // ------------------------------------
 // Keycloak Account
 // ------------------------------------
@@ -27,7 +25,7 @@ module.exports = {
           displayName = profile.fullName
         }
         try {
-          const user = await WIKI.models.users.processProfile({
+          const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               id: profile.keycloakId,

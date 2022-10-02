@@ -1,7 +1,5 @@
 const Model = require('objection').Model
 
-/* global WIKI */
-
 /**
  * Locales model
  */
@@ -50,7 +48,7 @@ module.exports = class Locale extends Model {
     //     return navLocalesCached
     //   }
     // }
-    // const navLocales = await WIKI.models.locales.query().select('code', 'nativeName AS name').whereIn('code', WIKI.config.lang.namespaces).orderBy('code')
+    // const navLocales = await WIKI.db.locales.query().select('code', 'nativeName AS name').whereIn('code', WIKI.config.lang.namespaces).orderBy('code')
     // if (navLocales) {
     //   if (cache) {
     //     await WIKI.cache.set('nav:locales', navLocales, 300)

@@ -1,11 +1,9 @@
 const graphHelper = require('../../helpers/graph')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async navigationTree (obj, args, context, info) {
-      return WIKI.models.navigation.getTree({ cache: false, locale: 'all', bypassAuth: true })
+      return WIKI.db.navigation.getTree({ cache: false, locale: 'all', bypassAuth: true })
     },
     navigationConfig (obj, args, context, info) {
       return WIKI.config.nav
@@ -14,7 +12,7 @@ module.exports = {
   Mutation: {
     async updateNavigationTree (obj, args, context) {
       try {
-        await WIKI.models.navigation.query().patch({
+        await WIKI.db.navigation.query().patch({
           config: args.tree
         }).where('key', 'site')
         for (const tree of args.tree) {

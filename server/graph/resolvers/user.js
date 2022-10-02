@@ -1,8 +1,6 @@
 const graphHelper = require('../../helpers/graph')
 const _ = require('lodash')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     /**
@@ -22,7 +20,7 @@ module.exports = {
       }
 
       // -> Fetch Users
-      return WIKI.models.users.query()
+      return WIKI.db.users.query()
         .select('id', 'email', 'name', 'isSystem', 'isActive', 'createdAt', 'lastLoginAt')
         .where(builder => {
           if (args.filter) {
@@ -38,7 +36,7 @@ module.exports = {
      * FETCH A SINGLE USER
      */
     async userById (obj, args, context, info) {
-      const usr = await WIKI.models.users.query().findById(args.id)
+      const usr = await WIKI.db.users.query().findById(args.id)
 
       if (!usr) {
         throw new Error('Invalid User')
@@ -64,7 +62,7 @@ module.exports = {
     //   if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
     //     throw new WIKI.Error.AuthRequired()
     //   }
-    //   const usr = await WIKI.models.users.query().findById(context.req.user.id)
+    //   const usr = await WIKI.db.users.query().findById(context.req.user.id)
     //   if (!usr.isActive) {
     //     throw new WIKI.Error.AuthAccountBanned()
     //   }
@@ -80,7 +78,7 @@ module.exports = {
     //   return usr
     // },
     async lastLogins (obj, args, context, info) {
-      return WIKI.models.users.query()
+      return WIKI.db.users.query()
         .select('id', 'name', 'lastLoginAt')
         .whereNotNull('lastLoginAt')
         .orderBy('lastLoginAt', 'desc')
@@ -90,7 +88,7 @@ module.exports = {
   Mutation: {
     async createUser (obj, args) {
       try {
-        await WIKI.models.users.createNewUser({ ...args, passwordRaw: args.password, isVerified: true })
+        await WIKI.db.users.createNewUser({ ...args, passwordRaw: args.password, isVerified: true })
 
         return {
           operation: graphHelper.generateSuccess('User created successfully')
@@ -104,7 +102,7 @@ module.exports = {
         if (args.id <= 2) {
           throw new WIKI.Error.UserDeleteProtected()
         }
-        await WIKI.models.users.deleteUser(args.id, args.replaceId)
+        await WIKI.db.users.deleteUser(args.id, args.replaceId)
 
         WIKI.auth.revokeUserTokens({ id: args.id, kind: 'u' })
         WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
@@ -122,7 +120,7 @@ module.exports = {
     },
     async updateUser (obj, args) {
       try {
-        await WIKI.models.users.updateUser(args.id, args.patch)
+        await WIKI.db.users.updateUser(args.id, args.patch)
 
         return {
           operation: graphHelper.generateSuccess('User updated successfully')
@@ -133,7 +131,7 @@ module.exports = {
     },
     async verifyUser (obj, args) {
       try {
-        await WIKI.models.users.query().patch({ isVerified: true }).findById(args.id)
+        await WIKI.db.users.query().patch({ isVerified: true }).findById(args.id)
 
         return {
           operation: graphHelper.generateSuccess('User verified successfully')
@@ -144,7 +142,7 @@ module.exports = {
     },
     async activateUser (obj, args) {
       try {
-        await WIKI.models.users.query().patch({ isActive: true }).findById(args.id)
+        await WIKI.db.users.query().patch({ isActive: true }).findById(args.id)
 
         return {
           operation: graphHelper.generateSuccess('User activated successfully')
@@ -158,7 +156,7 @@ module.exports = {
         if (args.id <= 2) {
           throw new Error('Cannot deactivate system accounts.')
         }
-        await WIKI.models.users.query().patch({ isActive: false }).findById(args.id)
+        await WIKI.db.users.query().patch({ isActive: false }).findById(args.id)
 
         WIKI.auth.revokeUserTokens({ id: args.id, kind: 'u' })
         WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
@@ -172,7 +170,7 @@ module.exports = {
     },
     async enableUserTFA (obj, args) {
       try {
-        await WIKI.models.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
+        await WIKI.db.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
 
         return {
           operation: graphHelper.generateSuccess('User 2FA enabled successfully')
@@ -183,7 +181,7 @@ module.exports = {
     },
     async disableUserTFA (obj, args) {
       try {
-        await WIKI.models.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
+        await WIKI.db.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
 
         return {
           operation: graphHelper.generateSuccess('User 2FA disabled successfully')
@@ -200,7 +198,7 @@ module.exports = {
         if (!context.req.user || context.req.user.id === WIKI.auth.guest.id) {
           throw new WIKI.Error.AuthRequired()
         }
-        const usr = await WIKI.models.users.query().findById(context.req.user.id)
+        const usr = await WIKI.db.users.query().findById(context.req.user.id)
         if (!usr.isActive) {
           throw new WIKI.Error.AuthAccountBanned()
         }
@@ -216,7 +214,7 @@ module.exports = {
           throw new WIKI.Error.InputInvalid()
         }
 
-        await WIKI.models.users.query().findById(usr.id).patch({
+        await WIKI.db.users.query().findById(usr.id).patch({
           name: args.name?.trim() ?? usr.name,
           meta: {
             ...usr.meta,
@@ -245,7 +243,7 @@ module.exports = {
         if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
           throw new WIKI.Error.AuthRequired()
         }
-        const usr = await WIKI.models.users.query().findById(context.req.user.id)
+        const usr = await WIKI.db.users.query().findById(context.req.user.id)
         if (!usr.isActive) {
           throw new WIKI.Error.AuthAccountBanned()
         }
@@ -261,12 +259,12 @@ module.exports = {
           throw new WIKI.Error.AuthPasswordInvalid()
         }
 
-        await WIKI.models.users.updateUser({
+        await WIKI.db.users.updateUser({
           id: usr.id,
           newPassword: args.new
         })
 
-        const newToken = await WIKI.models.users.refreshToken(usr)
+        const newToken = await WIKI.db.users.refreshToken(usr)
 
         return {
           responseResult: graphHelper.generateSuccess('Password changed successfully'),
@@ -288,7 +286,7 @@ module.exports = {
   //     return usrGroups.map(g => g.name)
   //   },
   //   async pagesTotal (usr) {
-  //     const result = await WIKI.models.pages.query().count('* as total').where('creatorId', usr.id).first()
+  //     const result = await WIKI.db.pages.query().count('* as total').where('creatorId', usr.id).first()
   //     return _.toSafeInteger(result.total)
   //   }
   // }

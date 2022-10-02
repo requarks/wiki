@@ -1,12 +1,10 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async analyticsProviders(obj, args, context, info) {
-      let providers = await WIKI.models.analytics.getProviders(args.isEnabled)
+      let providers = await WIKI.db.analytics.getProviders(args.isEnabled)
       providers = providers.map(stg => {
         const providerInfo = _.find(WIKI.data.analytics, ['key', stg.key]) || {}
         return {
@@ -31,7 +29,7 @@ module.exports = {
     async updateAnalyticsProviders(obj, args, context) {
       try {
         for (let str of args.providers) {
-          await WIKI.models.analytics.query().patch({
+          await WIKI.db.analytics.query().patch({
             isEnabled: str.isEnabled,
             config: _.reduce(str.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))

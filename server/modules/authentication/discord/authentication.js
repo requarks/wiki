@@ -22,7 +22,7 @@ module.exports = {
           if (conf.guildId && !_.some(profile.guilds, { id: conf.guildId })) {
             throw new WIKI.Error.AuthLoginFailed()
           }
-          const user = await WIKI.models.users.processProfile({
+          const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               ...profile,

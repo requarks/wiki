@@ -1,8 +1,6 @@
 const chalk = require('chalk')
 const os = require('node:os')
 
-/* global WIKI */
-
 module.exports = () => {
   WIKI.servers.ws.on('connection', (socket) => {
     // TODO: Validate token + permissions

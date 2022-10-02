@@ -80,6 +80,7 @@ defaults:
     maintainerEmail: security@requarks.io
 jobs:
   - task: background
+    identifier: purge-uploads
     pattern: '*/15 * * * *'
     payload:
       name: purgeUploads

@@ -1,8 +1,6 @@
 const Model = require('objection').Model
 const _ = require('lodash')
 
-/* global WIKI */
-
 /**
  * Navigation model
  */
@@ -26,10 +24,10 @@ module.exports = class Navigation extends Model {
     if (cache) {
       const navTreeCached = await WIKI.cache.get(`nav:sidebar:${locale}`)
       if (navTreeCached) {
-        return bypassAuth ? navTreeCached : WIKI.models.navigation.getAuthorizedItems(navTreeCached, groups)
+        return bypassAuth ? navTreeCached : WIKI.db.navigation.getAuthorizedItems(navTreeCached, groups)
       }
     }
-    const navTree = await WIKI.models.navigation.query().findOne('key', `site`)
+    const navTree = await WIKI.db.navigation.query().findOne('key', `site`)
     if (navTree) {
       // Check for pre-2.3 format
       if (_.has(navTree.config[0], 'kind')) {
@@ -51,7 +49,7 @@ module.exports = class Navigation extends Model {
       if (bypassAuth) {
         return locale === 'all' ? navTree.config : WIKI.cache.get(`nav:sidebar:${locale}`)
       } else {
-        return locale === 'all' ? WIKI.models.navigation.getAuthorizedItems(navTree.config, groups) : WIKI.models.navigation.getAuthorizedItems(WIKI.cache.get(`nav:sidebar:${locale}`), groups)
+        return locale === 'all' ? WIKI.db.navigation.getAuthorizedItems(navTree.config, groups) : WIKI.db.navigation.getAuthorizedItems(WIKI.cache.get(`nav:sidebar:${locale}`), groups)
       }
     } else {
       WIKI.logger.warn('Site Navigation is missing or corrupted.')

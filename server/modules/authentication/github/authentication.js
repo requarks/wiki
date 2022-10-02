@@ -27,7 +27,7 @@ module.exports = {
     passport.use(conf.key,
       new GitHubStrategy(githubConfig, async (req, accessToken, refreshToken, profile, cb) => {
         try {
-          const user = await WIKI.models.users.processProfile({
+          const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               ...profile,

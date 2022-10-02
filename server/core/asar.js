@@ -3,8 +3,6 @@ const path = require('path')
 const UINT64 = require('cuint').UINT64
 const fs = require('fs')
 
-/* global WIKI */
-
 /**
  * Based of express-serve-asar (https://github.com/toyobayashi/express-serve-asar)
  * by Fenglin Li (https://github.com/toyobayashi)

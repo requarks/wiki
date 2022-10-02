@@ -1,8 +1,6 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async mailConfig(obj, args, context, info) {

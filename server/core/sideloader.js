@@ -2,8 +2,6 @@ const fs = require('fs-extra')
 const path = require('path')
 const _ = require('lodash')
 
-/* global WIKI */
-
 module.exports = {
   async init () {
     if (!WIKI.config.offline) {
@@ -45,9 +43,9 @@ module.exports = {
                 _.set(lcObj, key.replace(':', '.'), value)
               })
 
-              const localeDbExists = await WIKI.models.locales.query().select('code').where('code', locale.code).first()
+              const localeDbExists = await WIKI.db.locales.query().select('code').where('code', locale.code).first()
               if (localeDbExists) {
-                await WIKI.models.locales.query().update({
+                await WIKI.db.locales.query().update({
                   code: locale.code,
                   strings: lcObj,
                   isRTL: locale.isRTL,
@@ -55,7 +53,7 @@ module.exports = {
                   nativeName: locale.nativeName
                 }).where('code', locale.code)
               } else {
-                await WIKI.models.locales.query().insert({
+                await WIKI.db.locales.query().insert({
                   code: locale.code,
                   strings: lcObj,
                   isRTL: locale.isRTL,

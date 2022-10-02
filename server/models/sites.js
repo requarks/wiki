@@ -3,8 +3,6 @@ const crypto = require('crypto')
 const pem2jwk = require('pem-jwk').pem2jwk
 const _ = require('lodash')
 
-/* global WIKI */
-
 /**
  * Site model
  */
@@ -30,7 +28,7 @@ module.exports = class Site extends Model {
 
   static async getSiteByHostname ({ hostname, forceReload = false }) {
     if (forceReload) {
-      await WIKI.models.sites.reloadCache()
+      await WIKI.db.sites.reloadCache()
     }
     const siteId = WIKI.sitesMappings[hostname] || WIKI.sitesMappings['*']
     if (siteId) {
@@ -41,7 +39,7 @@ module.exports = class Site extends Model {
 
   static async reloadCache () {
     WIKI.logger.info('Reloading site configurations...')
-    const sites = await WIKI.models.sites.query().orderBy('id')
+    const sites = await WIKI.db.sites.query().orderBy('id')
     WIKI.sites = _.keyBy(sites, 'id')
     WIKI.sitesMappings = {}
     for (const site of sites) {
@@ -51,7 +49,7 @@ module.exports = class Site extends Model {
   }
 
   static async createSite (hostname, config) {
-    const newSite = await WIKI.models.sites.query().insertAndFetch({
+    const newSite = await WIKI.db.sites.query().insertAndFetch({
       hostname,
       isEnabled: true,
       config: _.defaultsDeep(config, {
@@ -114,7 +112,7 @@ module.exports = class Site extends Model {
 
     WIKI.logger.debug(`Creating new DB storage for site ${newSite.id}`)
 
-    await WIKI.models.storage.query().insert({
+    await WIKI.db.storage.query().insert({
       module: 'db',
       siteId: newSite.id,
       isEnabled: true,
@@ -135,11 +133,11 @@ module.exports = class Site extends Model {
   }
 
   static async updateSite (id, patch) {
-    return WIKI.models.sites.query().findById(id).patch(patch)
+    return WIKI.db.sites.query().findById(id).patch(patch)
   }
 
   static async deleteSite (id) {
-    await WIKI.models.storage.query().delete().where('siteId', id)
-    return WIKI.models.sites.query().deleteById(id)
+    await WIKI.db.storage.query().delete().where('siteId', id)
+    return WIKI.db.sites.query().deleteById(id)
   }
 }

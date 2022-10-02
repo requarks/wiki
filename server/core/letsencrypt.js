@@ -6,8 +6,6 @@ const CSR = require('@root/csr')
 const PEM = require('@root/pem')
 const punycode = require('punycode/')
 
-/* global WIKI */
-
 module.exports = {
   apiDirectory: WIKI.dev ? 'https://acme-staging-v02.api.letsencrypt.org/directory' : 'https://acme-v02.api.letsencrypt.org/directory',
   acme: null,

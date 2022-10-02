@@ -90,7 +90,7 @@ module.exports = class User extends Model {
       name: WIKI.config.title,
       account: this.email
     })
-    await WIKI.models.users.query().findById(this.id).patch({
+    await WIKI.db.users.query().findById(this.id).patch({
       tfaIsActive: false,
       tfaSecret: tfaInfo.secret
     })
@@ -99,7 +99,7 @@ module.exports = class User extends Model {
   }
 
   async enableTFA() {
-    return WIKI.models.users.query().findById(this.id).patch({
+    return WIKI.db.users.query().findById(this.id).patch({
       tfaIsActive: true
     })
   }
@@ -129,7 +129,7 @@ module.exports = class User extends Model {
   // ------------------------------------------------
 
   static async getById(id) {
-    return WIKI.models.users.query().findById(id).withGraphFetched('groups').modifyGraph('groups', builder => {
+    return WIKI.db.users.query().findById(id).withGraphFetched('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions')
     })
   }
@@ -139,7 +139,7 @@ module.exports = class User extends Model {
     provider.info = _.find(WIKI.data.authentication, ['key', provider.stategyKey])
 
     // Find existing user
-    let user = await WIKI.models.users.query().findOne({
+    let user = await WIKI.db.users.query().findOne({
       providerId: _.toString(profile.id),
       providerKey
     })
@@ -164,7 +164,7 @@ module.exports = class User extends Model {
 
     // Find pending social user
     if (!user) {
-      user = await WIKI.models.users.query().findOne({
+      user = await WIKI.db.users.query().findOne({
         email: primaryEmail,
         providerId: null,
         providerKey
@@ -213,7 +213,7 @@ module.exports = class User extends Model {
       })
 
       if (pictureUrl === 'internal') {
-        await WIKI.models.users.updateUserAvatarData(user.id, profile.picture)
+        await WIKI.db.users.updateUserAvatarData(user.id, profile.picture)
       }
 
       return user
@@ -230,7 +230,7 @@ module.exports = class User extends Model {
       }
 
       // Create account
-      user = await WIKI.models.users.query().insertAndFetch({
+      user = await WIKI.db.users.query().insertAndFetch({
         providerKey: providerKey,
         providerId: _.toString(profile.id),
         email: primaryEmail,
@@ -250,7 +250,7 @@ module.exports = class User extends Model {
       }
 
       if (pictureUrl === 'internal') {
-        await WIKI.models.users.updateUserAvatarData(user.id, profile.picture)
+        await WIKI.db.users.updateUserAvatarData(user.id, profile.picture)
       }
 
       return user
@@ -288,7 +288,7 @@ module.exports = class User extends Model {
           if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
 
           try {
-            const resp = await WIKI.models.users.afterLoginChecks(user, selStrategy.id, context, {
+            const resp = await WIKI.db.users.afterLoginChecks(user, selStrategy.id, context, {
               skipTFA: !strInfo.useForm,
               skipChangePwd: !strInfo.useForm
             })
@@ -326,7 +326,7 @@ module.exports = class User extends Model {
     if (!skipTFA) {
       if (authStr.tfaRequired && authStr.tfaSecret) {
         try {
-          const tfaToken = await WIKI.models.userKeys.generateToken({
+          const tfaToken = await WIKI.db.userKeys.generateToken({
             kind: 'tfa',
             userId: user.id
           })
@@ -342,7 +342,7 @@ module.exports = class User extends Model {
       } else if (WIKI.config.auth.enforce2FA || (authStr.tfaIsActive && !authStr.tfaSecret)) {
         try {
           const tfaQRImage = await user.generateTFA()
-          const tfaToken = await WIKI.models.userKeys.generateToken({
+          const tfaToken = await WIKI.db.userKeys.generateToken({
             kind: 'tfaSetup',
             userId: user.id
           })
@@ -362,7 +362,7 @@ module.exports = class User extends Model {
     // Must Change Password?
     if (!skipChangePwd && authStr.mustChangePwd) {
       try {
-        const pwdChangeToken = await WIKI.models.userKeys.generateToken({
+        const pwdChangeToken = await WIKI.db.userKeys.generateToken({
           kind: 'changePwd',
           userId: user.id
         })
@@ -381,7 +381,7 @@ module.exports = class User extends Model {
     return new Promise((resolve, reject) => {
       context.req.login(user, { session: false }, async errc => {
         if (errc) { return reject(errc) }
-        const jwtToken = await WIKI.models.users.refreshToken(user, strategyId)
+        const jwtToken = await WIKI.db.users.refreshToken(user, strategyId)
         resolve({ jwt: jwtToken.token, redirect })
       })
     })
@@ -392,7 +392,7 @@ module.exports = class User extends Model {
    */
   static async refreshToken(user, provider) {
     if (_.isString(user)) {
-      user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
+      user = await WIKI.db.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
         builder.select('groups.id', 'permissions')
       })
       if (!user) {
@@ -409,7 +409,7 @@ module.exports = class User extends Model {
 
     // Update Last Login Date
     // -> Bypass Objection.js to avoid updating the updatedAt field
-    await WIKI.models.knex('users').where('id', user.id).update({ lastLoginAt: new Date().toISOString() })
+    await WIKI.db.knex('users').where('id', user.id).update({ lastLoginAt: new Date().toISOString() })
 
     return {
       token: jwt.sign({
@@ -435,7 +435,7 @@ module.exports = class User extends Model {
    */
   static async loginTFA ({ securityCode, continuationToken, setup }, context) {
     if (securityCode.length === 6 && continuationToken.length > 1) {
-      const user = await WIKI.models.userKeys.validateToken({
+      const user = await WIKI.db.userKeys.validateToken({
         kind: setup ? 'tfaSetup' : 'tfa',
         token: continuationToken,
         skipDelete: setup
@@ -445,7 +445,7 @@ module.exports = class User extends Model {
           if (setup) {
             await user.enableTFA()
           }
-          return WIKI.models.users.afterLoginChecks(user, context, { skipTFA: true })
+          return WIKI.db.users.afterLoginChecks(user, context, { skipTFA: true })
         } else {
           throw new WIKI.Error.AuthTFAFailed()
         }
@@ -461,13 +461,13 @@ module.exports = class User extends Model {
     if (!newPassword || newPassword.length < 6) {
       throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
     }
-    const usr = await WIKI.models.userKeys.validateToken({
+    const usr = await WIKI.db.userKeys.validateToken({
       kind: 'changePwd',
       token: continuationToken
     })
 
     if (usr) {
-      await WIKI.models.users.query().patch({
+      await WIKI.db.users.query().patch({
         password: newPassword,
         mustChangePwd: false
       }).findById(usr.id)
@@ -475,7 +475,7 @@ module.exports = class User extends Model {
       return new Promise((resolve, reject) => {
         context.req.logIn(usr, { session: false }, async err => {
           if (err) { return reject(err) }
-          const jwtToken = await WIKI.models.users.refreshToken(usr)
+          const jwtToken = await WIKI.db.users.refreshToken(usr)
           resolve({ jwt: jwtToken.token })
         })
       })
@@ -488,7 +488,7 @@ module.exports = class User extends Model {
    * Send a password reset request
    */
   static async loginForgotPassword ({ email }, context) {
-    const usr = await WIKI.models.users.query().where({
+    const usr = await WIKI.db.users.query().where({
       email,
       providerKey: 'local'
     }).first()
@@ -496,7 +496,7 @@ module.exports = class User extends Model {
       WIKI.logger.debug(`Password reset attempt on nonexistant local account ${email}: [DISCARDED]`)
       return
     }
-    const resetToken = await WIKI.models.userKeys.generateToken({
+    const resetToken = await WIKI.db.userKeys.generateToken({
       userId: usr.id,
       kind: 'resetPwd'
     })
@@ -585,7 +585,7 @@ module.exports = class User extends Model {
     }
 
     // Check if email already exists
-    const usr = await WIKI.models.users.query().findOne({ email, providerKey })
+    const usr = await WIKI.db.users.query().findOne({ email, providerKey })
     if (!usr) {
       // Create the account
       let newUsrData = {
@@ -606,7 +606,7 @@ module.exports = class User extends Model {
         newUsrData.mustChangePwd = (mustChangePassword === true)
       }
 
-      const newUsr = await WIKI.models.users.query().insert(newUsrData)
+      const newUsr = await WIKI.db.users.query().insert(newUsrData)
 
       // Assign to group(s)
       if (groups.length > 0) {
@@ -640,11 +640,11 @@ module.exports = class User extends Model {
    * @param {Object} param0 User ID and fields to update
    */
   static async updateUser ({ id, email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
-    const usr = await WIKI.models.users.query().findById(id)
+    const usr = await WIKI.db.users.query().findById(id)
     if (usr) {
       let usrData = {}
       if (!_.isEmpty(email) && email !== usr.email) {
-        const dupUsr = await WIKI.models.users.query().select('id').where({
+        const dupUsr = await WIKI.db.users.query().select('id').where({
           email,
           providerKey: usr.providerKey
         }).first()
@@ -691,7 +691,7 @@ module.exports = class User extends Model {
       if (!_.isNil(appearance) && appearance !== usr.appearance) {
         usrData.appearance = appearance
       }
-      await WIKI.models.users.query().patch(usrData).findById(id)
+      await WIKI.db.users.query().patch(usrData).findById(id)
     } else {
       throw new WIKI.Error.UserNotFound()
     }
@@ -703,16 +703,16 @@ module.exports = class User extends Model {
    * @param {*} id User ID
    */
   static async deleteUser (id, replaceId) {
-    const usr = await WIKI.models.users.query().findById(id)
+    const usr = await WIKI.db.users.query().findById(id)
     if (usr) {
-      await WIKI.models.assets.query().patch({ authorId: replaceId }).where('authorId', id)
-      await WIKI.models.comments.query().patch({ authorId: replaceId }).where('authorId', id)
-      await WIKI.models.pageHistory.query().patch({ authorId: replaceId }).where('authorId', id)
-      await WIKI.models.pages.query().patch({ authorId: replaceId }).where('authorId', id)
-      await WIKI.models.pages.query().patch({ creatorId: replaceId }).where('creatorId', id)
+      await WIKI.db.assets.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.db.comments.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.db.pageHistory.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.db.pages.query().patch({ authorId: replaceId }).where('authorId', id)
+      await WIKI.db.pages.query().patch({ creatorId: replaceId }).where('creatorId', id)
 
-      await WIKI.models.userKeys.query().delete().where('userId', id)
-      await WIKI.models.users.query().deleteById(id)
+      await WIKI.db.userKeys.query().delete().where('userId', id)
+      await WIKI.db.users.query().deleteById(id)
     } else {
       throw new WIKI.Error.UserNotFound()
     }
@@ -725,7 +725,7 @@ module.exports = class User extends Model {
    * @param {Object} context GraphQL Context
    */
   static async register ({ email, password, name, verify = false, bypassChecks = false }, context) {
-    const localStrg = await WIKI.models.authentication.getStrategy('local')
+    const localStrg = await WIKI.db.authentication.getStrategy('local')
     // Check if self-registration is enabled
     if (localStrg.selfRegistration || bypassChecks) {
       // Input sanitization
@@ -773,10 +773,10 @@ module.exports = class User extends Model {
         }
       }
       // Check if email already exists
-      const usr = await WIKI.models.users.query().findOne({ email, providerKey: 'local' })
+      const usr = await WIKI.db.users.query().findOne({ email, providerKey: 'local' })
       if (!usr) {
         // Create the account
-        const newUsr = await WIKI.models.users.query().insert({
+        const newUsr = await WIKI.db.users.query().insert({
           provider: 'local',
           email,
           name,
@@ -796,7 +796,7 @@ module.exports = class User extends Model {
 
         if (verify) {
           // Create verification token
-          const verificationToken = await WIKI.models.userKeys.generateToken({
+          const verificationToken = await WIKI.db.userKeys.generateToken({
             kind: 'verify',
             userId: newUsr.id
           })
@@ -846,7 +846,7 @@ module.exports = class User extends Model {
   }
 
   static async getGuestUser () {
-    const user = await WIKI.models.users.query().findById(WIKI.config.auth.guestUserId).withGraphJoined('groups').modifyGraph('groups', builder => {
+    const user = await WIKI.db.users.query().findById(WIKI.config.auth.guestUserId).withGraphJoined('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions')
     })
     if (!user) {
@@ -858,7 +858,7 @@ module.exports = class User extends Model {
   }
 
   static async getRootUser () {
-    let user = await WIKI.models.users.query().findById(WIKI.config.auth.rootAdminUserId)
+    let user = await WIKI.db.users.query().findById(WIKI.config.auth.rootAdminUserId)
     if (!user) {
       WIKI.logger.error('CRITICAL ERROR: Root Administrator user is missing!')
       process.exit(1)
@@ -876,15 +876,15 @@ module.exports = class User extends Model {
       if (data.length > 1024 * 1024) {
         throw new Error('Avatar image filesize is too large. 1MB max.')
       }
-      const existing = await WIKI.models.knex('userAvatars').select('id').where('id', userId).first()
+      const existing = await WIKI.db.knex('userAvatars').select('id').where('id', userId).first()
       if (existing) {
-        await WIKI.models.knex('userAvatars').where({
+        await WIKI.db.knex('userAvatars').where({
           id: userId
         }).update({
           data
         })
       } else {
-        await WIKI.models.knex('userAvatars').insert({
+        await WIKI.db.knex('userAvatars').insert({
           id: userId,
           data
         })
@@ -896,7 +896,7 @@ module.exports = class User extends Model {
 
   static async getUserAvatarData (userId) {
     try {
-      const usrData = await WIKI.models.knex('userAvatars').where('id', userId).first()
+      const usrData = await WIKI.db.knex('userAvatars').where('id', userId).first()
       if (usrData) {
         return usrData.data
       } else {

@@ -2,12 +2,10 @@ const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
 const { v4: uuid } = require('uuid')
 
-/* global WIKI */
-
 module.exports = {
   Query: {
     async storageTargets (obj, args, context, info) {
-      const dbTargets = await WIKI.models.storage.getTargets({ siteId: args.siteId })
+      const dbTargets = await WIKI.db.storage.getTargets({ siteId: args.siteId })
       // targets = _.sortBy(targets.map(tgt => {
       //   const targetInfo = _.find(WIKI.data.storage, ['module', tgt.key]) || {}
       //   return {
@@ -101,7 +99,7 @@ module.exports = {
     async updateStorageTargets (obj, args, context) {
       WIKI.logger.debug(`Updating storage targets for site ${args.siteId}...`)
       try {
-        const dbTargets = await WIKI.models.storage.getTargets({ siteId: args.siteId })
+        const dbTargets = await WIKI.db.storage.getTargets({ siteId: args.siteId })
         for (const tgt of args.targets) {
           const md = _.find(WIKI.storage.defs, ['key', tgt.module])
           if (!md) {
@@ -124,7 +122,7 @@ module.exports = {
           // -> Target doesn't exist yet in the DB, let's create it
           if (!dbTarget) {
             WIKI.logger.debug(`No existing DB configuration for module ${tgt.module}. Creating a new one...`)
-            await WIKI.models.storage.query().insert({
+            await WIKI.db.storage.query().insert({
               id: tgt.id,
               module: tgt.module,
               siteId: args.siteId,
@@ -147,7 +145,7 @@ module.exports = {
             })
           } else {
             WIKI.logger.debug(`Updating DB configuration for module ${tgt.module}...`)
-            await WIKI.models.storage.query().patch({
+            await WIKI.db.storage.query().patch({
               isEnabled: tgt.isEnabled ?? dbTarget.isEnabled ?? false,
               contentTypes: {
                 activeTypes: tgt.contentTypes ?? dbTarget?.contentTypes?.activeTypes ?? [],
@@ -164,7 +162,7 @@ module.exports = {
             }).where('id', tgt.id)
           }
         }
-        // await WIKI.models.storage.initTargets()
+        // await WIKI.db.storage.initTargets()
         return {
           status: graphHelper.generateSuccess('Storage targets updated successfully')
         }
@@ -174,7 +172,7 @@ module.exports = {
     },
     async setupStorageTarget (obj, args, context) {
       try {
-        const tgt = await WIKI.models.storage.query().findById(args.targetId)
+        const tgt = await WIKI.db.storage.query().findById(args.targetId)
         if (!tgt) {
           throw new Error('Not storage target matching this ID')
         }
@@ -182,7 +180,7 @@ module.exports = {
         if (!md) {
           throw new Error('No matching storage module installed.')
         }
-        if (!await WIKI.models.storage.ensureModule(md.key)) {
+        if (!await WIKI.db.storage.ensureModule(md.key)) {
           throw new Error('Failed to load storage module. Check logs for details.')
         }
         const result = await WIKI.storage.modules[md.key].setup(args.targetId, args.state)
@@ -197,7 +195,7 @@ module.exports = {
     },
     async destroyStorageTargetSetup (obj, args, context) {
       try {
-        const tgt = await WIKI.models.storage.query().findById(args.targetId)
+        const tgt = await WIKI.db.storage.query().findById(args.targetId)
         if (!tgt) {
           throw new Error('Not storage target matching this ID')
         }
@@ -205,7 +203,7 @@ module.exports = {
         if (!md) {
           throw new Error('No matching storage module installed.')
         }
-        if (!await WIKI.models.storage.ensureModule(md.key)) {
+        if (!await WIKI.db.storage.ensureModule(md.key)) {
           throw new Error('Failed to load storage module. Check logs for details.')
         }
         await WIKI.storage.modules[md.key].setupDestroy(args.targetId)
@@ -219,7 +217,7 @@ module.exports = {
     },
     async executeStorageAction (obj, args, context) {
       try {
-        await WIKI.models.storage.executeAction(args.targetKey, args.handler)
+        await WIKI.db.storage.executeAction(args.targetKey, args.handler)
         return {
           status: graphHelper.generateSuccess('Action completed.')
         }

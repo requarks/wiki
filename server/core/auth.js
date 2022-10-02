@@ -10,8 +10,6 @@ const pem2jwk = require('pem-jwk').pem2jwk
 
 const securityHelper = require('../helpers/security')
 
-/* global WIKI */
-
 module.exports = {
   strategies: {},
   guest: {
@@ -33,7 +31,7 @@ module.exports = {
 
     passport.deserializeUser(async (id, done) => {
       try {
-        const user = await WIKI.models.users.query().findById(id).withGraphFetched('groups').modifyGraph('groups', builder => {
+        const user = await WIKI.db.users.query().findById(id).withGraphFetched('groups').modifyGraph('groups', builder => {
           builder.select('groups.id', 'permissions')
         })
         if (user) {
@@ -75,7 +73,7 @@ module.exports = {
       }))
 
       // Load enabled strategies
-      const enabledStrategies = await WIKI.models.authentication.getStrategies({ enabledOnly: true })
+      const enabledStrategies = await WIKI.db.authentication.getStrategies({ enabledOnly: true })
       for (const stg of enabledStrategies) {
         try {
           const strategy = require(`../modules/authentication/${stg.module}/authentication.js`)
@@ -144,7 +142,7 @@ module.exports = {
       if (mustRevalidate) {
         const jwtPayload = jwt.decode(securityHelper.extractJWT(req))
         try {
-          const newToken = await WIKI.models.users.refreshToken(jwtPayload.id, jwtPayload.pvd)
+          const newToken = await WIKI.db.users.refreshToken(jwtPayload.id, jwtPayload.pvd)
           user = newToken.user
           user.permissions = user.getPermissions()
           user.groups = user.getGroups()
@@ -162,7 +160,7 @@ module.exports = {
           return next()
         }
       } else if (user) {
-        user = await WIKI.models.users.getById(user.id)
+        user = await WIKI.db.users.getById(user.id)
         user.permissions = user.getPermissions()
         user.groups = user.getGroups()
         user.strategyId = strategyId
@@ -170,7 +168,7 @@ module.exports = {
       } else {
         // JWT is NOT valid, set as guest
         if (WIKI.auth.guest.cacheExpiration <= DateTime.utc()) {
-          WIKI.auth.guest = await WIKI.models.users.getGuestUser()
+          WIKI.auth.guest = await WIKI.db.users.getGuestUser()
           WIKI.auth.guest.cacheExpiration = DateTime.utc().plus({ minutes: 1 })
         }
         req.user = WIKI.auth.guest
@@ -349,7 +347,7 @@ module.exports = {
    * Reload Groups from DB
    */
   async reloadGroups () {
-    const groupsArray = await WIKI.models.groups.query()
+    const groupsArray = await WIKI.db.groups.query()
     this.groups = _.keyBy(groupsArray, 'id')
     WIKI.auth.guest.cacheExpiration = DateTime.utc().minus({ days: 1 })
   },
@@ -358,7 +356,7 @@ module.exports = {
    * Reload valid API Keys from DB
    */
   async reloadApiKeys () {
-    const keys = await WIKI.models.apiKeys.query().select('id').where('isRevoked', false).andWhere('expiration', '>', DateTime.utc().toISO())
+    const keys = await WIKI.db.apiKeys.query().select('id').where('isRevoked', false).andWhere('expiration', '>', DateTime.utc().toISO())
     this.validApiKeys = _.map(keys, 'id')
   },
 
@@ -405,14 +403,14 @@ module.exports = {
    */
   async resetGuestUser() {
     WIKI.logger.info('Resetting guest account...')
-    const guestGroup = await WIKI.models.groups.query().where('id', 2).first()
+    const guestGroup = await WIKI.db.groups.query().where('id', 2).first()
 
-    await WIKI.models.users.query().delete().where({
+    await WIKI.db.users.query().delete().where({
       providerKey: 'local',
       email: 'guest@example.com'
     }).orWhere('id', 2)
 
-    const guestUser = await WIKI.models.users.query().insert({
+    const guestUser = await WIKI.db.users.query().insert({
       id: 2,
       provider: 'local',
       email: 'guest@example.com',

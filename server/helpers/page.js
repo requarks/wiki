@@ -14,8 +14,6 @@ const contentToExt = {
 }
 const extToContent = _.invert(contentToExt)
 
-/* global WIKI */
-
 module.exports = {
   /**
    * Parse raw url path and make it safe

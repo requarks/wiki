@@ -1,7 +1,5 @@
 const Model = require('objection').Model
 
-/* global WIKI */
-
 /**
  * Editor model
  */
@@ -26,7 +24,7 @@ module.exports = class Editor extends Model {
   }
 
   static async getEditors() {
-    return WIKI.models.editors.query()
+    return WIKI.db.editors.query()
   }
 
   static async getDefaultEditor(contentType) {

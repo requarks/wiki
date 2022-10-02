@@ -1,7 +1,5 @@
 const _ = require('lodash')
 
-/* global WIKI */
-
 // ------------------------------------
 // SAML Account
 // ------------------------------------
@@ -47,7 +45,7 @@ module.exports = {
             throw new Error('Invalid or Missing Unique ID field!')
           }
 
-          const user = await WIKI.models.users.processProfile({
+          const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               id: userId,

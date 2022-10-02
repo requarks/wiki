@@ -10,8 +10,6 @@ const favicon = require('serve-favicon')
 const path = require('path')
 const _ = require('lodash')
 
-/* global WIKI */
-
 module.exports = async () => {
   // ----------------------------------------
   // Load core modules
@@ -104,7 +102,7 @@ module.exports = async () => {
     resave: false,
     saveUninitialized: false,
     store: new KnexSessionStore({
-      knex: WIKI.models.knex
+      knex: WIKI.db.knex
     })
   }))
   app.use(WIKI.auth.passport.initialize())
@@ -162,7 +160,7 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(async (req, res, next) => {
-    const currentSite = await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
+    const currentSite = await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
     if (!currentSite) {
       return res.status(404).send('Site Not Found')
     }
@@ -176,8 +174,8 @@ module.exports = async () => {
       company: currentSite.config.company,
       contentLicense: currentSite.config.contentLicense
     }
-    res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
-    res.locals.analyticsCode = await WIKI.models.analytics.getCode({ cache: true })
+    res.locals.langs = await WIKI.db.locales.getNavLocales({ cache: true })
+    res.locals.analyticsCode = await WIKI.db.analytics.getCode({ cache: true })
     next()
   })
 

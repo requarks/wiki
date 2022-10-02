@@ -1,7 +1,5 @@
 const _ = require('lodash')
 
-/* global WIKI */
-
 // ------------------------------------
 // OpenID Connect Account
 // ------------------------------------
@@ -22,7 +20,7 @@ module.exports = {
         passReqToCallback: true
       }, async (req, iss, sub, profile, cb) => {
         try {
-          const user = await WIKI.models.users.processProfile({
+          const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               ...profile,

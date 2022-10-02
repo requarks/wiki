@@ -5,8 +5,6 @@ const _ = require('lodash')
 const yaml = require('js-yaml')
 const commonHelper = require('../helpers/common')
 
-/* global WIKI */
-
 /**
  * CommentProvider model
  */
@@ -31,11 +29,11 @@ module.exports = class CommentProvider extends Model {
   }
 
   static async getProvider(key) {
-    return WIKI.models.commentProviders.query().findOne({ key })
+    return WIKI.db.commentProviders.query().findOne({ key })
   }
 
   static async getProviders(isEnabled) {
-    const providers = await WIKI.models.commentProviders.query().where(_.isBoolean(isEnabled) ? { isEnabled } : {})
+    const providers = await WIKI.db.commentProviders.query().where(_.isBoolean(isEnabled) ? { isEnabled } : {})
     return _.sortBy(providers, ['module'])
   }
 
@@ -61,7 +59,7 @@ module.exports = class CommentProvider extends Model {
   }
 
   static async initProvider() {
-    const commentProvider = await WIKI.models.commentProviders.query().findOne('isEnabled', true)
+    const commentProvider = await WIKI.db.commentProviders.query().findOne('isEnabled', true)
     if (commentProvider) {
       WIKI.data.commentProvider = {
         ..._.find(WIKI.data.commentProviders, ['key', commentProvider.module]),

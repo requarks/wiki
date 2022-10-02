@@ -1,8 +1,0 @@
-key: sphinx
-title: Sphinx
-description: Sphinx is an open source full text search server, designed from the ground up with performance, relevance and integration simplicity in mind.
-author: requarks.io
-logo: https://static.requarks.io/logo/sphinx.svg
-website: http://sphinxsearch.com/
-isAvailable: false
-props: {}

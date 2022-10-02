@@ -6,8 +6,6 @@ const yaml = require('js-yaml')
 const DepGraph = require('dependency-graph').DepGraph
 const commonHelper = require('../helpers/common')
 
-/* global WIKI */
-
 /**
  * Renderer model
  */
@@ -32,7 +30,7 @@ module.exports = class Renderer extends Model {
   }
 
   static async getRenderers() {
-    return WIKI.models.renderers.query()
+    return WIKI.db.renderers.query()
   }
 
   static async fetchDefinitions() {
@@ -57,16 +55,16 @@ module.exports = class Renderer extends Model {
   }
 
   static async refreshRenderersFromDisk() {
-    // const dbRenderers = await WIKI.models.renderers.query()
+    // const dbRenderers = await WIKI.db.renderers.query()
 
     // -> Fetch definitions from disk
-    await WIKI.models.renderers.fetchDefinitions()
+    await WIKI.db.renderers.fetchDefinitions()
 
     // TODO: Merge existing configs with updated modules
   }
 
   static async getRenderingPipeline(contentType) {
-    const renderersDb = await WIKI.models.renderers.query().where('isEnabled', true)
+    const renderersDb = await WIKI.db.renderers.query().where('isEnabled', true)
     if (renderersDb && renderersDb.length > 0) {
       const renderers = renderersDb.map(rdr => {
         const renderer = _.find(WIKI.data.renderers, ['key', rdr.key])

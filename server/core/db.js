@@ -9,8 +9,6 @@ const Objection = require('objection')
 const migrationSource = require('../db/migrator-source')
 const migrateFromLegacy = require('../db/legacy')
 
-/* global WIKI */
-
 /**
  * ORM DB module
  */
@@ -144,17 +142,13 @@ module.exports = {
       }
     }
 
-    let initTasksQueue = (WIKI.IS_MASTER) ? [
-      initTasks.connect,
-      initTasks.migrateFromLegacy,
-      initTasks.syncSchemas
-    ] : [
-      () => { return Promise.resolve() }
-    ]
-
     // Perform init tasks
 
-    this.onReady = Promise.each(initTasksQueue, t => t()).return(true)
+    this.onReady = (async () => {
+      await initTasks.connect()
+      await initTasks.migrateFromLegacy()
+      await initTasks.syncSchemas()
+    })()
 
     return {
       ...this,
@@ -187,7 +181,7 @@ module.exports = {
 
     WIKI.auth.subscribeToEvents()
     WIKI.configSvc.subscribeToEvents()
-    WIKI.models.pages.subscribeToEvents()
+    WIKI.db.pages.subscribeToEvents()
 
     WIKI.logger.info(`PG PubSub Listener initialized successfully: [ OK ]`)
   },
@@ -208,7 +202,7 @@ module.exports = {
    * @param {object} value Payload of the event
    */
   notifyViaDB (event, value) {
-    WIKI.models.listener.publish('wiki', {
+    WIKI.db.listener.publish('wiki', {
       source: WIKI.INSTANCE_ID,
       event,
       value

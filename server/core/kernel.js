@@ -3,8 +3,6 @@ const EventEmitter = require('eventemitter2').EventEmitter2
 
 let isShuttingDown = false
 
-/* global WIKI */
-
 module.exports = {
   async init() {
     WIKI.logger.info('=======================================')
@@ -12,10 +10,10 @@ module.exports = {
     WIKI.logger.info('=======================================')
     WIKI.logger.info('Initializing...')
 
-    WIKI.models = require('./db').init()
+    WIKI.db = require('./db').init()
 
     try {
-      await WIKI.models.onReady
+      await WIKI.db.onReady
       await WIKI.configSvc.loadFromDb()
       await WIKI.configSvc.applyFlags()
     } catch (err) {
@@ -64,21 +62,21 @@ module.exports = {
    * Post-Web Boot Sequence
    */
   async postBootWeb() {
-    await WIKI.models.analytics.refreshProvidersFromDisk()
-    await WIKI.models.authentication.refreshStrategiesFromDisk()
-    await WIKI.models.commentProviders.refreshProvidersFromDisk()
-    await WIKI.models.renderers.refreshRenderersFromDisk()
-    await WIKI.models.storage.refreshTargetsFromDisk()
+    await WIKI.db.analytics.refreshProvidersFromDisk()
+    await WIKI.db.authentication.refreshStrategiesFromDisk()
+    await WIKI.db.commentProviders.refreshProvidersFromDisk()
+    await WIKI.db.renderers.refreshRenderersFromDisk()
+    await WIKI.db.storage.refreshTargetsFromDisk()
 
     await WIKI.extensions.init()
 
     await WIKI.auth.activateStrategies()
-    await WIKI.models.commentProviders.initProvider()
-    await WIKI.models.sites.reloadCache()
-    await WIKI.models.storage.initTargets()
+    await WIKI.db.commentProviders.initProvider()
+    await WIKI.db.sites.reloadCache()
+    await WIKI.db.storage.initTargets()
     await WIKI.scheduler.start()
 
-    await WIKI.models.subscribeToNotifications()
+    await WIKI.db.subscribeToNotifications()
   },
   /**
    * Graceful shutdown
@@ -93,9 +91,9 @@ module.exports = {
       await WIKI.scheduler.stop()
     }
     if (WIKI.models) {
-      await WIKI.models.unsubscribeToNotifications()
-      if (WIKI.models.knex) {
-        await WIKI.models.knex.destroy()
+      await WIKI.db.unsubscribeToNotifications()
+      if (WIKI.db.knex) {
+        await WIKI.db.knex.destroy()
       }
     }
     if (WIKI.asar) {
