@@ -134,7 +134,6 @@ module.exports = async () => {
   // View accessible data
   // ----------------------------------------
 
-  app.locals.siteConfig = {}
   app.locals.analyticsCode = {}
   app.locals.basedir = WIKI.ROOTPATH
   app.locals.config = WIKI.config
@@ -173,6 +172,9 @@ module.exports = async () => {
       rtl: false, // TODO: handle RTL
       company: currentSite.config.company,
       contentLicense: currentSite.config.contentLicense
+    }
+    res.locals.theming = {
+
     }
     res.locals.langs = await WIKI.db.locales.getNavLocales({ cache: true })
     res.locals.analyticsCode = await WIKI.db.analytics.getCode({ cache: true })

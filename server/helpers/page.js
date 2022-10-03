@@ -20,7 +20,8 @@ module.exports = {
    */
   parsePath (rawPath, opts = {}) {
     let pathObj = {
-      locale: WIKI.config.lang.code,
+      // TODO: use site base lang
+      locale: 'en', // WIKI.config.lang.code,
       path: 'home',
       private: false,
       privateNS: '',

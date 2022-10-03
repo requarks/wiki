@@ -1,6 +1,7 @@
 const { v4: uuid } = require('uuid')
 const bcrypt = require('bcryptjs-then')
 const crypto = require('crypto')
+const { DateTime } = require('luxon')
 const pem2jwk = require('pem-jwk').pem2jwk
 
 exports.up = async knex => {
@@ -120,16 +121,6 @@ exports.up = async knex => {
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })
-    // JOB SCHEDULE ------------------------
-    .createTable('jobSchedule', table => {
-      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
-      table.string('task').notNullable()
-      table.string('cron').notNullable()
-      table.string('type').notNullable().defaultTo('system')
-      table.jsonb('payload')
-      table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
-      table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
-    })
     // JOB HISTORY -------------------------
     .createTable('jobHistory', table => {
       table.uuid('id').notNullable().primary()
@@ -141,6 +132,22 @@ exports.up = async knex => {
       table.timestamp('startedAt').notNullable()
       table.timestamp('completedAt').notNullable().defaultTo(knex.fn.now())
     })
+    // JOB SCHEDULE ------------------------
+    .createTable('jobSchedule', table => {
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.string('task').notNullable()
+      table.string('cron').notNullable()
+      table.string('type').notNullable().defaultTo('system')
+      table.jsonb('payload')
+      table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
+      table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
+    })
+    // JOB SCHEDULE ------------------------
+    .createTable('jobLock', table => {
+      table.string('key').notNullable().primary()
+      table.string('lastCheckedBy')
+      table.timestamp('lastCheckedAt').notNullable().defaultTo(knex.fn.now())
+    })
     // JOBS --------------------------------
     .createTable('jobs', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
@@ -148,6 +155,8 @@ exports.up = async knex => {
       table.boolean('useWorker').notNullable().defaultTo(false)
       table.jsonb('payload')
       table.timestamp('waitUntil')
+      table.boolean('isScheduled').notNullable().defaultTo(false)
+      table.string('createdBy')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })
@@ -679,6 +688,12 @@ exports.up = async knex => {
       type: 'system'
     }
   ])
+
+  await knex('jobLock').insert({
+    key: 'cron',
+    lastCheckedBy: 'init',
+    lastCheckedAt: DateTime.utc().minus({ hours: 1 }).toISO()
+  })
 
   WIKI.logger.info('Completed 3.0.0 database migration.')
 }

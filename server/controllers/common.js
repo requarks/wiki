@@ -158,15 +158,15 @@ router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
     return res.redirect(`/_edit/home`)
   }
 
-  if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/_edit/${pageArgs.locale}/${pageArgs.path}`)
-  }
+  // if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
+  //   return res.redirect(`/_edit/${pageArgs.locale}/${pageArgs.path}`)
+  // }
 
-  req.i18n.changeLanguage(pageArgs.locale)
+  // req.i18n.changeLanguage(pageArgs.locale)
 
   // -> Set Editor Lang
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
-  _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
+  // _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
   // -> Check for reserved path
   if (pageHelper.isReservedPath(pageArgs.path)) {
@@ -187,9 +187,9 @@ router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
   const effectivePermissions = WIKI.auth.getEffectivePermissions(req, pageArgs)
 
   const injectCode = {
-    css: WIKI.config.theming.injectCSS,
-    head: WIKI.config.theming.injectHead,
-    body: WIKI.config.theming.injectBody
+    css: '', // WIKI.config.theming.injectCSS,
+    head: '', // WIKI.config.theming.injectHead,
+    body: '' // WIKI.config.theming.injectBody
   }
 
   if (page) {
@@ -462,11 +462,11 @@ router.get('/*', async (req, res, next) => {
   const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
 
   if (isPage) {
-    if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-      return res.redirect(`/${pageArgs.locale}/${pageArgs.path}`)
-    }
+    // if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
+    //   return res.redirect(`/${pageArgs.locale}/${pageArgs.path}`)
+    // }
 
-    req.i18n.changeLanguage(pageArgs.locale)
+    // req.i18n.changeLanguage(pageArgs.locale)
 
     try {
       // -> Get Page from cache
@@ -494,7 +494,7 @@ router.get('/*', async (req, res, next) => {
       }
 
       _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
-      _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
+      // _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)

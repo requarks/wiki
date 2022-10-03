@@ -31,6 +31,8 @@ defaults:
     bodyParserLimit: 5mb
     scheduler:
       workers: 3
+      pollingCheck: 5
+      scheduledCheck: 300
     # DB defaults
     api:
       isEnabled: false

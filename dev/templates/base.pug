@@ -38,20 +38,6 @@ html(lang=siteConfig.lang)
       script.
         siteConfig.devMode = true
 
-    //- Icon Set
-    if config.theming.iconset === 'fa'
-      link(
-        type='text/css'
-        rel='stylesheet'
-        href='https://use.fontawesome.com/releases/v5.10.0/css/all.css'
-        )
-    else if config.theming.iconset === 'fa4'
-      link(
-        type='text/css'
-        rel='stylesheet'
-        href='https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css'
-        )
-
     //- CSS
     <% for (var index in htmlWebpackPlugin.files.css) { %>
       <% if (htmlWebpackPlugin.files.cssIntegrity) { %>

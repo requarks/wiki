@@ -453,9 +453,9 @@ module.exports = {
   getEffectivePermissions (req, page) {
     return {
       comments: {
-        read: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['read:comments'], page) : false,
-        write: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['write:comments'], page) : false,
-        manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:comments'], page) : false
+        read: WIKI.auth.checkAccess(req.user, ['read:comments'], page),
+        write: WIKI.auth.checkAccess(req.user, ['write:comments'], page),
+        manage: WIKI.auth.checkAccess(req.user, ['manage:comments'], page)
       },
       history: {
         read: WIKI.auth.checkAccess(req.user, ['read:history'], page)
