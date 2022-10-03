@@ -164,6 +164,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - GoodCorporateCitizen ([@GoodCorporateCitizen](https://github.com/GoodCorporateCitizen))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
+- HikaruEgashira ([@HikaruEgashira](https://github.com/HikaruEgashira))
 - Ian Hyzy ([@ianhyzy](https://github.com/ianhyzy))
 - Jaimyn Mayer ([@jabelone](https://github.com/jabelone))
 - Jay Lee ([@polyglotm](https://github.com/polyglotm))
