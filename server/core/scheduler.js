@@ -1,11 +1,14 @@
 const { DynamicThreadPool } = require('poolifier')
 const os = require('node:os')
 const { setTimeout } = require('node:timers/promises')
+const autoload = require('auto-load')
+const path = require('node:path')
 
 module.exports = {
   pool: null,
   maxWorkers: 1,
   activeWorkers: 0,
+  tasks: null,
   async init () {
     this.maxWorkers = WIKI.config.scheduler.workers === 'auto' ? os.cpus().length : WIKI.config.scheduler.workers
     WIKI.logger.info(`Initializing Worker Pool (Limit: ${this.maxWorkers})...`)
@@ -14,6 +17,7 @@ module.exports = {
       exitHandler: () => WIKI.logger.debug('A worker has gone offline.'),
       onlineHandler: () => WIKI.logger.debug('New worker is online.')
     })
+    this.tasks = autoload(path.join(WIKI.SERVERPATH, 'tasks/simple'))
     return this
   },
   async start () {
@@ -56,7 +60,7 @@ module.exports = {
               data: job.payload
             })
           } else {
-
+            await this.tasks[job.task](job.payload)
           }
         }
       })
@@ -66,7 +70,7 @@ module.exports = {
   },
   async stop () {
     WIKI.logger.info('Stopping Scheduler...')
-    await this.pool.stop()
+    await this.pool.destroy()
     WIKI.logger.info('Scheduler: [ STOPPED ]')
   }
 }
