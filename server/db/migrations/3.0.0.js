@@ -669,12 +669,12 @@ exports.up = async knex => {
 
   await knex('jobSchedule').insert([
     {
-      task: 'update-locales',
+      task: 'updateLocales',
       cron: '0 0 * * *',
       type: 'system'
     },
     {
-      task: 'check-version',
+      task: 'checkVersion',
       cron: '0 0 * * *',
       type: 'system'
     }
