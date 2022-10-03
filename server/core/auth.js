@@ -4,8 +4,9 @@ const _ = require('lodash')
 const jwt = require('jsonwebtoken')
 const ms = require('ms')
 const { DateTime } = require('luxon')
-const Promise = require('bluebird')
-const crypto = Promise.promisifyAll(require('crypto'))
+const util = require('node:util')
+const crypto = require('node:crypto')
+const randomBytes = util.promisify(crypto.randomBytes)
 const pem2jwk = require('pem-jwk').pem2jwk
 
 const securityHelper = require('../helpers/security')
@@ -366,7 +367,7 @@ module.exports = {
   async regenerateCertificates () {
     WIKI.logger.info('Regenerating certificates...')
 
-    _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+    _.set(WIKI.config, 'sessionSecret', (await randomBytes(32)).toString('hex'))
     const certs = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: {

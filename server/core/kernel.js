@@ -74,9 +74,9 @@ module.exports = {
     await WIKI.db.commentProviders.initProvider()
     await WIKI.db.sites.reloadCache()
     await WIKI.db.storage.initTargets()
-    await WIKI.scheduler.start()
 
     await WIKI.db.subscribeToNotifications()
+    await WIKI.scheduler.start()
   },
   /**
    * Graceful shutdown

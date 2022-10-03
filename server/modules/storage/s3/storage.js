@@ -1,7 +1,7 @@
 const S3 = require('aws-sdk/clients/s3')
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const stream = require('node:stream')
+const util = require('node:util')
+const pipeline = util.promisify(stream.pipeline)
 const _ = require('lodash')
 const pageHelper = require('../../../helpers/page.js')
 

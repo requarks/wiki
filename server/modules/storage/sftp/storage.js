@@ -1,9 +1,9 @@
 const SSH2Promise = require('ssh2-promise')
 const _ = require('lodash')
-const path = require('path')
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const path = require('node:path')
+const stream = require('node:stream')
+const util = require('node:util')
+const pipeline = util.promisify(stream.pipeline)
 const pageHelper = require('../../../helpers/page.js')
 
 const getFilePath = (page, pathKey) => {

@@ -33,6 +33,9 @@ LEVELS.forEach(lvl => {
           message: msg
         })
       } else {
+        if (msg instanceof Error) {
+          msg = msg.stack
+        }
         formatted = chalk`${new Date().toISOString()} {dim [${WIKI.INSTANCE_ID}]} {${LEVELCOLORS[lvl]}.bold ${lvl}}: ${msg}`
       }
 

@@ -1,12 +1,9 @@
-/* global WIKI */
-
 const Model = require('objection').Model
 const moment = require('moment')
 const path = require('path')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const assetHelper = require('../helpers/asset')
-const Promise = require('bluebird')
 
 /**
  * Users model
@@ -199,9 +196,8 @@ module.exports = class Asset extends Model {
     } catch (err) {
       return false
     }
-    const sendFile = Promise.promisify(res.sendFile, {context: res})
     res.type(path.extname(assetPath))
-    await sendFile(cachePath, { dotfiles: 'deny' })
+    await new Promise(resolve => res.sendFile(cachePath, { dotfiles: 'deny' }, resolve))
     return true
   }
 

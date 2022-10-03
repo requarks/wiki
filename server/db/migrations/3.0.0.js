@@ -145,7 +145,9 @@ exports.up = async knex => {
     .createTable('jobs', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('task').notNullable()
+      table.boolean('useWorker').notNullable().defaultTo(false)
       table.jsonb('payload')
+      table.timestamp('waitUntil')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })

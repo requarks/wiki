@@ -1,5 +1,6 @@
-const Promise = require('bluebird')
-const crypto = require('crypto')
+const util = require('node:util')
+const crypto = require('node:crypto')
+const randomBytes = util.promisify(crypto.randomBytes)
 const passportJWT = require('passport-jwt')
 
 module.exports = {
@@ -17,11 +18,7 @@ module.exports = {
    * @returns
    */
   async generateToken (length) {
-    return Promise.fromCallback(clb => {
-      crypto.randomBytes(length, clb)
-    }).then(buf => {
-      return buf.toString('hex')
-    })
+    return (await randomBytes(length)).toString('hex')
   },
 
   extractJWT: passportJWT.ExtractJwt.fromExtractors([

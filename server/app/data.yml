@@ -78,25 +78,6 @@ defaults:
     search:
       maxHits: 100
     maintainerEmail: security@requarks.io
-jobs:
-  - task: background
-    identifier: purge-uploads
-    pattern: '*/15 * * * *'
-    payload:
-      name: purgeUploads
-      data: {}
-  # - task: simple
-  #   identifier: letest
-  #   pattern: '* * * * *'
-  #   payload:
-  #     name: bob
-  #     data: {}
-  # - task: simple
-  #   identifier: letest2
-  #   pattern: '* * * * *'
-  #   payload:
-  #     name: bob
-  #     data: {}
 groups:
   defaultPermissions:
     - 'read:pages'
