@@ -1,7 +1,7 @@
 const _ = require('lodash')
-const Promise = require('bluebird')
-const getos = Promise.promisify(require('getos'))
-const os = require('os')
+const util = require('node:util')
+const getos = util.promisify(require('getos'))
+const os = require('node:os')
 const filesize = require('filesize')
 const path = require('path')
 const fs = require('fs-extra')
@@ -105,11 +105,11 @@ module.exports = {
     currentVersion () {
       return WIKI.version
     },
-    async dbVersion () {
-      return _.get(WIKI.models, 'knex.client.version', 'Unknown Version')
-    },
     dbHost () {
       return WIKI.config.db.host
+    },
+    dbVersion () {
+      return _.get(WIKI.db, 'knex.client.version', 'Unknown Version')
     },
     hostname () {
       return os.hostname()

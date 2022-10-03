@@ -1,13 +1,13 @@
 const _ = require('lodash')
 const autoload = require('auto-load')
 const path = require('path')
-const Promise = require('bluebird')
 const Knex = require('knex')
 const fs = require('fs')
 const Objection = require('objection')
 
 const migrationSource = require('../db/migrator-source')
 const migrateFromLegacy = require('../db/legacy')
+const { setTimeout } = require('timers/promises')
 
 /**
  * ORM DB module
@@ -118,7 +118,7 @@ module.exports = {
               WIKI.logger.error(`Database Connection Error: ${err.message}`)
             }
             WIKI.logger.warn(`Will retry in 3 seconds... [Attempt ${++conAttempts} of 10]`)
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            await setTimeout(3000)
             await initTasks.connect()
           } else {
             throw err

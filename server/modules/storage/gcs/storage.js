@@ -1,7 +1,7 @@
 const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob')
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const stream = require('node:stream')
+const util = require('node:util')
+const pipeline = util.promisify(stream.pipeline)
 const pageHelper = require('../../../helpers/page.js')
 const _ = require('lodash')
 

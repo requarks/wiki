@@ -2,7 +2,6 @@ const fs = require('fs-extra')
 const http = require('http')
 const https = require('https')
 const { ApolloServer } = require('apollo-server-express')
-const Promise = require('bluebird')
 const _ = require('lodash')
 const io = require('socket.io')
 const { ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageProductionDefault } = require('apollo-server-core')
@@ -188,11 +187,11 @@ module.exports = {
   async stopServers () {
     this.closeConnections()
     if (this.http) {
-      await Promise.fromCallback(cb => { this.http.close(cb) })
+      await new Promise(resolve => this.http.close(resolve))
       this.http = null
     }
     if (this.https) {
-      await Promise.fromCallback(cb => { this.https.close(cb) })
+      await new Promise(resolve => this.https.close(resolve))
       this.https = null
     }
     this.graph = null
@@ -205,7 +204,7 @@ module.exports = {
     switch (srv) {
       case 'http':
         if (this.http) {
-          await Promise.fromCallback(cb => { this.http.close(cb) })
+          await new Promise(resolve => this.http.close(resolve))
           this.http = null
         }
         this.initHTTP()
@@ -213,7 +212,7 @@ module.exports = {
         break
       case 'https':
         if (this.https) {
-          await Promise.fromCallback(cb => { this.https.close(cb) })
+          await new Promise(resolve => this.https.close(resolve))
           this.https = null
         }
         this.initHTTPS()

@@ -1,12 +1,11 @@
 const { DynamicThreadPool } = require('poolifier')
-const { v4: uuid } = require('uuid')
 const os = require('node:os')
-const path = require('node:path')
+const { setTimeout } = require('node:timers/promises')
 
 module.exports = {
   pool: null,
-  runner: null,
   maxWorkers: 1,
+  activeWorkers: 0,
   async init () {
     this.maxWorkers = WIKI.config.scheduler.workers === 'auto' ? os.cpus().length : WIKI.config.scheduler.workers
     WIKI.logger.info(`Initializing Worker Pool (Limit: ${this.maxWorkers})...`)
@@ -19,46 +18,55 @@ module.exports = {
   },
   async start () {
     WIKI.logger.info('Starting Scheduler...')
-    // this.runner = await run({
-    //   pgPool: new Pool({
-    //     ...(typeof WIKI.db.config === 'string') ? {
-    //       connectionString: WIKI.db.config
-    //     } : WIKI.db.config,
-    //     max: this.maxWorkers + 2
-    //   }),
-    //   schema: WIKI.config.db.schemas.scheduler,
-    //   concurrency: this.maxWorkers,
-    //   noHandleSignals: true,
-    //   logger: new Logger(scope => {
-    //     return (level, message, meta) => {
-    //       const prefix = (scope?.workerId) ? `[${scope.workerId}] ` : ''
-    //       WIKI.logger[level](`${prefix}${message}`, meta)
-    //     }
-    //   }),
-    //   parsedCronItems: parseCronItems(WIKI.data.jobs),
-    //   taskList: {
-    //     simple: async (payload, helpers) => {
-    //       // TODO: Handle task
-    //     },
-    //     background: async (payload, helpers) => {
-    //       try {
-    //         await this.pool.execute({
-    //           id: helpers.job.id,
-    //           name: payload.name,
-    //           data: payload.data
-    //         })
-    //       } catch (err) {
-    //         helpers.logger.warn(`Failed job: ${err.message}`)
-    //         throw err
-    //       }
-    //     }
-    //   }
+    WIKI.db.listener.addChannel('scheduler', payload => {
+      switch (payload.event) {
+        case 'newJob': {
+          if (this.activeWorkers < this.maxWorkers) {
+            this.activeWorkers++
+            this.processJob()
+          }
+          break
+        }
+      }
+    })
+    // await WIKI.db.knex('jobs').insert({
+    //   task: 'test',
+    //   payload: { foo: 'bar' }
+    // })
+    // WIKI.db.listener.publish('scheduler', {
+    //   source: WIKI.INSTANCE_ID,
+    //   event: 'newJob'
     // })
     WIKI.logger.info('Scheduler: [ STARTED ]')
   },
+  async processJob () {
+    try {
+      await WIKI.db.knex.transaction(async trx => {
+        const jobs = await trx('jobs')
+          .where('id', WIKI.db.knex.raw('(SELECT id FROM jobs ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1)'))
+          .returning('*')
+          .del()
+        if (jobs && jobs.length === 1) {
+          const job = jobs[0]
+          WIKI.logger.info(`Processing new job ${job.id}: ${job.task}...`)
+          if (job.useWorker) {
+            await this.pool.execute({
+              id: job.id,
+              name: job.task,
+              data: job.payload
+            })
+          } else {
+
+          }
+        }
+      })
+    } catch (err) {
+      WIKI.logger.warn(err)
+    }
+  },
   async stop () {
     WIKI.logger.info('Stopping Scheduler...')
-    // await this.runner.stop()
+    await this.pool.stop()
     WIKI.logger.info('Scheduler: [ STOPPED ]')
   }
 }
