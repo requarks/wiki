@@ -61,6 +61,7 @@ service:
   # type: LoadBalancer
   # httpsPort: 443
   # annotations: {}
+  # loadBalancerIP: 172.16.0.1
 
 ingress:
   enabled: true
