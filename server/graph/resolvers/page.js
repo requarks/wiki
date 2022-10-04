@@ -244,7 +244,7 @@ module.exports = {
             builder.andWhere('isFolder', true)
             break
           case 'PAGES':
-            builder.andWhereNotNull('pageId')
+            builder.whereNotNull('pageId')
             break
         }
         if (!args.parent || args.parent < 1) {
