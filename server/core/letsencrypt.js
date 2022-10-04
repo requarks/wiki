@@ -113,7 +113,7 @@ module.exports = {
           }
         }
       })
-      WIKI.logger.info(`(LETSENCRYPT) New certifiate received successfully: [ COMPLETED ]`)
+      WIKI.logger.info(`(LETSENCRYPT) New certificate received successfully: [ COMPLETED ]`)
       WIKI.config.letsencrypt.payload = certResp
       WIKI.config.letsencrypt.domain = WIKI.config.ssl.domain
       await WIKI.configSvc.saveToDb(['letsencrypt'])
