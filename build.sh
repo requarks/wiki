@@ -19,7 +19,7 @@ then
 fi
 
 mv package.json pkg-temp.json
-jq --arg vs "$0" -r '. + {dev:false, version:$vs}' pkg-temp.json > package.json
+jq --arg vs "$1" -r '. + {dev:false, version:$vs}' pkg-temp.json > package.json
 rm pkg-temp.json
 cat package.json
 
