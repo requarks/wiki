@@ -38,7 +38,7 @@ module.exports = {
                 await user.$relatedQuery('groups').relate(groupId)
               }
               for (const groupId of _.difference(currentGroups, expectedGroups)) {
-                await user.$relatedQuery('groups').unrelate(groupId)
+                await user.$relatedQuery('groups').unrelate().where('groups.id', '=', groupId)
               }
             }
           }
