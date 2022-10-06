@@ -22,7 +22,7 @@ jobs:
         # sync action checks out your 'target_sync_branch' anyway
         ref:  main
         # REQUIRED if your upstream repo is private (see wiki)
-        persist-credentials: false
+        persist-credentials: true
 
     # REQUIRED step
     # Step 2: run the sync action
