@@ -13,7 +13,5 @@ jobs:
     steps:
       - uses: tgymnich/fork-sync@v1.6.3
         with:
-          owner: ${{ env.OWNER }}
-          base: main
-          head: main
-          auto_merge: false
+          base: master
+          head: master
