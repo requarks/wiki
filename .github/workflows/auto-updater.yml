@@ -1,20 +1,19 @@
-name: autoupdate
+name: Sync Fork
+
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - 'main'
+  schedule:
+    - cron: '*/30 * * * *' # every 30 minutes
+  workflow_dispatch: # on button click
 
 jobs:
-  update-branches:
-    name: Update branches
+  sync:
+
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Update branches
-        uses: brainly/action-autoupdate-branch@2.0.0
-        id: autoUpdateBranch
+      - uses: tgymnich/fork-sync@v1.6.3
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          requiredApprovals: 0
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          owner: jdsmithit
+          base: master
+          head: master
