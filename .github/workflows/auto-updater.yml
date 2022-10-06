@@ -16,3 +16,4 @@ jobs:
           owner: ${{ env.OWNER }}
           base: main
           head: main
+          auto_merge: false
