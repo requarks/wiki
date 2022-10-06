@@ -13,6 +13,6 @@ jobs:
     steps:
       - uses: tgymnich/fork-sync@v1.6.3
         with:
-          token: ${{ secrets.PERSONAL_TOKEN }}
+          owner: ${{ env.OWNER }}
           base: main
           head: main
