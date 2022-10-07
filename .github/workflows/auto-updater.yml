@@ -51,10 +51,7 @@ jobs:
       
     - name: Show value of 'has_new_commits'
       run: echo ${{ steps.sync.outputs.has_new_commits }}
-   
-    - name: Step is going to fail
-      run: exit 1
-   
+    
     - name: Notify Slack Releases Channel
       if: ${{ failure() }}
       uses: slackapi/slack-github-action@v1.18.0
