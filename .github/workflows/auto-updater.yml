@@ -51,7 +51,7 @@ jobs:
       
     - name: Show value of 'has_new_commits'
       run: echo ${{ steps.sync.outputs.has_new_commits }}
-      
+   
     - name: Step is going to fail
       run: exit 1
    
@@ -61,7 +61,7 @@ jobs:
       with:
        payload: |
         {
-          "text": "Wikijs-dfds GitHub Action Auto Merge Result: ${{ job.status }}\n${{ github.event.head_commit.url }}."
+          "text": "Wikijs-dfds Auto Fork Merge Result: ${{ job.status }}\n Please resolve the merge conflicts using a manual Sync @ https://github.com/dfds/wikijs-dfds"
         }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
