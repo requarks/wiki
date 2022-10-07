@@ -51,3 +51,18 @@ jobs:
       
     - name: Show value of 'has_new_commits'
       run: echo ${{ steps.sync.outputs.has_new_commits }}
+      
+    - name: Step is going to fail
+      run: exit 1
+   
+    - name: Notify Slack Releases Channel
+      if: ${{ failure() }}
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+       payload: |
+        {
+          "text": "Wikijs-dfds GitHub Action Auto Merge Result: ${{ job.status }}\n${{ github.event.head_commit.url }}."
+        }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
