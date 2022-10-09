@@ -1515,7 +1515,15 @@
   "admin.scheduler.completedNone": "There are no recently completed job to display.",
   "admin.scheduler.scheduledNone": "There are no scheduled jobs at the moment.",
   "admin.scheduler.cron": "Cron",
-  "admin.scheduler.nextExecutionIn": "Next run {date}",
-  "admin.scheduler.nextExecution": "Next Run",
-  "admin.scheduler.timezone": "Timezone"
+  "admin.scheduler.createdBy": "by instance {instance}",
+  "admin.scheduler.upcoming": "Upcoming",
+  "admin.scheduler.failed": "Failed",
+  "admin.scheduler.type": "Type",
+  "admin.scheduler.createdAt": "Created",
+  "admin.scheduler.updatedAt": "Last Updated",
+  "common.field.task": "Task",
+  "admin.scheduler.upcomingNone": "There are no upcoming job for the moment.",
+  "admin.scheduler.waitUntil": "Start",
+  "admin.scheduler.attempt": "Attempt",
+  "admin.scheduler.useWorker": "Execution Mode"
 }

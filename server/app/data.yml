@@ -33,6 +33,8 @@ defaults:
       workers: 3
       pollingCheck: 5
       scheduledCheck: 300
+      maxRetries: 5
+      retryBackoff: 60
     # DB defaults
     api:
       isEnabled: false

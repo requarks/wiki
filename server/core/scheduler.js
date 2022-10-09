@@ -55,12 +55,13 @@ module.exports = {
 
     WIKI.logger.info('Scheduler: [ STARTED ]')
   },
-  async addJob ({ task, payload, waitUntil, isScheduled = false, notify = true }) {
+  async addJob ({ task, payload, waitUntil, maxRetries, isScheduled = false, notify = true }) {
     try {
       await WIKI.db.knex('jobs').insert({
         task,
         useWorker: !(typeof this.tasks[task] === 'function'),
         payload,
+        maxRetries: maxRetries ?? WIKI.config.scheduler.maxRetries,
         isScheduled,
         waitUntil,
         createdBy: WIKI.INSTANCE_ID
@@ -76,6 +77,7 @@ module.exports = {
     }
   },
   async processJob () {
+    let jobId = null
     try {
       await WIKI.db.knex.transaction(async trx => {
         const jobs = await trx('jobs')
@@ -85,19 +87,74 @@ module.exports = {
         if (jobs && jobs.length === 1) {
           const job = jobs[0]
           WIKI.logger.info(`Processing new job ${job.id}: ${job.task}...`)
-          if (job.useWorker) {
-            await this.workerPool.execute({
-              id: job.id,
-              name: job.task,
-              data: job.payload
+          jobId = job.id
+          // -> Add to Job History
+          await WIKI.db.knex('jobHistory').insert({
+            id: job.id,
+            task: job.task,
+            state: 'active',
+            useWorker: job.useWorker,
+            wasScheduled: job.isScheduled,
+            payload: job.payload,
+            attempt: job.retries + 1,
+            maxRetries: job.maxRetries,
+            createdAt: job.createdAt
+          }).onConflict('id').merge({
+            startedAt: new Date()
+          })
+          // -> Start working on it
+          try {
+            if (job.useWorker) {
+              await this.workerPool.execute({
+                id: job.id,
+                name: job.task,
+                data: job.payload
+              })
+            } else {
+              await this.tasks[job.task](job.payload)
+            }
+            // -> Update job history (success)
+            await WIKI.db.knex('jobHistory').where({
+              id: job.id
+            }).update({
+              state: 'completed',
+              completedAt: new Date()
             })
-          } else {
-            await this.tasks[job.task](job.payload)
+            WIKI.logger.info(`Completed job ${job.id}: ${job.task} [ SUCCESS ]`)
+          } catch (err) {
+            WIKI.logger.warn(`Failed to complete job ${job.id}: ${job.task} [ FAILED ]`)
+            WIKI.logger.warn(err)
+            // -> Update job history (fail)
+            await WIKI.db.knex('jobHistory').where({
+              id: job.id
+            }).update({
+              state: 'failed',
+              lastErrorMessage: err.message
+            })
+            // -> Reschedule for retry
+            if (job.retries < job.maxRetries) {
+              const backoffDelay = (2 ** job.retries) * WIKI.config.scheduler.retryBackoff
+              await trx('jobs').insert({
+                ...job,
+                retries: job.retries + 1,
+                waitUntil: DateTime.utc().plus({ seconds: backoffDelay }).toJSDate(),
+                updatedAt: new Date()
+              })
+              WIKI.logger.warn(`Rescheduling new attempt for job ${job.id}: ${job.task}...`)
+            }
           }
         }
       })
     } catch (err) {
       WIKI.logger.warn(err)
+      if (jobId) {
+        WIKI.db.knex('jobHistory').where({
+          id: jobId
+        }).update({
+          state: 'interrupted',
+          lastErrorMessage: err.message
+        })
+      }
     }
   },
   async addScheduled () {

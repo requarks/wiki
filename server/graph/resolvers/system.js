@@ -7,7 +7,6 @@ const path = require('path')
 const fs = require('fs-extra')
 const { DateTime } = require('luxon')
 const graphHelper = require('../../helpers/graph')
-const cronParser = require('cron-parser')
 
 module.exports = {
   Query: {
@@ -28,33 +27,34 @@ module.exports = {
       return WIKI.config.security
     },
     async systemJobs (obj, args) {
-      switch (args.type) {
+      switch (args.state) {
         case 'ACTIVE': {
           // const result = await WIKI.scheduler.boss.fetch('*', 25, { includeMeta: true })
           return []
         }
         case 'COMPLETED': {
-          const result = await WIKI.scheduler.boss.fetchCompleted('*', 25, { includeMeta: true })
-          console.info(result)
-          return result ?? []
+          return []
+        }
+        case 'FAILED': {
+          return []
+        }
+        case 'INTERRUPTED': {
+          return []
         }
         default: {
-          WIKI.logger.warn('Invalid Job Type requested.')
+          WIKI.logger.warn('Invalid Job State requested.')
           return []
         }
       }
     },
-    async systemScheduledJobs (obj, args) {
-      const jobs = await WIKI.scheduler.boss.getSchedules()
-      return jobs.map(job => ({
-        id: job.name,
-        name: job.name,
-        cron: job.cron,
-        timezone: job.timezone,
-        nextExecution: cronParser.parseExpression(job.cron, { tz: job.timezone }).next(),
-        createdAt: job.created_on,
-        updatedAt: job.updated_on
-      }))
+    async systemJobsScheduled (obj, args) {
+      return WIKI.db.knex('jobSchedule').orderBy('task')
+    },
+    async systemJobsUpcoming (obj, args) {
+      return WIKI.db.knex('jobs').orderBy([
+        { column: 'waitUntil', order: 'asc', nulls: 'first' },
+        { column: 'createdAt', order: 'asc' }
+      ])
     }
   },
   Mutation: {
@@ -123,14 +123,18 @@ module.exports = {
     httpsPort () {
       return WIKI.servers.servers.https ? _.get(WIKI.servers.servers.https.address(), 'port', 0) : 0
     },
+    isMailConfigured () {
+      return WIKI.config?.mail?.host?.length > 2
+    },
+    async isSchedulerHealthy () {
+      const results = await WIKI.db.knex('jobHistory').count('* as total').whereIn('state', ['failed', 'interrupted']).andWhere('startedAt', '>=', DateTime.utc().minus({ days: 1 }).toISO()).first()
+      return _.toSafeInteger(results?.total) === 0
+    },
     latestVersion () {
       return WIKI.system.updates.version
     },
     latestVersionReleaseDate () {
       return DateTime.fromISO(WIKI.system.updates.releaseDate).toJSDate()
-    },
-    mailConfigured () {
-      return WIKI.config?.mail?.host?.length > 2
     },
     nodeVersion () {
       return process.version.substr(1)
@@ -167,12 +171,6 @@ module.exports = {
     },
     sslSubscriberEmail () {
       return WIKI.config.ssl.enabled && WIKI.config.ssl.provider === 'letsencrypt' ? WIKI.config.ssl.subscriberEmail : null
-    },
-    telemetry () {
-      return WIKI.telemetry.enabled
-    },
-    telemetryClientId () {
-      return WIKI.config.telemetry.clientId
     },
     async upgradeCapable () {
       return !_.isNil(process.env.UPGRADE_COMPANION)

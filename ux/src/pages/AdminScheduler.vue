@@ -18,7 +18,9 @@ q-page.admin-terminal
         :color='$q.dark.isActive ? `dark-1` : `white`'
         :options=`[
           { label: t('admin.scheduler.scheduled'), value: 'scheduled' },
-          { label: t('admin.scheduler.completed'), value: 'completed' }
+          { label: t('admin.scheduler.upcoming'), value: 'upcoming' },
+          { label: t('admin.scheduler.completed'), value: 'completed' },
+          { label: t('admin.scheduler.failed'), value: 'failed' },
         ]`
       )
       q-separator.q-mr-md(vertical)
@@ -66,18 +68,62 @@ q-page.admin-terminal
                 size='xs'
               )
               //- q-icon(name='las la-stopwatch', color='primary', size='sm')
-          template(v-slot:body-cell-name='props')
+          template(v-slot:body-cell-task='props')
             q-td(:props='props')
               strong {{props.value}}
+              div: small.text-grey {{props.row.id}}
           template(v-slot:body-cell-cron='props')
             q-td(:props='props')
               span {{ props.value }}
+    template(v-else-if='state.displayMode === `upcoming`')
+      q-card.rounded-borders(
+        v-if='state.upcomingJobs.length < 1'
+        flat
+        :class='$q.dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`'
+        )
+        q-card-section.items-center(horizontal)
+          q-card-section.col-auto.q-pr-none
+            q-icon(name='las la-info-circle', size='sm')
+          q-card-section.text-caption {{ t('admin.scheduler.upcomingNone') }}
+      q-card.shadow-1(v-else)
+        q-table(
+          :rows='state.upcomingJobs'
+          :columns='upcomingJobsHeaders'
+          row-key='name'
+          flat
+          hide-bottom
+          :rows-per-page-options='[0]'
+          :loading='state.loading > 0'
+          )
+          template(v-slot:body-cell-id='props')
+            q-td(:props='props')
+              q-icon(name='las la-chess-knight', color='primary', size='sm')
+          template(v-slot:body-cell-task='props')
+            q-td(:props='props')
+              strong {{props.value}}
+              div: small.text-grey {{props.row.id}}
+          template(v-slot:body-cell-waituntil='props')
+            q-td(:props='props')
+              span {{ props.value }}
+              div: small.text-grey {{humanizeDate(props.row.waitUntil)}}
+          template(v-slot:body-cell-retries='props')
+            q-td(:props='props')
+              span #[strong {{props.value + 1}}] #[span.text-grey / {{props.row.maxRetries}}]
+          template(v-slot:body-cell-useworker='props')
+            q-td(:props='props')
+              template(v-if='props.value')
+                q-icon(name='las la-microchip', color='brown', size='sm')
+                small.q-ml-xs.text-brown Worker
+              template(v-else)
+                q-icon(name='las la-leaf', color='teal', size='sm')
+                small.q-ml-xs.text-teal In-Process
           template(v-slot:body-cell-date='props')
             q-td(:props='props')
-              i18n-t.text-caption(keypath='admin.scheduler.nextExecutionIn', tag='div')
-                template(#date)
-                  strong {{ humanizeDate(props.value) }}
-              small {{props.value}}
+              span {{props.value}}
+              div
+                i18n-t.text-grey(keypath='admin.scheduler.createdBy', tag='small')
+                  template(#instance)
+                    strong {{props.row.createdBy}}
     template(v-else)
       q-card.rounded-borders(
         v-if='state.jobs.length < 1'
@@ -122,8 +168,9 @@ useMeta({
 // DATA
 
 const state = reactive({
-  displayMode: 'scheduled',
+  displayMode: 'upcoming',
   scheduledJobs: [],
+  upcomingJobs: [],
   jobs: [],
   loading: 0
 })
@@ -137,10 +184,10 @@ const scheduledJobsHeaders = [
     style: 'width: 15px; padding-right: 0;'
   },
   {
-    label: t('common.field.name'),
+    label: t('common.field.task'),
     align: 'left',
-    field: 'name',
-    name: 'name',
+    field: 'task',
+    name: 'task',
     sortable: true
   },
   {
@@ -148,21 +195,77 @@ const scheduledJobsHeaders = [
     align: 'left',
     field: 'cron',
     name: 'cron',
-    sortable: false
+    sortable: true
   },
   {
-    label: t('admin.scheduler.timezone'),
+    label: t('admin.scheduler.type'),
     align: 'left',
-    field: 'timezone',
-    name: 'timezone',
-    sortable: false
+    field: 'type',
+    name: 'type',
+    sortable: true
   },
   {
-    label: t('admin.scheduler.nextExecution'),
+    label: t('admin.scheduler.createdAt'),
     align: 'left',
-    field: 'nextExecution',
+    field: 'createdAt',
+    name: 'created',
+    sortable: true,
+    format: v => DateTime.fromISO(v).toRelative()
+  },
+  {
+    label: t('admin.scheduler.updatedAt'),
+    align: 'left',
+    field: 'updatedAt',
+    name: 'updated',
+    sortable: true,
+    format: v => DateTime.fromISO(v).toRelative()
+  }
+]
+
+const upcomingJobsHeaders = [
+  {
+    align: 'center',
+    field: 'id',
+    name: 'id',
+    sortable: false,
+    style: 'width: 15px; padding-right: 0;'
+  },
+  {
+    label: t('common.field.task'),
+    align: 'left',
+    field: 'task',
+    name: 'task',
+    sortable: true
+  },
+  {
+    label: t('admin.scheduler.waitUntil'),
+    align: 'left',
+    field: 'waitUntil',
+    name: 'waituntil',
+    sortable: true,
+    format: v => DateTime.fromISO(v).toRelative()
+  },
+  {
+    label: t('admin.scheduler.attempt'),
+    align: 'left',
+    field: 'retries',
+    name: 'retries',
+    sortable: true
+  },
+  {
+    label: t('admin.scheduler.useWorker'),
+    align: 'left',
+    field: 'useWorker',
+    name: 'useworker',
+    sortable: true
+  },
+  {
+    label: t('admin.scheduler.createdAt'),
+    align: 'left',
+    field: 'createdAt',
     name: 'date',
-    sortable: false
+    sortable: true,
+    format: v => DateTime.fromISO(v).toRelative()
   }
 ]
 
@@ -174,33 +277,59 @@ watch(() => state.displayMode, (newValue) => {
 
 // METHODS
 
+function humanizeDate (val) {
+  return DateTime.fromISO(val).toFormat('fff')
+}
+
 async function load () {
   state.loading++
   try {
     if (state.displayMode === 'scheduled') {
       const resp = await APOLLO_CLIENT.query({
         query: gql`
-          query getSystemScheduledJobs {
-            systemScheduledJobs {
+          query getSystemJobsScheduled {
+            systemJobsScheduled {
               id
-              name
+              task
               cron
-              timezone
-              nextExecution
+              type
+              createdAt
+              updatedAt
             }
           }
         `,
         fetchPolicy: 'network-only'
       })
-      state.scheduledJobs = resp?.data?.systemScheduledJobs
+      state.scheduledJobs = resp?.data?.systemJobsScheduled
+    } else if (state.displayMode === 'upcoming') {
+      const resp = await APOLLO_CLIENT.query({
+        query: gql`
+          query getSystemJobsUpcoming {
+            systemJobsUpcoming {
+              id
+              task
+              useWorker
+              retries
+              maxRetries
+              waitUntil
+              isScheduled
+              createdBy
+              createdAt
+              updatedAt
+            }
+          }
+        `,
+        fetchPolicy: 'network-only'
+      })
+      state.upcomingJobs = resp?.data?.systemJobsUpcoming
     } else {
       const resp = await APOLLO_CLIENT.query({
         query: gql`
           query getSystemJobs (
-            $type: SystemJobType!
+            $state: SystemJobState!
           ) {
             systemJobs (
-              type: $type
+              state: $state
               ) {
               id
               name
@@ -210,7 +339,7 @@ async function load () {
           }
         `,
         variables: {
-          type: state.displayMode.toUpperCase()
+          state: state.displayMode.toUpperCase()
         },
         fetchPolicy: 'network-only'
       })
@@ -224,10 +353,6 @@ async function load () {
     })
   }
   state.loading--
-}
-
-function humanizeDate (val) {
-  return DateTime.fromISO(val).toRelative()
 }
 
 // MOUNTED

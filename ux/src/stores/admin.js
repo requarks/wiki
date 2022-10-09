@@ -16,7 +16,8 @@ export const useAdminStore = defineStore('admin', {
       usersTotal: 0,
       loginsPastDay: 0,
       isApiEnabled: false,
-      isMailConfigured: false
+      isMailConfigured: false,
+      isSchedulerHealthy: false
     },
     overlay: null,
     overlayOpts: {},
@@ -63,7 +64,8 @@ export const useAdminStore = defineStore('admin', {
               usersTotal
               currentVersion
               latestVersion
-              mailConfigured
+              isMailConfigured
+              isSchedulerHealthy
             }
           }
         `,
@@ -74,7 +76,8 @@ export const useAdminStore = defineStore('admin', {
       this.info.currentVersion = clone(resp?.data?.systemInfo?.currentVersion ?? 'n/a')
       this.info.latestVersion = clone(resp?.data?.systemInfo?.latestVersion ?? 'n/a')
       this.info.isApiEnabled = clone(resp?.data?.apiState ?? false)
-      this.info.isMailConfigured = clone(resp?.data?.systemInfo?.mailConfigured ?? false)
+      this.info.isMailConfigured = clone(resp?.data?.systemInfo?.isMailConfigured ?? false)
+      this.info.isSchedulerHealthy = clone(resp?.data?.systemInfo?.isSchedulerHealthy ?? false)
     }
   }
 })

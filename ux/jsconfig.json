@@ -36,5 +36,11 @@
     "dist",
     ".quasar",
     "node_modules"
-  ]
+  ],
+  "vueCompilerOptions": {
+    "target": 3,
+    "plugins": [
+      "@volar/vue-language-plugin-pug"
+    ]
+  }
 }

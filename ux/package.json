@@ -89,6 +89,7 @@
     "@intlify/vite-plugin-vue-i18n": "6.0.1",
     "@quasar/app-vite": "1.0.6",
     "@types/lodash": "4.14.184",
+    "@volar/vue-language-plugin-pug": "1.0.1",
     "browserlist": "latest",
     "eslint": "8.22.0",
     "eslint-config-standard": "17.0.0",

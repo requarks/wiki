@@ -8,9 +8,10 @@ extend type Query {
   systemInfo: SystemInfo
   systemSecurity: SystemSecurity
   systemJobs(
-    type: SystemJobType!
+    state: SystemJobState
   ): [SystemJob]
-  systemScheduledJobs: [SystemScheduledJob]
+  systemJobsScheduled: [SystemJobScheduled]
+  systemJobsUpcoming: [SystemJobUpcoming]
 }
 
 extend type Mutation {
@@ -72,9 +73,10 @@ type SystemInfo {
   httpPort: Int
   httpRedirection: Boolean
   httpsPort: Int
+  isMailConfigured: Boolean
+  isSchedulerHealthy: Boolean
   latestVersion: String
   latestVersionReleaseDate: Date
-  mailConfigured: Boolean
   nodeVersion: String
   operatingSystem: String
   pagesTotal: Int
@@ -86,8 +88,6 @@ type SystemInfo {
   sslStatus: String
   sslSubscriberEmail: String
   tagsTotal: Int
-  telemetry: Boolean
-  telemetryClientId: String
   upgradeCapable: Boolean
   usersTotal: Int
   workingDirectory: String
@@ -151,22 +151,46 @@ enum SystemSecurityCorsMode {
 
 type SystemJob {
   id: UUID
-  name: String
-  priority: Int
-  state: String
+  task: String
+  state: SystemJobState
+  useWorker: Boolean
+  wasScheduled: Boolean
+  payload: JSON
+  attempt: Int
+  maxRetries: Int
+  lastErrorMessage: String
+  createdAt: Date
+  startedAt: Date
+  completedAt: Date
 }
 
-type SystemScheduledJob {
-  id: String
-  name: String
+type SystemJobScheduled {
+  id: UUID
+  task: String
   cron: String
-  timezone: String
-  nextExecution: Date
+  type: String
+  payload: JSON
   createdAt: Date
   updatedAt: Date
 }
 
-enum SystemJobType {
+type SystemJobUpcoming {
+  id: UUID
+  task: String
+  useWorker: Boolean
+  payload: JSON
+  retries: Int
+  maxRetries: Int
+  waitUntil: Date
+  isScheduled: Boolean
+  createdBy: String
+  createdAt: Date
+  updatedAt: Date
+}
+
+enum SystemJobState {
   ACTIVE
   COMPLETED
+  FAILED
+  INTERRUPTED
 }

@@ -156,6 +156,8 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-bot.svg')
           q-item-section {{ t('admin.scheduler.title') }}
+          q-item-section(side)
+            status-light(:color='adminStore.info.isSchedulerHealthy ? `positive` : `warning`')
         q-item(to='/_admin/security', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-protect.svg')
