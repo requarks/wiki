@@ -186,6 +186,17 @@ module.exports = class User extends Model {
       displayName = primaryEmail.split('@')[0]
     }
 
+    // Parse jobTitle
+    let jobTitle = ''
+    if (_.isString(profile.jobTitle) && profile.jobTitle.length > 0) {
+      jobTitle = profile.jobTitle
+    }
+    // Parse location
+    let location = ''
+    if (_.isString(profile.location) && profile.location.length > 0) {
+      location = profile.location
+    }
+
     // Parse picture URL / Data
     let pictureUrl = ''
     if (profile.picture && Buffer.isBuffer(profile.picture)) {
@@ -236,6 +247,8 @@ module.exports = class User extends Model {
         email: primaryEmail,
         name: displayName,
         pictureUrl: pictureUrl,
+        jobTitle: jobTitle,
+        location: location,
         localeCode: WIKI.config.lang.code,
         defaultEditor: 'markdown',
         tfaIsActive: false,
