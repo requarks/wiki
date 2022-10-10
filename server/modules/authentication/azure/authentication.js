@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const { default: axios } = require("axios");
 
 /* global WIKI */
 
