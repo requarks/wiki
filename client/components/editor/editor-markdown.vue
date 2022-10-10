@@ -240,6 +240,7 @@ import underline from '../../libs/markdown-it-underline'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 import plantuml from './markdown/plantuml'
+import kroki from './markdown/kroki'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
@@ -341,6 +342,13 @@ md.renderer.rules.blockquote_open = injectLineNumbers
 
 // TODO: Use same options as defined in backend
 plantuml.init(md, {})
+
+// ========================================
+// KROKI
+// ========================================
+
+// TODO: Use same options as defined in backend
+kroki.init(md, {})
 
 // ========================================
 // KATEX
