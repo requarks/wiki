@@ -32,7 +32,7 @@ module.exports = {
         responseMode: 'form_post',
         scope: ['profile', 'email', 'openid'],
         allowHttpForRedirectUrl: WIKI.IS_DEBUG,
-        clientSecret: 'clientSecret', // needs to be in the config of the Azure.
+        clientSecret: conf.clientSecretValueString,
         passReqToCallback: true,
         cookieSameSite: keyArray.length > 0,
         useCookieInsteadOfSession: keyArray.length > 0,
@@ -44,7 +44,6 @@ module.exports = {
             "https://graph.microsoft.com/beta/me",
             access_token
           );
-
 
           const user = await WIKI.models.users.processProfile({
             providerKey: req.params.strategy,
