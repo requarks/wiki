@@ -8,7 +8,7 @@ extend type Query {
   systemInfo: SystemInfo
   systemSecurity: SystemSecurity
   systemJobs(
-    state: SystemJobState
+    states: [SystemJobState]
   ): [SystemJob]
   systemJobsScheduled: [SystemJobScheduled]
   systemJobsUpcoming: [SystemJobUpcoming]
@@ -159,6 +159,7 @@ type SystemJob {
   attempt: Int
   maxRetries: Int
   lastErrorMessage: String
+  executedBy: String
   createdAt: Date
   startedAt: Date
   completedAt: Date

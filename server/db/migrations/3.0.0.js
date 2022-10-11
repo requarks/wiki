@@ -132,6 +132,7 @@ exports.up = async knex => {
       table.integer('attempt').notNullable().defaultTo(1)
       table.integer('maxRetries').notNullable().defaultTo(0)
       table.text('lastErrorMessage')
+      table.string('executedBy')
       table.timestamp('createdAt').notNullable()
       table.timestamp('startedAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('completedAt')
@@ -684,12 +685,17 @@ exports.up = async knex => {
 
   await knex('jobSchedule').insert([
     {
-      task: 'updateLocales',
+      task: 'checkVersion',
       cron: '0 0 * * *',
       type: 'system'
     },
     {
-      task: 'checkVersion',
+      task: 'cleanJobHistory',
+      cron: '5 0 * * *',
+      type: 'system'
+    },
+    {
+      task: 'updateLocales',
       cron: '0 0 * * *',
       type: 'system'
     }

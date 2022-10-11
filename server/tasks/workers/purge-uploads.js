@@ -2,8 +2,8 @@ const path = require('node:path')
 const fs = require('fs-extra')
 const { DateTime } = require('luxon')
 
-module.exports = async (payload, helpers) => {
-  helpers.logger.info('Purging orphaned upload files...')
+module.exports = async ({ payload }) => {
+  WIKI.logger.info('Purging orphaned upload files...')
 
   try {
     const uplTempPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'uploads')
@@ -18,9 +18,9 @@ module.exports = async (payload, helpers) => {
       }
     }
 
-    helpers.logger.info('Purging orphaned upload files: [ COMPLETED ]')
+    WIKI.logger.info('Purging orphaned upload files: [ COMPLETED ]')
   } catch (err) {
-    helpers.logger.error('Purging orphaned upload files: [ FAILED ]')
-    helpers.logger.error(err.message)
+    WIKI.logger.error('Purging orphaned upload files: [ FAILED ]')
+    WIKI.logger.error(err.message)
   }
 }

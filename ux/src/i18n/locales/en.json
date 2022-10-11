@@ -1523,7 +1523,16 @@
   "admin.scheduler.updatedAt": "Last Updated",
   "common.field.task": "Task",
   "admin.scheduler.upcomingNone": "There are no upcoming job for the moment.",
+  "admin.scheduler.failedNone": "There are no recently failed job to display.",
   "admin.scheduler.waitUntil": "Start",
   "admin.scheduler.attempt": "Attempt",
-  "admin.scheduler.useWorker": "Execution Mode"
+  "admin.scheduler.useWorker": "Execution Mode",
+  "admin.scheduler.schedule": "Schedule",
+  "admin.scheduler.state": "State",
+  "admin.scheduler.startedAt": "Started",
+  "admin.scheduler.result": "Result",
+  "admin.scheduler.completedIn": "Completed in {duration}",
+  "admin.scheduler.pending": "Pending",
+  "admin.scheduler.error": "Error",
+  "admin.scheduler.interrupted": "Interrupted"
 }

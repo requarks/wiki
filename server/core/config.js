@@ -9,7 +9,7 @@ module.exports = {
   /**
    * Load root config from disk
    */
-  init() {
+  init(silent = false) {
     let confPaths = {
       config: path.join(WIKI.ROOTPATH, 'config.yml'),
       data: path.join(WIKI.SERVERPATH, 'app/data.yml'),
@@ -24,7 +24,9 @@ module.exports = {
       confPaths.config = path.resolve(WIKI.ROOTPATH, process.env.CONFIG_FILE)
     }
 
-    process.stdout.write(chalk.blue(`Loading configuration from ${confPaths.config}... `))
+    if (!silent) {
+      process.stdout.write(chalk.blue(`Loading configuration from ${confPaths.config}... `))
+    }
 
     let appconfig = {}
     let appdata = {}
@@ -37,7 +39,9 @@ module.exports = {
       )
       appdata = yaml.load(fs.readFileSync(confPaths.data, 'utf8'))
       appdata.regex = require(confPaths.dataRegex)
-      console.info(chalk.green.bold(`OK`))
+      if (!silent) {
+        console.info(chalk.green.bold(`OK`))
+      }
     } catch (err) {
       console.error(chalk.red.bold(`FAILED`))
       console.error(err.message)
@@ -66,7 +70,9 @@ module.exports = {
 
     // Load DB Password from Docker Secret File
     if (process.env.DB_PASS_FILE) {
-      console.info(chalk.blue(`DB_PASS_FILE is defined. Will use secret from file.`))
+      if (!silent) {
+        console.info(chalk.blue(`DB_PASS_FILE is defined. Will use secret from file.`))
+      }
       try {
         appconfig.db.pass = fs.readFileSync(process.env.DB_PASS_FILE, 'utf8').trim()
       } catch (err) {

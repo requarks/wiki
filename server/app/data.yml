@@ -35,6 +35,7 @@ defaults:
       scheduledCheck: 300
       maxRetries: 5
       retryBackoff: 60
+      historyExpiration: 90000
     # DB defaults
     api:
       isEnabled: false

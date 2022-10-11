@@ -13,7 +13,8 @@ module.exports = {
   scheduledRef: null,
   tasks: null,
   async init () {
-    this.maxWorkers = WIKI.config.scheduler.workers === 'auto' ? os.cpus().length : WIKI.config.scheduler.workers
+    this.maxWorkers = WIKI.config.scheduler.workers === 'auto' ? (os.cpus().length - 1) : WIKI.config.scheduler.workers
+    if (this.maxWorkers < 1) { this.maxWorkers = 1 }
     WIKI.logger.info(`Initializing Worker Pool (Limit: ${this.maxWorkers})...`)
     this.workerPool = new DynamicThreadPool(1, this.maxWorkers, './server/worker.js', {
       errorHandler: (err) => WIKI.logger.warn(err),
@@ -77,80 +78,87 @@ module.exports = {
     }
   },
   async processJob () {
-    let jobId = null
+    let jobIds = []
     try {
+      const availableWorkers = this.maxWorkers - this.activeWorkers
+      if (availableWorkers < 1) {
+        WIKI.logger.debug('All workers are busy. Cannot process more jobs at the moment.')
+        return
+      }
+
       await WIKI.db.knex.transaction(async trx => {
         const jobs = await trx('jobs')
-          .where('id', WIKI.db.knex.raw('(SELECT id FROM jobs WHERE ("waitUntil" IS NULL OR "waitUntil" <= NOW()) ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1)'))
+          .whereIn('id', WIKI.db.knex.raw(`(SELECT id FROM jobs WHERE ("waitUntil" IS NULL OR "waitUntil" <= NOW()) ORDER BY id FOR UPDATE SKIP LOCKED LIMIT ${availableWorkers})`))
           .returning('*')
           .del()
-        if (jobs && jobs.length === 1) {
-          const job = jobs[0]
-          WIKI.logger.info(`Processing new job ${job.id}: ${job.task}...`)
-          jobId = job.id
-          // -> Add to Job History
-          await WIKI.db.knex('jobHistory').insert({
-            id: job.id,
-            task: job.task,
-            state: 'active',
-            useWorker: job.useWorker,
-            wasScheduled: job.isScheduled,
-            payload: job.payload,
-            attempt: job.retries + 1,
-            maxRetries: job.maxRetries,
-            createdAt: job.createdAt
-          }).onConflict('id').merge({
-            startedAt: new Date()
-          })
-          // -> Start working on it
-          try {
-            if (job.useWorker) {
-              await this.workerPool.execute({
-                id: job.id,
-                name: job.task,
-                data: job.payload
-              })
-            } else {
-              await this.tasks[job.task](job.payload)
-            }
-            // -> Update job history (success)
-            await WIKI.db.knex('jobHistory').where({
-              id: job.id
-            }).update({
-              state: 'completed',
-              completedAt: new Date()
+        if (jobs && jobs.length > 0) {
+          for (const job of jobs) {
+            WIKI.logger.info(`Processing new job ${job.id}: ${job.task}...`)
+            // -> Add to Job History
+            await WIKI.db.knex('jobHistory').insert({
+              id: job.id,
+              task: job.task,
+              state: 'active',
+              useWorker: job.useWorker,
+              wasScheduled: job.isScheduled,
+              payload: job.payload,
+              attempt: job.retries + 1,
+              maxRetries: job.maxRetries,
+              executedBy: WIKI.INSTANCE_ID,
+              createdAt: job.createdAt
+            }).onConflict('id').merge({
+              executedBy: WIKI.INSTANCE_ID,
+              startedAt: new Date()
             })
-            WIKI.logger.info(`Completed job ${job.id}: ${job.task} [ SUCCESS ]`)
-          } catch (err) {
-            WIKI.logger.warn(`Failed to complete job ${job.id}: ${job.task} [ FAILED ]`)
-            WIKI.logger.warn(err)
-            // -> Update job history (fail)
-            await WIKI.db.knex('jobHistory').where({
-              id: job.id
-            }).update({
-              state: 'failed',
-              lastErrorMessage: err.message
-            })
-            // -> Reschedule for retry
-            if (job.retries < job.maxRetries) {
-              const backoffDelay = (2 ** job.retries) * WIKI.config.scheduler.retryBackoff
-              await trx('jobs').insert({
-                ...job,
-                retries: job.retries + 1,
-                waitUntil: DateTime.utc().plus({ seconds: backoffDelay }).toJSDate(),
-                updatedAt: new Date()
+            jobIds.push(job.id)
+
+            // -> Start working on it
+            try {
+              if (job.useWorker) {
+                await this.workerPool.execute({
+                  ...job,
+                  INSTANCE_ID: `${WIKI.INSTANCE_ID}:WKR`
+                })
+              } else {
+                await this.tasks[job.task](job.payload)
+              }
+              // -> Update job history (success)
+              await WIKI.db.knex('jobHistory').where({
+                id: job.id
+              }).update({
+                state: 'completed',
+                completedAt: new Date()
               })
-              WIKI.logger.warn(`Rescheduling new attempt for job ${job.id}: ${job.task}...`)
+              WIKI.logger.info(`Completed job ${job.id}: ${job.task}`)
+            } catch (err) {
+              WIKI.logger.warn(`Failed to complete job ${job.id}: ${job.task} [ FAILED ]`)
+              WIKI.logger.warn(err)
+              // -> Update job history (fail)
+              await WIKI.db.knex('jobHistory').where({
+                id: job.id
+              }).update({
+                state: 'failed',
+                lastErrorMessage: err.message
+              })
+              // -> Reschedule for retry
+              if (job.retries < job.maxRetries) {
+                const backoffDelay = (2 ** job.retries) * WIKI.config.scheduler.retryBackoff
+                await trx('jobs').insert({
+                  ...job,
+                  retries: job.retries + 1,
+                  waitUntil: DateTime.utc().plus({ seconds: backoffDelay }).toJSDate(),
+                  updatedAt: new Date()
+                })
+                WIKI.logger.warn(`Rescheduling new attempt for job ${job.id}: ${job.task}...`)
+              }
             }
           }
         }
       })
     } catch (err) {
       WIKI.logger.warn(err)
-      if (jobId) {
-        WIKI.db.knex('jobHistory').where({
-          id: jobId
-        }).update({
+      if (jobIds && jobIds.length > 0) {
+        WIKI.db.knex('jobHistory').whereIn('id', jobIds).update({
           state: 'interrupted',
           lastErrorMessage: err.message
         })
@@ -181,6 +189,7 @@ module.exports = {
           if (scheduledJobs?.length > 0) {
             // -> Get existing scheduled jobs
             const existingJobs = await WIKI.db.knex('jobs').where('isScheduled', true)
+            let totalAdded = 0
             for (const job of scheduledJobs) {
               // -> Get next planned iterations
               const plannedIterations = cronparser.parseExpression(job.cron, {
@@ -205,6 +214,7 @@ module.exports = {
                       notify: false
                     })
                     addedFutureJobs++
+                    totalAdded++
                   }
                   // -> No more iterations for this period or max iterations count reached
                   if (next.done || addedFutureJobs >= 10) { break }
@@ -212,6 +222,11 @@ module.exports = {
                   break
                 }
               }
+            }
+            if (totalAdded > 0) {
+              WIKI.logger.info(`Scheduled ${totalAdded} new future planned jobs: [ OK ]`)
+            } else {
+              WIKI.logger.info(`No new future planned jobs to schedule: [ OK ]`)
             }
           }
         }

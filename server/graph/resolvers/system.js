@@ -27,25 +27,13 @@ module.exports = {
       return WIKI.config.security
     },
     async systemJobs (obj, args) {
-      switch (args.state) {
-        case 'ACTIVE': {
-          // const result = await WIKI.scheduler.boss.fetch('*', 25, { includeMeta: true })
-          return []
-        }
-        case 'COMPLETED': {
-          return []
-        }
-        case 'FAILED': {
-          return []
-        }
-        case 'INTERRUPTED': {
-          return []
-        }
-        default: {
-          WIKI.logger.warn('Invalid Job State requested.')
-          return []
-        }
-      }
+      const results = args.states?.length > 0 ?
+        await WIKI.db.knex('jobHistory').whereIn('state', args.states.map(s => s.toLowerCase())).orderBy('startedAt') :
+        await WIKI.db.knex('jobHistory').orderBy('startedAt')
+      return results.map(r => ({
+        ...r,
+        state: r.state.toUpperCase()
+      }))
     },
     async systemJobsScheduled (obj, args) {
       return WIKI.db.knex('jobSchedule').orderBy('task')

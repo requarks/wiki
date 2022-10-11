@@ -17,8 +17,9 @@ q-page.admin-terminal
         :text-color='$q.dark.isActive ? `white` : `black`'
         :color='$q.dark.isActive ? `dark-1` : `white`'
         :options=`[
-          { label: t('admin.scheduler.scheduled'), value: 'scheduled' },
+          { label: t('admin.scheduler.schedule'), value: 'scheduled' },
           { label: t('admin.scheduler.upcoming'), value: 'upcoming' },
+          { label: t('admin.scheduler.active'), value: 'active' },
           { label: t('admin.scheduler.completed'), value: 'completed' },
           { label: t('admin.scheduler.failed'), value: 'failed' },
         ]`
@@ -67,14 +68,37 @@ q-page.admin-terminal
                 color='indigo'
                 size='xs'
               )
-              //- q-icon(name='las la-stopwatch', color='primary', size='sm')
           template(v-slot:body-cell-task='props')
             q-td(:props='props')
               strong {{props.value}}
               div: small.text-grey {{props.row.id}}
           template(v-slot:body-cell-cron='props')
             q-td(:props='props')
-              span {{ props.value }}
+              q-chip(
+                square
+                size='md'
+                color='blue'
+                text-color='white'
+                )
+                span.font-robotomono {{ props.value }}
+          template(v-slot:body-cell-type='props')
+            q-td(:props='props')
+              q-chip(
+                square
+                size='md'
+                dense
+                color='deep-orange'
+                text-color='white'
+                )
+                small.text-uppercase {{ props.value }}
+          template(v-slot:body-cell-created='props')
+            q-td(:props='props')
+              span {{props.value}}
+              div: small.text-grey {{humanizeDate(props.row.createdAt)}}
+          template(v-slot:body-cell-updated='props')
+            q-td(:props='props')
+              span {{props.value}}
+              div: small.text-grey {{humanizeDate(props.row.updatedAt)}}
     template(v-else-if='state.displayMode === `upcoming`')
       q-card.rounded-borders(
         v-if='state.upcomingJobs.length < 1'
@@ -97,7 +121,7 @@ q-page.admin-terminal
           )
           template(v-slot:body-cell-id='props')
             q-td(:props='props')
-              q-icon(name='las la-chess-knight', color='primary', size='sm')
+              q-icon(name='las la-clock', color='primary', size='sm')
           template(v-slot:body-cell-task='props')
             q-td(:props='props')
               strong {{props.value}}
@@ -133,8 +157,87 @@ q-page.admin-terminal
         q-card-section.items-center(horizontal)
           q-card-section.col-auto.q-pr-none
             q-icon(name='las la-info-circle', size='sm')
-          q-card-section.text-caption {{ t('admin.scheduler.completedNone') }}
-      q-card.shadow-1(v-else) ---
+          q-card-section.text-caption {{ t('admin.scheduler.' + state.displayMode + 'None') }}
+      q-card.shadow-1(v-else)
+        q-table(
+          :rows='state.jobs'
+          :columns='jobsHeaders'
+          row-key='name'
+          flat
+          hide-bottom
+          :rows-per-page-options='[0]'
+          :loading='state.loading > 0'
+          )
+          template(v-slot:body-cell-id='props')
+            q-td(:props='props')
+              q-avatar(
+                v-if='props.row.state === `completed`'
+                icon='las la-check'
+                color='positive'
+                text-color='white'
+                size='sm'
+                rounded
+                )
+              q-avatar(
+                v-else-if='props.row.state === `failed`'
+                icon='las la-times'
+                color='negative'
+                text-color='white'
+                size='sm'
+                rounded
+                )
+              q-avatar(
+                v-else-if='props.row.state === `interrupted`'
+                icon='las la-square-full'
+                color='orange'
+                text-color='white'
+                size='sm'
+                rounded
+                )
+              q-circular-progress(
+                v-else-if='props.row.state === `active`'
+                indeterminate
+                size='sm'
+                :thickness='0.4'
+                color='blue'
+                track-color='blue-1'
+                center-color='blue-2'
+                )
+          template(v-slot:body-cell-task='props')
+            q-td(:props='props')
+              strong {{props.value}}
+              div: small.text-grey {{props.row.id}}
+          template(v-slot:body-cell-state='props')
+            q-td(:props='props')
+              template(v-if='props.value === `completed`')
+                i18n-t(keypath='admin.scheduler.completedIn', tag='span')
+                  template(#duration)
+                    strong {{humanizeDuration(props.row.startedAt, props.row.completedAt)}}
+                div: small.text-grey {{ humanizeDate(props.row.completedAt) }}
+              template(v-else-if='props.value === `active`')
+                em.text-grey {{ t('admin.scheduler.pending') }}
+              template(v-else)
+                strong.text-negative {{ props.value === 'failed' ? t('admin.scheduler.error') : t('admin.scheduler.interrupted') }}
+                div: small {{ props.row.lastErrorMessage }}
+          template(v-slot:body-cell-attempt='props')
+            q-td(:props='props')
+              span #[strong {{props.value}}] #[span.text-grey / {{props.row.maxRetries}}]
+          template(v-slot:body-cell-useworker='props')
+            q-td(:props='props')
+              template(v-if='props.value')
+                q-icon(name='las la-microchip', color='brown', size='sm')
+                small.q-ml-xs.text-brown Worker
+              template(v-else)
+                q-icon(name='las la-leaf', color='teal', size='sm')
+                small.q-ml-xs.text-teal In-Process
+          template(v-slot:body-cell-date='props')
+            q-td(:props='props')
+              span {{props.value}}
+              div: small.text-grey {{humanizeDate(props.row.startedAt)}}
+              div
+                i18n-t.text-grey(keypath='admin.scheduler.createdBy', tag='small')
+                  template(#instance)
+                    strong {{props.row.executedBy}}
 
 </template>
 
@@ -143,7 +246,7 @@ import { onMounted, reactive, watch } from 'vue'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import gql from 'graphql-tag'
-import { DateTime } from 'luxon'
+import { DateTime, Duration, Interval } from 'luxon'
 
 import { useSiteStore } from 'src/stores/site'
 
@@ -168,7 +271,7 @@ useMeta({
 // DATA
 
 const state = reactive({
-  displayMode: 'upcoming',
+  displayMode: 'completed',
   scheduledJobs: [],
   upcomingJobs: [],
   jobs: [],
@@ -260,9 +363,55 @@ const upcomingJobsHeaders = [
     sortable: true
   },
   {
-    label: t('admin.scheduler.createdAt'),
+    label: t('admin.scheduler.scheduled'),
     align: 'left',
     field: 'createdAt',
+    name: 'date',
+    sortable: true,
+    format: v => DateTime.fromISO(v).toRelative()
+  }
+]
+
+const jobsHeaders = [
+  {
+    align: 'center',
+    field: 'id',
+    name: 'id',
+    sortable: false,
+    style: 'width: 15px; padding-right: 0;'
+  },
+  {
+    label: t('common.field.task'),
+    align: 'left',
+    field: 'task',
+    name: 'task',
+    sortable: true
+  },
+  {
+    label: t('admin.scheduler.result'),
+    align: 'left',
+    field: 'state',
+    name: 'state',
+    sortable: true
+  },
+  {
+    label: t('admin.scheduler.attempt'),
+    align: 'left',
+    field: 'attempt',
+    name: 'attempt',
+    sortable: true
+  },
+  {
+    label: t('admin.scheduler.useWorker'),
+    align: 'left',
+    field: 'useWorker',
+    name: 'useworker',
+    sortable: true
+  },
+  {
+    label: t('admin.scheduler.startedAt'),
+    align: 'left',
+    field: 'startedAt',
     name: 'date',
     sortable: true,
     format: v => DateTime.fromISO(v).toRelative()
@@ -279,6 +428,17 @@ watch(() => state.displayMode, (newValue) => {
 
 function humanizeDate (val) {
   return DateTime.fromISO(val).toFormat('fff')
+}
+
+function humanizeDuration (start, end) {
+  const dur = Interval.fromDateTimes(DateTime.fromISO(start), DateTime.fromISO(end))
+    .toDuration(['hours', 'minutes', 'seconds', 'milliseconds'])
+  return Duration.fromObject({
+    ...dur.hours > 0 && { hours: dur.hours },
+    ...dur.minutes > 0 && { minutes: dur.minutes },
+    ...dur.seconds > 0 && { seconds: dur.seconds },
+    ...dur.milliseconds > 0 && { milliseconds: dur.milliseconds }
+  }).toHuman({ unitDisplay: 'narrow', listStyle: 'short' })
 }
 
 async function load () {
@@ -323,27 +483,36 @@ async function load () {
       })
       state.upcomingJobs = resp?.data?.systemJobsUpcoming
     } else {
+      const states = state.displayMode === 'failed' ? ['FAILED', 'INTERRUPTED'] : [state.displayMode.toUpperCase()]
       const resp = await APOLLO_CLIENT.query({
         query: gql`
           query getSystemJobs (
-            $state: SystemJobState!
+            $states: [SystemJobState]
           ) {
             systemJobs (
-              state: $state
+              states: $states
               ) {
-              id
-              name
-              priority
-              state
+                id
+                task
+                state
+                useWorker
+                wasScheduled
+                attempt
+                maxRetries
+                lastErrorMessage
+                executedBy
+                createdAt
+                startedAt
+                completedAt
             }
           }
         `,
         variables: {
-          state: state.displayMode.toUpperCase()
+          states
         },
         fetchPolicy: 'network-only'
       })
-      state.jobs = resp?.data?.systemJobs
+      state.jobs = resp?.data?.systemJobs?.map(j => ({ ...j, state: j.state.toLowerCase() }))
     }
   } catch (err) {
     $q.notify({
@@ -361,15 +530,3 @@ onMounted(() => {
   load()
 })
 </script>
-
-<style lang='scss'>
-.admin-terminal {
-  &-term {
-    width: 100%;
-    background-color: #000;
-    border-radius: 5px;
-    overflow: hidden;
-    padding: 10px;
-  }
-}
-</style>

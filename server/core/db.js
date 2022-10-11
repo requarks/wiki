@@ -4,6 +4,7 @@ const path = require('path')
 const Knex = require('knex')
 const fs = require('fs')
 const Objection = require('objection')
+const PGPubSub = require('pg-pubsub')
 
 const migrationSource = require('../db/migrator-source')
 const migrateFromLegacy = require('../db/legacy')
@@ -87,7 +88,7 @@ module.exports = {
         ...WIKI.config.pool,
         async afterCreate(conn, done) {
           // -> Set Connection App Name
-          await conn.query(`set application_name = 'Wiki.js'`)
+          await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}:MAIN'`)
           done()
         }
       },
@@ -159,9 +160,18 @@ module.exports = {
    * Subscribe to database LISTEN / NOTIFY for multi-instances events
    */
   async subscribeToNotifications () {
-    const PGPubSub = require('pg-pubsub')
-
-    this.listener = new PGPubSub(this.knex.client.connectionSettings, {
+    let connSettings = this.knex.client.connectionSettings
+    if (typeof connSettings === 'string') {
+      const encodedName = encodeURIComponent(`Wiki.js - ${WIKI.INSTANCE_ID}:PSUB`)
+      if (connSettings.indexOf('?') > 0) {
+        connSettings = `${connSettings}&ApplicationName=${encodedName}`
+      } else {
+        connSettings = `${connSettings}?ApplicationName=${encodedName}`
+      }
+    } else {
+      connSettings.application_name = `Wiki.js - ${WIKI.INSTANCE_ID}:PSUB`
+    }
+    this.listener = new PGPubSub(connSettings, {
       log (ev) {
         WIKI.logger.debug(ev)
       }
