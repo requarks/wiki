@@ -542,13 +542,18 @@ router.get('/*', async (req, res, next) => {
             })
           }
 
+          // -> Page Filename (for edit on external repo button)
+          let pageFilename = WIKI.config.lang.namespacing ? `${pageArgs.locale}/${page.path}` : page.path
+          pageFilename += page.contentType === 'markdown' ? '.md' : '.html'
+
           // -> Render view
           res.render('page', {
             page,
             sidebar,
             injectCode,
             comments: commentTmpl,
-            effectivePermissions
+            effectivePermissions,
+            pageFilename
           })
         }
       } else if (pageArgs.path === 'home') {

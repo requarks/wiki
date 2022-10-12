@@ -126,11 +126,18 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           Oleksii<br />(@idokka)
         </a>
       </td>
-      <!--<td align="center" valign="middle" width="148">
+    </tr>
+    <tr>
+      <td align="center" valign="middle" width="148">
+        <a href="https://www.openhost-network.com/" target="_blank">
+          <img src="https://avatars.githubusercontent.com/u/114218287?s=200&v=4">
+        </a>
+      </td>
+      <td align="center" valign="middle" colspan="5">
         <a href="https://github.com/sponsors/NGPixel" target="_blank">
           <img src="https://static.requarks.io/sponsors/become-148x72.png">
         </a>
-      </td>-->
+      </td>
     </tr>
   </tbody>
 </table>
@@ -146,6 +153,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Cameron Steele ([@ATechAdventurer](https://github.com/ATechAdventurer))
 - Charlie Schliesser ([@charlie-s](https://github.com/charlie-s))
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
+- Cole Manning ([@RVRX](https://github.com/RVRX))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
@@ -156,6 +164,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Florian Moss ([@florianmoss](https://github.com/florianmoss))
 - GoodCorporateCitizen ([@GoodCorporateCitizen](https://github.com/GoodCorporateCitizen))
 - HeavenBay ([@HeavenBay](https://github.com/heavenbay))
+- HikaruEgashira ([@HikaruEgashira](https://github.com/HikaruEgashira))
 - Ian Hyzy ([@ianhyzy](https://github.com/ianhyzy))
 - Jaimyn Mayer ([@jabelone](https://github.com/jabelone))
 - Jay Lee ([@polyglotm](https://github.com/polyglotm))
@@ -192,6 +201,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - chaee ([@chaee](https://github.com/chaee))
 - magicpotato ([@fortheday](https://github.com/fortheday))
 - motoacs ([@motoacs](https://github.com/motoacs))
+- muzian666 ([@muzian666](https://github.com/muzian666))
 - rburckner ([@rburckner](https://github.com/rburckner))
 - scorpion ([@scorpion](https://github.com/scorpion))
 - valantien ([@valantien](https://github.com/valantien))

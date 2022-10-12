@@ -49,10 +49,28 @@
             status-indicator.ml-3(negative, pulse)
         v-divider
       v-container.grey.pa-0(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
-        v-row(no-gutters, align-content='center', style='height: 90px;')
+        v-row.page-header-section(no-gutters, align-content='center', style='height: 90px;')
           v-col.page-col-content.is-page-header(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')
             .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
             .caption.grey--text.text--darken-1 {{description}}
+            .page-edit-shortcuts(v-if='editShortcutsObj.editMenuBar')
+              v-btn(
+                v-if='editShortcutsObj.editMenuBtn'
+                @click='pageEdit'
+                depressed
+                small
+                )
+                v-icon.mr-2(small) mdi-pencil
+                span.text-none {{$t(`common:actions.edit`)}}
+              v-btn(
+                v-if='editShortcutsObj.editMenuExternalBtn'
+                :href='editMenuExternalUrl'
+                target='_blank'
+                depressed
+                small
+                )
+                v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
+                span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
@@ -186,7 +204,7 @@
                 v-spacer
 
           v-flex.page-col-content(xs12, lg9, xl10)
-            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions')
+            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions && editShortcutsObj.editFab')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
                   v-model='pageEditFab'
@@ -440,6 +458,14 @@ export default {
     commentsExternal: {
       type: Boolean,
       default: false
+    },
+    editShortcuts: {
+      type: String,
+      default: ''
+    },
+    filename: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -478,6 +504,7 @@ export default {
     isAuthenticated: get('user/authenticated'),
     commentsCount: get('page/commentsCount'),
     commentsPerms: get('page/effectivePermissions@comments'),
+    editShortcutsObj: get('page/editShortcuts'),
     rating: {
       get () {
         return 3.5
@@ -519,7 +546,14 @@ export default {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
-    printView: sync('site/printView')
+    printView: sync('site/printView'),
+    editMenuExternalUrl () {
+      if (this.editShortcutsObj.editMenuBar && this.editShortcutsObj.editMenuExternalBtn) {
+        return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
+      } else {
+        return ''
+      }
+    }
   },
   created() {
     this.$store.set('page/authorId', this.authorId)
@@ -536,6 +570,9 @@ export default {
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
       this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
+    if (this.editShortcuts) {
+      this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
     }
 
     this.$store.set('page/mode', 'view')
@@ -674,6 +711,45 @@ export default {
 
 .page-col-sd::-webkit-scrollbar {
   display: none;
+}
+
+.page-header-section {
+  position: relative;
+
+  .page-edit-shortcuts {
+    position: absolute;
+    bottom: -14px;
+    right: 10px;
+
+    .v-btn {
+      border-right: 1px solid #DDD !important;
+      border-bottom: 1px solid #DDD !important;
+      border-radius: 0;
+      color: #777;
+      background-color: #FFF !important;
+
+      @at-root .theme--dark & {
+        background-color: #222 !important;
+        border-right-color: #444 !important;
+        border-bottom-color: #444 !important;
+        color: #CCC;
+      }
+
+      .v-icon {
+        color: mc('blue', '700');
+      }
+
+      &:first-child {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+      }
+
+      &:last-child {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+      }
+    }
+  }
 }
 
 </style>
