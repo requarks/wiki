@@ -76,7 +76,8 @@ router.post('/u', (req, res, next) => {
   }
 
   // Sanitize filename
-  fileMeta.originalname = sanitize(fileMeta.originalname.toLowerCase().replace(/[\s,;#]+/g, '_'))
+  let time = new Date().getTime()
+  fileMeta.originalname = req.user.name + "_" + time + "_" + sanitize(fileMeta.originalname.toLowerCase().replace(/[\s,;#]+/g, '_'))
 
   // Check if user can upload at path
   const assetPath = (folderId) ? hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
