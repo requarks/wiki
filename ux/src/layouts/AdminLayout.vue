@@ -146,6 +146,10 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-module.svg')
           q-item-section {{ t('admin.extensions.title') }}
+        q-item(to='/_admin/instances', v-ripple, active-class='bg-primary text-white')
+          q-item-section(avatar)
+            q-icon(name='img:/_assets/icons/fluent-network.svg')
+          q-item-section {{ t('admin.instances.title') }}
         q-item(to='/_admin/mail', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-message-settings.svg')

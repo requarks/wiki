@@ -6,6 +6,7 @@ extend type Query {
   systemExtensions: [SystemExtension]
   systemFlags: [SystemFlag]
   systemInfo: SystemInfo
+  systemInstances: [SystemInstance]
   systemSecurity: SystemSecurity
   systemJobs(
     states: [SystemJobState]
@@ -91,6 +92,16 @@ type SystemInfo {
   upgradeCapable: Boolean
   usersTotal: Int
   workingDirectory: String
+}
+
+type SystemInstance {
+  id: String
+  activeConnections: Int
+  activeListeners: Int
+  dbUser: String
+  dbFirstSeen: Date
+  dbLastSeen: Date
+  ip: String
 }
 
 enum SystemImportUsersGroupMode {

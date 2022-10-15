@@ -23,13 +23,46 @@ module.exports = {
       }
       return exts
     },
+    async systemInstances () {
+      const instRaw = await WIKI.db.knex('pg_stat_activity')
+        .select([
+          'usename',
+          'client_addr',
+          'application_name',
+          'backend_start',
+          'state_change'
+        ])
+        .where('datname', WIKI.db.knex.client.connectionSettings.database)
+        .andWhereLike('application_name', 'Wiki.js%')
+      const insts = {}
+      for (const inst of instRaw) {
+        const instId = inst.application_name.substring(10, 20)
+        const conType = inst.application_name.includes(':MAIN') ? 'main' : 'sub'
+        const curInst = insts[instId] ?? {
+          activeConnections: 0,
+          activeListeners: 0,
+          dbFirstSeen: inst.backend_start,
+          dbLastSeen: inst.state_change
+        }
+        insts[instId] = {
+          id: instId,
+          activeConnections: conType === 'main' ? curInst.activeConnections + 1 : curInst.activeConnections,
+          activeListeners: conType === 'sub' ? curInst.activeListeners + 1 : curInst.activeListeners,
+          dbUser: inst.usename,
+          dbFirstSeen: curInst.dbFirstSeen > inst.backend_start ? inst.backend_start : curInst.dbFirstSeen,
+          dbLastSeen: curInst.dbLastSeen < inst.state_change ? inst.state_change : curInst.dbLastSeen,
+          ip: inst.client_addr
+        }
+      }
+      return _.values(insts)
+    },
     systemSecurity () {
       return WIKI.config.security
     },
     async systemJobs (obj, args) {
       const results = args.states?.length > 0 ?
-        await WIKI.db.knex('jobHistory').whereIn('state', args.states.map(s => s.toLowerCase())).orderBy('startedAt') :
-        await WIKI.db.knex('jobHistory').orderBy('startedAt')
+        await WIKI.db.knex('jobHistory').whereIn('state', args.states.map(s => s.toLowerCase())).orderBy('startedAt', 'desc') :
+        await WIKI.db.knex('jobHistory').orderBy('startedAt', 'desc')
       return results.map(r => ({
         ...r,
         state: r.state.toUpperCase()

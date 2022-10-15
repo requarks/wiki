@@ -4,9 +4,9 @@
 // ===========================================
 
 const path = require('path')
-const { nanoid } = require('nanoid')
 const { DateTime } = require('luxon')
 const semver = require('semver')
+const nanoid = require('nanoid').customAlphabet('1234567890abcdef', 10)
 
 if (!semver.satisfies(process.version, '>=18')) {
   console.error('ERROR: Node.js 18.x or later required!')

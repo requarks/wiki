@@ -1534,5 +1534,11 @@
   "admin.scheduler.completedIn": "Completed in {duration}",
   "admin.scheduler.pending": "Pending",
   "admin.scheduler.error": "Error",
-  "admin.scheduler.interrupted": "Interrupted"
+  "admin.scheduler.interrupted": "Interrupted",
+  "admin.instances.title": "Instances",
+  "admin.instances.subtitle": "View a list of active instances",
+  "admin.instances.lastSeen": "Last Seen",
+  "admin.instances.firstSeen": "First Seen",
+  "admin.instances.activeListeners": "Active Listeners",
+  "admin.instances.activeConnections": "Active Connections"
 }
