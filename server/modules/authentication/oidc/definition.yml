@@ -55,15 +55,21 @@ props:
     hint: Map groups matching names from the groups claim value
     default: false
     order: 8
+  createGroups:
+    type: Boolean
+    title: Create Mapped Groups
+    hint: Create new groups from idp if they don't exist
+    default: false
+    order: 9
   groupsClaim:
     type: String
     title: Groups Claim
     hint: Field containing the group names
     default: groups
     maxWidth: 500
-    order: 9
+    order: 10
   logoutURL:
     type: String
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
-    order: 10
+    order: 11

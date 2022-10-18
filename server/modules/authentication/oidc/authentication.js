@@ -32,13 +32,26 @@ module.exports = {
           if (conf.mapGroups) {
             const groups = _.get(profile, '_json.' + conf.groupsClaim)
             if (groups && _.isArray(groups)) {
-              const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).groups.map(g => g.id)
+              if (conf.createGroups) {
+                const existingGroups = (await WIKI.models.groups.query().select('groups.name')).map(g => g.name)
+                for (const groupName of _.difference(groups, existingGroups)) {
+                  await WIKI.models.groups.query().insertAndFetch({
+                    name: groupName,
+                    permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
+                    pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules),
+                    isSystem: false
+                  })
+                }
+                await WIKI.auth.reloadGroups()
+                WIKI.events.outbound.emit('reloadGroups')
+              }
+              const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).map(g => g.id)
               const expectedGroups = Object.values(WIKI.auth.groups).filter(g => groups.includes(g.name)).map(g => g.id)
               for (const groupId of _.difference(expectedGroups, currentGroups)) {
                 await user.$relatedQuery('groups').relate(groupId)
               }
               for (const groupId of _.difference(currentGroups, expectedGroups)) {
-                await user.$relatedQuery('groups').unrelate(groupId)
+                await user.$relatedQuery('groups').unrelate().where('groups.id', '=', groupId)
               }
             }
           }
