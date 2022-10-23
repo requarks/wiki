@@ -23,7 +23,8 @@ module.exports = class Comment extends Model {
         email: {type: 'string'},
         ip: {type: 'string'},
         createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        updatedAt: {type: 'string'},
+        notificationSent: {type: 'boolean'}
       }
     }
   }
