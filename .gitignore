@@ -28,6 +28,7 @@ server/views/setup.pug
 
 # Config Files
 /config.yml
+/knexfile.js
 
 # Data directories
 /repo
