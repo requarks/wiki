@@ -12,6 +12,8 @@ services:
       POSTGRES_USER: wikijs
     logging:
       driver: "none"
+    networks:
+      - idigital_network
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
@@ -20,24 +22,12 @@ services:
   adminer:
     container_name: wiki-adminer
     image: adminer:latest
+    networks:
+      - idigital_network
     logging:
       driver: "none"
     ports:
       - "3001:8080"
-
-  # solr:
-  #   container_name: wiki-solr
-  #   image: solr:7-alpine
-  #   logging:
-  #     driver: "none"
-  #   ports:
-  #     - "8983:8983"
-  #   volumes:
-  #     - solr-data:/opt/solr/server/solr/mycores
-  #   entrypoint:
-  #     - docker-entrypoint.sh
-  #     - solr-precreate
-  #     - wiki
 
   wiki:
     container_name: wiki-app
@@ -48,12 +38,17 @@ services:
       - db
     ports:
       - "3000:3000"
+    networks:
+      - idigital_network
     volumes:
       - ../..:/wiki
       - /wiki/node_modules
       - /wiki/.git
 
-
 volumes:
   db-data:
-  # solr-data:
+
+networks:
+  idigital_network:
+    driver: bridge
+    external: true

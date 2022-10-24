@@ -8,8 +8,8 @@
   "scripts": {
     "start": "node server",
     "dev": "node dev",
-    "build": "webpack --profile --config dev/webpack/webpack.prod.js",
-    "watch": "webpack --config dev/webpack/webpack.dev.js",
+    "build": "npx webpack --profile --config dev/webpack/webpack.prod.js",
+    "watch": "npx webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open"
   },
@@ -147,7 +147,7 @@
     "passport-microsoft": "0.1.0",
     "passport-oauth2": "1.6.1",
     "passport-okta-oauth": "0.0.1",
-    "passport-openidconnect": "0.0.2",
+    "passport-openidconnect": "0.1.1",
     "passport-saml": "3.2.1",
     "passport-slack-oauth2": "1.1.1",
     "passport-twitch-strategy": "2.2.0",
@@ -157,6 +157,7 @@
     "pg-pubsub": "0.5.0",
     "pg-query-stream": "3.3.1",
     "pg-tsquery": "8.1.0",
+    "pkce-challenge": "3.0.0",
     "pug": "3.0.2",
     "punycode": "2.1.1",
     "qr-image": "3.2.0",
