@@ -400,22 +400,25 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Hope
 - Ian
 - Imari Childress
+- Iskander Callos
   
 </td><td>
 <img width="441" height="1" />
 
-- Iskander Callos
 - Josh Stewart
 - Justin Dunsworth
 - Keir
 - Loïc CRAMPON
 - Ludgeir Ibanez
+- Lyn Matten
+- Mads Rosendahl
 - Mark Mansur
 - Matt Gedigian
 - Nate Figz
 - Patryk
 - Philipp Schürch
 - Tracey Duffy
+- Quaxim
 - Richeir
 - Shad Narcher
 - SmartNET.works
