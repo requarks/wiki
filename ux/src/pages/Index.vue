@@ -13,97 +13,33 @@ q-page.column
         q-breadcrumbs-el(icon='las la-home', to='/', aria-label='Home')
           q-tooltip Home
         q-breadcrumbs-el(
-          v-for='brd of breadcrumbs'
+          v-for='brd of pageStore.breadcrumbs'
           :key='brd.id'
           :icon='brd.icon'
           :label='brd.title'
           :aria-label='brd.title'
-          :to='$pageHelpers.getFullPath(brd)'
-          )
-        q-breadcrumbs-el(
-          v-if='editCreateMode'
-          :icon='pageIcon'
-          :label='title || `Untitled Page`'
-          :aria-label='title || `Untitled Page`'
+          :to='getFullPath(brd)'
           )
     .col-auto.flex.items-center.justify-end
-      template(v-if='!isPublished')
+      template(v-if='!pageStore.isPublished')
         .text-caption.text-accent: strong Unpublished
         q-separator.q-mx-sm(vertical)
-      .text-caption.text-grey-6(v-if='editCreateMode') New Page
-      .text-caption.text-grey-6(v-if='!editCreateMode') Last modified on #[strong September 5th, 2020]
+      .text-caption.text-grey-6 Last modified on #[strong September 5th, 2020]
   .page-header.row
     //- PAGE ICON
-    .col-auto.q-pl-md.flex.items-center(v-if='editMode')
-      q-btn.rounded-borders(
-        padding='none'
-        size='37px'
-        :icon='pageIcon'
-        color='primary'
-        flat
-        )
-        q-menu(content-class='shadow-7')
-          icon-picker-dialog(v-model='pageIcon')
-    .col-auto.q-pl-md.flex.items-center(v-else)
+    .col-auto.q-pl-md.flex.items-center
       q-icon.rounded-borders(
-        :name='pageIcon'
+        :name='pageStore.icon'
         size='64px'
         color='primary'
       )
     //- PAGE HEADER
-    .col.q-pa-md(v-if='editMode')
-      q-input.no-height(
-        borderless
-        v-model='title'
-        input-class='text-h4 text-grey-9'
-        input-style='padding: 0;'
-        placeholder='Untitled Page'
-        hide-hint
-        )
-      q-input.no-height(
-        borderless
-        v-model='description'
-        input-class='text-subtitle2 text-grey-7'
-        input-style='padding: 0;'
-        placeholder='Enter a short description'
-        hide-hint
-        )
-    .col.q-pa-md(v-else)
-      .text-h4.page-header-title {{title}}
-      .text-subtitle2.page-header-subtitle {{description}}
+    .col.q-pa-md
+      .text-h4.page-header-title {{pageStore.title}}
+      .text-subtitle2.page-header-subtitle {{pageStore.description}}
 
     //- PAGE ACTIONS
-    .col-auto.q-pa-md.flex.items-center.justify-end(v-if='editMode')
-      q-btn.q-mr-sm.acrylic-btn(
-        flat
-        icon='las la-times'
-        color='grey-7'
-        label='Discard'
-        aria-label='Discard'
-        no-caps
-        @click='mode = `view`'
-      )
-      q-btn(
-        v-if='editorMode === `edit`'
-        unelevated
-        icon='las la-check'
-        color='secondary'
-        label='Save'
-        aria-label='Save'
-        no-caps
-        @click='mode = `view`'
-      )
-      q-btn(
-        v-else
-        unelevated
-        icon='las la-check'
-        color='secondary'
-        label='Create'
-        aria-label='Create'
-        no-caps
-        @click='mode = `view`'
-      )
-    .col-auto.q-pa-md.flex.items-center.justify-end(v-else)
+    .col-auto.q-pa-md.flex.items-center.justify-end
       q-btn.q-mr-md(
         flat
         dense
@@ -144,23 +80,18 @@ q-page.column
         label='Edit'
         aria-label='Edit'
         no-caps
-        @click='mode = `edit`'
+        :href='editUrl'
       )
   .page-container.row.no-wrap.items-stretch(style='flex: 1 1 100%;')
     .col(style='order: 1;')
-      q-no-ssr(v-if='editMode')
-        component(:is='editorComponent')
-        //- editor-wysiwyg
-        //- editor-markdown
       q-scroll-area(
         :thumb-style='thumbStyle'
         :bar-style='barStyle'
         style='height: 100%;'
-        v-else
         )
         .q-pa-md
-          div(v-html='render')
-          template(v-if='relations && relations.length > 0')
+          div(v-html='pageStore.render')
+          template(v-if='pageStore.relations && pageStore.relations.length > 0')
             q-separator.q-my-lg
             .row.align-center
               .col.text-left(v-if='relationsLeft.length > 0')
@@ -204,24 +135,24 @@ q-page.column
       v-if='showSidebar'
       style='order: 2;'
       )
-      template(v-if='showToc')
+      template(v-if='pageStore.showToc')
         //- TOC
         .q-pa-md.flex.items-center
           q-icon.q-mr-sm(name='las la-stream', color='grey')
           .text-caption.text-grey-7 Contents
         .q-px-md.q-pb-sm
           q-tree(
-            :nodes='toc'
+            :nodes='state.toc'
             node-key='key'
-            v-model:expanded='tocExpanded'
-            v-model:selected='tocSelected'
+            v-model:expanded='state.tocExpanded'
+            v-model:selected='state.tocSelected'
           )
       //- Tags
-      template(v-if='showTags')
-        q-separator(v-if='showToc')
+      template(v-if='pageStore.showTags')
+        q-separator(v-if='pageStore.showToc')
         .q-pa-md(
-          @mouseover='showTagsEditBtn = true'
-          @mouseleave='showTagsEditBtn = false'
+          @mouseover='state.showTagsEditBtn = true'
+          @mouseleave='state.showTagsEditBtn = false'
           )
           .flex.items-center
             q-icon.q-mr-sm(name='las la-tags', color='grey')
@@ -229,7 +160,7 @@ q-page.column
             q-space
             transition(name='fade')
               q-btn(
-                v-show='showTagsEditBtn'
+                v-show='state.showTagsEditBtn'
                 size='sm'
                 padding='none xs'
                 icon='las la-pen'
@@ -237,24 +168,24 @@ q-page.column
                 flat
                 label='Edit'
                 no-caps
-                @click='tagEditMode = !tagEditMode'
+                @click='state.tagEditMode = !state.tagEditMode'
               )
-          page-tags.q-mt-sm(:edit='tagEditMode')
-      template(v-if='allowRatings && ratingsMode !== `off`')
-        q-separator(v-if='showToc || showTags')
+          page-tags.q-mt-sm(:edit='state.tagEditMode')
+      template(v-if='pageStore.allowRatings && pageStore.ratingsMode !== `off`')
+        q-separator(v-if='pageStore.showToc || pageStore.showTags')
         //- Rating
         .q-pa-md.flex.items-center
           q-icon.q-mr-sm(name='las la-star-half-alt', color='grey')
           .text-caption.text-grey-7 Rate this page
         .q-px-md
           q-rating(
-            v-if='ratingsMode === `stars`'
-            v-model='currentRating'
+            v-if='pageStore.ratingsMode === `stars`'
+            v-model='state.currentRating'
             icon='las la-star'
             color='secondary'
             size='sm'
           )
-          .flex.items-center(v-else-if='ratingsMode === `thumbs`')
+          .flex.items-center(v-else-if='pageStore.ratingsMode === `thumbs`')
             q-btn.acrylic-btn(
               flat
               icon='las la-thumbs-down'
@@ -350,206 +281,226 @@ q-page.column
         q-tooltip(anchor='center left' self='center right') Delete Page
 
   q-dialog(
-    v-model='showSideDialog'
+    v-model='state.showSideDialog'
     position='right'
     full-height
     transition-show='jump-left'
     transition-hide='jump-right'
     class='floating-sidepanel'
     )
-    component(:is='sideDialogComponent')
+    component(:is='state.sideDialogComponent')
 
   q-dialog(
-    v-model='showGlobalDialog'
+    v-model='state.showGlobalDialog'
     transition-show='jump-up'
     transition-hide='jump-down'
     )
-    component(:is='globalDialogComponent')
+    component(:is='state.globalDialogComponent')
 </template>
 
-<script>
-import { get, sync } from 'vuex-pathify'
-import IconPickerDialog from '../components/IconPickerDialog.vue'
+<script setup>
+import { useMeta, useQuasar, setCssVar } from 'quasar'
+import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
+import { usePageStore } from 'src/stores/page'
+import { useSiteStore } from '../stores/site'
+
+// COMPONENTS
+
 import SocialSharingMenu from '../components/SocialSharingMenu.vue'
 import PageDataDialog from '../components/PageDataDialog.vue'
 import PageTags from '../components/PageTags.vue'
 import PagePropertiesDialog from '../components/PagePropertiesDialog.vue'
 import PageSaveDialog from '../components/PageSaveDialog.vue'
-import EditorWysiwyg from '../components/EditorWysiwyg.vue'
 
-export default {
-  name: 'PageIndex',
-  components: {
-    EditorWysiwyg,
-    IconPickerDialog,
-    PageDataDialog,
-    PagePropertiesDialog,
-    PageSaveDialog,
-    PageTags,
-    SocialSharingMenu
-  },
-  data () {
-    return {
-      showSideDialog: false,
-      sideDialogComponent: null,
-      showGlobalDialog: false,
-      globalDialogComponent: null,
-      showTagsEditBtn: false,
-      tagEditMode: false,
-      toc: [
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const pageStore = usePageStore()
+const siteStore = useSiteStore()
+
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  title: pageStore.title
+})
+
+// DATA
+
+const state = reactive({
+  showSideDialog: false,
+  sideDialogComponent: null,
+  showGlobalDialog: false,
+  globalDialogComponent: null,
+  showTagsEditBtn: false,
+  tagEditMode: false,
+  toc: [
+    {
+      key: 'h1-0',
+      label: 'Introduction'
+    },
+    {
+      key: 'h1-1',
+      label: 'Planets',
+      children: [
         {
-          key: 'h1-0',
-          label: 'Introduction'
-        },
-        {
-          key: 'h1-1',
-          label: 'Planets',
+          key: 'h2-0',
+          label: 'Earth',
           children: [
             {
-              key: 'h2-0',
-              label: 'Earth',
+              key: 'h3-0',
+              label: 'Countries',
               children: [
                 {
-                  key: 'h3-0',
-                  label: 'Countries',
+                  key: 'h4-0',
+                  label: 'Cities',
                   children: [
                     {
-                      key: 'h4-0',
-                      label: 'Cities',
+                      key: 'h5-0',
+                      label: 'Montreal',
                       children: [
                         {
-                          key: 'h5-0',
-                          label: 'Montreal',
-                          children: [
-                            {
-                              key: 'h6-0',
-                              label: 'Districts'
-                            }
-                          ]
+                          key: 'h6-0',
+                          label: 'Districts'
                         }
                       ]
                     }
                   ]
                 }
               ]
-            },
-            {
-              key: 'h2-1',
-              label: 'Mars'
-            },
-            {
-              key: 'h2-2',
-              label: 'Jupiter'
             }
           ]
+        },
+        {
+          key: 'h2-1',
+          label: 'Mars'
+        },
+        {
+          key: 'h2-2',
+          label: 'Jupiter'
         }
-      ],
-      tocExpanded: ['h1-0', 'h1-1'],
-      tocSelected: [],
-      currentRating: 3,
-      thumbStyle: {
-        right: '2px',
-        borderRadius: '5px',
-        backgroundColor: '#000',
-        width: '5px',
-        opacity: 0.15
-      },
-      barStyle: {
-        backgroundColor: '#FAFAFA',
-        width: '9px',
-        opacity: 1
-      }
+      ]
     }
-  },
-  computed: {
-    mode: sync('page/mode', false),
-    editorMode: get('page/editorMode', false),
-    breadcrumbs: get('page/breadcrumbs', false),
-    title: sync('page/title', false),
-    description: sync('page/description', false),
-    relations: get('page/relations', false),
-    tags: sync('page/tags', false),
-    ratingsMode: get('site/ratingsMode', false),
-    allowComments: get('page/allowComments', false),
-    allowContributions: get('page/allowContributions', false),
-    allowRatings: get('page/allowRatings', false),
-    showSidebar () {
-      return this.$store.get('page/showSidebar') && this.$store.get('site/showSidebar')
-    },
-    showTags: get('page/showTags', false),
-    showToc: get('page/showToc', false),
-    tocDepth: get('page/tocDepth', false),
-    isPublished: get('page/isPublished', false),
-    pageIcon: sync('page/icon', false),
-    render: get('page/render', false),
-    editorComponent () {
-      return this.$store.get('page/editor') ? `editor-${this.$store.get('page/editor')}` : null
-    },
-    relationsLeft () {
-      return this.relations ? this.relations.filter(r => r.position === 'left') : []
-    },
-    relationsCenter () {
-      return this.relations ? this.relations.filter(r => r.position === 'center') : []
-    },
-    relationsRight () {
-      return this.relations ? this.relations.filter(r => r.position === 'right') : []
-    },
-    editMode () {
-      return this.mode === 'edit'
-    },
-    editCreateMode () {
-      return this.mode === 'edit' && this.editorMode === 'create'
-    }
-  },
-  watch: {
-    toc () {
-      this.refreshTocExpanded()
-    },
-    tocDepth () {
-      this.refreshTocExpanded()
-    }
-  },
-  mounted () {
-    this.refreshTocExpanded()
-  },
-  methods: {
-    togglePageProperties () {
-      this.sideDialogComponent = 'PagePropertiesDialog'
-      this.showSideDialog = true
-    },
-    togglePageData () {
-      this.sideDialogComponent = 'PageDataDialog'
-      this.showSideDialog = true
-    },
-    savePage () {
-      this.globalDialogComponent = 'PageSaveDialog'
-      this.showGlobalDialog = true
-    },
-    refreshTocExpanded (baseToc) {
-      const toExpand = []
-      let isRootNode = false
-      if (!baseToc) {
-        baseToc = this.toc
-        isRootNode = true
+  ],
+  tocExpanded: ['h1-0', 'h1-1'],
+  tocSelected: [],
+  currentRating: 3
+})
+const thumbStyle = {
+  right: '2px',
+  borderRadius: '5px',
+  backgroundColor: '#000',
+  width: '5px',
+  opacity: 0.15
+}
+const barStyle = {
+  backgroundColor: '#FAFAFA',
+  width: '9px',
+  opacity: 1
+}
+
+// COMPUTED
+
+const showSidebar = computed(() => {
+  return pageStore.showSidebar && siteStore.showSidebar
+})
+const editorComponent = computed(() => {
+  return pageStore.editor ? `editor-${pageStore.editor}` : null
+})
+const relationsLeft = computed(() => {
+  return pageStore.relations ? pageStore.relations.filter(r => r.position === 'left') : []
+})
+const relationsCenter = computed(() => {
+  return pageStore.relations ? pageStore.relations.filter(r => r.position === 'center') : []
+})
+const relationsRight = computed(() => {
+  return pageStore.relations ? pageStore.relations.filter(r => r.position === 'right') : []
+})
+const editMode = computed(() => {
+  return pageStore.mode === 'edit'
+})
+const editCreateMode = computed(() => {
+  return pageStore.mode === 'edit' && pageStore.mode === 'create'
+})
+const editUrl = computed(() => {
+  let pagePath = siteStore.useLocales ? `${pageStore.locale}/` : ''
+  pagePath += !pageStore.path ? 'home' : pageStore.path
+  return `/_edit/${pagePath}`
+})
+
+// WATCHERS
+
+watch(() => state.toc, refreshTocExpanded)
+watch(() => pageStore.tocDepth, refreshTocExpanded)
+
+// METHODS
+
+function getFullPath ({ locale, path }) {
+  if (siteStore.useLocales) {
+    return `/${locale}/${path}`
+  } else {
+    return `/${path}`
+  }
+}
+
+function togglePageProperties () {
+  state.sideDialogComponent = 'PagePropertiesDialog'
+  state.showSideDialog = true
+}
+
+function togglePageData () {
+  state.sideDialogComponent = 'PageDataDialog'
+  state.showSideDialog = true
+}
+
+function savePage () {
+  state.globalDialogComponent = 'PageSaveDialog'
+  state.showGlobalDialog = true
+}
+
+function refreshTocExpanded (baseToc) {
+  const toExpand = []
+  let isRootNode = false
+  if (!baseToc) {
+    baseToc = state.toc
+    isRootNode = true
+  }
+  if (baseToc.length > 0) {
+    for (const node of baseToc) {
+      if (node.key >= `h${pageStore.tocDepth.min}` && node.key <= `h${pageStore.tocDepth.max}`) {
+        toExpand.push(node.key)
       }
-      if (baseToc.length > 0) {
-        for (const node of baseToc) {
-          if (node.key >= `h${this.tocDepth.min}` && node.key <= `h${this.tocDepth.max}`) {
-            toExpand.push(node.key)
-          }
-          if (node.children?.length && node.key < `h${this.tocDepth.max}`) {
-            toExpand.push(...this.refreshTocExpanded(node.children))
-          }
-        }
-      }
-      if (isRootNode) {
-        this.tocExpanded = toExpand
-      } else {
-        return toExpand
+      if (node.children?.length && node.key < `h${pageStore.tocDepth.max}`) {
+        toExpand.push(...refreshTocExpanded(node.children))
       }
     }
   }
+  if (isRootNode) {
+    state.tocExpanded = toExpand
+  } else {
+    return toExpand
+  }
 }
+
+// MOUNTED
+
+onMounted(() => {
+  refreshTocExpanded()
+})
 </script>
 
 <style lang="scss">

@@ -4,5 +4,5 @@ description: Parse footnotes references
 author: requarks.io
 icon: mdi-page-layout-footer
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props: {}

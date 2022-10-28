@@ -4,7 +4,7 @@ description: PlantUML Markdown Parser
 author: ethanmdavidson
 icon: mdi-sitemap
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props:
   server:
     type: String

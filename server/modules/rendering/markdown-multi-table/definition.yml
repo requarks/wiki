@@ -4,7 +4,7 @@ description: Add MultiMarkdown table support
 author: requarks.io
 icon: mdi-table
 enabledDefault: false
-dependsOn: markdownCore
+dependsOn: markdown-core
 props:
   multilineEnabled:
     type: Boolean

@@ -21,7 +21,7 @@ module.exports = {
     // --------------------------------
 
     for (let child of _.reject(this.children, ['step', 'post'])) {
-      const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
+      const renderer = require(`../${child.key}/renderer.js`)
       await renderer.init($, child.config)
     }
 
@@ -33,10 +33,7 @@ module.exports = {
     const reservedPrefixes = /^\/[a-z]\//i
     const exactReservedPaths = /^\/[a-z]$/i
 
-    const isHostSet = WIKI.config.host.length > 7 && WIKI.config.host !== 'http://'
-    if (!isHostSet) {
-      WIKI.logger.warn('Host is not set. You must set the Site Host under General in the Administration Area!')
-    }
+    const hasHostname = this.site.hostname !== '*'
 
     $('a').each((i, elm) => {
       let href = $(elm).attr('href')
@@ -48,8 +45,8 @@ module.exports = {
       }
 
       // -> Strip host from local links
-      if (isHostSet && href.indexOf(`${WIKI.config.host}/`) === 0) {
-        href = href.replace(WIKI.config.host, '')
+      if (hasHostname && href.indexOf(`${this.site.hostname}/`) === 0) {
+        href = href.replace(this.site.hostname, '')
       }
 
       // -> Assign local / external tag
@@ -68,7 +65,7 @@ module.exports = {
           let pagePath = null
 
           // -> Add locale prefix if using namespacing
-          if (WIKI.config.lang.namespacing) {
+          if (this.site.config.localeNamespacing) {
             // -> Reformat paths
             if (href.indexOf('/') !== 0) {
               if (this.config.absoluteLinks) {

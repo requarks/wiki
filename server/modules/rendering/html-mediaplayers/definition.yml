@@ -4,5 +4,5 @@ description: Embed players such as Youtube, Vimeo, Soundcloud, etc.
 author: requarks.io
 icon: mdi-video
 enabledDefault: true
-dependsOn: htmlCore
+dependsOn: html-core
 props: {}

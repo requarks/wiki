@@ -132,7 +132,7 @@ q-page.admin-terminal
               div: small.text-grey {{humanizeDate(props.row.waitUntil)}}
           template(v-slot:body-cell-retries='props')
             q-td(:props='props')
-              span #[strong {{props.value + 1}}] #[span.text-grey / {{props.row.maxRetries}}]
+              span #[strong {{props.value + 1}}] #[span.text-grey / {{props.row.maxRetries + 1}}]
           template(v-slot:body-cell-useworker='props')
             q-td(:props='props')
               template(v-if='props.value')
@@ -148,6 +148,15 @@ q-page.admin-terminal
                 i18n-t.text-grey(keypath='admin.scheduler.createdBy', tag='small')
                   template(#instance)
                     strong {{props.row.createdBy}}
+          template(v-slot:body-cell-cancel='props')
+            q-td(:props='props')
+              q-btn.acrylic-btn.q-px-sm(
+                flat
+                icon='las la-window-close'
+                color='negative'
+                @click='cancelJob(props.row.id)'
+                )
+                q-tooltip(anchor='center left', self='center right') {{ t('admin.scheduler.cancelJob') }}
     template(v-else)
       q-card.rounded-borders(
         v-if='state.jobs.length < 1'
@@ -221,7 +230,7 @@ q-page.admin-terminal
                 div: small {{ props.row.lastErrorMessage }}
           template(v-slot:body-cell-attempt='props')
             q-td(:props='props')
-              span #[strong {{props.value}}] #[span.text-grey / {{props.row.maxRetries}}]
+              span #[strong {{props.value}}] #[span.text-grey / {{props.row.maxRetries + 1}}]
           template(v-slot:body-cell-useworker='props')
             q-td(:props='props')
               template(v-if='props.value')
@@ -238,6 +247,17 @@ q-page.admin-terminal
                 i18n-t.text-grey(keypath='admin.scheduler.createdBy', tag='small')
                   template(#instance)
                     strong {{props.row.executedBy}}
+          template(v-slot:body-cell-actions='props')
+            q-td(:props='props')
+              q-btn.acrylic-btn.q-px-sm(
+                v-if='props.row.state !== `active`'
+                flat
+                icon='las la-undo-alt'
+                color='orange'
+                @click='retryJob(props.row.id)'
+                :disable='props.row.state === `interrupted` || props.row.state === `failed` && props.row.attempt < props.row.maxRetries'
+                )
+                q-tooltip(anchor='center left', self='center right') {{ t('admin.scheduler.retryJob') }}
 
 </template>
 
@@ -271,7 +291,7 @@ useMeta({
 // DATA
 
 const state = reactive({
-  displayMode: 'completed',
+  displayMode: 'upcoming',
   scheduledJobs: [],
   upcomingJobs: [],
   jobs: [],
@@ -369,6 +389,13 @@ const upcomingJobsHeaders = [
     name: 'date',
     sortable: true,
     format: v => DateTime.fromISO(v).toRelative()
+  },
+  {
+    align: 'center',
+    field: 'id',
+    name: 'cancel',
+    sortable: false,
+    style: 'width: 15px;'
   }
 ]
 
@@ -415,6 +442,13 @@ const jobsHeaders = [
     name: 'date',
     sortable: true,
     format: v => DateTime.fromISO(v).toRelative()
+  },
+  {
+    align: 'center',
+    field: 'id',
+    name: 'actions',
+    sortable: false,
+    style: 'width: 15px;'
   }
 ]
 
@@ -518,6 +552,80 @@ async function load () {
     $q.notify({
       type: 'negative',
       message: 'Failed to load scheduled jobs.',
+      caption: err.message
+    })
+  }
+  state.loading--
+}
+
+async function cancelJob (jobId) {
+  state.loading++
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation cancelJob ($id: UUID!) {
+          cancelJob(id: $id) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        id: jobId
+      }
+    })
+    if (resp?.data?.cancelJob?.operation?.succeeded) {
+      this.load()
+      $q.notify({
+        type: 'positive',
+        message: t('admin.scheduler.cancelJobSuccess')
+      })
+    } else {
+      throw new Error(resp?.data?.cancelJob?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to cancel job.',
+      caption: err.message
+    })
+  }
+  state.loading--
+}
+
+async function retryJob (jobId) {
+  state.loading++
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation retryJob ($id: UUID!) {
+          retryJob(id: $id) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        id: jobId
+      }
+    })
+    if (resp?.data?.retryJob?.operation?.succeeded) {
+      this.load()
+      $q.notify({
+        type: 'positive',
+        message: t('admin.scheduler.retryJobSuccess')
+      })
+    } else {
+      throw new Error(resp?.data?.retryJob?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to retry the job.',
       caption: err.message
     })
   }

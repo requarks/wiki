@@ -1,6 +1,34 @@
 const _ = require('lodash')
 
 module.exports = {
+  /* eslint-disable promise/param-names */
+  createDeferred () {
+    let result, resolve, reject
+    return {
+      resolve: function (value) {
+        if (resolve) {
+          resolve(value)
+        } else {
+          result = result || new Promise(function (r) { r(value) })
+        }
+      },
+      reject: function (reason) {
+        if (reject) {
+          reject(reason)
+        } else {
+          result = result || new Promise(function (x, j) { j(reason) })
+        }
+      },
+      promise: new Promise(function (r, j) {
+        if (result) {
+          r(result)
+        } else {
+          resolve = r
+          reject = j
+        }
+      })
+    }
+  },
   /**
    * Get default value of type
    *

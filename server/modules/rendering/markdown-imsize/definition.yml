@@ -4,5 +4,5 @@ description: Adds dimensions attributes to images
 author: requarks.io
 icon: mdi-image-size-select-large
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props: {}

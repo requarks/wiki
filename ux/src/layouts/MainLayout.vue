@@ -2,7 +2,7 @@
 q-layout(view='hHh Lpr lff')
   header-nav
   q-drawer.bg-sidebar(
-    v-model='showSideNav'
+    v-model='siteStore.showSideNav'
     show-if-above
     :width='255'
     )
@@ -81,46 +81,64 @@ q-layout(view='hHh Lpr lff')
       span(style='font-size: 11px;') &copy; Cyberdyne Systems Corp. 2020 | Powered by #[strong Wiki.js]
 </template>
 
-<script>
-import { get, sync } from 'vuex-pathify'
-import { setCssVar } from 'quasar'
+<script setup>
+import { useMeta, useQuasar, setCssVar } from 'quasar'
+import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
+import { useSiteStore } from '../stores/site'
+
+// COMPONENTS
+
+import AccountMenu from '../components/AccountMenu.vue'
 import HeaderNav from '../components/HeaderNav.vue'
 
-export default {
-  name: 'MainLayout',
-  components: {
-    HeaderNav
-  },
-  data () {
-    return {
-      leftDrawerOpen: true,
-      search: '',
-      thumbStyle: {
-        right: '2px',
-        borderRadius: '5px',
-        backgroundColor: '#FFF',
-        width: '5px',
-        opacity: 0.5
-      },
-      barStyle: {
-        backgroundColor: '#000',
-        width: '9px',
-        opacity: 0.1
-      }
-    }
-  },
-  computed: {
-    showSideNav: sync('site/showSideNav', false),
-    isSyncing: get('isLoading', false)
-  },
-  created () {
-    setCssVar('primary', this.$store.get('site/theme@colorPrimary'))
-    setCssVar('secondary', this.$store.get('site/theme@colorSecondary'))
-    setCssVar('accent', this.$store.get('site/theme@colorAccent'))
-    setCssVar('header', this.$store.get('site/theme@colorHeader'))
-    setCssVar('sidebar', this.$store.get('site/theme@colorSidebar'))
-  }
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const siteStore = useSiteStore()
+
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
+// I18N
+
+const { t } = useI18n()
+
+// META
+
+useMeta({
+  titleTemplate: title => `${title} - ${siteStore.title}`
+})
+
+// DATA
+
+const leftDrawerOpen = ref(true)
+const search = ref('')
+const user = reactive({
+  name: 'John Doe',
+  email: 'test@example.com',
+  picture: null
+})
+const thumbStyle = {
+  right: '2px',
+  borderRadius: '5px',
+  backgroundColor: '#FFF',
+  width: '5px',
+  opacity: 0.5
 }
+const barStyle = {
+  backgroundColor: '#000',
+  width: '9px',
+  opacity: 0.1
+}
+
 </script>
 
 <style lang="scss">

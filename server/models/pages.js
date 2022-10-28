@@ -34,7 +34,7 @@ module.exports = class Page extends Model {
       required: ['path', 'title'],
 
       properties: {
-        id: {type: 'integer'},
+        id: {type: 'string'},
         path: {type: 'string'},
         hash: {type: 'string'},
         title: {type: 'string'},
@@ -44,7 +44,7 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
         contentType: {type: 'string'},
-
+        siteId: {type: 'string'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -125,11 +125,11 @@ module.exports = class Page extends Model {
    */
   static get cacheSchema() {
     return new JSBinType({
-      id: 'uint',
-      authorId: 'uint',
+      id: 'string',
+      authorId: 'string',
       authorName: 'string',
       createdAt: 'string',
-      creatorId: 'uint',
+      creatorId: 'string',
       creatorName: 'string',
       description: 'string',
       editor: 'string',
@@ -137,6 +137,7 @@ module.exports = class Page extends Model {
       publishEndDate: 'string',
       publishStartDate: 'string',
       render: 'string',
+      siteId: 'string',
       tags: [
         {
           tag: 'string'
@@ -291,7 +292,7 @@ module.exports = class Page extends Model {
       authorId: opts.user.id,
       content: opts.content,
       creatorId: opts.user.id,
-      contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
+      contentType: _.get(WIKI.data.editors[opts.editor], 'contentType', 'text'),
       description: opts.description,
       editor: opts.editor,
       hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale }),
@@ -321,6 +322,9 @@ module.exports = class Page extends Model {
 
     // -> Render page to HTML
     await WIKI.db.pages.renderPage(page)
+
+    return page
+    // TODO: Handle remaining flow
 
     // -> Rebuild page tree
     await WIKI.db.pages.rebuildTree()
@@ -922,12 +926,15 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async renderPage(page) {
-    const renderJob = await WIKI.scheduler.registerJob({
-      name: 'render-page',
-      immediate: true,
-      worker: true
-    }, page.id)
-    return renderJob.finished
+    const renderJob = await WIKI.scheduler.addJob({
+      task: 'render-page',
+      payload: {
+        id: page.id
+      },
+      maxRetries: 0,
+      promise: true
+    })
+    return renderJob.promise
   }
 
   /**
@@ -963,7 +970,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async getPageFromDb(opts) {
-    const queryModeID = _.isNumber(opts)
+    const queryModeID = typeof opts === 'string'
     try {
       return WIKI.db.pages.query()
         .column([
@@ -985,6 +992,7 @@ module.exports = class Page extends Model {
           'pages.localeCode',
           'pages.authorId',
           'pages.creatorId',
+          'pages.siteId',
           'pages.extra',
           {
             authorName: 'author.name',
@@ -1033,7 +1041,7 @@ module.exports = class Page extends Model {
       id: page.id,
       authorId: page.authorId,
       authorName: page.authorName,
-      createdAt: page.createdAt,
+      createdAt: page.createdAt.toISOString(),
       creatorId: page.creatorId,
       creatorName: page.creatorName,
       description: page.description,
@@ -1042,14 +1050,15 @@ module.exports = class Page extends Model {
         css: _.get(page, 'extra.css', ''),
         js: _.get(page, 'extra.js', '')
       },
-      publishState: page.publishState,
-      publishEndDate: page.publishEndDate,
-      publishStartDate: page.publishStartDate,
+      publishState: page.publishState ?? '',
+      publishEndDate: page.publishEndDate ?? '',
+      publishStartDate: page.publishStartDate ?? '',
       render: page.render,
+      siteId: page.siteId,
       tags: page.tags.map(t => _.pick(t, ['tag'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
-      updatedAt: page.updatedAt
+      updatedAt: page.updatedAt.toISOString()
     }))
   }
 

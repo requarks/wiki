@@ -528,9 +528,9 @@ router.get('/*', async (req, res, next) => {
 
         // -> Build theme code injection
         const injectCode = {
-          css: WIKI.config.theming.injectCSS,
-          head: WIKI.config.theming.injectHead,
-          body: WIKI.config.theming.injectBody
+          css: '', // WIKI.config.theming.injectCSS,
+          head: '', // WIKI.config.theming.injectHead,
+          body: '' // WIKI.config.theming.injectBody
         }
 
         // Handle missing extra field
@@ -551,12 +551,12 @@ router.get('/*', async (req, res, next) => {
 
         // -> Inject comments variables
         const commentTmpl = {
-          codeTemplate: WIKI.data.commentProvider.codeTemplate,
-          head: WIKI.data.commentProvider.head,
-          body: WIKI.data.commentProvider.body,
-          main: WIKI.data.commentProvider.main
+          codeTemplate: '', // WIKI.data.commentProvider.codeTemplate,
+          head: '', // WIKI.data.commentProvider.head,
+          body: '', // WIKI.data.commentProvider.body,
+          main: '' // WIKI.data.commentProvider.main
         }
-        if (WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
+        if (false && WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
           [
             { key: 'pageUrl', value: `${WIKI.config.host}/i/${page.id}` },
             { key: 'pageId', value: page.id }
@@ -568,13 +568,14 @@ router.get('/*', async (req, res, next) => {
         }
 
         // -> Render view
-        res.render('page', {
-          page,
-          sidebar,
-          injectCode,
-          comments: commentTmpl,
-          effectivePermissions
-        })
+        res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
+        // res.render('page', {
+        //   page,
+        //   sidebar,
+        //   injectCode,
+        //   comments: commentTmpl,
+        //   effectivePermissions
+        // })
       } else if (pageArgs.path === 'home') {
         res.redirect('/_welcome')
       } else {

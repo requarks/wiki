@@ -4,7 +4,7 @@ description: LaTeX Math + Chemical Expression Typesetting Renderer
 author: requarks.io
 icon: mdi-math-integral
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props:
   useInline:
     type: Boolean

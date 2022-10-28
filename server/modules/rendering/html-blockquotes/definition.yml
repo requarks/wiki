@@ -4,5 +4,5 @@ description: Parse blockquotes box styling
 author: requarks.io
 icon: mdi-alpha-t-box-outline
 enabledDefault: true
-dependsOn: htmlCore
+dependsOn: html-core
 props: {}

@@ -44,7 +44,7 @@ module.exports = {
     })
 
     for (let child of this.children) {
-      const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
+      const renderer = require(`../${child.key}/renderer.js`)
       await renderer.init(mkdown, child.config)
     }
 

@@ -1,13 +1,13 @@
 
 const routes = [
-  // {
-  //   path: '/',
-  //   component: () => import('../layouts/MainLayout.vue'),
-  //   children: [
-  //     { path: '', component: () => import('../pages/Index.vue') },
-  //     { path: 'n/:editor?', component: () => import('../pages/Index.vue') }
-  //   ]
-  // },
+  {
+    path: '/',
+    component: () => import('../layouts/MainLayout.vue'),
+    children: [
+      { path: '', component: () => import('../pages/Index.vue') }
+      // { path: 'n/:editor?', component: () => import('../pages/Index.vue') }
+    ]
+  },
   {
     path: '/login',
     component: () => import('layouts/AuthLayout.vue'),
@@ -36,7 +36,6 @@ const routes = [
       { path: ':siteid/locale', component: () => import('pages/AdminLocale.vue') },
       { path: ':siteid/login', component: () => import('pages/AdminLogin.vue') },
       { path: ':siteid/navigation', component: () => import('pages/AdminNavigation.vue') },
-      // { path: ':siteid/rendering', component: () => import('pages/AdminRendering.vue') },
       { path: ':siteid/storage/:id?', component: () => import('pages/AdminStorage.vue') },
       { path: ':siteid/theme', component: () => import('pages/AdminTheme.vue') },
       // -> Users
@@ -48,6 +47,7 @@ const routes = [
       { path: 'extensions', component: () => import('pages/AdminExtensions.vue') },
       { path: 'instances', component: () => import('pages/AdminInstances.vue') },
       { path: 'mail', component: () => import('pages/AdminMail.vue') },
+      // { path: 'rendering', component: () => import('pages/AdminRendering.vue') },
       { path: 'scheduler', component: () => import('pages/AdminScheduler.vue') },
       { path: 'security', component: () => import('pages/AdminSecurity.vue') },
       { path: 'system', component: () => import('pages/AdminSystem.vue') },
@@ -74,7 +74,10 @@ const routes = [
   // but you can also remove it
   {
     path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue')
+    component: () => import('../layouts/MainLayout.vue'),
+    children: [
+      { path: '', component: () => import('../pages/Index.vue') }
+    ]
   }
 ]
 

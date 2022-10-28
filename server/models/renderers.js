@@ -55,19 +55,65 @@ module.exports = class Renderer extends Model {
   }
 
   static async refreshRenderersFromDisk() {
-    // const dbRenderers = await WIKI.db.renderers.query()
+    try {
+      const dbRenderers = await WIKI.db.renderers.query()
 
-    // -> Fetch definitions from disk
-    await WIKI.db.renderers.fetchDefinitions()
+      // -> Fetch definitions from disk
+      await WIKI.db.renderers.fetchDefinitions()
 
-    // TODO: Merge existing configs with updated modules
+      // -> Insert new Renderers
+      const newRenderers = []
+      let updatedRenderers = 0
+      for (const renderer of WIKI.data.renderers) {
+        if (!_.some(dbRenderers, ['module', renderer.key])) {
+          newRenderers.push({
+            module: renderer.key,
+            isEnabled: renderer.enabledDefault ?? true,
+            config: _.transform(renderer.props, (result, value, key) => {
+              result[key] = value.default
+              return result
+            }, {})
+          })
+        } else {
+          const rendererConfig = _.get(_.find(dbRenderers, ['module', renderer.key]), 'config', {})
+          await WIKI.db.renderers.query().patch({
+            config: _.transform(renderer.props, (result, value, key) => {
+              if (!_.has(result, key)) {
+                result[key] = value.default
+              }
+              return result
+            }, rendererConfig)
+          }).where('module', renderer.key)
+          updatedRenderers++
+        }
+      }
+      if (newRenderers.length > 0) {
+        await WIKI.db.renderers.query().insert(newRenderers)
+        WIKI.logger.info(`Loaded ${newRenderers.length} new renderers: [ OK ]`)
+      }
+
+      if (updatedRenderers > 0) {
+        WIKI.logger.info(`Updated ${updatedRenderers} existing renderers: [ OK ]`)
+      }
+
+      // -> Delete removed Renderers
+      for (const renderer of dbRenderers) {
+        if (!_.some(WIKI.data.renderers, ['key', renderer.module])) {
+          await WIKI.db.renderers.query().where('module', renderer.key).del()
+          WIKI.logger.info(`Removed renderer ${renderer.key} because it is no longer present in the modules folder: [ OK ]`)
+        }
+      }
+    } catch (err) {
+      WIKI.logger.error('Failed to import renderers: [ FAILED ]')
+      WIKI.logger.error(err)
+    }
   }
 
   static async getRenderingPipeline(contentType) {
     const renderersDb = await WIKI.db.renderers.query().where('isEnabled', true)
     if (renderersDb && renderersDb.length > 0) {
       const renderers = renderersDb.map(rdr => {
-        const renderer = _.find(WIKI.data.renderers, ['key', rdr.key])
+        const renderer = _.find(WIKI.data.renderers, ['key', rdr.module])
         return {
           ...renderer,
           config: rdr.config

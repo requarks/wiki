@@ -4,7 +4,7 @@ description: Apply Twitter Emojis to all Unicode emojis
 author: requarks.io
 icon: mdi-emoticon-happy-outline
 enabledDefault: true
-dependsOn: htmlCore
+dependsOn: html-core
 step: post
 order: 10
 props: {}

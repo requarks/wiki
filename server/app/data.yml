@@ -33,7 +33,7 @@ defaults:
       workers: 3
       pollingCheck: 5
       scheduledCheck: 300
-      maxRetries: 5
+      maxRetries: 2
       retryBackoff: 60
       historyExpiration: 90000
     # DB defaults
@@ -83,6 +83,13 @@ defaults:
     search:
       maxHits: 100
     maintainerEmail: security@requarks.io
+editors:
+  code:
+    contentType: html
+  markdown:
+    contentType: markdown
+  wysiwyg:
+    contentType: html
 groups:
   defaultPermissions:
     - 'read:pages'

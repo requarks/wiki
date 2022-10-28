@@ -21,7 +21,7 @@ module.exports = {
   /**
    * Initialize DB
    */
-  init() {
+  init(workerMode = false) {
     let self = this
 
     WIKI.logger.info('Checking DB configuration...')
@@ -85,10 +85,14 @@ module.exports = {
       connection: this.config,
       searchPath: [WIKI.config.db.schemas.wiki],
       pool: {
-        ...WIKI.config.pool,
+        ...workerMode ? { min: 0, max: 1 } : WIKI.config.pool,
         async afterCreate(conn, done) {
           // -> Set Connection App Name
-          await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}:MAIN'`)
+          if (workerMode) {
+            await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}'`)
+          } else {
+            await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}:MAIN'`)
+          }
           done()
         }
       },
@@ -145,7 +149,7 @@ module.exports = {
 
     // Perform init tasks
 
-    this.onReady = (async () => {
+    this.onReady = workerMode ? Promise.resolve() : (async () => {
       await initTasks.connect()
       await initTasks.migrateFromLegacy()
       await initTasks.syncSchemas()

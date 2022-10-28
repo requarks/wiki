@@ -4,7 +4,7 @@ description: Parse subscript and superscript tags
 author: requarks.io
 icon: mdi-format-superscript
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props:
   subEnabled:
     type: Boolean

@@ -4,7 +4,7 @@ description: Replace tabs with spaces in code blocks
 author: requarks.io
 icon: mdi-arrow-expand-horizontal
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props:
   tabWidth:
     type: Number

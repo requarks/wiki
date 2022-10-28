@@ -3,7 +3,7 @@ q-layout.admin(view='hHh Lpr lff')
   q-header.bg-black.text-white
     .row.no-wrap
       q-toolbar(style='height: 64px;', dark)
-        q-btn(dense, flat, href='/')
+        q-btn(dense, flat, to='/')
           q-avatar(size='34px', square)
             img(src='/_assets/logo-wikijs.svg')
         q-toolbar-title.text-h6 Wiki.js
@@ -102,10 +102,6 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-tree-structure.svg')
           q-item-section {{ t('admin.navigation.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/rendering`', v-ripple, active-class='bg-primary text-white', disabled)
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')
-          q-item-section {{ t('admin.rendering.title') }}
         q-item(:to='`/_admin/` + adminStore.currentSiteId + `/storage`', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-ssd.svg')
@@ -156,6 +152,10 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section {{ t('admin.mail.title') }}
           q-item-section(side)
             status-light(:color='adminStore.info.isMailConfigured ? `positive` : `warning`')
+        q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white', disabled)
+          q-item-section(avatar)
+            q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')
+          q-item-section {{ t('admin.rendering.title') }}
         q-item(to='/_admin/scheduler', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-bot.svg')

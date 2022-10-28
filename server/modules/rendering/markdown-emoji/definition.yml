@@ -4,5 +4,5 @@ description: Convert tags to emojis
 author: requarks.io
 icon: mdi-sticker-emoji
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props: {}

@@ -243,7 +243,7 @@ exports.up = async knex => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('module').notNullable()
       table.boolean('isEnabled').notNullable().defaultTo(false)
-      table.jsonb('config')
+      table.jsonb('config').notNullable().defaultTo('{}')
     })
     // SETTINGS ----------------------------
     .createTable('settings', table => {
@@ -369,9 +369,6 @@ exports.up = async knex => {
       table.integer('parent').unsigned().references('id').inTable('pageTree').onDelete('CASCADE')
       table.uuid('pageId').notNullable().references('id').inTable('pages').onDelete('CASCADE')
       table.string('localeCode', 5).references('code').inTable('locales')
-    })
-    .table('renderers', table => {
-      table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
     .table('storage', table => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')

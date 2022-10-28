@@ -4,5 +4,5 @@ description: Parse abbreviations into abbr tags
 author: requarks.io
 icon: mdi-contain-start
 enabledDefault: true
-dependsOn: markdownCore
+dependsOn: markdown-core
 props: {}

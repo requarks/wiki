@@ -79,6 +79,25 @@ module.exports = {
     }
   },
   Mutation: {
+    async cancelJob (obj, args, context) {
+      WIKI.logger.info(`Admin requested cancelling job ${args.id}...`)
+      try {
+        const result = await WIKI.db.knex('jobs')
+          .where('id', args.id)
+          .del()
+        if (result === 1) {
+          WIKI.logger.info(`Cancelled job ${args.id} [ OK ]`)
+        } else {
+          throw new Error('Job has already entered active state or does not exist.')
+        }
+        return {
+          operation: graphHelper.generateSuccess('Cancelled job successfully.')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return graphHelper.generateError(err)
+      }
+    },
     async disconnectWS (obj, args, context) {
       WIKI.servers.ws.disconnectSockets(true)
       WIKI.logger.info('All active websocket connections have been terminated.')
@@ -94,6 +113,39 @@ module.exports = {
           operation: graphHelper.generateSuccess('Extension installed successfully')
         }
       } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    async retryJob (obj, args, context) {
+      WIKI.logger.info(`Admin requested rescheduling of job ${args.id}...`)
+      try {
+        const job = await WIKI.db.knex('jobHistory')
+          .where('id', args.id)
+          .first()
+        if (!job) {
+          throw new Error('No such job found.')
+        } else if (job.state === 'interrupted') {
+          throw new Error('Cannot reschedule a task that has been interrupted. It will automatically be retried shortly.')
+        } else if (job.state === 'failed' && job.attempt < job.maxRetries) {
+          throw new Error('Cannot reschedule a task that has not reached its maximum retry attempts.')
+        }
+        await WIKI.db.knex('jobs')
+          .insert({
+            id: job.id,
+            task: job.task,
+            useWorker: job.useWorker,
+            payload: job.payload,
+            retries: job.attempt,
+            maxRetries: job.maxRetries,
+            isScheduled: job.wasScheduled,
+            createdBy: WIKI.INSTANCE_ID
+          })
+        WIKI.logger.info(`Job ${args.id} has been rescheduled [ OK ]`)
+        return {
+          operation: graphHelper.generateSuccess('Job rescheduled successfully.')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
         return graphHelper.generateError(err)
       }
     },

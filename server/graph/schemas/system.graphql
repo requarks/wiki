@@ -16,10 +16,18 @@ extend type Query {
 }
 
 extend type Mutation {
+  cancelJob(
+    id: UUID!
+  ): DefaultResponse
+
   disconnectWS: DefaultResponse
 
   installExtension(
     key: String!
+  ): DefaultResponse
+
+  retryJob(
+    id: UUID!
   ): DefaultResponse
 
   updateSystemFlags(

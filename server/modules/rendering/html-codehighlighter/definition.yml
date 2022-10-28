@@ -4,6 +4,6 @@ description: Syntax detector for programming code
 author: requarks.io
 icon: mdi-code-braces
 enabledDefault: true
-dependsOn: htmlCore
+dependsOn: html-core
 step: pre
 props: {}

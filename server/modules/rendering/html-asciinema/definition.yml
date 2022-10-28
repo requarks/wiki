@@ -4,5 +4,5 @@ description: Embed asciinema players from compatible links
 author: requarks.io
 icon: mdi-theater
 enabledDefault: false
-dependsOn: htmlCore
+dependsOn: html-core
 props: {}

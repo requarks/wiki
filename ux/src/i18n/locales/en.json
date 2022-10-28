@@ -1540,5 +1540,9 @@
   "admin.instances.lastSeen": "Last Seen",
   "admin.instances.firstSeen": "First Seen",
   "admin.instances.activeListeners": "Active Listeners",
-  "admin.instances.activeConnections": "Active Connections"
+  "admin.instances.activeConnections": "Active Connections",
+  "admin.scheduler.cancelJob": "Cancel Job",
+  "admin.scheduler.cancelJobSuccess": "Job cancelled successfully.",
+  "admin.scheduler.retryJob": "Retry Job",
+  "admin.scheduler.retryJobSuccess": "Job has been rescheduled and will execute shortly."
 }

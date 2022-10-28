@@ -4,6 +4,9 @@ const autoload = require('auto-load')
 const path = require('node:path')
 const cronparser = require('cron-parser')
 const { DateTime } = require('luxon')
+const { v4: uuid } = require('uuid')
+const { createDeferred } = require('../helpers/common')
+const _ = require('lodash')
 
 module.exports = {
   workerPool: null,
@@ -12,6 +15,7 @@ module.exports = {
   pollingRef: null,
   scheduledRef: null,
   tasks: null,
+  completionPromises: [],
   async init () {
     this.maxWorkers = WIKI.config.scheduler.workers === 'auto' ? (os.cpus().length - 1) : WIKI.config.scheduler.workers
     if (this.maxWorkers < 1) { this.maxWorkers = 1 }
@@ -38,6 +42,20 @@ module.exports = {
           }
           break
         }
+        case 'jobCompleted': {
+          const jobPromise = _.find(this.completionPromises, ['id', payload.id])
+          if (jobPromise) {
+            if (payload.state === 'success') {
+              jobPromise.resolve()
+            } else {
+              jobPromise.reject(new Error(payload.errorMessage))
+            }
+            setTimeout(() => {
+              _.remove(this.completionPromises, ['id', payload.id])
+            })
+          }
+          break
+        }
       }
     })
 
@@ -56,22 +74,51 @@ module.exports = {
 
     WIKI.logger.info('Scheduler: [ STARTED ]')
   },
-  async addJob ({ task, payload, waitUntil, maxRetries, isScheduled = false, notify = true }) {
+  /**
+   * Add a job to the scheduler
+   * @param {Object} opts - Job options
+   * @param {string} opts.task - The task name to execute.
+   * @param {Object} [opts.payload={}] - An optional data object to pass to the job.
+   * @param {Date} [opts.waitUntil] - An optional datetime after which the task is allowed to run.
+   * @param {Number} [opts.maxRetries] - The number of times this job can be restarted upon failure. Uses server defaults if not provided.
+   * @param {Boolean} [opts.isScheduled=false] - Whether this is a scheduled job.
+   * @param {Boolean} [opts.notify=true] - Whether to notify all instances that a new job is available.
+   * @param {Boolean} [opts.promise=false] - Whether to return a promise property that resolves when the job completes.
+   * @returns {Promise}
+   */
+  async addJob ({ task, payload = {}, waitUntil, maxRetries, isScheduled = false, notify = true, promise = false }) {
     try {
-      await WIKI.db.knex('jobs').insert({
-        task,
-        useWorker: !(typeof this.tasks[task] === 'function'),
-        payload,
-        maxRetries: maxRetries ?? WIKI.config.scheduler.maxRetries,
-        isScheduled,
-        waitUntil,
-        createdBy: WIKI.INSTANCE_ID
-      })
+      const jobId = uuid()
+      const jobDefer = createDeferred()
+      if (promise) {
+        this.completionPromises.push({
+          id: jobId,
+          added: DateTime.utc(),
+          resolve: jobDefer.resolve,
+          reject: jobDefer.reject
+        })
+      }
+      await WIKI.db.knex('jobs')
+        .insert({
+          id: jobId,
+          task,
+          useWorker: !(typeof this.tasks[task] === 'function'),
+          payload,
+          maxRetries: maxRetries ?? WIKI.config.scheduler.maxRetries,
+          isScheduled,
+          waitUntil,
+          createdBy: WIKI.INSTANCE_ID
+        })
       if (notify) {
         WIKI.db.listener.publish('scheduler', {
           source: WIKI.INSTANCE_ID,
-          event: 'newJob'
+          event: 'newJob',
+          id: jobId
         })
+      }
+      return {
+        id: jobId,
+        ...promise && { promise: jobDefer.promise }
       }
     } catch (err) {
       WIKI.logger.warn(`Failed to add job to scheduler: ${err.message}`)
@@ -130,6 +177,12 @@ module.exports = {
                 completedAt: new Date()
               })
               WIKI.logger.info(`Completed job ${job.id}: ${job.task}`)
+              WIKI.db.listener.publish('scheduler', {
+                source: WIKI.INSTANCE_ID,
+                event: 'jobCompleted',
+                state: 'success',
+                id: job.id
+              })
             } catch (err) {
               WIKI.logger.warn(`Failed to complete job ${job.id}: ${job.task} [ FAILED ]`)
               WIKI.logger.warn(err)
@@ -137,8 +190,16 @@ module.exports = {
               await WIKI.db.knex('jobHistory').where({
                 id: job.id
               }).update({
+                attempt: job.retries + 1,
                 state: 'failed',
                 lastErrorMessage: err.message
+              })
+              WIKI.db.listener.publish('scheduler', {
+                source: WIKI.INSTANCE_ID,
+                event: 'jobCompleted',
+                state: 'failed',
+                id: job.id,
+                errorMessage: err.message
               })
               // -> Reschedule for retry
               if (job.retries < job.maxRetries) {
