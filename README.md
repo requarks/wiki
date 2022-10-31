@@ -18,19 +18,34 @@
 - **[Official Website](https://next.js.wiki/)**
 - **[Documentation](https://next.js.wiki/docs/)**
 
-:warning: :warning: **THIS IS A VERY BUGGY, INCOMPLETE AND NON-SECURE DEVELOPMENT BRANCH! USE AT YOUR OWN RISK! THERE'S NO UPGRADE PATH FROM THIS BUILD.** :warning: :warning:
+:red_square: :warning: :warning:  
+**THIS IS A VERY BUGGY, INCOMPLETE AND NON-SECURE DEVELOPMENT BRANCH! USE AT YOUR OWN RISK! THERE'S NO UPGRADE PATH FROM THIS BUILD AND NO SUPPORT IS PROVIDED.**  
+:warning: :warning: :red_square:
 
 The current stable release (2.x) is available at https://js.wiki
 
 ---
 
-## Requirements
+- [Generic Setup](#generic-setup)
+  - [Requirements](#requirements)
+  - [Usage](#usage)
+- [Using VS Code Dev Environment](#using-vs-code-dev-environment) *(recommended)*
+  - [Requirements](#requirements-1)
+  - [Usage](#usage-1)
+  - [Server Development](#server-development)
+  - [Frontend Development (Quasar/Vue 3)](#frontend-development-quasarvue-3)
+  - [Legacy Frontend Development (Vuetify/Vue 2)](#legacy-frontend-development-vuetifyvue-2)
+  - [pgAdmin](#pgadmin)
+
+## Generic Setup
+
+### Requirements
 
 - Node.js **18.x** or later
 - Yarn
 - PostgreSQL **11** or later
 
-## Setup
+### Usage
 
 1. Clone the project
 1. Make a copy of `config.sample.yml` and rename it to `config.yml`
