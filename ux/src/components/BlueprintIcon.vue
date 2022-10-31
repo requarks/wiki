@@ -5,7 +5,7 @@ q-item-section(avatar)
     :text-color='avatarTextColor'
     font-size='14px'
     rounded
-    :style='hueRotate !== 0 ? `filter: hue-rotate(` + hueRotate + `deg)` : ``'
+    :style='props.hueRotate !== 0 ? `filter: hue-rotate(` + props.hueRotate + `deg)` : ``'
     )
     q-badge(
       v-if='indicatorDot'
@@ -13,57 +13,57 @@ q-item-section(avatar)
       :color='indicatorDot'
       floating
       )
-      q-tooltip(v-if='indicatorText') {{indicatorText}}
+      q-tooltip(v-if='props.indicatorText') {{props.indicatorText}}
     q-icon(
       v-if='!textMode'
       :name='`img:/_assets/icons/ultraviolet-` + icon + `.svg`'
       size='sm'
     )
-    span.text-uppercase(v-else) {{text}}
+    span.text-uppercase(v-else) {{props.text}}
 </template>
 
-<script>
-export default {
-  name: 'BlueprintIcon',
-  props: {
-    icon: {
-      type: String,
-      default: ''
-    },
-    dark: {
-      type: Boolean,
-      default: false
-    },
-    indicator: {
-      type: String,
-      default: null
-    },
-    indicatorText: {
-      type: String,
-      default: null
-    },
-    hueRotate: {
-      type: Number,
-      default: 0
-    },
-    text: {
-      type: String,
-      default: null
-    }
+<script setup>
+import { computed } from 'vue'
+import { useQuasar } from 'quasar'
+
+const props = defineProps({
+  icon: {
+    type: String,
+    default: ''
   },
-  data () {
-    return {
-      imgPath: null
-    }
+  dark: {
+    type: Boolean,
+    default: false
   },
-  computed: {
-    textMode () { return this.text !== null },
-    avatarBgColor () { return this.$q.dark.isActive || this.dark ? 'dark-4' : 'blue-1' },
-    avatarTextColor () { return this.$q.dark.isActive || this.dark ? 'white' : 'blue-7' },
-    indicatorDot () {
-      if (this.indicator === null) { return null }
-      return (this.indicator === '') ? 'pink' : this.indicator
-    }
+  indicator: {
+    type: String,
+    default: null
+  },
+  indicatorText: {
+    type: String,
+    default: null
+  },
+  hueRotate: {
+    type: Number,
+    default: 0
+  },
+  text: {
+    type: String,
+    default: null
   }
-}
+})
+
+// QUASAR
+
+const $q = useQuasar()
+
+// COMPUTED
+
+const textMode = computed(() => { return props.text !== null })
+const avatarBgColor = computed(() => { return $q.dark.isActive || props.dark ? 'dark-4' : 'blue-1' })
+const avatarTextColor = computed(() => { return $q.dark.isActive || props.dark ? 'white' : 'blue-7' })
+const indicatorDot = computed(() => {
+  if (props.indicator === null) { return null }
+  return (props.indicator === '') ? 'pink' : props.indicator
+})
 </script>

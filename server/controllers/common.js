@@ -238,51 +238,6 @@ router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
         js: ''
       }
     }
-
-    // -> From Template
-    if (req.query.from && tmplCreateRegex.test(req.query.from)) {
-      let tmplPageId = 0
-      let tmplVersionId = 0
-      if (req.query.from.indexOf(',')) {
-        const q = req.query.from.split(',')
-        tmplPageId = _.toSafeInteger(q[0])
-        tmplVersionId = _.toSafeInteger(q[1])
-      } else {
-        tmplPageId = _.toSafeInteger(req.query.from)
-      }
-
-      if (tmplVersionId > 0) {
-        // -> From Page Version
-        const pageVersion = await WIKI.db.pageHistory.getVersion({ pageId: tmplPageId, versionId: tmplVersionId })
-        if (!pageVersion) {
-          _.set(res.locals, 'pageMeta.title', 'Page Not Found')
-          return res.status(404).render('notfound', { action: 'template' })
-        }
-        if (!WIKI.auth.checkAccess(req.user, ['read:history'], { path: pageVersion.path, locale: pageVersion.locale })) {
-          _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-          return res.render('unauthorized', { action: 'sourceVersion' })
-        }
-        page.content = Buffer.from(pageVersion.content).toString('base64')
-        page.editorKey = pageVersion.editor
-        page.title = pageVersion.title
-        page.description = pageVersion.description
-      } else {
-        // -> From Page Live
-        const pageOriginal = await WIKI.db.pages.query().findById(tmplPageId)
-        if (!pageOriginal) {
-          _.set(res.locals, 'pageMeta.title', 'Page Not Found')
-          return res.status(404).render('notfound', { action: 'template' })
-        }
-        if (!WIKI.auth.checkAccess(req.user, ['read:source'], { path: pageOriginal.path, locale: pageOriginal.locale })) {
-          _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-          return res.render('unauthorized', { action: 'source' })
-        }
-        page.content = Buffer.from(pageOriginal.content).toString('base64')
-        page.editorKey = pageOriginal.editorKey
-        page.title = pageOriginal.title
-        page.description = pageOriginal.description
-      }
-    }
   }
 
   res.render('editor', { page, injectCode, effectivePermissions })

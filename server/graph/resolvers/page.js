@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
+const pageHelper = require('../../helpers/page')
 
 module.exports = {
   Query: {
@@ -139,7 +140,7 @@ module.exports = {
       return results
     },
     /**
-     * FETCH SINGLE PAGE
+     * FETCH SINGLE PAGE BY ID
      */
     async pageById (obj, args, context, info) {
       let page = await WIKI.db.pages.getPageFromDb(args.id)
@@ -158,6 +159,22 @@ module.exports = {
         }
       } else {
         throw new WIKI.Error.PageNotFound()
+      }
+    },
+    /**
+     * FETCH SINGLE PAGE BY PATH
+     */
+    async pageByPath (obj, args, context, info) {
+      const pageArgs = pageHelper.parsePath(args.path)
+      let page = await WIKI.db.pages.getPageFromDb(pageArgs)
+      if (page) {
+        return {
+          ...page,
+          locale: page.localeCode,
+          editor: page.editorKey
+        }
+      } else {
+        throw new Error('ERR_PAGE_NOT_FOUND')
       }
     },
     /**
@@ -366,7 +383,7 @@ module.exports = {
           user: context.req.user
         })
         return {
-          responseResult: graphHelper.generateSuccess('Page created successfully.'),
+          operation: graphHelper.generateSuccess('Page created successfully.'),
           page
         }
       } catch (err) {
@@ -383,7 +400,7 @@ module.exports = {
           user: context.req.user
         })
         return {
-          responseResult: graphHelper.generateSuccess('Page has been updated.'),
+          operation: graphHelper.generateSuccess('Page has been updated.'),
           page
         }
       } catch (err) {

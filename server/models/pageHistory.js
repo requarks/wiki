@@ -19,7 +19,7 @@ module.exports = class PageHistory extends Model {
         hash: {type: 'string'},
         title: {type: 'string'},
         description: {type: 'string'},
-        isPublished: {type: 'boolean'},
+        publishState: {type: 'string'},
         publishStartDate: {type: 'string'},
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
@@ -60,14 +60,6 @@ module.exports = class PageHistory extends Model {
           to: 'users.id'
         }
       },
-      editor: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: require('./editors'),
-        join: {
-          from: 'pageHistory.editorKey',
-          to: 'editors.key'
-        }
-      },
       locale: {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./locales'),
@@ -89,18 +81,18 @@ module.exports = class PageHistory extends Model {
   static async addVersion(opts) {
     await WIKI.db.pageHistory.query().insert({
       pageId: opts.id,
+      siteId: opts.siteId,
       authorId: opts.authorId,
       content: opts.content,
       contentType: opts.contentType,
       description: opts.description,
-      editorKey: opts.editorKey,
+      editor: opts.editor,
       hash: opts.hash,
-      isPrivate: (opts.isPrivate === true || opts.isPrivate === 1),
-      isPublished: (opts.isPublished === true || opts.isPublished === 1),
+      publishState: opts.publishState,
       localeCode: opts.localeCode,
       path: opts.path,
-      publishEndDate: opts.publishEndDate || '',
-      publishStartDate: opts.publishStartDate || '',
+      publishEndDate: opts.publishEndDate?.toISO(),
+      publishStartDate: opts.publishStartDate?.toISO(),
       title: opts.title,
       action: opts.action || 'updated',
       versionDate: opts.versionDate
@@ -116,7 +108,6 @@ module.exports = class PageHistory extends Model {
         'pageHistory.path',
         'pageHistory.title',
         'pageHistory.description',
-        'pageHistory.isPrivate',
         'pageHistory.isPublished',
         'pageHistory.publishStartDate',
         'pageHistory.publishEndDate',

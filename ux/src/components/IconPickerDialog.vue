@@ -1,7 +1,7 @@
 <template lang="pug">
 q-card.icon-picker(flat, style='width: 400px;')
   q-tabs.text-primary(
-    v-model='currentTab'
+    v-model='state.currentTab'
     no-caps
     inline-label
     )
@@ -17,12 +17,12 @@ q-card.icon-picker(flat, style='width: 400px;')
       )
   q-separator
   q-tab-panels(
-    v-model='currentTab'
+    v-model='state.currentTab'
     )
     q-tab-panel(name='icon')
       q-select(
         :options='iconPacks'
-        v-model='selPack'
+        v-model='state.selPack'
         emit-value
         map-options
         outlined
@@ -52,7 +52,7 @@ q-card.icon-picker(flat, style='width: 400px;')
                 size='sm'
               ) {{scope.opt.subset.toUpperCase()}}
       q-input.q-mt-md(
-        v-model='selIcon'
+        v-model='state.selIcon'
         outlined
         label='Icon Name'
         dense
@@ -96,7 +96,7 @@ q-card.icon-picker(flat, style='width: 400px;')
           q-img(
             transition='jump-down'
             :ratio='1'
-            :src='imgPath'
+            :src='state.imgPath'
           )
   q-separator
   q-card-actions
@@ -118,67 +118,80 @@ q-card.icon-picker(flat, style='width: 400px;')
     )
 </template>
 
-<script>
+<script setup>
 import { find } from 'lodash-es'
+import { computed, onMounted, reactive } from 'vue'
 
-export default {
-  props: {
-    value: {
-      type: String,
-      required: true
-    }
-  },
-  data () {
-    return {
-      currentTab: 'icon',
-      selPack: 'las',
-      selIcon: '',
-      imgPath: 'https://placeimg.com/64/64/nature',
-      iconPacks: [
-        { value: 'las', label: 'Line Awesome (solid)', name: 'Line Awesome', subset: 'solid', prefix: 'las la-', reference: 'https://icons8.com/line-awesome' },
-        { value: 'lab', label: 'Line Awesome (brands)', name: 'Line Awesome', subset: 'brands', prefix: 'lab la-', reference: 'https://icons8.com/line-awesome' },
-        { value: 'mdi', label: 'Material Design Icons', name: 'Material Design Icons', prefix: 'mdi-', reference: 'https://materialdesignicons.com' },
-        { value: 'fas', label: 'Font Awesome (solid)', name: 'Font Awesome', subset: 'solid', prefix: 'fas fa-', reference: 'https://fontawesome.com/icons' },
-        { value: 'far', label: 'Font Awesome (regular)', name: 'Font Awesome', subset: 'regular', prefix: 'far fa-', reference: 'https://fontawesome.com/icons' },
-        { value: 'fal', label: 'Font Awesome (light)', name: 'Font Awesome', subset: 'light', prefix: 'fal fa-', reference: 'https://fontawesome.com/icons' },
-        { value: 'fad', label: 'Font Awesome (duotone)', name: 'Font Awesome', subset: 'duotone', prefix: 'fad fa-', reference: 'https://fontawesome.com/icons' },
-        { value: 'fab', label: 'Font Awesome (brands)', name: 'Font Awesome', subset: 'brands', prefix: 'fab fa-', reference: 'https://fontawesome.com/icons' }
-      ]
-    }
-  },
-  computed: {
-    iconName () {
-      return find(this.iconPacks, ['value', this.selPack]).prefix + this.selIcon
-    },
-    iconPackRefWebsite () {
-      return find(this.iconPacks, ['value', this.selPack]).reference
-    }
-  },
-  mounted () {
-    if (this.value?.startsWith('img:')) {
-      this.currentTab = 'img'
-      this.imgPath = this.value.substring(4)
-    } else {
-      this.currentTab = 'icon'
-      for (const pack of this.iconPacks) {
-        if (this.value?.startsWith(pack.prefix)) {
-          this.selPack = pack.value
-          this.selIcon = this.value.substring(pack.prefix.length)
-          break
-        }
-      }
-    }
-  },
-  methods: {
-    apply () {
-      if (this.currentTab === 'img') {
-        this.$emit('input', `img:${this.imgPath}`)
-      } else {
-        this.$emit('input', this.iconName)
+// PROPS
+
+const props = defineProps({
+  value: {
+    type: String,
+    required: true
+  }
+})
+
+// EMITS
+
+const emit = defineEmits(['input'])
+
+// DATA
+
+const state = reactive({
+  currentTab: 'icon',
+  selPack: 'las',
+  selIcon: '',
+  imgPath: 'https://placeimg.com/64/64/nature'
+})
+
+const iconPacks = [
+  { value: 'las', label: 'Line Awesome (solid)', name: 'Line Awesome', subset: 'solid', prefix: 'las la-', reference: 'https://icons8.com/line-awesome' },
+  { value: 'lab', label: 'Line Awesome (brands)', name: 'Line Awesome', subset: 'brands', prefix: 'lab la-', reference: 'https://icons8.com/line-awesome' },
+  { value: 'mdi', label: 'Material Design Icons', name: 'Material Design Icons', prefix: 'mdi-', reference: 'https://materialdesignicons.com' },
+  { value: 'fas', label: 'Font Awesome (solid)', name: 'Font Awesome', subset: 'solid', prefix: 'fas fa-', reference: 'https://fontawesome.com/icons' },
+  { value: 'far', label: 'Font Awesome (regular)', name: 'Font Awesome', subset: 'regular', prefix: 'far fa-', reference: 'https://fontawesome.com/icons' },
+  { value: 'fal', label: 'Font Awesome (light)', name: 'Font Awesome', subset: 'light', prefix: 'fal fa-', reference: 'https://fontawesome.com/icons' },
+  { value: 'fad', label: 'Font Awesome (duotone)', name: 'Font Awesome', subset: 'duotone', prefix: 'fad fa-', reference: 'https://fontawesome.com/icons' },
+  { value: 'fab', label: 'Font Awesome (brands)', name: 'Font Awesome', subset: 'brands', prefix: 'fab fa-', reference: 'https://fontawesome.com/icons' }
+]
+
+// COMPUTED
+
+const iconName = computed(() => {
+  return find(iconPacks, ['value', state.selPack]).prefix + state.selIcon
+})
+
+const iconPackRefWebsite = computed(() => {
+  return find(iconPacks, ['value', state.selPack]).reference
+})
+
+// METHODS
+
+function apply () {
+  if (state.currentTab === 'img') {
+    emit('input', `img:${state.imgPath}`)
+  } else {
+    emit('input', state.iconName)
+  }
+}
+
+// MOUNTED
+
+onMounted(() => {
+  if (props.value?.startsWith('img:')) {
+    state.currentTab = 'img'
+    state.imgPath = props.value.substring(4)
+  } else {
+    state.currentTab = 'icon'
+    for (const pack of iconPacks) {
+      if (props.value?.startsWith(pack.prefix)) {
+        state.selPack = pack.value
+        state.selIcon = props.value.substring(pack.prefix.length)
+        break
       }
     }
   }
-}
+})
 </script>
 
 <style lang="scss">

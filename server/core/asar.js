@@ -9,7 +9,7 @@ const fs = require('fs')
  */
 
 const packages = {
-  'twemoji': path.join(WIKI.ROOTPATH, `assets/svg/twemoji.asar`)
+  'twemoji': path.join(WIKI.ROOTPATH, `assets-legacy/svg/twemoji.asar`)
 }
 
 module.exports = {

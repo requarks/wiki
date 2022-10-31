@@ -34,6 +34,10 @@ extend type Query {
     id: Int!
   ): Page
 
+  pageByPath(
+    path: String!
+  ): Page
+
   tags: [PageTag]!
 
   searchTags(
@@ -80,7 +84,7 @@ extend type Mutation {
   ): PageResponse
 
   updatePage(
-    id: Int!
+    id: UUID!
     content: String
     description: String
     editor: String
@@ -158,7 +162,7 @@ type PageMigrationResponse {
 }
 
 type Page {
-  id: Int
+  id: UUID
   path: String
   hash: String
   title: String

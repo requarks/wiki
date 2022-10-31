@@ -1,24 +1,29 @@
 import { defineStore } from 'pinia'
+import gql from 'graphql-tag'
+import { cloneDeep, last, transform } from 'lodash-es'
+
+import { useSiteStore } from './site'
 
 export const usePageStore = defineStore('page', {
   state: () => ({
+    isLoading: true,
     mode: 'view',
     editor: 'wysiwyg',
     editorMode: 'edit',
     id: 0,
     authorId: 0,
-    authorName: 'Unknown',
+    authorName: '',
     createdAt: '',
-    description: 'How to install Wiki.js on Ubuntu 18.04 / 20.04',
+    description: '',
     isPublished: true,
     showInTree: true,
     locale: 'en',
     path: '',
     publishEndDate: '',
     publishStartDate: '',
-    tags: ['cities', 'canada'],
-    title: 'Ubuntu',
-    icon: 'lab la-empire',
+    tags: [],
+    title: '',
+    icon: 'las la-file-alt',
     updatedAt: '',
     relations: [],
     scriptJsLoad: '',
@@ -35,20 +40,20 @@ export const usePageStore = defineStore('page', {
       max: 2
     },
     breadcrumbs: [
-      {
-        id: 1,
-        title: 'Installation',
-        icon: 'las la-file-alt',
-        locale: 'en',
-        path: 'installation'
-      },
-      {
-        id: 2,
-        title: 'Ubuntu',
-        icon: 'lab la-ubuntu',
-        locale: 'en',
-        path: 'installation/ubuntu'
-      }
+      // {
+      //   id: 1,
+      //   title: 'Installation',
+      //   icon: 'las la-file-alt',
+      //   locale: 'en',
+      //   path: 'installation'
+      // },
+      // {
+      //   id: 2,
+      //   title: 'Ubuntu',
+      //   icon: 'lab la-ubuntu',
+      //   locale: 'en',
+      //   path: 'installation/ubuntu'
+      // }
     ],
     effectivePermissions: {
       comments: {
@@ -75,10 +80,61 @@ export const usePageStore = defineStore('page', {
     },
     commentsCount: 0,
     content: '',
-    render: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+    render: ''
   }),
   getters: {},
   actions: {
+    /**
+     * PAGE - LOAD
+     */
+    async pageLoad ({ path, id }) {
+      const siteStore = useSiteStore()
+      try {
+        const resp = await APOLLO_CLIENT.query({
+          query: gql`
+            query loadPage (
+              $path: String!
+            ) {
+              pageByPath(
+                path: $path
+              ) {
+                id
+                title
+                description
+                path
+                locale
+                updatedAt
+                render
+              }
+            }
+          `,
+          variables: {
+            path
+          },
+          fetchPolicy: 'network-only'
+        })
+        const pageData = cloneDeep(resp?.data?.pageByPath ?? {})
+        if (!pageData?.id) {
+          throw new Error('ERR_PAGE_NOT_FOUND')
+        }
+        const pathPrefix = siteStore.useLocales ? `/${pageData.locale}` : ''
+        this.$patch({
+          ...pageData,
+          breadcrumbs: transform(pageData.path.split('/'), (result, value, key) => {
+            result.push({
+              id: key,
+              title: value,
+              icon: 'las la-file-alt',
+              locale: 'en',
+              path: (last(result)?.path || pathPrefix) + `/${value}`
+            })
+          }, [])
+        })
+      } catch (err) {
+        console.warn(err)
+        throw err
+      }
+    },
     /**
      * PAGE - CREATE
      */

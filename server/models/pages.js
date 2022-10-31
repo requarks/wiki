@@ -421,8 +421,8 @@ module.exports = class Page extends Model {
       content: opts.content,
       description: opts.description,
       publishState: opts.publishState,
-      publishEndDate: opts.publishEndDate || '',
-      publishStartDate: opts.publishStartDate || '',
+      publishEndDate: opts.publishEndDate?.toISO(),
+      publishStartDate: opts.publishStartDate?.toISO(),
       title: opts.title,
       extra: JSON.stringify({
         ...ogPage.extra,
@@ -439,18 +439,18 @@ module.exports = class Page extends Model {
     await WIKI.db.pages.renderPage(page)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Update Search Index
-    const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
-    await WIKI.data.searchEngine.updated(page)
+    // // -> Update Search Index
+    // const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
+    // page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
+    // await WIKI.data.searchEngine.updated(page)
 
     // -> Update on Storage
-    if (!opts.skipStorage) {
-      await WIKI.db.storage.pageEvent({
-        event: 'updated',
-        page
-      })
-    }
+    // if (!opts.skipStorage) {
+    //   await WIKI.db.storage.pageEvent({
+    //     event: 'updated',
+    //     page
+    //   })
+    // }
 
     // -> Perform move?
     if ((opts.locale && opts.locale !== page.localeCode) || (opts.path && opts.path !== page.path)) {

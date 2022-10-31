@@ -603,7 +603,8 @@ exports.up = async knex => {
       auth: {
         [authModuleId]: {
           password: await bcrypt.hash(process.env.ADMIN_PASS || '12345678', 12),
-          mustChangePwd: !process.env.ADMIN_PASS,
+          mustChangePwd: false, // TODO: Revert to true (below) once change password flow is implemented
+          // mustChangePwd: !process.env.ADMIN_PASS,
           restrictLogin: false,
           tfaRequired: false,
           tfaSecret: ''

@@ -1,0 +1,62 @@
+.page-contents {
+  color: #424242;
+  font-size: 14px;
+
+  // ---------------------------------
+  // HEADERS
+  // ---------------------------------
+
+  h1, h2, h3, h4, h5, h6 {
+    padding: 0;
+    margin: 0;
+    position: relative;
+    line-height: normal;
+
+    &:first-child {
+      padding-top: 0;
+    }
+
+    &:hover {
+      .toc-anchor {
+        display: block;
+      }
+    }
+  }
+
+  * + h1, * + h2, * + h3 {
+    border-top: 1px solid #DDD;
+  }
+
+  h1 {
+    font-size: 3em;
+    font-weight: 500;
+    padding: 12px 0;
+  }
+  h2 {
+    font-size: 2.4em;
+    padding: 12px 0;
+  }
+  h3 {
+    font-size: 2em;
+    padding: 12px 0;
+  }
+  h4 {
+    font-size: 1.75em;
+  }
+  h5 {
+    font-size: 1.5em;
+  }
+  h6 {
+    font-size: 1.25em;
+  }
+
+  .toc-anchor {
+    display: none;
+    position: absolute;
+    right: 1rem;
+    bottom: .5rem;
+    font-size: 1.25rem;
+    text-decoration: none;
+    color: #666;
+  }
+}

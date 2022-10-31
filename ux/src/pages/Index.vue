@@ -18,13 +18,13 @@ q-page.column
           :icon='brd.icon'
           :label='brd.title'
           :aria-label='brd.title'
-          :to='getFullPath(brd)'
+          :to='brd.path'
           )
     .col-auto.flex.items-center.justify-end
       template(v-if='!pageStore.isPublished')
         .text-caption.text-accent: strong Unpublished
         q-separator.q-mx-sm(vertical)
-      .text-caption.text-grey-6 Last modified on #[strong September 5th, 2020]
+      .text-caption.text-grey-6 Last modified on #[strong {{lastModified}}]
   .page-header.row
     //- PAGE ICON
     .col-auto.q-pl-md.flex.items-center
@@ -90,7 +90,7 @@ q-page.column
         style='height: 100%;'
         )
         .q-pa-md
-          div(v-html='pageStore.render')
+          .page-contents(v-html='pageStore.render')
           template(v-if='pageStore.relations && pageStore.relations.length > 0')
             q-separator.q-my-lg
             .row.align-center
@@ -288,14 +288,14 @@ q-page.column
     transition-hide='jump-right'
     class='floating-sidepanel'
     )
-    component(:is='state.sideDialogComponent')
+    component(:is='sideDialogs[state.sideDialogComponent]')
 
   q-dialog(
     v-model='state.showGlobalDialog'
     transition-show='jump-up'
     transition-hide='jump-down'
     )
-    component(:is='state.globalDialogComponent')
+    component(:is='globalDialogs[state.globalDialogComponent]')
 </template>
 
 <script setup>
@@ -303,17 +303,23 @@ import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { DateTime } from 'luxon'
 
 import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from '../stores/site'
+import { useSiteStore } from 'src/stores/site'
 
 // COMPONENTS
 
 import SocialSharingMenu from '../components/SocialSharingMenu.vue'
-import PageDataDialog from '../components/PageDataDialog.vue'
 import PageTags from '../components/PageTags.vue'
-import PagePropertiesDialog from '../components/PagePropertiesDialog.vue'
-import PageSaveDialog from '../components/PageSaveDialog.vue'
+
+const sideDialogs = {
+  PageDataDialog: defineAsyncComponent(() => import('../components/PageDataDialog.vue')),
+  PagePropertiesDialog: defineAsyncComponent(() => import('../components/PagePropertiesDialog.vue'))
+}
+const globalDialogs = {
+  PageSaveDialog: defineAsyncComponent(() => import('../components/PageSaveDialog.vue'))
+}
 
 // QUASAR
 
@@ -441,21 +447,35 @@ const editUrl = computed(() => {
   pagePath += !pageStore.path ? 'home' : pageStore.path
   return `/_edit/${pagePath}`
 })
+const lastModified = computed(() => {
+  return pageStore.updatedAt ? DateTime.fromISO(pageStore.updatedAt).toLocaleString(DateTime.DATETIME_MED) : 'N/A'
+})
 
 // WATCHERS
+
+watch(() => route.path, async (newValue) => {
+  if (newValue.startsWith('/_')) { return }
+  try {
+    await pageStore.pageLoad({ path: newValue })
+  } catch (err) {
+    if (err.message === 'ERR_PAGE_NOT_FOUND') {
+      $q.notify({
+        type: 'negative',
+        message: 'This page does not exist (yet)!'
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: err.message
+      })
+    }
+  }
+}, { immediate: true })
 
 watch(() => state.toc, refreshTocExpanded)
 watch(() => pageStore.tocDepth, refreshTocExpanded)
 
 // METHODS
-
-function getFullPath ({ locale, path }) {
-  if (siteStore.useLocales) {
-    return `/${locale}/${path}`
-  } else {
-    return `/${path}`
-  }
-}
 
 function togglePageProperties () {
   state.sideDialogComponent = 'PagePropertiesDialog'

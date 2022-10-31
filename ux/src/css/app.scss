@@ -222,7 +222,9 @@ body::-webkit-scrollbar-thumb {
 
 @import './animation.scss';
 
-@import 'v-network-graph/lib/style.css'
+@import 'v-network-graph/lib/style.css';
+
+@import './page-contents.scss';
 
 // @import '~codemirror/lib/codemirror.css';
 // @import '~codemirror/theme/elegant.css';

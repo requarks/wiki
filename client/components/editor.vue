@@ -141,8 +141,8 @@ export default {
       default: null
     },
     pageId: {
-      type: Number,
-      default: 0
+      type: String,
+      default: ''
     },
     checkoutDate: {
       type: String,
@@ -369,33 +369,32 @@ export default {
           // -> UPDATE EXISTING PAGE
           // --------------------------------------------
 
-          const conflictResp = await this.$apollo.query({
-            query: gql`
-              query ($id: Int!, $checkoutDate: Date!) {
-                pages {
-                  checkConflicts(id: $id, checkoutDate: $checkoutDate)
-                }
-              }
-            `,
-            fetchPolicy: 'network-only',
-            variables: {
-              id: this.pageId,
-              checkoutDate: this.checkoutDateActive
-            }
-          })
-          if (_.get(conflictResp, 'data.pages.checkConflicts', false)) {
-            this.$root.$emit('saveConflict')
-            throw new Error(this.$t('editor:conflict.warning'))
-          }
+          // const conflictResp = await this.$apollo.query({
+          //   query: gql`
+          //     query ($id: Int!, $checkoutDate: Date!) {
+          //       pages {
+          //         checkConflicts(id: $id, checkoutDate: $checkoutDate)
+          //       }
+          //     }
+          //   `,
+          //   fetchPolicy: 'network-only',
+          //   variables: {
+          //     id: this.pageId,
+          //     checkoutDate: this.checkoutDateActive
+          //   }
+          // })
+          // if (_.get(conflictResp, 'data.pages.checkConflicts', false)) {
+          //   this.$root.$emit('saveConflict')
+          //   throw new Error(this.$t('editor:conflict.warning'))
+          // }
 
           let resp = await this.$apollo.mutate({
             mutation: gql`
               mutation (
-                $id: Int!
+                $id: UUID!
                 $content: String
                 $description: String
                 $editor: String
-                $isPrivate: Boolean
                 $isPublished: Boolean
                 $locale: String
                 $path: String
@@ -406,32 +405,27 @@ export default {
                 $tags: [String]
                 $title: String
               ) {
-                pages {
-                  update(
-                    id: $id
-                    content: $content
-                    description: $description
-                    editor: $editor
-                    isPrivate: $isPrivate
-                    isPublished: $isPublished
-                    locale: $locale
-                    path: $path
-                    publishEndDate: $publishEndDate
-                    publishStartDate: $publishStartDate
-                    scriptCss: $scriptCss
-                    scriptJs: $scriptJs
-                    tags: $tags
-                    title: $title
-                  ) {
-                    operation {
-                      succeeded
-                      errorCode
-                      slug
-                      message
-                    }
-                    page {
-                      updatedAt
-                    }
+                updatePage(
+                  id: $id
+                  content: $content
+                  description: $description
+                  editor: $editor
+                  isPublished: $isPublished
+                  locale: $locale
+                  path: $path
+                  publishEndDate: $publishEndDate
+                  publishStartDate: $publishStartDate
+                  scriptCss: $scriptCss
+                  scriptJs: $scriptJs
+                  tags: $tags
+                  title: $title
+                ) {
+                  operation {
+                    succeeded
+                    message
+                  }
+                  page {
+                    updatedAt
                   }
                 }
               }
@@ -442,7 +436,6 @@ export default {
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
-              isPrivate: false,
               isPublished: this.$store.get('page/isPublished'),
               path: this.$store.get('page/path'),
               publishEndDate: this.$store.get('page/publishEndDate') || '',
@@ -453,7 +446,7 @@ export default {
               title: this.$store.get('page/title')
             }
           })
-          resp = _.get(resp, 'data.pages.update', {})
+          resp = _.get(resp, 'data.updatePage', {})
           if (_.get(resp, 'operation.succeeded')) {
             this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
             this.isConflict = false
@@ -547,30 +540,30 @@ export default {
         styl.appendChild(document.createTextNode(css))
       }
     }, 1000)
-  },
-  apollo: {
-    isConflict: {
-      query: gql`
-        query ($id: Int!, $checkoutDate: Date!) {
-          pages {
-            checkConflicts(id: $id, checkoutDate: $checkoutDate)
-          }
-        }
-      `,
-      fetchPolicy: 'network-only',
-      pollInterval: 5000,
-      variables () {
-        return {
-          id: this.pageId,
-          checkoutDate: this.checkoutDateActive
-        }
-      },
-      update: (data) => _.cloneDeep(data.pages.checkConflicts),
-      skip () {
-        return this.mode === 'create' || this.isSaving || !this.isDirty
-      }
-    }
   }
+  // apollo: {
+  //   isConflict: {
+  //     query: gql`
+  //       query ($id: Int!, $checkoutDate: Date!) {
+  //         pages {
+  //           checkConflicts(id: $id, checkoutDate: $checkoutDate)
+  //         }
+  //       }
+  //     `,
+  //     fetchPolicy: 'network-only',
+  //     pollInterval: 5000,
+  //     variables () {
+  //       return {
+  //         id: this.pageId,
+  //         checkoutDate: this.checkoutDateActive
+  //       }
+  //     },
+  //     update: (data) => _.cloneDeep(data.pages.checkConflicts),
+  //     skip () {
+  //       return this.mode === 'create' || this.isSaving || !this.isDirty
+  //     }
+  //   }
+  // }
 }
 </script>
 

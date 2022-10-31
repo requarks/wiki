@@ -77,6 +77,7 @@ module.exports = configure(function (/* ctx */) {
 
       extendViteConf (viteConf) {
         viteConf.build.assetsDir = '_assets'
+        // viteConf.resolve.alias.vue = '/workspace/ux/node_modules/vue/dist/vue.esm-bundler.js'
         // viteConf.build.rollupOptions = {
         //   ...viteConf.build.rollupOptions ?? {},
         //   external: [
