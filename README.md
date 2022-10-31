@@ -18,9 +18,10 @@
 - **[Official Website](https://next.js.wiki/)**
 - **[Documentation](https://next.js.wiki/docs/)**
 
-:red_square: :warning: :warning:  
-**THIS IS A VERY BUGGY, INCOMPLETE AND NON-SECURE DEVELOPMENT BRANCH! USE AT YOUR OWN RISK! THERE'S NO UPGRADE PATH FROM THIS BUILD AND NO SUPPORT IS PROVIDED.**  
-:warning: :warning: :red_square:
+:red_square: :warning: :warning: :red_square:   
+**THIS IS A VERY BUGGY, INCOMPLETE AND NON-SECURE DEVELOPMENT BRANCH!**  
+**USE AT YOUR OWN RISK! THERE'S NO UPGRADE PATH FROM THIS BUILD AND NO SUPPORT IS PROVIDED!**  
+:red_square: :warning: :warning: :red_square:
 
 The current stable release (2.x) is available at https://js.wiki
 
