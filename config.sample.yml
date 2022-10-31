@@ -2,7 +2,7 @@
 # Wiki.js - CONFIGURATION                                             #
 #######################################################################
 # Full documentation + examples:
-# https://docs.js.wiki/install
+# https://js.wiki/docs/install
 
 # ---------------------------------------------------------------------
 # Port the server should listen to
@@ -13,14 +13,14 @@ port: 3000
 # ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
-# PostgreSQL 9.6 or later required
+# PostgreSQL 11 or later required
 
 db:
   host: localhost
   port: 5432
-  user: wikijs
-  pass: wikijsrocks
-  db: wiki
+  user: postgres
+  pass: postgres
+  db: postgres
   schemas:
     wiki: wiki
     scheduler: scheduler

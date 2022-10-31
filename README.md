@@ -81,11 +81,12 @@ The current stable release (2.x) is available at https://js.wiki
 
 ### Usage
 
-1. Clone the project
-1. Open the project in VS Code
+1. Clone the project.
+1. Open the project in VS Code.
 1. Make sure you have **Dev Containers** extension installed. (On Windows, you need the **WSL** VS Code extension as well.)
 1. Reopen the project in container (from the popup in the lower-right corner of the screen when opening the project, or via the Command Palette (Ctrl+Shift+P) afterwards).
-1. Once in container mode, run the task "Create terminals" from the Command Palette:
+1. Once in container mode, make a copy of `config.sample.yml` and rename it to `config.yml`. There's no need to edit the file, the default values are ok.
+1. From the Command Palette, run the task "Create terminals":
     - Launch the Command Palette (Ctrl+Shift+P)
     - Type "Run Task" and press Enter
     - Select the task "Create terminals" and press Enter
