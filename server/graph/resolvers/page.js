@@ -166,7 +166,10 @@ module.exports = {
      */
     async pageByPath (obj, args, context, info) {
       const pageArgs = pageHelper.parsePath(args.path)
-      let page = await WIKI.db.pages.getPageFromDb(pageArgs)
+      let page = await WIKI.db.pages.getPageFromDb({
+        ...pageArgs,
+        siteId: args.siteId
+      })
       if (page) {
         return {
           ...page,

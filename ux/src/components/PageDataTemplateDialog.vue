@@ -1,7 +1,7 @@
 <template lang="pug">
 q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
   q-toolbar.bg-primary.text-white
-    .text-subtitle2 {{$t('editor.pageData.manageTemplates')}}
+    .text-subtitle2 {{t('editor.pageData.manageTemplates')}}
     q-space
     q-btn(
       icon='las la-times'
@@ -12,10 +12,10 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
   q-card-section.page-datatmpl-selector
     .flex.q-gutter-md
       q-select.col(
-        v-model='selectedTemplateId'
-        :options='templates'
+        v-model='state.selectedTemplateId'
+        :options='siteStore.pageDataTemplates'
         standout
-        :label='$t(`editor.pageData.template`)'
+        :label='t(`editor.pageData.template`)'
         dense
         dark
         option-value='id'
@@ -24,23 +24,23 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
       )
       q-btn(
         icon='las la-plus'
-        :label='$t(`common.actions.new`)'
+        :label='t(`common.actions.new`)'
         unelevated
         color='primary'
         no-caps
         @click='create'
       )
-  .row(v-if='tmpl')
+  .row(v-if='state.tmpl')
     .col-auto.page-datatmpl-sd
       .q-pa-md
         q-btn.acrylic-btn.full-width(
-          :label='$t(`common.actions.howItWorks`)'
+          :label='t(`common.actions.howItWorks`)'
           icon='las la-question-circle'
           flat
           color='pink'
           no-caps
         )
-      q-item-label(header, style='margin-top: 2px;') {{$t('editor.pageData.templateFullRowTypes')}}
+      q-item-label(header, style='margin-top: 2px;') {{t('editor.pageData.templateFullRowTypes')}}
       .q-px-md
         draggable(
           class='q-list rounded-borders'
@@ -49,8 +49,8 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
           :clone='cloneFieldType'
           :sort='false'
           :animation='150'
-          @start='dragStarted = true'
-          @end='dragStarted = false'
+          @start='state.dragStarted = true'
+          @end='state.dragStarted = false'
           item-key='id'
           )
           template(#item='{element}')
@@ -59,7 +59,7 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
                 q-icon(:name='element.icon', color='primary')
               q-item-section
                 q-item-label {{element.label}}
-      q-item-label(header) {{$t('editor.pageData.templateKeyValueTypes')}}
+      q-item-label(header) {{t('editor.pageData.templateKeyValueTypes')}}
       .q-px-md.q-pb-md
         draggable(
           class='q-list rounded-borders'
@@ -68,8 +68,8 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
           :clone='cloneFieldType'
           :sort='false'
           :animation='150'
-          @start='dragStarted = true'
-          @end='dragStarted = false'
+          @start='state.dragStarted = true'
+          @end='state.dragStarted = false'
           item-key='id'
           )
           template(#item='{element}')
@@ -81,21 +81,21 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
     .col.page-datatmpl-content
       q-scroll-area(
         ref='scrollArea'
-        :thumb-style='thumbStyle'
-        :bar-style='barStyle'
+        :thumb-style='siteStore.thumbStyle'
+        :bar-style='siteStore.barStyle'
         style='height: 100%;'
         )
           .col.page-datatmpl-meta.q-px-md.q-py-md.flex.q-gutter-md
             q-input.col(
               ref='tmplTitleIpt'
-              :label='$t(`editor.pageData.templateTitle`)'
+              :label='t(`editor.pageData.templateTitle`)'
               outlined
               dense
-              v-model='tmpl.label'
+              v-model='state.tmpl.label'
             )
             q-btn.acrylic-btn(
               icon='las la-check'
-              :label='$t(`common.actions.commit`)'
+              :label='t(`common.actions.commit`)'
               no-caps
               flat
               color='positive'
@@ -103,22 +103,22 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
             )
             q-btn.acrylic-btn(
               icon='las la-trash'
-              :aria-label='$t(`common.actions.delete`)'
+              :aria-label='t(`common.actions.delete`)'
               flat
               color='negative'
               @click='remove'
             )
-          q-item-label(header) {{$t('editor.pageData.templateStructure')}}
+          q-item-label(header) {{t('editor.pageData.templateStructure')}}
           .q-px-md.q-pb-md
-            div(:class='(dragStarted || tmpl.data.length < 1 ? `page-datatmpl-box` : ``)')
-              .text-caption.text-primary.q-pa-md(v-if='tmpl.data.length < 1 && !dragStarted'): em {{$t('editor.pageData.dragDropHint')}}
+            div(:class='(state.dragStarted || state.tmpl.data.length < 1 ? `page-datatmpl-box` : ``)')
+              .text-caption.text-primary.q-pa-md(v-if='state.tmpl.data.length < 1 && !state.dragStarted'): em {{t('editor.pageData.dragDropHint')}}
               draggable(
                 class='q-list rounded-borders'
-                :list='tmpl.data'
+                :list='state.tmpl.data'
                 group='shared'
                 :animation='150'
                 handle='.handle'
-                @end='dragStarted = false'
+                @end='state.dragStarted = false'
                 item-key='id'
                 )
                 template(#item='{element}')
@@ -129,14 +129,14 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
                       q-icon(:name='element.icon', color='primary')
                     q-item-section
                       q-input(
-                        :label='$t(`editor.pageData.label`)'
+                        :label='t(`editor.pageData.label`)'
                         v-model='element.label'
                         outlined
                         dense
                       )
                     q-item-section(v-if='element.type !== `header`')
                       q-input(
-                        :label='$t(`editor.pageData.uniqueKey`)'
+                        :label='t(`editor.pageData.uniqueKey`)'
                         v-model='element.key'
                         outlined
                         dense
@@ -144,7 +144,7 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
                     q-item-section(side)
                       q-btn.acrylic-btn(
                         color='negative'
-                        :aria-label='$t(`common.actions.delete`)'
+                        :aria-label='t(`common.actions.delete`)'
                         padding='xs'
                         icon='las la-times'
                         flat
@@ -152,171 +152,194 @@ q-card.page-datatmpl-dialog(style='width: 1100px; max-width: 1100px;')
                       )
           .page-datatmpl-scrollend(ref='scrollAreaEnd')
 
-  .q-pa-md.text-center(v-else-if='templates.length > 0')
-    em.text-grey-6 {{$t('editor.pageData.selectTemplateAbove')}}
+  .q-pa-md.text-center(v-else-if='siteStore.pageDataTemplates.length > 0')
+    em.text-grey-6 {{t('editor.pageData.selectTemplateAbove')}}
   .q-pa-md.text-center(v-else)
-    em.text-grey-6 {{$t('editor.pageData.noTemplate')}}
+    em.text-grey-6 {{t('editor.pageData.noTemplate')}}
 </template>
 
-<script>
-import { get, sync } from 'vuex-pathify'
+<script setup>
 import { v4 as uuid } from 'uuid'
 import { cloneDeep, sortBy } from 'lodash-es'
 import draggable from 'vuedraggable'
+import { useI18n } from 'vue-i18n'
+import { useQuasar } from 'quasar'
+import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 
-export default {
-  props: {
-    editId: {
-      type: String,
-      default: null
-    }
+import { usePageStore } from 'src/stores/page'
+import { useSiteStore } from 'src/stores/site'
+
+// PROPS
+
+const props = defineProps({
+  editId: {
+    type: String,
+    default: null
+  }
+})
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const pageStore = usePageStore()
+const siteStore = useSiteStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  selectedTemplateId: null,
+  dragStarted: false,
+  tmpl: null
+})
+
+const inventoryMisc = [
+  {
+    key: 'header',
+    label: t('editor.pageData.fieldTypeHeader'),
+    icon: 'las la-heading'
   },
-  components: {
-    draggable
+  {
+    key: 'image',
+    label: t('editor.pageData.fieldTypeImage'),
+    icon: 'las la-image'
+  }
+]
+
+const inventoryKV = [
+  {
+    key: 'text',
+    label: t('editor.pageData.fieldTypeText'),
+    icon: 'las la-font'
   },
-  data () {
-    return {
-      selectedTemplateId: null,
-      dragStarted: false,
-      tmpl: null
-    }
+  {
+    key: 'number',
+    label: t('editor.pageData.fieldTypeNumber'),
+    icon: 'las la-infinity'
   },
-  computed: {
-    templates: sync('site/pageDataTemplates', false),
-    thumbStyle: get('site/thumbStyle', false),
-    barStyle: get('site/barStyle', false),
-    inventoryMisc () {
-      return [
-        {
-          key: 'header',
-          label: this.$t('editor.pageData.fieldTypeHeader'),
-          icon: 'las la-heading'
-        },
-        {
-          key: 'image',
-          label: this.$t('editor.pageData.fieldTypeImage'),
-          icon: 'las la-image'
-        }
-      ]
-    },
-    inventoryKV () {
-      return [
-        {
-          key: 'text',
-          label: this.$t('editor.pageData.fieldTypeText'),
-          icon: 'las la-font'
-        },
-        {
-          key: 'number',
-          label: this.$t('editor.pageData.fieldTypeNumber'),
-          icon: 'las la-infinity'
-        },
-        {
-          key: 'boolean',
-          label: this.$t('editor.pageData.fieldTypeBoolean'),
-          icon: 'las la-check-square'
-        },
-        {
-          key: 'link',
-          label: this.$t('editor.pageData.fieldTypeLink'),
-          icon: 'las la-link'
-        }
-      ]
-    }
+  {
+    key: 'boolean',
+    label: t('editor.pageData.fieldTypeBoolean'),
+    icon: 'las la-check-square'
   },
-  watch: {
-    dragStarted (newValue) {
-      if (newValue) {
-        this.$nextTick(() => {
-          this.$refs.scrollAreaEnd.scrollIntoView({
-            behavior: 'smooth'
-          })
-        })
-      }
-    },
-    selectedTemplateId (newValue) {
-      this.tmpl = cloneDeep(this.templates.find(t => t.id === this.selectedTemplateId))
-    }
-  },
-  mounted () {
-    if (this.templates.length > 0) {
-      this.tmpl = this.templates[0]
-      this.selectedTemplateId = this.tmpl.id
-    } else {
-      this.create()
-    }
-  },
-  methods: {
-    cloneFieldType (tp) {
-      return {
-        id: uuid(),
-        type: tp.key,
-        label: '',
-        ...(tp.key !== 'header' ? { key: '' } : {}),
-        icon: tp.icon
-      }
-    },
-    removeItem (item) {
-      this.tmpl.data = this.tmpl.data.filter(i => i.id !== item.id)
-    },
-    create () {
-      this.tmpl = {
-        id: uuid(),
-        label: this.$t('editor.pageData.templateUntitled'),
-        data: []
-      }
-      this.$nextTick(() => {
-        this.$refs.tmplTitleIpt.focus()
-        this.$nextTick(() => {
-          document.execCommand('selectall')
-        })
+  {
+    key: 'link',
+    label: t('editor.pageData.fieldTypeLink'),
+    icon: 'las la-link'
+  }
+]
+
+// REFS
+
+const scrollAreaEnd = ref(null)
+const tmplTitleIpt = ref(null)
+
+// WATCHERS
+
+watch(() => state.dragStarted, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      scrollAreaEnd.value.scrollIntoView({
+        behavior: 'smooth'
       })
-    },
-    commit () {
-      try {
-        if (this.tmpl.label.length < 1) {
-          throw new Error(this.$t('editor.pageData.invalidTemplateName'))
-        } else if (this.tmpl.data.length < 1) {
-          throw new Error(this.$t('editor.pageData.emptyTemplateStructure'))
-        } else if (this.tmpl.data.some(f => f.label.length < 1)) {
-          throw new Error(this.$t('editor.pageData.invalidTemplateLabels'))
-        } else if (this.tmpl.data.some(f => f.type !== 'header' && f.key.length < 1)) {
-          throw new Error(this.$t('editor.pageData.invalidTemplateKeys'))
-        }
+    })
+  }
+})
 
-        const keys = this.tmpl.data.filter(f => f.type !== 'header').map(f => f.key)
-        if ((new Set(keys)).size !== keys.length) {
-          throw new Error(this.$t('editor.pageData.duplicateTemplateKeys'))
-        }
+watch(() => state.selectedTemplateId, (newValue) => {
+  state.tmpl = cloneDeep(siteStore.pageDataTemplates.find(t => t.id === state.selectedTemplateId))
+})
 
-        if (this.templates.some(t => t.id === this.tmpl.id)) {
-          this.templates = sortBy([...this.templates.filter(t => t.id !== this.tmpl.id), cloneDeep(this.tmpl)], 'label')
-        } else {
-          this.templates = sortBy([...this.templates, cloneDeep(this.tmpl)], 'label')
-        }
-        this.selectedTemplateId = this.tmpl.id
-      } catch (err) {
-        this.$q.notify({
-          type: 'negative',
-          message: err.message
-        })
-      }
-    },
-    remove () {
-      this.$q.dialog({
-        title: this.$t('editor.pageData.templateDeleteConfirmTitle'),
-        message: this.$t('editor.pageData.templateDeleteConfirmText'),
-        cancel: true,
-        persistent: true,
-        color: 'negative'
-      }).onOk(() => {
-        this.templates = this.templates.filter(t => t.id !== this.selectedTemplateId)
-        this.selectedTemplateId = null
-        this.tmpl = null
-      })
-    }
+// METHODS
+
+function cloneFieldType (tp) {
+  return {
+    id: uuid(),
+    type: tp.key,
+    label: '',
+    ...(tp.key !== 'header' ? { key: '' } : {}),
+    icon: tp.icon
   }
 }
+
+function removeItem (item) {
+  state.tmpl.data = state.tmpl.data.filter(i => i.id !== item.id)
+}
+
+function create () {
+  state.tmpl = {
+    id: uuid(),
+    label: t('editor.pageData.templateUntitled'),
+    data: []
+  }
+  nextTick(() => {
+    tmplTitleIpt.value.focus()
+    nextTick(() => {
+      document.execCommand('selectall')
+    })
+  })
+}
+
+function commit () {
+  try {
+    if (state.tmpl.label.length < 1) {
+      throw new Error(t('editor.pageData.invalidTemplateName'))
+    } else if (state.tmpl.data.length < 1) {
+      throw new Error(t('editor.pageData.emptyTemplateStructure'))
+    } else if (state.tmpl.data.some(f => f.label.length < 1)) {
+      throw new Error(t('editor.pageData.invalidTemplateLabels'))
+    } else if (state.tmpl.data.some(f => f.type !== 'header' && f.key.length < 1)) {
+      throw new Error(t('editor.pageData.invalidTemplateKeys'))
+    }
+
+    const keys = state.tmpl.data.filter(f => f.type !== 'header').map(f => f.key)
+    if ((new Set(keys)).size !== keys.length) {
+      throw new Error(t('editor.pageData.duplicateTemplateKeys'))
+    }
+
+    if (siteStore.pageDataTemplates.some(t => t.id === state.tmpl.id)) {
+      siteStore.pageDataTemplates = sortBy([...siteStore.pageDataTemplates.filter(t => t.id !== state.tmpl.id), cloneDeep(state.tmpl)], 'label')
+    } else {
+      siteStore.pageDataTemplates = sortBy([...siteStore.pageDataTemplates, cloneDeep(state.tmpl)], 'label')
+    }
+    state.selectedTemplateId = state.tmpl.id
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+}
+function remove () {
+  $q.dialog({
+    title: t('editor.pageData.templateDeleteConfirmTitle'),
+    message: t('editor.pageData.templateDeleteConfirmText'),
+    cancel: true,
+    persistent: true,
+    color: 'negative'
+  }).onOk(() => {
+    siteStore.pageDataTemplates = siteStore.pageDataTemplates.filter(t => t.id !== state.selectedTemplateId)
+    state.selectedTemplateId = null
+    state.tmpl = null
+  })
+}
+
+// MOUNTED
+
+onMounted(() => {
+  if (siteStore.pageDataTemplates.length > 0) {
+    state.tmpl = siteStore.pageDataTemplates[0]
+    state.selectedTemplateId = state.tmpl.id
+  } else {
+    create()
+  }
+})
 </script>
 
 <style lang="scss">

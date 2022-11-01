@@ -1010,6 +1010,7 @@ module.exports = class Page extends Model {
         .where(queryModeID ? {
           'pages.id': opts
         } : {
+          'pages.siteId': opts.siteId,
           'pages.path': opts.path,
           'pages.localeCode': opts.locale
         })

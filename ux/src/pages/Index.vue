@@ -141,9 +141,11 @@ q-page.column
           q-icon.q-mr-sm(name='las la-stream', color='grey')
           .text-caption.text-grey-7 Contents
         .q-px-md.q-pb-sm
-          q-tree(
-            :nodes='state.toc'
+          q-tree.page-toc(
+            :nodes='pageStore.toc'
+            icon='las la-caret-right'
             node-key='key'
+            dense
             v-model:expanded='state.tocExpanded'
             v-model:selected='state.tocSelected'
           )
@@ -287,6 +289,7 @@ q-page.column
     transition-show='jump-left'
     transition-hide='jump-right'
     class='floating-sidepanel'
+    no-shake
     )
     component(:is='sideDialogs[state.sideDialogComponent]')
 
@@ -354,54 +357,6 @@ const state = reactive({
   globalDialogComponent: null,
   showTagsEditBtn: false,
   tagEditMode: false,
-  toc: [
-    {
-      key: 'h1-0',
-      label: 'Introduction'
-    },
-    {
-      key: 'h1-1',
-      label: 'Planets',
-      children: [
-        {
-          key: 'h2-0',
-          label: 'Earth',
-          children: [
-            {
-              key: 'h3-0',
-              label: 'Countries',
-              children: [
-                {
-                  key: 'h4-0',
-                  label: 'Cities',
-                  children: [
-                    {
-                      key: 'h5-0',
-                      label: 'Montreal',
-                      children: [
-                        {
-                          key: 'h6-0',
-                          label: 'Districts'
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          key: 'h2-1',
-          label: 'Mars'
-        },
-        {
-          key: 'h2-2',
-          label: 'Jupiter'
-        }
-      ]
-    }
-  ],
   tocExpanded: ['h1-0', 'h1-1'],
   tocSelected: [],
   currentRating: 3
@@ -472,8 +427,8 @@ watch(() => route.path, async (newValue) => {
   }
 }, { immediate: true })
 
-watch(() => state.toc, refreshTocExpanded)
-watch(() => pageStore.tocDepth, refreshTocExpanded)
+watch(() => pageStore.toc, () => { refreshTocExpanded() }, { immediate: true })
+watch(() => pageStore.tocDepth, () => { refreshTocExpanded() })
 
 // METHODS
 
@@ -492,20 +447,22 @@ function savePage () {
   state.showGlobalDialog = true
 }
 
-function refreshTocExpanded (baseToc) {
+function refreshTocExpanded (baseToc, lvl) {
+  console.info(pageStore.tocDepth.min, lvl, pageStore.tocDepth.max)
   const toExpand = []
   let isRootNode = false
   if (!baseToc) {
-    baseToc = state.toc
+    baseToc = pageStore.toc
     isRootNode = true
+    lvl = 1
   }
   if (baseToc.length > 0) {
     for (const node of baseToc) {
-      if (node.key >= `h${pageStore.tocDepth.min}` && node.key <= `h${pageStore.tocDepth.max}`) {
+      if (lvl >= pageStore.tocDepth.min && lvl < pageStore.tocDepth.max) {
         toExpand.push(node.key)
       }
-      if (node.children?.length && node.key < `h${pageStore.tocDepth.max}`) {
-        toExpand.push(...refreshTocExpanded(node.children))
+      if (node.children?.length && lvl < pageStore.tocDepth.max - 1) {
+        toExpand.push(...refreshTocExpanded(node.children, lvl + 1))
       }
     }
   }
@@ -515,12 +472,6 @@ function refreshTocExpanded (baseToc) {
     return toExpand
   }
 }
-
-// MOUNTED
-
-onMounted(() => {
-  refreshTocExpanded()
-})
 </script>
 
 <style lang="scss">
@@ -689,6 +640,12 @@ onMounted(() => {
   }
   @at-root .body--dark & {
     background-color: $dark-3;
+  }
+}
+
+.page-toc {
+  &.q-tree--dense .q-tree__node {
+    padding-bottom: 5px;
   }
 }
 </style>

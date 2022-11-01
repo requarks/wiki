@@ -35,6 +35,7 @@ extend type Query {
   ): Page
 
   pageByPath(
+    siteId: UUID!
     path: String!
   ): Page
 
@@ -173,7 +174,7 @@ type Page {
   tags: [PageTag]
   content: String
   render: String
-  toc: String
+  toc: [JSON]
   contentType: String
   createdAt: Date
   updatedAt: Date

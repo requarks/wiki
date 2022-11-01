@@ -270,8 +270,6 @@ q-card.page-properties-dialog
 </template>
 
 <script setup>
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
@@ -279,6 +277,9 @@ import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 import PageRelationDialog from './PageRelationDialog.vue'
 import PageScriptsDialog from './PageScriptsDialog.vue'
 import PageTags from './PageTags.vue'
+
+import { usePageStore } from 'src/stores/page'
+import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
 

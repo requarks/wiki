@@ -80,7 +80,8 @@ export const usePageStore = defineStore('page', {
     },
     commentsCount: 0,
     content: '',
-    render: ''
+    render: '',
+    toc: []
   }),
   getters: {},
   actions: {
@@ -93,9 +94,11 @@ export const usePageStore = defineStore('page', {
         const resp = await APOLLO_CLIENT.query({
           query: gql`
             query loadPage (
+              $siteId: UUID!
               $path: String!
             ) {
               pageByPath(
+                siteId: $siteId
                 path: $path
               ) {
                 id
@@ -105,10 +108,12 @@ export const usePageStore = defineStore('page', {
                 locale
                 updatedAt
                 render
+                toc
               }
             }
           `,
           variables: {
+            siteId: siteStore.id,
             path
           },
           fetchPolicy: 'network-only'

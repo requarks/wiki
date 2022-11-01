@@ -62,8 +62,8 @@ module.exports = async ({ payload }) => {
       $('.toc-anchor', el).remove()
 
       _.get(toc, leafPath).push({
-        title: _.trim($(el).text()),
-        anchor: leafSlug,
+        label: _.trim($(el).text()),
+        key: leafSlug.substring(1),
         children: []
       })
     })

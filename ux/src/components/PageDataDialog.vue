@@ -1,7 +1,7 @@
 <template lang="pug">
 q-card.page-data-dialog(style='width: 750px;')
   q-toolbar.bg-primary.text-white.flex
-    .text-subtitle2 {{$t('editor.pageData.title')}}
+    .text-subtitle2 {{t('editor.pageData.title')}}
     q-space
     q-btn(
       icon='las la-times'
@@ -10,13 +10,13 @@ q-card.page-data-dialog(style='width: 750px;')
       v-close-popup
     )
   q-card-section.page-data-dialog-selector
-    //- .text-overline.text-white {{$t('editor.pageData.template')}}
+    //- .text-overline.text-white {{t('editor.pageData.template')}}
     .flex.q-gutter-sm
       q-select(
         dark
-        v-model='templateId'
-        :label='$t(`editor.pageData.template`)'
-        :aria-label='$t(`editor.pageData.template`)'
+        v-model='state.templateId'
+        :label='t(`editor.pageData.template`)'
+        :aria-label='t(`editor.pageData.template`)'
         :options='templates'
         option-value='id'
         map-options
@@ -28,14 +28,14 @@ q-card.page-data-dialog(style='width: 750px;')
       q-btn.acrylic-btn(
         dark
         icon='las la-pen'
-        :label='$t(`common.actions.manage`)'
+        :label='t(`common.actions.manage`)'
         unelevated
         no-caps
         color='deep-orange-9'
         @click='editTemplates'
       )
   q-tabs.alt-card(
-    v-model='mode'
+    v-model='state.mode'
     inline-label
     no-caps
     )
@@ -48,11 +48,11 @@ q-card.page-data-dialog(style='width: 750px;')
       label='YAML'
       )
   q-scroll-area(
-    :thumb-style='thumbStyle'
-    :bar-style='barStyle'
+    :thumb-style='siteStore.thumbStyle'
+    :bar-style='siteStore.barStyle'
     style='height: calc(100% - 50px - 75px - 48px);'
     )
-    q-card-section(v-if='mode === `visual`')
+    q-card-section(v-if='state.mode === `visual`')
       .q-gutter-sm
         q-input(
           label='Attribute Text'
@@ -76,60 +76,69 @@ q-card.page-data-dialog(style='width: 750px;')
             dense
             size='lg'
             )
-    q-no-ssr(v-else, :placeholder='$t(`common.loading`)')
+    q-no-ssr(v-else, :placeholder='t(`common.loading`)')
       codemirror.admin-theme-cm(
         ref='cmData'
-        v-model='content'
+        v-model='state.content'
         :options='{ mode: `text/yaml` }'
       )
 
   q-dialog(
-    v-model='showDataTemplateDialog'
+    v-model='state.showDataTemplateDialog'
     )
     page-data-template-dialog
 </template>
 
-<script>
-import { get } from 'vuex-pathify'
+<script setup>
+import { useI18n } from 'vue-i18n'
+import { useQuasar } from 'quasar'
+import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import PageDataTemplateDialog from './PageDataTemplateDialog.vue'
 
-export default {
-  components: {
-    PageDataTemplateDialog
+import { usePageStore } from 'src/stores/page'
+import { useSiteStore } from 'src/stores/site'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const pageStore = usePageStore()
+const siteStore = useSiteStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  showDataTemplateDialog: false,
+  templateId: '',
+  content: '',
+  mode: 'visual'
+})
+
+const templates = [
+  {
+    id: '',
+    label: 'None',
+    data: []
   },
-  data () {
-    return {
-      showDataTemplateDialog: false,
-      templateId: '',
-      content: '',
-      mode: 'visual'
-    }
-  },
-  computed: {
-    thumbStyle: get('site/thumbStyle', false),
-    barStyle: get('site/barStyle', false),
-    templates () {
-      return [
-        {
-          id: '',
-          label: 'None',
-          data: []
-        },
-        ...this.$store.get('site/pageDataTemplates'),
-        {
-          id: 'basic',
-          label: 'Basic',
-          data: []
-        }
-      ]
-    }
-  },
-  methods: {
-    editTemplates () {
-      this.showDataTemplateDialog = !this.showDataTemplateDialog
-    }
+  ...siteStore.pageDataTemplates,
+  {
+    id: 'basic',
+    label: 'Basic',
+    data: []
   }
+]
+
+// METHODS
+
+function editTemplates () {
+  state.showDataTemplateDialog = !state.showDataTemplateDialog
 }
 </script>
 

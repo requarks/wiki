@@ -153,6 +153,11 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
  */
 router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+  const site = await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
+
+  if (!site) {
+    throw new Error('INVALID_SITE')
+  }
 
   if (pageArgs.path === '') {
     return res.redirect(`/_edit/home`)
@@ -175,10 +180,10 @@ router.get(['/_edit', '/_edit/*'], async (req, res, next) => {
 
   // -> Get page data from DB
   let page = await WIKI.db.pages.getPageFromDb({
+    siteId: site.id,
     path: pageArgs.path,
     locale: pageArgs.locale,
-    userId: req.user.id,
-    isPrivate: false
+    userId: req.user.id
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
@@ -415,6 +420,11 @@ router.get('/*', async (req, res, next) => {
   const stripExt = _.some(WIKI.data.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
   const pageArgs = pageHelper.parsePath(req.path, { stripExt })
   const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
+  const site = await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
+
+  if (!site) {
+    throw new Error('INVALID_SITE')
+  }
 
   if (isPage) {
     // if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
@@ -426,6 +436,7 @@ router.get('/*', async (req, res, next) => {
     try {
       // -> Get Page from cache
       const page = await WIKI.db.pages.getPage({
+        siteId: site.id,
         path: pageArgs.path,
         locale: pageArgs.locale,
         userId: req.user.id
@@ -470,67 +481,8 @@ router.get('/*', async (req, res, next) => {
           })
         }
 
-        // -> Build sidebar navigation
-        let sdi = 1
-        const sidebar = (await WIKI.db.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({
-          i: `sdi-${sdi++}`,
-          k: n.kind,
-          l: n.label,
-          c: n.icon,
-          y: n.targetType,
-          t: n.target
-        }))
-
-        // -> Build theme code injection
-        const injectCode = {
-          css: '', // WIKI.config.theming.injectCSS,
-          head: '', // WIKI.config.theming.injectHead,
-          body: '' // WIKI.config.theming.injectBody
-        }
-
-        // Handle missing extra field
-        page.extra = page.extra || { css: '', js: '' }
-
-        if (!_.isEmpty(page.extra.css)) {
-          injectCode.css = `${injectCode.css}\n${page.extra.css}`
-        }
-
-        if (!_.isEmpty(page.extra.js)) {
-          injectCode.body = `${injectCode.body}\n${page.extra.js}`
-        }
-
-        // -> Convert page TOC
-        if (!_.isString(page.toc)) {
-          page.toc = JSON.stringify(page.toc)
-        }
-
-        // -> Inject comments variables
-        const commentTmpl = {
-          codeTemplate: '', // WIKI.data.commentProvider.codeTemplate,
-          head: '', // WIKI.data.commentProvider.head,
-          body: '', // WIKI.data.commentProvider.body,
-          main: '' // WIKI.data.commentProvider.main
-        }
-        if (false && WIKI.config.features.featurePageComments && WIKI.data.commentProvider.codeTemplate) {
-          [
-            { key: 'pageUrl', value: `${WIKI.config.host}/i/${page.id}` },
-            { key: 'pageId', value: page.id }
-          ].forEach((cfg) => {
-            commentTmpl.head = _.replace(commentTmpl.head, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-            commentTmpl.body = _.replace(commentTmpl.body, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-            commentTmpl.main = _.replace(commentTmpl.main, new RegExp(`{{${cfg.key}}}`, 'g'), cfg.value)
-          })
-        }
-
         // -> Render view
         res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
-        // res.render('page', {
-        //   page,
-        //   sidebar,
-        //   injectCode,
-        //   comments: commentTmpl,
-        //   effectivePermissions
-        // })
       } else if (pageArgs.path === 'home') {
         res.redirect('/_welcome')
       } else {
