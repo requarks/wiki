@@ -21,7 +21,7 @@ module.exports = {
         callbackURL: conf.callbackURL,
         passReqToCallback: true
       }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
-        const profile = Object.assign({}, idProfile, uiProfile);
+        const profile = Object.assign({}, idProfile, uiProfile)
 
         try {
           const user = await WIKI.models.users.processProfile({
