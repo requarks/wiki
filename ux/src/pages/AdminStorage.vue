@@ -600,7 +600,6 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'
 import { useSiteStore } from 'src/stores/site'
-import { useDataStore } from 'src/stores/data'
 
 import GithubSetupInstallDialog from '../components/GithubSetupInstallDialog.vue'
 
@@ -612,7 +611,6 @@ const $q = useQuasar()
 
 const adminStore = useAdminStore()
 const siteStore = useSiteStore()
-const dataStore = useDataStore()
 
 // ROUTER
 

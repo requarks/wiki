@@ -76,9 +76,7 @@ q-layout(view='hHh Lpr lff')
         round
         size='md'
       )
-  q-footer
-    q-bar.justify-center(dense)
-      span(style='font-size: 11px;') &copy; Cyberdyne Systems Corp. 2020 | Powered by #[strong Wiki.js]
+  footer-nav
 </template>
 
 <script setup>
@@ -91,8 +89,8 @@ import { useSiteStore } from '../stores/site'
 
 // COMPONENTS
 
-import AccountMenu from '../components/AccountMenu.vue'
 import HeaderNav from '../components/HeaderNav.vue'
+import FooterNav from 'src/components/FooterNav.vue'
 
 // QUASAR
 
@@ -121,11 +119,7 @@ useMeta({
 
 const leftDrawerOpen = ref(true)
 const search = ref('')
-const user = reactive({
-  name: 'John Doe',
-  email: 'test@example.com',
-  picture: null
-})
+
 const thumbStyle = {
   right: '2px',
   borderRadius: '5px',

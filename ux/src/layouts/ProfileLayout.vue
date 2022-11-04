@@ -39,9 +39,7 @@ q-layout(view='hHh Lpr lff')
             q-item-section
               q-item-label.text-negative {{ t('common.header.logout') }}
       router-view
-  q-footer
-    q-bar.justify-center(dense)
-      span(style='font-size: 11px;') &copy; Cyberdyne Systems Corp. 2020 | Powered by #[strong Wiki.js]
+  footer-nav
 </template>
 
 <script setup>
@@ -52,7 +50,8 @@ import { onMounted, reactive, watch } from 'vue'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 
-import HeaderNav from '../components/HeaderNav.vue'
+import HeaderNav from 'src/components/HeaderNav.vue'
+import FooterNav from 'src/components/FooterNav.vue'
 
 // QUASAR
 

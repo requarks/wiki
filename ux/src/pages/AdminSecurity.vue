@@ -334,7 +334,6 @@ import { computed, onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from 'src/stores/admin'
 import { useSiteStore } from 'src/stores/site'
-import { useDataStore } from 'src/stores/data'
 
 // QUASAR
 
@@ -344,7 +343,6 @@ const $q = useQuasar()
 
 const adminStore = useAdminStore()
 const siteStore = useSiteStore()
-const dataStore = useDataStore()
 
 // I18N
 

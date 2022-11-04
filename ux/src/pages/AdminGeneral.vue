@@ -330,7 +330,7 @@ q-page.admin-general
             q-select(
               outlined
               v-model='state.config.defaults.timezone'
-              :options='dataStore.timezones'
+              :options='timezones'
               option-value='value'
               option-label='text'
               emit-value
@@ -431,7 +431,6 @@ import { onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from 'src/stores/admin'
 import { useSiteStore } from 'src/stores/site'
-import { useDataStore } from 'src/stores/data'
 
 // QUASAR
 
@@ -441,7 +440,6 @@ const $q = useQuasar()
 
 const adminStore = useAdminStore()
 const siteStore = useSiteStore()
-const dataStore = useDataStore()
 
 // I18N
 
@@ -519,6 +517,8 @@ const timeFormats = [
   { value: '12h', label: t('admin.general.defaultTimeFormat12h') },
   { value: '24h', label: t('admin.general.defaultTimeFormat24h') }
 ]
+
+const timezones = Intl.supportedValuesOf('timeZone')
 
 const rulesTitle = [
   val => /^[^<>"]+$/.test(val) || t('admin.general.siteTitleInvalidChars')

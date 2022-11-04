@@ -10,6 +10,7 @@ export const useSiteStore = defineStore('site', {
     hostname: '',
     company: '',
     contentLicense: '',
+    footerExtra: '',
     dark: false,
     title: '',
     description: '',
@@ -71,6 +72,7 @@ export const useSiteStore = defineStore('site', {
                 logoText
                 company
                 contentLicense
+                footerExtra
                 theme {
                   dark
                   colorPrimary
@@ -101,6 +103,7 @@ export const useSiteStore = defineStore('site', {
           this.logoText = clone(siteInfo.logoText)
           this.company = clone(siteInfo.company)
           this.contentLicense = clone(siteInfo.contentLicense)
+          this.footerExtra = clone(siteInfo.footerExtra)
           this.theme = {
             ...this.theme,
             ...clone(siteInfo.theme)

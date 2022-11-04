@@ -143,7 +143,7 @@ q-layout(view='hHh lpR fFf', container)
                   q-select(
                     outlined
                     v-model='state.user.prefs.timezone'
-                    :options='dataStore.timezones'
+                    :options='timezones'
                     option-value='value'
                     option-label='text'
                     emit-value
@@ -515,7 +515,6 @@ import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'
-import { useDataStore } from 'src/stores/data'
 
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
 import UtilCodeEditor from './UtilCodeEditor.vue'
@@ -527,7 +526,6 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
-const dataStore = useDataStore()
 
 // ROUTER
 
@@ -561,6 +559,8 @@ const sections = [
   { key: 'metadata', text: t('admin.users.metadata'), icon: 'las la-clipboard-list' },
   { key: 'operations', text: t('admin.users.operations'), icon: 'las la-tools' }
 ]
+
+const timezones = Intl.supportedValuesOf('timeZone')
 
 // COMPUTED
 
