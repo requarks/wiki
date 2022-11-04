@@ -20,7 +20,10 @@ const routes = [
     component: () => import('layouts/ProfileLayout.vue'),
     children: [
       { path: '', redirect: '/_profile/info' },
-      { path: 'info', component: () => import('pages/Profile.vue') }
+      { path: 'info', component: () => import('src/pages/ProfileInfo.vue') },
+      { path: 'avatar', component: () => import('src/pages/ProfileAvatar.vue') },
+      { path: 'auth', component: () => import('src/pages/ProfileAuth.vue') },
+      { path: 'groups', component: () => import('src/pages/ProfileGroups.vue') }
     ]
   },
   {
@@ -70,8 +73,16 @@ const routes = [
   //   component: () => import('../pages/UnknownSite.vue')
   // },
 
-  // Always leave this as last one,
-  // but you can also remove it
+  // --------------------------------
+  // SYSTEM ROUTES CATCH-ALL FALLBACK
+  // --------------------------------
+  {
+    path: '/_:catchAll(.*)*',
+    redirect: '/_error/notfound'
+  },
+  // -----------------------
+  // STANDARD PAGE CATCH-ALL
+  // -----------------------
   {
     path: '/:catchAll(.*)*',
     component: () => import('../layouts/MainLayout.vue'),

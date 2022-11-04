@@ -9,7 +9,7 @@ export const useUserStore = defineStore('user', {
     id: '10000000-0000-4000-8000-000000000001',
     email: '',
     name: '',
-    pictureUrl: '',
+    hasAvatar: false,
     localeCode: '',
     timezone: '',
     dateFormat: 'YYYY-MM-DD',
@@ -58,6 +58,7 @@ export const useUserStore = defineStore('user', {
                 id
                 name
                 email
+                hasAvatar
                 meta
                 prefs
                 lastLoginAt
@@ -78,7 +79,7 @@ export const useUserStore = defineStore('user', {
         }
         this.name = resp.name || 'Unknown User'
         this.email = resp.email
-        this.pictureUrl = (resp.pictureUrl === 'local') ? `/_user/${this.id}/avatar` : resp.pictureUrl
+        this.hasAvatar = resp.hasAvatar ?? false
         this.location = resp.meta.location || ''
         this.jobTitle = resp.meta.jobTitle || ''
         this.pronouns = resp.meta.pronouns || ''

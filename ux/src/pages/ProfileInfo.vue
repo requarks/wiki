@@ -80,11 +80,10 @@ q-page.q-py-md(:style-fn='pageStyle')
       q-select(
         outlined
         v-model='state.config.timezone'
-        :options='dataStore.timezones'
-        option-value='value'
-        option-label='text'
-        emit-value
-        map-options
+        :options='timezones'
+        :virtual-scroll-slice-size='100'
+        :virtual-scroll-slice-ratio-before='2'
+        :virtual-scroll-slice-ratio-after='2'
         dense
         options-dense
         :aria-label='t(`admin.general.defaultTimezone`)'
@@ -153,7 +152,6 @@ import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 
 import { useSiteStore } from 'src/stores/site'
-import { useDataStore } from 'src/stores/data'
 import { useUserStore } from 'src/stores/user'
 
 // QUASAR
@@ -163,7 +161,6 @@ const $q = useQuasar()
 // STORES
 
 const siteStore = useSiteStore()
-const dataStore = useDataStore()
 const userStore = useUserStore()
 
 // I18N
@@ -173,7 +170,7 @@ const { t } = useI18n()
 // META
 
 useMeta({
-  title: t('profile.title')
+  title: t('profile.myInfo')
 })
 
 // DATA
@@ -209,6 +206,7 @@ const appearances = [
   { value: 'light', label: t('profile.appearanceLight') },
   { value: 'dark', label: t('profile.appearanceDark') }
 ]
+const timezones = Intl.supportedValuesOf('timeZone')
 
 // METHODS
 

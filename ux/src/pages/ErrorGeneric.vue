@@ -7,6 +7,7 @@
     .errorpage-hint {{error.hint}}
     .errorpage-actions
       q-btn(
+        v-if='error.showHomeBtn'
         push
         color='primary'
         label='Go to home'
@@ -38,6 +39,10 @@ const actions = {
   notfound: {
     code: 404
   },
+  unknownsite: {
+    code: 'X!?',
+    showHomeBtn: false
+  },
   generic: {
     code: '!?0'
   }
@@ -62,12 +67,14 @@ useMeta({
 const error = computed(() => {
   if (route.params.action && actions[route.params.action]) {
     return {
+      showHomeBtn: true,
       ...actions[route.params.action],
       title: t(`common.error.${route.params.action}.title`),
       hint: t(`common.error.${route.params.action}.hint`)
     }
   } else {
     return {
+      showHomeBtn: true,
       ...actions.generic,
       title: t('common.error.generic.title'),
       hint: t('common.error.generic.hint')

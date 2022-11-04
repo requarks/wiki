@@ -300,7 +300,7 @@ exports.up = async knex => {
       table.jsonb('auth').notNullable().defaultTo('{}')
       table.jsonb('meta').notNullable().defaultTo('{}')
       table.jsonb('prefs').notNullable().defaultTo('{}')
-      table.string('pictureUrl')
+      table.boolean('hasAvatar').notNullable().defaultTo(false)
       table.boolean('isSystem').notNullable().defaultTo(false)
       table.boolean('isActive').notNullable().defaultTo(false)
       table.boolean('isVerified').notNullable().defaultTo(false)

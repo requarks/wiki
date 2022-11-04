@@ -50,6 +50,7 @@ const { t } = useI18n()
 // METHODS
 
 function create (editor) {
-  pageStore.pageCreate({ editor })
+  window.location.assign('/_edit/new')
+  // pageStore.pageCreate({ editor })
 }
 </script>

@@ -400,14 +400,14 @@ router.get(['/t', '/t/*'], (req, res, next) => {
 /**
  * User Avatar
  */
-router.get('/_userav/:uid', async (req, res, next) => {
+router.get('/_user/:uid/avatar', async (req, res, next) => {
   if (!WIKI.auth.checkAccess(req.user, ['read:pages'])) {
     return res.sendStatus(403)
   }
   const av = await WIKI.db.users.getUserAvatarData(req.params.uid)
   if (av) {
     res.set('Content-Type', 'image/jpeg')
-    res.send(av)
+    return res.send(av)
   }
 
   return res.sendStatus(404)

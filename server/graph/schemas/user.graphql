@@ -73,6 +73,15 @@ extend type Mutation {
     timeFormat: String
     appearance: UserSiteAppearance
   ): DefaultResponse
+
+  uploadUserAvatar(
+    id: UUID!
+    image: Upload!
+  ): DefaultResponse
+
+  clearUserAvatar(
+    id: UUID!
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -104,17 +113,25 @@ type User {
   id: UUID
   name: String
   email: String
-  auth: JSON
+  auth: [UserAuth]
+  hasAvatar: Boolean
   isSystem: Boolean
   isActive: Boolean
   isVerified: Boolean
   meta: JSON
   prefs: JSON
-  pictureUrl: String
   createdAt: Date
   updatedAt: Date
   lastLoginAt: Date
   groups: [Group]
+}
+
+type UserAuth {
+  authId: UUID
+  authName: String
+  strategyKey: String
+  strategyIcon: String
+  config: JSON
 }
 
 type UserTokenResponse {

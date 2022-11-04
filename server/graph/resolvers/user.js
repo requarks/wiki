@@ -1,5 +1,7 @@
 const graphHelper = require('../../helpers/graph')
 const _ = require('lodash')
+const path = require('node:path')
+const fs = require('fs-extra')
 
 module.exports = {
   Query: {
@@ -273,9 +275,88 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * UPLOAD USER AVATAR
+     */
+    async uploadUserAvatar (obj, args) {
+      try {
+        const { filename, mimetype, createReadStream } = await args.image
+        WIKI.logger.debug(`Processing user ${args.id} avatar ${filename} of type ${mimetype}...`)
+        if (!WIKI.extensions.ext.sharp.isInstalled) {
+          throw new Error('This feature requires the Sharp extension but it is not installed.')
+        }
+        if (!['.png', '.jpg', '.webp', '.gif'].some(s => filename.endsWith(s))) {
+          throw new Error('Invalid File Extension. Must be png, jpg, webp or gif.')
+        }
+        const destFolder = path.resolve(
+          process.cwd(),
+          WIKI.config.dataPath,
+          `assets`
+        )
+        const destPath = path.join(destFolder, `userav-${args.id}.jpg`)
+        await fs.ensureDir(destFolder)
+        // -> Resize
+        await WIKI.extensions.ext.sharp.resize({
+          format: 'jpg',
+          inputStream: createReadStream(),
+          outputPath: destPath,
+          width: 180,
+          height: 180
+        })
+        // -> Set avatar flag for this user in the DB
+        await WIKI.db.users.query().findById(args.id).patch({ hasAvatar: true })
+        // -> Save image data to DB
+        const imgBuffer = await fs.readFile(destPath)
+        await WIKI.db.knex('userAvatars').insert({
+          id: args.id,
+          data: imgBuffer
+        }).onConflict('id').merge()
+        WIKI.logger.debug(`Processed user ${args.id} avatar successfully.`)
+        return {
+          operation: graphHelper.generateSuccess('User avatar uploaded successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * CLEAR USER AVATAR
+     */
+    async clearUserAvatar (obj, args) {
+      try {
+        WIKI.logger.debug(`Clearing user ${args.id} avatar...`)
+        await WIKI.db.users.query().findById(args.id).patch({ hasAvatar: false })
+        await WIKI.db.knex('userAvatars').where({ id: args.id }).del()
+        WIKI.logger.debug(`Cleared user ${args.id} avatar successfully.`)
+        return {
+          operation: graphHelper.generateSuccess('User avatar cleared successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return graphHelper.generateError(err)
+      }
     }
   },
   User: {
+    async auth (usr) {
+      const authStrategies = await WIKI.db.authentication.getStrategies({ enabledOnly: true })
+      return _.transform(usr.auth, (result, value, key) => {
+        const authStrategy = _.find(authStrategies, ['id', key])
+        const authModule = _.find(WIKI.data.authentication, ['key', authStrategy.module])
+        if (!authStrategy || !authModule) { return }
+        result.push({
+          authId: key,
+          authName: authStrategy.displayName,
+          strategyKey: authStrategy.module,
+          strategyIcon: authModule.icon,
+          config: authStrategy.module === 'local' ? {
+            isTfaSetup: value.tfaSecret?.length > 0
+          } : {}
+        })
+      }, [])
+    },
     groups (usr) {
       return usr.$relatedQuery('groups')
     }

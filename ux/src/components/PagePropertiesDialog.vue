@@ -318,13 +318,17 @@ const quickaccess = [
   { key: 'refCardVisibility', icon: 'las la-eye', label: t('editor.props.visibility') }
 ]
 
+// REFS
+
+const iptPagePassword = ref(null)
+
 // WATCHERS
 
 watch(() => state.requirePassword, (newValue) => {
   if (newValue) {
     nextTick(() => {
-      this.$refs.iptPagePassword.focus()
-      this.$refs.iptPagePassword.$el.scrollIntoView({
+      iptPagePassword.value.focus()
+      iptPagePassword.value.$el.scrollIntoView({
         behavior: 'smooth'
       })
     })
