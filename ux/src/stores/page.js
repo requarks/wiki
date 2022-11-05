@@ -1,8 +1,51 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
 import { cloneDeep, last, transform } from 'lodash-es'
+import { DateTime } from 'luxon'
 
 import { useSiteStore } from './site'
+import { useEditorStore } from './editor'
+
+const gqlQueries = {
+  pageById: gql`
+    query loadPage (
+      $id: UUID!
+    ) {
+      pageById(
+        id: $id
+      ) {
+        id
+        title
+        description
+        path
+        locale
+        updatedAt
+        render
+        toc
+      }
+    }
+  `,
+  pageByPath: gql`
+    query loadPage (
+      $siteId: UUID!
+      $path: String!
+    ) {
+      pageByPath(
+        siteId: $siteId
+        path: $path
+      ) {
+        id
+        title
+        description
+        path
+        locale
+        updatedAt
+        render
+        toc
+      }
+    }
+  `
+}
 
 export const usePageStore = defineStore('page', {
   state: () => ({
@@ -39,101 +82,50 @@ export const usePageStore = defineStore('page', {
       min: 1,
       max: 2
     },
-    breadcrumbs: [
-      // {
-      //   id: 1,
-      //   title: 'Installation',
-      //   icon: 'las la-file-alt',
-      //   locale: 'en',
-      //   path: 'installation'
-      // },
-      // {
-      //   id: 2,
-      //   title: 'Ubuntu',
-      //   icon: 'lab la-ubuntu',
-      //   locale: 'en',
-      //   path: 'installation/ubuntu'
-      // }
-    ],
-    effectivePermissions: {
-      comments: {
-        read: false,
-        write: false,
-        manage: false
-      },
-      history: {
-        read: false
-      },
-      source: {
-        read: false
-      },
-      pages: {
-        write: false,
-        manage: false,
-        delete: false,
-        script: false,
-        style: false
-      },
-      system: {
-        manage: false
-      }
-    },
     commentsCount: 0,
     content: '',
     render: '',
     toc: []
   }),
-  getters: {},
+  getters: {
+    breadcrumbs: (state) => {
+      const siteStore = useSiteStore()
+      const pathPrefix = siteStore.useLocales ? `/${state.locale}` : ''
+      return transform(state.path.split('/'), (result, value, key) => {
+        result.push({
+          id: key,
+          title: value,
+          icon: 'las la-file-alt',
+          locale: 'en',
+          path: (last(result)?.path || pathPrefix) + `/${value}`
+        })
+      }, [])
+    }
+  },
   actions: {
     /**
      * PAGE - LOAD
      */
     async pageLoad ({ path, id }) {
+      const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       try {
         const resp = await APOLLO_CLIENT.query({
-          query: gql`
-            query loadPage (
-              $siteId: UUID!
-              $path: String!
-            ) {
-              pageByPath(
-                siteId: $siteId
-                path: $path
-              ) {
-                id
-                title
-                description
-                path
-                locale
-                updatedAt
-                render
-                toc
-              }
-            }
-          `,
-          variables: {
-            siteId: siteStore.id,
-            path
-          },
+          query: id ? gqlQueries.pageById : gqlQueries.pageByPath,
+          variables: id ? { id } : { siteId: siteStore.id, path },
           fetchPolicy: 'network-only'
         })
-        const pageData = cloneDeep(resp?.data?.pageByPath ?? {})
+        const pageData = cloneDeep((id ? resp?.data?.pageById : resp?.data?.pageByPath) ?? {})
         if (!pageData?.id) {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
-        const pathPrefix = siteStore.useLocales ? `/${pageData.locale}` : ''
-        this.$patch({
-          ...pageData,
-          breadcrumbs: transform(pageData.path.split('/'), (result, value, key) => {
-            result.push({
-              id: key,
-              title: value,
-              icon: 'las la-file-alt',
-              locale: 'en',
-              path: (last(result)?.path || pathPrefix) + `/${value}`
-            })
-          }, [])
+        // Update page store
+        this.$patch(pageData)
+        // Update editor state timestamps
+        const curDate = DateTime.utc()
+        editorStore.$patch({
+          lastChangeTimestamp: curDate,
+          lastSaveTimestamp: curDate
         })
       } catch (err) {
         console.warn(err)

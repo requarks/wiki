@@ -13,8 +13,14 @@ export const useEditorStore = defineStore('editor', {
       currentFileId: null
     },
     checkoutDateActive: '',
+    lastSaveTimestamp: null,
+    lastChangeTimestamp: null,
     editors: {}
   }),
-  getters: {},
+  getters: {
+    hasPendingChanges: (state) => {
+      return state.lastSaveTimestamp && state.lastSaveTimestamp !== state.lastChangeTimestamp
+    }
+  },
   actions: {}
 })

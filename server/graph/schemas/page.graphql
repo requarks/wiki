@@ -31,7 +31,7 @@ extend type Query {
   ): [PageListItem!]!
 
   pageById(
-    id: Int!
+    id: UUID!
   ): Page
 
   pageByPath(

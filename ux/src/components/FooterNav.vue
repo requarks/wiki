@@ -66,6 +66,11 @@ const isCopyright = computed(() => {
   padding: 4px 12px;
   font-size: 11px;
 
+  @at-root .body--dark & {
+    background-color: $dark-4;
+    color: rgba(255,255,255,.4);
+  }
+
   &-line {
     text-align: center;
 

@@ -73,15 +73,35 @@ q-page.column
         aria-label='Print'
         )
         q-tooltip Print
-      q-btn.acrylic-btn(
-        flat
-        icon='las la-edit'
-        color='deep-orange-9'
-        label='Edit'
-        aria-label='Edit'
-        no-caps
-        :href='editUrl'
-      )
+      template(v-if='editorStore.hasPendingChanges')
+        q-btn.acrylic-btn.q-mr-sm(
+          flat
+          icon='las la-times'
+          color='negative'
+          label='Discard'
+          aria-label='Discard'
+          no-caps
+          @click='discardChanges'
+        )
+        q-btn.acrylic-btn(
+          flat
+          icon='las la-check'
+          color='positive'
+          label='Save Changes'
+          aria-label='Save Changes'
+          no-caps
+          @click='saveChanges'
+        )
+      template(v-else)
+        q-btn.acrylic-btn(
+          flat
+          icon='las la-edit'
+          color='deep-orange-9'
+          label='Edit'
+          aria-label='Edit'
+          no-caps
+          :href='editUrl'
+        )
   .page-container.row.no-wrap.items-stretch(style='flex: 1 1 100%;')
     .col(style='order: 1;')
       q-scroll-area(
@@ -308,17 +328,25 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 
+import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 // COMPONENTS
 
 import SocialSharingMenu from '../components/SocialSharingMenu.vue'
+import LoadingGeneric from 'src/components/LoadingGeneric.vue'
 import PageTags from '../components/PageTags.vue'
 
 const sideDialogs = {
-  PageDataDialog: defineAsyncComponent(() => import('../components/PageDataDialog.vue')),
-  PagePropertiesDialog: defineAsyncComponent(() => import('../components/PagePropertiesDialog.vue'))
+  PageDataDialog: defineAsyncComponent({
+    loader: () => import('../components/PageDataDialog.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  PagePropertiesDialog: defineAsyncComponent({
+    loader: () => import('../components/PagePropertiesDialog.vue'),
+    loadingComponent: LoadingGeneric
+  })
 }
 const globalDialogs = {
   PageSaveDialog: defineAsyncComponent(() => import('../components/PageSaveDialog.vue'))
@@ -330,6 +358,7 @@ const $q = useQuasar()
 
 // STORES
 
+const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
@@ -448,7 +477,6 @@ function savePage () {
 }
 
 function refreshTocExpanded (baseToc, lvl) {
-  console.info(pageStore.tocDepth.min, lvl, pageStore.tocDepth.max)
   const toExpand = []
   let isRootNode = false
   if (!baseToc) {
@@ -471,6 +499,27 @@ function refreshTocExpanded (baseToc, lvl) {
   } else {
     return toExpand
   }
+}
+
+async function discardChanges () {
+  $q.loading.show()
+  try {
+    await pageStore.pageLoad({ id: pageStore.id })
+    $q.notify({
+      type: 'positive',
+      message: 'Page has been reverted to the last saved state.'
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to reload page state.'
+    })
+  }
+  $q.loading.hide()
+}
+
+async function saveChanges () {
+
 }
 </script>
 

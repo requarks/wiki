@@ -145,7 +145,7 @@ module.exports = {
     async pageById (obj, args, context, info) {
       let page = await WIKI.db.pages.getPageFromDb(args.id)
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
+        if (WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: page.path,
           locale: page.localeCode
         })) {

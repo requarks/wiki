@@ -273,11 +273,13 @@ q-card.page-properties-dialog
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { DateTime } from 'luxon'
 
 import PageRelationDialog from './PageRelationDialog.vue'
 import PageScriptsDialog from './PageScriptsDialog.vue'
 import PageTags from './PageTags.vue'
 
+import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
@@ -287,6 +289,7 @@ const $q = useQuasar()
 
 // STORES
 
+const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
@@ -333,6 +336,12 @@ watch(() => state.requirePassword, (newValue) => {
       })
     })
   }
+})
+
+pageStore.$subscribe(() => {
+  editorStore.$patch({
+    lastChangeTimestamp: DateTime.utc()
+  })
 })
 
 // METHODS
