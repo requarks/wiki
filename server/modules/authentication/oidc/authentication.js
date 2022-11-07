@@ -20,7 +20,9 @@ module.exports = {
         userInfoURL: conf.userInfoURL,
         callbackURL: conf.callbackURL,
         passReqToCallback: true
-      }, async (req, iss, sub, profile, cb) => {
+      }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
+        const profile = Object.assign({}, idProfile, uiProfile)
+
         try {
           const user = await WIKI.models.users.processProfile({
             providerKey: req.params.strategy,
