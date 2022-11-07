@@ -20,8 +20,7 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
-        passReqToCallback: true,
-        scope: 'openid email profile'
+        passReqToCallback: true
       }, async (req, accessToken, refreshToken, profile, cb) => {
         let displayName = profile.username
         if (_.isString(profile.fullName) && profile.fullName.length > 0) {
