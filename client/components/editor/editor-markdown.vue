@@ -250,7 +250,7 @@ const md = new MarkdownIt({
   html: true,
   breaks: true,
   linkify: true,
-  typography: true,
+  typographer: true,
   highlight(str, lang) {
     if (lang === 'diagram') {
       return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
