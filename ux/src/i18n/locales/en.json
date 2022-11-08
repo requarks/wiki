@@ -1552,5 +1552,8 @@
   "profile.avatarUploadSuccess": "Profile picture uploaded successfully.",
   "profile.avatarUploadFailed": "Failed to upload user profile picture.",
   "profile.avatarClearSuccess": "Profile picture cleared successfully.",
-  "profile.avatarClearFailed": "Failed to clear profile picture."
+  "profile.avatarClearFailed": "Failed to clear profile picture.",
+  "admin.general.defaultTocDepth": "Default ToC Depth",
+  "admin.general.defaultTocDepthHint": "The default minimum and maximum header levels to show in the table of contents.",
+  "editor.props.icon": "Icon"
 }

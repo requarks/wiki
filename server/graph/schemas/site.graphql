@@ -89,6 +89,7 @@ type SiteDefaults {
   timezone: String
   dateFormat: String
   timeFormat: String
+  tocDepth: PageTocDepth
 }
 
 type SiteLocale {
@@ -174,6 +175,7 @@ input SiteDefaultsInput {
   timezone: String
   dateFormat: String
   timeFormat: String
+  tocDepth: PageTocDepthInput
 }
 
 input SiteThemeInput {

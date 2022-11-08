@@ -295,28 +295,28 @@ export default {
                 $content: String!
                 $description: String!
                 $editor: String!
-                $isPublished: Boolean!
+                $publishState: PagePublishState!
                 $locale: String!
                 $path: String!
                 $publishEndDate: Date
                 $publishStartDate: Date
                 $scriptCss: String
-                $scriptJs: String
+                $scriptJsLoad: String
                 $siteId: UUID!
-                $tags: [String]!
+                $tags: [String!]
                 $title: String!
               ) {
                 createPage(
                   content: $content
                   description: $description
                   editor: $editor
-                  isPublished: $isPublished
+                  publishState: $publishState
                   locale: $locale
                   path: $path
                   publishEndDate: $publishEndDate
                   publishStartDate: $publishStartDate
                   scriptCss: $scriptCss
-                  scriptJs: $scriptJs
+                  scriptJsLoad: $scriptJsLoad
                   siteId: $siteId
                   tags: $tags
                   title: $title
@@ -337,12 +337,12 @@ export default {
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
-              isPublished: this.$store.get('page/isPublished'),
+              publishState: this.$store.get('page/isPublished') ? 'published' : 'draft',
               path: this.$store.get('page/path'),
               publishEndDate: this.$store.get('page/publishEndDate') || '',
               publishStartDate: this.$store.get('page/publishStartDate') || '',
               scriptCss: this.$store.get('page/scriptCss'),
-              scriptJs: this.$store.get('page/scriptJs'),
+              scriptJsLoad: this.$store.get('page/scriptJs'),
               siteId: this.$store.get('site/id'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title')
@@ -392,33 +392,11 @@ export default {
             mutation: gql`
               mutation (
                 $id: UUID!
-                $content: String
-                $description: String
-                $editor: String
-                $isPublished: Boolean
-                $locale: String
-                $path: String
-                $publishEndDate: Date
-                $publishStartDate: Date
-                $scriptCss: String
-                $scriptJs: String
-                $tags: [String]
-                $title: String
+                $patch: PageUpdateInput!
               ) {
                 updatePage(
                   id: $id
-                  content: $content
-                  description: $description
-                  editor: $editor
-                  isPublished: $isPublished
-                  locale: $locale
-                  path: $path
-                  publishEndDate: $publishEndDate
-                  publishStartDate: $publishStartDate
-                  scriptCss: $scriptCss
-                  scriptJs: $scriptJs
-                  tags: $tags
-                  title: $title
+                  patch: $patch
                 ) {
                   operation {
                     succeeded
@@ -432,18 +410,19 @@ export default {
             `,
             variables: {
               id: this.$store.get('page/id'),
-              content: this.$store.get('editor/content'),
-              description: this.$store.get('page/description'),
-              editor: this.$store.get('editor/editorKey'),
-              locale: this.$store.get('page/locale'),
-              isPublished: this.$store.get('page/isPublished'),
-              path: this.$store.get('page/path'),
-              publishEndDate: this.$store.get('page/publishEndDate') || '',
-              publishStartDate: this.$store.get('page/publishStartDate') || '',
-              scriptCss: this.$store.get('page/scriptCss'),
-              scriptJs: this.$store.get('page/scriptJs'),
-              tags: this.$store.get('page/tags'),
-              title: this.$store.get('page/title')
+              patch: {
+                content: this.$store.get('editor/content'),
+                description: this.$store.get('page/description'),
+                locale: this.$store.get('page/locale'),
+                publishState: this.$store.get('page/isPublished') ? 'published' : 'draft',
+                path: this.$store.get('page/path'),
+                publishEndDate: this.$store.get('page/publishEndDate') || '',
+                publishStartDate: this.$store.get('page/publishStartDate') || '',
+                scriptCss: this.$store.get('page/scriptCss'),
+                scriptJsLoad: this.$store.get('page/scriptJs'),
+                tags: this.$store.get('page/tags'),
+                title: this.$store.get('page/title')
+              }
             }
           })
           resp = _.get(resp, 'data.updatePage', {})

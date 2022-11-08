@@ -32,11 +32,13 @@ extend type Query {
 
   pageById(
     id: UUID!
+    password: String
   ): Page
 
   pageByPath(
     siteId: UUID!
     path: String!
+    password: String
   ): Page
 
   tags: [PageTag]!
@@ -69,35 +71,35 @@ extend type Query {
 
 extend type Mutation {
   createPage(
-    siteId: UUID!
+    allowComments: Boolean
+    allowContributions: Boolean
+    allowRatings: Boolean
     content: String!
     description: String!
     editor: String!
-    isPublished: Boolean!
+    icon: String
+    isBrowsable: Boolean
     locale: String!
     path: String!
+    publishState: PagePublishState!
     publishEndDate: Date
     publishStartDate: Date
+    relations: [PageRelationInput!]
     scriptCss: String
-    scriptJs: String
-    tags: [String]!
+    scriptJsLoad: String
+    scriptJsUnload: String
+    showSidebar: Boolean
+    showTags: Boolean
+    showToc: Boolean
+    siteId: UUID!
+    tags: [String!]
     title: String!
+    tocDepth: PageTocDepthInput
   ): PageResponse
 
   updatePage(
     id: UUID!
-    content: String
-    description: String
-    editor: String
-    isPublished: Boolean
-    locale: String
-    path: String
-    publishEndDate: Date
-    publishStartDate: Date
-    scriptCss: String
-    scriptJs: String
-    tags: [String]
-    title: String
+    patch: PageUpdateInput!
   ): PageResponse
 
   convertPage(
@@ -163,31 +165,40 @@ type PageMigrationResponse {
 }
 
 type Page {
-  id: UUID
-  path: String
-  hash: String
-  title: String
-  description: String
-  isPublished: Boolean
-  publishStartDate: Date
-  publishEndDate: Date
-  tags: [PageTag]
+  allowComments: Boolean
+  allowContributions: Boolean
+  allowRatings: Boolean
+  author: User
   content: String
-  render: String
-  toc: [JSON]
   contentType: String
   createdAt: Date
-  updatedAt: Date
+  creator: User
+  description: String
   editor: String
+  hash: String
+  icon: String
+  id: UUID
+  isBrowsable: Boolean
   locale: String
+  password: String
+  path: String
+  publishEndDate: Date
+  publishStartDate: Date
+  publishState: PagePublishState
+  relations: [PageRelation]
+  render: String
+  scriptJsLoad: String
+  scriptJsUnload: String
   scriptCss: String
-  scriptJs: String
-  authorId: Int
-  authorName: String
-  authorEmail: String
-  creatorId: Int
-  creatorName: String
-  creatorEmail: String
+  showSidebar: Boolean
+  showTags: Boolean
+  showToc: Boolean
+  siteId: UUID
+  tags: [PageTag]
+  title: String
+  toc: [JSON]
+  tocDepth: PageTocDepth
+  updatedAt: Date
 }
 
 type PageTag {
@@ -299,6 +310,59 @@ type PageConflictLatest {
   updatedAt: Date
 }
 
+type PageRelation {
+  id: UUID
+  position: PageRelationPosition
+  label: String
+  caption: String
+  icon: String
+  target: String
+}
+input PageRelationInput {
+  id: UUID!
+  position: PageRelationPosition!
+  label: String!
+  caption: String
+  icon: String
+  target: String!
+}
+
+input PageUpdateInput {
+  allowComments: Boolean
+  allowContributions: Boolean
+  allowRatings: Boolean
+  content: String
+  description: String
+  icon: String
+  isBrowsable: Boolean
+  locale: String
+  password: String
+  path: String
+  publishEndDate: Date
+  publishStartDate: Date
+  publishState: PagePublishState
+  relations: [PageRelationInput!]
+  scriptJsLoad: String
+  scriptJsUnload: String
+  scriptCss: String
+  showSidebar: Boolean
+  showTags: Boolean
+  showToc: Boolean
+  tags: [String!]
+  title: String
+  tocDepth: PageTocDepthInput
+}
+
+type PageTocDepth {
+  min: Int
+  max: Int
+}
+
+input PageTocDepthInput {
+  min: Int!
+  max: Int!
+}
+
 enum PageOrderBy {
   CREATED
   ID
@@ -316,4 +380,16 @@ enum PageTreeMode {
   FOLDERS
   PAGES
   ALL
+}
+
+enum PagePublishState {
+  draft
+  published
+  scheduled
+}
+
+enum PageRelationPosition {
+  left
+  center
+  right
 }

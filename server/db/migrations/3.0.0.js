@@ -10,6 +10,7 @@ exports.up = async knex => {
   // =====================================
   // PG EXTENSIONS
   // =====================================
+  await knex.raw('CREATE EXTENSION IF NOT EXISTS ltree;')
   await knex.raw('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
 
   await knex.schema
@@ -187,21 +188,27 @@ exports.up = async knex => {
     .createTable('pageHistory', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.uuid('pageId').notNullable().index()
+      table.string('action').defaultTo('updated')
+      table.jsonb('affectedFields').notNullable().defaultTo('[]')
       table.string('path').notNullable()
       table.string('hash').notNullable()
+      table.string('alias')
       table.string('title').notNullable()
       table.string('description')
+      table.string('icon')
       table.enu('publishState', ['draft', 'published', 'scheduled']).notNullable().defaultTo('draft')
       table.timestamp('publishStartDate')
       table.timestamp('publishEndDate')
-      table.string('action').defaultTo('updated')
+      table.jsonb('config').notNullable().defaultTo('{}')
+      table.jsonb('relations').notNullable().defaultTo('[]')
       table.text('content')
+      table.text('render')
+      table.jsonb('toc')
       table.string('editor').notNullable()
       table.string('contentType').notNullable()
-      table.jsonb('extra').notNullable().defaultTo('{}')
-      table.jsonb('tags').defaultTo('[]')
-      table.timestamp('versionDate').notNullable().defaultTo(knex.fn.now())
+      table.jsonb('scripts').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
+      table.timestamp('versionDate').notNullable().defaultTo(knex.fn.now())
     })
     // PAGE LINKS --------------------------
     .createTable('pageLinks', table => {
@@ -212,31 +219,31 @@ exports.up = async knex => {
     // PAGES -------------------------------
     .createTable('pages', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
-      table.string('slug')
       table.string('path').notNullable()
+      table.specificType('dotPath', 'ltree').notNullable().index()
       table.string('hash').notNullable()
+      table.string('alias')
       table.string('title').notNullable()
       table.string('description')
+      table.string('icon')
       table.enu('publishState', ['draft', 'published', 'scheduled']).notNullable().defaultTo('draft')
       table.timestamp('publishStartDate')
       table.timestamp('publishEndDate')
+      table.jsonb('config').notNullable().defaultTo('{}')
+      table.jsonb('relations').notNullable().defaultTo('[]')
       table.text('content')
       table.text('render')
       table.jsonb('toc')
       table.string('editor').notNullable()
       table.string('contentType').notNullable()
-      table.jsonb('extra').notNullable().defaultTo('{}')
+      table.boolean('isBrowsable').notNullable().defaultTo(true)
+      table.string('password')
+      table.integer('ratingScore').notNullable().defaultTo(0)
+      table.integer('ratingCount').notNullable().defaultTo(0)
+      table.jsonb('scripts').notNullable().defaultTo('{}')
+      table.jsonb('historyData').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
-    })
-    // PAGE TREE ---------------------------
-    .createTable('pageTree', table => {
-      table.integer('id').unsigned().primary()
-      table.string('path').notNullable()
-      table.integer('depth').unsigned().notNullable()
-      table.string('title').notNullable()
-      table.boolean('isFolder').notNullable().defaultTo(false)
-      table.jsonb('ancestors')
     })
     // RENDERERS ---------------------------
     .createTable('renderers', table => {
@@ -364,11 +371,6 @@ exports.up = async knex => {
       table.uuid('authorId').notNullable().references('id').inTable('users').index()
       table.uuid('creatorId').notNullable().references('id').inTable('users').index()
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
-    })
-    .table('pageTree', table => {
-      table.integer('parent').unsigned().references('id').inTable('pageTree').onDelete('CASCADE')
-      table.uuid('pageId').notNullable().references('id').inTable('pages').onDelete('CASCADE')
-      table.string('localeCode', 5).references('code').inTable('locales')
     })
     .table('storage', table => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')
@@ -507,7 +509,11 @@ exports.up = async knex => {
       defaults: {
         timezone: 'America/New_York',
         dateFormat: 'YYYY-MM-DD',
-        timeFormat: '12h'
+        timeFormat: '12h',
+        tocDepth: {
+          min: 1,
+          max: 2
+        }
       },
       features: {
         ratings: false,

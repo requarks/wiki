@@ -41,28 +41,39 @@ q-card.page-properties-dialog
           outlined
           dense
         )
+        q-input(
+          v-model='pageStore.icon'
+          :label='t(`editor.props.icon`)'
+          outlined
+          dense
+          )
+          template(#append)
+            q-icon.cursor-pointer(
+              name='las la-icons'
+              color='primary'
+            )
     q-card-section.alt-card(id='refCardPublishState')
       .text-overline.q-pb-xs.items-center.flex #[q-icon.q-mr-sm(name='las la-power-off', size='xs')] {{t('editor.props.publishState')}}
       q-form.q-gutter-md
         div
           q-btn-toggle(
-            v-model='pageStore.isPublished'
+            v-model='pageStore.publishState'
             push
             glossy
             no-caps
             toggle-color='primary'
             :options=`[
-              { label: t('editor.props.draft'), value: false },
-              { label: t('editor.props.published'), value: true },
-              { label: t('editor.props.dateRange'), value: null }
+              { label: t('editor.props.draft'), value: 'draft' },
+              { label: t('editor.props.published'), value: 'published' },
+              { label: t('editor.props.dateRange'), value: 'scheduled' }
             ]`
           )
-        .text-caption(v-if='pageStore.isPublished'): em {{t('editor.props.publishedHint')}}
-        .text-caption(v-else-if='pageStore.isPublished === false'): em {{t('editor.props.draftHint')}}
-        template(v-else-if='pageStore.isPublished === null')
+        .text-caption(v-if='pageStore.publishState === `published`'): em {{t('editor.props.publishedHint')}}
+        .text-caption(v-else-if='pageStore.publishState === `draft`'): em {{t('editor.props.draftHint')}}
+        template(v-else-if='pageStore.publishState === `scheduled`')
           .text-caption: em {{t('editor.props.dateRangeHint')}}
           q-date(
-            v-model='pageStore.publishingRange'
+            v-model='publishingRange'
             range
             flat
             bordered
@@ -230,7 +241,7 @@ q-card.page-properties-dialog
       q-form.q-gutter-md.q-pt-sm
         div
           q-toggle(
-            v-model='pageStore.showInTree'
+            v-model='pageStore.isBrowsable'
             dense
             :label='$t(`editor.props.showInTree`)'
             color='primary'
@@ -240,6 +251,7 @@ q-card.page-properties-dialog
         div
           q-toggle(
             v-model='state.requirePassword'
+            @update:model-value='toggleRequirePassword'
             dense
             :label='$t(`editor.props.requirePassword`)'
             color='primary'
@@ -252,7 +264,7 @@ q-card.page-properties-dialog
           )
           q-input(
             ref='iptPagePassword'
-            v-model='state.password'
+            v-model='pageStore.password'
             :label='t(`editor.props.password`)'
             :hint='t(`editor.props.passwordHint`)'
             outlined
@@ -272,7 +284,7 @@ q-card.page-properties-dialog
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
-import { nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { DateTime } from 'luxon'
 
 import PageRelationDialog from './PageRelationDialog.vue'
@@ -302,9 +314,7 @@ const { t } = useI18n()
 const state = reactive({
   showRelationDialog: false,
   showScriptsDialog: false,
-  publishingRange: {},
   requirePassword: false,
-  password: '',
   editRelationId: null,
   pageScriptsMode: 'jsLoad',
   showQuickAccess: true
@@ -325,18 +335,22 @@ const quickaccess = [
 
 const iptPagePassword = ref(null)
 
-// WATCHERS
+// COMPUTED
 
-watch(() => state.requirePassword, (newValue) => {
-  if (newValue) {
-    nextTick(() => {
-      iptPagePassword.value.focus()
-      iptPagePassword.value.$el.scrollIntoView({
-        behavior: 'smooth'
-      })
-    })
+const publishingRange = computed({
+  get () {
+    return {
+      from: pageStore.publishStartDate,
+      to: pageStore.publishEndDate
+    }
+  },
+  set (newValue) {
+    pageStore.publishStartDate = newValue?.from
+    pageStore.publishEndDate = newValue?.to
   }
 })
+
+// WATCHERS
 
 pageStore.$subscribe(() => {
   editorStore.$patch({
@@ -366,10 +380,24 @@ function jumpToSection (id) {
     behavior: 'smooth'
   })
 }
+function toggleRequirePassword (newValue) {
+  if (newValue) {
+    nextTick(() => {
+      iptPagePassword.value.focus()
+      iptPagePassword.value.$el.scrollIntoView({
+        behavior: 'smooth'
+      })
+    })
+  } else {
+    pageStore.password = ''
+  }
+}
 
 // MOUNTED
 
 onMounted(() => {
+  state.requirePassword = pageStore.password?.length > 0
+
   setTimeout(() => {
     state.showQuickAccess = true
   }, 300)

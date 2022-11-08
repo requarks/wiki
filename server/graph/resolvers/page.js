@@ -143,7 +143,7 @@ module.exports = {
      * FETCH SINGLE PAGE BY ID
      */
     async pageById (obj, args, context, info) {
-      let page = await WIKI.db.pages.getPageFromDb(args.id)
+      const page = await WIKI.db.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: page.path,
@@ -151,30 +151,37 @@ module.exports = {
         })) {
           return {
             ...page,
-            locale: page.localeCode,
-            editor: page.editorKey
+            ...page.config,
+            scriptCss: page.scripts?.css,
+            scriptJsLoad: page.scripts?.jsLoad,
+            scriptJsUnload: page.scripts?.jsUnload,
+            locale: page.localeCode
           }
         } else {
-          throw new WIKI.Error.PageViewForbidden()
+          throw new Error('ERR_FORBIDDEN')
         }
       } else {
-        throw new WIKI.Error.PageNotFound()
+        throw new Error('ERR_PAGE_NOT_FOUND')
       }
     },
     /**
      * FETCH SINGLE PAGE BY PATH
      */
     async pageByPath (obj, args, context, info) {
+      // console.info(info)
       const pageArgs = pageHelper.parsePath(args.path)
-      let page = await WIKI.db.pages.getPageFromDb({
+      const page = await WIKI.db.pages.getPageFromDb({
         ...pageArgs,
         siteId: args.siteId
       })
       if (page) {
         return {
           ...page,
-          locale: page.localeCode,
-          editor: page.editorKey
+          ...page.config,
+          scriptCss: page.scripts?.css,
+          scriptJsLoad: page.scripts?.jsLoad,
+          scriptJsUnload: page.scripts?.jsUnload,
+          locale: page.localeCode
         }
       } else {
         throw new Error('ERR_PAGE_NOT_FOUND')
@@ -607,8 +614,20 @@ module.exports = {
     }
   },
   Page: {
+    icon (obj) {
+      return obj.icon || 'las la-file-alt'
+    },
+    password (obj) {
+      return obj ? '********' : ''
+    },
     async tags (obj) {
       return WIKI.db.pages.relatedQuery('tags').for(obj.id)
+    },
+    tocDepth (obj) {
+      return {
+        min: obj.extra?.tocDepth?.min ?? 1,
+        max: obj.extra?.tocDepth?.max ?? 2
+      }
     }
     // comments(pg) {
     //   return pg.$relatedQuery('comments')

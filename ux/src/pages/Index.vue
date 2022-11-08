@@ -21,7 +21,7 @@ q-page.column
           :to='brd.path'
           )
     .col-auto.flex.items-center.justify-end
-      template(v-if='!pageStore.isPublished')
+      template(v-if='!pageStore.publishState === `draft`')
         .text-caption.text-accent: strong Unpublished
         q-separator.q-mx-sm(vertical)
       .text-caption.text-grey-6 Last modified on #[strong {{lastModified}}]
@@ -233,6 +233,7 @@ q-page.column
         color='deep-orange-9'
         aria-label='Page Data'
         @click='togglePageData'
+        disable
         )
         q-tooltip(anchor='center left' self='center right') Page Data
       q-separator.q-my-sm(inset)
@@ -519,7 +520,20 @@ async function discardChanges () {
 }
 
 async function saveChanges () {
-
+  $q.loading.show()
+  try {
+    await pageStore.pageSave()
+    $q.notify({
+      type: 'positive',
+      message: 'Page saved successfully.'
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to save page changes.'
+    })
+  }
+  $q.loading.hide()
 }
 </script>
 

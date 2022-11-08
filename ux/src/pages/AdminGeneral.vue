@@ -371,6 +371,25 @@ q-page.admin-general
               toggle-color='primary'
               :options='timeFormats'
             )
+        q-separator.q-my-sm(inset)
+        q-item
+          blueprint-icon(icon='depth')
+          q-item-section
+            q-item-label {{t(`admin.general.defaultTocDepth`)}}
+            q-item-label(caption) {{t(`admin.general.defaultTocDepthHint`)}}
+          q-item-section.col-auto.q-pl-sm(style='min-width: 180px;')
+            .text-caption {{t('editor.props.tocMinMaxDepth')}} #[strong (H{{state.config.defaults.tocDepth.min}} &rarr; H{{state.config.defaults.tocDepth.max}})]
+            q-range(
+              v-model='state.config.defaults.tocDepth'
+              :min='1'
+              :max='6'
+              color='primary'
+              :left-label-value='`H` + state.config.defaults.tocDepth.min'
+              :right-label-value='`H` + state.config.defaults.tocDepth.max'
+              snap
+              label
+              markers
+            )
 
       //- -----------------------
       //- SEO
@@ -479,7 +498,11 @@ const state = reactive({
     defaults: {
       timezone: '',
       dateFormat: '',
-      timeFormat: ''
+      timeFormat: '',
+      tocDepth: {
+        min: 1,
+        max: 2
+      }
     },
     robots: {
       index: false,
@@ -573,6 +596,10 @@ async function load () {
             timezone
             dateFormat
             timeFormat
+            tocDepth {
+              min
+              max
+            }
           }
         }
       }
@@ -635,7 +662,11 @@ async function save () {
           defaults: {
             timezone: state.config.defaults?.timezone ?? 'America/New_York',
             dateFormat: state.config.defaults?.dateFormat ?? 'YYYY-MM-DD',
-            timeFormat: state.config.defaults?.timeFormat ?? '12h'
+            timeFormat: state.config.defaults?.timeFormat ?? '12h',
+            tocDepth: {
+              min: state.config.defaults?.tocDepth?.min ?? 1,
+              max: state.config.defaults?.tocDepth?.max ?? 2
+            }
           }
         }
       }

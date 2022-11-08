@@ -325,7 +325,7 @@ q-page.admin-mail
 <script setup>
 import { cloneDeep } from 'lodash-es'
 import gql from 'graphql-tag'
-import filesize from 'filesize'
+import { filesize } from 'filesize'
 import filesizeParser from 'filesize-parser'
 
 import { useI18n } from 'vue-i18n'

@@ -1,11 +1,57 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
-import { cloneDeep, last, transform } from 'lodash-es'
+import { cloneDeep, last, pick, transform } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 import { useSiteStore } from './site'
 import { useEditorStore } from './editor'
 
+const pagePropsFragment = gql`
+  fragment PageRead on Page {
+    allowComments
+    allowContributions
+    allowRatings
+    contentType
+    createdAt
+    description
+    editor
+    icon
+    id
+    isBrowsable
+    locale
+    password
+    path
+    publishEndDate
+    publishStartDate
+    publishState
+    relations {
+      id
+      position
+      label
+      caption
+      icon
+      target
+    }
+    render
+    scriptJsLoad
+    scriptJsUnload
+    scriptCss
+    showSidebar
+    showTags
+    showToc
+    tags {
+      tag
+      title
+    }
+    title
+    toc
+    tocDepth {
+      min
+      max
+    }
+    updatedAt
+  }
+`
 const gqlQueries = {
   pageById: gql`
     query loadPage (
@@ -14,16 +60,10 @@ const gqlQueries = {
       pageById(
         id: $id
       ) {
-        id
-        title
-        description
-        path
-        locale
-        updatedAt
-        render
-        toc
+        ...PageRead
       }
     }
+    ${pagePropsFragment}
   `,
   pageByPath: gql`
     query loadPage (
@@ -34,58 +74,49 @@ const gqlQueries = {
         siteId: $siteId
         path: $path
       ) {
-        id
-        title
-        description
-        path
-        locale
-        updatedAt
-        render
-        toc
+        ...PageRead
       }
     }
+    ${pagePropsFragment}
   `
 }
 
 export const usePageStore = defineStore('page', {
   state: () => ({
-    isLoading: true,
-    mode: 'view',
-    editor: 'wysiwyg',
-    editorMode: 'edit',
-    id: 0,
-    authorId: 0,
-    authorName: '',
-    createdAt: '',
-    description: '',
-    isPublished: true,
-    showInTree: true,
-    locale: 'en',
-    path: '',
-    publishEndDate: '',
-    publishStartDate: '',
-    tags: [],
-    title: '',
-    icon: 'las la-file-alt',
-    updatedAt: '',
-    relations: [],
-    scriptJsLoad: '',
-    scriptJsUnload: '',
-    scriptStyles: '',
     allowComments: false,
     allowContributions: true,
     allowRatings: true,
+    authorId: 0,
+    authorName: '',
+    commentsCount: 0,
+    content: '',
+    createdAt: '',
+    description: '',
+    icon: 'las la-file-alt',
+    id: '',
+    isBrowsable: true,
+    locale: 'en',
+    password: '',
+    path: '',
+    publishEndDate: '',
+    publishStartDate: '',
+    publishState: '',
+    relations: [],
+    render: '',
+    scriptJsLoad: '',
+    scriptJsUnload: '',
+    scriptCss: '',
     showSidebar: true,
-    showToc: true,
     showTags: true,
+    showToc: true,
+    tags: [],
+    title: '',
+    toc: [],
     tocDepth: {
       min: 1,
       max: 2
     },
-    commentsCount: 0,
-    content: '',
-    render: '',
-    toc: []
+    updatedAt: ''
   }),
   getters: {
     breadcrumbs: (state) => {
@@ -120,7 +151,11 @@ export const usePageStore = defineStore('page', {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
         // Update page store
-        this.$patch(pageData)
+        this.$patch({
+          ...pageData,
+          relations: pageData.relations.map(r => pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])),
+          tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+        })
         // Update editor state timestamps
         const curDate = DateTime.utc()
         editorStore.$patch({
@@ -173,6 +208,73 @@ export const usePageStore = defineStore('page', {
 
       // -> View Mode
       this.mode = 'edit'
+    },
+    /**
+     * PAGE SAVE
+     */
+    async pageSave () {
+      const editorStore = useEditorStore()
+      try {
+        const resp = await APOLLO_CLIENT.mutate({
+          mutation: gql`
+            mutation savePage (
+              $id: UUID!
+              $patch: PageUpdateInput!
+            ) {
+              updatePage (
+                id: $id
+                patch: $patch
+              ) {
+                operation {
+                  succeeded
+                  message
+                }
+              }
+            }
+            `,
+          variables: {
+            id: this.id,
+            patch: pick(this, [
+              'allowComments',
+              'allowContributions',
+              'allowRatings',
+              // 'content',
+              'description',
+              'icon',
+              'isBrowsable',
+              'locale',
+              'password',
+              'path',
+              'publishEndDate',
+              'publishStartDate',
+              'publishState',
+              'relations',
+              'scriptJsLoad',
+              'scriptJsUnload',
+              'scriptCss',
+              'showSidebar',
+              'showTags',
+              'showToc',
+              'tags',
+              'title',
+              'tocDepth'
+            ])
+          }
+        })
+        const result = resp?.data?.updatePage?.operation ?? {}
+        if (!result.succeeded) {
+          throw new Error(result.message)
+        }
+        // Update editor state timestamps
+        const curDate = DateTime.utc()
+        editorStore.$patch({
+          lastChangeTimestamp: curDate,
+          lastSaveTimestamp: curDate
+        })
+      } catch (err) {
+        console.warn(err)
+        throw err
+      }
     },
     generateToc () {
 

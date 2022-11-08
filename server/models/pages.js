@@ -13,6 +13,8 @@ const TurndownService = require('turndown')
 const turndownPluginGfm = require('@joplin/turndown-plugin-gfm').gfm
 const cheerio = require('cheerio')
 
+const pageRegex = /^[a-zA0-90-9-_/]*$/
+
 const frontmatterRegex = {
   html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,
   legacy: /^(<!-- TITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)*([\w\W]*)*/i,
@@ -52,7 +54,7 @@ module.exports = class Page extends Model {
   }
 
   static get jsonAttributes() {
-    return ['extra']
+    return ['config', 'historyData', 'relations', 'scripts', 'toc']
   }
 
   static get relationMappings() {
@@ -231,11 +233,6 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.Custom('InvalidSiteId', 'Site ID is invalid.')
     }
 
-    // -> Validate path
-    if (opts.path.includes('.') || opts.path.includes(' ') || opts.path.includes('\\') || opts.path.includes('//')) {
-      throw new WIKI.Error.PageIllegalPath()
-    }
-
     // -> Remove trailing slash
     if (opts.path.endsWith('/')) {
       opts.path = opts.path.slice(0, -1)
@@ -245,6 +242,14 @@ module.exports = class Page extends Model {
     if (opts.path.startsWith('/')) {
       opts.path = opts.path.slice(1)
     }
+
+    // -> Validate path
+    if (!pageRegex.test(opts.path)) {
+      throw new Error('ERR_INVALID_PATH')
+    }
+
+    opts.path = opts.path.toLowerCase()
+    const dotPath = opts.path.replaceAll('/', '.').replaceAll('-', '_')
 
     // -> Check for page access
     if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
@@ -279,41 +284,52 @@ module.exports = class Page extends Model {
     }
 
     // -> Format JS Scripts
-    let scriptJs = ''
+    let scriptJsLoad = ''
+    let scriptJsUnload = ''
     if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
       locale: opts.locale,
       path: opts.path
     })) {
-      scriptJs = opts.scriptJs || ''
+      scriptJsLoad = opts.scriptJsLoad || ''
+      scriptJsUnload = opts.scriptJsUnload || ''
     }
 
     // -> Create page
-    await WIKI.db.pages.query().insert({
+    const page = await WIKI.db.pages.query().insert({
       authorId: opts.user.id,
       content: opts.content,
       creatorId: opts.user.id,
-      contentType: _.get(WIKI.data.editors[opts.editor], 'contentType', 'text'),
+      config: {
+        allowComments: opts.allowComments ?? true,
+        allowContributions: opts.allowContributions ?? true,
+        allowRatings: opts.allowRatings ?? true,
+        showSidebar: opts.showSidebar ?? true,
+        showTags: opts.showTags ?? true,
+        showToc: opts.showToc ?? true,
+        tocDepth: opts.tocDepth ?? WIKI.sites[opts.siteId].config?.defaults.tocDepth
+      },
+      contentType: WIKI.data.editors[opts.editor]?.contentType ?? 'text',
       description: opts.description,
+      dotPath: dotPath,
       editor: opts.editor,
       hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale }),
-      publishState: opts.publishState,
+      icon: opts.icon,
+      isBrowsable: opts.isBrowsable ?? true,
       localeCode: opts.locale,
       path: opts.path,
+      publishState: opts.publishState,
       publishEndDate: opts.publishEndDate?.toISO(),
       publishStartDate: opts.publishStartDate?.toISO(),
+      relations: opts.relations ?? [],
       siteId: opts.siteId,
       title: opts.title,
       toc: '[]',
-      extra: JSON.stringify({
-        js: scriptJs,
+      scripts: JSON.stringify({
+        jsLoad: scriptJsLoad,
+        jsUnload: scriptJsUnload,
         css: scriptCss
       })
-    })
-    const page = await WIKI.db.pages.getPageFromDb({
-      path: opts.path,
-      locale: opts.locale,
-      userId: opts.user.id
-    })
+    }).returning('*')
 
     // -> Save Tags
     if (opts.tags && opts.tags.length > 0) {
@@ -365,7 +381,7 @@ module.exports = class Page extends Model {
     // -> Fetch original page
     const ogPage = await WIKI.db.pages.query().findById(opts.id)
     if (!ogPage) {
-      throw new Error('Invalid Page Id')
+      throw new Error('ERR_PAGE_NOT_FOUND')
     }
 
     // -> Check for page access
@@ -373,70 +389,205 @@ module.exports = class Page extends Model {
       locale: ogPage.localeCode,
       path: ogPage.path
     })) {
-      throw new WIKI.Error.PageUpdateForbidden()
+      throw new Error('ERR_PAGE_UPDATE_FORBIDDEN')
     }
 
-    // -> Check for empty content
-    if (!opts.content || _.trim(opts.content).length < 1) {
-      throw new WIKI.Error.PageEmptyContent()
+    const patch = {}
+    const historyData = {
+      action: 'updated',
+      affectedFields: []
     }
 
     // -> Create version snapshot
-    await WIKI.db.pageHistory.addVersion({
-      ...ogPage,
-      action: opts.action ? opts.action : 'updated',
-      versionDate: ogPage.updatedAt
-    })
+    await WIKI.db.pageHistory.addVersion(ogPage)
 
-    // -> Format Extra Properties
-    if (!_.isPlainObject(ogPage.extra)) {
-      ogPage.extra = {}
+    // -> Basic fields
+    if ('title' in opts.patch) {
+      patch.title = opts.patch.title.trim()
+      historyData.affectedFields.push('title')
+
+      if (patch.title.length < 1) {
+        throw new Error('ERR_PAGE_TITLE_MISSING')
+      }
+    }
+
+    if ('description' in opts.patch) {
+      patch.description = opts.patch.description.trim()
+      historyData.affectedFields.push('description')
+    }
+
+    if ('icon' in opts.patch) {
+      patch.icon = opts.patch.icon.trim()
+      historyData.affectedFields.push('icon')
+    }
+
+    if ('content' in opts.patch) {
+      patch.content = opts.patch.content
+      historyData.affectedFields.push('content')
+    }
+
+    // -> Publish State
+    if (opts.patch.publishState) {
+      patch.publishState = opts.patch.publishState
+      historyData.affectedFields.push('publishState')
+
+      if (patch.publishState === 'scheduled' && (!opts.patch.publishStartDate || !opts.patch.publishEndDate)) {
+        throw new Error('ERR_PAGE_MISSING_SCHEDULED_DATES')
+      }
+    }
+    if (opts.patch.publishStartDate) {
+      patch.publishStartDate = opts.patch.publishStartDate
+      historyData.affectedFields.push('publishStartDate')
+    }
+    if (opts.patch.publishEndDate) {
+      patch.publishEndDate = opts.patch.publishEndDate
+      historyData.affectedFields.push('publishEndDate')
+    }
+
+    // -> Page Config
+    if ('isBrowsable' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        isBrowsable: opts.patch.isBrowsable
+      }
+      historyData.affectedFields.push('isBrowsable')
+    }
+    if ('allowComments' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        allowComments: opts.patch.allowComments
+      }
+      historyData.affectedFields.push('allowComments')
+    }
+    if ('allowContributions' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        allowContributions: opts.patch.allowContributions
+      }
+      historyData.affectedFields.push('allowContributions')
+    }
+    if ('allowRatings' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        allowRatings: opts.patch.allowRatings
+      }
+      historyData.affectedFields.push('allowRatings')
+    }
+    if ('showSidebar' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        showSidebar: opts.patch.showSidebar
+      }
+      historyData.affectedFields.push('showSidebar')
+    }
+    if ('showTags' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        showTags: opts.patch.showTags
+      }
+      historyData.affectedFields.push('showTags')
+    }
+    if ('showToc' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        showToc: opts.patch.showToc
+      }
+      historyData.affectedFields.push('showToc')
+    }
+    if ('tocDepth' in opts.patch) {
+      patch.config = {
+        ...patch.config ?? ogPage.config ?? {},
+        tocDepth: opts.patch.tocDepth
+      }
+      historyData.affectedFields.push('tocDepth')
+
+      if (patch.config.tocDepth?.min < 1 || patch.config.tocDepth?.min > 6) {
+        throw new Error('ERR_PAGE_INVALID_TOC_DEPTH')
+      }
+      if (patch.config.tocDepth?.max < 1 || patch.config.tocDepth?.max > 6) {
+        throw new Error('ERR_PAGE_INVALID_TOC_DEPTH')
+      }
+    }
+
+    // -> Relations
+    if ('relations' in opts.patch) {
+      patch.relations = opts.patch.relations.map(r => {
+        if (r.label.length < 1) {
+          throw new Error('ERR_PAGE_RELATION_LABEL_MISSING')
+        } else if (r.label.length > 255) {
+          throw new Error('ERR_PAGE_RELATION_LABEL_TOOLONG')
+        } else if (r.icon.length > 255) {
+          throw new Error('ERR_PAGE_RELATION_ICON_INVALID')
+        } else if (r.target.length > 1024) {
+          throw new Error('ERR_PAGE_RELATION_TARGET_INVALID')
+        }
+        return r
+      })
+      historyData.affectedFields.push('relations')
     }
 
     // -> Format CSS Scripts
-    let scriptCss = _.get(ogPage, 'extra.css', '')
-    if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
-      locale: opts.locale,
-      path: opts.path
-    })) {
-      if (!_.isEmpty(opts.scriptCss)) {
-        scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
-      } else {
-        scriptCss = ''
+    if (opts.patch.scriptCss) {
+      if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
+        locale: ogPage.localeCode,
+        path: ogPage.path
+      })) {
+        patch.scripts = {
+          ...patch.scripts ?? ogPage.scripts ?? {},
+          css: !_.isEmpty(opts.patch.scriptCss) ? new CleanCSS({ inline: false }).minify(opts.patch.scriptCss).styles : ''
+        }
+        historyData.affectedFields.push('scripts.css')
       }
     }
 
     // -> Format JS Scripts
-    let scriptJs = _.get(ogPage, 'extra.js', '')
-    if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
-      locale: opts.locale,
-      path: opts.path
-    })) {
-      scriptJs = opts.scriptJs || ''
+    if (opts.patch.scriptJsLoad) {
+      if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
+        locale: ogPage.localeCode,
+        path: ogPage.path
+      })) {
+        patch.scripts = {
+          ...patch.scripts ?? ogPage.scripts ?? {},
+          jsLoad: opts.patch.scriptJsLoad ?? ''
+        }
+        historyData.affectedFields.push('scripts.jsLoad')
+      }
+    }
+    if (opts.patch.scriptJsUnload) {
+      if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
+        locale: ogPage.localeCode,
+        path: ogPage.path
+      })) {
+        patch.scripts = {
+          ...patch.scripts ?? ogPage.scripts ?? {},
+          jsUnload: opts.patch.scriptJsUnload ?? ''
+        }
+        historyData.affectedFields.push('scripts.jsUnload')
+      }
+    }
+
+    // -> Tags
+    if ('tags' in opts.patch) {
+      historyData.affectedFields.push('tags')
     }
 
     // -> Update page
     await WIKI.db.pages.query().patch({
+      ...patch,
       authorId: opts.user.id,
-      content: opts.content,
-      description: opts.description,
-      publishState: opts.publishState,
-      publishEndDate: opts.publishEndDate?.toISO(),
-      publishStartDate: opts.publishStartDate?.toISO(),
-      title: opts.title,
-      extra: JSON.stringify({
-        ...ogPage.extra,
-        js: scriptJs,
-        css: scriptCss
-      })
+      historyData
     }).where('id', ogPage.id)
     let page = await WIKI.db.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
-    await WIKI.db.tags.associateTags({ tags: opts.tags, page })
+    if (opts.patch.tags) {
+      await WIKI.db.tags.associateTags({ tags: opts.patch.tags, page })
+    }
 
     // -> Render page to HTML
-    await WIKI.db.pages.renderPage(page)
+    if (opts.patch.content) {
+      await WIKI.db.pages.renderPage(page)
+    }
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // // -> Update Search Index
@@ -468,11 +619,6 @@ module.exports = class Page extends Model {
         destinationPath: opts.path,
         user: opts.user
       })
-    } else {
-      // -> Update title of page tree entry
-      await WIKI.db.knex.table('pageTree').where({
-        pageId: page.id
-      }).update('title', page.title)
     }
 
     // -> Get latest updatedAt
@@ -944,6 +1090,8 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async getPage(opts) {
+    return WIKI.db.pages.getPageFromDb(opts)
+
     // -> Get from cache first
     let page = await WIKI.db.pages.getPageFromCache(opts)
     if (!page) {
@@ -974,26 +1122,7 @@ module.exports = class Page extends Model {
     try {
       return WIKI.db.pages.query()
         .column([
-          'pages.id',
-          'pages.path',
-          'pages.hash',
-          'pages.title',
-          'pages.description',
-          'pages.publishState',
-          'pages.publishStartDate',
-          'pages.publishEndDate',
-          'pages.content',
-          'pages.render',
-          'pages.toc',
-          'pages.contentType',
-          'pages.createdAt',
-          'pages.updatedAt',
-          'pages.editor',
-          'pages.localeCode',
-          'pages.authorId',
-          'pages.creatorId',
-          'pages.siteId',
-          'pages.extra',
+          'pages.*',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',

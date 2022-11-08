@@ -81,7 +81,7 @@ q-header.bg-header.text-white.site-header(
         round
         dense
         icon='las la-tools'
-        color='secondary'
+        color='positive'
         to='/_admin'
         aria-label='Administration'
         )
