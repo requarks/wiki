@@ -145,7 +145,7 @@
                         v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-1` : `blue-grey darken-2`', dense) mdi-comment-plus
                     span {{$t('common:comments.newComment')}}
 
-            v-card.mb-5
+            v-card.mb-5.author-card
               .pa-5
                 .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
@@ -162,7 +162,7 @@
                         )
                         v-icon(color='indigo', dense) mdi-history
                     span {{$t('common:header.history')}}
-                .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
+                .body-2.grey--text.author-name(:class='$vuetify.theme.dark ? `` : `text--darken-3`' rel="author") {{ authorName }}
                 .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- v-card.mb-5
