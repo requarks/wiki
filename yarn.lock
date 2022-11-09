@@ -12968,6 +12968,11 @@ markdown-it-attrs@3.0.3:
   resolved "https://registry.yarnpkg.com/markdown-it-attrs/-/markdown-it-attrs-3.0.3.tgz#92acdb16fe551cb056c5eb9848413443cafb5231"
   integrity sha512-cLnICU2t61skNCr4Wih/sdza+UbQcqJGZwvqAypnbWA284nzDm+Gpc90iaRk/JjsIy4emag5v3s0rXFhFBWhCA==
 
+markdown-it-decorate@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/markdown-it-decorate/-/markdown-it-decorate-1.2.2.tgz#f1e11d11d837ae78906198f8a2c974f0e646acb7"
+  integrity sha512-7BFWJ97KBXgkaPVjKHISQnhSW8RWQ7yRNXpr8pPUV2Rw4GHvGrgb6CelKCM+GSijP0uSLCAVfc/knWIz+2v/Sw==
+
 markdown-it-emoji@1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/markdown-it-emoji/-/markdown-it-emoji-1.4.0.tgz#9bee0e9a990a963ba96df6980c4fddb05dfb4dcc"
