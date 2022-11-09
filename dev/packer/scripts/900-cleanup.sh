@@ -12,6 +12,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get -y update
 apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes
 apt-get purge droplet-agent
+rm -rf /opt/digitalocean
 apt-get -y autoremove
 apt-get -y autoclean
 rm -rf /tmp/* /var/tmp/*
