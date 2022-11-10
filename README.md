@@ -462,6 +462,9 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 ![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
 [Lokalise](https://lokalise.com/) for providing access to their great localization tool.
 
+![MacStadium](https://static.requarks.io/logo/macstadium-h40.png)  
+[MacStadium](https://www.macstadium.com) for providing access to their Mac hardware in the cloud.
+
 ![Netlify](https://js.wiki/legacy/logo_netlify.png)  
 [Netlify](https://www.netlify.com) for providing hosting for our website.
 
