@@ -24,7 +24,7 @@ q-menu(
       blueprint-icon(icon='advance')
       q-item-section.q-pr-sm New Redirection
     q-separator.q-my-sm(inset)
-    q-item(clickable, to='/_assets')
+    q-item(clickable, @click='openFileManager')
       blueprint-icon(icon='add-image')
       q-item-section.q-pr-sm Upload Media Asset
 </template>
@@ -34,6 +34,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 
 import { usePageStore } from 'src/stores/page'
+import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
 
@@ -42,6 +43,7 @@ const $q = useQuasar()
 // STORES
 
 const pageStore = usePageStore()
+const siteStore = useSiteStore()
 
 // I18N
 
@@ -52,5 +54,9 @@ const { t } = useI18n()
 function create (editor) {
   window.location.assign('/_edit/new')
   // pageStore.pageCreate({ editor })
+}
+
+function openFileManager () {
+  siteStore.overlay = 'FileManager'
 }
 </script>

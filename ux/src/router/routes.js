@@ -48,6 +48,7 @@ const routes = [
       // -> System
       { path: 'api', component: () => import('pages/AdminApi.vue') },
       { path: 'extensions', component: () => import('pages/AdminExtensions.vue') },
+      { path: 'icons', component: () => import('pages/AdminIcons.vue') },
       { path: 'instances', component: () => import('pages/AdminInstances.vue') },
       { path: 'mail', component: () => import('pages/AdminMail.vue') },
       // { path: 'rendering', component: () => import('pages/AdminRendering.vue') },

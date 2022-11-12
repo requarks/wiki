@@ -142,6 +142,10 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-module.svg')
           q-item-section {{ t('admin.extensions.title') }}
+        q-item(to='/_admin/icons', v-ripple, active-class='bg-primary text-white')
+          q-item-section(avatar)
+            q-icon(name='img:/_assets/icons/fluent-spring.svg')
+          q-item-section {{ t('admin.icons.title') }}
         q-item(to='/_admin/instances', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-network.svg')

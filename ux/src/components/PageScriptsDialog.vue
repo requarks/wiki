@@ -1,20 +1,20 @@
 <template lang="pug">
 q-card.page-scripts-dialog(style='width: 860px; max-width: 90vw;')
   q-toolbar.bg-primary.text-white
-    .text-subtitle2 {{$t('editor.pageScripts.title')}} - {{$t('editor.props.' + mode)}}
+    .text-subtitle2 {{t('editor.pageScripts.title')}} - {{t('editor.props.' + props.mode)}}
     q-space
     q-chip(
       square
       style='background-color: rgba(0,0,0,.1)'
       text-color='white'
       )
-      .text-caption {{this.languageLabel}}
+      .text-caption {{languageLabel}}
   div(style='min-height: 450px;')
-    q-no-ssr(:placeholder='$t(`common.loading`)')
+    q-no-ssr(:placeholder='t(`common.loading`)')
       util-code-editor(
-        v-if='showEditor'
+        v-if='state.showEditor'
         ref='editor'
-        v-model='content'
+        v-model='state.content'
         :language='language'
         :min-height='450'
       )
@@ -22,7 +22,7 @@ q-card.page-scripts-dialog(style='width: 860px; max-width: 90vw;')
     q-space
     q-btn.acrylic-btn(
       icon='las la-times'
-      :label='$t(`common.actions.discard`)'
+      :label='t(`common.actions.discard`)'
       color='grey-7'
       padding='xs md'
       v-close-popup
@@ -30,7 +30,7 @@ q-card.page-scripts-dialog(style='width: 860px; max-width: 90vw;')
     )
     q-btn(
       icon='las la-check'
-      :label='$t(`common.actions.save`)'
+      :label='t(`common.actions.save`)'
       unelevated
       color='primary'
       padding='xs md'
@@ -39,65 +39,92 @@ q-card.page-scripts-dialog(style='width: 860px; max-width: 90vw;')
     )
 </template>
 
-<script>
+<script setup>
+import { computed, nextTick, onMounted, reactive } from 'vue'
+import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
+
 import UtilCodeEditor from './UtilCodeEditor.vue'
 
-export default {
-  components: {
-    UtilCodeEditor
-  },
-  props: {
-    mode: {
-      type: String,
-      default: 'css'
-    }
-  },
-  data () {
-    return {
-      content: '',
-      showEditor: false
-    }
-  },
-  computed: {
-    language () {
-      switch (this.mode) {
-        case 'jsLoad':
-        case 'jsUnload':
-          return 'javascript'
-        case 'styles':
-          return 'css'
-        default:
-          return 'plaintext'
-      }
-    },
-    languageLabel () {
-      switch (this.language) {
-        case 'javascript':
-          return 'Javascript'
-        case 'css':
-          return 'CSS'
-        default:
-          return 'Plain Text'
-      }
-    },
-    contentStoreKey () {
-      return 'script' + this.mode.charAt(0).toUpperCase() + this.mode.slice(1)
-    }
-  },
-  mounted () {
-    this.content = this.$store.get(`page/${this.contentStoreKey}`)
-    this.$nextTick(() => {
-      setTimeout(() => {
-        this.showEditor = true
-      }, 250)
-    })
-  },
-  methods: {
-    persist () {
-      this.$store.set(`page/${this.contentStoreKey}`, this.content)
-    }
+import { usePageStore } from 'src/stores/page'
+import { useSiteStore } from 'src/stores/site'
+
+// PROPS
+
+const props = defineProps({
+  mode: {
+    type: String,
+    default: 'css'
   }
+})
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const pageStore = usePageStore()
+const siteStore = useSiteStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// DATA
+
+const state = reactive({
+  content: '',
+  showEditor: false
+})
+
+// COMPUTED
+
+const language = computed(() => {
+  switch (props.mode) {
+    case 'jsLoad':
+    case 'jsUnload':
+      return 'javascript'
+    case 'styles':
+      return 'css'
+    default:
+      return 'plaintext'
+  }
+})
+
+const languageLabel = computed(() => {
+  switch (language.value) {
+    case 'javascript':
+      return 'Javascript'
+    case 'css':
+      return 'CSS'
+    default:
+      return 'Plain Text'
+  }
+})
+
+const contentStoreKey = computed(() => {
+  return 'script' + props.mode.charAt(0).toUpperCase() + props.mode.slice(1)
+})
+
+// METHODS
+
+function persist () {
+  pageStore.$patch({
+    [contentStoreKey]: state.content
+  })
 }
+
+// MOUNTED
+
+onMounted(() => {
+  state.content = pageStore[contentStoreKey.value]
+  nextTick(() => {
+    setTimeout(() => {
+      state.showEditor = true
+    }, 250)
+  })
+})
 </script>
 
 <style lang="scss">

@@ -618,7 +618,7 @@ module.exports = {
       return obj.icon || 'las la-file-alt'
     },
     password (obj) {
-      return obj ? '********' : ''
+      return obj.password ? '********' : ''
     },
     async tags (obj) {
       return WIKI.db.pages.relatedQuery('tags').for(obj.id)

@@ -25,6 +25,7 @@ export const useSiteStore = defineStore('site', {
     pageDataTemplates: [],
     showSideNav: true,
     showSidebar: true,
+    overlay: 'FileManager',
     theme: {
       dark: false,
       injectCSS: '',
@@ -54,7 +55,9 @@ export const useSiteStore = defineStore('site', {
     },
     docsBase: 'https://next.js.wiki/docs'
   }),
-  getters: {},
+  getters: {
+    overlayIsShown: (state) => Boolean(state.overlay)
+  },
   actions: {
     async loadSite (hostname) {
       try {

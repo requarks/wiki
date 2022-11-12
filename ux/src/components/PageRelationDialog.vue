@@ -205,7 +205,7 @@ function create () {
 function persist () {
   const rels = cloneDeep(pageStore.relations)
   for (const rel of rels) {
-    if (rel.id === state.editId) {
+    if (rel.id === props.editId) {
       rel.position = state.pos
       rel.label = state.label
       rel.caption = state.caption

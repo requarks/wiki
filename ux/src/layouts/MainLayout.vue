@@ -76,6 +76,16 @@ q-layout(view='hHh Lpr lff')
         round
         size='md'
       )
+  q-dialog.main-overlay(
+    v-model='siteStore.overlayIsShown'
+    persistent
+    full-width
+    full-height
+    no-shake
+    transition-show='jump-up'
+    transition-hide='jump-down'
+    )
+    component(:is='overlays[siteStore.overlay]')
   footer-nav
 </template>
 
@@ -91,6 +101,14 @@ import { useSiteStore } from '../stores/site'
 
 import HeaderNav from '../components/HeaderNav.vue'
 import FooterNav from 'src/components/FooterNav.vue'
+import LoadingGeneric from 'src/components/LoadingGeneric.vue'
+
+const overlays = {
+  FileManager: defineAsyncComponent({
+    loader: () => import('../components/FileManager.vue'),
+    loadingComponent: LoadingGeneric
+  })
+}
 
 // QUASAR
 
@@ -148,6 +166,30 @@ const barStyle = {
 
 body.body--dark {
   background-color: $dark-6;
+}
+
+.main-overlay {
+  > .q-dialog__backdrop {
+    background-color: rgba(0,0,0,.6);
+  }
+  > .q-dialog__inner {
+    padding: 24px 64px;
+
+    @media (max-width: $breakpoint-sm-max) {
+      padding: 0;
+    }
+
+    > .q-layout-container {
+      @at-root .body--light & {
+        background-image: linear-gradient(to bottom, $dark-5 10px, $grey-3 11px, $grey-4);
+      }
+      @at-root .body--dark & {
+        background-image: linear-gradient(to bottom, $dark-4 10px, $dark-4 11px, $dark-3);
+      }
+      border-radius: 6px;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.5);
+    }
+  }
 }
 
 .q-footer {

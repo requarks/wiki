@@ -80,12 +80,22 @@ q-header.bg-header.text-white.site-header(
         flat
         round
         dense
-        icon='las la-tools'
+        icon='las la-folder-open'
         color='positive'
-        to='/_admin'
-        aria-label='Administration'
+        aria-label='File Manager'
+        @click='toggleFileManager'
         )
-        q-tooltip Administration
+        q-tooltip File Manager
+      q-btn.q-ml-md(
+        flat
+        round
+        dense
+        icon='las la-tools'
+        color='pink'
+        to='/_admin'
+        :aria-label='t(`common.header.admin`)'
+        )
+        q-tooltip {{ t('common.header.admin') }}
       account-menu
 </template>
 
@@ -116,6 +126,12 @@ const { t } = useI18n()
 const state = reactive({
   search: ''
 })
+
+// METHODS
+
+function toggleFileManager () {
+  siteStore.overlay = 'FileManager'
+}
 </script>
 
 <style lang="scss">
