@@ -2,6 +2,44 @@
   color: #424242;
   font-size: 14px;
 
+  > *:first-child {
+    margin-top: 0;
+  }
+
+  // ---------------------------------
+  // LINKS
+  // ---------------------------------
+
+  a {
+    color: $blue;
+
+    &.is-internal-link.is-invalid-page {
+      color: $red-8;
+
+      @at-root .body--dark & {
+        color: $red-2;
+      }
+    }
+
+    &.is-external-link {
+      padding-right: 3px;
+
+      &::after {
+        font-family: 'Line Awesome Free';
+        font-size: 24px/1;
+        padding-left: 3px;
+        display: inline-block;
+        content: "\f35d";
+        color: $grey-5;
+        text-decoration: none;
+      }
+    }
+
+    @at-root .body--dark & {
+      color: $blue-2;
+    }
+  }
+
   // ---------------------------------
   // HEADERS
   // ---------------------------------
@@ -58,5 +96,340 @@
     font-size: 1.25rem;
     text-decoration: none;
     color: #666;
+  }
+
+  // ---------------------------------
+  // PARAGRAPHS
+  // ---------------------------------
+
+  p {
+    padding: 1rem 0 0 0;
+    margin: 0;
+
+    @at-root .page-contents > div > p:first-child {
+      padding-top: 0;
+    }
+  }
+
+  // ---------------------------------
+  // BLOCKQUOTES
+  // ---------------------------------
+
+  blockquote {
+    padding: 0 1rem 1rem 1rem;
+    background-color: $blue-grey-1;
+    border-left: 55px solid $blue-grey-5;
+    border-radius: .5rem;
+    margin: 1rem 0;
+    position: relative;
+
+    @at-root .body--dark & {
+      background-color: $blue-grey-9;
+    }
+
+    &::before {
+      display: inline-block;
+      font: normal normal normal 24px/1 "Line Awesome Free", sans-serif;
+      position: absolute;
+      margin-top: -12px;
+      top: 50%;
+      left: -38px;
+      color: rgba(255, 255, 255, .7);
+      content: "\F0757";
+    }
+
+    > p:first-child .emoji {
+      margin-right: .5rem;
+    }
+
+    &.valign-center > p {
+      display: flex;
+      align-items: center;
+    }
+
+    &.is-info {
+      background-color: $blue-1;
+      border-color: $blue-3;
+      color: $blue-9;
+
+      &::before {
+        content: "\F02FC";
+      }
+
+      code {
+        background-color: $blue-1;
+        color: $blue-8;
+      }
+
+      @at-root .body--dark & {
+        background-color: $blue-9;
+        color: $blue-5;
+        border-color: $blue-5;
+      }
+    }
+    &.is-warning {
+      background-color: $orange-1;
+      border-color: $orange-3;
+      color: darken($orange-9, 10%);
+
+      &::before {
+        content: "\F0026";
+      }
+
+      code {
+        background-color: $orange-1;
+        color: $orange-8;
+      }
+
+      @at-root .body--dark & {
+        background-color: darken($orange-9, 5%);
+        color: $orange-1;
+        border-color: $orange-5;
+        box-shadow: 0 0 2px 0 $grey-9;
+      }
+    }
+    &.is-danger {
+      background-color: $red-1;
+      border-color: $red-3;
+      color: $red-9;
+
+      &::before {
+        content: "\F0159";
+      }
+
+      code {
+        background-color: $red-1;
+        color: $red-8;
+      }
+
+      @at-root .body--dark & {
+        background-color: $red-9;
+        color: $red-1;
+        border-color: $red-5;
+      }
+    }
+    &.is-success {
+      background-color: $green-1;
+      border-color: $green-3;
+      color: $green-9;
+
+      &::before {
+        content: "\F0E1E";
+      }
+
+      code {
+        background-color: $green-1;
+        color: $green-8;
+      }
+
+      @at-root .body--dark & {
+        background-color: $green-9;
+        color: $green-5;
+        border-color: $green-5;
+      }
+    }
+  }
+
+  // ---------------------------------
+  // LISTS
+  // ---------------------------------
+
+  ol, ul:not(.tabset-tabs) {
+    padding-top: 1rem;
+    width: 100%;
+
+    @at-root .is-rtl & {
+      padding-left: 0;
+      padding-right: 1rem;
+    }
+
+    li > ul, li > ol {
+      padding-top: .5rem;
+      padding-left: 1rem;
+
+      @at-root .is-rtl & {
+        padding-left: 0;
+        padding-right: 1rem;
+      }
+    }
+
+    li + li {
+      margin-top: .5rem;
+    }
+
+    &.links-list {
+      padding-left: 0;
+      list-style-type: none;
+
+      @at-root .is-rtl & {
+        padding-right: 0;
+      }
+
+      li {
+        background-color: $grey-1;
+        background-image: linear-gradient(to bottom, #FFF, $grey-1);
+        border-right: 1px solid $grey-3;
+        border-bottom: 1px solid $grey-3;
+        border-left: 5px solid $grey-4;
+        box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
+        padding: 1rem;
+        border-radius: 5px;
+        font-weight: 500;
+
+        @at-root .is-rtl & {
+          border-left-width: 1px;
+          border-right-width: 5px;
+        }
+
+        &:hover {
+          background-image: linear-gradient(to bottom, #FFF, lighten($blue-1, 4%));
+          border-left-color: $blue-5;
+          cursor: pointer;
+
+          @at-root .is-rtl & {
+            border-left-color: $grey-3;
+            border-right-width: $blue-5;
+          }
+        }
+
+        &::before {
+          content: '';
+          display: none;
+        }
+
+        > a {
+          display: block;
+          text-decoration: none;
+          margin: -1rem;
+          padding: 1rem;
+
+          > em {
+            font-weight: 400;
+            font-style: normal;
+            color: $grey-7;
+            display: inline-block;
+            padding-left: .5rem;
+            border-left: 1px solid $grey-4;
+            margin-left: .5rem;
+
+            &.is-block {
+              display: block;
+              padding-left: 0;
+              margin-left: 0;
+              border-left: none;
+            }
+          }
+        }
+
+        > em {
+          font-weight: 400;
+          font-style: normal;
+        }
+
+        @at-root .body--dark & {
+          background-color: $grey-1;
+          background-image: linear-gradient(to bottom, lighten($grey-9, 5%), $grey-9);
+          border-right: 1px solid $grey-9;
+          border-bottom: 1px solid $grey-9;
+          border-left: 5px solid $grey-7;
+          box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.1);
+
+          @at-root .body--dark.is-rtl & {
+            border-left-width: 1px;
+            border-right-width: 5px;
+          }
+
+          &:hover {
+            background-image: linear-gradient(to bottom, lighten($grey-9, 2%), darken($grey-9, 3%));
+            border-left-color: mc('indigo', '300');
+            cursor: pointer;
+
+            @at-root .body--dark.is-rtl & {
+              border-left-color: $grey-9;
+              border-right-width: mc('indigo', '300');
+            }
+          }
+        }
+      }
+    }
+
+    &.grid-list {
+      margin: 1rem 0 0 0;
+      background-color: #FFF;
+      border: 1px solid $grey-3;
+      padding: 1px;
+      display: inline-block;
+      list-style-type: none;
+
+      @at-root .body--dark & {
+        background-color: #000;
+        border: 1px solid mc('grey', '800');
+      }
+
+      li {
+        background-color: $grey-1;
+        padding: .6rem 1rem;
+        display: block;
+
+        &:nth-child(odd) {
+          background-color: mc('grey', '100');
+        }
+
+        & + li {
+          margin-top: 0;
+        }
+
+        &::before {
+          content: '';
+          display: none;
+        }
+
+        @at-root .body--dark & {
+          background-color: $grey-9;
+
+          &:nth-child(odd) {
+            background-color: darken($grey-9, 5%);
+          }
+        }
+      }
+    }
+  }
+
+  ul:not(.tabset-tabs):not(.contains-task-list) {
+    list-style: none;
+    > li::before {
+      position: absolute;
+      left: -1.1rem;
+      content: '\25b8';
+      color: mc('grey', '600');
+      width: 1.35rem;
+
+      @at-root .is-rtl & {
+        right: -1.1rem;
+        content: '\25C3';
+      }
+    }
+  }
+  ol, ul:not(.tabset-tabs) {
+    > li {
+      position: relative;
+      > p {
+        display:inline-block;
+        vertical-align:top;
+        padding-top:0;
+      }
+    }
+  }
+
+  // ---------------------------------
+  // LEGACY
+  // ---------------------------------
+
+  .align-abstopright {
+    width: 100px;
+    max-height: 100px;
+    border: 2px dashed $red;
+    border-radius: 5px;
+    padding: 5px;
   }
 }

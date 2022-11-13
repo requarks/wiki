@@ -25,7 +25,7 @@ export const useSiteStore = defineStore('site', {
     pageDataTemplates: [],
     showSideNav: true,
     showSidebar: true,
-    overlay: 'FileManager',
+    overlay: null,
     theme: {
       dark: false,
       injectCSS: '',

@@ -83,12 +83,29 @@ q-layout(view='hHh lpR fFf', container)
         )
         q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.close`)}}
   q-drawer.bg-blue-grey-1(:model-value='true', :width='350')
-    q-list(padding, v-if='state.loading < 1')
+    .q-px-md.q-pb-sm
+      q-tree.fileman-toc(
+        :nodes='state.tree'
+        icon='las la-caret-right'
+        node-key='key'
+        dense
+        accordion
+        no-connectors
+        v-model:expanded='state.treeExpanded'
+        v-model:selected='state.treeSelected'
+        @click='openFolder'
+      )
   q-drawer.bg-grey-1(:model-value='true', :width='350', side='right')
-    q-list(padding, v-if='state.loading < 1')
+    .q-pa-md
+      q-img.rounded-borders(
+        src='https://picsum.photos/id/134/340/340'
+        width='100%'
+        fit='cover'
+        :ratio='16/10'
+      )
   q-page-container
     q-page.bg-white
-      q-bar.bg-grey-1
+      q-bar.bg-blue-grey-1
         small.text-caption.text-grey-7 / foo / bar
       q-list.fileman-filelist
         q-item(clickable)
@@ -130,10 +147,12 @@ q-layout(view='hHh lpR fFf', container)
 import { useI18n } from 'vue-i18n'
 import { reactive } from 'vue'
 
+import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 // STORES
 
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -144,13 +163,44 @@ const { t } = useI18n()
 
 const state = reactive({
   loading: 0,
-  search: ''
+  search: '',
+  tree: [
+    {
+      key: 'root',
+      label: 'Root',
+      children: [
+        {
+          key: '1',
+          label: 'guides',
+          icon: 'las la-folder',
+          children: [
+            {
+              key: '3',
+              label: 'offline',
+              icon: 'las la-folder'
+            }
+          ]
+        },
+        {
+          key: '2',
+          label: 'administration',
+          icon: 'las la-folder'
+        }
+      ]
+    }
+  ],
+  treeExpanded: ['root'],
+  treeSelected: []
 })
 
 // METHODS
 
 function close () {
   siteStore.overlay = null
+}
+
+function openFolder (node, noder) {
+  console.info(node, noder)
 }
 
 </script>
@@ -163,6 +213,12 @@ function close () {
     > .q-item {
       padding: 8px 6px;
       border-radius: 8px;
+    }
+  }
+
+  &-toc {
+    &.q-tree--dense .q-tree__node {
+      padding-bottom: 5px;
     }
   }
 }
