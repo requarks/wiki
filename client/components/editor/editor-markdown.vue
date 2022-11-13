@@ -348,11 +348,12 @@ plantuml.init(md, {})
 // KATEX
 // ========================================
 
+const macros = {}
 md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
 md.renderer.rules.katex_inline = (tokens, idx) => {
   try {
     return katex.renderToString(tokens[idx].content, {
-      displayMode: false
+      displayMode: false, macros
     })
   } catch (err) {
     console.warn(err)
@@ -365,7 +366,7 @@ md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
 md.renderer.rules.katex_block = (tokens, idx) => {
   try {
     return `<p>` + katex.renderToString(tokens[idx].content, {
-      displayMode: true
+      displayMode: true, macros
     }) + `</p>`
   } catch (err) {
     console.warn(err)
