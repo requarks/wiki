@@ -192,6 +192,24 @@ body::-webkit-scrollbar-thumb {
 }
 
 // ------------------------------------------------------------------
+// DROPDOWN MENUS
+// ------------------------------------------------------------------
+
+.translucent-menu {
+  @at-root .body--light & {
+    background-color: rgba(255,255,255,.9);
+  }
+  @at-root .body--dark & {
+    background-color: rgba($dark,.7);
+  }
+  backdrop-filter: blur(10px);
+
+  > .q-card {
+    background-color: transparent !important;
+  }
+}
+
+// ------------------------------------------------------------------
 // LOADING ANIMATIONS
 // ------------------------------------------------------------------
 

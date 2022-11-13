@@ -1,5 +1,5 @@
 <template lang="pug">
-q-menu(
+q-menu.translucent-menu(
   auto-close
   anchor='bottom right'
   self='top right'

@@ -9,7 +9,7 @@ q-btn.q-ml-md(flat, round, dense, color='grey')
     size='32px'
     )
     img(:src='`/_user/` + userStore.id + `/avatar`')
-  q-menu(auto-close)
+  q-menu.translucent-menu(auto-close)
     q-card(flat, style='width: 300px;', :dark='false')
       q-card-section(align='center')
         .text-subtitle1.text-grey-7 {{userStore.name}}
@@ -47,3 +47,7 @@ const userStore = useUserStore()
 
 const { t } = useI18n()
 </script>
+
+<style lang="scss">
+
+</style>
