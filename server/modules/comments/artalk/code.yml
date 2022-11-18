@@ -1,0 +1,17 @@
+main: |
+  <div id="Comments"></div>
+head: |
+  <link href="https://unpkg.com/artalk/dist/Artalk.css" rel="stylesheet">
+  <script src="https://unpkg.com/artalk/dist/Artalk.js"></script>
+body: |
+  <script>
+    window.onload = function() {
+      new Artalk({
+        el:        '#Comments',
+        pageKey:   '',
+        pageTitle: '',
+        server:    '{{server}}',
+        site:      '{{siteName}}',
+      });
+    };
+  </script>
