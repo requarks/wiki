@@ -2,7 +2,7 @@ key: artalk
 title: Artalk
 description: A light-weight self-hosted comment system.
 author: CDN18
-logo: https://artalk.js.org/favicon.png
+logo: https://static.requarks.io/logo/artalk.png
 website: https://artalk.js.org
 codeTemplate: true
 isAvailable: true
@@ -11,7 +11,7 @@ props:
     type: String
     title: Artalk Backend URL
     default: ''
-    hint: 'Publicly accessible URL of your Artalk instance. Protocol header (http/https) is required.'
+    hint: 'Publicly accessible URL of your Artalk instance. It should start with http/https and omit the trailing slash. (e.g. https://artalk.example.com)'
     maxWidth: 650
     order: 1
   siteName:
