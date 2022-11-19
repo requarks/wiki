@@ -75,7 +75,7 @@
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
           v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp')
-            v-card.mb-5(v-if='tocDecoded.length')
+            v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
                 template(v-for='(tocItem, tocIdx) in tocDecoded')
@@ -89,7 +89,7 @@
                       v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-            v-card.mb-5(v-if='tags.length > 0')
+            v-card.page-tags-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
                 v-chip.mr-1.mb-1(
@@ -109,7 +109,7 @@
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
-            v-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
+            v-card.page-comments-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
                 .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
                   span {{$t('common:comments.sdTitle')}}
@@ -145,7 +145,7 @@
                         v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-1` : `blue-grey darken-2`', dense) mdi-comment-plus
                     span {{$t('common:comments.newComment')}}
 
-            v-card.mb-5
+            v-card.page-author-card.mb-5
               .pa-5
                 .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
@@ -162,8 +162,8 @@
                         )
                         v-icon(color='indigo', dense) mdi-history
                     span {{$t('common:header.history')}}
-                .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
-                .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
+                .page-author-card-name.body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
+                .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- v-card.mb-5
             //-   .pa-5
@@ -178,7 +178,7 @@
             //-       )
             //-       .caption.grey--text 5 votes
 
-            v-card(flat)
+            v-card.page-shortcuts-card(flat)
               v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
                 v-spacer
                 v-tooltip(bottom)
