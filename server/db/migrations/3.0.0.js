@@ -435,6 +435,22 @@ exports.up = async knex => {
       }
     },
     {
+      key: 'icons',
+      value: {
+        fa: {
+          isActive: true,
+          config: {
+            version: 6,
+            license: 'free',
+            token: ''
+          }
+        },
+        la: {
+          isActive: true
+        }
+      }
+    },
+    {
       key: 'mail',
       value: {
         senderName: '',

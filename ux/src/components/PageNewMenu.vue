@@ -23,10 +23,11 @@ q-menu.translucent-menu(
     q-item(clickable, @click='create(`redirect`)')
       blueprint-icon(icon='advance')
       q-item-section.q-pr-sm New Redirection
-    q-separator.q-my-sm(inset)
-    q-item(clickable, @click='openFileManager')
-      blueprint-icon(icon='add-image')
-      q-item-section.q-pr-sm Upload Media Asset
+    template(v-if='props.hideAssetBtn === false')
+      q-separator.q-my-sm(inset)
+      q-item(clickable, @click='openFileManager')
+        blueprint-icon(icon='add-image')
+        q-item-section.q-pr-sm Upload Media Asset
 </template>
 
 <script setup>
@@ -35,6 +36,15 @@ import { useQuasar } from 'quasar'
 
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
+
+// PROPS
+
+const props = defineProps({
+  hideAssetBtn: {
+    type: Boolean,
+    default: false
+  }
+})
 
 // QUASAR
 

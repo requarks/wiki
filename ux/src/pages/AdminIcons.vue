@@ -44,7 +44,7 @@ q-page.admin-icons
                 .text-caption.text-red-1 {{ t('admin.icons.warnHint') }}
         q-list(separator)
           q-item(v-for='pack of combinedPacks', :key='pack.key')
-            blueprint-icon(icon='small-icons', :hueRotate='140')
+            blueprint-icon(icon='small-icons', :hueRotate='30')
             q-item-section
               q-item-label: strong {{pack.label}}
               q-item-label(caption, v-if='pack.isMandatory')
