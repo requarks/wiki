@@ -866,7 +866,7 @@ module.exports = class User extends Model {
     }
     const usr = await WIKI.models.users.query().findById(context.req.user.id).select('providerKey')
     const provider = _.find(WIKI.auth.strategies, ['key', usr.providerKey])
-    return provider.logout ? provider.logout(provider.config) : '/'
+    return provider.logout ? provider.logout(provider.config, context) : '/'
   }
 
   static async getGuestUser () {
