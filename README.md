@@ -425,6 +425,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Tracey Duffy
 - Quaxim
 - Richeir
+- Sergio Navarro Fernández
 - Shad Narcher
 - SmartNET.works
 - Stepan Sokolovskyi
