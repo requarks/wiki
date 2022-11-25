@@ -6,7 +6,8 @@ query {
       darkMode
       injectCSS
       injectHead
-      injectBody
+      injectBody,
+      injectInEditor
     }
   }
 }

@@ -130,7 +130,8 @@ module.exports = () => {
         iconset: 'mdi',
         injectCSS: '',
         injectHead: '',
-        injectBody: ''
+        injectBody: '',
+        injectInEditor: false
       })
       _.set(WIKI.config, 'title', 'Wiki.js')
 
