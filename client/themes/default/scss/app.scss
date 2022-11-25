@@ -282,11 +282,6 @@
         content: "\F02FC";
       }
 
-      code {
-        background-color: mc('blue', '50');
-        color: mc('blue', '800');
-      }
-
       @at-root .theme--dark & {
         background-color: mc('blue', '900');
         color: mc('blue', '50');
@@ -300,11 +295,6 @@
 
       &::before {
         content: "\F0026";
-      }
-
-      code {
-        background-color: mc('orange', '50');
-        color: mc('orange', '800');
       }
 
       @at-root .theme--dark & {
@@ -323,11 +313,6 @@
         content: "\F0159";
       }
 
-      code {
-        background-color: mc('red', '50');
-        color: mc('red', '800');
-      }
-
       @at-root .theme--dark & {
         background-color: mc('red', '900');
         color: mc('red', '100');
@@ -341,11 +326,6 @@
 
       &::before {
         content: "\F0E1E";
-      }
-
-      code {
-        background-color: mc('green', '50');
-        color: mc('green', '800');
       }
 
       @at-root .theme--dark & {
