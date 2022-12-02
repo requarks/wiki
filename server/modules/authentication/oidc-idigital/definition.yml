@@ -1,10 +1,10 @@
 key: oidc-idigital
-title: iDigital - OpenID Connect
-description: O iDigital é um provedor de identidade baseado no protocolo OpenID Connect. Essa integração usa o fluxo Authorization Code com Pkce.
-logo: https://idigital-dev.sistemafiea.com.br/assets/img/logo/logo.svg
+title: IDigital - OpenID Connect
+description: O IDigital é um provedor de identidade baseado no protocolo OpenID Connect. Essa integração usa o fluxo Authorization Code com PKCE.
+logo: https://idigital.sistemafiea.com.br/assets/img/logo/logo.svg
 website: https://idigital.sistemafiea.com.br
 color: blue-grey darken-2
-icon: https://idigital-dev.sistemafiea.com.br/assets/img/logo/logo.svg
+icon: https://idigital.sistemafiea.com.br/assets/img/logo/logo.svg
 author: Vitor Barcelos
 isAvailable: true
 useForm: false
@@ -18,23 +18,18 @@ props:
     title: Client ID
     hint: Application Client ID
     order: 1
-  authorizationURL:
-    type: String
-    title: Authorization Endpoint URL
-    hint: Application Authorization Endpoint URL
-    order: 2
-  tokenURL:
-    type: String
-    title: Token Endpoint URL
-    hint: Application Token Endpoint URL
-    order: 3
   issuer:
     type: String
     title: Issuer Endpoint URL
     hint: Application Issuer Endpoint URL
-    order: 4
-  logoutURL:
+    order: 2
+  applicationHost:
     type: String
-    title: Logout URL
-    hint: Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
-    order: 5
+    title: Host Endpoint URL
+    hint: Application Token Endpoint URL
+    order: 3
+  postLogoutRedirectUrl:
+    type: String
+    title: Post Logout Redirect Endpoint URL
+    hint: Application Post Logout Redirect Endpoint URL
+    order: 4

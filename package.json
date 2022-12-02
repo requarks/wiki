@@ -38,6 +38,7 @@
   "dependencies": {
     "@azure/storage-blob": "12.9.0",
     "@exlinc/keycloak-passport": "1.0.2",
+    "@fiea-al/idigital-node-integration": "https://github.com/FIEA-AL/idigital-node-integration.git#1.0.5",
     "@joplin/turndown-plugin-gfm": "1.0.43",
     "@root/csr": "0.8.1",
     "@root/keypairs": "0.10.3",
