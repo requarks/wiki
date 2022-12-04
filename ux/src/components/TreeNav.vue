@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, provide, reactive } from 'vue'
+import { computed, onMounted, provide, reactive, toRef } from 'vue'
 import { findKey } from 'lodash-es'
 
 import TreeLevel from './TreeLevel.vue'
@@ -26,16 +26,21 @@ const props = defineProps({
   selected: {
     type: String,
     default: null
+  },
+  useLazyLoad: {
+    type: Boolean,
+    default: false
   }
 })
 
 // EMITS
 
-const emit = defineEmits(['update:selected'])
+const emit = defineEmits(['update:selected', 'lazyLoad', 'contextAction'])
 
 // DATA
 
 const state = reactive({
+  loaded: {},
   opened: {}
 })
 
@@ -52,12 +57,27 @@ const selection = computed({
 
 // METHODS
 
+function emitLazyLoad (nodeId, clb) {
+  if (props.useLazyLoad) {
+    emit('lazyLoad', nodeId, clb)
+  } else {
+    clb.done()
+  }
+}
+
+function emitContextAction (nodeId, action) {
+  emit('contextAction', nodeId, action)
+}
+
 // PROVIDE
 
-provide('roots', props.roots)
+provide('roots', toRef(props, 'roots'))
 provide('nodes', props.nodes)
+provide('loaded', state.loaded)
 provide('opened', state.opened)
 provide('selection', selection)
+provide('emitLazyLoad', emitLazyLoad)
+provide('emitContextAction', emitContextAction)
 
 // MOUNTED
 
@@ -102,6 +122,13 @@ onMounted(() => {
   &-node {
     display: block;
     border-left: 2px solid rgba(0,0,0,.05);
+
+    @at-root .body--light & {
+      border-left: 2px solid rgba(0,0,0,.05);
+    }
+    @at-root .body--dark & {
+      border-left: 2px solid rgba(255,255,255,.1);
+    }
   }
 
   &-label {
@@ -113,11 +140,20 @@ onMounted(() => {
     transition: background-color .4s ease;
 
     &:hover, &:focus, &.active {
-      background-color: rgba(0,0,0,.05);
+      @at-root .body--light & {
+        background-color: rgba(0,0,0,.05);
+      }
+      @at-root .body--dark & {
+        background-color: rgba(255,255,255,.1);
+      }
     }
 
     > .q-icon {
       margin-right: 5px;
+    }
+
+    &-text {
+      flex: 1 0;
     }
   }
 

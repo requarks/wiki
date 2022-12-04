@@ -4,7 +4,7 @@ ul.treeview-level
   li.treeview-node(v-if='!props.parentId')
     .treeview-label(@click='setRoot', :class='{ "active": !selection }')
       q-icon(name='img:/_assets/icons/fluent-ftp.svg', size='sm')
-      em.text-purple root
+      .treeview-label-text(:class='$q.dark.isActive ? `text-purple-4` : `text-purple`') root
       q-menu(
         touch-position
         context-menu
@@ -14,10 +14,15 @@ ul.treeview-level
         )
         q-card.q-pa-sm
           q-list(dense, style='min-width: 150px;')
-            q-item(clickable)
+            q-item(clickable, @click='createRootFolder')
               q-item-section(side)
                 q-icon(name='las la-plus-circle', color='primary')
               q-item-section New Folder
+      q-icon(
+        v-if='!selection'
+        name='las la-angle-right'
+        :color='$q.dark.isActive ? `purple-4` : `purple`'
+        )
   //- NORMAL NODES
   tree-node(
     v-for='node of level'
@@ -30,6 +35,7 @@ ul.treeview-level
 
 <script setup>
 import { computed, inject } from 'vue'
+import { useQuasar } from 'quasar'
 
 import TreeNode from './TreeNode.vue'
 
@@ -46,18 +52,23 @@ const props = defineProps({
   }
 })
 
+// QUASAR
+
+const $q = useQuasar()
+
 // INJECT
 
-const roots = inject('roots', [])
+const roots = inject('roots')
 const nodes = inject('nodes')
 const selection = inject('selection')
+const emitContextAction = inject('emitContextAction')
 
 // COMPUTED
 
 const level = computed(() => {
   const items = []
   if (!props.parentId) {
-    for (const root of roots) {
+    for (const root of roots.value) {
       items.push({
         id: root,
         ...nodes[root]
@@ -78,6 +89,10 @@ const level = computed(() => {
 
 function setRoot () {
   selection.value = null
+}
+
+function createRootFolder () {
+  emitContextAction(null, 'newFolder')
 }
 
 </script>

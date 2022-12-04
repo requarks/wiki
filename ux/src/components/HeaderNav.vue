@@ -83,7 +83,7 @@ q-header.bg-header.text-white.site-header(
         icon='las la-folder-open'
         color='positive'
         aria-label='File Manager'
-        @click='toggleFileManager'
+        @click='openFileManager'
         )
         q-tooltip File Manager
       q-btn.q-ml-md(
@@ -129,7 +129,7 @@ const state = reactive({
 
 // METHODS
 
-function toggleFileManager () {
+function openFileManager () {
   siteStore.overlay = 'FileManager'
 }
 </script>

@@ -1,9 +1,22 @@
 <template lang="pug">
 li.treeview-node
   //- NODE
-  .treeview-label(@click='toggleNode', :class='{ "active": isActive }')
-    q-icon(:name='icon', size='sm')
-    span {{node.text}}
+  .treeview-label(@click='openNode', :class='{ "active": isActive }')
+    q-icon(
+      :name='icon'
+      size='sm'
+      @click.stop='hasChildren ? toggleNode() : openNode()'
+      )
+    .treeview-label-text {{node.text}}
+    q-spinner.q-mr-xs(
+      color='primary'
+      v-if='state.isLoading'
+      )
+    q-icon(
+      v-if='isActive'
+      name='las la-angle-right'
+      :color='$q.dark.isActive ? `yellow-9` : `brown-4`'
+      )
     //- RIGHT-CLICK MENU
     q-menu(
       touch-position
@@ -16,10 +29,14 @@ li.treeview-node
       )
       q-card.q-pa-sm
         q-list(dense, style='min-width: 150px;')
-          q-item(clickable)
+          q-item(clickable, @click='contextAction(`newFolder`)')
             q-item-section(side)
               q-icon(name='las la-plus-circle', color='primary')
             q-item-section New Folder
+          q-item(clickable)
+            q-item-section(side)
+              q-icon(name='las la-copy', color='teal')
+            q-item-section Duplicate...
           q-item(clickable)
             q-item-section(side)
               q-icon(name='las la-redo', color='teal')
@@ -43,6 +60,7 @@ li.treeview-node
 
 <script setup>
 import { computed, inject, reactive } from 'vue'
+import { useQuasar } from 'quasar'
 
 import TreeLevel from './TreeLevel.vue'
 
@@ -63,15 +81,23 @@ const props = defineProps({
   }
 })
 
+// QUASAR
+
+const $q = useQuasar()
+
 // INJECT
 
+const loaded = inject('loaded')
 const opened = inject('opened')
 const selection = inject('selection')
+const emitLazyLoad = inject('emitLazyLoad')
+const emitContextAction = inject('emitContextAction')
 
 // DATA
 
 const state = reactive({
-  isContextMenuShown: false
+  isContextMenuShown: false,
+  isLoading: false
 })
 
 // COMPUTED
@@ -80,7 +106,7 @@ const icon = computed(() => {
   if (props.node.icon) {
     return props.node.icon
   }
-  return hasChildren.value && isOpened.value ? 'img:/_assets/icons/fluent-opened-folder.svg' : 'img:/_assets/icons/fluent-folder.svg'
+  return isOpened.value ? 'img:/_assets/icons/fluent-opened-folder.svg' : 'img:/_assets/icons/fluent-folder.svg'
 })
 
 const hasChildren = computed(() => {
@@ -95,13 +121,33 @@ const isActive = computed(() => {
 
 // METHODS
 
-function toggleNode () {
-  selection.value = props.node.id
+async function toggleNode () {
+  opened[props.node.id] = !(opened[props.node.id] === true)
+  if (opened[props.node.id] && !loaded[props.node.id]) {
+    state.isLoading = true
+    await Promise.race([
+      new Promise((resolve, reject) => {
+        emitLazyLoad(props.node.id, { done: resolve, fail: reject })
+      }),
+      new Promise((resolve, reject) => {
+        setTimeout(() => reject(new Error('Async tree loading timeout')), 30000)
+      })
+    ])
+    loaded[props.node.id] = true
+    state.isLoading = false
+  }
+}
 
+function openNode () {
+  selection.value = props.node.id
   if (selection.value !== props.node.id && opened[props.node.id]) {
     return
   }
-  opened[props.node.id] = !(opened[props.node.id] === true)
+  toggleNode()
+}
+
+function contextAction (action) {
+  emitContextAction(props.node.id, action)
 }
 
 </script>

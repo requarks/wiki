@@ -2,6 +2,7 @@ const _ = require('lodash')
 const sanitize = require('sanitize-filename')
 const graphHelper = require('../../helpers/graph')
 const assetHelper = require('../../helpers/asset')
+const { setTimeout } = require('node:timers/promises')
 
 module.exports = {
   Query: {
@@ -176,6 +177,18 @@ module.exports = {
           }
         } else {
           throw new WIKI.Error.AssetInvalid()
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Upload Assets
+     */
+    async uploadAssets(obj, args, context) {
+      try {
+        return {
+          operation: graphHelper.generateSuccess('Asset(s) uploaded successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

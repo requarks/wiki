@@ -249,7 +249,7 @@ module.exports = class Page extends Model {
     }
 
     opts.path = opts.path.toLowerCase()
-    const dotPath = opts.path.replaceAll('/', '.').replaceAll('-', '_')
+    // const dotPath = opts.path.replaceAll('/', '.').replaceAll('-', '_')
 
     // -> Check for page access
     if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
@@ -310,7 +310,7 @@ module.exports = class Page extends Model {
       },
       contentType: WIKI.data.editors[opts.editor]?.contentType ?? 'text',
       description: opts.description,
-      dotPath: dotPath,
+      // dotPath: dotPath,
       editor: opts.editor,
       hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale }),
       icon: opts.icon,

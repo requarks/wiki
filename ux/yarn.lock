@@ -6624,6 +6624,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"slugify@npm:1.6.5":
+  version: 1.6.5
+  resolution: "slugify@npm:1.6.5"
+  checksum: a955a1b600201030f4c1daa9bb74a17d4402a0693fc40978bbd17e44e64fd72dad3bac4037422aa8aed55b5170edd57f3f4cd8f59ba331f5cf0f10f1a7795609
+  languageName: node
+  linkType: hard
+
 "smart-buffer@npm:^4.2.0":
   version: 4.2.0
   resolution: "smart-buffer@npm:4.2.0"
@@ -7181,6 +7188,7 @@ __metadata:
     pinia: 2.0.23
     pug: 3.0.2
     quasar: 2.10.1
+    slugify: 1.6.5
     socket.io-client: 4.5.3
     tippy.js: 6.3.7
     uuid: 9.0.0

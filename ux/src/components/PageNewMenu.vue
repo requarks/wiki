@@ -28,6 +28,11 @@ q-menu.translucent-menu(
       q-item(clickable, @click='openFileManager')
         blueprint-icon(icon='add-image')
         q-item-section.q-pr-sm Upload Media Asset
+    template(v-if='props.showNewFolder')
+      q-separator.q-my-sm(inset)
+      q-item(clickable, @click='newFolder')
+        blueprint-icon(icon='add-folder')
+        q-item-section.q-pr-sm New Folder
 </template>
 
 <script setup>
@@ -43,8 +48,16 @@ const props = defineProps({
   hideAssetBtn: {
     type: Boolean,
     default: false
+  },
+  showNewFolder: {
+    type: Boolean,
+    default: false
   }
 })
+
+// EMITS
+
+const emit = defineEmits(['newFolder'])
 
 // QUASAR
 
@@ -68,5 +81,9 @@ function create (editor) {
 
 function openFileManager () {
   siteStore.overlay = 'FileManager'
+}
+
+function newFolder () {
+  emit('newFolder')
 }
 </script>

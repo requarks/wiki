@@ -39,6 +39,7 @@ q-layout(view='hHh Lpr lff')
             q-item-section
               q-item-label.text-negative {{ t('common.header.logout') }}
       router-view
+  main-overlay-dialog
   footer-nav
 </template>
 
@@ -52,6 +53,7 @@ import { useUserStore } from 'src/stores/user'
 
 import HeaderNav from 'src/components/HeaderNav.vue'
 import FooterNav from 'src/components/FooterNav.vue'
+import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
 
 // QUASAR
 

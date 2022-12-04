@@ -1,0 +1,98 @@
+# ===============================================
+# TREE
+# ===============================================
+
+extend type Query {
+  tree(
+    siteId: UUID!
+    parentId: UUID
+    parentPath: String
+    types: [TreeItemType]
+    limit: Int
+    offset: Int
+    orderBy: TreeOrderBy
+    orderByDirection: OrderByDirection
+    depth: Int
+    includeAncestors: Boolean
+    ): [TreeItem]
+}
+
+extend type Mutation {
+  createFolder(
+    siteId: UUID!
+    parentId: UUID
+    pathName: String!
+    title: String!
+  ): DefaultResponse
+  deleteFolder(
+    folderId: UUID!
+  ): DefaultResponse
+  duplicateFolder(
+    folderId: UUID!
+    targetParentId: UUID
+    targetPathName: String!
+    targetTitle: String!
+  ): DefaultResponse
+  moveFolder(
+    folderId: UUID!
+    targetParentId: UUID
+  ): DefaultResponse
+  renameFolder(
+    folderId: UUID!
+    pathName: String
+    title: String
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+enum TreeItemType {
+  asset
+  folder
+  page
+}
+
+enum TreeOrderBy {
+  createdAt
+  fileName
+  title
+  updatedAt
+}
+
+type TreeItemFolder {
+  id: UUID
+  childrenCount: Int
+  depth: Int
+  fileName: String
+  folderPath: String
+  title: String
+}
+
+type TreeItemPage {
+  id: UUID
+  createdAt: Date
+  depth: Int
+  fileName: String
+  folderPath: String
+  pageEditor: String
+  pageType: String
+  title: String
+  updatedAt: Date
+}
+
+type TreeItemAsset {
+  id: UUID
+  createdAt: Date
+  depth: Int
+  fileName: String
+  # In Bytes
+  fileSize: Int
+  fileType: String
+  folderPath: String
+  title: String
+  updatedAt: Date
+}
+
+union TreeItem = TreeItemFolder | TreeItemPage | TreeItemAsset

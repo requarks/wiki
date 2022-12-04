@@ -220,7 +220,6 @@ exports.up = async knex => {
     .createTable('pages', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('path').notNullable()
-      table.specificType('dotPath', 'ltree').notNullable().index()
       table.string('hash').notNullable()
       table.string('alias')
       table.string('title').notNullable()
@@ -282,6 +281,18 @@ exports.up = async knex => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('tag').notNullable()
       table.jsonb('display').notNullable().defaultTo('{}')
+      table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
+      table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
+    })
+    // TREE --------------------------------
+    .createTable('tree', table => {
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.specificType('folderPath', 'ltree').index().index('tree_folderpath_gist_index', { indexType: 'GIST' })
+      table.string('fileName').notNullable().index()
+      table.enu('type', ['folder', 'page', 'asset']).notNullable().index()
+      table.uuid('targetId').index()
+      table.string('title').notNullable()
+      table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })
@@ -378,6 +389,9 @@ exports.up = async knex => {
     .table('tags', table => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')
       table.unique(['siteId', 'tag'])
+    })
+    .table('tree', table => {
+      table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
     .table('userKeys', table => {
       table.uuid('userId').notNullable().references('id').inTable('users')

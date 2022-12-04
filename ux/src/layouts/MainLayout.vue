@@ -27,6 +27,7 @@ q-layout(view='hHh Lpr lff')
         label='Browse'
         aria-label='Browse'
         size='sm'
+        @click='openFileManager'
         )
     q-scroll-area.sidebar-nav(
       :thumb-style='thumbStyle'
@@ -76,22 +77,13 @@ q-layout(view='hHh Lpr lff')
         round
         size='md'
       )
-  q-dialog.main-overlay(
-    v-model='siteStore.overlayIsShown'
-    persistent
-    full-width
-    full-height
-    no-shake
-    transition-show='jump-up'
-    transition-hide='jump-down'
-    )
-    component(:is='overlays[siteStore.overlay]')
+  main-overlay-dialog
   footer-nav
 </template>
 
 <script setup>
-import { useMeta, useQuasar, setCssVar } from 'quasar'
-import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { useMeta, useQuasar } from 'quasar'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -99,16 +91,9 @@ import { useSiteStore } from '../stores/site'
 
 // COMPONENTS
 
-import HeaderNav from '../components/HeaderNav.vue'
 import FooterNav from 'src/components/FooterNav.vue'
-import LoadingGeneric from 'src/components/LoadingGeneric.vue'
-
-const overlays = {
-  FileManager: defineAsyncComponent({
-    loader: () => import('../components/FileManager.vue'),
-    loadingComponent: LoadingGeneric
-  })
-}
+import HeaderNav from 'src/components/HeaderNav.vue'
+import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
 
 // QUASAR
 
@@ -149,6 +134,12 @@ const barStyle = {
   backgroundColor: '#000',
   width: '9px',
   opacity: 0.1
+}
+
+// METHODS
+
+function openFileManager () {
+  siteStore.overlay = 'FileManager'
 }
 
 </script>

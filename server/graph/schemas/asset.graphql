@@ -29,6 +29,11 @@ extend type Mutation {
     id: Int!
   ): DefaultResponse
 
+  uploadAssets(
+    siteId: UUID!
+    files: [Upload!]!
+  ): DefaultResponse
+
   flushTempUploads: DefaultResponse
 }
 
