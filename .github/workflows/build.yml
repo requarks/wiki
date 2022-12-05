@@ -191,7 +191,7 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v2.5.1
       with:
-        node-version: 12.x
+        node-version: 16.x
 
     - name: Download a Build Artifact
       uses: actions/download-artifact@v2.1.0
@@ -347,7 +347,7 @@ jobs:
         body: ${{ steps.changelog.outputs.changes }}
         token: ${{ github.token }}
         artifacts: 'drop/wiki-js.tar.gz,drop-win/wiki-js-windows.tar.gz'
-        
+
     - name: Notify Slack Releases Channel
       uses: slackapi/slack-github-action@v1.18.0
       with:
@@ -358,7 +358,7 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-        
+
     - name: Notify Telegram Channel
       uses: appleboy/telegram-action@v0.1.1
       with:
@@ -369,7 +369,7 @@ jobs:
         message: |
           Wiki.js *${{ github.ref_name }}* has been released!
           See [release notes](https://github.com/requarks/wiki/releases) for details.
-          
+
     - name: Notify Discord Channel
       uses: sebastianpopp/discord-action@v1.0
       with:

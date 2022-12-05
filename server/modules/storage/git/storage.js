@@ -118,7 +118,7 @@ module.exports = {
    * SYNC
    */
   async sync() {
-    const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
+    const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch, '--']), 'latest', {})
 
     const rootUser = await WIKI.models.users.getRootUser()
 
@@ -140,7 +140,7 @@ module.exports = {
 
     // Process Changes
     if (_.includes(['sync', 'pull'], this.mode)) {
-      const latestCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
+      const latestCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch, '--']), 'latest', {})
 
       const diff = await this.git.diffSummary(['-M', currentCommitLog.hash, latestCommitLog.hash])
       if (_.get(diff, 'files', []).length > 0) {

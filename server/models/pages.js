@@ -959,9 +959,8 @@ module.exports = class Page extends Model {
           // -> Save render to cache
           await WIKI.models.pages.savePageToCache(page)
         } else {
-          // -> No render? Possible duplicate issue
-          /* TODO: Detect duplicate and delete */
-          throw new Error('Error while fetching page. Duplicate entry detected. Reload the page to try again.')
+          // -> No render? Last page render failed...
+          throw new Error('Page has no rendered version. Looks like the Last page render failed. Try to edit the page and save it again.')
         }
       }
     }

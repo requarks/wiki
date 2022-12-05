@@ -20,7 +20,9 @@ module.exports = {
         userInfoURL: conf.userInfoURL,
         callbackURL: conf.callbackURL,
         passReqToCallback: true
-      }, async (req, iss, sub, profile, cb) => {
+      }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
+        const profile = Object.assign({}, idProfile, uiProfile)
+
         try {
           const user = await WIKI.models.users.processProfile({
             providerKey: req.params.strategy,
@@ -32,13 +34,13 @@ module.exports = {
           if (conf.mapGroups) {
             const groups = _.get(profile, '_json.' + conf.groupsClaim)
             if (groups && _.isArray(groups)) {
-              const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).groups.map(g => g.id)
+              const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).map(g => g.id)
               const expectedGroups = Object.values(WIKI.auth.groups).filter(g => groups.includes(g.name)).map(g => g.id)
               for (const groupId of _.difference(expectedGroups, currentGroups)) {
                 await user.$relatedQuery('groups').relate(groupId)
               }
               for (const groupId of _.difference(currentGroups, expectedGroups)) {
-                await user.$relatedQuery('groups').unrelate(groupId)
+                await user.$relatedQuery('groups').unrelate().where('groupId', groupId)
               }
             }
           }

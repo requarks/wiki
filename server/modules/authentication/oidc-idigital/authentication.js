@@ -1,38 +1,36 @@
-const Strategy = require('./strategy');
-const _ = require('lodash');
-
 module.exports = {
   async init (passport, conf) {
+    const integration = await import('@fiea-al/idigital-node-integration');
+
+    const client = await integration.IDigital.create({
+      scopes: ['openid', 'profile', 'email'],
+      postLogoutRedirectUri: conf.postLogoutRedirectUrl,
+      applicationHost: conf.applicationHost,
+      redirectUri: conf.callbackURL,
+      clientId: conf.clientId,
+      issuer: conf.issuer
+    });
+
     passport.use(conf.key,
-      new Strategy({
-        authorizationURL: conf.authorizationURL,
-        callbackURL: conf.callbackURL,
-        clientID: conf.clientId,
-        tokenURL: conf.tokenURL,
-        passReqToCallback: true,
-        scope: 'profile email',
-        response_type: 'code',
-        issuer: conf.issuer
-      }, async (req, iss, sub, profile, cb) => {
+      new integration.IDigitalStrategy(client, async (request, tokenSet, userInfo, done) => {
         try {
-          const email = sub.emails.pop();
           const user = await WIKI.models.users.processProfile({
-            providerKey: req.params.strategy,
+            providerKey: request.params.strategy,
             profile: {
-              ...profile,
-              id: sub.id,
-              email: email.value,
-              displayName: sub.displayName
+              id: userInfo.sub,
+              email: userInfo.email,
+              displayName: userInfo.displayName
             }
-          })
-          cb(null, user)
+          });
+
+          done(null, user)
         } catch (err) {
-          cb(err, null)
+          done(err, null)
         }
       })
-    )
+    );
   },
   logout (conf) {
-    return conf.logoutURL ? !conf.logoutURL : '/';
+    return conf.postLogoutRedirectUrl || '/';
   }
 }
