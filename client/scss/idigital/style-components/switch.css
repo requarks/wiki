@@ -1,0 +1,39 @@
+#modo-dark-input {
+    position: relative;
+    padding: 2px;
+    width: 16px;
+    height: 32px;
+
+    border-radius: 20px;
+    background-color: var(--cor-azulClaro);
+    box-shadow: var(--sombra-base-azul);
+
+
+    transition: all .3s;
+    cursor: pointer;
+}
+
+
+#modo-dark-input .input-switch{
+    position: absolute;
+
+    width: 12px;
+    height: 12px;
+
+    background-color: var(--cor-brancoPrimario);
+    border-radius: 50%;
+    transition: all .3s;
+
+    top: 2px;
+}
+
+html.darkMode #modo-dark-input{
+    background-color: var(--cor-brancoPrimario);
+    box-shadow: var(--sombra-base-branca);
+}
+
+html.darkMode #modo-dark-input .input-switch{
+    top: 18px;
+    background-color: var(--cor-azulClaro);
+    box-shadow: var(--sombra-base-azul);
+}

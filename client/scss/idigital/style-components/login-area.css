@@ -1,0 +1,91 @@
+#area-login{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    flex-direction: column;
+
+    width: 100%;
+    height: 100%;
+    gap: 12px;
+
+    background-color: var(--cor-fundo-azulClaro);
+}
+
+#area-login .caixa-visitante{
+    background-color: var(--cor-fundo-brancoPrimario);
+    width: 100%;
+    max-width: 300px;
+
+    padding: 16px 12px;
+    gap: 8px;
+
+    text-align: center;
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 12px;
+    box-shadow: var(--sombra-base-preta);
+}
+
+.caixa-visitante .area-texto{
+    color: var(--cor-pretoPrimario);
+}
+
+.caixa-visitante  .area-texto h1{
+    color: var(--cor-pretoPrimario);
+    font-size: 24px;
+
+    margin-top: 20px;
+}
+
+
+.foto-visitante img{
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+.foto-visitante{
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.botao.login{
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+    background-color: var(--cor-azulClaro);
+    color: var(--cor-brancoPrimario);
+
+    border-radius: 4px;
+    width: 100%;
+    max-width: 300px;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.botao.login svg{
+    height: 16px;
+    width: 16px;
+}
+.botao.login svg path{
+    fill: var(--cor-brancoPrimario);
+}
+
+.botao.login a{
+    text-decoration: none;
+    color: var(--cor-brancoPrimario);
+}
+
+.botao.login:hover{
+    background-color: var(--cor-azulEscuro);
+    color: var(--cor-brancoPrimario);
+}

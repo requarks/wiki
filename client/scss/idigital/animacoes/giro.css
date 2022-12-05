@@ -1,0 +1,72 @@
+/* GIRANDO O CRACHÁ */
+
+@keyframes subir {
+    0%{
+        transform: scale(100%) rotateY(0deg);
+        box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.15);
+    }
+    20%{
+        transform: scale(105%) rotateY(0deg);
+        box-shadow: 10px 10px 30px 0 rgba(0, 0, 0, 0.1);
+        perspective: 1000px;
+    }
+    70%{
+        transform: scale(105%) rotateY(180deg);
+    }
+    75%{
+        transform: scale(105%) rotateY(180deg);
+        box-shadow: 10px 10px 30px 0 rgba(0, 0, 0, 0.1);
+        perspective: 1000px;
+    }
+    100%{
+        transform: scale(100%) rotateY(180deg);
+        box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.15);
+    }
+}
+
+@keyframes descer {
+    0%{
+        transform: scale(100%) rotateY(180deg);
+        box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.15);
+    }
+    20%{
+        transform: scale(105%) rotateY(180deg);
+        box-shadow: 10px 10px 30px 0 rgba(0, 0, 0, 0.1);
+    }
+    70%{
+        transform: scale(105%) rotateY(0deg);
+    }
+    75%{
+        transform: scale(105%) rotateY(0deg);
+        box-shadow: 10px 10px 30px 0 rgba(0, 0, 0, 0.1);
+    }
+    100%{
+        transform: scale(100%) rotateY(0deg);
+        box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.15);
+    }
+}
+
+
+/* GIRANDO O ICONE */
+@keyframes giroSvg {
+    30%{
+        transform: rotate(0deg);
+    }
+    50%{
+        transform: rotate(180deg);
+    }
+    80%{
+        transform: rotate(180deg);
+    }
+}
+
+@keyframes italo {
+    0% {
+        filter: hue-rotate(0deg);
+    }
+
+
+    100% {
+        filter: hue-rotate(360deg);
+    }
+}

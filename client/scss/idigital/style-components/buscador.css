@@ -1,0 +1,44 @@
+/* - buscador */
+.buscador-cheio {
+    display: flex;
+    align-items: center;
+
+    padding: var(--espaco-mini) var(--espaco-m);
+    gap: var(--espaco-pp);
+
+    width: 100%;
+    height: 36px;
+
+    border-radius: var(--borda-arredondamento-base);
+    background-color: var(--cor-fundo-brancoPrimario);
+
+    box-shadow: var(--sombra-base) var(--preto-sombra);
+}
+
+.buscador-cheio .select-buscador {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 100%;
+    width: 100%;
+    max-width: 100px;
+
+    border: none;
+    background: none;
+}
+
+.buscador-cheio .input-buscador {
+    width: 100%;
+
+    border: none;
+    background: none;
+
+    color: var(--cor-pretoPrimario);
+    font-size: var(--fonte-tamanho-base);
+}
+
+.buscador-cheio svg {
+    max-width: 16px;
+    height: 100%;
+}

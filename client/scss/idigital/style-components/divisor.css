@@ -1,0 +1,13 @@
+    /* - divisor vertical  */
+    .divisor-vertical {
+        background-color: var(--cor-cinzaBase);
+        width: 2px;
+        height: 100%;
+    }
+
+    /* - divisor horizontal  */
+    .divisor-horizontal {
+        background-color: var(--cor-cinzaBase);
+        width: 100%;
+        height: 2px;
+    }

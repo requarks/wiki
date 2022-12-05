@@ -1,0 +1,228 @@
+:root {
+    /* DECLARANDO CORES  */
+    --cor-azulClaro: #3C89FC;
+    /* --cor-azulEscuro: #262256; */
+    --cor-azulEscuro: #014798;
+    --cor-azulCinza: #B9D1ED;
+    --cor-amarelo: #DC4744;
+    /* --cor-amarelo: #FCC530; */
+
+    --cor--nivel-desabilitado: #D9D9D9;
+    
+    --cor-brancoPrimario: #F8F8F8;
+    --cor-pretoPrimario: #333;
+    --cor-cinza-base: #666;
+    
+    --cor-pretoPrimario-botao: #333;
+    --cor-AzulEscuro-botaoSecundario: #014798;
+    
+    --cor--fundo-cinzaClaro: #D9D9D9;
+    --cor-fundo-brancoPrimario: #F8F8F8;
+    /* --cor-fundo-azulClaro: #E3F2FF; */
+    --cor-fundo-azulClaro: #D0E2F2;
+    --cor-fundo-azulEscuro: #014798;
+
+    --cor-logotipo-azulClaro: #3C89FC;
+
+
+    --cor-cinzaBase: #CFCFCF;
+    --cor-cinzaFundo: #A3A2A1;
+
+
+
+    /* cores dos status  */
+    --cor-status-aguardando: #FCC530;
+    --cor-status-confirmado: #098315;
+    --cor-status-enviado: #014798;
+    --cor-status-impresso: #3C89FC;
+    --cor-status-erro: #DB1040;
+
+
+
+
+    /* cores para alertas  */
+    --cor-alerta-fundo-neutro: #D4D4D4;
+    --cor-alerta-neutro: #616161;
+    
+    --cor-alerta-fundo-info: #B5D2FF;
+    --cor-alerta-info: #014798;
+    
+    --cor-alerta-fundo-erro: #EEC8C5;
+    --cor-alerta-erro: #DB1040;
+    
+    --cor-alerta-fundo-atencao: #F8F4C3;
+    --cor-alerta-atencao: #B58912;
+    
+    --cor-alerta-fundo-sucesso: #DCF3D7 ;
+    --cor-alerta-sucesso: #098315;
+
+
+
+
+    /* cores para codigo  */
+    --cor-code-tag: #014798;
+    --cor-code-atributo: #316f0b;
+    --cor-code-nome: #DB1040;
+    --cor-code-comentario: #787878;
+
+
+
+
+    /* DECLARANDO ESPAÇAMENTOS POSSÍVEIS (base de 8) */
+    --espaco-mini: 4px;
+    --espaco-pp: 8px;
+    --espaco-p: 12px;
+    --espaco-base: 16px;
+    --espaco-m: 20px;
+    --espaco-g: 24px;
+    --espaco-gg: 28px;
+    --espaco-xg: 32px;
+    --espaco-2xg: 36px;
+    --espaco-xxg: 40px;
+
+
+    /* TAMANHO DE FONTE (base de 8) */
+    --fonte-tamanho-pp: 8px;
+    --fonte-tamanho-p: 12px;
+    --fonte-tamanho-base: 16px;
+    --fonte-tamanho-m: 20px;
+    --fonte-tamanho-g: 24px;
+    --fonte-tamanho-g: 28px;
+    --fonte-tamanho-xg: 32px;
+    --fonte-tamanho-xgg: 40px;
+    --fonte-tamanho-2xxg: 64px;
+
+    --fonte-peso-light: 300;
+    --fonte-peso-regular: 400;
+    --fonte-peso-medium: 500;
+    --fonte-peso-semibold: 600; 
+    --fonte-peso-bold: 700; 
+    --fonte-peso-extrabold: 800;
+    --fonte-peso-black: 900;
+
+    /* ARREDONDAMENTO DAS BORDAS  */
+    --borda-arredondamento-mini: 4px;
+    --borda-arredondamento-pp: 8px;
+    --borda-arredondamento-p: 12px;
+    --borda-arredondamento-base: 16px;
+    --borda-arredondamento-m: 20px;
+    --borda-arredondamento-g: 24px;
+    --borda-arredondamento-gg: 28px;
+    --borda-arredondamento-xg: 32px;
+    --borda-arredondamento-2xg: 36px;
+
+    /* SOMBRAS  */
+    /* - Sombra externa  */
+    --sombra-base-azul: 0px 0px 8px 1px rgba(60, 137, 252, 0.50);
+    --sombra-base-branca: 0px 0px 8px 1px rgba(242, 242, 242, 0.5);
+    --sombra-base-preta: 0px 0px 10px rgba(0, 0, 0, 0.15);
+    --sombra-base-botao: 0px 0px 10px 1px;
+
+    --sombra-base: 4px 4px 15px 0;
+
+
+    /* - sombra interna  */
+    --sombra-interna-base: inset 4px 4px 4px;
+
+    --amarelo-sombra:hsla(64, 92%, 43%, 0.15);
+    --azulEscuro-sombra:rgba(1, 71, 152, 0.7);
+    --preto-sombra:rgba(0, 0, 0, 0.15);
+    --preto-sombra-buraco:rgba(0, 0, 0, 0.25);
+
+    --azulClaro-sombra-forte: rgba(60, 137, 252, 0.70);
+    --azulEscuro-sombra-forte: rgba(1, 71, 152, 0.7);
+    --amarelo-sombra-forte: rgba(220, 71, 68, 0.70);
+    /* --amarelo-sombra-forte: rgba(252, 197, 48, 0.70); */
+    --verde-sombra-forte: rgba(9, 131, 21, 0.70);
+}
+
+
+:root.darkMode {
+    /* MODIFICANDO DARK CORES  */
+    --cor-azulClaro: #3C89FC;
+    --cor-azulEscuro:#014798 ;
+    --cor-azulCinza: #B9D1ED;
+
+    --cor-brancoPrimario: #F8F8F8;
+    --cor-pretoPrimario: #dfdfdf;
+
+    --cor-AzulEscuro-botaoSecundario: #3C89FC;
+
+    --cor-fundo-brancoPrimario: #2D2D2D;
+    --cor-fundo-azulClaro: #121212;
+    --cor-fundo-azulEscuro:  #1F1F1F;
+
+    --cor--nivel-desabilitado: #393939;
+
+    
+    --cor-logotipo-azulClaro: #F2F2F2;
+
+    --cor-cinzaBase: #1F1F1F;
+    --cor--fundo-cinzaClaro: #393939;
+    --cor-cinzaFundo: #1F1F1F;
+
+
+
+    /* cores para codigo  */
+    --cor-code-tag: #F92658;
+    --cor-code-atributo: #A6E22E;
+    --cor-code-nome: #DDC556;
+    --cor-code-comentario: #B3B3B3;
+
+
+    /* cores para alertas  */
+    --cor-alerta-fundo-neutro: #363636;
+    --cor-alerta-neutro: #F8F8F8;
+    
+    --cor-alerta-fundo-info: #1F3249;
+    --cor-alerta-info: #BFD8FF;
+    
+    --cor-alerta-fundo-erro: #562925;
+    --cor-alerta-erro: #F2D6D6;
+    
+    --cor-alerta-fundo-atencao: #594226;
+    --cor-alerta-atencao: #F4EBD0;
+    
+    --cor-alerta-fundo-sucesso: #1D2F19 ;
+    --cor-alerta-sucesso: #EBF9ED;
+}
+
+
+
+
+
+
+
+@import url('http://fonts.cdnfonts.com/css/rawline');
+
+
+* {
+    margin: 0;
+    padding: 0;
+
+    box-sizing: border-box;
+    font-family: 'Rawline', sans-serif;
+
+    transition: background-color .2s;
+
+    color: var(--cor-pretoPrimario);
+}
+
+*::placeholder{
+    font-style: italic;
+    font-weight: var(--fonte-peso-medium);
+}
+
+body {
+    background-color: var(--cor-fundo-azulClaro);
+
+    /* display: flex; */
+    flex-wrap: wrap;
+
+    gap: 100px;
+    justify-content: center;
+    align-items: center;
+
+    width: 100vw;
+    height: 100%;
+}

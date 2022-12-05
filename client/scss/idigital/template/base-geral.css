@@ -1,0 +1,27 @@
+#conteudo-pagina{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 100%;
+
+    /* padding: 0 50px; */
+
+    margin-top: 80px;
+    height: calc(100vh - 80px);
+}
+@media (max-width: 950px){
+    #conteudo-pagina{
+        /* padding: 0 var(--espaco-m); */
+    }
+}
+
+@media (max-width: 500px){
+    #conteudo-pagina{
+        margin-top: 60px;
+        height: calc(100vh - 60px);
+
+        /* padding: 0 var(--espaco-pp); */
+    }
+    
+}

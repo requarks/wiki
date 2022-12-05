@@ -1,0 +1,51 @@
+/* componentes  */
+.formulario-base {
+    display: flex;
+    flex-direction: column;
+}
+
+.formulario-coluna {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    width: 100%;
+}
+
+.formulario-linha {
+    display: flex;
+    flex-direction: row;
+
+    gap: 8px;
+
+    width: 100%;
+}
+
+.campo-formulario {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.label-texto-base.label-claro {
+    color: var(--cor-brancoPrimario);
+}
+.label-texto-base {
+    font-size: 16px;
+    font-weight: var(--fonte-peso-semibold);
+
+    color: var(--cor-pretoPrimario);
+}
+
+.input-texto-base {
+    background-color: var(--cor-cinzaBase);
+    padding: var(--espaco-pp);
+    font-weight: var(--fonte-peso-medium);
+
+    border-radius: var(--borda-arredondamento-mini);
+
+    height: 32px;
+    width: 100%;
+
+    border: none;
+}

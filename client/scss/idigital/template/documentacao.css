@@ -1,0 +1,122 @@
+.blog-texto{
+    background-color: var(--cor-fundo-brancoPrimario);
+
+    display: flex;
+    flex-direction: column;
+
+    padding: var(--espaco-m) var(--espaco-g);
+    border-radius: var(--borda-arredondamento-pp);
+
+    box-shadow: var(--sombra-base) var(--preto-sombra);
+}
+
+.blog-texto .titulo-blog{
+    color: var(--cor-pretoPrimario);
+
+    font-size: var(--fonte-tamanho-g);
+    font-weight: var(--fonte-peso-bold);
+
+    margin-bottom: var(--espaco-pp);
+}
+
+.blog-texto .conteudo-blog{
+    color: var(--cor-pretoPrimario);
+
+    font-size: var(--fonte-tamanho-base);
+}
+.blog-texto .texto-code{
+    font-weight: var(--fonte-peso-bold);
+    color: var(--cor-code-tag);
+}
+
+.blog-texto .area-codigo{
+    position: relative;
+    background-color: var(--cor--nivel-desabilitado);
+
+    margin: var(--espaco-pp) 0;
+    margin-bottom: var(--espaco-gg);
+    padding: 0 var(--espaco-m);
+
+    height: 0;
+
+    border-radius: var(--borda-arredondamento-pp);
+
+
+    box-shadow:  var(--sombra-interna-base) var(--preto-sombra-buraco);
+
+    transition: height .8s;
+    overflow-x: auto;
+}
+.blog-texto .area-codigo.active{
+    padding: var(--espaco-m);
+    /* height: 96%; */
+    height: fit-content;
+}
+.base-code{
+    font-weight: var(--fonte-peso-medium);
+}
+.base-code .tag-code{
+    color: var(--cor-code-tag);
+}
+.base-code .atributo-code{
+    color: var(--cor-code-atributo);
+}
+.base-code .nome-tag{
+    color: var(--cor-code-nome);
+}
+.base-code .comentario-code{
+    color: var(--cor-code-comentario);
+}
+.base-code{
+    color: var(--cor-pretoPrimario);
+}
+
+.exemplo-componente{
+    display: flex;
+    flex-direction: column;
+    gap: var(--espaco-base);
+
+    margin: var(--espaco-base) 0;
+}
+.exemplo-componente.horizontal{
+    flex-direction: row;
+}
+
+.codigo-copiavel{
+    display: none;
+}
+
+.copiado-feedback{
+    display: none;
+    position: fixed;
+    
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-20px, -20px);
+
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 50%;
+
+    z-index: 600;
+
+    box-shadow: var(--sombra-base) var(--preto-sombra);
+}
+
+.copiado-feedback img{
+    display: flex;
+    height: 280%;
+}
+
+.navegacao-blog{
+    display: flex;
+    gap: var(--espaco-m);
+    justify-content: start;
+    flex-wrap: wrap;
+}

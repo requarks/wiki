@@ -1,0 +1,75 @@
+/* Componente alerta  */
+.alerta {
+    display: flex;
+    align-items: center;
+
+    background-color: var(--cor-alerta-fundo-neutro);
+
+    width: 100%;
+    height: fit-content;
+
+    padding: var(--espaco-p) var(--espaco-base);
+    justify-content: space-between;
+
+    border-radius: var(--borda-arredondamento-mini);
+}
+.alerta *{
+    color: var(--cor-alerta-neutro);
+    fill: var(--cor-alerta-neutro);
+}
+
+.alerta-texto {
+    display: flex;
+    align-items: center;
+
+    gap: var(--espaco-pp);
+
+    margin-right: var(--espaco-p);
+}
+
+.alerta-texto .alerta-icone {
+    width: 100%;
+    height: 100%;
+    max-width: 20px;
+    max-height: 20px;
+}
+
+/* ALERTA INFO  */
+.alerta.alerta-info{
+    background-color: var(--cor-alerta-fundo-info);
+}
+.alerta.alerta-info *{
+    color: var(--cor-alerta-info);
+    fill: var(--cor-alerta-info);
+}
+
+/* ALERTA ERRO  */
+.alerta.alerta-erro{
+    background-color: var(--cor-alerta-fundo-erro);
+}
+.alerta.alerta-erro *{
+    color: var(--cor-alerta-erro);
+    fill: var(--cor-alerta-erro);
+}
+
+/* ALERTA ATENÇÃO  */
+.alerta.alerta-atencao{
+    background-color: var(--cor-alerta-fundo-atencao);
+}
+.alerta.alerta-atencao *{
+    color: var(--cor-alerta-atencao);
+    fill: var(--cor-alerta-atencao);
+}
+
+/* ALERTA SUCESSO  */
+.alerta.alerta-sucesso{
+    background-color: var(--cor-alerta-fundo-sucesso);
+}
+.alerta.alerta-sucesso *{
+    color: var(--cor-alerta-sucesso);
+    fill: var(--cor-alerta-sucesso);
+}
+
+.link-mensagem{
+    font-weight: var(--fonte-peso-semibold);
+}

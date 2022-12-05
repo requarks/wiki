@@ -1,0 +1,22 @@
+/* - Base das seções  */
+.base-secao {
+    display: flex;
+    flex-direction: column;
+
+    padding: var(--espaco-p) var(--espaco-m);
+    gap: var(--espaco-pp);
+
+    width: 100%;
+
+    background-color: var(--cor-fundo-brancoPrimario);
+
+    border-radius: var(--borda-arredondamento-base);
+    box-shadow: var(--sombra-base) var(--preto-sombra);
+}
+
+
+@media (max-width: 500px){
+    .base-secao{
+        padding: var(--espaco-pp) var(--espaco-p);
+    }
+}

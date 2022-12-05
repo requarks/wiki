@@ -1,0 +1,6 @@
+@keyframes ondulacaoClick{
+    to{
+        transform: scale(600%);
+        opacity: 0;
+    }
+}

@@ -1,0 +1,133 @@
+@keyframes pulsanteAzulClaro {
+    0% {
+        -webkit-box-shadow:
+            0 0 0 0 var(--azulClaro-sombra-forte),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 0 var(--azulClaro-sombra-forte),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+
+            box-shadow:
+            0 0 0 0 var(--azulClaro-sombra-forte),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+        }   
+
+    50% {
+        -webkit-box-shadow:
+            0 0 0 50px rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 50px rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+
+            box-shadow:
+            0 0 0 10px rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+        }
+
+    100% {
+        -webkit-box-shadow:
+            0 0 0 0 rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 0 rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+
+            box-shadow:
+            0 0 0 0 rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulClaro-sombra-forte);
+        }
+}
+
+
+
+@keyframes pulsanteAmarelo {
+    0% {
+        -webkit-box-shadow:
+            0 0 0 0 var(--amarelo-sombra-forte),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 0 var(--amarelo-sombra-forte),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+
+            box-shadow:
+            0 0 0 0 var(--amarelo-sombra-forte),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+        }   
+
+    50% {
+        -webkit-box-shadow:
+            0 0 0 50px rgba(252, 197, 48, 0),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 50px rgba(252, 197, 48, 0),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+
+            box-shadow:
+            0 0 0 10px rgba(252, 197, 48, 0),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+        }
+
+    100% {
+        -webkit-box-shadow:
+            0 0 0 0 rgba(252, 197, 48, 0),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 0 rgba(252, 197, 48, 0),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+
+            box-shadow:
+            0 0 0 0 rgba(252, 197, 48, 0),
+            var(--sombra-base) var(--amarelo-sombra-forte);
+        }
+}
+
+@keyframes pulsanteAzulEscuro {
+    0% {
+        -webkit-box-shadow:
+            0 0 0 0 var(--azulEscuro-sombra-forte),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 0 var(--azulEscuro-sombra-forte),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+
+            box-shadow:
+            0 0 0 0 var(--azulEscuro-sombra-forte),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+        }   
+
+    50% {
+        -webkit-box-shadow:
+            0 0 0 50px rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 50px rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+
+            box-shadow:
+            0 0 0 10px rgba(60, 137, 252, 0),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+        }
+
+    100% {
+        -webkit-box-shadow:
+            0 0 0 0 rgba(1, 71, 152, 0),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+
+        -moz-box-shadow:
+            0 0 0 0 rgba(1, 71, 152, 0),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+
+            box-shadow:
+            0 0 0 0 rgba(252, 197, 48, 0),
+            var(--sombra-base) var(--azulEscuro-sombra-forte);
+        }
+}

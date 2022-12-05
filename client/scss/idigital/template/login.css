@@ -1,0 +1,233 @@
+#base-login {
+  display: flex;
+
+  width: 100vw;
+  height: 100vh;
+}
+
+#base-login .login-box .login-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: var(--espaco-xxg);
+
+  width: 100%;
+  max-width: 450px;
+  min-width: 350px;
+
+  height: 100%;
+}
+
+#base-login .login-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+
+  min-width: 350px;
+  width: 30%;
+
+  background-color: var(--cor-azulEscuro);
+}
+
+#base-login .login-box .logo-area {
+  width: 100%;
+}
+
+#base-login .login-box .logo-area svg {
+  width: 100%;
+}
+
+#base-login .login-box .logo-area svg path {
+  fill: var(--cor-brancoPrimario);
+}
+
+#base-login .login-box .login-area {
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+  width: 100%;
+}
+
+#base-login .login-box .login-area .login-inputs-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-pp);
+}
+
+#base-login .login-box .login-area h1 {
+  text-align: center;
+  color: var(--cor-brancoPrimario);
+
+  font-size: var(--fonte-tamanho-xgg);
+  font-weight: var(--fonte-peso-black);
+}
+
+#base-login .login-box .navegation-area * {
+  color: var(--cor-brancoPrimario);
+}
+
+.rodape-creditos {
+  text-align: center;
+  font-size: var(--fonte-tamanho-p);
+}
+
+
+#base-login .image-box {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 100%;
+}
+
+#base-login .image-box img {
+  width: 100%;
+  height: 90%;
+  min-height: 100%;
+
+  object-fit: cover;
+}
+
+#base-login .image-box a {
+  position: absolute;
+  bottom: var(--espaco-m);
+  right: var(--espaco-m);
+
+  font-size: var(--fonte-tamanho-p);
+  text-decoration: none;
+}
+
+.login-form .titulo-apicacao {
+  font-size: 24px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #F8F8F8;
+  text-align: center;
+}
+
+.login-form .subtitulo-apicacao {
+  font-size: 16px;
+  font-weight: 500;
+  /* text-transform: uppercase; */
+  color: #F8F8F8;
+  text-align: center;
+}
+
+.formas-login {
+  display: flex;
+  justify-content: start;
+  flex-direction: column;
+
+  width: 100%;
+
+  max-height: 100px;
+  overflow-y: auto;
+
+  border-radius: var(--borda-arredondamento-mini);
+}
+
+
+.formas-login::-webkit-scrollbar {
+  width: 12px;
+  /* width of the entire scrollbar */
+}
+
+.formas-login::-webkit-scrollbar-track {
+  background: white;
+  /* color of the tracking area */
+}
+
+.formas-login::-webkit-scrollbar-thumb {
+  background-color: blue;
+  /* color of the scroll thumb */
+  border-radius: 20px;
+  /* roundness of the scroll thumb */
+  border: 3px solid white;
+  /* creates padding around scroll thumb */
+}
+
+
+
+
+
+
+.formaLogin {
+  display: flex;
+  align-self: flex-start;
+  justify-content: start;
+  align-items: center;
+
+  border: none;
+
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  background-color: var(--cor-cinza-base);
+  padding: 20px;
+  gap: 20px;
+  box-shadow: var(--sombra-interna-base) var(--preto-sombra-buraco);
+  cursor: pointer;
+}
+.formaLogin *{
+  fill: var(--cor-cinzaFundo);
+  color: var(--cor-cinzaFundo);;
+}
+
+.formaLogin.active,
+.formaLogin:hover {
+  background-color: var(--cor-azulClaro);
+
+  box-shadow: var(--sombra-base-botao) var(--azulClaro-sombra-forte);
+  fill: var(--cor-fundo-brancoPrimario);
+}
+
+.formaLogin.active *,
+.formaLogin:hover *{
+  color: #F8F8F8;
+  fill: white;
+}
+
+
+.formaLogin svg {
+  width: 20px;
+  height: 20px;
+}
+
+.formaLogin svg path {
+
+}
+
+.esquecer-senha {
+  font-size: var(--fonte-tamanho-p);
+
+  color: var(--cor-brancoPrimario);
+  text-align: center;
+
+  padding-bottom: var(--espaco-p);
+}
+
+@media (max-width: 500px) {
+  #base-login .login-box {
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+
+    min-width: 0;
+  }
+
+  #base-login .image-box {
+    display: none;
+  }
+
+  #base-login .login-box .login-form {
+    padding: 24px 12px;
+
+    min-width: 0;
+  }
+}

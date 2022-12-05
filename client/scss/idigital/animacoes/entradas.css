@@ -1,0 +1,13 @@
+@keyframes fadeTransicao {
+    to {
+        transform: translate(0);
+        opacity: 1;
+    }
+}
+
+@keyframes openPopup {
+    to {
+        opacity: 1;
+        transform: scale(100%);
+    }
+}

@@ -1,0 +1,39 @@
+@import url(token.css);
+
+/* COMPONENTES  */
+@import url(style-components/botao-usuario.css);
+@import url(style-components/dropdown-menu.css);
+@import url(style-components/info-usuario.css);
+@import url(style-components/switch.css);
+@import url(style-components/popup.css);
+@import url(style-components/buscador.css);
+@import url(style-components/divisor.css);
+@import url(style-components/formulario-inputs.css);
+@import url(style-components/secoes-base.css);
+@import url(style-components/alertas.css);
+
+
+/* COMPONENTES CRACHA  */
+/* @import url(style-components/cracha/cartao-selecao.css);
+@import url(style-components/cracha/status.css);
+@import url(style-components/cracha/botao-lista.css);
+@import url(style-components/cracha/cartao-info.css); */
+
+
+
+/* TEMPLATES  */
+@import url(template/login.css);
+@import url(template/base-geral.css);
+@import url(template/login-area.css);
+@import url(template/pagina-erro.css);
+@import url(template/base-secoes.css);
+@import url(template/documentacao.css);
+
+
+
+/* importando animações  */
+@import url(animacoes/dropdown.css);
+@import url(animacoes/giro.css);
+@import url(animacoes/entradas.css);
+@import url(animacoes/pulsante.css);
+@import url(animacoes/ondulacao.css);

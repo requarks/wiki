@@ -1,0 +1,46 @@
+@keyframes meunDopdown {
+    0% {
+        opacity: 0;
+        transform: rotateX(-90deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: rotateX(0deg);
+    }
+}
+@keyframes meunDopdown2 {
+    0%{
+        opacity: 0;
+        transform: rotateX(-90deg);
+    }
+    40%{
+        transform: rotateX(50deg);
+        opacity: 1;
+    }
+    60%{
+        transform: rotateX(-30deg);
+    }
+    75%{
+        transform: rotateX(10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: rotateX(0deg);
+    }
+}
+
+
+
+
+@keyframes dropLado {
+    0% {
+        opacity: 0;
+        transform: rotateY(-90deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: rotateY(0deg);
+    }
+}
