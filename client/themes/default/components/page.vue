@@ -53,8 +53,8 @@
           v-col.page-col-content.is-page-header(
             :offset-xl='tocPosition === `left` ? 2 : 0'
             :offset-lg='tocPosition === `left` ? 3 : 0'
-            :xl10='tocPosition === `right`'
-            :lg9='tocPosition === `right`'
+            :xl='tocPosition === `right` ? 10 : false'
+            :lg='tocPosition === `right` ? 9 : false'
             style='margin-top: auto; margin-bottom: auto;'
             :class='$vuetify.rtl ? `pr-4` : `pl-4`'
             )
@@ -736,9 +736,13 @@ export default {
 .page-header-section {
   position: relative;
 
+  > .is-page-header {
+    position: relative;
+  }
+
   .page-edit-shortcuts {
     position: absolute;
-    bottom: -14px;
+    bottom: -43px;
     right: 10px;
 
     .v-btn {
