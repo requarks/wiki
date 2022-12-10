@@ -6,6 +6,7 @@ const state = {
   company: siteConfig.company,
   contentLicense: siteConfig.contentLicense,
   dark: siteConfig.darkMode,
+  tocPosition: siteConfig.tocPosition,
   mascot: true,
   title: siteConfig.title,
   logoUrl: siteConfig.logoUrl,
