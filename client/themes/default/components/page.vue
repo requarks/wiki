@@ -639,6 +639,8 @@ export default {
           this.$vuetify.goTo(decodeURIComponent(ev.currentTarget.hash), this.scrollOpts)
         }
       })
+
+      window.boot.notify('page-ready')
     })
   },
   methods: {
