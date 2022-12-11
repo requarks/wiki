@@ -58,9 +58,13 @@
             style='margin-top: auto; margin-bottom: auto;'
             :class='$vuetify.rtl ? `pr-4` : `pl-4`'
             )
-            .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
-            .caption.grey--text.text--darken-1 {{description}}
-            .page-edit-shortcuts(v-if='editShortcutsObj.editMenuBar')
+            .page-header-headings
+              .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
+              .caption.grey--text.text--darken-1 {{description}}
+            .page-edit-shortcuts(
+              v-if='editShortcutsObj.editMenuBar'
+              :class='tocPosition === `right` ? `is-right` : ``'
+              )
               v-btn(
                 v-if='editShortcutsObj.editMenuBtn'
                 @click='pageEdit'
@@ -742,9 +746,16 @@ export default {
     position: relative;
   }
 
+  .page-header-headings {
+    min-height: 52px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+  }
+
   .page-edit-shortcuts {
     position: absolute;
-    bottom: -43px;
+    bottom: -33px;
     right: 10px;
 
     .v-btn {
