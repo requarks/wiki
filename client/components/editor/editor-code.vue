@@ -174,8 +174,8 @@ export default {
   },
   mounted() {
     this.$store.set('editor/editorKey', 'code')
-
-    if (this.mode === 'create') {
+    let from_html = !this.$store.get('editor/content')
+    if (this.mode === 'create' && from_html) {
       this.$store.set('editor/content', '<h1>Title</h1>\n\n<p>Some text here</p>')
     }
 
@@ -183,7 +183,7 @@ export default {
 
     this.cm = CodeMirror.fromTextArea(this.$refs.cm, {
       tabSize: 2,
-      mode: 'text/html',
+      mode: from_html ? 'text/html' : {name: 'javascript', json: true},
       theme: 'wikijs-dark',
       lineNumbers: true,
       lineWrapping: true,
