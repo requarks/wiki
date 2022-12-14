@@ -1,0 +1,9 @@
+key: asciidocCore
+title: Core
+description: Basic Asciidoc Parser
+author: dzruyk (Based on asciidoctor.js renderer)
+input: asciidoc
+output: html
+icon: mdi-sitemap
+enabledDefault: true
+props: {}

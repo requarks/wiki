@@ -36,6 +36,7 @@
     "node": ">=10.12"
   },
   "dependencies": {
+    "asciidoctor": "2.2.6",
     "@azure/storage-blob": "12.12.0",
     "@exlinc/keycloak-passport": "1.0.2",
     "@joplin/turndown-plugin-gfm": "1.0.45",
@@ -231,6 +232,7 @@
     "clean-webpack-plugin": "3.0.0",
     "clipboard": "2.0.11",
     "codemirror": "5.58.2",
+    "codemirror-asciidoc": "1.0.4",
     "copy-webpack-plugin": "6.2.1",
     "core-js": "3.6.5",
     "css-loader": "4.3.0",

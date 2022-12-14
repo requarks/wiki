@@ -96,6 +96,17 @@
                   img(src='/_assets/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
                   .body-2.mt-2.primary--text Visual Editor
                   .caption.grey--text Rich-text WYSIWYG
+            v-flex(xs4)
+              v-card.radius-7.animated.fadeInUp.wait-p1s(
+                hover
+                light
+                ripple
+                )
+                v-card-text.text-center(@click='selectEditor("asciidoc")')
+                  img(src='/_assets/svg/editor-icon-code.svg', alt='Code', style='width: 36px;')
+                  .body-2.primary--text.mt-2 Asciidoc
+                  .caption.grey--text Asciidoc
+
         //- .caption.blue--text.text--lighten-2 {{$t('editor:select.cannotChange')}}
 
     v-card.radius-7.mt-2(color='teal darken-3', dark)

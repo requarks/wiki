@@ -356,6 +356,109 @@
     }
   }
 
+  .admonitionblock {
+    margin: 1rem 0;
+    position: relative;
+
+    ::before {
+      display: inline-block;
+      font: normal normal normal 24px/1 "Material Design Icons", sans-serif !important;
+    }
+    table {
+      border-collapse:separate;
+      border: none;
+    }
+    td:first-child {
+      border-bottom-left-radius: 7px;
+      border-top-left-radius: 7px;
+    }
+    &.note {
+      background-color: mc('blue', '50');
+      td.icon {
+        background-color: mc('blue', '300');
+        color: mc('blue', '50');
+        &::before {
+          content: "\F02FC";
+        }
+      }
+      td.content {
+        color: darken(mc('blue', '900'), 10%);
+        background-color: mc('blue', '50') !important;
+      }
+    }
+    &.tip {
+      background-color: mc('green', '50');
+      td.icon {
+        background-color: mc('green', '300');
+        color: mc('green', '50');
+        &::before {
+          content: "\F0335";
+        }
+      }
+      td.content {
+        color: darken(mc('green', '900'), 10%);
+        background-color: mc('green', '50') !important;
+      }
+    }
+    &.warning {
+      background-color: mc('orange', '50') !important;
+      td.icon {
+        background-color: mc('orange', '300');
+        color: mc('orange', '100');
+        &::before {
+          content: "\F0026";
+        }
+      }
+      td.content {
+        color: darken(mc('orange', '900'), 10%);
+        background-color: mc('orange', '50') !important;
+      }
+    }
+    &.caution {
+      background-color: mc('purple', '50');
+      td.icon {
+        background-color: mc('purple', '300');
+        color: mc('purple', '50');
+        &::before {
+          content: "\f0238";
+        }
+      }
+      td.content {
+        color: darken(mc('purple', '900'), 10%);
+        background-color: mc('purple', '50') !important;
+      }
+    }
+    &.important {
+      background-color: mc('red', '50');
+      td.icon {
+        background-color: mc('red', '300');
+        color: mc('red', '50');
+        &::before {
+          content: "\F0159";
+        }
+      }
+      td.content {
+        color: darken(mc('red', '900'), 10%);
+        background-color: mc('red', '50') !important;
+      }
+    }
+
+  }
+  .title {
+    font-style: italic;
+    font-size: 10rem;
+    color: #7a2717;
+  }
+
+  .exampleblock {
+    .content {
+      border-style: solid;
+      border-width: 1px;
+      border-color: #e6e6e6;
+      margin-bottom: 1.25em;
+      padding: 1.25em;
+    }
+  }
   // ---------------------------------
   // LISTS
   // ---------------------------------
@@ -545,6 +648,17 @@
         padding-top:0;
       }
     }
+  }
+
+  dl dt {
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+    font-weight: bold;
+  }
+
+  dl, dd {
+    margin-left: 1.125em;
+    margin-bottom: 0.75em;
   }
 
   // ---------------------------------
