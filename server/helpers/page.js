@@ -10,6 +10,7 @@ const unsafeCharsRegex = /[\x00-\x1f\x80-\x9f\\"|<>:*?]/
 
 const contentToExt = {
   markdown: 'md',
+  asciidoc: 'adoc',
   html: 'html'
 }
 const extToContent = _.invert(contentToExt)
