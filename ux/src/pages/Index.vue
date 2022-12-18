@@ -193,7 +193,7 @@ q-page.column
                 @click='state.tagEditMode = !state.tagEditMode'
               )
           page-tags.q-mt-sm(:edit='state.tagEditMode')
-      template(v-if='pageStore.allowRatings && pageStore.ratingsMode !== `off`')
+      template(v-if='siteStore.features.ratingsMode !== `off` && pageStore.allowRatings')
         q-separator(v-if='pageStore.showToc || pageStore.showTags')
         //- Rating
         .q-pa-md.flex.items-center
@@ -201,13 +201,13 @@ q-page.column
           .text-caption.text-grey-7 Rate this page
         .q-px-md
           q-rating(
-            v-if='pageStore.ratingsMode === `stars`'
+            v-if='siteStore.features.ratingsMode === `stars`'
             v-model='state.currentRating'
             icon='las la-star'
             color='secondary'
             size='sm'
           )
-          .flex.items-center(v-else-if='pageStore.ratingsMode === `thumbs`')
+          .flex.items-center(v-else-if='siteStore.features.ratingsMode === `thumbs`')
             q-btn.acrylic-btn(
               flat
               icon='las la-thumbs-down'
@@ -239,24 +239,11 @@ q-page.column
       q-separator.q-my-sm(inset)
       q-btn.q-py-sm(
         flat
-        icon='las la-history'
-        color='grey'
-        aria-label='Page History'
-        )
-        q-tooltip(anchor='center left' self='center right') Page History
-      q-btn.q-py-sm(
-        flat
-        icon='las la-code'
-        color='grey'
-        aria-label='Page Source'
-        )
-        q-tooltip(anchor='center left' self='center right') Page Source
-      q-btn.q-py-sm(
-        flat
         icon='las la-ellipsis-h'
         color='grey'
         aria-label='Page Actions'
         )
+        q-tooltip(anchor='center left' self='center right') Page Actions
         q-menu(
           anchor='top left'
           self='top right'
@@ -264,6 +251,16 @@ q-page.column
           transition-show='jump-left'
           )
           q-list(padding, style='min-width: 225px;')
+            q-item(clickable)
+              q-item-section.items-center(avatar)
+                q-icon(color='deep-orange-9', name='las la-history', size='sm')
+              q-item-section
+                q-item-label View History
+            q-item(clickable)
+              q-item-section.items-center(avatar)
+                q-icon(color='deep-orange-9', name='las la-code', size='sm')
+              q-item-section
+                q-item-label View Source
             q-item(clickable)
               q-item-section.items-center(avatar)
                 q-icon(color='deep-orange-9', name='las la-atom', size='sm')
@@ -285,6 +282,7 @@ q-page.column
         icon='las la-copy'
         color='grey'
         aria-label='Duplicate Page'
+        @click='duplicatePage'
         )
         q-tooltip(anchor='center left' self='center right') Duplicate Page
       q-btn.q-py-sm(
@@ -292,6 +290,7 @@ q-page.column
         icon='las la-share'
         color='grey'
         aria-label='Rename / Move Page'
+        @click='renamePage'
         )
         q-tooltip(anchor='center left' self='center right') Rename / Move Page
       q-btn.q-py-sm(
@@ -299,7 +298,7 @@ q-page.column
         icon='las la-trash'
         color='grey'
         aria-label='Delete Page'
-        @click='savePage'
+        @click='deletePage'
         )
         q-tooltip(anchor='center left' self='center right') Delete Page
 
@@ -313,13 +312,6 @@ q-page.column
     no-shake
     )
     component(:is='sideDialogs[state.sideDialogComponent]')
-
-  q-dialog(
-    v-model='state.showGlobalDialog'
-    transition-show='jump-up'
-    transition-hide='jump-down'
-    )
-    component(:is='globalDialogs[state.globalDialogComponent]')
 </template>
 
 <script setup>
@@ -348,9 +340,6 @@ const sideDialogs = {
     loader: () => import('../components/PagePropertiesDialog.vue'),
     loadingComponent: LoadingGeneric
   })
-}
-const globalDialogs = {
-  PageSaveDialog: defineAsyncComponent(() => import('../components/PageSaveDialog.vue'))
 }
 
 // QUASAR
@@ -472,9 +461,44 @@ function togglePageData () {
   state.showSideDialog = true
 }
 
-function savePage () {
-  state.globalDialogComponent = 'PageSaveDialog'
-  state.showGlobalDialog = true
+function duplicatePage () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('../components/PageSaveDialog.vue')),
+    componentProps: {
+      mode: 'duplicate',
+      pageId: pageStore.id,
+      pageName: pageStore.title,
+      pagePath: pageStore.path
+    }
+  }).onOk(() => {
+    // TODO: change route to new location
+  })
+}
+
+function renamePage () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('../components/PageSaveDialog.vue')),
+    componentProps: {
+      mode: 'rename',
+      pageId: pageStore.id,
+      pageName: pageStore.title,
+      pagePath: pageStore.path
+    }
+  }).onOk(() => {
+    // TODO: change route to new location
+  })
+}
+
+function deletePage () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('../components/PageDeleteDialog.vue')),
+    componentProps: {
+      pageId: pageStore.id,
+      pageName: pageStore.title
+    }
+  }).onOk(() => {
+    router.replace('/')
+  })
 }
 
 function refreshTocExpanded (baseToc, lvl) {

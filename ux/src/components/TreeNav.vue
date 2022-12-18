@@ -7,6 +7,7 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { computed, onMounted, provide, reactive, toRef } from 'vue'
 import { findKey } from 'lodash-es'
 
@@ -30,12 +31,62 @@ const props = defineProps({
   useLazyLoad: {
     type: Boolean,
     default: false
+  },
+  contextActionList: {
+    type: Array,
+    default: () => ['newFolder', 'duplicate', 'rename', 'move', 'del']
+  },
+  displayMode: {
+    type: String,
+    default: 'title'
   }
 })
 
 // EMITS
 
 const emit = defineEmits(['update:selected', 'lazyLoad', 'contextAction'])
+
+// I18N
+
+const { t } = useI18n()
+
+// Context Actions
+
+const contextActions = {
+  newFolder: {
+    icon: 'las la-plus-circle',
+    iconColor: 'blue',
+    label: t('common.actions.newFolder')
+  },
+  duplicate: {
+    icon: 'las la-copy',
+    iconColor: 'teal',
+    label: t('common.actions.duplicate') + '...'
+  },
+  rename: {
+    icon: 'las la-redo',
+    iconColor: 'teal',
+    label: t('common.actions.rename') + '...'
+  },
+  move: {
+    icon: 'las la-arrow-right',
+    iconColor: 'teal',
+    label: t('common.actions.moveTo') + '...'
+  },
+  del: {
+    icon: 'las la-trash-alt',
+    iconColor: 'negative',
+    label: t('common.actions.delete'),
+    labelColor: 'negative'
+  }
+}
+provide('contextActionList', props.contextActionList.map(key => ({
+  key,
+  ...contextActions[key],
+  handler: (nodeId) => {
+    emit('contextAction', nodeId, key)
+  }
+})))
 
 // DATA
 
@@ -75,6 +126,7 @@ provide('roots', toRef(props, 'roots'))
 provide('nodes', props.nodes)
 provide('loaded', state.loaded)
 provide('opened', state.opened)
+provide('displayMode', toRef(props, 'displayMode'))
 provide('selection', selection)
 provide('emitLazyLoad', emitLazyLoad)
 provide('emitContextAction', emitContextAction)

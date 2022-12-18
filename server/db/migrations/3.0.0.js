@@ -58,12 +58,7 @@ exports.up = async knex => {
     .createTable('assetData', table => {
       table.uuid('id').notNullable().primary()
       table.binary('data').notNullable()
-    })
-    // ASSET FOLDERS -----------------------
-    .createTable('assetFolders', table => {
-      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
-      table.string('name').notNullable()
-      table.string('slug').notNullable()
+      table.binary('preview')
     })
     // AUTHENTICATION ----------------------
     .createTable('authentication', table => {
@@ -351,12 +346,8 @@ exports.up = async knex => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
     .table('assets', table => {
-      table.uuid('folderId').notNullable().references('id').inTable('assetFolders').index()
       table.uuid('authorId').notNullable().references('id').inTable('users')
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
-    })
-    .table('assetFolders', table => {
-      table.uuid('parentId').references('id').inTable('assetFolders').index()
     })
     .table('commentProviders', table => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')
@@ -551,6 +542,7 @@ exports.up = async knex => {
         comments: false,
         contributions: false,
         profile: true,
+        reasonForChange: 'required',
         search: true
       },
       logoText: true,

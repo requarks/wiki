@@ -2,7 +2,9 @@ const _ = require('lodash')
 const sanitize = require('sanitize-filename')
 const graphHelper = require('../../helpers/graph')
 const assetHelper = require('../../helpers/asset')
-const { setTimeout } = require('node:timers/promises')
+const path = require('node:path')
+const fs = require('fs-extra')
+const { v4: uuid } = require('uuid')
 
 module.exports = {
   Query: {
@@ -187,10 +189,54 @@ module.exports = {
      */
     async uploadAssets(obj, args, context) {
       try {
+        const results = await Promise.allSettled(args.files.map(async fl => {
+          const { filename, mimetype, createReadStream } = await fl
+          WIKI.logger.debug(`Processing asset upload ${filename} of type ${mimetype}...`)
+
+          
+
+          if (!WIKI.extensions.ext.sharp.isInstalled) {
+            throw new Error('This feature requires the Sharp extension but it is not installed.')
+          }
+          if (!['.png', '.jpg', 'webp', '.gif'].some(s => filename.endsWith(s))) {
+            throw new Error('Invalid File Extension. Must be svg, png, jpg, webp or gif.')
+          }
+          const destFormat = mimetype.startsWith('image/svg') ? 'svg' : 'png'
+          const destFolder = path.resolve(
+            process.cwd(),
+            WIKI.config.dataPath,
+            `assets`
+          )
+          const destPath = path.join(destFolder, `logo-${args.id}.${destFormat}`)
+          await fs.ensureDir(destFolder)
+          // -> Resize
+          await WIKI.extensions.ext.sharp.resize({
+            format: destFormat,
+            inputStream: createReadStream(),
+            outputPath: destPath,
+            height: 72
+          })
+          // -> Save logo meta to DB
+          const site = await WIKI.db.sites.query().findById(args.id)
+          if (!site.config.assets.logo) {
+            site.config.assets.logo = uuid()
+          }
+          site.config.assets.logoExt = destFormat
+          await WIKI.db.sites.query().findById(args.id).patch({ config: site.config })
+          await WIKI.db.sites.reloadCache()
+          // -> Save image data to DB
+          const imgBuffer = await fs.readFile(destPath)
+          await WIKI.db.knex('assetData').insert({
+            id: site.config.assets.logo,
+            data: imgBuffer
+          }).onConflict('id').merge()
+        }))
+        WIKI.logger.debug('Asset(s) uploaded successfully.')
         return {
-          operation: graphHelper.generateSuccess('Asset(s) uploaded successfully.')
+          operation: graphHelper.generateSuccess('Asset(s) uploaded successfully')
         }
       } catch (err) {
+        WIKI.logger.warn(err)
         return graphHelper.generateError(err)
       }
     },

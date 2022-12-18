@@ -1586,5 +1586,22 @@
   "welcome.admin": "Administration Area",
   "welcome.createHome": "Create the homepage",
   "welcome.subtitle": "Let's get started...",
-  "welcome.title": "Welcome to Wiki.js!"
+  "welcome.title": "Welcome to Wiki.js!",
+  "admin.utilities.scanPageProblems": "Scan for Page Problems",
+  "admin.utilities.scanPageProblemsHint": "Scan all pages for invalid, missing or corrupted data.",
+  "pageSaveDialog.title": "Save As...",
+  "admin.general.reasonForChange": "Reason for Change",
+  "admin.general.reasonForChangeHint": "Should users be prompted the reason for changes made to a page?",
+  "admin.general.reasonForChangeRequired": "Required",
+  "admin.general.reasonForChangeOptional": "Optional",
+  "admin.general.reasonForChangeOff": "Off",
+  "pageDeleteDialog.title": "Confirm Page Deletion",
+  "pageDeleteDialog.confirm": "Are you sure you want to delete the page {name}?",
+  "pageDeleteDialog.pageId": "Page ID {id}",
+  "pageDeleteDialog.deleteSuccess": "Page deleted successfully.",
+  "common.actions.newFolder": "New Folder",
+  "common.actions.duplicate": "Duplicate",
+  "common.actions.moveTo": "Move To",
+  "pageSaveDialog.displayModeTitle": "Title",
+  "pageSaveDialog.displayModePath": "Path"
 }

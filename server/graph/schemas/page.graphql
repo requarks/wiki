@@ -103,7 +103,7 @@ extend type Mutation {
   ): PageResponse
 
   convertPage(
-    id: Int!
+    id: UUID!
     editor: String!
   ): DefaultResponse
 
@@ -114,7 +114,7 @@ extend type Mutation {
   ): DefaultResponse
 
   deletePage(
-    id: Int!
+    id: UUID!
   ): DefaultResponse
 
   deleteTag(

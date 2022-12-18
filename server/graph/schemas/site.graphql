@@ -78,10 +78,11 @@ type SiteRobots {
 
 type SiteFeatures {
   ratings: Boolean
-  ratingsMode: SitePageRatingModes
+  ratingsMode: SitePageRatingMode
   comments: Boolean
   contributions: Boolean
   profile: Boolean
+  reasonForChange: SiteReasonForChangeMode
   search: Boolean
 }
 
@@ -129,10 +130,16 @@ enum SiteThemePosition {
   right
 }
 
-enum SitePageRatingModes {
+enum SitePageRatingMode {
   off
   thumbs
   stars
+}
+
+enum SiteReasonForChangeMode {
+  off
+  optional
+  required
 }
 
 type SiteCreateResponse {
@@ -164,10 +171,11 @@ input SiteRobotsInput {
 
 input SiteFeaturesInput {
   ratings: Boolean
-  ratingsMode: SitePageRatingModes
+  ratingsMode: SitePageRatingMode
   comments: Boolean
   contributions: Boolean
   profile: Boolean
+  reasonForChange: SiteReasonForChangeMode
   search: Boolean
 }
 

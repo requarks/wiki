@@ -6,6 +6,7 @@ ul.treeview-level
       q-icon(name='img:/_assets/icons/fluent-ftp.svg', size='sm')
       .treeview-label-text(:class='$q.dark.isActive ? `text-purple-4` : `text-purple`') root
       q-menu(
+        v-if='rootContextActionList.length > 0'
         touch-position
         context-menu
         auto-close
@@ -14,10 +15,15 @@ ul.treeview-level
         )
         q-card.q-pa-sm
           q-list(dense, style='min-width: 150px;')
-            q-item(clickable, @click='createRootFolder')
+            q-item(
+              v-for='action of rootContextActionList'
+              :key='action.key'
+              clickable
+              @click='action.handler(null)'
+              )
               q-item-section(side)
-                q-icon(name='las la-plus-circle', color='primary')
-              q-item-section New Folder
+                q-icon(:name='action.icon', :color='action.iconColor')
+              q-item-section(:class='action.labelColor && (`text-` + action.labelColor)') {{action.label}}
       q-icon(
         v-if='!selection'
         name='las la-angle-right'
@@ -62,8 +68,14 @@ const roots = inject('roots')
 const nodes = inject('nodes')
 const selection = inject('selection')
 const emitContextAction = inject('emitContextAction')
+const contextActionList = inject('contextActionList')
 
 // COMPUTED
+
+const rootContextActionList = computed(() => {
+  if (props.parentId) { return [] }
+  return contextActionList.filter(c => c.key === 'newFolder')
+})
 
 const level = computed(() => {
   const items = []

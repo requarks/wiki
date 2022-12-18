@@ -36,26 +36,6 @@
                   img(src='/_assets-legacy/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
                   .body-2.mt-2.primary--text Visual Editor
                   .caption.grey--text Rich-text WYSIWYG
-
-    v-card.radius-7.mt-2(color='teal darken-3', dark)
-      v-card-text.text-center.py-4
-        .subtitle-1.white--text {{$t('editor:select.customView')}}
-        v-container(grid-list-lg, fluid)
-          v-layout(row, wrap, justify-center)
-            v-flex(xs4)
-              v-hover
-                template(v-slot:default='{ hover }')
-                  v-card.radius-7.animated.fadeInUp(
-                    hover
-                    light
-                    ripple
-                    )
-                    v-card-text.text-center(@click='fromTemplate')
-                      img(src='/_assets-legacy/svg/icon-cube.svg', alt='From Template', style='width: 42px; opacity: .5;')
-                      .body-2.mt-1.teal--text From Template
-                      .caption.grey--text Use an existing page...
-
-    page-selector(mode='select', v-model='templateDialogIsShown', :open-handler='fromTemplateHandle', :path='path', :locale='locale', must-exist)
 </template>
 
 <script>

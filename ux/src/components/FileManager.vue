@@ -44,6 +44,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
         @lazy-load='treeLazyLoad'
         :use-lazy-load='true'
         @context-action='treeContextAction'
+        :display-mode='state.displayMode'
       )
   q-drawer.fileman-right(:model-value='true', :width='350', side='right')
     .q-pa-md
@@ -90,7 +91,6 @@ q-layout.fileman(view='hHh lpR lFr', container)
             )
             q-tooltip(anchor='bottom middle', self='top middle') {{t(`fileman.viewOptions`)}}
             q-menu(
-              auto-close
               transition-show='jump-down'
               transition-hide='jump-up'
               anchor='bottom right'
@@ -103,11 +103,38 @@ q-layout.fileman(view='hHh lpR lFr', container)
                   q-separator.q-my-sm
                   q-item(clickable)
                     q-item-section(side)
-                      q-icon(name='las la-circle', color='grey', size='xs')
+                      q-icon(name='las la-list', color='grey', size='xs')
+                    q-item-section.q-pr-sm Browse using...
+                    q-item-section(side)
+                      q-icon(name='las la-angle-right', color='grey', size='xs')
+                    q-menu(
+                      anchor='top end'
+                      self='top start'
+                      )
+                      q-list.q-pa-sm(dense)
+                        q-item(clickable, @click='state.displayMode = `path`')
+                          q-item-section(side)
+                            q-icon(
+                              :name='state.displayMode === `path` ? `las la-check-circle` : `las la-circle`'
+                              :color='state.displayMode === `path` ? `positive` : `grey`'
+                              size='xs'
+                              )
+                          q-item-section.q-pr-sm Browse Using Paths
+                        q-item(clickable, @click='state.displayMode = `title`')
+                          q-item-section(side)
+                            q-icon(
+                              :name='state.displayMode === `title` ? `las la-check-circle` : `las la-circle`'
+                              :color='state.displayMode === `title` ? `positive` : `grey`'
+                              size='xs'
+                              )
+                          q-item-section.q-pr-sm Browse Using Titles
+                  q-item(clickable)
+                    q-item-section(side)
+                      q-icon(name='las la-stop', color='grey', size='xs')
                     q-item-section.q-pr-sm Compact List
                   q-item(clickable)
                     q-item-section(side)
-                      q-icon(name='las la-check-circle', color='positive', size='xs')
+                      q-icon(name='las la-check-square', color='positive', size='xs')
                     q-item-section.q-pr-sm Show Folders
           q-btn.q-mr-sm(
             flat
@@ -254,6 +281,7 @@ const state = reactive({
   currentFileId: '',
   treeNodes: {},
   treeRoots: [],
+  displayMode: 'title',
   isUploading: false,
   shouldCancelUpload: false,
   uploadPercentage: 0,
@@ -450,6 +478,7 @@ async function loadTree (parentId, types) {
           case 'TreeItemFolder': {
             state.treeNodes[item.id] = {
               text: item.title,
+              fileName: item.fileName,
               children: []
             }
             if (!item.folderPath) {

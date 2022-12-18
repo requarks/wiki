@@ -21,11 +21,13 @@ export const useSiteStore = defineStore('site', {
     searchRestrictLocale: false,
     searchRestrictPath: false,
     printView: false,
-    ratingsMode: 'thumbs',
     pageDataTemplates: [],
     showSideNav: true,
     showSidebar: true,
     overlay: null,
+    features: {
+      ratingsMode: 'off'
+    },
     theme: {
       dark: false,
       injectCSS: '',
@@ -76,6 +78,9 @@ export const useSiteStore = defineStore('site', {
                 company
                 contentLicense
                 footerExtra
+                features {
+                  ratingsMode
+                }
                 theme {
                   dark
                   colorPrimary
@@ -107,6 +112,10 @@ export const useSiteStore = defineStore('site', {
           this.company = clone(siteInfo.company)
           this.contentLicense = clone(siteInfo.contentLicense)
           this.footerExtra = clone(siteInfo.footerExtra)
+          this.features = {
+            ...this.features,
+            ...clone(siteInfo.features)
+          }
           this.theme = {
             ...this.theme,
             ...clone(siteInfo.theme)

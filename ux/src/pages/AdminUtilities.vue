@@ -109,7 +109,19 @@ q-page.admin-utilities
               @click=''
               :label='t(`common.actions.proceed`)'
             )
-
+        q-item
+          blueprint-icon(icon='rescan-document', :hue-rotate='45')
+          q-item-section
+            q-item-label {{t(`admin.utilities.scanPageProblems`)}}
+            q-item-label(caption) {{t(`admin.utilities.scanPageProblemsHint`)}}
+          q-item-section(side)
+            q-btn.acrylic-btn(
+              flat
+              icon='las la-arrow-circle-right'
+              color='primary'
+              @click=''
+              :label='t(`common.actions.proceed`)'
+            )
 </template>
 
 <script setup>

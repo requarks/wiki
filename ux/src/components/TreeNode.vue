@@ -7,7 +7,7 @@ li.treeview-node
       size='sm'
       @click.stop='hasChildren ? toggleNode() : openNode()'
       )
-    .treeview-label-text {{node.text}}
+    .treeview-label-text {{displayMode === 'path' ? node.fileName : node.text}}
     q-spinner.q-mr-xs(
       color='primary'
       v-if='state.isLoading'
@@ -19,6 +19,7 @@ li.treeview-node
       )
     //- RIGHT-CLICK MENU
     q-menu(
+      v-if='contextActionList.length > 0'
       touch-position
       context-menu
       auto-close
@@ -29,26 +30,15 @@ li.treeview-node
       )
       q-card.q-pa-sm
         q-list(dense, style='min-width: 150px;')
-          q-item(clickable, @click='contextAction(`newFolder`)')
+          q-item(
+            v-for='action of contextActionList'
+            :key='action.key'
+            clickable
+            @click='action.handler(node.id)'
+            )
             q-item-section(side)
-              q-icon(name='las la-plus-circle', color='primary')
-            q-item-section New Folder
-          q-item(clickable)
-            q-item-section(side)
-              q-icon(name='las la-copy', color='teal')
-            q-item-section Duplicate...
-          q-item(clickable)
-            q-item-section(side)
-              q-icon(name='las la-redo', color='teal')
-            q-item-section Rename...
-          q-item(clickable)
-            q-item-section(side)
-              q-icon(name='las la-arrow-right', color='teal')
-            q-item-section Move to...
-          q-item(clickable)
-            q-item-section(side)
-              q-icon(name='las la-trash-alt', color='negative')
-            q-item-section.text-negative Delete
+              q-icon(:name='action.icon', :color='action.iconColor')
+            q-item-section(:class='action.labelColor && (`text-` + action.labelColor)') {{action.label}}
   //- SUB-LEVEL
   transition(name='treeview')
     tree-level(
@@ -89,9 +79,11 @@ const $q = useQuasar()
 
 const loaded = inject('loaded')
 const opened = inject('opened')
+const displayMode = inject('displayMode')
 const selection = inject('selection')
 const emitLazyLoad = inject('emitLazyLoad')
 const emitContextAction = inject('emitContextAction')
+const contextActionList = inject('contextActionList')
 
 // DATA
 

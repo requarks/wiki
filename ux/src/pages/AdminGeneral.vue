@@ -11,7 +11,7 @@ q-page.admin-general
         icon='las la-question-circle'
         flat
         color='grey'
-        :href='siteStore.docsBase + `/admin/sites`'
+        :href='siteStore.docsBase + `/admin/sites#general`'
         target='_blank'
         type='a'
         )
@@ -208,6 +208,21 @@ q-page.admin-general
               unchecked-icon='las la-times'
               :aria-label='t(`admin.general.allowSearch`)'
               )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
+          blueprint-icon(icon='confusion')
+          q-item-section
+            q-item-label {{t(`admin.general.reasonForChange`)}}
+            q-item-label(caption) {{t(`admin.general.reasonForChangeHint`)}}
+          q-item-section(avatar)
+            q-btn-toggle(
+              v-model='state.config.features.reasonForChange'
+              push
+              glossy
+              no-caps
+              toggle-color='primary'
+              :options='reasonForChangeModes'
+            )
 
       //- -----------------------
       //- URL Handling
@@ -493,6 +508,7 @@ const state = reactive({
       ratingsMode: 'off',
       comments: false,
       contributions: false,
+      reasonForChange: 'off',
       profile: false
     },
     defaults: {
@@ -527,6 +543,11 @@ const ratingsModes = [
   { value: 'off', label: t('admin.general.ratingsOff') },
   { value: 'thumbs', label: t('admin.general.ratingsThumbs') },
   { value: 'stars', label: t('admin.general.ratingsStars') }
+]
+const reasonForChangeModes = [
+  { value: 'off', label: t('admin.general.reasonForChangeOff') },
+  { value: 'optional', label: t('admin.general.reasonForChangeOptional') },
+  { value: 'required', label: t('admin.general.reasonForChangeRequired') }
 ]
 const dateFormats = [
   { value: '', label: t('profile.localeDefault') },
@@ -586,10 +607,11 @@ async function load () {
           }
           features {
             comments
-            ratings
-            ratingsMode
             contributions
             profile
+            ratings
+            ratingsMode
+            reasonForChange
             search
           }
           defaults {
