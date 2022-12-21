@@ -2785,9 +2785,9 @@
   dependencies:
     passport-oauth2 "^1.4.0"
 
-"@fiea-al/idigital-node-integration@https://github.com/FIEA-AL/idigital-node-integration.git#1.0.5", "@fiea-al/idigital-node-integration@https://github.com/FIEA-AL/idigital-node-integration.git#v1.0.5":
-  version "1.0.4"
-  resolved "https://github.com/FIEA-AL/idigital-node-integration.git#935eea221e13808739ad3558c9e100ff9240643c"
+"@fiea-al/idigital-node-integration@https://github.com/FIEA-AL/idigital-node-integration.git#0.1.1":
+  version "0.1.1"
+  resolved "https://github.com/FIEA-AL/idigital-node-integration.git#118bbef9a13122e4080728a5acaa248e96d57170"
   dependencies:
     axios "1.2.0"
     jose "4.11.1"
@@ -9937,12 +9937,7 @@ follow-redirects@1.5.10:
   dependencies:
     debug "=3.1.0"
 
-follow-redirects@^1.14.9:
-  version "1.15.2"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.2.tgz#b460864144ba63f2681096f274c4e57026da2c13"
-  integrity sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==
-
-follow-redirects@^1.15.0:
+follow-redirects@^1.14.9, follow-redirects@^1.15.0:
   version "1.15.2"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.2.tgz#b460864144ba63f2681096f274c4e57026da2c13"
   integrity sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==

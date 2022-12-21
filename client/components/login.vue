@@ -873,6 +873,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import '../scss/idigital/style.css';
+
 #base-login {
   background-color: #d0e2f2;
 }
