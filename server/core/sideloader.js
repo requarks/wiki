@@ -53,7 +53,7 @@ module.exports = {
                   isRTL: locale.isRTL,
                   name: locale.name,
                   nativeName: locale.nativeName,
-                  availability: locale.availability ?? 0
+                  availability: locale.availability || 0
                 }).where('code', locale.code)
               } else {
                 await WIKI.models.locales.query().insert({
@@ -62,7 +62,7 @@ module.exports = {
                   isRTL: locale.isRTL,
                   name: locale.name,
                   nativeName: locale.nativeName,
-                  availability: locale.availability ?? 0
+                  availability: locale.availability || 0
                 })
               }
               importedLocales++
