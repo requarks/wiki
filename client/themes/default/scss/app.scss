@@ -357,6 +357,148 @@
   }
 
   // ---------------------------------
+  // ASCIIDOC SPECIFIC
+  // ---------------------------------
+
+  .admonitionblock {
+    margin: 1rem 0;
+    position: relative;
+
+    table {
+      border: none;
+      background-color: transparent;
+      width: 100%;
+    }
+
+    td.icon {
+      border-bottom-left-radius: 7px;
+      border-top-left-radius: 7px;
+      text-align: center;
+      width: 56px;
+
+      &::before {
+        display: inline-block;
+        font: normal normal normal 24px/1 "Material Design Icons", sans-serif !important;
+      }
+    }
+
+    td.content {
+      border-bottom-right-radius: 7px;
+      border-top-right-radius: 7px;
+    }
+
+    &.note {
+      td.icon {
+        background-color: mc('blue', '300');
+        color: mc('blue', '50');
+        &::before {
+          content: "\F02FC";
+        }
+      }
+      td.content {
+        color: darken(mc('blue', '900'), 10%);
+        background-color: mc('blue', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('blue', '900');
+          color: mc('blue', '50');
+        }
+      }
+    }
+    &.tip {
+      td.icon {
+        background-color: mc('green', '300');
+        color: mc('green', '50');
+        &::before {
+          content: "\F0335";
+        }
+      }
+      td.content {
+        color: darken(mc('green', '900'), 10%);
+        background-color: mc('green', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('green', '900');
+          color: mc('green', '50');
+        }
+      }
+    }
+    &.warning {
+      background-color: transparent !important;
+
+      td.icon {
+        background-color: mc('orange', '300');
+        color: #FFF;
+        &::before {
+          content: "\F0026";
+        }
+      }
+      td.content {
+        color: darken(mc('orange', '900'), 10%);
+        background-color: mc('orange', '50');
+
+        @at-root .theme--dark & {
+          background-color: darken(mc('orange', '900'), 5%);
+          color: mc('orange', '100');
+        }
+      }
+    }
+    &.caution {
+      td.icon {
+        background-color: mc('purple', '300');
+        color: mc('purple', '50');
+        &::before {
+          content: "\f0238";
+        }
+      }
+      td.content {
+        color: darken(mc('purple', '900'), 10%);
+        background-color: mc('purple', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('purple', '900');
+          color: mc('purple', '100');
+        }
+      }
+    }
+    &.important {
+      td.icon {
+        background-color: mc('red', '300');
+        color: mc('red', '50');
+        &::before {
+          content: "\F0159";
+        }
+      }
+      td.content {
+        color: darken(mc('red', '900'), 10%);
+        background-color: mc('red', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('red', '900');
+          color: mc('red', '100');
+        }
+      }
+    }
+  }
+
+  .exampleblock {
+    > .title {
+      font-style: italic;
+      font-size: 1rem !important;
+      color: #7a2717;
+
+      @at-root .theme--dark & {
+        color: mc('brown', '300');
+      }
+    }
+    > .content {
+      border: 1px solid mc('grey', '200');
+      border-radius: 7px;
+      margin-bottom: 12px;
+      padding: 16px;
+    }
+  }
+  // ---------------------------------
   // LISTS
   // ---------------------------------
 
@@ -543,6 +685,23 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
+      }
+    }
+  }
+
+  dl {
+    dt {
+      margin-top: 0.3em;
+      margin-bottom: 0.3em;
+      font-weight: bold;
+    }
+
+    dd {
+      margin-left: 1.125em;
+      margin-bottom: 0.75em;
+
+      > p {
+        padding: 0;
       }
     }
   }
