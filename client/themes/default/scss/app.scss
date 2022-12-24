@@ -689,15 +689,21 @@
     }
   }
 
-  dl dt {
-    margin-top: 0.3em;
-    margin-bottom: 0.3em;
-    font-weight: bold;
-  }
+  dl {
+    dt {
+      margin-top: 0.3em;
+      margin-bottom: 0.3em;
+      font-weight: bold;
+    }
 
-  dl, dd {
-    margin-left: 1.125em;
-    margin-bottom: 0.75em;
+    dd {
+      margin-left: 1.125em;
+      margin-bottom: 0.75em;
+
+      > p {
+        padding: 0;
+      }
+    }
   }
 
   // ---------------------------------
