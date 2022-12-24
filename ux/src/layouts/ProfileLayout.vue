@@ -5,19 +5,19 @@ q-layout(view='hHh Lpr lff')
     .layout-profile-card
       .layout-profile-sd
         q-list
-          q-item(
-            v-for='navItem of sidenav'
-            :key='navItem.key'
-            clickable
-            :to='`/_profile/` + navItem.key'
-            active-class='is-active'
-            :disabled='navItem.disabled'
-            v-ripple
-            )
-            q-item-section(side)
-              q-icon(:name='navItem.icon')
-            q-item-section
-              q-item-label {{navItem.label}}
+          template(v-for='navItem of sidenav' :key='navItem.key')
+            q-item(
+              v-if='!navItem.disabled || flagsStore.experimental'
+              clickable
+              :to='`/_profile/` + navItem.key'
+              active-class='is-active'
+              :disabled='navItem.disabled'
+              v-ripple
+              )
+              q-item-section(side)
+                q-icon(:name='navItem.icon')
+              q-item-section
+                q-item-label {{navItem.label}}
           q-separator.q-my-sm(inset)
           q-item(
             clickable
@@ -48,6 +48,7 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 
+import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 
@@ -61,6 +62,7 @@ const $q = useQuasar()
 
 // STORES
 
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 

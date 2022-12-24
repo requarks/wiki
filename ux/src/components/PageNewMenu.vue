@@ -11,15 +11,19 @@ q-menu.translucent-menu(
     q-item(clickable, @click='create(`markdown`)')
       blueprint-icon(icon='markdown')
       q-item-section.q-pr-sm New Markdown Page
-    q-item(clickable, @click='create(`channel`)')
-      blueprint-icon(icon='chat')
-      q-item-section.q-pr-sm New Discussion Space
-    q-item(clickable, @click='create(`blog`)')
-      blueprint-icon(icon='typewriter-with-paper')
-      q-item-section.q-pr-sm New Blog Page
-    q-item(clickable, @click='create(`api`)')
-      blueprint-icon(icon='api')
-      q-item-section.q-pr-sm New API Documentation
+    q-item(clickable, @click='create(`asciidoc`)')
+      blueprint-icon(icon='asciidoc')
+      q-item-section.q-pr-sm New AsciiDoc Page
+    template(v-if='flagsStore.experimental')
+      q-item(clickable, @click='create(`channel`)')
+        blueprint-icon(icon='chat')
+        q-item-section.q-pr-sm New Discussion Space
+      q-item(clickable, @click='create(`blog`)')
+        blueprint-icon(icon='typewriter-with-paper')
+        q-item-section.q-pr-sm New Blog Page
+      q-item(clickable, @click='create(`api`)')
+        blueprint-icon(icon='api')
+        q-item-section.q-pr-sm New API Documentation
     q-item(clickable, @click='create(`redirect`)')
       blueprint-icon(icon='advance')
       q-item-section.q-pr-sm New Redirection
@@ -41,6 +45,7 @@ import { useQuasar } from 'quasar'
 
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
+import { useFlagsStore } from 'src/stores/flags'
 
 // PROPS
 
@@ -65,6 +70,7 @@ const $q = useQuasar()
 
 // STORES
 
+const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 

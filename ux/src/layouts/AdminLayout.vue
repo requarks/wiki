@@ -29,7 +29,7 @@ q-layout.admin(view='hHh Lpr lff')
       :thumb-style='thumbStyle'
       :bar-style='barStyle'
       )
-      q-list.text-white(padding, dense)
+      q-list.text-white.q-pb-lg(padding, dense)
         q-item.q-mb-sm
           q-item-section
             q-btn.acrylic-btn(

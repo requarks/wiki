@@ -7,7 +7,7 @@ li.treeview-node
       size='sm'
       @click.stop='hasChildren ? toggleNode() : openNode()'
       )
-    .treeview-label-text {{displayMode === 'path' ? node.fileName : node.text}}
+    .treeview-label-text {{displayMode === 'path' ? node.fileName : node.title}}
     q-spinner.q-mr-xs(
       color='primary'
       v-if='state.isLoading'

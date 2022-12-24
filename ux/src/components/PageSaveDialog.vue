@@ -5,17 +5,23 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
       q-icon(name='img:/_assets/icons/fluent-save-as.svg', left, size='sm')
       span {{t('pageSaveDialog.title')}}
     .row.page-save-dialog-browser
-      .col-4.q-px-sm
-        tree(
-          :nodes='state.treeNodes'
-          :roots='state.treeRoots'
-          v-model:selected='state.currentFolderId'
-          @lazy-load='treeLazyLoad'
-          :use-lazy-load='true'
-          @context-action='treeContextAction'
-          :context-action-list='[`newFolder`]'
-          :display-mode='state.displayMode'
-        )
+      .col-4
+        q-scroll-area(
+          :thumb-style='thumbStyle'
+          :bar-style='barStyle'
+          style='height: 300px'
+          )
+          .q-px-sm
+            tree(
+              :nodes='state.treeNodes'
+              :roots='state.treeRoots'
+              v-model:selected='state.currentFolderId'
+              @lazy-load='treeLazyLoad'
+              :use-lazy-load='true'
+              @context-action='treeContextAction'
+              :context-action-list='[`newFolder`]'
+              :display-mode='state.displayMode'
+            )
       .col-8
         q-list.page-save-dialog-filelist(dense)
           q-item(
@@ -31,6 +37,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
               q-icon(:name='item.icon', size='sm')
             q-item-section
               q-item-label {{item.title}}
+    .page-save-dialog-path.font-robotomono {{folderPath}}
     q-list.q-py-sm
       q-item
         blueprint-icon(icon='new-document')
@@ -197,7 +204,27 @@ const displayModes = [
   { value: 'path', label: t('pageSaveDialog.displayModePath') }
 ]
 
+const thumbStyle = {
+  right: '1px',
+  borderRadius: '5px',
+  backgroundColor: '#666',
+  width: '5px',
+  opacity: 0.5
+}
+const barStyle = {
+  width: '7px'
+}
+
 // COMPUTED
+
+const folderPath = computed(() => {
+  if (!state.currentFolderId) {
+    return '/'
+  } else {
+    const folderNode = state.treeNodes[state.currentFolderId] ?? {}
+    return folderNode.folderPath ? `/${folderNode.folderPath}/${folderNode.fileName}/` : `/${folderNode.fileName}/`
+  }
+})
 
 const files = computed(() => {
   return state.fileList.map(f => {
@@ -274,8 +301,9 @@ async function loadTree (parentId, types) {
         switch (item.__typename) {
           case 'TreeItemFolder': {
             state.treeNodes[item.id] = {
-              text: item.title,
+              folderPath: item.folderPath,
               fileName: item.fileName,
+              title: item.title,
               children: []
             }
             if (!item.folderPath) {
@@ -336,16 +364,23 @@ onMounted(() => {
   &-browser {
     height: 300px;
     max-height: 90vh;
-    border-bottom: 1px solid $blue-grey-1;
+    border-bottom: 1px solid #FFF;
+
+    @at-root .body--light & {
+      border-bottom-color: $blue-grey-1;
+    }
+    @at-root .body--dark & {
+      border-bottom-color: $dark-3;
+    }
 
     > .col-4 {
+      height: 300px;
+
       @at-root .body--light & {
         background-color: $blue-grey-1;
-        border-bottom-color: $blue-grey-1;
       }
       @at-root .body--dark & {
         background-color: $dark-4;
-        border-bottom-color: $dark-4;
       }
     }
   }
@@ -369,6 +404,23 @@ onMounted(() => {
           color: rgba(255,255,255,.7);
         }
       }
+    }
+  }
+
+  &-path {
+    padding: 5px 16px;
+    font-size: 12px;
+    border-bottom: 1px solid #FFF;
+
+    @at-root .body--light & {
+      background-color: lighten($blue-grey-1, 4%);
+      border-bottom-color: $blue-grey-1;
+      color: $blue-grey-9;
+    }
+    @at-root .body--dark & {
+      background-color: darken($dark-4, 1%);
+      border-bottom-color: $dark-1;
+      color: $blue-grey-3;
     }
   }
 

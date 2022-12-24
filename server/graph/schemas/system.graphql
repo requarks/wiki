@@ -4,7 +4,7 @@
 
 extend type Query {
   systemExtensions: [SystemExtension]
-  systemFlags: [SystemFlag]
+  systemFlags: JSON
   systemInfo: SystemInfo
   systemInstances: [SystemInstance]
   systemSecurity: SystemSecurity
@@ -31,7 +31,7 @@ extend type Mutation {
   ): DefaultResponse
 
   updateSystemFlags(
-    flags: [SystemFlagInput]!
+    flags: JSON!
   ): DefaultResponse
 
   updateSystemSecurity(
@@ -59,16 +59,6 @@ extend type Mutation {
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
-
-type SystemFlag {
-  key: String
-  value: Boolean
-}
-
-input SystemFlagInput {
-  key: String!
-  value: Boolean!
-}
 
 type SystemInfo {
   configFile: String

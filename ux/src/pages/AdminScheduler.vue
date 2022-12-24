@@ -577,7 +577,7 @@ async function cancelJob (jobId) {
       }
     })
     if (resp?.data?.cancelJob?.operation?.succeeded) {
-      this.load()
+      load()
       $q.notify({
         type: 'positive',
         message: t('admin.scheduler.cancelJobSuccess')

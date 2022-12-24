@@ -95,7 +95,7 @@ const state = reactive({
   opened: {}
 })
 
-// COMPOUTED
+// COMPUTED
 
 const selection = computed({
   get () {
@@ -120,6 +120,16 @@ function emitContextAction (nodeId, action) {
   emit('contextAction', nodeId, action)
 }
 
+function setOpened (nodeId) {
+  state.opened[nodeId] = true
+}
+function isLoaded (nodeId) {
+  return state.loaded[nodeId]
+}
+function resetLoaded (nodeId) {
+  state.loaded[nodeId] = false
+}
+
 // PROVIDE
 
 provide('roots', toRef(props, 'roots'))
@@ -130,6 +140,14 @@ provide('displayMode', toRef(props, 'displayMode'))
 provide('selection', selection)
 provide('emitLazyLoad', emitLazyLoad)
 provide('emitContextAction', emitContextAction)
+
+// EXPOSE
+
+defineExpose({
+  setOpened,
+  isLoaded,
+  resetLoaded
+})
 
 // MOUNTED
 

@@ -5,6 +5,7 @@ router-view
 <script setup>
 import { nextTick, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 import { setCssVar, useQuasar } from 'quasar'
@@ -17,6 +18,7 @@ const $q = useQuasar()
 
 // STORES
 
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
@@ -67,6 +69,10 @@ if (typeof siteConfig !== 'undefined') {
 
 router.beforeEach(async (to, from) => {
   siteStore.routerLoading = true
+  // System Flags
+  if (!flagsStore.loaded) {
+    flagsStore.load()
+  }
   // Site Info
   if (!siteStore.id) {
     console.info('No pre-cached site config. Loading site info...')

@@ -38,6 +38,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
   q-drawer.fileman-left(:model-value='true', :width='350')
     .q-px-md.q-pb-sm
       tree(
+        ref='treeComp'
         :nodes='state.treeNodes'
         :roots='state.treeRoots'
         v-model:selected='state.currentFolderId'
@@ -46,7 +47,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
         @context-action='treeContextAction'
         :display-mode='state.displayMode'
       )
-  q-drawer.fileman-right(:model-value='true', :width='350', side='right')
+  q-drawer.fileman-right(:model-value='$q.screen.gt.md', :width='350', side='right')
     .q-pa-md
       template(v-if='currentFileDetails')
         q-img.rounded-borders.q-mb-md(
@@ -143,7 +144,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
             color='grey'
             :aria-label='t(`common.actions.refresh`)'
             icon='las la-redo-alt'
-            @click=''
+            @click='reloadFolder(state.currentFolderId)'
             )
             q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.refresh`)}}
           q-separator.q-mr-sm(inset, vertical)
@@ -172,14 +173,21 @@ q-layout.fileman(view='hHh lpR lFr', container)
             icon='las la-cloud-upload-alt'
             @click='uploadFile'
             )
-      q-list.fileman-filelist
+      .fileman-emptylist(v-if='files.length < 1')
+        template(v-if='state.fileListLoading')
+          q-spinner.q-mr-sm(color='primary', size='xs', :thickness='3')
+          span.text-primary Loading...
+        template(v-else)
+          q-icon.q-mr-sm(name='las la-exclamation-triangle', size='sm')
+          span This folder is empty.
+      q-list.fileman-filelist(v-else)
         q-item(
           v-for='item of files'
           :key='item.id'
           clickable
           active-class='active'
           :active='item.id === state.currentFileId'
-          @click.native='state.currentFileId = item.id'
+          @click.native='selectItem(item)'
           @dblclick.native='openItem(item)'
           )
           q-item-section.fileman-filelist-icon(avatar)
@@ -229,7 +237,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                   q-item-section.text-negative Delete
   q-footer
     q-bar.fileman-path
-      small.text-caption.text-grey-7 / foo / bar
+      small.text-caption.text-grey-7 {{folderPath}}
 
   input(
     type='file'
@@ -258,6 +266,7 @@ import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 import FolderCreateDialog from 'src/components/FolderCreateDialog.vue'
+import FolderDeleteDialog from 'src/components/FolderDeleteDialog.vue'
 
 // QUASAR
 
@@ -277,49 +286,33 @@ const { t } = useI18n()
 const state = reactive({
   loading: 0,
   search: '',
-  currentFolderId: '',
-  currentFileId: '',
+  currentFolderId: null,
+  currentFileId: null,
   treeNodes: {},
   treeRoots: [],
   displayMode: 'title',
   isUploading: false,
   shouldCancelUpload: false,
   uploadPercentage: 0,
-  fileList: [
-    {
-      id: '1',
-      type: 'folder',
-      title: 'Beep Boop',
-      children: 19
-    },
-    {
-      id: '2',
-      type: 'folder',
-      title: 'Second Folder',
-      children: 0
-    },
-    {
-      id: '3',
-      type: 'page',
-      title: 'Some Page',
-      pageType: 'markdown',
-      updatedAt: '2022-11-24T18:27:00Z'
-    },
-    {
-      id: '4',
-      type: 'file',
-      title: 'Important Document',
-      fileType: 'pdf',
-      fileSize: 19000
-    }
-  ]
+  fileList: [],
+  fileListLoading: false
 })
 
 // REFS
 
 const fileIpt = ref(null)
+const treeComp = ref(null)
 
 // COMPUTED
+
+const folderPath = computed(() => {
+  if (!state.currentFolderId) {
+    return '/'
+  } else {
+    const folderNode = state.treeNodes[state.currentFolderId] ?? {}
+    return folderNode.folderPath ? `/${folderNode.folderPath}/${folderNode.fileName}/` : `/${folderNode.fileName}/`
+  }
+})
 
 const files = computed(() => {
   return state.fileList.map(f => {
@@ -334,7 +327,7 @@ const files = computed(() => {
         f.caption = t(`fileman.${f.pageType}PageType`)
         break
       }
-      case 'file': {
+      case 'asset': {
         f.icon = fileTypes[f.fileType]?.icon ?? ''
         f.side = filesize(f.fileSize)
         if (fileTypes[f.fileType]) {
@@ -382,7 +375,7 @@ const currentFileDetails = computed(() => {
         })
         break
       }
-      case 'file': {
+      case 'asset': {
         items.push({
           label: t('fileman.detailsAssetType'),
           value: fileTypes[item.fileType] ? t(`fileman.${item.fileType}FileType`) : t('fileman.unknownFileType', { type: item.fileType.toUpperCase() })
@@ -405,8 +398,8 @@ const currentFileDetails = computed(() => {
 
 // WATCHERS
 
-watch(() => state.currentFolderId, (newValue) => {
-  state.currentFileId = null
+watch(() => state.currentFolderId, async (newValue) => {
+  await loadTree(newValue)
 })
 
 // METHODS
@@ -420,7 +413,16 @@ async function treeLazyLoad (nodeId, { done, fail }) {
   done()
 }
 
-async function loadTree (parentId, types) {
+async function loadTree (parentId, types, noCache = false) {
+  if (!parentId) {
+    parentId = null
+    state.treeRoots = []
+  }
+  if (parentId === state.currentFolderId) {
+    state.fileListLoading = true
+    state.currentFileId = null
+    state.fileList = []
+  }
   try {
     const resp = await APOLLO_CLIENT.query({
       query: gql`
@@ -476,15 +478,58 @@ async function loadTree (parentId, types) {
       for (const item of items) {
         switch (item.__typename) {
           case 'TreeItemFolder': {
-            state.treeNodes[item.id] = {
-              text: item.title,
-              fileName: item.fileName,
-              children: []
+            // -> Tree Nodes
+            if (!state.treeNodes[item.id] || (parentId && !treeComp.value.isLoaded(item.id))) {
+              state.treeNodes[item.id] = {
+                folderPath: item.folderPath,
+                fileName: item.fileName,
+                title: item.title,
+                children: []
+              }
+              if (item.folderPath) {
+                if (!state.treeNodes[parentId].children.includes(item.id)) {
+                  state.treeNodes[parentId].children.push(item.id)
+                }
+              }
             }
+
+            // -> Set Tree Roots
             if (!item.folderPath) {
               newTreeRoots.push(item.id)
-            } else {
-              state.treeNodes[parentId].children.push(item.id)
+            }
+
+            // -> File List
+            if (parentId === state.currentFolderId) {
+              state.fileList.push({
+                id: item.id,
+                type: 'folder',
+                title: item.title,
+                children: 0
+              })
+            }
+            break
+          }
+          case 'TreeItemAsset': {
+            if (parentId === state.currentFolderId) {
+              state.fileList.push({
+                id: item.id,
+                type: 'asset',
+                title: item.title,
+                fileType: 'pdf',
+                fileSize: 19000
+              })
+            }
+            break
+          }
+          case 'TreeItemPage': {
+            if (parentId === state.currentFolderId) {
+              state.fileList.push({
+                id: item.id,
+                type: 'page',
+                title: item.title,
+                pageType: 'markdown',
+                updatedAt: '2022-11-24T18:27:00Z'
+              })
             }
             break
           }
@@ -501,13 +546,21 @@ async function loadTree (parentId, types) {
       caption: err.message
     })
   }
+  if (parentId === state.currentFolderId) {
+    nextTick(() => {
+      state.fileListLoading = false
+    })
+  }
 }
 
 function treeContextAction (nodeId, action) {
-  console.info(nodeId, action)
   switch (action) {
     case 'newFolder': {
       newFolder(nodeId)
+      break
+    }
+    case 'del': {
+      delFolder(nodeId)
       break
     }
   }
@@ -522,6 +575,28 @@ function newFolder (parentId) {
   }).onOk(() => {
     loadTree(parentId)
   })
+}
+
+function delFolder (folderId) {
+  $q.dialog({
+    component: FolderDeleteDialog,
+    componentProps: {
+      folderId,
+      folderName: state.treeNodes[folderId].title
+    }
+  }).onOk(() => {
+    for (const nodeId in state.treeNodes) {
+      if (state.treeNodes[nodeId].children.includes(folderId)) {
+        state.treeNodes[nodeId].children = state.treeNodes[nodeId].children.filter(c => c !== folderId)
+      }
+    }
+    delete state.treeNodes[folderId]
+  })
+}
+
+function reloadFolder (folderId) {
+  loadTree(folderId, null, true)
+  treeComp.value.resetLoaded()
 }
 
 // -> Upload Methods
@@ -603,6 +678,15 @@ function uploadCancel () {
   state.uploadPercentage = 0
 }
 
+function selectItem (item) {
+  if (item.type === 'folder') {
+    state.currentFolderId = item.id
+    treeComp.value.setOpened(item.id)
+  } else {
+    state.currentFileId = item.id
+  }
+}
+
 function openItem (item) {
   console.info(item.id)
 }
@@ -659,6 +743,20 @@ onMounted(() => {
     }
     @at-root .body--dark & {
       background-color: $dark-4 !important;
+    }
+  }
+
+  &-emptylist {
+    padding: 16px;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+
+    @at-root .body--light & {
+      color: $grey-6;
+    }
+    @at-root .body--dark & {
+      color: $dark-4;
     }
   }
 

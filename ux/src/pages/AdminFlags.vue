@@ -15,13 +15,20 @@ q-page.admin-flags
         target='_blank'
         type='a'
         )
+      q-btn.q-mr-sm.acrylic-btn(
+        icon='las la-redo-alt'
+        flat
+        color='secondary'
+        :loading='state.loading > 0'
+        @click='load'
+        )
       q-btn(
         unelevated
         icon='fa-solid fa-check'
         :label='t(`common.actions.apply`)'
         color='secondary'
         @click='save'
-        :loading='loading'
+        :loading='state.loading > 0'
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
@@ -39,44 +46,60 @@ q-page.admin-flags
         q-item(tag='label')
           blueprint-icon(icon='flag-filled')
           q-item-section
-            q-item-label {{t(`admin.flags.ldapdebug.label`)}}
-            q-item-label(caption) {{t(`admin.flags.ldapdebug.hint`)}}
+            q-item-label {{t(`admin.flags.experimental.label`)}}
+            q-item-label(caption) {{t(`admin.flags.experimental.hint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='flags.ldapdebug'
-              color='primary'
+              v-model='state.flags.experimental'
+              color='negative'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
-              :aria-label='t(`admin.flags.ldapdebug.label`)'
+              :aria-label='t(`admin.flags.experimental.label`)'
               )
         q-separator.q-my-sm(inset)
         q-item(tag='label')
           blueprint-icon(icon='flag-filled')
           q-item-section
-            q-item-label {{t(`admin.flags.sqllog.label`)}}
-            q-item-label(caption) {{t(`admin.flags.sqllog.hint`)}}
+            q-item-label {{t(`admin.flags.authDebug.label`)}}
+            q-item-label(caption) {{t(`admin.flags.authDebug.hint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='flags.sqllog'
-              color='primary'
+              v-model='state.flags.authDebug'
+              color='negative'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
-              :aria-label='t(`admin.flags.sqllog.label`)'
+              :aria-label='t(`admin.flags.authDebug.label`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
+          blueprint-icon(icon='flag-filled')
+          q-item-section
+            q-item-label {{t(`admin.flags.sqlLog.label`)}}
+            q-item-label(caption) {{t(`admin.flags.sqlLog.hint`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.flags.sqlLog'
+              color='negative'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.flags.sqlLog.label`)'
               )
       q-card.shadow-1.q-py-sm.q-mt-md
-        q-item(tag='label')
-          blueprint-icon(icon='heart-outline')
+        q-item
+          blueprint-icon(icon='administrative-tools')
           q-item-section
-            q-item-label {{t(`admin.flags.hidedonatebtn.label`)}}
-            q-item-label(caption) {{t(`admin.flags.hidedonatebtn.hint`)}}
+            q-item-label {{t(`admin.flags.advanced.label`)}}
+            q-item-label(caption) {{t(`admin.flags.advanced.hint`)}}
           q-item-section(avatar)
-            q-toggle(
-              v-model='flags.hidedonatebtn'
+            q-btn(
+              :label='t(`common.actions.edit`)'
+              unelevated
+              icon='las la-code'
               color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.flags.hidedonatebtn.label`)'
-              )
+              text-color='white'
+              @click=''
+              disabled
+            )
 
     .col-12.col-lg-5.gt-md
       .q-pa-md.text-center
@@ -85,12 +108,13 @@ q-page.admin-flags
 
 <script setup>
 import gql from 'graphql-tag'
-import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
-import { transform } from 'lodash-es'
+import { defineAsyncComponent, onMounted, reactive, ref } from 'vue'
+import { cloneDeep, omit } from 'lodash-es'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
 import { useSiteStore } from 'src/stores/site'
+import { useFlagsStore } from 'src/stores/flags'
 
 // QUASAR
 
@@ -98,6 +122,7 @@ const $q = useQuasar()
 
 // STORES
 
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -110,67 +135,76 @@ useMeta({
   title: t('admin.flags.title')
 })
 
-const loading = ref(false)
-const flags = reactive({
-  ldapdebug: false,
-  sqllog: false,
-  hidedonatebtn: false
+// DATA
+
+const state = reactive({
+  loading: 0,
+  flags: {
+    experimental: false,
+    authDebug: false,
+    sqlLog: false
+  }
 })
 
-const save = async () => {
+// METHODS
 
+async function load () {
+  state.loading++
+  $q.loading.show()
+  await flagsStore.load()
+  state.flags = omit(cloneDeep(flagsStore.$state), ['loaded'])
+  $q.loading.hide()
+  state.loading--
 }
 
-// methods: {
-//   async save () {
-//     try {
-//       await this.$apollo.mutate({
-//         mutation: gql`
-//           mutation updateFlags (
-//             $flags: [SystemFlagInput]!
-//           ) {
-//             updateSystemFlags(
-//               flags: $flags
-//             ) {
-//               status {
-//                 succeeded
-//                 slug
-//                 message
-//               }
-//             }
-//           }
-//         `,
-//         variables: {
-//           flags: _transform(this.flags, (result, value, key) => {
-//             result.push({ key, value })
-//           }, [])
-//         },
-//         watchLoading (isLoading) {
-//           this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-flags-update')
-//         }
-//       })
-//       this.$store.commit('showNotification', {
-//         style: 'success',
-//         message: 'Flags applied successfully.',
-//         icon: 'check'
-//       })
-//     } catch (err) {
-//       this.$store.commit('pushGraphError', err)
-//     }
-//   }
-// }
-// apollo: {
-//   flags: {
-//     query: gql``,
-//     fetchPolicy: 'network-only',
-//     update: (data) => _transform(data.system.flags, (result, row) => {
-//       _set(result, row.key, row.value)
-//     }, {}),
-//     watchLoading (isLoading) {
-//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-flags-refresh')
-//     }
-//   }
-// }
+async function save () {
+  if (state.loading > 0) { return }
+
+  state.loading++
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation updateFlags (
+          $flags: JSON!
+        ) {
+          updateSystemFlags(
+            flags: $flags
+          ) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        flags: state.flags
+      }
+    })
+    if (resp?.data?.updateSystemFlags?.operation?.succeeded) {
+      load()
+      $q.notify({
+        type: 'positive',
+        message: t('admin.flags.saveSuccess')
+      })
+    } else {
+      throw new Error(resp?.data?.updateSystemFlags?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+  state.loading--
+}
+
+// MOUNTED
+
+onMounted(async () => {
+  load()
+})
+
 </script>
 
 <style lang='scss'>

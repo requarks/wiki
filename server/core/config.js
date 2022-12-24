@@ -133,7 +133,7 @@ module.exports = {
    * Apply Dev Flags
    */
   async applyFlags() {
-    WIKI.db.knex.client.config.debug = WIKI.config.flags.sqllog
+    WIKI.db.knex.client.config.debug = WIKI.config.flags.sqlLog
   },
 
   /**

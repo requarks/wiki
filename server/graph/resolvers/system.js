@@ -11,9 +11,7 @@ const graphHelper = require('../../helpers/graph')
 module.exports = {
   Query: {
     systemFlags () {
-      return _.transform(WIKI.config.flags, (result, value, key) => {
-        result.push({ key, value })
-      }, [])
+      return WIKI.config.flags
     },
     async systemInfo () { return {} },
     async systemExtensions () {
@@ -150,9 +148,10 @@ module.exports = {
       }
     },
     async updateSystemFlags (obj, args, context) {
-      WIKI.config.flags = _.transform(args.flags, (result, row) => {
-        _.set(result, row.key, row.value)
-      }, {})
+      WIKI.config.flags = {
+        ...WIKI.config.flags,
+        ...args.flags
+      }
       await WIKI.configSvc.applyFlags()
       await WIKI.configSvc.saveToDb(['flags'])
       return {
@@ -164,7 +163,7 @@ module.exports = {
       // TODO: broadcast config update
       await WIKI.configSvc.saveToDb(['security'])
       return {
-        status: graphHelper.generateSuccess('System Security configuration applied successfully')
+        operation: graphHelper.generateSuccess('System Security configuration applied successfully')
       }
     }
   },

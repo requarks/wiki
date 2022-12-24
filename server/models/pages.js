@@ -310,12 +310,12 @@ module.exports = class Page extends Model {
       },
       contentType: WIKI.data.editors[opts.editor]?.contentType ?? 'text',
       description: opts.description,
-      // dotPath: dotPath,
       editor: opts.editor,
       hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale }),
       icon: opts.icon,
       isBrowsable: opts.isBrowsable ?? true,
       localeCode: opts.locale,
+      ownerId: opts.user.id,
       path: opts.path,
       publishState: opts.publishState,
       publishEndDate: opts.publishEndDate?.toISO(),
@@ -338,6 +338,29 @@ module.exports = class Page extends Model {
 
     // -> Render page to HTML
     await WIKI.db.pages.renderPage(page)
+
+    // -> Add to tree
+    const pathParts = page.path.split('/')
+    await WIKI.db.knex('tree').insert({
+      id: page.id,
+      folderPath: _.initial(pathParts).join('/'),
+      fileName: _.last(pathParts),
+      type: 'page',
+      localeCode: page.localeCode,
+      title: page.title,
+      meta: {
+        authorId: page.authorId,
+        contentType: page.contentType,
+        creatorId: page.creatorId,
+        description: page.description,
+        isBrowsable: page.isBrowsable,
+        ownerId: page.ownerId,
+        publishState: page.publishState,
+        publishEndDate: page.publishEndDate,
+        publishStartDate: page.publishStartDate
+      },
+      siteId: page.siteId
+    })
 
     return page
     // TODO: Handle remaining flow
@@ -589,6 +612,23 @@ module.exports = class Page extends Model {
       await WIKI.db.pages.renderPage(page)
     }
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+
+    // -> Update tree
+    await WIKI.db.knex('tree').where('id', page.id).update({
+      title: page.title,
+      meta: {
+        authorId: page.authorId,
+        contentType: page.contentType,
+        creatorId: page.creatorId,
+        description: page.description,
+        isBrowsable: page.isBrowsable,
+        ownerId: page.ownerId,
+        publishState: page.publishState,
+        publishEndDate: page.publishEndDate,
+        publishStartDate: page.publishStartDate
+      },
+      updatedAt: page.updatedAt
+    })
 
     // // -> Update Search Index
     // const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
@@ -948,11 +988,9 @@ module.exports = class Page extends Model {
 
     // -> Delete page
     await WIKI.db.pages.query().delete().where('id', page.id)
+    await WIKI.db.knex('tree').where('id', page.id).del()
     await WIKI.db.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
-
-    // -> Rebuild page tree
-    await WIKI.db.pages.rebuildTree()
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)

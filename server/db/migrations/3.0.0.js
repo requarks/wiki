@@ -285,7 +285,7 @@ exports.up = async knex => {
       table.specificType('folderPath', 'ltree').index().index('tree_folderpath_gist_index', { indexType: 'GIST' })
       table.string('fileName').notNullable().index()
       table.enu('type', ['folder', 'page', 'asset']).notNullable().index()
-      table.uuid('targetId').index()
+      table.string('localeCode', 5).notNullable().defaultTo('en').index()
       table.string('title').notNullable()
       table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
@@ -372,6 +372,7 @@ exports.up = async knex => {
       table.string('localeCode', 5).references('code').inTable('locales').index()
       table.uuid('authorId').notNullable().references('id').inTable('users').index()
       table.uuid('creatorId').notNullable().references('id').inTable('users').index()
+      table.uuid('ownerId').notNullable().references('id').inTable('users').index()
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
     })
     .table('storage', table => {
@@ -437,6 +438,14 @@ exports.up = async knex => {
         secret,
         rootAdminUserId: userAdminId,
         guestUserId: userGuestId
+      }
+    },
+    {
+      key: 'flags',
+      value: {
+        experimental: false,
+        authDebug: false,
+        sqlLog: false
       }
     },
     {

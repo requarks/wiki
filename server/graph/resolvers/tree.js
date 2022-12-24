@@ -7,7 +7,7 @@ const typeResolvers = {
   asset: 'TreeItemAsset'
 }
 
-const rePathName = /^[a-z0-9_]+$/
+const rePathName = /^[a-z0-9-]+$/
 const reTitle = /^[^<>"]+$/
 
 module.exports = {
@@ -41,7 +41,7 @@ module.exports = {
       if (args.parentId) {
         const parent = await WIKI.db.knex('tree').where('id', args.parentId).first()
         if (parent) {
-          parentPath = parent.folderPath ? `${parent.folderPath}.${parent.fileName}` : parent.fileName
+          parentPath = (parent.folderPath ? `${parent.folderPath}.${parent.fileName}` : parent.fileName).replaceAll('-', '_')
         }
       } else if (args.parentPath) {
         parentPath = args.parentPath.replaceAll('/', '.').replaceAll('-', '_').toLowerCase()
@@ -101,11 +101,11 @@ module.exports = {
           if (parent) {
             parentPath = parent.folderPath ? `${parent.folderPath}.${parent.fileName}` : parent.fileName
           }
+          parentPath = parentPath.replaceAll('-', '_')
         }
 
         // Validate path name
-        const pathName = args.pathName.replaceAll('-', '_')
-        if (!rePathName.test(pathName)) {
+        if (!rePathName.test(args.pathName)) {
           throw new Error('ERR_INVALID_PATH_NAME')
         }
 
@@ -118,7 +118,7 @@ module.exports = {
         const existingFolder = await WIKI.db.knex('tree').where({
           siteId: args.siteId,
           folderPath: parentPath,
-          fileName: pathName
+          fileName: args.pathName
         }).first()
         if (existingFolder) {
           throw new Error('ERR_FOLDER_ALREADY_EXISTS')
@@ -127,7 +127,7 @@ module.exports = {
         // Create folder
         await WIKI.db.knex('tree').insert({
           folderPath: parentPath,
-          fileName: pathName,
+          fileName: args.pathName,
           type: 'folder',
           title: args.title,
           siteId: args.siteId

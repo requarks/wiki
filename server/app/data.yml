@@ -71,8 +71,9 @@ defaults:
       authJwtRenewablePeriod: '14d'
       enforceSameOriginReferrerPolicy: true
     flags:
-      ldapdebug: false
-      sqllog: false
+      experimental: false
+      authDebug: false
+      sqlLog: false
     # System defaults
     channel: NEXT
     cors:
