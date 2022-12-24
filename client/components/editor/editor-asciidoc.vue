@@ -94,29 +94,9 @@
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalBlocks`)', disabled).mx-0
-              v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
-          span {{$t('editor:markup.insertBlock')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-code-braces
-          span {{$t('editor:markup.insertCodeBlock')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-library-video
-          span {{$t('editor:markup.insertVideoAudio')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
             v-btn.mt-3.animated.fadeInLeft.wait-p5s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p6s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-function-variant
-          span {{$t('editor:markup.insertMathExpression')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(right, color='teal')
@@ -139,7 +119,7 @@
       .caption.px-3 /{{path}}
       template(v-if='$vuetify.breakpoint.mdAndUp')
         v-spacer
-        .caption Code
+        .caption AsciiDoc
         v-spacer
         .caption Ln {{cursorPos.line + 1}}, Col {{cursorPos.ch + 1}}
     page-selector(mode='select', v-model='insertLinkDialog', :open-handler='insertLinkHandler', :path='path', :locale='locale')
@@ -197,10 +177,10 @@ export default {
     return {
       cm: null,
       cursorPos: { ch: 0, line: 1 },
-      previewShown : true,  //TODO
+      previewShown: true, // TODO
       insertLinkDialog: false,
       helpShown: false,
-      previewHTML: '',
+      previewHTML: ''
     }
   },
   computed: {
@@ -230,7 +210,14 @@ export default {
     }, 600),
     processContent(newContent) {
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
-      let html = asciidoctor.convert(newContent, {standalone: false, safe: 'safe', 'attributes': { 'showtitle': true, 'icons': 'font' } })
+      let html = asciidoctor.convert(newContent, {
+        standalone: false,
+        safe: 'safe',
+        attributes: {
+          showtitle: true,
+          icons: 'font'
+        }
+      })
       const $ = cheerio.load(html, {
         decodeEntities: true
       })
@@ -327,7 +314,6 @@ export default {
       this.insertLinkDialog = true
     },
     insertLinkHandler ({ locale, path }) {
-      console.log("link handler")
       const lastPart = _.last(path.split('/'))
       this.insertAtCursor({
         content: siteLangs.length > 0 ? `link:/${locale}/${path}[${lastPart}]` : `link:/${path}[${lastPart}]`
@@ -429,9 +415,9 @@ export default {
       this.onCmInput(this.$store.get('editor/content'))
     })
     if (this.$vuetify.breakpoint.mdAndUp) {
-      this.cm.setSize(null, 'calc(100vh - 64px - 24px)')
+      this.cm.setSize(null, 'calc(100vh - 137px)')
     } else {
-      this.cm.setSize(null, 'calc(100vh - 56px - 16px)')
+      this.cm.setSize(null, 'calc(100vh - 112px - 16px)')
     }
 
     // Set Keybindings
@@ -501,8 +487,8 @@ export default {
 </script>
 
 <style lang='scss'>
-$editor-height: calc(100vh - 64px - 24px);
-$editor-height-mobile: calc(100vh - 56px - 16px);
+$editor-ascii-height: calc(100vh - 137px);
+$editor-ascii-height-mobile: calc(100vh - 112px - 16px);
 
 .editor-asciidoc {
   &-main {
@@ -514,11 +500,11 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     background-color: darken(mc('grey', '900'), 4.5%);
     flex: 1 1 50%;
     display: block;
-    height: $editor-height;
+    height: $editor-ascii-height;
     position: relative;
 
     @include until($tablet) {
-      height: $editor-height-mobile;
+      height: $editor-ascii-height-mobile;
     }
   }
 
@@ -526,7 +512,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     flex: 1 1 50%;
     background-color: mc('grey', '100');
     position: relative;
-    height: $editor-height;
+    height: $editor-ascii-height;
     overflow: hidden;
     padding: 1rem;
 
@@ -552,7 +538,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
 
     &-content {
-      height: $editor-height;
+      height: $editor-ascii-height;
       overflow-y: scroll;
       padding: 0;
       width: calc(100% + 17px);
@@ -564,7 +550,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
       // }
 
       @include until($tablet) {
-        height: $editor-height-mobile;
+        height: $editor-ascii-height-mobile;
       }
 
       > div {

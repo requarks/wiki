@@ -3,7 +3,14 @@ const cheerio = require('cheerio')
 
 module.exports = {
   async render() {
-    const html = asciidoctor.convert(this.input, {standalone: false, safe: 'safe', 'attributes': { 'showtitle': true, 'icons': 'font' } })
+    const html = asciidoctor.convert(this.input, {
+      standalone: false,
+      safe: this.config.safeMode,
+      attributes: {
+        showtitle: true,
+        icons: 'font'
+      }
+    })
 
     const $ = cheerio.load(html, {
       decodeEntities: true

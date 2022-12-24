@@ -177,6 +177,21 @@
   dependencies:
     tslib "~2.0.1"
 
+"@asciidoctor/cli@3.5.0":
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/@asciidoctor/cli/-/cli-3.5.0.tgz#0b0a0204880b325971fb2af33bf490ab67672d8f"
+  integrity sha512-/VMHXcZBnZ9vgWfmqk9Hu0x0gMjPLup0YGq/xA8qCQuk11kUIZNMVQwgSsIUzOEwJqIUD7CgncJdtfwv1Ndxuw==
+  dependencies:
+    yargs "16.2.0"
+
+"@asciidoctor/core@2.2.6":
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/@asciidoctor/core/-/core-2.2.6.tgz#a59a9e8ab48ac0a615d5a3200214d3071291c5d5"
+  integrity sha512-TmB2K5UfpDpSbCNBBntXzKHcAk2EA3/P68jmWvmJvglVUdkO9V6kTAuXVe12+h6C4GK0ndwuCrHHtEVcL5t6pQ==
+  dependencies:
+    asciidoctor-opal-runtime "0.3.3"
+    unxhr "1.0.1"
+
 "@azure/abort-controller@^1.0.0":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@azure/abort-controller/-/abort-controller-1.0.1.tgz#8510935b25ac051e58920300e9d7b511ca6e656a"
@@ -5168,6 +5183,22 @@ asap@^2.0.0, asap@~2.0.3:
   resolved "https://registry.yarnpkg.com/asap/-/asap-2.0.6.tgz#e50347611d7e690943208bbdafebcbc2fb866d46"
   integrity sha1-5QNHYR1+aQlDIIu9r+vLwvuGbUY=
 
+asciidoctor-opal-runtime@0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/asciidoctor-opal-runtime/-/asciidoctor-opal-runtime-0.3.3.tgz#2667635f858d3eb3fdfcf6795cf68138e2040174"
+  integrity sha512-/CEVNiOia8E5BMO9FLooo+Kv18K4+4JBFRJp8vUy/N5dMRAg+fRNV4HA+o6aoSC79jVU/aT5XvUpxSxSsTS8FQ==
+  dependencies:
+    glob "7.1.3"
+    unxhr "1.0.1"
+
+asciidoctor@2.2.6:
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/asciidoctor/-/asciidoctor-2.2.6.tgz#43b5fec8ab91ed2d8d1815c75067cfa29da2e568"
+  integrity sha512-EXG3+F2pO21B+COfQmV/WgEgGiy7nG/mJiS/o5DXpaT2q82FRZWPVkbMZrpDvpu4pjXe5c754RbZR9Vz0L0Vtw==
+  dependencies:
+    "@asciidoctor/cli" "3.5.0"
+    "@asciidoctor/core" "2.2.6"
+
 asn1.js@^4.0.0:
   version "4.10.1"
   resolved "https://registry.yarnpkg.com/asn1.js/-/asn1.js-4.10.1.tgz#b9c2bf5805f1e64aadeed6df3a2bfafb5a73f5a0"
@@ -6680,6 +6711,11 @@ code-point-at@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
   integrity sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=
+
+codemirror-asciidoc@1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/codemirror-asciidoc/-/codemirror-asciidoc-1.0.4.tgz#7439fcc38f30f1408ab144d156bf398ed35b2cc0"
+  integrity sha512-U+G8+ToPONYFGkwTprxpFzV6EV1bCA9zChAA8uT2YAnKFn357JMWL2VkdIPy2yP5N/X13GzslMOGaAk1UNE3rA==
 
 codemirror@5.58.2:
   version "5.58.2"
@@ -10251,6 +10287,18 @@ glob-parent@~5.1.2:
   integrity sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==
   dependencies:
     is-glob "^4.0.1"
+
+glob@7.1.3:
+  version "7.1.3"
+  resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.3.tgz#3960832d3f1574108342dafd3a67b332c0969df1"
+  integrity sha512-vcfuiIxogLV4DlGBHIUOwI0IbrJ8HWPc4MU7HzviGeNho/UJDfi6B5p3sHeWIQ0KGIU0Jpxi5ZHxemQfLkkAwQ==
+  dependencies:
+    fs.realpath "^1.0.0"
+    inflight "^1.0.4"
+    inherits "2"
+    minimatch "^3.0.4"
+    once "^1.3.0"
+    path-is-absolute "^1.0.0"
 
 glob@^6.0.1:
   version "6.0.4"
@@ -19425,6 +19473,11 @@ untildify@^4.0.0:
   resolved "https://registry.yarnpkg.com/untildify/-/untildify-4.0.0.tgz#2bc947b953652487e4600949fb091e3ae8cd919b"
   integrity sha512-KK8xQ1mkzZeg9inewmFVDNkg3l5LUhoq9kN6iWYB/CC9YMG8HA+c1Q8HwDe6dEX7kErrEVNVBO3fWsVq5iDgtw==
 
+unxhr@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/unxhr/-/unxhr-1.0.1.tgz#92200322d66c728993de771f9e01eeb21f41bc7b"
+  integrity sha512-MAhukhVHyaLGDjyDYhy8gVjWJyhTECCdNsLwlMoGFoNJ3o79fpQhtQuzmAE4IxCMDwraF4cW8ZjpAV0m9CRQbg==
+
 upath@^1.1.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/upath/-/upath-1.2.0.tgz#8f66dbcd55a883acdae4408af8b035a5044c1894"
@@ -20445,6 +20498,11 @@ y18n@^5.0.2:
   resolved "https://registry.yarnpkg.com/y18n/-/y18n-5.0.5.tgz#8769ec08d03b1ea2df2500acef561743bbb9ab18"
   integrity sha512-hsRUr4FFrvhhRH12wOdfs38Gy7k2FFzB9qgN9v3aLykRq0dRcdcpz5C9FxdS2NuhOrI/628b/KSTJ3rwHysYSg==
 
+y18n@^5.0.5:
+  version "5.0.8"
+  resolved "https://registry.yarnpkg.com/y18n/-/y18n-5.0.8.tgz#7f4934d0f7ca8c56f95314939ddcd2dd91ce1d55"
+  integrity sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==
+
 yaeti@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/yaeti/-/yaeti-0.0.6.tgz#f26f484d72684cf42bedfb76970aa1608fbf9577"
@@ -20512,6 +20570,19 @@ yargs@16.1.0:
     require-directory "^2.1.1"
     string-width "^4.2.0"
     y18n "^5.0.2"
+    yargs-parser "^20.2.2"
+
+yargs@16.2.0:
+  version "16.2.0"
+  resolved "https://registry.yarnpkg.com/yargs/-/yargs-16.2.0.tgz#1c82bf0f6b6a66eafce7ef30e376f49a12477f66"
+  integrity sha512-D1mvvtDG0L5ft/jGWkLpG1+m0eQxOfaBvTNELraWj22wSVUMWxZUvYgJYcKh6jGGIkJFhH4IZPQhR4TKpc8mBw==
+  dependencies:
+    cliui "^7.0.2"
+    escalade "^3.1.1"
+    get-caller-file "^2.0.5"
+    require-directory "^2.1.1"
+    string-width "^4.2.0"
+    y18n "^5.0.5"
     yargs-parser "^20.2.2"
 
 yargs@^13.3.2:
