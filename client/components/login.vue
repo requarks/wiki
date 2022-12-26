@@ -150,257 +150,254 @@
             </svg>
           </section>
 
-          <template v-if="screen === `login` && selectedStrategy.strategy.useForm">
-            <form class="login-area" role="form" method="post">
-              <h1>Wiki</h1>
+          <div class="login-inputs">
+            <h1 class="login-title">Wiki</h1>
 
-              <v-alert
-                class="mb-0"
-                v-model="errorShown"
-                transition="slide-y-reverse-transition"
-                color="red darken-2"
-                tile="tile"
-                dark="dark"
-                dense="dense"
-                icon="mdi-alert"
-                rounded
-              >
-                <div class="body-2">
-                  {{ errorMessage }}
-                </div>
-              </v-alert>
-
-              <div>
+            <div v-if='screen === `login` && strategies.length > 1'>
                 <span class="label-texto-base label-claro">
                   {{ $t('auth:selectAuthProvider') }}
                 </span>
-                <v-list
-                  dense
-                  max-height="6.5rem"
-                  class="provider-list mt-1"
-                >
-                  <v-list-item-group v-model="selectedStrategyKey">
-                    <v-list-item
-                      v-for="(stg, idx) of filteredStrategies"
-                      :key="stg.key"
-                      :value="stg.key"
-                      :color="stg.strategy.color"
-                      class="provider-list-item"
-                    >
-                      <v-avatar
-                        class="mr-3 provider-list-item-icon"
-                        tile="tile"
-                        size="24"
-                        v-html="stg.strategy.icon"
-                      />
-                      <span class="text-none">
+              <v-list
+                dense
+                max-height="6.5rem"
+                class="provider-list mt-1"
+              >
+                <v-list-item-group v-model="selectedStrategyKey">
+                  <v-list-item
+                    v-for="(stg, idx) of filteredStrategies"
+                    :key="stg.key"
+                    :value="stg.key"
+                    :color="stg.strategy.color"
+                    class="provider-list-item"
+                  >
+                    <v-avatar
+                      class="mr-3 provider-list-item-icon"
+                      tile="tile"
+                      size="24"
+                      v-html="stg.strategy.icon"
+                    />
+                    <span class="text-none">
                         {{ stg.displayName }}
                       </span>
-                    </v-list-item>
-                  </v-list-item-group>
-                </v-list>
-              </div>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </div>
 
-              <div class='login-inputs-box'>
-                <div class="input-box">
-                  <label
-                    class="label-texto-base label-claro">{{
-                      isUsernameEmail ? $t(`auth:fields.email`) : $t(`auth:fields.username`)
-                    }}</label>
-                  <v-text-field
-                    solo
-                    flat
-                    background-color="#cfcfcf"
-                    color="#333"
-                    hide-details
-                    ref="iptEmail"
-                    v-model="username"
-                    :placeholder="isUsernameEmail ? $t(`auth:fields.email`) : $t(`auth:fields.username`)"
-                    :type="isUsernameEmail ? `email` : `text`"
-                    :autocomplete="isUsernameEmail ? `email` : `username`"
-                    light
-                  />
-                  <!--                <input type="email" class="input-texto-base" id="email" name="email"-->
-                  <!--                       placeholder="Digite seu e-mail">-->
-                </div>
-
-                <div class="input-box">
-                  <label class="label-texto-base label-claro">{{ $t("auth:fields.password") }}</label>
-                  <v-text-field
-                    solo
-                    flat
-                    background-color="#cfcfcf"
-                    color="#333"
-                    hide-details
-                    ref='iptPassword'
-                    v-model='password'
-                    :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
-                    @click:append='() => (hidePassword = !hidePassword)'
-                    @keyup.enter='login'
-                    :type='hidePassword ? "password" : "text"'
-                    :placeholder='$t("auth:fields.password")'
-                    :autocomplete="isUsernameEmail ? `email` : `username`"
-                    light
-                  />
-                </div>
-              </div>
-
-              <v-btn
-                rounded
-                color="#DC4744"
-                dark
-                class="login-btn"
-                @click='login'
-                :loading='isLoading'
-              >
-                <v-icon left>mdi-import</v-icon>
-                {{ $t('auth:actions.login') }}
-              </v-btn>
-
-              <v-btn class="text-none minimal-btn" small text rounded
-                     @click.stop.prevent="forgotPassword" href="#forgot">
-                <div class="caption">{{ $t('auth:forgotPasswordLink') }}</div>
-              </v-btn>
-
-              <v-btn class="text-none minimal-btn"
-                     v-if='selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
-                     small rounded text href="/register">
-                <div class="caption">{{ $t('auth:switchToRegister.link') }}</div>
-              </v-btn>
-
-
-              <!--              <section class="formas-login">-->
-              <!--                <a class="formaLogin forma-login-button active">-->
-              <!--                  <svg width="25" height="25" viewBox="0 0 400 400" fill="none"-->
-              <!--                       xmlns="http://www.w3.org/2000/svg">-->
-              <!--                    <path fill-rule="evenodd" clip-rule="evenodd"-->
-              <!--                          d="M178.476 0.199989C143.934 2.74577 124.713 5.61085 102.257 11.5625C64.8732 21.4701 39.2063 38.202 35.7368 54.926C35.1611 57.7003 34.9507 68.6324 35.1158 87.1509C35.3559 113.996 35.438 115.326 37.057 118.699C49.0039 143.58 96.1393 161.822 164.788 168.133C178.411 169.386 221.556 169.386 235.179 168.133C297.483 162.405 342.563 146.73 358.936 125.1C364.986 117.109 365.12 116.155 364.852 82.9617L364.621 54.1348L362.486 49.8306C350.785 26.2322 305.035 8.08854 241.045 1.66814C230.068 0.566243 187.16 -0.440173 178.476 0.199989ZM35.1736 186.393L35.3473 229.436L37.3878 233.79C41.4079 242.366 53.2868 252.717 66.9575 259.557C90.7176 271.443 127.248 279.913 168.308 283.055C182.432 284.135 217.499 284.124 232.051 283.033C271.924 280.045 309.508 271.378 332.247 259.93C347.025 252.489 357.776 243.381 362.062 234.671L364.621 229.471L364.811 186.411L365 143.351L362.63 148.211C351.366 171.31 304.666 190.024 243.001 196.151C218.339 198.602 181.166 198.61 157.164 196.172C95.0459 189.861 47.8667 170.997 37.2721 148.234L35 143.351L35.1736 186.393ZM35.0109 300.677C34.9687 332.957 35.1885 343.077 36.0035 346.219C41.1835 366.202 75.1956 384.363 124.9 393.685C150.432 398.474 168.579 400 199.984 400C225.529 400 235.804 399.415 255.515 396.833C311.31 389.525 351.78 371.938 362.486 350.347L364.621 346.042L364.768 302.609C364.876 270.535 364.693 259.789 364.064 261.522C355.998 283.767 315.665 302.458 258.643 310.377C236.464 313.457 228.295 313.941 199.202 313.903C170.384 313.864 160.713 313.242 138.196 309.978C103.443 304.941 71.8082 294.573 53.8452 282.333C45.6071 276.72 38.5415 268.62 36.1059 262C35.2182 259.586 35.0587 265.222 35.0109 300.677Z"-->
-              <!--                          fill="#333333" />-->
-              <!--                  </svg>-->
-              <!--                  <p class="titulo-item">Texto</p>-->
-              <!--                </a>-->
-
-              <!--                <a class="formaLogin forma-login-button">-->
-              <!--                  <svg width="25" height="26" viewBox="0 0 400 404" fill="none"-->
-              <!--                       xmlns="http://www.w3.org/2000/svg">-->
-              <!--                    <path-->
-              <!--                      d="M194.231 160.708V221.736C194.231 271.201 193.91 283.085 192.521 284.263C191.346 285.227 188.034 283.835 178.525 278.267C143.91 258.246 120.833 243.471 120.727 241.008C120.727 239.937 120.727 236.725 120.833 233.835C120.94 230.944 119.979 225.912 118.697 222.378C117.415 218.952 116.346 215.74 116.346 215.419C116.346 214.134 185.363 151.286 186.752 151.286C187.072 151.286 188.889 153.427 190.812 155.997L194.231 160.708Z"-->
-              <!--                      fill="#00BEF2" />-->
-              <!--                    <path-->
-              <!--                      d="M278.311 238.974C277.777 241.115 269.23 246.897 223.504 275.698C215.064 281.051 207.799 285.441 207.585 285.334C205.555 285.334 205.128 276.126 204.807 221.522L204.487 160.601L211.538 155.89C215.384 153.32 219.124 151.179 219.871 151.179C222.008 151.179 231.196 161.243 256.196 190.901L279.487 218.631L279.166 227.625C279.059 232.657 278.632 237.689 278.311 238.974Z"-->
-              <!--                      fill="#00BEF2" />-->
-              <!--                    <path fill-rule="evenodd" clip-rule="evenodd"-->
-              <!--                          d="M201.282 1.49893C200.641 0.535329 200.214 0 199.786 0C199.466 0 199.145 0.428265 198.932 1.2848C198.718 2.14134 154.06 55.7819 99.4662 120.665C44.8724 185.547 0.214443 238.974 0.00076909 239.509C-0.212905 240.044 44.1245 276.661 98.5047 321.094C152.885 365.527 197.97 402.465 198.718 403.214C200 404.499 200.214 404.392 203.739 401.501C205.769 399.788 250.748 363.064 303.632 319.916C356.516 276.768 399.892 241.115 399.999 240.794C400.213 240.473 355.769 186.832 301.282 121.628C246.795 56.4243 201.816 2.35547 201.282 1.49893ZM175.641 325.056C178.739 331.051 186.218 337.475 192.414 339.724C198.504 341.972 202.884 341.972 210.149 339.938C217.307 337.797 225.534 330.837 228.846 323.878C231.837 317.561 232.158 307.497 229.487 301.073C226.709 294.542 227.136 292.935 232.478 288.546C241.239 281.479 280.662 254.391 283.226 253.749C284.722 253.321 288.354 254.606 293.055 257.175C299.358 260.601 301.602 261.244 307.585 261.244C316.132 261.244 320.833 259.424 327.243 253.642C336.324 245.398 340.063 231.693 335.79 221.522C329.166 205.676 312.392 198.609 296.474 204.926C293.055 206.211 289.422 207.282 288.354 207.282C287.286 207.282 284.081 204.605 281.196 201.286C264.85 182.228 233.974 144.862 232.158 141.757C230.021 138.224 230.021 138.117 232.265 132.335C240.598 111.457 225.106 88.1163 202.884 88.1163C193.376 88.1163 188.461 89.7223 181.837 94.9686C169.658 104.605 166.132 120.665 173.077 135.119L176.496 142.292L165.064 153.213C148.504 168.952 114.209 200.323 109.936 203.535C106.303 206.318 106.197 206.318 100.427 204.391C89.8506 200.858 78.8464 203.642 70.6199 211.886C64.5302 217.989 62.6071 222.914 62.6071 232.443C62.6071 242.293 64.7438 247.111 72.1156 253.963C82.372 263.492 95.4061 264.349 107.906 256.426C111.752 253.963 113.889 253.214 115.171 253.963C116.133 254.498 130.128 262.1 146.154 270.773C162.179 279.445 176.389 287.368 177.564 288.225C179.701 289.831 179.701 290.045 176.389 296.897C172.115 306.105 171.795 317.668 175.641 325.056Z"-->
-              <!--                          fill="#00BEF2" />-->
-              <!--                  </svg>-->
-
-              <!--                  <p class="titulo-item">Texto</p>-->
-              <!--                </a>-->
-
-              <!--                <a class="formaLogin forma-login-button">-->
-              <!--                  <svg width="400" height="400" viewBox="0 0 400 400" fill="none"-->
-              <!--                       xmlns="http://www.w3.org/2000/svg">-->
-              <!--                    <path fill-rule="evenodd" clip-rule="evenodd"-->
-              <!--                          d="M188.317 7.2467C134.959 12.9639 92.045 52.0217 81.3322 104.617C79.9142 111.579 79.6301 115.966 79.3347 135.428L78.991 158.121L73.8008 162.071C64.9428 168.815 58.3444 179.19 56.0538 189.977C55.1926 194.034 55.0007 209.008 55.0007 272.237C55.0007 358.545 54.8231 355.376 60.2573 366.157C66.9501 379.435 79.0212 388.77 93.4456 391.822C101.007 393.422 299.209 393.378 306.927 391.775C322.984 388.439 337.416 375.32 343.021 358.963L344.702 354.061L344.91 274.735C345.144 185.748 345.344 189.446 339.687 177.994C333.577 165.623 320.486 155.515 306.927 152.698C302.476 151.774 287.845 151.598 214.491 151.587L127.343 151.574L127.688 133.663C128.065 114.08 128.761 109.883 133.466 98.8486C140.365 82.6647 155.159 67.8903 171.352 61.011C181.422 56.7335 187.9 55.4862 200.027 55.49C212.087 55.493 217.166 56.41 227.121 60.3783C244.094 67.1445 259.457 82.1195 266.588 98.8486C269.592 105.896 271.657 114.118 272.273 121.485L272.771 127.441H296.945H321.12L320.588 119.711C316.822 64.9296 277.084 19.8266 223.069 9.02572C215.667 7.54534 195.272 6.50161 188.317 7.2467ZM208.683 225.126C222.641 228.755 233.325 240.345 235.752 254.493C237.457 264.428 234.102 275.947 227.235 283.734L224.202 287.174V303.837V320.502H200.027H175.851V303.837V287.174L172.993 283.932C165.05 274.925 161.994 262.744 164.891 251.643C169.975 232.156 189.726 220.197 208.683 225.126Z"-->
-              <!--                          fill="black" />-->
-              <!--                  </svg>-->
-
-              <!--                  <p class="titulo-item">Texto</p>-->
-              <!--                </a>-->
-              <!--              </section>-->
-            </form>
-          </template>
-
-          <template v-if="screen === `forgot`">
-            <div class="forgot-form">
-              <div class="login-subtitle flex-item">
-                <div class="text-subtitle-1">{{ $t('auth:forgotPasswordTitle') }}</div>
-                <div class="login-info">{{ $t('auth:forgotPasswordSubtitle') }}</div>
-              </div>
-
-              <v-text-field
-                class="flex-item"
-                solo
-                flat
-                background-color="white"
-                color="blue darken-2"
-                hide-details="hide-details"
-                ref="iptForgotPwdEmail"
-                v-model="username"
-                :placeholder="$t(`auth:fields.email`)"
-                type="email"
-                autocomplete="email"
-                light="light"
-              />
-
-              <v-btn
-                class="mt-2 text-none flex-item"
-                width="100%"
-                color="blue darken-2"
-                dark
-                @click="forgotPasswordSubmit"
-                :loading="isLoading"
-              >
-                {{ $t('auth:sendResetPassword') }}
-              </v-btn>
-
-              <div class="text-center mt-5 flex-item">
-                <v-btn
-                  class="text-none"
-                  text
+            <template v-if="screen === `login` && selectedStrategy.strategy.useForm">
+              <form class="login-area" role="form" method="post">
+                <v-alert
+                  class="mb-0"
+                  v-model="errorShown"
+                  transition="slide-y-reverse-transition"
+                  color="red darken-2"
+                  tile="tile"
+                  dark="dark"
+                  dense="dense"
+                  icon="mdi-alert"
                   rounded
-
-                  @click.stop.prevent="screen = `login`"
-                  href="#forgot"
                 >
-                  <div class="caption">{{ $t('auth:forgotPasswordCancel') }}</div>
-                </v-btn>
-              </div>
-            </div>
-          </template>
+                  <div class="body-2">
+                    {{ errorMessage }}
+                  </div>
+                </v-alert>
 
-          <template v-if="screen === `changePwd`">
-            <div class="forgot-form">
-              <div class="login-subtitle">
-                <div class="text-subtitle-1">{{ $t('auth:changePwd.subtitle') }}</div>
-              </div>
-              <div class="flex-item">
+                <div class='login-inputs-box'>
+                  <div class="input-box">
+                    <label
+                      class="label-texto-base label-claro">{{isUsernameEmail ? $t(`auth:fields.email`) : $t(`auth:fields.username`)}}</label>
+                    <v-text-field
+                      solo
+                      flat
+                      background-color="#cfcfcf"
+                      color="#333"
+                      hide-details
+                      ref="iptEmail"
+                      v-model="username"
+                      :placeholder="isUsernameEmail ? $t(`auth:fields.email`) : $t(`auth:fields.username`)"
+                      :type="isUsernameEmail ? `email` : `text`"
+                      :autocomplete="isUsernameEmail ? `email` : `username`"
+                      light
+                    />
+                    <!--                <input type="email" class="input-texto-base" id="email" name="email"-->
+                    <!--                       placeholder="Digite seu e-mail">-->
+                  </div>
+
+                  <div class="input-box">
+                    <label class="label-texto-base label-claro">{{ $t("auth:fields.password") }}</label>
+                    <v-text-field
+                      solo
+                      flat
+                      background-color="#cfcfcf"
+                      color="#333"
+                      hide-details
+                      ref='iptPassword'
+                      v-model='password'
+                      :append-icon='hidePassword ? "mdi-eye-off" : "mdi-eye"'
+                      @click:append='() => (hidePassword = !hidePassword)'
+                      @keyup.enter='login'
+                      :type='hidePassword ? "password" : "text"'
+                      :placeholder='$t("auth:fields.password")'
+                      :autocomplete="isUsernameEmail ? `email` : `username`"
+                      light
+                    />
+                  </div>
+                </div>
+
+                <v-btn
+                  rounded
+                  color="#DC4744"
+                  dark
+                  class="login-btn"
+                  @click='login'
+                  :loading='isLoading'
+                >
+                  <v-icon left>mdi-import</v-icon>
+                  {{ $t('auth:actions.login') }}
+                </v-btn>
+
+                <v-btn class="text-none minimal-btn" small text rounded
+                       @click.stop.prevent="forgotPassword" href="#forgot">
+                  <div class="caption">{{ $t('auth:forgotPasswordLink') }}</div>
+                </v-btn>
+
+                <v-btn class="text-none minimal-btn"
+                       v-if='selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
+                       small rounded text href="/register">
+                  <div class="caption">{{ $t('auth:switchToRegister.link') }}</div>
+                </v-btn>
+                <!--              <section class="formas-login">-->
+                <!--                <a class="formaLogin forma-login-button active">-->
+                <!--                  <svg width="25" height="25" viewBox="0 0 400 400" fill="none"-->
+                <!--                       xmlns="http://www.w3.org/2000/svg">-->
+                <!--                    <path fill-rule="evenodd" clip-rule="evenodd"-->
+                <!--                          d="M178.476 0.199989C143.934 2.74577 124.713 5.61085 102.257 11.5625C64.8732 21.4701 39.2063 38.202 35.7368 54.926C35.1611 57.7003 34.9507 68.6324 35.1158 87.1509C35.3559 113.996 35.438 115.326 37.057 118.699C49.0039 143.58 96.1393 161.822 164.788 168.133C178.411 169.386 221.556 169.386 235.179 168.133C297.483 162.405 342.563 146.73 358.936 125.1C364.986 117.109 365.12 116.155 364.852 82.9617L364.621 54.1348L362.486 49.8306C350.785 26.2322 305.035 8.08854 241.045 1.66814C230.068 0.566243 187.16 -0.440173 178.476 0.199989ZM35.1736 186.393L35.3473 229.436L37.3878 233.79C41.4079 242.366 53.2868 252.717 66.9575 259.557C90.7176 271.443 127.248 279.913 168.308 283.055C182.432 284.135 217.499 284.124 232.051 283.033C271.924 280.045 309.508 271.378 332.247 259.93C347.025 252.489 357.776 243.381 362.062 234.671L364.621 229.471L364.811 186.411L365 143.351L362.63 148.211C351.366 171.31 304.666 190.024 243.001 196.151C218.339 198.602 181.166 198.61 157.164 196.172C95.0459 189.861 47.8667 170.997 37.2721 148.234L35 143.351L35.1736 186.393ZM35.0109 300.677C34.9687 332.957 35.1885 343.077 36.0035 346.219C41.1835 366.202 75.1956 384.363 124.9 393.685C150.432 398.474 168.579 400 199.984 400C225.529 400 235.804 399.415 255.515 396.833C311.31 389.525 351.78 371.938 362.486 350.347L364.621 346.042L364.768 302.609C364.876 270.535 364.693 259.789 364.064 261.522C355.998 283.767 315.665 302.458 258.643 310.377C236.464 313.457 228.295 313.941 199.202 313.903C170.384 313.864 160.713 313.242 138.196 309.978C103.443 304.941 71.8082 294.573 53.8452 282.333C45.6071 276.72 38.5415 268.62 36.1059 262C35.2182 259.586 35.0587 265.222 35.0109 300.677Z"-->
+                <!--                          fill="#333333" />-->
+                <!--                  </svg>-->
+                <!--                  <p class="titulo-item">Texto</p>-->
+                <!--                </a>-->
+
+                <!--                <a class="formaLogin forma-login-button">-->
+                <!--                  <svg width="25" height="26" viewBox="0 0 400 404" fill="none"-->
+                <!--                       xmlns="http://www.w3.org/2000/svg">-->
+                <!--                    <path-->
+                <!--                      d="M194.231 160.708V221.736C194.231 271.201 193.91 283.085 192.521 284.263C191.346 285.227 188.034 283.835 178.525 278.267C143.91 258.246 120.833 243.471 120.727 241.008C120.727 239.937 120.727 236.725 120.833 233.835C120.94 230.944 119.979 225.912 118.697 222.378C117.415 218.952 116.346 215.74 116.346 215.419C116.346 214.134 185.363 151.286 186.752 151.286C187.072 151.286 188.889 153.427 190.812 155.997L194.231 160.708Z"-->
+                <!--                      fill="#00BEF2" />-->
+                <!--                    <path-->
+                <!--                      d="M278.311 238.974C277.777 241.115 269.23 246.897 223.504 275.698C215.064 281.051 207.799 285.441 207.585 285.334C205.555 285.334 205.128 276.126 204.807 221.522L204.487 160.601L211.538 155.89C215.384 153.32 219.124 151.179 219.871 151.179C222.008 151.179 231.196 161.243 256.196 190.901L279.487 218.631L279.166 227.625C279.059 232.657 278.632 237.689 278.311 238.974Z"-->
+                <!--                      fill="#00BEF2" />-->
+                <!--                    <path fill-rule="evenodd" clip-rule="evenodd"-->
+                <!--                          d="M201.282 1.49893C200.641 0.535329 200.214 0 199.786 0C199.466 0 199.145 0.428265 198.932 1.2848C198.718 2.14134 154.06 55.7819 99.4662 120.665C44.8724 185.547 0.214443 238.974 0.00076909 239.509C-0.212905 240.044 44.1245 276.661 98.5047 321.094C152.885 365.527 197.97 402.465 198.718 403.214C200 404.499 200.214 404.392 203.739 401.501C205.769 399.788 250.748 363.064 303.632 319.916C356.516 276.768 399.892 241.115 399.999 240.794C400.213 240.473 355.769 186.832 301.282 121.628C246.795 56.4243 201.816 2.35547 201.282 1.49893ZM175.641 325.056C178.739 331.051 186.218 337.475 192.414 339.724C198.504 341.972 202.884 341.972 210.149 339.938C217.307 337.797 225.534 330.837 228.846 323.878C231.837 317.561 232.158 307.497 229.487 301.073C226.709 294.542 227.136 292.935 232.478 288.546C241.239 281.479 280.662 254.391 283.226 253.749C284.722 253.321 288.354 254.606 293.055 257.175C299.358 260.601 301.602 261.244 307.585 261.244C316.132 261.244 320.833 259.424 327.243 253.642C336.324 245.398 340.063 231.693 335.79 221.522C329.166 205.676 312.392 198.609 296.474 204.926C293.055 206.211 289.422 207.282 288.354 207.282C287.286 207.282 284.081 204.605 281.196 201.286C264.85 182.228 233.974 144.862 232.158 141.757C230.021 138.224 230.021 138.117 232.265 132.335C240.598 111.457 225.106 88.1163 202.884 88.1163C193.376 88.1163 188.461 89.7223 181.837 94.9686C169.658 104.605 166.132 120.665 173.077 135.119L176.496 142.292L165.064 153.213C148.504 168.952 114.209 200.323 109.936 203.535C106.303 206.318 106.197 206.318 100.427 204.391C89.8506 200.858 78.8464 203.642 70.6199 211.886C64.5302 217.989 62.6071 222.914 62.6071 232.443C62.6071 242.293 64.7438 247.111 72.1156 253.963C82.372 263.492 95.4061 264.349 107.906 256.426C111.752 253.963 113.889 253.214 115.171 253.963C116.133 254.498 130.128 262.1 146.154 270.773C162.179 279.445 176.389 287.368 177.564 288.225C179.701 289.831 179.701 290.045 176.389 296.897C172.115 306.105 171.795 317.668 175.641 325.056Z"-->
+                <!--                          fill="#00BEF2" />-->
+                <!--                  </svg>-->
+
+                <!--                  <p class="titulo-item">Texto</p>-->
+                <!--                </a>-->
+
+                <!--                <a class="formaLogin forma-login-button">-->
+                <!--                  <svg width="400" height="400" viewBox="0 0 400 400" fill="none"-->
+                <!--                       xmlns="http://www.w3.org/2000/svg">-->
+                <!--                    <path fill-rule="evenodd" clip-rule="evenodd"-->
+                <!--                          d="M188.317 7.2467C134.959 12.9639 92.045 52.0217 81.3322 104.617C79.9142 111.579 79.6301 115.966 79.3347 135.428L78.991 158.121L73.8008 162.071C64.9428 168.815 58.3444 179.19 56.0538 189.977C55.1926 194.034 55.0007 209.008 55.0007 272.237C55.0007 358.545 54.8231 355.376 60.2573 366.157C66.9501 379.435 79.0212 388.77 93.4456 391.822C101.007 393.422 299.209 393.378 306.927 391.775C322.984 388.439 337.416 375.32 343.021 358.963L344.702 354.061L344.91 274.735C345.144 185.748 345.344 189.446 339.687 177.994C333.577 165.623 320.486 155.515 306.927 152.698C302.476 151.774 287.845 151.598 214.491 151.587L127.343 151.574L127.688 133.663C128.065 114.08 128.761 109.883 133.466 98.8486C140.365 82.6647 155.159 67.8903 171.352 61.011C181.422 56.7335 187.9 55.4862 200.027 55.49C212.087 55.493 217.166 56.41 227.121 60.3783C244.094 67.1445 259.457 82.1195 266.588 98.8486C269.592 105.896 271.657 114.118 272.273 121.485L272.771 127.441H296.945H321.12L320.588 119.711C316.822 64.9296 277.084 19.8266 223.069 9.02572C215.667 7.54534 195.272 6.50161 188.317 7.2467ZM208.683 225.126C222.641 228.755 233.325 240.345 235.752 254.493C237.457 264.428 234.102 275.947 227.235 283.734L224.202 287.174V303.837V320.502H200.027H175.851V303.837V287.174L172.993 283.932C165.05 274.925 161.994 262.744 164.891 251.643C169.975 232.156 189.726 220.197 208.683 225.126Z"-->
+                <!--                          fill="black" />-->
+                <!--                  </svg>-->
+
+                <!--                  <p class="titulo-item">Texto</p>-->
+                <!--                </a>-->
+                <!--              </section>-->
+              </form>
+            </template>
+
+            <template v-if="screen === `forgot`">
+              <div class="forgot-form">
+                <div class="login-subtitle flex-item">
+                  <div class="text-subtitle-1">{{ $t('auth:forgotPasswordTitle') }}</div>
+                  <div class="login-info">{{ $t('auth:forgotPasswordSubtitle') }}</div>
+                </div>
+
                 <v-text-field
-                  class="mt-2 flex-item"
-                  type="password"
+                  class="flex-item"
                   solo
                   flat
                   background-color="white"
                   color="blue darken-2"
                   hide-details="hide-details"
-                  ref="iptNewPassword"
-                  v-model="newPassword"
-                  :placeholder="$t(`auth:changePwd.newPasswordPlaceholder`)"
-                  autocomplete="new-password"
-                  light
-                >
-                  <password-strength slot="progress" v-model="newPassword"></password-strength>
-                </v-text-field>
-                <v-text-field
-                  class="mt-2 flex-item"
-                  type="password"
-                  solo
-                  flat
-                  background-color="white"
-                  color="blue darken-2"
-                  hide-details="hide-details"
-                  v-model="newPasswordVerify"
-                  :placeholder="$t(`auth:changePwd.newPasswordVerifyPlaceholder`)"
-                  autocomplete="new-password"
-                  @keyup.enter="changePassword"
-                  light/>
-                <v-btn class="mt-2 text-none flex-item" width="100%" large="large" color="blue darken-2" dark="dark"
-                       @click="changePassword" :loading="isLoading">{{ $t('auth:changePwd.proceed') }}
-                </v-btn>
-              </div>
-            </div>
-          </template>
+                  ref="iptForgotPwdEmail"
+                  v-model="username"
+                  :placeholder="$t(`auth:fields.email`)"
+                  type="email"
+                  autocomplete="email"
+                  light="light"
+                />
 
+                <v-btn
+                  class="mt-2 text-none flex-item"
+                  width="100%"
+                  color="blue darken-2"
+                  dark
+                  @click="forgotPasswordSubmit"
+                  :loading="isLoading"
+                >
+                  {{ $t('auth:sendResetPassword') }}
+                </v-btn>
+
+                <div class="text-center mt-5 flex-item">
+                  <v-btn
+                    class="text-none"
+                    text
+                    rounded
+
+                    @click.stop.prevent="screen = `login`"
+                    href="#forgot"
+                  >
+                    <div class="caption">{{ $t('auth:forgotPasswordCancel') }}</div>
+                  </v-btn>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="screen === `changePwd`">
+              <div class="forgot-form">
+                <div class="login-subtitle">
+                  <div class="text-subtitle-1">{{ $t('auth:changePwd.subtitle') }}</div>
+                </div>
+                <div class="flex-item">
+                  <v-text-field
+                    class="mt-2 flex-item"
+                    type="password"
+                    solo
+                    flat
+                    background-color="white"
+                    color="blue darken-2"
+                    hide-details="hide-details"
+                    ref="iptNewPassword"
+                    v-model="newPassword"
+                    :placeholder="$t(`auth:changePwd.newPasswordPlaceholder`)"
+                    autocomplete="new-password"
+                    light
+                  >
+                    <password-strength slot="progress" v-model="newPassword"></password-strength>
+                  </v-text-field>
+                  <v-text-field
+                    class="mt-2 flex-item"
+                    type="password"
+                    solo
+                    flat
+                    background-color="white"
+                    color="blue darken-2"
+                    hide-details="hide-details"
+                    v-model="newPasswordVerify"
+                    :placeholder="$t(`auth:changePwd.newPasswordVerifyPlaceholder`)"
+                    autocomplete="new-password"
+                    @keyup.enter="changePassword"
+                    light/>
+                  <v-btn class="mt-2 text-none flex-item" width="100%" large="large" color="blue darken-2" dark="dark"
+                         @click="changePassword" :loading="isLoading">{{ $t('auth:changePwd.proceed') }}
+                  </v-btn>
+                </div>
+              </div>
+            </template>
+          </div>
           <footer class='navegation-area'>
             <p class="rodape-creditos">Desenvolvimento e designed por: </p>
             <p class="rodape-creditos"><strong>DIGEST-TI</strong> e <strong>Marketing</strong></p>
@@ -879,6 +876,24 @@ export default {
   background-color: #d0e2f2;
 }
 
+.login-inputs{
+  width: 100%;
+}
+
+.login-inputs >{
+  *{
+    margin-top:  1rem;
+    margin-bottom:  1rem;
+  }
+}
+
+.login-title{
+  text-align: center;
+  color: var(--cor-brancoPrimario);
+  font-size: var(--fonte-tamanho-xgg);
+  font-weight: var(--fonte-peso-black);
+}
+
 .login-btn {
   margin: auto;
   box-shadow: 4px 4px 15px 0 rgba(220, 71, 68, 0.70);
@@ -907,9 +922,6 @@ export default {
   .text-subtitle-1, .login-info {
     color: var(--cor-brancoPrimario);
   }
-
-  //font-size: 1rem;
-  //padding: 0 var(--espaco-xxg);
 }
 
 .caption {
@@ -928,11 +940,6 @@ export default {
 
   .provider-list-item {
     background-color: #e1e1e1;
-
-    //.provider-list-item-icon{
-    //  color: #f8f8f8;
-    //  fill: white;
-    //}
   }
 }
 
