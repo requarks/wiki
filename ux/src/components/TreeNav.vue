@@ -126,8 +126,11 @@ function setOpened (nodeId) {
 function isLoaded (nodeId) {
   return state.loaded[nodeId]
 }
-function resetLoaded (nodeId) {
-  state.loaded[nodeId] = false
+function setLoaded (nodeId, value) {
+  state.loaded[nodeId] = value
+}
+function resetLoaded () {
+  state.loaded = {}
 }
 
 // PROVIDE
@@ -146,6 +149,7 @@ provide('emitContextAction', emitContextAction)
 defineExpose({
   setOpened,
   isLoaded,
+  setLoaded,
   resetLoaded
 })
 

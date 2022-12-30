@@ -63,6 +63,7 @@
     "codemirror": "6.0.1",
     "filesize": "10.0.5",
     "filesize-parser": "1.5.0",
+    "fuse.js": "6.6.2",
     "graphql": "16.6.0",
     "graphql-tag": "2.12.6",
     "js-cookie": "3.0.1",

@@ -19,6 +19,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             lazy-rules='ondemand'
             autofocus
             ref='iptTitle'
+            @keyup.enter='create'
             )
       q-item
         blueprint-icon.self-start(icon='file-submodule')
@@ -34,6 +35,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             :hint='t(`fileman.folderFileNameHint`)'
             lazy-rules='ondemand'
             @focus='state.pathDirty = true'
+            @keyup.enter='create'
             )
     q-card-actions.card-actions
       q-space

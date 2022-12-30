@@ -91,6 +91,9 @@ module.exports = {
     }
   },
   Mutation: {
+    /**
+     * CREATE FOLDER
+     */
     async createFolder (obj, args, context) {
       try {
         // Get parent path
@@ -134,6 +137,52 @@ module.exports = {
         })
         return {
           operation: graphHelper.generateSuccess('Folder created successfully')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * DELETE FOLDER
+     */
+    async deleteFolder (obj, args, context) {
+      try {
+        // Get folder
+        const folder = await WIKI.db.knex('tree').where('id', args.folderId).first()
+        const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
+        WIKI.logger.debug(`Deleting folder ${folder.id} at path ${folderPath}...`)
+
+        // Delete all children
+        const deletedNodes = await WIKI.db.knex('tree').where('folderPath', '~', `${folderPath}.*`).del().returning(['id', 'type'])
+
+        // Delete folders
+        const deletedFolders = deletedNodes.filter(n => n.type === 'folder').map(n => n.id)
+        if (deletedFolders.length > 0) {
+          WIKI.logger.debug(`Deleted ${deletedFolders.length} children folders.`)
+        }
+
+        // Delete pages
+        const deletedPages = deletedNodes.filter(n => n.type === 'page').map(n => n.id)
+        if (deletedPages.length > 0) {
+          WIKI.logger.debug(`Deleting ${deletedPages.length} children pages...`)
+
+          // TODO: Delete page
+        }
+
+        // Delete assets
+        const deletedAssets = deletedNodes.filter(n => n.type === 'asset').map(n => n.id)
+        if (deletedAssets.length > 0) {
+          WIKI.logger.debug(`Deleting ${deletedPages.length} children assets...`)
+
+          // TODO: Delete asset
+        }
+
+        // Delete the folder itself
+        await WIKI.db.knex('tree').where('id', folder.id).del()
+        WIKI.logger.debug(`Deleting folder ${folder.id} successfully.`)
+
+        return {
+          operation: graphHelper.generateSuccess('Folder deleted successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)

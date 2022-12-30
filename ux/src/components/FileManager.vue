@@ -13,6 +13,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
         ref='searchField'
         style='width: 100%;'
         label='Search folder...'
+        :debounce='500'
         )
         template(v-slot:prepend)
           q-icon(name='las la-search')
@@ -51,7 +52,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
     .q-pa-md
       template(v-if='currentFileDetails')
         q-img.rounded-borders.q-mb-md(
-          src='https://picsum.photos/id/134/340/340'
+          src='/_assets/illustrations/fileman-page.svg'
           width='100%'
           fit='cover'
           :ratio='16/10'
@@ -129,13 +130,21 @@ q-layout.fileman(view='hHh lpR lFr', container)
                               size='xs'
                               )
                           q-item-section.q-pr-sm Browse Using Titles
-                  q-item(clickable)
+                  q-item(clickable, @click='state.isCompact = !state.isCompact')
                     q-item-section(side)
-                      q-icon(name='las la-stop', color='grey', size='xs')
+                      q-icon(
+                        :name='state.isCompact ? `las la-check-square` : `las la-stop`'
+                        :color='state.isCompact ? `positive` : `grey`'
+                        size='xs'
+                      )
                     q-item-section.q-pr-sm Compact List
-                  q-item(clickable)
+                  q-item(clickable, @click='state.shouldShowFolders = !state.shouldShowFolders')
                     q-item-section(side)
-                      q-icon(name='las la-check-square', color='positive', size='xs')
+                      q-icon(
+                        :name='state.shouldShowFolders ? `las la-check-square` : `las la-stop`'
+                        :color='state.shouldShowFolders ? `positive` : `grey`'
+                        size='xs'
+                      )
                     q-item-section.q-pr-sm Show Folders
           q-btn.q-mr-sm(
             flat
@@ -191,10 +200,10 @@ q-layout.fileman(view='hHh lpR lFr', container)
           @dblclick.native='openItem(item)'
           )
           q-item-section.fileman-filelist-icon(avatar)
-            q-icon(:name='item.icon', size='xl')
+            q-icon(:name='item.icon', :size='state.isCompact ? `md` : `xl`')
           q-item-section.fileman-filelist-label
             q-item-label {{item.title}}
-            q-item-label(caption) {{item.caption}}
+            q-item-label(caption, v-if='!state.isCompact') {{item.caption}}
           q-item-section.fileman-filelist-side(side, v-if='item.side')
             .text-caption {{item.side}}
           //- RIGHT-CLICK MENU
@@ -211,11 +220,11 @@ q-layout.fileman(view='hHh lpR lFr', container)
                   q-item-section(side)
                     q-icon(name='las la-edit', color='orange')
                   q-item-section Edit
-                q-item(clickable, v-if='item.type !== `folder`')
+                q-item(clickable, v-if='item.type !== `folder`', @click='openItem(item)')
                   q-item-section(side)
                     q-icon(name='las la-eye', color='primary')
                   q-item-section View
-                q-item(clickable, v-if='item.type !== `folder`')
+                q-item(clickable, v-if='item.type !== `folder`', @click='copyItemURL(item)')
                   q-item-section(side)
                     q-icon(name='las la-clipboard', color='primary')
                   q-item-section Copy URL
@@ -231,7 +240,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                   q-item-section(side)
                     q-icon(name='las la-arrow-right', color='teal')
                   q-item-section Move to...
-                q-item(clickable)
+                q-item(clickable, @click='delItem(item)')
                   q-item-section(side)
                     q-icon(name='las la-trash-alt', color='negative')
                   q-item-section.text-negative Delete
@@ -255,7 +264,9 @@ import { filesize } from 'filesize'
 import { useQuasar } from 'quasar'
 import { DateTime } from 'luxon'
 import { cloneDeep, find } from 'lodash-es'
+import { useRoute, useRouter } from 'vue-router'
 import gql from 'graphql-tag'
+import Fuse from 'fuse.js/dist/fuse.basic.esm'
 
 import NewMenu from './PageNewMenu.vue'
 import Tree from './TreeNav.vue'
@@ -277,6 +288,11 @@ const $q = useQuasar()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
 // I18N
 
 const { t } = useI18n()
@@ -291,6 +307,8 @@ const state = reactive({
   treeNodes: {},
   treeRoots: [],
   displayMode: 'title',
+  isCompact: false,
+  shouldShowFolders: true,
   isUploading: false,
   shouldCancelUpload: false,
   uploadPercentage: 0,
@@ -314,8 +332,29 @@ const folderPath = computed(() => {
   }
 })
 
+const filteredFiles = computed(() => {
+  if (state.search) {
+    const fuse = new Fuse(state.fileList, {
+      keys: [
+        'title',
+        'fileName'
+      ]
+    })
+    return fuse.search(state.search).map(n => n.item)
+  } else {
+    return state.fileList
+  }
+})
+
 const files = computed(() => {
-  return state.fileList.map(f => {
+  return filteredFiles.value.filter(f => {
+    console.info(f)
+    // -> Show Folders Filter
+    if (f.type === 'folder' && !state.shouldShowFolders) {
+      return false
+    }
+    return true
+  }).map(f => {
     switch (f.type) {
       case 'folder': {
         f.icon = fileTypes.folder.icon
@@ -413,10 +452,9 @@ async function treeLazyLoad (nodeId, { done, fail }) {
   done()
 }
 
-async function loadTree (parentId, types, noCache = false) {
+async function loadTree (parentId, types) {
   if (!parentId) {
     parentId = null
-    state.treeRoots = []
   }
   if (parentId === state.currentFolderId) {
     state.fileListLoading = true
@@ -451,7 +489,7 @@ async function loadTree (parentId, types, noCache = false) {
               title
               createdAt
               updatedAt
-              pageEditor
+              editor
             }
             ... on TreeItemAsset {
               id
@@ -479,22 +517,21 @@ async function loadTree (parentId, types, noCache = false) {
         switch (item.__typename) {
           case 'TreeItemFolder': {
             // -> Tree Nodes
-            if (!state.treeNodes[item.id] || (parentId && !treeComp.value.isLoaded(item.id))) {
+            if (!state.treeNodes[item.id]) {
               state.treeNodes[item.id] = {
                 folderPath: item.folderPath,
                 fileName: item.fileName,
                 title: item.title,
-                children: []
-              }
-              if (item.folderPath) {
-                if (!state.treeNodes[parentId].children.includes(item.id)) {
-                  state.treeNodes[parentId].children.push(item.id)
-                }
+                children: state.treeNodes[item.id]?.children ?? []
               }
             }
 
-            // -> Set Tree Roots
-            if (!item.folderPath) {
+            // -> Set Ancestors / Tree Roots
+            if (item.folderPath) {
+              if (!state.treeNodes[parentId].children.includes(item.id)) {
+                state.treeNodes[parentId].children.push(item.id)
+              }
+            } else {
               newTreeRoots.push(item.id)
             }
 
@@ -504,6 +541,7 @@ async function loadTree (parentId, types, noCache = false) {
                 id: item.id,
                 type: 'folder',
                 title: item.title,
+                fileName: item.fileName,
                 children: 0
               })
             }
@@ -516,7 +554,9 @@ async function loadTree (parentId, types, noCache = false) {
                 type: 'asset',
                 title: item.title,
                 fileType: 'pdf',
-                fileSize: 19000
+                fileSize: 19000,
+                folderPath: item.folderPath,
+                fileName: item.fileName
               })
             }
             break
@@ -528,7 +568,9 @@ async function loadTree (parentId, types, noCache = false) {
                 type: 'page',
                 title: item.title,
                 pageType: 'markdown',
-                updatedAt: '2022-11-24T18:27:00Z'
+                updatedAt: '2022-11-24T18:27:00Z',
+                folderPath: item.folderPath,
+                fileName: item.fileName
               })
             }
             break
@@ -551,6 +593,9 @@ async function loadTree (parentId, types, noCache = false) {
       state.fileListLoading = false
     })
   }
+  if (parentId) {
+    treeComp.value.setLoaded(parentId)
+  }
 }
 
 function treeContextAction (nodeId, action) {
@@ -566,6 +611,10 @@ function treeContextAction (nodeId, action) {
   }
 }
 
+// --------------------------------------
+// FOLDER METHODS
+// --------------------------------------
+
 function newFolder (parentId) {
   $q.dialog({
     component: FolderCreateDialog,
@@ -577,7 +626,7 @@ function newFolder (parentId) {
   })
 }
 
-function delFolder (folderId) {
+function delFolder (folderId, mustReload = false) {
   $q.dialog({
     component: FolderDeleteDialog,
     componentProps: {
@@ -591,15 +640,23 @@ function delFolder (folderId) {
       }
     }
     delete state.treeNodes[folderId]
+    if (state.treeRoots.includes(folderId)) {
+      state.treeRoots = state.treeRoots.filter(n => n !== folderId)
+    }
+    if (mustReload) {
+      loadTree(state.currentFolderId, null)
+    }
   })
 }
 
 function reloadFolder (folderId) {
-  loadTree(folderId, null, true)
+  loadTree(folderId, null)
   treeComp.value.resetLoaded()
 }
 
-// -> Upload Methods
+// --------------------------------------
+// UPLOAD METHODS
+// --------------------------------------
 
 function uploadFile () {
   fileIpt.value.click()
@@ -678,6 +735,10 @@ function uploadCancel () {
   state.uploadPercentage = 0
 }
 
+// --------------------------------------
+// ITEM LIST ACTIONS
+// --------------------------------------
+
 function selectItem (item) {
   if (item.type === 'folder') {
     state.currentFolderId = item.id
@@ -688,7 +749,60 @@ function selectItem (item) {
 }
 
 function openItem (item) {
-  console.info(item.id)
+  switch (item.type) {
+    case 'folder': {
+      return
+    }
+    case 'page': {
+      const pagePath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
+      router.push(`/${pagePath}`)
+      close()
+      break
+    }
+    case 'asset': {
+      // TODO: Open asset
+      close()
+      break
+    }
+  }
+}
+
+async function copyItemURL (item) {
+  try {
+    switch (item.type) {
+      case 'page': {
+        const pagePath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
+        await navigator.clipboard.writeText(`${window.location.origin}/${pagePath}`)
+        break
+      }
+      case 'asset': {
+        // TODO: Copy asset URL to clibpard
+        break
+      }
+      default: {
+        throw new Error('Invalid Item Type')
+      }
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('fileman.copyURLSuccess')
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to copy URL to clipboard.',
+      caption: err.message
+    })
+  }
+}
+
+function delItem (item) {
+  switch (item.type) {
+    case 'folder': {
+      delFolder(item.id, true)
+      break
+    }
+  }
 }
 
 // MOUNTED

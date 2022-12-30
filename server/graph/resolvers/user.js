@@ -352,8 +352,12 @@ module.exports = {
           strategyKey: authStrategy.module,
           strategyIcon: authModule.icon,
           config: authStrategy.module === 'local' ? {
-            isTfaSetup: value.tfaSecret?.length > 0
-          } : {}
+            isPasswordSet: value.password?.length > 0,
+            isTfaSetup: value.tfaSecret?.length > 0,
+            isTfaRequired: value.tfaRequired ?? false,
+            mustChangePwd: value.mustChangePwd ?? false,
+            restrictLogin: value.restrictLogin ?? false
+          } : value
         })
       }, [])
     },

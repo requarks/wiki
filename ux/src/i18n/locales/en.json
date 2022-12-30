@@ -1610,5 +1610,6 @@
   "admin.flags.experimental.hint": "Enable unstable / unfinished features. DO NOT enable in a production environment!",
   "admin.flags.advanced.label": "Custom Configuration",
   "admin.flags.advanced.hint": "Set custom configuration flags. Note that all values are public to all users! Do not insert senstive data.",
-  "admin.flags.saveSuccess": "Flags have been updated successfully."
+  "admin.flags.saveSuccess": "Flags have been updated successfully.",
+  "fileman.copyURLSuccess": "URL has been copied to the clipboard."
 }

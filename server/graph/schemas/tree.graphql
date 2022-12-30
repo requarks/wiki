@@ -76,7 +76,7 @@ type TreeItemPage {
   depth: Int
   fileName: String
   folderPath: String
-  pageEditor: String
+  editor: String
   pageType: String
   title: String
   updatedAt: Date

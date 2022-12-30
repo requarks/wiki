@@ -234,6 +234,7 @@ q-page.column
         aria-label='Page Data'
         @click='togglePageData'
         disable
+        v-if='flagsStore.experimental'
         )
         q-tooltip(anchor='center left' self='center right') Page Data
       q-separator.q-my-sm(inset)
@@ -322,6 +323,7 @@ import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 
 import { useEditorStore } from 'src/stores/editor'
+import { useFlagsStore } from 'src/stores/flags'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
@@ -349,6 +351,7 @@ const $q = useQuasar()
 // STORES
 
 const editorStore = useEditorStore()
+const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
@@ -702,6 +705,7 @@ async function saveChanges () {
     width: 40px;
     border-radius: 4px !important;
     background-color: rgba(0,0,0,.75);
+    backdrop-filter: blur(5px);
     color: #FFF;
     position: fixed;
     right: 486px;

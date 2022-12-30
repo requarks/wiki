@@ -38,17 +38,20 @@ q-layout(view='hHh lpR fFf', container)
       )
   q-drawer.bg-dark-6(:model-value='true', :width='250', dark)
     q-list(padding, v-if='state.loading < 1')
-      q-item(
+      template(
         v-for='sc of sections'
         :key='`section-` + sc.key'
-        clickable
-        :to='{ params: { section: sc.key } }'
-        active-class='bg-primary text-white'
-        :disabled='sc.disabled'
         )
-        q-item-section(side)
-          q-icon(:name='sc.icon', color='white')
-        q-item-section {{sc.text}}
+        q-item(
+          v-if='!sc.disabled || flagsStore.experimental'
+          clickable
+          :to='{ params: { section: sc.key } }'
+          active-class='bg-primary text-white'
+          :disabled='sc.disabled'
+          )
+          q-item-section(side)
+            q-icon(:name='sc.icon', color='white')
+          q-item-section {{sc.text}}
   q-page-container
     q-page(v-if='state.loading > 0')
       .flex.q-pa-lg.items-center
@@ -268,7 +271,7 @@ q-layout(view='hHh lpR fFf', container)
                 q-item-section
                   q-item-label {{t(`admin.users.changePassword`)}}
                   q-item-label(caption) {{t(`admin.users.changePasswordHint`)}}
-                  q-item-label(caption): strong(:class='localAuth.password ? `text-positive` : `text-negative`') {{localAuth.password ? t(`admin.users.pwdSet`) : t(`admin.users.pwdNotSet`)}}
+                  q-item-label(caption): strong(:class='localAuth.isPasswordSet ? `text-positive` : `text-negative`') {{localAuth.isPasswordSet ? t(`admin.users.pwdSet`) : t(`admin.users.pwdNotSet`)}}
                 q-item-section(side)
                   q-btn.acrylic-btn(
                     flat
@@ -316,7 +319,7 @@ q-layout(view='hHh lpR fFf', container)
                   q-item-label(caption) {{t(`admin.users.tfaRequiredHint`)}}
                 q-item-section(avatar)
                   q-toggle(
-                    v-model='localAuth.tfaRequired'
+                    v-model='localAuth.isTfaRequired'
                     color='primary'
                     checked-icon='las la-check'
                     unchecked-icon='las la-times'
@@ -328,7 +331,7 @@ q-layout(view='hHh lpR fFf', container)
                 q-item-section
                   q-item-label {{t(`admin.users.tfaInvalidate`)}}
                   q-item-label(caption) {{t(`admin.users.tfaInvalidateHint`)}}
-                  q-item-label(caption): strong(:class='localAuth.tfaSecret ? `text-positive` : `text-negative`') {{localAuth.tfaSecret ? t(`admin.users.tfaSet`) : t(`admin.users.tfaNotSet`)}}
+                  q-item-label(caption): strong(:class='localAuth.isTfaSetup ? `text-positive` : `text-negative`') {{localAuth.isTfaSetup ? t(`admin.users.tfaSet`) : t(`admin.users.tfaNotSet`)}}
                 q-item-section(side)
                   q-btn.acrylic-btn(
                     flat
@@ -348,14 +351,14 @@ q-layout(view='hHh lpR fFf', container)
                   ) {{t('admin.users.noLinkedProviders')}}
               template(
                 v-for='(prv, idx) in linkedAuthProviders'
-                :key='prv._id'
+                :key='prv.authId'
                 )
                 q-separator.q-my-sm(inset, v-if='idx > 0')
                 q-item
-                  blueprint-icon(icon='google', :hue-rotate='-45')
+                  blueprint-icon(:icon='prv.strategyIcon', :hue-rotate='-45')
                   q-item-section
-                    q-item-label {{prv._moduleName}}
-                    q-item-label(caption) {{prv.key}}
+                    q-item-label {{prv.authName}}
+                    q-item-label(caption) {{prv.config.key}}
 
     q-page(v-else-if='route.params.section === `groups`')
       .q-pa-md
@@ -506,7 +509,7 @@ q-layout(view='hHh lpR fFf', container)
 
 <script setup>
 import gql from 'graphql-tag'
-import { cloneDeep, find, findKey, map, some } from 'lodash-es'
+import { cloneDeep, find, map, some } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 import { useI18n } from 'vue-i18n'
@@ -515,6 +518,7 @@ import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'
+import { useFlagsStore } from 'src/stores/flags'
 
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
 import UtilCodeEditor from './UtilCodeEditor.vue'
@@ -526,6 +530,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const flagsStore = useFlagsStore()
 
 // ROUTER
 
@@ -553,7 +558,7 @@ const state = reactive({
 
 const sections = [
   { key: 'overview', text: t('admin.users.overview'), icon: 'las la-user' },
-  { key: 'activity', text: t('admin.users.activity'), icon: 'las la-chart-area' },
+  { key: 'activity', text: t('admin.users.activity'), icon: 'las la-chart-area', disabled: true },
   { key: 'auth', text: t('admin.users.auth'), icon: 'las la-key' },
   { key: 'groups', text: t('admin.users.groups'), icon: 'las la-users' },
   { key: 'metadata', text: t('admin.users.metadata'), icon: 'las la-clipboard-list' },
@@ -576,17 +581,13 @@ const metadata = computed({
   }
 })
 
-const localAuthId = computed(() => {
-  return findKey(state.user.auth, ['module', 'local'])
-})
-
 const localAuth = computed({
   get () {
-    return localAuthId.value ? state.user.auth?.[localAuthId.value] || {} : {}
+    return find(state.user?.auth, ['strategyKey', 'local'])?.config ?? {}
   },
   set (val) {
-    if (localAuthId.value) {
-      state.user.auth[localAuthId.value] = val
+    if (localAuth.value.authId) {
+      find(state.user.auth, ['strategyKey', 'local']).config = val
     }
   }
 })
@@ -594,12 +595,7 @@ const localAuth = computed({
 const linkedAuthProviders = computed(() => {
   if (!state.user?.auth) { return [] }
 
-  return map(state.user.auth, (obj, key) => {
-    return {
-      ...obj,
-      _id: key
-    }
-  }).filter(prv => prv.module !== 'local')
+  return state.user.auth.filter(prv => prv.strategyKey !== 'local')
 })
 
 // WATCHERS
@@ -630,7 +626,13 @@ async function fetchUser () {
             isSystem
             isVerified
             isActive
-            auth
+            auth {
+              authId
+              authName
+              strategyKey
+              strategyIcon
+              config
+            }
             meta
             prefs
             lastLoginAt

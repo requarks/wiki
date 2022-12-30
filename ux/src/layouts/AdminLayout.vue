@@ -70,26 +70,27 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-web.svg')
           q-item-section {{ t('admin.general.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/analytics`', v-ripple, active-class='bg-primary text-white', disabled)
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-bar-chart.svg')
-          q-item-section {{ t('admin.analytics.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/approvals`', v-ripple, active-class='bg-primary text-white', disabled)
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-inspection.svg')
-          q-item-section {{ t('admin.approval.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/comments`', v-ripple, active-class='bg-primary text-white', disabled)
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-comments.svg')
-          q-item-section {{ t('admin.comments.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/blocks`', v-ripple, active-class='bg-primary text-white', disabled)
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-rfid-tag.svg')
-          q-item-section {{ t('admin.blocks.title') }}
-        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/editors`', v-ripple, active-class='bg-primary text-white', disabled)
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-cashbook.svg')
-          q-item-section {{ t('admin.editors.title') }}
+        template(v-if='flagsStore.experimental')
+          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/analytics`', v-ripple, active-class='bg-primary text-white', disabled)
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-bar-chart.svg')
+            q-item-section {{ t('admin.analytics.title') }}
+          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/approvals`', v-ripple, active-class='bg-primary text-white', disabled)
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-inspection.svg')
+            q-item-section {{ t('admin.approval.title') }}
+          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/comments`', v-ripple, active-class='bg-primary text-white', disabled)
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-comments.svg')
+            q-item-section {{ t('admin.comments.title') }}
+          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/blocks`', v-ripple, active-class='bg-primary text-white', disabled)
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-rfid-tag.svg')
+            q-item-section {{ t('admin.blocks.title') }}
+          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/editors`', v-ripple, active-class='bg-primary text-white', disabled)
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-cashbook.svg')
+            q-item-section {{ t('admin.editors.title') }}
         q-item(:to='`/_admin/` + adminStore.currentSiteId + `/locale`', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-language.svg')
@@ -134,7 +135,7 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section {{ t('admin.api.title') }}
           q-item-section(side)
             status-light(:color='adminStore.info.isApiEnabled ? `positive` : `negative`')
-        q-item(to='/_admin/audit', v-ripple, active-class='bg-primary text-white', disabled)
+        q-item(to='/_admin/audit', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-event-log.svg')
           q-item-section {{ t('admin.audit.title') }}
@@ -156,7 +157,7 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section {{ t('admin.mail.title') }}
           q-item-section(side)
             status-light(:color='adminStore.info.isMailConfigured ? `positive` : `warning`')
-        q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white', disabled)
+        q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')
           q-item-section {{ t('admin.rendering.title') }}
@@ -170,7 +171,7 @@ q-layout.admin(view='hHh Lpr lff')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-protect.svg')
           q-item-section {{ t('admin.security.title') }}
-        q-item(to='/_admin/ssl', v-ripple, active-class='bg-primary text-white', disabled)
+        q-item(to='/_admin/ssl', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-security-ssl.svg')
           q-item-section {{ t('admin.ssl.title') }}
@@ -218,8 +219,9 @@ import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { useAdminStore } from '../stores/admin'
-import { useSiteStore } from '../stores/site'
+import { useAdminStore } from 'src/stores/admin'
+import { useFlagsStore } from 'src/stores/flags'
+import { useSiteStore } from 'src/stores/site'
 
 // COMPONENTS
 
@@ -237,6 +239,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // ROUTER
