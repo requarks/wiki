@@ -15,6 +15,9 @@ extend type Query {
     depth: Int
     includeAncestors: Boolean
     ): [TreeItem]
+  folderById(
+    id: UUID!
+  ): TreeItemFolder
 }
 
 extend type Mutation {
@@ -39,8 +42,8 @@ extend type Mutation {
   ): DefaultResponse
   renameFolder(
     folderId: UUID!
-    pathName: String
-    title: String
+    pathName: String!
+    title: String!
   ): DefaultResponse
 }
 

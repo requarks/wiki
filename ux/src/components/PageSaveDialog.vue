@@ -282,7 +282,7 @@ async function loadTree (parentId, types) {
               title
               createdAt
               updatedAt
-              pageEditor
+              editor
             }
           }
         }

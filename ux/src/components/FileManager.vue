@@ -37,34 +37,44 @@ q-layout.fileman(view='hHh lpR lFr', container)
         )
         q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.close`)}}
   q-drawer.fileman-left(:model-value='true', :width='350')
-    .q-px-md.q-pb-sm
-      tree(
-        ref='treeComp'
-        :nodes='state.treeNodes'
-        :roots='state.treeRoots'
-        v-model:selected='state.currentFolderId'
-        @lazy-load='treeLazyLoad'
-        :use-lazy-load='true'
-        @context-action='treeContextAction'
-        :display-mode='state.displayMode'
+    q-scroll-area(
+      :thumb-style='thumbStyle'
+      :bar-style='barStyle'
+      style='height: 100%;'
       )
-  q-drawer.fileman-right(:model-value='$q.screen.gt.md', :width='350', side='right')
-    .q-pa-md
-      template(v-if='currentFileDetails')
-        q-img.rounded-borders.q-mb-md(
-          src='/_assets/illustrations/fileman-page.svg'
-          width='100%'
-          fit='cover'
-          :ratio='16/10'
-          no-spinner
+      .q-px-md.q-pb-sm
+        tree(
+          ref='treeComp'
+          :nodes='state.treeNodes'
+          :roots='state.treeRoots'
+          v-model:selected='state.currentFolderId'
+          @lazy-load='treeLazyLoad'
+          :use-lazy-load='true'
+          @context-action='treeContextAction'
+          :display-mode='state.displayMode'
         )
-        .fileman-details-row(
-          v-for='item of currentFileDetails.items'
+  q-drawer.fileman-right(:model-value='$q.screen.gt.md', :width='350', side='right')
+    q-scroll-area(
+      :thumb-style='thumbStyle'
+      :bar-style='barStyle'
+      style='height: 100%;'
+      )
+      .q-pa-md
+        template(v-if='currentFileDetails')
+          q-img.rounded-borders.q-mb-md(
+            src='/_assets/illustrations/fileman-page.svg'
+            width='100%'
+            fit='cover'
+            :ratio='16/10'
+            no-spinner
           )
-          label {{item.label}}
-          span {{item.value}}
+          .fileman-details-row(
+            v-for='item of currentFileDetails.items'
+            )
+            label {{item.label}}
+            span {{item.value}}
   q-page-container
-    q-page.fileman-center
+    q-page.fileman-center.column
       //- TOOLBAR -----------------------------------------------------
       q-toolbar.fileman-toolbar
         template(v-if='state.isUploading')
@@ -182,68 +192,79 @@ q-layout.fileman(view='hHh lpR lFr', container)
             icon='las la-cloud-upload-alt'
             @click='uploadFile'
             )
-      .fileman-emptylist(v-if='files.length < 1')
-        template(v-if='state.fileListLoading')
-          q-spinner.q-mr-sm(color='primary', size='xs', :thickness='3')
-          span.text-primary Loading...
-        template(v-else)
-          q-icon.q-mr-sm(name='las la-exclamation-triangle', size='sm')
-          span This folder is empty.
-      q-list.fileman-filelist(v-else)
-        q-item(
-          v-for='item of files'
-          :key='item.id'
-          clickable
-          active-class='active'
-          :active='item.id === state.currentFileId'
-          @click.native='selectItem(item)'
-          @dblclick.native='openItem(item)'
-          )
-          q-item-section.fileman-filelist-icon(avatar)
-            q-icon(:name='item.icon', :size='state.isCompact ? `md` : `xl`')
-          q-item-section.fileman-filelist-label
-            q-item-label {{item.title}}
-            q-item-label(caption, v-if='!state.isCompact') {{item.caption}}
-          q-item-section.fileman-filelist-side(side, v-if='item.side')
-            .text-caption {{item.side}}
-          //- RIGHT-CLICK MENU
-          q-menu(
-            touch-position
-            context-menu
-            auto-close
-            transition-show='jump-down'
-            transition-hide='jump-up'
+
+      .row(style='flex: 1 1 100%;')
+        .col
+          q-scroll-area(
+            :thumb-style='thumbStyle'
+            :bar-style='barStyle'
+            style='height: 100%;'
             )
-            q-card.q-pa-sm
-              q-list(dense, style='min-width: 150px;')
-                q-item(clickable, v-if='item.type === `page`')
-                  q-item-section(side)
-                    q-icon(name='las la-edit', color='orange')
-                  q-item-section Edit
-                q-item(clickable, v-if='item.type !== `folder`', @click='openItem(item)')
-                  q-item-section(side)
-                    q-icon(name='las la-eye', color='primary')
-                  q-item-section View
-                q-item(clickable, v-if='item.type !== `folder`', @click='copyItemURL(item)')
-                  q-item-section(side)
-                    q-icon(name='las la-clipboard', color='primary')
-                  q-item-section Copy URL
-                q-item(clickable)
-                  q-item-section(side)
-                    q-icon(name='las la-copy', color='teal')
-                  q-item-section Duplicate...
-                q-item(clickable)
-                  q-item-section(side)
-                    q-icon(name='las la-redo', color='teal')
-                  q-item-section Rename...
-                q-item(clickable)
-                  q-item-section(side)
-                    q-icon(name='las la-arrow-right', color='teal')
-                  q-item-section Move to...
-                q-item(clickable, @click='delItem(item)')
-                  q-item-section(side)
-                    q-icon(name='las la-trash-alt', color='negative')
-                  q-item-section.text-negative Delete
+            .fileman-emptylist(v-if='files.length < 1')
+              template(v-if='state.fileListLoading')
+                q-spinner.q-mr-sm(color='primary', size='xs', :thickness='3')
+                span.text-primary Loading...
+              template(v-else)
+                q-icon.q-mr-sm(name='las la-folder-open', size='sm')
+                span This folder is empty.
+            q-list.fileman-filelist(
+              v-else
+              :class='state.isCompact && `is-compact`'
+              )
+              q-item(
+                v-for='item of files'
+                :key='item.id'
+                clickable
+                active-class='active'
+                :active='item.id === state.currentFileId'
+                @click.native='selectItem(item)'
+                @dblclick.native='openItem(item)'
+                )
+                q-item-section.fileman-filelist-icon(avatar)
+                  q-icon(:name='item.icon', :size='state.isCompact ? `md` : `xl`')
+                q-item-section.fileman-filelist-label
+                  q-item-label {{usePathTitle ? item.fileName : item.title}}
+                  q-item-label(caption, v-if='!state.isCompact') {{item.caption}}
+                q-item-section.fileman-filelist-side(side, v-if='item.side')
+                  .text-caption {{item.side}}
+                //- RIGHT-CLICK MENU
+                q-menu(
+                  touch-position
+                  context-menu
+                  auto-close
+                  transition-show='jump-down'
+                  transition-hide='jump-up'
+                  )
+                  q-card.q-pa-sm
+                    q-list(dense, style='min-width: 150px;')
+                      q-item(clickable, v-if='item.type === `page`')
+                        q-item-section(side)
+                          q-icon(name='las la-edit', color='orange')
+                        q-item-section Edit
+                      q-item(clickable, v-if='item.type !== `folder`', @click='openItem(item)')
+                        q-item-section(side)
+                          q-icon(name='las la-eye', color='primary')
+                        q-item-section View
+                      q-item(clickable, v-if='item.type !== `folder`', @click='copyItemURL(item)')
+                        q-item-section(side)
+                          q-icon(name='las la-clipboard', color='primary')
+                        q-item-section Copy URL
+                      q-item(clickable)
+                        q-item-section(side)
+                          q-icon(name='las la-copy', color='teal')
+                        q-item-section Duplicate...
+                      q-item(clickable, @click='renameItem(item)')
+                        q-item-section(side)
+                          q-icon(name='las la-redo', color='teal')
+                        q-item-section Rename...
+                      q-item(clickable)
+                        q-item-section(side)
+                          q-icon(name='las la-arrow-right', color='teal')
+                        q-item-section Move to...
+                      q-item(clickable, @click='delItem(item)')
+                        q-item-section(side)
+                          q-icon(name='las la-trash-alt', color='negative')
+                        q-item-section.text-negative Delete
   q-footer
     q-bar.fileman-path
       small.text-caption.text-grey-7 {{folderPath}}
@@ -259,7 +280,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { filesize } from 'filesize'
 import { useQuasar } from 'quasar'
 import { DateTime } from 'luxon'
@@ -278,6 +299,7 @@ import { useSiteStore } from 'src/stores/site'
 
 import FolderCreateDialog from 'src/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from 'src/components/FolderDeleteDialog.vue'
+import FolderRenameDialog from 'src/components/FolderRenameDialog.vue'
 
 // QUASAR
 
@@ -301,6 +323,7 @@ const { t } = useI18n()
 
 const state = reactive({
   loading: 0,
+  isFetching: false,
   search: '',
   currentFolderId: null,
   currentFileId: null,
@@ -315,6 +338,19 @@ const state = reactive({
   fileList: [],
   fileListLoading: false
 })
+
+const thumbStyle = {
+  right: '2px',
+  borderRadius: '5px',
+  backgroundColor: '#000',
+  width: '5px',
+  opacity: 0.15
+}
+const barStyle = {
+  backgroundColor: '#FAFAFA',
+  width: '9px',
+  opacity: 1
+}
 
 // REFS
 
@@ -332,6 +368,8 @@ const folderPath = computed(() => {
   }
 })
 
+const usePathTitle = computed(() => state.displayMode === 'path')
+
 const filteredFiles = computed(() => {
   if (state.search) {
     const fuse = new Fuse(state.fileList, {
@@ -348,7 +386,6 @@ const filteredFiles = computed(() => {
 
 const files = computed(() => {
   return filteredFiles.value.filter(f => {
-    console.info(f)
     // -> Show Folders Filter
     if (f.type === 'folder' && !state.shouldShowFolders) {
       return false
@@ -453,6 +490,8 @@ async function treeLazyLoad (nodeId, { done, fail }) {
 }
 
 async function loadTree (parentId, types) {
+  if (state.isFetching) { return }
+  state.isFetching = true
   if (!parentId) {
     parentId = null
   }
@@ -517,13 +556,11 @@ async function loadTree (parentId, types) {
         switch (item.__typename) {
           case 'TreeItemFolder': {
             // -> Tree Nodes
-            if (!state.treeNodes[item.id]) {
-              state.treeNodes[item.id] = {
-                folderPath: item.folderPath,
-                fileName: item.fileName,
-                title: item.title,
-                children: state.treeNodes[item.id]?.children ?? []
-              }
+            state.treeNodes[item.id] = {
+              folderPath: item.folderPath,
+              fileName: item.fileName,
+              title: item.title,
+              children: state.treeNodes[item.id]?.children ?? []
             }
 
             // -> Set Ancestors / Tree Roots
@@ -596,12 +633,17 @@ async function loadTree (parentId, types) {
   if (parentId) {
     treeComp.value.setLoaded(parentId)
   }
+  state.isFetching = false
 }
 
 function treeContextAction (nodeId, action) {
   switch (action) {
     case 'newFolder': {
       newFolder(nodeId)
+      break
+    }
+    case 'rename': {
+      renameFolder(nodeId)
       break
     }
     case 'del': {
@@ -623,6 +665,18 @@ function newFolder (parentId) {
     }
   }).onOk(() => {
     loadTree(parentId)
+  })
+}
+
+function renameFolder (folderId) {
+  $q.dialog({
+    component: FolderRenameDialog,
+    componentProps: {
+      folderId
+    }
+  }).onOk(() => {
+    treeComp.value.resetLoaded()
+    loadTree(folderId)
   })
 }
 
@@ -652,6 +706,21 @@ function delFolder (folderId, mustReload = false) {
 function reloadFolder (folderId) {
   loadTree(folderId, null)
   treeComp.value.resetLoaded()
+}
+
+// PAGE METHODS
+// --------------------------------------
+
+function delPage (pageId, pageName) {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('src/components/PageDeleteDialog.vue')),
+    componentProps: {
+      pageId,
+      pageName
+    }
+  }).onOk(() => {
+    loadTree(state.currentFolderId, null)
+  })
 }
 
 // --------------------------------------
@@ -796,10 +865,32 @@ async function copyItemURL (item) {
   }
 }
 
+function renameItem (item) {
+  console.info(item)
+  switch (item.type) {
+    case 'folder': {
+      renameFolder(item.id)
+      break
+    }
+    case 'page': {
+      // TODO: Rename page
+      break
+    }
+    case 'asset': {
+      // TODO: Rename asset
+      break
+    }
+  }
+}
+
 function delItem (item) {
   switch (item.type) {
     case 'folder': {
       delFolder(item.id, true)
+      break
+    }
+    case 'page': {
+      delPage(item.id, item.title)
       break
     }
   }
@@ -825,6 +916,7 @@ onMounted(() => {
   }
 
   &-center {
+
     @at-root .body--light & {
       background-color: #FFF;
     }
@@ -860,6 +952,10 @@ onMounted(() => {
     }
   }
 
+  &-main {
+    height: 100%;
+  }
+
   &-emptylist {
     padding: 16px;
     font-style: italic;
@@ -878,7 +974,7 @@ onMounted(() => {
     padding: 8px 12px;
 
     > .q-item {
-      padding: 8px 6px;
+      padding: 4px 6px;
       border-radius: 8px;
 
       &.active {
@@ -892,6 +988,18 @@ onMounted(() => {
         .fileman-filelist-side .text-caption {
           color: rgba(255,255,255,.7);
         }
+      }
+    }
+
+    &.is-compact {
+      > .q-item {
+        padding: 0 6px;
+        min-height: 36px;
+      }
+
+      .fileman-filelist-icon {
+        padding-right: 6px;
+        min-width: 0;
       }
     }
   }
