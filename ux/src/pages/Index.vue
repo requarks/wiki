@@ -466,12 +466,13 @@ function togglePageData () {
 
 function duplicatePage () {
   $q.dialog({
-    component: defineAsyncComponent(() => import('../components/PageSaveDialog.vue')),
+    component: defineAsyncComponent(() => import('../components/TreeBrowserDialog.vue')),
     componentProps: {
-      mode: 'duplicate',
-      pageId: pageStore.id,
-      pageName: pageStore.title,
-      pagePath: pageStore.path
+      mode: 'duplicatePage',
+      folderPath: '',
+      itemId: pageStore.id,
+      itemTitle: pageStore.title,
+      itemFileName: pageStore.path
     }
   }).onOk(() => {
     // TODO: change route to new location
@@ -480,12 +481,13 @@ function duplicatePage () {
 
 function renamePage () {
   $q.dialog({
-    component: defineAsyncComponent(() => import('../components/PageSaveDialog.vue')),
+    component: defineAsyncComponent(() => import('../components/TreeBrowserDialog.vue')),
     componentProps: {
-      mode: 'rename',
-      pageId: pageStore.id,
-      pageName: pageStore.title,
-      pagePath: pageStore.path
+      mode: 'renamePage',
+      folderPath: '',
+      itemId: pageStore.id,
+      itemTitle: pageStore.title,
+      itemFileName: pageStore.path
     }
   }).onOk(() => {
     // TODO: change route to new location

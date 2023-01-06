@@ -143,12 +143,14 @@ async function create () {
       mutation: gql`
         mutation createFolder (
           $siteId: UUID!
+          $locale: String!
           $parentId: UUID
           $pathName: String!
           $title: String!
           ) {
           createFolder (
             siteId: $siteId
+            locale: $locale
             parentId: $parentId
             pathName: $pathName
             title: $title
@@ -162,6 +164,7 @@ async function create () {
       `,
       variables: {
         siteId: siteStore.id,
+        locale: 'en',
         parentId: props.parentId,
         pathName: state.path,
         title: state.title

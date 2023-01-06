@@ -14,16 +14,24 @@ extend type Query {
     orderByDirection: OrderByDirection
     depth: Int
     includeAncestors: Boolean
+    includeRootItems: Boolean
     ): [TreeItem]
   folderById(
     id: UUID!
+  ): TreeItemFolder
+  folderByPath(
+    siteId: UUID!
+    locale: String!
+    path: String!
   ): TreeItemFolder
 }
 
 extend type Mutation {
   createFolder(
     siteId: UUID!
+    locale: String!
     parentId: UUID
+    parentPath: String
     pathName: String!
     title: String!
   ): DefaultResponse

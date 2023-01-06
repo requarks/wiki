@@ -12,6 +12,9 @@ const reTitle = /^[^<>"]+$/
 
 module.exports = {
   Query: {
+    /**
+     * FETCH TREE
+     */
     async tree (obj, args, context, info) {
       // Offset
       const offset = args.offset || 0
@@ -20,8 +23,8 @@ module.exports = {
       }
 
       // Limit
-      const limit = args.limit || 100
-      if (limit < 1 || limit > 100) {
+      const limit = args.limit || 1000
+      if (limit < 1 || limit > 1000) {
         throw new Error('Invalid Limit')
       }
 
@@ -53,17 +56,27 @@ module.exports = {
         .select(WIKI.db.knex.raw('tree.*, nlevel(tree."folderPath") AS depth'))
         .where(builder => {
           builder.where('folderPath', '~', folderPathCondition)
+          // -> Include ancestors
           if (args.includeAncestors) {
             const parentPathParts = parentPath.split('.')
             for (let i = 1; i <= parentPathParts.length; i++) {
               builder.orWhere({
                 folderPath: _.dropRight(parentPathParts, i).join('.'),
-                fileName: _.nth(parentPathParts, i * -1)
+                fileName: _.nth(parentPathParts, i * -1),
+                type: 'folder'
               })
             }
           }
+          // -> Include root items
+          if (args.includeRootItems) {
+            builder.orWhere({
+              folderPath: '',
+              type: 'folder'
+            })
+          }
         })
         .andWhere(builder => {
+          // -> Limit to specific types
           if (args.types && args.types.length > 0) {
             builder.whereIn('type', args.types)
           }
@@ -85,20 +98,52 @@ module.exports = {
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         ...(item.type === 'folder') && {
-          childrenCount: 0
+          childrenCount: item.meta?.children || 0
         }
       }))
     },
+    /**
+     * FETCH SINGLE FOLDER BY ID
+     */
     async folderById (obj, args, context) {
       const folder = await WIKI.db.knex('tree')
         .select(WIKI.db.knex.raw('tree.*, nlevel(tree."folderPath") AS depth'))
         .where('id', args.id)
         .first()
 
+      if (!folder) {
+        throw new Error('ERR_FOLDER_NOT_EXIST')
+      }
+
       return {
         ...folder,
         folderPath: folder.folderPath.replaceAll('.', '/').replaceAll('_', '-'),
-        childrenCount: 0
+        childrenCount: folder.meta?.children || 0
+      }
+    },
+    /**
+     * FETCH SINGLE FOLDER BY PATH
+     */
+    async folderByPath (obj, args, context) {
+      const parentPathParts = args.path.replaceAll('/', '.').replaceAll('-', '_').split('.')
+      const folder = await WIKI.db.knex('tree')
+        .select(WIKI.db.knex.raw('tree.*, nlevel(tree."folderPath") AS depth'))
+        .where({
+          siteId: args.siteId,
+          localeCode: args.locale,
+          folderPath: _.dropRight(parentPathParts).join('.'),
+          fileName: _.last(parentPathParts)
+        })
+        .first()
+
+      if (!folder) {
+        throw new Error('ERR_FOLDER_NOT_EXIST')
+      }
+
+      return {
+        ...folder,
+        folderPath: folder.folderPath.replaceAll('.', '/').replaceAll('_', '-'),
+        childrenCount: folder.meta?.children || 0
       }
     }
   },
@@ -108,48 +153,8 @@ module.exports = {
      */
     async createFolder (obj, args, context) {
       try {
-        WIKI.logger.debug(`Creating new folder ${args.pathName}...`)
+        await WIKI.db.tree.createFolder(args)
 
-        // Get parent path
-        let parentPath = ''
-        if (args.parentId) {
-          const parent = await WIKI.db.knex('tree').where('id', args.parentId).first()
-          parentPath = parent ? `${parent.folderPath}.${parent.fileName}` : ''
-          if (parent) {
-            parentPath = parent.folderPath ? `${parent.folderPath}.${parent.fileName}` : parent.fileName
-          }
-          parentPath = parentPath.replaceAll('-', '_')
-        }
-
-        // Validate path name
-        if (!rePathName.test(args.pathName)) {
-          throw new Error('ERR_INVALID_PATH_NAME')
-        }
-
-        // Validate title
-        if (!reTitle.test(args.title)) {
-          throw new Error('ERR_INVALID_TITLE')
-        }
-
-        // Check for collision
-        const existingFolder = await WIKI.db.knex('tree').where({
-          siteId: args.siteId,
-          folderPath: parentPath,
-          fileName: args.pathName
-        }).first()
-        if (existingFolder) {
-          throw new Error('ERR_FOLDER_ALREADY_EXISTS')
-        }
-
-        // Create folder
-        WIKI.logger.debug(`Creating new folder ${args.pathName} at path /${parentPath}...`)
-        await WIKI.db.knex('tree').insert({
-          folderPath: parentPath,
-          fileName: args.pathName,
-          type: 'folder',
-          title: args.title,
-          siteId: args.siteId
-        })
         return {
           operation: graphHelper.generateSuccess('Folder created successfully')
         }
@@ -163,59 +168,7 @@ module.exports = {
      */
     async renameFolder (obj, args, context) {
       try {
-        // Get folder
-        const folder = await WIKI.db.knex('tree').where('id', args.folderId).first()
-        WIKI.logger.debug(`Renaming folder ${folder.id} path to ${args.pathName}...`)
-
-        // Validate path name
-        if (!rePathName.test(args.pathName)) {
-          throw new Error('ERR_INVALID_PATH_NAME')
-        }
-
-        // Validate title
-        if (!reTitle.test(args.title)) {
-          throw new Error('ERR_INVALID_TITLE')
-        }
-
-        if (args.pathName !== folder.fileName) {
-          // Check for collision
-          const existingFolder = await WIKI.db.knex('tree')
-            .whereNot('id', folder.id)
-            .andWhere({
-              siteId: folder.siteId,
-              folderPath: folder.folderPath,
-              fileName: args.pathName
-            }).first()
-          if (existingFolder) {
-            throw new Error('ERR_FOLDER_ALREADY_EXISTS')
-          }
-
-          // Build new paths
-          const oldFolderPath = (folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName).replaceAll('-', '_')
-          const newFolderPath = (folder.folderPath ? `${folder.folderPath}.${args.pathName}` : args.pathName).replaceAll('-', '_')
-
-          // Update children nodes
-          WIKI.logger.debug(`Updating parent path of children nodes from ${oldFolderPath} to ${newFolderPath} ...`)
-          await WIKI.db.knex('tree').where('siteId', folder.siteId).andWhere('folderPath', oldFolderPath).update({
-            folderPath: newFolderPath
-          })
-          await WIKI.db.knex('tree').where('siteId', folder.siteId).andWhere('folderPath', '<@', oldFolderPath).update({
-            folderPath: WIKI.db.knex.raw(`'${newFolderPath}' || subpath(tree."folderPath", nlevel('${newFolderPath}'))`)
-          })
-
-          // Rename the folder itself
-          await WIKI.db.knex('tree').where('id', folder.id).update({
-            fileName: args.pathName,
-            title: args.title
-          })
-        } else {
-          // Update the folder title only
-          await WIKI.db.knex('tree').where('id', folder.id).update({
-            title: args.title
-          })
-        }
-
-        WIKI.logger.debug(`Renamed folder ${folder.id} successfully.`)
+        await WIKI.db.tree.renameFolder(args)
 
         return {
           operation: graphHelper.generateSuccess('Folder renamed successfully')
@@ -230,39 +183,7 @@ module.exports = {
      */
     async deleteFolder (obj, args, context) {
       try {
-        // Get folder
-        const folder = await WIKI.db.knex('tree').where('id', args.folderId).first()
-        const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
-        WIKI.logger.debug(`Deleting folder ${folder.id} at path ${folderPath}...`)
-
-        // Delete all children
-        const deletedNodes = await WIKI.db.knex('tree').where('folderPath', '<@', folderPath).del().returning(['id', 'type'])
-
-        // Delete folders
-        const deletedFolders = deletedNodes.filter(n => n.type === 'folder').map(n => n.id)
-        if (deletedFolders.length > 0) {
-          WIKI.logger.debug(`Deleted ${deletedFolders.length} children folders.`)
-        }
-
-        // Delete pages
-        const deletedPages = deletedNodes.filter(n => n.type === 'page').map(n => n.id)
-        if (deletedPages.length > 0) {
-          WIKI.logger.debug(`Deleting ${deletedPages.length} children pages...`)
-
-          // TODO: Delete page
-        }
-
-        // Delete assets
-        const deletedAssets = deletedNodes.filter(n => n.type === 'asset').map(n => n.id)
-        if (deletedAssets.length > 0) {
-          WIKI.logger.debug(`Deleting ${deletedPages.length} children assets...`)
-
-          // TODO: Delete asset
-        }
-
-        // Delete the folder itself
-        await WIKI.db.knex('tree').where('id', folder.id).del()
-        WIKI.logger.debug(`Deleted folder ${folder.id} successfully.`)
+        await WIKI.db.tree.deleteFolder(args.folderId)
 
         return {
           operation: graphHelper.generateSuccess('Folder deleted successfully')

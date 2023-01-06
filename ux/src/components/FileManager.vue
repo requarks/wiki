@@ -5,6 +5,12 @@ q-layout.fileman(view='hHh lpR lFr', container)
       q-icon(name='img:/_assets/icons/fluent-folder.svg', left, size='md')
       span {{t(`fileman.title`)}}
     q-toolbar(dark)
+      q-btn.q-mr-sm.acrylic-btn(
+        flat
+        color='white'
+        label='EN'
+        style='height: 40px;'
+        )
       q-input(
         dark
         v-model='state.search'
@@ -200,13 +206,12 @@ q-layout.fileman(view='hHh lpR lFr', container)
             :bar-style='barStyle'
             style='height: 100%;'
             )
-            .fileman-emptylist(v-if='files.length < 1')
-              template(v-if='state.fileListLoading')
-                q-spinner.q-mr-sm(color='primary', size='xs', :thickness='3')
-                span.text-primary Loading...
-              template(v-else)
-                q-icon.q-mr-sm(name='las la-folder-open', size='sm')
-                span This folder is empty.
+            .fileman-loadinglist(v-if='state.fileListLoading')
+              q-spinner.q-mr-sm(color='primary', size='64px', :thickness='1')
+              span.text-primary Fetching folder contents...
+            .fileman-emptylist(v-else-if='files.length < 1')
+              img(src='/_assets/icons/carbon-copy-empty-box.svg')
+              span This folder is empty.
             q-list.fileman-filelist(
               v-else
               :class='state.isCompact && `is-compact`'
@@ -394,8 +399,9 @@ const files = computed(() => {
   }).map(f => {
     switch (f.type) {
       case 'folder': {
+        console.info(f.children)
         f.icon = fileTypes.folder.icon
-        f.caption = t('fileman.folderChildrenCount', f.children, { count: f.children })
+        f.caption = t('fileman.folderChildrenCount', { count: f.children }, f.children)
         break
       }
       case 'page': {
@@ -475,7 +481,7 @@ const currentFileDetails = computed(() => {
 // WATCHERS
 
 watch(() => state.currentFolderId, async (newValue) => {
-  await loadTree(newValue)
+  await loadTree({ parentId: newValue })
 })
 
 // METHODS
@@ -485,11 +491,11 @@ function close () {
 }
 
 async function treeLazyLoad (nodeId, { done, fail }) {
-  await loadTree(nodeId, ['folder'])
+  await loadTree({ parentId: nodeId, types: ['folder'] })
   done()
 }
 
-async function loadTree (parentId, types) {
+async function loadTree ({ parentId = null, parentPath = null, types, initLoad = false }) {
   if (state.isFetching) { return }
   state.isFetching = true
   if (!parentId) {
@@ -579,7 +585,7 @@ async function loadTree (parentId, types) {
                 type: 'folder',
                 title: item.title,
                 fileName: item.fileName,
-                children: 0
+                children: item.childrenCount || 0
               })
             }
             break
@@ -664,7 +670,7 @@ function newFolder (parentId) {
       parentId
     }
   }).onOk(() => {
-    loadTree(parentId)
+    loadTree({ parentId })
   })
 }
 
@@ -676,7 +682,7 @@ function renameFolder (folderId) {
     }
   }).onOk(() => {
     treeComp.value.resetLoaded()
-    loadTree(folderId)
+    loadTree({ parentId: folderId })
   })
 }
 
@@ -698,13 +704,13 @@ function delFolder (folderId, mustReload = false) {
       state.treeRoots = state.treeRoots.filter(n => n !== folderId)
     }
     if (mustReload) {
-      loadTree(state.currentFolderId, null)
+      loadTree({ parentId: state.currentFolderId })
     }
   })
 }
 
 function reloadFolder (folderId) {
-  loadTree(folderId, null)
+  loadTree({ parentId: folderId })
   treeComp.value.resetLoaded()
 }
 
@@ -899,7 +905,7 @@ function delItem (item) {
 // MOUNTED
 
 onMounted(() => {
-  loadTree()
+  loadTree({})
 })
 
 </script>
@@ -956,17 +962,43 @@ onMounted(() => {
     height: 100%;
   }
 
-  &-emptylist {
+  &-loadinglist {
     padding: 16px;
     font-style: italic;
     display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
+
+    > span {
+      margin-top: 16px;
+    }
+  }
+
+  &-emptylist {
+    padding: 16px;
+    font-style: italic;
+    font-size: 1.5em;
+    font-weight: 300;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    > img {
+      opacity: .25;
+      width: 200px;
+    }
 
     @at-root .body--light & {
       color: $grey-6;
     }
     @at-root .body--dark & {
-      color: $dark-4;
+      color: $grey-7;
+
+      > img {
+        filter: invert(1);
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
-import { cloneDeep, last, pick, transform } from 'lodash-es'
+import { cloneDeep, initial, last, pick, transform } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 import { useSiteStore } from './site'
@@ -131,6 +131,9 @@ export const usePageStore = defineStore('page', {
           path: (last(result)?.path || pathPrefix) + `/${value}`
         })
       }, [])
+    },
+    folderPath: (state) => {
+      return initial(state.path.split('/')).join('/')
     }
   },
   actions: {

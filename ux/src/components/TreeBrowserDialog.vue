@@ -81,7 +81,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                     :color='state.displayMode === `path` ? `positive` : `grey`'
                     size='xs'
                     )
-                q-item-section.q-pr-sm Browse Using Paths
+                q-item-section.q-pr-sm {{ t('pageSaveDialog.displayModePath') }}
               q-item(clickable, @click='state.displayMode = `title`')
                 q-item-section(side)
                   q-icon(
@@ -89,7 +89,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                     :color='state.displayMode === `title` ? `positive` : `grey`'
                     size='xs'
                     )
-                q-item-section.q-pr-sm Browse Using Titles
+                q-item-section.q-pr-sm {{ t('pageSaveDialog.displayModeTitle') }}
       q-space
       q-btn.acrylic-btn(
         icon='las la-times'
@@ -131,18 +131,24 @@ const props = defineProps({
   mode: {
     type: String,
     required: false,
-    default: 'save'
+    default: 'pageSave'
   },
-  pageId: {
-    type: String,
-    required: true
-  },
-  pageName: {
+  itemId: {
     type: String,
     required: false,
     default: ''
   },
-  pagePath: {
+  folderPath: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  itemTitle: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  itemFileName: {
     type: String,
     required: false,
     default: ''
@@ -177,32 +183,11 @@ const state = reactive({
   currentFileId: '',
   treeNodes: {},
   treeRoots: [],
-  fileList: [
-    {
-      id: '1',
-      type: 'folder',
-      title: 'Beep Boop'
-    },
-    {
-      id: '2',
-      type: 'folder',
-      title: 'Second Folder'
-    },
-    {
-      id: '3',
-      type: 'page',
-      title: 'Some Page',
-      pageType: 'markdown'
-    }
-  ],
+  fileList: [],
   title: '',
-  path: ''
+  path: '',
+  typesToFetch: []
 })
-
-const displayModes = [
-  { value: 'title', label: t('pageSaveDialog.displayModeTitle') },
-  { value: 'path', label: t('pageSaveDialog.displayModePath') }
-]
 
 const thumbStyle = {
   right: '1px',
@@ -249,23 +234,32 @@ async function save () {
 }
 
 async function treeLazyLoad (nodeId, { done, fail }) {
-  await loadTree(nodeId, ['folder', 'page'])
+  await loadTree({
+    parentId: nodeId,
+    types: ['folder', 'page']
+  })
   done()
 }
 
-async function loadTree (parentId, types) {
+async function loadTree ({ parentId = null, parentPath = null, types, initLoad = false }) {
   try {
     const resp = await APOLLO_CLIENT.query({
       query: gql`
         query loadTree (
           $siteId: UUID!
           $parentId: UUID
+          $parentPath: String
           $types: [TreeItemType]
+          $includeAncestors: Boolean
+          $includeRootItems: Boolean
         ) {
           tree (
             siteId: $siteId
             parentId: $parentId
+            parentPath: $parentPath
             types: $types
+            includeAncestors: $includeAncestors
+            includeRootItems: $includeRootItems
           ) {
             __typename
             ... on TreeItemFolder {
@@ -290,7 +284,10 @@ async function loadTree (parentId, types) {
       variables: {
         siteId: siteStore.id,
         parentId,
-        types
+        parentPath,
+        types,
+        includeAncestors: initLoad,
+        includeRootItems: initLoad
       },
       fetchPolicy: 'network-only'
     })
@@ -344,16 +341,26 @@ function newFolder (parentId) {
       parentId
     }
   }).onOk(() => {
-    loadTree(parentId)
+    loadTree({ parentId })
   })
 }
 
 // MOUNTED
 
 onMounted(() => {
-  loadTree()
-  state.title = props.pageName || ''
-  state.path = props.pagePath || ''
+  switch (props.mode) {
+    case 'pageSave': {
+      state.typesToFetch = ['folder', 'page']
+      break
+    }
+  }
+  loadTree({
+    parentPath: props.folderPath,
+    types: state.typesToFetch,
+    initLoad: true
+  })
+  state.title = props.itemTitle || ''
+  state.path = props.itemFileName || ''
 })
 
 </script>
