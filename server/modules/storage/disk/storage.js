@@ -135,7 +135,7 @@ module.exports = {
         transform: async (page, enc, cb) => {
           const pageObject = await WIKI.models.pages.query().findById(page.id)
           page.tags = await pageObject.$relatedQuery('tags')
-          
+
           let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
           if (WIKI.config.lang.code !== page.localeCode) {
             fileName = `${page.localeCode}/${fileName}`
