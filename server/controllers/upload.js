@@ -79,7 +79,7 @@ router.post('/u', (req, res, next) => {
   fileMeta.originalname = sanitize(fileMeta.originalname.toLowerCase().replace(/[\s,;#]+/g, '_'))
 
   // Prevent overwriting of pasted images
-  if (fileMeta.originalname == 'image.png') {
+  if (fileMeta.originalname === 'image.png') {
     fileMeta.originalname = 'image_' + Date.now() + '.png'
   }
 
