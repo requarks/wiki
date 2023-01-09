@@ -68,7 +68,7 @@ module.exports = {
             }
           }
           // -> Include root items
-          if (args.includeRootItems) {
+          if (args.includeRootFolders) {
             builder.orWhere({
               folderPath: '',
               type: 'folder'
@@ -98,7 +98,8 @@ module.exports = {
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         ...(item.type === 'folder') && {
-          childrenCount: item.meta?.children || 0
+          childrenCount: item.meta?.children || 0,
+          isAncestor: item.folderPath.length < parentPath.length
         }
       }))
     },

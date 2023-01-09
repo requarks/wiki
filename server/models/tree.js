@@ -1,6 +1,8 @@
 const Model = require('objection').Model
 const _ = require('lodash')
 
+const commonHelper = require('../helpers/common')
+
 const rePathName = /^[a-z0-9-]+$/
 const reTitle = /^[^<>"]+$/
 
@@ -61,6 +63,95 @@ module.exports = class Tree extends Model {
   }
 
   /**
+   * Get a Folder
+   *
+   * @param {Object} args - Fetch Properties
+   * @param {string} [args.id] - UUID of the folder
+   * @param {string} [args.path] - Path of the folder
+   * @param {string} [args.locale] - Locale code of the folder (when using path)
+   * @param {string} [args.siteId] - UUID of the site in which the folder is (when using path)
+   * @param {boolean} [args.createIfMissing] - Create the folder and its ancestor if it's missing (when using path)
+   */
+  static async getFolder ({ id, path, locale, siteId, createIfMissing = false }) {
+    // Get by ID
+    if (id) {
+      const parent = await WIKI.db.knex('tree').where('id', id).first()
+      if (!parent) {
+        throw new Error('ERR_NONEXISTING_FOLDER_ID')
+      }
+      return parent
+    } else {
+      // Get by path
+      const parentPath = commonHelper.encodeTreePath(path)
+      const parentPathParts = parentPath.split('.')
+      const parentFilter = {
+        folderPath: _.dropRight(parentPathParts).join('.'),
+        fileName: _.last(parentPathParts)
+      }
+      const parent = await WIKI.db.knex('tree').where({
+        ...parentFilter,
+        locale,
+        siteId
+      }).first()
+      if (parent) {
+        return parent
+      } else if (createIfMissing) {
+        return WIKI.db.tree.createFolder({
+          parentPath: parentFilter.folderPath,
+          pathName: parentFilter.fileName,
+          title: parentFilter.fileName,
+          locale,
+          siteId
+        })
+      } else {
+        throw new Error('ERR_NONEXISTING_FOLDER_PATH')
+      }
+    }
+  }
+
+  /**
+   * Add Page Entry
+   *
+   * @param {Object} args - New Page Properties
+   * @param {string} [args.parentId] - UUID of the parent folder
+   * @param {string} [args.parentPath] - Path of the parent folder
+   * @param {string} args.pathName - Path name of the page to add
+   * @param {string} args.title - Title of the page to add
+   * @param {string} args.locale - Locale code of the page to add
+   * @param {string} args.siteId - UUID of the site in which the page will be added
+   */
+  static async addPage ({ id, parentId, parentPath, fileName, title, locale, siteId, meta = {} }) {
+    const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
+      parentId,
+      parentPath,
+      locale,
+      siteId,
+      createIfMissing: true
+    }) : {
+      folderPath: '',
+      fileName: ''
+    }
+    const folderPath = commonHelper.decodeTreePath(folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName)
+    const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
+
+    WIKI.logger.debug(`Adding page ${fullPath} to tree...`)
+
+    const pageEntry = await WIKI.db.knex('tree').insert({
+      id,
+      folderPath,
+      fileName,
+      type: 'page',
+      title: title,
+      hash: commonHelper.generateHash(fullPath),
+      localeCode: locale,
+      siteId,
+      meta
+    }).returning('*')
+
+    return pageEntry[0]
+  }
+
+  /**
    * Create New Folder
    *
    * @param {Object} args - New Folder Properties
@@ -82,8 +173,8 @@ module.exports = class Tree extends Model {
       throw new Error('ERR_INVALID_TITLE')
     }
 
+    parentPath = commonHelper.encodeTreePath(parentPath)
     WIKI.logger.debug(`Creating new folder ${pathName}...`)
-    parentPath = parentPath?.replaceAll('/', '.')?.replaceAll('-', '_') || ''
     const parentPathParts = parentPath.split('.')
     const parentFilter = {
       folderPath: _.dropRight(parentPathParts).join('.'),
@@ -134,10 +225,12 @@ module.exports = class Tree extends Model {
       })
       for (const ancestor of _.differenceWith(expectedAncestors, existingAncestors, (expAnc, exsAnc) => expAnc.folderPath === exsAnc.folderPath && expAnc.fileName === exsAnc.fileName)) {
         WIKI.logger.debug(`Creating missing parent folder ${ancestor.fileName} at path /${ancestor.folderPath}...`)
+        const newAncestorFullPath = ancestor.folderPath ? `${commonHelper.decodeTreePath(ancestor.folderPath)}/${ancestor.fileName}` : ancestor.fileName
         const newAncestor = await WIKI.db.knex('tree').insert({
           ...ancestor,
           type: 'folder',
           title: ancestor.fileName,
+          hash: commonHelper.generateHash(newAncestorFullPath),
           localeCode: locale,
           siteId: siteId,
           meta: {
@@ -147,24 +240,25 @@ module.exports = class Tree extends Model {
 
         // Parent didn't exist until now, assign it
         if (!parent && ancestor.folderPath === parentFilter.folderPath && ancestor.fileName === parentFilter.fileName) {
-          parent = newAncestor
+          parent = newAncestor[0]
         }
       }
     }
 
     // Create folder
-    WIKI.logger.debug(`Creating new folder ${pathName} at path /${parentPath}...`)
-    await WIKI.db.knex('tree').insert({
+    const fullPath = parentPath ? `${commonHelper.decodeTreePath(parentPath)}/${pathName}` : pathName
+    const folder = await WIKI.db.knex('tree').insert({
       folderPath: parentPath,
       fileName: pathName,
       type: 'folder',
       title: title,
+      hash: commonHelper.generateHash(fullPath),
       localeCode: locale,
       siteId: siteId,
       meta: {
         children: 0
       }
-    })
+    }).returning('*')
 
     // Update parent ancestor count
     if (parent) {
@@ -175,6 +269,10 @@ module.exports = class Tree extends Model {
         }
       })
     }
+
+    WIKI.logger.debug(`Created folder ${folder[0].id} successfully.`)
+
+    return folder[0]
   }
 
   /**
@@ -231,9 +329,11 @@ module.exports = class Tree extends Model {
       })
 
       // Rename the folder itself
+      const fullPath = folder.folderPath ? `${commonHelper.decodeTreePath(folder.folderPath)}/${pathName}` : pathName
       await WIKI.db.knex('tree').where('id', folder.id).update({
         fileName: pathName,
-        title: title
+        title: title,
+        hash: commonHelper.generateHash(fullPath)
       })
     } else {
       // Update the folder title only

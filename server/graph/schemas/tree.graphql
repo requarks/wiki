@@ -3,18 +3,32 @@
 # ===============================================
 
 extend type Query {
+  """
+  Browse the tree.
+  Must provide either `parentId` or a combination of `parentPath` and `locale`.
+  """
   tree(
     siteId: UUID!
     parentId: UUID
     parentPath: String
+    locale: String
     types: [TreeItemType]
     limit: Int
     offset: Int
     orderBy: TreeOrderBy
     orderByDirection: OrderByDirection
+    """
+    How many levels of children to include. Defaults to 1.
+    """
     depth: Int
+    """
+    Include all parent folders up to root
+    """
     includeAncestors: Boolean
-    includeRootItems: Boolean
+    """
+    Include all folders at root level
+    """
+    includeRootFolders: Boolean
     ): [TreeItem]
   folderById(
     id: UUID!
@@ -72,16 +86,24 @@ enum TreeOrderBy {
   updatedAt
 }
 
-type TreeItemFolder {
+interface TreeItem {
+  id: UUID
+  folderPath: String
+  fileName: String
+  title: String
+}
+
+type TreeItemFolder implements TreeItem {
   id: UUID
   childrenCount: Int
   depth: Int
   fileName: String
   folderPath: String
   title: String
+  isAncestor: Boolean
 }
 
-type TreeItemPage {
+type TreeItemPage implements TreeItem {
   id: UUID
   createdAt: Date
   depth: Int
@@ -93,7 +115,7 @@ type TreeItemPage {
   updatedAt: Date
 }
 
-type TreeItemAsset {
+type TreeItemAsset implements TreeItem {
   id: UUID
   createdAt: Date
   depth: Int
@@ -105,5 +127,3 @@ type TreeItemAsset {
   title: String
   updatedAt: Date
 }
-
-union TreeItem = TreeItemFolder | TreeItemPage | TreeItemAsset

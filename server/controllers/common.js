@@ -43,6 +43,7 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
   switch (req.params.resource) {
     case 'logo': {
       if (site.config.assets.logo) {
+        // TODO: Fetch from db if not in disk cache
         res.sendFile(path.join(siteAssetsPath, `logo-${site.id}.${site.config.assets.logoExt}`))
       } else {
         res.sendFile(path.join(WIKI.ROOTPATH, 'assets/_assets/logo-wikijs.svg'))
@@ -51,6 +52,7 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
     }
     case 'favicon': {
       if (site.config.assets.favicon) {
+        // TODO: Fetch from db if not in disk cache
         res.sendFile(path.join(siteAssetsPath, `favicon-${site.id}.${site.config.assets.faviconExt}`))
       } else {
         res.sendFile(path.join(WIKI.ROOTPATH, 'assets/_assets/logo-wikijs.svg'))
@@ -59,6 +61,7 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
     }
     case 'loginbg': {
       if (site.config.assets.loginBg) {
+        // TODO: Fetch from db if not in disk cache
         res.sendFile(path.join(siteAssetsPath, `loginbg-${site.id}.jpg`))
       } else {
         res.sendFile(path.join(WIKI.ROOTPATH, 'assets/_assets/bg/login.jpg'))

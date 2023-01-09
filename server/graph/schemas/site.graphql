@@ -65,6 +65,7 @@ type Site {
   robots: SiteRobots
   features: SiteFeatures
   defaults: SiteDefaults
+  uploads: SiteUploads
   locale: String
   localeNamespaces: [String]
   localeNamespacing: Boolean
@@ -91,6 +92,11 @@ type SiteDefaults {
   dateFormat: String
   timeFormat: String
   tocDepth: PageTocDepth
+}
+
+type SiteUploads {
+  conflictBehavior: SiteUploadConflictBehavior
+  normalizeFilename: Boolean
 }
 
 type SiteLocale {
@@ -142,6 +148,12 @@ enum SiteReasonForChangeMode {
   required
 }
 
+enum SiteUploadConflictBehavior {
+  overwrite
+  reject
+  new
+}
+
 type SiteCreateResponse {
   operation: Operation
   site: Site
@@ -161,6 +173,7 @@ input SiteUpdateInput {
   robots: SiteRobotsInput
   features: SiteFeaturesInput
   defaults: SiteDefaultsInput
+  uploads: SiteUploadsInput
   theme: SiteThemeInput
 }
 
@@ -203,4 +216,9 @@ input SiteThemeInput {
   showPrintBtn: Boolean
   baseFont: String
   contentFont: String
+}
+
+input SiteUploadsInput {
+  conflictBehavior: SiteUploadConflictBehavior
+  normalizeFilename: Boolean
 }

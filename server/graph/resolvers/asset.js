@@ -1,71 +1,17 @@
 const _ = require('lodash')
 const sanitize = require('sanitize-filename')
 const graphHelper = require('../../helpers/graph')
-const assetHelper = require('../../helpers/asset')
 const path = require('node:path')
 const fs = require('fs-extra')
 const { v4: uuid } = require('uuid')
 
 module.exports = {
   Query: {
-    async assets(obj, args, context) {
-      let cond = {
-        folderId: args.folderId === 0 ? null : args.folderId
-      }
-      if (args.kind !== 'ALL') {
-        cond.kind = args.kind.toLowerCase()
-      }
-      const folderHierarchy = await WIKI.db.assetFolders.getHierarchy(args.folderId)
-      const folderPath = folderHierarchy.map(h => h.slug).join('/')
-      const results = await WIKI.db.assets.query().where(cond)
-      return _.filter(results, r => {
-        const path = folderPath ? `${folderPath}/${r.filename}` : r.filename
-        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
-      }).map(a => ({
-        ...a,
-        kind: a.kind.toUpperCase()
-      }))
-    },
-    async assetsFolders(obj, args, context) {
-      const results = await WIKI.db.assetFolders.query().where({
-        parentId: args.parentFolderId === 0 ? null : args.parentFolderId
-      })
-      const parentHierarchy = await WIKI.db.assetFolders.getHierarchy(args.parentFolderId)
-      const parentPath = parentHierarchy.map(h => h.slug).join('/')
-      return _.filter(results, r => {
-        const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
-        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
-      })
+    async assetById(obj, args, context) {
+      return null
     }
   },
   Mutation: {
-    /**
-     * Create New Asset Folder
-     */
-    async createAssetsFolder(obj, args, context) {
-      try {
-        const folderSlug = sanitize(args.slug).toLowerCase()
-        const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId
-        const result = await WIKI.db.assetFolders.query().where({
-          parentId: parentFolderId,
-          slug: folderSlug
-        }).first()
-        if (!result) {
-          await WIKI.db.assetFolders.query().insert({
-            slug: folderSlug,
-            name: folderSlug,
-            parentId: parentFolderId
-          })
-          return {
-            responseResult: graphHelper.generateSuccess('Asset Folder has been created successfully.')
-          }
-        } else {
-          throw new WIKI.Error.AssetFolderExists()
-        }
-      } catch (err) {
-        return graphHelper.generateError(err)
-      }
-    },
     /**
      * Rename an Asset
      */
@@ -113,7 +59,7 @@ module.exports = {
           }
 
           // Update filename + hash
-          const fileHash = assetHelper.generateHash(assetTargetPath)
+          const fileHash = '' // assetHelper.generateHash(assetTargetPath)
           await WIKI.db.assets.query().patch({
             filename: filename,
             hash: fileHash
@@ -189,41 +135,62 @@ module.exports = {
      */
     async uploadAssets(obj, args, context) {
       try {
+        // -> Get Folder
+        const folder = await WIKI.db.tree.query().findById(args.folderId)
+        if (!folder) {
+          throw new Error('ERR_INVALID_FOLDER_ID')
+        }
+
+        // -> Get Site
+        const site = await WIKI.db.sites.query().findById(folder.siteId)
+        if (!site) {
+          throw new Error('ERR_INVALID_SITE_ID')
+        }
+
         const results = await Promise.allSettled(args.files.map(async fl => {
           const { filename, mimetype, createReadStream } = await fl
           WIKI.logger.debug(`Processing asset upload ${filename} of type ${mimetype}...`)
 
-          
+          // Format filename
+          const formattedFilename = ''
 
-          if (!WIKI.extensions.ext.sharp.isInstalled) {
-            throw new Error('This feature requires the Sharp extension but it is not installed.')
-          }
-          if (!['.png', '.jpg', 'webp', '.gif'].some(s => filename.endsWith(s))) {
-            throw new Error('Invalid File Extension. Must be svg, png, jpg, webp or gif.')
-          }
-          const destFormat = mimetype.startsWith('image/svg') ? 'svg' : 'png'
-          const destFolder = path.resolve(
-            process.cwd(),
-            WIKI.config.dataPath,
-            `assets`
-          )
-          const destPath = path.join(destFolder, `logo-${args.id}.${destFormat}`)
-          await fs.ensureDir(destFolder)
-          // -> Resize
-          await WIKI.extensions.ext.sharp.resize({
-            format: destFormat,
-            inputStream: createReadStream(),
-            outputPath: destPath,
-            height: 72
+          // Save asset to DB
+          const asset = await WIKI.db.knex('assets').insert({
+
+          }).returning('id')
+
+          // Add to tree
+          await WIKI.db.knex('tree').insert({
+            id: asset.id,
+            folderPath: folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName,
+            fileName: formattedFilename,
+            type: 'asset',
+            localeCode: ''
           })
-          // -> Save logo meta to DB
-          const site = await WIKI.db.sites.query().findById(args.id)
-          if (!site.config.assets.logo) {
-            site.config.assets.logo = uuid()
+
+          // Create thumbnail
+          if (!['.png', '.jpg', 'webp', '.gif'].some(s => filename.endsWith(s))) {
+            if (!WIKI.extensions.ext.sharp.isInstalled) {
+              WIKI.logger.warn('Cannot generate asset thumbnail because the Sharp extension is not installed.')
+            } else {
+              const destFormat = mimetype.startsWith('image/svg') ? 'svg' : 'png'
+              const destFolder = path.resolve(
+                process.cwd(),
+                WIKI.config.dataPath,
+                `assets`
+              )
+              const destPath = path.join(destFolder, `asset-${site.id}-${hash}.${destFormat}`)
+              await fs.ensureDir(destFolder)
+              // -> Resize
+              await WIKI.extensions.ext.sharp.resize({
+                format: destFormat,
+                inputStream: createReadStream(),
+                outputPath: destPath,
+                height: 72
+              })
+            }
           }
-          site.config.assets.logoExt = destFormat
-          await WIKI.db.sites.query().findById(args.id).patch({ config: site.config })
-          await WIKI.db.sites.reloadCache()
+
           // -> Save image data to DB
           const imgBuffer = await fs.readFile(destPath)
           await WIKI.db.knex('assetData').insert({
@@ -254,9 +221,4 @@ module.exports = {
       }
     }
   }
-  // File: {
-  //   folder(fl) {
-  //     return fl.getFolder()
-  //   }
-  // }
 }

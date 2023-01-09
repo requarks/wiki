@@ -251,7 +251,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
           $parentPath: String
           $types: [TreeItemType]
           $includeAncestors: Boolean
-          $includeRootItems: Boolean
+          $includeRootFolders: Boolean
         ) {
           tree (
             siteId: $siteId
@@ -259,7 +259,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
             parentPath: $parentPath
             types: $types
             includeAncestors: $includeAncestors
-            includeRootItems: $includeRootItems
+            includeRootFolders: $includeRootFolders
           ) {
             __typename
             ... on TreeItemFolder {
@@ -287,7 +287,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
         parentPath,
         types,
         includeAncestors: initLoad,
-        includeRootItems: initLoad
+        includeRootFolders: initLoad
       },
       fetchPolicy: 'network-only'
     })

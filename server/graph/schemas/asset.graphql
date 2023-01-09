@@ -3,34 +3,30 @@
 # ===============================================
 
 extend type Query {
-  assets(
-    folderId: Int!
-    kind: AssetKind!
+  assetById(
+    id: UUID!
   ): [AssetItem]
-
-  assetsFolders(
-    parentFolderId: Int!
-  ): [AssetFolder]
 }
 
 extend type Mutation {
-  createAssetsFolder(
-    parentFolderId: Int!
-    slug: String!
-    name: String
-  ): DefaultResponse
-
   renameAsset(
-    id: Int!
+    id: UUID!
     filename: String!
   ): DefaultResponse
 
   deleteAsset(
-    id: Int!
+    id: UUID!
   ): DefaultResponse
 
+  """
+  Upload one or more assets.
+  Must provide either `folderId` or a combination of `folderPath`, `locale` and `siteId`.
+  """
   uploadAssets(
-    siteId: UUID!
+    folderId: UUID
+    folderPath: String
+    locale: String
+    siteId: UUID
     files: [Upload!]!
   ): DefaultResponse
 
@@ -42,27 +38,20 @@ extend type Mutation {
 # -----------------------------------------------
 
 type AssetItem {
-  id: Int!
-  filename: String!
-  ext: String!
-  kind: AssetKind!
-  mime: String!
-  fileSize: Int!
-  metadata: String
-  createdAt: Date!
-  updatedAt: Date!
-  folder: AssetFolder
+  id: UUID
+  filename: String
+  ext: String
+  kind: AssetKind
+  mime: String
+  fileSize: Int
+  metadata: JSON
+  createdAt: Date
+  updatedAt: Date
   author: User
 }
 
-type AssetFolder {
-  id: Int!
-  slug: String!
-  name: String
-}
-
 enum AssetKind {
-  IMAGE
-  BINARY
-  ALL
+  document
+  image
+  other
 }

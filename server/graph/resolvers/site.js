@@ -147,7 +147,7 @@ module.exports = {
     /**
      * UPLOAD LOGO
      */
-    async uploadSiteLogo (obj, args) {
+    async uploadSiteLogo (obj, args, context) {
       try {
         const { filename, mimetype, createReadStream } = await args.image
         WIKI.logger.info(`Processing site logo ${filename} of type ${mimetype}...`)
@@ -182,9 +182,18 @@ module.exports = {
         await WIKI.db.sites.reloadCache()
         // -> Save image data to DB
         const imgBuffer = await fs.readFile(destPath)
-        await WIKI.db.knex('assetData').insert({
+        await WIKI.db.knex('assets').insert({
           id: site.config.assets.logo,
-          data: imgBuffer
+          filename: `_logo.${destFormat}`,
+          hash: '_logo',
+          ext: `.${destFormat}`,
+          isSystem: true,
+          kind: 'image',
+          mime: (destFormat === 'svg') ? 'image/svg' : 'image/png',
+          fileSize: Math.ceil(imgBuffer.byteLength / 1024),
+          data: imgBuffer,
+          authorId: context.req.user.id,
+          siteId: site.id
         }).onConflict('id').merge()
         WIKI.logger.info('New site logo processed successfully.')
         return {
@@ -198,7 +207,7 @@ module.exports = {
     /**
      * UPLOAD FAVICON
      */
-    async uploadSiteFavicon (obj, args) {
+    async uploadSiteFavicon (obj, args, context) {
       try {
         const { filename, mimetype, createReadStream } = await args.image
         WIKI.logger.info(`Processing site favicon ${filename} of type ${mimetype}...`)
@@ -234,9 +243,18 @@ module.exports = {
         await WIKI.db.sites.reloadCache()
         // -> Save image data to DB
         const imgBuffer = await fs.readFile(destPath)
-        await WIKI.db.knex('assetData').insert({
+        await WIKI.db.knex('assets').insert({
           id: site.config.assets.favicon,
-          data: imgBuffer
+          filename: `_favicon.${destFormat}`,
+          hash: '_favicon',
+          ext: `.${destFormat}`,
+          isSystem: true,
+          kind: 'image',
+          mime: (destFormat === 'svg') ? 'image/svg' : 'image/png',
+          fileSize: Math.ceil(imgBuffer.byteLength / 1024),
+          data: imgBuffer,
+          authorId: context.req.user.id,
+          siteId: site.id
         }).onConflict('id').merge()
         WIKI.logger.info('New site favicon processed successfully.')
         return {
@@ -250,7 +268,7 @@ module.exports = {
     /**
      * UPLOAD LOGIN BG
      */
-    async uploadSiteLoginBg (obj, args) {
+    async uploadSiteLoginBg (obj, args, context) {
       try {
         const { filename, mimetype, createReadStream } = await args.image
         WIKI.logger.info(`Processing site login bg ${filename} of type ${mimetype}...`)
@@ -283,9 +301,18 @@ module.exports = {
         }
         // -> Save image data to DB
         const imgBuffer = await fs.readFile(destPath)
-        await WIKI.db.knex('assetData').insert({
+        await WIKI.db.knex('assets').insert({
           id: site.config.assets.loginBg,
-          data: imgBuffer
+          filename: '_loginbg.jpg',
+          hash: '_loginbg',
+          ext: '.jpg',
+          isSystem: true,
+          kind: 'image',
+          mime: 'image/jpg',
+          fileSize: Math.ceil(imgBuffer.byteLength / 1024),
+          data: imgBuffer,
+          authorId: context.req.user.id,
+          siteId: site.id
         }).onConflict('id').merge()
         WIKI.logger.info('New site login bg processed successfully.')
         return {

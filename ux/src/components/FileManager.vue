@@ -512,35 +512,34 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
         query loadTree (
           $siteId: UUID!
           $parentId: UUID
+          $parentPath: String
           $types: [TreeItemType]
+          $includeAncestors: Boolean
+          $includeRootFolders: Boolean
         ) {
           tree (
             siteId: $siteId
             parentId: $parentId
+            parentPath: $parentPath
             types: $types
+            includeAncestors: $includeAncestors
+            includeRootFolders: $includeRootFolders
           ) {
             __typename
+            id
+            folderPath
+            fileName
+            title
             ... on TreeItemFolder {
-              id
-              folderPath
-              fileName
-              title
               childrenCount
+              isAncestor
             }
             ... on TreeItemPage {
-              id
-              folderPath
-              fileName
-              title
               createdAt
               updatedAt
               editor
             }
             ... on TreeItemAsset {
-              id
-              folderPath
-              fileName
-              title
               createdAt
               updatedAt
               fileSize
@@ -551,7 +550,10 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
       variables: {
         siteId: siteStore.id,
         parentId,
-        types
+        parentPath,
+        types,
+        includeAncestors: initLoad,
+        includeRootFolders: initLoad
       },
       fetchPolicy: 'network-only'
     })
@@ -579,7 +581,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
             }
 
             // -> File List
-            if (parentId === state.currentFolderId) {
+            if (parentId === state.currentFolderId && !item.isAncestor) {
               state.fileList.push({
                 id: item.id,
                 type: 'folder',
@@ -682,7 +684,7 @@ function renameFolder (folderId) {
     }
   }).onOk(() => {
     treeComp.value.resetLoaded()
-    loadTree({ parentId: folderId })
+    loadTree({ parentId: folderId, initLoad: true })
   })
 }
 

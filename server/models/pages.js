@@ -341,12 +341,11 @@ module.exports = class Page extends Model {
 
     // -> Add to tree
     const pathParts = page.path.split('/')
-    await WIKI.db.knex('tree').insert({
+    await WIKI.db.tree.addPage({
       id: page.id,
-      folderPath: _.initial(pathParts).join('/'),
+      parentPath: _.initial(pathParts).join('/'),
       fileName: _.last(pathParts),
-      type: 'page',
-      localeCode: page.localeCode,
+      locale: page.localeCode,
       title: page.title,
       meta: {
         authorId: page.authorId,

@@ -407,6 +407,46 @@ q-page.admin-general
             )
 
       //- -----------------------
+      //- Uploads
+      //- -----------------------
+      q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.config.uploads')
+        q-card-section
+          .text-subtitle1 {{t('admin.general.uploads')}}
+        q-item
+          blueprint-icon(icon='merge-files')
+          q-item-section
+            q-item-label {{t(`admin.general.uploadConflictBehavior`)}}
+            q-item-label(caption) {{t(`admin.general.uploadConflictBehaviorHint`)}}
+          q-item-section
+            q-select(
+              outlined
+              v-model='state.config.uploads.conflictBehavior'
+              :options='uploadConflictBehaviors'
+              option-value='value'
+              option-label='label'
+              emit-value
+              map-options
+              dense
+              options-dense
+              :virtual-scroll-slice-size='1000'
+              :aria-label='t(`admin.general.uploadConflictBehavior`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
+          blueprint-icon(icon='rename')
+          q-item-section
+            q-item-label {{t(`admin.general.uploadNormalizeFilename`)}}
+            q-item-label(caption) {{t(`admin.general.uploadNormalizeFilenameHint`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.config.uploads.normalizeFilename'
+              color='primary'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.general.uploadNormalizeFilename`)'
+              )
+
+      //- -----------------------
       //- SEO
       //- -----------------------
       q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.config.robots')
@@ -561,6 +601,11 @@ const timeFormats = [
   { value: '12h', label: t('admin.general.defaultTimeFormat12h') },
   { value: '24h', label: t('admin.general.defaultTimeFormat24h') }
 ]
+const uploadConflictBehaviors = [
+  { value: 'overwrite', label: t('admin.general.uploadConflictBehaviorOverwrite') },
+  { value: 'reject', label: t('admin.general.uploadConflictBehaviorReject') },
+  { value: 'new', label: t('admin.general.uploadConflictBehaviorNew') }
+]
 
 const timezones = Intl.supportedValuesOf('timeZone')
 
@@ -601,6 +646,10 @@ async function load () {
           pageExtensions
           logoText
           sitemap
+          uploads {
+            conflictBehavior
+            normalizeFilename
+          }
           robots {
             index
             follow
@@ -669,6 +718,10 @@ async function save () {
           pageExtensions: state.config.pageExtensions ?? '',
           logoText: state.config.logoText ?? false,
           sitemap: state.config.sitemap ?? false,
+          uploads: {
+            conflictBehavior: state.config.uploads?.conflictBehavior ?? 'overwrite',
+            normalizeFilename: state.config.uploads?.normalizeFilename ?? false
+          },
           robots: {
             index: state.config.robots?.index ?? false,
             follow: state.config.robots?.follow ?? false

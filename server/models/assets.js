@@ -3,7 +3,6 @@ const moment = require('moment')
 const path = require('path')
 const fs = require('fs-extra')
 const _ = require('lodash')
-const assetHelper = require('../helpers/asset')
 
 /**
  * Users model
@@ -16,7 +15,7 @@ module.exports = class Asset extends Model {
       type: 'object',
 
       properties: {
-        id: {type: 'integer'},
+        id: {type: 'string'},
         filename: {type: 'string'},
         hash: {type: 'string'},
         ext: {type: 'string'},
@@ -77,18 +76,16 @@ module.exports = class Asset extends Model {
 
   static async upload(opts) {
     const fileInfo = path.parse(opts.originalname)
-    const fileHash = assetHelper.generateHash(opts.assetPath)
 
     // Check for existing asset
     let asset = await WIKI.db.assets.query().where({
-      hash: fileHash,
+      // hash: fileHash,
       folderId: opts.folderId
     }).first()
 
     // Build Object
     let assetRow = {
       filename: opts.originalname,
-      hash: fileHash,
       ext: fileInfo.ext,
       kind: _.startsWith(opts.mimetype, 'image/') ? 'image' : 'binary',
       mime: opts.mimetype,
@@ -138,11 +135,11 @@ module.exports = class Asset extends Model {
       }
 
       // Move temp upload to cache
-      if (opts.mode === 'upload') {
-        await fs.move(opts.path, path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`), { overwrite: true })
-      } else {
-        await fs.copy(opts.path, path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`), { overwrite: true })
-      }
+      // if (opts.mode === 'upload') {
+      //   await fs.move(opts.path, path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`), { overwrite: true })
+      // } else {
+      //   await fs.copy(opts.path, path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`), { overwrite: true })
+      // }
 
       // Add to Storage
       if (!opts.skipStorage) {
@@ -165,8 +162,8 @@ module.exports = class Asset extends Model {
 
   static async getAsset(assetPath, res) {
     try {
-      const fileInfo = assetHelper.getPathInfo(assetPath)
-      const fileHash = assetHelper.generateHash(assetPath)
+      const fileInfo = '' // assetHelper.getPathInfo(assetPath)
+      const fileHash = '' // assetHelper.generateHash(assetPath)
       const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
 
       // Force unsafe extensions to download

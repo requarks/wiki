@@ -1614,5 +1614,13 @@
   "fileman.copyURLSuccess": "URL has been copied to the clipboard.",
   "fileman.folderRename": "Rename Folder",
   "fileman.renameFolderInvalidData": "One or more fields are invalid.",
-  "fileman.renameFolderSuccess": "Folder renamed successfully."
+  "fileman.renameFolderSuccess": "Folder renamed successfully.",
+  "admin.general.uploads": "Uploads",
+  "admin.general.uploadConflictBehavior": "Upload Conflict Behavior",
+  "admin.general.uploadConflictBehaviorHint": "How should uploads for a file that already exists be handled?",
+  "admin.general.uploadConflictBehaviorOverwrite": "Overwrite",
+  "admin.general.uploadConflictBehaviorReject": "Reject",
+  "admin.general.uploadConflictBehaviorNew": "Append Time to Filename",
+  "admin.general.uploadNormalizeFilename": "Normalize Filenames",
+  "admin.general.uploadNormalizeFilenameHint": "Automatically transform filenames to a standard URL-friendly format."
 }

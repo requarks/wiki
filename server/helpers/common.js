@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const crypto = require('node:crypto')
 
 module.exports = {
   /* eslint-disable promise/param-names */
@@ -28,6 +29,33 @@ module.exports = {
         }
       })
     }
+  },
+  /**
+   * Decode a tree path
+   *
+   * @param {string} str String to decode
+   * @returns Decoded tree path
+   */
+  decodeTreePath (str) {
+    return str.replaceAll('_', '-').replaceAll('.', '/')
+  },
+  /**
+   * Encode a tree path
+   *
+   * @param {string} str String to encode
+   * @returns Encoded tree path
+   */
+  encodeTreePath (str) {
+    return str?.toLowerCase()?.replaceAll('-', '_')?.replaceAll('/', '.') || ''
+  },
+  /**
+   * Generate SHA-1 Hash of a string
+   *
+   * @param {string} str String to hash
+   * @returns Hashed string
+   */
+  generateHash (str) {
+    return crypto.createHash('sha1').update(str).digest('hex')
   },
   /**
    * Get default value of type

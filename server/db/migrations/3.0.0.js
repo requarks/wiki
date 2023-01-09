@@ -45,20 +45,17 @@ exports.up = async knex => {
     .createTable('assets', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('filename').notNullable()
-      table.string('hash').notNullable().index()
       table.string('ext').notNullable()
-      table.enum('kind', ['binary', 'image']).notNullable().defaultTo('binary')
+      table.boolean('isSystem').notNullable().defaultTo(false)
+      table.enum('kind', ['document', 'image', 'other']).notNullable().defaultTo('other')
       table.string('mime').notNullable().defaultTo('application/octet-stream')
       table.integer('fileSize').unsigned().comment('In kilobytes')
-      table.jsonb('metadata')
+      table.jsonb('metadata').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
-    })
-    // ASSET DATA --------------------------
-    .createTable('assetData', table => {
-      table.uuid('id').notNullable().primary()
       table.binary('data').notNullable()
       table.binary('preview')
+      table.enum('previewState', ['none', 'pending', 'ready', 'failed']).notNullable().defaultTo('none')
     })
     // AUTHENTICATION ----------------------
     .createTable('authentication', table => {
@@ -284,6 +281,7 @@ exports.up = async knex => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.specificType('folderPath', 'ltree').index().index('tree_folderpath_gist_index', { indexType: 'GIST' })
       table.string('fileName').notNullable().index()
+      table.string('hash').notNullable().index()
       table.enu('type', ['folder', 'page', 'asset']).notNullable().index()
       table.string('localeCode', 5).notNullable().defaultTo('en').index()
       table.string('title').notNullable()
@@ -588,6 +586,10 @@ exports.up = async knex => {
         showPrintBtn: true,
         baseFont: 'roboto',
         contentFont: 'roboto'
+      },
+      uploads: {
+        conflictBehavior: 'overwrite',
+        normalizeFilename: true
       }
     }
   })
