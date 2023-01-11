@@ -3,6 +3,8 @@ const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
 const _ = require('lodash')
 
+const matchquery = require('./match-query')
+
 /* global WIKI */
 
 module.exports = {
@@ -44,13 +46,20 @@ module.exports = {
     try {
       let qry = `
         SELECT rowid as id, path, locale, title, description
-        FROM "fts5_pages_vector"
-        WHERE content MATCH ?
-        ORDER BY rank
-      `
-      let qryParams = [ q ]
+        FROM "fts5_pages_vector"`
+      let qryEnd = 'ORDER BY rank'
+      let qryWhere = 'WHERE fts5_pages_vector MATCH ?'
 
-      const results = await WIKI.models.knex.raw(qry, qryParams)
+      let o = matchquery.parse(q)
+      if (o.negated)
+        qryWhere = 'WHERE rowid not in (select rowid from fts5_pages_vector where fts5_pages_vector MATCH ?)'
+      let qryParams = [ o.str ]
+
+      const results = await WIKI.models.knex.raw(`
+        ${qry}
+        ${qryWhere}
+        ${qryEnd}
+       ` , qryParams)
       return {
         results,
         suggestions: [],
@@ -119,24 +128,10 @@ module.exports = {
     WIKI.logger.info(`(SEARCH/SQLITE3) Rebuilding Index...`)
     await WIKI.models.knex('fts5_pages_vector').truncate()
 
-    await pipeline(
-      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'render').select().from('pages').where({
-        isPublished: true,
-        isPrivate: false
-      }).stream(),
-      new stream.Transform({
-        objectMode: true,
-        transform: async (page, enc, cb) => {
-          const content = WIKI.models.pages.cleanHTML(page.render)
-          await WIKI.models.knex.raw(`
-            INSERT INTO "fts5_pages_vector" (path, locale, title, description, content) VALUES (
-              ?, ?, ?, ?, ?
-            )
-          `, [page.path, page.localeCode, page.title, page.description, content])
-          cb()
-        }
-      })
-    )
-    WIKI.logger.info(`(SEARCH/SQLITE3) Index rebuilt successfully.`)
+    await WIKI.models.knex.raw(`
+      INSERT INTO "fts5_pages_vector" (path, locale, title, description, content)
+      SELECT path, localeCode, title, description, content from pages`)
+
   }
+
 }
