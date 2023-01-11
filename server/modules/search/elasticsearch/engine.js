@@ -19,6 +19,16 @@ module.exports = {
   async init() {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
     switch (this.config.apiVersion) {
+      case '8.x':
+        const { Client: Client8 } = require('elasticsearch8')
+        this.client = new Client8({
+          nodes: this.config.hosts.split(',').map(_.trim),
+          sniffOnStart: this.config.sniffOnStart,
+          sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          ssl: getTlsOptions(this.config),
+          name: 'wiki-js'
+        })
+        break
       case '7.x':
         const { Client: Client7 } = require('elasticsearch7')
         this.client = new Client7({
@@ -65,7 +75,8 @@ module.exports = {
               content: { type: 'text', boost: 1.0 },
               locale: { type: 'keyword' },
               path: { type: 'text' },
-              tags: { type: 'text', boost: 8.0 }
+              tags: { type: 'text', boost: 8.0 },
+              isPublic: { type: 'text' }
             }
           }
           await this.client.indices.create({
@@ -114,7 +125,7 @@ module.exports = {
           },
           from: 0,
           size: 50,
-          _source: ['title', 'description', 'path', 'locale'],
+          _source: ['title', 'description', 'path', 'locale', 'isPublic'],
           suggest: {
             suggestions: {
               text: q,
@@ -134,6 +145,7 @@ module.exports = {
           locale: r._source.locale,
           path: r._source.path,
           title: r._source.title,
+          isPublic: r._source.isPublic ? r._source.isPublic : false,
           description: r._source.description
         })),
         suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
@@ -191,7 +203,8 @@ module.exports = {
         title: page.title,
         description: page.description,
         content: page.safeContent,
-        tags: await this.buildTags(page.id)
+        tags: await this.buildTags(page.id),
+        isPublic: page.isPublic
       },
       refresh: true
     })
@@ -213,7 +226,8 @@ module.exports = {
         title: page.title,
         description: page.description,
         content: page.safeContent,
-        tags: await this.buildTags(page.id)
+        tags: await this.buildTags(page.id),
+        isPublic: page.isPublic
       },
       refresh: true
     })
@@ -254,7 +268,8 @@ module.exports = {
         title: page.title,
         description: page.description,
         content: page.safeContent,
-        tags: await this.buildTags(page.id)
+        tags: await this.buildTags(page.id),
+        isPublic: page.isPublic
       },
       refresh: true
     })
@@ -326,7 +341,8 @@ module.exports = {
               path: doc.path,
               title: doc.title,
               description: doc.description,
-              content: doc.safeContent
+              content: doc.safeContent,
+              isPublic: doc.isPublic
             })
             return result
           }, []),
@@ -341,7 +357,7 @@ module.exports = {
 
     // Added real id in order to fetch page tags from the query
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', { realId: 'id' }).select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', { realId: 'id' }, 'isPublic').select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
