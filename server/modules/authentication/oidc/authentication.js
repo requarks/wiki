@@ -44,6 +44,7 @@ module.exports = {
               }
             }
           }
+          req.session.keycloak_id_token = idToken
           cb(null, user)
         } catch (err) {
           cb(err, null)
@@ -51,11 +52,17 @@ module.exports = {
       })
     )
   },
-  logout (conf) {
+  logout (conf, context) {
     if (!conf.logoutURL) {
       return '/'
     } else {
-      return conf.logoutURL
+      const idToken = context.req.session.keycloak_id_token
+      const redirURL = encodeURIComponent(WIKI.config.host)
+      if (idToken) {
+        return `${conf.logoutURL}?post_logout_redirect_uri=${redirURL}&id_token_hint=${idToken}`
+      } else {
+        return conf.logoutURL
+      }
     }
   }
 }
