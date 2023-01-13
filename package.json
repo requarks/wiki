@@ -1,10 +1,10 @@
 {
   "name": "wiki",
-  "version": "2.0.0",
+  "version": "2.5.295",
   "releaseDate": "2019-01-01T01:01:01.000Z",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "wiki.js",
-  "dev": true,
+  "dev": false,
   "scripts": {
     "start": "node server",
     "dev": "node dev",
