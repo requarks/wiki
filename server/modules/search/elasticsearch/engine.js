@@ -75,8 +75,7 @@ module.exports = {
               content: { type: 'text', boost: 1.0 },
               locale: { type: 'keyword' },
               path: { type: 'text' },
-              tags: { type: 'text', boost: 8.0 },
-              isPublic: { type: 'text' }
+              tags: { type: 'text', boost: 8.0 }
             }
           }
           await this.client.indices.create({
@@ -125,7 +124,7 @@ module.exports = {
           },
           from: 0,
           size: 50,
-          _source: ['title', 'description', 'path', 'locale', 'isPublic'],
+          _source: ['title', 'description', 'path', 'locale'],
           suggest: {
             suggestions: {
               text: q,
@@ -145,7 +144,6 @@ module.exports = {
           locale: r._source.locale,
           path: r._source.path,
           title: r._source.title,
-          isPublic: r._source.isPublic ? r._source.isPublic : false,
           description: r._source.description
         })),
         suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
@@ -203,8 +201,7 @@ module.exports = {
         title: page.title,
         description: page.description,
         content: page.safeContent,
-        tags: await this.buildTags(page.id),
-        isPublic: page.isPublic
+        tags: await this.buildTags(page.id)
       },
       refresh: true
     })
@@ -226,8 +223,7 @@ module.exports = {
         title: page.title,
         description: page.description,
         content: page.safeContent,
-        tags: await this.buildTags(page.id),
-        isPublic: page.isPublic
+        tags: await this.buildTags(page.id)
       },
       refresh: true
     })
@@ -268,8 +264,7 @@ module.exports = {
         title: page.title,
         description: page.description,
         content: page.safeContent,
-        tags: await this.buildTags(page.id),
-        isPublic: page.isPublic
+        tags: await this.buildTags(page.id)
       },
       refresh: true
     })
@@ -341,8 +336,7 @@ module.exports = {
               path: doc.path,
               title: doc.title,
               description: doc.description,
-              content: doc.safeContent,
-              isPublic: doc.isPublic
+              content: doc.safeContent
             })
             return result
           }, []),
@@ -357,7 +351,7 @@ module.exports = {
 
     // Added real id in order to fetch page tags from the query
     await pipeline(
-      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', { realId: 'id' }, 'isPublic').select().from('pages').where({
+      WIKI.models.knex.column({ id: 'hash' }, 'path', { locale: 'localeCode' }, 'title', 'description', 'render', { realId: 'id' }).select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
