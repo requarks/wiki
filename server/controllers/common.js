@@ -119,12 +119,22 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   }
 
   // -> Get page data from DB
-  let page = await WIKI.models.pages.getPageFromDb({
-    path: pageArgs.path,
-    locale: pageArgs.locale,
-    userId: req.user.id,
-    isPrivate: false
-  })
+  let page;
+
+  try {
+    if (pageArgs.path && _.isNumber(pageArgs.path)) {
+      page = await WIKI.models.pages.getPage(+pageArgs.path);
+    } else {
+      page = await WIKI.models.pages.getPage({
+        path: pageArgs.path,
+        locale: pageArgs.locale,
+        userId: req.user.id,
+        isPrivate: false
+      })
+    }
+  } catch (error) {
+    console.error(error);
+  }
 
   pageArgs.tags = _.get(page, 'tags', [])
 

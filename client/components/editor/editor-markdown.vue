@@ -679,10 +679,10 @@ export default {
     insertLink () {
       this.insertLinkDialog = true
     },
-    insertLinkHandler ({ locale, path }) {
+    insertLinkHandler ({ locale, path, pageId }) {
       const lastPart = _.last(path.split('/'))
       this.insertAtCursor({
-        content: siteLangs.length > 0 ? `[${lastPart}](/${locale}/${path})` : `[${lastPart}](/${path})`
+        content: `[${lastPart}](/${locale}/${pageId})`
       })
     },
     processMarkers (from, to) {

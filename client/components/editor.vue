@@ -364,7 +364,7 @@ export default {
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
             this.exitConfirmed = true
-            window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+            window.location.assign(`/${this.$store.get('page/locale')}/${_.get(resp, 'page.id')}`)
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
           }
