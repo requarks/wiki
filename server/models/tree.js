@@ -90,7 +90,8 @@ module.exports = class Tree extends Model {
       }
       const parent = await WIKI.db.knex('tree').where({
         ...parentFilter,
-        locale,
+        type: 'folder',
+        localeCode: locale,
         siteId
       }).first()
       if (parent) {
@@ -119,6 +120,7 @@ module.exports = class Tree extends Model {
    * @param {string} args.title - Title of the page to add
    * @param {string} args.locale - Locale code of the page to add
    * @param {string} args.siteId - UUID of the site in which the page will be added
+   * @param {Object} [args.meta] - Extra metadata
    */
   static async addPage ({ id, parentId, parentPath, fileName, title, locale, siteId, meta = {} }) {
     const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
@@ -149,6 +151,49 @@ module.exports = class Tree extends Model {
     }).returning('*')
 
     return pageEntry[0]
+  }
+
+  /**
+   * Add Asset Entry
+   *
+   * @param {Object} args - New Asset Properties
+   * @param {string} [args.parentId] - UUID of the parent folder
+   * @param {string} [args.parentPath] - Path of the parent folder
+   * @param {string} args.pathName - Path name of the asset to add
+   * @param {string} args.title - Title of the asset to add
+   * @param {string} args.locale - Locale code of the asset to add
+   * @param {string} args.siteId - UUID of the site in which the asset will be added
+   * @param {Object} [args.meta] - Extra metadata
+   */
+  static async addAsset ({ id, parentId, parentPath, fileName, title, locale, siteId, meta = {} }) {
+    const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
+      id: parentId,
+      path: parentPath,
+      locale,
+      siteId,
+      createIfMissing: true
+    }) : {
+      folderPath: '',
+      fileName: ''
+    }
+    const folderPath = commonHelper.decodeTreePath(folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName)
+    const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
+
+    WIKI.logger.debug(`Adding asset ${fullPath} to tree...`)
+
+    const assetEntry = await WIKI.db.knex('tree').insert({
+      id,
+      folderPath,
+      fileName,
+      type: 'asset',
+      title: title,
+      hash: commonHelper.generateHash(fullPath),
+      localeCode: locale,
+      siteId,
+      meta
+    }).returning('*')
+
+    return assetEntry[0]
   }
 
   /**

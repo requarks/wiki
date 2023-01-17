@@ -28,10 +28,13 @@ module.exports = class Storage extends Model {
     return ['contentTypes', 'assetDelivery', 'versioning', 'schedule', 'config', 'state']
   }
 
-  static async getTargets ({ siteId }) {
+  static async getTargets ({ siteId, enabledOnly = false } = {}) {
     return WIKI.db.storage.query().where(builder => {
       if (siteId) {
         builder.where('siteId', siteId)
+      }
+      if (enabledOnly) {
+        builder.where('isEnabled', true)
       }
     })
   }

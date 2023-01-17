@@ -122,7 +122,8 @@ type TreeItemAsset implements TreeItem {
   fileName: String
   # In Bytes
   fileSize: Int
-  fileType: String
+  fileExt: String
+  mimeType: String
   folderPath: String
   title: String
   updatedAt: Date

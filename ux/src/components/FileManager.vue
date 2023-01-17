@@ -399,7 +399,6 @@ const files = computed(() => {
   }).map(f => {
     switch (f.type) {
       case 'folder': {
-        console.info(f.children)
         f.icon = fileTypes.folder.icon
         f.caption = t('fileman.folderChildrenCount', { count: f.children }, f.children)
         break
@@ -410,12 +409,12 @@ const files = computed(() => {
         break
       }
       case 'asset': {
-        f.icon = fileTypes[f.fileType]?.icon ?? ''
-        f.side = filesize(f.fileSize)
+        f.icon = fileTypes[f.fileExt]?.icon ?? ''
+        f.side = filesize(f.fileSize, { round: 0 })
         if (fileTypes[f.fileType]) {
-          f.caption = t(`fileman.${f.fileType}FileType`)
+          f.caption = t(`fileman.${f.fileExt}FileType`)
         } else {
-          f.caption = t('fileman.unknownFileType', { type: f.fileType.toUpperCase() })
+          f.caption = t('fileman.unknownFileType', { type: f.fileExt.toUpperCase() })
         }
         break
       }
@@ -543,6 +542,8 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
               createdAt
               updatedAt
               fileSize
+              fileExt
+              mimeType
             }
           }
         }
@@ -598,8 +599,9 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
                 id: item.id,
                 type: 'asset',
                 title: item.title,
-                fileType: 'pdf',
-                fileSize: 19000,
+                fileExt: item.fileExt,
+                fileSize: item.fileSize,
+                mimeType: item.mimeType,
                 folderPath: item.folderPath,
                 fileName: item.fileName
               })
@@ -744,8 +746,6 @@ async function uploadNewFiles () {
     return
   }
 
-  console.info(fileIpt.value.files)
-
   state.isUploading = true
   state.uploadPercentage = 0
 
@@ -762,10 +762,14 @@ async function uploadNewFiles () {
           const resp = await APOLLO_CLIENT.mutate({
             mutation: gql`
               mutation uploadAssets (
-                $siteId: UUID!
+                $folderId: UUID
+                $locale: String
+                $siteId: UUID
                 $files: [Upload!]!
               ) {
                 uploadAssets (
+                  folderId: $folderId
+                  locale: $locale
                   siteId: $siteId
                   files: $files
                 ) {
@@ -777,7 +781,9 @@ async function uploadNewFiles () {
               }
             `,
             variables: {
+              folderId: state.currentFolderId,
               siteId: siteStore.id,
+              locale: 'en', // TODO: use current locale
               files: [fileToUpload]
             }
           })

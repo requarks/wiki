@@ -100,6 +100,11 @@ module.exports = {
         ...(item.type === 'folder') && {
           childrenCount: item.meta?.children || 0,
           isAncestor: item.folderPath.length < parentPath.length
+        },
+        ...(item.type === 'asset') && {
+          fileSize: item.meta?.fileSize || 0,
+          fileExt: item.meta?.fileExt || '',
+          mimeType: item.meta?.mimeType || ''
         }
       }))
     },

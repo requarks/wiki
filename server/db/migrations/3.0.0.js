@@ -44,18 +44,19 @@ exports.up = async knex => {
     // ASSETS ------------------------------
     .createTable('assets', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
-      table.string('filename').notNullable()
-      table.string('ext').notNullable()
+      table.string('fileName').notNullable()
+      table.string('fileExt').notNullable()
       table.boolean('isSystem').notNullable().defaultTo(false)
       table.enum('kind', ['document', 'image', 'other']).notNullable().defaultTo('other')
-      table.string('mime').notNullable().defaultTo('application/octet-stream')
-      table.integer('fileSize').unsigned().comment('In kilobytes')
-      table.jsonb('metadata').notNullable().defaultTo('{}')
+      table.string('mimeType').notNullable().defaultTo('application/octet-stream')
+      table.integer('fileSize').unsigned().comment('In bytes')
+      table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
-      table.binary('data').notNullable()
+      table.binary('data')
       table.binary('preview')
       table.enum('previewState', ['none', 'pending', 'ready', 'failed']).notNullable().defaultTo('none')
+      table.jsonb('storageInfo')
     })
     // AUTHENTICATION ----------------------
     .createTable('authentication', table => {

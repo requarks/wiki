@@ -106,6 +106,10 @@ module.exports = class Site extends Model {
           showPrintBtn: true,
           baseFont: 'roboto',
           contentFont: 'roboto'
+        },
+        uploads: {
+          conflictBehavior: 'overwrite',
+          normalizeFilename: true
         }
       })
     })

@@ -144,7 +144,10 @@ module.exports = {
       ]
     })
     await this.graph.start()
-    WIKI.app.use(graphqlUploadExpress())
+    WIKI.app.use(graphqlUploadExpress({
+      maxFileSize: WIKI.config.security.uploadMaxFileSize,
+      maxFiles: WIKI.config.security.uploadMaxFiles
+    }))
     this.graph.applyMiddleware({ app: WIKI.app, cors: false, path: '/_graphql' })
   },
   /**

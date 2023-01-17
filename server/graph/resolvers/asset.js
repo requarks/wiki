@@ -4,6 +4,7 @@ const graphHelper = require('../../helpers/graph')
 const path = require('node:path')
 const fs = require('fs-extra')
 const { v4: uuid } = require('uuid')
+const { pipeline } = require('node:stream/promises')
 
 module.exports = {
   Query: {
@@ -136,9 +137,42 @@ module.exports = {
     async uploadAssets(obj, args, context) {
       try {
         // -> Get Folder
-        const folder = await WIKI.db.tree.query().findById(args.folderId)
-        if (!folder) {
-          throw new Error('ERR_INVALID_FOLDER_ID')
+        let folder = {}
+        if (args.folderId || args.folderPath) {
+          // Get Folder by ID
+          folder = await WIKI.db.tree.getFolder({ id: args.folderId })
+          if (!folder) {
+            throw new Error('ERR_INVALID_FOLDER_ID')
+          }
+        } else if (args.folderPath) {
+          // Get Folder by Path
+          if (!args.locale) {
+            throw new Error('ERR_MISSING_LOCALE')
+          } else if (!args.siteId) {
+            throw new Error('ERR_MISSING_SITE_ID')
+          }
+          folder = await WIKI.db.tree.getFolder({
+            path: args.folderPath,
+            locale: args.locale,
+            siteId: args.siteId,
+            createIfMissing: true
+          })
+          if (!folder) {
+            throw new Error('ERR_INVALID_FOLDER_PATH')
+          }
+        } else {
+          // Use Root Folder
+          if (!args.locale) {
+            throw new Error('ERR_MISSING_LOCALE')
+          } else if (!args.siteId) {
+            throw new Error('ERR_MISSING_SITE_ID')
+          }
+          folder = {
+            folderPath: '',
+            fileName: '',
+            localeCode: args.locale,
+            siteId: args.siteId
+          }
         }
 
         // -> Get Site
@@ -147,60 +181,188 @@ module.exports = {
           throw new Error('ERR_INVALID_SITE_ID')
         }
 
+        // -> Get Storage Targets
+        const storageTargets = await WIKI.db.storage.getTargets({ siteId: folder.siteId, enabledOnly: true })
+
+        // -> Process Assets
         const results = await Promise.allSettled(args.files.map(async fl => {
           const { filename, mimetype, createReadStream } = await fl
-          WIKI.logger.debug(`Processing asset upload ${filename} of type ${mimetype}...`)
+          const sanitizedFilename = sanitize(filename).toLowerCase().trim()
+
+          WIKI.logger.debug(`Processing asset upload ${sanitizedFilename} of type ${mimetype}...`)
+
+          // Parse file extension
+          if (sanitizedFilename.indexOf('.') <= 0) {
+            throw new Error('ERR_ASSET_DOTFILE_NOTALLOWED')
+          }
+          const fileExt = _.last(sanitizedFilename.split('.')).toLowerCase()
+
+          // Determine asset kind
+          let fileKind = 'other'
+          switch (fileExt) {
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'webp':
+            case 'gif':
+            case 'tiff':
+            case 'svg':
+              fileKind = 'image'
+              break
+            case 'pdf':
+            case 'docx':
+            case 'xlsx':
+            case 'pptx':
+            case 'odt':
+            case 'epub':
+            case 'csv':
+            case 'md':
+            case 'txt':
+            case 'adoc':
+            case 'rtf':
+            case 'wdp':
+            case 'xps':
+            case 'ods':
+              fileKind = 'document'
+              break
+          }
+
+          // Save to temp disk
+          const tempFileId = uuid()
+          const tempFilePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `uploads/${tempFileId}.dat`)
+          WIKI.logger.debug(`Writing asset upload ${sanitizedFilename} to temp disk...`)
+          await pipeline(
+            createReadStream(),
+            fs.createWriteStream(tempFilePath)
+          )
+          WIKI.logger.debug(`Querying asset ${sanitizedFilename} file size...`)
+          const tempFileStat = await fs.stat(tempFilePath)
 
           // Format filename
-          const formattedFilename = ''
+          const formattedFilename = site.config.uploads.normalizeFilename ? sanitizedFilename.replaceAll(' ', '-') : sanitizedFilename
 
           // Save asset to DB
-          const asset = await WIKI.db.knex('assets').insert({
+          WIKI.logger.debug(`Saving asset ${sanitizedFilename} metadata to DB...`)
+          const assetRaw = await WIKI.db.knex('assets').insert({
+            fileName: formattedFilename,
+            fileExt,
+            kind: fileKind,
+            mimeType: mimetype,
+            fileSize: Math.round(tempFileStat.size),
+            meta: {},
+            previewState: fileKind === 'image' ? 'pending' : 'none',
+            authorId: context.req.user.id,
+            siteId: folder.siteId
+          }).returning('*')
 
-          }).returning('id')
+          const asset = assetRaw[0]
 
           // Add to tree
-          await WIKI.db.knex('tree').insert({
+          const treeAsset = await WIKI.db.tree.addAsset({
             id: asset.id,
-            folderPath: folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName,
+            parentPath: folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName,
             fileName: formattedFilename,
-            type: 'asset',
-            localeCode: ''
+            title: formattedFilename,
+            locale: folder.localeCode,
+            siteId: folder.siteId,
+            meta: {
+              authorId: asset.authorId,
+              creatorId: asset.creatorId,
+              fileSize: asset.fileSize,
+              fileExt,
+              mimeType: mimetype,
+              ownerId: asset.ownerId
+            }
           })
 
+          // Save to storage targets
+          const storageInfo = {}
+          const failedStorage = []
+          await Promise.allSettled(storageTargets.map(async storageTarget => {
+            WIKI.logger.debug(`Saving asset ${sanitizedFilename} to storage target ${storageTarget.module} (${storageTarget.id})...`)
+            try {
+              const strInfo = await WIKI.storage.modules[storageTarget.module].assetUploaded({
+                asset,
+                createReadStream,
+                storageTarget,
+                tempFilePath
+              })
+              storageInfo[storageTarget.id] = strInfo ?? true
+            } catch (err) {
+              WIKI.logger.warn(`Failed to save asset ${sanitizedFilename} to storage target ${storageTarget.module} (${storageTarget.id}):`)
+              WIKI.logger.warn(err)
+              failedStorage.push({
+                storageId: storageTarget.id,
+                storageModule: storageTarget.module,
+                fileId: asset.id,
+                fileName: formattedFilename
+              })
+            }
+          }))
+
+          // Save Storage Info to DB
+          await WIKI.db.knex('assets').where({ id: asset.id }).update({ storageInfo })
+
           // Create thumbnail
-          if (!['.png', '.jpg', 'webp', '.gif'].some(s => filename.endsWith(s))) {
+          if (fileKind === 'image') {
             if (!WIKI.extensions.ext.sharp.isInstalled) {
               WIKI.logger.warn('Cannot generate asset thumbnail because the Sharp extension is not installed.')
             } else {
-              const destFormat = mimetype.startsWith('image/svg') ? 'svg' : 'png'
-              const destFolder = path.resolve(
-                process.cwd(),
+              WIKI.logger.debug(`Generating thumbnail of asset ${sanitizedFilename}...`)
+              const previewDestFolder = path.resolve(
+                WIKI.ROOTPATH,
                 WIKI.config.dataPath,
-                `assets`
+                'assets'
               )
-              const destPath = path.join(destFolder, `asset-${site.id}-${hash}.${destFormat}`)
-              await fs.ensureDir(destFolder)
+              const previewDestPath = path.join(previewDestFolder, `asset-thumb-${treeAsset.hash}.png`)
+              await fs.ensureDir(previewDestFolder)
               // -> Resize
               await WIKI.extensions.ext.sharp.resize({
-                format: destFormat,
+                format: 'png',
                 inputStream: createReadStream(),
-                outputPath: destPath,
-                height: 72
+                outputPath: previewDestPath,
+                width: 320,
+                height: 200,
+                fit: 'inside'
+              })
+              // -> Save to DB
+              await WIKI.db.knex('assets').where({
+                id: asset.id
+              }).update({
+                preview: await fs.readFile(previewDestPath),
+                previewState: 'ready'
               })
             }
           }
 
-          // -> Save image data to DB
-          const imgBuffer = await fs.readFile(destPath)
-          await WIKI.db.knex('assetData').insert({
-            id: site.config.assets.logo,
-            data: imgBuffer
-          }).onConflict('id').merge()
+          WIKI.logger.debug(`Removing asset ${sanitizedFilename} temp file...`)
+          await fs.remove(tempFilePath)
+
+          WIKI.logger.debug(`Processed asset ${sanitizedFilename} successfully.`)
+          return failedStorage
         }))
-        WIKI.logger.debug('Asset(s) uploaded successfully.')
-        return {
-          operation: graphHelper.generateSuccess('Asset(s) uploaded successfully')
+
+        // Return results
+        const failedResults = results.filter(r => r.status === 'rejected')
+        if (failedResults.length > 0) {
+          // -> One or more thrown errors
+          WIKI.logger.warn(`Failed to upload one or more assets:`)
+          for (const failedResult of failedResults) {
+            WIKI.logger.warn(failedResult.reason)
+          }
+          throw new Error('ERR_UPLOAD_FAILED')
+        } else {
+          const failedSaveTargets = results.map(r => r.value).filter(r => r.length > 0)
+          if (failedSaveTargets.length > 0) {
+            // -> One or more storage target save errors
+            WIKI.logger.warn('Failed to save one or more assets to storage targets.')
+            throw new Error('ERR_UPLOAD_TARGET_FAILED')
+          } else {
+            WIKI.logger.debug('Asset(s) uploaded successfully.')
+            return {
+              operation: graphHelper.generateSuccess('Asset(s) uploaded successfully')
+            }
+          }
         }
       } catch (err) {
         WIKI.logger.warn(err)

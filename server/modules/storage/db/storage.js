@@ -1,3 +1,5 @@
+const fs = require('fs-extra')
+
 module.exports = {
   async activated () { },
   async deactivated () { },
@@ -6,7 +8,16 @@ module.exports = {
   async updated (page) { },
   async deleted (page) { },
   async renamed (page) { },
-  async assetUploaded (asset) { },
+  async assetUploaded ({ asset, tempFilePath, createReadStream }) {
+    await WIKI.db.knex('assets').where({
+      id: asset.id
+    }).update({
+      data: await fs.readFile(tempFilePath)
+    })
+    return {
+      available: true
+    }
+  },
   async assetDeleted (asset) { },
   async assetRenamed (asset) { },
   async getLocalLocation () { },
