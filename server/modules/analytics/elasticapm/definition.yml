@@ -24,3 +24,9 @@ props:
     hint: e.g. production/development/test
     default: ''
     order: 3
+  certificatePath:
+    type: String
+    title: Certificate Path
+    hint: The path to the SSL certificate used for secure communication with the APM server
+    default: ''
+    order: 4
