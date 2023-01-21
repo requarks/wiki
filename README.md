@@ -64,7 +64,7 @@ The current stable release (2.x) is available at https://js.wiki
     ```sh
     node server
     ```
-1. In your browser, navigate to `http://localhost:3000` *(or the IP/hostname of the server and the PORT you defined earlier.)*
+1. In your browser, navigate to `http://localhost:5000` *(or the IP/hostname of the server and the PORT you defined earlier.)*
 1. Login using the default administrator user:
     - Email: `admin@example.com`
     - Password: `12345678`
@@ -103,7 +103,7 @@ The current stable release (2.x) is available at https://js.wiki
     ```sh
     yarn dev
     ```
-1. Open your browser to `http://localhost:3000`
+1. Open your browser to `http://localhost:5000`
 1. Login using the default administrator user:
     - Email: `admin@example.com`
     - Password: `12345678`
@@ -132,11 +132,11 @@ If you wish to modify any frontend content (under `/ux`), you need to start the 
 yarn dev
 ```
 
-You can then access the site at `http://localhost:3001`. Notice the port being `3001` rather than `3000`. The app runs in a SPA (single-page application) mode and automatically hot-reload any modified component. Any requests made to the `/graphql` endpoint are automatically forwarded to the server running on port `3000`, which is why both must be running at the same time.
+You can then access the site at `http://localhost:5001`. Notice the port being `5001` rather than `5000`. The app runs in a SPA (single-page application) mode and automatically hot-reload any modified component. Any requests made to the `/graphql` endpoint are automatically forwarded to the server running on port `5000`, which is why both must be running at the same time.
 
-Note that not all sections/features are available from this mode, notably the page editing features which still relies on the old client code (Vuetify/Vue 2). For example, trying to edit a page will simply not work. You must use the normal mode (port 3000) to edit pages as it relies on legacy client code. As more features gets ported / developed for Vue 3, they will become available in the SPA mode.
+Note that not all sections/features are available from this mode, notably the page editing features which still relies on the old client code (Vuetify/Vue 2). For example, trying to edit a page will simply not work. You must use the normal mode (port 5000) to edit pages as it relies on legacy client code. As more features gets ported / developed for Vue 3, they will become available in the SPA mode.
 
-Any change you make to the frontend will not be reflected on port 3000 until you run the command `yarn build` in the right-side terminal.
+Any change you make to the frontend will not be reflected on port 5000 until you run the command `yarn build` in the right-side terminal.
 
 ### Legacy Frontend Development (Vuetify/Vue 2)
 
