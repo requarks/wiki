@@ -411,7 +411,7 @@ const files = computed(() => {
       case 'asset': {
         f.icon = fileTypes[f.fileExt]?.icon ?? ''
         f.side = filesize(f.fileSize, { round: 0 })
-        if (fileTypes[f.fileType]) {
+        if (fileTypes[f.fileExt]) {
           f.caption = t(`fileman.${f.fileExt}FileType`)
         } else {
           f.caption = t('fileman.unknownFileType', { type: f.fileExt.toUpperCase() })
@@ -459,7 +459,7 @@ const currentFileDetails = computed(() => {
       case 'asset': {
         items.push({
           label: t('fileman.detailsAssetType'),
-          value: fileTypes[item.fileType] ? t(`fileman.${item.fileType}FileType`) : t('fileman.unknownFileType', { type: item.fileType.toUpperCase() })
+          value: fileTypes[item.fileExt] ? t(`fileman.${item.fileExt}FileType`) : t('fileman.unknownFileType', { type: item.fileExt.toUpperCase() })
         })
         items.push({
           label: t('fileman.detailsAssetSize'),
