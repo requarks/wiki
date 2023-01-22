@@ -250,10 +250,23 @@ q-layout.fileman(view='hHh lpR lFr', container)
                         q-item-section(side)
                           q-icon(name='las la-eye', color='primary')
                         q-item-section View
+                      template(v-if='item.type === `asset` && item.imageEdit')
+                        q-item(clickable)
+                          q-item-section(side)
+                            q-icon(name='las la-edit', color='orange')
+                          q-item-section Edit Image...
+                        q-item(clickable)
+                          q-item-section(side)
+                            q-icon(name='las la-crop', color='orange')
+                          q-item-section Resize Image...
                       q-item(clickable, v-if='item.type !== `folder`', @click='copyItemURL(item)')
                         q-item-section(side)
                           q-icon(name='las la-clipboard', color='primary')
                         q-item-section Copy URL
+                      q-item(clickable, v-if='item.type !== `folder`', @click='')
+                        q-item-section(side)
+                          q-icon(name='las la-download', color='primary')
+                        q-item-section Download
                       q-item(clickable)
                         q-item-section(side)
                           q-icon(name='las la-copy', color='teal')
@@ -411,6 +424,7 @@ const files = computed(() => {
       case 'asset': {
         f.icon = fileTypes[f.fileExt]?.icon ?? ''
         f.side = filesize(f.fileSize, { round: 0 })
+        f.imageEdit = fileTypes[f.fileExt]?.imageEdit
         if (fileTypes[f.fileExt]) {
           f.caption = t(`fileman.${f.fileExt}FileType`)
         } else {
@@ -489,8 +503,8 @@ function close () {
   siteStore.overlay = null
 }
 
-async function treeLazyLoad (nodeId, { done, fail }) {
-  await loadTree({ parentId: nodeId, types: ['folder'] })
+async function treeLazyLoad (nodeId, isCurrent, { done, fail }) {
+  await loadTree({ parentId: nodeId, types: isCurrent ? null : ['folder'] })
   done()
 }
 
@@ -792,6 +806,7 @@ async function uploadNewFiles () {
           }
         }
         state.uploadPercentage = 100
+        loadTree({ parentId: state.currentFolderId })
         $q.notify({
           type: 'positive',
           message: t('fileman.uploadSuccess')
@@ -859,7 +874,8 @@ async function copyItemURL (item) {
         break
       }
       case 'asset': {
-        // TODO: Copy asset URL to clibpard
+        const assetPath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
+        await navigator.clipboard.writeText(`${window.location.origin}/${assetPath}`)
         break
       }
       default: {

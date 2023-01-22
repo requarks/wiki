@@ -108,16 +108,12 @@ const selection = computed({
 
 // METHODS
 
-function emitLazyLoad (nodeId, clb) {
+function emitLazyLoad (nodeId, isCurrent, clb) {
   if (props.useLazyLoad) {
-    emit('lazyLoad', nodeId, clb)
+    emit('lazyLoad', nodeId, isCurrent, clb)
   } else {
     clb.done()
   }
-}
-
-function emitContextAction (nodeId, action) {
-  emit('contextAction', nodeId, action)
 }
 
 function setOpened (nodeId) {
@@ -142,7 +138,6 @@ provide('opened', state.opened)
 provide('displayMode', toRef(props, 'displayMode'))
 provide('selection', selection)
 provide('emitLazyLoad', emitLazyLoad)
-provide('emitContextAction', emitContextAction)
 
 // EXPOSE
 

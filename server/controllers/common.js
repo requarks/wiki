@@ -40,6 +40,7 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
   if (!site) {
     return res.status(404).send('Site Not Found')
   }
+  console.info(req.params)
   switch (req.params.resource) {
     case 'logo': {
       if (site.config.assets.logo) {
@@ -72,6 +73,35 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
       return res.status(404).send('Invalid Site Resource')
     }
   }
+})
+
+/**
+ * Asset Thumbnails / Download
+ */
+router.get('/_asset/:siteId/:mode/*', async (req, res, next) => {
+  const site = req.params.siteId ? WIKI.sites[req.params.siteId] : await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
+  if (!site) {
+    return res.status(404).send('Site Not Found')
+  }
+  const filePath = req.params[0]
+  console.info(filePath)
+  switch (req.params.mode) {
+    case 'thumb': {
+      try {
+
+      } catch (err) {
+
+      }
+      break
+    }
+    case 'download': {
+      break
+    }
+    default: {
+      return res.status(404).send('Invalid Site Resource')
+    }
+  }
+  return res.send('BOB').end()
 })
 
 /**

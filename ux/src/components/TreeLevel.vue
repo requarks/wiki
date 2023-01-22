@@ -67,7 +67,6 @@ const $q = useQuasar()
 const roots = inject('roots')
 const nodes = inject('nodes')
 const selection = inject('selection')
-const emitContextAction = inject('emitContextAction')
 const contextActionList = inject('contextActionList')
 
 // COMPUTED
@@ -101,10 +100,6 @@ const level = computed(() => {
 
 function setRoot () {
   selection.value = null
-}
-
-function createRootFolder () {
-  emitContextAction(null, 'newFolder')
 }
 
 </script>

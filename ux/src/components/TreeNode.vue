@@ -5,7 +5,7 @@ li.treeview-node
     q-icon(
       :name='icon'
       size='sm'
-      @click.stop='hasChildren ? toggleNode() : openNode()'
+      @click.stop='toggleNode()'
       )
     .treeview-label-text {{displayMode === 'path' ? node.fileName : node.title}}
     q-spinner.q-mr-xs(
@@ -82,7 +82,6 @@ const opened = inject('opened')
 const displayMode = inject('displayMode')
 const selection = inject('selection')
 const emitLazyLoad = inject('emitLazyLoad')
-const emitContextAction = inject('emitContextAction')
 const contextActionList = inject('contextActionList')
 
 // DATA
@@ -113,13 +112,13 @@ const isActive = computed(() => {
 
 // METHODS
 
-async function toggleNode () {
+async function toggleNode (isCurrent = false) {
   opened[props.node.id] = !(opened[props.node.id] === true)
   if (opened[props.node.id] && !loaded[props.node.id]) {
     state.isLoading = true
     await Promise.race([
       new Promise((resolve, reject) => {
-        emitLazyLoad(props.node.id, { done: resolve, fail: reject })
+        emitLazyLoad(props.node.id, isCurrent, { done: resolve, fail: reject })
       }),
       new Promise((resolve, reject) => {
         setTimeout(() => reject(new Error('Async tree loading timeout')), 30000)
@@ -135,11 +134,7 @@ function openNode () {
   if (selection.value !== props.node.id && opened[props.node.id]) {
     return
   }
-  toggleNode()
-}
-
-function contextAction (action) {
-  emitContextAction(props.node.id, action)
+  toggleNode(true)
 }
 
 </script>
