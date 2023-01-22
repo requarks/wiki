@@ -10,6 +10,7 @@
 [![Twitter Follow](https://img.shields.io/badge/follow-%40requarks-blue.svg?style=flat&logo=twitter)](https://twitter.com/requarks)
 [![Reddit](https://img.shields.io/badge/reddit-%2Fr%2Fwikijs-orange?logo=reddit&logoColor=white)](https://www.reddit.com/r/wikijs/)
 [![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp)](https://blog.js.wiki/subscribe)
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/from-referrer/)
 
 ##### Next Generation Open Source Wiki
 
@@ -30,6 +31,7 @@ The current stable release (2.x) is available at https://js.wiki
 - [Generic Setup](#generic-setup)
   - [Requirements](#requirements)
   - [Usage](#usage)
+- [Using VS Code DEV Environment by GitPod.io](#using-cs-code-dev-environment-by-gitpodio)
 - [Using VS Code Dev Environment](#using-vs-code-dev-environment) *(recommended)*
   - [Requirements](#requirements-1)
   - [Usage](#usage-1)
@@ -74,6 +76,12 @@ The current stable release (2.x) is available at https://js.wiki
     - Password: `12345678`
 
 > **DO NOT** report bugs. This build is **VERY** buggy and **VERY** incomplete. Absolutely **NO** support is provided either.
+
+## Using CS Code Dev Environment by Gitpod.io
+
+Gitpod is an open-source Kubernetes application for ready-to-code cloud development environments that spins up fresh, automated dev environments for each task, in the cloud, in seconds. It enables you to describe your dev environment as code and start instant, remote and cloud development environments directly from your browser or your Desktop IDE.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/from-referrer/)
 
 ## Using VS Code Dev Environment
 
