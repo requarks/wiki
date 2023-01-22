@@ -68,7 +68,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
       .q-pa-md
         template(v-if='currentFileDetails')
           q-img.rounded-borders.q-mb-md(
-            src='/_assets/illustrations/fileman-page.svg'
+            :src='currentFileDetails.thumbnail'
             width='100%'
             fit='cover'
             :ratio='16/10'
@@ -450,8 +450,10 @@ const currentFileDetails = computed(() => {
         value: item.title
       }
     ]
+    let thumbnail = ''
     switch (item.type) {
       case 'page': {
+        thumbnail = '/_assets/illustrations/fileman-page.svg'
         items.push({
           label: t('fileman.detailsPageType'),
           value: t(`fileman.${item.pageType}PageType`)
@@ -471,6 +473,7 @@ const currentFileDetails = computed(() => {
         break
       }
       case 'asset': {
+        thumbnail = `/_thumb/${item.id}.png`
         items.push({
           label: t('fileman.detailsAssetType'),
           value: fileTypes[item.fileExt] ? t(`fileman.${item.fileExt}FileType`) : t('fileman.unknownFileType', { type: item.fileExt.toUpperCase() })
@@ -483,7 +486,7 @@ const currentFileDetails = computed(() => {
       }
     }
     return {
-      thumbnail: '',
+      thumbnail,
       items
     }
   } else {

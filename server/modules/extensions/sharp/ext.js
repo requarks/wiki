@@ -51,7 +51,8 @@ module.exports = {
     width = null,
     height = null,
     fit = 'cover',
-    background = { r: 0, g: 0, b: 0, alpha: 0 }
+    background = { r: 0, g: 0, b: 0, alpha: 0 },
+    kernel = 'lanczos3'
   }) {
     this.load()
 
@@ -75,7 +76,8 @@ module.exports = {
         width,
         height,
         fit,
-        background
+        background,
+        kernel
       }).toFormat(format)
 
       return pipeline([inputStream, transformer, outputStream])

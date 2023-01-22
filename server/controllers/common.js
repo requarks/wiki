@@ -5,8 +5,6 @@ const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
 const path = require('path')
-
-const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
 const siteAssetsPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'assets')
 
 /**
@@ -78,30 +76,35 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
 /**
  * Asset Thumbnails / Download
  */
-router.get('/_asset/:siteId/:mode/*', async (req, res, next) => {
-  const site = req.params.siteId ? WIKI.sites[req.params.siteId] : await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
-  if (!site) {
-    return res.status(404).send('Site Not Found')
-  }
-  const filePath = req.params[0]
-  console.info(filePath)
-  switch (req.params.mode) {
-    case 'thumb': {
-      try {
+router.get('/_thumb/:id.png', async (req, res, next) => {
+  const thumb = await WIKI.db.assets.getThumbnail({
+    id: req.params.id
+  })
 
-      } catch (err) {
+  if (thumb) {
+    // TODO: Check permissions
 
+    switch (thumb.previewState) {
+      case 'pending': {
+        res.send('PENDING')
+        break
       }
-      break
+      case 'ready': {
+        res.set('Content-Type', 'image/png')
+        res.send(thumb.preview)
+        break
+      }
+      case 'failed': {
+        res.status(500).send('Thumbnail Preview Failed').end()
+        break
+      }
+      default: {
+        return res.status(500).send('Invalid Thumbnail Preview State')
+      }
     }
-    case 'download': {
-      break
-    }
-    default: {
-      return res.status(404).send('Invalid Site Resource')
-    }
+  } else {
+    return res.sendStatus(404)
   }
-  return res.send('BOB').end()
 })
 
 /**

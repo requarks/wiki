@@ -10,6 +10,9 @@ module.exports = {
     minimumNodeRequired: '18.0.0'
   },
   init () {
+    fs.ensureDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'assets'))
+    fs.ensureDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'uploads'))
+
     // Clear content cache
     fs.emptyDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'cache'))
 

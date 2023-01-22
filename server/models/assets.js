@@ -3,6 +3,7 @@ const moment = require('moment')
 const path = require('path')
 const fs = require('fs-extra')
 const _ = require('lodash')
+const commonHelper = require('../helpers/common')
 
 /**
  * Users model
@@ -160,7 +161,19 @@ module.exports = class Asset extends Model {
     }
   }
 
-  static async getAsset(assetPath, res) {
+  static async getThumbnail ({ id, path, locale, siteId }) {
+    return WIKI.db.tree.query()
+      .select('tree.*', 'assets.preview', 'assets.previewState')
+      .innerJoin('assets', 'tree.id', 'assets.id')
+      .where(id ? { 'tree.id': id } : {
+        'tree.hash': commonHelper.generateHash(path),
+        'tree.localeCode': locale,
+        'tree.siteId': siteId
+      })
+      .first()
+  }
+
+  static async getAsset({ path, locale, siteId }, res) {
     try {
       const fileInfo = '' // assetHelper.getPathInfo(assetPath)
       const fileHash = '' // assetHelper.generateHash(assetPath)

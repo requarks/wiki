@@ -102,11 +102,12 @@ module.exports = configure(function (/* ctx */) {
     devServer: {
       // https: true
       open: false, // opens browser window automatically
-      port: 5001,
+      port: 3001,
       proxy: {
-        '/_graphql': 'http://localhost:5000/_graphql',
-        '/_site': 'http://localhost:5000',
-        '/_user': 'http://localhost:5000'
+        '/_graphql': 'http://127.0.0.1:3000/_graphql',
+        '/_site': 'http://127.0.0.1:3000',
+        '/_thumb': 'http://127.0.0.1:3000',
+        '/_user': 'http://127.0.0.1:3000'
       }
     },
 

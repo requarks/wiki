@@ -258,7 +258,7 @@ module.exports = {
           const asset = assetRaw[0]
 
           // Add to tree
-          const treeAsset = await WIKI.db.tree.addAsset({
+          await WIKI.db.tree.addAsset({
             id: asset.id,
             parentPath: folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName,
             fileName: formattedFilename,
@@ -309,13 +309,7 @@ module.exports = {
               WIKI.logger.warn('Cannot generate asset thumbnail because the Sharp extension is not installed.')
             } else {
               WIKI.logger.debug(`Generating thumbnail of asset ${sanitizedFilename}...`)
-              const previewDestFolder = path.resolve(
-                WIKI.ROOTPATH,
-                WIKI.config.dataPath,
-                'assets'
-              )
-              const previewDestPath = path.join(previewDestFolder, `asset-thumb-${treeAsset.hash}.png`)
-              await fs.ensureDir(previewDestFolder)
+              const previewDestPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `uploads/${tempFileId}-thumb.png`)
               // -> Resize
               await WIKI.extensions.ext.sharp.resize({
                 format: 'png',
@@ -332,6 +326,9 @@ module.exports = {
                 preview: await fs.readFile(previewDestPath),
                 previewState: 'ready'
               })
+
+              // -> Delete
+              await fs.remove(previewDestPath)
             }
           }
 
