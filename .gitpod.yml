@@ -1,0 +1,43 @@
+image: gitpod/workspace-postgres
+
+tasks:
+  - name: Yarn Server - legacy:build
+    init: >
+      cp config.sample.yml config.yml &&
+      nvm install v18.13 &&
+      yarn install &&
+      yarn legacy:build &&
+      gp sync-done build-legacy &&
+      pg_start &&
+      gp sync-await build
+    command:  yarn dev
+    openMode: split-left
+
+  - name: Yarn UX - build
+    init: >
+      gp sync-await build-legacy &&
+      yarn build &&
+      gp sync-done build
+    openMode: split-right
+
+ports:
+  - name: Web App
+    port: 5000
+    description: The main application web server
+    visibility: private
+    onOpen: open-browser
+  - name: pgAdmin
+    description: a PostgreSQL administration tool. Use the login dev / 123123 to login.
+    port: 8000
+    visibility: private
+    onOpen: ignore
+  - name: postgresql Server
+    port: 5432
+    onOpen: ignore
+
+vscode:
+  extensions:
+    - dbaeumer.vscode-eslint
+    - EditorConfig.EditorConfig
+    - christian-kohler.path-intellisense
+    - octref.vetur
