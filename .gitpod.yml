@@ -8,7 +8,6 @@ tasks:
       yarn install &&
       yarn legacy:build &&
       gp sync-done build-legacy &&
-      pg_start &&
       gp sync-await build
     command:  yarn dev
     openMode: split-left
@@ -16,16 +15,23 @@ tasks:
   - name: Yarn UX - build
     init: >
       gp sync-await build-legacy &&
+      cd ux &&
+      yarn install &&
       yarn build &&
       gp sync-done build
+    command: yarn dev
     openMode: split-right
 
 ports:
   - name: Web App
-    port: 5000
-    description: The main application web server
+    port: 3000
+    description: The main application web server. Use the login admin@example.com / 12345678 to login.
     visibility: private
     onOpen: open-browser
+  - name: UX dev
+    port: 3001
+    visibility: private
+    onOpen: ignore
   - name: pgAdmin
     description: a PostgreSQL administration tool. Use the login dev / 123123 to login.
     port: 8000
