@@ -473,7 +473,7 @@ const currentFileDetails = computed(() => {
         break
       }
       case 'asset': {
-        thumbnail = `/_thumb/${item.id}.png`
+        thumbnail = `/_thumb/${item.id}.webp`
         items.push({
           label: t('fileman.detailsAssetType'),
           value: fileTypes[item.fileExt] ? t(`fileman.${item.fileExt}FileType`) : t('fileman.unknownFileType', { type: item.fileExt.toUpperCase() })

@@ -38,7 +38,6 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
   if (!site) {
     return res.status(404).send('Site Not Found')
   }
-  console.info(req.params)
   switch (req.params.resource) {
     case 'logo': {
       if (site.config.assets.logo) {
@@ -76,7 +75,7 @@ router.get('/_site/:siteId?/:resource', async (req, res, next) => {
 /**
  * Asset Thumbnails / Download
  */
-router.get('/_thumb/:id.png', async (req, res, next) => {
+router.get('/_thumb/:id.webp', async (req, res, next) => {
   const thumb = await WIKI.db.assets.getThumbnail({
     id: req.params.id
   })
@@ -86,16 +85,16 @@ router.get('/_thumb/:id.png', async (req, res, next) => {
 
     switch (thumb.previewState) {
       case 'pending': {
-        res.send('PENDING')
+        res.redirect('/_assets/illustrations/fileman-pending.svg')
         break
       }
       case 'ready': {
-        res.set('Content-Type', 'image/png')
+        res.set('Content-Type', 'image/webp')
         res.send(thumb.preview)
         break
       }
       case 'failed': {
-        res.status(500).send('Thumbnail Preview Failed').end()
+        res.redirect('/_assets/illustrations/fileman-failed.svg')
         break
       }
       default: {

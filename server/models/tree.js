@@ -176,8 +176,9 @@ module.exports = class Tree extends Model {
       folderPath: '',
       fileName: ''
     }
-    const folderPath = commonHelper.decodeTreePath(folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName)
-    const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
+    const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
+    const decodedFolderPath = commonHelper.decodeTreePath(folderPath)
+    const fullPath = decodedFolderPath ? `${decodedFolderPath}/${fileName}` : fileName
 
     WIKI.logger.debug(`Adding asset ${fullPath} to tree...`)
 

@@ -309,10 +309,10 @@ module.exports = {
               WIKI.logger.warn('Cannot generate asset thumbnail because the Sharp extension is not installed.')
             } else {
               WIKI.logger.debug(`Generating thumbnail of asset ${sanitizedFilename}...`)
-              const previewDestPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `uploads/${tempFileId}-thumb.png`)
+              const previewDestPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `uploads/${tempFileId}-thumb.webp`)
               // -> Resize
               await WIKI.extensions.ext.sharp.resize({
-                format: 'png',
+                format: 'webp',
                 inputStream: createReadStream(),
                 outputPath: previewDestPath,
                 width: 320,
