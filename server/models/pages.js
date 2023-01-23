@@ -28,6 +28,9 @@ const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
  * Pages model
  */
 module.exports = class Page extends Model {
+  static rebuildIsRunning = false
+  static rebuildIsQueued = false
+
   static get tableName() { return 'pages' }
 
   static get jsonSchema () {
@@ -333,7 +336,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.renderPage(page)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    // await WIKI.models.pages.rebuildTree()
+    WIKI.models.pages.rebuildTreeBG()
 
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -736,7 +740,8 @@ module.exports = class Page extends Model {
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    // await WIKI.models.pages.rebuildTree()
+    WIKI.models.pages.rebuildTreeBG()
 
     // -> Rename in Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -814,7 +819,8 @@ module.exports = class Page extends Model {
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    // await WIKI.models.pages.rebuildTree()
+    WIKI.models.pages.rebuildTreeBG()
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
@@ -925,6 +931,43 @@ module.exports = class Page extends Model {
       worker: true
     })
     return rebuildJob.finished
+  }
+
+  /**
+   * Rebuild page tree for new/updated/deleted page in the
+   * background. Multiple calls to this function will
+   * queue up a single pending job if a rebuild is already
+   * in progress, and that queued up job will start when
+   * the current rebuild ends. In other words, calling this
+   * function will ensure at least one rebuild will start
+   * in the near future as soon as no rebuilds are running,
+   * but 50 quick calls to this routine will only cause
+   * one rebuild to kick off when possible.
+   *
+   * @returns {Promise} Promise with no value
+   */
+  static async rebuildTreeBG() {
+    if (this.rebuildIsRunning) {
+      this.rebuildIsQueued = true
+      return	
+    }
+    this.rebuildIsRunning = true
+    const rebuildJob = await WIKI.scheduler.registerJob({
+      name: 'rebuild-tree',
+      immediate: true,
+      worker: true
+    })
+    await rebuildJob.finished
+    while (this.rebuildIsQueued) {
+      this.rebuildIsQueued = false
+      const rebuildJob = await WIKI.scheduler.registerJob({
+        name: 'rebuild-tree',
+        immediate: true,
+        worker: true
+      })
+      await rebuildJob.finished
+    }
+    this.rebuildIsRunning = false
   }
 
   /**
