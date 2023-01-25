@@ -26,9 +26,6 @@ server/views/setup.pug
 .webpack-cache
 .fusebox
 
-# Config Files
-/config.yml
-
 # Data directories
 /repo
 /data
