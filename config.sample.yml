@@ -1,0 +1,147 @@
+#######################################################################
+# Wiki.js - CONFIGURATION                                             #
+#######################################################################
+# Full documentation + examples:
+# https://docs.requarks.io/install
+
+# ---------------------------------------------------------------------
+# Port the server should listen to
+# ---------------------------------------------------------------------
+
+port: 3000
+
+# ---------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------
+# Supported Database Engines:
+# - postgres = PostgreSQL 9.5 or later
+# - mysql = MySQL 8.0 or later (5.7.8 partially supported, refer to docs)
+# - mariadb = MariaDB 10.2.7 or later
+# - mssql = MS SQL Server 2012 or later
+# - sqlite = SQLite 3.9 or later
+
+db:
+  type: postgres
+
+  # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
+  host: localhost
+  port: 5432
+  user: wikijs
+  pass: wikijsrocks
+  db: wiki
+  ssl: false
+
+  # Optional - PostgreSQL / MySQL / MariaDB only:
+  # -> Uncomment lines you need below and set `auto` to false
+  # -> Full list of accepted options: https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options
+  sslOptions:
+    auto: true
+    # rejectUnauthorized: false
+    # ca: path/to/ca.crt
+    # cert: path/to/cert.crt
+    # key: path/to/key.pem
+    # pfx: path/to/cert.pfx
+    # passphrase: xyz123
+
+  # Optional - PostgreSQL only:
+  schema: public
+
+  # SQLite only:
+  storage: path/to/database.sqlite
+
+#######################################################################
+# ADVANCED OPTIONS                                                    #
+#######################################################################
+# Do not change unless you know what you are doing!
+
+# ---------------------------------------------------------------------
+# SSL/TLS Settings
+# ---------------------------------------------------------------------
+# Consider using a reverse proxy (e.g. nginx) if you require more
+# advanced options than those provided below.
+
+ssl:
+  enabled: false
+  port: 3443
+
+  # Provider to use, possible values: custom, letsencrypt
+  provider: custom
+
+  # ++++++ For custom only ++++++
+  # Certificate format, either 'pem' or 'pfx':
+  format: pem
+  # Using PEM format:
+  key: path/to/key.pem
+  cert: path/to/cert.pem
+  # Using PFX format:
+  pfx: path/to/cert.pfx
+  # Passphrase when using encrypted PEM / PFX keys (default: null):
+  passphrase: null
+  # Diffie Hellman parameters, with key length being greater or equal
+  # to 1024 bits (default: null):
+  dhparam: null
+
+  # ++++++ For letsencrypt only ++++++
+  domain: wiki.yourdomain.com
+  subscriberEmail: admin@example.com
+
+# ---------------------------------------------------------------------
+# Database Pool Options
+# ---------------------------------------------------------------------
+# Refer to https://github.com/vincit/tarn.js for all possible options
+
+pool:
+  # min: 2
+  # max: 10
+
+# ---------------------------------------------------------------------
+# IP address the server should listen to
+# ---------------------------------------------------------------------
+# Leave 0.0.0.0 for all interfaces
+
+bindIP: 0.0.0.0
+
+# ---------------------------------------------------------------------
+# Log Level
+# ---------------------------------------------------------------------
+# Possible values: error, warn, info (default), verbose, debug, silly
+
+logLevel: info
+
+# ---------------------------------------------------------------------
+# Log Format
+# ---------------------------------------------------------------------
+# Output format for logging, possible values: default, json
+
+logFormat: default
+
+# ---------------------------------------------------------------------
+# Offline Mode
+# ---------------------------------------------------------------------
+# If your server cannot access the internet. Set to true and manually
+# download the offline files for sideloading.
+
+offline: false
+
+# ---------------------------------------------------------------------
+# High-Availability
+# ---------------------------------------------------------------------
+# Set to true if you have multiple concurrent instances running off the
+# same DB (e.g. Kubernetes pods / load balanced instances). Leave false
+# otherwise. You MUST be using PostgreSQL to use this feature.
+
+ha: false
+
+# ---------------------------------------------------------------------
+# Data Path
+# ---------------------------------------------------------------------
+# Writeable data path used for cache and temporary user uploads.
+dataPath: ./data
+
+# ---------------------------------------------------------------------
+# Body Parser Limit
+# ---------------------------------------------------------------------
+# Maximum size of API requests body that can be parsed. Does not affect
+# file uploads.
+
+bodyParserLimit: 5mb

@@ -243,8 +243,10 @@
     page-convert(v-model='convertPageModal', v-if='path && path.length')
 
     .nav-header-dev(v-if='isDevMode')
+      v-icon mdi-alert
       div
-        .overline DEV
+        .overline DEVELOPMENT VERSION
+        .overline This code base is NOT for production use!
 </template>
 
 <script>
@@ -532,13 +534,21 @@ export default {
   }
 
   &-dev {
-    background-color: mc('blue', '600');
+    background-color: mc('red', '600');
     position: absolute;
-    top: 16px;
+    top: 11px;
     left: 255px;
     padding: 5px 15px;
     border-radius: 5px;
     display: flex;
+
+    .v-icon {
+      margin-right: 15px;
+    }
+
+    .overline:nth-child(2) {
+      text-transform: none;
+    }
   }
 }
 
