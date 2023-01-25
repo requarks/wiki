@@ -3,7 +3,7 @@ bindIP: 0.0.0.0
 db:
   type: postgres
   host: db
-  port: 5432
+  port: 6543
   user: wikijs
   pass: wikijsrocks
   db: wiki
