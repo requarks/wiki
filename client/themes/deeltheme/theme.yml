@@ -1,0 +1,51 @@
+name: Default
+author: requarks.io
+site: https://wiki.requarks.io/
+version: 1.0.0
+requirements:
+  minimum: '>= 2.0.0'
+  maximum: '< 3.0.0'
+props:
+  sdPosition:
+    type: String
+    default: 'left'
+    title: Table of Contents Position
+    hint: Should the content sidebar be shown on the left or right.
+    enum:
+      - 'hidden'
+      - 'left'
+      - 'right'
+    order: 1
+    icon: mdi-border-vertical
+  showTOC:
+    type: Boolean
+    default: true
+    title: Display the Table of Contents
+    order: 2
+  showTags:
+    type: Boolean
+    default: true
+    title: Display the Page Tags
+    order: 3
+  showTags:
+    type: Boolean
+    default: true
+    title: Display the Page Author and Date
+    order: 4
+  showTags:
+    type: Boolean
+    default: true
+    title: Display the Page Rating
+    order: 5
+  showSocialBar:
+    type: Boolean
+    default: true
+    title: Display the Social Links Bar
+    order: 6
+  showEditSpeedDial:
+    type: Boolean
+    default: true
+    title: Display the Edit Speed Dial
+    hint: Shown in the lower right corner of the page.
+    order: 7
+
