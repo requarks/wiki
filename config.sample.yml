@@ -131,3 +131,12 @@ scheduler:
   # Maximum number of workers to run background cpu-intensive jobs.
   # Leave 'auto' to use number of CPU cores as maximum.
   workers: auto
+
+# ---------------------------------------------------------------------
+# Dev Mode
+# ---------------------------------------------------------------------
+# Settings when running in dev mode only
+
+dev:
+  port: 3001
+  hmrClientPort: 3001

@@ -10,8 +10,15 @@
 
 const { configure } = require('quasar/wrappers')
 const path = require('path')
+const yaml = require('js-yaml')
+const fs = require('fs')
 
 module.exports = configure(function (/* ctx */) {
+  const userConfig = {
+    dev: { port: 3001, hmrClientPort: 3001 },
+    ...yaml.load(fs.readFileSync(path.resolve(__dirname, '../config.yml'), 'utf8'))
+  }
+
   return {
     eslint: {
       fix: true,
@@ -102,12 +109,15 @@ module.exports = configure(function (/* ctx */) {
     devServer: {
       // https: true
       open: false, // opens browser window automatically
-      port: 3001,
+      port: userConfig.dev.port,
       proxy: {
-        '/_graphql': 'http://127.0.0.1:3000/_graphql',
-        '/_site': 'http://127.0.0.1:3000',
-        '/_thumb': 'http://127.0.0.1:3000',
-        '/_user': 'http://127.0.0.1:3000'
+        '/_graphql': `http://127.0.0.1:${userConfig.port}/_graphql`,
+        '/_site': `http://127.0.0.1:${userConfig.port}`,
+        '/_thumb': `http://127.0.0.1:${userConfig.port}`,
+        '/_user': `http://127.0.0.1:${userConfig.port}`
+      },
+      hmr: {
+        clientPort: userConfig.dev.hmrClientPort
       }
     },
 
