@@ -17,8 +17,13 @@
   // LINKS
   // ---------------------------------
 
+  u {
+    text-decoration: none;
+  }
+
   a {
     color: mc('blue', '700');
+    text-decoration: none;
 
     &.is-internal-link.is-invalid-page {
       color: mc('red', '700');
@@ -37,7 +42,7 @@
         padding-left: 3px;
         display: inline-block;
         content: '\F03CC';
-        color: mc('grey', '500');
+        color: mc('blue', '700');
         text-decoration: none;
       }
     }
