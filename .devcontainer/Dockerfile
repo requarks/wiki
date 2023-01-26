@@ -59,6 +59,10 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
     $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+# Add ngrok source
+RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc > /dev/null && \
+    echo "deb https://ngrok-agent.s3.amazonaws.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+
 # Install the packages we need
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -qy \
     bash \
@@ -71,6 +75,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
     gnupg2 \
     nano \
     netcat \
+    ngrok \
     pandoc \
     unzip \
     wget
