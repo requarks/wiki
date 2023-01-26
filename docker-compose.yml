@@ -15,20 +15,20 @@ services:
     ports:
       - "6543:5432"
 
-  wiki:
-    image: ghcr.io/requarks/wiki:2
-    depends_on:
-      - db
-    environment:
-      DB_TYPE: postgres
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: wikijs
-      DB_PASS: wikijsrocks
-      DB_NAME: wiki
-    restart: unless-stopped
-    ports:
-      - "3003:3000"
+  # wiki:
+  #   image: ghcr.io/requarks/wiki:2
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     DB_TYPE: postgres
+  #     DB_HOST: db
+  #     DB_PORT: 5432
+  #     DB_USER: wikijs
+  #     DB_PASS: wikijsrocks
+  #     DB_NAME: wiki
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3003:3000"
 
 volumes:
   db-data:
