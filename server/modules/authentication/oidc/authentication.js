@@ -28,7 +28,8 @@ module.exports = {
             providerKey: req.params.strategy,
             profile: {
               ...profile,
-              email: _.get(profile, '_json.' + conf.emailClaim)
+              email: _.get(profile, '_json.' + conf.emailClaim),
+              displayName: _.get(profile, conf.displayNameClaim, '???'),
             }
           })
           if (conf.mapGroups) {
