@@ -18,7 +18,8 @@ module.exports = {
       userInfoURL: conf.userInfoURL,
       callbackURL: conf.callbackURL,
       passReqToCallback: true,
-      scope: conf.scope
+      scope: conf.scope,
+      state: true
     }, async (req, accessToken, refreshToken, profile, cb) => {
       try {
         const user = await WIKI.models.users.processProfile({
