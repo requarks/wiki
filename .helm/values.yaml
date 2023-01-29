@@ -1,0 +1,25 @@
+deployment:
+  name: growth
+  version: dummy
+  replicas: 1
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 5
+  rollingUpdate:
+    maxUnavailable: '50%'
+    maxSurge: 1
+  resources:
+    requests:
+      memory: '64Mi'
+      cpu: '250m'
+    limits:
+      memory: '1024Mi'
+      cpu: '1500m'
+serviceAccount: secret-manager-sa
+bucket: dummy
+ingress: dummy
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 3
+  cpu: 75
+  memory: 75
+nodeSelector: test

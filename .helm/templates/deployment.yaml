@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{$.Values.deployment.name}}
+  labels:
+    app: {{$.Values.deployment.name}}
+spec:
+  replicas: {{$.Values.deployment.replicas}}
+  progressDeadlineSeconds: {{$.Values.deployment.progressDeadlineSeconds}}
+  revisionHistoryLimit: {{$.Values.deployment.revisionHistoryLimit}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{$.Values.deployment.rollingUpdate.maxUnavailable}}
+      maxSurge: {{$.Values.deployment.rollingUpdate.maxSurge}}
+  selector:
+    matchLabels:
+      app: {{$.Values.deployment.name}}
+  template:
+    metadata:
+      labels:
+        app: {{$.Values.deployment.name}}
+        version: {{$.Values.deployment.version}}
+    spec:
+      serviceAccountName: {{$.Values.serviceAccount}}
+      nodeSelector:
+        eks.amazonaws.com/nodegroup: {{$.Values.nodeSelector}}
+      containers:
+        - name: nginx
+          image: public.ecr.aws/nginx/nginx:1.21-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: {{$.Values.deployment.resources.requests.memory}}
+              cpu: {{$.Values.deployment.resources.requests.cpu}}
+            limits:
+              memory: {{$.Values.deployment.resources.limits.memory}}
+              cpu: {{$.Values.deployment.resources.limits.cpu}}
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - mountPath: /var/html
+              name: html
+              readOnly: true
+      initContainers:
+        - name: s3
+          image: amazon/aws-cli:latest
+          command:
+            - bash
+          args:
+            - -c
+            - |
+              aws s3 sync s3://{{$.Values.bucket}}/ /var/html/
+          volumeMounts:
+            - name: html
+              mountPath: /var/html
+      volumes:
+        - name: html
+          emptyDir:
+            medium: Memory
+        - name: nginx-conf
+          configMap:
+            name: {{$.Values.deployment.name}}
