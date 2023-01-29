@@ -29,7 +29,7 @@ module.exports = {
             profile: {
               ...profile,
               email: _.get(profile, '_json.' + conf.emailClaim),
-              displayName: _.get(profile, conf.displayNameClaim, '???'),
+              displayName: _.get(profile, conf.displayNameClaim, ''),
             }
           })
           if (conf.mapGroups) {
