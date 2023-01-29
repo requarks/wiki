@@ -70,3 +70,9 @@ props:
     title: Pass access token via GET query string to User Info Endpoint
     hint: (optional) Pass the access token in an `access_token` parameter attached to the GET query string of the User Info Endpoint URL. Otherwise the access token will be passed in the Authorization header.
     order: 11
+  enableCSRFProtection:
+    type: Boolean
+    default: true
+    title: Enable CSRF protection
+    hint: Pass a nonce state parameter during authentication to protect against CSRF attacks.
+    order: 12

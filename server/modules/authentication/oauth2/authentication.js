@@ -19,7 +19,7 @@ module.exports = {
       callbackURL: conf.callbackURL,
       passReqToCallback: true,
       scope: conf.scope,
-      state: true
+      state: conf.enableCSRFProtection
     }, async (req, accessToken, refreshToken, profile, cb) => {
       try {
         const user = await WIKI.models.users.processProfile({
