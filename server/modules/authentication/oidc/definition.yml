@@ -51,8 +51,8 @@ props:
     order: 7
   displayNameClaim:
     type: String
-    title: DisplayName Claim
-    hint: Field containing the users display name
+    title: Display Name Claim
+    hint: Field containing the user display name
     default: displayName
     maxWidth: 500
     order: 8
