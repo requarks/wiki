@@ -25,23 +25,23 @@ steps:
     volumes:
       - name: docker
         path: /var/run
-  # - name: update Chart.yaml
-  #   image: 221581667315.dkr.ecr.eu-west-1.amazonaws.com/mikefarah/yq:latest
-  #   user: 0
-  #   commands:
-  #     - chmod 777 .helm/Chart.yaml
-  #     - yq -i '.annotations["branch"] = "${CI_COMMIT_BRANCH}" | .annotations["sha"] = "${CI_COMMIT_SHA}" ' .helm/Chart.yaml
-  # - name: helm
-  #   image: public.ecr.aws/deel/aws-cli-kubectl-helm:latest
-  #   commands:
-  #     - KUBECONFIG="" helm repo add deel http://registry-chartmuseum.registry:8080 --username deel --password $${REGISTRY_PASSWORD}
-  #     - KUBECONFIG="" helm push -u deel -p $${REGISTRY_PASSWORD} .helm deel --force --version="0.1.0-${CI_COMMIT_SHA}"
-  #   depends_on:
-  #     - publish
-  #     - update Chart.yaml
-  #   environment:
-  #     REGISTRY_PASSWORD:
-  #       from_secret: REGISTRY_PASSWORD
+  - name: update Chart.yaml
+    image: 221581667315.dkr.ecr.eu-west-1.amazonaws.com/mikefarah/yq:latest
+    user: 0
+    commands:
+      - chmod 777 .helm/Chart.yaml
+      - yq -i '.annotations["branch"] = "${CI_COMMIT_BRANCH}" | .annotations["sha"] = "${CI_COMMIT_SHA}" ' .helm/Chart.yaml
+  - name: helm
+    image: public.ecr.aws/deel/aws-cli-kubectl-helm:latest
+    commands:
+      - KUBECONFIG="" helm repo add deel http://registry-chartmuseum.registry:8080 --username deel --password $${REGISTRY_PASSWORD}
+      - KUBECONFIG="" helm push -u deel -p $${REGISTRY_PASSWORD} .helm deel --force --version="0.1.0-${CI_COMMIT_SHA}"
+    depends_on:
+      - publish
+      - update Chart.yaml
+    environment:
+      REGISTRY_PASSWORD:
+        from_secret: REGISTRY_PASSWORD
 ---
 kind: secret
 name: AWS_ACCESS_KEY_ID
