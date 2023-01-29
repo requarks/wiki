@@ -12,7 +12,7 @@ module.exports = {
     if (WIKI.config.db.type !== 'sqlite') {
       throw new WIKI.Error.SearchActivationFailed('Must use Sqlite3 database to activate this engine!')
     }
-    let opts = await WIKI.models.knex.schema.raw('PRAGMA compile_options')
+    const opts = await WIKI.models.knex.schema.raw('PRAGMA compile_options')
     if (!_.find(opts, { compile_options: 'ENABLE_FTS5' })) {
       throw new WIKI.Error.SearchActivationFailed('Sqlite3 must have FTS5 module!')
     }
@@ -32,7 +32,7 @@ module.exports = {
     const indexExists = await WIKI.models.knex.schema.hasTable('fts5_pages_vector')
     if (!indexExists) {
       WIKI.logger.info(`(SEARCH/SQLITE3) Creating Pages Vector table...`)
-      await WIKI.models.knex.raw('create virtual table fts5_pages_vector using fts5(tokenize=unicode61, path, locale, title,description,content)')
+      await WIKI.models.knex.raw('CREATE VIRTUAL TABLE fts5_pages_vector USING fts5(tokenize=unicode61, path, locale, title, description, content)')
     }
     WIKI.logger.info(`(SEARCH/SQLITE3) Initialization completed.`)
   },
@@ -44,26 +44,26 @@ module.exports = {
    */
   async query(q, opts) {
     try {
-      let qry = `
-        SELECT rowid as id, path, locale, title, description
+      const qry = `
+        SELECT rowid AS id, path, locale, title, description
         FROM "fts5_pages_vector"`
-      let qryEnd = 'ORDER BY rank'
+      const qryEnd = 'ORDER BY rank'
       let qryWhere = 'WHERE fts5_pages_vector MATCH ?'
 
-      let o = matchquery.parse(q)
-      if (o.negated)
-        qryWhere = 'WHERE rowid not in (select rowid from fts5_pages_vector where fts5_pages_vector MATCH ?)'
-      let qryParams = [ o.str ]
+      const o = matchquery.parse(q)
+      if (o.negated) {
+        qryWhere = 'WHERE rowid NOT IN (SELECT rowid FROM fts5_pages_vector WHERE fts5_pages_vector MATCH ?)'
+      }
 
       const results = await WIKI.models.knex.raw(`
         ${qry}
         ${qryWhere}
         ${qryEnd}
-       ` , qryParams)
+       `, [o.str])
       return {
         results,
         suggestions: [],
-        totalHits: results.length,
+        totalHits: results.length
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')
@@ -130,8 +130,7 @@ module.exports = {
 
     await WIKI.models.knex.raw(`
       INSERT INTO "fts5_pages_vector" (path, locale, title, description, content)
-      SELECT path, localeCode, title, description, content from pages`)
-
+      SELECT path, localeCode, title, description, content FROM pages`
+    )
   }
-
 }
