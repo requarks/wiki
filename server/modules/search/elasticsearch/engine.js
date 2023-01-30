@@ -19,6 +19,16 @@ module.exports = {
   async init() {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
     switch (this.config.apiVersion) {
+      case '8.x':
+        const { Client: Client8 } = require('elasticsearch8')
+        this.client = new Client8({
+          nodes: this.config.hosts.split(',').map(_.trim),
+          sniffOnStart: this.config.sniffOnStart,
+          sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          ssl: getTlsOptions(this.config),
+          name: 'wiki-js'
+        })
+        break
       case '7.x':
         const { Client: Client7 } = require('elasticsearch7')
         this.client = new Client7({
