@@ -83,3 +83,39 @@ props:
     hint: The field storing the user avatar picture. Usually "jpegPhoto" or "thumbnailPhoto".
     maxWidth: 500
     order: 23
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Map groups matching names from the users LDAP/Active Directory groups. Group Search Base must also be defined for this to work. Note this will remove any groups the user has that doesn't match an LDAP/Active Directory group.
+    default: false
+    order: 24
+  groupSearchBase:
+    type: String
+    title: Group Search Base
+    hint: The base DN from which to search for groups.
+    default: OU=groups,dc=example,dc=com
+    order: 25
+  groupSearchFilter:
+    type: String
+    title: Group Search Filter
+    hint: LDAP search filter for groups. (member={{dn}}) will use the distinguished name of the user and will work in most cases.
+    default: (member={{dn}})
+    order: 26
+  groupSearchScope:
+    type: String
+    title: Group Search Scope
+    hint: How far from the Group Search Base to search for groups. sub (default) will search the entire subtree. base, will only search the Group Search Base dn. one, will search the Group Search Base dn and one additional level.
+    default: sub
+    order: 27
+  groupDnProperty:
+    type: String
+    title: Group DN Property
+    hint: The property of user object to use in {{dn}} interpolation of Group Search Filter.
+    default: dn
+    order: 28
+  groupNameField:
+    type: String
+    title: Group Name Field
+    hint: The field that contains the name of the LDAP group to match on, usually "name" or "cn".
+    default: name
+    order: 29
