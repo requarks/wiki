@@ -1,5 +1,4 @@
 const _ = require('lodash')
-
 /*
  * Full text query preprocessor for sqlite3 FTS similar to pg-tsquery.
  * Converts input string into internal sqlite match query
@@ -16,20 +15,20 @@ const _ = require('lodash')
 | `foo*,bar* bana*`                    | `(foo *) or (bar *  bana*)` |
 */
 
-
 module.exports = {
   parse(input) {
-    let p = new MatchQueryParser()
-    let v = p.parse(input)
+    const p = new MatchQueryParser()
+    const v = p.parse(input)
 
-    let negated = v.negated
+    const negated = v.negated
     /*
      * Since sqlite does not support top level negated MATCH queries
      * calling function need to create negated sql query like
      * select * not in (select ... match)
      */
-    if (negated)
+    if (negated) {
       v.negated = false
+    }
     return {
       negated,
       str: v.toString()
@@ -37,17 +36,15 @@ module.exports = {
   }
 }
 
-class Token
-{
+class Token {
   constructor(type, value) {
     this.type = type
     this.value = value
   }
 }
 
-class Node
-{
-  constructor({type, value, negated = false, args, parNode = undefined, star = false}) {
+class Node {
+  constructor({ type, value, negated = false, args, parNode = undefined, star = false }) {
     this.type = type
     this.value = value
     this.negated = negated
@@ -61,92 +58,98 @@ class Node
 
   toString() {
     let s = ''
-    if (this.type == 'id') {
+    if (this.type === 'id') {
       s = `"${this.value}"`
-      if (this.star)
+      if (this.star) {
         s += '*'
+      }
     } else {
       let separator = ''
 
-      if (this.type == 'and') {
+      if (this.type === 'and') {
         separator = ' AND '
-      } else if (this.type == 'or') {
+      } else if (this.type === 'or') {
         separator = ' OR '
       } else {
         throw new Error('should not reach')
       }
 
-      if (this.args && this.args.length > 0)
+      if (this.args && this.args.length > 0) {
         this.args.forEach(item => {
-          if (s != '') {
-            if (item.negated && this.type == 'and')
+          if (s !== '') {
+            if (item.negated && this.type === 'and') {
               s += ' '
-            else
+            } else {
               s += separator
+            }
           }
           s += item
         })
-      if (this.parNode !== undefined || this.negated)
+      }
+      if (this.parNode !== undefined || this.negated) {
         s = `(${s})`
+      }
     }
-    if (this.negated)
+    if (this.negated) {
       s = 'NOT ' + s
+    }
     return s
   }
 }
 
-function negateNodeType(node)
-{
-    if (node.type  == 'or')
-      return 'and'
-    else if (node.type == 'and')
-      return 'or'
-      else
-        throw new Error('should not reach')
+function negateNodeType(node) {
+  if (node.type === 'or') {
+    return 'and'
+  } else if (node.type === 'and') {
+    return 'or'
+  } else {
+    throw new Error('should not reach')
+  }
 }
 
-function negateNodes(lst)
-{
-      lst.forEach(item => {
-        if (!(item instanceof Node))
-          throw new Error('should not reach')
-        item.negated = !item.negated
-      })
+function negateNodes(lst) {
+  lst.forEach(item => {
+    if (!(item instanceof Node)) {
+      throw new Error('should not reach')
+    }
+    item.negated = !item.negated
+  })
 }
 
-class MatchQueryParser
-{
+class MatchQueryParser {
   constructor() {
-    this.tokenRegex = /^([",!*\(\)-])/
+    this.tokenRegex = /^([",!*()-])/
     this.phraseSeparator = ' '
-    this.terms = /[ \t,!*\(\)-]/
+    this.terms = /[ \t,!*()-]/
     this.knownLexemes = {
-      '-' : 'not', '!' : 'not', 'not' : 'not',
-      '&' : 'and', 'and' : 'and',
-      ',' : 'or', 'or' : 'or', '|' : 'or',
+      '-': 'not', '!': 'not', 'not': 'not',
+      '&': 'and', 'and': 'and',
+      ',': 'or', 'or': 'or', '|': 'or'
     }
   }
 
   asKeywordToken(s) {
     const k = s.toLowerCase()
-    if (!this.knownLexemes.hasOwnProperty(k))
+    if (!_.has(this.knownLexemes, k)) {
       return undefined
+    }
     return new Token(this.knownLexemes[k], s)
   }
 
   intNextToken() {
     let tail = this.input.substring(this.idx).trimStart()
-    if (!tail)
+    if (!tail) {
       return undefined
+    }
 
     tail = tail.trimStart()
     this.idx = this.input.length - tail.length
 
-    let m = tail.match(this.tokenRegex)
+    const m = tail.match(this.tokenRegex)
     if (m) {
-      if (m[0] == '"') {
-        let idx = tail.indexOf('"', 1)
-        if (idx == -1) {
+      if (m[0] === '"') {
+        const idx = tail.indexOf('"', 1)
+        if (idx === -1) {
           tail = tail.substring(1)
           this.idx = this.input.length
         } else {
@@ -156,17 +159,18 @@ class MatchQueryParser
         return new Token('id', tail)
       }
       this.idx += m[0].length
-      let keyword = this.asKeywordToken(m[0])
+      const keyword = this.asKeywordToken(m[0])
       return keyword || new Token(m[0], m[0])
     }
 
     // this is literal string, find next valid token start
-    let idx = tail.search(this.terms)
-    if (idx > 0)
+    const idx = tail.search(this.terms)
+    if (idx > 0) {
       tail = tail.substring(0, idx)
+    }
     this.idx += tail.length
 
-    let keyword = this.asKeywordToken(tail)
+    const keyword = this.asKeywordToken(tail)
     return keyword || new Token('id', tail)
   }
 
@@ -176,55 +180,65 @@ class MatchQueryParser
   }
 
   match(v) {
-    if (this.tok === undefined)
+    if (this.tok === undefined) {
       return false
-    return this.tok.type == v
+    }
+    return this.tok.type === v
   }
 
   eat(v) {
-    if (!this.match(v))
+    if (!this.match(v)) {
       return false
+    }
     this.nextToken()
     return true
   }
 
   setParent(node, par) {
-    if (node === undefined)
+    if (node === undefined) {
       return undefined
+    }
 
     node.parNode = par
-    if (!node.args)
+    if (!node.args) {
       return
+    }
 
     node.args.forEach(item => {
-      if (item instanceof Node)
+      if (item instanceof Node) {
         this.setParent(item, node)
+      }
     })
   }
+
   /*
    * Sqlite3 `NOT` operator is binary but our input search string
    * have unary not ('!', '-') operators so we need to preprocess request
    * and rearange some items to generate valid queries
    */
   preprocess(node) {
-    if (node === undefined || node.args === undefined)
+    if (node === undefined || node.args === undefined) {
       return node
+    }
 
     node.args.forEach(item => {
-      if (item instanceof Node)
+      if (item instanceof Node) {
         this.preprocess(item)
+      }
     })
 
-    //try to rearrange items
-    let l = [], nl = []
+    // try to rearrange items
+    const l = []
+    let nl = []
     node.args.forEach(item => {
-      if (item.negated)
+      if (item.negated) {
         nl.push(item)
-      else
+      } else {
         l.push(item)
+      }
     })
 
-    if (l.length == 0 && nl.length > 1) {
+    if (l.length === 0 && nl.length > 1) {
       /* invert node type if all children are negated */
       node.negated = !node.negated
       node.type = negateNodeType(node)
@@ -254,24 +268,26 @@ class MatchQueryParser
     this.idx = 0
 
     this.nextToken()
-    let o = this.parseOr()
+    const o = this.parseOr()
     this.setParent(o, undefined)
     return this.preprocess(o)
   }
 
   parseOr() {
     let o = this.parseAnd()
-    if (!o)
+    if (!o) {
       return undefined
-    if (!this.match('or'))
+    } else if (!this.match('or')) {
       return o
+    }
 
-    let l = [o]
+    const l = [o]
 
     while (this.eat('or')) {
       o = this.parseAnd()
-      if (!o)
+      if (!o) {
         break
+      }
       l.push(o)
     }
     return new Node({
@@ -282,23 +298,26 @@ class MatchQueryParser
 
   parseAnd() {
     let o = this.parseLit()
-    if (!o)
+    if (!o) {
       return undefined
+    }
 
-    let l = [o]
+    const l = [o]
     while (true) {
-      this.eat('and') //optional
+      this.eat('and') // optional 'and' keyword
       o = this.parseLit()
-      if (!o)
+      if (!o) {
         break
+      }
       l.push(o)
     }
-    if (l.length == 1)
+    if (l.length === 1) {
       return l[0]
+    }
 
     return new Node({
       type: 'and',
-      args: l,
+      args: l
     })
   }
 
@@ -307,26 +326,27 @@ class MatchQueryParser
     let negated = false
     let star = false
 
-    if (o == undefined)
+    if (o === undefined) {
       return o
+    }
 
     if (this.eat('not')) {
-      if (this.tok == undefined) {
-       return new Node({
-           type: 'id',
-           negated: false,
-           value: o.value,
-       })
+      if (this.tok === undefined) {
+        return new Node({
+          type: 'id',
+          negated: false,
+          value: o.value
+        })
       }
       negated = true
       o = this.tok
     }
 
     if (this.eat('(')) {
-      let tail = this.input
-      let n = this.parseOr()
-      if (!this.eat(')') || n === undefined)
+      const n = this.parseOr()
+      if (!this.eat(')') || n === undefined) {
         return undefined
+      }
       n.negated = negated
       return n
     }
@@ -335,15 +355,15 @@ class MatchQueryParser
     }
 
     this.nextToken()
-    if (this.eat('*'))
+    if (this.eat('*')) {
       star = true
+    }
 
     return new Node({
       type: 'id',
       negated,
       star,
-      value: o.value,
+      value: o.value
     })
   }
 }
-

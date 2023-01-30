@@ -1,6 +1,5 @@
 const stream = require('stream')
 const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
 const _ = require('lodash')
 
 const matchquery = require('./match-query')
@@ -94,7 +93,7 @@ module.exports = {
         description = ?,
         content = ?
         WHERE path = ? AND locale = ?
-    `, [page.title, page.description, page.safeContent,  page.path, page.localeCode])
+    `, [page.title, page.description, page.safeContent, page.path, page.localeCode])
   },
   /**
    * DELETE
