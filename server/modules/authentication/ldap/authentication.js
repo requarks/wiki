@@ -19,7 +19,7 @@ module.exports = {
           searchBase: conf.searchBase,
           searchFilter: conf.searchFilter,
           tlsOptions: getTlsOptions(conf),
-          ...conf.mapsGroups && {
+          ...conf.mapGroups && {
             groupSearchBase: conf.groupSearchBase,
             groupSearchFilter: conf.groupSearchFilter,
             groupSearchScope: conf.groupSearchScope,
