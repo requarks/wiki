@@ -148,24 +148,20 @@ module.exports = {
         const filePattern = /(.*?)(?:{(.*?))? => (?:(.*?)})?(.*)/
         for (const f of diff.files) {
           const fMatch = f.file.match(filePattern)
-          const fNames = function () {
-            if (!fMatch) {
-              return {
-                "old":f.file,
-                "new":f.file
-              }
-            } else if (!fMatch[2] && !fMatch[3]) {
-              return {
-                "old":fMatch[1],
-                "new":fMatch[4]
-              }
-            } else {
-              return {
-                "old":(fMatch[1]+fMatch[2]+fMatch[4]).replace('//', '/'),
-                "new":(fMatch[1]+fMatch[3]+fMatch[4]).replace('//', '/')
-              }
-            }
-          }()
+          const fNames = {
+            old: null,
+            new: null
+          }
+          if (!fMatch) {
+            fNames.old = f.file
+            fNames.new = f.file
+          } else if (!fMatch[2] && !fMatch[3]) {
+            fNames.old = fMatch[1]
+            fNames.new = fMatch[4]
+          } else {
+            fNames.old = (fMatch[1]+fMatch[2]+fMatch[4]).replace('//', '/'),
+            fNames.new = (fMatch[1]+fMatch[3]+fMatch[4]).replace('//', '/')
+          }
           const fPath = path.join(this.repoPath, fNames.new)
           let fStats = { size: 0 }
           try {
