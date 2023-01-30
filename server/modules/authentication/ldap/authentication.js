@@ -19,11 +19,13 @@ module.exports = {
           searchBase: conf.searchBase,
           searchFilter: conf.searchFilter,
           tlsOptions: getTlsOptions(conf),
-          groupSearchBase: conf.mapGroups ? conf.groupSearchBase : null,
-          groupSearchFilter: conf.mapGroups ? conf.groupSearchFilter : null,
-          groupSearchScope: conf.mapGroups ? conf.groupSearchScope : null,
-          groupDnProperty: conf.mapGroups ? conf.groupDnProperty : null,
-          groupSearchAttributes: conf.mapGroups ? [conf.groupNameField] : null,
+          ...conf.mapsGroups && {
+            groupSearchBase: conf.groupSearchBase,
+            groupSearchFilter: conf.groupSearchFilter,
+            groupSearchScope: conf.groupSearchScope,
+            groupDnProperty: conf.groupDnProperty,
+            groupSearchAttributes: [conf.groupNameField]
+          },
           includeRaw: true
         },
         usernameField: 'email',
