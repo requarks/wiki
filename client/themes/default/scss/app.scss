@@ -282,7 +282,7 @@
         content: "\F02FC";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('blue', '50');
         color: mc('blue', '800');
       }
@@ -302,7 +302,7 @@
         content: "\F0026";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('orange', '50');
         color: mc('orange', '800');
       }
@@ -323,7 +323,7 @@
         content: "\F0159";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('red', '50');
         color: mc('red', '800');
       }
@@ -343,7 +343,7 @@
         content: "\F0E1E";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('green', '50');
         color: mc('green', '800');
       }
