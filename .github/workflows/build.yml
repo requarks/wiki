@@ -161,7 +161,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Download a Build Artifact
-      uses: actions/download-artifact@v2.1.0
+      uses: actions/download-artifact@v3.0.2
       with:
         name: drop
         path: drop
@@ -177,6 +177,7 @@ jobs:
         context: .
         file: dev/build-arm/Dockerfile
         platforms: ${{ matrix.platform }}
+        provenance: false
         push: true
         tags: |
           requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
