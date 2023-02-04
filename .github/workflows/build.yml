@@ -60,7 +60,6 @@ jobs:
         context: .
         file: dev/build/Dockerfile
         push: true
-        provenance: false
         tags: |
           requarks/wiki:canary
           requarks/wiki:canary-${{ env.REL_VERSION_STRICT }}
@@ -179,7 +178,6 @@ jobs:
         file: dev/build-arm/Dockerfile
         platforms: ${{ matrix.platform }}
         push: true
-        provenance: false
         tags: |
           requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
           ghcr.io/requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
@@ -341,10 +339,11 @@ jobs:
         writeToFile: false
 
     - name: Update GitHub Release
-      uses: ncipollo/release-action@v1
+      uses: ncipollo/release-action@v1.12.0
       with:
         allowUpdates: true
         draft: false
+        makeLatest: true
         name: ${{ github.ref_name }}
         body: ${{ steps.changelog.outputs.changes }}
         token: ${{ github.token }}
