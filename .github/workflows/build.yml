@@ -60,6 +60,7 @@ jobs:
         context: .
         file: dev/build/Dockerfile
         push: true
+        provenance: false
         tags: |
           requarks/wiki:canary
           requarks/wiki:canary-${{ env.REL_VERSION_STRICT }}
@@ -178,6 +179,7 @@ jobs:
         file: dev/build-arm/Dockerfile
         platforms: ${{ matrix.platform }}
         push: true
+        provenance: false
         tags: |
           requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
           ghcr.io/requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
