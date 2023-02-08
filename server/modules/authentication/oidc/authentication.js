@@ -9,7 +9,7 @@ const _ = require('lodash')
 const OpenIDConnectStrategy = require('passport-openidconnect').Strategy
 
 module.exports = {
-  init(passport, conf) {
+  init (passport, conf) {
     passport.use(conf.key,
       new OpenIDConnectStrategy({
         authorizationURL: conf.authorizationURL,
@@ -29,7 +29,7 @@ module.exports = {
             profile: {
               ...profile,
               email: _.get(profile, '_json.' + conf.emailClaim),
-              displayName: _.get(profile, '_json' + conf.displayNameClaim, ''),
+              displayName: _.get(profile, '_json.' + conf.displayNameClaim, '')
             }
           })
           if (conf.mapGroups) {
@@ -52,7 +52,7 @@ module.exports = {
       })
     )
   },
-  logout(conf) {
+  logout (conf) {
     if (!conf.logoutURL) {
       return '/'
     } else {
